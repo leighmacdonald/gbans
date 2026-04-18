@@ -9,11 +9,7 @@ import { file_ban_v1_ban } from "./ban_pb";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import { file_database_query_v1_filter } from "../../database/query/v1/filter_pb";
 import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
-import {
-	file_google_protobuf_duration,
-	file_google_protobuf_empty,
-	file_google_protobuf_timestamp,
-} from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_duration, file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Privilege } from "../../person/v1/privilege_pb";
 import { file_person_v1_privilege } from "../../person/v1/privilege_pb";
 import type { Message } from "@bufbuild/protobuf";
@@ -21,320 +17,315 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file ban/v1/appeal.proto.
  */
-export const file_ban_v1_appeal: GenFile =
-	/*@__PURE__*/
-	fileDesc(
-		"ChNiYW4vdjEvYXBwZWFsLnByb3RvEgZiYW4udjEiIQoOQXBwZWFsc1JlcXVlc3QSDwoHZGVsZXRlZBgBIAEoCCI6Cg9BcHBlYWxzUmVzcG9uc2USJwoHYXBwZWFscxgBIAMoCzIWLmJhbi52MS5BcHBlYWxPdmVydmlldyIhCg9NZXNzYWdlc1JlcXVlc3QSDgoGYmFuX2lkGAEgASgDIjsKEE1lc3NhZ2VzUmVzcG9uc2USJwoIbWVzc2FnZXMYASADKAsyFS5iYW4udjEuQXBwZWFsTWVzc2FnZSKcAQoOQXBwZWFsT3ZlcnZpZXcSGAoDYmFuGAEgASgLMgsuYmFuLnYxLkJhbhIbChNzb3VyY2VfcGVyc29uYV9uYW1lGAIgASgJEhoKEnNvdXJjZV9hdmF0YXJfaGFzaBgDIAEoCRIbChN0YXJnZXRfcGVyc29uYV9uYW1lGAQgASgJEhoKEnRhcmdldF9hdmF0YXJfaGFzaBgFIAEoCSKjAgoNQXBwZWFsTWVzc2FnZRIOCgZiYW5faWQYASABKAMSFgoOYmFuX21lc3NhZ2VfaWQYAiABKAMSEQoJYXV0aG9yX2lkGAMgASgDEhIKCm1lc3NhZ2VfbWQYBCABKAkSDwoHZGVsZXRlZBgFIAEoCBIuCgpjcmVhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBITCgthdmF0YXJfaGFzaBgIIAEoCRIUCgxwZXJzb25hX25hbWUYCSABKAkSJwoJcHJpdmlsZWdlGAogASgOMhQucGVyc29uLnYxLlByaXZpbGVnZSIvCgxSZXBseVJlcXVlc3QSDgoGYmFuX2lkGAEgASgDEg8KB2JvZHlfbWQYAiABKAkiNwoNUmVwbHlSZXNwb25zZRImCgdtZXNzYWdlGAEgASgLMhUuYmFuLnYxLkFwcGVhbE1lc3NhZ2UiQwoYRWRpdEFwcGVhbE1lc3NhZ2VSZXF1ZXN0EhYKDmJhbl9tZXNzYWdlX2lkGAEgASgDEg8KB2JvZHlfbWQYAiABKAkiQwoZRWRpdEFwcGVhbE1lc3NhZ2VSZXNwb25zZRImCgdtZXNzYWdlGAEgASgLMhUuYmFuLnYxLkFwcGVhbE1lc3NhZ2UiNAoaRGVsZXRlQXBwZWFsTWVzc2FnZVJlcXVlc3QSFgoOYmFuX21lc3NhZ2VfaWQYASABKAMy9wIKDUFwcGVhbFNlcnZpY2USPAoHQXBwZWFscxIWLmJhbi52MS5BcHBlYWxzUmVxdWVzdBoXLmJhbi52MS5BcHBlYWxzUmVzcG9uc2UiABI/CghNZXNzYWdlcxIXLmJhbi52MS5NZXNzYWdlc1JlcXVlc3QaGC5iYW4udjEuTWVzc2FnZXNSZXNwb25zZSIAEjYKBVJlcGx5EhQuYmFuLnYxLlJlcGx5UmVxdWVzdBoVLmJhbi52MS5SZXBseVJlc3BvbnNlIgASWgoRRWRpdEFwcGVhbE1lc3NhZ2USIC5iYW4udjEuRWRpdEFwcGVhbE1lc3NhZ2VSZXF1ZXN0GiEuYmFuLnYxLkVkaXRBcHBlYWxNZXNzYWdlUmVzcG9uc2UiABJTChNEZWxldGVBcHBlYWxNZXNzYWdlEiIuYmFuLnYxLkRlbGV0ZUFwcGVhbE1lc3NhZ2VSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgBCiQEKCmNvbS5iYW4udjFCC0FwcGVhbFByb3RvUAFaNWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvYmFuL3YxO2JhbnYxogIDQlhYqgIGQmFuLlYxygIGQmFuXFYx4gISQmFuXFYxXEdQQk1ldGFkYXRh6gIHQmFuOjpWMWIIZWRpdGlvbnNw6Ac",
-		[
-			file_ban_v1_ban,
-			file_buf_validate_validate,
-			file_database_query_v1_filter,
-			file_google_protobuf_duration,
-			file_google_protobuf_empty,
-			file_google_protobuf_timestamp,
-			file_person_v1_privilege,
-		],
-	);
+export const file_ban_v1_appeal: GenFile = /*@__PURE__*/
+  fileDesc("ChNiYW4vdjEvYXBwZWFsLnByb3RvEgZiYW4udjEiIQoOQXBwZWFsc1JlcXVlc3QSDwoHZGVsZXRlZBgBIAEoCCI6Cg9BcHBlYWxzUmVzcG9uc2USJwoHYXBwZWFscxgBIAMoCzIWLmJhbi52MS5BcHBlYWxPdmVydmlldyIhCg9NZXNzYWdlc1JlcXVlc3QSDgoGYmFuX2lkGAEgASgDIjsKEE1lc3NhZ2VzUmVzcG9uc2USJwoIbWVzc2FnZXMYASADKAsyFS5iYW4udjEuQXBwZWFsTWVzc2FnZSKcAQoOQXBwZWFsT3ZlcnZpZXcSGAoDYmFuGAEgASgLMgsuYmFuLnYxLkJhbhIbChNzb3VyY2VfcGVyc29uYV9uYW1lGAIgASgJEhoKEnNvdXJjZV9hdmF0YXJfaGFzaBgDIAEoCRIbChN0YXJnZXRfcGVyc29uYV9uYW1lGAQgASgJEhoKEnRhcmdldF9hdmF0YXJfaGFzaBgFIAEoCSKjAgoNQXBwZWFsTWVzc2FnZRIOCgZiYW5faWQYASABKAMSFgoOYmFuX21lc3NhZ2VfaWQYAiABKAMSEQoJYXV0aG9yX2lkGAMgASgDEhIKCm1lc3NhZ2VfbWQYBCABKAkSDwoHZGVsZXRlZBgFIAEoCBIuCgpjcmVhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBITCgthdmF0YXJfaGFzaBgIIAEoCRIUCgxwZXJzb25hX25hbWUYCSABKAkSJwoJcHJpdmlsZWdlGAogASgOMhQucGVyc29uLnYxLlByaXZpbGVnZSIvCgxSZXBseVJlcXVlc3QSDgoGYmFuX2lkGAEgASgDEg8KB2JvZHlfbWQYAiABKAkiNwoNUmVwbHlSZXNwb25zZRImCgdtZXNzYWdlGAEgASgLMhUuYmFuLnYxLkFwcGVhbE1lc3NhZ2UiQwoYRWRpdEFwcGVhbE1lc3NhZ2VSZXF1ZXN0EhYKDmJhbl9tZXNzYWdlX2lkGAEgASgDEg8KB2JvZHlfbWQYAiABKAkiQwoZRWRpdEFwcGVhbE1lc3NhZ2VSZXNwb25zZRImCgdtZXNzYWdlGAEgASgLMhUuYmFuLnYxLkFwcGVhbE1lc3NhZ2UiNAoaRGVsZXRlQXBwZWFsTWVzc2FnZVJlcXVlc3QSFgoOYmFuX21lc3NhZ2VfaWQYASABKAMy9wIKDUFwcGVhbFNlcnZpY2USPAoHQXBwZWFscxIWLmJhbi52MS5BcHBlYWxzUmVxdWVzdBoXLmJhbi52MS5BcHBlYWxzUmVzcG9uc2UiABI/CghNZXNzYWdlcxIXLmJhbi52MS5NZXNzYWdlc1JlcXVlc3QaGC5iYW4udjEuTWVzc2FnZXNSZXNwb25zZSIAEjYKBVJlcGx5EhQuYmFuLnYxLlJlcGx5UmVxdWVzdBoVLmJhbi52MS5SZXBseVJlc3BvbnNlIgASWgoRRWRpdEFwcGVhbE1lc3NhZ2USIC5iYW4udjEuRWRpdEFwcGVhbE1lc3NhZ2VSZXF1ZXN0GiEuYmFuLnYxLkVkaXRBcHBlYWxNZXNzYWdlUmVzcG9uc2UiABJTChNEZWxldGVBcHBlYWxNZXNzYWdlEiIuYmFuLnYxLkRlbGV0ZUFwcGVhbE1lc3NhZ2VSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgBCiQEKCmNvbS5iYW4udjFCC0FwcGVhbFByb3RvUAFaNWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvYmFuL3YxO2JhbnYxogIDQlhYqgIGQmFuLlYxygIGQmFuXFYx4gISQmFuXFYxXEdQQk1ldGFkYXRh6gIHQmFuOjpWMWIIZWRpdGlvbnNw6Ac", [file_ban_v1_ban, file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_duration, file_google_protobuf_empty, file_google_protobuf_timestamp, file_person_v1_privilege]);
 
 /**
  * @generated from message ban.v1.AppealsRequest
  */
 export type AppealsRequest = Message<"ban.v1.AppealsRequest"> & {
-	/**
-	 * @generated from field: bool deleted = 1;
-	 */
-	deleted: boolean;
+  /**
+   * @generated from field: bool deleted = 1;
+   */
+  deleted: boolean;
 };
 
 /**
  * Describes the message ban.v1.AppealsRequest.
  * Use `create(AppealsRequestSchema)` to create a new message.
  */
-export const AppealsRequestSchema: GenMessage<AppealsRequest> = /*@__PURE__*/ messageDesc(file_ban_v1_appeal, 0);
+export const AppealsRequestSchema: GenMessage<AppealsRequest> = /*@__PURE__*/
+  messageDesc(file_ban_v1_appeal, 0);
 
 /**
  * @generated from message ban.v1.AppealsResponse
  */
 export type AppealsResponse = Message<"ban.v1.AppealsResponse"> & {
-	/**
-	 * @generated from field: repeated ban.v1.AppealOverview appeals = 1;
-	 */
-	appeals: AppealOverview[];
+  /**
+   * @generated from field: repeated ban.v1.AppealOverview appeals = 1;
+   */
+  appeals: AppealOverview[];
 };
 
 /**
  * Describes the message ban.v1.AppealsResponse.
  * Use `create(AppealsResponseSchema)` to create a new message.
  */
-export const AppealsResponseSchema: GenMessage<AppealsResponse> = /*@__PURE__*/ messageDesc(file_ban_v1_appeal, 1);
+export const AppealsResponseSchema: GenMessage<AppealsResponse> = /*@__PURE__*/
+  messageDesc(file_ban_v1_appeal, 1);
 
 /**
  * @generated from message ban.v1.MessagesRequest
  */
 export type MessagesRequest = Message<"ban.v1.MessagesRequest"> & {
-	/**
-	 * @generated from field: int64 ban_id = 1;
-	 */
-	banId: bigint;
+  /**
+   * @generated from field: int64 ban_id = 1;
+   */
+  banId: bigint;
 };
 
 /**
  * Describes the message ban.v1.MessagesRequest.
  * Use `create(MessagesRequestSchema)` to create a new message.
  */
-export const MessagesRequestSchema: GenMessage<MessagesRequest> = /*@__PURE__*/ messageDesc(file_ban_v1_appeal, 2);
+export const MessagesRequestSchema: GenMessage<MessagesRequest> = /*@__PURE__*/
+  messageDesc(file_ban_v1_appeal, 2);
 
 /**
  * @generated from message ban.v1.MessagesResponse
  */
 export type MessagesResponse = Message<"ban.v1.MessagesResponse"> & {
-	/**
-	 * @generated from field: repeated ban.v1.AppealMessage messages = 1;
-	 */
-	messages: AppealMessage[];
+  /**
+   * @generated from field: repeated ban.v1.AppealMessage messages = 1;
+   */
+  messages: AppealMessage[];
 };
 
 /**
  * Describes the message ban.v1.MessagesResponse.
  * Use `create(MessagesResponseSchema)` to create a new message.
  */
-export const MessagesResponseSchema: GenMessage<MessagesResponse> = /*@__PURE__*/ messageDesc(file_ban_v1_appeal, 3);
+export const MessagesResponseSchema: GenMessage<MessagesResponse> = /*@__PURE__*/
+  messageDesc(file_ban_v1_appeal, 3);
 
 /**
  * @generated from message ban.v1.AppealOverview
  */
 export type AppealOverview = Message<"ban.v1.AppealOverview"> & {
-	/**
-	 * @generated from field: ban.v1.Ban ban = 1;
-	 */
-	ban?: Ban;
+  /**
+   * @generated from field: ban.v1.Ban ban = 1;
+   */
+  ban?: Ban;
 
-	/**
-	 * @generated from field: string source_persona_name = 2;
-	 */
-	sourcePersonaName: string;
+  /**
+   * @generated from field: string source_persona_name = 2;
+   */
+  sourcePersonaName: string;
 
-	/**
-	 * @generated from field: string source_avatar_hash = 3;
-	 */
-	sourceAvatarHash: string;
+  /**
+   * @generated from field: string source_avatar_hash = 3;
+   */
+  sourceAvatarHash: string;
 
-	/**
-	 * @generated from field: string target_persona_name = 4;
-	 */
-	targetPersonaName: string;
+  /**
+   * @generated from field: string target_persona_name = 4;
+   */
+  targetPersonaName: string;
 
-	/**
-	 * @generated from field: string target_avatar_hash = 5;
-	 */
-	targetAvatarHash: string;
+  /**
+   * @generated from field: string target_avatar_hash = 5;
+   */
+  targetAvatarHash: string;
 };
 
 /**
  * Describes the message ban.v1.AppealOverview.
  * Use `create(AppealOverviewSchema)` to create a new message.
  */
-export const AppealOverviewSchema: GenMessage<AppealOverview> = /*@__PURE__*/ messageDesc(file_ban_v1_appeal, 4);
+export const AppealOverviewSchema: GenMessage<AppealOverview> = /*@__PURE__*/
+  messageDesc(file_ban_v1_appeal, 4);
 
 /**
  * @generated from message ban.v1.AppealMessage
  */
 export type AppealMessage = Message<"ban.v1.AppealMessage"> & {
-	/**
-	 * @generated from field: int64 ban_id = 1;
-	 */
-	banId: bigint;
+  /**
+   * @generated from field: int64 ban_id = 1;
+   */
+  banId: bigint;
 
-	/**
-	 * @generated from field: int64 ban_message_id = 2;
-	 */
-	banMessageId: bigint;
+  /**
+   * @generated from field: int64 ban_message_id = 2;
+   */
+  banMessageId: bigint;
 
-	/**
-	 * @generated from field: int64 author_id = 3;
-	 */
-	authorId: bigint;
+  /**
+   * @generated from field: int64 author_id = 3;
+   */
+  authorId: bigint;
 
-	/**
-	 * @generated from field: string message_md = 4;
-	 */
-	messageMd: string;
+  /**
+   * @generated from field: string message_md = 4;
+   */
+  messageMd: string;
 
-	/**
-	 * @generated from field: bool deleted = 5;
-	 */
-	deleted: boolean;
+  /**
+   * @generated from field: bool deleted = 5;
+   */
+  deleted: boolean;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 6;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 6;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 7;
-	 */
-	updatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 7;
+   */
+  updatedOn?: Timestamp;
 
-	/**
-	 * @generated from field: string avatar_hash = 8;
-	 */
-	avatarHash: string;
+  /**
+   * @generated from field: string avatar_hash = 8;
+   */
+  avatarHash: string;
 
-	/**
-	 * @generated from field: string persona_name = 9;
-	 */
-	personaName: string;
+  /**
+   * @generated from field: string persona_name = 9;
+   */
+  personaName: string;
 
-	/**
-	 * @generated from field: person.v1.Privilege privilege = 10;
-	 */
-	privilege: Privilege;
+  /**
+   * @generated from field: person.v1.Privilege privilege = 10;
+   */
+  privilege: Privilege;
 };
 
 /**
  * Describes the message ban.v1.AppealMessage.
  * Use `create(AppealMessageSchema)` to create a new message.
  */
-export const AppealMessageSchema: GenMessage<AppealMessage> = /*@__PURE__*/ messageDesc(file_ban_v1_appeal, 5);
+export const AppealMessageSchema: GenMessage<AppealMessage> = /*@__PURE__*/
+  messageDesc(file_ban_v1_appeal, 5);
 
 /**
  * @generated from message ban.v1.ReplyRequest
  */
 export type ReplyRequest = Message<"ban.v1.ReplyRequest"> & {
-	/**
-	 * @generated from field: int64 ban_id = 1;
-	 */
-	banId: bigint;
+  /**
+   * @generated from field: int64 ban_id = 1;
+   */
+  banId: bigint;
 
-	/**
-	 * @generated from field: string body_md = 2;
-	 */
-	bodyMd: string;
+  /**
+   * @generated from field: string body_md = 2;
+   */
+  bodyMd: string;
 };
 
 /**
  * Describes the message ban.v1.ReplyRequest.
  * Use `create(ReplyRequestSchema)` to create a new message.
  */
-export const ReplyRequestSchema: GenMessage<ReplyRequest> = /*@__PURE__*/ messageDesc(file_ban_v1_appeal, 6);
+export const ReplyRequestSchema: GenMessage<ReplyRequest> = /*@__PURE__*/
+  messageDesc(file_ban_v1_appeal, 6);
 
 /**
  * @generated from message ban.v1.ReplyResponse
  */
 export type ReplyResponse = Message<"ban.v1.ReplyResponse"> & {
-	/**
-	 * @generated from field: ban.v1.AppealMessage message = 1;
-	 */
-	message?: AppealMessage;
+  /**
+   * @generated from field: ban.v1.AppealMessage message = 1;
+   */
+  message?: AppealMessage;
 };
 
 /**
  * Describes the message ban.v1.ReplyResponse.
  * Use `create(ReplyResponseSchema)` to create a new message.
  */
-export const ReplyResponseSchema: GenMessage<ReplyResponse> = /*@__PURE__*/ messageDesc(file_ban_v1_appeal, 7);
+export const ReplyResponseSchema: GenMessage<ReplyResponse> = /*@__PURE__*/
+  messageDesc(file_ban_v1_appeal, 7);
 
 /**
  * @generated from message ban.v1.EditAppealMessageRequest
  */
 export type EditAppealMessageRequest = Message<"ban.v1.EditAppealMessageRequest"> & {
-	/**
-	 * @generated from field: int64 ban_message_id = 1;
-	 */
-	banMessageId: bigint;
+  /**
+   * @generated from field: int64 ban_message_id = 1;
+   */
+  banMessageId: bigint;
 
-	/**
-	 * @generated from field: string body_md = 2;
-	 */
-	bodyMd: string;
+  /**
+   * @generated from field: string body_md = 2;
+   */
+  bodyMd: string;
 };
 
 /**
  * Describes the message ban.v1.EditAppealMessageRequest.
  * Use `create(EditAppealMessageRequestSchema)` to create a new message.
  */
-export const EditAppealMessageRequestSchema: GenMessage<EditAppealMessageRequest> =
-	/*@__PURE__*/
-	messageDesc(file_ban_v1_appeal, 8);
+export const EditAppealMessageRequestSchema: GenMessage<EditAppealMessageRequest> = /*@__PURE__*/
+  messageDesc(file_ban_v1_appeal, 8);
 
 /**
  * @generated from message ban.v1.EditAppealMessageResponse
  */
 export type EditAppealMessageResponse = Message<"ban.v1.EditAppealMessageResponse"> & {
-	/**
-	 * @generated from field: ban.v1.AppealMessage message = 1;
-	 */
-	message?: AppealMessage;
+  /**
+   * @generated from field: ban.v1.AppealMessage message = 1;
+   */
+  message?: AppealMessage;
 };
 
 /**
  * Describes the message ban.v1.EditAppealMessageResponse.
  * Use `create(EditAppealMessageResponseSchema)` to create a new message.
  */
-export const EditAppealMessageResponseSchema: GenMessage<EditAppealMessageResponse> =
-	/*@__PURE__*/
-	messageDesc(file_ban_v1_appeal, 9);
+export const EditAppealMessageResponseSchema: GenMessage<EditAppealMessageResponse> = /*@__PURE__*/
+  messageDesc(file_ban_v1_appeal, 9);
 
 /**
  * @generated from message ban.v1.DeleteAppealMessageRequest
  */
 export type DeleteAppealMessageRequest = Message<"ban.v1.DeleteAppealMessageRequest"> & {
-	/**
-	 * @generated from field: int64 ban_message_id = 1;
-	 */
-	banMessageId: bigint;
+  /**
+   * @generated from field: int64 ban_message_id = 1;
+   */
+  banMessageId: bigint;
 };
 
 /**
  * Describes the message ban.v1.DeleteAppealMessageRequest.
  * Use `create(DeleteAppealMessageRequestSchema)` to create a new message.
  */
-export const DeleteAppealMessageRequestSchema: GenMessage<DeleteAppealMessageRequest> =
-	/*@__PURE__*/
-	messageDesc(file_ban_v1_appeal, 10);
+export const DeleteAppealMessageRequestSchema: GenMessage<DeleteAppealMessageRequest> = /*@__PURE__*/
+  messageDesc(file_ban_v1_appeal, 10);
 
 /**
  * @generated from service ban.v1.AppealService
  */
 export const AppealService: GenService<{
-	/**
-	 * @generated from rpc ban.v1.AppealService.Appeals
-	 */
-	appeals: {
-		methodKind: "unary";
-		input: typeof AppealsRequestSchema;
-		output: typeof AppealsResponseSchema;
-	};
-	/**
-	 * @generated from rpc ban.v1.AppealService.Messages
-	 */
-	messages: {
-		methodKind: "unary";
-		input: typeof MessagesRequestSchema;
-		output: typeof MessagesResponseSchema;
-	};
-	/**
-	 * @generated from rpc ban.v1.AppealService.Reply
-	 */
-	reply: {
-		methodKind: "unary";
-		input: typeof ReplyRequestSchema;
-		output: typeof ReplyResponseSchema;
-	};
-	/**
-	 * @generated from rpc ban.v1.AppealService.EditAppealMessage
-	 */
-	editAppealMessage: {
-		methodKind: "unary";
-		input: typeof EditAppealMessageRequestSchema;
-		output: typeof EditAppealMessageResponseSchema;
-	};
-	/**
-	 * @generated from rpc ban.v1.AppealService.DeleteAppealMessage
-	 */
-	deleteAppealMessage: {
-		methodKind: "unary";
-		input: typeof DeleteAppealMessageRequestSchema;
-		output: typeof EmptySchema;
-	};
-}> = /*@__PURE__*/ serviceDesc(file_ban_v1_appeal, 0);
+  /**
+   * @generated from rpc ban.v1.AppealService.Appeals
+   */
+  appeals: {
+    methodKind: "unary";
+    input: typeof AppealsRequestSchema;
+    output: typeof AppealsResponseSchema;
+  },
+  /**
+   * @generated from rpc ban.v1.AppealService.Messages
+   */
+  messages: {
+    methodKind: "unary";
+    input: typeof MessagesRequestSchema;
+    output: typeof MessagesResponseSchema;
+  },
+  /**
+   * @generated from rpc ban.v1.AppealService.Reply
+   */
+  reply: {
+    methodKind: "unary";
+    input: typeof ReplyRequestSchema;
+    output: typeof ReplyResponseSchema;
+  },
+  /**
+   * @generated from rpc ban.v1.AppealService.EditAppealMessage
+   */
+  editAppealMessage: {
+    methodKind: "unary";
+    input: typeof EditAppealMessageRequestSchema;
+    output: typeof EditAppealMessageResponseSchema;
+  },
+  /**
+   * @generated from rpc ban.v1.AppealService.DeleteAppealMessage
+   */
+  deleteAppealMessage: {
+    methodKind: "unary";
+    input: typeof DeleteAppealMessageRequestSchema;
+    output: typeof EmptySchema;
+  },
+}> = /*@__PURE__*/
+  serviceDesc(file_ban_v1_appeal, 0);
+

@@ -100,8 +100,8 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\n" +
 	"\x12auth/v1/auth.proto\x12\aauth.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x0f\n" +
 	"\rLogoutRequest\"\x10\n" +
-	"\x0eLogoutResponse2K\n" +
-	"\fAssetService\x12;\n" +
+	"\x0eLogoutResponse2J\n" +
+	"\vAuthService\x12;\n" +
 	"\x06Logout\x12\x16.auth.v1.LogoutRequest\x1a\x17.auth.v1.LogoutResponse\"\x00B\x8e\x01\n" +
 	"\vcom.auth.v1B\tAuthProtoP\x01Z7github.com/leighmacdonald/gbans/internal/auth/v1;authv1\xa2\x02\x03AXX\xaa\x02\aAuth.V1\xca\x02\aAuth\\V1\xe2\x02\x13Auth\\V1\\GPBMetadata\xea\x02\bAuth::V1b\beditionsp\xe8\a"
 
@@ -123,8 +123,8 @@ var file_auth_v1_auth_proto_goTypes = []any{
 	(*LogoutResponse)(nil), // 1: auth.v1.LogoutResponse
 }
 var file_auth_v1_auth_proto_depIdxs = []int32{
-	0, // 0: auth.v1.AssetService.Logout:input_type -> auth.v1.LogoutRequest
-	1, // 1: auth.v1.AssetService.Logout:output_type -> auth.v1.LogoutResponse
+	0, // 0: auth.v1.AuthService.Logout:input_type -> auth.v1.LogoutRequest
+	1, // 1: auth.v1.AuthService.Logout:output_type -> auth.v1.LogoutResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

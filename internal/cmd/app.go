@@ -527,35 +527,14 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	}
 
 	// Create authentication middlewares
-	// userAuth := auth.NewAuthentication(auth.NewRepository(g.database), conf.General.SiteName, conf.HTTPCookieKey, g.persons, g.bans, g.servers, g.config.Config().General.SentryDSN)
+	userAuth := auth.NewAuthentication(auth.NewRepository(g.database), conf.General.SiteName, conf.HTTPCookieKey, g.persons, g.bans, g.servers, g.config.Config().General.SentryDSN)
 	// serverAuth := servers.NewServerAuth(g.servers, g.config.Config().General.SentryDSN)
 
 	// Register all our handlers with router
-	// anticheat.NewAnticheatHandler(router, userAuth, g.anticheat)
-	// asset.NewAssetHandler(router, userAuth, g.assets)
-	// auth.NewAuthHandler(router, userAuth, g.config, g.tfapiClient, g.notifications)
-	// ban.NewAppealHandler(router, userAuth, ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications, conf.Discord.LogChannelID))
-	// ban.NewReportHandler(router, userAuth, g.reports)
-	// ban.NewHandlerBans(router, userAuth, g.bans, conf.Exports, conf.General.SiteName)
-	// chat.NewChatHandler(router, g.chat, userAuth)
-	// chat.NewWordFilterHandler(router, userAuth, conf.Filters, g.wordFilters, g.chat)
-	// config.NewHandler(router, userAuth, g.config, BuildVersion)
-	// contest.NewContestHandler(router, userAuth, contest.NewContests(contest.NewRepository(g.database)), g.assets)
-	// discordoauth.NewDiscordOAuthHandler(router, userAuth, g.config, g.persons, g.discordOAuth)
-	// forum.NewForumHandler(router, userAuth, g.forums)
-	// match.NewMatchHandler(ctx, router, matchUsecase, serversUC, authUsecase, configUsecase)
-	// metrics.NewMetricsHandler(router)
-	// mge.NewHandler(router, userAuth, g.mge)
-	// network.NewHandler(router, userAuth, g.networks)
-	// network.NewBlocklistHandler(router, userAuth, g.blocklists, g.networks)
-	// news.NewNewsHandler(router, g.news, userAuth)
-	// notification.NewNotificationHandler(router, userAuth, g.notifications)
-	// patreon.NewPatreonHandler(router, userAuth, patreon.NewPatreon(patreon.NewRepository(g.database), conf.Patreon), g.config.Config().Patreon)
-	// person.NewPersonHandler(router, userAuth, g.persons)
-	// servers.NewDemoHandler(router, userAuth, g.demos)
-	// servers.NewServersHandler(router, userAuth, g.servers)
-	// servers.NewSpeedrunsHandler(router, userAuth, serverAuth, g.speedruns)
-	// sourcemod.NewHandler(router, userAuth, serverAuth, g.sourcemod, g.notifications, conf.Discord.SafeKickLogChannelID(), g.persons)
+	asset.NewAssetHandler(router, g.assets)
+	auth.NewAuthHandler(router, userAuth, g.config, g.tfapiClient, g.notifications)
+	discordoauth.NewDiscordOAuthHandler(router, g.config, g.persons, g.discordOAuth)
+	metrics.NewMetricsHandler(router)
 
 	router.GET("/health", g.healthCheck)
 

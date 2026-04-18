@@ -8,53 +8,52 @@ import { enumDesc, fileDesc } from "@bufbuild/protobuf/codegenv2";
 /**
  * Describes the file person/v1/privilege.proto.
  */
-export const file_person_v1_privilege: GenFile =
-	/*@__PURE__*/
-	fileDesc(
-		"ChlwZXJzb24vdjEvcHJpdmlsZWdlLnByb3RvEglwZXJzb24udjEqsgEKCVByaXZpbGVnZRIUChBQUklWSUxFR0VfQkFOTkVEEAASHwobUFJJVklMRUdFX0dVRVNUX1VOU1BFQ0lGSUVEEAESEgoOUFJJVklMRUdFX1VTRVIQChIWChJQUklWSUxFR0VfUkVTRVJWRUQQDxIUChBQUklWSUxFR0VfRURJVE9SEBkSFwoTUFJJVklMRUdFX01PREVSQVRPUhAyEhMKD1BSSVZJTEVHRV9BRE1JThBkQqEBCg1jb20ucGVyc29uLnYxQg5Qcml2aWxlZ2VQcm90b1ABWjtnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3BlcnNvbi92MTtwZXJzb252MaICA1BYWKoCCVBlcnNvbi5WMcoCCVBlcnNvblxWMeICFVBlcnNvblxWMVxHUEJNZXRhZGF0YeoCClBlcnNvbjo6VjFiCGVkaXRpb25zcOgH",
-	);
+export const file_person_v1_privilege: GenFile = /*@__PURE__*/
+  fileDesc("ChlwZXJzb24vdjEvcHJpdmlsZWdlLnByb3RvEglwZXJzb24udjEqsgEKCVByaXZpbGVnZRIUChBQUklWSUxFR0VfQkFOTkVEEAASHwobUFJJVklMRUdFX0dVRVNUX1VOU1BFQ0lGSUVEEAESEgoOUFJJVklMRUdFX1VTRVIQChIWChJQUklWSUxFR0VfUkVTRVJWRUQQDxIUChBQUklWSUxFR0VfRURJVE9SEBkSFwoTUFJJVklMRUdFX01PREVSQVRPUhAyEhMKD1BSSVZJTEVHRV9BRE1JThBkQqEBCg1jb20ucGVyc29uLnYxQg5Qcml2aWxlZ2VQcm90b1ABWjtnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3BlcnNvbi92MTtwZXJzb252MaICA1BYWKoCCVBlcnNvbi5WMcoCCVBlcnNvblxWMeICFVBlcnNvblxWMVxHUEJNZXRhZGF0YeoCClBlcnNvbjo6VjFiCGVkaXRpb25zcOgH");
 
 /**
  * @generated from enum person.v1.Privilege
  */
 export enum Privilege {
-	/**
-	 * @generated from enum value: PRIVILEGE_BANNED = 0;
-	 */
-	BANNED = 0,
+  /**
+   * @generated from enum value: PRIVILEGE_BANNED = 0;
+   */
+  BANNED = 0,
 
-	/**
-	 * @generated from enum value: PRIVILEGE_GUEST_UNSPECIFIED = 1;
-	 */
-	GUEST_UNSPECIFIED = 1,
+  /**
+   * @generated from enum value: PRIVILEGE_GUEST_UNSPECIFIED = 1;
+   */
+  GUEST_UNSPECIFIED = 1,
 
-	/**
-	 * @generated from enum value: PRIVILEGE_USER = 10;
-	 */
-	USER = 10,
+  /**
+   * @generated from enum value: PRIVILEGE_USER = 10;
+   */
+  USER = 10,
 
-	/**
-	 * @generated from enum value: PRIVILEGE_RESERVED = 15;
-	 */
-	RESERVED = 15,
+  /**
+   * @generated from enum value: PRIVILEGE_RESERVED = 15;
+   */
+  RESERVED = 15,
 
-	/**
-	 * @generated from enum value: PRIVILEGE_EDITOR = 25;
-	 */
-	EDITOR = 25,
+  /**
+   * @generated from enum value: PRIVILEGE_EDITOR = 25;
+   */
+  EDITOR = 25,
 
-	/**
-	 * @generated from enum value: PRIVILEGE_MODERATOR = 50;
-	 */
-	MODERATOR = 50,
+  /**
+   * @generated from enum value: PRIVILEGE_MODERATOR = 50;
+   */
+  MODERATOR = 50,
 
-	/**
-	 * @generated from enum value: PRIVILEGE_ADMIN = 100;
-	 */
-	ADMIN = 100,
+  /**
+   * @generated from enum value: PRIVILEGE_ADMIN = 100;
+   */
+  ADMIN = 100,
 }
 
 /**
  * Describes the enum person.v1.Privilege.
  */
-export const PrivilegeSchema: GenEnum<Privilege> = /*@__PURE__*/ enumDesc(file_person_v1_privilege, 0);
+export const PrivilegeSchema: GenEnum<Privilege> = /*@__PURE__*/
+  enumDesc(file_person_v1_privilege, 0);
+

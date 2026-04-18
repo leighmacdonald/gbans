@@ -4,7 +4,7 @@ package auth.v1;
 
 import "google/protobuf/timestamp.proto";
 
-service AssetService {
+service AuthService {
   rpc Logout(LogoutRequest) returns (LogoutResponse) {}
 }
 

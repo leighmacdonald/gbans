@@ -13,1160 +13,1155 @@ import type { Message as Message$1 } from "@bufbuild/protobuf";
 /**
  * Describes the file forum/v1/forum.proto.
  */
-export const file_forum_v1_forum: GenFile =
-	/*@__PURE__*/
-	fileDesc(
-		"ChRmb3J1bS92MS9mb3J1bS5wcm90bxIIZm9ydW0udjEiWwoRVGhyZWFkRWRpdFJlcXVlc3QSFwoPZm9ydW1fdGhyZWFkX2lkGAEgASgFEg0KBXRpdGxlGAIgASgJEg4KBnN0aWNreRgDIAEoCBIOCgZsb2NrZWQYBCABKAgiNgoSVGhyZWFkRWRpdFJlc3BvbnNlEiAKBnRocmVhZBgBIAEoCzIQLmZvcnVtLnYxLlRocmVhZCIzChFGb3J1bUVkaXRSZXNwb25zZRIeCgVmb3J1bRgBIAEoCzIPLmZvcnVtLnYxLkZvcnVtIqUBChBGb3J1bUVkaXRSZXF1ZXN0EhAKCGZvcnVtX2lkGAEgASgFEhkKEWZvcnVtX2NhdGVnb3J5X2lkGAIgASgFEi4KEHBlcm1pc3Npb25fbGV2ZWwYAyABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlEg0KBXRpdGxlGAQgASgJEhMKC2Rlc2NyaXB0aW9uGAUgASgJEhAKCG9yZGVyaW5nGAYgASgFIpUBChJGb3J1bUNyZWF0ZVJlcXVlc3QSGQoRZm9ydW1fY2F0ZWdvcnlfaWQYASABKAUSLgoQcGVybWlzc2lvbl9sZXZlbBgCIAEoDjIULnBlcnNvbi52MS5Qcml2aWxlZ2USDQoFdGl0bGUYAyABKAkSEwoLZGVzY3JpcHRpb24YBCABKAkSEAoIb3JkZXJpbmcYBSABKAUiNQoTRm9ydW1DcmVhdGVSZXNwb25zZRIeCgVmb3J1bRgBIAEoCzIPLmZvcnVtLnYxLkZvcnVtImYKE0NhdGVnb3J5RWRpdFJlcXVlc3QSGQoRZm9ydW1fY2F0ZWdvcnlfaWQYASABKAUSDQoFdGl0bGUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSEAoIb3JkZXJpbmcYBCABKAUiPAoUQ2F0ZWdvcnlFZGl0UmVzcG9uc2USJAoIY2F0ZWdvcnkYASABKAsyEi5mb3J1bS52MS5DYXRlZ29yeSIsCg9DYXRlZ29yeVJlcXVlc3QSGQoRZm9ydW1fY2F0ZWdvcnlfaWQYASABKAUiOAoQQ2F0ZWdvcnlSZXNwb25zZRIkCghjYXRlZ29yeRgBIAEoCzISLmZvcnVtLnYxLkNhdGVnb3J5Ij4KFkNhdGVnb3J5Q3JlYXRlUmVzcG9uc2USJAoIY2F0ZWdvcnkYASABKAsyEi5mb3J1bS52MS5DYXRlZ29yeSJNChVDYXRlZ29yeUNyZWF0ZVJlcXVlc3QSDQoFdGl0bGUYASABKAkSEwoLZGVzY3JpcHRpb24YAiABKAkSEAoIb3JkZXJpbmcYAyABKAUiMAoUTWVzc2FnZURlbGV0ZVJlcXVlc3QSGAoQZm9ydW1fbWVzc2FnZV9pZBgBIAEoAyIuChNUaHJlYWREZWxldGVSZXF1ZXN0EhcKD2ZvcnVtX3RocmVhZF9pZBgBIAEoBSJDChZUaHJlYWRSZXBseUVkaXRSZXF1ZXN0EhgKEGZvcnVtX21lc3NhZ2VfaWQYASABKAMSDwoHYm9keV9tZBgCIAEoCSI9ChdUaHJlYWRSZXBseUVkaXRSZXNwb25zZRIiCgdtZXNzYWdlGAEgASgLMhEuZm9ydW0udjEuTWVzc2FnZSJEChhUaHJlYWRSZXBseUNyZWF0ZVJlcXVlc3QSFwoPZm9ydW1fdGhyZWFkX2lkGAEgASgFEg8KB2JvZHlfbWQYAiABKAkiPwoZVGhyZWFkUmVwbHlDcmVhdGVSZXNwb25zZRIiCgdtZXNzYWdlGAEgASgLMhEuZm9ydW0udjEuTWVzc2FnZSJnChNUaHJlYWRDcmVhdGVSZXF1ZXN0EhAKCGZvcnVtX2lkGAEgASgFEg0KBXRpdGxlGAIgASgJEg8KB2JvZHlfbWQYAyABKAkSDgoGc3RpY2t5GAQgASgIEg4KBmxvY2tlZBgFIAEoCCJcChRUaHJlYWRDcmVhdGVSZXNwb25zZRIgCgZ0aHJlYWQYASABKAsyEC5mb3J1bS52MS5UaHJlYWQSIgoHbWVzc2FnZRgCIAEoCzIRLmZvcnVtLnYxLk1lc3NhZ2UiQAoURm9ydW1NZXNzYWdlc1JlcXVlc3QSFwoPZm9ydW1fdGhyZWFkX2lkGAEgASgFEg8KB2RlbGV0ZWQYAiABKAgiPAoVRm9ydW1NZXNzYWdlc1Jlc3BvbnNlEiMKCG1lc3NhZ2VzGAEgAygLMhEuZm9ydW0udjEuTWVzc2FnZSIgCgxGb3J1bVJlcXVlc3QSEAoIZm9ydW1faWQYASABKAUiLwoNRm9ydW1SZXNwb25zZRIeCgVmb3J1bRgBIAEoCzIPLmZvcnVtLnYxLkZvcnVtIigKDVRocmVhZFJlcXVlc3QSFwoPZm9ydW1fdGhyZWFkX2lkGAEgASgFIjIKDlRocmVhZFJlc3BvbnNlEiAKBnRocmVhZBgBIAEoCzIQLmZvcnVtLnYxLlRocmVhZCIiCg5UaHJlYWRzUmVxdWVzdBIQCghmb3J1bV9pZBgBIAEoBSI7ChZUaHJlYWRzUmVxdWVzdFJlc3BvbnNlEiEKB3RocmVhZHMYASADKAsyEC5mb3J1bS52MS5UaHJlYWQinAEKBlRocmVhZBIQCghmb3J1bV9pZBgBIAEoBRIRCglzb3VyY2VfaWQYAiABKAMSDQoFdGl0bGUYAyABKAkSLgoKY3JlYXRlZF9vbhgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9vbhgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiuQIKEFRocmVhZFdpdGhTb3VyY2USIAoGdGhyZWFkGAEgASgLMhAuZm9ydW0udjEuVGhyZWFkEhQKDHBlcnNvbmFfbmFtZRgCIAEoCRITCgthdmF0YXJfaGFzaBgDIAEoCRIuChBwZXJtaXNzaW9uX2xldmVsGAQgASgOMhQucGVyc29uLnYxLlByaXZpbGVnZRIfChdyZWNlbnRfZm9ydW1fbWVzc2FnZV9pZBgFIAEoAxI1ChFyZWNlbnRfY3JlYXRlZF9vbhgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFwoPcmVjZW50X3N0ZWFtX2lkGAcgASgDEhsKE3JlY2VudF9wZXJzb25hX25hbWUYCCABKAkSGgoScmVjZW50X2F2YXRhcl9oYXNoGAkgASgJIpYBCgxVc2VyQWN0aXZpdHkSEAoIc3RlYW1faWQYASABKAMSFAoMcGVyc29uYV9uYW1lGAIgASgJEi4KEHBlcm1pc3Npb25fbGV2ZWwYAyABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlEi4KCmNyZWF0ZWRfb24YBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIkQKE0FjdGl2ZVVzZXJzUmVzcG9uc2USLQoNdXNlcl9hY3Rpdml0eRgBIAMoCzIWLmZvcnVtLnYxLlVzZXJBY3Rpdml0eSLNAgoHTWVzc2FnZRIYChBmb3J1bV9tZXNzYWdlX2lkGAEgASgDEhcKD2ZvcnVtX3RocmVhZF9pZBgCIAEoBRIRCglzb3VyY2VfaWQYAyABKAMSDwoHYm9keV9tZBgEIAEoCRINCgV0aXRsZRgFIAEoCRIOCgZvbmxpbmUYBiABKAgSEQoJc2lnbmF0dXJlGAcgASgJEhQKDHBlcnNvbmFfbmFtZRgIIAEoCRITCgthdmF0YXJfaGFzaBgJIAEoCRIuChBwZXJtaXNzaW9uX2xldmVsGAogASgOMhQucGVyc29uLnYxLlByaXZpbGVnZRIuCgpjcmVhdGVkX29uGAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCI9ChZSZWNlbnRNZXNzYWdlc1Jlc3BvbnNlEiMKCG1lc3NhZ2VzGAEgAygLMhEuZm9ydW0udjEuTWVzc2FnZSKHBAoFRm9ydW0SEAoIZm9ydW1faWQYASABKAUSGQoRZm9ydW1fY2F0ZWdvcnlfaWQYAiABKAUSFgoObGFzdF90aHJlYWRfaWQYAyABKAUSDQoFdGl0bGUYBCABKAkSEwoLZGVzY3JpcHRpb24YBSABKAkSEAoIb3JkZXJpbmcYBiABKAUSFQoNY291bnRfdGhyZWFkcxgHIAEoAxIWCg5jb3VudF9tZXNzYWdlcxgIIAEoAxIuChBwZXJtaXNzaW9uX2xldmVsGAkgASgOMhQucGVyc29uLnYxLlByaXZpbGVnZRIeChZyZWNlbnRfZm9ydW1fdGhyZWFkX2lkGAogASgFEhoKEnJlY2VudF9mb3J1bV90aXRsZRgLIAEoCRIYChByZWNlbnRfc291cmNlX2lkGAwgASgJEhsKE3JlY2VudF9wZXJzb25hX25hbWUYDSABKAkSGgoScmVjZW50X2F2YXRhcl9oYXNoGA4gASgJEjUKEXJlY2VudF9jcmVhdGVkX29uGA8gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpjcmVhdGVkX29uGBAgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGBEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCLcAQoIQ2F0ZWdvcnkSGQoRZm9ydW1fY2F0ZWdvcnlfaWQYASABKAUSDQoFdGl0bGUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSEAoIb3JkZXJpbmcYBCABKAUSHwoGZm9ydW1zGAUgAygLMg8uZm9ydW0udjEuRm9ydW0SLgoKY3JlYXRlZF9vbhgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9vbhgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiOgoQT3ZlcnZpZXdSZXNwb25zZRImCgpjYXRlZ29yaWVzGAEgAygLMhIuZm9ydW0udjEuQ2F0ZWdvcnky6woKDEZvcnVtU2VydmljZRJGCgtBY3RpdmVVc2VycxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRodLmZvcnVtLnYxLkFjdGl2ZVVzZXJzUmVzcG9uc2UiABJACghPdmVydmlldxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoaLmZvcnVtLnYxLk92ZXJ2aWV3UmVzcG9uc2UiABJMCg5SZWNlbnRNZXNzYWdlcxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRogLmZvcnVtLnYxLlJlY2VudE1lc3NhZ2VzUmVzcG9uc2UiABJHCgdUaHJlYWRzEhguZm9ydW0udjEuVGhyZWFkc1JlcXVlc3QaIC5mb3J1bS52MS5UaHJlYWRzUmVxdWVzdFJlc3BvbnNlIgASPQoGVGhyZWFkEhcuZm9ydW0udjEuVGhyZWFkUmVxdWVzdBoYLmZvcnVtLnYxLlRocmVhZFJlc3BvbnNlIgASRwoMVGhyZWFkRGVsZXRlEh0uZm9ydW0udjEuVGhyZWFkRGVsZXRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEjoKBUZvcnVtEhYuZm9ydW0udjEuRm9ydW1SZXF1ZXN0GhcuZm9ydW0udjEuRm9ydW1SZXNwb25zZSIAElIKDUZvcnVtTWVzc2FnZXMSHi5mb3J1bS52MS5Gb3J1bU1lc3NhZ2VzUmVxdWVzdBofLmZvcnVtLnYxLkZvcnVtTWVzc2FnZXNSZXNwb25zZSIAEk8KDFRocmVhZENyZWF0ZRIdLmZvcnVtLnYxLlRocmVhZENyZWF0ZVJlcXVlc3QaHi5mb3J1bS52MS5UaHJlYWRDcmVhdGVSZXNwb25zZSIAEkkKClRocmVhZEVkaXQSGy5mb3J1bS52MS5UaHJlYWRFZGl0UmVxdWVzdBocLmZvcnVtLnYxLlRocmVhZEVkaXRSZXNwb25zZSIAEl4KEVRocmVhZFJlcGx5Q3JlYXRlEiIuZm9ydW0udjEuVGhyZWFkUmVwbHlDcmVhdGVSZXF1ZXN0GiMuZm9ydW0udjEuVGhyZWFkUmVwbHlDcmVhdGVSZXNwb25zZSIAElgKD1RocmVhZFJlcGx5RWRpdBIgLmZvcnVtLnYxLlRocmVhZFJlcGx5RWRpdFJlcXVlc3QaIS5mb3J1bS52MS5UaHJlYWRSZXBseUVkaXRSZXNwb25zZSIAEkkKDU1lc3NhZ2VEZWxldGUSHi5mb3J1bS52MS5NZXNzYWdlRGVsZXRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAElUKDkNhdGVnb3J5Q3JlYXRlEh8uZm9ydW0udjEuQ2F0ZWdvcnlDcmVhdGVSZXF1ZXN0GiAuZm9ydW0udjEuQ2F0ZWdvcnlDcmVhdGVSZXNwb25zZSIAEk8KDENhdGVnb3J5RWRpdBIdLmZvcnVtLnYxLkNhdGVnb3J5RWRpdFJlcXVlc3QaHi5mb3J1bS52MS5DYXRlZ29yeUVkaXRSZXNwb25zZSIAEkMKCENhdGVnb3J5EhkuZm9ydW0udjEuQ2F0ZWdvcnlSZXF1ZXN0GhouZm9ydW0udjEuQ2F0ZWdvcnlSZXNwb25zZSIAEkwKC0ZvcnVtQ3JlYXRlEhwuZm9ydW0udjEuRm9ydW1DcmVhdGVSZXF1ZXN0Gh0uZm9ydW0udjEuRm9ydW1DcmVhdGVSZXNwb25zZSIAEkYKCUZvcnVtRWRpdBIaLmZvcnVtLnYxLkZvcnVtRWRpdFJlcXVlc3QaGy5mb3J1bS52MS5Gb3J1bUVkaXRSZXNwb25zZSIAQpYBCgxjb20uZm9ydW0udjFCCkZvcnVtUHJvdG9QAVo5Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9mb3J1bS92MTtmb3J1bXYxogIDRlhYqgIIRm9ydW0uVjHKAghGb3J1bVxWMeICFEZvcnVtXFYxXEdQQk1ldGFkYXRh6gIJRm9ydW06OlYxYghlZGl0aW9uc3DoBw",
-		[file_google_protobuf_empty, file_google_protobuf_timestamp, file_person_v1_privilege],
-	);
+export const file_forum_v1_forum: GenFile = /*@__PURE__*/
+  fileDesc("ChRmb3J1bS92MS9mb3J1bS5wcm90bxIIZm9ydW0udjEiWwoRVGhyZWFkRWRpdFJlcXVlc3QSFwoPZm9ydW1fdGhyZWFkX2lkGAEgASgFEg0KBXRpdGxlGAIgASgJEg4KBnN0aWNreRgDIAEoCBIOCgZsb2NrZWQYBCABKAgiNgoSVGhyZWFkRWRpdFJlc3BvbnNlEiAKBnRocmVhZBgBIAEoCzIQLmZvcnVtLnYxLlRocmVhZCIzChFGb3J1bUVkaXRSZXNwb25zZRIeCgVmb3J1bRgBIAEoCzIPLmZvcnVtLnYxLkZvcnVtIqUBChBGb3J1bUVkaXRSZXF1ZXN0EhAKCGZvcnVtX2lkGAEgASgFEhkKEWZvcnVtX2NhdGVnb3J5X2lkGAIgASgFEi4KEHBlcm1pc3Npb25fbGV2ZWwYAyABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlEg0KBXRpdGxlGAQgASgJEhMKC2Rlc2NyaXB0aW9uGAUgASgJEhAKCG9yZGVyaW5nGAYgASgFIpUBChJGb3J1bUNyZWF0ZVJlcXVlc3QSGQoRZm9ydW1fY2F0ZWdvcnlfaWQYASABKAUSLgoQcGVybWlzc2lvbl9sZXZlbBgCIAEoDjIULnBlcnNvbi52MS5Qcml2aWxlZ2USDQoFdGl0bGUYAyABKAkSEwoLZGVzY3JpcHRpb24YBCABKAkSEAoIb3JkZXJpbmcYBSABKAUiNQoTRm9ydW1DcmVhdGVSZXNwb25zZRIeCgVmb3J1bRgBIAEoCzIPLmZvcnVtLnYxLkZvcnVtImYKE0NhdGVnb3J5RWRpdFJlcXVlc3QSGQoRZm9ydW1fY2F0ZWdvcnlfaWQYASABKAUSDQoFdGl0bGUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSEAoIb3JkZXJpbmcYBCABKAUiPAoUQ2F0ZWdvcnlFZGl0UmVzcG9uc2USJAoIY2F0ZWdvcnkYASABKAsyEi5mb3J1bS52MS5DYXRlZ29yeSIsCg9DYXRlZ29yeVJlcXVlc3QSGQoRZm9ydW1fY2F0ZWdvcnlfaWQYASABKAUiOAoQQ2F0ZWdvcnlSZXNwb25zZRIkCghjYXRlZ29yeRgBIAEoCzISLmZvcnVtLnYxLkNhdGVnb3J5Ij4KFkNhdGVnb3J5Q3JlYXRlUmVzcG9uc2USJAoIY2F0ZWdvcnkYASABKAsyEi5mb3J1bS52MS5DYXRlZ29yeSJNChVDYXRlZ29yeUNyZWF0ZVJlcXVlc3QSDQoFdGl0bGUYASABKAkSEwoLZGVzY3JpcHRpb24YAiABKAkSEAoIb3JkZXJpbmcYAyABKAUiMAoUTWVzc2FnZURlbGV0ZVJlcXVlc3QSGAoQZm9ydW1fbWVzc2FnZV9pZBgBIAEoAyIuChNUaHJlYWREZWxldGVSZXF1ZXN0EhcKD2ZvcnVtX3RocmVhZF9pZBgBIAEoBSJDChZUaHJlYWRSZXBseUVkaXRSZXF1ZXN0EhgKEGZvcnVtX21lc3NhZ2VfaWQYASABKAMSDwoHYm9keV9tZBgCIAEoCSI9ChdUaHJlYWRSZXBseUVkaXRSZXNwb25zZRIiCgdtZXNzYWdlGAEgASgLMhEuZm9ydW0udjEuTWVzc2FnZSJEChhUaHJlYWRSZXBseUNyZWF0ZVJlcXVlc3QSFwoPZm9ydW1fdGhyZWFkX2lkGAEgASgFEg8KB2JvZHlfbWQYAiABKAkiPwoZVGhyZWFkUmVwbHlDcmVhdGVSZXNwb25zZRIiCgdtZXNzYWdlGAEgASgLMhEuZm9ydW0udjEuTWVzc2FnZSJnChNUaHJlYWRDcmVhdGVSZXF1ZXN0EhAKCGZvcnVtX2lkGAEgASgFEg0KBXRpdGxlGAIgASgJEg8KB2JvZHlfbWQYAyABKAkSDgoGc3RpY2t5GAQgASgIEg4KBmxvY2tlZBgFIAEoCCJcChRUaHJlYWRDcmVhdGVSZXNwb25zZRIgCgZ0aHJlYWQYASABKAsyEC5mb3J1bS52MS5UaHJlYWQSIgoHbWVzc2FnZRgCIAEoCzIRLmZvcnVtLnYxLk1lc3NhZ2UiQAoURm9ydW1NZXNzYWdlc1JlcXVlc3QSFwoPZm9ydW1fdGhyZWFkX2lkGAEgASgFEg8KB2RlbGV0ZWQYAiABKAgiPAoVRm9ydW1NZXNzYWdlc1Jlc3BvbnNlEiMKCG1lc3NhZ2VzGAEgAygLMhEuZm9ydW0udjEuTWVzc2FnZSIgCgxGb3J1bVJlcXVlc3QSEAoIZm9ydW1faWQYASABKAUiLwoNRm9ydW1SZXNwb25zZRIeCgVmb3J1bRgBIAEoCzIPLmZvcnVtLnYxLkZvcnVtIigKDVRocmVhZFJlcXVlc3QSFwoPZm9ydW1fdGhyZWFkX2lkGAEgASgFIjIKDlRocmVhZFJlc3BvbnNlEiAKBnRocmVhZBgBIAEoCzIQLmZvcnVtLnYxLlRocmVhZCIiCg5UaHJlYWRzUmVxdWVzdBIQCghmb3J1bV9pZBgBIAEoBSI7ChZUaHJlYWRzUmVxdWVzdFJlc3BvbnNlEiEKB3RocmVhZHMYASADKAsyEC5mb3J1bS52MS5UaHJlYWQinAEKBlRocmVhZBIQCghmb3J1bV9pZBgBIAEoBRIRCglzb3VyY2VfaWQYAiABKAMSDQoFdGl0bGUYAyABKAkSLgoKY3JlYXRlZF9vbhgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9vbhgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiuQIKEFRocmVhZFdpdGhTb3VyY2USIAoGdGhyZWFkGAEgASgLMhAuZm9ydW0udjEuVGhyZWFkEhQKDHBlcnNvbmFfbmFtZRgCIAEoCRITCgthdmF0YXJfaGFzaBgDIAEoCRIuChBwZXJtaXNzaW9uX2xldmVsGAQgASgOMhQucGVyc29uLnYxLlByaXZpbGVnZRIfChdyZWNlbnRfZm9ydW1fbWVzc2FnZV9pZBgFIAEoAxI1ChFyZWNlbnRfY3JlYXRlZF9vbhgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFwoPcmVjZW50X3N0ZWFtX2lkGAcgASgDEhsKE3JlY2VudF9wZXJzb25hX25hbWUYCCABKAkSGgoScmVjZW50X2F2YXRhcl9oYXNoGAkgASgJIpYBCgxVc2VyQWN0aXZpdHkSEAoIc3RlYW1faWQYASABKAMSFAoMcGVyc29uYV9uYW1lGAIgASgJEi4KEHBlcm1pc3Npb25fbGV2ZWwYAyABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlEi4KCmNyZWF0ZWRfb24YBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIkQKE0FjdGl2ZVVzZXJzUmVzcG9uc2USLQoNdXNlcl9hY3Rpdml0eRgBIAMoCzIWLmZvcnVtLnYxLlVzZXJBY3Rpdml0eSLNAgoHTWVzc2FnZRIYChBmb3J1bV9tZXNzYWdlX2lkGAEgASgDEhcKD2ZvcnVtX3RocmVhZF9pZBgCIAEoBRIRCglzb3VyY2VfaWQYAyABKAMSDwoHYm9keV9tZBgEIAEoCRINCgV0aXRsZRgFIAEoCRIOCgZvbmxpbmUYBiABKAgSEQoJc2lnbmF0dXJlGAcgASgJEhQKDHBlcnNvbmFfbmFtZRgIIAEoCRITCgthdmF0YXJfaGFzaBgJIAEoCRIuChBwZXJtaXNzaW9uX2xldmVsGAogASgOMhQucGVyc29uLnYxLlByaXZpbGVnZRIuCgpjcmVhdGVkX29uGAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCI9ChZSZWNlbnRNZXNzYWdlc1Jlc3BvbnNlEiMKCG1lc3NhZ2VzGAEgAygLMhEuZm9ydW0udjEuTWVzc2FnZSKHBAoFRm9ydW0SEAoIZm9ydW1faWQYASABKAUSGQoRZm9ydW1fY2F0ZWdvcnlfaWQYAiABKAUSFgoObGFzdF90aHJlYWRfaWQYAyABKAUSDQoFdGl0bGUYBCABKAkSEwoLZGVzY3JpcHRpb24YBSABKAkSEAoIb3JkZXJpbmcYBiABKAUSFQoNY291bnRfdGhyZWFkcxgHIAEoAxIWCg5jb3VudF9tZXNzYWdlcxgIIAEoAxIuChBwZXJtaXNzaW9uX2xldmVsGAkgASgOMhQucGVyc29uLnYxLlByaXZpbGVnZRIeChZyZWNlbnRfZm9ydW1fdGhyZWFkX2lkGAogASgFEhoKEnJlY2VudF9mb3J1bV90aXRsZRgLIAEoCRIYChByZWNlbnRfc291cmNlX2lkGAwgASgJEhsKE3JlY2VudF9wZXJzb25hX25hbWUYDSABKAkSGgoScmVjZW50X2F2YXRhcl9oYXNoGA4gASgJEjUKEXJlY2VudF9jcmVhdGVkX29uGA8gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpjcmVhdGVkX29uGBAgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGBEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCLcAQoIQ2F0ZWdvcnkSGQoRZm9ydW1fY2F0ZWdvcnlfaWQYASABKAUSDQoFdGl0bGUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSEAoIb3JkZXJpbmcYBCABKAUSHwoGZm9ydW1zGAUgAygLMg8uZm9ydW0udjEuRm9ydW0SLgoKY3JlYXRlZF9vbhgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9vbhgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiOgoQT3ZlcnZpZXdSZXNwb25zZRImCgpjYXRlZ29yaWVzGAEgAygLMhIuZm9ydW0udjEuQ2F0ZWdvcnky6woKDEZvcnVtU2VydmljZRJGCgtBY3RpdmVVc2VycxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRodLmZvcnVtLnYxLkFjdGl2ZVVzZXJzUmVzcG9uc2UiABJACghPdmVydmlldxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoaLmZvcnVtLnYxLk92ZXJ2aWV3UmVzcG9uc2UiABJMCg5SZWNlbnRNZXNzYWdlcxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRogLmZvcnVtLnYxLlJlY2VudE1lc3NhZ2VzUmVzcG9uc2UiABJHCgdUaHJlYWRzEhguZm9ydW0udjEuVGhyZWFkc1JlcXVlc3QaIC5mb3J1bS52MS5UaHJlYWRzUmVxdWVzdFJlc3BvbnNlIgASPQoGVGhyZWFkEhcuZm9ydW0udjEuVGhyZWFkUmVxdWVzdBoYLmZvcnVtLnYxLlRocmVhZFJlc3BvbnNlIgASRwoMVGhyZWFkRGVsZXRlEh0uZm9ydW0udjEuVGhyZWFkRGVsZXRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEjoKBUZvcnVtEhYuZm9ydW0udjEuRm9ydW1SZXF1ZXN0GhcuZm9ydW0udjEuRm9ydW1SZXNwb25zZSIAElIKDUZvcnVtTWVzc2FnZXMSHi5mb3J1bS52MS5Gb3J1bU1lc3NhZ2VzUmVxdWVzdBofLmZvcnVtLnYxLkZvcnVtTWVzc2FnZXNSZXNwb25zZSIAEk8KDFRocmVhZENyZWF0ZRIdLmZvcnVtLnYxLlRocmVhZENyZWF0ZVJlcXVlc3QaHi5mb3J1bS52MS5UaHJlYWRDcmVhdGVSZXNwb25zZSIAEkkKClRocmVhZEVkaXQSGy5mb3J1bS52MS5UaHJlYWRFZGl0UmVxdWVzdBocLmZvcnVtLnYxLlRocmVhZEVkaXRSZXNwb25zZSIAEl4KEVRocmVhZFJlcGx5Q3JlYXRlEiIuZm9ydW0udjEuVGhyZWFkUmVwbHlDcmVhdGVSZXF1ZXN0GiMuZm9ydW0udjEuVGhyZWFkUmVwbHlDcmVhdGVSZXNwb25zZSIAElgKD1RocmVhZFJlcGx5RWRpdBIgLmZvcnVtLnYxLlRocmVhZFJlcGx5RWRpdFJlcXVlc3QaIS5mb3J1bS52MS5UaHJlYWRSZXBseUVkaXRSZXNwb25zZSIAEkkKDU1lc3NhZ2VEZWxldGUSHi5mb3J1bS52MS5NZXNzYWdlRGVsZXRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAElUKDkNhdGVnb3J5Q3JlYXRlEh8uZm9ydW0udjEuQ2F0ZWdvcnlDcmVhdGVSZXF1ZXN0GiAuZm9ydW0udjEuQ2F0ZWdvcnlDcmVhdGVSZXNwb25zZSIAEk8KDENhdGVnb3J5RWRpdBIdLmZvcnVtLnYxLkNhdGVnb3J5RWRpdFJlcXVlc3QaHi5mb3J1bS52MS5DYXRlZ29yeUVkaXRSZXNwb25zZSIAEkMKCENhdGVnb3J5EhkuZm9ydW0udjEuQ2F0ZWdvcnlSZXF1ZXN0GhouZm9ydW0udjEuQ2F0ZWdvcnlSZXNwb25zZSIAEkwKC0ZvcnVtQ3JlYXRlEhwuZm9ydW0udjEuRm9ydW1DcmVhdGVSZXF1ZXN0Gh0uZm9ydW0udjEuRm9ydW1DcmVhdGVSZXNwb25zZSIAEkYKCUZvcnVtRWRpdBIaLmZvcnVtLnYxLkZvcnVtRWRpdFJlcXVlc3QaGy5mb3J1bS52MS5Gb3J1bUVkaXRSZXNwb25zZSIAQpYBCgxjb20uZm9ydW0udjFCCkZvcnVtUHJvdG9QAVo5Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9mb3J1bS92MTtmb3J1bXYxogIDRlhYqgIIRm9ydW0uVjHKAghGb3J1bVxWMeICFEZvcnVtXFYxXEdQQk1ldGFkYXRh6gIJRm9ydW06OlYxYghlZGl0aW9uc3DoBw", [file_google_protobuf_empty, file_google_protobuf_timestamp, file_person_v1_privilege]);
 
 /**
  * @generated from message forum.v1.ThreadEditRequest
  */
 export type ThreadEditRequest = Message$1<"forum.v1.ThreadEditRequest"> & {
-	/**
-	 * @generated from field: int32 forum_thread_id = 1;
-	 */
-	forumThreadId: number;
+  /**
+   * @generated from field: int32 forum_thread_id = 1;
+   */
+  forumThreadId: number;
 
-	/**
-	 * @generated from field: string title = 2;
-	 */
-	title: string;
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
 
-	/**
-	 * @generated from field: bool sticky = 3;
-	 */
-	sticky: boolean;
+  /**
+   * @generated from field: bool sticky = 3;
+   */
+  sticky: boolean;
 
-	/**
-	 * @generated from field: bool locked = 4;
-	 */
-	locked: boolean;
+  /**
+   * @generated from field: bool locked = 4;
+   */
+  locked: boolean;
 };
 
 /**
  * Describes the message forum.v1.ThreadEditRequest.
  * Use `create(ThreadEditRequestSchema)` to create a new message.
  */
-export const ThreadEditRequestSchema: GenMessage<ThreadEditRequest> = /*@__PURE__*/ messageDesc(file_forum_v1_forum, 0);
+export const ThreadEditRequestSchema: GenMessage<ThreadEditRequest> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 0);
 
 /**
  * @generated from message forum.v1.ThreadEditResponse
  */
 export type ThreadEditResponse = Message$1<"forum.v1.ThreadEditResponse"> & {
-	/**
-	 * @generated from field: forum.v1.Thread thread = 1;
-	 */
-	thread?: Thread;
+  /**
+   * @generated from field: forum.v1.Thread thread = 1;
+   */
+  thread?: Thread;
 };
 
 /**
  * Describes the message forum.v1.ThreadEditResponse.
  * Use `create(ThreadEditResponseSchema)` to create a new message.
  */
-export const ThreadEditResponseSchema: GenMessage<ThreadEditResponse> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 1);
+export const ThreadEditResponseSchema: GenMessage<ThreadEditResponse> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 1);
 
 /**
  * @generated from message forum.v1.ForumEditResponse
  */
 export type ForumEditResponse = Message$1<"forum.v1.ForumEditResponse"> & {
-	/**
-	 * @generated from field: forum.v1.Forum forum = 1;
-	 */
-	forum?: Forum;
+  /**
+   * @generated from field: forum.v1.Forum forum = 1;
+   */
+  forum?: Forum;
 };
 
 /**
  * Describes the message forum.v1.ForumEditResponse.
  * Use `create(ForumEditResponseSchema)` to create a new message.
  */
-export const ForumEditResponseSchema: GenMessage<ForumEditResponse> = /*@__PURE__*/ messageDesc(file_forum_v1_forum, 2);
+export const ForumEditResponseSchema: GenMessage<ForumEditResponse> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 2);
 
 /**
  * @generated from message forum.v1.ForumEditRequest
  */
 export type ForumEditRequest = Message$1<"forum.v1.ForumEditRequest"> & {
-	/**
-	 * @generated from field: int32 forum_id = 1;
-	 */
-	forumId: number;
+  /**
+   * @generated from field: int32 forum_id = 1;
+   */
+  forumId: number;
 
-	/**
-	 * @generated from field: int32 forum_category_id = 2;
-	 */
-	forumCategoryId: number;
+  /**
+   * @generated from field: int32 forum_category_id = 2;
+   */
+  forumCategoryId: number;
 
-	/**
-	 * @generated from field: person.v1.Privilege permission_level = 3;
-	 */
-	permissionLevel: Privilege;
+  /**
+   * @generated from field: person.v1.Privilege permission_level = 3;
+   */
+  permissionLevel: Privilege;
 
-	/**
-	 * @generated from field: string title = 4;
-	 */
-	title: string;
+  /**
+   * @generated from field: string title = 4;
+   */
+  title: string;
 
-	/**
-	 * @generated from field: string description = 5;
-	 */
-	description: string;
+  /**
+   * @generated from field: string description = 5;
+   */
+  description: string;
 
-	/**
-	 * @generated from field: int32 ordering = 6;
-	 */
-	ordering: number;
+  /**
+   * @generated from field: int32 ordering = 6;
+   */
+  ordering: number;
 };
 
 /**
  * Describes the message forum.v1.ForumEditRequest.
  * Use `create(ForumEditRequestSchema)` to create a new message.
  */
-export const ForumEditRequestSchema: GenMessage<ForumEditRequest> = /*@__PURE__*/ messageDesc(file_forum_v1_forum, 3);
+export const ForumEditRequestSchema: GenMessage<ForumEditRequest> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 3);
 
 /**
  * @generated from message forum.v1.ForumCreateRequest
  */
 export type ForumCreateRequest = Message$1<"forum.v1.ForumCreateRequest"> & {
-	/**
-	 * @generated from field: int32 forum_category_id = 1;
-	 */
-	forumCategoryId: number;
+  /**
+   * @generated from field: int32 forum_category_id = 1;
+   */
+  forumCategoryId: number;
 
-	/**
-	 * @generated from field: person.v1.Privilege permission_level = 2;
-	 */
-	permissionLevel: Privilege;
+  /**
+   * @generated from field: person.v1.Privilege permission_level = 2;
+   */
+  permissionLevel: Privilege;
 
-	/**
-	 * @generated from field: string title = 3;
-	 */
-	title: string;
+  /**
+   * @generated from field: string title = 3;
+   */
+  title: string;
 
-	/**
-	 * @generated from field: string description = 4;
-	 */
-	description: string;
+  /**
+   * @generated from field: string description = 4;
+   */
+  description: string;
 
-	/**
-	 * @generated from field: int32 ordering = 5;
-	 */
-	ordering: number;
+  /**
+   * @generated from field: int32 ordering = 5;
+   */
+  ordering: number;
 };
 
 /**
  * Describes the message forum.v1.ForumCreateRequest.
  * Use `create(ForumCreateRequestSchema)` to create a new message.
  */
-export const ForumCreateRequestSchema: GenMessage<ForumCreateRequest> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 4);
+export const ForumCreateRequestSchema: GenMessage<ForumCreateRequest> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 4);
 
 /**
  * @generated from message forum.v1.ForumCreateResponse
  */
 export type ForumCreateResponse = Message$1<"forum.v1.ForumCreateResponse"> & {
-	/**
-	 * @generated from field: forum.v1.Forum forum = 1;
-	 */
-	forum?: Forum;
+  /**
+   * @generated from field: forum.v1.Forum forum = 1;
+   */
+  forum?: Forum;
 };
 
 /**
  * Describes the message forum.v1.ForumCreateResponse.
  * Use `create(ForumCreateResponseSchema)` to create a new message.
  */
-export const ForumCreateResponseSchema: GenMessage<ForumCreateResponse> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 5);
+export const ForumCreateResponseSchema: GenMessage<ForumCreateResponse> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 5);
 
 /**
  * @generated from message forum.v1.CategoryEditRequest
  */
 export type CategoryEditRequest = Message$1<"forum.v1.CategoryEditRequest"> & {
-	/**
-	 * @generated from field: int32 forum_category_id = 1;
-	 */
-	forumCategoryId: number;
+  /**
+   * @generated from field: int32 forum_category_id = 1;
+   */
+  forumCategoryId: number;
 
-	/**
-	 * @generated from field: string title = 2;
-	 */
-	title: string;
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
 
-	/**
-	 * @generated from field: string description = 3;
-	 */
-	description: string;
+  /**
+   * @generated from field: string description = 3;
+   */
+  description: string;
 
-	/**
-	 * @generated from field: int32 ordering = 4;
-	 */
-	ordering: number;
+  /**
+   * @generated from field: int32 ordering = 4;
+   */
+  ordering: number;
 };
 
 /**
  * Describes the message forum.v1.CategoryEditRequest.
  * Use `create(CategoryEditRequestSchema)` to create a new message.
  */
-export const CategoryEditRequestSchema: GenMessage<CategoryEditRequest> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 6);
+export const CategoryEditRequestSchema: GenMessage<CategoryEditRequest> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 6);
 
 /**
  * @generated from message forum.v1.CategoryEditResponse
  */
 export type CategoryEditResponse = Message$1<"forum.v1.CategoryEditResponse"> & {
-	/**
-	 * @generated from field: forum.v1.Category category = 1;
-	 */
-	category?: Category;
+  /**
+   * @generated from field: forum.v1.Category category = 1;
+   */
+  category?: Category;
 };
 
 /**
  * Describes the message forum.v1.CategoryEditResponse.
  * Use `create(CategoryEditResponseSchema)` to create a new message.
  */
-export const CategoryEditResponseSchema: GenMessage<CategoryEditResponse> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 7);
+export const CategoryEditResponseSchema: GenMessage<CategoryEditResponse> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 7);
 
 /**
  * @generated from message forum.v1.CategoryRequest
  */
 export type CategoryRequest = Message$1<"forum.v1.CategoryRequest"> & {
-	/**
-	 * @generated from field: int32 forum_category_id = 1;
-	 */
-	forumCategoryId: number;
+  /**
+   * @generated from field: int32 forum_category_id = 1;
+   */
+  forumCategoryId: number;
 };
 
 /**
  * Describes the message forum.v1.CategoryRequest.
  * Use `create(CategoryRequestSchema)` to create a new message.
  */
-export const CategoryRequestSchema: GenMessage<CategoryRequest> = /*@__PURE__*/ messageDesc(file_forum_v1_forum, 8);
+export const CategoryRequestSchema: GenMessage<CategoryRequest> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 8);
 
 /**
  * @generated from message forum.v1.CategoryResponse
  */
 export type CategoryResponse = Message$1<"forum.v1.CategoryResponse"> & {
-	/**
-	 * @generated from field: forum.v1.Category category = 1;
-	 */
-	category?: Category;
+  /**
+   * @generated from field: forum.v1.Category category = 1;
+   */
+  category?: Category;
 };
 
 /**
  * Describes the message forum.v1.CategoryResponse.
  * Use `create(CategoryResponseSchema)` to create a new message.
  */
-export const CategoryResponseSchema: GenMessage<CategoryResponse> = /*@__PURE__*/ messageDesc(file_forum_v1_forum, 9);
+export const CategoryResponseSchema: GenMessage<CategoryResponse> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 9);
 
 /**
  * @generated from message forum.v1.CategoryCreateResponse
  */
 export type CategoryCreateResponse = Message$1<"forum.v1.CategoryCreateResponse"> & {
-	/**
-	 * @generated from field: forum.v1.Category category = 1;
-	 */
-	category?: Category;
+  /**
+   * @generated from field: forum.v1.Category category = 1;
+   */
+  category?: Category;
 };
 
 /**
  * Describes the message forum.v1.CategoryCreateResponse.
  * Use `create(CategoryCreateResponseSchema)` to create a new message.
  */
-export const CategoryCreateResponseSchema: GenMessage<CategoryCreateResponse> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 10);
+export const CategoryCreateResponseSchema: GenMessage<CategoryCreateResponse> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 10);
 
 /**
  * @generated from message forum.v1.CategoryCreateRequest
  */
 export type CategoryCreateRequest = Message$1<"forum.v1.CategoryCreateRequest"> & {
-	/**
-	 * @generated from field: string title = 1;
-	 */
-	title: string;
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
 
-	/**
-	 * @generated from field: string description = 2;
-	 */
-	description: string;
+  /**
+   * @generated from field: string description = 2;
+   */
+  description: string;
 
-	/**
-	 * @generated from field: int32 ordering = 3;
-	 */
-	ordering: number;
+  /**
+   * @generated from field: int32 ordering = 3;
+   */
+  ordering: number;
 };
 
 /**
  * Describes the message forum.v1.CategoryCreateRequest.
  * Use `create(CategoryCreateRequestSchema)` to create a new message.
  */
-export const CategoryCreateRequestSchema: GenMessage<CategoryCreateRequest> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 11);
+export const CategoryCreateRequestSchema: GenMessage<CategoryCreateRequest> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 11);
 
 /**
  * @generated from message forum.v1.MessageDeleteRequest
  */
 export type MessageDeleteRequest = Message$1<"forum.v1.MessageDeleteRequest"> & {
-	/**
-	 * @generated from field: int64 forum_message_id = 1;
-	 */
-	forumMessageId: bigint;
+  /**
+   * @generated from field: int64 forum_message_id = 1;
+   */
+  forumMessageId: bigint;
 };
 
 /**
  * Describes the message forum.v1.MessageDeleteRequest.
  * Use `create(MessageDeleteRequestSchema)` to create a new message.
  */
-export const MessageDeleteRequestSchema: GenMessage<MessageDeleteRequest> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 12);
+export const MessageDeleteRequestSchema: GenMessage<MessageDeleteRequest> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 12);
 
 /**
  * @generated from message forum.v1.ThreadDeleteRequest
  */
 export type ThreadDeleteRequest = Message$1<"forum.v1.ThreadDeleteRequest"> & {
-	/**
-	 * @generated from field: int32 forum_thread_id = 1;
-	 */
-	forumThreadId: number;
+  /**
+   * @generated from field: int32 forum_thread_id = 1;
+   */
+  forumThreadId: number;
 };
 
 /**
  * Describes the message forum.v1.ThreadDeleteRequest.
  * Use `create(ThreadDeleteRequestSchema)` to create a new message.
  */
-export const ThreadDeleteRequestSchema: GenMessage<ThreadDeleteRequest> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 13);
+export const ThreadDeleteRequestSchema: GenMessage<ThreadDeleteRequest> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 13);
 
 /**
  * @generated from message forum.v1.ThreadReplyEditRequest
  */
 export type ThreadReplyEditRequest = Message$1<"forum.v1.ThreadReplyEditRequest"> & {
-	/**
-	 * @generated from field: int64 forum_message_id = 1;
-	 */
-	forumMessageId: bigint;
+  /**
+   * @generated from field: int64 forum_message_id = 1;
+   */
+  forumMessageId: bigint;
 
-	/**
-	 * @generated from field: string body_md = 2;
-	 */
-	bodyMd: string;
+  /**
+   * @generated from field: string body_md = 2;
+   */
+  bodyMd: string;
 };
 
 /**
  * Describes the message forum.v1.ThreadReplyEditRequest.
  * Use `create(ThreadReplyEditRequestSchema)` to create a new message.
  */
-export const ThreadReplyEditRequestSchema: GenMessage<ThreadReplyEditRequest> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 14);
+export const ThreadReplyEditRequestSchema: GenMessage<ThreadReplyEditRequest> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 14);
 
 /**
  * @generated from message forum.v1.ThreadReplyEditResponse
  */
 export type ThreadReplyEditResponse = Message$1<"forum.v1.ThreadReplyEditResponse"> & {
-	/**
-	 * @generated from field: forum.v1.Message message = 1;
-	 */
-	message?: Message;
+  /**
+   * @generated from field: forum.v1.Message message = 1;
+   */
+  message?: Message;
 };
 
 /**
  * Describes the message forum.v1.ThreadReplyEditResponse.
  * Use `create(ThreadReplyEditResponseSchema)` to create a new message.
  */
-export const ThreadReplyEditResponseSchema: GenMessage<ThreadReplyEditResponse> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 15);
+export const ThreadReplyEditResponseSchema: GenMessage<ThreadReplyEditResponse> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 15);
 
 /**
  * @generated from message forum.v1.ThreadReplyCreateRequest
  */
 export type ThreadReplyCreateRequest = Message$1<"forum.v1.ThreadReplyCreateRequest"> & {
-	/**
-	 * @generated from field: int32 forum_thread_id = 1;
-	 */
-	forumThreadId: number;
+  /**
+   * @generated from field: int32 forum_thread_id = 1;
+   */
+  forumThreadId: number;
 
-	/**
-	 * @generated from field: string body_md = 2;
-	 */
-	bodyMd: string;
+  /**
+   * @generated from field: string body_md = 2;
+   */
+  bodyMd: string;
 };
 
 /**
  * Describes the message forum.v1.ThreadReplyCreateRequest.
  * Use `create(ThreadReplyCreateRequestSchema)` to create a new message.
  */
-export const ThreadReplyCreateRequestSchema: GenMessage<ThreadReplyCreateRequest> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 16);
+export const ThreadReplyCreateRequestSchema: GenMessage<ThreadReplyCreateRequest> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 16);
 
 /**
  * @generated from message forum.v1.ThreadReplyCreateResponse
  */
 export type ThreadReplyCreateResponse = Message$1<"forum.v1.ThreadReplyCreateResponse"> & {
-	/**
-	 * @generated from field: forum.v1.Message message = 1;
-	 */
-	message?: Message;
+  /**
+   * @generated from field: forum.v1.Message message = 1;
+   */
+  message?: Message;
 };
 
 /**
  * Describes the message forum.v1.ThreadReplyCreateResponse.
  * Use `create(ThreadReplyCreateResponseSchema)` to create a new message.
  */
-export const ThreadReplyCreateResponseSchema: GenMessage<ThreadReplyCreateResponse> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 17);
+export const ThreadReplyCreateResponseSchema: GenMessage<ThreadReplyCreateResponse> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 17);
 
 /**
  * @generated from message forum.v1.ThreadCreateRequest
  */
 export type ThreadCreateRequest = Message$1<"forum.v1.ThreadCreateRequest"> & {
-	/**
-	 * @generated from field: int32 forum_id = 1;
-	 */
-	forumId: number;
+  /**
+   * @generated from field: int32 forum_id = 1;
+   */
+  forumId: number;
 
-	/**
-	 * @generated from field: string title = 2;
-	 */
-	title: string;
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
 
-	/**
-	 * @generated from field: string body_md = 3;
-	 */
-	bodyMd: string;
+  /**
+   * @generated from field: string body_md = 3;
+   */
+  bodyMd: string;
 
-	/**
-	 * @generated from field: bool sticky = 4;
-	 */
-	sticky: boolean;
+  /**
+   * @generated from field: bool sticky = 4;
+   */
+  sticky: boolean;
 
-	/**
-	 * @generated from field: bool locked = 5;
-	 */
-	locked: boolean;
+  /**
+   * @generated from field: bool locked = 5;
+   */
+  locked: boolean;
 };
 
 /**
  * Describes the message forum.v1.ThreadCreateRequest.
  * Use `create(ThreadCreateRequestSchema)` to create a new message.
  */
-export const ThreadCreateRequestSchema: GenMessage<ThreadCreateRequest> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 18);
+export const ThreadCreateRequestSchema: GenMessage<ThreadCreateRequest> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 18);
 
 /**
  * @generated from message forum.v1.ThreadCreateResponse
  */
 export type ThreadCreateResponse = Message$1<"forum.v1.ThreadCreateResponse"> & {
-	/**
-	 * @generated from field: forum.v1.Thread thread = 1;
-	 */
-	thread?: Thread;
+  /**
+   * @generated from field: forum.v1.Thread thread = 1;
+   */
+  thread?: Thread;
 
-	/**
-	 * @generated from field: forum.v1.Message message = 2;
-	 */
-	message?: Message;
+  /**
+   * @generated from field: forum.v1.Message message = 2;
+   */
+  message?: Message;
 };
 
 /**
  * Describes the message forum.v1.ThreadCreateResponse.
  * Use `create(ThreadCreateResponseSchema)` to create a new message.
  */
-export const ThreadCreateResponseSchema: GenMessage<ThreadCreateResponse> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 19);
+export const ThreadCreateResponseSchema: GenMessage<ThreadCreateResponse> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 19);
 
 /**
  * @generated from message forum.v1.ForumMessagesRequest
  */
 export type ForumMessagesRequest = Message$1<"forum.v1.ForumMessagesRequest"> & {
-	/**
-	 * @generated from field: int32 forum_thread_id = 1;
-	 */
-	forumThreadId: number;
+  /**
+   * @generated from field: int32 forum_thread_id = 1;
+   */
+  forumThreadId: number;
 
-	/**
-	 * @generated from field: bool deleted = 2;
-	 */
-	deleted: boolean;
+  /**
+   * @generated from field: bool deleted = 2;
+   */
+  deleted: boolean;
 };
 
 /**
  * Describes the message forum.v1.ForumMessagesRequest.
  * Use `create(ForumMessagesRequestSchema)` to create a new message.
  */
-export const ForumMessagesRequestSchema: GenMessage<ForumMessagesRequest> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 20);
+export const ForumMessagesRequestSchema: GenMessage<ForumMessagesRequest> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 20);
 
 /**
  * @generated from message forum.v1.ForumMessagesResponse
  */
 export type ForumMessagesResponse = Message$1<"forum.v1.ForumMessagesResponse"> & {
-	/**
-	 * @generated from field: repeated forum.v1.Message messages = 1;
-	 */
-	messages: Message[];
+  /**
+   * @generated from field: repeated forum.v1.Message messages = 1;
+   */
+  messages: Message[];
 };
 
 /**
  * Describes the message forum.v1.ForumMessagesResponse.
  * Use `create(ForumMessagesResponseSchema)` to create a new message.
  */
-export const ForumMessagesResponseSchema: GenMessage<ForumMessagesResponse> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 21);
+export const ForumMessagesResponseSchema: GenMessage<ForumMessagesResponse> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 21);
 
 /**
  * @generated from message forum.v1.ForumRequest
  */
 export type ForumRequest = Message$1<"forum.v1.ForumRequest"> & {
-	/**
-	 * @generated from field: int32 forum_id = 1;
-	 */
-	forumId: number;
+  /**
+   * @generated from field: int32 forum_id = 1;
+   */
+  forumId: number;
 };
 
 /**
  * Describes the message forum.v1.ForumRequest.
  * Use `create(ForumRequestSchema)` to create a new message.
  */
-export const ForumRequestSchema: GenMessage<ForumRequest> = /*@__PURE__*/ messageDesc(file_forum_v1_forum, 22);
+export const ForumRequestSchema: GenMessage<ForumRequest> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 22);
 
 /**
  * @generated from message forum.v1.ForumResponse
  */
 export type ForumResponse = Message$1<"forum.v1.ForumResponse"> & {
-	/**
-	 * @generated from field: forum.v1.Forum forum = 1;
-	 */
-	forum?: Forum;
+  /**
+   * @generated from field: forum.v1.Forum forum = 1;
+   */
+  forum?: Forum;
 };
 
 /**
  * Describes the message forum.v1.ForumResponse.
  * Use `create(ForumResponseSchema)` to create a new message.
  */
-export const ForumResponseSchema: GenMessage<ForumResponse> = /*@__PURE__*/ messageDesc(file_forum_v1_forum, 23);
+export const ForumResponseSchema: GenMessage<ForumResponse> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 23);
 
 /**
  * @generated from message forum.v1.ThreadRequest
  */
 export type ThreadRequest = Message$1<"forum.v1.ThreadRequest"> & {
-	/**
-	 * @generated from field: int32 forum_thread_id = 1;
-	 */
-	forumThreadId: number;
+  /**
+   * @generated from field: int32 forum_thread_id = 1;
+   */
+  forumThreadId: number;
 };
 
 /**
  * Describes the message forum.v1.ThreadRequest.
  * Use `create(ThreadRequestSchema)` to create a new message.
  */
-export const ThreadRequestSchema: GenMessage<ThreadRequest> = /*@__PURE__*/ messageDesc(file_forum_v1_forum, 24);
+export const ThreadRequestSchema: GenMessage<ThreadRequest> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 24);
 
 /**
  * @generated from message forum.v1.ThreadResponse
  */
 export type ThreadResponse = Message$1<"forum.v1.ThreadResponse"> & {
-	/**
-	 * @generated from field: forum.v1.Thread thread = 1;
-	 */
-	thread?: Thread;
+  /**
+   * @generated from field: forum.v1.Thread thread = 1;
+   */
+  thread?: Thread;
 };
 
 /**
  * Describes the message forum.v1.ThreadResponse.
  * Use `create(ThreadResponseSchema)` to create a new message.
  */
-export const ThreadResponseSchema: GenMessage<ThreadResponse> = /*@__PURE__*/ messageDesc(file_forum_v1_forum, 25);
+export const ThreadResponseSchema: GenMessage<ThreadResponse> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 25);
 
 /**
  * @generated from message forum.v1.ThreadsRequest
  */
 export type ThreadsRequest = Message$1<"forum.v1.ThreadsRequest"> & {
-	/**
-	 * @generated from field: int32 forum_id = 1;
-	 */
-	forumId: number;
+  /**
+   * @generated from field: int32 forum_id = 1;
+   */
+  forumId: number;
 };
 
 /**
  * Describes the message forum.v1.ThreadsRequest.
  * Use `create(ThreadsRequestSchema)` to create a new message.
  */
-export const ThreadsRequestSchema: GenMessage<ThreadsRequest> = /*@__PURE__*/ messageDesc(file_forum_v1_forum, 26);
+export const ThreadsRequestSchema: GenMessage<ThreadsRequest> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 26);
 
 /**
  * @generated from message forum.v1.ThreadsRequestResponse
  */
 export type ThreadsRequestResponse = Message$1<"forum.v1.ThreadsRequestResponse"> & {
-	/**
-	 * @generated from field: repeated forum.v1.Thread threads = 1;
-	 */
-	threads: Thread[];
+  /**
+   * @generated from field: repeated forum.v1.Thread threads = 1;
+   */
+  threads: Thread[];
 };
 
 /**
  * Describes the message forum.v1.ThreadsRequestResponse.
  * Use `create(ThreadsRequestResponseSchema)` to create a new message.
  */
-export const ThreadsRequestResponseSchema: GenMessage<ThreadsRequestResponse> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 27);
+export const ThreadsRequestResponseSchema: GenMessage<ThreadsRequestResponse> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 27);
 
 /**
  * @generated from message forum.v1.Thread
  */
 export type Thread = Message$1<"forum.v1.Thread"> & {
-	/**
-	 * @generated from field: int32 forum_id = 1;
-	 */
-	forumId: number;
+  /**
+   * @generated from field: int32 forum_id = 1;
+   */
+  forumId: number;
 
-	/**
-	 * @generated from field: int64 source_id = 2;
-	 */
-	sourceId: bigint;
+  /**
+   * @generated from field: int64 source_id = 2;
+   */
+  sourceId: bigint;
 
-	/**
-	 * @generated from field: string title = 3;
-	 */
-	title: string;
+  /**
+   * @generated from field: string title = 3;
+   */
+  title: string;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 4;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 4;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 5;
-	 */
-	updatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 5;
+   */
+  updatedOn?: Timestamp;
 };
 
 /**
  * Describes the message forum.v1.Thread.
  * Use `create(ThreadSchema)` to create a new message.
  */
-export const ThreadSchema: GenMessage<Thread> = /*@__PURE__*/ messageDesc(file_forum_v1_forum, 28);
+export const ThreadSchema: GenMessage<Thread> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 28);
 
 /**
  * @generated from message forum.v1.ThreadWithSource
  */
 export type ThreadWithSource = Message$1<"forum.v1.ThreadWithSource"> & {
-	/**
-	 * @generated from field: forum.v1.Thread thread = 1;
-	 */
-	thread?: Thread;
+  /**
+   * @generated from field: forum.v1.Thread thread = 1;
+   */
+  thread?: Thread;
 
-	/**
-	 * @generated from field: string persona_name = 2;
-	 */
-	personaName: string;
+  /**
+   * @generated from field: string persona_name = 2;
+   */
+  personaName: string;
 
-	/**
-	 * @generated from field: string avatar_hash = 3;
-	 */
-	avatarHash: string;
+  /**
+   * @generated from field: string avatar_hash = 3;
+   */
+  avatarHash: string;
 
-	/**
-	 * @generated from field: person.v1.Privilege permission_level = 4;
-	 */
-	permissionLevel: Privilege;
+  /**
+   * @generated from field: person.v1.Privilege permission_level = 4;
+   */
+  permissionLevel: Privilege;
 
-	/**
-	 * @generated from field: int64 recent_forum_message_id = 5;
-	 */
-	recentForumMessageId: bigint;
+  /**
+   * @generated from field: int64 recent_forum_message_id = 5;
+   */
+  recentForumMessageId: bigint;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp recent_created_on = 6;
-	 */
-	recentCreatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp recent_created_on = 6;
+   */
+  recentCreatedOn?: Timestamp;
 
-	/**
-	 * @generated from field: int64 recent_steam_id = 7;
-	 */
-	recentSteamId: bigint;
+  /**
+   * @generated from field: int64 recent_steam_id = 7;
+   */
+  recentSteamId: bigint;
 
-	/**
-	 * @generated from field: string recent_persona_name = 8;
-	 */
-	recentPersonaName: string;
+  /**
+   * @generated from field: string recent_persona_name = 8;
+   */
+  recentPersonaName: string;
 
-	/**
-	 * @generated from field: string recent_avatar_hash = 9;
-	 */
-	recentAvatarHash: string;
+  /**
+   * @generated from field: string recent_avatar_hash = 9;
+   */
+  recentAvatarHash: string;
 };
 
 /**
  * Describes the message forum.v1.ThreadWithSource.
  * Use `create(ThreadWithSourceSchema)` to create a new message.
  */
-export const ThreadWithSourceSchema: GenMessage<ThreadWithSource> = /*@__PURE__*/ messageDesc(file_forum_v1_forum, 29);
+export const ThreadWithSourceSchema: GenMessage<ThreadWithSource> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 29);
 
 /**
  * @generated from message forum.v1.UserActivity
  */
 export type UserActivity = Message$1<"forum.v1.UserActivity"> & {
-	/**
-	 * @generated from field: int64 steam_id = 1;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 1;
+   */
+  steamId: bigint;
 
-	/**
-	 * @generated from field: string persona_name = 2;
-	 */
-	personaName: string;
+  /**
+   * @generated from field: string persona_name = 2;
+   */
+  personaName: string;
 
-	/**
-	 * @generated from field: person.v1.Privilege permission_level = 3;
-	 */
-	permissionLevel: Privilege;
+  /**
+   * @generated from field: person.v1.Privilege permission_level = 3;
+   */
+  permissionLevel: Privilege;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 4;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 4;
+   */
+  createdOn?: Timestamp;
 };
 
 /**
  * Describes the message forum.v1.UserActivity.
  * Use `create(UserActivitySchema)` to create a new message.
  */
-export const UserActivitySchema: GenMessage<UserActivity> = /*@__PURE__*/ messageDesc(file_forum_v1_forum, 30);
+export const UserActivitySchema: GenMessage<UserActivity> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 30);
 
 /**
  * @generated from message forum.v1.ActiveUsersResponse
  */
 export type ActiveUsersResponse = Message$1<"forum.v1.ActiveUsersResponse"> & {
-	/**
-	 * @generated from field: repeated forum.v1.UserActivity user_activity = 1;
-	 */
-	userActivity: UserActivity[];
+  /**
+   * @generated from field: repeated forum.v1.UserActivity user_activity = 1;
+   */
+  userActivity: UserActivity[];
 };
 
 /**
  * Describes the message forum.v1.ActiveUsersResponse.
  * Use `create(ActiveUsersResponseSchema)` to create a new message.
  */
-export const ActiveUsersResponseSchema: GenMessage<ActiveUsersResponse> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 31);
+export const ActiveUsersResponseSchema: GenMessage<ActiveUsersResponse> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 31);
 
 /**
  * @generated from message forum.v1.Message
  */
 export type Message = Message$1<"forum.v1.Message"> & {
-	/**
-	 * @generated from field: int64 forum_message_id = 1;
-	 */
-	forumMessageId: bigint;
+  /**
+   * @generated from field: int64 forum_message_id = 1;
+   */
+  forumMessageId: bigint;
 
-	/**
-	 * @generated from field: int32 forum_thread_id = 2;
-	 */
-	forumThreadId: number;
+  /**
+   * @generated from field: int32 forum_thread_id = 2;
+   */
+  forumThreadId: number;
 
-	/**
-	 * @generated from field: int64 source_id = 3;
-	 */
-	sourceId: bigint;
+  /**
+   * @generated from field: int64 source_id = 3;
+   */
+  sourceId: bigint;
 
-	/**
-	 * @generated from field: string body_md = 4;
-	 */
-	bodyMd: string;
+  /**
+   * @generated from field: string body_md = 4;
+   */
+  bodyMd: string;
 
-	/**
-	 * @generated from field: string title = 5;
-	 */
-	title: string;
+  /**
+   * @generated from field: string title = 5;
+   */
+  title: string;
 
-	/**
-	 * @generated from field: bool online = 6;
-	 */
-	online: boolean;
+  /**
+   * @generated from field: bool online = 6;
+   */
+  online: boolean;
 
-	/**
-	 * @generated from field: string signature = 7;
-	 */
-	signature: string;
+  /**
+   * @generated from field: string signature = 7;
+   */
+  signature: string;
 
-	/**
-	 * @generated from field: string persona_name = 8;
-	 */
-	personaName: string;
+  /**
+   * @generated from field: string persona_name = 8;
+   */
+  personaName: string;
 
-	/**
-	 * @generated from field: string avatar_hash = 9;
-	 */
-	avatarHash: string;
+  /**
+   * @generated from field: string avatar_hash = 9;
+   */
+  avatarHash: string;
 
-	/**
-	 * @generated from field: person.v1.Privilege permission_level = 10;
-	 */
-	permissionLevel: Privilege;
+  /**
+   * @generated from field: person.v1.Privilege permission_level = 10;
+   */
+  permissionLevel: Privilege;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 11;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 11;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 12;
-	 */
-	updatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 12;
+   */
+  updatedOn?: Timestamp;
 };
 
 /**
  * Describes the message forum.v1.Message.
  * Use `create(MessageSchema)` to create a new message.
  */
-export const MessageSchema: GenMessage<Message> = /*@__PURE__*/ messageDesc(file_forum_v1_forum, 32);
+export const MessageSchema: GenMessage<Message> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 32);
 
 /**
  * @generated from message forum.v1.RecentMessagesResponse
  */
 export type RecentMessagesResponse = Message$1<"forum.v1.RecentMessagesResponse"> & {
-	/**
-	 * @generated from field: repeated forum.v1.Message messages = 1;
-	 */
-	messages: Message[];
+  /**
+   * @generated from field: repeated forum.v1.Message messages = 1;
+   */
+  messages: Message[];
 };
 
 /**
  * Describes the message forum.v1.RecentMessagesResponse.
  * Use `create(RecentMessagesResponseSchema)` to create a new message.
  */
-export const RecentMessagesResponseSchema: GenMessage<RecentMessagesResponse> =
-	/*@__PURE__*/
-	messageDesc(file_forum_v1_forum, 33);
+export const RecentMessagesResponseSchema: GenMessage<RecentMessagesResponse> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 33);
 
 /**
  * @generated from message forum.v1.Forum
  */
 export type Forum = Message$1<"forum.v1.Forum"> & {
-	/**
-	 * @generated from field: int32 forum_id = 1;
-	 */
-	forumId: number;
+  /**
+   * @generated from field: int32 forum_id = 1;
+   */
+  forumId: number;
 
-	/**
-	 * @generated from field: int32 forum_category_id = 2;
-	 */
-	forumCategoryId: number;
+  /**
+   * @generated from field: int32 forum_category_id = 2;
+   */
+  forumCategoryId: number;
 
-	/**
-	 * @generated from field: int32 last_thread_id = 3;
-	 */
-	lastThreadId: number;
+  /**
+   * @generated from field: int32 last_thread_id = 3;
+   */
+  lastThreadId: number;
 
-	/**
-	 * @generated from field: string title = 4;
-	 */
-	title: string;
+  /**
+   * @generated from field: string title = 4;
+   */
+  title: string;
 
-	/**
-	 * @generated from field: string description = 5;
-	 */
-	description: string;
+  /**
+   * @generated from field: string description = 5;
+   */
+  description: string;
 
-	/**
-	 * @generated from field: int32 ordering = 6;
-	 */
-	ordering: number;
+  /**
+   * @generated from field: int32 ordering = 6;
+   */
+  ordering: number;
 
-	/**
-	 * @generated from field: int64 count_threads = 7;
-	 */
-	countThreads: bigint;
+  /**
+   * @generated from field: int64 count_threads = 7;
+   */
+  countThreads: bigint;
 
-	/**
-	 * @generated from field: int64 count_messages = 8;
-	 */
-	countMessages: bigint;
+  /**
+   * @generated from field: int64 count_messages = 8;
+   */
+  countMessages: bigint;
 
-	/**
-	 * @generated from field: person.v1.Privilege permission_level = 9;
-	 */
-	permissionLevel: Privilege;
+  /**
+   * @generated from field: person.v1.Privilege permission_level = 9;
+   */
+  permissionLevel: Privilege;
 
-	/**
-	 * @generated from field: int32 recent_forum_thread_id = 10;
-	 */
-	recentForumThreadId: number;
+  /**
+   * @generated from field: int32 recent_forum_thread_id = 10;
+   */
+  recentForumThreadId: number;
 
-	/**
-	 * @generated from field: string recent_forum_title = 11;
-	 */
-	recentForumTitle: string;
+  /**
+   * @generated from field: string recent_forum_title = 11;
+   */
+  recentForumTitle: string;
 
-	/**
-	 * @generated from field: string recent_source_id = 12;
-	 */
-	recentSourceId: string;
+  /**
+   * @generated from field: string recent_source_id = 12;
+   */
+  recentSourceId: string;
 
-	/**
-	 * @generated from field: string recent_persona_name = 13;
-	 */
-	recentPersonaName: string;
+  /**
+   * @generated from field: string recent_persona_name = 13;
+   */
+  recentPersonaName: string;
 
-	/**
-	 * @generated from field: string recent_avatar_hash = 14;
-	 */
-	recentAvatarHash: string;
+  /**
+   * @generated from field: string recent_avatar_hash = 14;
+   */
+  recentAvatarHash: string;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp recent_created_on = 15;
-	 */
-	recentCreatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp recent_created_on = 15;
+   */
+  recentCreatedOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 16;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 16;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 17;
-	 */
-	updatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 17;
+   */
+  updatedOn?: Timestamp;
 };
 
 /**
  * Describes the message forum.v1.Forum.
  * Use `create(ForumSchema)` to create a new message.
  */
-export const ForumSchema: GenMessage<Forum> = /*@__PURE__*/ messageDesc(file_forum_v1_forum, 34);
+export const ForumSchema: GenMessage<Forum> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 34);
 
 /**
  * @generated from message forum.v1.Category
  */
 export type Category = Message$1<"forum.v1.Category"> & {
-	/**
-	 * @generated from field: int32 forum_category_id = 1;
-	 */
-	forumCategoryId: number;
+  /**
+   * @generated from field: int32 forum_category_id = 1;
+   */
+  forumCategoryId: number;
 
-	/**
-	 * @generated from field: string title = 2;
-	 */
-	title: string;
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
 
-	/**
-	 * @generated from field: string description = 3;
-	 */
-	description: string;
+  /**
+   * @generated from field: string description = 3;
+   */
+  description: string;
 
-	/**
-	 * @generated from field: int32 ordering = 4;
-	 */
-	ordering: number;
+  /**
+   * @generated from field: int32 ordering = 4;
+   */
+  ordering: number;
 
-	/**
-	 * @generated from field: repeated forum.v1.Forum forums = 5;
-	 */
-	forums: Forum[];
+  /**
+   * @generated from field: repeated forum.v1.Forum forums = 5;
+   */
+  forums: Forum[];
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 6;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 6;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 7;
-	 */
-	updatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 7;
+   */
+  updatedOn?: Timestamp;
 };
 
 /**
  * Describes the message forum.v1.Category.
  * Use `create(CategorySchema)` to create a new message.
  */
-export const CategorySchema: GenMessage<Category> = /*@__PURE__*/ messageDesc(file_forum_v1_forum, 35);
+export const CategorySchema: GenMessage<Category> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 35);
 
 /**
  * @generated from message forum.v1.OverviewResponse
  */
 export type OverviewResponse = Message$1<"forum.v1.OverviewResponse"> & {
-	/**
-	 * @generated from field: repeated forum.v1.Category categories = 1;
-	 */
-	categories: Category[];
+  /**
+   * @generated from field: repeated forum.v1.Category categories = 1;
+   */
+  categories: Category[];
 };
 
 /**
  * Describes the message forum.v1.OverviewResponse.
  * Use `create(OverviewResponseSchema)` to create a new message.
  */
-export const OverviewResponseSchema: GenMessage<OverviewResponse> = /*@__PURE__*/ messageDesc(file_forum_v1_forum, 36);
+export const OverviewResponseSchema: GenMessage<OverviewResponse> = /*@__PURE__*/
+  messageDesc(file_forum_v1_forum, 36);
 
 /**
  * @generated from service forum.v1.ForumService
  */
 export const ForumService: GenService<{
-	/**
-	 * @generated from rpc forum.v1.ForumService.ActiveUsers
-	 */
-	activeUsers: {
-		methodKind: "unary";
-		input: typeof EmptySchema;
-		output: typeof ActiveUsersResponseSchema;
-	};
-	/**
-	 * @generated from rpc forum.v1.ForumService.Overview
-	 */
-	overview: {
-		methodKind: "unary";
-		input: typeof EmptySchema;
-		output: typeof OverviewResponseSchema;
-	};
-	/**
-	 * @generated from rpc forum.v1.ForumService.RecentMessages
-	 */
-	recentMessages: {
-		methodKind: "unary";
-		input: typeof EmptySchema;
-		output: typeof RecentMessagesResponseSchema;
-	};
-	/**
-	 * @generated from rpc forum.v1.ForumService.Threads
-	 */
-	threads: {
-		methodKind: "unary";
-		input: typeof ThreadsRequestSchema;
-		output: typeof ThreadsRequestResponseSchema;
-	};
-	/**
-	 * @generated from rpc forum.v1.ForumService.Thread
-	 */
-	thread: {
-		methodKind: "unary";
-		input: typeof ThreadRequestSchema;
-		output: typeof ThreadResponseSchema;
-	};
-	/**
-	 * @generated from rpc forum.v1.ForumService.ThreadDelete
-	 */
-	threadDelete: {
-		methodKind: "unary";
-		input: typeof ThreadDeleteRequestSchema;
-		output: typeof EmptySchema;
-	};
-	/**
-	 * @generated from rpc forum.v1.ForumService.Forum
-	 */
-	forum: {
-		methodKind: "unary";
-		input: typeof ForumRequestSchema;
-		output: typeof ForumResponseSchema;
-	};
-	/**
-	 * @generated from rpc forum.v1.ForumService.ForumMessages
-	 */
-	forumMessages: {
-		methodKind: "unary";
-		input: typeof ForumMessagesRequestSchema;
-		output: typeof ForumMessagesResponseSchema;
-	};
-	/**
-	 * authed
-	 *
-	 * @generated from rpc forum.v1.ForumService.ThreadCreate
-	 */
-	threadCreate: {
-		methodKind: "unary";
-		input: typeof ThreadCreateRequestSchema;
-		output: typeof ThreadCreateResponseSchema;
-	};
-	/**
-	 * @generated from rpc forum.v1.ForumService.ThreadEdit
-	 */
-	threadEdit: {
-		methodKind: "unary";
-		input: typeof ThreadEditRequestSchema;
-		output: typeof ThreadEditResponseSchema;
-	};
-	/**
-	 * @generated from rpc forum.v1.ForumService.ThreadReplyCreate
-	 */
-	threadReplyCreate: {
-		methodKind: "unary";
-		input: typeof ThreadReplyCreateRequestSchema;
-		output: typeof ThreadReplyCreateResponseSchema;
-	};
-	/**
-	 * @generated from rpc forum.v1.ForumService.ThreadReplyEdit
-	 */
-	threadReplyEdit: {
-		methodKind: "unary";
-		input: typeof ThreadReplyEditRequestSchema;
-		output: typeof ThreadReplyEditResponseSchema;
-	};
-	/**
-	 * @generated from rpc forum.v1.ForumService.MessageDelete
-	 */
-	messageDelete: {
-		methodKind: "unary";
-		input: typeof MessageDeleteRequestSchema;
-		output: typeof EmptySchema;
-	};
-	/**
-	 * mod
-	 *
-	 * @generated from rpc forum.v1.ForumService.CategoryCreate
-	 */
-	categoryCreate: {
-		methodKind: "unary";
-		input: typeof CategoryCreateRequestSchema;
-		output: typeof CategoryCreateResponseSchema;
-	};
-	/**
-	 * @generated from rpc forum.v1.ForumService.CategoryEdit
-	 */
-	categoryEdit: {
-		methodKind: "unary";
-		input: typeof CategoryEditRequestSchema;
-		output: typeof CategoryEditResponseSchema;
-	};
-	/**
-	 * @generated from rpc forum.v1.ForumService.Category
-	 */
-	category: {
-		methodKind: "unary";
-		input: typeof CategoryRequestSchema;
-		output: typeof CategoryResponseSchema;
-	};
-	/**
-	 * @generated from rpc forum.v1.ForumService.ForumCreate
-	 */
-	forumCreate: {
-		methodKind: "unary";
-		input: typeof ForumCreateRequestSchema;
-		output: typeof ForumCreateResponseSchema;
-	};
-	/**
-	 * @generated from rpc forum.v1.ForumService.ForumEdit
-	 */
-	forumEdit: {
-		methodKind: "unary";
-		input: typeof ForumEditRequestSchema;
-		output: typeof ForumEditResponseSchema;
-	};
-}> = /*@__PURE__*/ serviceDesc(file_forum_v1_forum, 0);
+  /**
+   * @generated from rpc forum.v1.ForumService.ActiveUsers
+   */
+  activeUsers: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof ActiveUsersResponseSchema;
+  },
+  /**
+   * @generated from rpc forum.v1.ForumService.Overview
+   */
+  overview: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof OverviewResponseSchema;
+  },
+  /**
+   * @generated from rpc forum.v1.ForumService.RecentMessages
+   */
+  recentMessages: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof RecentMessagesResponseSchema;
+  },
+  /**
+   * @generated from rpc forum.v1.ForumService.Threads
+   */
+  threads: {
+    methodKind: "unary";
+    input: typeof ThreadsRequestSchema;
+    output: typeof ThreadsRequestResponseSchema;
+  },
+  /**
+   * @generated from rpc forum.v1.ForumService.Thread
+   */
+  thread: {
+    methodKind: "unary";
+    input: typeof ThreadRequestSchema;
+    output: typeof ThreadResponseSchema;
+  },
+  /**
+   * @generated from rpc forum.v1.ForumService.ThreadDelete
+   */
+  threadDelete: {
+    methodKind: "unary";
+    input: typeof ThreadDeleteRequestSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc forum.v1.ForumService.Forum
+   */
+  forum: {
+    methodKind: "unary";
+    input: typeof ForumRequestSchema;
+    output: typeof ForumResponseSchema;
+  },
+  /**
+   * @generated from rpc forum.v1.ForumService.ForumMessages
+   */
+  forumMessages: {
+    methodKind: "unary";
+    input: typeof ForumMessagesRequestSchema;
+    output: typeof ForumMessagesResponseSchema;
+  },
+  /**
+   * authed
+   *
+   * @generated from rpc forum.v1.ForumService.ThreadCreate
+   */
+  threadCreate: {
+    methodKind: "unary";
+    input: typeof ThreadCreateRequestSchema;
+    output: typeof ThreadCreateResponseSchema;
+  },
+  /**
+   * @generated from rpc forum.v1.ForumService.ThreadEdit
+   */
+  threadEdit: {
+    methodKind: "unary";
+    input: typeof ThreadEditRequestSchema;
+    output: typeof ThreadEditResponseSchema;
+  },
+  /**
+   * @generated from rpc forum.v1.ForumService.ThreadReplyCreate
+   */
+  threadReplyCreate: {
+    methodKind: "unary";
+    input: typeof ThreadReplyCreateRequestSchema;
+    output: typeof ThreadReplyCreateResponseSchema;
+  },
+  /**
+   * @generated from rpc forum.v1.ForumService.ThreadReplyEdit
+   */
+  threadReplyEdit: {
+    methodKind: "unary";
+    input: typeof ThreadReplyEditRequestSchema;
+    output: typeof ThreadReplyEditResponseSchema;
+  },
+  /**
+   * @generated from rpc forum.v1.ForumService.MessageDelete
+   */
+  messageDelete: {
+    methodKind: "unary";
+    input: typeof MessageDeleteRequestSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * mod
+   *
+   * @generated from rpc forum.v1.ForumService.CategoryCreate
+   */
+  categoryCreate: {
+    methodKind: "unary";
+    input: typeof CategoryCreateRequestSchema;
+    output: typeof CategoryCreateResponseSchema;
+  },
+  /**
+   * @generated from rpc forum.v1.ForumService.CategoryEdit
+   */
+  categoryEdit: {
+    methodKind: "unary";
+    input: typeof CategoryEditRequestSchema;
+    output: typeof CategoryEditResponseSchema;
+  },
+  /**
+   * @generated from rpc forum.v1.ForumService.Category
+   */
+  category: {
+    methodKind: "unary";
+    input: typeof CategoryRequestSchema;
+    output: typeof CategoryResponseSchema;
+  },
+  /**
+   * @generated from rpc forum.v1.ForumService.ForumCreate
+   */
+  forumCreate: {
+    methodKind: "unary";
+    input: typeof ForumCreateRequestSchema;
+    output: typeof ForumCreateResponseSchema;
+  },
+  /**
+   * @generated from rpc forum.v1.ForumService.ForumEdit
+   */
+  forumEdit: {
+    methodKind: "unary";
+    input: typeof ForumEditRequestSchema;
+    output: typeof ForumEditResponseSchema;
+  },
+}> = /*@__PURE__*/
+  serviceDesc(file_forum_v1_forum, 0);
+

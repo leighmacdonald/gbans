@@ -16,671 +16,661 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file contest/v1/contest.proto.
  */
-export const file_contest_v1_contest: GenFile =
-	/*@__PURE__*/
-	fileDesc(
-		"Chhjb250ZXN0L3YxL2NvbnRlc3QucHJvdG8SCmNvbnRlc3QudjEiPAoUQ29udGVzdENyZWF0ZVJlcXVlc3QSJAoHY29udGVzdBgBIAEoCzITLmNvbnRlc3QudjEuQ29udGVzdCI9ChVDb250ZXN0Q3JlYXRlUmVzcG9uc2USJAoHY29udGVzdBgBIAEoCzITLmNvbnRlc3QudjEuQ29udGVzdCI0ChRDb250ZXN0RGVsZXRlUmVxdWVzdBIcCgpjb250ZXN0X2lkGAEgASgJQgi6SAVyA7ABASI6ChJDb250ZXN0RWRpdFJlcXVlc3QSJAoHY29udGVzdBgBIAEoCzITLmNvbnRlc3QudjEuQ29udGVzdCI7ChNDb250ZXN0RWRpdFJlc3BvbnNlEiQKB2NvbnRlc3QYASABKAsyEy5jb250ZXN0LnYxLkNvbnRlc3QiOAoSRW50cnlEZWxldGVSZXF1ZXN0EiIKEGNvbnRlc3RfZW50cnlfaWQYASABKAlCCLpIBXIDsAEBIjcKE0VudHJ5RGVsZXRlUmVzcG9uc2USIAoFZW50cnkYASABKAsyES5jb250ZXN0LnYxLkVudHJ5ImMKEkVudHJ5Q3JlYXRlUmVxdWVzdBIcCgpjb250ZXN0X2lkGAEgASgJQgi6SAVyA7ABARITCgtkZXNjcmlwdGlvbhgCIAEoCRIaCghhc3NldF9pZBgDIAEoCUIIukgFcgOwAQEiNwoTRW50cnlDcmVhdGVSZXNwb25zZRIgCgVlbnRyeRgBIAEoCzIRLmNvbnRlc3QudjEuRW50cnkiigEKC1ZvdGVSZXF1ZXN0EhwKCmNvbnRlc3RfaWQYASABKAlCCLpIBXIDsAEBEiIKEGNvbnRlc3RfZW50cnlfaWQYAiABKAlCCLpIBXIDsAEBEjkKCWRpcmVjdGlvbhgDIAEoDjIVLmNvbnRlc3QudjEuRGlyZWN0aW9uQg+6SAxyClICdXBSBGRvd24iQAoMVm90ZVJlc3BvbnNlEjAKEWN1cnJlbnRfZGlyZWN0aW9uGAEgASgOMhUuY29udGVzdC52MS5EaXJlY3Rpb24iTAoNVXBsb2FkUmVxdWVzdBIcCgpjb250ZXN0X2lkGAEgASgJQgi6SAVyA7ABARIMCgRuYW1lGAIgASgJEg8KB2NvbnRlbnQYAyABKAwiMAoOVXBsb2FkUmVzcG9uc2USHgoFYXNzZXQYASABKAsyDy5hc3NldC52MS5Bc3NldCI1Cg9FbnRyaWVzUmVzcG9uc2USIgoHZW50cmllcxgBIAMoCzIRLmNvbnRlc3QudjEuRW50cnkiLgoORW50cmllc1JlcXVlc3QSHAoKY29udGVzdF9pZBgBIAEoCUIIukgFcgOwAQEiLgoOQ29udGVzdFJlcXVlc3QSHAoKY29udGVzdF9pZBgBIAEoCUIIukgFcgOwAQEiNwoPQ29udGVzdFJlc3BvbnNlEiQKB2NvbnRlc3QYASABKAsyEy5jb250ZXN0LnYxLkNvbnRlc3QiqgEKBFZvdGUSIgoQY29udGVzdF9lbnRyeV9pZBgBIAEoCUIIukgFcgOwAQESEAoIc3RlYW1faWQYAiABKAMSDAoEdm90ZRgDIAEoBRIuCgpjcmVhdGVkX29uGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCKBAwoFRW50cnkSHAoKY29udGVzdF9pZBgBIAEoCUIIukgFcgOwAQESIgoQY29udGVzdF9lbnRyeV9pZBgCIAEoCUIIukgFcgOwAQESEAoIc3RlYW1faWQYAyABKAMSFAoMcGVyc29uYV9uYW1lGAQgASgJEhMKC2F2YXRhcl9oYXNoGAUgASgJEhoKCGFzc2V0X2lkGAYgASgJQgi6SAVyA7ABARITCgtkZXNjcmlwdGlvbhgHIAEoCRIRCglwbGFjZW1lbnQYCCABKAUSDwoHZGVsZXRlZBgJIAEoCBIQCgh2b3Rlc191cBgKIAEoBRISCgp2b3Rlc19kb3duGAsgASgFEh4KBWFzc2V0GAwgASgLMg8uYXNzZXQudjEuQXNzZXQSLgoKY3JlYXRlZF9vbhgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9vbhgOIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAi5wMKB0NvbnRlc3QSDQoFdGl0bGUYASABKAkSEwoLZGVzY3JpcHRpb24YAiABKAkSDgoGcHVibGljGAMgASgIEhgKEGhpZGVfc3VibWlzc2lvbnMYBCABKAgSLgoKZGF0ZV9zdGFydBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLAoIZGF0ZV9lbmQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhcKD21heF9zdWJtaXNzaW9ucxgHIAEoBRIXCg9vd25fc3VibWlzc2lvbnMYCCABKAUSEwoLbWVkaWFfdHlwZXMYCSABKAkSEwoLbnVtX2VudHJpZXMYCiABKAUSDgoGdm90aW5nGAsgASgIEjIKFG1pbl9wZXJtaXNzaW9uX2xldmVsGAwgASgOMhQucGVyc29uLnYxLlByaXZpbGVnZRISCgpkb3duX3ZvdGVzGA0gASgIEi4KCmNyZWF0ZWRfb24YDiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhwKCmNvbnRlc3RfaWQYECABKAlCCLpIBXIDsAEBIjkKEENvbnRlc3RzUmVzcG9uc2USJQoIY29udGVzdHMYASADKAsyEy5jb250ZXN0LnYxLkNvbnRlc3QqPQoJRGlyZWN0aW9uEhwKGERJUkVDVElPTl9VUF9VTlNQRUNJRklFRBAAEhIKDkRJUkVDVElPTl9ET1dOEAEy6wUKB1NlcnZpY2USQgoIQ29udGVzdHMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHC5jb250ZXN0LnYxLkNvbnRlc3RzUmVzcG9uc2UiABJECgdDb250ZXN0EhouY29udGVzdC52MS5Db250ZXN0UmVxdWVzdBobLmNvbnRlc3QudjEuQ29udGVzdFJlc3BvbnNlIgASRAoHRW50cmllcxIaLmNvbnRlc3QudjEuRW50cmllc1JlcXVlc3QaGy5jb250ZXN0LnYxLkVudHJpZXNSZXNwb25zZSIAEkEKBlVwbG9hZBIZLmNvbnRlc3QudjEuVXBsb2FkUmVxdWVzdBoaLmNvbnRlc3QudjEuVXBsb2FkUmVzcG9uc2UiABI7CgRWb3RlEhcuY29udGVzdC52MS5Wb3RlUmVxdWVzdBoYLmNvbnRlc3QudjEuVm90ZVJlc3BvbnNlIgASUAoLRW50cnlDcmVhdGUSHi5jb250ZXN0LnYxLkVudHJ5Q3JlYXRlUmVxdWVzdBofLmNvbnRlc3QudjEuRW50cnlDcmVhdGVSZXNwb25zZSIAEkcKC0VudHJ5RGVsZXRlEh4uY29udGVzdC52MS5FbnRyeURlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJWCg1Db250ZXN0Q3JlYXRlEiAuY29udGVzdC52MS5Db250ZXN0Q3JlYXRlUmVxdWVzdBohLmNvbnRlc3QudjEuQ29udGVzdENyZWF0ZVJlc3BvbnNlIgASSwoNQ29udGVzdERlbGV0ZRIgLmNvbnRlc3QudjEuQ29udGVzdERlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJQCgtDb250ZXN0RWRpdBIeLmNvbnRlc3QudjEuQ29udGVzdEVkaXRSZXF1ZXN0Gh8uY29udGVzdC52MS5Db250ZXN0RWRpdFJlc3BvbnNlIgBCpgEKDmNvbS5jb250ZXN0LnYxQgxDb250ZXN0UHJvdG9QAVo9Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9jb250ZXN0L3YxO2NvbnRlc3R2MaICA0NYWKoCCkNvbnRlc3QuVjHKAgpDb250ZXN0XFYx4gIWQ29udGVzdFxWMVxHUEJNZXRhZGF0YeoCC0NvbnRlc3Q6OlYxYghlZGl0aW9uc3DoBw",
-		[
-			file_asset_v1_asset,
-			file_buf_validate_validate,
-			file_google_protobuf_empty,
-			file_google_protobuf_timestamp,
-			file_person_v1_privilege,
-		],
-	);
+export const file_contest_v1_contest: GenFile = /*@__PURE__*/
+  fileDesc("Chhjb250ZXN0L3YxL2NvbnRlc3QucHJvdG8SCmNvbnRlc3QudjEiPAoUQ29udGVzdENyZWF0ZVJlcXVlc3QSJAoHY29udGVzdBgBIAEoCzITLmNvbnRlc3QudjEuQ29udGVzdCI9ChVDb250ZXN0Q3JlYXRlUmVzcG9uc2USJAoHY29udGVzdBgBIAEoCzITLmNvbnRlc3QudjEuQ29udGVzdCI0ChRDb250ZXN0RGVsZXRlUmVxdWVzdBIcCgpjb250ZXN0X2lkGAEgASgJQgi6SAVyA7ABASI6ChJDb250ZXN0RWRpdFJlcXVlc3QSJAoHY29udGVzdBgBIAEoCzITLmNvbnRlc3QudjEuQ29udGVzdCI7ChNDb250ZXN0RWRpdFJlc3BvbnNlEiQKB2NvbnRlc3QYASABKAsyEy5jb250ZXN0LnYxLkNvbnRlc3QiOAoSRW50cnlEZWxldGVSZXF1ZXN0EiIKEGNvbnRlc3RfZW50cnlfaWQYASABKAlCCLpIBXIDsAEBIjcKE0VudHJ5RGVsZXRlUmVzcG9uc2USIAoFZW50cnkYASABKAsyES5jb250ZXN0LnYxLkVudHJ5ImMKEkVudHJ5Q3JlYXRlUmVxdWVzdBIcCgpjb250ZXN0X2lkGAEgASgJQgi6SAVyA7ABARITCgtkZXNjcmlwdGlvbhgCIAEoCRIaCghhc3NldF9pZBgDIAEoCUIIukgFcgOwAQEiNwoTRW50cnlDcmVhdGVSZXNwb25zZRIgCgVlbnRyeRgBIAEoCzIRLmNvbnRlc3QudjEuRW50cnkiigEKC1ZvdGVSZXF1ZXN0EhwKCmNvbnRlc3RfaWQYASABKAlCCLpIBXIDsAEBEiIKEGNvbnRlc3RfZW50cnlfaWQYAiABKAlCCLpIBXIDsAEBEjkKCWRpcmVjdGlvbhgDIAEoDjIVLmNvbnRlc3QudjEuRGlyZWN0aW9uQg+6SAxyClICdXBSBGRvd24iQAoMVm90ZVJlc3BvbnNlEjAKEWN1cnJlbnRfZGlyZWN0aW9uGAEgASgOMhUuY29udGVzdC52MS5EaXJlY3Rpb24iTAoNVXBsb2FkUmVxdWVzdBIcCgpjb250ZXN0X2lkGAEgASgJQgi6SAVyA7ABARIMCgRuYW1lGAIgASgJEg8KB2NvbnRlbnQYAyABKAwiMAoOVXBsb2FkUmVzcG9uc2USHgoFYXNzZXQYASABKAsyDy5hc3NldC52MS5Bc3NldCI1Cg9FbnRyaWVzUmVzcG9uc2USIgoHZW50cmllcxgBIAMoCzIRLmNvbnRlc3QudjEuRW50cnkiLgoORW50cmllc1JlcXVlc3QSHAoKY29udGVzdF9pZBgBIAEoCUIIukgFcgOwAQEiLgoOQ29udGVzdFJlcXVlc3QSHAoKY29udGVzdF9pZBgBIAEoCUIIukgFcgOwAQEiNwoPQ29udGVzdFJlc3BvbnNlEiQKB2NvbnRlc3QYASABKAsyEy5jb250ZXN0LnYxLkNvbnRlc3QiqgEKBFZvdGUSIgoQY29udGVzdF9lbnRyeV9pZBgBIAEoCUIIukgFcgOwAQESEAoIc3RlYW1faWQYAiABKAMSDAoEdm90ZRgDIAEoBRIuCgpjcmVhdGVkX29uGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCKBAwoFRW50cnkSHAoKY29udGVzdF9pZBgBIAEoCUIIukgFcgOwAQESIgoQY29udGVzdF9lbnRyeV9pZBgCIAEoCUIIukgFcgOwAQESEAoIc3RlYW1faWQYAyABKAMSFAoMcGVyc29uYV9uYW1lGAQgASgJEhMKC2F2YXRhcl9oYXNoGAUgASgJEhoKCGFzc2V0X2lkGAYgASgJQgi6SAVyA7ABARITCgtkZXNjcmlwdGlvbhgHIAEoCRIRCglwbGFjZW1lbnQYCCABKAUSDwoHZGVsZXRlZBgJIAEoCBIQCgh2b3Rlc191cBgKIAEoBRISCgp2b3Rlc19kb3duGAsgASgFEh4KBWFzc2V0GAwgASgLMg8uYXNzZXQudjEuQXNzZXQSLgoKY3JlYXRlZF9vbhgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9vbhgOIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAi5wMKB0NvbnRlc3QSDQoFdGl0bGUYASABKAkSEwoLZGVzY3JpcHRpb24YAiABKAkSDgoGcHVibGljGAMgASgIEhgKEGhpZGVfc3VibWlzc2lvbnMYBCABKAgSLgoKZGF0ZV9zdGFydBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLAoIZGF0ZV9lbmQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhcKD21heF9zdWJtaXNzaW9ucxgHIAEoBRIXCg9vd25fc3VibWlzc2lvbnMYCCABKAUSEwoLbWVkaWFfdHlwZXMYCSABKAkSEwoLbnVtX2VudHJpZXMYCiABKAUSDgoGdm90aW5nGAsgASgIEjIKFG1pbl9wZXJtaXNzaW9uX2xldmVsGAwgASgOMhQucGVyc29uLnYxLlByaXZpbGVnZRISCgpkb3duX3ZvdGVzGA0gASgIEi4KCmNyZWF0ZWRfb24YDiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhwKCmNvbnRlc3RfaWQYECABKAlCCLpIBXIDsAEBIjkKEENvbnRlc3RzUmVzcG9uc2USJQoIY29udGVzdHMYASADKAsyEy5jb250ZXN0LnYxLkNvbnRlc3QqPQoJRGlyZWN0aW9uEhwKGERJUkVDVElPTl9VUF9VTlNQRUNJRklFRBAAEhIKDkRJUkVDVElPTl9ET1dOEAEy6wUKB1NlcnZpY2USQgoIQ29udGVzdHMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHC5jb250ZXN0LnYxLkNvbnRlc3RzUmVzcG9uc2UiABJECgdDb250ZXN0EhouY29udGVzdC52MS5Db250ZXN0UmVxdWVzdBobLmNvbnRlc3QudjEuQ29udGVzdFJlc3BvbnNlIgASRAoHRW50cmllcxIaLmNvbnRlc3QudjEuRW50cmllc1JlcXVlc3QaGy5jb250ZXN0LnYxLkVudHJpZXNSZXNwb25zZSIAEkEKBlVwbG9hZBIZLmNvbnRlc3QudjEuVXBsb2FkUmVxdWVzdBoaLmNvbnRlc3QudjEuVXBsb2FkUmVzcG9uc2UiABI7CgRWb3RlEhcuY29udGVzdC52MS5Wb3RlUmVxdWVzdBoYLmNvbnRlc3QudjEuVm90ZVJlc3BvbnNlIgASUAoLRW50cnlDcmVhdGUSHi5jb250ZXN0LnYxLkVudHJ5Q3JlYXRlUmVxdWVzdBofLmNvbnRlc3QudjEuRW50cnlDcmVhdGVSZXNwb25zZSIAEkcKC0VudHJ5RGVsZXRlEh4uY29udGVzdC52MS5FbnRyeURlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJWCg1Db250ZXN0Q3JlYXRlEiAuY29udGVzdC52MS5Db250ZXN0Q3JlYXRlUmVxdWVzdBohLmNvbnRlc3QudjEuQ29udGVzdENyZWF0ZVJlc3BvbnNlIgASSwoNQ29udGVzdERlbGV0ZRIgLmNvbnRlc3QudjEuQ29udGVzdERlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJQCgtDb250ZXN0RWRpdBIeLmNvbnRlc3QudjEuQ29udGVzdEVkaXRSZXF1ZXN0Gh8uY29udGVzdC52MS5Db250ZXN0RWRpdFJlc3BvbnNlIgBCpgEKDmNvbS5jb250ZXN0LnYxQgxDb250ZXN0UHJvdG9QAVo9Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9jb250ZXN0L3YxO2NvbnRlc3R2MaICA0NYWKoCCkNvbnRlc3QuVjHKAgpDb250ZXN0XFYx4gIWQ29udGVzdFxWMVxHUEJNZXRhZGF0YeoCC0NvbnRlc3Q6OlYxYghlZGl0aW9uc3DoBw", [file_asset_v1_asset, file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp, file_person_v1_privilege]);
 
 /**
  * @generated from message contest.v1.ContestCreateRequest
  */
 export type ContestCreateRequest = Message<"contest.v1.ContestCreateRequest"> & {
-	/**
-	 * @generated from field: contest.v1.Contest contest = 1;
-	 */
-	contest?: Contest;
+  /**
+   * @generated from field: contest.v1.Contest contest = 1;
+   */
+  contest?: Contest;
 };
 
 /**
  * Describes the message contest.v1.ContestCreateRequest.
  * Use `create(ContestCreateRequestSchema)` to create a new message.
  */
-export const ContestCreateRequestSchema: GenMessage<ContestCreateRequest> =
-	/*@__PURE__*/
-	messageDesc(file_contest_v1_contest, 0);
+export const ContestCreateRequestSchema: GenMessage<ContestCreateRequest> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 0);
 
 /**
  * @generated from message contest.v1.ContestCreateResponse
  */
 export type ContestCreateResponse = Message<"contest.v1.ContestCreateResponse"> & {
-	/**
-	 * @generated from field: contest.v1.Contest contest = 1;
-	 */
-	contest?: Contest;
+  /**
+   * @generated from field: contest.v1.Contest contest = 1;
+   */
+  contest?: Contest;
 };
 
 /**
  * Describes the message contest.v1.ContestCreateResponse.
  * Use `create(ContestCreateResponseSchema)` to create a new message.
  */
-export const ContestCreateResponseSchema: GenMessage<ContestCreateResponse> =
-	/*@__PURE__*/
-	messageDesc(file_contest_v1_contest, 1);
+export const ContestCreateResponseSchema: GenMessage<ContestCreateResponse> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 1);
 
 /**
  * @generated from message contest.v1.ContestDeleteRequest
  */
 export type ContestDeleteRequest = Message<"contest.v1.ContestDeleteRequest"> & {
-	/**
-	 * @generated from field: string contest_id = 1;
-	 */
-	contestId: string;
+  /**
+   * @generated from field: string contest_id = 1;
+   */
+  contestId: string;
 };
 
 /**
  * Describes the message contest.v1.ContestDeleteRequest.
  * Use `create(ContestDeleteRequestSchema)` to create a new message.
  */
-export const ContestDeleteRequestSchema: GenMessage<ContestDeleteRequest> =
-	/*@__PURE__*/
-	messageDesc(file_contest_v1_contest, 2);
+export const ContestDeleteRequestSchema: GenMessage<ContestDeleteRequest> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 2);
 
 /**
  * @generated from message contest.v1.ContestEditRequest
  */
 export type ContestEditRequest = Message<"contest.v1.ContestEditRequest"> & {
-	/**
-	 * @generated from field: contest.v1.Contest contest = 1;
-	 */
-	contest?: Contest;
+  /**
+   * @generated from field: contest.v1.Contest contest = 1;
+   */
+  contest?: Contest;
 };
 
 /**
  * Describes the message contest.v1.ContestEditRequest.
  * Use `create(ContestEditRequestSchema)` to create a new message.
  */
-export const ContestEditRequestSchema: GenMessage<ContestEditRequest> =
-	/*@__PURE__*/
-	messageDesc(file_contest_v1_contest, 3);
+export const ContestEditRequestSchema: GenMessage<ContestEditRequest> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 3);
 
 /**
  * @generated from message contest.v1.ContestEditResponse
  */
 export type ContestEditResponse = Message<"contest.v1.ContestEditResponse"> & {
-	/**
-	 * @generated from field: contest.v1.Contest contest = 1;
-	 */
-	contest?: Contest;
+  /**
+   * @generated from field: contest.v1.Contest contest = 1;
+   */
+  contest?: Contest;
 };
 
 /**
  * Describes the message contest.v1.ContestEditResponse.
  * Use `create(ContestEditResponseSchema)` to create a new message.
  */
-export const ContestEditResponseSchema: GenMessage<ContestEditResponse> =
-	/*@__PURE__*/
-	messageDesc(file_contest_v1_contest, 4);
+export const ContestEditResponseSchema: GenMessage<ContestEditResponse> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 4);
 
 /**
  * @generated from message contest.v1.EntryDeleteRequest
  */
 export type EntryDeleteRequest = Message<"contest.v1.EntryDeleteRequest"> & {
-	/**
-	 * @generated from field: string contest_entry_id = 1;
-	 */
-	contestEntryId: string;
+  /**
+   * @generated from field: string contest_entry_id = 1;
+   */
+  contestEntryId: string;
 };
 
 /**
  * Describes the message contest.v1.EntryDeleteRequest.
  * Use `create(EntryDeleteRequestSchema)` to create a new message.
  */
-export const EntryDeleteRequestSchema: GenMessage<EntryDeleteRequest> =
-	/*@__PURE__*/
-	messageDesc(file_contest_v1_contest, 5);
+export const EntryDeleteRequestSchema: GenMessage<EntryDeleteRequest> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 5);
 
 /**
  * @generated from message contest.v1.EntryDeleteResponse
  */
 export type EntryDeleteResponse = Message<"contest.v1.EntryDeleteResponse"> & {
-	/**
-	 * @generated from field: contest.v1.Entry entry = 1;
-	 */
-	entry?: Entry;
+  /**
+   * @generated from field: contest.v1.Entry entry = 1;
+   */
+  entry?: Entry;
 };
 
 /**
  * Describes the message contest.v1.EntryDeleteResponse.
  * Use `create(EntryDeleteResponseSchema)` to create a new message.
  */
-export const EntryDeleteResponseSchema: GenMessage<EntryDeleteResponse> =
-	/*@__PURE__*/
-	messageDesc(file_contest_v1_contest, 6);
+export const EntryDeleteResponseSchema: GenMessage<EntryDeleteResponse> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 6);
 
 /**
  * @generated from message contest.v1.EntryCreateRequest
  */
 export type EntryCreateRequest = Message<"contest.v1.EntryCreateRequest"> & {
-	/**
-	 * @generated from field: string contest_id = 1;
-	 */
-	contestId: string;
+  /**
+   * @generated from field: string contest_id = 1;
+   */
+  contestId: string;
 
-	/**
-	 * @generated from field: string description = 2;
-	 */
-	description: string;
+  /**
+   * @generated from field: string description = 2;
+   */
+  description: string;
 
-	/**
-	 * @generated from field: string asset_id = 3;
-	 */
-	assetId: string;
+  /**
+   * @generated from field: string asset_id = 3;
+   */
+  assetId: string;
 };
 
 /**
  * Describes the message contest.v1.EntryCreateRequest.
  * Use `create(EntryCreateRequestSchema)` to create a new message.
  */
-export const EntryCreateRequestSchema: GenMessage<EntryCreateRequest> =
-	/*@__PURE__*/
-	messageDesc(file_contest_v1_contest, 7);
+export const EntryCreateRequestSchema: GenMessage<EntryCreateRequest> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 7);
 
 /**
  * @generated from message contest.v1.EntryCreateResponse
  */
 export type EntryCreateResponse = Message<"contest.v1.EntryCreateResponse"> & {
-	/**
-	 * @generated from field: contest.v1.Entry entry = 1;
-	 */
-	entry?: Entry;
+  /**
+   * @generated from field: contest.v1.Entry entry = 1;
+   */
+  entry?: Entry;
 };
 
 /**
  * Describes the message contest.v1.EntryCreateResponse.
  * Use `create(EntryCreateResponseSchema)` to create a new message.
  */
-export const EntryCreateResponseSchema: GenMessage<EntryCreateResponse> =
-	/*@__PURE__*/
-	messageDesc(file_contest_v1_contest, 8);
+export const EntryCreateResponseSchema: GenMessage<EntryCreateResponse> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 8);
 
 /**
  * @generated from message contest.v1.VoteRequest
  */
 export type VoteRequest = Message<"contest.v1.VoteRequest"> & {
-	/**
-	 * @generated from field: string contest_id = 1;
-	 */
-	contestId: string;
+  /**
+   * @generated from field: string contest_id = 1;
+   */
+  contestId: string;
 
-	/**
-	 * @generated from field: string contest_entry_id = 2;
-	 */
-	contestEntryId: string;
+  /**
+   * @generated from field: string contest_entry_id = 2;
+   */
+  contestEntryId: string;
 
-	/**
-	 * @generated from field: contest.v1.Direction direction = 3;
-	 */
-	direction: Direction;
+  /**
+   * @generated from field: contest.v1.Direction direction = 3;
+   */
+  direction: Direction;
 };
 
 /**
  * Describes the message contest.v1.VoteRequest.
  * Use `create(VoteRequestSchema)` to create a new message.
  */
-export const VoteRequestSchema: GenMessage<VoteRequest> = /*@__PURE__*/ messageDesc(file_contest_v1_contest, 9);
+export const VoteRequestSchema: GenMessage<VoteRequest> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 9);
 
 /**
  * @generated from message contest.v1.VoteResponse
  */
 export type VoteResponse = Message<"contest.v1.VoteResponse"> & {
-	/**
-	 * @generated from field: contest.v1.Direction current_direction = 1;
-	 */
-	currentDirection: Direction;
+  /**
+   * @generated from field: contest.v1.Direction current_direction = 1;
+   */
+  currentDirection: Direction;
 };
 
 /**
  * Describes the message contest.v1.VoteResponse.
  * Use `create(VoteResponseSchema)` to create a new message.
  */
-export const VoteResponseSchema: GenMessage<VoteResponse> = /*@__PURE__*/ messageDesc(file_contest_v1_contest, 10);
+export const VoteResponseSchema: GenMessage<VoteResponse> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 10);
 
 /**
  * @generated from message contest.v1.UploadRequest
  */
 export type UploadRequest = Message<"contest.v1.UploadRequest"> & {
-	/**
-	 * @generated from field: string contest_id = 1;
-	 */
-	contestId: string;
+  /**
+   * @generated from field: string contest_id = 1;
+   */
+  contestId: string;
 
-	/**
-	 * @generated from field: string name = 2;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: bytes content = 3;
-	 */
-	content: Uint8Array;
+  /**
+   * @generated from field: bytes content = 3;
+   */
+  content: Uint8Array;
 };
 
 /**
  * Describes the message contest.v1.UploadRequest.
  * Use `create(UploadRequestSchema)` to create a new message.
  */
-export const UploadRequestSchema: GenMessage<UploadRequest> = /*@__PURE__*/ messageDesc(file_contest_v1_contest, 11);
+export const UploadRequestSchema: GenMessage<UploadRequest> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 11);
 
 /**
  * @generated from message contest.v1.UploadResponse
  */
 export type UploadResponse = Message<"contest.v1.UploadResponse"> & {
-	/**
-	 * @generated from field: asset.v1.Asset asset = 1;
-	 */
-	asset?: Asset;
+  /**
+   * @generated from field: asset.v1.Asset asset = 1;
+   */
+  asset?: Asset;
 };
 
 /**
  * Describes the message contest.v1.UploadResponse.
  * Use `create(UploadResponseSchema)` to create a new message.
  */
-export const UploadResponseSchema: GenMessage<UploadResponse> = /*@__PURE__*/ messageDesc(file_contest_v1_contest, 12);
+export const UploadResponseSchema: GenMessage<UploadResponse> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 12);
 
 /**
  * @generated from message contest.v1.EntriesResponse
  */
 export type EntriesResponse = Message<"contest.v1.EntriesResponse"> & {
-	/**
-	 * @generated from field: repeated contest.v1.Entry entries = 1;
-	 */
-	entries: Entry[];
+  /**
+   * @generated from field: repeated contest.v1.Entry entries = 1;
+   */
+  entries: Entry[];
 };
 
 /**
  * Describes the message contest.v1.EntriesResponse.
  * Use `create(EntriesResponseSchema)` to create a new message.
  */
-export const EntriesResponseSchema: GenMessage<EntriesResponse> =
-	/*@__PURE__*/
-	messageDesc(file_contest_v1_contest, 13);
+export const EntriesResponseSchema: GenMessage<EntriesResponse> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 13);
 
 /**
  * @generated from message contest.v1.EntriesRequest
  */
 export type EntriesRequest = Message<"contest.v1.EntriesRequest"> & {
-	/**
-	 * @generated from field: string contest_id = 1;
-	 */
-	contestId: string;
+  /**
+   * @generated from field: string contest_id = 1;
+   */
+  contestId: string;
 };
 
 /**
  * Describes the message contest.v1.EntriesRequest.
  * Use `create(EntriesRequestSchema)` to create a new message.
  */
-export const EntriesRequestSchema: GenMessage<EntriesRequest> = /*@__PURE__*/ messageDesc(file_contest_v1_contest, 14);
+export const EntriesRequestSchema: GenMessage<EntriesRequest> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 14);
 
 /**
  * @generated from message contest.v1.ContestRequest
  */
 export type ContestRequest = Message<"contest.v1.ContestRequest"> & {
-	/**
-	 * @generated from field: string contest_id = 1;
-	 */
-	contestId: string;
+  /**
+   * @generated from field: string contest_id = 1;
+   */
+  contestId: string;
 };
 
 /**
  * Describes the message contest.v1.ContestRequest.
  * Use `create(ContestRequestSchema)` to create a new message.
  */
-export const ContestRequestSchema: GenMessage<ContestRequest> = /*@__PURE__*/ messageDesc(file_contest_v1_contest, 15);
+export const ContestRequestSchema: GenMessage<ContestRequest> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 15);
 
 /**
  * @generated from message contest.v1.ContestResponse
  */
 export type ContestResponse = Message<"contest.v1.ContestResponse"> & {
-	/**
-	 * @generated from field: contest.v1.Contest contest = 1;
-	 */
-	contest?: Contest;
+  /**
+   * @generated from field: contest.v1.Contest contest = 1;
+   */
+  contest?: Contest;
 };
 
 /**
  * Describes the message contest.v1.ContestResponse.
  * Use `create(ContestResponseSchema)` to create a new message.
  */
-export const ContestResponseSchema: GenMessage<ContestResponse> =
-	/*@__PURE__*/
-	messageDesc(file_contest_v1_contest, 16);
+export const ContestResponseSchema: GenMessage<ContestResponse> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 16);
 
 /**
  * @generated from message contest.v1.Vote
  */
 export type Vote = Message<"contest.v1.Vote"> & {
-	/**
-	 * @generated from field: string contest_entry_id = 1;
-	 */
-	contestEntryId: string;
+  /**
+   * @generated from field: string contest_entry_id = 1;
+   */
+  contestEntryId: string;
 
-	/**
-	 * @generated from field: int64 steam_id = 2;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 2;
+   */
+  steamId: bigint;
 
-	/**
-	 * @generated from field: int32 vote = 3;
-	 */
-	vote: number;
+  /**
+   * @generated from field: int32 vote = 3;
+   */
+  vote: number;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 4;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 4;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 5;
-	 */
-	updatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 5;
+   */
+  updatedOn?: Timestamp;
 };
 
 /**
  * Describes the message contest.v1.Vote.
  * Use `create(VoteSchema)` to create a new message.
  */
-export const VoteSchema: GenMessage<Vote> = /*@__PURE__*/ messageDesc(file_contest_v1_contest, 17);
+export const VoteSchema: GenMessage<Vote> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 17);
 
 /**
  * @generated from message contest.v1.Entry
  */
 export type Entry = Message<"contest.v1.Entry"> & {
-	/**
-	 * @generated from field: string contest_id = 1;
-	 */
-	contestId: string;
+  /**
+   * @generated from field: string contest_id = 1;
+   */
+  contestId: string;
 
-	/**
-	 * @generated from field: string contest_entry_id = 2;
-	 */
-	contestEntryId: string;
+  /**
+   * @generated from field: string contest_entry_id = 2;
+   */
+  contestEntryId: string;
 
-	/**
-	 * @generated from field: int64 steam_id = 3;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 3;
+   */
+  steamId: bigint;
 
-	/**
-	 * @generated from field: string persona_name = 4;
-	 */
-	personaName: string;
+  /**
+   * @generated from field: string persona_name = 4;
+   */
+  personaName: string;
 
-	/**
-	 * @generated from field: string avatar_hash = 5;
-	 */
-	avatarHash: string;
+  /**
+   * @generated from field: string avatar_hash = 5;
+   */
+  avatarHash: string;
 
-	/**
-	 * @generated from field: string asset_id = 6;
-	 */
-	assetId: string;
+  /**
+   * @generated from field: string asset_id = 6;
+   */
+  assetId: string;
 
-	/**
-	 * @generated from field: string description = 7;
-	 */
-	description: string;
+  /**
+   * @generated from field: string description = 7;
+   */
+  description: string;
 
-	/**
-	 * @generated from field: int32 placement = 8;
-	 */
-	placement: number;
+  /**
+   * @generated from field: int32 placement = 8;
+   */
+  placement: number;
 
-	/**
-	 * @generated from field: bool deleted = 9;
-	 */
-	deleted: boolean;
+  /**
+   * @generated from field: bool deleted = 9;
+   */
+  deleted: boolean;
 
-	/**
-	 * @generated from field: int32 votes_up = 10;
-	 */
-	votesUp: number;
+  /**
+   * @generated from field: int32 votes_up = 10;
+   */
+  votesUp: number;
 
-	/**
-	 * @generated from field: int32 votes_down = 11;
-	 */
-	votesDown: number;
+  /**
+   * @generated from field: int32 votes_down = 11;
+   */
+  votesDown: number;
 
-	/**
-	 * @generated from field: asset.v1.Asset asset = 12;
-	 */
-	asset?: Asset;
+  /**
+   * @generated from field: asset.v1.Asset asset = 12;
+   */
+  asset?: Asset;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 13;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 13;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 14;
-	 */
-	updatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 14;
+   */
+  updatedOn?: Timestamp;
 };
 
 /**
  * Describes the message contest.v1.Entry.
  * Use `create(EntrySchema)` to create a new message.
  */
-export const EntrySchema: GenMessage<Entry> = /*@__PURE__*/ messageDesc(file_contest_v1_contest, 18);
+export const EntrySchema: GenMessage<Entry> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 18);
 
 /**
  * @generated from message contest.v1.Contest
  */
 export type Contest = Message<"contest.v1.Contest"> & {
-	/**
-	 * @generated from field: string title = 1;
-	 */
-	title: string;
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
 
-	/**
-	 * @generated from field: string description = 2;
-	 */
-	description: string;
+  /**
+   * @generated from field: string description = 2;
+   */
+  description: string;
 
-	/**
-	 * @generated from field: bool public = 3;
-	 */
-	public: boolean;
+  /**
+   * @generated from field: bool public = 3;
+   */
+  public: boolean;
 
-	/**
-	 * @generated from field: bool hide_submissions = 4;
-	 */
-	hideSubmissions: boolean;
+  /**
+   * @generated from field: bool hide_submissions = 4;
+   */
+  hideSubmissions: boolean;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp date_start = 5;
-	 */
-	dateStart?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp date_start = 5;
+   */
+  dateStart?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp date_end = 6;
-	 */
-	dateEnd?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp date_end = 6;
+   */
+  dateEnd?: Timestamp;
 
-	/**
-	 * @generated from field: int32 max_submissions = 7;
-	 */
-	maxSubmissions: number;
+  /**
+   * @generated from field: int32 max_submissions = 7;
+   */
+  maxSubmissions: number;
 
-	/**
-	 * @generated from field: int32 own_submissions = 8;
-	 */
-	ownSubmissions: number;
+  /**
+   * @generated from field: int32 own_submissions = 8;
+   */
+  ownSubmissions: number;
 
-	/**
-	 * @generated from field: string media_types = 9;
-	 */
-	mediaTypes: string;
+  /**
+   * @generated from field: string media_types = 9;
+   */
+  mediaTypes: string;
 
-	/**
-	 * @generated from field: int32 num_entries = 10;
-	 */
-	numEntries: number;
+  /**
+   * @generated from field: int32 num_entries = 10;
+   */
+  numEntries: number;
 
-	/**
-	 * @generated from field: bool voting = 11;
-	 */
-	voting: boolean;
+  /**
+   * @generated from field: bool voting = 11;
+   */
+  voting: boolean;
 
-	/**
-	 * @generated from field: person.v1.Privilege min_permission_level = 12;
-	 */
-	minPermissionLevel: Privilege;
+  /**
+   * @generated from field: person.v1.Privilege min_permission_level = 12;
+   */
+  minPermissionLevel: Privilege;
 
-	/**
-	 * @generated from field: bool down_votes = 13;
-	 */
-	downVotes: boolean;
+  /**
+   * @generated from field: bool down_votes = 13;
+   */
+  downVotes: boolean;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 14;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 14;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 15;
-	 */
-	updatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 15;
+   */
+  updatedOn?: Timestamp;
 
-	/**
-	 * @generated from field: string contest_id = 16;
-	 */
-	contestId: string;
+  /**
+   * @generated from field: string contest_id = 16;
+   */
+  contestId: string;
 };
 
 /**
  * Describes the message contest.v1.Contest.
  * Use `create(ContestSchema)` to create a new message.
  */
-export const ContestSchema: GenMessage<Contest> = /*@__PURE__*/ messageDesc(file_contest_v1_contest, 19);
+export const ContestSchema: GenMessage<Contest> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 19);
 
 /**
  * @generated from message contest.v1.ContestsResponse
  */
 export type ContestsResponse = Message<"contest.v1.ContestsResponse"> & {
-	/**
-	 * @generated from field: repeated contest.v1.Contest contests = 1;
-	 */
-	contests: Contest[];
+  /**
+   * @generated from field: repeated contest.v1.Contest contests = 1;
+   */
+  contests: Contest[];
 };
 
 /**
  * Describes the message contest.v1.ContestsResponse.
  * Use `create(ContestsResponseSchema)` to create a new message.
  */
-export const ContestsResponseSchema: GenMessage<ContestsResponse> =
-	/*@__PURE__*/
-	messageDesc(file_contest_v1_contest, 20);
+export const ContestsResponseSchema: GenMessage<ContestsResponse> = /*@__PURE__*/
+  messageDesc(file_contest_v1_contest, 20);
 
 /**
  * @generated from enum contest.v1.Direction
  */
 export enum Direction {
-	/**
-	 * @generated from enum value: DIRECTION_UP_UNSPECIFIED = 0;
-	 */
-	UP_UNSPECIFIED = 0,
+  /**
+   * @generated from enum value: DIRECTION_UP_UNSPECIFIED = 0;
+   */
+  UP_UNSPECIFIED = 0,
 
-	/**
-	 * @generated from enum value: DIRECTION_DOWN = 1;
-	 */
-	DOWN = 1,
+  /**
+   * @generated from enum value: DIRECTION_DOWN = 1;
+   */
+  DOWN = 1,
 }
 
 /**
  * Describes the enum contest.v1.Direction.
  */
-export const DirectionSchema: GenEnum<Direction> = /*@__PURE__*/ enumDesc(file_contest_v1_contest, 0);
+export const DirectionSchema: GenEnum<Direction> = /*@__PURE__*/
+  enumDesc(file_contest_v1_contest, 0);
 
 /**
  * @generated from service contest.v1.Service
  */
 export const Service: GenService<{
-	/**
-	 * @generated from rpc contest.v1.Service.Contests
-	 */
-	contests: {
-		methodKind: "unary";
-		input: typeof EmptySchema;
-		output: typeof ContestsResponseSchema;
-	};
-	/**
-	 * @generated from rpc contest.v1.Service.Contest
-	 */
-	contest: {
-		methodKind: "unary";
-		input: typeof ContestRequestSchema;
-		output: typeof ContestResponseSchema;
-	};
-	/**
-	 * @generated from rpc contest.v1.Service.Entries
-	 */
-	entries: {
-		methodKind: "unary";
-		input: typeof EntriesRequestSchema;
-		output: typeof EntriesResponseSchema;
-	};
-	/**
-	 * @generated from rpc contest.v1.Service.Upload
-	 */
-	upload: {
-		methodKind: "unary";
-		input: typeof UploadRequestSchema;
-		output: typeof UploadResponseSchema;
-	};
-	/**
-	 * @generated from rpc contest.v1.Service.Vote
-	 */
-	vote: {
-		methodKind: "unary";
-		input: typeof VoteRequestSchema;
-		output: typeof VoteResponseSchema;
-	};
-	/**
-	 * @generated from rpc contest.v1.Service.EntryCreate
-	 */
-	entryCreate: {
-		methodKind: "unary";
-		input: typeof EntryCreateRequestSchema;
-		output: typeof EntryCreateResponseSchema;
-	};
-	/**
-	 * @generated from rpc contest.v1.Service.EntryDelete
-	 */
-	entryDelete: {
-		methodKind: "unary";
-		input: typeof EntryDeleteRequestSchema;
-		output: typeof EmptySchema;
-	};
-	/**
-	 * @generated from rpc contest.v1.Service.ContestCreate
-	 */
-	contestCreate: {
-		methodKind: "unary";
-		input: typeof ContestCreateRequestSchema;
-		output: typeof ContestCreateResponseSchema;
-	};
-	/**
-	 * @generated from rpc contest.v1.Service.ContestDelete
-	 */
-	contestDelete: {
-		methodKind: "unary";
-		input: typeof ContestDeleteRequestSchema;
-		output: typeof EmptySchema;
-	};
-	/**
-	 * @generated from rpc contest.v1.Service.ContestEdit
-	 */
-	contestEdit: {
-		methodKind: "unary";
-		input: typeof ContestEditRequestSchema;
-		output: typeof ContestEditResponseSchema;
-	};
-}> = /*@__PURE__*/ serviceDesc(file_contest_v1_contest, 0);
+  /**
+   * @generated from rpc contest.v1.Service.Contests
+   */
+  contests: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof ContestsResponseSchema;
+  },
+  /**
+   * @generated from rpc contest.v1.Service.Contest
+   */
+  contest: {
+    methodKind: "unary";
+    input: typeof ContestRequestSchema;
+    output: typeof ContestResponseSchema;
+  },
+  /**
+   * @generated from rpc contest.v1.Service.Entries
+   */
+  entries: {
+    methodKind: "unary";
+    input: typeof EntriesRequestSchema;
+    output: typeof EntriesResponseSchema;
+  },
+  /**
+   * @generated from rpc contest.v1.Service.Upload
+   */
+  upload: {
+    methodKind: "unary";
+    input: typeof UploadRequestSchema;
+    output: typeof UploadResponseSchema;
+  },
+  /**
+   * @generated from rpc contest.v1.Service.Vote
+   */
+  vote: {
+    methodKind: "unary";
+    input: typeof VoteRequestSchema;
+    output: typeof VoteResponseSchema;
+  },
+  /**
+   * @generated from rpc contest.v1.Service.EntryCreate
+   */
+  entryCreate: {
+    methodKind: "unary";
+    input: typeof EntryCreateRequestSchema;
+    output: typeof EntryCreateResponseSchema;
+  },
+  /**
+   * @generated from rpc contest.v1.Service.EntryDelete
+   */
+  entryDelete: {
+    methodKind: "unary";
+    input: typeof EntryDeleteRequestSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc contest.v1.Service.ContestCreate
+   */
+  contestCreate: {
+    methodKind: "unary";
+    input: typeof ContestCreateRequestSchema;
+    output: typeof ContestCreateResponseSchema;
+  },
+  /**
+   * @generated from rpc contest.v1.Service.ContestDelete
+   */
+  contestDelete: {
+    methodKind: "unary";
+    input: typeof ContestDeleteRequestSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc contest.v1.Service.ContestEdit
+   */
+  contestEdit: {
+    methodKind: "unary";
+    input: typeof ContestEditRequestSchema;
+    output: typeof ContestEditResponseSchema;
+  },
+}> = /*@__PURE__*/
+  serviceDesc(file_contest_v1_contest, 0);
+

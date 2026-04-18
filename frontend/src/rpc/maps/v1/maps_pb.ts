@@ -11,40 +11,38 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file maps/v1/maps.proto.
  */
-export const file_maps_v1_maps: GenFile =
-	/*@__PURE__*/
-	fileDesc(
-		"ChJtYXBzL3YxL21hcHMucHJvdG8SB21hcHMudjEigwEKA01hcBIOCgZtYXBfaWQYASABKAUSDAoEbmFtZRgCIAEoCRIuCgpjcmVhdGVkX29uGAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEKOAQoLY29tLm1hcHMudjFCCU1hcHNQcm90b1ABWjdnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL21hcHMvdjE7bWFwc3YxogIDTVhYqgIHTWFwcy5WMcoCB01hcHNcVjHiAhNNYXBzXFYxXEdQQk1ldGFkYXRh6gIITWFwczo6VjFiCGVkaXRpb25zcOgH",
-		[file_google_protobuf_timestamp],
-	);
+export const file_maps_v1_maps: GenFile = /*@__PURE__*/
+  fileDesc("ChJtYXBzL3YxL21hcHMucHJvdG8SB21hcHMudjEigwEKA01hcBIOCgZtYXBfaWQYASABKAUSDAoEbmFtZRgCIAEoCRIuCgpjcmVhdGVkX29uGAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEKOAQoLY29tLm1hcHMudjFCCU1hcHNQcm90b1ABWjdnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL21hcHMvdjE7bWFwc3YxogIDTVhYqgIHTWFwcy5WMcoCB01hcHNcVjHiAhNNYXBzXFYxXEdQQk1ldGFkYXRh6gIITWFwczo6VjFiCGVkaXRpb25zcOgH", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message maps.v1.Map
  */
 export type Map = Message<"maps.v1.Map"> & {
-	/**
-	 * @generated from field: int32 map_id = 1;
-	 */
-	mapId: number;
+  /**
+   * @generated from field: int32 map_id = 1;
+   */
+  mapId: number;
 
-	/**
-	 * @generated from field: string name = 2;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 3;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 3;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 4;
-	 */
-	updatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 4;
+   */
+  updatedOn?: Timestamp;
 };
 
 /**
  * Describes the message maps.v1.Map.
  * Use `create(MapSchema)` to create a new message.
  */
-export const MapSchema: GenMessage<Map> = /*@__PURE__*/ messageDesc(file_maps_v1_maps, 0);
+export const MapSchema: GenMessage<Map> = /*@__PURE__*/
+  messageDesc(file_maps_v1_maps, 0);
+

@@ -1,12 +1,13 @@
 import Pagination from "@mui/material/Pagination";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import { useQuery } from "@tanstack/react-query";
+
 import { useState } from "react";
-import { apiGetNewsLatest } from "../api/news";
-import { renderDate } from "../util/time.ts";
+import {renderDate, timestampToDateTime} from "../util/time.ts";
 import { MarkDownRenderer } from "./MarkdownRenderer";
 import { NewsHead } from "./NewsHead.tsx";
+import {latest} from "../rpc/news/v1/news-NewsService_connectquery.ts";
+import { useQuery } from "@connectrpc/connect-query";
 
 interface NewsViewProps {
 	itemsPerPage: number;
@@ -15,29 +16,24 @@ interface NewsViewProps {
 
 export const NewsView = ({ itemsPerPage, assetURL }: NewsViewProps) => {
 	const [page, setPage] = useState<number>(0);
-	const { data: articles, isLoading } = useQuery({
-		queryKey: ["articles"],
-		queryFn: async ({ signal }) => {
-			return await apiGetNewsLatest(signal);
-		},
-	});
+	const { data, isLoading } = useQuery(latest, {limit: 1000});
 
 	return (
 		<Stack spacing={2}>
 			{!isLoading &&
-				(articles ?? [])?.slice(page * itemsPerPage, page * itemsPerPage + itemsPerPage).map((article) => {
-					if (!article.created_on || !article.updated_on) {
+				(data?.article ?? [])?.slice(page * itemsPerPage, page * itemsPerPage + itemsPerPage).map((article) => {
+					if (!article.createdOn || !article.updatedOn) {
 						return null;
 					}
 					return (
-						<Paper elevation={1} key={`news_${article.news_id}`}>
-							<NewsHead left={article.title} right={renderDate(article.created_on)} />
-							<MarkDownRenderer body_md={article.body_md} assetURL={assetURL} />
+						<Paper elevation={1} key={`news_${article.newsId}`}>
+							<NewsHead left={article.title} right={renderDate(timestampToDateTime(article.createdOn))} />
+							<MarkDownRenderer body_md={article.bodyMd} assetURL={assetURL} />
 						</Paper>
 					);
 				})}
 			<Pagination
-				count={articles ? Math.ceil(articles.length / itemsPerPage) : 0}
+				count={data?.article ? Math.ceil(data.article.length / itemsPerPage) : 0}
 				defaultValue={1}
 				onChange={(_, newPage) => {
 					setPage(newPage - 1);

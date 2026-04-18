@@ -1,41 +1,13 @@
-import { queryOptions } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { apiGetWikiPage } from "../api/wiki.ts";
 import { ErrorDetails } from "../component/ErrorDetails.tsx";
 import { WikiPage } from "../component/WikiPage.tsx";
 import { AppError } from "../error.tsx";
 import { PermissionLevel } from "../schema/people.ts";
+import { useSuspenseQuery} from "@connectrpc/connect-query";
+import {get} from "../rpc/wiki/v1/wiki-WikiService_connectquery.ts";
 
 export const Route = createFileRoute("/_guest/wiki/$slug")({
 	component: Wiki,
-
-	loader: async ({ context, params }) => {
-		const { slug } = params;
-		const queryOpts = queryOptions({
-			queryKey: ["wiki", { slug }],
-			queryFn: async ({ signal }) => {
-				return await apiGetWikiPage(slug, signal);
-			},
-		});
-		try {
-			return { page: await context.queryClient.fetchQuery(queryOpts) };
-		} catch (e) {
-			if (e instanceof AppError) {
-				// Mostly meant for handling permission denied error
-				throw e;
-			}
-			return {
-				page: {
-					revision: 0,
-					body_md: "",
-					slug: slug,
-					permission_level: PermissionLevel.Guest,
-					created_on: new Date(),
-					updated_on: new Date(),
-				},
-			};
-		}
-	},
 	head: ({ match, params }) => ({
 		meta: [{ name: "description", content: "Wiki" }, match.context.title(params.slug)],
 	}),
@@ -49,8 +21,23 @@ export const Route = createFileRoute("/_guest/wiki/$slug")({
 
 function Wiki() {
 	const { slug } = Route.useParams();
-	const { page } = Route.useLoaderData();
 	const { appInfo } = Route.useRouteContext();
+
+    const {data, isLoading} = useSuspenseQuery(get, {slug});
+
+    if (isLoading) {
+        return <div>loading...</div>;
+    }
+
+
+    const page = data.wiki ?? {
+            revision: 0,
+            body_md: "",
+            slug: slug,
+            permission_level: PermissionLevel.Guest,
+            created_on: new Date(),
+            updated_on: new Date(),
+        }
 
 	return <WikiPage slug={slug} page={page} assetURL={appInfo.assetUrl} />;
 }
