@@ -26,26 +26,26 @@ var file_person_v1_steamid_proto_extTypes = []protoimpl.ExtensionInfo{
 		ExtendedType:  (*validate.Int64Rules)(nil),
 		ExtensionType: (*bool)(nil),
 		Field:         10000,
-		Name:          "person.v1.steam_id_range",
-		Tag:           "varint,10000,opt,name=steam_id_range",
+		Name:          "person.v1.valid_steam_id",
+		Tag:           "varint,10000,opt,name=valid_steam_id",
 		Filename:      "person/v1/steamid.proto",
 	},
 }
 
 // Extension fields to validate.Int64Rules.
 var (
-	// optional bool steam_id_range = 10000;
-	E_SteamIdRange = &file_person_v1_steamid_proto_extTypes[0]
+	// optional bool valid_steam_id = 10000;
+	E_ValidSteamId = &file_person_v1_steamid_proto_extTypes[0]
 )
 
 var File_person_v1_steamid_proto protoreflect.FileDescriptor
 
 const file_person_v1_steamid_proto_rawDesc = "" +
 	"\n" +
-	"\x17person/v1/steamid.proto\x12\tperson.v1\x1a\x1bbuf/validate/validate.proto:\xac\x01\n" +
-	"\x0esteam_id_range\x12\x18.buf.validate.Int64Rules\x18\x90N \x01(\bBk\xc2Hh\n" +
-	"f\n" +
-	"\x0eint64.steam_id\x12\x1einvalid steam_id, out of range\x1a4this > 76561197960265729 && this < 76561200000000000R\fsteamIdRangeB\x9f\x01\n" +
+	"\x17person/v1/steamid.proto\x12\tperson.v1\x1a\x1bbuf/validate/validate.proto:\xb2\x01\n" +
+	"\x0evalid_steam_id\x12\x18.buf.validate.Int64Rules\x18\x90N \x01(\bBq\xc2Hn\n" +
+	"l\n" +
+	"\x14int64.valid_steam_id\x12\x1einvalid steam_id, out of range\x1a4this > 76561197960265729 && this < 76561200000000000R\fvalidSteamIdB\x9f\x01\n" +
 	"\rcom.person.v1B\fSteamidProtoP\x01Z;github.com/leighmacdonald/gbans/internal/person/v1;personv1\xa2\x02\x03PXX\xaa\x02\tPerson.V1\xca\x02\tPerson\\V1\xe2\x02\x15Person\\V1\\GPBMetadata\xea\x02\n" +
 	"Person::V1b\beditionsp\xe8\a"
 
@@ -53,7 +53,7 @@ var file_person_v1_steamid_proto_goTypes = []any{
 	(*validate.Int64Rules)(nil), // 0: buf.validate.Int64Rules
 }
 var file_person_v1_steamid_proto_depIdxs = []int32{
-	0, // 0: person.v1.steam_id_range:extendee -> buf.validate.Int64Rules
+	0, // 0: person.v1.valid_steam_id:extendee -> buf.validate.Int64Rules
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name

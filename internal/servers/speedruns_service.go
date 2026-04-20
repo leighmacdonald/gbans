@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"connectrpc.com/connect"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/maps"
 	mapsv1 "github.com/leighmacdonald/gbans/internal/maps/v1"
@@ -22,8 +23,16 @@ type SpeedrunsService struct {
 	speedruns Speedruns
 }
 
-func NewSpeedrunsService(speedruns Speedruns) *SpeedrunsService {
-	return &SpeedrunsService{speedruns: speedruns}
+func NewSpeedrunsService(speedruns Speedruns, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := serversv1connect.NewSpeedrunsServiceHandler(&SpeedrunsService{speedruns: speedruns}, option...)
+
+	authMiddleware.AuthedRoute(serversv1connect.SpeedrunsServiceMapSpeedrunsProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(serversv1connect.SpeedrunsServiceOverallTopNProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(serversv1connect.SpeedrunsServiceOverallRecentProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(serversv1connect.SpeedrunsServiceSpeedrunCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(serversv1connect.SpeedrunsServiceQueryProcedure, rpc.WithMinPermissions(permission.User))
+
+	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
 func (s SpeedrunsService) MapSpeedruns(ctx context.Context, req *v1.MapSpeedrunsRequest) (*v1.MapSpeedrunsResponse, error) {

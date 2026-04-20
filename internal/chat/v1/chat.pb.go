@@ -7,6 +7,7 @@
 package chatv1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -127,7 +128,7 @@ type QueryRequest struct {
 	DateStart     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=date_start,json=dateStart" json:"date_start,omitempty"`
 	DateEnd       *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=date_end,json=dateEnd" json:"date_end,omitempty"`
 	FlaggedOnly   *bool                  `protobuf:"varint,6,opt,name=flagged_only,json=flaggedOnly" json:"flagged_only,omitempty"`
-	SteamId       *string                `protobuf:"bytes,7,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	SteamId       *int64                 `protobuf:"varint,7,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -204,11 +205,11 @@ func (x *QueryRequest) GetFlaggedOnly() bool {
 	return false
 }
 
-func (x *QueryRequest) GetSteamId() string {
+func (x *QueryRequest) GetSteamId() int64 {
 	if x != nil && x.SteamId != nil {
 		return *x.SteamId
 	}
-	return ""
+	return 0
 }
 
 type QueryResponse struct {
@@ -267,7 +268,7 @@ type Message struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	PersonMessageId   *int64                 `protobuf:"varint,1,opt,name=person_message_id,json=personMessageId" json:"person_message_id,omitempty"`
 	MatchId           *string                `protobuf:"bytes,2,opt,name=match_id,json=matchId" json:"match_id,omitempty"`
-	SteamId           *string                `protobuf:"bytes,3,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	SteamId           *int64                 `protobuf:"varint,3,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	AvatarHash        *string                `protobuf:"bytes,4,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
 	PersonaName       *string                `protobuf:"bytes,5,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
 	ServerName        *string                `protobuf:"bytes,6,opt,name=server_name,json=serverName" json:"server_name,omitempty"`
@@ -275,7 +276,7 @@ type Message struct {
 	Body              *string                `protobuf:"bytes,8,opt,name=body" json:"body,omitempty"`
 	Team              *bool                  `protobuf:"varint,9,opt,name=team" json:"team,omitempty"`
 	CreatedOn         *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
-	AutoFilterFlagged *int64                 `protobuf:"varint,11,opt,name=auto_filter_flagged,json=autoFilterFlagged" json:"auto_filter_flagged,omitempty"`
+	AutoFilterFlagged *int32                 `protobuf:"varint,11,opt,name=auto_filter_flagged,json=autoFilterFlagged" json:"auto_filter_flagged,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -324,11 +325,11 @@ func (x *Message) GetMatchId() string {
 	return ""
 }
 
-func (x *Message) GetSteamId() string {
+func (x *Message) GetSteamId() int64 {
 	if x != nil && x.SteamId != nil {
 		return *x.SteamId
 	}
-	return ""
+	return 0
 }
 
 func (x *Message) GetAvatarHash() string {
@@ -380,7 +381,7 @@ func (x *Message) GetCreatedOn() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *Message) GetAutoFilterFlagged() int64 {
+func (x *Message) GetAutoFilterFlagged() int32 {
 	if x != nil && x.AutoFilterFlagged != nil {
 		return *x.AutoFilterFlagged
 	}
@@ -391,40 +392,40 @@ var File_chat_v1_chat_proto protoreflect.FileDescriptor
 
 const file_chat_v1_chat_proto_rawDesc = "" +
 	"\n" +
-	"\x12chat/v1/chat.proto\x12\achat.v1\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"[\n" +
-	"\x13QueryContextRequest\x12*\n" +
-	"\x11person_message_id\x18\x01 \x01(\x03R\x0fpersonMessageId\x12\x18\n" +
-	"\apadding\x18\x02 \x01(\x05R\apadding\"D\n" +
-	"\x14QueryContextResponse\x12,\n" +
-	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageR\bmessages\"\x92\x02\n" +
-	"\fQueryRequest\x12\x1f\n" +
-	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12\x14\n" +
+	"\x12chat/v1/chat.proto\x12\achat.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"m\n" +
+	"\x13QueryContextRequest\x124\n" +
+	"\x11person_message_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x0fpersonMessageId\x12 \n" +
+	"\apadding\x18\x02 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\apadding\"L\n" +
+	"\x14QueryContextResponse\x124\n" +
+	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\"\xa8\x02\n" +
+	"\fQueryRequest\x121\n" +
+	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12\x14\n" +
 	"\x05query\x18\x02 \x01(\tR\x05query\x12\x1b\n" +
 	"\tserver_id\x18\x03 \x01(\x05R\bserverId\x129\n" +
 	"\n" +
 	"date_start\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tdateStart\x125\n" +
 	"\bdate_end\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\adateEnd\x12!\n" +
-	"\fflagged_only\x18\x06 \x01(\bR\vflaggedOnly\x12\x19\n" +
-	"\bsteam_id\x18\a \x01(\tR\asteamId\"S\n" +
-	"\rQueryResponse\x12,\n" +
-	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageR\bmessages\x12\x14\n" +
-	"\x05count\x18\x02 \x01(\x03R\x05count\"\x80\x03\n" +
-	"\aMessage\x12*\n" +
-	"\x11person_message_id\x18\x01 \x01(\x03R\x0fpersonMessageId\x12\x19\n" +
-	"\bmatch_id\x18\x02 \x01(\tR\amatchId\x12\x19\n" +
-	"\bsteam_id\x18\x03 \x01(\tR\asteamId\x12\x1f\n" +
-	"\vavatar_hash\x18\x04 \x01(\tR\n" +
-	"avatarHash\x12!\n" +
-	"\fpersona_name\x18\x05 \x01(\tR\vpersonaName\x12\x1f\n" +
-	"\vserver_name\x18\x06 \x01(\tR\n" +
-	"serverName\x12\x1b\n" +
-	"\tserver_id\x18\a \x01(\x05R\bserverId\x12\x12\n" +
-	"\x04body\x18\b \x01(\tR\x04body\x12\x12\n" +
-	"\x04team\x18\t \x01(\bR\x04team\x129\n" +
+	"\fflagged_only\x18\x06 \x01(\bR\vflaggedOnly\x12\x1d\n" +
+	"\bsteam_id\x18\a \x01(\x03B\x020\x01R\asteamId\"e\n" +
+	"\rQueryResponse\x124\n" +
+	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\x12\x1e\n" +
+	"\x05count\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x05count\"\xdc\x03\n" +
+	"\aMessage\x124\n" +
+	"\x11person_message_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x0fpersonMessageId\x12!\n" +
+	"\bmatch_id\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\amatchId\x12#\n" +
+	"\bsteam_id\x18\x03 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12'\n" +
+	"\vavatar_hash\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"avatarHash\x12)\n" +
+	"\fpersona_name\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12'\n" +
+	"\vserver_name\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"serverName\x12#\n" +
+	"\tserver_id\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bserverId\x12\x1a\n" +
+	"\x04body\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04body\x12\x1a\n" +
+	"\x04team\x18\t \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x04team\x12A\n" +
 	"\n" +
 	"created_on\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x12.\n" +
-	"\x13auto_filter_flagged\x18\v \x01(\x03R\x11autoFilterFlagged2\x96\x01\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x126\n" +
+	"\x13auto_filter_flagged\x18\v \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11autoFilterFlagged2\x96\x01\n" +
 	"\vChatService\x128\n" +
 	"\x05Query\x12\x15.chat.v1.QueryRequest\x1a\x16.chat.v1.QueryResponse\"\x00\x12M\n" +
 	"\fQueryContext\x12\x1c.chat.v1.QueryContextRequest\x1a\x1d.chat.v1.QueryContextResponse\"\x00B\x8e\x01\n" +
@@ -449,12 +450,12 @@ var file_chat_v1_chat_proto_goTypes = []any{
 	(*QueryRequest)(nil),          // 2: chat.v1.QueryRequest
 	(*QueryResponse)(nil),         // 3: chat.v1.QueryResponse
 	(*Message)(nil),               // 4: chat.v1.Message
-	(*v1.Filter)(nil),             // 5: Filter
+	(*v1.Filter)(nil),             // 5: database.query.v1.Filter
 	(*timestamppb.Timestamp)(nil), // 6: google.protobuf.Timestamp
 }
 var file_chat_v1_chat_proto_depIdxs = []int32{
 	4, // 0: chat.v1.QueryContextResponse.messages:type_name -> chat.v1.Message
-	5, // 1: chat.v1.QueryRequest.filter:type_name -> Filter
+	5, // 1: chat.v1.QueryRequest.filter:type_name -> database.query.v1.Filter
 	6, // 2: chat.v1.QueryRequest.date_start:type_name -> google.protobuf.Timestamp
 	6, // 3: chat.v1.QueryRequest.date_end:type_name -> google.protobuf.Timestamp
 	4, // 4: chat.v1.QueryResponse.messages:type_name -> chat.v1.Message

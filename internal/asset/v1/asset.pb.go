@@ -8,7 +8,6 @@ package assetv1
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
-	_ "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -328,31 +327,31 @@ var File_asset_v1_asset_proto protoreflect.FileDescriptor
 
 const file_asset_v1_asset_proto_rawDesc = "" +
 	"\n" +
-	"\x14asset/v1/asset.proto\x12\basset.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"4\n" +
-	"\rDeleteRequest\x12#\n" +
-	"\basset_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\aassetId\"$\n" +
-	"\x0eDeleteResponse\x12\x12\n" +
-	"\x04size\x18\x01 \x01(\x03R\x04size\"?\n" +
-	"\rCreateRequest\x12\x1a\n" +
-	"\bcontents\x18\x01 \x01(\fR\bcontents\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\"7\n" +
-	"\x0eCreateResponse\x12%\n" +
-	"\x05asset\x18\x01 \x01(\v2\x0f.asset.v1.AssetR\x05asset\"\xcf\x02\n" +
-	"\x05Asset\x12#\n" +
-	"\basset_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\aassetId\x12\x16\n" +
-	"\x06bucket\x18\x02 \x01(\tR\x06bucket\x12\x1b\n" +
-	"\tauthor_id\x18\x03 \x01(\x03R\bauthorId\x12\x12\n" +
-	"\x04hash\x18\x04 \x01(\tR\x04hash\x12\x1d\n" +
+	"\x14asset/v1/asset.proto\x12\basset.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"7\n" +
+	"\rDeleteRequest\x12&\n" +
+	"\basset_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\aassetId\".\n" +
+	"\x0eDeleteResponse\x12\x1c\n" +
+	"\x04size\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x04size\"G\n" +
+	"\rCreateRequest\x12\"\n" +
+	"\bcontents\x18\x01 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\bcontents\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"?\n" +
+	"\x0eCreateResponse\x12-\n" +
+	"\x05asset\x18\x01 \x01(\v2\x0f.asset.v1.AssetB\x06\xbaH\x03\xc8\x01\x01R\x05asset\"\x9e\x03\n" +
+	"\x05Asset\x12&\n" +
+	"\basset_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\aassetId\x12\x1e\n" +
+	"\x06bucket\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06bucket\x12%\n" +
+	"\tauthor_id\x18\x03 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\bauthorId\x12\x1a\n" +
+	"\x04hash\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04hash\x12%\n" +
 	"\n" +
-	"is_private\x18\x05 \x01(\bR\tisPrivate\x12\x1b\n" +
-	"\tmime_type\x18\x06 \x01(\tR\bmimeType\x12\x12\n" +
-	"\x04name\x18\a \x01(\tR\x04name\x12\x12\n" +
-	"\x04size\x18\b \x01(\x03R\x04size\x129\n" +
+	"is_private\x18\x05 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\tisPrivate\x12#\n" +
+	"\tmime_type\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bmimeType\x12\x1a\n" +
+	"\x04name\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12\x1c\n" +
+	"\x04size\x18\b \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x04size\x12A\n" +
 	"\n" +
-	"created_on\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"created_on\x18\t \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
 	"updated_on\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn2\x8c\x01\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn2\x8c\x01\n" +
 	"\fAssetService\x12=\n" +
 	"\x06Create\x12\x17.asset.v1.CreateRequest\x1a\x18.asset.v1.CreateResponse\"\x00\x12=\n" +
 	"\x06Delete\x12\x17.asset.v1.DeleteRequest\x1a\x18.asset.v1.DeleteResponse\"\x00B\x96\x01\n" +

@@ -264,13 +264,13 @@ var File_discord_v1_discord_proto protoreflect.FileDescriptor
 
 const file_discord_v1_discord_proto_rawDesc = "" +
 	"\n" +
-	"\x18discord/v1/discord.proto\x12\x10discord.oauth.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x19google/protobuf/any.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\\\n" +
+	"\x18discord/v1/discord.proto\x12\x10discord.oauth.v1\x1a\x19google/protobuf/any.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\\\n" +
 	"\x0fProfileResponse\x12I\n" +
 	"\x0fdiscord_profile\x18\x01 \x01(\v2 .discord.oauth.v1.DiscordProfileR\x0ediscordProfile\",\n" +
 	"\rLoginResponse\x12\x1b\n" +
-	"\tlogin_url\x18\x01 \x01(\tR\bloginUrl\"\xc8\x04\n" +
-	"\x0eDiscordProfile\x12\x19\n" +
-	"\bsteam_id\x18\x01 \x01(\x03R\asteamId\x12\x0e\n" +
+	"\tlogin_url\x18\x01 \x01(\tR\bloginUrl\"\xcc\x04\n" +
+	"\x0eDiscordProfile\x12\x1d\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\x020\x01R\asteamId\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12\x16\n" +
 	"\x06avatar\x18\x03 \x01(\tR\x06avatar\x12A\n" +
 	"\x11avatar_decoration\x18\x04 \x01(\v2\x14.google.protobuf.AnyR\x10avatarDecoration\x12$\n" +

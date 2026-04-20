@@ -9,6 +9,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	v1 "github.com/leighmacdonald/gbans/internal/asset/v1"
 	"github.com/leighmacdonald/gbans/internal/asset/v1/assetv1connect"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -20,8 +21,16 @@ type Service struct {
 	assets Assets
 }
 
-func NewService(assets Assets) Service {
-	return Service{assets: assets}
+func NewService(assets Assets, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := assetv1connect.NewAssetServiceHandler(Service{assets: assets}, option...)
+
+	authMiddleware.AuthedRoute(assetv1connect.AssetServiceCreateProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(assetv1connect.AssetServiceDeleteProcedure, rpc.WithMinPermissions(permission.User))
+
+	return rpc.Service{
+		Pattern: pattern,
+		Handler: handler,
+	}
 }
 
 func (s Service) Create(ctx context.Context, req *v1.CreateRequest) (*v1.CreateResponse, error) {

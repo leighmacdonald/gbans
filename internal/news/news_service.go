@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"connectrpc.com/connect"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	v1 "github.com/leighmacdonald/gbans/internal/news/v1"
 	"github.com/leighmacdonald/gbans/internal/news/v1/newsv1connect"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -16,8 +18,15 @@ type Service struct {
 	news News
 }
 
-func NewService(news News) Service {
-	return Service{news: news}
+func NewService(news News, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := newsv1connect.NewNewsServiceHandler(Service{news: news}, option...)
+
+	authMiddleware.AuthedRoute(newsv1connect.NewsServiceEditProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(newsv1connect.NewsServiceCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(newsv1connect.NewsServiceDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(newsv1connect.NewsServiceAllProcedure, rpc.WithMinPermissions(permission.Moderator))
+
+	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
 func (s Service) Latest(ctx context.Context, req *v1.LatestRequest) (*v1.NewsAllResponse, error) {

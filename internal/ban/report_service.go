@@ -26,8 +26,19 @@ type ReportService struct {
 	reports Reports
 }
 
-func NewReportService(reports Reports) ReportService {
-	return ReportService{reports: reports}
+func NewReportService(reports Reports, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := banv1connect.NewReportServiceHandler(ReportService{reports: reports}, option...)
+
+	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportCreateProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportStatusEditProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(banv1connect.ReportServiceUserReportsProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportMessagesProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportMessageCreateProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportMessageEditProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportMessageDeleteProcedure, rpc.WithMinPermissions(permission.User))
+
+	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
 func (s ReportService) ReportCreate(ctx context.Context, req *v1.CreateReportRequest) (*v1.CreateReportResponse, error) {
@@ -77,7 +88,7 @@ func (s ReportService) ReportStatusEdit(ctx context.Context, req *v1.ReportStatu
 	return &emptypb.Empty{}, nil
 }
 
-func (s ReportService) UserReports(ctx context.Context, req *v1.UserReportsRequest) (*v1.UserReportsResponse, error) {
+func (s ReportService) UserReports(ctx context.Context, _ *v1.UserReportsRequest) (*v1.UserReportsResponse, error) {
 	user, _ := rpc.UserInfoFromCtx(ctx)
 	reports, errReports := s.reports.BySteamID(ctx, user.GetSteamID())
 	if errReports != nil {

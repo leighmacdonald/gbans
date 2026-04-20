@@ -7,6 +7,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/asset"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	configv1 "github.com/leighmacdonald/gbans/internal/config/v1"
@@ -18,6 +19,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/patreon"
 	"github.com/leighmacdonald/gbans/internal/ptr"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -30,10 +32,19 @@ type Service struct {
 	version string
 }
 
-func NewService(conf *Configuration, version string) *Service {
-	return &Service{
+func NewService(conf *Configuration, version string, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
+	pattern, handler := configv1connect.NewConfigServiceHandler(&Service{
 		config:  conf,
 		version: version,
+	}, options...)
+
+	// authMiddleware.AuthedRoute(configv1connect.ConfigServiceInfoProcedure, rpc.WithMinPermissions(permission.Guest))
+	authMiddleware.AuthedRoute(configv1connect.ConfigServiceGetProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(configv1connect.ConfigServiceUpdateProcedure, rpc.WithMinPermissions(permission.Moderator))
+
+	return rpc.Service{
+		Pattern: pattern,
+		Handler: handler,
 	}
 }
 

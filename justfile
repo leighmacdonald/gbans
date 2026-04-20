@@ -70,13 +70,13 @@ test: test-go test-ts
 test-ts:
     just -f frontend/justfile test
 
-check: lint-go vulncheck lint-ts typecheck-ts lint-md
+check: lint-proto lint-go vulncheck lint-ts typecheck-ts lint-md
 
 vulncheck:
     govulncheck
 
 lint-proto:
-    buf lint
+    @buf lint
 
 fix: fmt
     golangci-lint run --fix

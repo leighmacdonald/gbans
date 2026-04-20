@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	v1 "github.com/leighmacdonald/gbans/internal/chat/v1"
 	"github.com/leighmacdonald/gbans/internal/chat/v1/chatv1connect"
 	"github.com/leighmacdonald/gbans/internal/ptr"
@@ -21,8 +22,17 @@ type WordfilterService struct {
 	filters WordFilters
 }
 
-func NewWordfilterService(filters WordFilters, chat *Chat, config Config) WordfilterService {
-	return WordfilterService{filters: filters, chat: chat, config: config}
+func NewWordfilterService(filters WordFilters, chat *Chat, config Config, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
+	pattern, handler := chatv1connect.NewWordfilterServiceHandler(WordfilterService{filters: filters, chat: chat, config: config}, options...)
+
+	authMiddleware.AuthedRoute(chatv1connect.WordfilterServiceFiltersProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(chatv1connect.WordfilterServiceWarningStateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(chatv1connect.WordfilterServiceFilterCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(chatv1connect.WordfilterServiceFilterEditProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(chatv1connect.WordfilterServiceFilterDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(chatv1connect.WordfilterServiceFilterMatchProcedure, rpc.WithMinPermissions(permission.Moderator))
+
+	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
 func (s WordfilterService) Filters(ctx context.Context, _ *emptypb.Empty) (*v1.FiltersResponse, error) {

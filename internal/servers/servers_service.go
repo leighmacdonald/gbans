@@ -7,9 +7,11 @@ import (
 	"sort"
 
 	"connectrpc.com/connect"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/ptr"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/servers/v1"
 	"github.com/leighmacdonald/gbans/internal/servers/v1/serversv1connect"
 	"github.com/maruel/natural"
@@ -23,8 +25,16 @@ type ServersService struct {
 	servers *Servers
 }
 
-func NewServersService(servers *Servers) *ServersService {
-	return &ServersService{servers: servers}
+func NewServersService(servers *Servers, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := serversv1connect.NewServersServiceHandler(&ServersService{servers: servers}, option...)
+
+	authMiddleware.AuthedRoute(serversv1connect.ServersServiceStateProcedure, rpc.WithMinPermissions(permission.Guest))
+	authMiddleware.AuthedRoute(serversv1connect.ServersServiceServersProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(serversv1connect.ServersServiceEditServerProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(serversv1connect.ServersServiceDeleteServerProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(serversv1connect.ServersServiceServersAdminProcedure, rpc.WithMinPermissions(permission.Admin))
+
+	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
 func (s ServersService) State(_ context.Context, req *v1.StateRequest) (*v1.StateResponse, error) {

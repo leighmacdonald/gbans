@@ -52,7 +52,7 @@ type BanServiceClient interface {
 	Query(context.Context, *v1.QueryRequest) (*v1.QueryResponse, error)
 	// rpc ExportValve(google.protobuf.Empty) returns (ExportValveResponse) {}
 	Delete(context.Context, *v1.DeleteRequest) (*emptypb.Empty, error)
-	Get(context.Context, *v1.GetBanRequest) (*v1.GetBanResponse, error)
+	Get(context.Context, *v1.GetRequest) (*v1.GetResponse, error)
 	QuerySourceBans(context.Context, *v1.QuerySourceBansRequest) (*v1.QuerySourceBansResponse, error)
 	Update(context.Context, *v1.UpdateRequest) (*v1.UpdateResponse, error)
 }
@@ -80,7 +80,7 @@ func NewBanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(banServiceMethods.ByName("Delete")),
 			connect.WithClientOptions(opts...),
 		),
-		get: connect.NewClient[v1.GetBanRequest, v1.GetBanResponse](
+		get: connect.NewClient[v1.GetRequest, v1.GetResponse](
 			httpClient,
 			baseURL+BanServiceGetProcedure,
 			connect.WithSchema(banServiceMethods.ByName("Get")),
@@ -105,7 +105,7 @@ func NewBanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 type banServiceClient struct {
 	query           *connect.Client[v1.QueryRequest, v1.QueryResponse]
 	delete          *connect.Client[v1.DeleteRequest, emptypb.Empty]
-	get             *connect.Client[v1.GetBanRequest, v1.GetBanResponse]
+	get             *connect.Client[v1.GetRequest, v1.GetResponse]
 	querySourceBans *connect.Client[v1.QuerySourceBansRequest, v1.QuerySourceBansResponse]
 	update          *connect.Client[v1.UpdateRequest, v1.UpdateResponse]
 }
@@ -129,7 +129,7 @@ func (c *banServiceClient) Delete(ctx context.Context, req *v1.DeleteRequest) (*
 }
 
 // Get calls ban.v1.BanService.Get.
-func (c *banServiceClient) Get(ctx context.Context, req *v1.GetBanRequest) (*v1.GetBanResponse, error) {
+func (c *banServiceClient) Get(ctx context.Context, req *v1.GetRequest) (*v1.GetResponse, error) {
 	response, err := c.get.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -160,7 +160,7 @@ type BanServiceHandler interface {
 	Query(context.Context, *v1.QueryRequest) (*v1.QueryResponse, error)
 	// rpc ExportValve(google.protobuf.Empty) returns (ExportValveResponse) {}
 	Delete(context.Context, *v1.DeleteRequest) (*emptypb.Empty, error)
-	Get(context.Context, *v1.GetBanRequest) (*v1.GetBanResponse, error)
+	Get(context.Context, *v1.GetRequest) (*v1.GetResponse, error)
 	QuerySourceBans(context.Context, *v1.QuerySourceBansRequest) (*v1.QuerySourceBansResponse, error)
 	Update(context.Context, *v1.UpdateRequest) (*v1.UpdateResponse, error)
 }
@@ -231,7 +231,7 @@ func (UnimplementedBanServiceHandler) Delete(context.Context, *v1.DeleteRequest)
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.BanService.Delete is not implemented"))
 }
 
-func (UnimplementedBanServiceHandler) Get(context.Context, *v1.GetBanRequest) (*v1.GetBanResponse, error) {
+func (UnimplementedBanServiceHandler) Get(context.Context, *v1.GetRequest) (*v1.GetResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.BanService.Get is not implemented"))
 }
 

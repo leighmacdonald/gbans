@@ -61,12 +61,12 @@ const (
 
 // ReportServiceClient is a client for the ban.v1.ReportService service.
 type ReportServiceClient interface {
-	ReportCreate(context.Context, *v1.CreateReportRequest) (*v1.CreateReportResponse, error)
+	ReportCreate(context.Context, *v1.ReportCreateRequest) (*v1.ReportCreateResponse, error)
 	Report(context.Context, *v1.ReportRequest) (*v1.ReportResponse, error)
 	ReportStatusEdit(context.Context, *v1.ReportStatusEditRequest) (*emptypb.Empty, error)
 	UserReports(context.Context, *v1.UserReportsRequest) (*v1.UserReportsResponse, error)
 	ReportMessages(context.Context, *v1.ReportMessagesRequest) (*v1.ReportMessagesResponse, error)
-	ReportMessageCreate(context.Context, *v1.CreateReportMessageRequest) (*v1.CreateReportMessageResponse, error)
+	ReportMessageCreate(context.Context, *v1.ReportMessageCreateRequest) (*v1.ReportMessageCreateResponse, error)
 	ReportMessageEdit(context.Context, *v1.ReportMessageEditRequest) (*v1.ReportMessageEditResponse, error)
 	ReportMessageDelete(context.Context, *v1.ReportMessageDeleteRequest) (*emptypb.Empty, error)
 }
@@ -82,7 +82,7 @@ func NewReportServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 	baseURL = strings.TrimRight(baseURL, "/")
 	reportServiceMethods := v1.File_ban_v1_report_proto.Services().ByName("ReportService").Methods()
 	return &reportServiceClient{
-		reportCreate: connect.NewClient[v1.CreateReportRequest, v1.CreateReportResponse](
+		reportCreate: connect.NewClient[v1.ReportCreateRequest, v1.ReportCreateResponse](
 			httpClient,
 			baseURL+ReportServiceReportCreateProcedure,
 			connect.WithSchema(reportServiceMethods.ByName("ReportCreate")),
@@ -112,7 +112,7 @@ func NewReportServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(reportServiceMethods.ByName("ReportMessages")),
 			connect.WithClientOptions(opts...),
 		),
-		reportMessageCreate: connect.NewClient[v1.CreateReportMessageRequest, v1.CreateReportMessageResponse](
+		reportMessageCreate: connect.NewClient[v1.ReportMessageCreateRequest, v1.ReportMessageCreateResponse](
 			httpClient,
 			baseURL+ReportServiceReportMessageCreateProcedure,
 			connect.WithSchema(reportServiceMethods.ByName("ReportMessageCreate")),
@@ -135,18 +135,18 @@ func NewReportServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 
 // reportServiceClient implements ReportServiceClient.
 type reportServiceClient struct {
-	reportCreate        *connect.Client[v1.CreateReportRequest, v1.CreateReportResponse]
+	reportCreate        *connect.Client[v1.ReportCreateRequest, v1.ReportCreateResponse]
 	report              *connect.Client[v1.ReportRequest, v1.ReportResponse]
 	reportStatusEdit    *connect.Client[v1.ReportStatusEditRequest, emptypb.Empty]
 	userReports         *connect.Client[v1.UserReportsRequest, v1.UserReportsResponse]
 	reportMessages      *connect.Client[v1.ReportMessagesRequest, v1.ReportMessagesResponse]
-	reportMessageCreate *connect.Client[v1.CreateReportMessageRequest, v1.CreateReportMessageResponse]
+	reportMessageCreate *connect.Client[v1.ReportMessageCreateRequest, v1.ReportMessageCreateResponse]
 	reportMessageEdit   *connect.Client[v1.ReportMessageEditRequest, v1.ReportMessageEditResponse]
 	reportMessageDelete *connect.Client[v1.ReportMessageDeleteRequest, emptypb.Empty]
 }
 
 // ReportCreate calls ban.v1.ReportService.ReportCreate.
-func (c *reportServiceClient) ReportCreate(ctx context.Context, req *v1.CreateReportRequest) (*v1.CreateReportResponse, error) {
+func (c *reportServiceClient) ReportCreate(ctx context.Context, req *v1.ReportCreateRequest) (*v1.ReportCreateResponse, error) {
 	response, err := c.reportCreate.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -191,7 +191,7 @@ func (c *reportServiceClient) ReportMessages(ctx context.Context, req *v1.Report
 }
 
 // ReportMessageCreate calls ban.v1.ReportService.ReportMessageCreate.
-func (c *reportServiceClient) ReportMessageCreate(ctx context.Context, req *v1.CreateReportMessageRequest) (*v1.CreateReportMessageResponse, error) {
+func (c *reportServiceClient) ReportMessageCreate(ctx context.Context, req *v1.ReportMessageCreateRequest) (*v1.ReportMessageCreateResponse, error) {
 	response, err := c.reportMessageCreate.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -219,12 +219,12 @@ func (c *reportServiceClient) ReportMessageDelete(ctx context.Context, req *v1.R
 
 // ReportServiceHandler is an implementation of the ban.v1.ReportService service.
 type ReportServiceHandler interface {
-	ReportCreate(context.Context, *v1.CreateReportRequest) (*v1.CreateReportResponse, error)
+	ReportCreate(context.Context, *v1.ReportCreateRequest) (*v1.ReportCreateResponse, error)
 	Report(context.Context, *v1.ReportRequest) (*v1.ReportResponse, error)
 	ReportStatusEdit(context.Context, *v1.ReportStatusEditRequest) (*emptypb.Empty, error)
 	UserReports(context.Context, *v1.UserReportsRequest) (*v1.UserReportsResponse, error)
 	ReportMessages(context.Context, *v1.ReportMessagesRequest) (*v1.ReportMessagesResponse, error)
-	ReportMessageCreate(context.Context, *v1.CreateReportMessageRequest) (*v1.CreateReportMessageResponse, error)
+	ReportMessageCreate(context.Context, *v1.ReportMessageCreateRequest) (*v1.ReportMessageCreateResponse, error)
 	ReportMessageEdit(context.Context, *v1.ReportMessageEditRequest) (*v1.ReportMessageEditResponse, error)
 	ReportMessageDelete(context.Context, *v1.ReportMessageDeleteRequest) (*emptypb.Empty, error)
 }
@@ -311,7 +311,7 @@ func NewReportServiceHandler(svc ReportServiceHandler, opts ...connect.HandlerOp
 // UnimplementedReportServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedReportServiceHandler struct{}
 
-func (UnimplementedReportServiceHandler) ReportCreate(context.Context, *v1.CreateReportRequest) (*v1.CreateReportResponse, error) {
+func (UnimplementedReportServiceHandler) ReportCreate(context.Context, *v1.ReportCreateRequest) (*v1.ReportCreateResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.ReportService.ReportCreate is not implemented"))
 }
 
@@ -331,7 +331,7 @@ func (UnimplementedReportServiceHandler) ReportMessages(context.Context, *v1.Rep
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.ReportService.ReportMessages is not implemented"))
 }
 
-func (UnimplementedReportServiceHandler) ReportMessageCreate(context.Context, *v1.CreateReportMessageRequest) (*v1.CreateReportMessageResponse, error) {
+func (UnimplementedReportServiceHandler) ReportMessageCreate(context.Context, *v1.ReportMessageCreateRequest) (*v1.ReportMessageCreateResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.ReportService.ReportMessageCreate is not implemented"))
 }
 

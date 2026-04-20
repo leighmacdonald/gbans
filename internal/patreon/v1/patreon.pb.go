@@ -7,7 +7,6 @@
 package patreonv1
 
 import (
-	_ "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -809,7 +808,7 @@ var File_patreon_v1_patreon_proto protoreflect.FileDescriptor
 const file_patreon_v1_patreon_proto_rawDesc = "" +
 	"\n" +
 	"\x18patreon/v1/patreon.proto\x12\n" +
-	"patreon.v1\x1a\x1edatabase/query/v1/filter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa7\x01\n" +
+	"patreon.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa7\x01\n" +
 	"\bCampaign\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x126\n" +

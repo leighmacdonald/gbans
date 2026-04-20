@@ -31,8 +31,7 @@ const appInfo = await queryClient.fetchQuery({
 		cardinality: "finite",
 	}),
 	queryFn: async () => {
-		const appInfo = await configClient.info({});
-		return appInfo;
+		return await configClient.info({});
 	},
 });
 const router = newRouter(queryClient, appInfo);

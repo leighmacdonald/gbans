@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"connectrpc.com/authn"
 	"connectrpc.com/connect"
+	"connectrpc.com/validate"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
@@ -21,6 +23,11 @@ var (
 	ErrPermission = errors.New("permission denied")
 	ErrExists     = errors.New("entity already exists")
 )
+
+type Service struct {
+	Pattern string
+	Handler http.Handler
+}
 
 type UserInfo struct {
 	SteamID    steamid.SteamID      `json:"steam_id"`
@@ -95,4 +102,8 @@ func FromRPC(filter *v1.Filter) query.Filter {
 		Desc:    filter.GetDesc(),
 		OrderBy: filter.GetOrderBy(),
 	}
+}
+
+func CreateInterceptors() connect.Option {
+	return connect.WithInterceptors(validate.NewInterceptor())
 }

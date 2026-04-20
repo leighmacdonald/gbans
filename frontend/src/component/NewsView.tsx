@@ -3,10 +3,10 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 
 import { useState } from "react";
-import {renderDate, timestampToDateTime} from "../util/time.ts";
+import { renderDate, timestampToDateTime } from "../util/time.ts";
 import { MarkDownRenderer } from "./MarkdownRenderer";
 import { NewsHead } from "./NewsHead.tsx";
-import {latest} from "../rpc/news/v1/news-NewsService_connectquery.ts";
+import { latest } from "../rpc/news/v1/news-NewsService_connectquery.ts";
 import { useQuery } from "@connectrpc/connect-query";
 
 interface NewsViewProps {
@@ -16,7 +16,7 @@ interface NewsViewProps {
 
 export const NewsView = ({ itemsPerPage, assetURL }: NewsViewProps) => {
 	const [page, setPage] = useState<number>(0);
-	const { data, isLoading } = useQuery(latest, {limit: 1000});
+	const { data, isLoading } = useQuery(latest, { limit: 1000 });
 
 	return (
 		<Stack spacing={2}>

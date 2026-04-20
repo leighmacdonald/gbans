@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	v1 "github.com/leighmacdonald/gbans/internal/network/v1"
 	"github.com/leighmacdonald/gbans/internal/network/v1/networkv1connect"
 	"github.com/leighmacdonald/gbans/internal/ptr"
@@ -20,8 +21,23 @@ type BlocklistService struct {
 	blocklists Blocklists
 }
 
-func NewBlocklistService(blocklists Blocklists) BlocklistService {
-	return BlocklistService{blocklists: blocklists}
+func NewBlocklistService(blocklists Blocklists, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := networkv1connect.NewBlocklistServiceHandler(BlocklistService{blocklists: blocklists}, option...)
+
+	authMiddleware.AuthedRoute(networkv1connect.BlocklistServiceBlocklistSourcesProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(networkv1connect.BlocklistServiceBlocklistSourcesCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(networkv1connect.BlocklistServiceBlocklistSourcesEditProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(networkv1connect.BlocklistServiceBlocklistSourcesDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(networkv1connect.BlocklistServiceWhitelistAddressProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(networkv1connect.BlocklistServiceWhitelistAddressCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(networkv1connect.BlocklistServiceWhitelistAddressDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(networkv1connect.BlocklistServiceWhitelistAddressEditProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(networkv1connect.BlocklistServiceWhitelistSteamProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(networkv1connect.BlocklistServiceWhitelistSteamDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(networkv1connect.BlocklistServiceWhitelistSteamCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(networkv1connect.BlocklistServiceCheckBlockProcedure, rpc.WithMinPermissions(permission.Moderator))
+
+	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
 func (s BlocklistService) BlocklistSources(ctx context.Context, _ *emptypb.Empty) (*v1.BlocklistSourcesResponse, error) {

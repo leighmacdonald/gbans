@@ -1327,88 +1327,87 @@ const file_contest_v1_contest_proto_rawDesc = "" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12#\n" +
 	"\basset_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\aassetId\">\n" +
 	"\x13EntryCreateResponse\x12'\n" +
-	"\x05entry\x18\x01 \x01(\v2\x11.contest.v1.EntryR\x05entry\"\xb0\x01\n" +
+	"\x05entry\x18\x01 \x01(\v2\x11.contest.v1.EntryR\x05entry\"\xa7\x01\n" +
 	"\vVoteRequest\x12'\n" +
 	"\n" +
 	"contest_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tcontestId\x122\n" +
-	"\x10contest_entry_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x0econtestEntryId\x12D\n" +
-	"\tdirection\x18\x03 \x01(\x0e2\x15.contest.v1.DirectionB\x0f\xbaH\fr\n" +
-	"R\x02upR\x04downR\tdirection\"R\n" +
-	"\fVoteResponse\x12B\n" +
-	"\x11current_direction\x18\x01 \x01(\x0e2\x15.contest.v1.DirectionR\x10currentDirection\"f\n" +
-	"\rUploadRequest\x12'\n" +
+	"\x10contest_entry_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x0econtestEntryId\x12;\n" +
+	"\tdirection\x18\x03 \x01(\x0e2\x15.contest.v1.DirectionB\x06\xbaH\x03\xc8\x01\x01R\tdirection\"Z\n" +
+	"\fVoteResponse\x12J\n" +
+	"\x11current_direction\x18\x01 \x01(\x0e2\x15.contest.v1.DirectionB\x06\xbaH\x03\xc8\x01\x01R\x10currentDirection\"q\n" +
+	"\rUploadRequest\x12*\n" +
 	"\n" +
-	"contest_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tcontestId\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
-	"\acontent\x18\x03 \x01(\fR\acontent\"7\n" +
-	"\x0eUploadResponse\x12%\n" +
-	"\x05asset\x18\x01 \x01(\v2\x0f.asset.v1.AssetR\x05asset\">\n" +
-	"\x0fEntriesResponse\x12+\n" +
-	"\aentries\x18\x01 \x03(\v2\x11.contest.v1.EntryR\aentries\"9\n" +
-	"\x0eEntriesRequest\x12'\n" +
+	"contest_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\tcontestId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
+	"\acontent\x18\x03 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\acontent\"?\n" +
+	"\x0eUploadResponse\x12-\n" +
+	"\x05asset\x18\x01 \x01(\v2\x0f.asset.v1.AssetB\x06\xbaH\x03\xc8\x01\x01R\x05asset\"F\n" +
+	"\x0fEntriesResponse\x123\n" +
+	"\aentries\x18\x01 \x03(\v2\x11.contest.v1.EntryB\x06\xbaH\x03\xc8\x01\x01R\aentries\"<\n" +
+	"\x0eEntriesRequest\x12*\n" +
 	"\n" +
-	"contest_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tcontestId\"9\n" +
-	"\x0eContestRequest\x12'\n" +
+	"contest_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\tcontestId\"<\n" +
+	"\x0eContestRequest\x12*\n" +
 	"\n" +
-	"contest_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tcontestId\"@\n" +
-	"\x0fContestResponse\x12-\n" +
-	"\acontest\x18\x01 \x01(\v2\x13.contest.v1.ContestR\acontest\"\xdf\x01\n" +
-	"\x04Vote\x122\n" +
-	"\x10contest_entry_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x0econtestEntryId\x12\x19\n" +
-	"\bsteam_id\x18\x02 \x01(\x03R\asteamId\x12\x12\n" +
-	"\x04vote\x18\x03 \x01(\x05R\x04vote\x129\n" +
+	"contest_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\tcontestId\"H\n" +
+	"\x0fContestResponse\x125\n" +
+	"\acontest\x18\x01 \x01(\v2\x13.contest.v1.ContestB\x06\xbaH\x03\xc8\x01\x01R\acontest\"\x84\x02\n" +
+	"\x04Vote\x125\n" +
+	"\x10contest_entry_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x0econtestEntryId\x12#\n" +
+	"\bsteam_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12\x1a\n" +
+	"\x04vote\x18\x03 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x04vote\x12A\n" +
 	"\n" +
-	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"\x99\x04\n" +
-	"\x05Entry\x12'\n" +
+	"updated_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xe4\x04\n" +
+	"\x05Entry\x12*\n" +
 	"\n" +
-	"contest_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tcontestId\x122\n" +
-	"\x10contest_entry_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x0econtestEntryId\x12\x19\n" +
-	"\bsteam_id\x18\x03 \x01(\x03R\asteamId\x12!\n" +
+	"contest_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\tcontestId\x125\n" +
+	"\x10contest_entry_id\x18\x02 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x0econtestEntryId\x12#\n" +
+	"\bsteam_id\x18\x03 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12!\n" +
 	"\fpersona_name\x18\x04 \x01(\tR\vpersonaName\x12\x1f\n" +
 	"\vavatar_hash\x18\x05 \x01(\tR\n" +
-	"avatarHash\x12#\n" +
-	"\basset_id\x18\x06 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\aassetId\x12 \n" +
-	"\vdescription\x18\a \x01(\tR\vdescription\x12\x1c\n" +
-	"\tplacement\x18\b \x01(\x05R\tplacement\x12\x18\n" +
-	"\adeleted\x18\t \x01(\bR\adeleted\x12\x19\n" +
+	"avatarHash\x12&\n" +
+	"\basset_id\x18\x06 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\aassetId\x12(\n" +
+	"\vdescription\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdescription\x12$\n" +
+	"\tplacement\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\tplacement\x12\x18\n" +
+	"\adeleted\x18\t \x01(\bR\adeleted\x12!\n" +
 	"\bvotes_up\x18\n" +
-	" \x01(\x05R\avotesUp\x12\x1d\n" +
+	" \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\avotesUp\x12%\n" +
 	"\n" +
-	"votes_down\x18\v \x01(\x05R\tvotesDown\x12%\n" +
-	"\x05asset\x18\f \x01(\v2\x0f.asset.v1.AssetR\x05asset\x129\n" +
+	"votes_down\x18\v \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\tvotesDown\x12-\n" +
+	"\x05asset\x18\f \x01(\v2\x0f.asset.v1.AssetB\x06\xbaH\x03\xc8\x01\x01R\x05asset\x12A\n" +
 	"\n" +
-	"created_on\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"created_on\x18\r \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"\xa8\x05\n" +
-	"\aContest\x12\x14\n" +
-	"\x05title\x18\x01 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x16\n" +
-	"\x06public\x18\x03 \x01(\bR\x06public\x12)\n" +
-	"\x10hide_submissions\x18\x04 \x01(\bR\x0fhideSubmissions\x129\n" +
+	"updated_on\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\x9b\x06\n" +
+	"\aContest\x12\x1c\n" +
+	"\x05title\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12(\n" +
+	"\vdescription\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdescription\x12\x1e\n" +
+	"\x06public\x18\x03 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x06public\x121\n" +
+	"\x10hide_submissions\x18\x04 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0fhideSubmissions\x12A\n" +
 	"\n" +
-	"date_start\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tdateStart\x125\n" +
-	"\bdate_end\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\adateEnd\x12'\n" +
-	"\x0fmax_submissions\x18\a \x01(\x05R\x0emaxSubmissions\x12'\n" +
-	"\x0fown_submissions\x18\b \x01(\x05R\x0eownSubmissions\x12\x1f\n" +
-	"\vmedia_types\x18\t \x01(\tR\n" +
-	"mediaTypes\x12\x1f\n" +
+	"date_start\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tdateStart\x125\n" +
+	"\bdate_end\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\adateEnd\x12/\n" +
+	"\x0fmax_submissions\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x0emaxSubmissions\x12/\n" +
+	"\x0fown_submissions\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x0eownSubmissions\x12'\n" +
+	"\vmedia_types\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"mediaTypes\x12'\n" +
 	"\vnum_entries\x18\n" +
-	" \x01(\x05R\n" +
-	"numEntries\x12\x16\n" +
-	"\x06voting\x18\v \x01(\bR\x06voting\x12F\n" +
-	"\x14min_permission_level\x18\f \x01(\x0e2\x14.person.v1.PrivilegeR\x12minPermissionLevel\x12\x1d\n" +
+	" \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"numEntries\x12\x1e\n" +
+	"\x06voting\x18\v \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x06voting\x12N\n" +
+	"\x14min_permission_level\x18\f \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x12minPermissionLevel\x12%\n" +
 	"\n" +
-	"down_votes\x18\r \x01(\bR\tdownVotes\x129\n" +
+	"down_votes\x18\r \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\tdownVotes\x12A\n" +
 	"\n" +
-	"created_on\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"created_on\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x12'\n" +
+	"updated_on\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\x12*\n" +
 	"\n" +
-	"contest_id\x18\x10 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tcontestId\"C\n" +
-	"\x10ContestsResponse\x12/\n" +
-	"\bcontests\x18\x01 \x03(\v2\x13.contest.v1.ContestR\bcontests*=\n" +
+	"contest_id\x18\x10 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\tcontestId\"K\n" +
+	"\x10ContestsResponse\x127\n" +
+	"\bcontests\x18\x01 \x03(\v2\x13.contest.v1.ContestB\x06\xbaH\x03\xc8\x01\x01R\bcontests*=\n" +
 	"\tDirection\x12\x1c\n" +
 	"\x18DIRECTION_UP_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eDIRECTION_DOWN\x10\x012\xeb\x05\n" +

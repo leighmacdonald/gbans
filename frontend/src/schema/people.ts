@@ -72,36 +72,6 @@ export const NotificationSeverity = {
 export const NotificationSeverityEnum = z.enum(NotificationSeverity);
 export type NotificationSeverityEnum = z.infer<typeof NotificationSeverityEnum>;
 
-export const schemaUserProfile = z.object({
-	steam_id: z.string(),
-	permission_level: PermissionLevelEnum,
-	discord_id: z.string(),
-	patreon_id: z.string(),
-	name: z.string(),
-	avatarhash: z.string(),
-	ban_id: z.number(),
-	muted: z.boolean(),
-	created_on: z.date(),
-	updated_on: z.date(),
-});
-
-export type UserProfile = z.infer<typeof schemaUserProfile>;
-
-export const schemaUserNotification = z.object({
-	person_notification_id: z.number(),
-	steam_id: z.string(),
-	read: z.boolean(),
-	deleted: z.boolean(),
-	severity: NotificationSeverityEnum,
-	message: z.string(),
-	link: z.string(),
-	count: z.number(),
-	author: schemaUserProfile.optional(),
-	created_on: z.date(),
-});
-
-export type UserNotification = z.infer<typeof schemaUserNotification>;
-
 export const schemaPerson = z.object({
 	steam_id: z.string(),
 	permission_level: PermissionLevelEnum,

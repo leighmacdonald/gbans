@@ -2,6 +2,7 @@ edition = "2023";
 
 package config.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/descriptor.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
@@ -17,46 +18,46 @@ service ConfigService {
 }
 
 message ChangelogResponse {
-  repeated GithubRelease changelog = 1;
+  repeated GithubRelease changelog = 1 [(buf.validate.field).required = true];
 }
 
 message InfoResponse {
-  string site_name = 1;
-  string site_description = 2;
-  string asset_url = 3;
-  string favicon = 4;
-  string link_id = 5;
-  string app_version = 6;
-  string sentry_dsn_web = 7;
-  string document_policy = 8;
-  string patreon_client_id = 9;
-  string discord_client_id = 10;
-  bool discord_enabled = 11;
-  bool patreon_enabled = 12;
-  string default_route = 13;
-  bool news_enabled = 14;
-  bool contests_enabled = 15;
-  bool wiki_enabled = 16;
-  bool stats_enabled = 17;
-  bool servers_enabled = 18;
-  bool reports_enabled = 19;
-  bool chatlogs_enabled = 20;
-  bool demos_enabled = 21;
-  bool speedruns_enabled = 22;
-  bool forums_enabled = 23;
-  bool mge_enabled = 24;
+  string site_name = 1 [(buf.validate.field).required = true];
+  string site_description = 2 [(buf.validate.field).required = true];
+  string asset_url = 3 [(buf.validate.field).required = true];
+  string favicon = 4 [(buf.validate.field).required = true];
+  string link_id = 5 [(buf.validate.field).required = true];
+  string app_version = 6 [(buf.validate.field).required = true];
+  string sentry_dsn_web = 7 [(buf.validate.field).required = true];
+  string document_policy = 8 [(buf.validate.field).required = true];
+  string patreon_client_id = 9 [(buf.validate.field).required = true];
+  string discord_client_id = 10 [(buf.validate.field).required = true];
+  bool discord_enabled = 11 [(buf.validate.field).required = true];
+  bool patreon_enabled = 12 [(buf.validate.field).required = true];
+  string default_route = 13 [(buf.validate.field).required = true];
+  bool news_enabled = 14 [(buf.validate.field).required = true];
+  bool contests_enabled = 15 [(buf.validate.field).required = true];
+  bool wiki_enabled = 16 [(buf.validate.field).required = true];
+  bool stats_enabled = 17 [(buf.validate.field).required = true];
+  bool servers_enabled = 18 [(buf.validate.field).required = true];
+  bool reports_enabled = 19 [(buf.validate.field).required = true];
+  bool chatlogs_enabled = 20 [(buf.validate.field).required = true];
+  bool demos_enabled = 21 [(buf.validate.field).required = true];
+  bool speedruns_enabled = 22 [(buf.validate.field).required = true];
+  bool forums_enabled = 23 [(buf.validate.field).required = true];
+  bool mge_enabled = 24 [(buf.validate.field).required = true];
 }
 
 message GetResponse {
-  Config config = 1;
+  Config config = 1 [(buf.validate.field).required = true];
 }
 
 message UpdateRequest {
-  Config config = 1;
+  Config config = 1 [(buf.validate.field).required = true];
 }
 
 message UpdateResponse {
-  Config config = 1;
+  Config config = 1 [(buf.validate.field).required = true];
 }
 
 enum RunMode {
@@ -70,31 +71,31 @@ enum FileServeMode {
 }
 
 message General {
-  string site_name = 1;
-  string site_description = 2;
-  RunMode mode = 3;
-  FileServeMode file_serve_mode = 4;
-  string srcds_log_addr = 5;
-  string asset_url = 6;
-  string favicon = 7;
-  string default_route = 8;
-  bool news_enabled = 9;
-  bool forums_enabled = 10;
-  bool contests_enabled = 11;
-  bool wiki_enabled = 12;
-  bool stats_enabled = 13;
-  bool servers_enabled = 14;
-  bool reports_enabled = 15;
-  bool chatlogs_enabled = 16;
-  bool demos_enabled = 17;
-  bool speedruns_enabled = 18;
-  string sentry_dsn = 19;
-  string sentry_dsn_web = 20;
+  string site_name = 1 [(buf.validate.field).required = true];
+  string site_description = 2 [(buf.validate.field).required = true];
+  RunMode mode = 3 [(buf.validate.field).required = true];
+  FileServeMode file_serve_mode = 4 [(buf.validate.field).required = true];
+  string srcds_log_addr = 5 [(buf.validate.field).required = true];
+  string asset_url = 6 [(buf.validate.field).required = true];
+  string favicon = 7 [(buf.validate.field).required = true];
+  string default_route = 8 [(buf.validate.field).required = true];
+  bool news_enabled = 9 [(buf.validate.field).required = true];
+  bool forums_enabled = 10 [(buf.validate.field).required = true];
+  bool contests_enabled = 11 [(buf.validate.field).required = true];
+  bool wiki_enabled = 12 [(buf.validate.field).required = true];
+  bool stats_enabled = 13 [(buf.validate.field).required = true];
+  bool servers_enabled = 14 [(buf.validate.field).required = true];
+  bool reports_enabled = 15 [(buf.validate.field).required = true];
+  bool chatlogs_enabled = 16 [(buf.validate.field).required = true];
+  bool demos_enabled = 17 [(buf.validate.field).required = true];
+  bool speedruns_enabled = 18 [(buf.validate.field).required = true];
+  string sentry_dsn = 19 [(buf.validate.field).required = true];
+  string sentry_dsn_web = 20 [(buf.validate.field).required = true];
 }
 
 message Debug {
-  bool skip_open_id_validation = 1;
-  string add_rcon_log_address = 2;
+  bool skip_open_id_validation = 1 [(buf.validate.field).required = true];
+  string add_rcon_log_address = 2 [(buf.validate.field).required = true];
 }
 
 enum DemoStrategy {
@@ -103,51 +104,51 @@ enum DemoStrategy {
 }
 
 message Demo {
-  bool cleanup_enabled = 1;
-  DemoStrategy strategy = 2;
-  float cleanup_min_pct = 3;
-  string cleanup_mount = 4;
-  int64 count_limit = 5;
-  string parser_url = 6;
+  bool cleanup_enabled = 1 [(buf.validate.field).required = true];
+  DemoStrategy strategy = 2 [(buf.validate.field).required = true];
+  float cleanup_min_pct = 3 [(buf.validate.field).required = true];
+  string cleanup_mount = 4 [(buf.validate.field).required = true];
+  int64 count_limit = 5 [(buf.validate.field).required = true];
+  string parser_url = 6 [(buf.validate.field).required = true];
 }
 
 message Filters {
-  bool enabled = 1;
-  int32 warning_timeout = 2;
-  int32 warning_limit = 3;
-  bool dry = 4;
-  bool ping_discord = 5;
-  int32 max_weight = 6;
-  int32 check_timeout = 7;
-  int32 match_timeout = 8;
+  bool enabled = 1 [(buf.validate.field).required = true];
+  int32 warning_timeout = 2 [(buf.validate.field).required = true];
+  int32 warning_limit = 3 [(buf.validate.field).required = true];
+  bool dry = 4 [(buf.validate.field).required = true];
+  bool ping_discord = 5 [(buf.validate.field).required = true];
+  int32 max_weight = 6 [(buf.validate.field).required = true];
+  int32 check_timeout = 7 [(buf.validate.field).required = true];
+  int32 match_timeout = 8 [(buf.validate.field).required = true];
 }
 
 message Discord {
-  bool enabled = 1;
-  bool bot_enabled = 2;
-  bool integrations_enabled = 3;
-  string app_id = 4;
-  string app_secret = 5;
-  string link_id = 6;
-  string token = 7;
-  string guild_id = 8;
-  bool public_log_channel_enable = 9;
-  string log_channel_id = 10;
-  string public_match_log_channel_id = 11;
-  string vote_log_channel_id = 12;
-  string appeal_log_channel_id = 13;
-  string ban_log_channel_id = 14;
-  string forum_log_channel_id = 15;
-  string kick_log_channel_id = 16;
-  string mod_ping_role_id = 17;
-  string anticheat_channel_id = 18;
-  string seed_channel_id = 19;
-  string word_filter_log_channel_id = 20;
-  string chat_log_channel_id = 21;
+  bool enabled = 1 [(buf.validate.field).required = true];
+  bool bot_enabled = 2 [(buf.validate.field).required = true];
+  bool integrations_enabled = 3 [(buf.validate.field).required = true];
+  string app_id = 4 [(buf.validate.field).required = true];
+  string app_secret = 5 [(buf.validate.field).required = true];
+  string link_id = 6 [(buf.validate.field).required = true];
+  string token = 7 [(buf.validate.field).required = true];
+  string guild_id = 8 [(buf.validate.field).required = true];
+  bool public_log_channel_enable = 9 [(buf.validate.field).required = true];
+  string log_channel_id = 10 [(buf.validate.field).required = true];
+  string public_match_log_channel_id = 11 [(buf.validate.field).required = true];
+  string vote_log_channel_id = 12 [(buf.validate.field).required = true];
+  string appeal_log_channel_id = 13 [(buf.validate.field).required = true];
+  string ban_log_channel_id = 14 [(buf.validate.field).required = true];
+  string forum_log_channel_id = 15 [(buf.validate.field).required = true];
+  string kick_log_channel_id = 16 [(buf.validate.field).required = true];
+  string mod_ping_role_id = 17 [(buf.validate.field).required = true];
+  string anticheat_channel_id = 18 [(buf.validate.field).required = true];
+  string seed_channel_id = 19 [(buf.validate.field).required = true];
+  string word_filter_log_channel_id = 20 [(buf.validate.field).required = true];
+  string chat_log_channel_id = 21 [(buf.validate.field).required = true];
 }
 
 message Sourcemod {
-  bool center_projectiles = 1;
+  bool center_projectiles = 1 [(buf.validate.field).required = true];
 }
 
 enum Level {
@@ -158,26 +159,26 @@ enum Level {
 }
 
 message Log {
-  Level level = 1;
-  string file = 2;
-  bool http_enabled = 3;
-  bool http_otel_enabled = 4;
-  Level http_level = 5;
+  Level level = 1 [(buf.validate.field).required = true];
+  string file = 2 [(buf.validate.field).required = true];
+  bool http_enabled = 3 [(buf.validate.field).required = true];
+  bool http_otel_enabled = 4 [(buf.validate.field).required = true];
+  Level http_level = 5 [(buf.validate.field).required = true];
 }
 
 message GeoLocation {
-  bool enabled = 1;
-  string cache_path = 2;
-  string token = 3;
+  bool enabled = 1 [(buf.validate.field).required = true];
+  string cache_path = 2 [(buf.validate.field).required = true];
+  string token = 3 [(buf.validate.field).required = true];
 }
 
 message Patreon {
-  bool enabled = 1;
-  bool integrations_enabled = 2;
-  string client_id = 3;
-  string client_secret = 4;
-  string creator_access_token = 5;
-  string creator_refresh_token = 6;
+  bool enabled = 1 [(buf.validate.field).required = true];
+  bool integrations_enabled = 2 [(buf.validate.field).required = true];
+  string client_id = 3 [(buf.validate.field).required = true];
+  string client_secret = 4 [(buf.validate.field).required = true];
+  string creator_access_token = 5 [(buf.validate.field).required = true];
+  string creator_refresh_token = 6 [(buf.validate.field).required = true];
 }
 
 enum HostKeyStrategy {
@@ -187,34 +188,34 @@ enum HostKeyStrategy {
 }
 
 message SSH {
-  bool enabled = 1;
-  string username = 2;
-  int32 port = 3;
-  string private_key_path = 4;
-  HostKeyStrategy host_key_strategy = 5;
-  string password = 6;
-  int32 update_interval = 7;
-  int32 timeout = 8;
-  string demo_path_fmt = 9;
-  string stac_path = 10;
+  bool enabled = 1 [(buf.validate.field).required = true];
+  string username = 2 [(buf.validate.field).required = true];
+  int32 port = 3 [(buf.validate.field).required = true];
+  string private_key_path = 4 [(buf.validate.field).required = true];
+  HostKeyStrategy host_key_strategy = 5 [(buf.validate.field).required = true];
+  string password = 6 [(buf.validate.field).required = true];
+  int32 update_interval = 7 [(buf.validate.field).required = true];
+  int32 timeout = 8 [(buf.validate.field).required = true];
+  string demo_path_fmt = 9 [(buf.validate.field).required = true];
+  string stac_path = 10 [(buf.validate.field).required = true];
 }
 
 message Network {
-  bool sdr_enabled = 1;
-  bool sdr_dns_enabled = 2;
-  string cf_key = 3;
-  string cf_email = 4;
-  string cf_zone_id = 5;
+  bool sdr_enabled = 1 [(buf.validate.field).required = true];
+  bool sdr_dns_enabled = 2 [(buf.validate.field).required = true];
+  string cf_key = 3 [(buf.validate.field).required = true];
+  string cf_email = 4 [(buf.validate.field).required = true];
+  string cf_zone_id = 5 [(buf.validate.field).required = true];
 }
 
 message LocalStore {
-  string path_root = 1;
+  string path_root = 1 [(buf.validate.field).required = true];
 }
 
 message Exports {
-  bool bd_enabled = 1;
-  bool valve_enabled = 2;
-  repeated string authorized_keys = 3;
+  bool bd_enabled = 1 [(buf.validate.field).required = true];
+  bool valve_enabled = 2 [(buf.validate.field).required = true];
+  repeated string authorized_keys = 3 [(buf.validate.field).required = true];
 }
 
 enum Action {
@@ -224,39 +225,39 @@ enum Action {
 }
 
 message Anticheat {
-  bool enabled = 1;
-  Action action = 2;
-  int32 duration = 3;
-  int32 max_aim_snaps = 4;
-  int32 max_psilent = 5;
-  int32 max_bhop = 6;
-  int32 max_fake_ang = 7;
-  int32 max_cmd_num = 8;
-  int32 max_too_many_connections = 9;
-  int32 max_oob_var = 10;
-  int32 max_invalid_user_cmd = 11;
-  int32 max_cheat_cvar = 12;
+  bool enabled = 1 [(buf.validate.field).required = true];
+  Action action = 2 [(buf.validate.field).required = true];
+  int32 duration = 3 [(buf.validate.field).required = true];
+  int32 max_aim_snaps = 4 [(buf.validate.field).required = true];
+  int32 max_psilent = 5 [(buf.validate.field).required = true];
+  int32 max_bhop = 6 [(buf.validate.field).required = true];
+  int32 max_fake_ang = 7 [(buf.validate.field).required = true];
+  int32 max_cmd_num = 8 [(buf.validate.field).required = true];
+  int32 max_too_many_connections = 9 [(buf.validate.field).required = true];
+  int32 max_oob_var = 10 [(buf.validate.field).required = true];
+  int32 max_invalid_user_cmd = 11 [(buf.validate.field).required = true];
+  int32 max_cheat_cvar = 12 [(buf.validate.field).required = true];
 }
 
 message Clientprefs {
-  bool center_projectiles = 1;
+  bool center_projectiles = 1 [(buf.validate.field).required = true];
 }
 
 message Config {
-  General general = 1;
-  Debug debug = 2;
-  Demo demo = 3;
-  Filters filters = 4;
-  Discord discord = 5;
-  Clientprefs client_prefs = 6;
-  Log log = 7;
-  GeoLocation geo_location = 8;
-  Patreon patreon = 9;
-  SSH ssh = 10;
-  Network network = 11;
-  LocalStore local_store = 12;
-  Exports exports = 13;
-  Anticheat anticheat = 14;
+  General general = 1 [(buf.validate.field).required = true];
+  Debug debug = 2 [(buf.validate.field).required = true];
+  Demo demo = 3 [(buf.validate.field).required = true];
+  Filters filters = 4 [(buf.validate.field).required = true];
+  Discord discord = 5 [(buf.validate.field).required = true];
+  Clientprefs client_prefs = 6 [(buf.validate.field).required = true];
+  Log log = 7 [(buf.validate.field).required = true];
+  GeoLocation geo_location = 8 [(buf.validate.field).required = true];
+  Patreon patreon = 9 [(buf.validate.field).required = true];
+  SSH ssh = 10 [(buf.validate.field).required = true];
+  Network network = 11 [(buf.validate.field).required = true];
+  LocalStore local_store = 12 [(buf.validate.field).required = true];
+  Exports exports = 13 [(buf.validate.field).required = true];
+  Anticheat anticheat = 14 [(buf.validate.field).required = true];
 }
 
 message GithubRelease {

@@ -88,7 +88,7 @@ type ForumServiceClient interface {
 	ActiveUsers(context.Context, *emptypb.Empty) (*v1.ActiveUsersResponse, error)
 	Overview(context.Context, *emptypb.Empty) (*v1.OverviewResponse, error)
 	RecentMessages(context.Context, *emptypb.Empty) (*v1.RecentMessagesResponse, error)
-	Threads(context.Context, *v1.ThreadsRequest) (*v1.ThreadsRequestResponse, error)
+	Threads(context.Context, *v1.ThreadsRequest) (*v1.ThreadsResponse, error)
 	Thread(context.Context, *v1.ThreadRequest) (*v1.ThreadResponse, error)
 	ThreadDelete(context.Context, *v1.ThreadDeleteRequest) (*emptypb.Empty, error)
 	Forum(context.Context, *v1.ForumRequest) (*v1.ForumResponse, error)
@@ -136,7 +136,7 @@ func NewForumServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(forumServiceMethods.ByName("RecentMessages")),
 			connect.WithClientOptions(opts...),
 		),
-		threads: connect.NewClient[v1.ThreadsRequest, v1.ThreadsRequestResponse](
+		threads: connect.NewClient[v1.ThreadsRequest, v1.ThreadsResponse](
 			httpClient,
 			baseURL+ForumServiceThreadsProcedure,
 			connect.WithSchema(forumServiceMethods.ByName("Threads")),
@@ -234,7 +234,7 @@ type forumServiceClient struct {
 	activeUsers       *connect.Client[emptypb.Empty, v1.ActiveUsersResponse]
 	overview          *connect.Client[emptypb.Empty, v1.OverviewResponse]
 	recentMessages    *connect.Client[emptypb.Empty, v1.RecentMessagesResponse]
-	threads           *connect.Client[v1.ThreadsRequest, v1.ThreadsRequestResponse]
+	threads           *connect.Client[v1.ThreadsRequest, v1.ThreadsResponse]
 	thread            *connect.Client[v1.ThreadRequest, v1.ThreadResponse]
 	threadDelete      *connect.Client[v1.ThreadDeleteRequest, emptypb.Empty]
 	forum             *connect.Client[v1.ForumRequest, v1.ForumResponse]
@@ -279,7 +279,7 @@ func (c *forumServiceClient) RecentMessages(ctx context.Context, req *emptypb.Em
 }
 
 // Threads calls forum.v1.ForumService.Threads.
-func (c *forumServiceClient) Threads(ctx context.Context, req *v1.ThreadsRequest) (*v1.ThreadsRequestResponse, error) {
+func (c *forumServiceClient) Threads(ctx context.Context, req *v1.ThreadsRequest) (*v1.ThreadsResponse, error) {
 	response, err := c.threads.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -418,7 +418,7 @@ type ForumServiceHandler interface {
 	ActiveUsers(context.Context, *emptypb.Empty) (*v1.ActiveUsersResponse, error)
 	Overview(context.Context, *emptypb.Empty) (*v1.OverviewResponse, error)
 	RecentMessages(context.Context, *emptypb.Empty) (*v1.RecentMessagesResponse, error)
-	Threads(context.Context, *v1.ThreadsRequest) (*v1.ThreadsRequestResponse, error)
+	Threads(context.Context, *v1.ThreadsRequest) (*v1.ThreadsResponse, error)
 	Thread(context.Context, *v1.ThreadRequest) (*v1.ThreadResponse, error)
 	ThreadDelete(context.Context, *v1.ThreadDeleteRequest) (*emptypb.Empty, error)
 	Forum(context.Context, *v1.ForumRequest) (*v1.ForumResponse, error)
@@ -611,7 +611,7 @@ func (UnimplementedForumServiceHandler) RecentMessages(context.Context, *emptypb
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("forum.v1.ForumService.RecentMessages is not implemented"))
 }
 
-func (UnimplementedForumServiceHandler) Threads(context.Context, *v1.ThreadsRequest) (*v1.ThreadsRequestResponse, error) {
+func (UnimplementedForumServiceHandler) Threads(context.Context, *v1.ThreadsRequest) (*v1.ThreadsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("forum.v1.ForumService.Threads is not implemented"))
 }
 

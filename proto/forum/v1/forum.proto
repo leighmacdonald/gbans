@@ -2,6 +2,7 @@ edition = "2023";
 
 package forum.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "person/v1/privilege.proto";
@@ -11,7 +12,7 @@ service ForumService {
 
   rpc Overview(google.protobuf.Empty) returns (OverviewResponse) {}
   rpc RecentMessages(google.protobuf.Empty) returns (RecentMessagesResponse) {}
-  rpc Threads(ThreadsRequest) returns (ThreadsRequestResponse) {}
+  rpc Threads(ThreadsRequest) returns (ThreadsResponse) {}
   rpc Thread(ThreadRequest) returns (ThreadResponse) {}
   rpc ThreadDelete(ThreadDeleteRequest) returns (google.protobuf.Empty) {}
   rpc Forum(ForumRequest) returns (ForumResponse) {}
@@ -33,10 +34,10 @@ service ForumService {
 }
 
 message ThreadEditRequest {
-  int32 forum_thread_id = 1;
-  string title = 2;
-  bool sticky = 3;
-  bool locked = 4;
+  int32 forum_thread_id = 1  [(buf.validate.field).required = true];
+  string title = 2  [(buf.validate.field).required = true];
+  bool sticky = 3  [(buf.validate.field).required = true];
+  bool locked = 4  [(buf.validate.field).required = true];
 }
 
 message ThreadEditResponse {
@@ -165,7 +166,7 @@ message ThreadsRequest {
   int32 forum_id = 1;
 }
 
-message ThreadsRequestResponse {
+message ThreadsResponse {
   repeated Thread threads = 1;
 }
 

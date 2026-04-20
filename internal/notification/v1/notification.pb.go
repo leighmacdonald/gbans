@@ -7,7 +7,6 @@
 package notificationv1
 
 import (
-	_ "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -317,7 +316,7 @@ var File_notification_v1_notification_proto protoreflect.FileDescriptor
 
 const file_notification_v1_notification_proto_rawDesc = "" +
 	"\n" +
-	"\"notification/v1/notification.proto\x12\x0fnotification.v1\x1a\x1edatabase/query/v1/filter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"`\n" +
+	"\"notification/v1/notification.proto\x12\x0fnotification.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"`\n" +
 	"\x15NotificationsResponse\x12G\n" +
 	"\rnotifications\x18\x01 \x03(\v2!.notification.v1.UserNotificationR\rnotifications\".\n" +
 	"\rDeleteRequest\x12\x1d\n" +
@@ -325,10 +324,10 @@ const file_notification_v1_notification_proto_rawDesc = "" +
 	"message_id\x18\x01 \x03(\x05R\tmessageId\"0\n" +
 	"\x0fMarkReadRequest\x12\x1d\n" +
 	"\n" +
-	"message_id\x18\x01 \x03(\x05R\tmessageId\"\xc7\x02\n" +
-	"\x10UserNotification\x124\n" +
-	"\x16person_notification_id\x18\x01 \x01(\x03R\x14personNotificationId\x12\x19\n" +
-	"\bsteam_id\x18\x02 \x01(\x03R\asteamId\x12\x12\n" +
+	"message_id\x18\x01 \x03(\x05R\tmessageId\"\xcf\x02\n" +
+	"\x10UserNotification\x128\n" +
+	"\x16person_notification_id\x18\x01 \x01(\x03B\x020\x01R\x14personNotificationId\x12\x1d\n" +
+	"\bsteam_id\x18\x02 \x01(\x03B\x020\x01R\asteamId\x12\x12\n" +
 	"\x04read\x18\x03 \x01(\bR\x04read\x12\x18\n" +
 	"\adeleted\x18\x04 \x01(\bR\adeleted\x125\n" +
 	"\bseverity\x18\x05 \x01(\x0e2\x19.notification.v1.SeverityR\bseverity\x12\x18\n" +

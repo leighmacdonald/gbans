@@ -10,6 +10,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
@@ -17,22 +18,29 @@ import (
 	"github.com/yohcop/openid-go"
 )
 
+type TokenGenerator interface {
+	// MakeToken returns accesstoken, fingerprint, err
+	MakeToken(id person.BaseUser) (string, string, error)
+}
+
 type authHandler struct {
 	*Authentication
 
-	config *config.Configuration
-	tfAPI  thirdparty.APIProvider
-	notif  notification.Notifier
+	config         *config.Configuration
+	tfAPI          thirdparty.APIProvider
+	notif          notification.Notifier
+	tokenGenerator TokenGenerator
 }
 
 func NewAuthHandler(engine *gin.Engine, auth *Authentication, config *config.Configuration,
-	tfAPI thirdparty.APIProvider, notif notification.Notifier,
+	tfAPI thirdparty.APIProvider, notif notification.Notifier, tokenGenerator TokenGenerator,
 ) {
 	handler := &authHandler{
 		Authentication: auth,
 		config:         config,
 		tfAPI:          tfAPI,
 		notif:          notif,
+		tokenGenerator: tokenGenerator,
 	}
 
 	engine.GET("/auth/callback", handler.onSteamOIDCCallback())
@@ -105,7 +113,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 			slog.Error("Failed to create or load user profile", slog.String("error", errPerson.Error()))
 		}
 
-		token, errToken := h.MakeToken(ctx, conf.HTTPCookieKey, sid)
+		accessToken, fingerprint, errToken := h.tokenGenerator.MakeToken(fetchedPerson)
 		if errToken != nil {
 			ctx.Redirect(302, referralURL)
 			slog.Error("Failed to create access token pair", slog.String("error", errToken.Error()))
@@ -121,7 +129,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		}
 
 		query := parsedURL.Query()
-		query.Set("token", token.Access)
+		query.Set("token", accessToken)
 		query.Set("next_url", referralURL)
 		parsedURL.RawQuery = query.Encode()
 
@@ -136,9 +144,9 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		ctx.SetSameSite(http.SameSiteStrictMode)
 		ctx.SetCookie(
 			FingerprintCookieName,
-			token.Fingerprint,
+			fingerprint,
 			int(TokenDuration.Seconds()),
-			"/api",
+			"/connect",
 			parsedExternal.Hostname(),
 			strings.HasPrefix(strings.ToLower(conf.ExternalURL), "https://"),
 			true)

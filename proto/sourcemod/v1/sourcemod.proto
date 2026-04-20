@@ -2,7 +2,6 @@ edition = "2023";
 
 package sourcemod.v1;
 
-import "ban/v1/ban.proto";
 import "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
@@ -25,9 +24,9 @@ service SourcemodService {
   rpc DeleteAdminGroup(DeleteAdminGroupRequest) returns (google.protobuf.Empty) {}
 
   rpc Overrides(google.protobuf.Empty) returns (OverridesResponse) {}
-  rpc CreateOverrides(CreateOverrideRequest) returns (CreateOverrideResponse) {}
-  rpc EditOverrides(EditOverrideRequest) returns (EditOverrideResponse) {}
-  rpc DeleteOverrides(DeleteOverrideRequest) returns (google.protobuf.Empty) {}
+  rpc CreateOverrides(CreateOverridesRequest) returns (CreateOverridesResponse) {}
+  rpc EditOverrides(EditOverridesRequest) returns (EditOverridesResponse) {}
+  rpc DeleteOverrides(DeleteOverridesRequest) returns (google.protobuf.Empty) {}
 
   rpc GroupImmunities(google.protobuf.Empty) returns (GroupImmunitiesResponse) {}
   rpc CreateImmunity(CreateImmunityRequest) returns (CreateImmunityResponse) {}
@@ -238,28 +237,28 @@ message OverridesResponse {
   repeated Override overrides = 1;
 }
 
-message CreateOverrideRequest {
+message CreateOverridesRequest {
   string name = 1;
   OverrideType override_type = 2;
   string flags = 3;
 }
 
-message CreateOverrideResponse {
+message CreateOverridesResponse {
   Override override = 1;
 }
 
-message EditOverrideRequest {
+message EditOverridesRequest {
   int32 override_id = 1;
   string name = 2;
   OverrideType override_type = 3;
   string flags = 4;
 }
 
-message EditOverrideResponse {
+message EditOverridesResponse {
   Override override = 1;
 }
 
-message DeleteOverrideRequest {
+message DeleteOverridesRequest {
   int32 override_id = 1;
 }
 

@@ -7,6 +7,7 @@
 package personv1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -785,7 +786,7 @@ func (x *EditPermissionsRequest) GetPermissionLevel() Privilege {
 	if x != nil && x.PermissionLevel != nil {
 		return *x.PermissionLevel
 	}
-	return Privilege_PRIVILEGE_BANNED
+	return Privilege_PRIVILEGE_BANNED_UNSPECIFIED
 }
 
 type EditPermissionsResponse struct {
@@ -1048,7 +1049,7 @@ func (x *Person) GetPermissionLevel() Privilege {
 	if x != nil && x.PermissionLevel != nil {
 		return *x.PermissionLevel
 	}
-	return Privilege_PRIVILEGE_BANNED
+	return Privilege_PRIVILEGE_BANNED_UNSPECIFIED
 }
 
 func (x *Person) GetMuted() bool {
@@ -1296,67 +1297,67 @@ var File_person_v1_person_proto protoreflect.FileDescriptor
 
 const file_person_v1_person_proto_rawDesc = "" +
 	"\n" +
-	"\x16person/v1/person.proto\x12\tperson.v1\x1a\x1edatabase/query/v1/filter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bperson/v1/person_core.proto\x1a\x19person/v1/privilege.proto\"+\n" +
-	"\x0eProfileRequest\x12\x19\n" +
-	"\bsteam_id\x18\x01 \x01(\tR\asteamId\"?\n" +
-	"\x0fProfileResponse\x12,\n" +
-	"\aprofile\x18\x01 \x01(\v2\x12.person.v1.ProfileR\aprofile\"2\n" +
-	"\x15ResolveSteamIDRequest\x12\x19\n" +
-	"\bsteam_id\x18\x01 \x01(\tR\asteamId\"w\n" +
-	"\x16ResolveSteamIDResponse\x12\x19\n" +
-	"\bsteam_id\x18\x01 \x01(\x03R\asteamId\x12\x1f\n" +
-	"\vavatar_hash\x18\x02 \x01(\tR\n" +
-	"avatarHash\x12!\n" +
-	"\fpersona_name\x18\x03 \x01(\tR\vpersonaName\"I\n" +
-	"\x16CurrentProfileResponse\x12/\n" +
-	"\aprofile\x18\x01 \x01(\v2\x15.person.v1.PersonCoreR\aprofile\"\xfa\x02\n" +
-	"\bSettings\x12,\n" +
-	"\x12person_settings_id\x18\x01 \x01(\x03R\x10personSettingsId\x12\x19\n" +
-	"\bsteam_id\x18\x02 \x01(\x03R\asteamId\x12'\n" +
-	"\x0fforum_signature\x18\x03 \x01(\tR\x0eforumSignature\x124\n" +
-	"\x16forum_profile_messages\x18\x04 \x01(\bR\x14forumProfileMessages\x12!\n" +
-	"\fstats_hidden\x18\x05 \x01(\bR\vstatsHidden\x12-\n" +
-	"\x12center_projectiles\x18\x06 \x01(\bR\x11centerProjectiles\x129\n" +
+	"\x16person/v1/person.proto\x12\tperson.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bperson/v1/person_core.proto\x1a\x19person/v1/privilege.proto\"3\n" +
+	"\x0eProfileRequest\x12!\n" +
+	"\bsteam_id\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\asteamId\"G\n" +
+	"\x0fProfileResponse\x124\n" +
+	"\aprofile\x18\x01 \x01(\v2\x12.person.v1.ProfileB\x06\xbaH\x03\xc8\x01\x01R\aprofile\":\n" +
+	"\x15ResolveSteamIDRequest\x12!\n" +
+	"\bsteam_id\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\asteamId\"\x91\x01\n" +
+	"\x16ResolveSteamIDResponse\x12#\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12'\n" +
+	"\vavatar_hash\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"avatarHash\x12)\n" +
+	"\fpersona_name\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\"Q\n" +
+	"\x16CurrentProfileResponse\x127\n" +
+	"\aprofile\x18\x01 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\aprofile\"\xbe\x03\n" +
+	"\bSettings\x126\n" +
+	"\x12person_settings_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x10personSettingsId\x12#\n" +
+	"\bsteam_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12/\n" +
+	"\x0fforum_signature\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0eforumSignature\x12<\n" +
+	"\x16forum_profile_messages\x18\x04 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x14forumProfileMessages\x12)\n" +
+	"\fstats_hidden\x18\x05 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\vstatsHidden\x125\n" +
+	"\x12center_projectiles\x18\x06 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x11centerProjectiles\x12A\n" +
 	"\n" +
-	"created_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"created_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"\xcd\x01\n" +
-	"\x1aEditProfileSettingsRequest\x12'\n" +
-	"\x0fforum_signature\x18\x01 \x01(\tR\x0eforumSignature\x124\n" +
-	"\x16forum_profile_messages\x18\x02 \x01(\bR\x14forumProfileMessages\x12!\n" +
-	"\fstats_hidden\x18\x03 \x01(\bR\vstatsHidden\x12-\n" +
-	"\x12center_projectiles\x18\x04 \x01(\bR\x11centerProjectiles\"\x9b\x01\n" +
+	"updated_on\x18\b \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xed\x01\n" +
+	"\x1aEditProfileSettingsRequest\x12/\n" +
+	"\x0fforum_signature\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0eforumSignature\x12<\n" +
+	"\x16forum_profile_messages\x18\x02 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x14forumProfileMessages\x12)\n" +
+	"\fstats_hidden\x18\x03 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\vstatsHidden\x125\n" +
+	"\x12center_projectiles\x18\x04 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x11centerProjectiles\"\x9b\x01\n" +
 	"\aProfile\x12-\n" +
 	"\x06player\x18\x01 \x01(\v2\x15.person.v1.PersonCoreR\x06player\x120\n" +
 	"\afriends\x18\x02 \x03(\v2\x16.person.v1.SteamFriendR\afriends\x12/\n" +
-	"\bsettings\x18\x03 \x01(\v2\x13.person.v1.SettingsR\bsettings\"\xc6\x01\n" +
+	"\bsettings\x18\x03 \x01(\v2\x13.person.v1.SettingsR\bsettings\"\xca\x01\n" +
 	"\vSteamFriend\x12=\n" +
 	"\ffriend_since\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\vfriendSince\x12\"\n" +
 	"\frelationship\x18\x02 \x01(\tR\frelationship\x129\n" +
 	"\n" +
-	"removed_on\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tremovedOn\x12\x19\n" +
-	"\bsteam_id\x18\x04 \x01(\x03R\asteamId\"\xcf\x02\n" +
-	"\fUserSettings\x12,\n" +
-	"\x12person_settings_id\x18\x01 \x01(\x03R\x10personSettingsId\x12\x19\n" +
-	"\bsteam_id\x18\x02 \x01(\x03R\asteamId\x12'\n" +
-	"\x0fforum_signature\x18\x03 \x01(\tR\x0eforumSignature\x124\n" +
-	"\x16forum_profile_messages\x18\x04 \x01(\bR\x14forumProfileMessages\x12!\n" +
-	"\fstats_hidden\x18\x05 \x01(\bR\vstatsHidden\x129\n" +
+	"removed_on\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tremovedOn\x12\x1d\n" +
+	"\bsteam_id\x18\x04 \x01(\x03B\x020\x01R\asteamId\"\x8b\x03\n" +
+	"\fUserSettings\x126\n" +
+	"\x12person_settings_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x10personSettingsId\x12#\n" +
+	"\bsteam_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12/\n" +
+	"\x0fforum_signature\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0eforumSignature\x12<\n" +
+	"\x16forum_profile_messages\x18\x04 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x14forumProfileMessages\x12)\n" +
+	"\fstats_hidden\x18\x05 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\vstatsHidden\x12A\n" +
 	"\n" +
-	"created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"N\n" +
-	"\x17ProfileSettingsResponse\x123\n" +
-	"\bsettings\x18\x01 \x01(\v2\x17.person.v1.UserSettingsR\bsettings\"R\n" +
-	"\x1bEditProfileSettingsResponse\x123\n" +
-	"\bsettings\x18\x01 \x01(\v2\x17.person.v1.UserSettingsR\bsettings\"t\n" +
-	"\x16EditPermissionsRequest\x12\x19\n" +
-	"\bsteam_id\x18\x01 \x01(\x03R\asteamId\x12?\n" +
-	"\x10permission_level\x18\x02 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\"H\n" +
-	"\x17EditPermissionsResponse\x12-\n" +
-	"\x06person\x18\x01 \x01(\v2\x15.person.v1.PersonCoreR\x06person\"\xe9\x03\n" +
-	"\fQueryRequest\x12\x1f\n" +
-	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12!\n" +
+	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"V\n" +
+	"\x17ProfileSettingsResponse\x12;\n" +
+	"\bsettings\x18\x01 \x01(\v2\x17.person.v1.UserSettingsB\x06\xbaH\x03\xc8\x01\x01R\bsettings\"Z\n" +
+	"\x1bEditProfileSettingsResponse\x12;\n" +
+	"\bsettings\x18\x01 \x01(\v2\x17.person.v1.UserSettingsB\x06\xbaH\x03\xc8\x01\x01R\bsettings\"\x86\x01\n" +
+	"\x16EditPermissionsRequest\x12#\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12G\n" +
+	"\x10permission_level\x18\x02 \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\"P\n" +
+	"\x17EditPermissionsResponse\x125\n" +
+	"\x06person\x18\x01 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\x06person\"\xfb\x03\n" +
+	"\fQueryRequest\x121\n" +
+	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12!\n" +
 	"\fpersona_name\x18\x02 \x01(\tR\vpersonaName\x12?\n" +
 	"\x10with_permissions\x18\x03 \x03(\x0e2\x14.person.v1.PrivilegeR\x0fwithPermissions\x12\x1d\n" +
 	"\n" +
@@ -1369,51 +1370,51 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"\x10community_banned\x18\t \x01(\bR\x0fcommunityBanned\x12H\n" +
 	"\x12time_created_after\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\x10timeCreatedAfter\x12J\n" +
-	"\x13time_created_before\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\x11timeCreatedBefore\"\xfe\t\n" +
-	"\x06Person\x12\x19\n" +
-	"\bsteam_id\x18\x01 \x01(\x03R\asteamId\x129\n" +
+	"\x13time_created_before\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\x11timeCreatedBefore\"\x82\f\n" +
+	"\x06Person\x12#\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12A\n" +
 	"\n" +
-	"created_on\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"created_on\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x12?\n" +
-	"\x10permission_level\x18\x04 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x12\x14\n" +
-	"\x05muted\x18\x05 \x01(\bR\x05muted\x12\x1d\n" +
+	"updated_on\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\x12G\n" +
+	"\x10permission_level\x18\x04 \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\x12\x1c\n" +
+	"\x05muted\x18\x05 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x05muted\x12%\n" +
 	"\n" +
-	"discord_id\x18\x06 \x01(\tR\tdiscordId\x12\x1d\n" +
+	"discord_id\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tdiscordId\x12%\n" +
 	"\n" +
-	"patreon_id\x18\a \x01(\tR\tpatreonId\x12\x17\n" +
-	"\aip_addr\x18\b \x01(\tR\x06ipAddr\x12)\n" +
-	"\x10community_banned\x18\t \x01(\bR\x0fcommunityBanned\x12\x19\n" +
+	"patreon_id\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tpatreonId\x12\x1f\n" +
+	"\aip_addr\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06ipAddr\x121\n" +
+	"\x10community_banned\x18\t \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0fcommunityBanned\x12!\n" +
 	"\bvac_bans\x18\n" +
-	" \x01(\x05R\avacBans\x12\x1b\n" +
-	"\tgame_bans\x18\v \x01(\x05R\bgameBans\x12\x1f\n" +
-	"\veconomy_ban\x18\f \x01(\tR\n" +
-	"economyBan\x12-\n" +
-	"\x13days_since_last_ban\x18\r \x01(\x05R\x10daysSinceLastBan\x12D\n" +
-	"\x10updated_on_steam\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\x0eupdatedOnSteam\x126\n" +
-	"\x17playerqueue_chat_status\x18\x0f \x01(\x05R\x15playerqueueChatStatus\x126\n" +
-	"\x17playerqueue_chat_reason\x18\x10 \x01(\tR\x15playerqueueChatReason\x12\x1f\n" +
-	"\vavatar_hash\x18\x11 \x01(\tR\n" +
-	"avatarHash\x12-\n" +
-	"\x12comment_permission\x18\x12 \x01(\x03R\x11commentPermission\x12\x1f\n" +
-	"\vlast_logoff\x18\x13 \x01(\x03R\n" +
-	"lastLogoff\x12\x1e\n" +
-	"\vloc_city_id\x18\x14 \x01(\x03R\tlocCityId\x12(\n" +
-	"\x10loc_country_code\x18\x15 \x01(\tR\x0elocCountryCode\x12$\n" +
-	"\x0eloc_state_code\x18\x16 \x01(\tR\flocStateCode\x12!\n" +
-	"\fpersona_name\x18\x17 \x01(\tR\vpersonaName\x12#\n" +
-	"\rpersona_state\x18\x18 \x01(\x05R\fpersonaState\x12.\n" +
-	"\x13persona_state_flags\x18\x19 \x01(\x05R\x11personaStateFlags\x12&\n" +
-	"\x0fprimary_clan_id\x18\x1a \x01(\tR\rprimaryClanId\x12#\n" +
-	"\rprofile_state\x18\x1b \x01(\x03R\fprofileState\x12\x1f\n" +
-	"\vprofile_url\x18\x1c \x01(\tR\n" +
-	"profileUrl\x12\x1b\n" +
-	"\treal_name\x18\x1d \x01(\tR\brealName\x12=\n" +
-	"\ftime_created\x18\x1e \x01(\v2\x1a.google.protobuf.TimestampR\vtimeCreated\x12)\n" +
-	"\x10visibility_state\x18\x1f \x01(\x03R\x0fvisibilityState\"T\n" +
-	"\rQueryResponse\x12-\n" +
-	"\x06people\x18\x01 \x03(\v2\x15.person.v1.PersonCoreR\x06people\x12\x14\n" +
-	"\x05count\x18\x02 \x01(\x03R\x05count2\xc4\x04\n" +
+	" \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\avacBans\x12#\n" +
+	"\tgame_bans\x18\v \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bgameBans\x12'\n" +
+	"\veconomy_ban\x18\f \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"economyBan\x125\n" +
+	"\x13days_since_last_ban\x18\r \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x10daysSinceLastBan\x12L\n" +
+	"\x10updated_on_steam\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\x0eupdatedOnSteam\x12>\n" +
+	"\x17playerqueue_chat_status\x18\x0f \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x15playerqueueChatStatus\x12>\n" +
+	"\x17playerqueue_chat_reason\x18\x10 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x15playerqueueChatReason\x12'\n" +
+	"\vavatar_hash\x18\x11 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"avatarHash\x127\n" +
+	"\x12comment_permission\x18\x12 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x11commentPermission\x12)\n" +
+	"\vlast_logoff\x18\x13 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\n" +
+	"lastLogoff\x12(\n" +
+	"\vloc_city_id\x18\x14 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\tlocCityId\x120\n" +
+	"\x10loc_country_code\x18\x15 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0elocCountryCode\x12,\n" +
+	"\x0eloc_state_code\x18\x16 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\flocStateCode\x12)\n" +
+	"\fpersona_name\x18\x17 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12+\n" +
+	"\rpersona_state\x18\x18 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fpersonaState\x126\n" +
+	"\x13persona_state_flags\x18\x19 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11personaStateFlags\x12.\n" +
+	"\x0fprimary_clan_id\x18\x1a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rprimaryClanId\x12-\n" +
+	"\rprofile_state\x18\x1b \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\fprofileState\x12'\n" +
+	"\vprofile_url\x18\x1c \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"profileUrl\x12#\n" +
+	"\treal_name\x18\x1d \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\brealName\x12E\n" +
+	"\ftime_created\x18\x1e \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\vtimeCreated\x123\n" +
+	"\x10visibility_state\x18\x1f \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x0fvisibilityState\"f\n" +
+	"\rQueryResponse\x125\n" +
+	"\x06people\x18\x01 \x03(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\x06people\x12\x1e\n" +
+	"\x05count\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x05count2\xc4\x04\n" +
 	"\rPersonService\x12B\n" +
 	"\aProfile\x12\x19.person.v1.ProfileRequest\x1a\x1a.person.v1.ProfileResponse\"\x00\x12W\n" +
 	"\x0eResolveSteamID\x12 .person.v1.ResolveSteamIDRequest\x1a!.person.v1.ResolveSteamIDResponse\"\x00\x12K\n" +
@@ -1459,7 +1460,7 @@ var file_person_v1_person_proto_goTypes = []any{
 	(*PersonCore)(nil),                  // 17: person.v1.PersonCore
 	(*timestamppb.Timestamp)(nil),       // 18: google.protobuf.Timestamp
 	(Privilege)(0),                      // 19: person.v1.Privilege
-	(*v1.Filter)(nil),                   // 20: Filter
+	(*v1.Filter)(nil),                   // 20: database.query.v1.Filter
 	(*emptypb.Empty)(nil),               // 21: google.protobuf.Empty
 }
 var file_person_v1_person_proto_depIdxs = []int32{
@@ -1478,7 +1479,7 @@ var file_person_v1_person_proto_depIdxs = []int32{
 	9,  // 12: person.v1.EditProfileSettingsResponse.settings:type_name -> person.v1.UserSettings
 	19, // 13: person.v1.EditPermissionsRequest.permission_level:type_name -> person.v1.Privilege
 	17, // 14: person.v1.EditPermissionsResponse.person:type_name -> person.v1.PersonCore
-	20, // 15: person.v1.QueryRequest.filter:type_name -> Filter
+	20, // 15: person.v1.QueryRequest.filter:type_name -> database.query.v1.Filter
 	19, // 16: person.v1.QueryRequest.with_permissions:type_name -> person.v1.Privilege
 	18, // 17: person.v1.QueryRequest.time_created_after:type_name -> google.protobuf.Timestamp
 	18, // 18: person.v1.QueryRequest.time_created_before:type_name -> google.protobuf.Timestamp

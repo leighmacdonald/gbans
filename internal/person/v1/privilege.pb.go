@@ -24,20 +24,20 @@ const (
 type Privilege int32
 
 const (
-	Privilege_PRIVILEGE_BANNED            Privilege = 0
-	Privilege_PRIVILEGE_GUEST_UNSPECIFIED Privilege = 1
-	Privilege_PRIVILEGE_USER              Privilege = 10
-	Privilege_PRIVILEGE_RESERVED          Privilege = 15
-	Privilege_PRIVILEGE_EDITOR            Privilege = 25
-	Privilege_PRIVILEGE_MODERATOR         Privilege = 50
-	Privilege_PRIVILEGE_ADMIN             Privilege = 100
+	Privilege_PRIVILEGE_BANNED_UNSPECIFIED Privilege = 0
+	Privilege_PRIVILEGE_GUEST              Privilege = 1
+	Privilege_PRIVILEGE_USER               Privilege = 10
+	Privilege_PRIVILEGE_RESERVED           Privilege = 15
+	Privilege_PRIVILEGE_EDITOR             Privilege = 25
+	Privilege_PRIVILEGE_MODERATOR          Privilege = 50
+	Privilege_PRIVILEGE_ADMIN              Privilege = 100
 )
 
 // Enum value maps for Privilege.
 var (
 	Privilege_name = map[int32]string{
-		0:   "PRIVILEGE_BANNED",
-		1:   "PRIVILEGE_GUEST_UNSPECIFIED",
+		0:   "PRIVILEGE_BANNED_UNSPECIFIED",
+		1:   "PRIVILEGE_GUEST",
 		10:  "PRIVILEGE_USER",
 		15:  "PRIVILEGE_RESERVED",
 		25:  "PRIVILEGE_EDITOR",
@@ -45,13 +45,13 @@ var (
 		100: "PRIVILEGE_ADMIN",
 	}
 	Privilege_value = map[string]int32{
-		"PRIVILEGE_BANNED":            0,
-		"PRIVILEGE_GUEST_UNSPECIFIED": 1,
-		"PRIVILEGE_USER":              10,
-		"PRIVILEGE_RESERVED":          15,
-		"PRIVILEGE_EDITOR":            25,
-		"PRIVILEGE_MODERATOR":         50,
-		"PRIVILEGE_ADMIN":             100,
+		"PRIVILEGE_BANNED_UNSPECIFIED": 0,
+		"PRIVILEGE_GUEST":              1,
+		"PRIVILEGE_USER":               10,
+		"PRIVILEGE_RESERVED":           15,
+		"PRIVILEGE_EDITOR":             25,
+		"PRIVILEGE_MODERATOR":          50,
+		"PRIVILEGE_ADMIN":              100,
 	}
 )
 
@@ -87,9 +87,9 @@ var File_person_v1_privilege_proto protoreflect.FileDescriptor
 const file_person_v1_privilege_proto_rawDesc = "" +
 	"\n" +
 	"\x19person/v1/privilege.proto\x12\tperson.v1*\xb2\x01\n" +
-	"\tPrivilege\x12\x14\n" +
-	"\x10PRIVILEGE_BANNED\x10\x00\x12\x1f\n" +
-	"\x1bPRIVILEGE_GUEST_UNSPECIFIED\x10\x01\x12\x12\n" +
+	"\tPrivilege\x12 \n" +
+	"\x1cPRIVILEGE_BANNED_UNSPECIFIED\x10\x00\x12\x13\n" +
+	"\x0fPRIVILEGE_GUEST\x10\x01\x12\x12\n" +
 	"\x0ePRIVILEGE_USER\x10\n" +
 	"\x12\x16\n" +
 	"\x12PRIVILEGE_RESERVED\x10\x0f\x12\x14\n" +

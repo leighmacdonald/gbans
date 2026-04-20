@@ -8,7 +8,6 @@ package sourcemodv1
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
-	_ "github.com/leighmacdonald/gbans/internal/ban/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -2154,7 +2153,7 @@ func (x *OverridesResponse) GetOverrides() []*Override {
 	return nil
 }
 
-type CreateOverrideRequest struct {
+type CreateOverridesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          *string                `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
 	OverrideType  *OverrideType          `protobuf:"varint,2,opt,name=override_type,json=overrideType,enum=sourcemod.v1.OverrideType" json:"override_type,omitempty"`
@@ -2163,20 +2162,20 @@ type CreateOverrideRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CreateOverrideRequest) Reset() {
-	*x = CreateOverrideRequest{}
+func (x *CreateOverridesRequest) Reset() {
+	*x = CreateOverridesRequest{}
 	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CreateOverrideRequest) String() string {
+func (x *CreateOverridesRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CreateOverrideRequest) ProtoMessage() {}
+func (*CreateOverridesRequest) ProtoMessage() {}
 
-func (x *CreateOverrideRequest) ProtoReflect() protoreflect.Message {
+func (x *CreateOverridesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2188,53 +2187,53 @@ func (x *CreateOverrideRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CreateOverrideRequest.ProtoReflect.Descriptor instead.
-func (*CreateOverrideRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateOverridesRequest.ProtoReflect.Descriptor instead.
+func (*CreateOverridesRequest) Descriptor() ([]byte, []int) {
 	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{36}
 }
 
-func (x *CreateOverrideRequest) GetName() string {
+func (x *CreateOverridesRequest) GetName() string {
 	if x != nil && x.Name != nil {
 		return *x.Name
 	}
 	return ""
 }
 
-func (x *CreateOverrideRequest) GetOverrideType() OverrideType {
+func (x *CreateOverridesRequest) GetOverrideType() OverrideType {
 	if x != nil && x.OverrideType != nil {
 		return *x.OverrideType
 	}
 	return OverrideType_OVERRIDE_TYPE_COMMAND_UNSPECIFIED
 }
 
-func (x *CreateOverrideRequest) GetFlags() string {
+func (x *CreateOverridesRequest) GetFlags() string {
 	if x != nil && x.Flags != nil {
 		return *x.Flags
 	}
 	return ""
 }
 
-type CreateOverrideResponse struct {
+type CreateOverridesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Override      *Override              `protobuf:"bytes,1,opt,name=override" json:"override,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CreateOverrideResponse) Reset() {
-	*x = CreateOverrideResponse{}
+func (x *CreateOverridesResponse) Reset() {
+	*x = CreateOverridesResponse{}
 	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CreateOverrideResponse) String() string {
+func (x *CreateOverridesResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CreateOverrideResponse) ProtoMessage() {}
+func (*CreateOverridesResponse) ProtoMessage() {}
 
-func (x *CreateOverrideResponse) ProtoReflect() protoreflect.Message {
+func (x *CreateOverridesResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2246,19 +2245,19 @@ func (x *CreateOverrideResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CreateOverrideResponse.ProtoReflect.Descriptor instead.
-func (*CreateOverrideResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateOverridesResponse.ProtoReflect.Descriptor instead.
+func (*CreateOverridesResponse) Descriptor() ([]byte, []int) {
 	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{37}
 }
 
-func (x *CreateOverrideResponse) GetOverride() *Override {
+func (x *CreateOverridesResponse) GetOverride() *Override {
 	if x != nil {
 		return x.Override
 	}
 	return nil
 }
 
-type EditOverrideRequest struct {
+type EditOverridesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OverrideId    *int32                 `protobuf:"varint,1,opt,name=override_id,json=overrideId" json:"override_id,omitempty"`
 	Name          *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
@@ -2268,20 +2267,20 @@ type EditOverrideRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *EditOverrideRequest) Reset() {
-	*x = EditOverrideRequest{}
+func (x *EditOverridesRequest) Reset() {
+	*x = EditOverridesRequest{}
 	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *EditOverrideRequest) String() string {
+func (x *EditOverridesRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*EditOverrideRequest) ProtoMessage() {}
+func (*EditOverridesRequest) ProtoMessage() {}
 
-func (x *EditOverrideRequest) ProtoReflect() protoreflect.Message {
+func (x *EditOverridesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2293,60 +2292,60 @@ func (x *EditOverrideRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use EditOverrideRequest.ProtoReflect.Descriptor instead.
-func (*EditOverrideRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use EditOverridesRequest.ProtoReflect.Descriptor instead.
+func (*EditOverridesRequest) Descriptor() ([]byte, []int) {
 	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{38}
 }
 
-func (x *EditOverrideRequest) GetOverrideId() int32 {
+func (x *EditOverridesRequest) GetOverrideId() int32 {
 	if x != nil && x.OverrideId != nil {
 		return *x.OverrideId
 	}
 	return 0
 }
 
-func (x *EditOverrideRequest) GetName() string {
+func (x *EditOverridesRequest) GetName() string {
 	if x != nil && x.Name != nil {
 		return *x.Name
 	}
 	return ""
 }
 
-func (x *EditOverrideRequest) GetOverrideType() OverrideType {
+func (x *EditOverridesRequest) GetOverrideType() OverrideType {
 	if x != nil && x.OverrideType != nil {
 		return *x.OverrideType
 	}
 	return OverrideType_OVERRIDE_TYPE_COMMAND_UNSPECIFIED
 }
 
-func (x *EditOverrideRequest) GetFlags() string {
+func (x *EditOverridesRequest) GetFlags() string {
 	if x != nil && x.Flags != nil {
 		return *x.Flags
 	}
 	return ""
 }
 
-type EditOverrideResponse struct {
+type EditOverridesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Override      *Override              `protobuf:"bytes,1,opt,name=override" json:"override,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *EditOverrideResponse) Reset() {
-	*x = EditOverrideResponse{}
+func (x *EditOverridesResponse) Reset() {
+	*x = EditOverridesResponse{}
 	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *EditOverrideResponse) String() string {
+func (x *EditOverridesResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*EditOverrideResponse) ProtoMessage() {}
+func (*EditOverridesResponse) ProtoMessage() {}
 
-func (x *EditOverrideResponse) ProtoReflect() protoreflect.Message {
+func (x *EditOverridesResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2358,39 +2357,39 @@ func (x *EditOverrideResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use EditOverrideResponse.ProtoReflect.Descriptor instead.
-func (*EditOverrideResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use EditOverridesResponse.ProtoReflect.Descriptor instead.
+func (*EditOverridesResponse) Descriptor() ([]byte, []int) {
 	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{39}
 }
 
-func (x *EditOverrideResponse) GetOverride() *Override {
+func (x *EditOverridesResponse) GetOverride() *Override {
 	if x != nil {
 		return x.Override
 	}
 	return nil
 }
 
-type DeleteOverrideRequest struct {
+type DeleteOverridesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OverrideId    *int32                 `protobuf:"varint,1,opt,name=override_id,json=overrideId" json:"override_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteOverrideRequest) Reset() {
-	*x = DeleteOverrideRequest{}
+func (x *DeleteOverridesRequest) Reset() {
+	*x = DeleteOverridesRequest{}
 	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteOverrideRequest) String() string {
+func (x *DeleteOverridesRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteOverrideRequest) ProtoMessage() {}
+func (*DeleteOverridesRequest) ProtoMessage() {}
 
-func (x *DeleteOverrideRequest) ProtoReflect() protoreflect.Message {
+func (x *DeleteOverridesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2402,12 +2401,12 @@ func (x *DeleteOverrideRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteOverrideRequest.ProtoReflect.Descriptor instead.
-func (*DeleteOverrideRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use DeleteOverridesRequest.ProtoReflect.Descriptor instead.
+func (*DeleteOverridesRequest) Descriptor() ([]byte, []int) {
 	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{40}
 }
 
-func (x *DeleteOverrideRequest) GetOverrideId() int32 {
+func (x *DeleteOverridesRequest) GetOverrideId() int32 {
 	if x != nil && x.OverrideId != nil {
 		return *x.OverrideId
 	}
@@ -3054,7 +3053,7 @@ var File_sourcemod_v1_sourcemod_proto protoreflect.FileDescriptor
 
 const file_sourcemod_v1_sourcemod_proto_rawDesc = "" +
 	"\n" +
-	"\x1csourcemod/v1/sourcemod.proto\x12\fsourcemod.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"*\n" +
+	"\x1csourcemod/v1/sourcemod.proto\x12\fsourcemod.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"*\n" +
 	"\rSMSeedRequest\x12\x19\n" +
 	"\bsteam_id\x18\x01 \x01(\tR\asteamId\"*\n" +
 	"\x0eSMSeedResponse\x12\x18\n" +
@@ -3177,22 +3176,22 @@ const file_sourcemod_v1_sourcemod_proto_rawDesc = "" +
 	"\badmin_id\x18\x01 \x01(\x05R\aadminId\x12\x19\n" +
 	"\bgroup_id\x18\x02 \x01(\x05R\agroupId\"I\n" +
 	"\x11OverridesResponse\x124\n" +
-	"\toverrides\x18\x01 \x03(\v2\x16.sourcemod.v1.OverrideR\toverrides\"\x82\x01\n" +
-	"\x15CreateOverrideRequest\x12\x12\n" +
+	"\toverrides\x18\x01 \x03(\v2\x16.sourcemod.v1.OverrideR\toverrides\"\x83\x01\n" +
+	"\x16CreateOverridesRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12?\n" +
 	"\roverride_type\x18\x02 \x01(\x0e2\x1a.sourcemod.v1.OverrideTypeR\foverrideType\x12\x14\n" +
-	"\x05flags\x18\x03 \x01(\tR\x05flags\"L\n" +
-	"\x16CreateOverrideResponse\x122\n" +
-	"\boverride\x18\x01 \x01(\v2\x16.sourcemod.v1.OverrideR\boverride\"\xa1\x01\n" +
-	"\x13EditOverrideRequest\x12\x1f\n" +
+	"\x05flags\x18\x03 \x01(\tR\x05flags\"M\n" +
+	"\x17CreateOverridesResponse\x122\n" +
+	"\boverride\x18\x01 \x01(\v2\x16.sourcemod.v1.OverrideR\boverride\"\xa2\x01\n" +
+	"\x14EditOverridesRequest\x12\x1f\n" +
 	"\voverride_id\x18\x01 \x01(\x05R\n" +
 	"overrideId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12?\n" +
 	"\roverride_type\x18\x03 \x01(\x0e2\x1a.sourcemod.v1.OverrideTypeR\foverrideType\x12\x14\n" +
-	"\x05flags\x18\x04 \x01(\tR\x05flags\"J\n" +
-	"\x14EditOverrideResponse\x122\n" +
-	"\boverride\x18\x01 \x01(\v2\x16.sourcemod.v1.OverrideR\boverride\"8\n" +
-	"\x15DeleteOverrideRequest\x12\x1f\n" +
+	"\x05flags\x18\x04 \x01(\tR\x05flags\"K\n" +
+	"\x15EditOverridesResponse\x122\n" +
+	"\boverride\x18\x01 \x01(\v2\x16.sourcemod.v1.OverrideR\boverride\"9\n" +
+	"\x16DeleteOverridesRequest\x12\x1f\n" +
 	"\voverride_id\x18\x01 \x01(\x05R\n" +
 	"overrideId\"a\n" +
 	"\x17GroupImmunitiesResponse\x12F\n" +
@@ -3229,10 +3228,10 @@ const file_sourcemod_v1_sourcemod_proto_rawDesc = "" +
 	"\n" +
 	"created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
 	"\n" +
-	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"\x9e\x03\n" +
+	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"\xa2\x03\n" +
 	"\x05Admin\x12\x19\n" +
-	"\badmin_id\x18\x01 \x01(\x05R\aadminId\x12\x19\n" +
-	"\bsteam_id\x18\x02 \x01(\x03R\asteamId\x123\n" +
+	"\badmin_id\x18\x01 \x01(\x05R\aadminId\x12\x1d\n" +
+	"\bsteam_id\x18\x02 \x01(\x03B\x020\x01R\asteamId\x123\n" +
 	"\tauth_type\x18\x03 \x01(\x0e2\x16.sourcemod.v1.AuthTypeR\bauthType\x12\x1a\n" +
 	"\bidentity\x18\x04 \x01(\tR\bidentity\x12\x1a\n" +
 	"\bpassword\x18\x05 \x01(\tR\bpassword\x12\x14\n" +
@@ -3269,7 +3268,7 @@ const file_sourcemod_v1_sourcemod_proto_rawDesc = "" +
 	"\bAuthType\x12\x1f\n" +
 	"\x1bAUTH_TYPE_STEAM_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eAUTH_TYPE_NAME\x10\x01\x12\x10\n" +
-	"\fAUTH_TYPE_IP\x10\x022\xf5\x10\n" +
+	"\fAUTH_TYPE_IP\x10\x022\xfa\x10\n" +
 	"\x10SourcemodService\x12@\n" +
 	"\x06Groups\x12\x16.google.protobuf.Empty\x1a\x1c.sourcemod.v1.GroupsResponse\"\x00\x12T\n" +
 	"\vCreateGroup\x12 .sourcemod.v1.CreateGroupRequest\x1a!.sourcemod.v1.CreateGroupResponse\"\x00\x12Q\n" +
@@ -3286,10 +3285,10 @@ const file_sourcemod_v1_sourcemod_proto_rawDesc = "" +
 	"\vDeleteAdmin\x12 .sourcemod.v1.DeleteAdminRequest\x1a\x16.google.protobuf.Empty\"\x00\x12Z\n" +
 	"\rAddAdminGroup\x12\".sourcemod.v1.AddAdminGroupRequest\x1a#.sourcemod.v1.AddAdminGroupResponse\"\x00\x12S\n" +
 	"\x10DeleteAdminGroup\x12%.sourcemod.v1.DeleteAdminGroupRequest\x1a\x16.google.protobuf.Empty\"\x00\x12F\n" +
-	"\tOverrides\x12\x16.google.protobuf.Empty\x1a\x1f.sourcemod.v1.OverridesResponse\"\x00\x12^\n" +
-	"\x0fCreateOverrides\x12#.sourcemod.v1.CreateOverrideRequest\x1a$.sourcemod.v1.CreateOverrideResponse\"\x00\x12X\n" +
-	"\rEditOverrides\x12!.sourcemod.v1.EditOverrideRequest\x1a\".sourcemod.v1.EditOverrideResponse\"\x00\x12P\n" +
-	"\x0fDeleteOverrides\x12#.sourcemod.v1.DeleteOverrideRequest\x1a\x16.google.protobuf.Empty\"\x00\x12R\n" +
+	"\tOverrides\x12\x16.google.protobuf.Empty\x1a\x1f.sourcemod.v1.OverridesResponse\"\x00\x12`\n" +
+	"\x0fCreateOverrides\x12$.sourcemod.v1.CreateOverridesRequest\x1a%.sourcemod.v1.CreateOverridesResponse\"\x00\x12Z\n" +
+	"\rEditOverrides\x12\".sourcemod.v1.EditOverridesRequest\x1a#.sourcemod.v1.EditOverridesResponse\"\x00\x12Q\n" +
+	"\x0fDeleteOverrides\x12$.sourcemod.v1.DeleteOverridesRequest\x1a\x16.google.protobuf.Empty\"\x00\x12R\n" +
 	"\x0fGroupImmunities\x12\x16.google.protobuf.Empty\x1a%.sourcemod.v1.GroupImmunitiesResponse\"\x00\x12]\n" +
 	"\x0eCreateImmunity\x12#.sourcemod.v1.CreateImmunityRequest\x1a$.sourcemod.v1.CreateImmunityResponse\"\x00\x12O\n" +
 	"\x0eDeleteImmunity\x12#.sourcemod.v1.DeleteImmunityRequest\x1a\x16.google.protobuf.Empty\"\x00\x12B\n" +
@@ -3355,11 +3354,11 @@ var file_sourcemod_v1_sourcemod_proto_goTypes = []any{
 	(*AddAdminGroupResponse)(nil),       // 37: sourcemod.v1.AddAdminGroupResponse
 	(*DeleteAdminGroupRequest)(nil),     // 38: sourcemod.v1.DeleteAdminGroupRequest
 	(*OverridesResponse)(nil),           // 39: sourcemod.v1.OverridesResponse
-	(*CreateOverrideRequest)(nil),       // 40: sourcemod.v1.CreateOverrideRequest
-	(*CreateOverrideResponse)(nil),      // 41: sourcemod.v1.CreateOverrideResponse
-	(*EditOverrideRequest)(nil),         // 42: sourcemod.v1.EditOverrideRequest
-	(*EditOverrideResponse)(nil),        // 43: sourcemod.v1.EditOverrideResponse
-	(*DeleteOverrideRequest)(nil),       // 44: sourcemod.v1.DeleteOverrideRequest
+	(*CreateOverridesRequest)(nil),      // 40: sourcemod.v1.CreateOverridesRequest
+	(*CreateOverridesResponse)(nil),     // 41: sourcemod.v1.CreateOverridesResponse
+	(*EditOverridesRequest)(nil),        // 42: sourcemod.v1.EditOverridesRequest
+	(*EditOverridesResponse)(nil),       // 43: sourcemod.v1.EditOverridesResponse
+	(*DeleteOverridesRequest)(nil),      // 44: sourcemod.v1.DeleteOverridesRequest
 	(*GroupImmunitiesResponse)(nil),     // 45: sourcemod.v1.GroupImmunitiesResponse
 	(*CreateImmunityRequest)(nil),       // 46: sourcemod.v1.CreateImmunityRequest
 	(*CreateImmunityResponse)(nil),      // 47: sourcemod.v1.CreateImmunityResponse
@@ -3398,10 +3397,10 @@ var file_sourcemod_v1_sourcemod_proto_depIdxs = []int32{
 	52, // 22: sourcemod.v1.EditAdminResponse.admin:type_name -> sourcemod.v1.Admin
 	52, // 23: sourcemod.v1.AddAdminGroupResponse.admin:type_name -> sourcemod.v1.Admin
 	53, // 24: sourcemod.v1.OverridesResponse.overrides:type_name -> sourcemod.v1.Override
-	1,  // 25: sourcemod.v1.CreateOverrideRequest.override_type:type_name -> sourcemod.v1.OverrideType
-	53, // 26: sourcemod.v1.CreateOverrideResponse.override:type_name -> sourcemod.v1.Override
-	1,  // 27: sourcemod.v1.EditOverrideRequest.override_type:type_name -> sourcemod.v1.OverrideType
-	53, // 28: sourcemod.v1.EditOverrideResponse.override:type_name -> sourcemod.v1.Override
+	1,  // 25: sourcemod.v1.CreateOverridesRequest.override_type:type_name -> sourcemod.v1.OverrideType
+	53, // 26: sourcemod.v1.CreateOverridesResponse.override:type_name -> sourcemod.v1.Override
+	1,  // 27: sourcemod.v1.EditOverridesRequest.override_type:type_name -> sourcemod.v1.OverrideType
+	53, // 28: sourcemod.v1.EditOverridesResponse.override:type_name -> sourcemod.v1.Override
 	49, // 29: sourcemod.v1.GroupImmunitiesResponse.group_immunities:type_name -> sourcemod.v1.GroupImmunity
 	49, // 30: sourcemod.v1.CreateImmunityResponse.group_immunity:type_name -> sourcemod.v1.GroupImmunity
 	50, // 31: sourcemod.v1.GroupImmunity.group:type_name -> sourcemod.v1.Group
@@ -3435,9 +3434,9 @@ var file_sourcemod_v1_sourcemod_proto_depIdxs = []int32{
 	36, // 59: sourcemod.v1.SourcemodService.AddAdminGroup:input_type -> sourcemod.v1.AddAdminGroupRequest
 	38, // 60: sourcemod.v1.SourcemodService.DeleteAdminGroup:input_type -> sourcemod.v1.DeleteAdminGroupRequest
 	55, // 61: sourcemod.v1.SourcemodService.Overrides:input_type -> google.protobuf.Empty
-	40, // 62: sourcemod.v1.SourcemodService.CreateOverrides:input_type -> sourcemod.v1.CreateOverrideRequest
-	42, // 63: sourcemod.v1.SourcemodService.EditOverrides:input_type -> sourcemod.v1.EditOverrideRequest
-	44, // 64: sourcemod.v1.SourcemodService.DeleteOverrides:input_type -> sourcemod.v1.DeleteOverrideRequest
+	40, // 62: sourcemod.v1.SourcemodService.CreateOverrides:input_type -> sourcemod.v1.CreateOverridesRequest
+	42, // 63: sourcemod.v1.SourcemodService.EditOverrides:input_type -> sourcemod.v1.EditOverridesRequest
+	44, // 64: sourcemod.v1.SourcemodService.DeleteOverrides:input_type -> sourcemod.v1.DeleteOverridesRequest
 	55, // 65: sourcemod.v1.SourcemodService.GroupImmunities:input_type -> google.protobuf.Empty
 	46, // 66: sourcemod.v1.SourcemodService.CreateImmunity:input_type -> sourcemod.v1.CreateImmunityRequest
 	48, // 67: sourcemod.v1.SourcemodService.DeleteImmunity:input_type -> sourcemod.v1.DeleteImmunityRequest
@@ -3461,8 +3460,8 @@ var file_sourcemod_v1_sourcemod_proto_depIdxs = []int32{
 	37, // 85: sourcemod.v1.SourcemodService.AddAdminGroup:output_type -> sourcemod.v1.AddAdminGroupResponse
 	55, // 86: sourcemod.v1.SourcemodService.DeleteAdminGroup:output_type -> google.protobuf.Empty
 	39, // 87: sourcemod.v1.SourcemodService.Overrides:output_type -> sourcemod.v1.OverridesResponse
-	41, // 88: sourcemod.v1.SourcemodService.CreateOverrides:output_type -> sourcemod.v1.CreateOverrideResponse
-	43, // 89: sourcemod.v1.SourcemodService.EditOverrides:output_type -> sourcemod.v1.EditOverrideResponse
+	41, // 88: sourcemod.v1.SourcemodService.CreateOverrides:output_type -> sourcemod.v1.CreateOverridesResponse
+	43, // 89: sourcemod.v1.SourcemodService.EditOverrides:output_type -> sourcemod.v1.EditOverridesResponse
 	55, // 90: sourcemod.v1.SourcemodService.DeleteOverrides:output_type -> google.protobuf.Empty
 	45, // 91: sourcemod.v1.SourcemodService.GroupImmunities:output_type -> sourcemod.v1.GroupImmunitiesResponse
 	47, // 92: sourcemod.v1.SourcemodService.CreateImmunity:output_type -> sourcemod.v1.CreateImmunityResponse

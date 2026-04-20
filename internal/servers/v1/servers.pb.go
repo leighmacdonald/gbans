@@ -8,7 +8,6 @@ package serversv1
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
-	_ "github.com/leighmacdonald/gbans/internal/ban/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -894,7 +893,7 @@ var File_servers_v1_servers_proto protoreflect.FileDescriptor
 const file_servers_v1_servers_proto_rawDesc = "" +
 	"\n" +
 	"\x18servers/v1/servers.proto\x12\n" +
-	"servers.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\">\n" +
+	"servers.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\">\n" +
 	"\fStateRequest\x12.\n" +
 	"\blat_long\x18\x01 \x01(\v2\x13.servers.v1.LatLongR\alatLong\"\xd7\x03\n" +
 	"\n" +

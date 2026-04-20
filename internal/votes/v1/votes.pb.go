@@ -75,8 +75,8 @@ func (VoteCode) EnumDescriptor() ([]byte, []int) {
 type QueryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Filter        *v1.Filter             `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
-	SourceId      *string                `protobuf:"bytes,2,opt,name=source_id,json=sourceId" json:"source_id,omitempty"`
-	TargetId      *string                `protobuf:"bytes,3,opt,name=target_id,json=targetId" json:"target_id,omitempty"`
+	SourceId      *int64                 `protobuf:"varint,2,opt,name=source_id,json=sourceId" json:"source_id,omitempty"`
+	TargetId      *int64                 `protobuf:"varint,3,opt,name=target_id,json=targetId" json:"target_id,omitempty"`
 	ServerId      *int32                 `protobuf:"varint,4,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
 	Name          *string                `protobuf:"bytes,5,opt,name=name" json:"name,omitempty"`
 	Success       *int32                 `protobuf:"varint,6,opt,name=success" json:"success,omitempty"`
@@ -122,18 +122,18 @@ func (x *QueryRequest) GetFilter() *v1.Filter {
 	return nil
 }
 
-func (x *QueryRequest) GetSourceId() string {
+func (x *QueryRequest) GetSourceId() int64 {
 	if x != nil && x.SourceId != nil {
 		return *x.SourceId
 	}
-	return ""
+	return 0
 }
 
-func (x *QueryRequest) GetTargetId() string {
+func (x *QueryRequest) GetTargetId() int64 {
 	if x != nil && x.TargetId != nil {
 		return *x.TargetId
 	}
-	return ""
+	return 0
 }
 
 func (x *QueryRequest) GetServerId() int32 {
@@ -167,10 +167,10 @@ func (x *QueryRequest) GetCode() bool {
 type VoteResult struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	VoteId           *int32                 `protobuf:"varint,1,opt,name=vote_id,json=voteId" json:"vote_id,omitempty"`
-	SourceId         *string                `protobuf:"bytes,2,opt,name=source_id,json=sourceId" json:"source_id,omitempty"`
+	SourceId         *int64                 `protobuf:"varint,2,opt,name=source_id,json=sourceId" json:"source_id,omitempty"`
 	SourceName       *string                `protobuf:"bytes,3,opt,name=source_name,json=sourceName" json:"source_name,omitempty"`
 	SourceAvatarHash *string                `protobuf:"bytes,4,opt,name=source_avatar_hash,json=sourceAvatarHash" json:"source_avatar_hash,omitempty"`
-	TargetId         *string                `protobuf:"bytes,5,opt,name=target_id,json=targetId" json:"target_id,omitempty"`
+	TargetId         *int64                 `protobuf:"varint,5,opt,name=target_id,json=targetId" json:"target_id,omitempty"`
 	TargetName       *string                `protobuf:"bytes,6,opt,name=target_name,json=targetName" json:"target_name,omitempty"`
 	TargetAvatarHash *string                `protobuf:"bytes,7,opt,name=target_avatar_hash,json=targetAvatarHash" json:"target_avatar_hash,omitempty"`
 	Name             *string                `protobuf:"bytes,8,opt,name=name" json:"name,omitempty"`
@@ -220,11 +220,11 @@ func (x *VoteResult) GetVoteId() int32 {
 	return 0
 }
 
-func (x *VoteResult) GetSourceId() string {
+func (x *VoteResult) GetSourceId() int64 {
 	if x != nil && x.SourceId != nil {
 		return *x.SourceId
 	}
-	return ""
+	return 0
 }
 
 func (x *VoteResult) GetSourceName() string {
@@ -241,11 +241,11 @@ func (x *VoteResult) GetSourceAvatarHash() string {
 	return ""
 }
 
-func (x *VoteResult) GetTargetId() string {
+func (x *VoteResult) GetTargetId() int64 {
 	if x != nil && x.TargetId != nil {
 		return *x.TargetId
 	}
-	return ""
+	return 0
 }
 
 func (x *VoteResult) GetTargetName() string {
@@ -360,23 +360,23 @@ var File_votes_v1_votes_proto protoreflect.FileDescriptor
 
 const file_votes_v1_votes_proto_rawDesc = "" +
 	"\n" +
-	"\x14votes/v1/votes.proto\x12\bvotes.v1\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc8\x01\n" +
-	"\fQueryRequest\x12\x1f\n" +
-	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12\x1b\n" +
-	"\tsource_id\x18\x02 \x01(\tR\bsourceId\x12\x1b\n" +
-	"\ttarget_id\x18\x03 \x01(\tR\btargetId\x12\x1b\n" +
+	"\x14votes/v1/votes.proto\x12\bvotes.v1\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xe2\x01\n" +
+	"\fQueryRequest\x121\n" +
+	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12\x1f\n" +
+	"\tsource_id\x18\x02 \x01(\x03B\x020\x01R\bsourceId\x12\x1f\n" +
+	"\ttarget_id\x18\x03 \x01(\x03B\x020\x01R\btargetId\x12\x1b\n" +
 	"\tserver_id\x18\x04 \x01(\x05R\bserverId\x12\x12\n" +
 	"\x04name\x18\x05 \x01(\tR\x04name\x12\x18\n" +
 	"\asuccess\x18\x06 \x01(\x05R\asuccess\x12\x12\n" +
-	"\x04code\x18\a \x01(\bR\x04code\"\xcc\x03\n" +
+	"\x04code\x18\a \x01(\bR\x04code\"\xd4\x03\n" +
 	"\n" +
 	"VoteResult\x12\x17\n" +
-	"\avote_id\x18\x01 \x01(\x05R\x06voteId\x12\x1b\n" +
-	"\tsource_id\x18\x02 \x01(\tR\bsourceId\x12\x1f\n" +
+	"\avote_id\x18\x01 \x01(\x05R\x06voteId\x12\x1f\n" +
+	"\tsource_id\x18\x02 \x01(\x03B\x020\x01R\bsourceId\x12\x1f\n" +
 	"\vsource_name\x18\x03 \x01(\tR\n" +
 	"sourceName\x12,\n" +
-	"\x12source_avatar_hash\x18\x04 \x01(\tR\x10sourceAvatarHash\x12\x1b\n" +
-	"\ttarget_id\x18\x05 \x01(\tR\btargetId\x12\x1f\n" +
+	"\x12source_avatar_hash\x18\x04 \x01(\tR\x10sourceAvatarHash\x12\x1f\n" +
+	"\ttarget_id\x18\x05 \x01(\x03B\x020\x01R\btargetId\x12\x1f\n" +
 	"\vtarget_name\x18\x06 \x01(\tR\n" +
 	"targetName\x12,\n" +
 	"\x12target_avatar_hash\x18\a \x01(\tR\x10targetAvatarHash\x12\x12\n" +
@@ -388,10 +388,10 @@ const file_votes_v1_votes_proto_rawDesc = "" +
 	"serverName\x12&\n" +
 	"\x04code\x18\f \x01(\x0e2\x12.votes.v1.VoteCodeR\x04code\x129\n" +
 	"\n" +
-	"created_on\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\"U\n" +
+	"created_on\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\"Y\n" +
 	"\rQueryResponse\x12.\n" +
-	"\aresults\x18\x01 \x03(\v2\x14.votes.v1.VoteResultR\aresults\x12\x14\n" +
-	"\x05count\x18\x02 \x01(\x03R\x05count*r\n" +
+	"\aresults\x18\x01 \x03(\v2\x14.votes.v1.VoteResultR\aresults\x12\x18\n" +
+	"\x05count\x18\x02 \x01(\x03B\x020\x01R\x05count*r\n" +
 	"\bVoteCode\x12&\n" +
 	"\"VOTE_CODE_FAIL_GENERIC_UNSPECIFIED\x10\x00\x12#\n" +
 	"\x1fVOTE_CODE_FAIL_NO_OUTNUMBER_YES\x10\x01\x12\x19\n" +
@@ -420,11 +420,11 @@ var file_votes_v1_votes_proto_goTypes = []any{
 	(*QueryRequest)(nil),          // 1: votes.v1.QueryRequest
 	(*VoteResult)(nil),            // 2: votes.v1.VoteResult
 	(*QueryResponse)(nil),         // 3: votes.v1.QueryResponse
-	(*v1.Filter)(nil),             // 4: Filter
+	(*v1.Filter)(nil),             // 4: database.query.v1.Filter
 	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
 }
 var file_votes_v1_votes_proto_depIdxs = []int32{
-	4, // 0: votes.v1.QueryRequest.filter:type_name -> Filter
+	4, // 0: votes.v1.QueryRequest.filter:type_name -> database.query.v1.Filter
 	0, // 1: votes.v1.VoteResult.code:type_name -> votes.v1.VoteCode
 	5, // 2: votes.v1.VoteResult.created_on:type_name -> google.protobuf.Timestamp
 	2, // 3: votes.v1.QueryResponse.results:type_name -> votes.v1.VoteResult

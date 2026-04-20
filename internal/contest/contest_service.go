@@ -33,8 +33,21 @@ type Service struct {
 	assets   asset.Assets
 }
 
-func NewService(contests Contests, assets asset.Assets) Service {
-	return Service{contests: contests, assets: assets}
+func NewService(contests Contests, assets asset.Assets, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
+	pattern, handler := contestv1connect.NewServiceHandler(Service{contests: contests, assets: assets}, options...)
+
+	authMiddleware.AuthedRoute(contestv1connect.ServiceContestsProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(contestv1connect.ServiceContestProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(contestv1connect.ServiceEntriesProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(contestv1connect.ServiceUploadProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(contestv1connect.ServiceVoteProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(contestv1connect.ServiceEntryCreateProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(contestv1connect.ServiceEntryDeleteProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(contestv1connect.ServiceContestCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(contestv1connect.ServiceContestDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(contestv1connect.ServiceContestEditProcedure, rpc.WithMinPermissions(permission.Moderator))
+
+	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
 func (s Service) Contests(ctx context.Context, _ *emptypb.Empty) (*v1.ContestsResponse, error) {

@@ -7,6 +7,7 @@
 package forumv1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	v1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -1412,27 +1413,27 @@ func (x *ThreadsRequest) GetForumId() int32 {
 	return 0
 }
 
-type ThreadsRequestResponse struct {
+type ThreadsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Threads       []*Thread              `protobuf:"bytes,1,rep,name=threads" json:"threads,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ThreadsRequestResponse) Reset() {
-	*x = ThreadsRequestResponse{}
+func (x *ThreadsResponse) Reset() {
+	*x = ThreadsResponse{}
 	mi := &file_forum_v1_forum_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ThreadsRequestResponse) String() string {
+func (x *ThreadsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ThreadsRequestResponse) ProtoMessage() {}
+func (*ThreadsResponse) ProtoMessage() {}
 
-func (x *ThreadsRequestResponse) ProtoReflect() protoreflect.Message {
+func (x *ThreadsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_forum_v1_forum_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1444,12 +1445,12 @@ func (x *ThreadsRequestResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ThreadsRequestResponse.ProtoReflect.Descriptor instead.
-func (*ThreadsRequestResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ThreadsResponse.ProtoReflect.Descriptor instead.
+func (*ThreadsResponse) Descriptor() ([]byte, []int) {
 	return file_forum_v1_forum_proto_rawDescGZIP(), []int{27}
 }
 
-func (x *ThreadsRequestResponse) GetThreads() []*Thread {
+func (x *ThreadsResponse) GetThreads() []*Thread {
 	if x != nil {
 		return x.Threads
 	}
@@ -2240,12 +2241,12 @@ var File_forum_v1_forum_proto protoreflect.FileDescriptor
 
 const file_forum_v1_forum_proto_rawDesc = "" +
 	"\n" +
-	"\x14forum/v1/forum.proto\x12\bforum.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"\x81\x01\n" +
-	"\x11ThreadEditRequest\x12&\n" +
-	"\x0fforum_thread_id\x18\x01 \x01(\x05R\rforumThreadId\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12\x16\n" +
-	"\x06sticky\x18\x03 \x01(\bR\x06sticky\x12\x16\n" +
-	"\x06locked\x18\x04 \x01(\bR\x06locked\">\n" +
+	"\x14forum/v1/forum.proto\x12\bforum.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"\xa1\x01\n" +
+	"\x11ThreadEditRequest\x12.\n" +
+	"\x0fforum_thread_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rforumThreadId\x12\x1c\n" +
+	"\x05title\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12\x1e\n" +
+	"\x06sticky\x18\x03 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x06sticky\x12\x1e\n" +
+	"\x06locked\x18\x04 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x06locked\">\n" +
 	"\x12ThreadEditResponse\x12(\n" +
 	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadR\x06thread\":\n" +
 	"\x11ForumEditResponse\x12%\n" +
@@ -2281,13 +2282,13 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\x15CategoryCreateRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1a\n" +
-	"\bordering\x18\x03 \x01(\x05R\bordering\"@\n" +
-	"\x14MessageDeleteRequest\x12(\n" +
-	"\x10forum_message_id\x18\x01 \x01(\x03R\x0eforumMessageId\"=\n" +
+	"\bordering\x18\x03 \x01(\x05R\bordering\"D\n" +
+	"\x14MessageDeleteRequest\x12,\n" +
+	"\x10forum_message_id\x18\x01 \x01(\x03B\x020\x01R\x0eforumMessageId\"=\n" +
 	"\x13ThreadDeleteRequest\x12&\n" +
-	"\x0fforum_thread_id\x18\x01 \x01(\x05R\rforumThreadId\"[\n" +
-	"\x16ThreadReplyEditRequest\x12(\n" +
-	"\x10forum_message_id\x18\x01 \x01(\x03R\x0eforumMessageId\x12\x17\n" +
+	"\x0fforum_thread_id\x18\x01 \x01(\x05R\rforumThreadId\"_\n" +
+	"\x16ThreadReplyEditRequest\x12,\n" +
+	"\x10forum_message_id\x18\x01 \x01(\x03B\x020\x01R\x0eforumMessageId\x12\x17\n" +
 	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\"F\n" +
 	"\x17ThreadReplyEditResponse\x12+\n" +
 	"\amessage\x18\x01 \x01(\v2\x11.forum.v1.MessageR\amessage\"[\n" +
@@ -2319,40 +2320,40 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\x0eThreadResponse\x12(\n" +
 	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadR\x06thread\"+\n" +
 	"\x0eThreadsRequest\x12\x19\n" +
-	"\bforum_id\x18\x01 \x01(\x05R\aforumId\"D\n" +
-	"\x16ThreadsRequestResponse\x12*\n" +
-	"\athreads\x18\x01 \x03(\v2\x10.forum.v1.ThreadR\athreads\"\xcc\x01\n" +
+	"\bforum_id\x18\x01 \x01(\x05R\aforumId\"=\n" +
+	"\x0fThreadsResponse\x12*\n" +
+	"\athreads\x18\x01 \x03(\v2\x10.forum.v1.ThreadR\athreads\"\xd0\x01\n" +
 	"\x06Thread\x12\x19\n" +
-	"\bforum_id\x18\x01 \x01(\x05R\aforumId\x12\x1b\n" +
-	"\tsource_id\x18\x02 \x01(\x03R\bsourceId\x12\x14\n" +
+	"\bforum_id\x18\x01 \x01(\x05R\aforumId\x12\x1f\n" +
+	"\tsource_id\x18\x02 \x01(\x03B\x020\x01R\bsourceId\x12\x14\n" +
 	"\x05title\x18\x03 \x01(\tR\x05title\x129\n" +
 	"\n" +
 	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
 	"\n" +
-	"updated_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"\xc6\x03\n" +
+	"updated_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"\xce\x03\n" +
 	"\x10ThreadWithSource\x12(\n" +
 	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadR\x06thread\x12!\n" +
 	"\fpersona_name\x18\x02 \x01(\tR\vpersonaName\x12\x1f\n" +
 	"\vavatar_hash\x18\x03 \x01(\tR\n" +
 	"avatarHash\x12?\n" +
-	"\x10permission_level\x18\x04 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x125\n" +
-	"\x17recent_forum_message_id\x18\x05 \x01(\x03R\x14recentForumMessageId\x12F\n" +
-	"\x11recent_created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x0frecentCreatedOn\x12&\n" +
-	"\x0frecent_steam_id\x18\a \x01(\x03R\rrecentSteamId\x12.\n" +
+	"\x10permission_level\x18\x04 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x129\n" +
+	"\x17recent_forum_message_id\x18\x05 \x01(\x03B\x020\x01R\x14recentForumMessageId\x12F\n" +
+	"\x11recent_created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x0frecentCreatedOn\x12*\n" +
+	"\x0frecent_steam_id\x18\a \x01(\x03B\x020\x01R\rrecentSteamId\x12.\n" +
 	"\x13recent_persona_name\x18\b \x01(\tR\x11recentPersonaName\x12,\n" +
-	"\x12recent_avatar_hash\x18\t \x01(\tR\x10recentAvatarHash\"\xc8\x01\n" +
-	"\fUserActivity\x12\x19\n" +
-	"\bsteam_id\x18\x01 \x01(\x03R\asteamId\x12!\n" +
+	"\x12recent_avatar_hash\x18\t \x01(\tR\x10recentAvatarHash\"\xcc\x01\n" +
+	"\fUserActivity\x12\x1d\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\x020\x01R\asteamId\x12!\n" +
 	"\fpersona_name\x18\x02 \x01(\tR\vpersonaName\x12?\n" +
 	"\x10permission_level\x18\x03 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x129\n" +
 	"\n" +
 	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\"R\n" +
 	"\x13ActiveUsersResponse\x12;\n" +
-	"\ruser_activity\x18\x01 \x03(\v2\x16.forum.v1.UserActivityR\fuserActivity\"\xd8\x03\n" +
-	"\aMessage\x12(\n" +
-	"\x10forum_message_id\x18\x01 \x01(\x03R\x0eforumMessageId\x12&\n" +
-	"\x0fforum_thread_id\x18\x02 \x01(\x05R\rforumThreadId\x12\x1b\n" +
-	"\tsource_id\x18\x03 \x01(\x03R\bsourceId\x12\x17\n" +
+	"\ruser_activity\x18\x01 \x03(\v2\x16.forum.v1.UserActivityR\fuserActivity\"\xe0\x03\n" +
+	"\aMessage\x12,\n" +
+	"\x10forum_message_id\x18\x01 \x01(\x03B\x020\x01R\x0eforumMessageId\x12&\n" +
+	"\x0fforum_thread_id\x18\x02 \x01(\x05R\rforumThreadId\x12\x1f\n" +
+	"\tsource_id\x18\x03 \x01(\x03B\x020\x01R\bsourceId\x12\x17\n" +
 	"\abody_md\x18\x04 \x01(\tR\x06bodyMd\x12\x14\n" +
 	"\x05title\x18\x05 \x01(\tR\x05title\x12\x16\n" +
 	"\x06online\x18\x06 \x01(\bR\x06online\x12\x1c\n" +
@@ -2367,16 +2368,16 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\n" +
 	"updated_on\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"G\n" +
 	"\x16RecentMessagesResponse\x12-\n" +
-	"\bmessages\x18\x01 \x03(\v2\x11.forum.v1.MessageR\bmessages\"\xfe\x05\n" +
+	"\bmessages\x18\x01 \x03(\v2\x11.forum.v1.MessageR\bmessages\"\x86\x06\n" +
 	"\x05Forum\x12\x19\n" +
 	"\bforum_id\x18\x01 \x01(\x05R\aforumId\x12*\n" +
 	"\x11forum_category_id\x18\x02 \x01(\x05R\x0fforumCategoryId\x12$\n" +
 	"\x0elast_thread_id\x18\x03 \x01(\x05R\flastThreadId\x12\x14\n" +
 	"\x05title\x18\x04 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x05 \x01(\tR\vdescription\x12\x1a\n" +
-	"\bordering\x18\x06 \x01(\x05R\bordering\x12#\n" +
-	"\rcount_threads\x18\a \x01(\x03R\fcountThreads\x12%\n" +
-	"\x0ecount_messages\x18\b \x01(\x03R\rcountMessages\x12?\n" +
+	"\bordering\x18\x06 \x01(\x05R\bordering\x12'\n" +
+	"\rcount_threads\x18\a \x01(\x03B\x020\x01R\fcountThreads\x12)\n" +
+	"\x0ecount_messages\x18\b \x01(\x03B\x020\x01R\rcountMessages\x12?\n" +
 	"\x10permission_level\x18\t \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x123\n" +
 	"\x16recent_forum_thread_id\x18\n" +
 	" \x01(\x05R\x13recentForumThreadId\x12,\n" +
@@ -2402,13 +2403,13 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\x10OverviewResponse\x122\n" +
 	"\n" +
 	"categories\x18\x01 \x03(\v2\x12.forum.v1.CategoryR\n" +
-	"categories2\xeb\n" +
+	"categories2\xe4\n" +
 	"\n" +
 	"\fForumService\x12F\n" +
 	"\vActiveUsers\x12\x16.google.protobuf.Empty\x1a\x1d.forum.v1.ActiveUsersResponse\"\x00\x12@\n" +
 	"\bOverview\x12\x16.google.protobuf.Empty\x1a\x1a.forum.v1.OverviewResponse\"\x00\x12L\n" +
-	"\x0eRecentMessages\x12\x16.google.protobuf.Empty\x1a .forum.v1.RecentMessagesResponse\"\x00\x12G\n" +
-	"\aThreads\x12\x18.forum.v1.ThreadsRequest\x1a .forum.v1.ThreadsRequestResponse\"\x00\x12=\n" +
+	"\x0eRecentMessages\x12\x16.google.protobuf.Empty\x1a .forum.v1.RecentMessagesResponse\"\x00\x12@\n" +
+	"\aThreads\x12\x18.forum.v1.ThreadsRequest\x1a\x19.forum.v1.ThreadsResponse\"\x00\x12=\n" +
 	"\x06Thread\x12\x17.forum.v1.ThreadRequest\x1a\x18.forum.v1.ThreadResponse\"\x00\x12G\n" +
 	"\fThreadDelete\x12\x1d.forum.v1.ThreadDeleteRequest\x1a\x16.google.protobuf.Empty\"\x00\x12:\n" +
 	"\x05Forum\x12\x16.forum.v1.ForumRequest\x1a\x17.forum.v1.ForumResponse\"\x00\x12R\n" +
@@ -2468,7 +2469,7 @@ var file_forum_v1_forum_proto_goTypes = []any{
 	(*ThreadRequest)(nil),             // 24: forum.v1.ThreadRequest
 	(*ThreadResponse)(nil),            // 25: forum.v1.ThreadResponse
 	(*ThreadsRequest)(nil),            // 26: forum.v1.ThreadsRequest
-	(*ThreadsRequestResponse)(nil),    // 27: forum.v1.ThreadsRequestResponse
+	(*ThreadsResponse)(nil),           // 27: forum.v1.ThreadsResponse
 	(*Thread)(nil),                    // 28: forum.v1.Thread
 	(*ThreadWithSource)(nil),          // 29: forum.v1.ThreadWithSource
 	(*UserActivity)(nil),              // 30: forum.v1.UserActivity
@@ -2498,7 +2499,7 @@ var file_forum_v1_forum_proto_depIdxs = []int32{
 	32, // 12: forum.v1.ForumMessagesResponse.messages:type_name -> forum.v1.Message
 	34, // 13: forum.v1.ForumResponse.forum:type_name -> forum.v1.Forum
 	28, // 14: forum.v1.ThreadResponse.thread:type_name -> forum.v1.Thread
-	28, // 15: forum.v1.ThreadsRequestResponse.threads:type_name -> forum.v1.Thread
+	28, // 15: forum.v1.ThreadsResponse.threads:type_name -> forum.v1.Thread
 	38, // 16: forum.v1.Thread.created_on:type_name -> google.protobuf.Timestamp
 	38, // 17: forum.v1.Thread.updated_on:type_name -> google.protobuf.Timestamp
 	28, // 18: forum.v1.ThreadWithSource.thread:type_name -> forum.v1.Thread
@@ -2540,7 +2541,7 @@ var file_forum_v1_forum_proto_depIdxs = []int32{
 	31, // 54: forum.v1.ForumService.ActiveUsers:output_type -> forum.v1.ActiveUsersResponse
 	36, // 55: forum.v1.ForumService.Overview:output_type -> forum.v1.OverviewResponse
 	33, // 56: forum.v1.ForumService.RecentMessages:output_type -> forum.v1.RecentMessagesResponse
-	27, // 57: forum.v1.ForumService.Threads:output_type -> forum.v1.ThreadsRequestResponse
+	27, // 57: forum.v1.ForumService.Threads:output_type -> forum.v1.ThreadsResponse
 	25, // 58: forum.v1.ForumService.Thread:output_type -> forum.v1.ThreadResponse
 	39, // 59: forum.v1.ForumService.ThreadDelete:output_type -> google.protobuf.Empty
 	23, // 60: forum.v1.ForumService.Forum:output_type -> forum.v1.ForumResponse

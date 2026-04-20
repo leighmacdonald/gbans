@@ -3,7 +3,6 @@ edition = "2023";
 package asset.v1;
 
 import "buf/validate/validate.proto";
-import "database/query/v1/filter.proto";
 import "google/protobuf/timestamp.proto";
 
 service AssetService {
@@ -12,31 +11,37 @@ service AssetService {
 }
 
 message DeleteRequest {
-  string asset_id = 1 [(buf.validate.field).string.uuid = true];
+  string asset_id = 1 [
+    (buf.validate.field).string.uuid = true,
+    (buf.validate.field).required = true
+  ];
 }
 
 message DeleteResponse {
-  int64 size = 1;
+  int64 size = 1 [(buf.validate.field).required = true];
 }
 
 message CreateRequest {
-  bytes contents = 1;
+  bytes contents = 1 [(buf.validate.field).required = true];
   string name = 2;
 }
 
 message CreateResponse {
-  Asset asset = 1;
+  Asset asset = 1 [(buf.validate.field).required = true];
 }
 
 message Asset {
-  string asset_id = 1 [(buf.validate.field).string.uuid = true];
-  string bucket = 2;
-  int64 author_id = 3;
-  string hash = 4;
-  bool is_private = 5;
-  string mime_type = 6;
-  string name = 7;
-  int64 size = 8;
-  google.protobuf.Timestamp created_on = 9;
-  google.protobuf.Timestamp updated_on = 10;
+  string asset_id = 1 [
+    (buf.validate.field).string.uuid = true,
+    (buf.validate.field).required = true
+  ];
+  string bucket = 2 [(buf.validate.field).required = true];
+  int64 author_id = 3 [(buf.validate.field).required = true];
+  string hash = 4 [(buf.validate.field).required = true];
+  bool is_private = 5 [(buf.validate.field).required = true];
+  string mime_type = 6 [(buf.validate.field).required = true];
+  string name = 7 [(buf.validate.field).required = true];
+  int64 size = 8 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 9 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 10 [(buf.validate.field).required = true];
 }

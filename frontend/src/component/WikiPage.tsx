@@ -10,17 +10,14 @@ import { z } from "zod/v4";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import {
-	PermissionLevel,
-	PermissionLevelCollection,
-	permissionLevelString,
-} from "../schema/people.ts";
+import { PermissionLevel, PermissionLevelCollection, permissionLevelString } from "../schema/people.ts";
 import { ContainerWithHeaderAndButtons } from "./ContainerWithHeaderAndButtons.tsx";
 import { mdEditorRef } from "./form/field/MarkdownField.tsx";
 import { MarkDownRenderer } from "./MarkdownRenderer.tsx";
-import type {Wiki} from "../rpc/wiki/v1/wiki_pb.ts";
-import  {update} from "../rpc/wiki/v1/wiki-WikiService_connectquery.ts";
-import {useMutation} from "@connectrpc/connect-query";
+import { type Wiki, WikiSchema } from "../rpc/wiki/v1/wiki_pb.ts";
+import { update } from "../rpc/wiki/v1/wiki-WikiService_connectquery.ts";
+import { useMutation } from "@connectrpc/connect-query";
+import { create } from "@bufbuild/protobuf";
 
 export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page: Wiki; assetURL: string }) => {
 	const [editMode, setEditMode] = useState<boolean>(false);
@@ -44,7 +41,7 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 				>
 					Edit
 				</Button>
-			</ButtonGroup>
+			</ButtonGroup>,
 		];
 	}, [hasPermission]);
 
@@ -53,9 +50,9 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 			//queryClient.setQueryData(["wiki", { slug }], savedPage);
 			setEditMode(false);
 			mdEditorRef.current?.setMarkdown("");
-            if (!savedPage.wiki) {
-                return;
-            }
+			if (!savedPage.wiki) {
+				return;
+			}
 			sendFlash("success", `Updated ${slug} successfully. Revision: ${savedPage.wiki.revision}`);
 			setCurrentPage(savedPage.wiki);
 		},
@@ -64,17 +61,23 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			await mutation.mutateAsync({ wiki: value});
+			await mutation.mutateAsync({
+				wiki: create(WikiSchema, {
+					slug,
+					bodyMd: value.bodyMd,
+					permissionLevel: value.permissionLevel,
+				}),
+			});
 		},
 		validators: {
 			onChange: z.object({
-				permission_level: z.enum(PermissionLevel),
-				body_md: z.string(),
+				permissionLevel: z.enum(PermissionLevel),
+				bodyMd: z.string(),
 			}),
 		},
 		defaultValues: {
-			permission_level: page?.permissionLevel ?? PermissionLevel.Guest,
-			body_md: page?.bodyMd ?? "",
+			permissionLevel: page?.permissionLevel ?? PermissionLevel.Guest,
+			bodyMd: page?.bodyMd ?? "",
 		},
 	});
 
@@ -91,7 +94,7 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 					<Grid container spacing={2}>
 						<Grid size={{ xs: 12 }}>
 							<form.AppField
-								name={"permission_level"}
+								name={"permissionLevel"}
 								children={(field) => {
 									return (
 										<field.SelectField
@@ -112,7 +115,7 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 
 						<Grid size={{ xs: 12 }}>
 							<form.AppField
-								name={"body_md"}
+								name={"bodyMd"}
 								children={(field) => {
 									return <field.MarkdownField label={"Body"} />;
 								}}

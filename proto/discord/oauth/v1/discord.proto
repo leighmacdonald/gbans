@@ -2,8 +2,9 @@ edition = "2023";
 
 package discord.oauth.v1;
 
-import "google/protobuf/empty.proto";
+import "buf/validate/validate.proto";
 import "google/protobuf/any.proto";
+import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 service DiscordOAuthService {
@@ -13,11 +14,11 @@ service DiscordOAuthService {
 }
 
 message ProfileResponse {
-  DiscordProfile discord_profile = 1;
+  DiscordProfile discord_profile = 1 [(buf.validate.field).required = true];
 }
 
 message LoginResponse {
-  string login_url = 1;
+  string login_url = 1 [(buf.validate.field).required = true];
 }
 
 message DiscordProfile {

@@ -7,6 +7,7 @@
 package personv1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -78,7 +79,7 @@ func (x *PersonCore) GetPermissionLevel() Privilege {
 	if x != nil && x.PermissionLevel != nil {
 		return *x.PermissionLevel
 	}
-	return Privilege_PRIVILEGE_BANNED
+	return Privilege_PRIVILEGE_BANNED_UNSPECIFIED
 }
 
 func (x *PersonCore) GetName() string {
@@ -134,20 +135,20 @@ var File_person_v1_person_core_proto protoreflect.FileDescriptor
 
 const file_person_v1_person_core_proto_rawDesc = "" +
 	"\n" +
-	"\x1bperson/v1/person_core.proto\x12\tperson.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"\xca\x02\n" +
+	"\x1bperson/v1/person_core.proto\x12\tperson.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\x1a\x17person/v1/steamid.proto\"\x9e\x03\n" +
 	"\n" +
-	"PersonCore\x12\x19\n" +
-	"\bsteam_id\x18\x01 \x01(\x03R\asteamId\x12?\n" +
-	"\x10permission_level\x18\x02 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1f\n" +
-	"\vavatar_hash\x18\x04 \x01(\tR\n" +
-	"avatarHash\x12\x1d\n" +
+	"PersonCore\x12&\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\v\xbaH\x06\"\x04\x80\xf1\x04\x010\x01R\asteamId\x12G\n" +
+	"\x10permission_level\x18\x02 \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\x12\x1a\n" +
+	"\x04name\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12,\n" +
+	"\vavatar_hash\x18\x04 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x98\x01(R\n" +
+	"avatarHash\x12%\n" +
 	"\n" +
-	"discord_id\x18\x05 \x01(\tR\tdiscordId\x12\x19\n" +
-	"\bvac_bans\x18\x06 \x01(\x05R\avacBans\x12\x1b\n" +
-	"\tgame_bans\x18\a \x01(\x05R\bgameBans\x12\x15\n" +
-	"\x06ban_id\x18\b \x01(\x03R\x05banId\x12=\n" +
-	"\ftime_created\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\vtimeCreatedB\xa2\x01\n" +
+	"discord_id\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tdiscordId\x12!\n" +
+	"\bvac_bans\x18\x06 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\avacBans\x12#\n" +
+	"\tgame_bans\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bgameBans\x12\x1f\n" +
+	"\x06ban_id\x18\b \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x05banId\x12E\n" +
+	"\ftime_created\x18\t \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\vtimeCreatedB\xa2\x01\n" +
 	"\rcom.person.v1B\x0fPersonCoreProtoP\x01Z;github.com/leighmacdonald/gbans/internal/person/v1;personv1\xa2\x02\x03PXX\xaa\x02\tPerson.V1\xca\x02\tPerson\\V1\xe2\x02\x15Person\\V1\\GPBMetadata\xea\x02\n" +
 	"Person::V1b\beditionsp\xe8\a"
 
@@ -185,6 +186,7 @@ func file_person_v1_person_core_proto_init() {
 		return
 	}
 	file_person_v1_privilege_proto_init()
+	file_person_v1_steamid_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

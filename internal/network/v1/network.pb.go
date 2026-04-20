@@ -913,9 +913,9 @@ var File_network_v1_network_proto protoreflect.FileDescriptor
 const file_network_v1_network_proto_rawDesc = "" +
 	"\n" +
 	"\x18network/v1/network.proto\x12\n" +
-	"network.v1\x1a\x1edatabase/query/v1/filter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"F\n" +
-	"\x13QueryNetworkRequest\x12\x1f\n" +
-	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12\x0e\n" +
+	"network.v1\x1a\x1edatabase/query/v1/filter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"X\n" +
+	"\x13QueryNetworkRequest\x121\n" +
+	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12\x0e\n" +
 	"\x02ip\x18\x02 \x01(\tR\x02ip\"\x87\x01\n" +
 	"\aDetails\x120\n" +
 	"\blocation\x18\x01 \x01(\v2\x14.network.v1.LocationR\blocation\x12!\n" +
@@ -928,11 +928,11 @@ const file_network_v1_network_proto_rawDesc = "" +
 	"\vregion_name\x18\x04 \x01(\tR\n" +
 	"regionName\x12\x1b\n" +
 	"\tcity_name\x18\x05 \x01(\tR\bcityName\x12.\n" +
-	"\blat_long\x18\x06 \x01(\v2\x13.network.v1.LatLongR\alatLong\"I\n" +
+	"\blat_long\x18\x06 \x01(\v2\x13.network.v1.LatLongR\alatLong\"M\n" +
 	"\x03ASN\x12\x12\n" +
-	"\x04cidr\x18\x01 \x01(\tR\x04cidr\x12\x15\n" +
-	"\x06as_num\x18\x02 \x01(\x04R\x05asNum\x12\x17\n" +
-	"\aas_name\x18\x03 \x01(\tR\x06asName\"\xd2\x03\n" +
+	"\x04cidr\x18\x01 \x01(\tR\x04cidr\x12\x19\n" +
+	"\x06as_num\x18\x02 \x01(\x04B\x020\x01R\x05asNum\x12\x17\n" +
+	"\aas_name\x18\x03 \x01(\tR\x06asName\"\xd6\x03\n" +
 	"\x05Proxy\x12\x12\n" +
 	"\x04cidr\x18\x01 \x01(\tR\x04cidr\x124\n" +
 	"\n" +
@@ -945,9 +945,9 @@ const file_network_v1_network_proto_rawDesc = "" +
 	"\x03isp\x18\a \x01(\tR\x03isp\x12\x16\n" +
 	"\x06domain\x18\b \x01(\tR\x06domain\x124\n" +
 	"\n" +
-	"usage_type\x18\t \x01(\x0e2\x15.network.v1.UsageTypeR\tusageType\x12\x10\n" +
+	"usage_type\x18\t \x01(\x0e2\x15.network.v1.UsageTypeR\tusageType\x12\x14\n" +
 	"\x03asn\x18\n" +
-	" \x01(\x03R\x03asn\x12\x17\n" +
+	" \x01(\x03B\x020\x01R\x03asn\x12\x17\n" +
 	"\aas_name\x18\v \x01(\tR\x06asName\x127\n" +
 	"\tlast_seen\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\blastSeen\x127\n" +
 	"\vthreat_type\x18\r \x01(\x0e2\x16.network.v1.ThreatTypeR\n" +
@@ -956,9 +956,9 @@ const file_network_v1_network_proto_rawDesc = "" +
 	"\blatitude\x18\x01 \x01(\x02R\blatitude\x12\x1c\n" +
 	"\tlongitude\x18\x02 \x01(\x02R\tlongitude\"E\n" +
 	"\x14QueryNetworkResponse\x12-\n" +
-	"\adetails\x18\x01 \x01(\v2\x13.network.v1.DetailsR\adetails\"\xe9\x01\n" +
-	"\x17QueryConnectionsRequest\x12\x1f\n" +
-	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12\x19\n" +
+	"\adetails\x18\x01 \x01(\v2\x13.network.v1.DetailsR\adetails\"\xfb\x01\n" +
+	"\x17QueryConnectionsRequest\x121\n" +
+	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12\x19\n" +
 	"\bsteam_id\x18\x02 \x01(\tR\asteamId\x12\x12\n" +
 	"\x04cidr\x18\x03 \x01(\tR\x04cidr\x12!\n" +
 	"\fcountry_code\x18\x04 \x01(\tR\vcountryCode\x12!\n" +
@@ -968,11 +968,11 @@ const file_network_v1_network_proto_rawDesc = "" +
 	"\x18QueryConnectionsResponse\x12<\n" +
 	"\n" +
 	"connection\x18\x01 \x03(\v2\x1c.network.v1.PersonConnectionR\n" +
-	"connection\"\xb8\x01\n" +
-	"\x10PersonConnection\x120\n" +
-	"\x14person_connection_id\x18\x01 \x01(\x03R\x12personConnectionId\x12\x17\n" +
-	"\aip_addr\x18\x02 \x01(\tR\x06ipAddr\x12\x19\n" +
-	"\bsteam_id\x18\x03 \x01(\x03R\asteamId\x12!\n" +
+	"connection\"\xc0\x01\n" +
+	"\x10PersonConnection\x124\n" +
+	"\x14person_connection_id\x18\x01 \x01(\x03B\x020\x01R\x12personConnectionId\x12\x17\n" +
+	"\aip_addr\x18\x02 \x01(\tR\x06ipAddr\x12\x1d\n" +
+	"\bsteam_id\x18\x03 \x01(\x03B\x020\x01R\asteamId\x12!\n" +
 	"\fpersona_name\x18\x04 \x01(\tR\vpersonaName\x12\x1b\n" +
 	"\tserver_id\x18\x05 \x01(\x05R\bserverId*\xd0\x01\n" +
 	"\n" +
@@ -1036,12 +1036,12 @@ var file_network_v1_network_proto_goTypes = []any{
 	(*QueryConnectionsRequest)(nil),  // 10: network.v1.QueryConnectionsRequest
 	(*QueryConnectionsResponse)(nil), // 11: network.v1.QueryConnectionsResponse
 	(*PersonConnection)(nil),         // 12: network.v1.PersonConnection
-	(*v1.Filter)(nil),                // 13: Filter
+	(*v1.Filter)(nil),                // 13: database.query.v1.Filter
 	(*timestamppb.Timestamp)(nil),    // 14: google.protobuf.Timestamp
 	(*emptypb.Empty)(nil),            // 15: google.protobuf.Empty
 }
 var file_network_v1_network_proto_depIdxs = []int32{
-	13, // 0: network.v1.QueryNetworkRequest.filter:type_name -> Filter
+	13, // 0: network.v1.QueryNetworkRequest.filter:type_name -> database.query.v1.Filter
 	5,  // 1: network.v1.Details.location:type_name -> network.v1.Location
 	6,  // 2: network.v1.Details.asn:type_name -> network.v1.ASN
 	7,  // 3: network.v1.Details.proxy:type_name -> network.v1.Proxy
@@ -1051,7 +1051,7 @@ var file_network_v1_network_proto_depIdxs = []int32{
 	14, // 7: network.v1.Proxy.last_seen:type_name -> google.protobuf.Timestamp
 	0,  // 8: network.v1.Proxy.threat_type:type_name -> network.v1.ThreatType
 	4,  // 9: network.v1.QueryNetworkResponse.details:type_name -> network.v1.Details
-	13, // 10: network.v1.QueryConnectionsRequest.filter:type_name -> Filter
+	13, // 10: network.v1.QueryConnectionsRequest.filter:type_name -> database.query.v1.Filter
 	12, // 11: network.v1.QueryConnectionsResponse.connection:type_name -> network.v1.PersonConnection
 	10, // 12: network.v1.NetworkService.QueryConnections:input_type -> network.v1.QueryConnectionsRequest
 	3,  // 13: network.v1.NetworkService.QueryNetwork:input_type -> network.v1.QueryNetworkRequest

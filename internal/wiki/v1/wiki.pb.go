@@ -7,6 +7,7 @@
 package wikiv1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	v1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -287,25 +288,25 @@ var File_wiki_v1_wiki_proto protoreflect.FileDescriptor
 
 const file_wiki_v1_wiki_proto_rawDesc = "" +
 	"\n" +
-	"\x12wiki/v1/wiki.proto\x12\awiki.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"\x86\x02\n" +
-	"\x04Wiki\x12\x12\n" +
-	"\x04slug\x18\x01 \x01(\tR\x04slug\x12\x17\n" +
-	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\x12\x1a\n" +
-	"\brevision\x18\x03 \x01(\x05R\brevision\x12?\n" +
-	"\x10permission_level\x18\x04 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x129\n" +
+	"\x12wiki/v1/wiki.proto\x12\awiki.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"\xb6\x02\n" +
+	"\x04Wiki\x12\x1a\n" +
+	"\x04slug\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04slug\x12\x1f\n" +
+	"\abody_md\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06bodyMd\x12\"\n" +
+	"\brevision\x18\x03 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\brevision\x12G\n" +
+	"\x10permission_level\x18\x04 \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\x12A\n" +
 	"\n" +
-	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\" \n" +
+	"updated_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"(\n" +
 	"\n" +
-	"GetRequest\x12\x12\n" +
-	"\x04slug\x18\x01 \x01(\tR\x04slug\"0\n" +
-	"\vGetResponse\x12!\n" +
-	"\x04wiki\x18\x01 \x01(\v2\r.wiki.v1.WikiR\x04wiki\"2\n" +
-	"\rUpdateRequest\x12!\n" +
-	"\x04wiki\x18\x01 \x01(\v2\r.wiki.v1.WikiR\x04wiki\"3\n" +
-	"\x0eUpdateResponse\x12!\n" +
-	"\x04wiki\x18\x01 \x01(\v2\r.wiki.v1.WikiR\x04wiki2~\n" +
+	"GetRequest\x12\x1a\n" +
+	"\x04slug\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04slug\"8\n" +
+	"\vGetResponse\x12)\n" +
+	"\x04wiki\x18\x01 \x01(\v2\r.wiki.v1.WikiB\x06\xbaH\x03\xc8\x01\x01R\x04wiki\":\n" +
+	"\rUpdateRequest\x12)\n" +
+	"\x04wiki\x18\x01 \x01(\v2\r.wiki.v1.WikiB\x06\xbaH\x03\xc8\x01\x01R\x04wiki\";\n" +
+	"\x0eUpdateResponse\x12)\n" +
+	"\x04wiki\x18\x01 \x01(\v2\r.wiki.v1.WikiB\x06\xbaH\x03\xc8\x01\x01R\x04wiki2~\n" +
 	"\vWikiService\x122\n" +
 	"\x03Get\x12\x13.wiki.v1.GetRequest\x1a\x14.wiki.v1.GetResponse\"\x00\x12;\n" +
 	"\x06Update\x12\x16.wiki.v1.UpdateRequest\x1a\x17.wiki.v1.UpdateResponse\"\x00B\x8e\x01\n" +

@@ -4,16 +4,25 @@ import (
 	"context"
 	"fmt"
 
+	"connectrpc.com/connect"
 	v1 "github.com/leighmacdonald/gbans/internal/anticheat/v1"
 	"github.com/leighmacdonald/gbans/internal/anticheat/v1/anticheatv1connect"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func NewService(anticheat AntiCheat) Service {
-	return Service{anticheat: anticheat}
+func NewService(anticheat AntiCheat, authMiddleware *rpc.Middleware, interceptor ...connect.HandlerOption) rpc.Service {
+	pattern, handler := anticheatv1connect.NewAnticheatServiceHandler(Service{anticheat: anticheat}, interceptor...)
+
+	authMiddleware.AuthedRoute(anticheatv1connect.AnticheatServiceQueryProcedure, rpc.WithMinPermissions(permission.Moderator))
+
+	return rpc.Service{
+		Pattern: pattern,
+		Handler: handler,
+	}
 }
 
 type Service struct {

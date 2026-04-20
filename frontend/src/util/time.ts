@@ -6,7 +6,6 @@ import type { z } from "zod/v4";
 import { Duration } from "../schema/bans.ts";
 import type { DateRange, schemaTimeStamped, TimeStampedWithValidUntil } from "../schema/chrono.ts";
 import { logErr } from "./errors.ts";
-import type {Timestamp} from "@bufbuild/protobuf/wkt";
 
 export const Duration8601ToString = (bt: string) => {
 	switch (bt) {
@@ -71,11 +70,6 @@ export const parseDateTime = (t: string | Date): Date => {
 export const renderDateTime = (t: Date): string => {
 	return format(t, "yyyy-MM-dd HH:mm");
 };
-
-export const timestampToDateTime = (timestamp: Timestamp): Date => {
-    return new Date(Number(timestamp.seconds) * 1000 + Math.round(timestamp.nanos / 1e6));
-};
-
 
 export const renderDate = (t: Date): string => {
 	return format(t, "yyyy-MM-dd");

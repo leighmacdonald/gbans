@@ -2,17 +2,19 @@ edition = "2023";
 
 package person.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 import "person/v1/privilege.proto";
+import "person/v1/steamid.proto";
 
 message PersonCore {
-  int64 steam_id = 1;
-  person.v1.Privilege permission_level = 2;
-  string name = 3;
-  string avatar_hash = 4;
-  string discord_id = 5;
-  int32 vac_bans = 6;
-  int32 game_bans = 7;
-  int64 ban_id = 8;
-  google.protobuf.Timestamp time_created = 9;
+  int64 steam_id = 1 [(buf.validate.field).int64.(valid_steam_id) = true];
+  person.v1.Privilege permission_level = 2 [(buf.validate.field).required = true];
+  string name = 3 [(buf.validate.field).required = true];
+  string avatar_hash = 4 [(buf.validate.field).required = true, (buf.validate.field).string.len = 40];
+  string discord_id = 5 [(buf.validate.field).required = true];
+  int32 vac_bans = 6 [(buf.validate.field).required = true];
+  int32 game_bans = 7 [(buf.validate.field).required = true];
+  int64 ban_id = 8 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp time_created = 9 [(buf.validate.field).required = true];
 }

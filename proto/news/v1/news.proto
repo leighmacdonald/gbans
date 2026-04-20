@@ -6,7 +6,7 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 service NewsService {
-  rpc Latest(LatestRequest) returns (NewsAllResponse) {}
+  rpc Latest(LatestRequest) returns (LatestResponse) {}
   rpc Edit(EditRequest) returns (EditResponse) {}
   rpc Create(CreateRequest) returns (CreateResponse) {}
   rpc Delete(DeleteRequest) returns (google.protobuf.Empty) {}
@@ -44,7 +44,7 @@ message CreateResponse {
   Article article = 1;
 }
 
-message NewsAllResponse {
+message LatestResponse {
   repeated Article article = 1;
 }
 

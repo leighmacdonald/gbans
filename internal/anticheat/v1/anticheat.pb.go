@@ -9,7 +9,6 @@ package anticheatv1
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
-	_ "github.com/leighmacdonald/gbans/internal/person/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -28,46 +27,46 @@ const (
 type Detection int32
 
 const (
-	Detection_Unknown            Detection = 0
-	Detection_SilentAim          Detection = 1
-	Detection_AimSnap            Detection = 2
-	Detection_TooManyConnections Detection = 3
-	Detection_Interp             Detection = 4
-	Detection_BHop               Detection = 5
-	Detection_CmdNumSpike        Detection = 6
-	Detection_EyeAngles          Detection = 7
-	Detection_InvalidUserCmd     Detection = 8
-	Detection_OOBCVar            Detection = 9
-	Detection_CheatCVar          Detection = 10
+	Detection_DETECTION_UNSPECIFIED          Detection = 0
+	Detection_DETECTION_SILENT_AIM           Detection = 1
+	Detection_DETECTION_AIM_SNAP             Detection = 2
+	Detection_DETECTION_TOO_MANY_CONNECTIONS Detection = 3
+	Detection_DETECTION_INTERP               Detection = 4
+	Detection_DETECTION_BHOP                 Detection = 5
+	Detection_DETECTION_CMD_NUM_SPIKE        Detection = 6
+	Detection_DETECTION_EYE_ANGLES           Detection = 7
+	Detection_DETECTION_INVALID_USER_CMD     Detection = 8
+	Detection_DETECTION_OOB_CVAR             Detection = 9
+	Detection_DETECTION_CHEAT_CVAR           Detection = 10
 )
 
 // Enum value maps for Detection.
 var (
 	Detection_name = map[int32]string{
-		0:  "Unknown",
-		1:  "SilentAim",
-		2:  "AimSnap",
-		3:  "TooManyConnections",
-		4:  "Interp",
-		5:  "BHop",
-		6:  "CmdNumSpike",
-		7:  "EyeAngles",
-		8:  "InvalidUserCmd",
-		9:  "OOBCVar",
-		10: "CheatCVar",
+		0:  "DETECTION_UNSPECIFIED",
+		1:  "DETECTION_SILENT_AIM",
+		2:  "DETECTION_AIM_SNAP",
+		3:  "DETECTION_TOO_MANY_CONNECTIONS",
+		4:  "DETECTION_INTERP",
+		5:  "DETECTION_BHOP",
+		6:  "DETECTION_CMD_NUM_SPIKE",
+		7:  "DETECTION_EYE_ANGLES",
+		8:  "DETECTION_INVALID_USER_CMD",
+		9:  "DETECTION_OOB_CVAR",
+		10: "DETECTION_CHEAT_CVAR",
 	}
 	Detection_value = map[string]int32{
-		"Unknown":            0,
-		"SilentAim":          1,
-		"AimSnap":            2,
-		"TooManyConnections": 3,
-		"Interp":             4,
-		"BHop":               5,
-		"CmdNumSpike":        6,
-		"EyeAngles":          7,
-		"InvalidUserCmd":     8,
-		"OOBCVar":            9,
-		"CheatCVar":          10,
+		"DETECTION_UNSPECIFIED":          0,
+		"DETECTION_SILENT_AIM":           1,
+		"DETECTION_AIM_SNAP":             2,
+		"DETECTION_TOO_MANY_CONNECTIONS": 3,
+		"DETECTION_INTERP":               4,
+		"DETECTION_BHOP":                 5,
+		"DETECTION_CMD_NUM_SPIKE":        6,
+		"DETECTION_EYE_ANGLES":           7,
+		"DETECTION_INVALID_USER_CMD":     8,
+		"DETECTION_OOB_CVAR":             9,
+		"DETECTION_CHEAT_CVAR":           10,
 	}
 )
 
@@ -171,7 +170,7 @@ func (x *QueryRequest) GetDetection() Detection {
 	if x != nil && x.Detection != nil {
 		return *x.Detection
 	}
-	return Detection_Unknown
+	return Detection_DETECTION_UNSPECIFIED
 }
 
 type QueryResponse struct {
@@ -329,7 +328,7 @@ func (x *Entry) GetDetection() Detection {
 	if x != nil && x.Detection != nil {
 		return *x.Detection
 	}
-	return Detection_Unknown
+	return Detection_DETECTION_UNSPECIFIED
 }
 
 func (x *Entry) GetSummary() string {
@@ -378,50 +377,48 @@ var File_anticheat_v1_anticheat_proto protoreflect.FileDescriptor
 
 const file_anticheat_v1_anticheat_proto_rawDesc = "" +
 	"\n" +
-	"\x1canticheat/v1/anticheat.proto\x12\fanticheat.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17person/v1/steamid.proto\"\xaf\x01\n" +
-	"\fQueryRequest\x12\x1f\n" +
-	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x19\n" +
-	"\bsteam_id\x18\x03 \x01(\x03R\asteamId\x12\x18\n" +
+	"\x1canticheat/v1/anticheat.proto\x12\fanticheat.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc5\x01\n" +
+	"\fQueryRequest\x121\n" +
+	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1d\n" +
+	"\bsteam_id\x18\x03 \x01(\x03B\x020\x01R\asteamId\x12\x18\n" +
 	"\asummary\x18\x04 \x01(\tR\asummary\x125\n" +
-	"\tdetection\x18\x05 \x01(\x0e2\x17.anticheat.v1.DetectionR\tdetection\">\n" +
-	"\rQueryResponse\x12-\n" +
-	"\aentries\x18\x01 \x03(\v2\x13.anticheat.v1.EntryR\aentries\"\x89\x04\n" +
-	"\x05Entry\x12!\n" +
-	"\fanticheat_id\x18\x01 \x01(\x03R\vanticheatId\x12%\n" +
-	"\bsteam_id\x18\x02 \x01(\x03B\n" +
-	"\xbaH\a\xc8\x01\x01\"\x02 \x00R\asteamId\x12'\n" +
+	"\tdetection\x18\x05 \x01(\x0e2\x17.anticheat.v1.DetectionR\tdetection\"F\n" +
+	"\rQueryResponse\x125\n" +
+	"\aentries\x18\x01 \x03(\v2\x13.anticheat.v1.EntryB\x06\xbaH\x03\xc8\x01\x01R\aentries\"\xdd\x04\n" +
+	"\x05Entry\x12+\n" +
+	"\fanticheat_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\vanticheatId\x12'\n" +
+	"\bsteam_id\x18\x02 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\asteamId\x12'\n" +
 	"\tserver_id\x18\x03 \x01(\x05B\n" +
-	"\xbaH\a\xc8\x01\x01\"\x02 \x00R\bserverId\x12\x1f\n" +
-	"\vserver_name\x18\x04 \x01(\tR\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\bserverId\x12'\n" +
+	"\vserver_name\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"serverName\x12\x17\n" +
 	"\ademo_id\x18\x05 \x01(\x05R\x06demoId\x12\x1b\n" +
 	"\tdemo_name\x18\x06 \x01(\tR\bdemoName\x12\x1b\n" +
-	"\tdemo_tick\x18\a \x01(\x05R\bdemoTick\x12\x12\n" +
-	"\x04name\x18\b \x01(\tR\x04name\x125\n" +
-	"\tdetection\x18\t \x01(\x0e2\x17.anticheat.v1.DetectionR\tdetection\x12\x18\n" +
+	"\tdemo_tick\x18\a \x01(\x05R\bdemoTick\x12\x1a\n" +
+	"\x04name\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12=\n" +
+	"\tdetection\x18\t \x01(\x0e2\x17.anticheat.v1.DetectionB\x06\xbaH\x03\xc8\x01\x01R\tdetection\x12 \n" +
 	"\asummary\x18\n" +
-	" \x01(\tR\asummary\x12\x17\n" +
-	"\araw_log\x18\v \x01(\tR\x06rawLog\x129\n" +
+	" \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\asummary\x12\x1f\n" +
+	"\araw_log\x18\v \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06rawLog\x12A\n" +
 	"\n" +
-	"created_on\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x12!\n" +
-	"\fpersona_name\x18\r \x01(\tR\vpersonaName\x12\x1f\n" +
-	"\vavatar_hash\x18\x0e \x01(\tR\n" +
-	"avatarHash\x12\x1c\n" +
-	"\ttriggered\x18\x0f \x01(\x05R\ttriggered*\xb2\x01\n" +
-	"\tDetection\x12\v\n" +
-	"\aUnknown\x10\x00\x12\r\n" +
-	"\tSilentAim\x10\x01\x12\v\n" +
-	"\aAimSnap\x10\x02\x12\x16\n" +
-	"\x12TooManyConnections\x10\x03\x12\n" +
-	"\n" +
-	"\x06Interp\x10\x04\x12\b\n" +
-	"\x04BHop\x10\x05\x12\x0f\n" +
-	"\vCmdNumSpike\x10\x06\x12\r\n" +
-	"\tEyeAngles\x10\a\x12\x12\n" +
-	"\x0eInvalidUserCmd\x10\b\x12\v\n" +
-	"\aOOBCVar\x10\t\x12\r\n" +
-	"\tCheatCVar\x10\n" +
+	"created_on\x18\f \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12)\n" +
+	"\fpersona_name\x18\r \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12'\n" +
+	"\vavatar_hash\x18\x0e \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"avatarHash\x12$\n" +
+	"\ttriggered\x18\x0f \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\ttriggered*\xaf\x02\n" +
+	"\tDetection\x12\x19\n" +
+	"\x15DETECTION_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14DETECTION_SILENT_AIM\x10\x01\x12\x16\n" +
+	"\x12DETECTION_AIM_SNAP\x10\x02\x12\"\n" +
+	"\x1eDETECTION_TOO_MANY_CONNECTIONS\x10\x03\x12\x14\n" +
+	"\x10DETECTION_INTERP\x10\x04\x12\x12\n" +
+	"\x0eDETECTION_BHOP\x10\x05\x12\x1b\n" +
+	"\x17DETECTION_CMD_NUM_SPIKE\x10\x06\x12\x18\n" +
+	"\x14DETECTION_EYE_ANGLES\x10\a\x12\x1e\n" +
+	"\x1aDETECTION_INVALID_USER_CMD\x10\b\x12\x16\n" +
+	"\x12DETECTION_OOB_CVAR\x10\t\x12\x18\n" +
+	"\x14DETECTION_CHEAT_CVAR\x10\n" +
 	"2V\n" +
 	"\x10AnticheatService\x12B\n" +
 	"\x05Query\x12\x1a.anticheat.v1.QueryRequest\x1a\x1b.anticheat.v1.QueryResponse\"\x00B\xb6\x01\n" +
@@ -446,11 +443,11 @@ var file_anticheat_v1_anticheat_proto_goTypes = []any{
 	(*QueryRequest)(nil),          // 1: anticheat.v1.QueryRequest
 	(*QueryResponse)(nil),         // 2: anticheat.v1.QueryResponse
 	(*Entry)(nil),                 // 3: anticheat.v1.Entry
-	(*v1.Filter)(nil),             // 4: Filter
+	(*v1.Filter)(nil),             // 4: database.query.v1.Filter
 	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
 }
 var file_anticheat_v1_anticheat_proto_depIdxs = []int32{
-	4, // 0: anticheat.v1.QueryRequest.filter:type_name -> Filter
+	4, // 0: anticheat.v1.QueryRequest.filter:type_name -> database.query.v1.Filter
 	0, // 1: anticheat.v1.QueryRequest.detection:type_name -> anticheat.v1.Detection
 	3, // 2: anticheat.v1.QueryResponse.entries:type_name -> anticheat.v1.Entry
 	0, // 3: anticheat.v1.Entry.detection:type_name -> anticheat.v1.Detection

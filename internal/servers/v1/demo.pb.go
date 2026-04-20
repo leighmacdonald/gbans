@@ -206,17 +206,17 @@ const file_servers_v1_demo_proto_rawDesc = "" +
 	"\x15servers/v1/demo.proto\x12\n" +
 	"servers.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\":\n" +
 	"\x10GetDemosResponse\x12&\n" +
-	"\x05demos\x18\x01 \x03(\v2\x10.servers.v1.DemoR\x05demos\"\xd2\x03\n" +
-	"\x04Demo\x12\x17\n" +
-	"\ademo_id\x18\x01 \x01(\x03R\x06demoId\x12\x1b\n" +
+	"\x05demos\x18\x01 \x03(\v2\x10.servers.v1.DemoR\x05demos\"\xde\x03\n" +
+	"\x04Demo\x12\x1b\n" +
+	"\ademo_id\x18\x01 \x01(\x03B\x020\x01R\x06demoId\x12\x1b\n" +
 	"\tserver_id\x18\x02 \x01(\x05R\bserverId\x12*\n" +
 	"\x11server_name_short\x18\x03 \x01(\tR\x0fserverNameShort\x12(\n" +
 	"\x10server_name_long\x18\x04 \x01(\tR\x0eserverNameLong\x12\x14\n" +
 	"\x05title\x18\x05 \x01(\tR\x05title\x129\n" +
 	"\n" +
-	"created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x12\x1c\n" +
-	"\tdownloads\x18\a \x01(\x03R\tdownloads\x12\x12\n" +
-	"\x04size\x18\b \x01(\x03R\x04size\x12\x19\n" +
+	"created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x12 \n" +
+	"\tdownloads\x18\a \x01(\x03B\x020\x01R\tdownloads\x12\x16\n" +
+	"\x04size\x18\b \x01(\x03B\x020\x01R\x04size\x12\x19\n" +
 	"\bmap_name\x18\t \x01(\tR\amapName\x12\x18\n" +
 	"\aarchive\x18\n" +
 	" \x01(\bR\aarchive\x121\n" +

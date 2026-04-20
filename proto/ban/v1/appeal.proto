@@ -4,8 +4,6 @@ package ban.v1;
 
 import "ban/v1/ban.proto";
 import "buf/validate/validate.proto";
-import "database/query/v1/filter.proto";
-import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "person/v1/privilege.proto";
@@ -23,56 +21,56 @@ message AppealsRequest {
 }
 
 message AppealsResponse {
-  repeated AppealOverview appeals = 1;
+  repeated AppealOverview appeals = 1 [(buf.validate.field).required = true];
 }
 
 message MessagesRequest {
-  int64 ban_id = 1;
+  int64 ban_id = 1 [(buf.validate.field).required = true];
 }
 
 message MessagesResponse {
-  repeated AppealMessage messages = 1;
+  repeated AppealMessage messages = 1 [(buf.validate.field).required = true];
 }
 
 message AppealOverview {
-  Ban ban = 1;
-  string source_persona_name = 2;
-  string source_avatar_hash = 3;
-  string target_persona_name = 4;
-  string target_avatar_hash = 5;
+  Ban ban = 1 [(buf.validate.field).required = true];
+  string source_persona_name = 2 [(buf.validate.field).required = true];
+  string source_avatar_hash = 3 [(buf.validate.field).required = true];
+  string target_persona_name = 4 [(buf.validate.field).required = true];
+  string target_avatar_hash = 5 [(buf.validate.field).required = true];
 }
 
 message AppealMessage {
-  int64 ban_id = 1;
-  int64 ban_message_id = 2;
-  int64 author_id = 3;
-  string message_md = 4;
-  bool deleted = 5;
-  google.protobuf.Timestamp created_on = 6;
-  google.protobuf.Timestamp updated_on = 7;
-  string avatar_hash = 8;
-  string persona_name = 9;
-  person.v1.Privilege privilege = 10;
+  int64 ban_id = 1 [(buf.validate.field).required = true];
+  int64 ban_message_id = 2 [(buf.validate.field).required = true];
+  int64 author_id = 3 [(buf.validate.field).required = true];
+  string message_md = 4 [(buf.validate.field).required = true];
+  bool deleted = 5 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 6 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 7 [(buf.validate.field).required = true];
+  string avatar_hash = 8 [(buf.validate.field).required = true];
+  string persona_name = 9 [(buf.validate.field).required = true];
+  person.v1.Privilege privilege = 10 [(buf.validate.field).required = true];
 }
 
 message ReplyRequest {
-  int64 ban_id = 1;
-  string body_md = 2;
+  int64 ban_id = 1 [(buf.validate.field).required = true];
+  string body_md = 2 [(buf.validate.field).required = true];
 }
 
 message ReplyResponse {
-  AppealMessage message = 1;
+  AppealMessage message = 1 [(buf.validate.field).required = true];
 }
 
 message EditAppealMessageRequest {
-  int64 ban_message_id = 1;
-  string body_md = 2;
+  int64 ban_message_id = 1 [(buf.validate.field).required = true];
+  string body_md = 2 [(buf.validate.field).required = true];
 }
 
 message EditAppealMessageResponse {
-  AppealMessage message = 1;
+  AppealMessage message = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteAppealMessageRequest {
-  int64 ban_message_id = 1;
+  int64 ban_message_id = 1 [(buf.validate.field).required = true];
 }

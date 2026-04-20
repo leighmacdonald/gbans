@@ -24,8 +24,18 @@ type PersonService struct {
 	persons *Persons
 }
 
-func NewPersonService(persons *Persons) PersonService {
-	return PersonService{persons: persons}
+func NewPersonService(persons *Persons, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := personv1connect.NewPersonServiceHandler(PersonService{persons: persons}, option...)
+
+	authMiddleware.AuthedRoute(personv1connect.PersonServiceProfileProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(personv1connect.PersonServiceResolveSteamIDProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(personv1connect.PersonServiceCurrentProfileProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(personv1connect.PersonServiceProfileSettingsProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(personv1connect.PersonServiceEditProfileSettingsProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(personv1connect.PersonServiceQueryProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(personv1connect.PersonServiceEditPermissionsProcedure, rpc.WithMinPermissions(permission.Admin))
+
+	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
 func (s PersonService) CurrentProfile(ctx context.Context, _ *emptypb.Empty) (*v1.CurrentProfileResponse, error) {

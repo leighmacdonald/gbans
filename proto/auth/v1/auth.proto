@@ -2,8 +2,6 @@ edition = "2023";
 
 package auth.v1;
 
-import "google/protobuf/timestamp.proto";
-
 service AuthService {
   rpc Logout(LogoutRequest) returns (LogoutResponse) {}
 }
