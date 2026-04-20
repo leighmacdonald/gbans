@@ -2,6 +2,7 @@ edition = "2023";
 
 package votes.v1;
 
+import "buf/validate/validate.proto";
 import "database/query/v1/filter.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -26,22 +27,22 @@ message QueryRequest {
 }
 
 message VoteResult {
-  int32 vote_id = 1;
-  int64 source_id = 2;
-  string source_name = 3;
-  string source_avatar_hash = 4;
-  int64 target_id = 5;
-  string target_name = 6;
-  string target_avatar_hash = 7;
-  string name = 8;
-  bool success = 9;
-  int32 server_id = 10;
-  string server_name = 11;
-  VoteCode code = 12;
-  google.protobuf.Timestamp created_on = 13;
+  int32 vote_id = 1 [(buf.validate.field).required = true];
+  int64 source_id = 2 [(buf.validate.field).required = true];
+  string source_name = 3 [(buf.validate.field).required = true];
+  string source_avatar_hash = 4 [(buf.validate.field).required = true];
+  int64 target_id = 5 [(buf.validate.field).required = true];
+  string target_name = 6 [(buf.validate.field).required = true];
+  string target_avatar_hash = 7 [(buf.validate.field).required = true];
+  string name = 8 [(buf.validate.field).required = true];
+  bool success = 9 [(buf.validate.field).required = true];
+  int32 server_id = 10 [(buf.validate.field).required = true];
+  string server_name = 11 [(buf.validate.field).required = true];
+  VoteCode code = 12 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 13 [(buf.validate.field).required = true];
 }
 
 message QueryResponse {
-  repeated VoteResult results = 1;
-  int64 count = 2;
+  repeated VoteResult results = 1 [(buf.validate.field).required = true];
+  int64 count = 2 [(buf.validate.field).required = true];
 }

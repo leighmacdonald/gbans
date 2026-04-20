@@ -4,6 +4,7 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
@@ -12,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file servers/v1/demo.proto.
  */
 export const file_servers_v1_demo: GenFile = /*@__PURE__*/
-  fileDesc("ChVzZXJ2ZXJzL3YxL2RlbW8ucHJvdG8SCnNlcnZlcnMudjEiMwoQR2V0RGVtb3NSZXNwb25zZRIfCgVkZW1vcxgBIAMoCzIQLnNlcnZlcnMudjEuRGVtbyLaAgoERGVtbxITCgdkZW1vX2lkGAEgASgDQgIwARIRCglzZXJ2ZXJfaWQYAiABKAUSGQoRc2VydmVyX25hbWVfc2hvcnQYAyABKAkSGAoQc2VydmVyX25hbWVfbG9uZxgEIAEoCRINCgV0aXRsZRgFIAEoCRIuCgpjcmVhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIVCglkb3dubG9hZHMYByABKANCAjABEhAKBHNpemUYCCABKANCAjABEhAKCG1hcF9uYW1lGAkgASgJEg8KB2FyY2hpdmUYCiABKAgSKgoFc3RhdHMYCyADKAsyGy5zZXJ2ZXJzLnYxLkRlbW8uU3RhdHNFbnRyeRIQCghhc3NldF9pZBgMIAEoCRosCgpTdGF0c0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEyjQEKC0RlbW9TZXJ2aWNlEkAKCEdldERlbW9zEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Ghwuc2VydmVycy52MS5HZXREZW1vc1Jlc3BvbnNlEjwKClJ1bkNsZWFudXASFi5nb29nbGUucHJvdG9idWYuRW1wdHkaFi5nb29nbGUucHJvdG9idWYuRW1wdHlCowEKDmNvbS5zZXJ2ZXJzLnYxQglEZW1vUHJvdG9QAVo9Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9zZXJ2ZXJzL3YxO3NlcnZlcnN2MaICA1NYWKoCClNlcnZlcnMuVjHKAgpTZXJ2ZXJzXFYx4gIWU2VydmVyc1xWMVxHUEJNZXRhZGF0YeoCC1NlcnZlcnM6OlYxYghlZGl0aW9uc3DoBw", [file_google_protobuf_empty, file_google_protobuf_timestamp]);
+  fileDesc("ChVzZXJ2ZXJzL3YxL2RlbW8ucHJvdG8SCnNlcnZlcnMudjEiOwoQR2V0RGVtb3NSZXNwb25zZRInCgVkZW1vcxgBIAMoCzIQLnNlcnZlcnMudjEuRGVtb0IGukgDyAEBIrEDCgREZW1vEhkKB2RlbW9faWQYASABKANCCDABukgDyAEBEhkKCXNlcnZlcl9pZBgCIAEoBUIGukgDyAEBEiEKEXNlcnZlcl9uYW1lX3Nob3J0GAMgASgJQga6SAPIAQESIAoQc2VydmVyX25hbWVfbG9uZxgEIAEoCUIGukgDyAEBEhUKBXRpdGxlGAUgASgJQga6SAPIAQESNgoKY3JlYXRlZF9vbhgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARIbCglkb3dubG9hZHMYByABKANCCDABukgDyAEBEhYKBHNpemUYCCABKANCCDABukgDyAEBEhgKCG1hcF9uYW1lGAkgASgJQga6SAPIAQESFwoHYXJjaGl2ZRgKIAEoCEIGukgDyAEBEioKBXN0YXRzGAsgAygLMhsuc2VydmVycy52MS5EZW1vLlN0YXRzRW50cnkSHQoIYXNzZXRfaWQYDCABKAlCC7pICMgBAXIDsAEBGiwKClN0YXRzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ATKNAQoLRGVtb1NlcnZpY2USQAoIR2V0RGVtb3MSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHC5zZXJ2ZXJzLnYxLkdldERlbW9zUmVzcG9uc2USPAoKUnVuQ2xlYW51cBIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eUKjAQoOY29tLnNlcnZlcnMudjFCCURlbW9Qcm90b1ABWj1naXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3NlcnZlcnMvdjE7c2VydmVyc3YxogIDU1hYqgIKU2VydmVycy5WMcoCClNlcnZlcnNcVjHiAhZTZXJ2ZXJzXFYxXEdQQk1ldGFkYXRh6gILU2VydmVyczo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message servers.v1.GetDemosResponse
@@ -24,7 +25,15 @@ export type GetDemosResponse = Message<"servers.v1.GetDemosResponse"> & {
   demos: Demo[];
 };
 
-export type GetDemosResponseValid = GetDemosResponse;
+/**
+ * @generated from message servers.v1.GetDemosResponse
+ */
+export type GetDemosResponseValid = Message<"servers.v1.GetDemosResponse"> & {
+  /**
+   * @generated from field: repeated servers.v1.Demo demos = 1;
+   */
+  demos: DemoValid[];
+};
 
 /**
  * Describes the message servers.v1.GetDemosResponse.
@@ -98,7 +107,70 @@ export type Demo = Message<"servers.v1.Demo"> & {
   assetId: string;
 };
 
-export type DemoValid = Demo;
+/**
+ * @generated from message servers.v1.Demo
+ */
+export type DemoValid = Message<"servers.v1.Demo"> & {
+  /**
+   * @generated from field: int64 demo_id = 1 [jstype = JS_STRING];
+   */
+  demoId: string;
+
+  /**
+   * @generated from field: int32 server_id = 2;
+   */
+  serverId: number;
+
+  /**
+   * @generated from field: string server_name_short = 3;
+   */
+  serverNameShort: string;
+
+  /**
+   * @generated from field: string server_name_long = 4;
+   */
+  serverNameLong: string;
+
+  /**
+   * @generated from field: string title = 5;
+   */
+  title: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 6;
+   */
+  createdOn: Timestamp;
+
+  /**
+   * @generated from field: int64 downloads = 7 [jstype = JS_STRING];
+   */
+  downloads: string;
+
+  /**
+   * @generated from field: int64 size = 8 [jstype = JS_STRING];
+   */
+  size: string;
+
+  /**
+   * @generated from field: string map_name = 9;
+   */
+  mapName: string;
+
+  /**
+   * @generated from field: bool archive = 10;
+   */
+  archive: boolean;
+
+  /**
+   * @generated from field: map<string, string> stats = 11;
+   */
+  stats: { [key: string]: string };
+
+  /**
+   * @generated from field: string asset_id = 12;
+   */
+  assetId: string;
+};
 
 /**
  * Describes the message servers.v1.Demo.

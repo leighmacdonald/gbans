@@ -7,6 +7,7 @@
 package newsv1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -519,41 +520,47 @@ var File_news_v1_news_proto protoreflect.FileDescriptor
 
 const file_news_v1_news_proto_rawDesc = "" +
 	"\n" +
-	"\x12news/v1/news.proto\x12\anews.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\";\n" +
-	"\vAllResponse\x12,\n" +
-	"\barticles\x18\x01 \x03(\v2\x10.news.v1.ArticleR\barticles\"\xea\x01\n" +
-	"\aArticle\x12\x17\n" +
-	"\anews_id\x18\x01 \x01(\x05R\x06newsId\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12\x17\n" +
-	"\abody_md\x18\x03 \x01(\tR\x06bodyMd\x12!\n" +
+	"\x12news/v1/news.proto\x12\anews.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"C\n" +
+	"\vAllResponse\x124\n" +
+	"\barticles\x18\x01 \x03(\v2\x10.news.v1.ArticleB\x06\xbaH\x03\xc8\x01\x01R\barticles\"\xad\x02\n" +
+	"\aArticle\x12#\n" +
+	"\anews_id\x18\x01 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x06newsId\x12#\n" +
+	"\x05title\x18\x02 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x05\x18\x80\x02R\x05title\x12'\n" +
+	"\abody_md\x18\x03 \x01(\tB\x0e\xbaH\v\xc8\x01\x01r\x06\x10\x05\x18\xa0\x8d\x06R\x06bodyMd\x12)\n" +
+	"\fis_published\x18\x04 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\visPublished\x12A\n" +
+	"\n" +
+	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
+	"\n" +
+	"updated_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"4\n" +
+	"\rDeleteRequest\x12#\n" +
+	"\anews_id\x18\x01 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x06newsId\"-\n" +
+	"\rLatestRequest\x12\x1c\n" +
+	"\x05limit\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05limit\"\xcb\x01\n" +
+	"\rCreateRequest\x12#\n" +
+	"\x05title\x18\x01 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x05\x18\x80\x02R\x05title\x12'\n" +
+	"\abody_md\x18\x02 \x01(\tB\x0e\xbaH\v\xc8\x01\x01r\x06\x10\x05\x18\xa0\x8d\x06R\x06bodyMd\x12)\n" +
+	"\fis_published\x18\x03 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\visPublished\x12A\n" +
+	"\n" +
+	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\"D\n" +
+	"\x0eCreateResponse\x122\n" +
+	"\aarticle\x18\x01 \x01(\v2\x10.news.v1.ArticleB\x06\xbaH\x03\xc8\x01\x01R\aarticle\"D\n" +
+	"\x0eLatestResponse\x122\n" +
+	"\aarticle\x18\x01 \x03(\v2\x10.news.v1.ArticleB\x06\xbaH\x03\xc8\x01\x01R\aarticle\"\xde\x01\n" +
+	"\vEditRequest\x12#\n" +
+	"\anews_id\x18\x01 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x06newsId\x12#\n" +
+	"\x05title\x18\x02 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x05\x18\x80\x02R\x05title\x12'\n" +
+	"\abody_md\x18\x03 \x01(\tB\x0e\xbaH\v\xc8\x01\x01r\x06\x10\x05\x18\xa0\x8d\x06R\x06bodyMd\x12!\n" +
 	"\fis_published\x18\x04 \x01(\bR\visPublished\x129\n" +
 	"\n" +
-	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
-	"\n" +
-	"updated_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"(\n" +
-	"\rDeleteRequest\x12\x17\n" +
-	"\anews_id\x18\x01 \x01(\x05R\x06newsId\"%\n" +
-	"\rLatestRequest\x12\x14\n" +
-	"\x05limit\x18\x01 \x01(\x05R\x05limit\"\x9c\x01\n" +
-	"\rCreateRequest\x12\x14\n" +
-	"\x05title\x18\x01 \x01(\tR\x05title\x12\x17\n" +
-	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\x12!\n" +
-	"\fis_published\x18\x03 \x01(\bR\visPublished\x129\n" +
-	"\n" +
-	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\"<\n" +
-	"\x0eCreateResponse\x12*\n" +
-	"\aarticle\x18\x01 \x01(\v2\x10.news.v1.ArticleR\aarticle\"<\n" +
-	"\x0eLatestResponse\x12*\n" +
-	"\aarticle\x18\x01 \x03(\v2\x10.news.v1.ArticleR\aarticle\"\xb3\x01\n" +
-	"\vEditRequest\x12\x17\n" +
-	"\anews_id\x18\x01 \x01(\x05R\x06newsId\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12\x17\n" +
-	"\abody_md\x18\x03 \x01(\tR\x06bodyMd\x12!\n" +
-	"\fis_published\x18\x04 \x01(\bR\visPublished\x129\n" +
-	"\n" +
-	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\":\n" +
-	"\fEditResponse\x12*\n" +
-	"\aarticle\x18\x01 \x01(\v2\x10.news.v1.ArticleR\aarticle2\xb1\x02\n" +
+	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\"B\n" +
+	"\fEditResponse\x122\n" +
+	"\aarticle\x18\x01 \x01(\v2\x10.news.v1.ArticleB\x06\xbaH\x03\xc8\x01\x01R\aarticle2\xb1\x02\n" +
 	"\vNewsService\x12;\n" +
 	"\x06Latest\x12\x16.news.v1.LatestRequest\x1a\x17.news.v1.LatestResponse\"\x00\x125\n" +
 	"\x04Edit\x12\x14.news.v1.EditRequest\x1a\x15.news.v1.EditResponse\"\x00\x12;\n" +

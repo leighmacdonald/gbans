@@ -5,6 +5,7 @@ package servers.v1;
 import "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "network/v1/network.proto";
 
 service ServersService {
   rpc State(StateRequest) returns (StateResponse);
@@ -15,7 +16,7 @@ service ServersService {
 }
 
 message StateRequest {
-  LatLong lat_long = 1;
+  network.v1.LatLong lat_long = 1;
 }
 
 message SafeServer {
@@ -28,88 +29,79 @@ message SafeServer {
     (buf.validate.field).required = true,
     (buf.validate.field).uint32.lte = 65535
   ];
-  string ip = 4;
-  string name = 5;
-  string name_short = 6;
-  string region = 7;
-  string cc = 8;
-  int32 players = 9;
-  int32 max_players = 10;
-  int32 bot = 11;
-  string map = 12;
-  repeated string game_types = 13;
-  float latitude = 14;
-  float longitude = 15;
-  float distance = 16;
-  int32 humans = 17;
-  repeated string tags = 18;
+  string ip = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.ipv4 = true
+  ];
+  string name = 5 [(buf.validate.field).required = true];
+  string name_short = 6 [(buf.validate.field).required = true];
+  string region = 7 [(buf.validate.field).required = true];
+  string cc = 8 [(buf.validate.field).required = true];
+  int32 players = 9 [(buf.validate.field).required = true];
+  int32 max_players = 10 [(buf.validate.field).required = true];
+  int32 bot = 11 [(buf.validate.field).required = true];
+  string map = 12 [(buf.validate.field).required = true];
+  repeated string game_types = 13 [(buf.validate.field).required = true];
+  network.v1.LatLong lat_long = 14 [(buf.validate.field).required = true];
+  float distance = 15 [(buf.validate.field).required = true];
+  int32 humans = 16 [(buf.validate.field).required = true];
+  repeated string tags = 17 [(buf.validate.field).required = true];
 }
 
-message LatLong {
-  float latitude = 1 [
-    (buf.validate.field).float.gte = -90,
-    (buf.validate.field).float.lte = 90
-  ];
-  float longitude = 2 [
-    (buf.validate.field).float.gte = -180,
-    (buf.validate.field).float.lte = 180
-  ];
-}
 message Server {
-  int32 server_id = 1;
-  string short_name = 2;
-  string name = 3;
-  string address = 4;
-  string address_internal = 5;
-  bool sdr_enabled = 6;
-  int32 port = 7;
-  string rcon = 8;
-  string password = 9;
-  bool is_enabled = 10;
+  int32 server_id = 1 [(buf.validate.field).required = true];
+  string short_name = 2 [(buf.validate.field).required = true];
+  string name = 3 [(buf.validate.field).required = true];
+  string address = 4 [(buf.validate.field).required = true];
+  string address_internal = 5 [(buf.validate.field).required = true];
+  bool sdr_enabled = 6 [(buf.validate.field).required = true];
+  int32 port = 7 [(buf.validate.field).required = true];
+  string rcon = 8 [(buf.validate.field).required = true];
+  string password = 9 [(buf.validate.field).required = true];
+  bool is_enabled = 10 [(buf.validate.field).required = true];
   bool deleted = 11;
-  string region = 12;
-  string cc = 13;
-  float latitude = 14;
-  float longitude = 15;
-  int32 log_secret = 16;
-  bool enable_stats = 17;
-  google.protobuf.Timestamp token_created_on = 18;
-  google.protobuf.Timestamp created_on = 19;
-  google.protobuf.Timestamp updated_on = 20;
-  repeated string discord_seed_role_ids = 21;
-  string ip = 22;
+  string region = 12 [(buf.validate.field).required = true];
+  string cc = 13 [(buf.validate.field).required = true];
+  network.v1.LatLong lat_long = 14 [(buf.validate.field).required = true];
+  int32 log_secret = 15 [(buf.validate.field).required = true];
+  bool enable_stats = 16 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp token_created_on = 17;
+  google.protobuf.Timestamp created_on = 18 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 19 [(buf.validate.field).required = true];
+  repeated string discord_seed_role_ids = 20;
+  string ip = 21;
 }
 
 message StateResponse {
-  repeated SafeServer servers = 1;
-  LatLong lat_long = 2;
+  repeated SafeServer servers = 1 [(buf.validate.field).required = true];
+  network.v1.LatLong lat_long = 2 [(buf.validate.field).required = true];
 }
 
 message ServerInfoSafe {
-  string server_name_long = 1;
-  string server_name = 2;
-  int32 server_id = 3;
+  string server_name_long = 1 [(buf.validate.field).required = true];
+  string server_name = 2 [(buf.validate.field).required = true];
+  int32 server_id = 3 [(buf.validate.field).required = true];
   string colour = 4;
 }
 
 message ServersResponse {
-  repeated ServerInfoSafe servers = 1;
+  repeated ServerInfoSafe servers = 1 [(buf.validate.field).required = true];
 }
 
 message EditServerRequest {
-  Server server = 1;
+  Server server = 1 [(buf.validate.field).required = true];
 }
 
 message EditServerResponse {
-  Server server = 1;
+  Server server = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteServerRequest {
-  int32 server_id = 1;
+  int32 server_id = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteServerResponse {}
 
 message ServersAdminResponse {
-  repeated Server servers = 1;
+  repeated Server servers = 1 [(buf.validate.field).required = true];
 }

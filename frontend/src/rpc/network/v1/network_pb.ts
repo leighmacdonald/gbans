@@ -4,6 +4,7 @@
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Filter } from "../../database/query/v1/filter_pb";
 import { file_database_query_v1_filter } from "../../database/query/v1/filter_pb";
 import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
@@ -14,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file network/v1/network.proto.
  */
 export const file_network_v1_network: GenFile = /*@__PURE__*/
-  fileDesc("ChhuZXR3b3JrL3YxL25ldHdvcmsucHJvdG8SCm5ldHdvcmsudjEiTAoTUXVlcnlOZXR3b3JrUmVxdWVzdBIpCgZmaWx0ZXIYASABKAsyGS5kYXRhYmFzZS5xdWVyeS52MS5GaWx0ZXISCgoCaXAYAiABKAkicQoHRGV0YWlscxImCghsb2NhdGlvbhgBIAEoCzIULm5ldHdvcmsudjEuTG9jYXRpb24SHAoDYXNuGAIgASgLMg8ubmV0d29yay52MS5BU04SIAoFcHJveHkYAyABKAsyES5uZXR3b3JrLnYxLlByb3h5IpMBCghMb2NhdGlvbhIMCgRjaWRyGAEgASgJEhQKDGNvdW50cnlfY29kZRgCIAEoCRIUCgxjb3VudHJ5X25hbWUYAyABKAkSEwoLcmVnaW9uX25hbWUYBCABKAkSEQoJY2l0eV9uYW1lGAUgASgJEiUKCGxhdF9sb25nGAYgASgLMhMubmV0d29yay52MS5MYXRMb25nIjgKA0FTThIMCgRjaWRyGAEgASgJEhIKBmFzX251bRgCIAEoBEICMAESDwoHYXNfbmFtZRgDIAEoCSLaAgoFUHJveHkSDAoEY2lkchgBIAEoCRIpCgpwcm94eV90eXBlGAIgASgOMhUubmV0d29yay52MS5Qcm94eVR5cGUSFAoMY291bnRyeV9jb2RlGAMgASgJEhQKDGNvdW50cnlfbmFtZRgEIAEoCRITCgtyZWdpb25fbmFtZRgFIAEoCRIRCgljaXR5X25hbWUYBiABKAkSCwoDaXNwGAcgASgJEg4KBmRvbWFpbhgIIAEoCRIpCgp1c2FnZV90eXBlGAkgASgOMhUubmV0d29yay52MS5Vc2FnZVR5cGUSDwoDYXNuGAogASgDQgIwARIPCgdhc19uYW1lGAsgASgJEi0KCWxhc3Rfc2VlbhgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKwoLdGhyZWF0X3R5cGUYDSABKA4yFi5uZXR3b3JrLnYxLlRocmVhdFR5cGUiLgoHTGF0TG9uZxIQCghsYXRpdHVkZRgBIAEoAhIRCglsb25naXR1ZGUYAiABKAIiPAoUUXVlcnlOZXR3b3JrUmVzcG9uc2USJAoHZGV0YWlscxgBIAEoCzITLm5ldHdvcmsudjEuRGV0YWlscyK2AQoXUXVlcnlDb25uZWN0aW9uc1JlcXVlc3QSKQoGZmlsdGVyGAEgASgLMhkuZGF0YWJhc2UucXVlcnkudjEuRmlsdGVyEhAKCHN0ZWFtX2lkGAIgASgJEgwKBGNpZHIYAyABKAkSFAoMY291bnRyeV9jb2RlGAQgASgJEhQKDGNvdW50cnlfbmFtZRgFIAEoCRIRCgljaXR5X25hbWUYBiABKAkSEQoJc2VydmVyX2lkGAcgAygFIkwKGFF1ZXJ5Q29ubmVjdGlvbnNSZXNwb25zZRIwCgpjb25uZWN0aW9uGAEgAygLMhwubmV0d29yay52MS5QZXJzb25Db25uZWN0aW9uIoQBChBQZXJzb25Db25uZWN0aW9uEiAKFHBlcnNvbl9jb25uZWN0aW9uX2lkGAEgASgDQgIwARIPCgdpcF9hZGRyGAIgASgJEhQKCHN0ZWFtX2lkGAMgASgDQgIwARIUCgxwZXJzb25hX25hbWUYBCABKAkSEQoJc2VydmVyX2lkGAUgASgFKtABCgpUaHJlYXRUeXBlEhsKF1RIUkVBVF9UWVBFX1VOU1BFQ0lGSUVEEAASFAoQVEhSRUFUX1RZUEVfU1BBTRABEhYKElRIUkVBVF9UWVBFX0JPVE5FVBACEhcKE1RIUkVBVF9UWVBFX1NDQU5ORVIQAxIbChdUSFJFQVRfVFlQRV9TUEFNX0JPVE5FVBAEEhwKGFRIUkVBVF9UWVBFX1NQQU1fU0NBTk5FUhAFEiMKH1RIUkVBVF9UWVBFX1NQQU1fU0NBTk5FUl9CT1RORVQQBirLAgoJVXNhZ2VUeXBlEhoKFlVTQUdFX1RZUEVfVU5TUEVDSUZJRUQQABISCg5VU0FHRV9UWVBFX0NEThABEh8KG1VTQUdFX1RZUEVfSVNQX0ZJWEVEX01PQklMRRACEhkKFVVTQUdFX1RZUEVfQ09NTUVSQ0lBTBADEhkKFVVTQUdFX1RZUEVfSVNQX01PQklMRRAEEhYKElVTQUdFX1RZUEVfTElCUkFSWRAFEhoKFlVTQUdFX1RZUEVfREFUQV9DRU5URVIQBhIXChNVU0FHRV9UWVBFX01JTElUQVJZEAcSGQoVVVNBR0VfVFlQRV9HT1ZFUk5NRU5UEAgSGAoUVVNBR0VfVFlQRV9JU1BfRklYRUQQCRIbChdVU0FHRV9UWVBFX09SR0FOSVpBVElPThAKEhgKFFVTQUdFX1RZUEVfRURVQ0FUSU9OEAsqKwoJUHJveHlUeXBlEh4KGlBST1hZX1RZUEVfUFVCX1VOU1BFQ0lGSUVEEAAyhAIKDk5ldHdvcmtTZXJ2aWNlEl8KEFF1ZXJ5Q29ubmVjdGlvbnMSIy5uZXR3b3JrLnYxLlF1ZXJ5Q29ubmVjdGlvbnNSZXF1ZXN0GiQubmV0d29yay52MS5RdWVyeUNvbm5lY3Rpb25zUmVzcG9uc2UiABJTCgxRdWVyeU5ldHdvcmsSHy5uZXR3b3JrLnYxLlF1ZXJ5TmV0d29ya1JlcXVlc3QaIC5uZXR3b3JrLnYxLlF1ZXJ5TmV0d29ya1Jlc3BvbnNlIgASPAoIVXBkYXRlREISFi5nb29nbGUucHJvdG9idWYuRW1wdHkaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiAEKmAQoOY29tLm5ldHdvcmsudjFCDE5ldHdvcmtQcm90b1ABWj1naXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL25ldHdvcmsvdjE7bmV0d29ya3YxogIDTlhYqgIKTmV0d29yay5WMcoCCk5ldHdvcmtcVjHiAhZOZXR3b3JrXFYxXEdQQk1ldGFkYXRh6gILTmV0d29yazo6VjFiCGVkaXRpb25zcOgH", [file_database_query_v1_filter, file_google_protobuf_empty, file_google_protobuf_timestamp]);
+  fileDesc("ChhuZXR3b3JrL3YxL25ldHdvcmsucHJvdG8SCm5ldHdvcmsudjEiTAoTUXVlcnlOZXR3b3JrUmVxdWVzdBIpCgZmaWx0ZXIYASABKAsyGS5kYXRhYmFzZS5xdWVyeS52MS5GaWx0ZXISCgoCaXAYAiABKAkiiQEKB0RldGFpbHMSLgoIbG9jYXRpb24YASABKAsyFC5uZXR3b3JrLnYxLkxvY2F0aW9uQga6SAPIAQESJAoDYXNuGAIgASgLMg8ubmV0d29yay52MS5BU05CBrpIA8gBARIoCgVwcm94eRgDIAEoCzIRLm5ldHdvcmsudjEuUHJveHlCBrpIA8gBASLDAQoITG9jYXRpb24SFAoEY2lkchgBIAEoCUIGukgDyAEBEhwKDGNvdW50cnlfY29kZRgCIAEoCUIGukgDyAEBEhwKDGNvdW50cnlfbmFtZRgDIAEoCUIGukgDyAEBEhsKC3JlZ2lvbl9uYW1lGAQgASgJQga6SAPIAQESGQoJY2l0eV9uYW1lGAUgASgJQga6SAPIAQESLQoIbGF0X2xvbmcYBiABKAsyEy5uZXR3b3JrLnYxLkxhdExvbmdCBrpIA8gBASJOCgNBU04SFAoEY2lkchgBIAEoCUIGukgDyAEBEhgKBmFzX251bRgCIAEoBEIIMAG6SAPIAQESFwoHYXNfbmFtZRgDIAEoCUIGukgDyAEBIuoCCgVQcm94eRIUCgRjaWRyGAEgASgJQga6SAPIAQESMQoKcHJveHlfdHlwZRgCIAEoDjIVLm5ldHdvcmsudjEuUHJveHlUeXBlQga6SAPIAQESFAoMY291bnRyeV9jb2RlGAMgASgJEhQKDGNvdW50cnlfbmFtZRgEIAEoCRITCgtyZWdpb25fbmFtZRgFIAEoCRIRCgljaXR5X25hbWUYBiABKAkSCwoDaXNwGAcgASgJEg4KBmRvbWFpbhgIIAEoCRIpCgp1c2FnZV90eXBlGAkgASgOMhUubmV0d29yay52MS5Vc2FnZVR5cGUSDwoDYXNuGAogASgDQgIwARIPCgdhc19uYW1lGAsgASgJEi0KCWxhc3Rfc2VlbhgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKwoLdGhyZWF0X3R5cGUYDSABKA4yFi5uZXR3b3JrLnYxLlRocmVhdFR5cGUiVgoHTGF0TG9uZxIkCghsYXRpdHVkZRgBIAEoAkISukgPyAEBCgodAAC0Qi0AALTCEiUKCWxvbmdpdHVkZRgCIAEoAkISukgPyAEBCgodAAA0Qy0AADTDIkQKFFF1ZXJ5TmV0d29ya1Jlc3BvbnNlEiwKB2RldGFpbHMYASABKAsyEy5uZXR3b3JrLnYxLkRldGFpbHNCBrpIA8gBASLTAQoXUXVlcnlDb25uZWN0aW9uc1JlcXVlc3QSKQoGZmlsdGVyGAEgASgLMhkuZGF0YWJhc2UucXVlcnkudjEuRmlsdGVyEhAKCHN0ZWFtX2lkGAIgASgJEhYKBGNpZHIYAyABKAlCCLpIBXID2AEBEh4KDGNvdW50cnlfY29kZRgEIAEoCUIIukgFcgOYAQISFAoMY291bnRyeV9uYW1lGAUgASgJEhEKCWNpdHlfbmFtZRgGIAEoCRIaCglzZXJ2ZXJfaWQYByADKAVCB7pIBBoCIAAiVAoYUXVlcnlDb25uZWN0aW9uc1Jlc3BvbnNlEjgKCmNvbm5lY3Rpb24YASADKAsyHC5uZXR3b3JrLnYxLlBlcnNvbkNvbm5lY3Rpb25CBrpIA8gBASKsAQoQUGVyc29uQ29ubmVjdGlvbhImChRwZXJzb25fY29ubmVjdGlvbl9pZBgBIAEoA0IIMAG6SAPIAQESGwoHaXBfYWRkchgCIAEoCUIKukgHyAEBcgJ4ARIaCghzdGVhbV9pZBgDIAEoA0IIMAG6SAPIAQESHAoMcGVyc29uYV9uYW1lGAQgASgJQga6SAPIAQESGQoJc2VydmVyX2lkGAUgASgFQga6SAPIAQEq0AEKClRocmVhdFR5cGUSGwoXVEhSRUFUX1RZUEVfVU5TUEVDSUZJRUQQABIUChBUSFJFQVRfVFlQRV9TUEFNEAESFgoSVEhSRUFUX1RZUEVfQk9UTkVUEAISFwoTVEhSRUFUX1RZUEVfU0NBTk5FUhADEhsKF1RIUkVBVF9UWVBFX1NQQU1fQk9UTkVUEAQSHAoYVEhSRUFUX1RZUEVfU1BBTV9TQ0FOTkVSEAUSIwofVEhSRUFUX1RZUEVfU1BBTV9TQ0FOTkVSX0JPVE5FVBAGKssCCglVc2FnZVR5cGUSGgoWVVNBR0VfVFlQRV9VTlNQRUNJRklFRBAAEhIKDlVTQUdFX1RZUEVfQ0ROEAESHwobVVNBR0VfVFlQRV9JU1BfRklYRURfTU9CSUxFEAISGQoVVVNBR0VfVFlQRV9DT01NRVJDSUFMEAMSGQoVVVNBR0VfVFlQRV9JU1BfTU9CSUxFEAQSFgoSVVNBR0VfVFlQRV9MSUJSQVJZEAUSGgoWVVNBR0VfVFlQRV9EQVRBX0NFTlRFUhAGEhcKE1VTQUdFX1RZUEVfTUlMSVRBUlkQBxIZChVVU0FHRV9UWVBFX0dPVkVSTk1FTlQQCBIYChRVU0FHRV9UWVBFX0lTUF9GSVhFRBAJEhsKF1VTQUdFX1RZUEVfT1JHQU5JWkFUSU9OEAoSGAoUVVNBR0VfVFlQRV9FRFVDQVRJT04QCyorCglQcm94eVR5cGUSHgoaUFJPWFlfVFlQRV9QVUJfVU5TUEVDSUZJRUQQADKEAgoOTmV0d29ya1NlcnZpY2USXwoQUXVlcnlDb25uZWN0aW9ucxIjLm5ldHdvcmsudjEuUXVlcnlDb25uZWN0aW9uc1JlcXVlc3QaJC5uZXR3b3JrLnYxLlF1ZXJ5Q29ubmVjdGlvbnNSZXNwb25zZSIAElMKDFF1ZXJ5TmV0d29yaxIfLm5ldHdvcmsudjEuUXVlcnlOZXR3b3JrUmVxdWVzdBogLm5ldHdvcmsudjEuUXVlcnlOZXR3b3JrUmVzcG9uc2UiABI8CghVcGRhdGVEQhIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAQqYBCg5jb20ubmV0d29yay52MUIMTmV0d29ya1Byb3RvUAFaPWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvbmV0d29yay92MTtuZXR3b3JrdjGiAgNOWFiqAgpOZXR3b3JrLlYxygIKTmV0d29ya1xWMeICFk5ldHdvcmtcVjFcR1BCTWV0YWRhdGHqAgtOZXR3b3JrOjpWMWIIZWRpdGlvbnNw6Ac", [file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_empty, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message network.v1.QueryNetworkRequest
@@ -60,7 +61,25 @@ export type Details = Message<"network.v1.Details"> & {
   proxy?: Proxy;
 };
 
-export type DetailsValid = Details;
+/**
+ * @generated from message network.v1.Details
+ */
+export type DetailsValid = Message<"network.v1.Details"> & {
+  /**
+   * @generated from field: network.v1.Location location = 1;
+   */
+  location: LocationValid;
+
+  /**
+   * @generated from field: network.v1.ASN asn = 2;
+   */
+  asn: ASNValid;
+
+  /**
+   * @generated from field: network.v1.Proxy proxy = 3;
+   */
+  proxy: ProxyValid;
+};
 
 /**
  * Describes the message network.v1.Details.
@@ -104,7 +123,40 @@ export type Location = Message<"network.v1.Location"> & {
   latLong?: LatLong;
 };
 
-export type LocationValid = Location;
+/**
+ * @generated from message network.v1.Location
+ */
+export type LocationValid = Message<"network.v1.Location"> & {
+  /**
+   * @generated from field: string cidr = 1;
+   */
+  cidr: string;
+
+  /**
+   * @generated from field: string country_code = 2;
+   */
+  countryCode: string;
+
+  /**
+   * @generated from field: string country_name = 3;
+   */
+  countryName: string;
+
+  /**
+   * @generated from field: string region_name = 4;
+   */
+  regionName: string;
+
+  /**
+   * @generated from field: string city_name = 5;
+   */
+  cityName: string;
+
+  /**
+   * @generated from field: network.v1.LatLong lat_long = 6;
+   */
+  latLong: LatLongValid;
+};
 
 /**
  * Describes the message network.v1.Location.
@@ -133,7 +185,25 @@ export type ASN = Message<"network.v1.ASN"> & {
   asName: string;
 };
 
-export type ASNValid = ASN;
+/**
+ * @generated from message network.v1.ASN
+ */
+export type ASNValid = Message<"network.v1.ASN"> & {
+  /**
+   * @generated from field: string cidr = 1;
+   */
+  cidr: string;
+
+  /**
+   * @generated from field: uint64 as_num = 2 [jstype = JS_STRING];
+   */
+  asNum: string;
+
+  /**
+   * @generated from field: string as_name = 3;
+   */
+  asName: string;
+};
 
 /**
  * Describes the message network.v1.ASN.
@@ -212,7 +282,75 @@ export type Proxy = Message<"network.v1.Proxy"> & {
   threatType: ThreatType;
 };
 
-export type ProxyValid = Proxy;
+/**
+ * @generated from message network.v1.Proxy
+ */
+export type ProxyValid = Message<"network.v1.Proxy"> & {
+  /**
+   * @generated from field: string cidr = 1;
+   */
+  cidr: string;
+
+  /**
+   * @generated from field: network.v1.ProxyType proxy_type = 2;
+   */
+  proxyType: ProxyType;
+
+  /**
+   * @generated from field: string country_code = 3;
+   */
+  countryCode: string;
+
+  /**
+   * @generated from field: string country_name = 4;
+   */
+  countryName: string;
+
+  /**
+   * @generated from field: string region_name = 5;
+   */
+  regionName: string;
+
+  /**
+   * @generated from field: string city_name = 6;
+   */
+  cityName: string;
+
+  /**
+   * @generated from field: string isp = 7;
+   */
+  isp: string;
+
+  /**
+   * @generated from field: string domain = 8;
+   */
+  domain: string;
+
+  /**
+   * @generated from field: network.v1.UsageType usage_type = 9;
+   */
+  usageType: UsageType;
+
+  /**
+   * @generated from field: int64 asn = 10 [jstype = JS_STRING];
+   */
+  asn: string;
+
+  /**
+   * @generated from field: string as_name = 11;
+   */
+  asName: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp last_seen = 12;
+   */
+  lastSeen?: Timestamp;
+
+  /**
+   * @generated from field: network.v1.ThreatType threat_type = 13;
+   */
+  threatType: ThreatType;
+};
 
 /**
  * Describes the message network.v1.Proxy.
@@ -236,7 +374,20 @@ export type LatLong = Message<"network.v1.LatLong"> & {
   longitude: number;
 };
 
-export type LatLongValid = LatLong;
+/**
+ * @generated from message network.v1.LatLong
+ */
+export type LatLongValid = Message<"network.v1.LatLong"> & {
+  /**
+   * @generated from field: float latitude = 1;
+   */
+  latitude: number;
+
+  /**
+   * @generated from field: float longitude = 2;
+   */
+  longitude: number;
+};
 
 /**
  * Describes the message network.v1.LatLong.
@@ -255,7 +406,15 @@ export type QueryNetworkResponse = Message<"network.v1.QueryNetworkResponse"> & 
   details?: Details;
 };
 
-export type QueryNetworkResponseValid = QueryNetworkResponse;
+/**
+ * @generated from message network.v1.QueryNetworkResponse
+ */
+export type QueryNetworkResponseValid = Message<"network.v1.QueryNetworkResponse"> & {
+  /**
+   * @generated from field: network.v1.Details details = 1;
+   */
+  details: DetailsValid;
+};
 
 /**
  * Describes the message network.v1.QueryNetworkResponse.
@@ -323,7 +482,15 @@ export type QueryConnectionsResponse = Message<"network.v1.QueryConnectionsRespo
   connection: PersonConnection[];
 };
 
-export type QueryConnectionsResponseValid = QueryConnectionsResponse;
+/**
+ * @generated from message network.v1.QueryConnectionsResponse
+ */
+export type QueryConnectionsResponseValid = Message<"network.v1.QueryConnectionsResponse"> & {
+  /**
+   * @generated from field: repeated network.v1.PersonConnection connection = 1;
+   */
+  connection: PersonConnectionValid[];
+};
 
 /**
  * Describes the message network.v1.QueryConnectionsResponse.
@@ -362,7 +529,35 @@ export type PersonConnection = Message<"network.v1.PersonConnection"> & {
   serverId: number;
 };
 
-export type PersonConnectionValid = PersonConnection;
+/**
+ * @generated from message network.v1.PersonConnection
+ */
+export type PersonConnectionValid = Message<"network.v1.PersonConnection"> & {
+  /**
+   * @generated from field: int64 person_connection_id = 1 [jstype = JS_STRING];
+   */
+  personConnectionId: string;
+
+  /**
+   * @generated from field: string ip_addr = 2;
+   */
+  ipAddr: string;
+
+  /**
+   * @generated from field: int64 steam_id = 3 [jstype = JS_STRING];
+   */
+  steamId: string;
+
+  /**
+   * @generated from field: string persona_name = 4;
+   */
+  personaName: string;
+
+  /**
+   * @generated from field: int32 server_id = 5;
+   */
+  serverId: number;
+};
 
 /**
  * Describes the message network.v1.PersonConnection.

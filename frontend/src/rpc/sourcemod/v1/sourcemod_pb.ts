@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file sourcemod/v1/sourcemod.proto.
  */
 export const file_sourcemod_v1_sourcemod: GenFile = /*@__PURE__*/
-  fileDesc("Chxzb3VyY2Vtb2QvdjEvc291cmNlbW9kLnByb3RvEgxzb3VyY2Vtb2QudjEiIQoNU01TZWVkUmVxdWVzdBIQCghzdGVhbV9pZBgBIAEoCSIhCg5TTVNlZWRSZXNwb25zZRIPCgdtZXNzYWdlGAEgASgJIlwKClNNT3ZlcnJpZGUSMQoNb3ZlcnJpZGVfdHlwZRgBIAEoDjIaLnNvdXJjZW1vZC52MS5PdmVycmlkZVR5cGUSDAoEbmFtZRgCIAEoCRINCgVmbGFncxgDIAEoCSJCChNTTU92ZXJyaWRlc1Jlc3BvbnNlEisKCW92ZXJyaWRlcxgBIAMoCzIYLnNvdXJjZW1vZC52MS5TTU92ZXJyaWRlIpIBCgZTTVVzZXISCgoCaWQYASABKAUSKQoJYXV0aF90eXBlGAIgASgOMhYuc291cmNlbW9kLnYxLkF1dGhUeXBlEhAKCGlkZW50aXR5GAMgASgJEhAKCHBhc3N3b3JkGAQgASgJEg0KBWZsYWdzGAUgASgJEgwKBG5hbWUYBiABKAkSEAoIaW1tdW5pdHkYByABKAUiMwoLU01Vc2VyR3JvdXASEAoIYWRtaW5faWQYASABKAUSEgoKZ3JvdXBfbmFtZRgCIAEoCSJmCg9TTVVzZXJzUmVzcG9uc2USIwoFdXNlcnMYASADKAsyFC5zb3VyY2Vtb2QudjEuU01Vc2VyEi4KC3VzZXJfZ3JvdXBzGAIgAygLMhkuc291cmNlbW9kLnYxLlNNVXNlckdyb3VwIj4KB1NNR3JvdXASDQoFZmxhZ3MYASABKAkSDAoEbmFtZRgCIAEoCRIWCg5pbW11bml0eV9sZXZlbBgDIAEoBSJsChBTTUdyb3Vwc1Jlc3BvbnNlEiUKBmdyb3VwcxgBIAMoCzIVLnNvdXJjZW1vZC52MS5TTUdyb3VwEjEKCmltbXVuaXRpZXMYAiADKAsyHS5zb3VyY2Vtb2QudjEuU01Hcm91cEltbXVuaXR5IjkKD1NNR3JvdXBJbW11bml0eRISCgpncm91cF9uYW1lGAEgASgJEhIKCm90aGVyX25hbWUYAiABKAkiTQoMQ2hlY2tSZXF1ZXN0EhAKCHN0ZWFtX2lkGAEgASgJEhEKCWNsaWVudF9pZBgCIAEoBRIKCgJpcBgDIAEoCRIMCgRuYW1lGAQgASgJIlgKDUNoZWNrUmVzcG9uc2USEQoJY2xpZW50X2lkGAEgASgFEicKCGJhbl90eXBlGAIgASgOMhUuc291cmNlbW9kLnYxLkJhblR5cGUSCwoDbXNnGAMgASgJIjUKDkdyb3Vwc1Jlc3BvbnNlEiMKBmdyb3VwcxgBIAMoCzITLnNvdXJjZW1vZC52MS5Hcm91cCJOChJDcmVhdGVHcm91cFJlcXVlc3QSDAoEbmFtZRgBIAEoCRIbCghpbW11bml0eRgCIAEoBUIJukgGGgQYZCgAEg0KBWZsYWdzGAMgASgJIjkKE0NyZWF0ZUdyb3VwUmVzcG9uc2USIgoFZ3JvdXAYASABKAsyEy5zb3VyY2Vtb2QudjEuR3JvdXAiXwoRRWRpdEdyb3Vwc1JlcXVlc3QSEAoIZ3JvdXBfaWQYASABKAUSDAoEbmFtZRgCIAEoCRIbCghpbW11bml0eRgDIAEoBUIJukgGGgQYZCgAEg0KBWZsYWdzGAQgASgJIjgKEkVkaXRHcm91cHNSZXNwb25zZRIiCgVncm91cBgBIAEoCzITLnNvdXJjZW1vZC52MS5Hcm91cCImChJEZWxldGVHcm91cFJlcXVlc3QSEAoIZ3JvdXBfaWQYASABKAUiKQoVR3JvdXBPdmVycmlkZXNSZXF1ZXN0EhAKCGdyb3VwX2lkGAEgASgFIkkKFkdyb3VwT3ZlcnJpZGVzUmVzcG9uc2USLwoJb3ZlcnJpZGVzGAEgAygLMhwuc291cmNlbW9kLnYxLkdyb3VwT3ZlcnJpZGVzIq8BChpDcmVhdGVHcm91cE92ZXJyaWRlUmVxdWVzdBIZChFncm91cF9vdmVycmlkZV9pZBgBIAEoBRIQCghncm91cF9pZBgCIAEoBRIoCgR0eXBlGAMgASgOMhouc291cmNlbW9kLnYxLk92ZXJyaWRlVHlwZRIMCgRuYW1lGAQgASgJEiwKBmFjY2VzcxgFIAEoDjIcLnNvdXJjZW1vZC52MS5PdmVycmlkZUFjY2VzcyJTChtDcmVhdGVHcm91cE92ZXJyaWRlUmVzcG9uc2USNAoOZ3JvdXBfb3ZlcnJpZGUYASABKAsyHC5zb3VyY2Vtb2QudjEuR3JvdXBPdmVycmlkZXMivwEKGEVkaXRHcm91cE92ZXJyaWRlUmVxdWVzdBIQCghncm91cF9pZBgBIAEoBRIZChFncm91cF9vdmVycmlkZV9pZBgCIAEoBRIMCgRuYW1lGAMgASgJEjEKDW92ZXJyaWRlX3R5cGUYBCABKA4yGi5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVUeXBlEjUKD292ZXJyaWRlX2FjY2VzcxgFIAEoDjIcLnNvdXJjZW1vZC52MS5PdmVycmlkZUFjY2VzcyJRChlFZGl0R3JvdXBPdmVycmlkZVJlc3BvbnNlEjQKDmdyb3VwX292ZXJyaWRlGAEgASgLMhwuc291cmNlbW9kLnYxLkdyb3VwT3ZlcnJpZGVzIjcKGkRlbGV0ZUdyb3VwT3ZlcnJpZGVSZXF1ZXN0EhkKEWdyb3VwX292ZXJyaWRlX2lkGAEgASgFIh0KG0RlbGV0ZUdyb3VwT3ZlcnJpZGVSZXNwb25zZSI1Cg5BZG1pbnNSZXNwb25zZRIjCgZhZG1pbnMYASADKAsyEy5zb3VyY2Vtb2QudjEuQWRtaW4ikgEKEkNyZWF0ZUFkbWluUmVxdWVzdBIpCglhdXRoX3R5cGUYASABKA4yFi5zb3VyY2Vtb2QudjEuQXV0aFR5cGUSEAoIaWRlbnRpdHkYAiABKAkSEAoIcGFzc3dvcmQYAyABKAkSDQoFZmxhZ3MYBCABKAkSDAoEbmFtZRgFIAEoCRIQCghpbW11bml0eRgGIAEoBSI5ChNDcmVhdGVBZG1pblJlc3BvbnNlEiIKBWFkbWluGAEgASgLMhMuc291cmNlbW9kLnYxLkFkbWluIqIBChBFZGl0QWRtaW5SZXF1ZXN0EhAKCGFkbWluX2lkGAEgASgFEikKCWF1dGhfdHlwZRgCIAEoDjIWLnNvdXJjZW1vZC52MS5BdXRoVHlwZRIQCghpZGVudGl0eRgDIAEoCRIQCghwYXNzd29yZBgEIAEoCRINCgVmbGFncxgFIAEoCRIMCgRuYW1lGAYgASgJEhAKCGltbXVuaXR5GAcgASgFIjcKEUVkaXRBZG1pblJlc3BvbnNlEiIKBWFkbWluGAEgASgLMhMuc291cmNlbW9kLnYxLkFkbWluIiYKEkRlbGV0ZUFkbWluUmVxdWVzdBIQCghhZG1pbl9pZBgBIAEoBSI6ChRBZGRBZG1pbkdyb3VwUmVxdWVzdBIQCghhZG1pbl9pZBgBIAEoBRIQCghncm91cF9pZBgCIAEoBSI7ChVBZGRBZG1pbkdyb3VwUmVzcG9uc2USIgoFYWRtaW4YASABKAsyEy5zb3VyY2Vtb2QudjEuQWRtaW4iPQoXRGVsZXRlQWRtaW5Hcm91cFJlcXVlc3QSEAoIYWRtaW5faWQYASABKAUSEAoIZ3JvdXBfaWQYAiABKAUiPgoRT3ZlcnJpZGVzUmVzcG9uc2USKQoJb3ZlcnJpZGVzGAEgAygLMhYuc291cmNlbW9kLnYxLk92ZXJyaWRlImgKFkNyZWF0ZU92ZXJyaWRlc1JlcXVlc3QSDAoEbmFtZRgBIAEoCRIxCg1vdmVycmlkZV90eXBlGAIgASgOMhouc291cmNlbW9kLnYxLk92ZXJyaWRlVHlwZRINCgVmbGFncxgDIAEoCSJDChdDcmVhdGVPdmVycmlkZXNSZXNwb25zZRIoCghvdmVycmlkZRgBIAEoCzIWLnNvdXJjZW1vZC52MS5PdmVycmlkZSJ7ChRFZGl0T3ZlcnJpZGVzUmVxdWVzdBITCgtvdmVycmlkZV9pZBgBIAEoBRIMCgRuYW1lGAIgASgJEjEKDW92ZXJyaWRlX3R5cGUYAyABKA4yGi5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVUeXBlEg0KBWZsYWdzGAQgASgJIkEKFUVkaXRPdmVycmlkZXNSZXNwb25zZRIoCghvdmVycmlkZRgBIAEoCzIWLnNvdXJjZW1vZC52MS5PdmVycmlkZSItChZEZWxldGVPdmVycmlkZXNSZXF1ZXN0EhMKC292ZXJyaWRlX2lkGAEgASgFIlAKF0dyb3VwSW1tdW5pdGllc1Jlc3BvbnNlEjUKEGdyb3VwX2ltbXVuaXRpZXMYASADKAsyGy5zb3VyY2Vtb2QudjEuR3JvdXBJbW11bml0eSI7ChVDcmVhdGVJbW11bml0eVJlcXVlc3QSEAoIZ3JvdXBfaWQYASABKAUSEAoIb3RoZXJfaWQYAiABKAUiTQoWQ3JlYXRlSW1tdW5pdHlSZXNwb25zZRIzCg5ncm91cF9pbW11bml0eRgBIAEoCzIbLnNvdXJjZW1vZC52MS5Hcm91cEltbXVuaXR5IiwKFURlbGV0ZUltbXVuaXR5UmVxdWVzdBITCgtpbW11bml0eV9pZBgBIAEoBSKiAQoNR3JvdXBJbW11bml0eRIZChFncm91cF9pbW11bml0eV9pZBgBIAEoBRIiCgVncm91cBgCIAEoCzITLnNvdXJjZW1vZC52MS5Hcm91cBIiCgVvdGhlchgDIAEoCzITLnNvdXJjZW1vZC52MS5Hcm91cBIuCgpjcmVhdGVkX29uGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCKuAQoFR3JvdXASEAoIZ3JvdXBfaWQYASABKAUSDQoFZmxhZ3MYAiABKAkSDAoEbmFtZRgDIAEoCRIWCg5pbW11bml0eV9sZXZlbBgEIAEoBRIuCgpjcmVhdGVkX29uGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCKVAgoOR3JvdXBPdmVycmlkZXMSGQoRZ3JvdXBfb3ZlcnJpZGVfaWQYASABKAUSEAoIZ3JvdXBfaWQYAiABKAUSMQoNb3ZlcnJpZGVfdHlwZRgDIAEoDjIaLnNvdXJjZW1vZC52MS5PdmVycmlkZVR5cGUSDAoEbmFtZRgEIAEoCRI1Cg9vdmVycmlkZV9hY2Nlc3MYBSABKA4yHC5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVBY2Nlc3MSLgoKY3JlYXRlZF9vbhgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9vbhgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAivQIKBUFkbWluEhAKCGFkbWluX2lkGAEgASgFEhQKCHN0ZWFtX2lkGAIgASgDQgIwARIpCglhdXRoX3R5cGUYAyABKA4yFi5zb3VyY2Vtb2QudjEuQXV0aFR5cGUSEAoIaWRlbnRpdHkYBCABKAkSEAoIcGFzc3dvcmQYBSABKAkSDQoFZmxhZ3MYBiABKAkSDAoEbmFtZRgHIAEoCRIbCghpbW11bml0eRgIIAEoBUIJukgGGgQYZCgAEiMKBmdyb3VwcxgJIAMoCzITLnNvdXJjZW1vZC52MS5Hcm91cBIuCgpjcmVhdGVkX29uGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCLPAQoIT3ZlcnJpZGUSEwoLb3ZlcnJpZGVfaWQYASABKAUSMQoNb3ZlcnJpZGVfdHlwZRgCIAEoDjIaLnNvdXJjZW1vZC52MS5PdmVycmlkZVR5cGUSDAoEbmFtZRgDIAEoCRINCgVmbGFncxgEIAEoCRIuCgpjcmVhdGVkX29uGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCpnCgdCYW5UeXBlEhsKF0JBTl9UWVBFX09LX1VOU1BFQ0lGSUVEEAASFAoQQkFOX1RZUEVfTk9fQ09NTRABEhMKD0JBTl9UWVBFX0JBTk5FRBACEhQKEEJBTl9UWVBFX05FVFdPUksQAypOCgxPdmVycmlkZVR5cGUSJQohT1ZFUlJJREVfVFlQRV9DT01NQU5EX1VOU1BFQ0lGSUVEEAASFwoTT1ZFUlJJREVfVFlQRV9HUk9VUBABKlEKDk92ZXJyaWRlQWNjZXNzEiUKIU9WRVJSSURFX0FDQ0VTU19BTExPV19VTlNQRUNJRklFRBAAEhgKFE9WRVJSSURFX0FDQ0VTU19ERU5ZEAEqUQoIQXV0aFR5cGUSHwobQVVUSF9UWVBFX1NURUFNX1VOU1BFQ0lGSUVEEAASEgoOQVVUSF9UWVBFX05BTUUQARIQCgxBVVRIX1RZUEVfSVAQAjL6EAoQU291cmNlbW9kU2VydmljZRJACgZHcm91cHMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHC5zb3VyY2Vtb2QudjEuR3JvdXBzUmVzcG9uc2UiABJUCgtDcmVhdGVHcm91cBIgLnNvdXJjZW1vZC52MS5DcmVhdGVHcm91cFJlcXVlc3QaIS5zb3VyY2Vtb2QudjEuQ3JlYXRlR3JvdXBSZXNwb25zZSIAElEKCkVkaXRHcm91cHMSHy5zb3VyY2Vtb2QudjEuRWRpdEdyb3Vwc1JlcXVlc3QaIC5zb3VyY2Vtb2QudjEuRWRpdEdyb3Vwc1Jlc3BvbnNlIgASSQoLRGVsZXRlR3JvdXASIC5zb3VyY2Vtb2QudjEuRGVsZXRlR3JvdXBSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASXQoOR3JvdXBPdmVycmlkZXMSIy5zb3VyY2Vtb2QudjEuR3JvdXBPdmVycmlkZXNSZXF1ZXN0GiQuc291cmNlbW9kLnYxLkdyb3VwT3ZlcnJpZGVzUmVzcG9uc2UiABJsChNDcmVhdGVHcm91cE92ZXJyaWRlEiguc291cmNlbW9kLnYxLkNyZWF0ZUdyb3VwT3ZlcnJpZGVSZXF1ZXN0Gikuc291cmNlbW9kLnYxLkNyZWF0ZUdyb3VwT3ZlcnJpZGVSZXNwb25zZSIAEmYKEUVkaXRHcm91cE92ZXJyaWRlEiYuc291cmNlbW9kLnYxLkVkaXRHcm91cE92ZXJyaWRlUmVxdWVzdBonLnNvdXJjZW1vZC52MS5FZGl0R3JvdXBPdmVycmlkZVJlc3BvbnNlIgASWQoTRGVsZXRlR3JvdXBPdmVycmlkZRIoLnNvdXJjZW1vZC52MS5EZWxldGVHcm91cE92ZXJyaWRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEkAKBkFkbWlucxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRocLnNvdXJjZW1vZC52MS5BZG1pbnNSZXNwb25zZSIAElQKC0NyZWF0ZUFkbWluEiAuc291cmNlbW9kLnYxLkNyZWF0ZUFkbWluUmVxdWVzdBohLnNvdXJjZW1vZC52MS5DcmVhdGVBZG1pblJlc3BvbnNlIgASTgoJRWRpdEFkbWluEh4uc291cmNlbW9kLnYxLkVkaXRBZG1pblJlcXVlc3QaHy5zb3VyY2Vtb2QudjEuRWRpdEFkbWluUmVzcG9uc2UiABJJCgtEZWxldGVBZG1pbhIgLnNvdXJjZW1vZC52MS5EZWxldGVBZG1pblJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJaCg1BZGRBZG1pbkdyb3VwEiIuc291cmNlbW9kLnYxLkFkZEFkbWluR3JvdXBSZXF1ZXN0GiMuc291cmNlbW9kLnYxLkFkZEFkbWluR3JvdXBSZXNwb25zZSIAElMKEERlbGV0ZUFkbWluR3JvdXASJS5zb3VyY2Vtb2QudjEuRGVsZXRlQWRtaW5Hcm91cFJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJGCglPdmVycmlkZXMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHy5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVzUmVzcG9uc2UiABJgCg9DcmVhdGVPdmVycmlkZXMSJC5zb3VyY2Vtb2QudjEuQ3JlYXRlT3ZlcnJpZGVzUmVxdWVzdBolLnNvdXJjZW1vZC52MS5DcmVhdGVPdmVycmlkZXNSZXNwb25zZSIAEloKDUVkaXRPdmVycmlkZXMSIi5zb3VyY2Vtb2QudjEuRWRpdE92ZXJyaWRlc1JlcXVlc3QaIy5zb3VyY2Vtb2QudjEuRWRpdE92ZXJyaWRlc1Jlc3BvbnNlIgASUQoPRGVsZXRlT3ZlcnJpZGVzEiQuc291cmNlbW9kLnYxLkRlbGV0ZU92ZXJyaWRlc1JlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJSCg9Hcm91cEltbXVuaXRpZXMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaJS5zb3VyY2Vtb2QudjEuR3JvdXBJbW11bml0aWVzUmVzcG9uc2UiABJdCg5DcmVhdGVJbW11bml0eRIjLnNvdXJjZW1vZC52MS5DcmVhdGVJbW11bml0eVJlcXVlc3QaJC5zb3VyY2Vtb2QudjEuQ3JlYXRlSW1tdW5pdHlSZXNwb25zZSIAEk8KDkRlbGV0ZUltbXVuaXR5EiMuc291cmNlbW9kLnYxLkRlbGV0ZUltbXVuaXR5UmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEkIKBUNoZWNrEhouc291cmNlbW9kLnYxLkNoZWNrUmVxdWVzdBobLnNvdXJjZW1vZC52MS5DaGVja1Jlc3BvbnNlIgASSgoLU01PdmVycmlkZXMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaIS5zb3VyY2Vtb2QudjEuU01PdmVycmlkZXNSZXNwb25zZSIAEkIKB1NNVXNlcnMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHS5zb3VyY2Vtb2QudjEuU01Vc2Vyc1Jlc3BvbnNlIgASRAoIU01Hcm91cHMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHi5zb3VyY2Vtb2QudjEuU01Hcm91cHNSZXNwb25zZSIAEkUKBlNNU2VlZBIbLnNvdXJjZW1vZC52MS5TTVNlZWRSZXF1ZXN0Ghwuc291cmNlbW9kLnYxLlNNU2VlZFJlc3BvbnNlIgBCtgEKEGNvbS5zb3VyY2Vtb2QudjFCDlNvdXJjZW1vZFByb3RvUAFaQWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvc291cmNlbW9kL3YxO3NvdXJjZW1vZHYxogIDU1hYqgIMU291cmNlbW9kLlYxygIMU291cmNlbW9kXFYx4gIYU291cmNlbW9kXFYxXEdQQk1ldGFkYXRh6gINU291cmNlbW9kOjpWMWIIZWRpdGlvbnNw6Ac", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp]);
+  fileDesc("Chxzb3VyY2Vtb2QvdjEvc291cmNlbW9kLnByb3RvEgxzb3VyY2Vtb2QudjEiKQoNU01TZWVkUmVxdWVzdBIYCghzdGVhbV9pZBgBIAEoCUIGukgDyAEBIikKDlNNU2VlZFJlc3BvbnNlEhcKB21lc3NhZ2UYASABKAlCBrpIA8gBASJ0CgpTTU92ZXJyaWRlEjkKDW92ZXJyaWRlX3R5cGUYASABKA4yGi5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVUeXBlQga6SAPIAQESFAoEbmFtZRgCIAEoCUIGukgDyAEBEhUKBWZsYWdzGAMgASgJQga6SAPIAQEiSgoTU01PdmVycmlkZXNSZXNwb25zZRIzCglvdmVycmlkZXMYASADKAsyGC5zb3VyY2Vtb2QudjEuU01PdmVycmlkZUIGukgDyAEBIsgBCgZTTVVzZXISEgoCaWQYASABKAVCBrpIA8gBARIxCglhdXRoX3R5cGUYAiABKA4yFi5zb3VyY2Vtb2QudjEuQXV0aFR5cGVCBrpIA8gBARIYCghpZGVudGl0eRgDIAEoCUIGukgDyAEBEhAKCHBhc3N3b3JkGAQgASgJEhUKBWZsYWdzGAUgASgJQga6SAPIAQESFAoEbmFtZRgGIAEoCUIGukgDyAEBEh4KCGltbXVuaXR5GAcgASgFQgy6SAnIAQEaBBhkKAAiQwoLU01Vc2VyR3JvdXASGAoIYWRtaW5faWQYASABKAVCBrpIA8gBARIaCgpncm91cF9uYW1lGAIgASgJQga6SAPIAQEidgoPU01Vc2Vyc1Jlc3BvbnNlEisKBXVzZXJzGAEgAygLMhQuc291cmNlbW9kLnYxLlNNVXNlckIGukgDyAEBEjYKC3VzZXJfZ3JvdXBzGAIgAygLMhkuc291cmNlbW9kLnYxLlNNVXNlckdyb3VwQga6SAPIAQEiVgoHU01Hcm91cBIVCgVmbGFncxgBIAEoCUIGukgDyAEBEhQKBG5hbWUYAiABKAlCBrpIA8gBARIeCg5pbW11bml0eV9sZXZlbBgDIAEoBUIGukgDyAEBInwKEFNNR3JvdXBzUmVzcG9uc2USLQoGZ3JvdXBzGAEgAygLMhUuc291cmNlbW9kLnYxLlNNR3JvdXBCBrpIA8gBARI5CgppbW11bml0aWVzGAIgAygLMh0uc291cmNlbW9kLnYxLlNNR3JvdXBJbW11bml0eUIGukgDyAEBIkkKD1NNR3JvdXBJbW11bml0eRIaCgpncm91cF9uYW1lGAEgASgJQga6SAPIAQESGgoKb3RoZXJfbmFtZRgCIAEoCUIGukgDyAEBInEKDENoZWNrUmVxdWVzdBIYCghzdGVhbV9pZBgBIAEoCUIGukgDyAEBEhkKCWNsaWVudF9pZBgCIAEoBUIGukgDyAEBEhYKAmlwGAMgASgJQgq6SAfIAQFyAngBEhQKBG5hbWUYBCABKAlCBrpIA8gBASJwCg1DaGVja1Jlc3BvbnNlEhkKCWNsaWVudF9pZBgBIAEoBUIGukgDyAEBEi8KCGJhbl90eXBlGAIgASgOMhUuc291cmNlbW9kLnYxLkJhblR5cGVCBrpIA8gBARITCgNtc2cYAyABKAlCBrpIA8gBASI9Cg5Hcm91cHNSZXNwb25zZRIrCgZncm91cHMYASADKAsyEy5zb3VyY2Vtb2QudjEuR3JvdXBCBrpIA8gBASJeChJDcmVhdGVHcm91cFJlcXVlc3QSFAoEbmFtZRgBIAEoCUIGukgDyAEBEhsKCGltbXVuaXR5GAIgASgFQgm6SAYaBBhkKAASFQoFZmxhZ3MYAyABKAlCBrpIA8gBASJBChNDcmVhdGVHcm91cFJlc3BvbnNlEioKBWdyb3VwGAEgASgLMhMuc291cmNlbW9kLnYxLkdyb3VwQga6SAPIAQEidwoRRWRpdEdyb3Vwc1JlcXVlc3QSGAoIZ3JvdXBfaWQYASABKAVCBrpIA8gBARIUCgRuYW1lGAIgASgJQga6SAPIAQESGwoIaW1tdW5pdHkYAyABKAVCCbpIBhoEGGQoABIVCgVmbGFncxgEIAEoCUIGukgDyAEBIkAKEkVkaXRHcm91cHNSZXNwb25zZRIqCgVncm91cBgBIAEoCzITLnNvdXJjZW1vZC52MS5Hcm91cEIGukgDyAEBIi4KEkRlbGV0ZUdyb3VwUmVxdWVzdBIYCghncm91cF9pZBgBIAEoBUIGukgDyAEBIjEKFUdyb3VwT3ZlcnJpZGVzUmVxdWVzdBIYCghncm91cF9pZBgBIAEoBUIGukgDyAEBIlEKFkdyb3VwT3ZlcnJpZGVzUmVzcG9uc2USNwoJb3ZlcnJpZGVzGAEgAygLMhwuc291cmNlbW9kLnYxLkdyb3VwT3ZlcnJpZGVzQga6SAPIAQEi1wEKGkNyZWF0ZUdyb3VwT3ZlcnJpZGVSZXF1ZXN0EiEKEWdyb3VwX292ZXJyaWRlX2lkGAEgASgFQga6SAPIAQESGAoIZ3JvdXBfaWQYAiABKAVCBrpIA8gBARIwCgR0eXBlGAMgASgOMhouc291cmNlbW9kLnYxLk92ZXJyaWRlVHlwZUIGukgDyAEBEhQKBG5hbWUYBCABKAlCBrpIA8gBARI0CgZhY2Nlc3MYBSABKA4yHC5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVBY2Nlc3NCBrpIA8gBASJbChtDcmVhdGVHcm91cE92ZXJyaWRlUmVzcG9uc2USPAoOZ3JvdXBfb3ZlcnJpZGUYASABKAsyHC5zb3VyY2Vtb2QudjEuR3JvdXBPdmVycmlkZXNCBrpIA8gBASLnAQoYRWRpdEdyb3VwT3ZlcnJpZGVSZXF1ZXN0EhgKCGdyb3VwX2lkGAEgASgFQga6SAPIAQESIQoRZ3JvdXBfb3ZlcnJpZGVfaWQYAiABKAVCBrpIA8gBARIUCgRuYW1lGAMgASgJQga6SAPIAQESOQoNb3ZlcnJpZGVfdHlwZRgEIAEoDjIaLnNvdXJjZW1vZC52MS5PdmVycmlkZVR5cGVCBrpIA8gBARI9Cg9vdmVycmlkZV9hY2Nlc3MYBSABKA4yHC5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVBY2Nlc3NCBrpIA8gBASJZChlFZGl0R3JvdXBPdmVycmlkZVJlc3BvbnNlEjwKDmdyb3VwX292ZXJyaWRlGAEgASgLMhwuc291cmNlbW9kLnYxLkdyb3VwT3ZlcnJpZGVzQga6SAPIAQEiPwoaRGVsZXRlR3JvdXBPdmVycmlkZVJlcXVlc3QSIQoRZ3JvdXBfb3ZlcnJpZGVfaWQYASABKAVCBrpIA8gBASIdChtEZWxldGVHcm91cE92ZXJyaWRlUmVzcG9uc2UiPQoOQWRtaW5zUmVzcG9uc2USKwoGYWRtaW5zGAEgAygLMhMuc291cmNlbW9kLnYxLkFkbWluQga6SAPIAQEiwAEKEkNyZWF0ZUFkbWluUmVxdWVzdBIxCglhdXRoX3R5cGUYASABKA4yFi5zb3VyY2Vtb2QudjEuQXV0aFR5cGVCBrpIA8gBARIYCghpZGVudGl0eRgCIAEoCUIGukgDyAEBEhAKCHBhc3N3b3JkGAMgASgJEhUKBWZsYWdzGAQgASgJQga6SAPIAQESFAoEbmFtZRgFIAEoCUIGukgDyAEBEh4KCGltbXVuaXR5GAYgASgFQgy6SAnIAQEaBBhkKAAiQQoTQ3JlYXRlQWRtaW5SZXNwb25zZRIqCgVhZG1pbhgBIAEoCzITLnNvdXJjZW1vZC52MS5BZG1pbkIGukgDyAEBItgBChBFZGl0QWRtaW5SZXF1ZXN0EhgKCGFkbWluX2lkGAEgASgFQga6SAPIAQESMQoJYXV0aF90eXBlGAIgASgOMhYuc291cmNlbW9kLnYxLkF1dGhUeXBlQga6SAPIAQESGAoIaWRlbnRpdHkYAyABKAlCBrpIA8gBARIQCghwYXNzd29yZBgEIAEoCRIVCgVmbGFncxgFIAEoCUIGukgDyAEBEhQKBG5hbWUYBiABKAlCBrpIA8gBARIeCghpbW11bml0eRgHIAEoBUIMukgJyAEBGgQYZCgAIj8KEUVkaXRBZG1pblJlc3BvbnNlEioKBWFkbWluGAEgASgLMhMuc291cmNlbW9kLnYxLkFkbWluQga6SAPIAQEiLgoSRGVsZXRlQWRtaW5SZXF1ZXN0EhgKCGFkbWluX2lkGAEgASgFQga6SAPIAQEiSgoUQWRkQWRtaW5Hcm91cFJlcXVlc3QSGAoIYWRtaW5faWQYASABKAVCBrpIA8gBARIYCghncm91cF9pZBgCIAEoBUIGukgDyAEBIkMKFUFkZEFkbWluR3JvdXBSZXNwb25zZRIqCgVhZG1pbhgBIAEoCzITLnNvdXJjZW1vZC52MS5BZG1pbkIGukgDyAEBIk0KF0RlbGV0ZUFkbWluR3JvdXBSZXF1ZXN0EhgKCGFkbWluX2lkGAEgASgFQga6SAPIAQESGAoIZ3JvdXBfaWQYAiABKAVCBrpIA8gBASJGChFPdmVycmlkZXNSZXNwb25zZRIxCglvdmVycmlkZXMYASADKAsyFi5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVCBrpIA8gBASKAAQoWQ3JlYXRlT3ZlcnJpZGVzUmVxdWVzdBIUCgRuYW1lGAEgASgJQga6SAPIAQESOQoNb3ZlcnJpZGVfdHlwZRgCIAEoDjIaLnNvdXJjZW1vZC52MS5PdmVycmlkZVR5cGVCBrpIA8gBARIVCgVmbGFncxgDIAEoCUIGukgDyAEBIksKF0NyZWF0ZU92ZXJyaWRlc1Jlc3BvbnNlEjAKCG92ZXJyaWRlGAEgASgLMhYuc291cmNlbW9kLnYxLk92ZXJyaWRlQga6SAPIAQEimwEKFEVkaXRPdmVycmlkZXNSZXF1ZXN0EhsKC292ZXJyaWRlX2lkGAEgASgFQga6SAPIAQESFAoEbmFtZRgCIAEoCUIGukgDyAEBEjkKDW92ZXJyaWRlX3R5cGUYAyABKA4yGi5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVUeXBlQga6SAPIAQESFQoFZmxhZ3MYBCABKAlCBrpIA8gBASJJChVFZGl0T3ZlcnJpZGVzUmVzcG9uc2USMAoIb3ZlcnJpZGUYASABKAsyFi5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVCBrpIA8gBASI1ChZEZWxldGVPdmVycmlkZXNSZXF1ZXN0EhsKC292ZXJyaWRlX2lkGAEgASgFQga6SAPIAQEiWAoXR3JvdXBJbW11bml0aWVzUmVzcG9uc2USPQoQZ3JvdXBfaW1tdW5pdGllcxgBIAMoCzIbLnNvdXJjZW1vZC52MS5Hcm91cEltbXVuaXR5Qga6SAPIAQEiSwoVQ3JlYXRlSW1tdW5pdHlSZXF1ZXN0EhgKCGdyb3VwX2lkGAEgASgFQga6SAPIAQESGAoIb3RoZXJfaWQYAiABKAVCBrpIA8gBASJVChZDcmVhdGVJbW11bml0eVJlc3BvbnNlEjsKDmdyb3VwX2ltbXVuaXR5GAEgASgLMhsuc291cmNlbW9kLnYxLkdyb3VwSW1tdW5pdHlCBrpIA8gBASI0ChVEZWxldGVJbW11bml0eVJlcXVlc3QSGwoLaW1tdW5pdHlfaWQYASABKAVCBrpIA8gBASLCAQoNR3JvdXBJbW11bml0eRIhChFncm91cF9pbW11bml0eV9pZBgBIAEoBUIGukgDyAEBEioKBWdyb3VwGAIgASgLMhMuc291cmNlbW9kLnYxLkdyb3VwQga6SAPIAQESKgoFb3RoZXIYAyABKAsyEy5zb3VyY2Vtb2QudjEuR3JvdXBCBrpIA8gBARI2CgpjcmVhdGVkX29uGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBIt4BCgVHcm91cBIYCghncm91cF9pZBgBIAEoBUIGukgDyAEBEhUKBWZsYWdzGAIgASgJQga6SAPIAQESFAoEbmFtZRgDIAEoCUIGukgDyAEBEh4KDmltbXVuaXR5X2xldmVsGAQgASgFQga6SAPIAQESNgoKY3JlYXRlZF9vbhgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARI2Cgp1cGRhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBIs0CCg5Hcm91cE92ZXJyaWRlcxIhChFncm91cF9vdmVycmlkZV9pZBgBIAEoBUIGukgDyAEBEhgKCGdyb3VwX2lkGAIgASgFQga6SAPIAQESOQoNb3ZlcnJpZGVfdHlwZRgDIAEoDjIaLnNvdXJjZW1vZC52MS5PdmVycmlkZVR5cGVCBrpIA8gBARIUCgRuYW1lGAQgASgJQga6SAPIAQESPQoPb3ZlcnJpZGVfYWNjZXNzGAUgASgOMhwuc291cmNlbW9kLnYxLk92ZXJyaWRlQWNjZXNzQga6SAPIAQESNgoKY3JlYXRlZF9vbhgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARI2Cgp1cGRhdGVkX29uGAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBIosDCgVBZG1pbhIYCghhZG1pbl9pZBgBIAEoBUIGukgDyAEBEhoKCHN0ZWFtX2lkGAIgASgDQggwAbpIA8gBARIxCglhdXRoX3R5cGUYAyABKA4yFi5zb3VyY2Vtb2QudjEuQXV0aFR5cGVCBrpIA8gBARIYCghpZGVudGl0eRgEIAEoCUIGukgDyAEBEhgKCHBhc3N3b3JkGAUgASgJQga6SAPIAQESFQoFZmxhZ3MYBiABKAlCBrpIA8gBARIUCgRuYW1lGAcgASgJQga6SAPIAQESGwoIaW1tdW5pdHkYCCABKAVCCbpIBhoEGGQoABIrCgZncm91cHMYCSADKAsyEy5zb3VyY2Vtb2QudjEuR3JvdXBCBrpIA8gBARI2CgpjcmVhdGVkX29uGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEjYKCnVwZGF0ZWRfb24YCyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEi/wEKCE92ZXJyaWRlEhsKC292ZXJyaWRlX2lkGAEgASgFQga6SAPIAQESOQoNb3ZlcnJpZGVfdHlwZRgCIAEoDjIaLnNvdXJjZW1vZC52MS5PdmVycmlkZVR5cGVCBrpIA8gBARIUCgRuYW1lGAMgASgJQga6SAPIAQESFQoFZmxhZ3MYBCABKAlCBrpIA8gBARI2CgpjcmVhdGVkX29uGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEjYKCnVwZGF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEqZwoHQmFuVHlwZRIbChdCQU5fVFlQRV9PS19VTlNQRUNJRklFRBAAEhQKEEJBTl9UWVBFX05PX0NPTU0QARITCg9CQU5fVFlQRV9CQU5ORUQQAhIUChBCQU5fVFlQRV9ORVRXT1JLEAMqTgoMT3ZlcnJpZGVUeXBlEiUKIU9WRVJSSURFX1RZUEVfQ09NTUFORF9VTlNQRUNJRklFRBAAEhcKE09WRVJSSURFX1RZUEVfR1JPVVAQASpRCg5PdmVycmlkZUFjY2VzcxIlCiFPVkVSUklERV9BQ0NFU1NfQUxMT1dfVU5TUEVDSUZJRUQQABIYChRPVkVSUklERV9BQ0NFU1NfREVOWRABKlEKCEF1dGhUeXBlEh8KG0FVVEhfVFlQRV9TVEVBTV9VTlNQRUNJRklFRBAAEhIKDkFVVEhfVFlQRV9OQU1FEAESEAoMQVVUSF9UWVBFX0lQEAIy+hAKEFNvdXJjZW1vZFNlcnZpY2USQAoGR3JvdXBzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Ghwuc291cmNlbW9kLnYxLkdyb3Vwc1Jlc3BvbnNlIgASVAoLQ3JlYXRlR3JvdXASIC5zb3VyY2Vtb2QudjEuQ3JlYXRlR3JvdXBSZXF1ZXN0GiEuc291cmNlbW9kLnYxLkNyZWF0ZUdyb3VwUmVzcG9uc2UiABJRCgpFZGl0R3JvdXBzEh8uc291cmNlbW9kLnYxLkVkaXRHcm91cHNSZXF1ZXN0GiAuc291cmNlbW9kLnYxLkVkaXRHcm91cHNSZXNwb25zZSIAEkkKC0RlbGV0ZUdyb3VwEiAuc291cmNlbW9kLnYxLkRlbGV0ZUdyb3VwUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEl0KDkdyb3VwT3ZlcnJpZGVzEiMuc291cmNlbW9kLnYxLkdyb3VwT3ZlcnJpZGVzUmVxdWVzdBokLnNvdXJjZW1vZC52MS5Hcm91cE92ZXJyaWRlc1Jlc3BvbnNlIgASbAoTQ3JlYXRlR3JvdXBPdmVycmlkZRIoLnNvdXJjZW1vZC52MS5DcmVhdGVHcm91cE92ZXJyaWRlUmVxdWVzdBopLnNvdXJjZW1vZC52MS5DcmVhdGVHcm91cE92ZXJyaWRlUmVzcG9uc2UiABJmChFFZGl0R3JvdXBPdmVycmlkZRImLnNvdXJjZW1vZC52MS5FZGl0R3JvdXBPdmVycmlkZVJlcXVlc3QaJy5zb3VyY2Vtb2QudjEuRWRpdEdyb3VwT3ZlcnJpZGVSZXNwb25zZSIAElkKE0RlbGV0ZUdyb3VwT3ZlcnJpZGUSKC5zb3VyY2Vtb2QudjEuRGVsZXRlR3JvdXBPdmVycmlkZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJACgZBZG1pbnMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHC5zb3VyY2Vtb2QudjEuQWRtaW5zUmVzcG9uc2UiABJUCgtDcmVhdGVBZG1pbhIgLnNvdXJjZW1vZC52MS5DcmVhdGVBZG1pblJlcXVlc3QaIS5zb3VyY2Vtb2QudjEuQ3JlYXRlQWRtaW5SZXNwb25zZSIAEk4KCUVkaXRBZG1pbhIeLnNvdXJjZW1vZC52MS5FZGl0QWRtaW5SZXF1ZXN0Gh8uc291cmNlbW9kLnYxLkVkaXRBZG1pblJlc3BvbnNlIgASSQoLRGVsZXRlQWRtaW4SIC5zb3VyY2Vtb2QudjEuRGVsZXRlQWRtaW5SZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASWgoNQWRkQWRtaW5Hcm91cBIiLnNvdXJjZW1vZC52MS5BZGRBZG1pbkdyb3VwUmVxdWVzdBojLnNvdXJjZW1vZC52MS5BZGRBZG1pbkdyb3VwUmVzcG9uc2UiABJTChBEZWxldGVBZG1pbkdyb3VwEiUuc291cmNlbW9kLnYxLkRlbGV0ZUFkbWluR3JvdXBSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASRgoJT3ZlcnJpZGVzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Gh8uc291cmNlbW9kLnYxLk92ZXJyaWRlc1Jlc3BvbnNlIgASYAoPQ3JlYXRlT3ZlcnJpZGVzEiQuc291cmNlbW9kLnYxLkNyZWF0ZU92ZXJyaWRlc1JlcXVlc3QaJS5zb3VyY2Vtb2QudjEuQ3JlYXRlT3ZlcnJpZGVzUmVzcG9uc2UiABJaCg1FZGl0T3ZlcnJpZGVzEiIuc291cmNlbW9kLnYxLkVkaXRPdmVycmlkZXNSZXF1ZXN0GiMuc291cmNlbW9kLnYxLkVkaXRPdmVycmlkZXNSZXNwb25zZSIAElEKD0RlbGV0ZU92ZXJyaWRlcxIkLnNvdXJjZW1vZC52MS5EZWxldGVPdmVycmlkZXNSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASUgoPR3JvdXBJbW11bml0aWVzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GiUuc291cmNlbW9kLnYxLkdyb3VwSW1tdW5pdGllc1Jlc3BvbnNlIgASXQoOQ3JlYXRlSW1tdW5pdHkSIy5zb3VyY2Vtb2QudjEuQ3JlYXRlSW1tdW5pdHlSZXF1ZXN0GiQuc291cmNlbW9kLnYxLkNyZWF0ZUltbXVuaXR5UmVzcG9uc2UiABJPCg5EZWxldGVJbW11bml0eRIjLnNvdXJjZW1vZC52MS5EZWxldGVJbW11bml0eVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJCCgVDaGVjaxIaLnNvdXJjZW1vZC52MS5DaGVja1JlcXVlc3QaGy5zb3VyY2Vtb2QudjEuQ2hlY2tSZXNwb25zZSIAEkoKC1NNT3ZlcnJpZGVzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GiEuc291cmNlbW9kLnYxLlNNT3ZlcnJpZGVzUmVzcG9uc2UiABJCCgdTTVVzZXJzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Gh0uc291cmNlbW9kLnYxLlNNVXNlcnNSZXNwb25zZSIAEkQKCFNNR3JvdXBzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Gh4uc291cmNlbW9kLnYxLlNNR3JvdXBzUmVzcG9uc2UiABJFCgZTTVNlZWQSGy5zb3VyY2Vtb2QudjEuU01TZWVkUmVxdWVzdBocLnNvdXJjZW1vZC52MS5TTVNlZWRSZXNwb25zZSIAQrYBChBjb20uc291cmNlbW9kLnYxQg5Tb3VyY2Vtb2RQcm90b1ABWkFnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3NvdXJjZW1vZC92MTtzb3VyY2Vtb2R2MaICA1NYWKoCDFNvdXJjZW1vZC5WMcoCDFNvdXJjZW1vZFxWMeICGFNvdXJjZW1vZFxWMVxHUEJNZXRhZGF0YeoCDVNvdXJjZW1vZDo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message sourcemod.v1.SMSeedRequest
@@ -25,7 +25,15 @@ export type SMSeedRequest = Message<"sourcemod.v1.SMSeedRequest"> & {
   steamId: string;
 };
 
-export type SMSeedRequestValid = SMSeedRequest;
+/**
+ * @generated from message sourcemod.v1.SMSeedRequest
+ */
+export type SMSeedRequestValid = Message<"sourcemod.v1.SMSeedRequest"> & {
+  /**
+   * @generated from field: string steam_id = 1;
+   */
+  steamId: string;
+};
 
 /**
  * Describes the message sourcemod.v1.SMSeedRequest.
@@ -44,7 +52,15 @@ export type SMSeedResponse = Message<"sourcemod.v1.SMSeedResponse"> & {
   message: string;
 };
 
-export type SMSeedResponseValid = SMSeedResponse;
+/**
+ * @generated from message sourcemod.v1.SMSeedResponse
+ */
+export type SMSeedResponseValid = Message<"sourcemod.v1.SMSeedResponse"> & {
+  /**
+   * @generated from field: string message = 1;
+   */
+  message: string;
+};
 
 /**
  * Describes the message sourcemod.v1.SMSeedResponse.
@@ -73,7 +89,25 @@ export type SMOverride = Message<"sourcemod.v1.SMOverride"> & {
   flags: string;
 };
 
-export type SMOverrideValid = SMOverride;
+/**
+ * @generated from message sourcemod.v1.SMOverride
+ */
+export type SMOverrideValid = Message<"sourcemod.v1.SMOverride"> & {
+  /**
+   * @generated from field: sourcemod.v1.OverrideType override_type = 1;
+   */
+  overrideType: OverrideType;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string flags = 3;
+   */
+  flags: string;
+};
 
 /**
  * Describes the message sourcemod.v1.SMOverride.
@@ -92,7 +126,15 @@ export type SMOverridesResponse = Message<"sourcemod.v1.SMOverridesResponse"> & 
   overrides: SMOverride[];
 };
 
-export type SMOverridesResponseValid = SMOverridesResponse;
+/**
+ * @generated from message sourcemod.v1.SMOverridesResponse
+ */
+export type SMOverridesResponseValid = Message<"sourcemod.v1.SMOverridesResponse"> & {
+  /**
+   * @generated from field: repeated sourcemod.v1.SMOverride overrides = 1;
+   */
+  overrides: SMOverrideValid[];
+};
 
 /**
  * Describes the message sourcemod.v1.SMOverridesResponse.
@@ -141,7 +183,45 @@ export type SMUser = Message<"sourcemod.v1.SMUser"> & {
   immunity: number;
 };
 
-export type SMUserValid = SMUser;
+/**
+ * @generated from message sourcemod.v1.SMUser
+ */
+export type SMUserValid = Message<"sourcemod.v1.SMUser"> & {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id: number;
+
+  /**
+   * @generated from field: sourcemod.v1.AuthType auth_type = 2;
+   */
+  authType: AuthType;
+
+  /**
+   * @generated from field: string identity = 3;
+   */
+  identity: string;
+
+  /**
+   * @generated from field: string password = 4;
+   */
+  password: string;
+
+  /**
+   * @generated from field: string flags = 5;
+   */
+  flags: string;
+
+  /**
+   * @generated from field: string name = 6;
+   */
+  name: string;
+
+  /**
+   * @generated from field: int32 immunity = 7;
+   */
+  immunity: number;
+};
 
 /**
  * Describes the message sourcemod.v1.SMUser.
@@ -165,7 +245,20 @@ export type SMUserGroup = Message<"sourcemod.v1.SMUserGroup"> & {
   groupName: string;
 };
 
-export type SMUserGroupValid = SMUserGroup;
+/**
+ * @generated from message sourcemod.v1.SMUserGroup
+ */
+export type SMUserGroupValid = Message<"sourcemod.v1.SMUserGroup"> & {
+  /**
+   * @generated from field: int32 admin_id = 1;
+   */
+  adminId: number;
+
+  /**
+   * @generated from field: string group_name = 2;
+   */
+  groupName: string;
+};
 
 /**
  * Describes the message sourcemod.v1.SMUserGroup.
@@ -189,7 +282,20 @@ export type SMUsersResponse = Message<"sourcemod.v1.SMUsersResponse"> & {
   userGroups: SMUserGroup[];
 };
 
-export type SMUsersResponseValid = SMUsersResponse;
+/**
+ * @generated from message sourcemod.v1.SMUsersResponse
+ */
+export type SMUsersResponseValid = Message<"sourcemod.v1.SMUsersResponse"> & {
+  /**
+   * @generated from field: repeated sourcemod.v1.SMUser users = 1;
+   */
+  users: SMUserValid[];
+
+  /**
+   * @generated from field: repeated sourcemod.v1.SMUserGroup user_groups = 2;
+   */
+  userGroups: SMUserGroupValid[];
+};
 
 /**
  * Describes the message sourcemod.v1.SMUsersResponse.
@@ -218,7 +324,25 @@ export type SMGroup = Message<"sourcemod.v1.SMGroup"> & {
   immunityLevel: number;
 };
 
-export type SMGroupValid = SMGroup;
+/**
+ * @generated from message sourcemod.v1.SMGroup
+ */
+export type SMGroupValid = Message<"sourcemod.v1.SMGroup"> & {
+  /**
+   * @generated from field: string flags = 1;
+   */
+  flags: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: int32 immunity_level = 3;
+   */
+  immunityLevel: number;
+};
 
 /**
  * Describes the message sourcemod.v1.SMGroup.
@@ -242,7 +366,20 @@ export type SMGroupsResponse = Message<"sourcemod.v1.SMGroupsResponse"> & {
   immunities: SMGroupImmunity[];
 };
 
-export type SMGroupsResponseValid = SMGroupsResponse;
+/**
+ * @generated from message sourcemod.v1.SMGroupsResponse
+ */
+export type SMGroupsResponseValid = Message<"sourcemod.v1.SMGroupsResponse"> & {
+  /**
+   * @generated from field: repeated sourcemod.v1.SMGroup groups = 1;
+   */
+  groups: SMGroupValid[];
+
+  /**
+   * @generated from field: repeated sourcemod.v1.SMGroupImmunity immunities = 2;
+   */
+  immunities: SMGroupImmunityValid[];
+};
 
 /**
  * Describes the message sourcemod.v1.SMGroupsResponse.
@@ -266,7 +403,20 @@ export type SMGroupImmunity = Message<"sourcemod.v1.SMGroupImmunity"> & {
   otherName: string;
 };
 
-export type SMGroupImmunityValid = SMGroupImmunity;
+/**
+ * @generated from message sourcemod.v1.SMGroupImmunity
+ */
+export type SMGroupImmunityValid = Message<"sourcemod.v1.SMGroupImmunity"> & {
+  /**
+   * @generated from field: string group_name = 1;
+   */
+  groupName: string;
+
+  /**
+   * @generated from field: string other_name = 2;
+   */
+  otherName: string;
+};
 
 /**
  * Describes the message sourcemod.v1.SMGroupImmunity.
@@ -300,7 +450,30 @@ export type CheckRequest = Message<"sourcemod.v1.CheckRequest"> & {
   name: string;
 };
 
-export type CheckRequestValid = CheckRequest;
+/**
+ * @generated from message sourcemod.v1.CheckRequest
+ */
+export type CheckRequestValid = Message<"sourcemod.v1.CheckRequest"> & {
+  /**
+   * @generated from field: string steam_id = 1;
+   */
+  steamId: string;
+
+  /**
+   * @generated from field: int32 client_id = 2;
+   */
+  clientId: number;
+
+  /**
+   * @generated from field: string ip = 3;
+   */
+  ip: string;
+
+  /**
+   * @generated from field: string name = 4;
+   */
+  name: string;
+};
 
 /**
  * Describes the message sourcemod.v1.CheckRequest.
@@ -329,7 +502,25 @@ export type CheckResponse = Message<"sourcemod.v1.CheckResponse"> & {
   msg: string;
 };
 
-export type CheckResponseValid = CheckResponse;
+/**
+ * @generated from message sourcemod.v1.CheckResponse
+ */
+export type CheckResponseValid = Message<"sourcemod.v1.CheckResponse"> & {
+  /**
+   * @generated from field: int32 client_id = 1;
+   */
+  clientId: number;
+
+  /**
+   * @generated from field: sourcemod.v1.BanType ban_type = 2;
+   */
+  banType: BanType;
+
+  /**
+   * @generated from field: string msg = 3;
+   */
+  msg: string;
+};
 
 /**
  * Describes the message sourcemod.v1.CheckResponse.
@@ -348,7 +539,15 @@ export type GroupsResponse = Message<"sourcemod.v1.GroupsResponse"> & {
   groups: Group[];
 };
 
-export type GroupsResponseValid = GroupsResponse;
+/**
+ * @generated from message sourcemod.v1.GroupsResponse
+ */
+export type GroupsResponseValid = Message<"sourcemod.v1.GroupsResponse"> & {
+  /**
+   * @generated from field: repeated sourcemod.v1.Group groups = 1;
+   */
+  groups: GroupValid[];
+};
 
 /**
  * Describes the message sourcemod.v1.GroupsResponse.
@@ -377,7 +576,25 @@ export type CreateGroupRequest = Message<"sourcemod.v1.CreateGroupRequest"> & {
   flags: string;
 };
 
-export type CreateGroupRequestValid = CreateGroupRequest;
+/**
+ * @generated from message sourcemod.v1.CreateGroupRequest
+ */
+export type CreateGroupRequestValid = Message<"sourcemod.v1.CreateGroupRequest"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: int32 immunity = 2;
+   */
+  immunity: number;
+
+  /**
+   * @generated from field: string flags = 3;
+   */
+  flags: string;
+};
 
 /**
  * Describes the message sourcemod.v1.CreateGroupRequest.
@@ -396,7 +613,15 @@ export type CreateGroupResponse = Message<"sourcemod.v1.CreateGroupResponse"> & 
   group?: Group;
 };
 
-export type CreateGroupResponseValid = CreateGroupResponse;
+/**
+ * @generated from message sourcemod.v1.CreateGroupResponse
+ */
+export type CreateGroupResponseValid = Message<"sourcemod.v1.CreateGroupResponse"> & {
+  /**
+   * @generated from field: sourcemod.v1.Group group = 1;
+   */
+  group: GroupValid;
+};
 
 /**
  * Describes the message sourcemod.v1.CreateGroupResponse.
@@ -430,7 +655,30 @@ export type EditGroupsRequest = Message<"sourcemod.v1.EditGroupsRequest"> & {
   flags: string;
 };
 
-export type EditGroupsRequestValid = EditGroupsRequest;
+/**
+ * @generated from message sourcemod.v1.EditGroupsRequest
+ */
+export type EditGroupsRequestValid = Message<"sourcemod.v1.EditGroupsRequest"> & {
+  /**
+   * @generated from field: int32 group_id = 1;
+   */
+  groupId: number;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: int32 immunity = 3;
+   */
+  immunity: number;
+
+  /**
+   * @generated from field: string flags = 4;
+   */
+  flags: string;
+};
 
 /**
  * Describes the message sourcemod.v1.EditGroupsRequest.
@@ -449,7 +697,15 @@ export type EditGroupsResponse = Message<"sourcemod.v1.EditGroupsResponse"> & {
   group?: Group;
 };
 
-export type EditGroupsResponseValid = EditGroupsResponse;
+/**
+ * @generated from message sourcemod.v1.EditGroupsResponse
+ */
+export type EditGroupsResponseValid = Message<"sourcemod.v1.EditGroupsResponse"> & {
+  /**
+   * @generated from field: sourcemod.v1.Group group = 1;
+   */
+  group: GroupValid;
+};
 
 /**
  * Describes the message sourcemod.v1.EditGroupsResponse.
@@ -468,7 +724,15 @@ export type DeleteGroupRequest = Message<"sourcemod.v1.DeleteGroupRequest"> & {
   groupId: number;
 };
 
-export type DeleteGroupRequestValid = DeleteGroupRequest;
+/**
+ * @generated from message sourcemod.v1.DeleteGroupRequest
+ */
+export type DeleteGroupRequestValid = Message<"sourcemod.v1.DeleteGroupRequest"> & {
+  /**
+   * @generated from field: int32 group_id = 1;
+   */
+  groupId: number;
+};
 
 /**
  * Describes the message sourcemod.v1.DeleteGroupRequest.
@@ -487,7 +751,15 @@ export type GroupOverridesRequest = Message<"sourcemod.v1.GroupOverridesRequest"
   groupId: number;
 };
 
-export type GroupOverridesRequestValid = GroupOverridesRequest;
+/**
+ * @generated from message sourcemod.v1.GroupOverridesRequest
+ */
+export type GroupOverridesRequestValid = Message<"sourcemod.v1.GroupOverridesRequest"> & {
+  /**
+   * @generated from field: int32 group_id = 1;
+   */
+  groupId: number;
+};
 
 /**
  * Describes the message sourcemod.v1.GroupOverridesRequest.
@@ -506,7 +778,15 @@ export type GroupOverridesResponse = Message<"sourcemod.v1.GroupOverridesRespons
   overrides: GroupOverrides[];
 };
 
-export type GroupOverridesResponseValid = GroupOverridesResponse;
+/**
+ * @generated from message sourcemod.v1.GroupOverridesResponse
+ */
+export type GroupOverridesResponseValid = Message<"sourcemod.v1.GroupOverridesResponse"> & {
+  /**
+   * @generated from field: repeated sourcemod.v1.GroupOverrides overrides = 1;
+   */
+  overrides: GroupOverridesValid[];
+};
 
 /**
  * Describes the message sourcemod.v1.GroupOverridesResponse.
@@ -545,7 +825,35 @@ export type CreateGroupOverrideRequest = Message<"sourcemod.v1.CreateGroupOverri
   access: OverrideAccess;
 };
 
-export type CreateGroupOverrideRequestValid = CreateGroupOverrideRequest;
+/**
+ * @generated from message sourcemod.v1.CreateGroupOverrideRequest
+ */
+export type CreateGroupOverrideRequestValid = Message<"sourcemod.v1.CreateGroupOverrideRequest"> & {
+  /**
+   * @generated from field: int32 group_override_id = 1;
+   */
+  groupOverrideId: number;
+
+  /**
+   * @generated from field: int32 group_id = 2;
+   */
+  groupId: number;
+
+  /**
+   * @generated from field: sourcemod.v1.OverrideType type = 3;
+   */
+  type: OverrideType;
+
+  /**
+   * @generated from field: string name = 4;
+   */
+  name: string;
+
+  /**
+   * @generated from field: sourcemod.v1.OverrideAccess access = 5;
+   */
+  access: OverrideAccess;
+};
 
 /**
  * Describes the message sourcemod.v1.CreateGroupOverrideRequest.
@@ -564,7 +872,15 @@ export type CreateGroupOverrideResponse = Message<"sourcemod.v1.CreateGroupOverr
   groupOverride?: GroupOverrides;
 };
 
-export type CreateGroupOverrideResponseValid = CreateGroupOverrideResponse;
+/**
+ * @generated from message sourcemod.v1.CreateGroupOverrideResponse
+ */
+export type CreateGroupOverrideResponseValid = Message<"sourcemod.v1.CreateGroupOverrideResponse"> & {
+  /**
+   * @generated from field: sourcemod.v1.GroupOverrides group_override = 1;
+   */
+  groupOverride: GroupOverridesValid;
+};
 
 /**
  * Describes the message sourcemod.v1.CreateGroupOverrideResponse.
@@ -603,7 +919,35 @@ export type EditGroupOverrideRequest = Message<"sourcemod.v1.EditGroupOverrideRe
   overrideAccess: OverrideAccess;
 };
 
-export type EditGroupOverrideRequestValid = EditGroupOverrideRequest;
+/**
+ * @generated from message sourcemod.v1.EditGroupOverrideRequest
+ */
+export type EditGroupOverrideRequestValid = Message<"sourcemod.v1.EditGroupOverrideRequest"> & {
+  /**
+   * @generated from field: int32 group_id = 1;
+   */
+  groupId: number;
+
+  /**
+   * @generated from field: int32 group_override_id = 2;
+   */
+  groupOverrideId: number;
+
+  /**
+   * @generated from field: string name = 3;
+   */
+  name: string;
+
+  /**
+   * @generated from field: sourcemod.v1.OverrideType override_type = 4;
+   */
+  overrideType: OverrideType;
+
+  /**
+   * @generated from field: sourcemod.v1.OverrideAccess override_access = 5;
+   */
+  overrideAccess: OverrideAccess;
+};
 
 /**
  * Describes the message sourcemod.v1.EditGroupOverrideRequest.
@@ -622,7 +966,15 @@ export type EditGroupOverrideResponse = Message<"sourcemod.v1.EditGroupOverrideR
   groupOverride?: GroupOverrides;
 };
 
-export type EditGroupOverrideResponseValid = EditGroupOverrideResponse;
+/**
+ * @generated from message sourcemod.v1.EditGroupOverrideResponse
+ */
+export type EditGroupOverrideResponseValid = Message<"sourcemod.v1.EditGroupOverrideResponse"> & {
+  /**
+   * @generated from field: sourcemod.v1.GroupOverrides group_override = 1;
+   */
+  groupOverride: GroupOverridesValid;
+};
 
 /**
  * Describes the message sourcemod.v1.EditGroupOverrideResponse.
@@ -641,7 +993,15 @@ export type DeleteGroupOverrideRequest = Message<"sourcemod.v1.DeleteGroupOverri
   groupOverrideId: number;
 };
 
-export type DeleteGroupOverrideRequestValid = DeleteGroupOverrideRequest;
+/**
+ * @generated from message sourcemod.v1.DeleteGroupOverrideRequest
+ */
+export type DeleteGroupOverrideRequestValid = Message<"sourcemod.v1.DeleteGroupOverrideRequest"> & {
+  /**
+   * @generated from field: int32 group_override_id = 1;
+   */
+  groupOverrideId: number;
+};
 
 /**
  * Describes the message sourcemod.v1.DeleteGroupOverrideRequest.
@@ -675,7 +1035,15 @@ export type AdminsResponse = Message<"sourcemod.v1.AdminsResponse"> & {
   admins: Admin[];
 };
 
-export type AdminsResponseValid = AdminsResponse;
+/**
+ * @generated from message sourcemod.v1.AdminsResponse
+ */
+export type AdminsResponseValid = Message<"sourcemod.v1.AdminsResponse"> & {
+  /**
+   * @generated from field: repeated sourcemod.v1.Admin admins = 1;
+   */
+  admins: AdminValid[];
+};
 
 /**
  * Describes the message sourcemod.v1.AdminsResponse.
@@ -719,7 +1087,40 @@ export type CreateAdminRequest = Message<"sourcemod.v1.CreateAdminRequest"> & {
   immunity: number;
 };
 
-export type CreateAdminRequestValid = CreateAdminRequest;
+/**
+ * @generated from message sourcemod.v1.CreateAdminRequest
+ */
+export type CreateAdminRequestValid = Message<"sourcemod.v1.CreateAdminRequest"> & {
+  /**
+   * @generated from field: sourcemod.v1.AuthType auth_type = 1;
+   */
+  authType: AuthType;
+
+  /**
+   * @generated from field: string identity = 2;
+   */
+  identity: string;
+
+  /**
+   * @generated from field: string password = 3;
+   */
+  password: string;
+
+  /**
+   * @generated from field: string flags = 4;
+   */
+  flags: string;
+
+  /**
+   * @generated from field: string name = 5;
+   */
+  name: string;
+
+  /**
+   * @generated from field: int32 immunity = 6;
+   */
+  immunity: number;
+};
 
 /**
  * Describes the message sourcemod.v1.CreateAdminRequest.
@@ -738,7 +1139,15 @@ export type CreateAdminResponse = Message<"sourcemod.v1.CreateAdminResponse"> & 
   admin?: Admin;
 };
 
-export type CreateAdminResponseValid = CreateAdminResponse;
+/**
+ * @generated from message sourcemod.v1.CreateAdminResponse
+ */
+export type CreateAdminResponseValid = Message<"sourcemod.v1.CreateAdminResponse"> & {
+  /**
+   * @generated from field: sourcemod.v1.Admin admin = 1;
+   */
+  admin: AdminValid;
+};
 
 /**
  * Describes the message sourcemod.v1.CreateAdminResponse.
@@ -787,7 +1196,45 @@ export type EditAdminRequest = Message<"sourcemod.v1.EditAdminRequest"> & {
   immunity: number;
 };
 
-export type EditAdminRequestValid = EditAdminRequest;
+/**
+ * @generated from message sourcemod.v1.EditAdminRequest
+ */
+export type EditAdminRequestValid = Message<"sourcemod.v1.EditAdminRequest"> & {
+  /**
+   * @generated from field: int32 admin_id = 1;
+   */
+  adminId: number;
+
+  /**
+   * @generated from field: sourcemod.v1.AuthType auth_type = 2;
+   */
+  authType: AuthType;
+
+  /**
+   * @generated from field: string identity = 3;
+   */
+  identity: string;
+
+  /**
+   * @generated from field: string password = 4;
+   */
+  password: string;
+
+  /**
+   * @generated from field: string flags = 5;
+   */
+  flags: string;
+
+  /**
+   * @generated from field: string name = 6;
+   */
+  name: string;
+
+  /**
+   * @generated from field: int32 immunity = 7;
+   */
+  immunity: number;
+};
 
 /**
  * Describes the message sourcemod.v1.EditAdminRequest.
@@ -806,7 +1253,15 @@ export type EditAdminResponse = Message<"sourcemod.v1.EditAdminResponse"> & {
   admin?: Admin;
 };
 
-export type EditAdminResponseValid = EditAdminResponse;
+/**
+ * @generated from message sourcemod.v1.EditAdminResponse
+ */
+export type EditAdminResponseValid = Message<"sourcemod.v1.EditAdminResponse"> & {
+  /**
+   * @generated from field: sourcemod.v1.Admin admin = 1;
+   */
+  admin: AdminValid;
+};
 
 /**
  * Describes the message sourcemod.v1.EditAdminResponse.
@@ -825,7 +1280,15 @@ export type DeleteAdminRequest = Message<"sourcemod.v1.DeleteAdminRequest"> & {
   adminId: number;
 };
 
-export type DeleteAdminRequestValid = DeleteAdminRequest;
+/**
+ * @generated from message sourcemod.v1.DeleteAdminRequest
+ */
+export type DeleteAdminRequestValid = Message<"sourcemod.v1.DeleteAdminRequest"> & {
+  /**
+   * @generated from field: int32 admin_id = 1;
+   */
+  adminId: number;
+};
 
 /**
  * Describes the message sourcemod.v1.DeleteAdminRequest.
@@ -849,7 +1312,20 @@ export type AddAdminGroupRequest = Message<"sourcemod.v1.AddAdminGroupRequest"> 
   groupId: number;
 };
 
-export type AddAdminGroupRequestValid = AddAdminGroupRequest;
+/**
+ * @generated from message sourcemod.v1.AddAdminGroupRequest
+ */
+export type AddAdminGroupRequestValid = Message<"sourcemod.v1.AddAdminGroupRequest"> & {
+  /**
+   * @generated from field: int32 admin_id = 1;
+   */
+  adminId: number;
+
+  /**
+   * @generated from field: int32 group_id = 2;
+   */
+  groupId: number;
+};
 
 /**
  * Describes the message sourcemod.v1.AddAdminGroupRequest.
@@ -868,7 +1344,15 @@ export type AddAdminGroupResponse = Message<"sourcemod.v1.AddAdminGroupResponse"
   admin?: Admin;
 };
 
-export type AddAdminGroupResponseValid = AddAdminGroupResponse;
+/**
+ * @generated from message sourcemod.v1.AddAdminGroupResponse
+ */
+export type AddAdminGroupResponseValid = Message<"sourcemod.v1.AddAdminGroupResponse"> & {
+  /**
+   * @generated from field: sourcemod.v1.Admin admin = 1;
+   */
+  admin: AdminValid;
+};
 
 /**
  * Describes the message sourcemod.v1.AddAdminGroupResponse.
@@ -892,7 +1376,20 @@ export type DeleteAdminGroupRequest = Message<"sourcemod.v1.DeleteAdminGroupRequ
   groupId: number;
 };
 
-export type DeleteAdminGroupRequestValid = DeleteAdminGroupRequest;
+/**
+ * @generated from message sourcemod.v1.DeleteAdminGroupRequest
+ */
+export type DeleteAdminGroupRequestValid = Message<"sourcemod.v1.DeleteAdminGroupRequest"> & {
+  /**
+   * @generated from field: int32 admin_id = 1;
+   */
+  adminId: number;
+
+  /**
+   * @generated from field: int32 group_id = 2;
+   */
+  groupId: number;
+};
 
 /**
  * Describes the message sourcemod.v1.DeleteAdminGroupRequest.
@@ -911,7 +1408,15 @@ export type OverridesResponse = Message<"sourcemod.v1.OverridesResponse"> & {
   overrides: Override[];
 };
 
-export type OverridesResponseValid = OverridesResponse;
+/**
+ * @generated from message sourcemod.v1.OverridesResponse
+ */
+export type OverridesResponseValid = Message<"sourcemod.v1.OverridesResponse"> & {
+  /**
+   * @generated from field: repeated sourcemod.v1.Override overrides = 1;
+   */
+  overrides: OverrideValid[];
+};
 
 /**
  * Describes the message sourcemod.v1.OverridesResponse.
@@ -940,7 +1445,25 @@ export type CreateOverridesRequest = Message<"sourcemod.v1.CreateOverridesReques
   flags: string;
 };
 
-export type CreateOverridesRequestValid = CreateOverridesRequest;
+/**
+ * @generated from message sourcemod.v1.CreateOverridesRequest
+ */
+export type CreateOverridesRequestValid = Message<"sourcemod.v1.CreateOverridesRequest"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: sourcemod.v1.OverrideType override_type = 2;
+   */
+  overrideType: OverrideType;
+
+  /**
+   * @generated from field: string flags = 3;
+   */
+  flags: string;
+};
 
 /**
  * Describes the message sourcemod.v1.CreateOverridesRequest.
@@ -959,7 +1482,15 @@ export type CreateOverridesResponse = Message<"sourcemod.v1.CreateOverridesRespo
   override?: Override;
 };
 
-export type CreateOverridesResponseValid = CreateOverridesResponse;
+/**
+ * @generated from message sourcemod.v1.CreateOverridesResponse
+ */
+export type CreateOverridesResponseValid = Message<"sourcemod.v1.CreateOverridesResponse"> & {
+  /**
+   * @generated from field: sourcemod.v1.Override override = 1;
+   */
+  override: OverrideValid;
+};
 
 /**
  * Describes the message sourcemod.v1.CreateOverridesResponse.
@@ -993,7 +1524,30 @@ export type EditOverridesRequest = Message<"sourcemod.v1.EditOverridesRequest"> 
   flags: string;
 };
 
-export type EditOverridesRequestValid = EditOverridesRequest;
+/**
+ * @generated from message sourcemod.v1.EditOverridesRequest
+ */
+export type EditOverridesRequestValid = Message<"sourcemod.v1.EditOverridesRequest"> & {
+  /**
+   * @generated from field: int32 override_id = 1;
+   */
+  overrideId: number;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: sourcemod.v1.OverrideType override_type = 3;
+   */
+  overrideType: OverrideType;
+
+  /**
+   * @generated from field: string flags = 4;
+   */
+  flags: string;
+};
 
 /**
  * Describes the message sourcemod.v1.EditOverridesRequest.
@@ -1012,7 +1566,15 @@ export type EditOverridesResponse = Message<"sourcemod.v1.EditOverridesResponse"
   override?: Override;
 };
 
-export type EditOverridesResponseValid = EditOverridesResponse;
+/**
+ * @generated from message sourcemod.v1.EditOverridesResponse
+ */
+export type EditOverridesResponseValid = Message<"sourcemod.v1.EditOverridesResponse"> & {
+  /**
+   * @generated from field: sourcemod.v1.Override override = 1;
+   */
+  override: OverrideValid;
+};
 
 /**
  * Describes the message sourcemod.v1.EditOverridesResponse.
@@ -1031,7 +1593,15 @@ export type DeleteOverridesRequest = Message<"sourcemod.v1.DeleteOverridesReques
   overrideId: number;
 };
 
-export type DeleteOverridesRequestValid = DeleteOverridesRequest;
+/**
+ * @generated from message sourcemod.v1.DeleteOverridesRequest
+ */
+export type DeleteOverridesRequestValid = Message<"sourcemod.v1.DeleteOverridesRequest"> & {
+  /**
+   * @generated from field: int32 override_id = 1;
+   */
+  overrideId: number;
+};
 
 /**
  * Describes the message sourcemod.v1.DeleteOverridesRequest.
@@ -1050,7 +1620,15 @@ export type GroupImmunitiesResponse = Message<"sourcemod.v1.GroupImmunitiesRespo
   groupImmunities: GroupImmunity[];
 };
 
-export type GroupImmunitiesResponseValid = GroupImmunitiesResponse;
+/**
+ * @generated from message sourcemod.v1.GroupImmunitiesResponse
+ */
+export type GroupImmunitiesResponseValid = Message<"sourcemod.v1.GroupImmunitiesResponse"> & {
+  /**
+   * @generated from field: repeated sourcemod.v1.GroupImmunity group_immunities = 1;
+   */
+  groupImmunities: GroupImmunityValid[];
+};
 
 /**
  * Describes the message sourcemod.v1.GroupImmunitiesResponse.
@@ -1074,7 +1652,20 @@ export type CreateImmunityRequest = Message<"sourcemod.v1.CreateImmunityRequest"
   otherId: number;
 };
 
-export type CreateImmunityRequestValid = CreateImmunityRequest;
+/**
+ * @generated from message sourcemod.v1.CreateImmunityRequest
+ */
+export type CreateImmunityRequestValid = Message<"sourcemod.v1.CreateImmunityRequest"> & {
+  /**
+   * @generated from field: int32 group_id = 1;
+   */
+  groupId: number;
+
+  /**
+   * @generated from field: int32 other_id = 2;
+   */
+  otherId: number;
+};
 
 /**
  * Describes the message sourcemod.v1.CreateImmunityRequest.
@@ -1093,7 +1684,15 @@ export type CreateImmunityResponse = Message<"sourcemod.v1.CreateImmunityRespons
   groupImmunity?: GroupImmunity;
 };
 
-export type CreateImmunityResponseValid = CreateImmunityResponse;
+/**
+ * @generated from message sourcemod.v1.CreateImmunityResponse
+ */
+export type CreateImmunityResponseValid = Message<"sourcemod.v1.CreateImmunityResponse"> & {
+  /**
+   * @generated from field: sourcemod.v1.GroupImmunity group_immunity = 1;
+   */
+  groupImmunity: GroupImmunityValid;
+};
 
 /**
  * Describes the message sourcemod.v1.CreateImmunityResponse.
@@ -1112,7 +1711,15 @@ export type DeleteImmunityRequest = Message<"sourcemod.v1.DeleteImmunityRequest"
   immunityId: number;
 };
 
-export type DeleteImmunityRequestValid = DeleteImmunityRequest;
+/**
+ * @generated from message sourcemod.v1.DeleteImmunityRequest
+ */
+export type DeleteImmunityRequestValid = Message<"sourcemod.v1.DeleteImmunityRequest"> & {
+  /**
+   * @generated from field: int32 immunity_id = 1;
+   */
+  immunityId: number;
+};
 
 /**
  * Describes the message sourcemod.v1.DeleteImmunityRequest.
@@ -1146,7 +1753,30 @@ export type GroupImmunity = Message<"sourcemod.v1.GroupImmunity"> & {
   createdOn?: Timestamp;
 };
 
-export type GroupImmunityValid = GroupImmunity;
+/**
+ * @generated from message sourcemod.v1.GroupImmunity
+ */
+export type GroupImmunityValid = Message<"sourcemod.v1.GroupImmunity"> & {
+  /**
+   * @generated from field: int32 group_immunity_id = 1;
+   */
+  groupImmunityId: number;
+
+  /**
+   * @generated from field: sourcemod.v1.Group group = 2;
+   */
+  group: GroupValid;
+
+  /**
+   * @generated from field: sourcemod.v1.Group other = 3;
+   */
+  other: GroupValid;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 4;
+   */
+  createdOn: Timestamp;
+};
 
 /**
  * Describes the message sourcemod.v1.GroupImmunity.
@@ -1190,7 +1820,40 @@ export type Group = Message<"sourcemod.v1.Group"> & {
   updatedOn?: Timestamp;
 };
 
-export type GroupValid = Group;
+/**
+ * @generated from message sourcemod.v1.Group
+ */
+export type GroupValid = Message<"sourcemod.v1.Group"> & {
+  /**
+   * @generated from field: int32 group_id = 1;
+   */
+  groupId: number;
+
+  /**
+   * @generated from field: string flags = 2;
+   */
+  flags: string;
+
+  /**
+   * @generated from field: string name = 3;
+   */
+  name: string;
+
+  /**
+   * @generated from field: int32 immunity_level = 4;
+   */
+  immunityLevel: number;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 5;
+   */
+  createdOn: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 6;
+   */
+  updatedOn: Timestamp;
+};
 
 /**
  * Describes the message sourcemod.v1.Group.
@@ -1239,7 +1902,45 @@ export type GroupOverrides = Message<"sourcemod.v1.GroupOverrides"> & {
   updatedOn?: Timestamp;
 };
 
-export type GroupOverridesValid = GroupOverrides;
+/**
+ * @generated from message sourcemod.v1.GroupOverrides
+ */
+export type GroupOverridesValid = Message<"sourcemod.v1.GroupOverrides"> & {
+  /**
+   * @generated from field: int32 group_override_id = 1;
+   */
+  groupOverrideId: number;
+
+  /**
+   * @generated from field: int32 group_id = 2;
+   */
+  groupId: number;
+
+  /**
+   * @generated from field: sourcemod.v1.OverrideType override_type = 3;
+   */
+  overrideType: OverrideType;
+
+  /**
+   * @generated from field: string name = 4;
+   */
+  name: string;
+
+  /**
+   * @generated from field: sourcemod.v1.OverrideAccess override_access = 5;
+   */
+  overrideAccess: OverrideAccess;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 6;
+   */
+  createdOn: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 7;
+   */
+  updatedOn: Timestamp;
+};
 
 /**
  * Describes the message sourcemod.v1.GroupOverrides.
@@ -1308,7 +2009,65 @@ export type Admin = Message<"sourcemod.v1.Admin"> & {
   updatedOn?: Timestamp;
 };
 
-export type AdminValid = Admin;
+/**
+ * @generated from message sourcemod.v1.Admin
+ */
+export type AdminValid = Message<"sourcemod.v1.Admin"> & {
+  /**
+   * @generated from field: int32 admin_id = 1;
+   */
+  adminId: number;
+
+  /**
+   * @generated from field: int64 steam_id = 2 [jstype = JS_STRING];
+   */
+  steamId: string;
+
+  /**
+   * @generated from field: sourcemod.v1.AuthType auth_type = 3;
+   */
+  authType: AuthType;
+
+  /**
+   * @generated from field: string identity = 4;
+   */
+  identity: string;
+
+  /**
+   * @generated from field: string password = 5;
+   */
+  password: string;
+
+  /**
+   * @generated from field: string flags = 6;
+   */
+  flags: string;
+
+  /**
+   * @generated from field: string name = 7;
+   */
+  name: string;
+
+  /**
+   * @generated from field: int32 immunity = 8;
+   */
+  immunity: number;
+
+  /**
+   * @generated from field: repeated sourcemod.v1.Group groups = 9;
+   */
+  groups: GroupValid[];
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 10;
+   */
+  createdOn: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 11;
+   */
+  updatedOn: Timestamp;
+};
 
 /**
  * Describes the message sourcemod.v1.Admin.
@@ -1352,7 +2111,40 @@ export type Override = Message<"sourcemod.v1.Override"> & {
   updatedOn?: Timestamp;
 };
 
-export type OverrideValid = Override;
+/**
+ * @generated from message sourcemod.v1.Override
+ */
+export type OverrideValid = Message<"sourcemod.v1.Override"> & {
+  /**
+   * @generated from field: int32 override_id = 1;
+   */
+  overrideId: number;
+
+  /**
+   * @generated from field: sourcemod.v1.OverrideType override_type = 2;
+   */
+  overrideType: OverrideType;
+
+  /**
+   * @generated from field: string name = 3;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string flags = 4;
+   */
+  flags: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 5;
+   */
+  createdOn: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 6;
+   */
+  updatedOn: Timestamp;
+};
 
 /**
  * Describes the message sourcemod.v1.Override.

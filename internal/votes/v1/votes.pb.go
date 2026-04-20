@@ -7,6 +7,7 @@
 package votesv1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -360,7 +361,7 @@ var File_votes_v1_votes_proto protoreflect.FileDescriptor
 
 const file_votes_v1_votes_proto_rawDesc = "" +
 	"\n" +
-	"\x14votes/v1/votes.proto\x12\bvotes.v1\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xe2\x01\n" +
+	"\x14votes/v1/votes.proto\x12\bvotes.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xe2\x01\n" +
 	"\fQueryRequest\x121\n" +
 	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12\x1f\n" +
 	"\tsource_id\x18\x02 \x01(\x03B\x020\x01R\bsourceId\x12\x1f\n" +
@@ -368,30 +369,30 @@ const file_votes_v1_votes_proto_rawDesc = "" +
 	"\tserver_id\x18\x04 \x01(\x05R\bserverId\x12\x12\n" +
 	"\x04name\x18\x05 \x01(\tR\x04name\x12\x18\n" +
 	"\asuccess\x18\x06 \x01(\x05R\asuccess\x12\x12\n" +
-	"\x04code\x18\a \x01(\bR\x04code\"\xd4\x03\n" +
+	"\x04code\x18\a \x01(\bR\x04code\"\xb8\x04\n" +
 	"\n" +
-	"VoteResult\x12\x17\n" +
-	"\avote_id\x18\x01 \x01(\x05R\x06voteId\x12\x1f\n" +
-	"\tsource_id\x18\x02 \x01(\x03B\x020\x01R\bsourceId\x12\x1f\n" +
-	"\vsource_name\x18\x03 \x01(\tR\n" +
-	"sourceName\x12,\n" +
-	"\x12source_avatar_hash\x18\x04 \x01(\tR\x10sourceAvatarHash\x12\x1f\n" +
-	"\ttarget_id\x18\x05 \x01(\x03B\x020\x01R\btargetId\x12\x1f\n" +
-	"\vtarget_name\x18\x06 \x01(\tR\n" +
-	"targetName\x12,\n" +
-	"\x12target_avatar_hash\x18\a \x01(\tR\x10targetAvatarHash\x12\x12\n" +
-	"\x04name\x18\b \x01(\tR\x04name\x12\x18\n" +
-	"\asuccess\x18\t \x01(\bR\asuccess\x12\x1b\n" +
+	"VoteResult\x12\x1f\n" +
+	"\avote_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x06voteId\x12%\n" +
+	"\tsource_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\bsourceId\x12'\n" +
+	"\vsource_name\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"sourceName\x124\n" +
+	"\x12source_avatar_hash\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10sourceAvatarHash\x12%\n" +
+	"\ttarget_id\x18\x05 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\btargetId\x12'\n" +
+	"\vtarget_name\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"targetName\x124\n" +
+	"\x12target_avatar_hash\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10targetAvatarHash\x12\x1a\n" +
+	"\x04name\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12 \n" +
+	"\asuccess\x18\t \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\asuccess\x12#\n" +
 	"\tserver_id\x18\n" +
-	" \x01(\x05R\bserverId\x12\x1f\n" +
-	"\vserver_name\x18\v \x01(\tR\n" +
-	"serverName\x12&\n" +
-	"\x04code\x18\f \x01(\x0e2\x12.votes.v1.VoteCodeR\x04code\x129\n" +
+	" \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bserverId\x12'\n" +
+	"\vserver_name\x18\v \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"serverName\x12.\n" +
+	"\x04code\x18\f \x01(\x0e2\x12.votes.v1.VoteCodeB\x06\xbaH\x03\xc8\x01\x01R\x04code\x12A\n" +
 	"\n" +
-	"created_on\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\"Y\n" +
-	"\rQueryResponse\x12.\n" +
-	"\aresults\x18\x01 \x03(\v2\x14.votes.v1.VoteResultR\aresults\x12\x18\n" +
-	"\x05count\x18\x02 \x01(\x03B\x020\x01R\x05count*r\n" +
+	"created_on\x18\r \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\"g\n" +
+	"\rQueryResponse\x126\n" +
+	"\aresults\x18\x01 \x03(\v2\x14.votes.v1.VoteResultB\x06\xbaH\x03\xc8\x01\x01R\aresults\x12\x1e\n" +
+	"\x05count\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x05count*r\n" +
 	"\bVoteCode\x12&\n" +
 	"\"VOTE_CODE_FAIL_GENERIC_UNSPECIFIED\x10\x00\x12#\n" +
 	"\x1fVOTE_CODE_FAIL_NO_OUTNUMBER_YES\x10\x01\x12\x19\n" +

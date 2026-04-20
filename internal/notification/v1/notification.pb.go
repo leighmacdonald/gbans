@@ -7,6 +7,7 @@
 package notificationv1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -316,26 +317,26 @@ var File_notification_v1_notification_proto protoreflect.FileDescriptor
 
 const file_notification_v1_notification_proto_rawDesc = "" +
 	"\n" +
-	"\"notification/v1/notification.proto\x12\x0fnotification.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"`\n" +
-	"\x15NotificationsResponse\x12G\n" +
-	"\rnotifications\x18\x01 \x03(\v2!.notification.v1.UserNotificationR\rnotifications\".\n" +
-	"\rDeleteRequest\x12\x1d\n" +
+	"\"notification/v1/notification.proto\x12\x0fnotification.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"h\n" +
+	"\x15NotificationsResponse\x12O\n" +
+	"\rnotifications\x18\x01 \x03(\v2!.notification.v1.UserNotificationB\x06\xbaH\x03\xc8\x01\x01R\rnotifications\"6\n" +
+	"\rDeleteRequest\x12%\n" +
 	"\n" +
-	"message_id\x18\x01 \x03(\x05R\tmessageId\"0\n" +
-	"\x0fMarkReadRequest\x12\x1d\n" +
+	"message_id\x18\x01 \x03(\x05B\x06\xbaH\x03\xc8\x01\x01R\tmessageId\"8\n" +
+	"\x0fMarkReadRequest\x12%\n" +
 	"\n" +
-	"message_id\x18\x01 \x03(\x05R\tmessageId\"\xcf\x02\n" +
-	"\x10UserNotification\x128\n" +
-	"\x16person_notification_id\x18\x01 \x01(\x03B\x020\x01R\x14personNotificationId\x12\x1d\n" +
-	"\bsteam_id\x18\x02 \x01(\x03B\x020\x01R\asteamId\x12\x12\n" +
-	"\x04read\x18\x03 \x01(\bR\x04read\x12\x18\n" +
-	"\adeleted\x18\x04 \x01(\bR\adeleted\x125\n" +
-	"\bseverity\x18\x05 \x01(\x0e2\x19.notification.v1.SeverityR\bseverity\x12\x18\n" +
-	"\amessage\x18\x06 \x01(\tR\amessage\x12\x12\n" +
-	"\x04link\x18\a \x01(\tR\x04link\x12\x14\n" +
-	"\x05count\x18\b \x01(\x05R\x05count\x129\n" +
+	"message_id\x18\x01 \x03(\x05B\x06\xbaH\x03\xc8\x01\x01R\tmessageId\"\x93\x03\n" +
+	"\x10UserNotification\x12>\n" +
+	"\x16person_notification_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x14personNotificationId\x12#\n" +
+	"\bsteam_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12\x1a\n" +
+	"\x04read\x18\x03 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x04read\x12 \n" +
+	"\adeleted\x18\x04 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\adeleted\x12=\n" +
+	"\bseverity\x18\x05 \x01(\x0e2\x19.notification.v1.SeverityB\x06\xbaH\x03\xc8\x01\x01R\bseverity\x12 \n" +
+	"\amessage\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\amessage\x12\x1a\n" +
+	"\x04link\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04link\x12\x1c\n" +
+	"\x05count\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05count\x12A\n" +
 	"\n" +
-	"created_on\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn*P\n" +
+	"created_on\x18\t \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn*P\n" +
 	"\bSeverity\x12\x1d\n" +
 	"\x19SEVERITY_INFO_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rSEVERITY_WARN\x10\x01\x12\x12\n" +

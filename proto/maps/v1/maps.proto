@@ -2,11 +2,12 @@ edition = "2023";
 
 package maps.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 
 message Map {
-  int32 map_id = 1;
-  string name = 2;
-  google.protobuf.Timestamp created_on = 3;
-  google.protobuf.Timestamp updated_on = 4;
+  int32 map_id = 1 [(buf.validate.field).required = true];
+  string name = 2 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 3 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 4 [(buf.validate.field).required = true];
 }

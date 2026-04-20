@@ -7,6 +7,7 @@
 package serversv1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -204,24 +205,24 @@ var File_servers_v1_demo_proto protoreflect.FileDescriptor
 const file_servers_v1_demo_proto_rawDesc = "" +
 	"\n" +
 	"\x15servers/v1/demo.proto\x12\n" +
-	"servers.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\":\n" +
-	"\x10GetDemosResponse\x12&\n" +
-	"\x05demos\x18\x01 \x03(\v2\x10.servers.v1.DemoR\x05demos\"\xde\x03\n" +
-	"\x04Demo\x12\x1b\n" +
-	"\ademo_id\x18\x01 \x01(\x03B\x020\x01R\x06demoId\x12\x1b\n" +
-	"\tserver_id\x18\x02 \x01(\x05R\bserverId\x12*\n" +
-	"\x11server_name_short\x18\x03 \x01(\tR\x0fserverNameShort\x12(\n" +
-	"\x10server_name_long\x18\x04 \x01(\tR\x0eserverNameLong\x12\x14\n" +
-	"\x05title\x18\x05 \x01(\tR\x05title\x129\n" +
+	"servers.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"B\n" +
+	"\x10GetDemosResponse\x12.\n" +
+	"\x05demos\x18\x01 \x03(\v2\x10.servers.v1.DemoB\x06\xbaH\x03\xc8\x01\x01R\x05demos\"\xb5\x04\n" +
+	"\x04Demo\x12!\n" +
+	"\ademo_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x06demoId\x12#\n" +
+	"\tserver_id\x18\x02 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bserverId\x122\n" +
+	"\x11server_name_short\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0fserverNameShort\x120\n" +
+	"\x10server_name_long\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0eserverNameLong\x12\x1c\n" +
+	"\x05title\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12A\n" +
 	"\n" +
-	"created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x12 \n" +
-	"\tdownloads\x18\a \x01(\x03B\x020\x01R\tdownloads\x12\x16\n" +
-	"\x04size\x18\b \x01(\x03B\x020\x01R\x04size\x12\x19\n" +
-	"\bmap_name\x18\t \x01(\tR\amapName\x12\x18\n" +
+	"created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12&\n" +
+	"\tdownloads\x18\a \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\tdownloads\x12\x1c\n" +
+	"\x04size\x18\b \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x04size\x12!\n" +
+	"\bmap_name\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\amapName\x12 \n" +
 	"\aarchive\x18\n" +
-	" \x01(\bR\aarchive\x121\n" +
-	"\x05stats\x18\v \x03(\v2\x1b.servers.v1.Demo.StatsEntryR\x05stats\x12\x19\n" +
-	"\basset_id\x18\f \x01(\tR\aassetId\x1a8\n" +
+	" \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aarchive\x121\n" +
+	"\x05stats\x18\v \x03(\v2\x1b.servers.v1.Demo.StatsEntryR\x05stats\x12&\n" +
+	"\basset_id\x18\f \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\aassetId\x1a8\n" +
 	"\n" +
 	"StatsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +

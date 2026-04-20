@@ -41,64 +41,73 @@ service SourcemodService {
 }
 
 message SMSeedRequest {
-  string steam_id = 1;
+  string steam_id = 1 [(buf.validate.field).required = true];
 }
 
 message SMSeedResponse {
-  string message = 1;
+  string message = 1 [(buf.validate.field).required = true];
 }
 
 message SMOverride {
-  OverrideType override_type = 1;
-  string name = 2;
-  string flags = 3;
+  OverrideType override_type = 1 [(buf.validate.field).required = true];
+  string name = 2 [(buf.validate.field).required = true];
+  string flags = 3 [(buf.validate.field).required = true];
 }
 
 message SMOverridesResponse {
-  repeated SMOverride overrides = 1;
+  repeated SMOverride overrides = 1 [(buf.validate.field).required = true];
 }
 
 message SMUser {
-  int32 id = 1;
-  AuthType auth_type = 2;
-  string identity = 3;
+  int32 id = 1 [(buf.validate.field).required = true];
+  AuthType auth_type = 2 [(buf.validate.field).required = true];
+  string identity = 3 [(buf.validate.field).required = true];
   string password = 4;
-  string flags = 5;
-  string name = 6;
-  int32 immunity = 7;
+  string flags = 5 [(buf.validate.field).required = true];
+  string name = 6 [(buf.validate.field).required = true];
+  int32 immunity = 7 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {
+      gte: 0
+      lte: 100
+    }
+  ];
 }
 
 message SMUserGroup {
-  int32 admin_id = 1;
-  string group_name = 2;
+  int32 admin_id = 1 [(buf.validate.field).required = true];
+  string group_name = 2 [(buf.validate.field).required = true];
 }
 
 message SMUsersResponse {
-  repeated SMUser users = 1;
-  repeated SMUserGroup user_groups = 2;
+  repeated SMUser users = 1 [(buf.validate.field).required = true];
+  repeated SMUserGroup user_groups = 2 [(buf.validate.field).required = true];
 }
 
 message SMGroup {
-  string flags = 1;
-  string name = 2;
-  int32 immunity_level = 3;
+  string flags = 1 [(buf.validate.field).required = true];
+  string name = 2 [(buf.validate.field).required = true];
+  int32 immunity_level = 3 [(buf.validate.field).required = true];
 }
 
 message SMGroupsResponse {
-  repeated SMGroup groups = 1;
-  repeated SMGroupImmunity immunities = 2;
+  repeated SMGroup groups = 1 [(buf.validate.field).required = true];
+  repeated SMGroupImmunity immunities = 2 [(buf.validate.field).required = true];
 }
 
 message SMGroupImmunity {
-  string group_name = 1;
-  string other_name = 2;
+  string group_name = 1 [(buf.validate.field).required = true];
+  string other_name = 2 [(buf.validate.field).required = true];
 }
 
 message CheckRequest {
-  string steam_id = 1;
-  int32 client_id = 2;
-  string ip = 3;
-  string name = 4;
+  string steam_id = 1 [(buf.validate.field).required = true];
+  int32 client_id = 2 [(buf.validate.field).required = true];
+  string ip = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.ipv4 = true
+  ];
+  string name = 4 [(buf.validate.field).required = true];
 }
 
 enum BanType {
@@ -109,190 +118,202 @@ enum BanType {
 }
 
 message CheckResponse {
-  int32 client_id = 1;
-  BanType ban_type = 2;
-  string msg = 3;
+  int32 client_id = 1 [(buf.validate.field).required = true];
+  BanType ban_type = 2 [(buf.validate.field).required = true];
+  string msg = 3 [(buf.validate.field).required = true];
 }
 
 message GroupsResponse {
-  repeated Group groups = 1;
+  repeated Group groups = 1 [(buf.validate.field).required = true];
 }
 
 message CreateGroupRequest {
-  string name = 1;
+  string name = 1 [(buf.validate.field).required = true];
   int32 immunity = 2 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).int32.lte = 100
   ];
-  string flags = 3;
+  string flags = 3 [(buf.validate.field).required = true];
 }
 
 message CreateGroupResponse {
-  Group group = 1;
+  Group group = 1 [(buf.validate.field).required = true];
 }
 
 message EditGroupsRequest {
-  int32 group_id = 1;
-  string name = 2;
+  int32 group_id = 1 [(buf.validate.field).required = true];
+  string name = 2 [(buf.validate.field).required = true];
   int32 immunity = 3 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).int32.lte = 100
   ];
-  string flags = 4;
+  string flags = 4 [(buf.validate.field).required = true];
 }
 
 message EditGroupsResponse {
-  Group group = 1;
+  Group group = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteGroupRequest {
-  int32 group_id = 1;
+  int32 group_id = 1 [(buf.validate.field).required = true];
 }
 
 message GroupOverridesRequest {
-  int32 group_id = 1;
+  int32 group_id = 1 [(buf.validate.field).required = true];
 }
 
 message GroupOverridesResponse {
-  repeated GroupOverrides overrides = 1;
+  repeated GroupOverrides overrides = 1 [(buf.validate.field).required = true];
 }
 
 message CreateGroupOverrideRequest {
-  int32 group_override_id = 1;
-  int32 group_id = 2;
-  OverrideType type = 3;
-  string name = 4;
-  OverrideAccess access = 5;
+  int32 group_override_id = 1 [(buf.validate.field).required = true];
+  int32 group_id = 2 [(buf.validate.field).required = true];
+  OverrideType type = 3 [(buf.validate.field).required = true];
+  string name = 4 [(buf.validate.field).required = true];
+  OverrideAccess access = 5 [(buf.validate.field).required = true];
 }
 
 message CreateGroupOverrideResponse {
-  GroupOverrides group_override = 1;
+  GroupOverrides group_override = 1 [(buf.validate.field).required = true];
 }
 
 message EditGroupOverrideRequest {
-  int32 group_id = 1;
-  int32 group_override_id = 2;
-  string name = 3;
-  OverrideType override_type = 4;
-  OverrideAccess override_access = 5;
+  int32 group_id = 1 [(buf.validate.field).required = true];
+  int32 group_override_id = 2 [(buf.validate.field).required = true];
+  string name = 3 [(buf.validate.field).required = true];
+  OverrideType override_type = 4 [(buf.validate.field).required = true];
+  OverrideAccess override_access = 5 [(buf.validate.field).required = true];
 }
 message EditGroupOverrideResponse {
-  GroupOverrides group_override = 1;
+  GroupOverrides group_override = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteGroupOverrideRequest {
-  int32 group_override_id = 1;
+  int32 group_override_id = 1 [(buf.validate.field).required = true];
 }
 message DeleteGroupOverrideResponse {}
 
 message AdminsResponse {
-  repeated Admin admins = 1;
+  repeated Admin admins = 1 [(buf.validate.field).required = true];
 }
 
 message CreateAdminRequest {
-  AuthType auth_type = 1;
-  string identity = 2;
+  AuthType auth_type = 1 [(buf.validate.field).required = true];
+  string identity = 2 [(buf.validate.field).required = true];
   string password = 3;
-  string flags = 4;
-  string name = 5;
-  int32 immunity = 6;
+  string flags = 4 [(buf.validate.field).required = true];
+  string name = 5 [(buf.validate.field).required = true];
+  int32 immunity = 6 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {
+      gte: 0
+      lte: 100
+    }
+  ];
 }
 
 message CreateAdminResponse {
-  Admin admin = 1;
+  Admin admin = 1 [(buf.validate.field).required = true];
 }
 
 message EditAdminRequest {
-  int32 admin_id = 1;
-  AuthType auth_type = 2;
-  string identity = 3;
+  int32 admin_id = 1 [(buf.validate.field).required = true];
+  AuthType auth_type = 2 [(buf.validate.field).required = true];
+  string identity = 3 [(buf.validate.field).required = true];
   string password = 4;
-  string flags = 5;
-  string name = 6;
-  int32 immunity = 7;
+  string flags = 5 [(buf.validate.field).required = true];
+  string name = 6 [(buf.validate.field).required = true];
+  int32 immunity = 7 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {
+      gte: 0
+      lte: 100
+    }
+  ];
 }
 message EditAdminResponse {
-  Admin admin = 1;
+  Admin admin = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteAdminRequest {
-  int32 admin_id = 1;
+  int32 admin_id = 1 [(buf.validate.field).required = true];
 }
 
 message AddAdminGroupRequest {
-  int32 admin_id = 1;
-  int32 group_id = 2;
+  int32 admin_id = 1 [(buf.validate.field).required = true];
+  int32 group_id = 2 [(buf.validate.field).required = true];
 }
 
 message AddAdminGroupResponse {
-  Admin admin = 1;
+  Admin admin = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteAdminGroupRequest {
-  int32 admin_id = 1;
-  int32 group_id = 2;
+  int32 admin_id = 1 [(buf.validate.field).required = true];
+  int32 group_id = 2 [(buf.validate.field).required = true];
 }
 
 message OverridesResponse {
-  repeated Override overrides = 1;
+  repeated Override overrides = 1 [(buf.validate.field).required = true];
 }
 
 message CreateOverridesRequest {
-  string name = 1;
-  OverrideType override_type = 2;
-  string flags = 3;
+  string name = 1 [(buf.validate.field).required = true];
+  OverrideType override_type = 2 [(buf.validate.field).required = true];
+  string flags = 3 [(buf.validate.field).required = true];
 }
 
 message CreateOverridesResponse {
-  Override override = 1;
+  Override override = 1 [(buf.validate.field).required = true];
 }
 
 message EditOverridesRequest {
-  int32 override_id = 1;
-  string name = 2;
-  OverrideType override_type = 3;
-  string flags = 4;
+  int32 override_id = 1 [(buf.validate.field).required = true];
+  string name = 2 [(buf.validate.field).required = true];
+  OverrideType override_type = 3 [(buf.validate.field).required = true];
+  string flags = 4 [(buf.validate.field).required = true];
 }
 
 message EditOverridesResponse {
-  Override override = 1;
+  Override override = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteOverridesRequest {
-  int32 override_id = 1;
+  int32 override_id = 1 [(buf.validate.field).required = true];
 }
 
 message GroupImmunitiesResponse {
-  repeated GroupImmunity group_immunities = 1;
+  repeated GroupImmunity group_immunities = 1 [(buf.validate.field).required = true];
 }
 
 message CreateImmunityRequest {
-  int32 group_id = 1;
-  int32 other_id = 2;
+  int32 group_id = 1 [(buf.validate.field).required = true];
+  int32 other_id = 2 [(buf.validate.field).required = true];
 }
 
 message CreateImmunityResponse {
-  GroupImmunity group_immunity = 1;
+  GroupImmunity group_immunity = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteImmunityRequest {
-  int32 immunity_id = 1;
+  int32 immunity_id = 1 [(buf.validate.field).required = true];
 }
 
 message GroupImmunity {
-  int32 group_immunity_id = 1;
-  Group group = 2;
-  Group other = 3;
-  google.protobuf.Timestamp created_on = 4;
+  int32 group_immunity_id = 1 [(buf.validate.field).required = true];
+  Group group = 2 [(buf.validate.field).required = true];
+  Group other = 3 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 4 [(buf.validate.field).required = true];
 }
 
 message Group {
-  int32 group_id = 1;
-  string flags = 2;
-  string name = 3;
-  int32 immunity_level = 4;
-  google.protobuf.Timestamp created_on = 5;
-  google.protobuf.Timestamp updated_on = 6;
+  int32 group_id = 1 [(buf.validate.field).required = true];
+  string flags = 2 [(buf.validate.field).required = true];
+  string name = 3 [(buf.validate.field).required = true];
+  int32 immunity_level = 4 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 5 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 6 [(buf.validate.field).required = true];
 }
 
 enum OverrideType {
@@ -306,13 +327,13 @@ enum OverrideAccess {
 }
 
 message GroupOverrides {
-  int32 group_override_id = 1;
-  int32 group_id = 2;
-  OverrideType override_type = 3;
-  string name = 4;
-  OverrideAccess override_access = 5;
-  google.protobuf.Timestamp created_on = 6;
-  google.protobuf.Timestamp updated_on = 7;
+  int32 group_override_id = 1 [(buf.validate.field).required = true];
+  int32 group_id = 2 [(buf.validate.field).required = true];
+  OverrideType override_type = 3 [(buf.validate.field).required = true];
+  string name = 4 [(buf.validate.field).required = true];
+  OverrideAccess override_access = 5 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 6 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 7 [(buf.validate.field).required = true];
 }
 
 enum AuthType {
@@ -322,27 +343,27 @@ enum AuthType {
 }
 
 message Admin {
-  int32 admin_id = 1;
-  int64 steam_id = 2;
-  AuthType auth_type = 3;
-  string identity = 4;
-  string password = 5;
-  string flags = 6;
-  string name = 7;
+  int32 admin_id = 1 [(buf.validate.field).required = true];
+  int64 steam_id = 2 [(buf.validate.field).required = true];
+  AuthType auth_type = 3 [(buf.validate.field).required = true];
+  string identity = 4 [(buf.validate.field).required = true];
+  string password = 5 [(buf.validate.field).required = true];
+  string flags = 6 [(buf.validate.field).required = true];
+  string name = 7 [(buf.validate.field).required = true];
   int32 immunity = 8 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).int32.lte = 100
   ];
-  repeated Group groups = 9;
-  google.protobuf.Timestamp created_on = 10;
-  google.protobuf.Timestamp updated_on = 11;
+  repeated Group groups = 9 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 10 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 11 [(buf.validate.field).required = true];
 }
 
 message Override {
-  int32 override_id = 1;
-  OverrideType override_type = 2;
-  string name = 3;
-  string flags = 4;
-  google.protobuf.Timestamp created_on = 5;
-  google.protobuf.Timestamp updated_on = 6;
+  int32 override_id = 1 [(buf.validate.field).required = true];
+  OverrideType override_type = 2 [(buf.validate.field).required = true];
+  string name = 3 [(buf.validate.field).required = true];
+  string flags = 4 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 5 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 6 [(buf.validate.field).required = true];
 }

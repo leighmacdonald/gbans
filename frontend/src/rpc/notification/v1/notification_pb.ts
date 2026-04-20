@@ -4,6 +4,7 @@
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
@@ -12,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file notification/v1/notification.proto.
  */
 export const file_notification_v1_notification: GenFile = /*@__PURE__*/
-  fileDesc("CiJub3RpZmljYXRpb24vdjEvbm90aWZpY2F0aW9uLnByb3RvEg9ub3RpZmljYXRpb24udjEiUQoVTm90aWZpY2F0aW9uc1Jlc3BvbnNlEjgKDW5vdGlmaWNhdGlvbnMYASADKAsyIS5ub3RpZmljYXRpb24udjEuVXNlck5vdGlmaWNhdGlvbiIjCg1EZWxldGVSZXF1ZXN0EhIKCm1lc3NhZ2VfaWQYASADKAUiJQoPTWFya1JlYWRSZXF1ZXN0EhIKCm1lc3NhZ2VfaWQYASADKAUi9gEKEFVzZXJOb3RpZmljYXRpb24SIgoWcGVyc29uX25vdGlmaWNhdGlvbl9pZBgBIAEoA0ICMAESFAoIc3RlYW1faWQYAiABKANCAjABEgwKBHJlYWQYAyABKAgSDwoHZGVsZXRlZBgEIAEoCBIrCghzZXZlcml0eRgFIAEoDjIZLm5vdGlmaWNhdGlvbi52MS5TZXZlcml0eRIPCgdtZXNzYWdlGAYgASgJEgwKBGxpbmsYByABKAkSDQoFY291bnQYCCABKAUSLgoKY3JlYXRlZF9vbhgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAqUAoIU2V2ZXJpdHkSHQoZU0VWRVJJVFlfSU5GT19VTlNQRUNJRklFRBAAEhEKDVNFVkVSSVRZX1dBUk4QARISCg5TRVZFUklUWV9FUlJPUhACMvQCChNOb3RpZmljYXRpb25TZXJ2aWNlElEKDU5vdGlmaWNhdGlvbnMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaJi5ub3RpZmljYXRpb24udjEuTm90aWZpY2F0aW9uc1Jlc3BvbnNlIgASRgoITWFya1JlYWQSIC5ub3RpZmljYXRpb24udjEuTWFya1JlYWRSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASPwoLTWFya1JlYWRBbGwSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABI9CglEZWxldGVBbGwSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJCCgZEZWxldGUSHi5ub3RpZmljYXRpb24udjEuRGVsZXRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAQs4BChNjb20ubm90aWZpY2F0aW9uLnYxQhFOb3RpZmljYXRpb25Qcm90b1ABWkdnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL25vdGlmaWNhdGlvbi92MTtub3RpZmljYXRpb252MaICA05YWKoCD05vdGlmaWNhdGlvbi5WMcoCD05vdGlmaWNhdGlvblxWMeICG05vdGlmaWNhdGlvblxWMVxHUEJNZXRhZGF0YeoCEE5vdGlmaWNhdGlvbjo6VjFiCGVkaXRpb25zcOgH", [file_google_protobuf_empty, file_google_protobuf_timestamp]);
+  fileDesc("CiJub3RpZmljYXRpb24vdjEvbm90aWZpY2F0aW9uLnByb3RvEg9ub3RpZmljYXRpb24udjEiWQoVTm90aWZpY2F0aW9uc1Jlc3BvbnNlEkAKDW5vdGlmaWNhdGlvbnMYASADKAsyIS5ub3RpZmljYXRpb24udjEuVXNlck5vdGlmaWNhdGlvbkIGukgDyAEBIisKDURlbGV0ZVJlcXVlc3QSGgoKbWVzc2FnZV9pZBgBIAMoBUIGukgDyAEBIi0KD01hcmtSZWFkUmVxdWVzdBIaCgptZXNzYWdlX2lkGAEgAygFQga6SAPIAQEiugIKEFVzZXJOb3RpZmljYXRpb24SKAoWcGVyc29uX25vdGlmaWNhdGlvbl9pZBgBIAEoA0IIMAG6SAPIAQESGgoIc3RlYW1faWQYAiABKANCCDABukgDyAEBEhQKBHJlYWQYAyABKAhCBrpIA8gBARIXCgdkZWxldGVkGAQgASgIQga6SAPIAQESMwoIc2V2ZXJpdHkYBSABKA4yGS5ub3RpZmljYXRpb24udjEuU2V2ZXJpdHlCBrpIA8gBARIXCgdtZXNzYWdlGAYgASgJQga6SAPIAQESFAoEbGluaxgHIAEoCUIGukgDyAEBEhUKBWNvdW50GAggASgFQga6SAPIAQESNgoKY3JlYXRlZF9vbhgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASpQCghTZXZlcml0eRIdChlTRVZFUklUWV9JTkZPX1VOU1BFQ0lGSUVEEAASEQoNU0VWRVJJVFlfV0FSThABEhIKDlNFVkVSSVRZX0VSUk9SEAIy9AIKE05vdGlmaWNhdGlvblNlcnZpY2USUQoNTm90aWZpY2F0aW9ucxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRomLm5vdGlmaWNhdGlvbi52MS5Ob3RpZmljYXRpb25zUmVzcG9uc2UiABJGCghNYXJrUmVhZBIgLm5vdGlmaWNhdGlvbi52MS5NYXJrUmVhZFJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABI/CgtNYXJrUmVhZEFsbBIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEj0KCURlbGV0ZUFsbBIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEkIKBkRlbGV0ZRIeLm5vdGlmaWNhdGlvbi52MS5EZWxldGVSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgBCzgEKE2NvbS5ub3RpZmljYXRpb24udjFCEU5vdGlmaWNhdGlvblByb3RvUAFaR2dpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvbm90aWZpY2F0aW9uL3YxO25vdGlmaWNhdGlvbnYxogIDTlhYqgIPTm90aWZpY2F0aW9uLlYxygIPTm90aWZpY2F0aW9uXFYx4gIbTm90aWZpY2F0aW9uXFYxXEdQQk1ldGFkYXRh6gIQTm90aWZpY2F0aW9uOjpWMWIIZWRpdGlvbnNw6Ac", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message notification.v1.NotificationsResponse
@@ -24,7 +25,15 @@ export type NotificationsResponse = Message<"notification.v1.NotificationsRespon
   notifications: UserNotification[];
 };
 
-export type NotificationsResponseValid = NotificationsResponse;
+/**
+ * @generated from message notification.v1.NotificationsResponse
+ */
+export type NotificationsResponseValid = Message<"notification.v1.NotificationsResponse"> & {
+  /**
+   * @generated from field: repeated notification.v1.UserNotification notifications = 1;
+   */
+  notifications: UserNotificationValid[];
+};
 
 /**
  * Describes the message notification.v1.NotificationsResponse.
@@ -43,7 +52,15 @@ export type DeleteRequest = Message<"notification.v1.DeleteRequest"> & {
   messageId: number[];
 };
 
-export type DeleteRequestValid = DeleteRequest;
+/**
+ * @generated from message notification.v1.DeleteRequest
+ */
+export type DeleteRequestValid = Message<"notification.v1.DeleteRequest"> & {
+  /**
+   * @generated from field: repeated int32 message_id = 1;
+   */
+  messageId: number[];
+};
 
 /**
  * Describes the message notification.v1.DeleteRequest.
@@ -62,7 +79,15 @@ export type MarkReadRequest = Message<"notification.v1.MarkReadRequest"> & {
   messageId: number[];
 };
 
-export type MarkReadRequestValid = MarkReadRequest;
+/**
+ * @generated from message notification.v1.MarkReadRequest
+ */
+export type MarkReadRequestValid = Message<"notification.v1.MarkReadRequest"> & {
+  /**
+   * @generated from field: repeated int32 message_id = 1;
+   */
+  messageId: number[];
+};
 
 /**
  * Describes the message notification.v1.MarkReadRequest.
@@ -121,7 +146,55 @@ export type UserNotification = Message<"notification.v1.UserNotification"> & {
   createdOn?: Timestamp;
 };
 
-export type UserNotificationValid = UserNotification;
+/**
+ * @generated from message notification.v1.UserNotification
+ */
+export type UserNotificationValid = Message<"notification.v1.UserNotification"> & {
+  /**
+   * @generated from field: int64 person_notification_id = 1 [jstype = JS_STRING];
+   */
+  personNotificationId: string;
+
+  /**
+   * @generated from field: int64 steam_id = 2 [jstype = JS_STRING];
+   */
+  steamId: string;
+
+  /**
+   * @generated from field: bool read = 3;
+   */
+  read: boolean;
+
+  /**
+   * @generated from field: bool deleted = 4;
+   */
+  deleted: boolean;
+
+  /**
+   * @generated from field: notification.v1.Severity severity = 5;
+   */
+  severity: Severity;
+
+  /**
+   * @generated from field: string message = 6;
+   */
+  message: string;
+
+  /**
+   * @generated from field: string link = 7;
+   */
+  link: string;
+
+  /**
+   * @generated from field: int32 count = 8;
+   */
+  count: number;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 9;
+   */
+  createdOn: Timestamp;
+};
 
 /**
  * Describes the message notification.v1.UserNotification.

@@ -15,7 +15,7 @@ import type { Message as Message$1 } from "@bufbuild/protobuf";
  * Describes the file forum/v1/forum.proto.
  */
 export const file_forum_v1_forum: GenFile = /*@__PURE__*/
-  fileDesc("ChRmb3J1bS92MS9mb3J1bS5wcm90bxIIZm9ydW0udjEiewoRVGhyZWFkRWRpdFJlcXVlc3QSHwoPZm9ydW1fdGhyZWFkX2lkGAEgASgFQga6SAPIAQESFQoFdGl0bGUYAiABKAlCBrpIA8gBARIWCgZzdGlja3kYAyABKAhCBrpIA8gBARIWCgZsb2NrZWQYBCABKAhCBrpIA8gBASI2ChJUaHJlYWRFZGl0UmVzcG9uc2USIAoGdGhyZWFkGAEgASgLMhAuZm9ydW0udjEuVGhyZWFkIjMKEUZvcnVtRWRpdFJlc3BvbnNlEh4KBWZvcnVtGAEgASgLMg8uZm9ydW0udjEuRm9ydW0ipQEKEEZvcnVtRWRpdFJlcXVlc3QSEAoIZm9ydW1faWQYASABKAUSGQoRZm9ydW1fY2F0ZWdvcnlfaWQYAiABKAUSLgoQcGVybWlzc2lvbl9sZXZlbBgDIAEoDjIULnBlcnNvbi52MS5Qcml2aWxlZ2USDQoFdGl0bGUYBCABKAkSEwoLZGVzY3JpcHRpb24YBSABKAkSEAoIb3JkZXJpbmcYBiABKAUilQEKEkZvcnVtQ3JlYXRlUmVxdWVzdBIZChFmb3J1bV9jYXRlZ29yeV9pZBgBIAEoBRIuChBwZXJtaXNzaW9uX2xldmVsGAIgASgOMhQucGVyc29uLnYxLlByaXZpbGVnZRINCgV0aXRsZRgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIQCghvcmRlcmluZxgFIAEoBSI1ChNGb3J1bUNyZWF0ZVJlc3BvbnNlEh4KBWZvcnVtGAEgASgLMg8uZm9ydW0udjEuRm9ydW0iZgoTQ2F0ZWdvcnlFZGl0UmVxdWVzdBIZChFmb3J1bV9jYXRlZ29yeV9pZBgBIAEoBRINCgV0aXRsZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIQCghvcmRlcmluZxgEIAEoBSI8ChRDYXRlZ29yeUVkaXRSZXNwb25zZRIkCghjYXRlZ29yeRgBIAEoCzISLmZvcnVtLnYxLkNhdGVnb3J5IiwKD0NhdGVnb3J5UmVxdWVzdBIZChFmb3J1bV9jYXRlZ29yeV9pZBgBIAEoBSI4ChBDYXRlZ29yeVJlc3BvbnNlEiQKCGNhdGVnb3J5GAEgASgLMhIuZm9ydW0udjEuQ2F0ZWdvcnkiPgoWQ2F0ZWdvcnlDcmVhdGVSZXNwb25zZRIkCghjYXRlZ29yeRgBIAEoCzISLmZvcnVtLnYxLkNhdGVnb3J5Ik0KFUNhdGVnb3J5Q3JlYXRlUmVxdWVzdBINCgV0aXRsZRgBIAEoCRITCgtkZXNjcmlwdGlvbhgCIAEoCRIQCghvcmRlcmluZxgDIAEoBSI0ChRNZXNzYWdlRGVsZXRlUmVxdWVzdBIcChBmb3J1bV9tZXNzYWdlX2lkGAEgASgDQgIwASIuChNUaHJlYWREZWxldGVSZXF1ZXN0EhcKD2ZvcnVtX3RocmVhZF9pZBgBIAEoBSJHChZUaHJlYWRSZXBseUVkaXRSZXF1ZXN0EhwKEGZvcnVtX21lc3NhZ2VfaWQYASABKANCAjABEg8KB2JvZHlfbWQYAiABKAkiPQoXVGhyZWFkUmVwbHlFZGl0UmVzcG9uc2USIgoHbWVzc2FnZRgBIAEoCzIRLmZvcnVtLnYxLk1lc3NhZ2UiRAoYVGhyZWFkUmVwbHlDcmVhdGVSZXF1ZXN0EhcKD2ZvcnVtX3RocmVhZF9pZBgBIAEoBRIPCgdib2R5X21kGAIgASgJIj8KGVRocmVhZFJlcGx5Q3JlYXRlUmVzcG9uc2USIgoHbWVzc2FnZRgBIAEoCzIRLmZvcnVtLnYxLk1lc3NhZ2UiZwoTVGhyZWFkQ3JlYXRlUmVxdWVzdBIQCghmb3J1bV9pZBgBIAEoBRINCgV0aXRsZRgCIAEoCRIPCgdib2R5X21kGAMgASgJEg4KBnN0aWNreRgEIAEoCBIOCgZsb2NrZWQYBSABKAgiXAoUVGhyZWFkQ3JlYXRlUmVzcG9uc2USIAoGdGhyZWFkGAEgASgLMhAuZm9ydW0udjEuVGhyZWFkEiIKB21lc3NhZ2UYAiABKAsyES5mb3J1bS52MS5NZXNzYWdlIkAKFEZvcnVtTWVzc2FnZXNSZXF1ZXN0EhcKD2ZvcnVtX3RocmVhZF9pZBgBIAEoBRIPCgdkZWxldGVkGAIgASgIIjwKFUZvcnVtTWVzc2FnZXNSZXNwb25zZRIjCghtZXNzYWdlcxgBIAMoCzIRLmZvcnVtLnYxLk1lc3NhZ2UiIAoMRm9ydW1SZXF1ZXN0EhAKCGZvcnVtX2lkGAEgASgFIi8KDUZvcnVtUmVzcG9uc2USHgoFZm9ydW0YASABKAsyDy5mb3J1bS52MS5Gb3J1bSIoCg1UaHJlYWRSZXF1ZXN0EhcKD2ZvcnVtX3RocmVhZF9pZBgBIAEoBSIyCg5UaHJlYWRSZXNwb25zZRIgCgZ0aHJlYWQYASABKAsyEC5mb3J1bS52MS5UaHJlYWQiIgoOVGhyZWFkc1JlcXVlc3QSEAoIZm9ydW1faWQYASABKAUiNAoPVGhyZWFkc1Jlc3BvbnNlEiEKB3RocmVhZHMYASADKAsyEC5mb3J1bS52MS5UaHJlYWQioAEKBlRocmVhZBIQCghmb3J1bV9pZBgBIAEoBRIVCglzb3VyY2VfaWQYAiABKANCAjABEg0KBXRpdGxlGAMgASgJEi4KCmNyZWF0ZWRfb24YBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIsECChBUaHJlYWRXaXRoU291cmNlEiAKBnRocmVhZBgBIAEoCzIQLmZvcnVtLnYxLlRocmVhZBIUCgxwZXJzb25hX25hbWUYAiABKAkSEwoLYXZhdGFyX2hhc2gYAyABKAkSLgoQcGVybWlzc2lvbl9sZXZlbBgEIAEoDjIULnBlcnNvbi52MS5Qcml2aWxlZ2USIwoXcmVjZW50X2ZvcnVtX21lc3NhZ2VfaWQYBSABKANCAjABEjUKEXJlY2VudF9jcmVhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIbCg9yZWNlbnRfc3RlYW1faWQYByABKANCAjABEhsKE3JlY2VudF9wZXJzb25hX25hbWUYCCABKAkSGgoScmVjZW50X2F2YXRhcl9oYXNoGAkgASgJIpoBCgxVc2VyQWN0aXZpdHkSFAoIc3RlYW1faWQYASABKANCAjABEhQKDHBlcnNvbmFfbmFtZRgCIAEoCRIuChBwZXJtaXNzaW9uX2xldmVsGAMgASgOMhQucGVyc29uLnYxLlByaXZpbGVnZRIuCgpjcmVhdGVkX29uGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJEChNBY3RpdmVVc2Vyc1Jlc3BvbnNlEi0KDXVzZXJfYWN0aXZpdHkYASADKAsyFi5mb3J1bS52MS5Vc2VyQWN0aXZpdHki1QIKB01lc3NhZ2USHAoQZm9ydW1fbWVzc2FnZV9pZBgBIAEoA0ICMAESFwoPZm9ydW1fdGhyZWFkX2lkGAIgASgFEhUKCXNvdXJjZV9pZBgDIAEoA0ICMAESDwoHYm9keV9tZBgEIAEoCRINCgV0aXRsZRgFIAEoCRIOCgZvbmxpbmUYBiABKAgSEQoJc2lnbmF0dXJlGAcgASgJEhQKDHBlcnNvbmFfbmFtZRgIIAEoCRITCgthdmF0YXJfaGFzaBgJIAEoCRIuChBwZXJtaXNzaW9uX2xldmVsGAogASgOMhQucGVyc29uLnYxLlByaXZpbGVnZRIuCgpjcmVhdGVkX29uGAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCI9ChZSZWNlbnRNZXNzYWdlc1Jlc3BvbnNlEiMKCG1lc3NhZ2VzGAEgAygLMhEuZm9ydW0udjEuTWVzc2FnZSKPBAoFRm9ydW0SEAoIZm9ydW1faWQYASABKAUSGQoRZm9ydW1fY2F0ZWdvcnlfaWQYAiABKAUSFgoObGFzdF90aHJlYWRfaWQYAyABKAUSDQoFdGl0bGUYBCABKAkSEwoLZGVzY3JpcHRpb24YBSABKAkSEAoIb3JkZXJpbmcYBiABKAUSGQoNY291bnRfdGhyZWFkcxgHIAEoA0ICMAESGgoOY291bnRfbWVzc2FnZXMYCCABKANCAjABEi4KEHBlcm1pc3Npb25fbGV2ZWwYCSABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlEh4KFnJlY2VudF9mb3J1bV90aHJlYWRfaWQYCiABKAUSGgoScmVjZW50X2ZvcnVtX3RpdGxlGAsgASgJEhgKEHJlY2VudF9zb3VyY2VfaWQYDCABKAkSGwoTcmVjZW50X3BlcnNvbmFfbmFtZRgNIAEoCRIaChJyZWNlbnRfYXZhdGFyX2hhc2gYDiABKAkSNQoRcmVjZW50X2NyZWF0ZWRfb24YDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCmNyZWF0ZWRfb24YECABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YESABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wItwBCghDYXRlZ29yeRIZChFmb3J1bV9jYXRlZ29yeV9pZBgBIAEoBRINCgV0aXRsZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIQCghvcmRlcmluZxgEIAEoBRIfCgZmb3J1bXMYBSADKAsyDy5mb3J1bS52MS5Gb3J1bRIuCgpjcmVhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCI6ChBPdmVydmlld1Jlc3BvbnNlEiYKCmNhdGVnb3JpZXMYASADKAsyEi5mb3J1bS52MS5DYXRlZ29yeTLkCgoMRm9ydW1TZXJ2aWNlEkYKC0FjdGl2ZVVzZXJzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Gh0uZm9ydW0udjEuQWN0aXZlVXNlcnNSZXNwb25zZSIAEkAKCE92ZXJ2aWV3EhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhouZm9ydW0udjEuT3ZlcnZpZXdSZXNwb25zZSIAEkwKDlJlY2VudE1lc3NhZ2VzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GiAuZm9ydW0udjEuUmVjZW50TWVzc2FnZXNSZXNwb25zZSIAEkAKB1RocmVhZHMSGC5mb3J1bS52MS5UaHJlYWRzUmVxdWVzdBoZLmZvcnVtLnYxLlRocmVhZHNSZXNwb25zZSIAEj0KBlRocmVhZBIXLmZvcnVtLnYxLlRocmVhZFJlcXVlc3QaGC5mb3J1bS52MS5UaHJlYWRSZXNwb25zZSIAEkcKDFRocmVhZERlbGV0ZRIdLmZvcnVtLnYxLlRocmVhZERlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABI6CgVGb3J1bRIWLmZvcnVtLnYxLkZvcnVtUmVxdWVzdBoXLmZvcnVtLnYxLkZvcnVtUmVzcG9uc2UiABJSCg1Gb3J1bU1lc3NhZ2VzEh4uZm9ydW0udjEuRm9ydW1NZXNzYWdlc1JlcXVlc3QaHy5mb3J1bS52MS5Gb3J1bU1lc3NhZ2VzUmVzcG9uc2UiABJPCgxUaHJlYWRDcmVhdGUSHS5mb3J1bS52MS5UaHJlYWRDcmVhdGVSZXF1ZXN0Gh4uZm9ydW0udjEuVGhyZWFkQ3JlYXRlUmVzcG9uc2UiABJJCgpUaHJlYWRFZGl0EhsuZm9ydW0udjEuVGhyZWFkRWRpdFJlcXVlc3QaHC5mb3J1bS52MS5UaHJlYWRFZGl0UmVzcG9uc2UiABJeChFUaHJlYWRSZXBseUNyZWF0ZRIiLmZvcnVtLnYxLlRocmVhZFJlcGx5Q3JlYXRlUmVxdWVzdBojLmZvcnVtLnYxLlRocmVhZFJlcGx5Q3JlYXRlUmVzcG9uc2UiABJYCg9UaHJlYWRSZXBseUVkaXQSIC5mb3J1bS52MS5UaHJlYWRSZXBseUVkaXRSZXF1ZXN0GiEuZm9ydW0udjEuVGhyZWFkUmVwbHlFZGl0UmVzcG9uc2UiABJJCg1NZXNzYWdlRGVsZXRlEh4uZm9ydW0udjEuTWVzc2FnZURlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJVCg5DYXRlZ29yeUNyZWF0ZRIfLmZvcnVtLnYxLkNhdGVnb3J5Q3JlYXRlUmVxdWVzdBogLmZvcnVtLnYxLkNhdGVnb3J5Q3JlYXRlUmVzcG9uc2UiABJPCgxDYXRlZ29yeUVkaXQSHS5mb3J1bS52MS5DYXRlZ29yeUVkaXRSZXF1ZXN0Gh4uZm9ydW0udjEuQ2F0ZWdvcnlFZGl0UmVzcG9uc2UiABJDCghDYXRlZ29yeRIZLmZvcnVtLnYxLkNhdGVnb3J5UmVxdWVzdBoaLmZvcnVtLnYxLkNhdGVnb3J5UmVzcG9uc2UiABJMCgtGb3J1bUNyZWF0ZRIcLmZvcnVtLnYxLkZvcnVtQ3JlYXRlUmVxdWVzdBodLmZvcnVtLnYxLkZvcnVtQ3JlYXRlUmVzcG9uc2UiABJGCglGb3J1bUVkaXQSGi5mb3J1bS52MS5Gb3J1bUVkaXRSZXF1ZXN0GhsuZm9ydW0udjEuRm9ydW1FZGl0UmVzcG9uc2UiAEKWAQoMY29tLmZvcnVtLnYxQgpGb3J1bVByb3RvUAFaOWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvZm9ydW0vdjE7Zm9ydW12MaICA0ZYWKoCCEZvcnVtLlYxygIIRm9ydW1cVjHiAhRGb3J1bVxWMVxHUEJNZXRhZGF0YeoCCUZvcnVtOjpWMWIIZWRpdGlvbnNw6Ac", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp, file_person_v1_privilege]);
+  fileDesc("ChRmb3J1bS92MS9mb3J1bS5wcm90bxIIZm9ydW0udjEiewoRVGhyZWFkRWRpdFJlcXVlc3QSHwoPZm9ydW1fdGhyZWFkX2lkGAEgASgFQga6SAPIAQESFQoFdGl0bGUYAiABKAlCBrpIA8gBARIWCgZzdGlja3kYAyABKAhCBrpIA8gBARIWCgZsb2NrZWQYBCABKAhCBrpIA8gBASI+ChJUaHJlYWRFZGl0UmVzcG9uc2USKAoGdGhyZWFkGAEgASgLMhAuZm9ydW0udjEuVGhyZWFkQga6SAPIAQEiOwoRRm9ydW1FZGl0UmVzcG9uc2USJgoFZm9ydW0YASABKAsyDy5mb3J1bS52MS5Gb3J1bUIGukgDyAEBItUBChBGb3J1bUVkaXRSZXF1ZXN0EhgKCGZvcnVtX2lkGAEgASgFQga6SAPIAQESIQoRZm9ydW1fY2F0ZWdvcnlfaWQYAiABKAVCBrpIA8gBARI2ChBwZXJtaXNzaW9uX2xldmVsGAMgASgOMhQucGVyc29uLnYxLlByaXZpbGVnZUIGukgDyAEBEhUKBXRpdGxlGAQgASgJQga6SAPIAQESGwoLZGVzY3JpcHRpb24YBSABKAlCBrpIA8gBARIYCghvcmRlcmluZxgGIAEoBUIGukgDyAEBIr0BChJGb3J1bUNyZWF0ZVJlcXVlc3QSIQoRZm9ydW1fY2F0ZWdvcnlfaWQYASABKAVCBrpIA8gBARI2ChBwZXJtaXNzaW9uX2xldmVsGAIgASgOMhQucGVyc29uLnYxLlByaXZpbGVnZUIGukgDyAEBEhUKBXRpdGxlGAMgASgJQga6SAPIAQESGwoLZGVzY3JpcHRpb24YBCABKAlCBrpIA8gBARIYCghvcmRlcmluZxgFIAEoBUIGukgDyAEBIj0KE0ZvcnVtQ3JlYXRlUmVzcG9uc2USJgoFZm9ydW0YASABKAsyDy5mb3J1bS52MS5Gb3J1bUIGukgDyAEBIoYBChNDYXRlZ29yeUVkaXRSZXF1ZXN0EiEKEWZvcnVtX2NhdGVnb3J5X2lkGAEgASgFQga6SAPIAQESFQoFdGl0bGUYAiABKAlCBrpIA8gBARIbCgtkZXNjcmlwdGlvbhgDIAEoCUIGukgDyAEBEhgKCG9yZGVyaW5nGAQgASgFQga6SAPIAQEiRAoUQ2F0ZWdvcnlFZGl0UmVzcG9uc2USLAoIY2F0ZWdvcnkYASABKAsyEi5mb3J1bS52MS5DYXRlZ29yeUIGukgDyAEBIjQKD0NhdGVnb3J5UmVxdWVzdBIhChFmb3J1bV9jYXRlZ29yeV9pZBgBIAEoBUIGukgDyAEBIkAKEENhdGVnb3J5UmVzcG9uc2USLAoIY2F0ZWdvcnkYASABKAsyEi5mb3J1bS52MS5DYXRlZ29yeUIGukgDyAEBIkYKFkNhdGVnb3J5Q3JlYXRlUmVzcG9uc2USLAoIY2F0ZWdvcnkYASABKAsyEi5mb3J1bS52MS5DYXRlZ29yeUIGukgDyAEBImUKFUNhdGVnb3J5Q3JlYXRlUmVxdWVzdBIVCgV0aXRsZRgBIAEoCUIGukgDyAEBEhsKC2Rlc2NyaXB0aW9uGAIgASgJQga6SAPIAQESGAoIb3JkZXJpbmcYAyABKAVCBrpIA8gBASI6ChRNZXNzYWdlRGVsZXRlUmVxdWVzdBIiChBmb3J1bV9tZXNzYWdlX2lkGAEgASgDQggwAbpIA8gBASI2ChNUaHJlYWREZWxldGVSZXF1ZXN0Eh8KD2ZvcnVtX3RocmVhZF9pZBgBIAEoBUIGukgDyAEBIlUKFlRocmVhZFJlcGx5RWRpdFJlcXVlc3QSIgoQZm9ydW1fbWVzc2FnZV9pZBgBIAEoA0IIMAG6SAPIAQESFwoHYm9keV9tZBgCIAEoCUIGukgDyAEBIkUKF1RocmVhZFJlcGx5RWRpdFJlc3BvbnNlEioKB21lc3NhZ2UYASABKAsyES5mb3J1bS52MS5NZXNzYWdlQga6SAPIAQEiVAoYVGhyZWFkUmVwbHlDcmVhdGVSZXF1ZXN0Eh8KD2ZvcnVtX3RocmVhZF9pZBgBIAEoBUIGukgDyAEBEhcKB2JvZHlfbWQYAiABKAlCBrpIA8gBASJHChlUaHJlYWRSZXBseUNyZWF0ZVJlc3BvbnNlEioKB21lc3NhZ2UYASABKAsyES5mb3J1bS52MS5NZXNzYWdlQga6SAPIAQEifwoTVGhyZWFkQ3JlYXRlUmVxdWVzdBIYCghmb3J1bV9pZBgBIAEoBUIGukgDyAEBEhUKBXRpdGxlGAIgASgJQga6SAPIAQESFwoHYm9keV9tZBgDIAEoCUIGukgDyAEBEg4KBnN0aWNreRgEIAEoCBIOCgZsb2NrZWQYBSABKAgibAoUVGhyZWFkQ3JlYXRlUmVzcG9uc2USKAoGdGhyZWFkGAEgASgLMhAuZm9ydW0udjEuVGhyZWFkQga6SAPIAQESKgoHbWVzc2FnZRgCIAEoCzIRLmZvcnVtLnYxLk1lc3NhZ2VCBrpIA8gBASJIChRGb3J1bU1lc3NhZ2VzUmVxdWVzdBIfCg9mb3J1bV90aHJlYWRfaWQYASABKAVCBrpIA8gBARIPCgdkZWxldGVkGAIgASgIIkQKFUZvcnVtTWVzc2FnZXNSZXNwb25zZRIrCghtZXNzYWdlcxgBIAMoCzIRLmZvcnVtLnYxLk1lc3NhZ2VCBrpIA8gBASIoCgxGb3J1bVJlcXVlc3QSGAoIZm9ydW1faWQYASABKAVCBrpIA8gBASI3Cg1Gb3J1bVJlc3BvbnNlEiYKBWZvcnVtGAEgASgLMg8uZm9ydW0udjEuRm9ydW1CBrpIA8gBASIwCg1UaHJlYWRSZXF1ZXN0Eh8KD2ZvcnVtX3RocmVhZF9pZBgBIAEoBUIGukgDyAEBIjoKDlRocmVhZFJlc3BvbnNlEigKBnRocmVhZBgBIAEoCzIQLmZvcnVtLnYxLlRocmVhZEIGukgDyAEBIioKDlRocmVhZHNSZXF1ZXN0EhgKCGZvcnVtX2lkGAEgASgFQga6SAPIAQEiPAoPVGhyZWFkc1Jlc3BvbnNlEikKB3RocmVhZHMYASADKAsyEC5mb3J1bS52MS5UaHJlYWRCBrpIA8gBASLGAQoGVGhyZWFkEhgKCGZvcnVtX2lkGAEgASgFQga6SAPIAQESGwoJc291cmNlX2lkGAIgASgDQggwAbpIA8gBARIVCgV0aXRsZRgDIAEoCUIGukgDyAEBEjYKCmNyZWF0ZWRfb24YBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASLhAgoQVGhyZWFkV2l0aFNvdXJjZRIoCgZ0aHJlYWQYASABKAsyEC5mb3J1bS52MS5UaHJlYWRCBrpIA8gBARIcCgxwZXJzb25hX25hbWUYAiABKAlCBrpIA8gBARIbCgthdmF0YXJfaGFzaBgDIAEoCUIGukgDyAEBEjYKEHBlcm1pc3Npb25fbGV2ZWwYBCABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlQga6SAPIAQESIwoXcmVjZW50X2ZvcnVtX21lc3NhZ2VfaWQYBSABKANCAjABEjUKEXJlY2VudF9jcmVhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIbCg9yZWNlbnRfc3RlYW1faWQYByABKANCAjABEhsKE3JlY2VudF9wZXJzb25hX25hbWUYCCABKAkSGgoScmVjZW50X2F2YXRhcl9oYXNoGAkgASgJIrgBCgxVc2VyQWN0aXZpdHkSGgoIc3RlYW1faWQYASABKANCCDABukgDyAEBEhwKDHBlcnNvbmFfbmFtZRgCIAEoCUIGukgDyAEBEjYKEHBlcm1pc3Npb25fbGV2ZWwYAyABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlQga6SAPIAQESNgoKY3JlYXRlZF9vbhgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASJMChNBY3RpdmVVc2Vyc1Jlc3BvbnNlEjUKDXVzZXJfYWN0aXZpdHkYASADKAsyFi5mb3J1bS52MS5Vc2VyQWN0aXZpdHlCBrpIA8gBASKxAwoHTWVzc2FnZRIiChBmb3J1bV9tZXNzYWdlX2lkGAEgASgDQggwAbpIA8gBARIfCg9mb3J1bV90aHJlYWRfaWQYAiABKAVCBrpIA8gBARIbCglzb3VyY2VfaWQYAyABKANCCDABukgDyAEBEhcKB2JvZHlfbWQYBCABKAlCBrpIA8gBARIVCgV0aXRsZRgFIAEoCUIGukgDyAEBEhYKBm9ubGluZRgGIAEoCEIGukgDyAEBEhkKCXNpZ25hdHVyZRgHIAEoCUIGukgDyAEBEhwKDHBlcnNvbmFfbmFtZRgIIAEoCUIGukgDyAEBEhsKC2F2YXRhcl9oYXNoGAkgASgJQga6SAPIAQESNgoQcGVybWlzc2lvbl9sZXZlbBgKIAEoDjIULnBlcnNvbi52MS5Qcml2aWxlZ2VCBrpIA8gBARI2CgpjcmVhdGVkX29uGAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEjYKCnVwZGF0ZWRfb24YDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEiRQoWUmVjZW50TWVzc2FnZXNSZXNwb25zZRIrCghtZXNzYWdlcxgBIAMoCzIRLmZvcnVtLnYxLk1lc3NhZ2VCBrpIA8gBASLbBAoFRm9ydW0SGAoIZm9ydW1faWQYASABKAVCBrpIA8gBARIhChFmb3J1bV9jYXRlZ29yeV9pZBgCIAEoBUIGukgDyAEBEhYKDmxhc3RfdGhyZWFkX2lkGAMgASgFEhUKBXRpdGxlGAQgASgJQga6SAPIAQESGwoLZGVzY3JpcHRpb24YBSABKAlCBrpIA8gBARIYCghvcmRlcmluZxgGIAEoBUIGukgDyAEBEh8KDWNvdW50X3RocmVhZHMYByABKANCCDABukgDyAEBEiAKDmNvdW50X21lc3NhZ2VzGAggASgDQggwAbpIA8gBARI2ChBwZXJtaXNzaW9uX2xldmVsGAkgASgOMhQucGVyc29uLnYxLlByaXZpbGVnZUIGukgDyAEBEh4KFnJlY2VudF9mb3J1bV90aHJlYWRfaWQYCiABKAUSGgoScmVjZW50X2ZvcnVtX3RpdGxlGAsgASgJEhgKEHJlY2VudF9zb3VyY2VfaWQYDCABKAkSGwoTcmVjZW50X3BlcnNvbmFfbmFtZRgNIAEoCRIaChJyZWNlbnRfYXZhdGFyX2hhc2gYDiABKAkSNQoRcmVjZW50X2NyZWF0ZWRfb24YDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjYKCmNyZWF0ZWRfb24YECABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgRIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASKUAgoIQ2F0ZWdvcnkSIQoRZm9ydW1fY2F0ZWdvcnlfaWQYASABKAVCBrpIA8gBARIVCgV0aXRsZRgCIAEoCUIGukgDyAEBEhsKC2Rlc2NyaXB0aW9uGAMgASgJQga6SAPIAQESGAoIb3JkZXJpbmcYBCABKAVCBrpIA8gBARInCgZmb3J1bXMYBSADKAsyDy5mb3J1bS52MS5Gb3J1bUIGukgDyAEBEjYKCmNyZWF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASJCChBPdmVydmlld1Jlc3BvbnNlEi4KCmNhdGVnb3JpZXMYASADKAsyEi5mb3J1bS52MS5DYXRlZ29yeUIGukgDyAEBMuQKCgxGb3J1bVNlcnZpY2USRgoLQWN0aXZlVXNlcnMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHS5mb3J1bS52MS5BY3RpdmVVc2Vyc1Jlc3BvbnNlIgASQAoIT3ZlcnZpZXcSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaGi5mb3J1bS52MS5PdmVydmlld1Jlc3BvbnNlIgASTAoOUmVjZW50TWVzc2FnZXMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaIC5mb3J1bS52MS5SZWNlbnRNZXNzYWdlc1Jlc3BvbnNlIgASQAoHVGhyZWFkcxIYLmZvcnVtLnYxLlRocmVhZHNSZXF1ZXN0GhkuZm9ydW0udjEuVGhyZWFkc1Jlc3BvbnNlIgASPQoGVGhyZWFkEhcuZm9ydW0udjEuVGhyZWFkUmVxdWVzdBoYLmZvcnVtLnYxLlRocmVhZFJlc3BvbnNlIgASRwoMVGhyZWFkRGVsZXRlEh0uZm9ydW0udjEuVGhyZWFkRGVsZXRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEjoKBUZvcnVtEhYuZm9ydW0udjEuRm9ydW1SZXF1ZXN0GhcuZm9ydW0udjEuRm9ydW1SZXNwb25zZSIAElIKDUZvcnVtTWVzc2FnZXMSHi5mb3J1bS52MS5Gb3J1bU1lc3NhZ2VzUmVxdWVzdBofLmZvcnVtLnYxLkZvcnVtTWVzc2FnZXNSZXNwb25zZSIAEk8KDFRocmVhZENyZWF0ZRIdLmZvcnVtLnYxLlRocmVhZENyZWF0ZVJlcXVlc3QaHi5mb3J1bS52MS5UaHJlYWRDcmVhdGVSZXNwb25zZSIAEkkKClRocmVhZEVkaXQSGy5mb3J1bS52MS5UaHJlYWRFZGl0UmVxdWVzdBocLmZvcnVtLnYxLlRocmVhZEVkaXRSZXNwb25zZSIAEl4KEVRocmVhZFJlcGx5Q3JlYXRlEiIuZm9ydW0udjEuVGhyZWFkUmVwbHlDcmVhdGVSZXF1ZXN0GiMuZm9ydW0udjEuVGhyZWFkUmVwbHlDcmVhdGVSZXNwb25zZSIAElgKD1RocmVhZFJlcGx5RWRpdBIgLmZvcnVtLnYxLlRocmVhZFJlcGx5RWRpdFJlcXVlc3QaIS5mb3J1bS52MS5UaHJlYWRSZXBseUVkaXRSZXNwb25zZSIAEkkKDU1lc3NhZ2VEZWxldGUSHi5mb3J1bS52MS5NZXNzYWdlRGVsZXRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAElUKDkNhdGVnb3J5Q3JlYXRlEh8uZm9ydW0udjEuQ2F0ZWdvcnlDcmVhdGVSZXF1ZXN0GiAuZm9ydW0udjEuQ2F0ZWdvcnlDcmVhdGVSZXNwb25zZSIAEk8KDENhdGVnb3J5RWRpdBIdLmZvcnVtLnYxLkNhdGVnb3J5RWRpdFJlcXVlc3QaHi5mb3J1bS52MS5DYXRlZ29yeUVkaXRSZXNwb25zZSIAEkMKCENhdGVnb3J5EhkuZm9ydW0udjEuQ2F0ZWdvcnlSZXF1ZXN0GhouZm9ydW0udjEuQ2F0ZWdvcnlSZXNwb25zZSIAEkwKC0ZvcnVtQ3JlYXRlEhwuZm9ydW0udjEuRm9ydW1DcmVhdGVSZXF1ZXN0Gh0uZm9ydW0udjEuRm9ydW1DcmVhdGVSZXNwb25zZSIAEkYKCUZvcnVtRWRpdBIaLmZvcnVtLnYxLkZvcnVtRWRpdFJlcXVlc3QaGy5mb3J1bS52MS5Gb3J1bUVkaXRSZXNwb25zZSIAQpYBCgxjb20uZm9ydW0udjFCCkZvcnVtUHJvdG9QAVo5Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9mb3J1bS92MTtmb3J1bXYxogIDRlhYqgIIRm9ydW0uVjHKAghGb3J1bVxWMeICFEZvcnVtXFYxXEdQQk1ldGFkYXRh6gIJRm9ydW06OlYxYghlZGl0aW9uc3DoBw", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp, file_person_v1_privilege]);
 
 /**
  * @generated from message forum.v1.ThreadEditRequest
@@ -84,7 +84,15 @@ export type ThreadEditResponse = Message$1<"forum.v1.ThreadEditResponse"> & {
   thread?: Thread;
 };
 
-export type ThreadEditResponseValid = ThreadEditResponse;
+/**
+ * @generated from message forum.v1.ThreadEditResponse
+ */
+export type ThreadEditResponseValid = Message$1<"forum.v1.ThreadEditResponse"> & {
+  /**
+   * @generated from field: forum.v1.Thread thread = 1;
+   */
+  thread: ThreadValid;
+};
 
 /**
  * Describes the message forum.v1.ThreadEditResponse.
@@ -103,7 +111,15 @@ export type ForumEditResponse = Message$1<"forum.v1.ForumEditResponse"> & {
   forum?: Forum;
 };
 
-export type ForumEditResponseValid = ForumEditResponse;
+/**
+ * @generated from message forum.v1.ForumEditResponse
+ */
+export type ForumEditResponseValid = Message$1<"forum.v1.ForumEditResponse"> & {
+  /**
+   * @generated from field: forum.v1.Forum forum = 1;
+   */
+  forum: ForumValid;
+};
 
 /**
  * Describes the message forum.v1.ForumEditResponse.
@@ -147,7 +163,40 @@ export type ForumEditRequest = Message$1<"forum.v1.ForumEditRequest"> & {
   ordering: number;
 };
 
-export type ForumEditRequestValid = ForumEditRequest;
+/**
+ * @generated from message forum.v1.ForumEditRequest
+ */
+export type ForumEditRequestValid = Message$1<"forum.v1.ForumEditRequest"> & {
+  /**
+   * @generated from field: int32 forum_id = 1;
+   */
+  forumId: number;
+
+  /**
+   * @generated from field: int32 forum_category_id = 2;
+   */
+  forumCategoryId: number;
+
+  /**
+   * @generated from field: person.v1.Privilege permission_level = 3;
+   */
+  permissionLevel: Privilege;
+
+  /**
+   * @generated from field: string title = 4;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string description = 5;
+   */
+  description: string;
+
+  /**
+   * @generated from field: int32 ordering = 6;
+   */
+  ordering: number;
+};
 
 /**
  * Describes the message forum.v1.ForumEditRequest.
@@ -186,7 +235,35 @@ export type ForumCreateRequest = Message$1<"forum.v1.ForumCreateRequest"> & {
   ordering: number;
 };
 
-export type ForumCreateRequestValid = ForumCreateRequest;
+/**
+ * @generated from message forum.v1.ForumCreateRequest
+ */
+export type ForumCreateRequestValid = Message$1<"forum.v1.ForumCreateRequest"> & {
+  /**
+   * @generated from field: int32 forum_category_id = 1;
+   */
+  forumCategoryId: number;
+
+  /**
+   * @generated from field: person.v1.Privilege permission_level = 2;
+   */
+  permissionLevel: Privilege;
+
+  /**
+   * @generated from field: string title = 3;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string description = 4;
+   */
+  description: string;
+
+  /**
+   * @generated from field: int32 ordering = 5;
+   */
+  ordering: number;
+};
 
 /**
  * Describes the message forum.v1.ForumCreateRequest.
@@ -205,7 +282,15 @@ export type ForumCreateResponse = Message$1<"forum.v1.ForumCreateResponse"> & {
   forum?: Forum;
 };
 
-export type ForumCreateResponseValid = ForumCreateResponse;
+/**
+ * @generated from message forum.v1.ForumCreateResponse
+ */
+export type ForumCreateResponseValid = Message$1<"forum.v1.ForumCreateResponse"> & {
+  /**
+   * @generated from field: forum.v1.Forum forum = 1;
+   */
+  forum: ForumValid;
+};
 
 /**
  * Describes the message forum.v1.ForumCreateResponse.
@@ -239,7 +324,30 @@ export type CategoryEditRequest = Message$1<"forum.v1.CategoryEditRequest"> & {
   ordering: number;
 };
 
-export type CategoryEditRequestValid = CategoryEditRequest;
+/**
+ * @generated from message forum.v1.CategoryEditRequest
+ */
+export type CategoryEditRequestValid = Message$1<"forum.v1.CategoryEditRequest"> & {
+  /**
+   * @generated from field: int32 forum_category_id = 1;
+   */
+  forumCategoryId: number;
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string description = 3;
+   */
+  description: string;
+
+  /**
+   * @generated from field: int32 ordering = 4;
+   */
+  ordering: number;
+};
 
 /**
  * Describes the message forum.v1.CategoryEditRequest.
@@ -258,7 +366,15 @@ export type CategoryEditResponse = Message$1<"forum.v1.CategoryEditResponse"> & 
   category?: Category;
 };
 
-export type CategoryEditResponseValid = CategoryEditResponse;
+/**
+ * @generated from message forum.v1.CategoryEditResponse
+ */
+export type CategoryEditResponseValid = Message$1<"forum.v1.CategoryEditResponse"> & {
+  /**
+   * @generated from field: forum.v1.Category category = 1;
+   */
+  category: CategoryValid;
+};
 
 /**
  * Describes the message forum.v1.CategoryEditResponse.
@@ -277,7 +393,15 @@ export type CategoryRequest = Message$1<"forum.v1.CategoryRequest"> & {
   forumCategoryId: number;
 };
 
-export type CategoryRequestValid = CategoryRequest;
+/**
+ * @generated from message forum.v1.CategoryRequest
+ */
+export type CategoryRequestValid = Message$1<"forum.v1.CategoryRequest"> & {
+  /**
+   * @generated from field: int32 forum_category_id = 1;
+   */
+  forumCategoryId: number;
+};
 
 /**
  * Describes the message forum.v1.CategoryRequest.
@@ -296,7 +420,15 @@ export type CategoryResponse = Message$1<"forum.v1.CategoryResponse"> & {
   category?: Category;
 };
 
-export type CategoryResponseValid = CategoryResponse;
+/**
+ * @generated from message forum.v1.CategoryResponse
+ */
+export type CategoryResponseValid = Message$1<"forum.v1.CategoryResponse"> & {
+  /**
+   * @generated from field: forum.v1.Category category = 1;
+   */
+  category: CategoryValid;
+};
 
 /**
  * Describes the message forum.v1.CategoryResponse.
@@ -315,7 +447,15 @@ export type CategoryCreateResponse = Message$1<"forum.v1.CategoryCreateResponse"
   category?: Category;
 };
 
-export type CategoryCreateResponseValid = CategoryCreateResponse;
+/**
+ * @generated from message forum.v1.CategoryCreateResponse
+ */
+export type CategoryCreateResponseValid = Message$1<"forum.v1.CategoryCreateResponse"> & {
+  /**
+   * @generated from field: forum.v1.Category category = 1;
+   */
+  category: CategoryValid;
+};
 
 /**
  * Describes the message forum.v1.CategoryCreateResponse.
@@ -344,7 +484,25 @@ export type CategoryCreateRequest = Message$1<"forum.v1.CategoryCreateRequest"> 
   ordering: number;
 };
 
-export type CategoryCreateRequestValid = CategoryCreateRequest;
+/**
+ * @generated from message forum.v1.CategoryCreateRequest
+ */
+export type CategoryCreateRequestValid = Message$1<"forum.v1.CategoryCreateRequest"> & {
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string description = 2;
+   */
+  description: string;
+
+  /**
+   * @generated from field: int32 ordering = 3;
+   */
+  ordering: number;
+};
 
 /**
  * Describes the message forum.v1.CategoryCreateRequest.
@@ -363,7 +521,15 @@ export type MessageDeleteRequest = Message$1<"forum.v1.MessageDeleteRequest"> & 
   forumMessageId: string;
 };
 
-export type MessageDeleteRequestValid = MessageDeleteRequest;
+/**
+ * @generated from message forum.v1.MessageDeleteRequest
+ */
+export type MessageDeleteRequestValid = Message$1<"forum.v1.MessageDeleteRequest"> & {
+  /**
+   * @generated from field: int64 forum_message_id = 1 [jstype = JS_STRING];
+   */
+  forumMessageId: string;
+};
 
 /**
  * Describes the message forum.v1.MessageDeleteRequest.
@@ -382,7 +548,15 @@ export type ThreadDeleteRequest = Message$1<"forum.v1.ThreadDeleteRequest"> & {
   forumThreadId: number;
 };
 
-export type ThreadDeleteRequestValid = ThreadDeleteRequest;
+/**
+ * @generated from message forum.v1.ThreadDeleteRequest
+ */
+export type ThreadDeleteRequestValid = Message$1<"forum.v1.ThreadDeleteRequest"> & {
+  /**
+   * @generated from field: int32 forum_thread_id = 1;
+   */
+  forumThreadId: number;
+};
 
 /**
  * Describes the message forum.v1.ThreadDeleteRequest.
@@ -406,7 +580,20 @@ export type ThreadReplyEditRequest = Message$1<"forum.v1.ThreadReplyEditRequest"
   bodyMd: string;
 };
 
-export type ThreadReplyEditRequestValid = ThreadReplyEditRequest;
+/**
+ * @generated from message forum.v1.ThreadReplyEditRequest
+ */
+export type ThreadReplyEditRequestValid = Message$1<"forum.v1.ThreadReplyEditRequest"> & {
+  /**
+   * @generated from field: int64 forum_message_id = 1 [jstype = JS_STRING];
+   */
+  forumMessageId: string;
+
+  /**
+   * @generated from field: string body_md = 2;
+   */
+  bodyMd: string;
+};
 
 /**
  * Describes the message forum.v1.ThreadReplyEditRequest.
@@ -425,7 +612,15 @@ export type ThreadReplyEditResponse = Message$1<"forum.v1.ThreadReplyEditRespons
   message?: Message;
 };
 
-export type ThreadReplyEditResponseValid = ThreadReplyEditResponse;
+/**
+ * @generated from message forum.v1.ThreadReplyEditResponse
+ */
+export type ThreadReplyEditResponseValid = Message$1<"forum.v1.ThreadReplyEditResponse"> & {
+  /**
+   * @generated from field: forum.v1.Message message = 1;
+   */
+  message: MessageValid;
+};
 
 /**
  * Describes the message forum.v1.ThreadReplyEditResponse.
@@ -449,7 +644,20 @@ export type ThreadReplyCreateRequest = Message$1<"forum.v1.ThreadReplyCreateRequ
   bodyMd: string;
 };
 
-export type ThreadReplyCreateRequestValid = ThreadReplyCreateRequest;
+/**
+ * @generated from message forum.v1.ThreadReplyCreateRequest
+ */
+export type ThreadReplyCreateRequestValid = Message$1<"forum.v1.ThreadReplyCreateRequest"> & {
+  /**
+   * @generated from field: int32 forum_thread_id = 1;
+   */
+  forumThreadId: number;
+
+  /**
+   * @generated from field: string body_md = 2;
+   */
+  bodyMd: string;
+};
 
 /**
  * Describes the message forum.v1.ThreadReplyCreateRequest.
@@ -468,7 +676,15 @@ export type ThreadReplyCreateResponse = Message$1<"forum.v1.ThreadReplyCreateRes
   message?: Message;
 };
 
-export type ThreadReplyCreateResponseValid = ThreadReplyCreateResponse;
+/**
+ * @generated from message forum.v1.ThreadReplyCreateResponse
+ */
+export type ThreadReplyCreateResponseValid = Message$1<"forum.v1.ThreadReplyCreateResponse"> & {
+  /**
+   * @generated from field: forum.v1.Message message = 1;
+   */
+  message: MessageValid;
+};
 
 /**
  * Describes the message forum.v1.ThreadReplyCreateResponse.
@@ -507,7 +723,35 @@ export type ThreadCreateRequest = Message$1<"forum.v1.ThreadCreateRequest"> & {
   locked: boolean;
 };
 
-export type ThreadCreateRequestValid = ThreadCreateRequest;
+/**
+ * @generated from message forum.v1.ThreadCreateRequest
+ */
+export type ThreadCreateRequestValid = Message$1<"forum.v1.ThreadCreateRequest"> & {
+  /**
+   * @generated from field: int32 forum_id = 1;
+   */
+  forumId: number;
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string body_md = 3;
+   */
+  bodyMd: string;
+
+  /**
+   * @generated from field: bool sticky = 4;
+   */
+  sticky: boolean;
+
+  /**
+   * @generated from field: bool locked = 5;
+   */
+  locked: boolean;
+};
 
 /**
  * Describes the message forum.v1.ThreadCreateRequest.
@@ -531,7 +775,20 @@ export type ThreadCreateResponse = Message$1<"forum.v1.ThreadCreateResponse"> & 
   message?: Message;
 };
 
-export type ThreadCreateResponseValid = ThreadCreateResponse;
+/**
+ * @generated from message forum.v1.ThreadCreateResponse
+ */
+export type ThreadCreateResponseValid = Message$1<"forum.v1.ThreadCreateResponse"> & {
+  /**
+   * @generated from field: forum.v1.Thread thread = 1;
+   */
+  thread: ThreadValid;
+
+  /**
+   * @generated from field: forum.v1.Message message = 2;
+   */
+  message: MessageValid;
+};
 
 /**
  * Describes the message forum.v1.ThreadCreateResponse.
@@ -555,7 +812,20 @@ export type ForumMessagesRequest = Message$1<"forum.v1.ForumMessagesRequest"> & 
   deleted: boolean;
 };
 
-export type ForumMessagesRequestValid = ForumMessagesRequest;
+/**
+ * @generated from message forum.v1.ForumMessagesRequest
+ */
+export type ForumMessagesRequestValid = Message$1<"forum.v1.ForumMessagesRequest"> & {
+  /**
+   * @generated from field: int32 forum_thread_id = 1;
+   */
+  forumThreadId: number;
+
+  /**
+   * @generated from field: bool deleted = 2;
+   */
+  deleted: boolean;
+};
 
 /**
  * Describes the message forum.v1.ForumMessagesRequest.
@@ -574,7 +844,15 @@ export type ForumMessagesResponse = Message$1<"forum.v1.ForumMessagesResponse"> 
   messages: Message[];
 };
 
-export type ForumMessagesResponseValid = ForumMessagesResponse;
+/**
+ * @generated from message forum.v1.ForumMessagesResponse
+ */
+export type ForumMessagesResponseValid = Message$1<"forum.v1.ForumMessagesResponse"> & {
+  /**
+   * @generated from field: repeated forum.v1.Message messages = 1;
+   */
+  messages: MessageValid[];
+};
 
 /**
  * Describes the message forum.v1.ForumMessagesResponse.
@@ -593,7 +871,15 @@ export type ForumRequest = Message$1<"forum.v1.ForumRequest"> & {
   forumId: number;
 };
 
-export type ForumRequestValid = ForumRequest;
+/**
+ * @generated from message forum.v1.ForumRequest
+ */
+export type ForumRequestValid = Message$1<"forum.v1.ForumRequest"> & {
+  /**
+   * @generated from field: int32 forum_id = 1;
+   */
+  forumId: number;
+};
 
 /**
  * Describes the message forum.v1.ForumRequest.
@@ -612,7 +898,15 @@ export type ForumResponse = Message$1<"forum.v1.ForumResponse"> & {
   forum?: Forum;
 };
 
-export type ForumResponseValid = ForumResponse;
+/**
+ * @generated from message forum.v1.ForumResponse
+ */
+export type ForumResponseValid = Message$1<"forum.v1.ForumResponse"> & {
+  /**
+   * @generated from field: forum.v1.Forum forum = 1;
+   */
+  forum: ForumValid;
+};
 
 /**
  * Describes the message forum.v1.ForumResponse.
@@ -631,7 +925,15 @@ export type ThreadRequest = Message$1<"forum.v1.ThreadRequest"> & {
   forumThreadId: number;
 };
 
-export type ThreadRequestValid = ThreadRequest;
+/**
+ * @generated from message forum.v1.ThreadRequest
+ */
+export type ThreadRequestValid = Message$1<"forum.v1.ThreadRequest"> & {
+  /**
+   * @generated from field: int32 forum_thread_id = 1;
+   */
+  forumThreadId: number;
+};
 
 /**
  * Describes the message forum.v1.ThreadRequest.
@@ -650,7 +952,15 @@ export type ThreadResponse = Message$1<"forum.v1.ThreadResponse"> & {
   thread?: Thread;
 };
 
-export type ThreadResponseValid = ThreadResponse;
+/**
+ * @generated from message forum.v1.ThreadResponse
+ */
+export type ThreadResponseValid = Message$1<"forum.v1.ThreadResponse"> & {
+  /**
+   * @generated from field: forum.v1.Thread thread = 1;
+   */
+  thread: ThreadValid;
+};
 
 /**
  * Describes the message forum.v1.ThreadResponse.
@@ -669,7 +979,15 @@ export type ThreadsRequest = Message$1<"forum.v1.ThreadsRequest"> & {
   forumId: number;
 };
 
-export type ThreadsRequestValid = ThreadsRequest;
+/**
+ * @generated from message forum.v1.ThreadsRequest
+ */
+export type ThreadsRequestValid = Message$1<"forum.v1.ThreadsRequest"> & {
+  /**
+   * @generated from field: int32 forum_id = 1;
+   */
+  forumId: number;
+};
 
 /**
  * Describes the message forum.v1.ThreadsRequest.
@@ -688,7 +1006,15 @@ export type ThreadsResponse = Message$1<"forum.v1.ThreadsResponse"> & {
   threads: Thread[];
 };
 
-export type ThreadsResponseValid = ThreadsResponse;
+/**
+ * @generated from message forum.v1.ThreadsResponse
+ */
+export type ThreadsResponseValid = Message$1<"forum.v1.ThreadsResponse"> & {
+  /**
+   * @generated from field: repeated forum.v1.Thread threads = 1;
+   */
+  threads: ThreadValid[];
+};
 
 /**
  * Describes the message forum.v1.ThreadsResponse.
@@ -727,7 +1053,35 @@ export type Thread = Message$1<"forum.v1.Thread"> & {
   updatedOn?: Timestamp;
 };
 
-export type ThreadValid = Thread;
+/**
+ * @generated from message forum.v1.Thread
+ */
+export type ThreadValid = Message$1<"forum.v1.Thread"> & {
+  /**
+   * @generated from field: int32 forum_id = 1;
+   */
+  forumId: number;
+
+  /**
+   * @generated from field: int64 source_id = 2 [jstype = JS_STRING];
+   */
+  sourceId: string;
+
+  /**
+   * @generated from field: string title = 3;
+   */
+  title: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 4;
+   */
+  createdOn: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 5;
+   */
+  updatedOn: Timestamp;
+};
 
 /**
  * Describes the message forum.v1.Thread.
@@ -786,7 +1140,55 @@ export type ThreadWithSource = Message$1<"forum.v1.ThreadWithSource"> & {
   recentAvatarHash: string;
 };
 
-export type ThreadWithSourceValid = ThreadWithSource;
+/**
+ * @generated from message forum.v1.ThreadWithSource
+ */
+export type ThreadWithSourceValid = Message$1<"forum.v1.ThreadWithSource"> & {
+  /**
+   * @generated from field: forum.v1.Thread thread = 1;
+   */
+  thread: ThreadValid;
+
+  /**
+   * @generated from field: string persona_name = 2;
+   */
+  personaName: string;
+
+  /**
+   * @generated from field: string avatar_hash = 3;
+   */
+  avatarHash: string;
+
+  /**
+   * @generated from field: person.v1.Privilege permission_level = 4;
+   */
+  permissionLevel: Privilege;
+
+  /**
+   * @generated from field: int64 recent_forum_message_id = 5 [jstype = JS_STRING];
+   */
+  recentForumMessageId: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp recent_created_on = 6;
+   */
+  recentCreatedOn?: Timestamp;
+
+  /**
+   * @generated from field: int64 recent_steam_id = 7 [jstype = JS_STRING];
+   */
+  recentSteamId: string;
+
+  /**
+   * @generated from field: string recent_persona_name = 8;
+   */
+  recentPersonaName: string;
+
+  /**
+   * @generated from field: string recent_avatar_hash = 9;
+   */
+  recentAvatarHash: string;
+};
 
 /**
  * Describes the message forum.v1.ThreadWithSource.
@@ -820,7 +1222,30 @@ export type UserActivity = Message$1<"forum.v1.UserActivity"> & {
   createdOn?: Timestamp;
 };
 
-export type UserActivityValid = UserActivity;
+/**
+ * @generated from message forum.v1.UserActivity
+ */
+export type UserActivityValid = Message$1<"forum.v1.UserActivity"> & {
+  /**
+   * @generated from field: int64 steam_id = 1 [jstype = JS_STRING];
+   */
+  steamId: string;
+
+  /**
+   * @generated from field: string persona_name = 2;
+   */
+  personaName: string;
+
+  /**
+   * @generated from field: person.v1.Privilege permission_level = 3;
+   */
+  permissionLevel: Privilege;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 4;
+   */
+  createdOn: Timestamp;
+};
 
 /**
  * Describes the message forum.v1.UserActivity.
@@ -839,7 +1264,15 @@ export type ActiveUsersResponse = Message$1<"forum.v1.ActiveUsersResponse"> & {
   userActivity: UserActivity[];
 };
 
-export type ActiveUsersResponseValid = ActiveUsersResponse;
+/**
+ * @generated from message forum.v1.ActiveUsersResponse
+ */
+export type ActiveUsersResponseValid = Message$1<"forum.v1.ActiveUsersResponse"> & {
+  /**
+   * @generated from field: repeated forum.v1.UserActivity user_activity = 1;
+   */
+  userActivity: UserActivityValid[];
+};
 
 /**
  * Describes the message forum.v1.ActiveUsersResponse.
@@ -913,7 +1346,70 @@ export type Message = Message$1<"forum.v1.Message"> & {
   updatedOn?: Timestamp;
 };
 
-export type MessageValid = Message;
+/**
+ * @generated from message forum.v1.Message
+ */
+export type MessageValid = Message$1<"forum.v1.Message"> & {
+  /**
+   * @generated from field: int64 forum_message_id = 1 [jstype = JS_STRING];
+   */
+  forumMessageId: string;
+
+  /**
+   * @generated from field: int32 forum_thread_id = 2;
+   */
+  forumThreadId: number;
+
+  /**
+   * @generated from field: int64 source_id = 3 [jstype = JS_STRING];
+   */
+  sourceId: string;
+
+  /**
+   * @generated from field: string body_md = 4;
+   */
+  bodyMd: string;
+
+  /**
+   * @generated from field: string title = 5;
+   */
+  title: string;
+
+  /**
+   * @generated from field: bool online = 6;
+   */
+  online: boolean;
+
+  /**
+   * @generated from field: string signature = 7;
+   */
+  signature: string;
+
+  /**
+   * @generated from field: string persona_name = 8;
+   */
+  personaName: string;
+
+  /**
+   * @generated from field: string avatar_hash = 9;
+   */
+  avatarHash: string;
+
+  /**
+   * @generated from field: person.v1.Privilege permission_level = 10;
+   */
+  permissionLevel: Privilege;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 11;
+   */
+  createdOn: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 12;
+   */
+  updatedOn: Timestamp;
+};
 
 /**
  * Describes the message forum.v1.Message.
@@ -932,7 +1428,15 @@ export type RecentMessagesResponse = Message$1<"forum.v1.RecentMessagesResponse"
   messages: Message[];
 };
 
-export type RecentMessagesResponseValid = RecentMessagesResponse;
+/**
+ * @generated from message forum.v1.RecentMessagesResponse
+ */
+export type RecentMessagesResponseValid = Message$1<"forum.v1.RecentMessagesResponse"> & {
+  /**
+   * @generated from field: repeated forum.v1.Message messages = 1;
+   */
+  messages: MessageValid[];
+};
 
 /**
  * Describes the message forum.v1.RecentMessagesResponse.
@@ -1031,7 +1535,95 @@ export type Forum = Message$1<"forum.v1.Forum"> & {
   updatedOn?: Timestamp;
 };
 
-export type ForumValid = Forum;
+/**
+ * @generated from message forum.v1.Forum
+ */
+export type ForumValid = Message$1<"forum.v1.Forum"> & {
+  /**
+   * @generated from field: int32 forum_id = 1;
+   */
+  forumId: number;
+
+  /**
+   * @generated from field: int32 forum_category_id = 2;
+   */
+  forumCategoryId: number;
+
+  /**
+   * @generated from field: int32 last_thread_id = 3;
+   */
+  lastThreadId: number;
+
+  /**
+   * @generated from field: string title = 4;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string description = 5;
+   */
+  description: string;
+
+  /**
+   * @generated from field: int32 ordering = 6;
+   */
+  ordering: number;
+
+  /**
+   * @generated from field: int64 count_threads = 7 [jstype = JS_STRING];
+   */
+  countThreads: string;
+
+  /**
+   * @generated from field: int64 count_messages = 8 [jstype = JS_STRING];
+   */
+  countMessages: string;
+
+  /**
+   * @generated from field: person.v1.Privilege permission_level = 9;
+   */
+  permissionLevel: Privilege;
+
+  /**
+   * @generated from field: int32 recent_forum_thread_id = 10;
+   */
+  recentForumThreadId: number;
+
+  /**
+   * @generated from field: string recent_forum_title = 11;
+   */
+  recentForumTitle: string;
+
+  /**
+   * @generated from field: string recent_source_id = 12;
+   */
+  recentSourceId: string;
+
+  /**
+   * @generated from field: string recent_persona_name = 13;
+   */
+  recentPersonaName: string;
+
+  /**
+   * @generated from field: string recent_avatar_hash = 14;
+   */
+  recentAvatarHash: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp recent_created_on = 15;
+   */
+  recentCreatedOn?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 16;
+   */
+  createdOn: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 17;
+   */
+  updatedOn: Timestamp;
+};
 
 /**
  * Describes the message forum.v1.Forum.
@@ -1080,7 +1672,45 @@ export type Category = Message$1<"forum.v1.Category"> & {
   updatedOn?: Timestamp;
 };
 
-export type CategoryValid = Category;
+/**
+ * @generated from message forum.v1.Category
+ */
+export type CategoryValid = Message$1<"forum.v1.Category"> & {
+  /**
+   * @generated from field: int32 forum_category_id = 1;
+   */
+  forumCategoryId: number;
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string description = 3;
+   */
+  description: string;
+
+  /**
+   * @generated from field: int32 ordering = 4;
+   */
+  ordering: number;
+
+  /**
+   * @generated from field: repeated forum.v1.Forum forums = 5;
+   */
+  forums: ForumValid[];
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 6;
+   */
+  createdOn: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 7;
+   */
+  updatedOn: Timestamp;
+};
 
 /**
  * Describes the message forum.v1.Category.
@@ -1099,7 +1729,15 @@ export type OverviewResponse = Message$1<"forum.v1.OverviewResponse"> & {
   categories: Category[];
 };
 
-export type OverviewResponseValid = OverviewResponse;
+/**
+ * @generated from message forum.v1.OverviewResponse
+ */
+export type OverviewResponseValid = Message$1<"forum.v1.OverviewResponse"> & {
+  /**
+   * @generated from field: repeated forum.v1.Category categories = 1;
+   */
+  categories: CategoryValid[];
+};
 
 /**
  * Describes the message forum.v1.OverviewResponse.
