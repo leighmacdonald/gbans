@@ -7,25 +7,35 @@ import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import type { LatLong, LatLongValid } from "../../network/v1/network_pb";
+import { file_network_v1_network } from "../../network/v1/network_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file servers/v1/servers.proto.
  */
 export const file_servers_v1_servers: GenFile = /*@__PURE__*/
-  fileDesc("ChhzZXJ2ZXJzL3YxL3NlcnZlcnMucHJvdG8SCnNlcnZlcnMudjEiNQoMU3RhdGVSZXF1ZXN0EiUKCGxhdF9sb25nGAEgASgLMhMuc2VydmVycy52MS5MYXRMb25nIskCCgpTYWZlU2VydmVyEhEKCXNlcnZlcl9pZBgBIAEoBRIZCgRob3N0GAIgASgJQgu6SAjIAQFyA6gBARIaCgRwb3J0GAMgASgNQgy6SAnIAQEqBBj//wMSCgoCaXAYBCABKAkSDAoEbmFtZRgFIAEoCRISCgpuYW1lX3Nob3J0GAYgASgJEg4KBnJlZ2lvbhgHIAEoCRIKCgJjYxgIIAEoCRIPCgdwbGF5ZXJzGAkgASgFEhMKC21heF9wbGF5ZXJzGAogASgFEgsKA2JvdBgLIAEoBRILCgNtYXAYDCABKAkSEgoKZ2FtZV90eXBlcxgNIAMoCRIQCghsYXRpdHVkZRgOIAEoAhIRCglsb25naXR1ZGUYDyABKAISEAoIZGlzdGFuY2UYECABKAISDgoGaHVtYW5zGBEgASgFEgwKBHRhZ3MYEiADKAkiUAoHTGF0TG9uZxIhCghsYXRpdHVkZRgBIAEoAkIPukgMCgodAAC0Qi0AALTCEiIKCWxvbmdpdHVkZRgCIAEoAkIPukgMCgodAAA0Qy0AADTDIvwDCgZTZXJ2ZXISEQoJc2VydmVyX2lkGAEgASgFEhIKCnNob3J0X25hbWUYAiABKAkSDAoEbmFtZRgDIAEoCRIPCgdhZGRyZXNzGAQgASgJEhgKEGFkZHJlc3NfaW50ZXJuYWwYBSABKAkSEwoLc2RyX2VuYWJsZWQYBiABKAgSDAoEcG9ydBgHIAEoBRIMCgRyY29uGAggASgJEhAKCHBhc3N3b3JkGAkgASgJEhIKCmlzX2VuYWJsZWQYCiABKAgSDwoHZGVsZXRlZBgLIAEoCBIOCgZyZWdpb24YDCABKAkSCgoCY2MYDSABKAkSEAoIbGF0aXR1ZGUYDiABKAISEQoJbG9uZ2l0dWRlGA8gASgCEhIKCmxvZ19zZWNyZXQYECABKAUSFAoMZW5hYmxlX3N0YXRzGBEgASgIEjQKEHRva2VuX2NyZWF0ZWRfb24YEiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCmNyZWF0ZWRfb24YEyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YFCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEh0KFWRpc2NvcmRfc2VlZF9yb2xlX2lkcxgVIAMoCRIKCgJpcBgWIAEoCSJfCg1TdGF0ZVJlc3BvbnNlEicKB3NlcnZlcnMYASADKAsyFi5zZXJ2ZXJzLnYxLlNhZmVTZXJ2ZXISJQoIbGF0X2xvbmcYAiABKAsyEy5zZXJ2ZXJzLnYxLkxhdExvbmciYgoOU2VydmVySW5mb1NhZmUSGAoQc2VydmVyX25hbWVfbG9uZxgBIAEoCRITCgtzZXJ2ZXJfbmFtZRgCIAEoCRIRCglzZXJ2ZXJfaWQYAyABKAUSDgoGY29sb3VyGAQgASgJIj4KD1NlcnZlcnNSZXNwb25zZRIrCgdzZXJ2ZXJzGAEgAygLMhouc2VydmVycy52MS5TZXJ2ZXJJbmZvU2FmZSI3ChFFZGl0U2VydmVyUmVxdWVzdBIiCgZzZXJ2ZXIYASABKAsyEi5zZXJ2ZXJzLnYxLlNlcnZlciI4ChJFZGl0U2VydmVyUmVzcG9uc2USIgoGc2VydmVyGAEgASgLMhIuc2VydmVycy52MS5TZXJ2ZXIiKAoTRGVsZXRlU2VydmVyUmVxdWVzdBIRCglzZXJ2ZXJfaWQYASABKAUiFgoURGVsZXRlU2VydmVyUmVzcG9uc2UiOwoUU2VydmVyc0FkbWluUmVzcG9uc2USIwoHc2VydmVycxgBIAMoCzISLnNlcnZlcnMudjEuU2VydmVyMu4CCg5TZXJ2ZXJzU2VydmljZRI8CgVTdGF0ZRIYLnNlcnZlcnMudjEuU3RhdGVSZXF1ZXN0Ghkuc2VydmVycy52MS5TdGF0ZVJlc3BvbnNlEj4KB1NlcnZlcnMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaGy5zZXJ2ZXJzLnYxLlNlcnZlcnNSZXNwb25zZRJLCgpFZGl0U2VydmVyEh0uc2VydmVycy52MS5FZGl0U2VydmVyUmVxdWVzdBoeLnNlcnZlcnMudjEuRWRpdFNlcnZlclJlc3BvbnNlEkcKDERlbGV0ZVNlcnZlchIfLnNlcnZlcnMudjEuRGVsZXRlU2VydmVyUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRJICgxTZXJ2ZXJzQWRtaW4SFi5nb29nbGUucHJvdG9idWYuRW1wdHkaIC5zZXJ2ZXJzLnYxLlNlcnZlcnNBZG1pblJlc3BvbnNlQqYBCg5jb20uc2VydmVycy52MUIMU2VydmVyc1Byb3RvUAFaPWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvc2VydmVycy92MTtzZXJ2ZXJzdjGiAgNTWFiqAgpTZXJ2ZXJzLlYxygIKU2VydmVyc1xWMeICFlNlcnZlcnNcVjFcR1BCTWV0YWRhdGHqAgtTZXJ2ZXJzOjpWMWIIZWRpdGlvbnNw6Ac", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp]);
+  fileDesc("ChhzZXJ2ZXJzL3YxL3NlcnZlcnMucHJvdG8SCnNlcnZlcnMudjEiNQoMU3RhdGVSZXF1ZXN0EiUKCGxhdF9sb25nGAEgASgLMhMubmV0d29yay52MS5MYXRMb25nIr8DCgpTYWZlU2VydmVyEhEKCXNlcnZlcl9pZBgBIAEoBRIZCgRob3N0GAIgASgJQgu6SAjIAQFyA6gBARIaCgRwb3J0GAMgASgNQgy6SAnIAQEqBBj//wMSFgoCaXAYBCABKAlCCrpIB8gBAXICeAESFAoEbmFtZRgFIAEoCUIGukgDyAEBEhoKCm5hbWVfc2hvcnQYBiABKAlCBrpIA8gBARIWCgZyZWdpb24YByABKAlCBrpIA8gBARISCgJjYxgIIAEoCUIGukgDyAEBEhcKB3BsYXllcnMYCSABKAVCBrpIA8gBARIbCgttYXhfcGxheWVycxgKIAEoBUIGukgDyAEBEhMKA2JvdBgLIAEoBUIGukgDyAEBEhMKA21hcBgMIAEoCUIGukgDyAEBEhoKCmdhbWVfdHlwZXMYDSADKAlCBrpIA8gBARItCghsYXRfbG9uZxgOIAEoCzITLm5ldHdvcmsudjEuTGF0TG9uZ0IGukgDyAEBEhgKCGRpc3RhbmNlGA8gASgCQga6SAPIAQESFgoGaHVtYW5zGBAgASgFQga6SAPIAQESFAoEdGFncxgRIAMoCUIGukgDyAEBIoYFCgZTZXJ2ZXISGQoJc2VydmVyX2lkGAEgASgFQga6SAPIAQESGgoKc2hvcnRfbmFtZRgCIAEoCUIGukgDyAEBEhQKBG5hbWUYAyABKAlCBrpIA8gBARIXCgdhZGRyZXNzGAQgASgJQga6SAPIAQESIAoQYWRkcmVzc19pbnRlcm5hbBgFIAEoCUIGukgDyAEBEhsKC3Nkcl9lbmFibGVkGAYgASgIQga6SAPIAQESFAoEcG9ydBgHIAEoBUIGukgDyAEBEhQKBHJjb24YCCABKAlCBrpIA8gBARIYCghwYXNzd29yZBgJIAEoCUIGukgDyAEBEhoKCmlzX2VuYWJsZWQYCiABKAhCBrpIA8gBARIPCgdkZWxldGVkGAsgASgIEhYKBnJlZ2lvbhgMIAEoCUIGukgDyAEBEhIKAmNjGA0gASgJQga6SAPIAQESLQoIbGF0X2xvbmcYDiABKAsyEy5uZXR3b3JrLnYxLkxhdExvbmdCBrpIA8gBARIaCgpsb2dfc2VjcmV0GA8gASgFQga6SAPIAQESHAoMZW5hYmxlX3N0YXRzGBAgASgIQga6SAPIAQESNAoQdG9rZW5fY3JlYXRlZF9vbhgRIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNgoKY3JlYXRlZF9vbhgSIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARI2Cgp1cGRhdGVkX29uGBMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEh0KFWRpc2NvcmRfc2VlZF9yb2xlX2lkcxgUIAMoCRIKCgJpcBgVIAEoCSJvCg1TdGF0ZVJlc3BvbnNlEi8KB3NlcnZlcnMYASADKAsyFi5zZXJ2ZXJzLnYxLlNhZmVTZXJ2ZXJCBrpIA8gBARItCghsYXRfbG9uZxgCIAEoCzITLm5ldHdvcmsudjEuTGF0TG9uZ0IGukgDyAEBInoKDlNlcnZlckluZm9TYWZlEiAKEHNlcnZlcl9uYW1lX2xvbmcYASABKAlCBrpIA8gBARIbCgtzZXJ2ZXJfbmFtZRgCIAEoCUIGukgDyAEBEhkKCXNlcnZlcl9pZBgDIAEoBUIGukgDyAEBEg4KBmNvbG91chgEIAEoCSJGCg9TZXJ2ZXJzUmVzcG9uc2USMwoHc2VydmVycxgBIAMoCzIaLnNlcnZlcnMudjEuU2VydmVySW5mb1NhZmVCBrpIA8gBASI/ChFFZGl0U2VydmVyUmVxdWVzdBIqCgZzZXJ2ZXIYASABKAsyEi5zZXJ2ZXJzLnYxLlNlcnZlckIGukgDyAEBIkAKEkVkaXRTZXJ2ZXJSZXNwb25zZRIqCgZzZXJ2ZXIYASABKAsyEi5zZXJ2ZXJzLnYxLlNlcnZlckIGukgDyAEBIjAKE0RlbGV0ZVNlcnZlclJlcXVlc3QSGQoJc2VydmVyX2lkGAEgASgFQga6SAPIAQEiFgoURGVsZXRlU2VydmVyUmVzcG9uc2UiQwoUU2VydmVyc0FkbWluUmVzcG9uc2USKwoHc2VydmVycxgBIAMoCzISLnNlcnZlcnMudjEuU2VydmVyQga6SAPIAQEy7gIKDlNlcnZlcnNTZXJ2aWNlEjwKBVN0YXRlEhguc2VydmVycy52MS5TdGF0ZVJlcXVlc3QaGS5zZXJ2ZXJzLnYxLlN0YXRlUmVzcG9uc2USPgoHU2VydmVycxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRobLnNlcnZlcnMudjEuU2VydmVyc1Jlc3BvbnNlEksKCkVkaXRTZXJ2ZXISHS5zZXJ2ZXJzLnYxLkVkaXRTZXJ2ZXJSZXF1ZXN0Gh4uc2VydmVycy52MS5FZGl0U2VydmVyUmVzcG9uc2USRwoMRGVsZXRlU2VydmVyEh8uc2VydmVycy52MS5EZWxldGVTZXJ2ZXJSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5EkgKDFNlcnZlcnNBZG1pbhIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRogLnNlcnZlcnMudjEuU2VydmVyc0FkbWluUmVzcG9uc2VCpgEKDmNvbS5zZXJ2ZXJzLnYxQgxTZXJ2ZXJzUHJvdG9QAVo9Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9zZXJ2ZXJzL3YxO3NlcnZlcnN2MaICA1NYWKoCClNlcnZlcnMuVjHKAgpTZXJ2ZXJzXFYx4gIWU2VydmVyc1xWMVxHUEJNZXRhZGF0YeoCC1NlcnZlcnM6OlYxYghlZGl0aW9uc3DoBw", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp, file_network_v1_network]);
 
 /**
  * @generated from message servers.v1.StateRequest
  */
 export type StateRequest = Message<"servers.v1.StateRequest"> & {
   /**
-   * @generated from field: servers.v1.LatLong lat_long = 1;
+   * @generated from field: network.v1.LatLong lat_long = 1;
    */
   latLong?: LatLong;
 };
 
-export type StateRequestValid = StateRequest;
+/**
+ * @generated from message servers.v1.StateRequest
+ */
+export type StateRequestValid = Message<"servers.v1.StateRequest"> & {
+  /**
+   * @generated from field: network.v1.LatLong lat_long = 1;
+   */
+  latLong?: LatLongValid;
+};
 
 /**
  * Describes the message servers.v1.StateRequest.
@@ -104,27 +114,22 @@ export type SafeServer = Message<"servers.v1.SafeServer"> & {
   gameTypes: string[];
 
   /**
-   * @generated from field: float latitude = 14;
+   * @generated from field: network.v1.LatLong lat_long = 14;
    */
-  latitude: number;
+  latLong?: LatLong;
 
   /**
-   * @generated from field: float longitude = 15;
-   */
-  longitude: number;
-
-  /**
-   * @generated from field: float distance = 16;
+   * @generated from field: float distance = 15;
    */
   distance: number;
 
   /**
-   * @generated from field: int32 humans = 17;
+   * @generated from field: int32 humans = 16;
    */
   humans: number;
 
   /**
-   * @generated from field: repeated string tags = 18;
+   * @generated from field: repeated string tags = 17;
    */
   tags: string[];
 };
@@ -199,27 +204,22 @@ export type SafeServerValid = Message<"servers.v1.SafeServer"> & {
   gameTypes: string[];
 
   /**
-   * @generated from field: float latitude = 14;
+   * @generated from field: network.v1.LatLong lat_long = 14;
    */
-  latitude: number;
+  latLong: LatLongValid;
 
   /**
-   * @generated from field: float longitude = 15;
-   */
-  longitude: number;
-
-  /**
-   * @generated from field: float distance = 16;
+   * @generated from field: float distance = 15;
    */
   distance: number;
 
   /**
-   * @generated from field: int32 humans = 17;
+   * @generated from field: int32 humans = 16;
    */
   humans: number;
 
   /**
-   * @generated from field: repeated string tags = 18;
+   * @generated from field: repeated string tags = 17;
    */
   tags: string[];
 };
@@ -230,30 +230,6 @@ export type SafeServerValid = Message<"servers.v1.SafeServer"> & {
  */
 export const SafeServerSchema: GenMessage<SafeServer, {validType: SafeServerValid}> = /*@__PURE__*/
   messageDesc(file_servers_v1_servers, 1);
-
-/**
- * @generated from message servers.v1.LatLong
- */
-export type LatLong = Message<"servers.v1.LatLong"> & {
-  /**
-   * @generated from field: float latitude = 1;
-   */
-  latitude: number;
-
-  /**
-   * @generated from field: float longitude = 2;
-   */
-  longitude: number;
-};
-
-export type LatLongValid = LatLong;
-
-/**
- * Describes the message servers.v1.LatLong.
- * Use `create(LatLongSchema)` to create a new message.
- */
-export const LatLongSchema: GenMessage<LatLong, {validType: LatLongValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 2);
 
 /**
  * @generated from message servers.v1.Server
@@ -325,59 +301,162 @@ export type Server = Message<"servers.v1.Server"> & {
   cc: string;
 
   /**
-   * @generated from field: float latitude = 14;
+   * @generated from field: network.v1.LatLong lat_long = 14;
    */
-  latitude: number;
+  latLong?: LatLong;
 
   /**
-   * @generated from field: float longitude = 15;
-   */
-  longitude: number;
-
-  /**
-   * @generated from field: int32 log_secret = 16;
+   * @generated from field: int32 log_secret = 15;
    */
   logSecret: number;
 
   /**
-   * @generated from field: bool enable_stats = 17;
+   * @generated from field: bool enable_stats = 16;
    */
   enableStats: boolean;
 
   /**
-   * @generated from field: google.protobuf.Timestamp token_created_on = 18;
+   * @generated from field: google.protobuf.Timestamp token_created_on = 17;
    */
   tokenCreatedOn?: Timestamp;
 
   /**
-   * @generated from field: google.protobuf.Timestamp created_on = 19;
+   * @generated from field: google.protobuf.Timestamp created_on = 18;
    */
   createdOn?: Timestamp;
 
   /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 20;
+   * @generated from field: google.protobuf.Timestamp updated_on = 19;
    */
   updatedOn?: Timestamp;
 
   /**
-   * @generated from field: repeated string discord_seed_role_ids = 21;
+   * @generated from field: repeated string discord_seed_role_ids = 20;
    */
   discordSeedRoleIds: string[];
 
   /**
-   * @generated from field: string ip = 22;
+   * @generated from field: string ip = 21;
    */
   ip: string;
 };
 
-export type ServerValid = Server;
+/**
+ * @generated from message servers.v1.Server
+ */
+export type ServerValid = Message<"servers.v1.Server"> & {
+  /**
+   * @generated from field: int32 server_id = 1;
+   */
+  serverId: number;
+
+  /**
+   * @generated from field: string short_name = 2;
+   */
+  shortName: string;
+
+  /**
+   * @generated from field: string name = 3;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string address = 4;
+   */
+  address: string;
+
+  /**
+   * @generated from field: string address_internal = 5;
+   */
+  addressInternal: string;
+
+  /**
+   * @generated from field: bool sdr_enabled = 6;
+   */
+  sdrEnabled: boolean;
+
+  /**
+   * @generated from field: int32 port = 7;
+   */
+  port: number;
+
+  /**
+   * @generated from field: string rcon = 8;
+   */
+  rcon: string;
+
+  /**
+   * @generated from field: string password = 9;
+   */
+  password: string;
+
+  /**
+   * @generated from field: bool is_enabled = 10;
+   */
+  isEnabled: boolean;
+
+  /**
+   * @generated from field: bool deleted = 11;
+   */
+  deleted: boolean;
+
+  /**
+   * @generated from field: string region = 12;
+   */
+  region: string;
+
+  /**
+   * @generated from field: string cc = 13;
+   */
+  cc: string;
+
+  /**
+   * @generated from field: network.v1.LatLong lat_long = 14;
+   */
+  latLong: LatLongValid;
+
+  /**
+   * @generated from field: int32 log_secret = 15;
+   */
+  logSecret: number;
+
+  /**
+   * @generated from field: bool enable_stats = 16;
+   */
+  enableStats: boolean;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp token_created_on = 17;
+   */
+  tokenCreatedOn?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 18;
+   */
+  createdOn: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 19;
+   */
+  updatedOn: Timestamp;
+
+  /**
+   * @generated from field: repeated string discord_seed_role_ids = 20;
+   */
+  discordSeedRoleIds: string[];
+
+  /**
+   * @generated from field: string ip = 21;
+   */
+  ip: string;
+};
 
 /**
  * Describes the message servers.v1.Server.
  * Use `create(ServerSchema)` to create a new message.
  */
 export const ServerSchema: GenMessage<Server, {validType: ServerValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 3);
+  messageDesc(file_servers_v1_servers, 2);
 
 /**
  * @generated from message servers.v1.StateResponse
@@ -389,7 +468,7 @@ export type StateResponse = Message<"servers.v1.StateResponse"> & {
   servers: SafeServer[];
 
   /**
-   * @generated from field: servers.v1.LatLong lat_long = 2;
+   * @generated from field: network.v1.LatLong lat_long = 2;
    */
   latLong?: LatLong;
 };
@@ -404,9 +483,9 @@ export type StateResponseValid = Message<"servers.v1.StateResponse"> & {
   servers: SafeServerValid[];
 
   /**
-   * @generated from field: servers.v1.LatLong lat_long = 2;
+   * @generated from field: network.v1.LatLong lat_long = 2;
    */
-  latLong?: LatLongValid;
+  latLong: LatLongValid;
 };
 
 /**
@@ -414,7 +493,7 @@ export type StateResponseValid = Message<"servers.v1.StateResponse"> & {
  * Use `create(StateResponseSchema)` to create a new message.
  */
 export const StateResponseSchema: GenMessage<StateResponse, {validType: StateResponseValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 4);
+  messageDesc(file_servers_v1_servers, 3);
 
 /**
  * @generated from message servers.v1.ServerInfoSafe
@@ -441,14 +520,37 @@ export type ServerInfoSafe = Message<"servers.v1.ServerInfoSafe"> & {
   colour: string;
 };
 
-export type ServerInfoSafeValid = ServerInfoSafe;
+/**
+ * @generated from message servers.v1.ServerInfoSafe
+ */
+export type ServerInfoSafeValid = Message<"servers.v1.ServerInfoSafe"> & {
+  /**
+   * @generated from field: string server_name_long = 1;
+   */
+  serverNameLong: string;
+
+  /**
+   * @generated from field: string server_name = 2;
+   */
+  serverName: string;
+
+  /**
+   * @generated from field: int32 server_id = 3;
+   */
+  serverId: number;
+
+  /**
+   * @generated from field: string colour = 4;
+   */
+  colour: string;
+};
 
 /**
  * Describes the message servers.v1.ServerInfoSafe.
  * Use `create(ServerInfoSafeSchema)` to create a new message.
  */
 export const ServerInfoSafeSchema: GenMessage<ServerInfoSafe, {validType: ServerInfoSafeValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 5);
+  messageDesc(file_servers_v1_servers, 4);
 
 /**
  * @generated from message servers.v1.ServersResponse
@@ -460,14 +562,22 @@ export type ServersResponse = Message<"servers.v1.ServersResponse"> & {
   servers: ServerInfoSafe[];
 };
 
-export type ServersResponseValid = ServersResponse;
+/**
+ * @generated from message servers.v1.ServersResponse
+ */
+export type ServersResponseValid = Message<"servers.v1.ServersResponse"> & {
+  /**
+   * @generated from field: repeated servers.v1.ServerInfoSafe servers = 1;
+   */
+  servers: ServerInfoSafeValid[];
+};
 
 /**
  * Describes the message servers.v1.ServersResponse.
  * Use `create(ServersResponseSchema)` to create a new message.
  */
 export const ServersResponseSchema: GenMessage<ServersResponse, {validType: ServersResponseValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 6);
+  messageDesc(file_servers_v1_servers, 5);
 
 /**
  * @generated from message servers.v1.EditServerRequest
@@ -479,14 +589,22 @@ export type EditServerRequest = Message<"servers.v1.EditServerRequest"> & {
   server?: Server;
 };
 
-export type EditServerRequestValid = EditServerRequest;
+/**
+ * @generated from message servers.v1.EditServerRequest
+ */
+export type EditServerRequestValid = Message<"servers.v1.EditServerRequest"> & {
+  /**
+   * @generated from field: servers.v1.Server server = 1;
+   */
+  server: ServerValid;
+};
 
 /**
  * Describes the message servers.v1.EditServerRequest.
  * Use `create(EditServerRequestSchema)` to create a new message.
  */
 export const EditServerRequestSchema: GenMessage<EditServerRequest, {validType: EditServerRequestValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 7);
+  messageDesc(file_servers_v1_servers, 6);
 
 /**
  * @generated from message servers.v1.EditServerResponse
@@ -498,14 +616,22 @@ export type EditServerResponse = Message<"servers.v1.EditServerResponse"> & {
   server?: Server;
 };
 
-export type EditServerResponseValid = EditServerResponse;
+/**
+ * @generated from message servers.v1.EditServerResponse
+ */
+export type EditServerResponseValid = Message<"servers.v1.EditServerResponse"> & {
+  /**
+   * @generated from field: servers.v1.Server server = 1;
+   */
+  server: ServerValid;
+};
 
 /**
  * Describes the message servers.v1.EditServerResponse.
  * Use `create(EditServerResponseSchema)` to create a new message.
  */
 export const EditServerResponseSchema: GenMessage<EditServerResponse, {validType: EditServerResponseValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 8);
+  messageDesc(file_servers_v1_servers, 7);
 
 /**
  * @generated from message servers.v1.DeleteServerRequest
@@ -517,14 +643,22 @@ export type DeleteServerRequest = Message<"servers.v1.DeleteServerRequest"> & {
   serverId: number;
 };
 
-export type DeleteServerRequestValid = DeleteServerRequest;
+/**
+ * @generated from message servers.v1.DeleteServerRequest
+ */
+export type DeleteServerRequestValid = Message<"servers.v1.DeleteServerRequest"> & {
+  /**
+   * @generated from field: int32 server_id = 1;
+   */
+  serverId: number;
+};
 
 /**
  * Describes the message servers.v1.DeleteServerRequest.
  * Use `create(DeleteServerRequestSchema)` to create a new message.
  */
 export const DeleteServerRequestSchema: GenMessage<DeleteServerRequest, {validType: DeleteServerRequestValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 9);
+  messageDesc(file_servers_v1_servers, 8);
 
 /**
  * @generated from message servers.v1.DeleteServerResponse
@@ -539,7 +673,7 @@ export type DeleteServerResponseValid = DeleteServerResponse;
  * Use `create(DeleteServerResponseSchema)` to create a new message.
  */
 export const DeleteServerResponseSchema: GenMessage<DeleteServerResponse, {validType: DeleteServerResponseValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 10);
+  messageDesc(file_servers_v1_servers, 9);
 
 /**
  * @generated from message servers.v1.ServersAdminResponse
@@ -551,14 +685,22 @@ export type ServersAdminResponse = Message<"servers.v1.ServersAdminResponse"> & 
   servers: Server[];
 };
 
-export type ServersAdminResponseValid = ServersAdminResponse;
+/**
+ * @generated from message servers.v1.ServersAdminResponse
+ */
+export type ServersAdminResponseValid = Message<"servers.v1.ServersAdminResponse"> & {
+  /**
+   * @generated from field: repeated servers.v1.Server servers = 1;
+   */
+  servers: ServerValid[];
+};
 
 /**
  * Describes the message servers.v1.ServersAdminResponse.
  * Use `create(ServersAdminResponseSchema)` to create a new message.
  */
 export const ServersAdminResponseSchema: GenMessage<ServersAdminResponse, {validType: ServersAdminResponseValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 11);
+  messageDesc(file_servers_v1_servers, 10);
 
 /**
  * @generated from service servers.v1.ServersService

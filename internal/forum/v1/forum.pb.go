@@ -2246,163 +2246,163 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\x0fforum_thread_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rforumThreadId\x12\x1c\n" +
 	"\x05title\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12\x1e\n" +
 	"\x06sticky\x18\x03 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x06sticky\x12\x1e\n" +
-	"\x06locked\x18\x04 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x06locked\">\n" +
-	"\x12ThreadEditResponse\x12(\n" +
-	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadR\x06thread\":\n" +
-	"\x11ForumEditResponse\x12%\n" +
-	"\x05forum\x18\x01 \x01(\v2\x0f.forum.v1.ForumR\x05forum\"\xee\x01\n" +
-	"\x10ForumEditRequest\x12\x19\n" +
-	"\bforum_id\x18\x01 \x01(\x05R\aforumId\x12*\n" +
-	"\x11forum_category_id\x18\x02 \x01(\x05R\x0fforumCategoryId\x12?\n" +
-	"\x10permission_level\x18\x03 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x12\x14\n" +
-	"\x05title\x18\x04 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x05 \x01(\tR\vdescription\x12\x1a\n" +
-	"\bordering\x18\x06 \x01(\x05R\bordering\"\xd5\x01\n" +
-	"\x12ForumCreateRequest\x12*\n" +
-	"\x11forum_category_id\x18\x01 \x01(\x05R\x0fforumCategoryId\x12?\n" +
-	"\x10permission_level\x18\x02 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x12\x14\n" +
-	"\x05title\x18\x03 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x04 \x01(\tR\vdescription\x12\x1a\n" +
-	"\bordering\x18\x05 \x01(\x05R\bordering\"<\n" +
-	"\x13ForumCreateResponse\x12%\n" +
-	"\x05forum\x18\x01 \x01(\v2\x0f.forum.v1.ForumR\x05forum\"\x95\x01\n" +
-	"\x13CategoryEditRequest\x12*\n" +
-	"\x11forum_category_id\x18\x01 \x01(\x05R\x0fforumCategoryId\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x1a\n" +
-	"\bordering\x18\x04 \x01(\x05R\bordering\"F\n" +
-	"\x14CategoryEditResponse\x12.\n" +
-	"\bcategory\x18\x01 \x01(\v2\x12.forum.v1.CategoryR\bcategory\"=\n" +
-	"\x0fCategoryRequest\x12*\n" +
-	"\x11forum_category_id\x18\x01 \x01(\x05R\x0fforumCategoryId\"B\n" +
-	"\x10CategoryResponse\x12.\n" +
-	"\bcategory\x18\x01 \x01(\v2\x12.forum.v1.CategoryR\bcategory\"H\n" +
-	"\x16CategoryCreateResponse\x12.\n" +
-	"\bcategory\x18\x01 \x01(\v2\x12.forum.v1.CategoryR\bcategory\"k\n" +
-	"\x15CategoryCreateRequest\x12\x14\n" +
-	"\x05title\x18\x01 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1a\n" +
-	"\bordering\x18\x03 \x01(\x05R\bordering\"D\n" +
-	"\x14MessageDeleteRequest\x12,\n" +
-	"\x10forum_message_id\x18\x01 \x01(\x03B\x020\x01R\x0eforumMessageId\"=\n" +
-	"\x13ThreadDeleteRequest\x12&\n" +
-	"\x0fforum_thread_id\x18\x01 \x01(\x05R\rforumThreadId\"_\n" +
-	"\x16ThreadReplyEditRequest\x12,\n" +
-	"\x10forum_message_id\x18\x01 \x01(\x03B\x020\x01R\x0eforumMessageId\x12\x17\n" +
-	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\"F\n" +
-	"\x17ThreadReplyEditResponse\x12+\n" +
-	"\amessage\x18\x01 \x01(\v2\x11.forum.v1.MessageR\amessage\"[\n" +
-	"\x18ThreadReplyCreateRequest\x12&\n" +
-	"\x0fforum_thread_id\x18\x01 \x01(\x05R\rforumThreadId\x12\x17\n" +
-	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\"H\n" +
-	"\x19ThreadReplyCreateResponse\x12+\n" +
-	"\amessage\x18\x01 \x01(\v2\x11.forum.v1.MessageR\amessage\"\x8f\x01\n" +
-	"\x13ThreadCreateRequest\x12\x19\n" +
-	"\bforum_id\x18\x01 \x01(\x05R\aforumId\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12\x17\n" +
-	"\abody_md\x18\x03 \x01(\tR\x06bodyMd\x12\x16\n" +
+	"\x06locked\x18\x04 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x06locked\"F\n" +
+	"\x12ThreadEditResponse\x120\n" +
+	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadB\x06\xbaH\x03\xc8\x01\x01R\x06thread\"B\n" +
+	"\x11ForumEditResponse\x12-\n" +
+	"\x05forum\x18\x01 \x01(\v2\x0f.forum.v1.ForumB\x06\xbaH\x03\xc8\x01\x01R\x05forum\"\x9e\x02\n" +
+	"\x10ForumEditRequest\x12!\n" +
+	"\bforum_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aforumId\x122\n" +
+	"\x11forum_category_id\x18\x02 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x0fforumCategoryId\x12G\n" +
+	"\x10permission_level\x18\x03 \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\x12\x1c\n" +
+	"\x05title\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12(\n" +
+	"\vdescription\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdescription\x12\"\n" +
+	"\bordering\x18\x06 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bordering\"\xfd\x01\n" +
+	"\x12ForumCreateRequest\x122\n" +
+	"\x11forum_category_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x0fforumCategoryId\x12G\n" +
+	"\x10permission_level\x18\x02 \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\x12\x1c\n" +
+	"\x05title\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12(\n" +
+	"\vdescription\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdescription\x12\"\n" +
+	"\bordering\x18\x05 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bordering\"D\n" +
+	"\x13ForumCreateResponse\x12-\n" +
+	"\x05forum\x18\x01 \x01(\v2\x0f.forum.v1.ForumB\x06\xbaH\x03\xc8\x01\x01R\x05forum\"\xb5\x01\n" +
+	"\x13CategoryEditRequest\x122\n" +
+	"\x11forum_category_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x0fforumCategoryId\x12\x1c\n" +
+	"\x05title\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12(\n" +
+	"\vdescription\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdescription\x12\"\n" +
+	"\bordering\x18\x04 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bordering\"N\n" +
+	"\x14CategoryEditResponse\x126\n" +
+	"\bcategory\x18\x01 \x01(\v2\x12.forum.v1.CategoryB\x06\xbaH\x03\xc8\x01\x01R\bcategory\"E\n" +
+	"\x0fCategoryRequest\x122\n" +
+	"\x11forum_category_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x0fforumCategoryId\"J\n" +
+	"\x10CategoryResponse\x126\n" +
+	"\bcategory\x18\x01 \x01(\v2\x12.forum.v1.CategoryB\x06\xbaH\x03\xc8\x01\x01R\bcategory\"P\n" +
+	"\x16CategoryCreateResponse\x126\n" +
+	"\bcategory\x18\x01 \x01(\v2\x12.forum.v1.CategoryB\x06\xbaH\x03\xc8\x01\x01R\bcategory\"\x83\x01\n" +
+	"\x15CategoryCreateRequest\x12\x1c\n" +
+	"\x05title\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12(\n" +
+	"\vdescription\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdescription\x12\"\n" +
+	"\bordering\x18\x03 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bordering\"J\n" +
+	"\x14MessageDeleteRequest\x122\n" +
+	"\x10forum_message_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x0eforumMessageId\"E\n" +
+	"\x13ThreadDeleteRequest\x12.\n" +
+	"\x0fforum_thread_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rforumThreadId\"m\n" +
+	"\x16ThreadReplyEditRequest\x122\n" +
+	"\x10forum_message_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x0eforumMessageId\x12\x1f\n" +
+	"\abody_md\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06bodyMd\"N\n" +
+	"\x17ThreadReplyEditResponse\x123\n" +
+	"\amessage\x18\x01 \x01(\v2\x11.forum.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\amessage\"k\n" +
+	"\x18ThreadReplyCreateRequest\x12.\n" +
+	"\x0fforum_thread_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rforumThreadId\x12\x1f\n" +
+	"\abody_md\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06bodyMd\"P\n" +
+	"\x19ThreadReplyCreateResponse\x123\n" +
+	"\amessage\x18\x01 \x01(\v2\x11.forum.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\amessage\"\xa7\x01\n" +
+	"\x13ThreadCreateRequest\x12!\n" +
+	"\bforum_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aforumId\x12\x1c\n" +
+	"\x05title\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12\x1f\n" +
+	"\abody_md\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06bodyMd\x12\x16\n" +
 	"\x06sticky\x18\x04 \x01(\bR\x06sticky\x12\x16\n" +
-	"\x06locked\x18\x05 \x01(\bR\x06locked\"m\n" +
-	"\x14ThreadCreateResponse\x12(\n" +
-	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadR\x06thread\x12+\n" +
-	"\amessage\x18\x02 \x01(\v2\x11.forum.v1.MessageR\amessage\"X\n" +
-	"\x14ForumMessagesRequest\x12&\n" +
-	"\x0fforum_thread_id\x18\x01 \x01(\x05R\rforumThreadId\x12\x18\n" +
-	"\adeleted\x18\x02 \x01(\bR\adeleted\"F\n" +
-	"\x15ForumMessagesResponse\x12-\n" +
-	"\bmessages\x18\x01 \x03(\v2\x11.forum.v1.MessageR\bmessages\")\n" +
-	"\fForumRequest\x12\x19\n" +
-	"\bforum_id\x18\x01 \x01(\x05R\aforumId\"6\n" +
-	"\rForumResponse\x12%\n" +
-	"\x05forum\x18\x01 \x01(\v2\x0f.forum.v1.ForumR\x05forum\"7\n" +
-	"\rThreadRequest\x12&\n" +
-	"\x0fforum_thread_id\x18\x01 \x01(\x05R\rforumThreadId\":\n" +
-	"\x0eThreadResponse\x12(\n" +
-	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadR\x06thread\"+\n" +
-	"\x0eThreadsRequest\x12\x19\n" +
-	"\bforum_id\x18\x01 \x01(\x05R\aforumId\"=\n" +
-	"\x0fThreadsResponse\x12*\n" +
-	"\athreads\x18\x01 \x03(\v2\x10.forum.v1.ThreadR\athreads\"\xd0\x01\n" +
-	"\x06Thread\x12\x19\n" +
-	"\bforum_id\x18\x01 \x01(\x05R\aforumId\x12\x1f\n" +
-	"\tsource_id\x18\x02 \x01(\x03B\x020\x01R\bsourceId\x12\x14\n" +
-	"\x05title\x18\x03 \x01(\tR\x05title\x129\n" +
+	"\x06locked\x18\x05 \x01(\bR\x06locked\"}\n" +
+	"\x14ThreadCreateResponse\x120\n" +
+	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadB\x06\xbaH\x03\xc8\x01\x01R\x06thread\x123\n" +
+	"\amessage\x18\x02 \x01(\v2\x11.forum.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\amessage\"`\n" +
+	"\x14ForumMessagesRequest\x12.\n" +
+	"\x0fforum_thread_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rforumThreadId\x12\x18\n" +
+	"\adeleted\x18\x02 \x01(\bR\adeleted\"N\n" +
+	"\x15ForumMessagesResponse\x125\n" +
+	"\bmessages\x18\x01 \x03(\v2\x11.forum.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\"1\n" +
+	"\fForumRequest\x12!\n" +
+	"\bforum_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aforumId\">\n" +
+	"\rForumResponse\x12-\n" +
+	"\x05forum\x18\x01 \x01(\v2\x0f.forum.v1.ForumB\x06\xbaH\x03\xc8\x01\x01R\x05forum\"?\n" +
+	"\rThreadRequest\x12.\n" +
+	"\x0fforum_thread_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rforumThreadId\"B\n" +
+	"\x0eThreadResponse\x120\n" +
+	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadB\x06\xbaH\x03\xc8\x01\x01R\x06thread\"3\n" +
+	"\x0eThreadsRequest\x12!\n" +
+	"\bforum_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aforumId\"E\n" +
+	"\x0fThreadsResponse\x122\n" +
+	"\athreads\x18\x01 \x03(\v2\x10.forum.v1.ThreadB\x06\xbaH\x03\xc8\x01\x01R\athreads\"\xf6\x01\n" +
+	"\x06Thread\x12!\n" +
+	"\bforum_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aforumId\x12%\n" +
+	"\tsource_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\bsourceId\x12\x1c\n" +
+	"\x05title\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12A\n" +
 	"\n" +
-	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"\xce\x03\n" +
-	"\x10ThreadWithSource\x12(\n" +
-	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadR\x06thread\x12!\n" +
-	"\fpersona_name\x18\x02 \x01(\tR\vpersonaName\x12\x1f\n" +
-	"\vavatar_hash\x18\x03 \x01(\tR\n" +
-	"avatarHash\x12?\n" +
-	"\x10permission_level\x18\x04 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x129\n" +
+	"updated_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xee\x03\n" +
+	"\x10ThreadWithSource\x120\n" +
+	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadB\x06\xbaH\x03\xc8\x01\x01R\x06thread\x12)\n" +
+	"\fpersona_name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12'\n" +
+	"\vavatar_hash\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"avatarHash\x12G\n" +
+	"\x10permission_level\x18\x04 \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\x129\n" +
 	"\x17recent_forum_message_id\x18\x05 \x01(\x03B\x020\x01R\x14recentForumMessageId\x12F\n" +
 	"\x11recent_created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x0frecentCreatedOn\x12*\n" +
 	"\x0frecent_steam_id\x18\a \x01(\x03B\x020\x01R\rrecentSteamId\x12.\n" +
 	"\x13recent_persona_name\x18\b \x01(\tR\x11recentPersonaName\x12,\n" +
-	"\x12recent_avatar_hash\x18\t \x01(\tR\x10recentAvatarHash\"\xcc\x01\n" +
-	"\fUserActivity\x12\x1d\n" +
-	"\bsteam_id\x18\x01 \x01(\x03B\x020\x01R\asteamId\x12!\n" +
-	"\fpersona_name\x18\x02 \x01(\tR\vpersonaName\x12?\n" +
-	"\x10permission_level\x18\x03 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x129\n" +
+	"\x12recent_avatar_hash\x18\t \x01(\tR\x10recentAvatarHash\"\xea\x01\n" +
+	"\fUserActivity\x12#\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12)\n" +
+	"\fpersona_name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12G\n" +
+	"\x10permission_level\x18\x03 \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\x12A\n" +
 	"\n" +
-	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\"R\n" +
-	"\x13ActiveUsersResponse\x12;\n" +
-	"\ruser_activity\x18\x01 \x03(\v2\x16.forum.v1.UserActivityR\fuserActivity\"\xe0\x03\n" +
-	"\aMessage\x12,\n" +
-	"\x10forum_message_id\x18\x01 \x01(\x03B\x020\x01R\x0eforumMessageId\x12&\n" +
-	"\x0fforum_thread_id\x18\x02 \x01(\x05R\rforumThreadId\x12\x1f\n" +
-	"\tsource_id\x18\x03 \x01(\x03B\x020\x01R\bsourceId\x12\x17\n" +
-	"\abody_md\x18\x04 \x01(\tR\x06bodyMd\x12\x14\n" +
-	"\x05title\x18\x05 \x01(\tR\x05title\x12\x16\n" +
-	"\x06online\x18\x06 \x01(\bR\x06online\x12\x1c\n" +
-	"\tsignature\x18\a \x01(\tR\tsignature\x12!\n" +
-	"\fpersona_name\x18\b \x01(\tR\vpersonaName\x12\x1f\n" +
-	"\vavatar_hash\x18\t \x01(\tR\n" +
-	"avatarHash\x12?\n" +
+	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\"Z\n" +
+	"\x13ActiveUsersResponse\x12C\n" +
+	"\ruser_activity\x18\x01 \x03(\v2\x16.forum.v1.UserActivityB\x06\xbaH\x03\xc8\x01\x01R\fuserActivity\"\xbc\x04\n" +
+	"\aMessage\x122\n" +
+	"\x10forum_message_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x0eforumMessageId\x12.\n" +
+	"\x0fforum_thread_id\x18\x02 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rforumThreadId\x12%\n" +
+	"\tsource_id\x18\x03 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\bsourceId\x12\x1f\n" +
+	"\abody_md\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06bodyMd\x12\x1c\n" +
+	"\x05title\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12\x1e\n" +
+	"\x06online\x18\x06 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x06online\x12$\n" +
+	"\tsignature\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tsignature\x12)\n" +
+	"\fpersona_name\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12'\n" +
+	"\vavatar_hash\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"avatarHash\x12G\n" +
 	"\x10permission_level\x18\n" +
-	" \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x129\n" +
+	" \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\x12A\n" +
 	"\n" +
-	"created_on\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"created_on\x18\v \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"G\n" +
-	"\x16RecentMessagesResponse\x12-\n" +
-	"\bmessages\x18\x01 \x03(\v2\x11.forum.v1.MessageR\bmessages\"\x86\x06\n" +
-	"\x05Forum\x12\x19\n" +
-	"\bforum_id\x18\x01 \x01(\x05R\aforumId\x12*\n" +
-	"\x11forum_category_id\x18\x02 \x01(\x05R\x0fforumCategoryId\x12$\n" +
-	"\x0elast_thread_id\x18\x03 \x01(\x05R\flastThreadId\x12\x14\n" +
-	"\x05title\x18\x04 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x05 \x01(\tR\vdescription\x12\x1a\n" +
-	"\bordering\x18\x06 \x01(\x05R\bordering\x12'\n" +
-	"\rcount_threads\x18\a \x01(\x03B\x020\x01R\fcountThreads\x12)\n" +
-	"\x0ecount_messages\x18\b \x01(\x03B\x020\x01R\rcountMessages\x12?\n" +
-	"\x10permission_level\x18\t \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x123\n" +
+	"updated_on\x18\f \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"O\n" +
+	"\x16RecentMessagesResponse\x125\n" +
+	"\bmessages\x18\x01 \x03(\v2\x11.forum.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\"\xd2\x06\n" +
+	"\x05Forum\x12!\n" +
+	"\bforum_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aforumId\x122\n" +
+	"\x11forum_category_id\x18\x02 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x0fforumCategoryId\x12$\n" +
+	"\x0elast_thread_id\x18\x03 \x01(\x05R\flastThreadId\x12\x1c\n" +
+	"\x05title\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12(\n" +
+	"\vdescription\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdescription\x12\"\n" +
+	"\bordering\x18\x06 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bordering\x12-\n" +
+	"\rcount_threads\x18\a \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\fcountThreads\x12/\n" +
+	"\x0ecount_messages\x18\b \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\rcountMessages\x12G\n" +
+	"\x10permission_level\x18\t \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\x123\n" +
 	"\x16recent_forum_thread_id\x18\n" +
 	" \x01(\x05R\x13recentForumThreadId\x12,\n" +
 	"\x12recent_forum_title\x18\v \x01(\tR\x10recentForumTitle\x12(\n" +
 	"\x10recent_source_id\x18\f \x01(\tR\x0erecentSourceId\x12.\n" +
 	"\x13recent_persona_name\x18\r \x01(\tR\x11recentPersonaName\x12,\n" +
 	"\x12recent_avatar_hash\x18\x0e \x01(\tR\x10recentAvatarHash\x12F\n" +
-	"\x11recent_created_on\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\x0frecentCreatedOn\x129\n" +
+	"\x11recent_created_on\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\x0frecentCreatedOn\x12A\n" +
 	"\n" +
-	"created_on\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"created_on\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"\xa9\x02\n" +
-	"\bCategory\x12*\n" +
-	"\x11forum_category_id\x18\x01 \x01(\x05R\x0fforumCategoryId\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x1a\n" +
-	"\bordering\x18\x04 \x01(\x05R\bordering\x12'\n" +
-	"\x06forums\x18\x05 \x03(\v2\x0f.forum.v1.ForumR\x06forums\x129\n" +
+	"updated_on\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xe1\x02\n" +
+	"\bCategory\x122\n" +
+	"\x11forum_category_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x0fforumCategoryId\x12\x1c\n" +
+	"\x05title\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12(\n" +
+	"\vdescription\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdescription\x12\"\n" +
+	"\bordering\x18\x04 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bordering\x12/\n" +
+	"\x06forums\x18\x05 \x03(\v2\x0f.forum.v1.ForumB\x06\xbaH\x03\xc8\x01\x01R\x06forums\x12A\n" +
 	"\n" +
-	"created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"F\n" +
-	"\x10OverviewResponse\x122\n" +
+	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"N\n" +
+	"\x10OverviewResponse\x12:\n" +
 	"\n" +
-	"categories\x18\x01 \x03(\v2\x12.forum.v1.CategoryR\n" +
+	"categories\x18\x01 \x03(\v2\x12.forum.v1.CategoryB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"categories2\xe4\n" +
 	"\n" +
 	"\fForumService\x12F\n" +

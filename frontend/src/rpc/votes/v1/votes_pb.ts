@@ -4,6 +4,7 @@
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Filter } from "../../database/query/v1/filter_pb";
 import { file_database_query_v1_filter } from "../../database/query/v1/filter_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
@@ -14,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file votes/v1/votes.proto.
  */
 export const file_votes_v1_votes: GenFile = /*@__PURE__*/
-  fileDesc("ChR2b3Rlcy92MS92b3Rlcy5wcm90bxIIdm90ZXMudjEipwEKDFF1ZXJ5UmVxdWVzdBIpCgZmaWx0ZXIYASABKAsyGS5kYXRhYmFzZS5xdWVyeS52MS5GaWx0ZXISFQoJc291cmNlX2lkGAIgASgDQgIwARIVCgl0YXJnZXRfaWQYAyABKANCAjABEhEKCXNlcnZlcl9pZBgEIAEoBRIMCgRuYW1lGAUgASgJEg8KB3N1Y2Nlc3MYBiABKAUSDAoEY29kZRgHIAEoCCLGAgoKVm90ZVJlc3VsdBIPCgd2b3RlX2lkGAEgASgFEhUKCXNvdXJjZV9pZBgCIAEoA0ICMAESEwoLc291cmNlX25hbWUYAyABKAkSGgoSc291cmNlX2F2YXRhcl9oYXNoGAQgASgJEhUKCXRhcmdldF9pZBgFIAEoA0ICMAESEwoLdGFyZ2V0X25hbWUYBiABKAkSGgoSdGFyZ2V0X2F2YXRhcl9oYXNoGAcgASgJEgwKBG5hbWUYCCABKAkSDwoHc3VjY2VzcxgJIAEoCBIRCglzZXJ2ZXJfaWQYCiABKAUSEwoLc2VydmVyX25hbWUYCyABKAkSIAoEY29kZRgMIAEoDjISLnZvdGVzLnYxLlZvdGVDb2RlEi4KCmNyZWF0ZWRfb24YDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIkkKDVF1ZXJ5UmVzcG9uc2USJQoHcmVzdWx0cxgBIAMoCzIULnZvdGVzLnYxLlZvdGVSZXN1bHQSEQoFY291bnQYAiABKANCAjABKnIKCFZvdGVDb2RlEiYKIlZPVEVfQ09ERV9GQUlMX0dFTkVSSUNfVU5TUEVDSUZJRUQQABIjCh9WT1RFX0NPREVfRkFJTF9OT19PVVROVU1CRVJfWUVTEAESGQoVVk9URV9DT0RFX0ZBSUxfUVVPUlVNEAIySgoMVm90ZXNTZXJ2aWNlEjoKBVF1ZXJ5EhYudm90ZXMudjEuUXVlcnlSZXF1ZXN0Ghcudm90ZXMudjEuUXVlcnlSZXNwb25zZSIAQpYBCgxjb20udm90ZXMudjFCClZvdGVzUHJvdG9QAVo5Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC92b3Rlcy92MTt2b3Rlc3YxogIDVlhYqgIIVm90ZXMuVjHKAghWb3Rlc1xWMeICFFZvdGVzXFYxXEdQQk1ldGFkYXRh6gIJVm90ZXM6OlYxYghlZGl0aW9uc3DoBw", [file_database_query_v1_filter, file_google_protobuf_timestamp]);
+  fileDesc("ChR2b3Rlcy92MS92b3Rlcy5wcm90bxIIdm90ZXMudjEipwEKDFF1ZXJ5UmVxdWVzdBIpCgZmaWx0ZXIYASABKAsyGS5kYXRhYmFzZS5xdWVyeS52MS5GaWx0ZXISFQoJc291cmNlX2lkGAIgASgDQgIwARIVCgl0YXJnZXRfaWQYAyABKANCAjABEhEKCXNlcnZlcl9pZBgEIAEoBRIMCgRuYW1lGAUgASgJEg8KB3N1Y2Nlc3MYBiABKAUSDAoEY29kZRgHIAEoCCKqAwoKVm90ZVJlc3VsdBIXCgd2b3RlX2lkGAEgASgFQga6SAPIAQESGwoJc291cmNlX2lkGAIgASgDQggwAbpIA8gBARIbCgtzb3VyY2VfbmFtZRgDIAEoCUIGukgDyAEBEiIKEnNvdXJjZV9hdmF0YXJfaGFzaBgEIAEoCUIGukgDyAEBEhsKCXRhcmdldF9pZBgFIAEoA0IIMAG6SAPIAQESGwoLdGFyZ2V0X25hbWUYBiABKAlCBrpIA8gBARIiChJ0YXJnZXRfYXZhdGFyX2hhc2gYByABKAlCBrpIA8gBARIUCgRuYW1lGAggASgJQga6SAPIAQESFwoHc3VjY2VzcxgJIAEoCEIGukgDyAEBEhkKCXNlcnZlcl9pZBgKIAEoBUIGukgDyAEBEhsKC3NlcnZlcl9uYW1lGAsgASgJQga6SAPIAQESKAoEY29kZRgMIAEoDjISLnZvdGVzLnYxLlZvdGVDb2RlQga6SAPIAQESNgoKY3JlYXRlZF9vbhgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASJXCg1RdWVyeVJlc3BvbnNlEi0KB3Jlc3VsdHMYASADKAsyFC52b3Rlcy52MS5Wb3RlUmVzdWx0Qga6SAPIAQESFwoFY291bnQYAiABKANCCDABukgDyAEBKnIKCFZvdGVDb2RlEiYKIlZPVEVfQ09ERV9GQUlMX0dFTkVSSUNfVU5TUEVDSUZJRUQQABIjCh9WT1RFX0NPREVfRkFJTF9OT19PVVROVU1CRVJfWUVTEAESGQoVVk9URV9DT0RFX0ZBSUxfUVVPUlVNEAIySgoMVm90ZXNTZXJ2aWNlEjoKBVF1ZXJ5EhYudm90ZXMudjEuUXVlcnlSZXF1ZXN0Ghcudm90ZXMudjEuUXVlcnlSZXNwb25zZSIAQpYBCgxjb20udm90ZXMudjFCClZvdGVzUHJvdG9QAVo5Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC92b3Rlcy92MTt2b3Rlc3YxogIDVlhYqgIIVm90ZXMuVjHKAghWb3Rlc1xWMeICFFZvdGVzXFYxXEdQQk1ldGFkYXRh6gIJVm90ZXM6OlYxYghlZGl0aW9uc3DoBw", [file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message votes.v1.QueryRequest
@@ -135,7 +136,75 @@ export type VoteResult = Message<"votes.v1.VoteResult"> & {
   createdOn?: Timestamp;
 };
 
-export type VoteResultValid = VoteResult;
+/**
+ * @generated from message votes.v1.VoteResult
+ */
+export type VoteResultValid = Message<"votes.v1.VoteResult"> & {
+  /**
+   * @generated from field: int32 vote_id = 1;
+   */
+  voteId: number;
+
+  /**
+   * @generated from field: int64 source_id = 2 [jstype = JS_STRING];
+   */
+  sourceId: string;
+
+  /**
+   * @generated from field: string source_name = 3;
+   */
+  sourceName: string;
+
+  /**
+   * @generated from field: string source_avatar_hash = 4;
+   */
+  sourceAvatarHash: string;
+
+  /**
+   * @generated from field: int64 target_id = 5 [jstype = JS_STRING];
+   */
+  targetId: string;
+
+  /**
+   * @generated from field: string target_name = 6;
+   */
+  targetName: string;
+
+  /**
+   * @generated from field: string target_avatar_hash = 7;
+   */
+  targetAvatarHash: string;
+
+  /**
+   * @generated from field: string name = 8;
+   */
+  name: string;
+
+  /**
+   * @generated from field: bool success = 9;
+   */
+  success: boolean;
+
+  /**
+   * @generated from field: int32 server_id = 10;
+   */
+  serverId: number;
+
+  /**
+   * @generated from field: string server_name = 11;
+   */
+  serverName: string;
+
+  /**
+   * @generated from field: votes.v1.VoteCode code = 12;
+   */
+  code: VoteCode;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 13;
+   */
+  createdOn: Timestamp;
+};
 
 /**
  * Describes the message votes.v1.VoteResult.
@@ -159,7 +228,20 @@ export type QueryResponse = Message<"votes.v1.QueryResponse"> & {
   count: string;
 };
 
-export type QueryResponseValid = QueryResponse;
+/**
+ * @generated from message votes.v1.QueryResponse
+ */
+export type QueryResponseValid = Message<"votes.v1.QueryResponse"> & {
+  /**
+   * @generated from field: repeated votes.v1.VoteResult results = 1;
+   */
+  results: VoteResultValid[];
+
+  /**
+   * @generated from field: int64 count = 2 [jstype = JS_STRING];
+   */
+  count: string;
+};
 
 /**
  * Describes the message votes.v1.QueryResponse.

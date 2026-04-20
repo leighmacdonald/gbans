@@ -11,7 +11,10 @@ message PersonCore {
   int64 steam_id = 1 [(buf.validate.field).int64.(valid_steam_id) = true];
   person.v1.Privilege permission_level = 2 [(buf.validate.field).required = true];
   string name = 3 [(buf.validate.field).required = true];
-  string avatar_hash = 4 [(buf.validate.field).required = true, (buf.validate.field).string.len = 40];
+  string avatar_hash = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.len = 40
+  ];
   string discord_id = 5 [(buf.validate.field).required = true];
   int32 vac_bans = 6 [(buf.validate.field).required = true];
   int32 game_bans = 7 [(buf.validate.field).required = true];

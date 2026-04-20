@@ -7,6 +7,7 @@
 package networkv1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -913,30 +914,30 @@ var File_network_v1_network_proto protoreflect.FileDescriptor
 const file_network_v1_network_proto_rawDesc = "" +
 	"\n" +
 	"\x18network/v1/network.proto\x12\n" +
-	"network.v1\x1a\x1edatabase/query/v1/filter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"X\n" +
+	"network.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"X\n" +
 	"\x13QueryNetworkRequest\x121\n" +
 	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12\x0e\n" +
-	"\x02ip\x18\x02 \x01(\tR\x02ip\"\x87\x01\n" +
-	"\aDetails\x120\n" +
-	"\blocation\x18\x01 \x01(\v2\x14.network.v1.LocationR\blocation\x12!\n" +
-	"\x03asn\x18\x02 \x01(\v2\x0f.network.v1.ASNR\x03asn\x12'\n" +
-	"\x05proxy\x18\x03 \x01(\v2\x11.network.v1.ProxyR\x05proxy\"\xd2\x01\n" +
-	"\bLocation\x12\x12\n" +
-	"\x04cidr\x18\x01 \x01(\tR\x04cidr\x12!\n" +
-	"\fcountry_code\x18\x02 \x01(\tR\vcountryCode\x12!\n" +
-	"\fcountry_name\x18\x03 \x01(\tR\vcountryName\x12\x1f\n" +
-	"\vregion_name\x18\x04 \x01(\tR\n" +
-	"regionName\x12\x1b\n" +
-	"\tcity_name\x18\x05 \x01(\tR\bcityName\x12.\n" +
-	"\blat_long\x18\x06 \x01(\v2\x13.network.v1.LatLongR\alatLong\"M\n" +
-	"\x03ASN\x12\x12\n" +
-	"\x04cidr\x18\x01 \x01(\tR\x04cidr\x12\x19\n" +
-	"\x06as_num\x18\x02 \x01(\x04B\x020\x01R\x05asNum\x12\x17\n" +
-	"\aas_name\x18\x03 \x01(\tR\x06asName\"\xd6\x03\n" +
-	"\x05Proxy\x12\x12\n" +
-	"\x04cidr\x18\x01 \x01(\tR\x04cidr\x124\n" +
+	"\x02ip\x18\x02 \x01(\tR\x02ip\"\x9f\x01\n" +
+	"\aDetails\x128\n" +
+	"\blocation\x18\x01 \x01(\v2\x14.network.v1.LocationB\x06\xbaH\x03\xc8\x01\x01R\blocation\x12)\n" +
+	"\x03asn\x18\x02 \x01(\v2\x0f.network.v1.ASNB\x06\xbaH\x03\xc8\x01\x01R\x03asn\x12/\n" +
+	"\x05proxy\x18\x03 \x01(\v2\x11.network.v1.ProxyB\x06\xbaH\x03\xc8\x01\x01R\x05proxy\"\x82\x02\n" +
+	"\bLocation\x12\x1a\n" +
+	"\x04cidr\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04cidr\x12)\n" +
+	"\fcountry_code\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vcountryCode\x12)\n" +
+	"\fcountry_name\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vcountryName\x12'\n" +
+	"\vregion_name\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"regionName\x12#\n" +
+	"\tcity_name\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bcityName\x126\n" +
+	"\blat_long\x18\x06 \x01(\v2\x13.network.v1.LatLongB\x06\xbaH\x03\xc8\x01\x01R\alatLong\"c\n" +
+	"\x03ASN\x12\x1a\n" +
+	"\x04cidr\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04cidr\x12\x1f\n" +
+	"\x06as_num\x18\x02 \x01(\x04B\b\xbaH\x03\xc8\x01\x010\x01R\x05asNum\x12\x1f\n" +
+	"\aas_name\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06asName\"\xe6\x03\n" +
+	"\x05Proxy\x12\x1a\n" +
+	"\x04cidr\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04cidr\x12<\n" +
 	"\n" +
-	"proxy_type\x18\x02 \x01(\x0e2\x15.network.v1.ProxyTypeR\tproxyType\x12!\n" +
+	"proxy_type\x18\x02 \x01(\x0e2\x15.network.v1.ProxyTypeB\x06\xbaH\x03\xc8\x01\x01R\tproxyType\x12!\n" +
 	"\fcountry_code\x18\x03 \x01(\tR\vcountryCode\x12!\n" +
 	"\fcountry_name\x18\x04 \x01(\tR\vcountryName\x12\x1f\n" +
 	"\vregion_name\x18\x05 \x01(\tR\n" +
@@ -951,30 +952,35 @@ const file_network_v1_network_proto_rawDesc = "" +
 	"\aas_name\x18\v \x01(\tR\x06asName\x127\n" +
 	"\tlast_seen\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\blastSeen\x127\n" +
 	"\vthreat_type\x18\r \x01(\x0e2\x16.network.v1.ThreatTypeR\n" +
-	"threatType\"C\n" +
-	"\aLatLong\x12\x1a\n" +
-	"\blatitude\x18\x01 \x01(\x02R\blatitude\x12\x1c\n" +
-	"\tlongitude\x18\x02 \x01(\x02R\tlongitude\"E\n" +
-	"\x14QueryNetworkResponse\x12-\n" +
-	"\adetails\x18\x01 \x01(\v2\x13.network.v1.DetailsR\adetails\"\xfb\x01\n" +
+	"threatType\"k\n" +
+	"\aLatLong\x12.\n" +
+	"\blatitude\x18\x01 \x01(\x02B\x12\xbaH\x0f\xc8\x01\x01\n" +
+	"\n" +
+	"\x1d\x00\x00\xb4B-\x00\x00\xb4\xc2R\blatitude\x120\n" +
+	"\tlongitude\x18\x02 \x01(\x02B\x12\xbaH\x0f\xc8\x01\x01\n" +
+	"\n" +
+	"\x1d\x00\x004C-\x00\x004\xc3R\tlongitude\"M\n" +
+	"\x14QueryNetworkResponse\x125\n" +
+	"\adetails\x18\x01 \x01(\v2\x13.network.v1.DetailsB\x06\xbaH\x03\xc8\x01\x01R\adetails\"\x98\x02\n" +
 	"\x17QueryConnectionsRequest\x121\n" +
 	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12\x19\n" +
-	"\bsteam_id\x18\x02 \x01(\tR\asteamId\x12\x12\n" +
-	"\x04cidr\x18\x03 \x01(\tR\x04cidr\x12!\n" +
-	"\fcountry_code\x18\x04 \x01(\tR\vcountryCode\x12!\n" +
+	"\bsteam_id\x18\x02 \x01(\tR\asteamId\x12\x1c\n" +
+	"\x04cidr\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xd8\x01\x01R\x04cidr\x12+\n" +
+	"\fcountry_code\x18\x04 \x01(\tB\b\xbaH\x05r\x03\x98\x01\x02R\vcountryCode\x12!\n" +
 	"\fcountry_name\x18\x05 \x01(\tR\vcountryName\x12\x1b\n" +
-	"\tcity_name\x18\x06 \x01(\tR\bcityName\x12\x1b\n" +
-	"\tserver_id\x18\a \x03(\x05R\bserverId\"X\n" +
-	"\x18QueryConnectionsResponse\x12<\n" +
+	"\tcity_name\x18\x06 \x01(\tR\bcityName\x12$\n" +
+	"\tserver_id\x18\a \x03(\x05B\a\xbaH\x04\x1a\x02 \x00R\bserverId\"`\n" +
+	"\x18QueryConnectionsResponse\x12D\n" +
 	"\n" +
-	"connection\x18\x01 \x03(\v2\x1c.network.v1.PersonConnectionR\n" +
-	"connection\"\xc0\x01\n" +
-	"\x10PersonConnection\x124\n" +
-	"\x14person_connection_id\x18\x01 \x01(\x03B\x020\x01R\x12personConnectionId\x12\x17\n" +
-	"\aip_addr\x18\x02 \x01(\tR\x06ipAddr\x12\x1d\n" +
-	"\bsteam_id\x18\x03 \x01(\x03B\x020\x01R\asteamId\x12!\n" +
-	"\fpersona_name\x18\x04 \x01(\tR\vpersonaName\x12\x1b\n" +
-	"\tserver_id\x18\x05 \x01(\x05R\bserverId*\xd0\x01\n" +
+	"connection\x18\x01 \x03(\v2\x1c.network.v1.PersonConnectionB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"connection\"\xe8\x01\n" +
+	"\x10PersonConnection\x12:\n" +
+	"\x14person_connection_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x12personConnectionId\x12#\n" +
+	"\aip_addr\x18\x02 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02x\x01R\x06ipAddr\x12#\n" +
+	"\bsteam_id\x18\x03 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12)\n" +
+	"\fpersona_name\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12#\n" +
+	"\tserver_id\x18\x05 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bserverId*\xd0\x01\n" +
 	"\n" +
 	"ThreatType\x12\x1b\n" +
 	"\x17THREAT_TYPE_UNSPECIFIED\x10\x00\x12\x14\n" +

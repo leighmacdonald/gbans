@@ -2,6 +2,7 @@ edition = "2023";
 
 package network.v1;
 
+import "buf/validate/validate.proto";
 import "database/query/v1/filter.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
@@ -18,24 +19,24 @@ message QueryNetworkRequest {
 }
 
 message Details {
-  Location location = 1;
-  ASN asn = 2;
-  Proxy proxy = 3;
+  Location location = 1 [(buf.validate.field).required = true];
+  ASN asn = 2 [(buf.validate.field).required = true];
+  Proxy proxy = 3 [(buf.validate.field).required = true];
 }
 
 message Location {
-  string cidr = 1;
-  string country_code = 2;
-  string country_name = 3;
-  string region_name = 4;
-  string city_name = 5;
-  LatLong lat_long = 6;
+  string cidr = 1 [(buf.validate.field).required = true];
+  string country_code = 2 [(buf.validate.field).required = true];
+  string country_name = 3 [(buf.validate.field).required = true];
+  string region_name = 4 [(buf.validate.field).required = true];
+  string city_name = 5 [(buf.validate.field).required = true];
+  LatLong lat_long = 6 [(buf.validate.field).required = true];
 }
 
 message ASN {
-  string cidr = 1;
-  uint64 as_num = 2;
-  string as_name = 3;
+  string cidr = 1 [(buf.validate.field).required = true];
+  uint64 as_num = 2 [(buf.validate.field).required = true];
+  string as_name = 3 [(buf.validate.field).required = true];
 }
 enum ThreatType {
   THREAT_TYPE_UNSPECIFIED = 0;
@@ -67,8 +68,8 @@ enum ProxyType {
 }
 
 message Proxy {
-  string cidr = 1;
-  ProxyType proxy_type = 2;
+  string cidr = 1 [(buf.validate.field).required = true];
+  ProxyType proxy_type = 2 [(buf.validate.field).required = true];
   string country_code = 3;
   string country_name = 4;
   string region_name = 5;
@@ -83,31 +84,46 @@ message Proxy {
 }
 
 message LatLong {
-  float latitude = 1;
-  float longitude = 2;
+  float latitude = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).float = {
+      gte: -90
+      lte: 90
+    }
+  ];
+  float longitude = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).float = {
+      gte: -180
+      lte: 180
+    }
+  ];
 }
 message QueryNetworkResponse {
-  Details details = 1;
+  Details details = 1 [(buf.validate.field).required = true];
 }
 
 message QueryConnectionsRequest {
   database.query.v1.Filter filter = 1;
   string steam_id = 2;
-  string cidr = 3;
-  string country_code = 4;
+  string cidr = 3 [(buf.validate.field).string.ipv4_with_prefixlen = true];
+  string country_code = 4 [(buf.validate.field).string.len = 2];
   string country_name = 5;
   string city_name = 6;
-  repeated int32 server_id = 7;
+  repeated int32 server_id = 7 [(buf.validate.field).int32.gt = 0];
 }
 
 message QueryConnectionsResponse {
-  repeated PersonConnection connection = 1;
+  repeated PersonConnection connection = 1 [(buf.validate.field).required = true];
 }
 
 message PersonConnection {
-  int64 person_connection_id = 1;
-  string ip_addr = 2;
-  int64 steam_id = 3;
-  string persona_name = 4;
-  int32 server_id = 5;
+  int64 person_connection_id = 1 [(buf.validate.field).required = true];
+  string ip_addr = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.ipv4 = true
+  ];
+  int64 steam_id = 3 [(buf.validate.field).required = true];
+  string persona_name = 4 [(buf.validate.field).required = true];
+  int32 server_id = 5 [(buf.validate.field).required = true];
 }

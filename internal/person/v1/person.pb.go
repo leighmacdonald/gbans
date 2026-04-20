@@ -1297,7 +1297,7 @@ var File_person_v1_person_proto protoreflect.FileDescriptor
 
 const file_person_v1_person_proto_rawDesc = "" +
 	"\n" +
-	"\x16person/v1/person.proto\x12\tperson.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bperson/v1/person_core.proto\x1a\x19person/v1/privilege.proto\"3\n" +
+	"\x16person/v1/person.proto\x12\tperson.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bperson/v1/person_core.proto\x1a\x19person/v1/privilege.proto\x1a\x17person/v1/steamid.proto\"3\n" +
 	"\x0eProfileRequest\x12!\n" +
 	"\bsteam_id\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\asteamId\"G\n" +
 	"\x0fProfileResponse\x124\n" +
@@ -1370,9 +1370,9 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"\x10community_banned\x18\t \x01(\bR\x0fcommunityBanned\x12H\n" +
 	"\x12time_created_after\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\x10timeCreatedAfter\x12J\n" +
-	"\x13time_created_before\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\x11timeCreatedBefore\"\x82\f\n" +
-	"\x06Person\x12#\n" +
-	"\bsteam_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12A\n" +
+	"\x13time_created_before\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\x11timeCreatedBefore\"\x88\f\n" +
+	"\x06Person\x12)\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\x0e\xbaH\t\xc8\x01\x01\"\x04\x80\xf1\x04\x010\x01R\asteamId\x12A\n" +
 	"\n" +
 	"created_on\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
@@ -1517,6 +1517,7 @@ func file_person_v1_person_proto_init() {
 	}
 	file_person_v1_person_core_proto_init()
 	file_person_v1_privilege_proto_init()
+	file_person_v1_steamid_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

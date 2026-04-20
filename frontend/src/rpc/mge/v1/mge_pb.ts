@@ -4,6 +4,7 @@
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Filter } from "../../database/query/v1/filter_pb";
 import { file_database_query_v1_filter } from "../../database/query/v1/filter_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
@@ -14,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file mge/v1/mge.proto.
  */
 export const file_mge_v1_mge: GenFile = /*@__PURE__*/
-  fileDesc("ChBtZ2UvdjEvbWdlLnByb3RvEgZtZ2UudjEiVwoYR2V0UmF0aW5nc092ZXJhbGxSZXF1ZXN0EikKBmZpbHRlchgBIAEoCzIZLmRhdGFiYXNlLnF1ZXJ5LnYxLkZpbHRlchIQCghzdGVhbV9pZBgCIAEoCSLNAQoLUGxheWVyU3RhdHMSEAoIc3RhdHNfaWQYASABKAUSDgoGcmF0aW5nGAIgASgFEhQKCHN0ZWFtX2lkGAMgASgDQgIwARIUCgxwZXJzb25hX25hbWUYBCABKAkSEwoLYXZhdGFyX2hhc2gYBSABKAkSDAoEbmFtZRgGIAEoCRIMCgR3aW5zGAcgASgFEg4KBmxvc3NlcxgIIAEoBRIvCgtsYXN0X3BsYXllZBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiUgoZR2V0UmF0aW5nc092ZXJhbGxSZXNwb25zZRIiCgVzdGF0cxgBIAMoCzITLm1nZS52MS5QbGF5ZXJTdGF0cxIRCgVjb3VudBgCIAEoA0ICMAEingEKEUdldEhpc3RvcnlSZXF1ZXN0EikKBmZpbHRlchgBIAEoCzIZLmRhdGFiYXNlLnF1ZXJ5LnYxLkZpbHRlchIeCgRtb2RlGAIgASgOMhAubWdlLnYxLkR1ZWxNb2RlEg4KBndpbm5lchgDIAEoCRIPCgd3aW5uZXIyGAQgASgJEg0KBWxvc2VyGAUgASgJEg4KBmxvc2VyMhgGIAEoCSLeAwoERHVlbBIPCgdkdWVsX2lkGAEgASgFEhIKBndpbm5lchgCIAEoA0ICMAESGgoSd2lubmVyX2F2YXRhcl9oYXNoGAMgASgJEhsKE3dpbm5lcl9wZXJzb25hX25hbWUYBCABKAkSEwoHd2lubmVyMhgFIAEoA0ICMAESGwoTd2lubmVyMl9hdmF0YXJfaGFzaBgGIAEoCRIcChR3aW5uZXIyX3BlcnNvbmFfbmFtZRgHIAEoCRIRCgVsb3NlchgIIAEoA0ICMAESGQoRbG9zZXJfYXZhdGFyX2hhc2gYCSABKAkSGgoSbG9zZXJfcGVyc29uYV9uYW1lGAogASgJEhIKBmxvc2VyMhgLIAEoA0ICMAESGgoSbG9zZXIyX2F2YXRhcl9oYXNoGAwgASgJEhsKE2xvc2VyMl9wZXJzb25hX25hbWUYDSABKAkSFAoMd2lubmVyX3Njb3JlGA4gASgFEhMKC2xvc2VyX3Njb3JlGA8gASgFEhEKCXdpbl9saW1pdBgQIAEoBRItCglnYW1lX3RpbWUYESABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhAKCG1hcF9uYW1lGBIgASgJEhIKCmFyZW5hX25hbWUYEyABKAkiRgoSR2V0SGlzdG9yeVJlc3BvbnNlEh0KB2hpc3RvcnkYASADKAsyDC5tZ2UudjEuRHVlbBIRCgVjb3VudBgCIAEoA0ICMAEqSgoIRHVlbE1vZGUSJAogRFVFTF9NT0RFX09ORV9WU19PTkVfVU5TUEVDSUZJRUQQABIYChREVUVMX01PREVfVFdPX1ZTX1RXTxABMqsBCgpNR0VTZXJ2aWNlElgKEUdldFJhdGluZ3NPdmVyYWxsEiAubWdlLnYxLkdldFJhdGluZ3NPdmVyYWxsUmVxdWVzdBohLm1nZS52MS5HZXRSYXRpbmdzT3ZlcmFsbFJlc3BvbnNlEkMKCkdldEhpc3RvcnkSGS5tZ2UudjEuR2V0SGlzdG9yeVJlcXVlc3QaGi5tZ2UudjEuR2V0SGlzdG9yeVJlc3BvbnNlQoYBCgpjb20ubWdlLnYxQghNZ2VQcm90b1ABWjVnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL21nZS92MTttZ2V2MaICA01YWKoCBk1nZS5WMcoCBk1nZVxWMeICEk1nZVxWMVxHUEJNZXRhZGF0YeoCB01nZTo6VjFiCGVkaXRpb25zcOgH", [file_database_query_v1_filter, file_google_protobuf_timestamp]);
+  fileDesc("ChBtZ2UvdjEvbWdlLnByb3RvEgZtZ2UudjEiVwoYR2V0UmF0aW5nc092ZXJhbGxSZXF1ZXN0EikKBmZpbHRlchgBIAEoCzIZLmRhdGFiYXNlLnF1ZXJ5LnYxLkZpbHRlchIQCghzdGVhbV9pZBgCIAEoCSKTAgoLUGxheWVyU3RhdHMSGAoIc3RhdHNfaWQYASABKAVCBrpIA8gBARIWCgZyYXRpbmcYAiABKAVCBrpIA8gBARIaCghzdGVhbV9pZBgDIAEoA0IIMAG6SAPIAQESHAoMcGVyc29uYV9uYW1lGAQgASgJQga6SAPIAQESGwoLYXZhdGFyX2hhc2gYBSABKAlCBrpIA8gBARIUCgRuYW1lGAYgASgJQga6SAPIAQESFAoEd2lucxgHIAEoBUIGukgDyAEBEhYKBmxvc3NlcxgIIAEoBUIGukgDyAEBEjcKC2xhc3RfcGxheWVkGAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBImAKGUdldFJhdGluZ3NPdmVyYWxsUmVzcG9uc2USKgoFc3RhdHMYASADKAsyEy5tZ2UudjEuUGxheWVyU3RhdHNCBrpIA8gBARIXCgVjb3VudBgCIAEoA0IIMAG6SAPIAQEingEKEUdldEhpc3RvcnlSZXF1ZXN0EikKBmZpbHRlchgBIAEoCzIZLmRhdGFiYXNlLnF1ZXJ5LnYxLkZpbHRlchIeCgRtb2RlGAIgASgOMhAubWdlLnYxLkR1ZWxNb2RlEg4KBndpbm5lchgDIAEoCRIPCgd3aW5uZXIyGAQgASgJEg0KBWxvc2VyGAUgASgJEg4KBmxvc2VyMhgGIAEoCSLuBAoERHVlbBIXCgdkdWVsX2lkGAEgASgFQga6SAPIAQESGAoGd2lubmVyGAIgASgDQggwAbpIA8gBARIiChJ3aW5uZXJfYXZhdGFyX2hhc2gYAyABKAlCBrpIA8gBARIjChN3aW5uZXJfcGVyc29uYV9uYW1lGAQgASgJQga6SAPIAQESGQoHd2lubmVyMhgFIAEoA0IIMAG6SAPIAQESIwoTd2lubmVyMl9hdmF0YXJfaGFzaBgGIAEoCUIGukgDyAEBEiQKFHdpbm5lcjJfcGVyc29uYV9uYW1lGAcgASgJQga6SAPIAQESFwoFbG9zZXIYCCABKANCCDABukgDyAEBEiEKEWxvc2VyX2F2YXRhcl9oYXNoGAkgASgJQga6SAPIAQESIgoSbG9zZXJfcGVyc29uYV9uYW1lGAogASgJQga6SAPIAQESGAoGbG9zZXIyGAsgASgDQggwAbpIA8gBARIiChJsb3NlcjJfYXZhdGFyX2hhc2gYDCABKAlCBrpIA8gBARIjChNsb3NlcjJfcGVyc29uYV9uYW1lGA0gASgJQga6SAPIAQESHAoMd2lubmVyX3Njb3JlGA4gASgFQga6SAPIAQESGwoLbG9zZXJfc2NvcmUYDyABKAVCBrpIA8gBARIZCgl3aW5fbGltaXQYECABKAVCBrpIA8gBARI1CglnYW1lX3RpbWUYESABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESGAoIbWFwX25hbWUYEiABKAlCBrpIA8gBARIaCgphcmVuYV9uYW1lGBMgASgJQga6SAPIAQEiVAoSR2V0SGlzdG9yeVJlc3BvbnNlEiUKB2hpc3RvcnkYASADKAsyDC5tZ2UudjEuRHVlbEIGukgDyAEBEhcKBWNvdW50GAIgASgDQggwAbpIA8gBASpKCghEdWVsTW9kZRIkCiBEVUVMX01PREVfT05FX1ZTX09ORV9VTlNQRUNJRklFRBAAEhgKFERVRUxfTU9ERV9UV09fVlNfVFdPEAEyqwEKCk1HRVNlcnZpY2USWAoRR2V0UmF0aW5nc092ZXJhbGwSIC5tZ2UudjEuR2V0UmF0aW5nc092ZXJhbGxSZXF1ZXN0GiEubWdlLnYxLkdldFJhdGluZ3NPdmVyYWxsUmVzcG9uc2USQwoKR2V0SGlzdG9yeRIZLm1nZS52MS5HZXRIaXN0b3J5UmVxdWVzdBoaLm1nZS52MS5HZXRIaXN0b3J5UmVzcG9uc2VChgEKCmNvbS5tZ2UudjFCCE1nZVByb3RvUAFaNWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvbWdlL3YxO21nZXYxogIDTVhYqgIGTWdlLlYxygIGTWdlXFYx4gISTWdlXFYxXEdQQk1ldGFkYXRh6gIHTWdlOjpWMWIIZWRpdGlvbnNw6Ac", [file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message mge.v1.GetRatingsOverallRequest
@@ -90,7 +91,55 @@ export type PlayerStats = Message<"mge.v1.PlayerStats"> & {
   lastPlayed?: Timestamp;
 };
 
-export type PlayerStatsValid = PlayerStats;
+/**
+ * @generated from message mge.v1.PlayerStats
+ */
+export type PlayerStatsValid = Message<"mge.v1.PlayerStats"> & {
+  /**
+   * @generated from field: int32 stats_id = 1;
+   */
+  statsId: number;
+
+  /**
+   * @generated from field: int32 rating = 2;
+   */
+  rating: number;
+
+  /**
+   * @generated from field: int64 steam_id = 3 [jstype = JS_STRING];
+   */
+  steamId: string;
+
+  /**
+   * @generated from field: string persona_name = 4;
+   */
+  personaName: string;
+
+  /**
+   * @generated from field: string avatar_hash = 5;
+   */
+  avatarHash: string;
+
+  /**
+   * @generated from field: string name = 6;
+   */
+  name: string;
+
+  /**
+   * @generated from field: int32 wins = 7;
+   */
+  wins: number;
+
+  /**
+   * @generated from field: int32 losses = 8;
+   */
+  losses: number;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp last_played = 9;
+   */
+  lastPlayed: Timestamp;
+};
 
 /**
  * Describes the message mge.v1.PlayerStats.
@@ -114,7 +163,20 @@ export type GetRatingsOverallResponse = Message<"mge.v1.GetRatingsOverallRespons
   count: string;
 };
 
-export type GetRatingsOverallResponseValid = GetRatingsOverallResponse;
+/**
+ * @generated from message mge.v1.GetRatingsOverallResponse
+ */
+export type GetRatingsOverallResponseValid = Message<"mge.v1.GetRatingsOverallResponse"> & {
+  /**
+   * @generated from field: repeated mge.v1.PlayerStats stats = 1;
+   */
+  stats: PlayerStatsValid[];
+
+  /**
+   * @generated from field: int64 count = 2 [jstype = JS_STRING];
+   */
+  count: string;
+};
 
 /**
  * Describes the message mge.v1.GetRatingsOverallResponse.
@@ -267,7 +329,105 @@ export type Duel = Message<"mge.v1.Duel"> & {
   arenaName: string;
 };
 
-export type DuelValid = Duel;
+/**
+ * @generated from message mge.v1.Duel
+ */
+export type DuelValid = Message<"mge.v1.Duel"> & {
+  /**
+   * @generated from field: int32 duel_id = 1;
+   */
+  duelId: number;
+
+  /**
+   * @generated from field: int64 winner = 2 [jstype = JS_STRING];
+   */
+  winner: string;
+
+  /**
+   * @generated from field: string winner_avatar_hash = 3;
+   */
+  winnerAvatarHash: string;
+
+  /**
+   * @generated from field: string winner_persona_name = 4;
+   */
+  winnerPersonaName: string;
+
+  /**
+   * @generated from field: int64 winner2 = 5 [jstype = JS_STRING];
+   */
+  winner2: string;
+
+  /**
+   * @generated from field: string winner2_avatar_hash = 6;
+   */
+  winner2AvatarHash: string;
+
+  /**
+   * @generated from field: string winner2_persona_name = 7;
+   */
+  winner2PersonaName: string;
+
+  /**
+   * @generated from field: int64 loser = 8 [jstype = JS_STRING];
+   */
+  loser: string;
+
+  /**
+   * @generated from field: string loser_avatar_hash = 9;
+   */
+  loserAvatarHash: string;
+
+  /**
+   * @generated from field: string loser_persona_name = 10;
+   */
+  loserPersonaName: string;
+
+  /**
+   * @generated from field: int64 loser2 = 11 [jstype = JS_STRING];
+   */
+  loser2: string;
+
+  /**
+   * @generated from field: string loser2_avatar_hash = 12;
+   */
+  loser2AvatarHash: string;
+
+  /**
+   * @generated from field: string loser2_persona_name = 13;
+   */
+  loser2PersonaName: string;
+
+  /**
+   * @generated from field: int32 winner_score = 14;
+   */
+  winnerScore: number;
+
+  /**
+   * @generated from field: int32 loser_score = 15;
+   */
+  loserScore: number;
+
+  /**
+   * @generated from field: int32 win_limit = 16;
+   */
+  winLimit: number;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp game_time = 17;
+   */
+  gameTime: Timestamp;
+
+  /**
+   * @generated from field: string map_name = 18;
+   */
+  mapName: string;
+
+  /**
+   * @generated from field: string arena_name = 19;
+   */
+  arenaName: string;
+};
 
 /**
  * Describes the message mge.v1.Duel.
@@ -291,7 +451,20 @@ export type GetHistoryResponse = Message<"mge.v1.GetHistoryResponse"> & {
   count: string;
 };
 
-export type GetHistoryResponseValid = GetHistoryResponse;
+/**
+ * @generated from message mge.v1.GetHistoryResponse
+ */
+export type GetHistoryResponseValid = Message<"mge.v1.GetHistoryResponse"> & {
+  /**
+   * @generated from field: repeated mge.v1.Duel history = 1;
+   */
+  history: DuelValid[];
+
+  /**
+   * @generated from field: int64 count = 2 [jstype = JS_STRING];
+   */
+  count: string;
+};
 
 /**
  * Describes the message mge.v1.GetHistoryResponse.

@@ -7,6 +7,7 @@
 package mapsv1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -94,14 +95,14 @@ var File_maps_v1_maps_proto protoreflect.FileDescriptor
 
 const file_maps_v1_maps_proto_rawDesc = "" +
 	"\n" +
-	"\x12maps/v1/maps.proto\x12\amaps.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa6\x01\n" +
-	"\x03Map\x12\x15\n" +
-	"\x06map_id\x18\x01 \x01(\x05R\x05mapId\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x129\n" +
+	"\x12maps/v1/maps.proto\x12\amaps.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc6\x01\n" +
+	"\x03Map\x12\x1d\n" +
+	"\x06map_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05mapId\x12\x1a\n" +
+	"\x04name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12A\n" +
 	"\n" +
-	"created_on\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"created_on\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOnB\x8e\x01\n" +
+	"updated_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOnB\x8e\x01\n" +
 	"\vcom.maps.v1B\tMapsProtoP\x01Z7github.com/leighmacdonald/gbans/internal/maps/v1;mapsv1\xa2\x02\x03MXX\xaa\x02\aMaps.V1\xca\x02\aMaps\\V1\xe2\x02\x13Maps\\V1\\GPBMetadata\xea\x02\bMaps::V1b\beditionsp\xe8\a"
 
 var (

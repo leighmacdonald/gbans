@@ -6,7 +6,7 @@ import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegen
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Duration, Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_duration, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
-import type { Map } from "../../maps/v1/maps_pb";
+import type { Map, MapValid } from "../../maps/v1/maps_pb";
 import { file_maps_v1_maps } from "../../maps/v1/maps_pb";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -26,7 +26,15 @@ export type SpeedrunCreateRequest = Message<"servers.v1.SpeedrunCreateRequest"> 
   speedrun?: Speedrun;
 };
 
-export type SpeedrunCreateRequestValid = SpeedrunCreateRequest;
+/**
+ * @generated from message servers.v1.SpeedrunCreateRequest
+ */
+export type SpeedrunCreateRequestValid = Message<"servers.v1.SpeedrunCreateRequest"> & {
+  /**
+   * @generated from field: servers.v1.Speedrun speedrun = 1;
+   */
+  speedrun?: SpeedrunValid;
+};
 
 /**
  * Describes the message servers.v1.SpeedrunCreateRequest.
@@ -45,7 +53,15 @@ export type SpeedrunCreateResponse = Message<"servers.v1.SpeedrunCreateResponse"
   speedrun?: Speedrun;
 };
 
-export type SpeedrunCreateResponseValid = SpeedrunCreateResponse;
+/**
+ * @generated from message servers.v1.SpeedrunCreateResponse
+ */
+export type SpeedrunCreateResponseValid = Message<"servers.v1.SpeedrunCreateResponse"> & {
+  /**
+   * @generated from field: servers.v1.Speedrun speedrun = 1;
+   */
+  speedrun?: SpeedrunValid;
+};
 
 /**
  * Describes the message servers.v1.SpeedrunCreateResponse.
@@ -83,7 +99,15 @@ export type QueryResponse = Message<"servers.v1.QueryResponse"> & {
   speedrun?: Speedrun;
 };
 
-export type QueryResponseValid = QueryResponse;
+/**
+ * @generated from message servers.v1.QueryResponse
+ */
+export type QueryResponseValid = Message<"servers.v1.QueryResponse"> & {
+  /**
+   * @generated from field: servers.v1.Speedrun speedrun = 1;
+   */
+  speedrun?: SpeedrunValid;
+};
 
 /**
  * Describes the message servers.v1.QueryResponse.
@@ -102,7 +126,15 @@ export type SpeedrunMapOverview = Message<"servers.v1.SpeedrunMapOverview"> & {
   speedruns: SpeedrunOverview[];
 };
 
-export type SpeedrunMapOverviewValid = SpeedrunMapOverview;
+/**
+ * @generated from message servers.v1.SpeedrunMapOverview
+ */
+export type SpeedrunMapOverviewValid = Message<"servers.v1.SpeedrunMapOverview"> & {
+  /**
+   * @generated from field: repeated servers.v1.SpeedrunOverview speedruns = 1;
+   */
+  speedruns: SpeedrunOverviewValid[];
+};
 
 /**
  * Describes the message servers.v1.SpeedrunMapOverview.
@@ -140,7 +172,15 @@ export type OverallRecentResponse = Message<"servers.v1.OverallRecentResponse"> 
   speedruns: SpeedrunMapOverview[];
 };
 
-export type OverallRecentResponseValid = OverallRecentResponse;
+/**
+ * @generated from message servers.v1.OverallRecentResponse
+ */
+export type OverallRecentResponseValid = Message<"servers.v1.OverallRecentResponse"> & {
+  /**
+   * @generated from field: repeated servers.v1.SpeedrunMapOverview speedruns = 1;
+   */
+  speedruns: SpeedrunMapOverviewValid[];
+};
 
 /**
  * Describes the message servers.v1.OverallRecentResponse.
@@ -178,7 +218,15 @@ export type Speedruns = Message<"servers.v1.Speedruns"> & {
   speedruns: Speedrun[];
 };
 
-export type SpeedrunsValid = Speedruns;
+/**
+ * @generated from message servers.v1.Speedruns
+ */
+export type SpeedrunsValid = Message<"servers.v1.Speedruns"> & {
+  /**
+   * @generated from field: repeated servers.v1.Speedrun speedruns = 1;
+   */
+  speedruns: SpeedrunValid[];
+};
 
 /**
  * Describes the message servers.v1.Speedruns.
@@ -197,7 +245,15 @@ export type OverallTopNResponse = Message<"servers.v1.OverallTopNResponse"> & {
   speedruns: { [key: string]: Speedruns };
 };
 
-export type OverallTopNResponseValid = OverallTopNResponse;
+/**
+ * @generated from message servers.v1.OverallTopNResponse
+ */
+export type OverallTopNResponseValid = Message<"servers.v1.OverallTopNResponse"> & {
+  /**
+   * @generated from field: map<string, servers.v1.Speedruns> speedruns = 1;
+   */
+  speedruns: { [key: string]: SpeedrunsValid };
+};
 
 /**
  * Describes the message servers.v1.OverallTopNResponse.
@@ -295,7 +351,75 @@ export type Speedrun = Message<"servers.v1.Speedrun"> & {
   participants: Participant[];
 };
 
-export type SpeedrunValid = Speedrun;
+/**
+ * @generated from message servers.v1.Speedrun
+ */
+export type SpeedrunValid = Message<"servers.v1.Speedrun"> & {
+  /**
+   * @generated from field: int32 speedrun_id = 1;
+   */
+  speedrunId: number;
+
+  /**
+   * @generated from field: int32 server_id = 2;
+   */
+  serverId: number;
+
+  /**
+   * @generated from field: int32 rank = 3;
+   */
+  rank: number;
+
+  /**
+   * @generated from field: int32 initial_rank = 4;
+   */
+  initialRank: number;
+
+  /**
+   * @generated from field: maps.v1.Map map = 5;
+   */
+  map?: MapValid;
+
+  /**
+   * @generated from field: google.protobuf.Duration duration = 6;
+   */
+  duration?: Duration;
+
+  /**
+   * @generated from field: int32 player_count = 7;
+   */
+  playerCount: number;
+
+  /**
+   * @generated from field: int32 bot_count = 8;
+   */
+  botCount: number;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 9;
+   */
+  createdOn?: Timestamp;
+
+  /**
+   * @generated from field: string category = 10;
+   */
+  category: string;
+
+  /**
+   * @generated from field: int32 total_players = 11;
+   */
+  totalPlayers: number;
+
+  /**
+   * @generated from field: repeated servers.v1.Capture captures = 12;
+   */
+  captures: CaptureValid[];
+
+  /**
+   * @generated from field: repeated servers.v1.Participant participants = 13;
+   */
+  participants: ParticipantValid[];
+};
 
 /**
  * Describes the message servers.v1.Speedrun.
@@ -364,7 +488,65 @@ export type SpeedrunOverview = Message<"servers.v1.SpeedrunOverview"> & {
   totalPlayers: number;
 };
 
-export type SpeedrunOverviewValid = SpeedrunOverview;
+/**
+ * @generated from message servers.v1.SpeedrunOverview
+ */
+export type SpeedrunOverviewValid = Message<"servers.v1.SpeedrunOverview"> & {
+  /**
+   * @generated from field: int32 speedrun_id = 1;
+   */
+  speedrunId: number;
+
+  /**
+   * @generated from field: int32 server_id = 2;
+   */
+  serverId: number;
+
+  /**
+   * @generated from field: int32 rank = 3;
+   */
+  rank: number;
+
+  /**
+   * @generated from field: int32 initial_rank = 4;
+   */
+  initialRank: number;
+
+  /**
+   * @generated from field: maps.v1.Map map = 5;
+   */
+  map?: MapValid;
+
+  /**
+   * @generated from field: google.protobuf.Duration duration = 6;
+   */
+  duration?: Duration;
+
+  /**
+   * @generated from field: int32 player_count = 7;
+   */
+  playerCount: number;
+
+  /**
+   * @generated from field: int32 bot_count = 8;
+   */
+  botCount: number;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 9;
+   */
+  createdOn?: Timestamp;
+
+  /**
+   * @generated from field: string category = 10;
+   */
+  category: string;
+
+  /**
+   * @generated from field: int32 total_players = 11;
+   */
+  totalPlayers: number;
+};
 
 /**
  * Describes the message servers.v1.SpeedrunOverview.
@@ -383,7 +565,15 @@ export type MapSpeedrunsResponse = Message<"servers.v1.MapSpeedrunsResponse"> & 
   speedruns: SpeedrunOverview[];
 };
 
-export type MapSpeedrunsResponseValid = MapSpeedrunsResponse;
+/**
+ * @generated from message servers.v1.MapSpeedrunsResponse
+ */
+export type MapSpeedrunsResponseValid = Message<"servers.v1.MapSpeedrunsResponse"> & {
+  /**
+   * @generated from field: repeated servers.v1.SpeedrunOverview speedruns = 1;
+   */
+  speedruns: SpeedrunOverviewValid[];
+};
 
 /**
  * Describes the message servers.v1.MapSpeedrunsResponse.
