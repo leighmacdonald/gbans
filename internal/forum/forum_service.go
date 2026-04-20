@@ -25,11 +25,32 @@ type Service struct {
 	forums Forums
 }
 
-func NewService(forums Forums) Service {
-	return Service{forums: forums}
+func NewService(forums Forums, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := forumv1connect.NewForumServiceHandler(Service{forums: forums}, option...)
+
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceActiveUsersProcedure, rpc.WithMinPermissions(permission.Guest))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceOverviewProcedure, rpc.WithMinPermissions(permission.Guest))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceRecentMessagesProcedure, rpc.WithMinPermissions(permission.Guest))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceThreadsProcedure, rpc.WithMinPermissions(permission.Guest))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceThreadProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceThreadDeleteProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceForumProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceForumMessagesProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceThreadCreateProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceThreadEditProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceThreadReplyCreateProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceThreadReplyEditProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceMessageDeleteProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceCategoryCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceCategoryEditProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceCategoryProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceForumCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceForumEditProcedure, rpc.WithMinPermissions(permission.Moderator))
+
+	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
-func (s Service) ActiveUsers(ctx context.Context, req *emptypb.Empty) (*v1.ActiveUsersResponse, error) {
+func (s Service) ActiveUsers(_ context.Context, _ *emptypb.Empty) (*v1.ActiveUsersResponse, error) {
 	current := s.forums.Current()
 	resp := v1.ActiveUsersResponse{UserActivity: make([]*v1.UserActivity, len(current))}
 

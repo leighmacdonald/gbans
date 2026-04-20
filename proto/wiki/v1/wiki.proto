@@ -2,6 +2,7 @@ edition = "2023";
 
 package wiki.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 import "person/v1/privilege.proto";
 
@@ -11,26 +12,26 @@ service WikiService {
 }
 
 message Wiki {
-  string slug = 1;
-  string body_md = 2;
-  int32 revision = 3;
-  person.v1.Privilege permission_level = 4;
-  google.protobuf.Timestamp created_on = 5;
-  google.protobuf.Timestamp updated_on = 6;
+  string slug = 1 [(buf.validate.field).required = true];
+  string body_md = 2 [(buf.validate.field).required = true];
+  int32 revision = 3 [(buf.validate.field).required = true];
+  person.v1.Privilege permission_level = 4 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 5 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 6 [(buf.validate.field).required = true];
 }
 
 message GetRequest {
-  string slug = 1;
+  string slug = 1 [(buf.validate.field).required = true];
 }
 
 message GetResponse {
-  Wiki wiki = 1;
+  Wiki wiki = 1 [(buf.validate.field).required = true];
 }
 
 message UpdateRequest {
-  Wiki wiki = 1;
+  Wiki wiki = 1 [(buf.validate.field).required = true];
 }
 
 message UpdateResponse {
-  Wiki wiki = 1;
+  Wiki wiki = 1 [(buf.validate.field).required = true];
 }

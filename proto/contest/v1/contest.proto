@@ -69,86 +69,107 @@ enum Direction {
 message VoteRequest {
   string contest_id = 1 [(buf.validate.field).string.uuid = true];
   string contest_entry_id = 2 [(buf.validate.field).string.uuid = true];
-  Direction direction = 3 [
-    (buf.validate.field).string.in = "up",
-    (buf.validate.field).string.in = "down"
-  ];
+  Direction direction = 3 [(buf.validate.field).required = true];
 }
 
 message VoteResponse {
-  Direction current_direction = 1;
+  Direction current_direction = 1 [(buf.validate.field).required = true];
 }
 
 message UploadRequest {
-  string contest_id = 1 [(buf.validate.field).string.uuid = true];
+  string contest_id = 1 [
+    (buf.validate.field).string.uuid = true,
+    (buf.validate.field).required = true
+  ];
   string name = 2;
-  bytes content = 3;
+  bytes content = 3 [(buf.validate.field).required = true];
 }
 
 message UploadResponse {
-  asset.v1.Asset asset = 1;
+  asset.v1.Asset asset = 1 [(buf.validate.field).required = true];
 }
 
 message EntriesResponse {
-  repeated Entry entries = 1;
+  repeated Entry entries = 1 [(buf.validate.field).required = true];
 }
 
 message EntriesRequest {
-  string contest_id = 1 [(buf.validate.field).string.uuid = true];
+  string contest_id = 1 [
+    (buf.validate.field).string.uuid = true,
+    (buf.validate.field).required = true
+  ];
 }
 
 message ContestRequest {
-  string contest_id = 1 [(buf.validate.field).string.uuid = true];
+  string contest_id = 1 [
+    (buf.validate.field).string.uuid = true,
+    (buf.validate.field).required = true
+  ];
 }
 
 message ContestResponse {
-  Contest contest = 1;
+  Contest contest = 1 [(buf.validate.field).required = true];
 }
 
 message Vote {
-  string contest_entry_id = 1 [(buf.validate.field).string.uuid = true];
-  int64 steam_id = 2;
-  int32 vote = 3;
-  google.protobuf.Timestamp created_on = 4;
-  google.protobuf.Timestamp updated_on = 5;
+  string contest_entry_id = 1 [
+    (buf.validate.field).string.uuid = true,
+    (buf.validate.field).required = true
+  ];
+  int64 steam_id = 2 [(buf.validate.field).required = true];
+  int32 vote = 3 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 4 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 5 [(buf.validate.field).required = true];
 }
 
 message Entry {
-  string contest_id = 1 [(buf.validate.field).string.uuid = true];
-  string contest_entry_id = 2 [(buf.validate.field).string.uuid = true];
-  int64 steam_id = 3;
+  string contest_id = 1 [
+    (buf.validate.field).string.uuid = true,
+    (buf.validate.field).required = true
+  ];
+  string contest_entry_id = 2 [
+    (buf.validate.field).string.uuid = true,
+    (buf.validate.field).required = true
+  ];
+  int64 steam_id = 3 [(buf.validate.field).required = true];
   string persona_name = 4;
   string avatar_hash = 5;
-  string asset_id = 6 [(buf.validate.field).string.uuid = true];
-  string description = 7;
-  int32 placement = 8;
+  string asset_id = 6 [
+    (buf.validate.field).string.uuid = true,
+    (buf.validate.field).required = true
+  ];
+  string description = 7 [(buf.validate.field).required = true];
+  int32 placement = 8 [(buf.validate.field).required = true];
   bool deleted = 9;
-  int32 votes_up = 10;
-  int32 votes_down = 11;
-  asset.v1.Asset asset = 12;
-  google.protobuf.Timestamp created_on = 13;
-  google.protobuf.Timestamp updated_on = 14;
+  int32 votes_up = 10 [(buf.validate.field).required = true];
+  int32 votes_down = 11 [(buf.validate.field).required = true];
+  asset.v1.Asset asset = 12 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 13 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 14 [(buf.validate.field).required = true];
 }
 
 message Contest {
-  string title = 1;
-  string description = 2;
-  bool public = 3;
-  bool hide_submissions = 4;
-  google.protobuf.Timestamp date_start = 5;
+  string title = 1 [(buf.validate.field).required = true];
+  string description = 2 [(buf.validate.field).required = true];
+  bool public = 3 [(buf.validate.field).required = true];
+  bool hide_submissions = 4 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp date_start = 5 [(buf.validate.field).required = true];
   google.protobuf.Timestamp date_end = 6;
-  int32 max_submissions = 7;
-  int32 own_submissions = 8;
-  string media_types = 9;
-  int32 num_entries = 10;
-  bool voting = 11;
-  person.v1.Privilege min_permission_level = 12;
-  bool down_votes = 13;
-  google.protobuf.Timestamp created_on = 14;
-  google.protobuf.Timestamp updated_on = 15;
-  string contest_id = 16 [(buf.validate.field).string.uuid = true];
+  int32 max_submissions = 7 [(buf.validate.field).required = true];
+  int32 own_submissions = 8 [(buf.validate.field).required = true];
+  string media_types = 9 [(buf.validate.field).required = true];
+  int32 num_entries = 10 [(buf.validate.field).required = true];
+  bool voting = 11 [(buf.validate.field).required = true];
+  person.v1.Privilege min_permission_level = 12 [(buf.validate.field).required = true];
+  bool down_votes = 13 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 14 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 15 [(buf.validate.field).required = true];
+  string contest_id = 16 [
+    (buf.validate.field).string.uuid = true,
+    (buf.validate.field).required = true
+  ];
 }
 
 message ContestsResponse {
-  repeated Contest contests = 1;
+  repeated Contest contests = 1 [(buf.validate.field).required = true];
 }

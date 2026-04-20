@@ -4,60 +4,58 @@ package ban.v1;
 
 import "ban/v1/ban.proto";
 import "buf/validate/validate.proto";
-import "database/query/v1/filter.proto";
-import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "person/v1/person_core.proto";
 import "person/v1/privilege.proto";
 
 service ReportService {
-  rpc ReportCreate(CreateReportRequest) returns (CreateReportResponse) {}
+  rpc ReportCreate(ReportCreateRequest) returns (ReportCreateResponse) {}
   rpc Report(ReportRequest) returns (ReportResponse) {}
   rpc ReportStatusEdit(ReportStatusEditRequest) returns (google.protobuf.Empty) {}
   rpc UserReports(UserReportsRequest) returns (UserReportsResponse) {}
 
   rpc ReportMessages(ReportMessagesRequest) returns (ReportMessagesResponse) {}
-  rpc ReportMessageCreate(CreateReportMessageRequest) returns (CreateReportMessageResponse) {}
+  rpc ReportMessageCreate(ReportMessageCreateRequest) returns (ReportMessageCreateResponse) {}
   rpc ReportMessageEdit(ReportMessageEditRequest) returns (ReportMessageEditResponse) {}
   rpc ReportMessageDelete(ReportMessageDeleteRequest) returns (google.protobuf.Empty) {}
 }
 
 message ReportMessageDeleteRequest {
-  int64 report_message_id = 1;
+  int64 report_message_id = 1 [(buf.validate.field).required = true];
 }
 
 message ReportMessageEditRequest {
-  int64 report_message_id = 1;
-  string body_md = 2;
+  int64 report_message_id = 1 [(buf.validate.field).required = true];
+  string body_md = 2 [(buf.validate.field).required = true];
 }
 
 message ReportMessageEditResponse {
-  ReportMessage message = 1;
+  ReportMessage message = 1 [(buf.validate.field).required = true];
 }
 
 message ReportMessagesRequest {
-  int64 report_id = 1;
+  int64 report_id = 1 [(buf.validate.field).required = true];
 }
 
 message UserReportsRequest {
-  int64 steam_id = 1;
+  int64 steam_id = 1 [(buf.validate.field).required = true];
 }
 
 message ReportMessagesResponse {
-  repeated ReportMessage messages = 1;
+  repeated ReportMessage messages = 1 [(buf.validate.field).required = true];
 }
 
 message UserReportsResponse {
-  repeated ReportWithAuthor reports = 1;
+  repeated ReportWithAuthor reports = 1 [(buf.validate.field).required = true];
 }
 
 message ReportRequest {
-  int64 report_id = 1;
+  int64 report_id = 1 [(buf.validate.field).required = true];
 }
 
 message ReportResponse {
-  ReportWithAuthor report = 1;
+  ReportWithAuthor report = 1 [(buf.validate.field).required = true];
 }
 
 enum ReportStatus {
@@ -68,65 +66,65 @@ enum ReportStatus {
 }
 
 message ReportMessage {
-  int64 report_id = 1;
-  int64 report_message_id = 2;
-  int64 author_id = 3;
-  string message_md = 4;
-  bool deleted = 5;
-  google.protobuf.Timestamp created_on = 6;
-  google.protobuf.Timestamp updated_on = 7;
-  string persona_name = 8;
-  string avatar_hash = 9;
-  person.v1.Privilege permission_level = 10;
+  int64 report_id = 1 [(buf.validate.field).required = true];
+  int64 report_message_id = 2 [(buf.validate.field).required = true];
+  int64 author_id = 3 [(buf.validate.field).required = true];
+  string message_md = 4 [(buf.validate.field).required = true];
+  bool deleted = 5 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 6 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 7 [(buf.validate.field).required = true];
+  string persona_name = 8 [(buf.validate.field).required = true];
+  string avatar_hash = 9 [(buf.validate.field).required = true];
+  person.v1.Privilege permission_level = 10 [(buf.validate.field).required = true];
 }
 
 message Report {
-  int64 report_id = 1;
-  int64 source_id = 2;
-  int64 target_id = 3;
-  string description = 4;
-  ReportStatus report_status = 5;
-  BanReason reason = 6;
-  string reason_text = 7;
-  bool deleted = 8;
+  int64 report_id = 1 [(buf.validate.field).required = true];
+  int64 source_id = 2 [(buf.validate.field).required = true];
+  int64 target_id = 3 [(buf.validate.field).required = true];
+  string description = 4 [(buf.validate.field).required = true];
+  ReportStatus report_status = 5 [(buf.validate.field).required = true];
+  BanReason reason = 6 [(buf.validate.field).required = true];
+  string reason_text = 7 [(buf.validate.field).required = true];
+  bool deleted = 8 [(buf.validate.field).required = true];
   int32 demo_tick = 9;
   int64 demo_id = 10;
   int64 person_message_id = 11;
-  google.protobuf.Timestamp created_on = 12;
-  google.protobuf.Timestamp updated_on = 13;
+  google.protobuf.Timestamp created_on = 12 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 13 [(buf.validate.field).required = true];
 }
 
 message ReportWithAuthor {
-  Report report = 1;
-  person.v1.PersonCore author = 2;
-  person.v1.PersonCore subject = 3;
+  Report report = 1 [(buf.validate.field).required = true];
+  person.v1.PersonCore author = 2 [(buf.validate.field).required = true];
+  person.v1.PersonCore subject = 3 [(buf.validate.field).required = true];
 }
 
 message ReportStatusEditRequest {
-  int64 report_id = 1;
-  ReportStatus report_status = 2;
+  int64 report_id = 1 [(buf.validate.field).required = true];
+  ReportStatus report_status = 2 [(buf.validate.field).required = true];
 }
 
-message CreateReportRequest {
-  int64 source_id = 1;
-  int64 target_id = 2;
-  string description = 3;
-  BanReason reason = 4;
-  string reason_text = 5;
+message ReportCreateRequest {
+  int64 source_id = 1 [(buf.validate.field).required = true];
+  int64 target_id = 2 [(buf.validate.field).required = true];
+  string description = 3 [(buf.validate.field).required = true];
+  BanReason reason = 4 [(buf.validate.field).required = true];
+  string reason_text = 5 [(buf.validate.field).required = true];
   int64 demo_id = 6;
   int32 demo_tick = 7;
   int64 person_message_id = 8;
 }
 
-message CreateReportResponse {
-  ReportWithAuthor report = 1;
+message ReportCreateResponse {
+  ReportWithAuthor report = 1 [(buf.validate.field).required = true];
 }
 
-message CreateReportMessageRequest {
-  int64 report_id = 1;
-  string body_md = 2;
+message ReportMessageCreateRequest {
+  int64 report_id = 1 [(buf.validate.field).required = true];
+  string body_md = 2 [(buf.validate.field).required = true];
 }
 
-message CreateReportMessageResponse {
-  ReportMessage report_message = 1;
+message ReportMessageCreateResponse {
+  ReportMessage report_message = 1 [(buf.validate.field).required = true];
 }

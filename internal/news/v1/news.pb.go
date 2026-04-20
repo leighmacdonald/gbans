@@ -351,27 +351,27 @@ func (x *CreateResponse) GetArticle() *Article {
 	return nil
 }
 
-type NewsAllResponse struct {
+type LatestResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Article       []*Article             `protobuf:"bytes,1,rep,name=article" json:"article,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *NewsAllResponse) Reset() {
-	*x = NewsAllResponse{}
+func (x *LatestResponse) Reset() {
+	*x = LatestResponse{}
 	mi := &file_news_v1_news_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NewsAllResponse) String() string {
+func (x *LatestResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NewsAllResponse) ProtoMessage() {}
+func (*LatestResponse) ProtoMessage() {}
 
-func (x *NewsAllResponse) ProtoReflect() protoreflect.Message {
+func (x *LatestResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_news_v1_news_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -383,12 +383,12 @@ func (x *NewsAllResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NewsAllResponse.ProtoReflect.Descriptor instead.
-func (*NewsAllResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use LatestResponse.ProtoReflect.Descriptor instead.
+func (*LatestResponse) Descriptor() ([]byte, []int) {
 	return file_news_v1_news_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *NewsAllResponse) GetArticle() []*Article {
+func (x *LatestResponse) GetArticle() []*Article {
 	if x != nil {
 		return x.Article
 	}
@@ -542,8 +542,8 @@ const file_news_v1_news_proto_rawDesc = "" +
 	"\n" +
 	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\"<\n" +
 	"\x0eCreateResponse\x12*\n" +
-	"\aarticle\x18\x01 \x01(\v2\x10.news.v1.ArticleR\aarticle\"=\n" +
-	"\x0fNewsAllResponse\x12*\n" +
+	"\aarticle\x18\x01 \x01(\v2\x10.news.v1.ArticleR\aarticle\"<\n" +
+	"\x0eLatestResponse\x12*\n" +
 	"\aarticle\x18\x01 \x03(\v2\x10.news.v1.ArticleR\aarticle\"\xb3\x01\n" +
 	"\vEditRequest\x12\x17\n" +
 	"\anews_id\x18\x01 \x01(\x05R\x06newsId\x12\x14\n" +
@@ -553,9 +553,9 @@ const file_news_v1_news_proto_rawDesc = "" +
 	"\n" +
 	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\":\n" +
 	"\fEditResponse\x12*\n" +
-	"\aarticle\x18\x01 \x01(\v2\x10.news.v1.ArticleR\aarticle2\xb2\x02\n" +
-	"\vNewsService\x12<\n" +
-	"\x06Latest\x12\x16.news.v1.LatestRequest\x1a\x18.news.v1.NewsAllResponse\"\x00\x125\n" +
+	"\aarticle\x18\x01 \x01(\v2\x10.news.v1.ArticleR\aarticle2\xb1\x02\n" +
+	"\vNewsService\x12;\n" +
+	"\x06Latest\x12\x16.news.v1.LatestRequest\x1a\x17.news.v1.LatestResponse\"\x00\x125\n" +
 	"\x04Edit\x12\x14.news.v1.EditRequest\x1a\x15.news.v1.EditResponse\"\x00\x12;\n" +
 	"\x06Create\x12\x16.news.v1.CreateRequest\x1a\x17.news.v1.CreateResponse\"\x00\x12:\n" +
 	"\x06Delete\x12\x16.news.v1.DeleteRequest\x1a\x16.google.protobuf.Empty\"\x00\x125\n" +
@@ -582,7 +582,7 @@ var file_news_v1_news_proto_goTypes = []any{
 	(*LatestRequest)(nil),         // 3: news.v1.LatestRequest
 	(*CreateRequest)(nil),         // 4: news.v1.CreateRequest
 	(*CreateResponse)(nil),        // 5: news.v1.CreateResponse
-	(*NewsAllResponse)(nil),       // 6: news.v1.NewsAllResponse
+	(*LatestResponse)(nil),        // 6: news.v1.LatestResponse
 	(*EditRequest)(nil),           // 7: news.v1.EditRequest
 	(*EditResponse)(nil),          // 8: news.v1.EditResponse
 	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
@@ -594,7 +594,7 @@ var file_news_v1_news_proto_depIdxs = []int32{
 	9,  // 2: news.v1.Article.updated_on:type_name -> google.protobuf.Timestamp
 	9,  // 3: news.v1.CreateRequest.created_on:type_name -> google.protobuf.Timestamp
 	1,  // 4: news.v1.CreateResponse.article:type_name -> news.v1.Article
-	1,  // 5: news.v1.NewsAllResponse.article:type_name -> news.v1.Article
+	1,  // 5: news.v1.LatestResponse.article:type_name -> news.v1.Article
 	9,  // 6: news.v1.EditRequest.created_on:type_name -> google.protobuf.Timestamp
 	1,  // 7: news.v1.EditResponse.article:type_name -> news.v1.Article
 	3,  // 8: news.v1.NewsService.Latest:input_type -> news.v1.LatestRequest
@@ -602,7 +602,7 @@ var file_news_v1_news_proto_depIdxs = []int32{
 	4,  // 10: news.v1.NewsService.Create:input_type -> news.v1.CreateRequest
 	2,  // 11: news.v1.NewsService.Delete:input_type -> news.v1.DeleteRequest
 	10, // 12: news.v1.NewsService.All:input_type -> google.protobuf.Empty
-	6,  // 13: news.v1.NewsService.Latest:output_type -> news.v1.NewsAllResponse
+	6,  // 13: news.v1.NewsService.Latest:output_type -> news.v1.LatestResponse
 	8,  // 14: news.v1.NewsService.Edit:output_type -> news.v1.EditResponse
 	5,  // 15: news.v1.NewsService.Create:output_type -> news.v1.CreateResponse
 	10, // 16: news.v1.NewsService.Delete:output_type -> google.protobuf.Empty

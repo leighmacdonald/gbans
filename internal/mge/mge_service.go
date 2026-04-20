@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"connectrpc.com/connect"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	v1 "github.com/leighmacdonald/gbans/internal/mge/v1"
 	"github.com/leighmacdonald/gbans/internal/mge/v1/mgev1connect"
@@ -19,8 +20,13 @@ type Service struct {
 	mge MGE
 }
 
-func NewService(mge MGE) Service {
-	return Service{mge: mge}
+func NewService(mge MGE, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
+	pattern, handler := mgev1connect.NewMGEServiceHandler(Service{mge: mge}, options...)
+
+	authMiddleware.AuthedRoute(mgev1connect.MGEServiceGetRatingsOverallProcedure, rpc.WithMinPermissions(permission.Guest))
+	authMiddleware.AuthedRoute(mgev1connect.MGEServiceGetHistoryProcedure, rpc.WithMinPermissions(permission.Guest))
+
+	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
 func (s Service) GetRatingsOverall(ctx context.Context, req *v1.GetRatingsOverallRequest) (*v1.GetRatingsOverallResponse, error) {

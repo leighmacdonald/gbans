@@ -8,11 +8,9 @@ package banv1
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
-	_ "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	v1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/durationpb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
@@ -851,7 +849,7 @@ func (x *ReportStatusEditRequest) GetReportStatus() ReportStatus {
 	return ReportStatus_REPORT_STATUS_OPENED_UNSPECIFIED
 }
 
-type CreateReportRequest struct {
+type ReportCreateRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	SourceId        *int64                 `protobuf:"varint,1,opt,name=source_id,json=sourceId" json:"source_id,omitempty"`
 	TargetId        *int64                 `protobuf:"varint,2,opt,name=target_id,json=targetId" json:"target_id,omitempty"`
@@ -865,20 +863,20 @@ type CreateReportRequest struct {
 	sizeCache       protoimpl.SizeCache
 }
 
-func (x *CreateReportRequest) Reset() {
-	*x = CreateReportRequest{}
+func (x *ReportCreateRequest) Reset() {
+	*x = ReportCreateRequest{}
 	mi := &file_ban_v1_report_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CreateReportRequest) String() string {
+func (x *ReportCreateRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CreateReportRequest) ProtoMessage() {}
+func (*ReportCreateRequest) ProtoMessage() {}
 
-func (x *CreateReportRequest) ProtoReflect() protoreflect.Message {
+func (x *ReportCreateRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_ban_v1_report_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -890,88 +888,88 @@ func (x *CreateReportRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CreateReportRequest.ProtoReflect.Descriptor instead.
-func (*CreateReportRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ReportCreateRequest.ProtoReflect.Descriptor instead.
+func (*ReportCreateRequest) Descriptor() ([]byte, []int) {
 	return file_ban_v1_report_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *CreateReportRequest) GetSourceId() int64 {
+func (x *ReportCreateRequest) GetSourceId() int64 {
 	if x != nil && x.SourceId != nil {
 		return *x.SourceId
 	}
 	return 0
 }
 
-func (x *CreateReportRequest) GetTargetId() int64 {
+func (x *ReportCreateRequest) GetTargetId() int64 {
 	if x != nil && x.TargetId != nil {
 		return *x.TargetId
 	}
 	return 0
 }
 
-func (x *CreateReportRequest) GetDescription() string {
+func (x *ReportCreateRequest) GetDescription() string {
 	if x != nil && x.Description != nil {
 		return *x.Description
 	}
 	return ""
 }
 
-func (x *CreateReportRequest) GetReason() BanReason {
+func (x *ReportCreateRequest) GetReason() BanReason {
 	if x != nil && x.Reason != nil {
 		return *x.Reason
 	}
 	return BanReason_BAN_REASON_UNSPECIFIED
 }
 
-func (x *CreateReportRequest) GetReasonText() string {
+func (x *ReportCreateRequest) GetReasonText() string {
 	if x != nil && x.ReasonText != nil {
 		return *x.ReasonText
 	}
 	return ""
 }
 
-func (x *CreateReportRequest) GetDemoId() int64 {
+func (x *ReportCreateRequest) GetDemoId() int64 {
 	if x != nil && x.DemoId != nil {
 		return *x.DemoId
 	}
 	return 0
 }
 
-func (x *CreateReportRequest) GetDemoTick() int32 {
+func (x *ReportCreateRequest) GetDemoTick() int32 {
 	if x != nil && x.DemoTick != nil {
 		return *x.DemoTick
 	}
 	return 0
 }
 
-func (x *CreateReportRequest) GetPersonMessageId() int64 {
+func (x *ReportCreateRequest) GetPersonMessageId() int64 {
 	if x != nil && x.PersonMessageId != nil {
 		return *x.PersonMessageId
 	}
 	return 0
 }
 
-type CreateReportResponse struct {
+type ReportCreateResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Report        *ReportWithAuthor      `protobuf:"bytes,1,opt,name=report" json:"report,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CreateReportResponse) Reset() {
-	*x = CreateReportResponse{}
+func (x *ReportCreateResponse) Reset() {
+	*x = ReportCreateResponse{}
 	mi := &file_ban_v1_report_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CreateReportResponse) String() string {
+func (x *ReportCreateResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CreateReportResponse) ProtoMessage() {}
+func (*ReportCreateResponse) ProtoMessage() {}
 
-func (x *CreateReportResponse) ProtoReflect() protoreflect.Message {
+func (x *ReportCreateResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_ban_v1_report_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -983,19 +981,19 @@ func (x *CreateReportResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CreateReportResponse.ProtoReflect.Descriptor instead.
-func (*CreateReportResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ReportCreateResponse.ProtoReflect.Descriptor instead.
+func (*ReportCreateResponse) Descriptor() ([]byte, []int) {
 	return file_ban_v1_report_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *CreateReportResponse) GetReport() *ReportWithAuthor {
+func (x *ReportCreateResponse) GetReport() *ReportWithAuthor {
 	if x != nil {
 		return x.Report
 	}
 	return nil
 }
 
-type CreateReportMessageRequest struct {
+type ReportMessageCreateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ReportId      *int64                 `protobuf:"varint,1,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
 	BodyMd        *string                `protobuf:"bytes,2,opt,name=body_md,json=bodyMd" json:"body_md,omitempty"`
@@ -1003,20 +1001,20 @@ type CreateReportMessageRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CreateReportMessageRequest) Reset() {
-	*x = CreateReportMessageRequest{}
+func (x *ReportMessageCreateRequest) Reset() {
+	*x = ReportMessageCreateRequest{}
 	mi := &file_ban_v1_report_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CreateReportMessageRequest) String() string {
+func (x *ReportMessageCreateRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CreateReportMessageRequest) ProtoMessage() {}
+func (*ReportMessageCreateRequest) ProtoMessage() {}
 
-func (x *CreateReportMessageRequest) ProtoReflect() protoreflect.Message {
+func (x *ReportMessageCreateRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_ban_v1_report_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1028,46 +1026,46 @@ func (x *CreateReportMessageRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CreateReportMessageRequest.ProtoReflect.Descriptor instead.
-func (*CreateReportMessageRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ReportMessageCreateRequest.ProtoReflect.Descriptor instead.
+func (*ReportMessageCreateRequest) Descriptor() ([]byte, []int) {
 	return file_ban_v1_report_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *CreateReportMessageRequest) GetReportId() int64 {
+func (x *ReportMessageCreateRequest) GetReportId() int64 {
 	if x != nil && x.ReportId != nil {
 		return *x.ReportId
 	}
 	return 0
 }
 
-func (x *CreateReportMessageRequest) GetBodyMd() string {
+func (x *ReportMessageCreateRequest) GetBodyMd() string {
 	if x != nil && x.BodyMd != nil {
 		return *x.BodyMd
 	}
 	return ""
 }
 
-type CreateReportMessageResponse struct {
+type ReportMessageCreateResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ReportMessage *ReportMessage         `protobuf:"bytes,1,opt,name=report_message,json=reportMessage" json:"report_message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CreateReportMessageResponse) Reset() {
-	*x = CreateReportMessageResponse{}
+func (x *ReportMessageCreateResponse) Reset() {
+	*x = ReportMessageCreateResponse{}
 	mi := &file_ban_v1_report_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CreateReportMessageResponse) String() string {
+func (x *ReportMessageCreateResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CreateReportMessageResponse) ProtoMessage() {}
+func (*ReportMessageCreateResponse) ProtoMessage() {}
 
-func (x *CreateReportMessageResponse) ProtoReflect() protoreflect.Message {
+func (x *ReportMessageCreateResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_ban_v1_report_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1079,12 +1077,12 @@ func (x *CreateReportMessageResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CreateReportMessageResponse.ProtoReflect.Descriptor instead.
-func (*CreateReportMessageResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ReportMessageCreateResponse.ProtoReflect.Descriptor instead.
+func (*ReportMessageCreateResponse) Descriptor() ([]byte, []int) {
 	return file_ban_v1_report_proto_rawDescGZIP(), []int{16}
 }
 
-func (x *CreateReportMessageResponse) GetReportMessage() *ReportMessage {
+func (x *ReportMessageCreateResponse) GetReportMessage() *ReportMessage {
 	if x != nil {
 		return x.ReportMessage
 	}
@@ -1095,96 +1093,96 @@ var File_ban_v1_report_proto protoreflect.FileDescriptor
 
 const file_ban_v1_report_proto_rawDesc = "" +
 	"\n" +
-	"\x13ban/v1/report.proto\x12\x06ban.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bperson/v1/person_core.proto\x1a\x19person/v1/privilege.proto\"H\n" +
-	"\x1aReportMessageDeleteRequest\x12*\n" +
-	"\x11report_message_id\x18\x01 \x01(\x03R\x0freportMessageId\"_\n" +
-	"\x18ReportMessageEditRequest\x12*\n" +
-	"\x11report_message_id\x18\x01 \x01(\x03R\x0freportMessageId\x12\x17\n" +
-	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\"L\n" +
-	"\x19ReportMessageEditResponse\x12/\n" +
-	"\amessage\x18\x01 \x01(\v2\x15.ban.v1.ReportMessageR\amessage\"4\n" +
-	"\x15ReportMessagesRequest\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\x03R\breportId\"/\n" +
-	"\x12UserReportsRequest\x12\x19\n" +
-	"\bsteam_id\x18\x01 \x01(\x03R\asteamId\"K\n" +
-	"\x16ReportMessagesResponse\x121\n" +
-	"\bmessages\x18\x01 \x03(\v2\x15.ban.v1.ReportMessageR\bmessages\"I\n" +
-	"\x13UserReportsResponse\x122\n" +
-	"\areports\x18\x01 \x03(\v2\x18.ban.v1.ReportWithAuthorR\areports\",\n" +
-	"\rReportRequest\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\x03R\breportId\"B\n" +
-	"\x0eReportResponse\x120\n" +
-	"\x06report\x18\x01 \x01(\v2\x18.ban.v1.ReportWithAuthorR\x06report\"\xa9\x03\n" +
-	"\rReportMessage\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\x03R\breportId\x12*\n" +
-	"\x11report_message_id\x18\x02 \x01(\x03R\x0freportMessageId\x12\x1b\n" +
-	"\tauthor_id\x18\x03 \x01(\x03R\bauthorId\x12\x1d\n" +
+	"\x13ban/v1/report.proto\x12\x06ban.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bperson/v1/person_core.proto\x1a\x19person/v1/privilege.proto\"R\n" +
+	"\x1aReportMessageDeleteRequest\x124\n" +
+	"\x11report_message_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x0freportMessageId\"q\n" +
+	"\x18ReportMessageEditRequest\x124\n" +
+	"\x11report_message_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x0freportMessageId\x12\x1f\n" +
+	"\abody_md\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06bodyMd\"T\n" +
+	"\x19ReportMessageEditResponse\x127\n" +
+	"\amessage\x18\x01 \x01(\v2\x15.ban.v1.ReportMessageB\x06\xbaH\x03\xc8\x01\x01R\amessage\">\n" +
+	"\x15ReportMessagesRequest\x12%\n" +
+	"\treport_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\breportId\"9\n" +
+	"\x12UserReportsRequest\x12#\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\"S\n" +
+	"\x16ReportMessagesResponse\x129\n" +
+	"\bmessages\x18\x01 \x03(\v2\x15.ban.v1.ReportMessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\"Q\n" +
+	"\x13UserReportsResponse\x12:\n" +
+	"\areports\x18\x01 \x03(\v2\x18.ban.v1.ReportWithAuthorB\x06\xbaH\x03\xc8\x01\x01R\areports\"6\n" +
+	"\rReportRequest\x12%\n" +
+	"\treport_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\breportId\"J\n" +
+	"\x0eReportResponse\x128\n" +
+	"\x06report\x18\x01 \x01(\v2\x18.ban.v1.ReportWithAuthorB\x06\xbaH\x03\xc8\x01\x01R\x06report\"\xff\x03\n" +
+	"\rReportMessage\x12%\n" +
+	"\treport_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\breportId\x124\n" +
+	"\x11report_message_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x0freportMessageId\x12%\n" +
+	"\tauthor_id\x18\x03 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\bauthorId\x12%\n" +
 	"\n" +
-	"message_md\x18\x04 \x01(\tR\tmessageMd\x12\x18\n" +
-	"\adeleted\x18\x05 \x01(\bR\adeleted\x129\n" +
+	"message_md\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tmessageMd\x12 \n" +
+	"\adeleted\x18\x05 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\adeleted\x12A\n" +
 	"\n" +
-	"created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x12!\n" +
-	"\fpersona_name\x18\b \x01(\tR\vpersonaName\x12\x1f\n" +
-	"\vavatar_hash\x18\t \x01(\tR\n" +
-	"avatarHash\x12?\n" +
+	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\x12)\n" +
+	"\fpersona_name\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12'\n" +
+	"\vavatar_hash\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"avatarHash\x12G\n" +
 	"\x10permission_level\x18\n" +
-	" \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\"\xfa\x03\n" +
-	"\x06Report\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\x03R\breportId\x12\x1b\n" +
-	"\tsource_id\x18\x02 \x01(\x03R\bsourceId\x12\x1b\n" +
-	"\ttarget_id\x18\x03 \x01(\x03R\btargetId\x12 \n" +
-	"\vdescription\x18\x04 \x01(\tR\vdescription\x129\n" +
-	"\rreport_status\x18\x05 \x01(\x0e2\x14.ban.v1.ReportStatusR\freportStatus\x12)\n" +
-	"\x06reason\x18\x06 \x01(\x0e2\x11.ban.v1.BanReasonR\x06reason\x12\x1f\n" +
-	"\vreason_text\x18\a \x01(\tR\n" +
-	"reasonText\x12\x18\n" +
-	"\adeleted\x18\b \x01(\bR\adeleted\x12\x1b\n" +
-	"\tdemo_tick\x18\t \x01(\x05R\bdemoTick\x12\x17\n" +
+	" \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\"\xd8\x04\n" +
+	"\x06Report\x12%\n" +
+	"\treport_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\breportId\x12%\n" +
+	"\tsource_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\bsourceId\x12%\n" +
+	"\ttarget_id\x18\x03 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\btargetId\x12(\n" +
+	"\vdescription\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdescription\x12A\n" +
+	"\rreport_status\x18\x05 \x01(\x0e2\x14.ban.v1.ReportStatusB\x06\xbaH\x03\xc8\x01\x01R\freportStatus\x121\n" +
+	"\x06reason\x18\x06 \x01(\x0e2\x11.ban.v1.BanReasonB\x06\xbaH\x03\xc8\x01\x01R\x06reason\x12'\n" +
+	"\vreason_text\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"reasonText\x12 \n" +
+	"\adeleted\x18\b \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\adeleted\x12\x1b\n" +
+	"\tdemo_tick\x18\t \x01(\x05R\bdemoTick\x12\x1b\n" +
 	"\ademo_id\x18\n" +
-	" \x01(\x03R\x06demoId\x12*\n" +
-	"\x11person_message_id\x18\v \x01(\x03R\x0fpersonMessageId\x129\n" +
+	" \x01(\x03B\x020\x01R\x06demoId\x12.\n" +
+	"\x11person_message_id\x18\v \x01(\x03B\x020\x01R\x0fpersonMessageId\x12A\n" +
 	"\n" +
-	"created_on\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"created_on\x18\f \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"\x9a\x01\n" +
-	"\x10ReportWithAuthor\x12&\n" +
-	"\x06report\x18\x01 \x01(\v2\x0e.ban.v1.ReportR\x06report\x12-\n" +
-	"\x06author\x18\x02 \x01(\v2\x15.person.v1.PersonCoreR\x06author\x12/\n" +
-	"\asubject\x18\x03 \x01(\v2\x15.person.v1.PersonCoreR\asubject\"q\n" +
-	"\x17ReportStatusEditRequest\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\x03R\breportId\x129\n" +
-	"\rreport_status\x18\x02 \x01(\x0e2\x14.ban.v1.ReportStatusR\freportStatus\"\x9f\x02\n" +
-	"\x13CreateReportRequest\x12\x1b\n" +
-	"\tsource_id\x18\x01 \x01(\x03R\bsourceId\x12\x1b\n" +
-	"\ttarget_id\x18\x02 \x01(\x03R\btargetId\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x12)\n" +
-	"\x06reason\x18\x04 \x01(\x0e2\x11.ban.v1.BanReasonR\x06reason\x12\x1f\n" +
-	"\vreason_text\x18\x05 \x01(\tR\n" +
-	"reasonText\x12\x17\n" +
-	"\ademo_id\x18\x06 \x01(\x03R\x06demoId\x12\x1b\n" +
-	"\tdemo_tick\x18\a \x01(\x05R\bdemoTick\x12*\n" +
-	"\x11person_message_id\x18\b \x01(\x03R\x0fpersonMessageId\"H\n" +
-	"\x14CreateReportResponse\x120\n" +
-	"\x06report\x18\x01 \x01(\v2\x18.ban.v1.ReportWithAuthorR\x06report\"R\n" +
-	"\x1aCreateReportMessageRequest\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\x03R\breportId\x12\x17\n" +
-	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\"[\n" +
-	"\x1bCreateReportMessageResponse\x12<\n" +
-	"\x0ereport_message\x18\x01 \x01(\v2\x15.ban.v1.ReportMessageR\rreportMessage*\xa5\x01\n" +
+	"updated_on\x18\r \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xb2\x01\n" +
+	"\x10ReportWithAuthor\x12.\n" +
+	"\x06report\x18\x01 \x01(\v2\x0e.ban.v1.ReportB\x06\xbaH\x03\xc8\x01\x01R\x06report\x125\n" +
+	"\x06author\x18\x02 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\x06author\x127\n" +
+	"\asubject\x18\x03 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\asubject\"\x83\x01\n" +
+	"\x17ReportStatusEditRequest\x12%\n" +
+	"\treport_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\breportId\x12A\n" +
+	"\rreport_status\x18\x02 \x01(\x0e2\x14.ban.v1.ReportStatusB\x06\xbaH\x03\xc8\x01\x01R\freportStatus\"\xd3\x02\n" +
+	"\x13ReportCreateRequest\x12%\n" +
+	"\tsource_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\bsourceId\x12%\n" +
+	"\ttarget_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\btargetId\x12(\n" +
+	"\vdescription\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdescription\x121\n" +
+	"\x06reason\x18\x04 \x01(\x0e2\x11.ban.v1.BanReasonB\x06\xbaH\x03\xc8\x01\x01R\x06reason\x12'\n" +
+	"\vreason_text\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"reasonText\x12\x1b\n" +
+	"\ademo_id\x18\x06 \x01(\x03B\x020\x01R\x06demoId\x12\x1b\n" +
+	"\tdemo_tick\x18\a \x01(\x05R\bdemoTick\x12.\n" +
+	"\x11person_message_id\x18\b \x01(\x03B\x020\x01R\x0fpersonMessageId\"P\n" +
+	"\x14ReportCreateResponse\x128\n" +
+	"\x06report\x18\x01 \x01(\v2\x18.ban.v1.ReportWithAuthorB\x06\xbaH\x03\xc8\x01\x01R\x06report\"d\n" +
+	"\x1aReportMessageCreateRequest\x12%\n" +
+	"\treport_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\breportId\x12\x1f\n" +
+	"\abody_md\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06bodyMd\"c\n" +
+	"\x1bReportMessageCreateResponse\x12D\n" +
+	"\x0ereport_message\x18\x01 \x01(\v2\x15.ban.v1.ReportMessageB\x06\xbaH\x03\xc8\x01\x01R\rreportMessage*\xa5\x01\n" +
 	"\fReportStatus\x12$\n" +
 	" REPORT_STATUS_OPENED_UNSPECIFIED\x10\x00\x12 \n" +
 	"\x1cREPORT_STATUS_NEED_MORE_INFO\x10\x01\x12'\n" +
 	"#REPORT_STATUS_CLOSED_WITHOUT_ACTION\x10\x02\x12$\n" +
 	" REPORT_STATUS_CLOSED_WITH_ACTION\x10\x032\x96\x05\n" +
 	"\rReportService\x12K\n" +
-	"\fReportCreate\x12\x1b.ban.v1.CreateReportRequest\x1a\x1c.ban.v1.CreateReportResponse\"\x00\x129\n" +
+	"\fReportCreate\x12\x1b.ban.v1.ReportCreateRequest\x1a\x1c.ban.v1.ReportCreateResponse\"\x00\x129\n" +
 	"\x06Report\x12\x15.ban.v1.ReportRequest\x1a\x16.ban.v1.ReportResponse\"\x00\x12M\n" +
 	"\x10ReportStatusEdit\x12\x1f.ban.v1.ReportStatusEditRequest\x1a\x16.google.protobuf.Empty\"\x00\x12H\n" +
 	"\vUserReports\x12\x1a.ban.v1.UserReportsRequest\x1a\x1b.ban.v1.UserReportsResponse\"\x00\x12Q\n" +
 	"\x0eReportMessages\x12\x1d.ban.v1.ReportMessagesRequest\x1a\x1e.ban.v1.ReportMessagesResponse\"\x00\x12`\n" +
-	"\x13ReportMessageCreate\x12\".ban.v1.CreateReportMessageRequest\x1a#.ban.v1.CreateReportMessageResponse\"\x00\x12Z\n" +
+	"\x13ReportMessageCreate\x12\".ban.v1.ReportMessageCreateRequest\x1a#.ban.v1.ReportMessageCreateResponse\"\x00\x12Z\n" +
 	"\x11ReportMessageEdit\x12 .ban.v1.ReportMessageEditRequest\x1a!.ban.v1.ReportMessageEditResponse\"\x00\x12S\n" +
 	"\x13ReportMessageDelete\x12\".ban.v1.ReportMessageDeleteRequest\x1a\x16.google.protobuf.Empty\"\x00B\x89\x01\n" +
 	"\n" +
@@ -1219,10 +1217,10 @@ var file_ban_v1_report_proto_goTypes = []any{
 	(*Report)(nil),                      // 11: ban.v1.Report
 	(*ReportWithAuthor)(nil),            // 12: ban.v1.ReportWithAuthor
 	(*ReportStatusEditRequest)(nil),     // 13: ban.v1.ReportStatusEditRequest
-	(*CreateReportRequest)(nil),         // 14: ban.v1.CreateReportRequest
-	(*CreateReportResponse)(nil),        // 15: ban.v1.CreateReportResponse
-	(*CreateReportMessageRequest)(nil),  // 16: ban.v1.CreateReportMessageRequest
-	(*CreateReportMessageResponse)(nil), // 17: ban.v1.CreateReportMessageResponse
+	(*ReportCreateRequest)(nil),         // 14: ban.v1.ReportCreateRequest
+	(*ReportCreateResponse)(nil),        // 15: ban.v1.ReportCreateResponse
+	(*ReportMessageCreateRequest)(nil),  // 16: ban.v1.ReportMessageCreateRequest
+	(*ReportMessageCreateResponse)(nil), // 17: ban.v1.ReportMessageCreateResponse
 	(*timestamppb.Timestamp)(nil),       // 18: google.protobuf.Timestamp
 	(v1.Privilege)(0),                   // 19: person.v1.Privilege
 	(BanReason)(0),                      // 20: ban.v1.BanReason
@@ -1245,23 +1243,23 @@ var file_ban_v1_report_proto_depIdxs = []int32{
 	21, // 12: ban.v1.ReportWithAuthor.author:type_name -> person.v1.PersonCore
 	21, // 13: ban.v1.ReportWithAuthor.subject:type_name -> person.v1.PersonCore
 	0,  // 14: ban.v1.ReportStatusEditRequest.report_status:type_name -> ban.v1.ReportStatus
-	20, // 15: ban.v1.CreateReportRequest.reason:type_name -> ban.v1.BanReason
-	12, // 16: ban.v1.CreateReportResponse.report:type_name -> ban.v1.ReportWithAuthor
-	10, // 17: ban.v1.CreateReportMessageResponse.report_message:type_name -> ban.v1.ReportMessage
-	14, // 18: ban.v1.ReportService.ReportCreate:input_type -> ban.v1.CreateReportRequest
+	20, // 15: ban.v1.ReportCreateRequest.reason:type_name -> ban.v1.BanReason
+	12, // 16: ban.v1.ReportCreateResponse.report:type_name -> ban.v1.ReportWithAuthor
+	10, // 17: ban.v1.ReportMessageCreateResponse.report_message:type_name -> ban.v1.ReportMessage
+	14, // 18: ban.v1.ReportService.ReportCreate:input_type -> ban.v1.ReportCreateRequest
 	8,  // 19: ban.v1.ReportService.Report:input_type -> ban.v1.ReportRequest
 	13, // 20: ban.v1.ReportService.ReportStatusEdit:input_type -> ban.v1.ReportStatusEditRequest
 	5,  // 21: ban.v1.ReportService.UserReports:input_type -> ban.v1.UserReportsRequest
 	4,  // 22: ban.v1.ReportService.ReportMessages:input_type -> ban.v1.ReportMessagesRequest
-	16, // 23: ban.v1.ReportService.ReportMessageCreate:input_type -> ban.v1.CreateReportMessageRequest
+	16, // 23: ban.v1.ReportService.ReportMessageCreate:input_type -> ban.v1.ReportMessageCreateRequest
 	2,  // 24: ban.v1.ReportService.ReportMessageEdit:input_type -> ban.v1.ReportMessageEditRequest
 	1,  // 25: ban.v1.ReportService.ReportMessageDelete:input_type -> ban.v1.ReportMessageDeleteRequest
-	15, // 26: ban.v1.ReportService.ReportCreate:output_type -> ban.v1.CreateReportResponse
+	15, // 26: ban.v1.ReportService.ReportCreate:output_type -> ban.v1.ReportCreateResponse
 	9,  // 27: ban.v1.ReportService.Report:output_type -> ban.v1.ReportResponse
 	22, // 28: ban.v1.ReportService.ReportStatusEdit:output_type -> google.protobuf.Empty
 	7,  // 29: ban.v1.ReportService.UserReports:output_type -> ban.v1.UserReportsResponse
 	6,  // 30: ban.v1.ReportService.ReportMessages:output_type -> ban.v1.ReportMessagesResponse
-	17, // 31: ban.v1.ReportService.ReportMessageCreate:output_type -> ban.v1.CreateReportMessageResponse
+	17, // 31: ban.v1.ReportService.ReportMessageCreate:output_type -> ban.v1.ReportMessageCreateResponse
 	3,  // 32: ban.v1.ReportService.ReportMessageEdit:output_type -> ban.v1.ReportMessageEditResponse
 	22, // 33: ban.v1.ReportService.ReportMessageDelete:output_type -> google.protobuf.Empty
 	26, // [26:34] is the sub-list for method output_type

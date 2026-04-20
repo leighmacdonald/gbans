@@ -11,7 +11,7 @@ service MGEService {
 }
 
 message GetRatingsOverallRequest {
-  Filter filter = 1;
+  database.query.v1.Filter filter = 1;
   string steam_id = 2;
 }
 
@@ -38,7 +38,7 @@ enum DuelMode {
 }
 
 message GetHistoryRequest {
-  Filter filter = 1;
+  database.query.v1.Filter filter = 1;
   DuelMode mode = 2;
   string winner = 3;
   string winner2 = 4;

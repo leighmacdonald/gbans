@@ -5,28 +5,27 @@ package anticheat.v1;
 import "buf/validate/validate.proto";
 import "database/query/v1/filter.proto";
 import "google/protobuf/timestamp.proto";
-import "person/v1/steamid.proto";
 
 service AnticheatService {
   rpc Query(QueryRequest) returns (QueryResponse) {}
 }
 
 enum Detection {
-  Unknown = 0;
-  SilentAim = 1;
-  AimSnap = 2;
-  TooManyConnections = 3;
-  Interp = 4;
-  BHop = 5;
-  CmdNumSpike = 6;
-  EyeAngles = 7;
-  InvalidUserCmd = 8;
-  OOBCVar = 9;
-  CheatCVar = 10;
+  DETECTION_UNSPECIFIED = 0;
+  DETECTION_SILENT_AIM = 1;
+  DETECTION_AIM_SNAP = 2;
+  DETECTION_TOO_MANY_CONNECTIONS = 3;
+  DETECTION_INTERP = 4;
+  DETECTION_BHOP = 5;
+  DETECTION_CMD_NUM_SPIKE = 6;
+  DETECTION_EYE_ANGLES = 7;
+  DETECTION_INVALID_USER_CMD = 8;
+  DETECTION_OOB_CVAR = 9;
+  DETECTION_CHEAT_CVAR = 10;
 }
 
 message QueryRequest {
-  Filter filter = 1;
+  database.query.v1.Filter filter = 1;
   string name = 2;
   int64 steam_id = 3;
   string summary = 4;
@@ -34,29 +33,29 @@ message QueryRequest {
 }
 
 message QueryResponse {
-  repeated Entry entries = 1;
+  repeated Entry entries = 1 [(buf.validate.field).required = true];
 }
 
 message Entry {
-  int64 anticheat_id = 1;
+  int64 anticheat_id = 1 [(buf.validate.field).required = true];
   int64 steam_id = 2 [(buf.validate.field) = {
     int64: {gt: 0}
     required: true
   }];
   int32 server_id = 3 [(buf.validate.field) = {
-    int64: {gt: 0}
+    int32: {gt: 0}
     required: true
   }];
-  string server_name = 4;
+  string server_name = 4 [(buf.validate.field).required = true];
   int32 demo_id = 5;
   string demo_name = 6;
   int32 demo_tick = 7;
-  string name = 8;
-  Detection detection = 9;
-  string summary = 10;
-  string raw_log = 11;
-  google.protobuf.Timestamp created_on = 12;
-  string persona_name = 13;
-  string avatar_hash = 14;
-  int32 triggered = 15;
+  string name = 8 [(buf.validate.field).required = true];
+  Detection detection = 9 [(buf.validate.field).required = true];
+  string summary = 10 [(buf.validate.field).required = true];
+  string raw_log = 11 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 12 [(buf.validate.field).required = true];
+  string persona_name = 13 [(buf.validate.field).required = true];
+  string avatar_hash = 14 [(buf.validate.field).required = true];
+  int32 triggered = 15 [(buf.validate.field).required = true];
 }

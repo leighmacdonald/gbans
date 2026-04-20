@@ -5,11 +5,13 @@ import (
 	"errors"
 
 	"connectrpc.com/connect"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	v1 "github.com/leighmacdonald/gbans/internal/notification/v1"
 	"github.com/leighmacdonald/gbans/internal/notification/v1/notificationv1connect"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
+	"github.com/leighmacdonald/gbans/internal/votes/v1/votesv1connect"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -20,8 +22,12 @@ type Service struct {
 	notifications *Notifications
 }
 
-func NewService(notifications *Notifications) Service {
-	return Service{notifications: notifications}
+func NewService(notifications *Notifications, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := notificationv1connect.NewNotificationServiceHandler(Service{notifications: notifications}, option...)
+
+	authMiddleware.AuthedRoute(votesv1connect.VotesServiceQueryProcedure, rpc.WithMinPermissions(permission.Moderator))
+
+	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
 func (s Service) Notifications(ctx context.Context, _ *emptypb.Empty) (*v1.NotificationsResponse, error) {

@@ -8,11 +8,9 @@ package banv1
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
-	_ "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	v1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/durationpb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
@@ -635,49 +633,49 @@ var File_ban_v1_appeal_proto protoreflect.FileDescriptor
 
 const file_ban_v1_appeal_proto_rawDesc = "" +
 	"\n" +
-	"\x13ban/v1/appeal.proto\x12\x06ban.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"*\n" +
+	"\x13ban/v1/appeal.proto\x12\x06ban.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"*\n" +
 	"\x0eAppealsRequest\x12\x18\n" +
-	"\adeleted\x18\x01 \x01(\bR\adeleted\"C\n" +
-	"\x0fAppealsResponse\x120\n" +
-	"\aappeals\x18\x01 \x03(\v2\x16.ban.v1.AppealOverviewR\aappeals\"(\n" +
-	"\x0fMessagesRequest\x12\x15\n" +
-	"\x06ban_id\x18\x01 \x01(\x03R\x05banId\"E\n" +
-	"\x10MessagesResponse\x121\n" +
-	"\bmessages\x18\x01 \x03(\v2\x15.ban.v1.AppealMessageR\bmessages\"\xeb\x01\n" +
-	"\x0eAppealOverview\x12\x1d\n" +
-	"\x03ban\x18\x01 \x01(\v2\v.ban.v1.BanR\x03ban\x12.\n" +
-	"\x13source_persona_name\x18\x02 \x01(\tR\x11sourcePersonaName\x12,\n" +
-	"\x12source_avatar_hash\x18\x03 \x01(\tR\x10sourceAvatarHash\x12.\n" +
-	"\x13target_persona_name\x18\x04 \x01(\tR\x11targetPersonaName\x12,\n" +
-	"\x12target_avatar_hash\x18\x05 \x01(\tR\x10targetAvatarHash\"\x90\x03\n" +
-	"\rAppealMessage\x12\x15\n" +
-	"\x06ban_id\x18\x01 \x01(\x03R\x05banId\x12$\n" +
-	"\x0eban_message_id\x18\x02 \x01(\x03R\fbanMessageId\x12\x1b\n" +
-	"\tauthor_id\x18\x03 \x01(\x03R\bauthorId\x12\x1d\n" +
+	"\adeleted\x18\x01 \x01(\bR\adeleted\"K\n" +
+	"\x0fAppealsResponse\x128\n" +
+	"\aappeals\x18\x01 \x03(\v2\x16.ban.v1.AppealOverviewB\x06\xbaH\x03\xc8\x01\x01R\aappeals\"2\n" +
+	"\x0fMessagesRequest\x12\x1f\n" +
+	"\x06ban_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x05banId\"M\n" +
+	"\x10MessagesResponse\x129\n" +
+	"\bmessages\x18\x01 \x03(\v2\x15.ban.v1.AppealMessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\"\x93\x02\n" +
+	"\x0eAppealOverview\x12%\n" +
+	"\x03ban\x18\x01 \x01(\v2\v.ban.v1.BanB\x06\xbaH\x03\xc8\x01\x01R\x03ban\x126\n" +
+	"\x13source_persona_name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11sourcePersonaName\x124\n" +
+	"\x12source_avatar_hash\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10sourceAvatarHash\x126\n" +
+	"\x13target_persona_name\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11targetPersonaName\x124\n" +
+	"\x12target_avatar_hash\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10targetAvatarHash\"\xe6\x03\n" +
+	"\rAppealMessage\x12\x1f\n" +
+	"\x06ban_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x05banId\x12.\n" +
+	"\x0eban_message_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\fbanMessageId\x12%\n" +
+	"\tauthor_id\x18\x03 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\bauthorId\x12%\n" +
 	"\n" +
-	"message_md\x18\x04 \x01(\tR\tmessageMd\x12\x18\n" +
-	"\adeleted\x18\x05 \x01(\bR\adeleted\x129\n" +
+	"message_md\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tmessageMd\x12 \n" +
+	"\adeleted\x18\x05 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\adeleted\x12A\n" +
 	"\n" +
-	"created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x12\x1f\n" +
-	"\vavatar_hash\x18\b \x01(\tR\n" +
-	"avatarHash\x12!\n" +
-	"\fpersona_name\x18\t \x01(\tR\vpersonaName\x122\n" +
+	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\x12'\n" +
+	"\vavatar_hash\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"avatarHash\x12)\n" +
+	"\fpersona_name\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12:\n" +
 	"\tprivilege\x18\n" +
-	" \x01(\x0e2\x14.person.v1.PrivilegeR\tprivilege\">\n" +
-	"\fReplyRequest\x12\x15\n" +
-	"\x06ban_id\x18\x01 \x01(\x03R\x05banId\x12\x17\n" +
-	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\"@\n" +
-	"\rReplyResponse\x12/\n" +
-	"\amessage\x18\x01 \x01(\v2\x15.ban.v1.AppealMessageR\amessage\"Y\n" +
-	"\x18EditAppealMessageRequest\x12$\n" +
-	"\x0eban_message_id\x18\x01 \x01(\x03R\fbanMessageId\x12\x17\n" +
-	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\"L\n" +
-	"\x19EditAppealMessageResponse\x12/\n" +
-	"\amessage\x18\x01 \x01(\v2\x15.ban.v1.AppealMessageR\amessage\"B\n" +
-	"\x1aDeleteAppealMessageRequest\x12$\n" +
-	"\x0eban_message_id\x18\x01 \x01(\x03R\fbanMessageId2\xf7\x02\n" +
+	" \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\tprivilege\"P\n" +
+	"\fReplyRequest\x12\x1f\n" +
+	"\x06ban_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x05banId\x12\x1f\n" +
+	"\abody_md\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06bodyMd\"H\n" +
+	"\rReplyResponse\x127\n" +
+	"\amessage\x18\x01 \x01(\v2\x15.ban.v1.AppealMessageB\x06\xbaH\x03\xc8\x01\x01R\amessage\"k\n" +
+	"\x18EditAppealMessageRequest\x12.\n" +
+	"\x0eban_message_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\fbanMessageId\x12\x1f\n" +
+	"\abody_md\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06bodyMd\"T\n" +
+	"\x19EditAppealMessageResponse\x127\n" +
+	"\amessage\x18\x01 \x01(\v2\x15.ban.v1.AppealMessageB\x06\xbaH\x03\xc8\x01\x01R\amessage\"L\n" +
+	"\x1aDeleteAppealMessageRequest\x12.\n" +
+	"\x0eban_message_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\fbanMessageId2\xf7\x02\n" +
 	"\rAppealService\x12<\n" +
 	"\aAppeals\x12\x16.ban.v1.AppealsRequest\x1a\x17.ban.v1.AppealsResponse\"\x00\x12?\n" +
 	"\bMessages\x12\x17.ban.v1.MessagesRequest\x1a\x18.ban.v1.MessagesResponse\"\x00\x126\n" +

@@ -23,8 +23,16 @@ type AppealService struct {
 	appeals Appeals
 }
 
-func NewAppealService(appeals Appeals) AppealService {
-	return AppealService{appeals: appeals}
+func NewAppealService(appeals Appeals, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
+	pattern, handler := banv1connect.NewAppealServiceHandler(AppealService{appeals: appeals}, options...)
+
+	authMiddleware.AuthedRoute(banv1connect.AppealServiceAppealsProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(banv1connect.AppealServiceMessagesProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(banv1connect.AppealServiceReplyProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(banv1connect.AppealServiceEditAppealMessageProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(banv1connect.AppealServiceDeleteAppealMessageProcedure, rpc.WithMinPermissions(permission.User))
+
+	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
 func (s AppealService) Appeals(ctx context.Context, req *v1.AppealsRequest) (*v1.AppealsResponse, error) {

@@ -12,56 +12,40 @@ import (
 	"syscall"
 	"time"
 
-	"connectrpc.com/connect"
-	"connectrpc.com/validate"
+	"connectrpc.com/authn"
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
-	"github.com/leighmacdonald/gbans/internal/anticheat/v1/anticheatv1connect"
 	"github.com/leighmacdonald/gbans/internal/asset"
-	"github.com/leighmacdonald/gbans/internal/asset/v1/assetv1connect"
 	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
-	"github.com/leighmacdonald/gbans/internal/ban/v1/banv1connect"
 	"github.com/leighmacdonald/gbans/internal/chat"
-	"github.com/leighmacdonald/gbans/internal/chat/v1/chatv1connect"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/config/v1/configv1connect"
 	"github.com/leighmacdonald/gbans/internal/contest"
-	"github.com/leighmacdonald/gbans/internal/contest/v1/contestv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	discordoauth "github.com/leighmacdonald/gbans/internal/discord/oauth"
 	"github.com/leighmacdonald/gbans/internal/forum"
-	"github.com/leighmacdonald/gbans/internal/forum/v1/forumv1connect"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/maps"
 	"github.com/leighmacdonald/gbans/internal/metrics"
 	"github.com/leighmacdonald/gbans/internal/mge"
-	"github.com/leighmacdonald/gbans/internal/mge/v1/mgev1connect"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/network/asn"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
-	"github.com/leighmacdonald/gbans/internal/network/v1/networkv1connect"
 	"github.com/leighmacdonald/gbans/internal/news"
-	"github.com/leighmacdonald/gbans/internal/news/v1/newsv1connect"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/notification/v1/notificationv1connect"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/person/v1/personv1connect"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/servers"
-	"github.com/leighmacdonald/gbans/internal/servers/v1/serversv1connect"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
-	"github.com/leighmacdonald/gbans/internal/sourcemod/v1/sourcemodv1connect"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
-	"github.com/leighmacdonald/gbans/internal/votes/v1/votesv1connect"
 	"github.com/leighmacdonald/gbans/internal/wiki"
-	"github.com/leighmacdonald/gbans/internal/wiki/v1/wikiv1connect"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -467,32 +451,38 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	}
 }
 
-func (g *GBans) createAPI() *http.ServeMux {
-	interceptor := connect.WithInterceptors(validate.NewInterceptor())
+func (g *GBans) createAPI(authMiddleware *rpc.Middleware) *http.ServeMux {
+	interceptors := rpc.CreateInterceptors()
 	api := http.NewServeMux()
 
-	api.Handle(anticheatv1connect.NewAnticheatServiceHandler(anticheat.NewService(g.anticheat), interceptor))
-	api.Handle(assetv1connect.NewAssetServiceHandler(asset.NewService(g.assets), interceptor))
-	api.Handle(banv1connect.NewAppealServiceHandler(ban.NewAppealService(g.appeals), interceptor))
-	api.Handle(banv1connect.NewBanServiceHandler(ban.NewBanService(g.bans), interceptor))
-	api.Handle(banv1connect.NewReportServiceHandler(ban.NewReportService(g.reports), interceptor))
-	api.Handle(chatv1connect.NewChatServiceHandler(chat.NewService(g.chat), interceptor))
-	api.Handle(chatv1connect.NewWordfilterServiceHandler(chat.NewWordfilterService(g.wordFilters, g.chat, g.config.Config().Filters), interceptor))
-	api.Handle(configv1connect.NewConfigServiceHandler(config.NewService(g.config, BuildVersion), interceptor))
-	api.Handle(contestv1connect.NewServiceHandler(contest.NewService(g.contests, g.assets), interceptor))
-	api.Handle(forumv1connect.NewForumServiceHandler(forum.NewService(g.forums), interceptor))
-	api.Handle(mgev1connect.NewMGEServiceHandler(mge.NewService(g.mge), interceptor))
-	api.Handle(networkv1connect.NewBlocklistServiceHandler(network.NewBlocklistService(g.blocklists), interceptor))
-	api.Handle(networkv1connect.NewNetworkServiceHandler(network.NewNetworkService(g.networks), interceptor))
-	api.Handle(newsv1connect.NewNewsServiceHandler(news.NewService(g.news), interceptor))
-	api.Handle(notificationv1connect.NewNotificationServiceHandler(notification.NewService(g.notifications), interceptor))
-	api.Handle(personv1connect.NewPersonServiceHandler(person.NewPersonService(g.persons), interceptor))
-	api.Handle(serversv1connect.NewServersServiceHandler(servers.NewServersService(g.servers), interceptor))
-	api.Handle(serversv1connect.NewDemoServiceHandler(servers.NewDemoService(g.demos), interceptor))
-	api.Handle(serversv1connect.NewSpeedrunsServiceHandler(servers.NewSpeedrunsService(g.speedruns), interceptor))
-	api.Handle(sourcemodv1connect.NewSourcemodServiceHandler(sourcemod.NewService(g.sourcemod, g.persons, g.notifications), interceptor))
-	api.Handle(votesv1connect.NewVotesServiceHandler(votes.NewService(g.votes), interceptor))
-	api.Handle(wikiv1connect.NewWikiServiceHandler(wiki.NewService(g.wiki), interceptor))
+	services := []rpc.Service{
+		anticheat.NewService(g.anticheat, authMiddleware, interceptors),
+		asset.NewService(g.assets, authMiddleware, interceptors),
+		ban.NewAppealService(g.appeals, authMiddleware, interceptors),
+		ban.NewBanService(g.bans, authMiddleware, interceptors),
+		ban.NewReportService(g.reports, authMiddleware, interceptors),
+		chat.NewService(g.chat, authMiddleware, interceptors),
+		chat.NewWordfilterService(g.wordFilters, g.chat, g.config.Config().Filters, authMiddleware, interceptors),
+		config.NewService(g.config, BuildVersion, authMiddleware, interceptors),
+		contest.NewService(g.contests, g.assets, authMiddleware, interceptors),
+		forum.NewService(g.forums, authMiddleware, interceptors),
+		mge.NewService(g.mge, authMiddleware, interceptors),
+		network.NewBlocklistService(g.blocklists, authMiddleware, interceptors),
+		network.NewNetworkService(g.networks, authMiddleware, interceptors),
+		news.NewService(g.news, authMiddleware, interceptors),
+		notification.NewService(g.notifications, authMiddleware, interceptors),
+		person.NewPersonService(g.persons, authMiddleware, interceptors),
+		servers.NewServersService(g.servers, authMiddleware, interceptors),
+		servers.NewDemoService(g.demos, authMiddleware, interceptors),
+		servers.NewSpeedrunsService(g.speedruns, authMiddleware, interceptors),
+		sourcemod.NewService(g.sourcemod, g.persons, g.notifications, authMiddleware, interceptors),
+		votes.NewService(g.votes, authMiddleware, interceptors),
+		wiki.NewService(g.wiki, authMiddleware, interceptors),
+	}
+
+	for _, service := range services {
+		api.Handle(service.Pattern, service.Handler)
+	}
 
 	return api
 }
@@ -530,21 +520,23 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	userAuth := auth.NewAuthentication(auth.NewRepository(g.database), conf.General.SiteName, conf.HTTPCookieKey, g.persons, g.bans, g.servers, g.config.Config().General.SentryDSN)
 	// serverAuth := servers.NewServerAuth(g.servers, g.config.Config().General.SentryDSN)
 
+	authMiddleware := rpc.NewMiddleware(conf.General.SiteName, conf.Static.HTTPCookieKey)
+
 	// Register all our handlers with router
 	asset.NewAssetHandler(router, g.assets)
-	auth.NewAuthHandler(router, userAuth, g.config, g.tfapiClient, g.notifications)
+	auth.NewAuthHandler(router, userAuth, g.config, g.tfapiClient, g.notifications, authMiddleware)
 	discordoauth.NewDiscordOAuthHandler(router, g.config, g.persons, g.discordOAuth)
 	metrics.NewMetricsHandler(router)
 
 	router.GET("/health", g.healthCheck)
 
-	api := g.createAPI()
+	apiHandler := g.createAPI(authMiddleware)
 
 	mux := http.NewServeMux()
-	mw := auth.NewMiddleware()
-	mw.AuthedRoute(votesv1connect.VotesServiceQueryProcedure, auth.WithMinPermissions(permission.Moderator))
 
-	mux.Handle("/connect/", http.StripPrefix("/connect", api))
+	mw := authn.NewMiddleware(authMiddleware.Authenticate)
+
+	mux.Handle("/connect/", http.StripPrefix("/connect", mw.Wrap(apiHandler)))
 	mux.Handle("/", router)
 
 	httpServer := httphelper.NewServer(conf.Addr(), mux)
@@ -569,8 +561,6 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	}
 
 	<-ctx.Done()
-
-	slog.Info("Exiting...")
 
 	return nil
 }

@@ -7,6 +7,7 @@ import (
 	"net/netip"
 
 	"connectrpc.com/connect"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/notification"
@@ -34,8 +35,36 @@ type Service struct {
 	logChannelID string
 }
 
-func NewService(sourcemod Sourcemod, persons *person.Persons, notifier notification.Notifier) Service {
-	return Service{sourcemod: sourcemod, persons: persons, notifier: notifier}
+func NewService(sourcemod Sourcemod, persons *person.Persons, notifier notification.Notifier, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := sourcemodv1connect.NewSourcemodServiceHandler(Service{sourcemod: sourcemod, persons: persons, notifier: notifier}, option...)
+
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceGroupsProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceCreateGroupProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceEditGroupsProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceDeleteGroupProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceGroupOverridesProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceCreateGroupOverrideProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceEditGroupOverrideProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceDeleteGroupOverrideProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceAdminsProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceCreateAdminProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceEditAdminProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceDeleteAdminProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceAddAdminGroupProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceDeleteAdminGroupProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceOverridesProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceCreateOverridesProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceEditOverridesProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceDeleteOverridesProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceGroupImmunitiesProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceCreateImmunityProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceCheckProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceSMOverridesProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceSMUsersProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceSMGroupsProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(sourcemodv1connect.SourcemodServiceSMSeedProcedure, rpc.WithMinPermissions(permission.Moderator))
+
+	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
 func (s Service) Groups(ctx context.Context, _ *emptypb.Empty) (*v1.GroupsResponse, error) {

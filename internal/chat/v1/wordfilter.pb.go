@@ -7,6 +7,8 @@
 package chatv1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
+	v1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -70,92 +72,6 @@ func (x FilterAction) Number() protoreflect.EnumNumber {
 // Deprecated: Use FilterAction.Descriptor instead.
 func (FilterAction) EnumDescriptor() ([]byte, []int) {
 	return file_chat_v1_wordfilter_proto_rawDescGZIP(), []int{0}
-}
-
-// FIXME Duplicated
-type BanReason int32
-
-const (
-	BanReason_BAN_REASON_UNSPECIFIED       BanReason = 0
-	BanReason_BAN_REASON_CUSTOM            BanReason = 1
-	BanReason_BAN_REASON_EXTERNAL          BanReason = 2
-	BanReason_BAN_REASON_CHEATING          BanReason = 3
-	BanReason_BAN_REASON_RACISM            BanReason = 4
-	BanReason_BAN_REASON_HARASSMENT        BanReason = 5
-	BanReason_BAN_REASON_EXPLOITING        BanReason = 6
-	BanReason_BAN_REASON_WARNINGS_EXCEEDED BanReason = 7
-	BanReason_BAN_REASON_SPAM              BanReason = 8
-	BanReason_BAN_REASON_LANGUAGE          BanReason = 9
-	BanReason_BAN_REASON_PROFILE           BanReason = 10
-	BanReason_BAN_REASON_ITEM_DESCRIPTIONS BanReason = 11
-	BanReason_BAN_REASON_BOT_HOST          BanReason = 12
-	BanReason_BAN_REASON_EVADING           BanReason = 13
-	BanReason_BAN_REASON_USERNAME          BanReason = 14
-)
-
-// Enum value maps for BanReason.
-var (
-	BanReason_name = map[int32]string{
-		0:  "BAN_REASON_UNSPECIFIED",
-		1:  "BAN_REASON_CUSTOM",
-		2:  "BAN_REASON_EXTERNAL",
-		3:  "BAN_REASON_CHEATING",
-		4:  "BAN_REASON_RACISM",
-		5:  "BAN_REASON_HARASSMENT",
-		6:  "BAN_REASON_EXPLOITING",
-		7:  "BAN_REASON_WARNINGS_EXCEEDED",
-		8:  "BAN_REASON_SPAM",
-		9:  "BAN_REASON_LANGUAGE",
-		10: "BAN_REASON_PROFILE",
-		11: "BAN_REASON_ITEM_DESCRIPTIONS",
-		12: "BAN_REASON_BOT_HOST",
-		13: "BAN_REASON_EVADING",
-		14: "BAN_REASON_USERNAME",
-	}
-	BanReason_value = map[string]int32{
-		"BAN_REASON_UNSPECIFIED":       0,
-		"BAN_REASON_CUSTOM":            1,
-		"BAN_REASON_EXTERNAL":          2,
-		"BAN_REASON_CHEATING":          3,
-		"BAN_REASON_RACISM":            4,
-		"BAN_REASON_HARASSMENT":        5,
-		"BAN_REASON_EXPLOITING":        6,
-		"BAN_REASON_WARNINGS_EXCEEDED": 7,
-		"BAN_REASON_SPAM":              8,
-		"BAN_REASON_LANGUAGE":          9,
-		"BAN_REASON_PROFILE":           10,
-		"BAN_REASON_ITEM_DESCRIPTIONS": 11,
-		"BAN_REASON_BOT_HOST":          12,
-		"BAN_REASON_EVADING":           13,
-		"BAN_REASON_USERNAME":          14,
-	}
-)
-
-func (x BanReason) Enum() *BanReason {
-	p := new(BanReason)
-	*p = x
-	return p
-}
-
-func (x BanReason) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (BanReason) Descriptor() protoreflect.EnumDescriptor {
-	return file_chat_v1_wordfilter_proto_enumTypes[1].Descriptor()
-}
-
-func (BanReason) Type() protoreflect.EnumType {
-	return &file_chat_v1_wordfilter_proto_enumTypes[1]
-}
-
-func (x BanReason) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use BanReason.Descriptor instead.
-func (BanReason) EnumDescriptor() ([]byte, []int) {
-	return file_chat_v1_wordfilter_proto_rawDescGZIP(), []int{1}
 }
 
 type FilterMatchRequest struct {
@@ -636,7 +552,7 @@ func (x *FiltersResponse) GetFilters() []*Filter {
 
 type UserWarning struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Reason        *BanReason             `protobuf:"varint,1,opt,name=reason,enum=chat.v1.BanReason" json:"reason,omitempty"`
+	Reason        *v1.BanReason          `protobuf:"varint,1,opt,name=reason,enum=ban.v1.BanReason" json:"reason,omitempty"`
 	Message       *string                `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
 	Matched       *string                `protobuf:"bytes,3,opt,name=matched" json:"matched,omitempty"`
 	Filter        *Filter                `protobuf:"bytes,4,opt,name=filter" json:"filter,omitempty"`
@@ -681,11 +597,11 @@ func (*UserWarning) Descriptor() ([]byte, []int) {
 	return file_chat_v1_wordfilter_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *UserWarning) GetReason() BanReason {
+func (x *UserWarning) GetReason() v1.BanReason {
 	if x != nil && x.Reason != nil {
 		return *x.Reason
 	}
-	return BanReason_BAN_REASON_UNSPECIFIED
+	return v1.BanReason(0)
 }
 
 func (x *UserWarning) GetMessage() string {
@@ -814,80 +730,63 @@ var File_chat_v1_wordfilter_proto protoreflect.FileDescriptor
 
 const file_chat_v1_wordfilter_proto_rawDesc = "" +
 	"\n" +
-	"\x18chat/v1/wordfilter.proto\x12\achat.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"*\n" +
-	"\x12FilterMatchRequest\x12\x14\n" +
-	"\x05query\x18\x01 \x01(\tR\x05query\"@\n" +
-	"\x13FilterMatchResponse\x12)\n" +
-	"\afilters\x18\x01 \x03(\v2\x0f.chat.v1.FilterR\afilters\"2\n" +
-	"\x13FilterDeleteRequest\x12\x1b\n" +
-	"\tfilter_id\x18\x01 \x01(\x03R\bfilterId\">\n" +
-	"\x13FilterCreateRequest\x12'\n" +
-	"\x06filter\x18\x01 \x01(\v2\x0f.chat.v1.FilterR\x06filter\"?\n" +
-	"\x14FilterCreateResponse\x12'\n" +
-	"\x06filter\x18\x01 \x01(\v2\x0f.chat.v1.FilterR\x06filter\"<\n" +
-	"\x11FilterEditRequest\x12'\n" +
-	"\x06filter\x18\x01 \x01(\v2\x0f.chat.v1.FilterR\x06filter\"=\n" +
-	"\x12FilterEditResponse\x12'\n" +
-	"\x06filter\x18\x01 \x01(\v2\x0f.chat.v1.FilterR\x06filter\"\x94\x03\n" +
-	"\x06Filter\x12\x1b\n" +
-	"\tfilter_id\x18\x01 \x01(\x03R\bfilterId\x12\x1b\n" +
-	"\tauthor_id\x18\x02 \x01(\x03R\bauthorId\x12\x18\n" +
-	"\apattern\x18\x03 \x01(\tR\apattern\x12\x19\n" +
-	"\bis_regex\x18\x04 \x01(\bR\aisRegex\x12\x1d\n" +
+	"\x18chat/v1/wordfilter.proto\x12\achat.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"2\n" +
+	"\x12FilterMatchRequest\x12\x1c\n" +
+	"\x05query\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05query\"H\n" +
+	"\x13FilterMatchResponse\x121\n" +
+	"\afilters\x18\x01 \x03(\v2\x0f.chat.v1.FilterB\x06\xbaH\x03\xc8\x01\x01R\afilters\"<\n" +
+	"\x13FilterDeleteRequest\x12%\n" +
+	"\tfilter_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\bfilterId\"F\n" +
+	"\x13FilterCreateRequest\x12/\n" +
+	"\x06filter\x18\x01 \x01(\v2\x0f.chat.v1.FilterB\x06\xbaH\x03\xc8\x01\x01R\x06filter\"G\n" +
+	"\x14FilterCreateResponse\x12/\n" +
+	"\x06filter\x18\x01 \x01(\v2\x0f.chat.v1.FilterB\x06\xbaH\x03\xc8\x01\x01R\x06filter\"D\n" +
+	"\x11FilterEditRequest\x12/\n" +
+	"\x06filter\x18\x01 \x01(\v2\x0f.chat.v1.FilterB\x06\xbaH\x03\xc8\x01\x01R\x06filter\"E\n" +
+	"\x12FilterEditResponse\x12/\n" +
+	"\x06filter\x18\x01 \x01(\v2\x0f.chat.v1.FilterB\x06\xbaH\x03\xc8\x01\x01R\x06filter\"\xf2\x03\n" +
+	"\x06Filter\x12%\n" +
+	"\tfilter_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\bfilterId\x12%\n" +
+	"\tauthor_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\bauthorId\x12 \n" +
+	"\apattern\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\apattern\x12!\n" +
+	"\bis_regex\x18\x04 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aisRegex\x12%\n" +
 	"\n" +
-	"is_enabled\x18\x05 \x01(\bR\tisEnabled\x12-\n" +
-	"\x06action\x18\x06 \x01(\x0e2\x15.chat.v1.FilterActionR\x06action\x12\x1a\n" +
-	"\bduration\x18\a \x01(\tR\bduration\x12#\n" +
-	"\rtrigger_count\x18\b \x01(\x03R\ftriggerCount\x12\x16\n" +
-	"\x06weight\x18\t \x01(\x05R\x06weight\x129\n" +
+	"is_enabled\x18\x05 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\tisEnabled\x125\n" +
+	"\x06action\x18\x06 \x01(\x0e2\x15.chat.v1.FilterActionB\x06\xbaH\x03\xc8\x01\x01R\x06action\x12\"\n" +
+	"\bduration\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bduration\x12-\n" +
+	"\rtrigger_count\x18\b \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\ftriggerCount\x12\x1e\n" +
+	"\x06weight\x18\t \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x06weight\x12A\n" +
 	"\n" +
 	"created_on\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"<\n" +
-	"\x0fFiltersResponse\x12)\n" +
-	"\afilters\x18\x01 \x03(\v2\x0f.chat.v1.FilterR\afilters\"\x93\x03\n" +
-	"\vUserWarning\x12*\n" +
-	"\x06reason\x18\x01 \x01(\x0e2\x12.chat.v1.BanReasonR\x06reason\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x12\x18\n" +
-	"\amatched\x18\x03 \x01(\tR\amatched\x12'\n" +
-	"\x06filter\x18\x04 \x01(\v2\x0f.chat.v1.FilterR\x06filter\x129\n" +
+	"updated_on\x18\v \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"D\n" +
+	"\x0fFiltersResponse\x121\n" +
+	"\afilters\x18\x01 \x03(\v2\x0f.chat.v1.FilterB\x06\xbaH\x03\xc8\x01\x01R\afilters\"\xec\x03\n" +
+	"\vUserWarning\x121\n" +
+	"\x06reason\x18\x01 \x01(\x0e2\x11.ban.v1.BanReasonB\x06\xbaH\x03\xc8\x01\x01R\x06reason\x12 \n" +
+	"\amessage\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\amessage\x12 \n" +
+	"\amatched\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\amatched\x12/\n" +
+	"\x06filter\x18\x04 \x01(\v2\x0f.chat.v1.FilterB\x06\xbaH\x03\xc8\x01\x01R\x06filter\x12A\n" +
 	"\n" +
-	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x12!\n" +
-	"\fpersona_name\x18\x06 \x01(\tR\vpersonaName\x12\x1f\n" +
-	"\vavatar_hash\x18\a \x01(\tR\n" +
-	"avatarHash\x12\x1f\n" +
-	"\vserver_name\x18\b \x01(\tR\n" +
-	"serverName\x12\x1b\n" +
-	"\tserver_id\x18\t \x01(\x05R\bserverId\x12\x19\n" +
+	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12)\n" +
+	"\fpersona_name\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12'\n" +
+	"\vavatar_hash\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"avatarHash\x12'\n" +
+	"\vserver_name\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"serverName\x12#\n" +
+	"\tserver_id\x18\t \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bserverId\x12#\n" +
 	"\bsteam_id\x18\n" +
-	" \x01(\x03R\asteamId\x12#\n" +
-	"\rcurrent_total\x18\v \x01(\x05R\fcurrentTotal\"e\n" +
-	"\x14WarningStateResponse\x12\x1d\n" +
+	" \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12+\n" +
+	"\rcurrent_total\x18\v \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fcurrentTotal\"u\n" +
+	"\x14WarningStateResponse\x12%\n" +
 	"\n" +
-	"max_weight\x18\x01 \x01(\x05R\tmaxWeight\x12.\n" +
-	"\acurrent\x18\x02 \x03(\v2\x14.chat.v1.UserWarningR\acurrent*a\n" +
+	"max_weight\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\tmaxWeight\x126\n" +
+	"\acurrent\x18\x02 \x03(\v2\x14.chat.v1.UserWarningB\x06\xbaH\x03\xc8\x01\x01R\acurrent*a\n" +
 	"\fFilterAction\x12\"\n" +
 	"\x1eFILTER_ACTION_KICK_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12FILTER_ACTION_MUTE\x10\x01\x12\x15\n" +
-	"\x11FILTER_ACTION_BAN\x10\x02*\x91\x03\n" +
-	"\tBanReason\x12\x1a\n" +
-	"\x16BAN_REASON_UNSPECIFIED\x10\x00\x12\x15\n" +
-	"\x11BAN_REASON_CUSTOM\x10\x01\x12\x17\n" +
-	"\x13BAN_REASON_EXTERNAL\x10\x02\x12\x17\n" +
-	"\x13BAN_REASON_CHEATING\x10\x03\x12\x15\n" +
-	"\x11BAN_REASON_RACISM\x10\x04\x12\x19\n" +
-	"\x15BAN_REASON_HARASSMENT\x10\x05\x12\x19\n" +
-	"\x15BAN_REASON_EXPLOITING\x10\x06\x12 \n" +
-	"\x1cBAN_REASON_WARNINGS_EXCEEDED\x10\a\x12\x13\n" +
-	"\x0fBAN_REASON_SPAM\x10\b\x12\x17\n" +
-	"\x13BAN_REASON_LANGUAGE\x10\t\x12\x16\n" +
-	"\x12BAN_REASON_PROFILE\x10\n" +
-	"\x12 \n" +
-	"\x1cBAN_REASON_ITEM_DESCRIPTIONS\x10\v\x12\x17\n" +
-	"\x13BAN_REASON_BOT_HOST\x10\f\x12\x16\n" +
-	"\x12BAN_REASON_EVADING\x10\r\x12\x17\n" +
-	"\x13BAN_REASON_USERNAME\x10\x0e2\xc7\x03\n" +
+	"\x11FILTER_ACTION_BAN\x10\x022\xc7\x03\n" +
 	"\x11WordfilterService\x12=\n" +
 	"\aFilters\x12\x16.google.protobuf.Empty\x1a\x18.chat.v1.FiltersResponse\"\x00\x12G\n" +
 	"\fWarningState\x12\x16.google.protobuf.Empty\x1a\x1d.chat.v1.WarningStateResponse\"\x00\x12M\n" +
@@ -910,51 +809,51 @@ func file_chat_v1_wordfilter_proto_rawDescGZIP() []byte {
 	return file_chat_v1_wordfilter_proto_rawDescData
 }
 
-var file_chat_v1_wordfilter_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_chat_v1_wordfilter_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_chat_v1_wordfilter_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_chat_v1_wordfilter_proto_goTypes = []any{
 	(FilterAction)(0),             // 0: chat.v1.FilterAction
-	(BanReason)(0),                // 1: chat.v1.BanReason
-	(*FilterMatchRequest)(nil),    // 2: chat.v1.FilterMatchRequest
-	(*FilterMatchResponse)(nil),   // 3: chat.v1.FilterMatchResponse
-	(*FilterDeleteRequest)(nil),   // 4: chat.v1.FilterDeleteRequest
-	(*FilterCreateRequest)(nil),   // 5: chat.v1.FilterCreateRequest
-	(*FilterCreateResponse)(nil),  // 6: chat.v1.FilterCreateResponse
-	(*FilterEditRequest)(nil),     // 7: chat.v1.FilterEditRequest
-	(*FilterEditResponse)(nil),    // 8: chat.v1.FilterEditResponse
-	(*Filter)(nil),                // 9: chat.v1.Filter
-	(*FiltersResponse)(nil),       // 10: chat.v1.FiltersResponse
-	(*UserWarning)(nil),           // 11: chat.v1.UserWarning
-	(*WarningStateResponse)(nil),  // 12: chat.v1.WarningStateResponse
-	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
+	(*FilterMatchRequest)(nil),    // 1: chat.v1.FilterMatchRequest
+	(*FilterMatchResponse)(nil),   // 2: chat.v1.FilterMatchResponse
+	(*FilterDeleteRequest)(nil),   // 3: chat.v1.FilterDeleteRequest
+	(*FilterCreateRequest)(nil),   // 4: chat.v1.FilterCreateRequest
+	(*FilterCreateResponse)(nil),  // 5: chat.v1.FilterCreateResponse
+	(*FilterEditRequest)(nil),     // 6: chat.v1.FilterEditRequest
+	(*FilterEditResponse)(nil),    // 7: chat.v1.FilterEditResponse
+	(*Filter)(nil),                // 8: chat.v1.Filter
+	(*FiltersResponse)(nil),       // 9: chat.v1.FiltersResponse
+	(*UserWarning)(nil),           // 10: chat.v1.UserWarning
+	(*WarningStateResponse)(nil),  // 11: chat.v1.WarningStateResponse
+	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
+	(v1.BanReason)(0),             // 13: ban.v1.BanReason
 	(*emptypb.Empty)(nil),         // 14: google.protobuf.Empty
 }
 var file_chat_v1_wordfilter_proto_depIdxs = []int32{
-	9,  // 0: chat.v1.FilterMatchResponse.filters:type_name -> chat.v1.Filter
-	9,  // 1: chat.v1.FilterCreateRequest.filter:type_name -> chat.v1.Filter
-	9,  // 2: chat.v1.FilterCreateResponse.filter:type_name -> chat.v1.Filter
-	9,  // 3: chat.v1.FilterEditRequest.filter:type_name -> chat.v1.Filter
-	9,  // 4: chat.v1.FilterEditResponse.filter:type_name -> chat.v1.Filter
+	8,  // 0: chat.v1.FilterMatchResponse.filters:type_name -> chat.v1.Filter
+	8,  // 1: chat.v1.FilterCreateRequest.filter:type_name -> chat.v1.Filter
+	8,  // 2: chat.v1.FilterCreateResponse.filter:type_name -> chat.v1.Filter
+	8,  // 3: chat.v1.FilterEditRequest.filter:type_name -> chat.v1.Filter
+	8,  // 4: chat.v1.FilterEditResponse.filter:type_name -> chat.v1.Filter
 	0,  // 5: chat.v1.Filter.action:type_name -> chat.v1.FilterAction
-	13, // 6: chat.v1.Filter.created_on:type_name -> google.protobuf.Timestamp
-	13, // 7: chat.v1.Filter.updated_on:type_name -> google.protobuf.Timestamp
-	9,  // 8: chat.v1.FiltersResponse.filters:type_name -> chat.v1.Filter
-	1,  // 9: chat.v1.UserWarning.reason:type_name -> chat.v1.BanReason
-	9,  // 10: chat.v1.UserWarning.filter:type_name -> chat.v1.Filter
-	13, // 11: chat.v1.UserWarning.created_on:type_name -> google.protobuf.Timestamp
-	11, // 12: chat.v1.WarningStateResponse.current:type_name -> chat.v1.UserWarning
+	12, // 6: chat.v1.Filter.created_on:type_name -> google.protobuf.Timestamp
+	12, // 7: chat.v1.Filter.updated_on:type_name -> google.protobuf.Timestamp
+	8,  // 8: chat.v1.FiltersResponse.filters:type_name -> chat.v1.Filter
+	13, // 9: chat.v1.UserWarning.reason:type_name -> ban.v1.BanReason
+	8,  // 10: chat.v1.UserWarning.filter:type_name -> chat.v1.Filter
+	12, // 11: chat.v1.UserWarning.created_on:type_name -> google.protobuf.Timestamp
+	10, // 12: chat.v1.WarningStateResponse.current:type_name -> chat.v1.UserWarning
 	14, // 13: chat.v1.WordfilterService.Filters:input_type -> google.protobuf.Empty
 	14, // 14: chat.v1.WordfilterService.WarningState:input_type -> google.protobuf.Empty
-	5,  // 15: chat.v1.WordfilterService.FilterCreate:input_type -> chat.v1.FilterCreateRequest
-	7,  // 16: chat.v1.WordfilterService.FilterEdit:input_type -> chat.v1.FilterEditRequest
-	4,  // 17: chat.v1.WordfilterService.FilterDelete:input_type -> chat.v1.FilterDeleteRequest
-	2,  // 18: chat.v1.WordfilterService.FilterMatch:input_type -> chat.v1.FilterMatchRequest
-	10, // 19: chat.v1.WordfilterService.Filters:output_type -> chat.v1.FiltersResponse
-	12, // 20: chat.v1.WordfilterService.WarningState:output_type -> chat.v1.WarningStateResponse
-	6,  // 21: chat.v1.WordfilterService.FilterCreate:output_type -> chat.v1.FilterCreateResponse
-	8,  // 22: chat.v1.WordfilterService.FilterEdit:output_type -> chat.v1.FilterEditResponse
+	4,  // 15: chat.v1.WordfilterService.FilterCreate:input_type -> chat.v1.FilterCreateRequest
+	6,  // 16: chat.v1.WordfilterService.FilterEdit:input_type -> chat.v1.FilterEditRequest
+	3,  // 17: chat.v1.WordfilterService.FilterDelete:input_type -> chat.v1.FilterDeleteRequest
+	1,  // 18: chat.v1.WordfilterService.FilterMatch:input_type -> chat.v1.FilterMatchRequest
+	9,  // 19: chat.v1.WordfilterService.Filters:output_type -> chat.v1.FiltersResponse
+	11, // 20: chat.v1.WordfilterService.WarningState:output_type -> chat.v1.WarningStateResponse
+	5,  // 21: chat.v1.WordfilterService.FilterCreate:output_type -> chat.v1.FilterCreateResponse
+	7,  // 22: chat.v1.WordfilterService.FilterEdit:output_type -> chat.v1.FilterEditResponse
 	14, // 23: chat.v1.WordfilterService.FilterDelete:output_type -> google.protobuf.Empty
-	3,  // 24: chat.v1.WordfilterService.FilterMatch:output_type -> chat.v1.FilterMatchResponse
+	2,  // 24: chat.v1.WordfilterService.FilterMatch:output_type -> chat.v1.FilterMatchResponse
 	19, // [19:25] is the sub-list for method output_type
 	13, // [13:19] is the sub-list for method input_type
 	13, // [13:13] is the sub-list for extension type_name
@@ -972,7 +871,7 @@ func file_chat_v1_wordfilter_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_chat_v1_wordfilter_proto_rawDesc), len(file_chat_v1_wordfilter_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      1,
 			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,

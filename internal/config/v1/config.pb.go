@@ -7,6 +7,7 @@
 package configv1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	_ "google.golang.org/protobuf/types/descriptorpb"
@@ -2724,197 +2725,197 @@ var File_config_v1_config_proto protoreflect.FileDescriptor
 
 const file_config_v1_config_proto_rawDesc = "" +
 	"\n" +
-	"\x16config/v1/config.proto\x12\tconfig.v1\x1a google/protobuf/descriptor.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"K\n" +
-	"\x11ChangelogResponse\x126\n" +
-	"\tchangelog\x18\x01 \x03(\v2\x18.config.v1.GithubReleaseR\tchangelog\"\x92\a\n" +
-	"\fInfoResponse\x12\x1b\n" +
-	"\tsite_name\x18\x01 \x01(\tR\bsiteName\x12)\n" +
-	"\x10site_description\x18\x02 \x01(\tR\x0fsiteDescription\x12\x1b\n" +
-	"\tasset_url\x18\x03 \x01(\tR\bassetUrl\x12\x18\n" +
-	"\afavicon\x18\x04 \x01(\tR\afavicon\x12\x17\n" +
-	"\alink_id\x18\x05 \x01(\tR\x06linkId\x12\x1f\n" +
-	"\vapp_version\x18\x06 \x01(\tR\n" +
-	"appVersion\x12$\n" +
-	"\x0esentry_dsn_web\x18\a \x01(\tR\fsentryDsnWeb\x12'\n" +
-	"\x0fdocument_policy\x18\b \x01(\tR\x0edocumentPolicy\x12*\n" +
-	"\x11patreon_client_id\x18\t \x01(\tR\x0fpatreonClientId\x12*\n" +
+	"\x16config/v1/config.proto\x12\tconfig.v1\x1a\x1bbuf/validate/validate.proto\x1a google/protobuf/descriptor.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"S\n" +
+	"\x11ChangelogResponse\x12>\n" +
+	"\tchangelog\x18\x01 \x03(\v2\x18.config.v1.GithubReleaseB\x06\xbaH\x03\xc8\x01\x01R\tchangelog\"\xd2\b\n" +
+	"\fInfoResponse\x12#\n" +
+	"\tsite_name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bsiteName\x121\n" +
+	"\x10site_description\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0fsiteDescription\x12#\n" +
+	"\tasset_url\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bassetUrl\x12 \n" +
+	"\afavicon\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\afavicon\x12\x1f\n" +
+	"\alink_id\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06linkId\x12'\n" +
+	"\vapp_version\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"appVersion\x12,\n" +
+	"\x0esentry_dsn_web\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fsentryDsnWeb\x12/\n" +
+	"\x0fdocument_policy\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0edocumentPolicy\x122\n" +
+	"\x11patreon_client_id\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0fpatreonClientId\x122\n" +
 	"\x11discord_client_id\x18\n" +
-	" \x01(\tR\x0fdiscordClientId\x12'\n" +
-	"\x0fdiscord_enabled\x18\v \x01(\bR\x0ediscordEnabled\x12'\n" +
-	"\x0fpatreon_enabled\x18\f \x01(\bR\x0epatreonEnabled\x12#\n" +
-	"\rdefault_route\x18\r \x01(\tR\fdefaultRoute\x12!\n" +
-	"\fnews_enabled\x18\x0e \x01(\bR\vnewsEnabled\x12)\n" +
-	"\x10contests_enabled\x18\x0f \x01(\bR\x0fcontestsEnabled\x12!\n" +
-	"\fwiki_enabled\x18\x10 \x01(\bR\vwikiEnabled\x12#\n" +
-	"\rstats_enabled\x18\x11 \x01(\bR\fstatsEnabled\x12'\n" +
-	"\x0fservers_enabled\x18\x12 \x01(\bR\x0eserversEnabled\x12'\n" +
-	"\x0freports_enabled\x18\x13 \x01(\bR\x0ereportsEnabled\x12)\n" +
-	"\x10chatlogs_enabled\x18\x14 \x01(\bR\x0fchatlogsEnabled\x12#\n" +
-	"\rdemos_enabled\x18\x15 \x01(\bR\fdemosEnabled\x12+\n" +
-	"\x11speedruns_enabled\x18\x16 \x01(\bR\x10speedrunsEnabled\x12%\n" +
-	"\x0eforums_enabled\x18\x17 \x01(\bR\rforumsEnabled\x12\x1f\n" +
-	"\vmge_enabled\x18\x18 \x01(\bR\n" +
-	"mgeEnabled\"8\n" +
-	"\vGetResponse\x12)\n" +
-	"\x06config\x18\x01 \x01(\v2\x11.config.v1.ConfigR\x06config\":\n" +
-	"\rUpdateRequest\x12)\n" +
-	"\x06config\x18\x01 \x01(\v2\x11.config.v1.ConfigR\x06config\";\n" +
-	"\x0eUpdateResponse\x12)\n" +
-	"\x06config\x18\x01 \x01(\v2\x11.config.v1.ConfigR\x06config\"\x8e\x06\n" +
-	"\aGeneral\x12\x1b\n" +
-	"\tsite_name\x18\x01 \x01(\tR\bsiteName\x12)\n" +
-	"\x10site_description\x18\x02 \x01(\tR\x0fsiteDescription\x12&\n" +
-	"\x04mode\x18\x03 \x01(\x0e2\x12.config.v1.RunModeR\x04mode\x12@\n" +
-	"\x0ffile_serve_mode\x18\x04 \x01(\x0e2\x18.config.v1.FileServeModeR\rfileServeMode\x12$\n" +
-	"\x0esrcds_log_addr\x18\x05 \x01(\tR\fsrcdsLogAddr\x12\x1b\n" +
-	"\tasset_url\x18\x06 \x01(\tR\bassetUrl\x12\x18\n" +
-	"\afavicon\x18\a \x01(\tR\afavicon\x12#\n" +
-	"\rdefault_route\x18\b \x01(\tR\fdefaultRoute\x12!\n" +
-	"\fnews_enabled\x18\t \x01(\bR\vnewsEnabled\x12%\n" +
+	" \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0fdiscordClientId\x12/\n" +
+	"\x0fdiscord_enabled\x18\v \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0ediscordEnabled\x12/\n" +
+	"\x0fpatreon_enabled\x18\f \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0epatreonEnabled\x12+\n" +
+	"\rdefault_route\x18\r \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fdefaultRoute\x12)\n" +
+	"\fnews_enabled\x18\x0e \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\vnewsEnabled\x121\n" +
+	"\x10contests_enabled\x18\x0f \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0fcontestsEnabled\x12)\n" +
+	"\fwiki_enabled\x18\x10 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\vwikiEnabled\x12+\n" +
+	"\rstats_enabled\x18\x11 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\fstatsEnabled\x12/\n" +
+	"\x0fservers_enabled\x18\x12 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0eserversEnabled\x12/\n" +
+	"\x0freports_enabled\x18\x13 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0ereportsEnabled\x121\n" +
+	"\x10chatlogs_enabled\x18\x14 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0fchatlogsEnabled\x12+\n" +
+	"\rdemos_enabled\x18\x15 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\fdemosEnabled\x123\n" +
+	"\x11speedruns_enabled\x18\x16 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x10speedrunsEnabled\x12-\n" +
+	"\x0eforums_enabled\x18\x17 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\rforumsEnabled\x12'\n" +
+	"\vmge_enabled\x18\x18 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"mgeEnabled\"@\n" +
+	"\vGetResponse\x121\n" +
+	"\x06config\x18\x01 \x01(\v2\x11.config.v1.ConfigB\x06\xbaH\x03\xc8\x01\x01R\x06config\"B\n" +
+	"\rUpdateRequest\x121\n" +
+	"\x06config\x18\x01 \x01(\v2\x11.config.v1.ConfigB\x06\xbaH\x03\xc8\x01\x01R\x06config\"C\n" +
+	"\x0eUpdateResponse\x121\n" +
+	"\x06config\x18\x01 \x01(\v2\x11.config.v1.ConfigB\x06\xbaH\x03\xc8\x01\x01R\x06config\"\xae\a\n" +
+	"\aGeneral\x12#\n" +
+	"\tsite_name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bsiteName\x121\n" +
+	"\x10site_description\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0fsiteDescription\x12.\n" +
+	"\x04mode\x18\x03 \x01(\x0e2\x12.config.v1.RunModeB\x06\xbaH\x03\xc8\x01\x01R\x04mode\x12H\n" +
+	"\x0ffile_serve_mode\x18\x04 \x01(\x0e2\x18.config.v1.FileServeModeB\x06\xbaH\x03\xc8\x01\x01R\rfileServeMode\x12,\n" +
+	"\x0esrcds_log_addr\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fsrcdsLogAddr\x12#\n" +
+	"\tasset_url\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bassetUrl\x12 \n" +
+	"\afavicon\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\afavicon\x12+\n" +
+	"\rdefault_route\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fdefaultRoute\x12)\n" +
+	"\fnews_enabled\x18\t \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\vnewsEnabled\x12-\n" +
 	"\x0eforums_enabled\x18\n" +
-	" \x01(\bR\rforumsEnabled\x12)\n" +
-	"\x10contests_enabled\x18\v \x01(\bR\x0fcontestsEnabled\x12!\n" +
-	"\fwiki_enabled\x18\f \x01(\bR\vwikiEnabled\x12#\n" +
-	"\rstats_enabled\x18\r \x01(\bR\fstatsEnabled\x12'\n" +
-	"\x0fservers_enabled\x18\x0e \x01(\bR\x0eserversEnabled\x12'\n" +
-	"\x0freports_enabled\x18\x0f \x01(\bR\x0ereportsEnabled\x12)\n" +
-	"\x10chatlogs_enabled\x18\x10 \x01(\bR\x0fchatlogsEnabled\x12#\n" +
-	"\rdemos_enabled\x18\x11 \x01(\bR\fdemosEnabled\x12+\n" +
-	"\x11speedruns_enabled\x18\x12 \x01(\bR\x10speedrunsEnabled\x12\x1d\n" +
+	" \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\rforumsEnabled\x121\n" +
+	"\x10contests_enabled\x18\v \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0fcontestsEnabled\x12)\n" +
+	"\fwiki_enabled\x18\f \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\vwikiEnabled\x12+\n" +
+	"\rstats_enabled\x18\r \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\fstatsEnabled\x12/\n" +
+	"\x0fservers_enabled\x18\x0e \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0eserversEnabled\x12/\n" +
+	"\x0freports_enabled\x18\x0f \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0ereportsEnabled\x121\n" +
+	"\x10chatlogs_enabled\x18\x10 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0fchatlogsEnabled\x12+\n" +
+	"\rdemos_enabled\x18\x11 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\fdemosEnabled\x123\n" +
+	"\x11speedruns_enabled\x18\x12 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x10speedrunsEnabled\x12%\n" +
 	"\n" +
-	"sentry_dsn\x18\x13 \x01(\tR\tsentryDsn\x12$\n" +
-	"\x0esentry_dsn_web\x18\x14 \x01(\tR\fsentryDsnWeb\"o\n" +
-	"\x05Debug\x125\n" +
-	"\x17skip_open_id_validation\x18\x01 \x01(\bR\x14skipOpenIdValidation\x12/\n" +
-	"\x14add_rcon_log_address\x18\x02 \x01(\tR\x11addRconLogAddress\"\xf1\x01\n" +
-	"\x04Demo\x12'\n" +
-	"\x0fcleanup_enabled\x18\x01 \x01(\bR\x0ecleanupEnabled\x123\n" +
-	"\bstrategy\x18\x02 \x01(\x0e2\x17.config.v1.DemoStrategyR\bstrategy\x12&\n" +
-	"\x0fcleanup_min_pct\x18\x03 \x01(\x02R\rcleanupMinPct\x12#\n" +
-	"\rcleanup_mount\x18\x04 \x01(\tR\fcleanupMount\x12\x1f\n" +
-	"\vcount_limit\x18\x05 \x01(\x03R\n" +
-	"countLimit\x12\x1d\n" +
+	"sentry_dsn\x18\x13 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tsentryDsn\x12,\n" +
+	"\x0esentry_dsn_web\x18\x14 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fsentryDsnWeb\"\x7f\n" +
+	"\x05Debug\x12=\n" +
+	"\x17skip_open_id_validation\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x14skipOpenIdValidation\x127\n" +
+	"\x14add_rcon_log_address\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11addRconLogAddress\"\xa3\x02\n" +
+	"\x04Demo\x12/\n" +
+	"\x0fcleanup_enabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0ecleanupEnabled\x12;\n" +
+	"\bstrategy\x18\x02 \x01(\x0e2\x17.config.v1.DemoStrategyB\x06\xbaH\x03\xc8\x01\x01R\bstrategy\x12.\n" +
+	"\x0fcleanup_min_pct\x18\x03 \x01(\x02B\x06\xbaH\x03\xc8\x01\x01R\rcleanupMinPct\x12+\n" +
+	"\rcleanup_mount\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fcleanupMount\x12)\n" +
+	"\vcount_limit\x18\x05 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\n" +
+	"countLimit\x12%\n" +
 	"\n" +
-	"parser_url\x18\x06 \x01(\tR\tparserUrl\"\x8f\x02\n" +
-	"\aFilters\x12\x18\n" +
-	"\aenabled\x18\x01 \x01(\bR\aenabled\x12'\n" +
-	"\x0fwarning_timeout\x18\x02 \x01(\x05R\x0ewarningTimeout\x12#\n" +
-	"\rwarning_limit\x18\x03 \x01(\x05R\fwarningLimit\x12\x10\n" +
-	"\x03dry\x18\x04 \x01(\bR\x03dry\x12!\n" +
-	"\fping_discord\x18\x05 \x01(\bR\vpingDiscord\x12\x1d\n" +
+	"parser_url\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tparserUrl\"\xcf\x02\n" +
+	"\aFilters\x12 \n" +
+	"\aenabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aenabled\x12/\n" +
+	"\x0fwarning_timeout\x18\x02 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x0ewarningTimeout\x12+\n" +
+	"\rwarning_limit\x18\x03 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fwarningLimit\x12\x18\n" +
+	"\x03dry\x18\x04 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x03dry\x12)\n" +
+	"\fping_discord\x18\x05 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\vpingDiscord\x12%\n" +
 	"\n" +
-	"max_weight\x18\x06 \x01(\x05R\tmaxWeight\x12#\n" +
-	"\rcheck_timeout\x18\a \x01(\x05R\fcheckTimeout\x12#\n" +
-	"\rmatch_timeout\x18\b \x01(\x05R\fmatchTimeout\"\xf3\x06\n" +
-	"\aDiscord\x12\x18\n" +
-	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x1f\n" +
-	"\vbot_enabled\x18\x02 \x01(\bR\n" +
-	"botEnabled\x121\n" +
-	"\x14integrations_enabled\x18\x03 \x01(\bR\x13integrationsEnabled\x12\x15\n" +
-	"\x06app_id\x18\x04 \x01(\tR\x05appId\x12\x1d\n" +
+	"max_weight\x18\x06 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\tmaxWeight\x12+\n" +
+	"\rcheck_timeout\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fcheckTimeout\x12+\n" +
+	"\rmatch_timeout\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fmatchTimeout\"\x9b\b\n" +
+	"\aDiscord\x12 \n" +
+	"\aenabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aenabled\x12'\n" +
+	"\vbot_enabled\x18\x02 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"botEnabled\x129\n" +
+	"\x14integrations_enabled\x18\x03 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x13integrationsEnabled\x12\x1d\n" +
+	"\x06app_id\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05appId\x12%\n" +
 	"\n" +
-	"app_secret\x18\x05 \x01(\tR\tappSecret\x12\x17\n" +
-	"\alink_id\x18\x06 \x01(\tR\x06linkId\x12\x14\n" +
-	"\x05token\x18\a \x01(\tR\x05token\x12\x19\n" +
-	"\bguild_id\x18\b \x01(\tR\aguildId\x129\n" +
-	"\x19public_log_channel_enable\x18\t \x01(\bR\x16publicLogChannelEnable\x12$\n" +
+	"app_secret\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tappSecret\x12\x1f\n" +
+	"\alink_id\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06linkId\x12\x1c\n" +
+	"\x05token\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05token\x12!\n" +
+	"\bguild_id\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\aguildId\x12A\n" +
+	"\x19public_log_channel_enable\x18\t \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x16publicLogChannelEnable\x12,\n" +
 	"\x0elog_channel_id\x18\n" +
-	" \x01(\tR\flogChannelId\x12<\n" +
-	"\x1bpublic_match_log_channel_id\x18\v \x01(\tR\x17publicMatchLogChannelId\x12-\n" +
-	"\x13vote_log_channel_id\x18\f \x01(\tR\x10voteLogChannelId\x121\n" +
-	"\x15appeal_log_channel_id\x18\r \x01(\tR\x12appealLogChannelId\x12+\n" +
-	"\x12ban_log_channel_id\x18\x0e \x01(\tR\x0fbanLogChannelId\x12/\n" +
-	"\x14forum_log_channel_id\x18\x0f \x01(\tR\x11forumLogChannelId\x12-\n" +
-	"\x13kick_log_channel_id\x18\x10 \x01(\tR\x10kickLogChannelId\x12'\n" +
-	"\x10mod_ping_role_id\x18\x11 \x01(\tR\rmodPingRoleId\x120\n" +
-	"\x14anticheat_channel_id\x18\x12 \x01(\tR\x12anticheatChannelId\x12&\n" +
-	"\x0fseed_channel_id\x18\x13 \x01(\tR\rseedChannelId\x12:\n" +
-	"\x1aword_filter_log_channel_id\x18\x14 \x01(\tR\x16wordFilterLogChannelId\x12-\n" +
-	"\x13chat_log_channel_id\x18\x15 \x01(\tR\x10chatLogChannelId\":\n" +
-	"\tSourcemod\x12-\n" +
-	"\x12center_projectiles\x18\x01 \x01(\bR\x11centerProjectiles\"\xc1\x01\n" +
-	"\x03Log\x12&\n" +
-	"\x05level\x18\x01 \x01(\x0e2\x10.config.v1.LevelR\x05level\x12\x12\n" +
-	"\x04file\x18\x02 \x01(\tR\x04file\x12!\n" +
-	"\fhttp_enabled\x18\x03 \x01(\bR\vhttpEnabled\x12*\n" +
-	"\x11http_otel_enabled\x18\x04 \x01(\bR\x0fhttpOtelEnabled\x12/\n" +
+	" \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\flogChannelId\x12D\n" +
+	"\x1bpublic_match_log_channel_id\x18\v \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x17publicMatchLogChannelId\x125\n" +
+	"\x13vote_log_channel_id\x18\f \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10voteLogChannelId\x129\n" +
+	"\x15appeal_log_channel_id\x18\r \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x12appealLogChannelId\x123\n" +
+	"\x12ban_log_channel_id\x18\x0e \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0fbanLogChannelId\x127\n" +
+	"\x14forum_log_channel_id\x18\x0f \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11forumLogChannelId\x125\n" +
+	"\x13kick_log_channel_id\x18\x10 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10kickLogChannelId\x12/\n" +
+	"\x10mod_ping_role_id\x18\x11 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rmodPingRoleId\x128\n" +
+	"\x14anticheat_channel_id\x18\x12 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x12anticheatChannelId\x12.\n" +
+	"\x0fseed_channel_id\x18\x13 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rseedChannelId\x12B\n" +
+	"\x1aword_filter_log_channel_id\x18\x14 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x16wordFilterLogChannelId\x125\n" +
+	"\x13chat_log_channel_id\x18\x15 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10chatLogChannelId\"B\n" +
+	"\tSourcemod\x125\n" +
+	"\x12center_projectiles\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x11centerProjectiles\"\xe9\x01\n" +
+	"\x03Log\x12.\n" +
+	"\x05level\x18\x01 \x01(\x0e2\x10.config.v1.LevelB\x06\xbaH\x03\xc8\x01\x01R\x05level\x12\x1a\n" +
+	"\x04file\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04file\x12)\n" +
+	"\fhttp_enabled\x18\x03 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\vhttpEnabled\x122\n" +
+	"\x11http_otel_enabled\x18\x04 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0fhttpOtelEnabled\x127\n" +
 	"\n" +
-	"http_level\x18\x05 \x01(\x0e2\x10.config.v1.LevelR\thttpLevel\"\\\n" +
-	"\vGeoLocation\x12\x18\n" +
-	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x1d\n" +
+	"http_level\x18\x05 \x01(\x0e2\x10.config.v1.LevelB\x06\xbaH\x03\xc8\x01\x01R\thttpLevel\"t\n" +
+	"\vGeoLocation\x12 \n" +
+	"\aenabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aenabled\x12%\n" +
 	"\n" +
-	"cache_path\x18\x02 \x01(\tR\tcachePath\x12\x14\n" +
-	"\x05token\x18\x03 \x01(\tR\x05token\"\xfe\x01\n" +
-	"\aPatreon\x12\x18\n" +
-	"\aenabled\x18\x01 \x01(\bR\aenabled\x121\n" +
-	"\x14integrations_enabled\x18\x02 \x01(\bR\x13integrationsEnabled\x12\x1b\n" +
-	"\tclient_id\x18\x03 \x01(\tR\bclientId\x12#\n" +
-	"\rclient_secret\x18\x04 \x01(\tR\fclientSecret\x120\n" +
-	"\x14creator_access_token\x18\x05 \x01(\tR\x12creatorAccessToken\x122\n" +
-	"\x15creator_refresh_token\x18\x06 \x01(\tR\x13creatorRefreshToken\"\xe1\x02\n" +
-	"\x03SSH\x12\x18\n" +
-	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12\x12\n" +
-	"\x04port\x18\x03 \x01(\x05R\x04port\x12(\n" +
-	"\x10private_key_path\x18\x04 \x01(\tR\x0eprivateKeyPath\x12F\n" +
-	"\x11host_key_strategy\x18\x05 \x01(\x0e2\x1a.config.v1.HostKeyStrategyR\x0fhostKeyStrategy\x12\x1a\n" +
-	"\bpassword\x18\x06 \x01(\tR\bpassword\x12'\n" +
-	"\x0fupdate_interval\x18\a \x01(\x05R\x0eupdateInterval\x12\x18\n" +
-	"\atimeout\x18\b \x01(\x05R\atimeout\x12\"\n" +
-	"\rdemo_path_fmt\x18\t \x01(\tR\vdemoPathFmt\x12\x1b\n" +
+	"cache_path\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tcachePath\x12\x1c\n" +
+	"\x05token\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05token\"\xae\x02\n" +
+	"\aPatreon\x12 \n" +
+	"\aenabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aenabled\x129\n" +
+	"\x14integrations_enabled\x18\x02 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x13integrationsEnabled\x12#\n" +
+	"\tclient_id\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bclientId\x12+\n" +
+	"\rclient_secret\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fclientSecret\x128\n" +
+	"\x14creator_access_token\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x12creatorAccessToken\x12:\n" +
+	"\x15creator_refresh_token\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x13creatorRefreshToken\"\xb1\x03\n" +
+	"\x03SSH\x12 \n" +
+	"\aenabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aenabled\x12\"\n" +
+	"\busername\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\busername\x12\x1a\n" +
+	"\x04port\x18\x03 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x04port\x120\n" +
+	"\x10private_key_path\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0eprivateKeyPath\x12N\n" +
+	"\x11host_key_strategy\x18\x05 \x01(\x0e2\x1a.config.v1.HostKeyStrategyB\x06\xbaH\x03\xc8\x01\x01R\x0fhostKeyStrategy\x12\"\n" +
+	"\bpassword\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bpassword\x12/\n" +
+	"\x0fupdate_interval\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x0eupdateInterval\x12 \n" +
+	"\atimeout\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\atimeout\x12*\n" +
+	"\rdemo_path_fmt\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdemoPathFmt\x12#\n" +
 	"\tstac_path\x18\n" +
-	" \x01(\tR\bstacPath\"\xa2\x01\n" +
-	"\aNetwork\x12\x1f\n" +
-	"\vsdr_enabled\x18\x01 \x01(\bR\n" +
-	"sdrEnabled\x12&\n" +
-	"\x0fsdr_dns_enabled\x18\x02 \x01(\bR\rsdrDnsEnabled\x12\x15\n" +
-	"\x06cf_key\x18\x03 \x01(\tR\x05cfKey\x12\x19\n" +
-	"\bcf_email\x18\x04 \x01(\tR\acfEmail\x12\x1c\n" +
+	" \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bstacPath\"\xca\x01\n" +
+	"\aNetwork\x12'\n" +
+	"\vsdr_enabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"sdrEnabled\x12.\n" +
+	"\x0fsdr_dns_enabled\x18\x02 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\rsdrDnsEnabled\x12\x1d\n" +
+	"\x06cf_key\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05cfKey\x12!\n" +
+	"\bcf_email\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\acfEmail\x12$\n" +
 	"\n" +
-	"cf_zone_id\x18\x05 \x01(\tR\bcfZoneId\")\n" +
+	"cf_zone_id\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bcfZoneId\"1\n" +
 	"\n" +
-	"LocalStore\x12\x1b\n" +
-	"\tpath_root\x18\x01 \x01(\tR\bpathRoot\"v\n" +
-	"\aExports\x12\x1d\n" +
+	"LocalStore\x12#\n" +
+	"\tpath_root\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bpathRoot\"\x8e\x01\n" +
+	"\aExports\x12%\n" +
 	"\n" +
-	"bd_enabled\x18\x01 \x01(\bR\tbdEnabled\x12#\n" +
-	"\rvalve_enabled\x18\x02 \x01(\bR\fvalveEnabled\x12'\n" +
-	"\x0fauthorized_keys\x18\x03 \x03(\tR\x0eauthorizedKeys\"\xbe\x03\n" +
-	"\tAnticheat\x12\x18\n" +
-	"\aenabled\x18\x01 \x01(\bR\aenabled\x12)\n" +
-	"\x06action\x18\x02 \x01(\x0e2\x11.config.v1.ActionR\x06action\x12\x1a\n" +
-	"\bduration\x18\x03 \x01(\x05R\bduration\x12\"\n" +
-	"\rmax_aim_snaps\x18\x04 \x01(\x05R\vmaxAimSnaps\x12\x1f\n" +
-	"\vmax_psilent\x18\x05 \x01(\x05R\n" +
-	"maxPsilent\x12\x19\n" +
-	"\bmax_bhop\x18\x06 \x01(\x05R\amaxBhop\x12 \n" +
-	"\fmax_fake_ang\x18\a \x01(\x05R\n" +
-	"maxFakeAng\x12\x1e\n" +
-	"\vmax_cmd_num\x18\b \x01(\x05R\tmaxCmdNum\x127\n" +
-	"\x18max_too_many_connections\x18\t \x01(\x05R\x15maxTooManyConnections\x12\x1e\n" +
+	"bd_enabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\tbdEnabled\x12+\n" +
+	"\rvalve_enabled\x18\x02 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\fvalveEnabled\x12/\n" +
+	"\x0fauthorized_keys\x18\x03 \x03(\tB\x06\xbaH\x03\xc8\x01\x01R\x0eauthorizedKeys\"\x9e\x04\n" +
+	"\tAnticheat\x12 \n" +
+	"\aenabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aenabled\x121\n" +
+	"\x06action\x18\x02 \x01(\x0e2\x11.config.v1.ActionB\x06\xbaH\x03\xc8\x01\x01R\x06action\x12\"\n" +
+	"\bduration\x18\x03 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bduration\x12*\n" +
+	"\rmax_aim_snaps\x18\x04 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\vmaxAimSnaps\x12'\n" +
+	"\vmax_psilent\x18\x05 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"maxPsilent\x12!\n" +
+	"\bmax_bhop\x18\x06 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\amaxBhop\x12(\n" +
+	"\fmax_fake_ang\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"maxFakeAng\x12&\n" +
+	"\vmax_cmd_num\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\tmaxCmdNum\x12?\n" +
+	"\x18max_too_many_connections\x18\t \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x15maxTooManyConnections\x12&\n" +
 	"\vmax_oob_var\x18\n" +
-	" \x01(\x05R\tmaxOobVar\x12/\n" +
-	"\x14max_invalid_user_cmd\x18\v \x01(\x05R\x11maxInvalidUserCmd\x12$\n" +
-	"\x0emax_cheat_cvar\x18\f \x01(\x05R\fmaxCheatCvar\"<\n" +
-	"\vClientprefs\x12-\n" +
-	"\x12center_projectiles\x18\x01 \x01(\bR\x11centerProjectiles\"\x8f\x05\n" +
-	"\x06Config\x12,\n" +
-	"\ageneral\x18\x01 \x01(\v2\x12.config.v1.GeneralR\ageneral\x12&\n" +
-	"\x05debug\x18\x02 \x01(\v2\x10.config.v1.DebugR\x05debug\x12#\n" +
-	"\x04demo\x18\x03 \x01(\v2\x0f.config.v1.DemoR\x04demo\x12,\n" +
-	"\afilters\x18\x04 \x01(\v2\x12.config.v1.FiltersR\afilters\x12,\n" +
-	"\adiscord\x18\x05 \x01(\v2\x12.config.v1.DiscordR\adiscord\x129\n" +
-	"\fclient_prefs\x18\x06 \x01(\v2\x16.config.v1.ClientprefsR\vclientPrefs\x12 \n" +
-	"\x03log\x18\a \x01(\v2\x0e.config.v1.LogR\x03log\x129\n" +
-	"\fgeo_location\x18\b \x01(\v2\x16.config.v1.GeoLocationR\vgeoLocation\x12,\n" +
-	"\apatreon\x18\t \x01(\v2\x12.config.v1.PatreonR\apatreon\x12 \n" +
+	" \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\tmaxOobVar\x127\n" +
+	"\x14max_invalid_user_cmd\x18\v \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11maxInvalidUserCmd\x12,\n" +
+	"\x0emax_cheat_cvar\x18\f \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fmaxCheatCvar\"D\n" +
+	"\vClientprefs\x125\n" +
+	"\x12center_projectiles\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x11centerProjectiles\"\xff\x05\n" +
+	"\x06Config\x124\n" +
+	"\ageneral\x18\x01 \x01(\v2\x12.config.v1.GeneralB\x06\xbaH\x03\xc8\x01\x01R\ageneral\x12.\n" +
+	"\x05debug\x18\x02 \x01(\v2\x10.config.v1.DebugB\x06\xbaH\x03\xc8\x01\x01R\x05debug\x12+\n" +
+	"\x04demo\x18\x03 \x01(\v2\x0f.config.v1.DemoB\x06\xbaH\x03\xc8\x01\x01R\x04demo\x124\n" +
+	"\afilters\x18\x04 \x01(\v2\x12.config.v1.FiltersB\x06\xbaH\x03\xc8\x01\x01R\afilters\x124\n" +
+	"\adiscord\x18\x05 \x01(\v2\x12.config.v1.DiscordB\x06\xbaH\x03\xc8\x01\x01R\adiscord\x12A\n" +
+	"\fclient_prefs\x18\x06 \x01(\v2\x16.config.v1.ClientprefsB\x06\xbaH\x03\xc8\x01\x01R\vclientPrefs\x12(\n" +
+	"\x03log\x18\a \x01(\v2\x0e.config.v1.LogB\x06\xbaH\x03\xc8\x01\x01R\x03log\x12A\n" +
+	"\fgeo_location\x18\b \x01(\v2\x16.config.v1.GeoLocationB\x06\xbaH\x03\xc8\x01\x01R\vgeoLocation\x124\n" +
+	"\apatreon\x18\t \x01(\v2\x12.config.v1.PatreonB\x06\xbaH\x03\xc8\x01\x01R\apatreon\x12(\n" +
 	"\x03ssh\x18\n" +
-	" \x01(\v2\x0e.config.v1.SSHR\x03ssh\x12,\n" +
-	"\anetwork\x18\v \x01(\v2\x12.config.v1.NetworkR\anetwork\x126\n" +
-	"\vlocal_store\x18\f \x01(\v2\x15.config.v1.LocalStoreR\n" +
-	"localStore\x12,\n" +
-	"\aexports\x18\r \x01(\v2\x12.config.v1.ExportsR\aexports\x122\n" +
-	"\tanticheat\x18\x0e \x01(\v2\x14.config.v1.AnticheatR\tanticheat\"\x9b\f\n" +
+	" \x01(\v2\x0e.config.v1.SSHB\x06\xbaH\x03\xc8\x01\x01R\x03ssh\x124\n" +
+	"\anetwork\x18\v \x01(\v2\x12.config.v1.NetworkB\x06\xbaH\x03\xc8\x01\x01R\anetwork\x12>\n" +
+	"\vlocal_store\x18\f \x01(\v2\x15.config.v1.LocalStoreB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"localStore\x124\n" +
+	"\aexports\x18\r \x01(\v2\x12.config.v1.ExportsB\x06\xbaH\x03\xc8\x01\x01R\aexports\x12:\n" +
+	"\tanticheat\x18\x0e \x01(\v2\x14.config.v1.AnticheatB\x06\xbaH\x03\xc8\x01\x01R\tanticheat\"\x9f\f\n" +
 	"\rGithubRelease\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\x19\n" +
 	"\bhtml_url\x18\x02 \x01(\tR\ahtmlUrl\x12\x1b\n" +
@@ -2961,7 +2962,7 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x13received_events_url\x18\x10 \x01(\tR\x11receivedEventsUrl\x12\x12\n" +
 	"\x04type\x18\x11 \x01(\tR\x04type\x12\x1d\n" +
 	"\n" +
-	"site_admin\x18\x12 \x01(\bR\tsiteAdmin\x1a\xc5\x03\n" +
+	"site_admin\x18\x12 \x01(\bR\tsiteAdmin\x1a\xc9\x03\n" +
 	"\x05Asset\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x120\n" +
 	"\x14browser_download_url\x18\x02 \x01(\tR\x12browserDownloadUrl\x12\x0e\n" +
@@ -2970,8 +2971,8 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x04name\x18\x05 \x01(\tR\x04name\x12\x14\n" +
 	"\x05label\x18\x06 \x01(\tR\x05label\x12\x14\n" +
 	"\x05state\x18\a \x01(\tR\x05state\x12!\n" +
-	"\fcontent_type\x18\b \x01(\tR\vcontentType\x12\x12\n" +
-	"\x04size\x18\t \x01(\x03R\x04size\x12%\n" +
+	"\fcontent_type\x18\b \x01(\tR\vcontentType\x12\x16\n" +
+	"\x04size\x18\t \x01(\x03B\x020\x01R\x04size\x12%\n" +
 	"\x0edownload_count\x18\n" +
 	" \x01(\x05R\rdownloadCount\x129\n" +
 	"\n" +

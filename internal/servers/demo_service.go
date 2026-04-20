@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"connectrpc.com/connect"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/servers/v1"
@@ -18,8 +19,13 @@ type DemoService struct {
 	demos Demos
 }
 
-func NewDemoService(demos Demos) *DemoService {
-	return &DemoService{demos: demos}
+func NewDemoService(demos Demos, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := serversv1connect.NewDemoServiceHandler(&DemoService{demos: demos}, option...)
+
+	authMiddleware.AuthedRoute(serversv1connect.DemoServiceGetDemosProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(serversv1connect.DemoServiceRunCleanupProcedure, rpc.WithMinPermissions(permission.Admin))
+
+	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
 func (s DemoService) GetDemos(ctx context.Context, _ *emptypb.Empty) (*v1.GetDemosResponse, error) {

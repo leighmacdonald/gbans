@@ -48,7 +48,7 @@ const (
 
 // NewsServiceClient is a client for the news.v1.NewsService service.
 type NewsServiceClient interface {
-	Latest(context.Context, *v1.LatestRequest) (*v1.NewsAllResponse, error)
+	Latest(context.Context, *v1.LatestRequest) (*v1.LatestResponse, error)
 	Edit(context.Context, *v1.EditRequest) (*v1.EditResponse, error)
 	Create(context.Context, *v1.CreateRequest) (*v1.CreateResponse, error)
 	Delete(context.Context, *v1.DeleteRequest) (*emptypb.Empty, error)
@@ -66,7 +66,7 @@ func NewNewsServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 	baseURL = strings.TrimRight(baseURL, "/")
 	newsServiceMethods := v1.File_news_v1_news_proto.Services().ByName("NewsService").Methods()
 	return &newsServiceClient{
-		latest: connect.NewClient[v1.LatestRequest, v1.NewsAllResponse](
+		latest: connect.NewClient[v1.LatestRequest, v1.LatestResponse](
 			httpClient,
 			baseURL+NewsServiceLatestProcedure,
 			connect.WithSchema(newsServiceMethods.ByName("Latest")),
@@ -101,7 +101,7 @@ func NewNewsServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // newsServiceClient implements NewsServiceClient.
 type newsServiceClient struct {
-	latest *connect.Client[v1.LatestRequest, v1.NewsAllResponse]
+	latest *connect.Client[v1.LatestRequest, v1.LatestResponse]
 	edit   *connect.Client[v1.EditRequest, v1.EditResponse]
 	create *connect.Client[v1.CreateRequest, v1.CreateResponse]
 	delete *connect.Client[v1.DeleteRequest, emptypb.Empty]
@@ -109,7 +109,7 @@ type newsServiceClient struct {
 }
 
 // Latest calls news.v1.NewsService.Latest.
-func (c *newsServiceClient) Latest(ctx context.Context, req *v1.LatestRequest) (*v1.NewsAllResponse, error) {
+func (c *newsServiceClient) Latest(ctx context.Context, req *v1.LatestRequest) (*v1.LatestResponse, error) {
 	response, err := c.latest.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -155,7 +155,7 @@ func (c *newsServiceClient) All(ctx context.Context, req *emptypb.Empty) (*v1.Al
 
 // NewsServiceHandler is an implementation of the news.v1.NewsService service.
 type NewsServiceHandler interface {
-	Latest(context.Context, *v1.LatestRequest) (*v1.NewsAllResponse, error)
+	Latest(context.Context, *v1.LatestRequest) (*v1.LatestResponse, error)
 	Edit(context.Context, *v1.EditRequest) (*v1.EditResponse, error)
 	Create(context.Context, *v1.CreateRequest) (*v1.CreateResponse, error)
 	Delete(context.Context, *v1.DeleteRequest) (*emptypb.Empty, error)
@@ -220,7 +220,7 @@ func NewNewsServiceHandler(svc NewsServiceHandler, opts ...connect.HandlerOption
 // UnimplementedNewsServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedNewsServiceHandler struct{}
 
-func (UnimplementedNewsServiceHandler) Latest(context.Context, *v1.LatestRequest) (*v1.NewsAllResponse, error) {
+func (UnimplementedNewsServiceHandler) Latest(context.Context, *v1.LatestRequest) (*v1.LatestResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("news.v1.NewsService.Latest is not implemented"))
 }
 

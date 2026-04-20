@@ -13,7 +13,7 @@ service NetworkService {
 }
 
 message QueryNetworkRequest {
-  Filter filter = 1;
+  database.query.v1.Filter filter = 1;
   string ip = 2;
 }
 
@@ -91,7 +91,7 @@ message QueryNetworkResponse {
 }
 
 message QueryConnectionsRequest {
-  Filter filter = 1;
+  database.query.v1.Filter filter = 1;
   string steam_id = 2;
   string cidr = 3;
   string country_code = 4;

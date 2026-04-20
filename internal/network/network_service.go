@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 
 	"connectrpc.com/connect"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/network/ip2location"
@@ -24,8 +25,14 @@ type NetworkService struct {
 	networks Networks
 }
 
-func NewNetworkService(networks Networks) NetworkService {
-	return NetworkService{networks: networks}
+func NewNetworkService(networks Networks, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := networkv1connect.NewNetworkServiceHandler(NetworkService{networks: networks}, option...)
+
+	authMiddleware.AuthedRoute(networkv1connect.NetworkServiceQueryConnectionsProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(networkv1connect.NetworkServiceQueryNetworkProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(networkv1connect.NetworkServiceUpdateDBProcedure, rpc.WithMinPermissions(permission.Admin))
+
+	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
 func (s NetworkService) QueryConnections(ctx context.Context, req *v1.QueryConnectionsRequest) (*v1.QueryConnectionsResponse, error) {

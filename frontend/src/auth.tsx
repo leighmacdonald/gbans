@@ -1,28 +1,38 @@
-import { type ReactNode, useCallback, useEffect } from "react";
-import { apiGetCurrentProfile, defaultAvatarHash } from "./api";
+import { type ReactNode, useCallback } from "react";
+import { defaultAvatarHash } from "./api";
 import { AuthContext } from "./contexts/AuthContext.tsx";
-import { PermissionLevel, type PermissionLevelEnum, type UserProfile } from "./schema/people.ts";
+import { PermissionLevel, type PermissionLevelEnum } from "./schema/people.ts";
 import { logoutFn } from "./util/auth/logoutFn.ts";
-import { readAccessToken } from "./util/auth/readAccessToken.ts";
 import { logErr } from "./util/errors.ts";
-import { emptyOrNullString } from "./util/types.ts";
+import { type PersonCore, PersonCoreSchema } from "./rpc/person/v1/person_core_pb.ts";
+import { create } from "@bufbuild/protobuf";
+import {timestampToDateTime} from "./util/time.ts";
 
 export const accessTokenKey = "token";
 export const profileKey = "profile";
 export const logoutKey = "logout";
 
+const saveProfile = (profile: PersonCore) => {
+    const v = {
+        ...profile, steamId: profile.steamId.toString(),
+        banId: profile.banId.toString(),
+        timeCreated: profile.timeCreated ? timestampToDateTime(profile.timeCreated) : new Date()
+    };
+    console.log(v);
+    localStorage.setItem(profileKey, JSON.stringify(v));
+}
 export function AuthProvider({
 	children,
 	profile,
 	setProfile,
 }: {
 	children: ReactNode;
-	profile: UserProfile;
-	setProfile: (v?: UserProfile) => void;
+	profile: PersonCore;
+	setProfile: (v?: PersonCore) => void;
 }) {
 	const login = useCallback(
-		async (profile: UserProfile) => {
-			localStorage.setItem(profileKey, JSON.stringify(profile));
+		async (profile: PersonCore) => {
+            saveProfile(profile);
 			setProfile(profile);
 		},
 		[setProfile],
@@ -34,27 +44,22 @@ export function AuthProvider({
 		} catch (e) {
 			logErr(`error logging out: ${e}`);
 		} finally {
-			setProfile({
-				steam_id: "",
-				permission_level: PermissionLevel.Guest,
-				avatarhash: defaultAvatarHash,
-				name: "",
-				ban_id: 0,
-				muted: false,
-				discord_id: "",
-				created_on: new Date(),
-				updated_on: new Date(),
-				patreon_id: "",
-			});
+			setProfile(
+				create(PersonCoreSchema, {
+					steamId: "",
+					permissionLevel: PermissionLevel.Guest,
+					avatarHash: defaultAvatarHash,
+				}),
+			);
 		}
 	}, [setProfile]);
 
 	const isAuthenticated = () => {
-		return Boolean(profile?.steam_id ?? false);
+		return Boolean(profile?.steamId ?? false);
 	};
 
 	const permissionLevel = () => {
-		return profile?.permission_level ?? PermissionLevel.Guest;
+		return profile?.permissionLevel ?? PermissionLevel.Guest;
 	};
 
 	const hasPermission = (wantedLevel: PermissionLevelEnum) => {
@@ -62,21 +67,21 @@ export function AuthProvider({
 		return currentLevel >= wantedLevel;
 	};
 
-	useEffect(() => {
-		const loadProfile = async () => {
-			try {
-				const token = readAccessToken();
-				if (!emptyOrNullString(token)) {
-					const ac = new AbortController();
-					await login(await apiGetCurrentProfile(ac.signal));
-				}
-			} catch (e) {
-				logErr(e);
-				await logout();
-			}
-		};
-		loadProfile().catch(logErr);
-	}, [login, logout]);
+	// useEffect(() => {
+	// 	const loadProfile = async () => {
+	// 		try {
+	// 			const token = readAccessToken();
+	// 			if (!emptyOrNullString(token)) {
+	// 				const ac = new AbortController();
+	// 				await login(await apiGetCurrentProfile(ac.signal));
+	// 			}
+	// 		} catch (e) {
+	// 			logErr(e);
+	// 			await logout();
+	// 		}
+	// 	};
+	// 	loadProfile().catch(logErr);
+	// }, [login, logout]);
 
 	return (
 		<AuthContext.Provider
@@ -95,8 +100,8 @@ export function AuthProvider({
 }
 
 export type AuthContextProps = {
-	profile: UserProfile;
-	login: (profile: UserProfile) => void;
+	profile: PersonCore;
+	login: (profile: PersonCore) => void;
 	logout: () => Promise<void>;
 	isAuthenticated: () => boolean;
 	permissionLevel: () => PermissionLevelEnum;

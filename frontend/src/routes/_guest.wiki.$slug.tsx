@@ -3,11 +3,13 @@ import { ErrorDetails } from "../component/ErrorDetails.tsx";
 import { WikiPage } from "../component/WikiPage.tsx";
 import { AppError } from "../error.tsx";
 import { PermissionLevel } from "../schema/people.ts";
-import { useSuspenseQuery} from "@connectrpc/connect-query";
-import {get} from "../rpc/wiki/v1/wiki-WikiService_connectquery.ts";
+import { useSuspenseQuery } from "@connectrpc/connect-query";
+import { WikiSchema } from "../rpc/wiki/v1/wiki_pb.ts";
+import { get } from "../rpc/wiki/v1/wiki-WikiService_connectquery.ts";
+import { create } from "@bufbuild/protobuf";
 
 export const Route = createFileRoute("/_guest/wiki/$slug")({
-	component: Wiki,
+	component: Component,
 	head: ({ match, params }) => ({
 		meta: [{ name: "description", content: "Wiki" }, match.context.title(params.slug)],
 	}),
@@ -15,29 +17,28 @@ export const Route = createFileRoute("/_guest/wiki/$slug")({
 		if (error instanceof AppError) {
 			return <ErrorDetails error={error} />;
 		}
-		return <div>idk</div>;
+		return <div>hmmm</div>;
 	},
 });
 
-function Wiki() {
+function Component() {
 	const { slug } = Route.useParams();
 	const { appInfo } = Route.useRouteContext();
 
-    const {data, isLoading} = useSuspenseQuery(get, {slug});
+	const { data, isLoading } = useSuspenseQuery(get, { slug });
 
-    if (isLoading) {
-        return <div>loading...</div>;
-    }
+	if (isLoading) {
+		return <div>loading...</div>;
+	}
 
-
-    const page = data.wiki ?? {
-            revision: 0,
-            body_md: "",
-            slug: slug,
-            permission_level: PermissionLevel.Guest,
-            created_on: new Date(),
-            updated_on: new Date(),
-        }
+	const page =
+		data.wiki ??
+		create(WikiSchema, {
+			revision: 0,
+			bodyMd: "",
+			slug: slug,
+			permissionLevel: PermissionLevel.Guest,
+		});
 
 	return <WikiPage slug={slug} page={page} assetURL={appInfo.assetUrl} />;
 }

@@ -2,6 +2,7 @@ edition = "2023";
 
 package chat.v1;
 
+import "buf/validate/validate.proto";
 import "database/query/v1/filter.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -11,39 +12,39 @@ service ChatService {
 }
 
 message QueryContextRequest {
-  int64 person_message_id = 1;
-  int32 padding = 2;
+  int64 person_message_id = 1 [(buf.validate.field).required = true];
+  int32 padding = 2 [(buf.validate.field).required = true];
 }
 
 message QueryContextResponse {
-  repeated Message messages = 1;
+  repeated Message messages = 1 [(buf.validate.field).required = true];
 }
 
 message QueryRequest {
-  Filter filter = 1;
+  database.query.v1.Filter filter = 1;
   string query = 2;
   int32 server_id = 3;
   google.protobuf.Timestamp date_start = 4;
   google.protobuf.Timestamp date_end = 5;
   bool flagged_only = 6;
-  string steam_id = 7;
+  int64 steam_id = 7;
 }
 
 message QueryResponse {
-  repeated Message messages = 1;
-  int64 count = 2;
+  repeated Message messages = 1 [(buf.validate.field).required = true];
+  int64 count = 2 [(buf.validate.field).required = true];
 }
 
 message Message {
-  int64 person_message_id = 1;
-  string match_id = 2;
-  string steam_id = 3;
-  string avatar_hash = 4;
-  string persona_name = 5;
-  string server_name = 6;
-  int32 server_id = 7;
-  string body = 8;
-  bool team = 9;
-  google.protobuf.Timestamp created_on = 10;
-  int64 auto_filter_flagged = 11;
+  int64 person_message_id = 1 [(buf.validate.field).required = true];
+  string match_id = 2 [(buf.validate.field).required = true];
+  int64 steam_id = 3 [(buf.validate.field).required = true];
+  string avatar_hash = 4 [(buf.validate.field).required = true];
+  string persona_name = 5 [(buf.validate.field).required = true];
+  string server_name = 6 [(buf.validate.field).required = true];
+  int32 server_id = 7 [(buf.validate.field).required = true];
+  string body = 8 [(buf.validate.field).required = true];
+  bool team = 9 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 10 [(buf.validate.field).required = true];
+  int32 auto_filter_flagged = 11 [(buf.validate.field).required = true];
 }

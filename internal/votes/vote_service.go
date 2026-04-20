@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"connectrpc.com/connect"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/ptr"
@@ -21,8 +22,12 @@ type Service struct {
 	votes Votes
 }
 
-func NewService(votes Votes) Service {
-	return Service{votes: votes}
+func NewService(votes Votes, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := votesv1connect.NewVotesServiceHandler(Service{votes: votes}, option...)
+
+	authMiddleware.AuthedRoute(votesv1connect.VotesServiceQueryProcedure, rpc.WithMinPermissions(permission.Moderator))
+
+	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
 func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResponse, error) {

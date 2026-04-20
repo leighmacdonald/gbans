@@ -8,7 +8,6 @@ let
   };
 in
 pkgs.mkShell {
-  hardeningDisable = [ "fortify" ];
   buildInputs = with pkgs; [
     gcc
     go
