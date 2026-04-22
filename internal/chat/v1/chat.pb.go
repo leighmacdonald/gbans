@@ -392,12 +392,12 @@ var File_chat_v1_chat_proto protoreflect.FileDescriptor
 
 const file_chat_v1_chat_proto_rawDesc = "" +
 	"\n" +
-	"\x12chat/v1/chat.proto\x12\achat.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"m\n" +
-	"\x13QueryContextRequest\x124\n" +
-	"\x11person_message_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x0fpersonMessageId\x12 \n" +
+	"\x12chat/v1/chat.proto\x12\achat.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"k\n" +
+	"\x13QueryContextRequest\x122\n" +
+	"\x11person_message_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x0fpersonMessageId\x12 \n" +
 	"\apadding\x18\x02 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\apadding\"L\n" +
 	"\x14QueryContextResponse\x124\n" +
-	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\"\xa8\x02\n" +
+	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\"\xa4\x02\n" +
 	"\fQueryRequest\x121\n" +
 	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12\x14\n" +
 	"\x05query\x18\x02 \x01(\tR\x05query\x12\x1b\n" +
@@ -405,15 +405,15 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"\n" +
 	"date_start\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tdateStart\x125\n" +
 	"\bdate_end\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\adateEnd\x12!\n" +
-	"\fflagged_only\x18\x06 \x01(\bR\vflaggedOnly\x12\x1d\n" +
-	"\bsteam_id\x18\a \x01(\x03B\x020\x01R\asteamId\"e\n" +
+	"\fflagged_only\x18\x06 \x01(\bR\vflaggedOnly\x12\x19\n" +
+	"\bsteam_id\x18\a \x01(\x03R\asteamId\"c\n" +
 	"\rQueryResponse\x124\n" +
-	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\x12\x1e\n" +
-	"\x05count\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x05count\"\xdc\x03\n" +
-	"\aMessage\x124\n" +
-	"\x11person_message_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x0fpersonMessageId\x12!\n" +
-	"\bmatch_id\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\amatchId\x12#\n" +
-	"\bsteam_id\x18\x03 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12'\n" +
+	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\x12\x1c\n" +
+	"\x05count\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x05count\"\xd8\x03\n" +
+	"\aMessage\x122\n" +
+	"\x11person_message_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x0fpersonMessageId\x12!\n" +
+	"\bmatch_id\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\amatchId\x12!\n" +
+	"\bsteam_id\x18\x03 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\x12'\n" +
 	"\vavatar_hash\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"avatarHash\x12)\n" +
 	"\fpersona_name\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12'\n" +

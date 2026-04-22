@@ -2,11 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ErrorDetails } from "../component/ErrorDetails.tsx";
 import { WikiPage } from "../component/WikiPage.tsx";
 import { AppError } from "../error.tsx";
-import { PermissionLevel } from "../schema/people.ts";
 import { useSuspenseQuery } from "@connectrpc/connect-query";
 import { WikiSchema } from "../rpc/wiki/v1/wiki_pb.ts";
 import { get } from "../rpc/wiki/v1/wiki-WikiService_connectquery.ts";
 import { create } from "@bufbuild/protobuf";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 
 export const Route = createFileRoute("/_guest/wiki/$slug")({
 	component: Component,
@@ -37,7 +37,7 @@ function Component() {
 			revision: 0,
 			bodyMd: "",
 			slug: slug,
-			permissionLevel: PermissionLevel.Guest,
+			permissionLevel: Privilege.GUEST,
 		});
 
 	return <WikiPage slug={slug} page={page} assetURL={appInfo.assetUrl} />;

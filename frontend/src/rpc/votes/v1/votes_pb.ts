@@ -14,47 +14,51 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file votes/v1/votes.proto.
  */
-export const file_votes_v1_votes: GenFile = /*@__PURE__*/
-  fileDesc("ChR2b3Rlcy92MS92b3Rlcy5wcm90bxIIdm90ZXMudjEipwEKDFF1ZXJ5UmVxdWVzdBIpCgZmaWx0ZXIYASABKAsyGS5kYXRhYmFzZS5xdWVyeS52MS5GaWx0ZXISFQoJc291cmNlX2lkGAIgASgDQgIwARIVCgl0YXJnZXRfaWQYAyABKANCAjABEhEKCXNlcnZlcl9pZBgEIAEoBRIMCgRuYW1lGAUgASgJEg8KB3N1Y2Nlc3MYBiABKAUSDAoEY29kZRgHIAEoCCKqAwoKVm90ZVJlc3VsdBIXCgd2b3RlX2lkGAEgASgFQga6SAPIAQESGwoJc291cmNlX2lkGAIgASgDQggwAbpIA8gBARIbCgtzb3VyY2VfbmFtZRgDIAEoCUIGukgDyAEBEiIKEnNvdXJjZV9hdmF0YXJfaGFzaBgEIAEoCUIGukgDyAEBEhsKCXRhcmdldF9pZBgFIAEoA0IIMAG6SAPIAQESGwoLdGFyZ2V0X25hbWUYBiABKAlCBrpIA8gBARIiChJ0YXJnZXRfYXZhdGFyX2hhc2gYByABKAlCBrpIA8gBARIUCgRuYW1lGAggASgJQga6SAPIAQESFwoHc3VjY2VzcxgJIAEoCEIGukgDyAEBEhkKCXNlcnZlcl9pZBgKIAEoBUIGukgDyAEBEhsKC3NlcnZlcl9uYW1lGAsgASgJQga6SAPIAQESKAoEY29kZRgMIAEoDjISLnZvdGVzLnYxLlZvdGVDb2RlQga6SAPIAQESNgoKY3JlYXRlZF9vbhgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASJXCg1RdWVyeVJlc3BvbnNlEi0KB3Jlc3VsdHMYASADKAsyFC52b3Rlcy52MS5Wb3RlUmVzdWx0Qga6SAPIAQESFwoFY291bnQYAiABKANCCDABukgDyAEBKnIKCFZvdGVDb2RlEiYKIlZPVEVfQ09ERV9GQUlMX0dFTkVSSUNfVU5TUEVDSUZJRUQQABIjCh9WT1RFX0NPREVfRkFJTF9OT19PVVROVU1CRVJfWUVTEAESGQoVVk9URV9DT0RFX0ZBSUxfUVVPUlVNEAIySgoMVm90ZXNTZXJ2aWNlEjoKBVF1ZXJ5EhYudm90ZXMudjEuUXVlcnlSZXF1ZXN0Ghcudm90ZXMudjEuUXVlcnlSZXNwb25zZSIAQpYBCgxjb20udm90ZXMudjFCClZvdGVzUHJvdG9QAVo5Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC92b3Rlcy92MTt2b3Rlc3YxogIDVlhYqgIIVm90ZXMuVjHKAghWb3Rlc1xWMeICFFZvdGVzXFYxXEdQQk1ldGFkYXRh6gIJVm90ZXM6OlYxYghlZGl0aW9uc3DoBw", [file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_timestamp]);
+export const file_votes_v1_votes: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"ChR2b3Rlcy92MS92b3Rlcy5wcm90bxIIdm90ZXMudjEinwEKDFF1ZXJ5UmVxdWVzdBIpCgZmaWx0ZXIYASABKAsyGS5kYXRhYmFzZS5xdWVyeS52MS5GaWx0ZXISEQoJc291cmNlX2lkGAIgASgDEhEKCXRhcmdldF9pZBgDIAEoAxIRCglzZXJ2ZXJfaWQYBCABKAUSDAoEbmFtZRgFIAEoCRIPCgdzdWNjZXNzGAYgASgFEgwKBGNvZGUYByABKAgipgMKClZvdGVSZXN1bHQSFwoHdm90ZV9pZBgBIAEoBUIGukgDyAEBEhkKCXNvdXJjZV9pZBgCIAEoA0IGukgDyAEBEhsKC3NvdXJjZV9uYW1lGAMgASgJQga6SAPIAQESIgoSc291cmNlX2F2YXRhcl9oYXNoGAQgASgJQga6SAPIAQESGQoJdGFyZ2V0X2lkGAUgASgDQga6SAPIAQESGwoLdGFyZ2V0X25hbWUYBiABKAlCBrpIA8gBARIiChJ0YXJnZXRfYXZhdGFyX2hhc2gYByABKAlCBrpIA8gBARIUCgRuYW1lGAggASgJQga6SAPIAQESFwoHc3VjY2VzcxgJIAEoCEIGukgDyAEBEhkKCXNlcnZlcl9pZBgKIAEoBUIGukgDyAEBEhsKC3NlcnZlcl9uYW1lGAsgASgJQga6SAPIAQESKAoEY29kZRgMIAEoDjISLnZvdGVzLnYxLlZvdGVDb2RlQga6SAPIAQESNgoKY3JlYXRlZF9vbhgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASJVCg1RdWVyeVJlc3BvbnNlEi0KB3Jlc3VsdHMYASADKAsyFC52b3Rlcy52MS5Wb3RlUmVzdWx0Qga6SAPIAQESFQoFY291bnQYAiABKANCBrpIA8gBASpyCghWb3RlQ29kZRImCiJWT1RFX0NPREVfRkFJTF9HRU5FUklDX1VOU1BFQ0lGSUVEEAASIwofVk9URV9DT0RFX0ZBSUxfTk9fT1VUTlVNQkVSX1lFUxABEhkKFVZPVEVfQ09ERV9GQUlMX1FVT1JVTRACMkoKDFZvdGVzU2VydmljZRI6CgVRdWVyeRIWLnZvdGVzLnYxLlF1ZXJ5UmVxdWVzdBoXLnZvdGVzLnYxLlF1ZXJ5UmVzcG9uc2UiAEKWAQoMY29tLnZvdGVzLnYxQgpWb3Rlc1Byb3RvUAFaOWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvdm90ZXMvdjE7dm90ZXN2MaICA1ZYWKoCCFZvdGVzLlYxygIIVm90ZXNcVjHiAhRWb3Rlc1xWMVxHUEJNZXRhZGF0YeoCCVZvdGVzOjpWMWIIZWRpdGlvbnNw6Ac",
+		[file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_timestamp],
+	);
 
 /**
  * @generated from message votes.v1.QueryRequest
  */
 export type QueryRequest = Message<"votes.v1.QueryRequest"> & {
-  /**
-   * @generated from field: database.query.v1.Filter filter = 1;
-   */
-  filter?: Filter;
+	/**
+	 * @generated from field: database.query.v1.Filter filter = 1;
+	 */
+	filter?: Filter;
 
-  /**
-   * @generated from field: int64 source_id = 2 [jstype = JS_STRING];
-   */
-  sourceId: string;
+	/**
+	 * @generated from field: int64 source_id = 2;
+	 */
+	sourceId: bigint;
 
-  /**
-   * @generated from field: int64 target_id = 3 [jstype = JS_STRING];
-   */
-  targetId: string;
+	/**
+	 * @generated from field: int64 target_id = 3;
+	 */
+	targetId: bigint;
 
-  /**
-   * @generated from field: int32 server_id = 4;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 4;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: string name = 5;
-   */
-  name: string;
+	/**
+	 * @generated from field: string name = 5;
+	 */
+	name: string;
 
-  /**
-   * @generated from field: int32 success = 6;
-   */
-  success: number;
+	/**
+	 * @generated from field: int32 success = 6;
+	 */
+	success: number;
 
-  /**
-   * @generated from field: bool code = 7;
-   */
-  code: boolean;
+	/**
+	 * @generated from field: bool code = 7;
+	 */
+	code: boolean;
 };
 
 export type QueryRequestValid = QueryRequest;
@@ -63,231 +67,231 @@ export type QueryRequestValid = QueryRequest;
  * Describes the message votes.v1.QueryRequest.
  * Use `create(QueryRequestSchema)` to create a new message.
  */
-export const QueryRequestSchema: GenMessage<QueryRequest, {validType: QueryRequestValid}> = /*@__PURE__*/
-  messageDesc(file_votes_v1_votes, 0);
+export const QueryRequestSchema: GenMessage<QueryRequest, { validType: QueryRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_votes_v1_votes, 0);
 
 /**
  * @generated from message votes.v1.VoteResult
  */
 export type VoteResult = Message<"votes.v1.VoteResult"> & {
-  /**
-   * @generated from field: int32 vote_id = 1;
-   */
-  voteId: number;
+	/**
+	 * @generated from field: int32 vote_id = 1;
+	 */
+	voteId: number;
 
-  /**
-   * @generated from field: int64 source_id = 2 [jstype = JS_STRING];
-   */
-  sourceId: string;
+	/**
+	 * @generated from field: int64 source_id = 2;
+	 */
+	sourceId: bigint;
 
-  /**
-   * @generated from field: string source_name = 3;
-   */
-  sourceName: string;
+	/**
+	 * @generated from field: string source_name = 3;
+	 */
+	sourceName: string;
 
-  /**
-   * @generated from field: string source_avatar_hash = 4;
-   */
-  sourceAvatarHash: string;
+	/**
+	 * @generated from field: string source_avatar_hash = 4;
+	 */
+	sourceAvatarHash: string;
 
-  /**
-   * @generated from field: int64 target_id = 5 [jstype = JS_STRING];
-   */
-  targetId: string;
+	/**
+	 * @generated from field: int64 target_id = 5;
+	 */
+	targetId: bigint;
 
-  /**
-   * @generated from field: string target_name = 6;
-   */
-  targetName: string;
+	/**
+	 * @generated from field: string target_name = 6;
+	 */
+	targetName: string;
 
-  /**
-   * @generated from field: string target_avatar_hash = 7;
-   */
-  targetAvatarHash: string;
+	/**
+	 * @generated from field: string target_avatar_hash = 7;
+	 */
+	targetAvatarHash: string;
 
-  /**
-   * @generated from field: string name = 8;
-   */
-  name: string;
+	/**
+	 * @generated from field: string name = 8;
+	 */
+	name: string;
 
-  /**
-   * @generated from field: bool success = 9;
-   */
-  success: boolean;
+	/**
+	 * @generated from field: bool success = 9;
+	 */
+	success: boolean;
 
-  /**
-   * @generated from field: int32 server_id = 10;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 10;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: string server_name = 11;
-   */
-  serverName: string;
+	/**
+	 * @generated from field: string server_name = 11;
+	 */
+	serverName: string;
 
-  /**
-   * @generated from field: votes.v1.VoteCode code = 12;
-   */
-  code: VoteCode;
+	/**
+	 * @generated from field: votes.v1.VoteCode code = 12;
+	 */
+	code: VoteCode;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 13;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 13;
+	 */
+	createdOn?: Timestamp;
 };
 
 /**
  * @generated from message votes.v1.VoteResult
  */
 export type VoteResultValid = Message<"votes.v1.VoteResult"> & {
-  /**
-   * @generated from field: int32 vote_id = 1;
-   */
-  voteId: number;
+	/**
+	 * @generated from field: int32 vote_id = 1;
+	 */
+	voteId: number;
 
-  /**
-   * @generated from field: int64 source_id = 2 [jstype = JS_STRING];
-   */
-  sourceId: string;
+	/**
+	 * @generated from field: int64 source_id = 2;
+	 */
+	sourceId: bigint;
 
-  /**
-   * @generated from field: string source_name = 3;
-   */
-  sourceName: string;
+	/**
+	 * @generated from field: string source_name = 3;
+	 */
+	sourceName: string;
 
-  /**
-   * @generated from field: string source_avatar_hash = 4;
-   */
-  sourceAvatarHash: string;
+	/**
+	 * @generated from field: string source_avatar_hash = 4;
+	 */
+	sourceAvatarHash: string;
 
-  /**
-   * @generated from field: int64 target_id = 5 [jstype = JS_STRING];
-   */
-  targetId: string;
+	/**
+	 * @generated from field: int64 target_id = 5;
+	 */
+	targetId: bigint;
 
-  /**
-   * @generated from field: string target_name = 6;
-   */
-  targetName: string;
+	/**
+	 * @generated from field: string target_name = 6;
+	 */
+	targetName: string;
 
-  /**
-   * @generated from field: string target_avatar_hash = 7;
-   */
-  targetAvatarHash: string;
+	/**
+	 * @generated from field: string target_avatar_hash = 7;
+	 */
+	targetAvatarHash: string;
 
-  /**
-   * @generated from field: string name = 8;
-   */
-  name: string;
+	/**
+	 * @generated from field: string name = 8;
+	 */
+	name: string;
 
-  /**
-   * @generated from field: bool success = 9;
-   */
-  success: boolean;
+	/**
+	 * @generated from field: bool success = 9;
+	 */
+	success: boolean;
 
-  /**
-   * @generated from field: int32 server_id = 10;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 10;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: string server_name = 11;
-   */
-  serverName: string;
+	/**
+	 * @generated from field: string server_name = 11;
+	 */
+	serverName: string;
 
-  /**
-   * @generated from field: votes.v1.VoteCode code = 12;
-   */
-  code: VoteCode;
+	/**
+	 * @generated from field: votes.v1.VoteCode code = 12;
+	 */
+	code: VoteCode;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 13;
-   */
-  createdOn: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 13;
+	 */
+	createdOn: Timestamp;
 };
 
 /**
  * Describes the message votes.v1.VoteResult.
  * Use `create(VoteResultSchema)` to create a new message.
  */
-export const VoteResultSchema: GenMessage<VoteResult, {validType: VoteResultValid}> = /*@__PURE__*/
-  messageDesc(file_votes_v1_votes, 1);
+export const VoteResultSchema: GenMessage<VoteResult, { validType: VoteResultValid }> =
+	/*@__PURE__*/
+	messageDesc(file_votes_v1_votes, 1);
 
 /**
  * @generated from message votes.v1.QueryResponse
  */
 export type QueryResponse = Message<"votes.v1.QueryResponse"> & {
-  /**
-   * @generated from field: repeated votes.v1.VoteResult results = 1;
-   */
-  results: VoteResult[];
+	/**
+	 * @generated from field: repeated votes.v1.VoteResult results = 1;
+	 */
+	results: VoteResult[];
 
-  /**
-   * @generated from field: int64 count = 2 [jstype = JS_STRING];
-   */
-  count: string;
+	/**
+	 * @generated from field: int64 count = 2;
+	 */
+	count: bigint;
 };
 
 /**
  * @generated from message votes.v1.QueryResponse
  */
 export type QueryResponseValid = Message<"votes.v1.QueryResponse"> & {
-  /**
-   * @generated from field: repeated votes.v1.VoteResult results = 1;
-   */
-  results: VoteResultValid[];
+	/**
+	 * @generated from field: repeated votes.v1.VoteResult results = 1;
+	 */
+	results: VoteResultValid[];
 
-  /**
-   * @generated from field: int64 count = 2 [jstype = JS_STRING];
-   */
-  count: string;
+	/**
+	 * @generated from field: int64 count = 2;
+	 */
+	count: bigint;
 };
 
 /**
  * Describes the message votes.v1.QueryResponse.
  * Use `create(QueryResponseSchema)` to create a new message.
  */
-export const QueryResponseSchema: GenMessage<QueryResponse, {validType: QueryResponseValid}> = /*@__PURE__*/
-  messageDesc(file_votes_v1_votes, 2);
+export const QueryResponseSchema: GenMessage<QueryResponse, { validType: QueryResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_votes_v1_votes, 2);
 
 /**
  * @generated from enum votes.v1.VoteCode
  */
 export enum VoteCode {
-  /**
-   * @generated from enum value: VOTE_CODE_FAIL_GENERIC_UNSPECIFIED = 0;
-   */
-  FAIL_GENERIC_UNSPECIFIED = 0,
+	/**
+	 * @generated from enum value: VOTE_CODE_FAIL_GENERIC_UNSPECIFIED = 0;
+	 */
+	FAIL_GENERIC_UNSPECIFIED = 0,
 
-  /**
-   * @generated from enum value: VOTE_CODE_FAIL_NO_OUTNUMBER_YES = 1;
-   */
-  FAIL_NO_OUTNUMBER_YES = 1,
+	/**
+	 * @generated from enum value: VOTE_CODE_FAIL_NO_OUTNUMBER_YES = 1;
+	 */
+	FAIL_NO_OUTNUMBER_YES = 1,
 
-  /**
-   * @generated from enum value: VOTE_CODE_FAIL_QUORUM = 2;
-   */
-  FAIL_QUORUM = 2,
+	/**
+	 * @generated from enum value: VOTE_CODE_FAIL_QUORUM = 2;
+	 */
+	FAIL_QUORUM = 2,
 }
 
 /**
  * Describes the enum votes.v1.VoteCode.
  */
-export const VoteCodeSchema: GenEnum<VoteCode> = /*@__PURE__*/
-  enumDesc(file_votes_v1_votes, 0);
+export const VoteCodeSchema: GenEnum<VoteCode> = /*@__PURE__*/ enumDesc(file_votes_v1_votes, 0);
 
 /**
  * @generated from service votes.v1.VotesService
  */
 export const VotesService: GenService<{
-  /**
-   * @generated from rpc votes.v1.VotesService.Query
-   */
-  query: {
-    methodKind: "unary";
-    input: typeof QueryRequestSchema;
-    output: typeof QueryResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_votes_v1_votes, 0);
-
+	/**
+	 * @generated from rpc votes.v1.VotesService.Query
+	 */
+	query: {
+		methodKind: "unary";
+		input: typeof QueryRequestSchema;
+		output: typeof QueryResponseSchema;
+	};
+}> = /*@__PURE__*/ serviceDesc(file_votes_v1_votes, 0);

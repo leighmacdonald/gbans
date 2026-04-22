@@ -4,25 +4,18 @@ import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { z } from "zod/v4";
-import { apiCreateThread } from "../../api/forum.ts";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useAuth } from "../../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { Forum, ForumThread } from "../../schema/forum.ts";
-import { PermissionLevel } from "../../schema/people.ts";
 import { logErr } from "../../util/errors";
 import { mdEditorRef } from "../form/field/MarkdownField.tsx";
 import { ConfirmationModal } from "./ConfirmationModal.tsx";
-
-type ForumThreadEditorValues = {
-	title: string;
-	body_md: string;
-	sticky: boolean;
-	locked: boolean;
-};
+import type { Forum } from "../../rpc/forum/v1/forum_pb.ts";
+import { useMutation } from "@connectrpc/connect-query";
+import { threadCreate } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
+import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
 
 export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: Forum }) => {
 	const threadModal = useModal(ForumThreadCreatorModal);
@@ -55,20 +48,8 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
 		[confirmModal, threadModal],
 	);
 
-	const mutation = useMutation({
-		mutationKey: ["forumThreadCreate", { forum_id: forum.forum_id }],
-		mutationFn: async (values: ForumThreadEditorValues) => {
-			const ac = new AbortController();
-			return await apiCreateThread(
-				forum.forum_id,
-				values.title,
-				values.body_md,
-				values.sticky,
-				values.locked,
-				ac.signal,
-			);
-		},
-		onSuccess: async (editedThread: ForumThread) => {
+	const mutation = useMutation(threadCreate, {
+		onSuccess: async (editedThread) => {
 			modal.resolve(editedThread);
 			mdEditorRef.current?.setMarkdown("");
 			await modal.hide();
@@ -136,7 +117,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
 									return (
 										<field.CheckboxField
 											label={"Stickied"}
-											disabled={!hasPermission(PermissionLevel.Editor)}
+											disabled={!hasPermission(Privilege.EDITOR)}
 										/>
 									);
 								}}
@@ -149,7 +130,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
 									return (
 										<field.CheckboxField
 											label={"Locked"}
-											disabled={!hasPermission(PermissionLevel.Editor)}
+											disabled={!hasPermission(Privilege.EDITOR)}
 										/>
 									);
 								}}

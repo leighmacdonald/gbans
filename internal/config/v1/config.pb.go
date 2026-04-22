@@ -2787,13 +2787,13 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x0esentry_dsn_web\x18\x14 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fsentryDsnWeb\"\x7f\n" +
 	"\x05Debug\x12=\n" +
 	"\x17skip_open_id_validation\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x14skipOpenIdValidation\x127\n" +
-	"\x14add_rcon_log_address\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11addRconLogAddress\"\xa3\x02\n" +
+	"\x14add_rcon_log_address\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11addRconLogAddress\"\xa1\x02\n" +
 	"\x04Demo\x12/\n" +
 	"\x0fcleanup_enabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0ecleanupEnabled\x12;\n" +
 	"\bstrategy\x18\x02 \x01(\x0e2\x17.config.v1.DemoStrategyB\x06\xbaH\x03\xc8\x01\x01R\bstrategy\x12.\n" +
 	"\x0fcleanup_min_pct\x18\x03 \x01(\x02B\x06\xbaH\x03\xc8\x01\x01R\rcleanupMinPct\x12+\n" +
-	"\rcleanup_mount\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fcleanupMount\x12)\n" +
-	"\vcount_limit\x18\x05 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\n" +
+	"\rcleanup_mount\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fcleanupMount\x12'\n" +
+	"\vcount_limit\x18\x05 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"countLimit\x12%\n" +
 	"\n" +
 	"parser_url\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tparserUrl\"\xcf\x02\n" +
@@ -2915,7 +2915,7 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\vlocal_store\x18\f \x01(\v2\x15.config.v1.LocalStoreB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"localStore\x124\n" +
 	"\aexports\x18\r \x01(\v2\x12.config.v1.ExportsB\x06\xbaH\x03\xc8\x01\x01R\aexports\x12:\n" +
-	"\tanticheat\x18\x0e \x01(\v2\x14.config.v1.AnticheatB\x06\xbaH\x03\xc8\x01\x01R\tanticheat\"\x9f\f\n" +
+	"\tanticheat\x18\x0e \x01(\v2\x14.config.v1.AnticheatB\x06\xbaH\x03\xc8\x01\x01R\tanticheat\"\x9b\f\n" +
 	"\rGithubRelease\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\x19\n" +
 	"\bhtml_url\x18\x02 \x01(\tR\ahtmlUrl\x12\x1b\n" +
@@ -2962,7 +2962,7 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x13received_events_url\x18\x10 \x01(\tR\x11receivedEventsUrl\x12\x12\n" +
 	"\x04type\x18\x11 \x01(\tR\x04type\x12\x1d\n" +
 	"\n" +
-	"site_admin\x18\x12 \x01(\bR\tsiteAdmin\x1a\xc9\x03\n" +
+	"site_admin\x18\x12 \x01(\bR\tsiteAdmin\x1a\xc5\x03\n" +
 	"\x05Asset\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x120\n" +
 	"\x14browser_download_url\x18\x02 \x01(\tR\x12browserDownloadUrl\x12\x0e\n" +
@@ -2971,8 +2971,8 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x04name\x18\x05 \x01(\tR\x04name\x12\x14\n" +
 	"\x05label\x18\x06 \x01(\tR\x05label\x12\x14\n" +
 	"\x05state\x18\a \x01(\tR\x05state\x12!\n" +
-	"\fcontent_type\x18\b \x01(\tR\vcontentType\x12\x16\n" +
-	"\x04size\x18\t \x01(\x03B\x020\x01R\x04size\x12%\n" +
+	"\fcontent_type\x18\b \x01(\tR\vcontentType\x12\x12\n" +
+	"\x04size\x18\t \x01(\x03R\x04size\x12%\n" +
 	"\x0edownload_count\x18\n" +
 	" \x01(\x05R\rdownloadCount\x129\n" +
 	"\n" +

@@ -47,6 +47,9 @@ const (
 	// ServersServiceServersAdminProcedure is the fully-qualified name of the ServersService's
 	// ServersAdmin RPC.
 	ServersServiceServersAdminProcedure = "/servers.v1.ServersService/ServersAdmin"
+	// ServersServiceQueryLogsProcedure is the fully-qualified name of the ServersService's QueryLogs
+	// RPC.
+	ServersServiceQueryLogsProcedure = "/servers.v1.ServersService/QueryLogs"
 )
 
 // ServersServiceClient is a client for the servers.v1.ServersService service.
@@ -56,6 +59,7 @@ type ServersServiceClient interface {
 	EditServer(context.Context, *v1.EditServerRequest) (*v1.EditServerResponse, error)
 	DeleteServer(context.Context, *v1.DeleteServerRequest) (*emptypb.Empty, error)
 	ServersAdmin(context.Context, *emptypb.Empty) (*v1.ServersAdminResponse, error)
+	QueryLogs(context.Context, *v1.QueryLogsRequest) (*v1.QueryLogsResponse, error)
 }
 
 // NewServersServiceClient constructs a client for the servers.v1.ServersService service. By
@@ -99,6 +103,12 @@ func NewServersServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(serversServiceMethods.ByName("ServersAdmin")),
 			connect.WithClientOptions(opts...),
 		),
+		queryLogs: connect.NewClient[v1.QueryLogsRequest, v1.QueryLogsResponse](
+			httpClient,
+			baseURL+ServersServiceQueryLogsProcedure,
+			connect.WithSchema(serversServiceMethods.ByName("QueryLogs")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -109,6 +119,7 @@ type serversServiceClient struct {
 	editServer   *connect.Client[v1.EditServerRequest, v1.EditServerResponse]
 	deleteServer *connect.Client[v1.DeleteServerRequest, emptypb.Empty]
 	serversAdmin *connect.Client[emptypb.Empty, v1.ServersAdminResponse]
+	queryLogs    *connect.Client[v1.QueryLogsRequest, v1.QueryLogsResponse]
 }
 
 // State calls servers.v1.ServersService.State.
@@ -156,6 +167,15 @@ func (c *serversServiceClient) ServersAdmin(ctx context.Context, req *emptypb.Em
 	return nil, err
 }
 
+// QueryLogs calls servers.v1.ServersService.QueryLogs.
+func (c *serversServiceClient) QueryLogs(ctx context.Context, req *v1.QueryLogsRequest) (*v1.QueryLogsResponse, error) {
+	response, err := c.queryLogs.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ServersServiceHandler is an implementation of the servers.v1.ServersService service.
 type ServersServiceHandler interface {
 	State(context.Context, *v1.StateRequest) (*v1.StateResponse, error)
@@ -163,6 +183,7 @@ type ServersServiceHandler interface {
 	EditServer(context.Context, *v1.EditServerRequest) (*v1.EditServerResponse, error)
 	DeleteServer(context.Context, *v1.DeleteServerRequest) (*emptypb.Empty, error)
 	ServersAdmin(context.Context, *emptypb.Empty) (*v1.ServersAdminResponse, error)
+	QueryLogs(context.Context, *v1.QueryLogsRequest) (*v1.QueryLogsResponse, error)
 }
 
 // NewServersServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -202,6 +223,12 @@ func NewServersServiceHandler(svc ServersServiceHandler, opts ...connect.Handler
 		connect.WithSchema(serversServiceMethods.ByName("ServersAdmin")),
 		connect.WithHandlerOptions(opts...),
 	)
+	serversServiceQueryLogsHandler := connect.NewUnaryHandlerSimple(
+		ServersServiceQueryLogsProcedure,
+		svc.QueryLogs,
+		connect.WithSchema(serversServiceMethods.ByName("QueryLogs")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/servers.v1.ServersService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ServersServiceStateProcedure:
@@ -214,6 +241,8 @@ func NewServersServiceHandler(svc ServersServiceHandler, opts ...connect.Handler
 			serversServiceDeleteServerHandler.ServeHTTP(w, r)
 		case ServersServiceServersAdminProcedure:
 			serversServiceServersAdminHandler.ServeHTTP(w, r)
+		case ServersServiceQueryLogsProcedure:
+			serversServiceQueryLogsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -241,4 +270,8 @@ func (UnimplementedServersServiceHandler) DeleteServer(context.Context, *v1.Dele
 
 func (UnimplementedServersServiceHandler) ServersAdmin(context.Context, *emptypb.Empty) (*v1.ServersAdminResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("servers.v1.ServersService.ServersAdmin is not implemented"))
+}
+
+func (UnimplementedServersServiceHandler) QueryLogs(context.Context, *v1.QueryLogsRequest) (*v1.QueryLogsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("servers.v1.ServersService.QueryLogs is not implemented"))
 }

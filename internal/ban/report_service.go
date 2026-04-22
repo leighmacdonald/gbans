@@ -37,11 +37,12 @@ func NewReportService(reports Reports, authMiddleware *rpc.Middleware, option ..
 	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportMessageCreateProcedure, rpc.WithMinPermissions(permission.User))
 	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportMessageEditProcedure, rpc.WithMinPermissions(permission.User))
 	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportMessageDeleteProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportsProcedure, rpc.WithMinPermissions(permission.Moderator))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
-func (s ReportService) ReportCreate(ctx context.Context, req *v1.CreateReportRequest) (*v1.CreateReportResponse, error) {
+func (s ReportService) ReportCreate(ctx context.Context, req *v1.ReportCreateRequest) (*v1.ReportCreateResponse, error) {
 	user, _ := rpc.UserInfoFromCtx(ctx)
 	report, errReportSave := s.reports.Save(ctx, user, RequestReportCreate{
 		SourceID:        user.GetSteamID(),
@@ -61,7 +62,7 @@ func (s ReportService) ReportCreate(ctx context.Context, req *v1.CreateReportReq
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	return &v1.CreateReportResponse{Report: toReportWithAuthor(report)}, nil
+	return &v1.ReportCreateResponse{Report: toReportWithAuthor(report)}, nil
 }
 
 func (s ReportService) Report(ctx context.Context, req *v1.ReportRequest) (*v1.ReportResponse, error) {
@@ -103,6 +104,20 @@ func (s ReportService) UserReports(ctx context.Context, _ *v1.UserReportsRequest
 	return &resp, nil
 }
 
+func (s ReportService) Reports(ctx context.Context, _ *emptypb.Empty) (*v1.ReportsResponse, error) {
+	reports, errReports := s.reports.Reports(ctx)
+	if errReports != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	resp := v1.ReportsResponse{Reports: make([]*v1.ReportWithAuthor, len(reports))}
+	for idx, report := range reports {
+		resp.Reports[idx] = toReportWithAuthor(report)
+	}
+
+	return &resp, nil
+}
+
 func (s ReportService) ReportMessages(ctx context.Context, req *v1.ReportMessagesRequest) (*v1.ReportMessagesResponse, error) {
 	user, _ := rpc.UserInfoFromCtx(ctx)
 	report, errGetReport := s.reports.Report(ctx, user, req.GetReportId())
@@ -131,14 +146,14 @@ func (s ReportService) ReportMessages(ctx context.Context, req *v1.ReportMessage
 	return &resp, nil
 }
 
-func (s ReportService) ReportMessageCreate(ctx context.Context, req *v1.CreateReportMessageRequest) (*v1.CreateReportMessageResponse, error) {
+func (s ReportService) ReportMessageCreate(ctx context.Context, req *v1.ReportMessageCreateRequest) (*v1.ReportMessageCreateResponse, error) {
 	user, _ := rpc.UserInfoFromCtx(ctx)
 	msg, errSave := s.reports.CreateMessage(ctx, req.GetReportId(), user, RequestMessageBodyMD{BodyMD: req.GetBodyMd()})
 	if errSave != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	return &v1.CreateReportMessageResponse{ReportMessage: toReportMessage(msg)}, nil
+	return &v1.ReportMessageCreateResponse{ReportMessage: toReportMessage(msg)}, nil
 }
 
 func (s ReportService) ReportMessageEdit(ctx context.Context, req *v1.ReportMessageEditRequest) (*v1.ReportMessageEditResponse, error) {

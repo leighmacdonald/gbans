@@ -137,7 +137,7 @@ func toMessage(msg Message) *v1.Message {
 	}
 }
 
-func (s Service) Threads(ctx context.Context, req *v1.ThreadsRequest) (*v1.ThreadsRequestResponse, error) {
+func (s Service) Threads(ctx context.Context, req *v1.ThreadsRequest) (*v1.ThreadsResponse, error) {
 	user, _ := rpc.UserInfoFromCtx(ctx)
 	s.forums.Touch(user)
 
@@ -155,7 +155,7 @@ func (s Service) Threads(ctx context.Context, req *v1.ThreadsRequest) (*v1.Threa
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 
-	resp := v1.ThreadsRequestResponse{Threads: make([]*v1.Thread, len(threads))}
+	resp := v1.ThreadsResponse{Threads: make([]*v1.Thread, len(threads))}
 	for idx, thread := range threads {
 		resp.Threads[idx] = fromThreadWithSource(thread)
 	}

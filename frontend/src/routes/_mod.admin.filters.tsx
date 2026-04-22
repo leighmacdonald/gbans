@@ -22,13 +22,12 @@ import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellSmall } from "../component/table/TableCellSmall.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { BanType } from "../schema/bans.ts";
 import { renderDateTime } from "../util/time.ts";
-import {useMutation, useQuery} from "@connectrpc/connect-query";
-import {filters, warningState, filterDelete} from "../rpc/chat/v1/wordfilter-WordfilterService_connectquery.ts";
-import type {Filter, UserWarning} from "../rpc/chat/v1/wordfilter_pb.ts";
-import {filterActionString} from "../schema/filters.ts";
-import {timestampDate} from "@bufbuild/protobuf/wkt";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
+import { filters, warningState, filterDelete } from "../rpc/chat/v1/wordfilter-WordfilterService_connectquery.ts";
+import type { Filter, UserWarning } from "../rpc/chat/v1/wordfilter_pb.ts";
+import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { BanType } from "../rpc/ban/v1/ban_pb.ts";
 
 const columnHelper = createMRTColumnHelper<Filter>();
 const defaultOptions = createDefaultTableOptions<Filter>();
@@ -92,7 +91,7 @@ function AdminFilters() {
 				if (!confirmed || !filter.filterId) {
 					return;
 				}
-				await deleteMutation.mutateAsync({filterId: filter.filterId});
+				await deleteMutation.mutateAsync({ filterId: filter.filterId });
 
 				queryClient.setQueryData(
 					["filters"],
@@ -137,8 +136,8 @@ function AdminFilters() {
 				meta: { tooltip: "What action to take?" },
 				grow: false,
 				filterSelectOptions: [
-					{ label: "Mute", value: BanType.NoComm },
-					{ label: "Ban", value: BanType.Banned },
+					{ label: "Mute", value: BanType.NO_COMM },
+					{ label: "Ban", value: BanType.BANNED },
 				],
 				Cell: ({ cell }) => filterActionString(cell.getValue()),
 			}),

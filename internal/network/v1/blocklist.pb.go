@@ -1173,19 +1173,19 @@ var File_network_v1_blocklist_proto protoreflect.FileDescriptor
 const file_network_v1_blocklist_proto_rawDesc = "" +
 	"\n" +
 	"\x1anetwork/v1/blocklist.proto\x12\n" +
-	"network.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"B\n" +
-	"\x1bWhitelistSteamCreateRequest\x12#\n" +
-	"\bsteam_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\"`\n" +
+	"network.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"@\n" +
+	"\x1bWhitelistSteamCreateRequest\x12!\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\"`\n" +
 	"\x1cWhitelistSteamCreateResponse\x12@\n" +
-	"\twhitelist\x18\x01 \x01(\v2\x1a.network.v1.WhitelistSteamB\x06\xbaH\x03\xc8\x01\x01R\twhitelist\"B\n" +
-	"\x1bWhitelistSteamDeleteRequest\x12#\n" +
-	"\bsteam_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\"\\\n" +
+	"\twhitelist\x18\x01 \x01(\v2\x1a.network.v1.WhitelistSteamB\x06\xbaH\x03\xc8\x01\x01R\twhitelist\"@\n" +
+	"\x1bWhitelistSteamDeleteRequest\x12!\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\"\\\n" +
 	"\x16WhitelistSteamResponse\x12B\n" +
 	"\n" +
 	"whitelists\x18\x01 \x03(\v2\x1a.network.v1.WhitelistSteamB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"whitelists\"\x8f\x02\n" +
-	"\x0eWhitelistSteam\x12#\n" +
-	"\bsteam_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12)\n" +
+	"whitelists\"\x8d\x02\n" +
+	"\x0eWhitelistSteam\x12!\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\x12)\n" +
 	"\fpersona_name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12'\n" +
 	"\vavatar_hash\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"avatarHash\x12A\n" +

@@ -6,6 +6,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	banv1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	v1 "github.com/leighmacdonald/gbans/internal/chat/v1"
 	"github.com/leighmacdonald/gbans/internal/chat/v1/chatv1connect"
 	"github.com/leighmacdonald/gbans/internal/ptr"
@@ -72,7 +73,7 @@ func (s WordfilterService) WarningState(_ context.Context, _ *emptypb.Empty) (*v
 	for _, warnings := range state {
 		for _, warn := range warnings {
 			resp.Current = append(resp.Current, &v1.UserWarning{
-				Reason:       ptr.To(v1.BanReason(warn.WarnReason)),
+				Reason:       ptr.To(banv1.BanReason(warn.WarnReason)),
 				Message:      &warn.Message,
 				Matched:      &warn.Matched,
 				Filter:       toFilter(warn.MatchedFilter),

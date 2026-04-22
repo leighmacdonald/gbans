@@ -2,18 +2,18 @@ import LinkIcon from "@mui/icons-material/Link";
 import Grid from "@mui/material/Grid";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useMemo } from "react";
-import { apiGetNotifications } from "../api";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
 import { createDefaultTableOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
-import { NotificationSeverity, type NotificationSeverityEnum, type UserNotification } from "../schema/people.ts";
+import { notifications } from "../rpc/notification/v1/notification-NotificationService_connectquery.ts";
+import { useQuery } from "@connectrpc/connect-query";
+import { Severity, type UserNotification } from "../rpc/notification/v1/notification_pb.ts";
 
 const columnHelper = createMRTColumnHelper<UserNotification>();
 const defaultOptions = createDefaultTableOptions<UserNotification>();
@@ -26,12 +26,7 @@ export const Route = createFileRoute("/_auth/notifications")({
 });
 
 function NotificationsPage() {
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["notifications"],
-		queryFn: async ({ signal }) => {
-			return await apiGetNotifications(signal);
-		},
-	});
+	const { data, isLoading, isError } = useQuery(notifications);
 	// const queryClient = useQueryClient();
 	// const { notifications } = Route.useLoaderData();
 	// const { sendError, sendFlash } = useUserFlashCtx();
@@ -247,7 +242,7 @@ function NotificationsPage() {
 				grow: false,
 				Cell: ({ cell }) => <BoolCell enabled={Boolean(cell.getValue())} />,
 			}),
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "Created",
 				grow: false,
 				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} suffix={true} />,
@@ -255,7 +250,7 @@ function NotificationsPage() {
 			columnHelper.accessor("severity", {
 				header: "level",
 				grow: false,
-				Cell: ({ cell }) => <TableCellSeverity severity={cell.getValue() as NotificationSeverityEnum} />,
+				Cell: ({ cell }) => <TableCellSeverity severity={cell.getValue()} />,
 			}),
 
 			columnHelper.accessor("message", {
@@ -296,7 +291,7 @@ function NotificationsPage() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ?? [],
+		data: data?.notifications ?? [],
 		enableFilters: true,
 		enableHiding: true,
 		enableFacetedValues: true,
@@ -327,13 +322,13 @@ function NotificationsPage() {
 	);
 }
 
-const TableCellSeverity = ({ severity }: { severity: NotificationSeverityEnum }) => {
+const TableCellSeverity = ({ severity }: { severity: Severity }) => {
 	const theme = useTheme();
 
 	switch (severity) {
-		case NotificationSeverity.SeverityError:
+		case Severity.ERROR:
 			return <Typography style={{ color: theme.palette.error.main }}>ERROR</Typography>;
-		case NotificationSeverity.SeverityWarn:
+		case Severity.WARN:
 			return <Typography style={{ color: theme.palette.warning.main }}>WARN</Typography>;
 		default:
 			return <Typography style={{ color: theme.palette.info.main }}>INFO</Typography>;

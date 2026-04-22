@@ -14,111 +14,117 @@ import type { Message as Message$1 } from "@bufbuild/protobuf";
 /**
  * Describes the file chat/v1/chat.proto.
  */
-export const file_chat_v1_chat: GenFile = /*@__PURE__*/
-  fileDesc("ChJjaGF0L3YxL2NoYXQucHJvdG8SB2NoYXQudjEiUwoTUXVlcnlDb250ZXh0UmVxdWVzdBIjChFwZXJzb25fbWVzc2FnZV9pZBgBIAEoA0IIMAG6SAPIAQESFwoHcGFkZGluZxgCIAEoBUIGukgDyAEBIkIKFFF1ZXJ5Q29udGV4dFJlc3BvbnNlEioKCG1lc3NhZ2VzGAEgAygLMhAuY2hhdC52MS5NZXNzYWdlQga6SAPIAQEi5QEKDFF1ZXJ5UmVxdWVzdBIpCgZmaWx0ZXIYASABKAsyGS5kYXRhYmFzZS5xdWVyeS52MS5GaWx0ZXISDQoFcXVlcnkYAiABKAkSEQoJc2VydmVyX2lkGAMgASgFEi4KCmRhdGVfc3RhcnQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiwKCGRhdGVfZW5kGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIUCgxmbGFnZ2VkX29ubHkYBiABKAgSFAoIc3RlYW1faWQYByABKANCAjABIlQKDVF1ZXJ5UmVzcG9uc2USKgoIbWVzc2FnZXMYASADKAsyEC5jaGF0LnYxLk1lc3NhZ2VCBrpIA8gBARIXCgVjb3VudBgCIAEoA0IIMAG6SAPIAQEi4AIKB01lc3NhZ2USIwoRcGVyc29uX21lc3NhZ2VfaWQYASABKANCCDABukgDyAEBEhgKCG1hdGNoX2lkGAIgASgJQga6SAPIAQESGgoIc3RlYW1faWQYAyABKANCCDABukgDyAEBEhsKC2F2YXRhcl9oYXNoGAQgASgJQga6SAPIAQESHAoMcGVyc29uYV9uYW1lGAUgASgJQga6SAPIAQESGwoLc2VydmVyX25hbWUYBiABKAlCBrpIA8gBARIZCglzZXJ2ZXJfaWQYByABKAVCBrpIA8gBARIUCgRib2R5GAggASgJQga6SAPIAQESFAoEdGVhbRgJIAEoCEIGukgDyAEBEjYKCmNyZWF0ZWRfb24YCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESIwoTYXV0b19maWx0ZXJfZmxhZ2dlZBgLIAEoBUIGukgDyAEBMpYBCgtDaGF0U2VydmljZRI4CgVRdWVyeRIVLmNoYXQudjEuUXVlcnlSZXF1ZXN0GhYuY2hhdC52MS5RdWVyeVJlc3BvbnNlIgASTQoMUXVlcnlDb250ZXh0EhwuY2hhdC52MS5RdWVyeUNvbnRleHRSZXF1ZXN0Gh0uY2hhdC52MS5RdWVyeUNvbnRleHRSZXNwb25zZSIAQo4BCgtjb20uY2hhdC52MUIJQ2hhdFByb3RvUAFaN2dpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvY2hhdC92MTtjaGF0djGiAgNDWFiqAgdDaGF0LlYxygIHQ2hhdFxWMeICE0NoYXRcVjFcR1BCTWV0YWRhdGHqAghDaGF0OjpWMWIIZWRpdGlvbnNw6Ac", [file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_timestamp]);
+export const file_chat_v1_chat: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"ChJjaGF0L3YxL2NoYXQucHJvdG8SB2NoYXQudjEiUQoTUXVlcnlDb250ZXh0UmVxdWVzdBIhChFwZXJzb25fbWVzc2FnZV9pZBgBIAEoA0IGukgDyAEBEhcKB3BhZGRpbmcYAiABKAVCBrpIA8gBASJCChRRdWVyeUNvbnRleHRSZXNwb25zZRIqCghtZXNzYWdlcxgBIAMoCzIQLmNoYXQudjEuTWVzc2FnZUIGukgDyAEBIuEBCgxRdWVyeVJlcXVlc3QSKQoGZmlsdGVyGAEgASgLMhkuZGF0YWJhc2UucXVlcnkudjEuRmlsdGVyEg0KBXF1ZXJ5GAIgASgJEhEKCXNlcnZlcl9pZBgDIAEoBRIuCgpkYXRlX3N0YXJ0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIsCghkYXRlX2VuZBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFAoMZmxhZ2dlZF9vbmx5GAYgASgIEhAKCHN0ZWFtX2lkGAcgASgDIlIKDVF1ZXJ5UmVzcG9uc2USKgoIbWVzc2FnZXMYASADKAsyEC5jaGF0LnYxLk1lc3NhZ2VCBrpIA8gBARIVCgVjb3VudBgCIAEoA0IGukgDyAEBItwCCgdNZXNzYWdlEiEKEXBlcnNvbl9tZXNzYWdlX2lkGAEgASgDQga6SAPIAQESGAoIbWF0Y2hfaWQYAiABKAlCBrpIA8gBARIYCghzdGVhbV9pZBgDIAEoA0IGukgDyAEBEhsKC2F2YXRhcl9oYXNoGAQgASgJQga6SAPIAQESHAoMcGVyc29uYV9uYW1lGAUgASgJQga6SAPIAQESGwoLc2VydmVyX25hbWUYBiABKAlCBrpIA8gBARIZCglzZXJ2ZXJfaWQYByABKAVCBrpIA8gBARIUCgRib2R5GAggASgJQga6SAPIAQESFAoEdGVhbRgJIAEoCEIGukgDyAEBEjYKCmNyZWF0ZWRfb24YCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESIwoTYXV0b19maWx0ZXJfZmxhZ2dlZBgLIAEoBUIGukgDyAEBMpYBCgtDaGF0U2VydmljZRI4CgVRdWVyeRIVLmNoYXQudjEuUXVlcnlSZXF1ZXN0GhYuY2hhdC52MS5RdWVyeVJlc3BvbnNlIgASTQoMUXVlcnlDb250ZXh0EhwuY2hhdC52MS5RdWVyeUNvbnRleHRSZXF1ZXN0Gh0uY2hhdC52MS5RdWVyeUNvbnRleHRSZXNwb25zZSIAQo4BCgtjb20uY2hhdC52MUIJQ2hhdFByb3RvUAFaN2dpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvY2hhdC92MTtjaGF0djGiAgNDWFiqAgdDaGF0LlYxygIHQ2hhdFxWMeICE0NoYXRcVjFcR1BCTWV0YWRhdGHqAghDaGF0OjpWMWIIZWRpdGlvbnNw6Ac",
+		[file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_timestamp],
+	);
 
 /**
  * @generated from message chat.v1.QueryContextRequest
  */
 export type QueryContextRequest = Message$1<"chat.v1.QueryContextRequest"> & {
-  /**
-   * @generated from field: int64 person_message_id = 1 [jstype = JS_STRING];
-   */
-  personMessageId: string;
+	/**
+	 * @generated from field: int64 person_message_id = 1;
+	 */
+	personMessageId: bigint;
 
-  /**
-   * @generated from field: int32 padding = 2;
-   */
-  padding: number;
+	/**
+	 * @generated from field: int32 padding = 2;
+	 */
+	padding: number;
 };
 
 /**
  * @generated from message chat.v1.QueryContextRequest
  */
 export type QueryContextRequestValid = Message$1<"chat.v1.QueryContextRequest"> & {
-  /**
-   * @generated from field: int64 person_message_id = 1 [jstype = JS_STRING];
-   */
-  personMessageId: string;
+	/**
+	 * @generated from field: int64 person_message_id = 1;
+	 */
+	personMessageId: bigint;
 
-  /**
-   * @generated from field: int32 padding = 2;
-   */
-  padding: number;
+	/**
+	 * @generated from field: int32 padding = 2;
+	 */
+	padding: number;
 };
 
 /**
  * Describes the message chat.v1.QueryContextRequest.
  * Use `create(QueryContextRequestSchema)` to create a new message.
  */
-export const QueryContextRequestSchema: GenMessage<QueryContextRequest, {validType: QueryContextRequestValid}> = /*@__PURE__*/
-  messageDesc(file_chat_v1_chat, 0);
+export const QueryContextRequestSchema: GenMessage<QueryContextRequest, { validType: QueryContextRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_chat_v1_chat, 0);
 
 /**
  * @generated from message chat.v1.QueryContextResponse
  */
 export type QueryContextResponse = Message$1<"chat.v1.QueryContextResponse"> & {
-  /**
-   * @generated from field: repeated chat.v1.Message messages = 1;
-   */
-  messages: Message[];
+	/**
+	 * @generated from field: repeated chat.v1.Message messages = 1;
+	 */
+	messages: Message[];
 };
 
 /**
  * @generated from message chat.v1.QueryContextResponse
  */
 export type QueryContextResponseValid = Message$1<"chat.v1.QueryContextResponse"> & {
-  /**
-   * @generated from field: repeated chat.v1.Message messages = 1;
-   */
-  messages: MessageValid[];
+	/**
+	 * @generated from field: repeated chat.v1.Message messages = 1;
+	 */
+	messages: MessageValid[];
 };
 
 /**
  * Describes the message chat.v1.QueryContextResponse.
  * Use `create(QueryContextResponseSchema)` to create a new message.
  */
-export const QueryContextResponseSchema: GenMessage<QueryContextResponse, {validType: QueryContextResponseValid}> = /*@__PURE__*/
-  messageDesc(file_chat_v1_chat, 1);
+export const QueryContextResponseSchema: GenMessage<QueryContextResponse, { validType: QueryContextResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_chat_v1_chat, 1);
 
 /**
  * @generated from message chat.v1.QueryRequest
  */
 export type QueryRequest = Message$1<"chat.v1.QueryRequest"> & {
-  /**
-   * @generated from field: database.query.v1.Filter filter = 1;
-   */
-  filter?: Filter;
+	/**
+	 * @generated from field: database.query.v1.Filter filter = 1;
+	 */
+	filter?: Filter;
 
-  /**
-   * @generated from field: string query = 2;
-   */
-  query: string;
+	/**
+	 * @generated from field: string query = 2;
+	 */
+	query: string;
 
-  /**
-   * @generated from field: int32 server_id = 3;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 3;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp date_start = 4;
-   */
-  dateStart?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp date_start = 4;
+	 */
+	dateStart?: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp date_end = 5;
-   */
-  dateEnd?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp date_end = 5;
+	 */
+	dateEnd?: Timestamp;
 
-  /**
-   * @generated from field: bool flagged_only = 6;
-   */
-  flaggedOnly: boolean;
+	/**
+	 * @generated from field: bool flagged_only = 6;
+	 */
+	flaggedOnly: boolean;
 
-  /**
-   * @generated from field: int64 steam_id = 7 [jstype = JS_STRING];
-   */
-  steamId: string;
+	/**
+	 * @generated from field: int64 steam_id = 7;
+	 */
+	steamId: bigint;
 };
 
 export type QueryRequestValid = QueryRequest;
@@ -127,193 +133,194 @@ export type QueryRequestValid = QueryRequest;
  * Describes the message chat.v1.QueryRequest.
  * Use `create(QueryRequestSchema)` to create a new message.
  */
-export const QueryRequestSchema: GenMessage<QueryRequest, {validType: QueryRequestValid}> = /*@__PURE__*/
-  messageDesc(file_chat_v1_chat, 2);
+export const QueryRequestSchema: GenMessage<QueryRequest, { validType: QueryRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_chat_v1_chat, 2);
 
 /**
  * @generated from message chat.v1.QueryResponse
  */
 export type QueryResponse = Message$1<"chat.v1.QueryResponse"> & {
-  /**
-   * @generated from field: repeated chat.v1.Message messages = 1;
-   */
-  messages: Message[];
+	/**
+	 * @generated from field: repeated chat.v1.Message messages = 1;
+	 */
+	messages: Message[];
 
-  /**
-   * @generated from field: int64 count = 2 [jstype = JS_STRING];
-   */
-  count: string;
+	/**
+	 * @generated from field: int64 count = 2;
+	 */
+	count: bigint;
 };
 
 /**
  * @generated from message chat.v1.QueryResponse
  */
 export type QueryResponseValid = Message$1<"chat.v1.QueryResponse"> & {
-  /**
-   * @generated from field: repeated chat.v1.Message messages = 1;
-   */
-  messages: MessageValid[];
+	/**
+	 * @generated from field: repeated chat.v1.Message messages = 1;
+	 */
+	messages: MessageValid[];
 
-  /**
-   * @generated from field: int64 count = 2 [jstype = JS_STRING];
-   */
-  count: string;
+	/**
+	 * @generated from field: int64 count = 2;
+	 */
+	count: bigint;
 };
 
 /**
  * Describes the message chat.v1.QueryResponse.
  * Use `create(QueryResponseSchema)` to create a new message.
  */
-export const QueryResponseSchema: GenMessage<QueryResponse, {validType: QueryResponseValid}> = /*@__PURE__*/
-  messageDesc(file_chat_v1_chat, 3);
+export const QueryResponseSchema: GenMessage<QueryResponse, { validType: QueryResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_chat_v1_chat, 3);
 
 /**
  * @generated from message chat.v1.Message
  */
 export type Message = Message$1<"chat.v1.Message"> & {
-  /**
-   * @generated from field: int64 person_message_id = 1 [jstype = JS_STRING];
-   */
-  personMessageId: string;
+	/**
+	 * @generated from field: int64 person_message_id = 1;
+	 */
+	personMessageId: bigint;
 
-  /**
-   * @generated from field: string match_id = 2;
-   */
-  matchId: string;
+	/**
+	 * @generated from field: string match_id = 2;
+	 */
+	matchId: string;
 
-  /**
-   * @generated from field: int64 steam_id = 3 [jstype = JS_STRING];
-   */
-  steamId: string;
+	/**
+	 * @generated from field: int64 steam_id = 3;
+	 */
+	steamId: bigint;
 
-  /**
-   * @generated from field: string avatar_hash = 4;
-   */
-  avatarHash: string;
+	/**
+	 * @generated from field: string avatar_hash = 4;
+	 */
+	avatarHash: string;
 
-  /**
-   * @generated from field: string persona_name = 5;
-   */
-  personaName: string;
+	/**
+	 * @generated from field: string persona_name = 5;
+	 */
+	personaName: string;
 
-  /**
-   * @generated from field: string server_name = 6;
-   */
-  serverName: string;
+	/**
+	 * @generated from field: string server_name = 6;
+	 */
+	serverName: string;
 
-  /**
-   * @generated from field: int32 server_id = 7;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 7;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: string body = 8;
-   */
-  body: string;
+	/**
+	 * @generated from field: string body = 8;
+	 */
+	body: string;
 
-  /**
-   * @generated from field: bool team = 9;
-   */
-  team: boolean;
+	/**
+	 * @generated from field: bool team = 9;
+	 */
+	team: boolean;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 10;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 10;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: int32 auto_filter_flagged = 11;
-   */
-  autoFilterFlagged: number;
+	/**
+	 * @generated from field: int32 auto_filter_flagged = 11;
+	 */
+	autoFilterFlagged: number;
 };
 
 /**
  * @generated from message chat.v1.Message
  */
 export type MessageValid = Message$1<"chat.v1.Message"> & {
-  /**
-   * @generated from field: int64 person_message_id = 1 [jstype = JS_STRING];
-   */
-  personMessageId: string;
+	/**
+	 * @generated from field: int64 person_message_id = 1;
+	 */
+	personMessageId: bigint;
 
-  /**
-   * @generated from field: string match_id = 2;
-   */
-  matchId: string;
+	/**
+	 * @generated from field: string match_id = 2;
+	 */
+	matchId: string;
 
-  /**
-   * @generated from field: int64 steam_id = 3 [jstype = JS_STRING];
-   */
-  steamId: string;
+	/**
+	 * @generated from field: int64 steam_id = 3;
+	 */
+	steamId: bigint;
 
-  /**
-   * @generated from field: string avatar_hash = 4;
-   */
-  avatarHash: string;
+	/**
+	 * @generated from field: string avatar_hash = 4;
+	 */
+	avatarHash: string;
 
-  /**
-   * @generated from field: string persona_name = 5;
-   */
-  personaName: string;
+	/**
+	 * @generated from field: string persona_name = 5;
+	 */
+	personaName: string;
 
-  /**
-   * @generated from field: string server_name = 6;
-   */
-  serverName: string;
+	/**
+	 * @generated from field: string server_name = 6;
+	 */
+	serverName: string;
 
-  /**
-   * @generated from field: int32 server_id = 7;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 7;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: string body = 8;
-   */
-  body: string;
+	/**
+	 * @generated from field: string body = 8;
+	 */
+	body: string;
 
-  /**
-   * @generated from field: bool team = 9;
-   */
-  team: boolean;
+	/**
+	 * @generated from field: bool team = 9;
+	 */
+	team: boolean;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 10;
-   */
-  createdOn: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 10;
+	 */
+	createdOn: Timestamp;
 
-  /**
-   * @generated from field: int32 auto_filter_flagged = 11;
-   */
-  autoFilterFlagged: number;
+	/**
+	 * @generated from field: int32 auto_filter_flagged = 11;
+	 */
+	autoFilterFlagged: number;
 };
 
 /**
  * Describes the message chat.v1.Message.
  * Use `create(MessageSchema)` to create a new message.
  */
-export const MessageSchema: GenMessage<Message, {validType: MessageValid}> = /*@__PURE__*/
-  messageDesc(file_chat_v1_chat, 4);
+export const MessageSchema: GenMessage<Message, { validType: MessageValid }> =
+	/*@__PURE__*/
+	messageDesc(file_chat_v1_chat, 4);
 
 /**
  * @generated from service chat.v1.ChatService
  */
 export const ChatService: GenService<{
-  /**
-   * @generated from rpc chat.v1.ChatService.Query
-   */
-  query: {
-    methodKind: "unary";
-    input: typeof QueryRequestSchema;
-    output: typeof QueryResponseSchema;
-  },
-  /**
-   * @generated from rpc chat.v1.ChatService.QueryContext
-   */
-  queryContext: {
-    methodKind: "unary";
-    input: typeof QueryContextRequestSchema;
-    output: typeof QueryContextResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_chat_v1_chat, 0);
-
+	/**
+	 * @generated from rpc chat.v1.ChatService.Query
+	 */
+	query: {
+		methodKind: "unary";
+		input: typeof QueryRequestSchema;
+		output: typeof QueryResponseSchema;
+	};
+	/**
+	 * @generated from rpc chat.v1.ChatService.QueryContext
+	 */
+	queryContext: {
+		methodKind: "unary";
+		input: typeof QueryContextRequestSchema;
+		output: typeof QueryContextResponseSchema;
+	};
+}> = /*@__PURE__*/ serviceDesc(file_chat_v1_chat, 0);

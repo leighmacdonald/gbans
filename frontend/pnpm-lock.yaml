@@ -14,6 +14,9 @@ importers:
       '@bufbuild/protobuf':
         specifier: ^2.11.0
         version: 2.11.0
+      '@bufbuild/protovalidate':
+        specifier: ^1.1.1
+        version: 1.1.1(@bufbuild/protobuf@2.11.0)
       '@connectrpc/connect':
         specifier: ^2.1.1
         version: 2.1.1(@bufbuild/protobuf@2.11.0)
@@ -23,6 +26,9 @@ importers:
       '@connectrpc/connect-web':
         specifier: ^2.1.1
         version: 2.1.1(@bufbuild/protobuf@2.11.0)(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.11.0))
+      '@connectrpc/validate':
+        specifier: ^0.2.0
+        version: 0.2.0(@bufbuild/protobuf@2.11.0)(@bufbuild/protovalidate@1.1.1(@bufbuild/protobuf@2.11.0))(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.11.0))
       '@ebay/nice-modal-react':
         specifier: ^1.2.13
         version: 1.2.13(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -392,6 +398,16 @@ packages:
   '@braintree/sanitize-url@7.1.1':
     resolution: {integrity: sha512-i1L7noDNxtFyL5DmZafWy1wRVhGehQmzZaz1HiN5e7iylJMSZR7ekOV7NsIqa5qBldlLrsKv4HbgFUVlQrz8Mw==}
 
+  '@bufbuild/cel-spec@0.4.0':
+    resolution: {integrity: sha512-dUS6f2fNt6KEumsYGE7YFxERZE5ZuyME1hQmGjtO8tkZhR6ow6/ne3v4Gik9cfdb9lSLK3AJ+vDxCdGWmDbWvA==}
+    peerDependencies:
+      '@bufbuild/protobuf': ^2.6.2
+
+  '@bufbuild/cel@0.4.0':
+    resolution: {integrity: sha512-CdW/JgiTJCYXqnwuaJRo7NcoYhR37AaF58MMiog0/t8nudn86ZyLXYaA1f2yGhm2U17h8pKGZNksTHVSTcpmAw==}
+    peerDependencies:
+      '@bufbuild/protobuf': ^2.6.2
+
   '@bufbuild/protobuf@2.11.0':
     resolution: {integrity: sha512-sBXGT13cpmPR5BMgHE6UEEfEaShh5Ror6rfN3yEK5si7QVrtZg8LEPQb0VVhiLRUslD2yLnXtnRzG035J/mZXQ==}
 
@@ -407,6 +423,11 @@ packages:
 
   '@bufbuild/protoplugin@2.11.0':
     resolution: {integrity: sha512-lyZVNFUHArIOt4W0+dwYBe5GBwbKzbOy8ObaloEqsw9Mmiwv2O48TwddDoHN4itylC+BaEGqFdI1W8WQt2vWJQ==}
+
+  '@bufbuild/protovalidate@1.1.1':
+    resolution: {integrity: sha512-sE6CojU25nfeb1w88Sm+jRnmk4GvQTeEZvLDHHDPvIHbj2NsDJWFAUJdJr+RcuMnjdWmbur+rAS38VuEK/XviQ==}
+    peerDependencies:
+      '@bufbuild/protobuf': ^2.8.0
 
   '@chevrotain/cst-dts-gen@11.0.3':
     resolution: {integrity: sha512-BvIKpRLeS/8UbfxXxgC33xOumsacaeCKAjAeLyOn7Pcp95HiRbrpl14S+9vaZLolnbssPIUuiUd8IvgkRyt6NQ==}
@@ -564,6 +585,13 @@ packages:
     peerDependenciesMeta:
       '@bufbuild/protoc-gen-es':
         optional: true
+
+  '@connectrpc/validate@0.2.0':
+    resolution: {integrity: sha512-u1hdyt1WaFkKpuT/3J2wYlCjYLkYHMZamoatgxTIsV5Q8H9fO2px3zecmb0Q47YDjkZqnX6z0PAEstK+dNYiEQ==}
+    peerDependencies:
+      '@bufbuild/protobuf': ^2.9.0
+      '@bufbuild/protovalidate': ^1.0.0
+      '@connectrpc/connect': ^2.0.3
 
   '@ebay/nice-modal-react@1.2.13':
     resolution: {integrity: sha512-jx8xIWe/Up4tpNuM02M+rbnLoxdngTGk3Y8LjJsLGXXcSoKd/+eZStZcAlIO/jwxyz/bhPZnpqPJZWAmhOofuA==}
@@ -4593,6 +4621,15 @@ snapshots:
   '@braintree/sanitize-url@7.1.1':
     optional: true
 
+  '@bufbuild/cel-spec@0.4.0(@bufbuild/protobuf@2.11.0)':
+    dependencies:
+      '@bufbuild/protobuf': 2.11.0
+
+  '@bufbuild/cel@0.4.0(@bufbuild/protobuf@2.11.0)':
+    dependencies:
+      '@bufbuild/cel-spec': 0.4.0(@bufbuild/protobuf@2.11.0)
+      '@bufbuild/protobuf': 2.11.0
+
   '@bufbuild/protobuf@2.11.0': {}
 
   '@bufbuild/protoc-gen-es@2.11.0(@bufbuild/protobuf@2.11.0)':
@@ -4610,6 +4647,11 @@ snapshots:
       typescript: 5.4.5
     transitivePeerDependencies:
       - supports-color
+
+  '@bufbuild/protovalidate@1.1.1(@bufbuild/protobuf@2.11.0)':
+    dependencies:
+      '@bufbuild/cel': 0.4.0(@bufbuild/protobuf@2.11.0)
+      '@bufbuild/protobuf': 2.11.0
 
   '@chevrotain/cst-dts-gen@11.0.3':
     dependencies:
@@ -4961,6 +5003,12 @@ snapshots:
       '@bufbuild/protoc-gen-es': 2.11.0(@bufbuild/protobuf@2.11.0)
     transitivePeerDependencies:
       - supports-color
+
+  '@connectrpc/validate@0.2.0(@bufbuild/protobuf@2.11.0)(@bufbuild/protovalidate@1.1.1(@bufbuild/protobuf@2.11.0))(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.11.0))':
+    dependencies:
+      '@bufbuild/protobuf': 2.11.0
+      '@bufbuild/protovalidate': 1.1.1(@bufbuild/protobuf@2.11.0)
+      '@connectrpc/connect': 2.1.1(@bufbuild/protobuf@2.11.0)
 
   '@ebay/nice-modal-react@1.2.13(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:

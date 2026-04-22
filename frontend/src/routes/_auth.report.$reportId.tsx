@@ -12,7 +12,6 @@ import ListItemAvatar from "@mui/material/ListItemAvatar";
 import ListItemText from "@mui/material/ListItemText";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { apiGetBanBySteam, apiGetReport, appealStateString } from "../api";
@@ -23,11 +22,11 @@ import { ReportViewComponent } from "../component/ReportViewComponent.tsx";
 import RouterLink from "../component/RouterLink.tsx";
 import { SteamIDList } from "../component/SteamIDList.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
-import { BanReasons, BanType } from "../schema/bans.ts";
-import { PermissionLevel } from "../schema/people.ts";
-import { ReportStatus, reportStatusColour, reportStatusString } from "../schema/report.ts";
 import { avatarHashToURL } from "../util/text.tsx";
 import { renderDateTime, renderTimeDistance } from "../util/time.ts";
+import { useQuery } from "@connectrpc/connect-query";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { BanReason } from "../rpc/ban/v1/ban_pb.ts";
 
 export const Route = createFileRoute("/_auth/report/$reportId")({
 	component: ReportView,
@@ -195,7 +194,7 @@ function ReportView() {
 												},
 											}}
 										>
-											<ListItemText primary={"Reason"} secondary={BanReasons[report.reason]} />
+											<ListItemText primary={"Reason"} secondary={BanReason[report.reason]} />
 										</ListItem>
 									)}
 									{report?.reason && report.reason_text !== "" && (
@@ -213,7 +212,7 @@ function ReportView() {
 								</List>
 							</ContainerWithHeader>
 						</Grid>
-						{hasPermission(PermissionLevel.Moderator) && (
+						{hasPermission(Privilege.MODERATOR) && (
 							<Grid size={{ xs: 6, md: 12 }}>
 								<ReportModPanel reportId={Number(reportId)} />
 							</Grid>

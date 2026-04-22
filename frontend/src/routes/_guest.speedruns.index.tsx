@@ -2,19 +2,20 @@ import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
 import Grid from "@mui/material/Grid";
 import TableCell from "@mui/material/TableCell";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useMemo } from "react";
-import { apiGetServers, getSpeedrunsRecent } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import { createDefaultTableOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellSmall } from "../component/table/TableCellSmall.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
-import type { SpeedrunMapOverview } from "../schema/speedrun.ts";
 import { durationString, renderDateTime } from "../util/time.ts";
+import type { SpeedrunMapOverview } from "../rpc/servers/v1/speedruns_pb.ts";
+import { useQuery } from "@connectrpc/connect-query";
+import { overallRecent } from "../rpc/servers/v1/speedruns-SpeedrunsService_connectquery.ts";
+import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 
 export const Route = createFileRoute("/_guest/speedruns/")({
 	component: SpeedrunsIndex,
@@ -79,29 +80,13 @@ const defaultOptions = createDefaultTableOptions<SpeedrunMapOverview>();
 
 const SpeedrunRecentTable = () => {
 	const recentCount = 10;
-	const {
-		data: recent,
-		isLoading: isLoadingRecent,
-		isError: isErrorRecent,
-	} = useQuery({
-		queryKey: ["speedruns_recent", recentCount],
-		queryFn: async ({ signal }) => {
-			return await getSpeedrunsRecent(recentCount, signal);
-		},
-	});
+	const { data: recent, isLoading: isLoadingRecent, isError: isErrorRecent } = useQuery(overallRecent);
 
-	const {
-		data: servers,
-		isLoading: isLoadingServers,
-		isError: isErrorServers,
-	} = useQuery({
-		queryKey: ["serversSimple"],
-		queryFn: ({ signal }) => apiGetServers(signal),
-	});
+	const { data: serverList, isLoading: isLoadingServers, isError: isErrorServers } = useQuery(servers);
 
 	const columns = useMemo(
 		() => [
-			columnHelper.accessor("rank", {
+			columnHelper.accessor("speedruns.rank", {
 				header: "Rank",
 				size: 10,
 				Cell: ({ cell }) => {
@@ -114,7 +99,7 @@ const SpeedrunRecentTable = () => {
 					);
 				},
 			}),
-			columnHelper.accessor("speedrun_id", {
+			columnHelper.accessor("speedruns.speedrunId", {
 				header: "ID",
 				size: 10,
 				Cell: ({ cell, row }) => {
@@ -160,7 +145,7 @@ const SpeedrunRecentTable = () => {
 				header: "Server",
 				size: 30,
 				Cell: ({ cell }) => {
-					const srv = (servers ?? []).find((s) => (s.server_id = cell.getValue()));
+					const srv = (serverList?.servers ?? []).find((s) => (s.server_id = cell.getValue()));
 					return <TableCellString>{srv?.server_name}</TableCellString>;
 				},
 			}),
@@ -178,7 +163,7 @@ const SpeedrunRecentTable = () => {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: recent ?? [],
+		data: recent?.speedruns ?? [],
 		enableFilters: true,
 		enableRowActions: true,
 		state: {

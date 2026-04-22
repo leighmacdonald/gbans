@@ -14,657 +14,798 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file servers/v1/servers.proto.
  */
-export const file_servers_v1_servers: GenFile = /*@__PURE__*/
-  fileDesc("ChhzZXJ2ZXJzL3YxL3NlcnZlcnMucHJvdG8SCnNlcnZlcnMudjEiNQoMU3RhdGVSZXF1ZXN0EiUKCGxhdF9sb25nGAEgASgLMhMubmV0d29yay52MS5MYXRMb25nIr8DCgpTYWZlU2VydmVyEhEKCXNlcnZlcl9pZBgBIAEoBRIZCgRob3N0GAIgASgJQgu6SAjIAQFyA6gBARIaCgRwb3J0GAMgASgNQgy6SAnIAQEqBBj//wMSFgoCaXAYBCABKAlCCrpIB8gBAXICeAESFAoEbmFtZRgFIAEoCUIGukgDyAEBEhoKCm5hbWVfc2hvcnQYBiABKAlCBrpIA8gBARIWCgZyZWdpb24YByABKAlCBrpIA8gBARISCgJjYxgIIAEoCUIGukgDyAEBEhcKB3BsYXllcnMYCSABKAVCBrpIA8gBARIbCgttYXhfcGxheWVycxgKIAEoBUIGukgDyAEBEhMKA2JvdBgLIAEoBUIGukgDyAEBEhMKA21hcBgMIAEoCUIGukgDyAEBEhoKCmdhbWVfdHlwZXMYDSADKAlCBrpIA8gBARItCghsYXRfbG9uZxgOIAEoCzITLm5ldHdvcmsudjEuTGF0TG9uZ0IGukgDyAEBEhgKCGRpc3RhbmNlGA8gASgCQga6SAPIAQESFgoGaHVtYW5zGBAgASgFQga6SAPIAQESFAoEdGFncxgRIAMoCUIGukgDyAEBIoYFCgZTZXJ2ZXISGQoJc2VydmVyX2lkGAEgASgFQga6SAPIAQESGgoKc2hvcnRfbmFtZRgCIAEoCUIGukgDyAEBEhQKBG5hbWUYAyABKAlCBrpIA8gBARIXCgdhZGRyZXNzGAQgASgJQga6SAPIAQESIAoQYWRkcmVzc19pbnRlcm5hbBgFIAEoCUIGukgDyAEBEhsKC3Nkcl9lbmFibGVkGAYgASgIQga6SAPIAQESFAoEcG9ydBgHIAEoBUIGukgDyAEBEhQKBHJjb24YCCABKAlCBrpIA8gBARIYCghwYXNzd29yZBgJIAEoCUIGukgDyAEBEhoKCmlzX2VuYWJsZWQYCiABKAhCBrpIA8gBARIPCgdkZWxldGVkGAsgASgIEhYKBnJlZ2lvbhgMIAEoCUIGukgDyAEBEhIKAmNjGA0gASgJQga6SAPIAQESLQoIbGF0X2xvbmcYDiABKAsyEy5uZXR3b3JrLnYxLkxhdExvbmdCBrpIA8gBARIaCgpsb2dfc2VjcmV0GA8gASgFQga6SAPIAQESHAoMZW5hYmxlX3N0YXRzGBAgASgIQga6SAPIAQESNAoQdG9rZW5fY3JlYXRlZF9vbhgRIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNgoKY3JlYXRlZF9vbhgSIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARI2Cgp1cGRhdGVkX29uGBMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEh0KFWRpc2NvcmRfc2VlZF9yb2xlX2lkcxgUIAMoCRIKCgJpcBgVIAEoCSJvCg1TdGF0ZVJlc3BvbnNlEi8KB3NlcnZlcnMYASADKAsyFi5zZXJ2ZXJzLnYxLlNhZmVTZXJ2ZXJCBrpIA8gBARItCghsYXRfbG9uZxgCIAEoCzITLm5ldHdvcmsudjEuTGF0TG9uZ0IGukgDyAEBInoKDlNlcnZlckluZm9TYWZlEiAKEHNlcnZlcl9uYW1lX2xvbmcYASABKAlCBrpIA8gBARIbCgtzZXJ2ZXJfbmFtZRgCIAEoCUIGukgDyAEBEhkKCXNlcnZlcl9pZBgDIAEoBUIGukgDyAEBEg4KBmNvbG91chgEIAEoCSJGCg9TZXJ2ZXJzUmVzcG9uc2USMwoHc2VydmVycxgBIAMoCzIaLnNlcnZlcnMudjEuU2VydmVySW5mb1NhZmVCBrpIA8gBASI/ChFFZGl0U2VydmVyUmVxdWVzdBIqCgZzZXJ2ZXIYASABKAsyEi5zZXJ2ZXJzLnYxLlNlcnZlckIGukgDyAEBIkAKEkVkaXRTZXJ2ZXJSZXNwb25zZRIqCgZzZXJ2ZXIYASABKAsyEi5zZXJ2ZXJzLnYxLlNlcnZlckIGukgDyAEBIjAKE0RlbGV0ZVNlcnZlclJlcXVlc3QSGQoJc2VydmVyX2lkGAEgASgFQga6SAPIAQEiFgoURGVsZXRlU2VydmVyUmVzcG9uc2UiQwoUU2VydmVyc0FkbWluUmVzcG9uc2USKwoHc2VydmVycxgBIAMoCzISLnNlcnZlcnMudjEuU2VydmVyQga6SAPIAQEy7gIKDlNlcnZlcnNTZXJ2aWNlEjwKBVN0YXRlEhguc2VydmVycy52MS5TdGF0ZVJlcXVlc3QaGS5zZXJ2ZXJzLnYxLlN0YXRlUmVzcG9uc2USPgoHU2VydmVycxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRobLnNlcnZlcnMudjEuU2VydmVyc1Jlc3BvbnNlEksKCkVkaXRTZXJ2ZXISHS5zZXJ2ZXJzLnYxLkVkaXRTZXJ2ZXJSZXF1ZXN0Gh4uc2VydmVycy52MS5FZGl0U2VydmVyUmVzcG9uc2USRwoMRGVsZXRlU2VydmVyEh8uc2VydmVycy52MS5EZWxldGVTZXJ2ZXJSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5EkgKDFNlcnZlcnNBZG1pbhIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRogLnNlcnZlcnMudjEuU2VydmVyc0FkbWluUmVzcG9uc2VCpgEKDmNvbS5zZXJ2ZXJzLnYxQgxTZXJ2ZXJzUHJvdG9QAVo9Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9zZXJ2ZXJzL3YxO3NlcnZlcnN2MaICA1NYWKoCClNlcnZlcnMuVjHKAgpTZXJ2ZXJzXFYx4gIWU2VydmVyc1xWMVxHUEJNZXRhZGF0YeoCC1NlcnZlcnM6OlYxYghlZGl0aW9uc3DoBw", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp, file_network_v1_network]);
+export const file_servers_v1_servers: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"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ZXJ2ZXIYASABKAsyEi5zZXJ2ZXJzLnYxLlNlcnZlckIGukgDyAEBIkAKEkVkaXRTZXJ2ZXJSZXNwb25zZRIqCgZzZXJ2ZXIYASABKAsyEi5zZXJ2ZXJzLnYxLlNlcnZlckIGukgDyAEBIjAKE0RlbGV0ZVNlcnZlclJlcXVlc3QSGQoJc2VydmVyX2lkGAEgASgFQga6SAPIAQEiFgoURGVsZXRlU2VydmVyUmVzcG9uc2UiQwoUU2VydmVyc0FkbWluUmVzcG9uc2USKwoHc2VydmVycxgBIAMoCzISLnNlcnZlcnMudjEuU2VydmVyQga6SAPIAQEyugMKDlNlcnZlcnNTZXJ2aWNlEjwKBVN0YXRlEhguc2VydmVycy52MS5TdGF0ZVJlcXVlc3QaGS5zZXJ2ZXJzLnYxLlN0YXRlUmVzcG9uc2USPgoHU2VydmVycxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRobLnNlcnZlcnMudjEuU2VydmVyc1Jlc3BvbnNlEksKCkVkaXRTZXJ2ZXISHS5zZXJ2ZXJzLnYxLkVkaXRTZXJ2ZXJSZXF1ZXN0Gh4uc2VydmVycy52MS5FZGl0U2VydmVyUmVzcG9uc2USRwoMRGVsZXRlU2VydmVyEh8uc2VydmVycy52MS5EZWxldGVTZXJ2ZXJSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5EkgKDFNlcnZlcnNBZG1pbhIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRogLnNlcnZlcnMudjEuU2VydmVyc0FkbWluUmVzcG9uc2USSgoJUXVlcnlMb2dzEhwuc2VydmVycy52MS5RdWVyeUxvZ3NSZXF1ZXN0Gh0uc2VydmVycy52MS5RdWVyeUxvZ3NSZXNwb25zZSIAQqYBCg5jb20uc2VydmVycy52MUIMU2VydmVyc1Byb3RvUAFaPWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvc2VydmVycy92MTtzZXJ2ZXJzdjGiAgNTWFiqAgpTZXJ2ZXJzLlYxygIKU2VydmVyc1xWMeICFlNlcnZlcnNcVjFcR1BCTWV0YWRhdGHqAgtTZXJ2ZXJzOjpWMWIIZWRpdGlvbnNw6Ac",
+		[
+			file_buf_validate_validate,
+			file_google_protobuf_empty,
+			file_google_protobuf_timestamp,
+			file_network_v1_network,
+		],
+	);
+
+/**
+ * @generated from message servers.v1.QueryLogsRequest
+ */
+export type QueryLogsRequest = Message<"servers.v1.QueryLogsRequest"> & {
+	/**
+	 * @generated from field: repeated int32 server_id = 1;
+	 */
+	serverId: number[];
+};
+
+/**
+ * @generated from message servers.v1.QueryLogsRequest
+ */
+export type QueryLogsRequestValid = Message<"servers.v1.QueryLogsRequest"> & {
+	/**
+	 * @generated from field: repeated int32 server_id = 1;
+	 */
+	serverId: number[];
+};
+
+/**
+ * Describes the message servers.v1.QueryLogsRequest.
+ * Use `create(QueryLogsRequestSchema)` to create a new message.
+ */
+export const QueryLogsRequestSchema: GenMessage<QueryLogsRequest, { validType: QueryLogsRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_servers, 0);
+
+/**
+ * @generated from message servers.v1.ServerLog
+ */
+export type ServerLog = Message<"servers.v1.ServerLog"> & {
+	/**
+	 * @generated from field: int32 server_id = 1;
+	 */
+	serverId: number;
+
+	/**
+	 * @generated from field: string server_name = 2;
+	 */
+	serverName: string;
+
+	/**
+	 * @generated from field: string body = 3;
+	 */
+	body: string;
+
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 4;
+	 */
+	createdOn?: Timestamp;
+};
+
+/**
+ * @generated from message servers.v1.ServerLog
+ */
+export type ServerLogValid = Message<"servers.v1.ServerLog"> & {
+	/**
+	 * @generated from field: int32 server_id = 1;
+	 */
+	serverId: number;
+
+	/**
+	 * @generated from field: string server_name = 2;
+	 */
+	serverName: string;
+
+	/**
+	 * @generated from field: string body = 3;
+	 */
+	body: string;
+
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 4;
+	 */
+	createdOn: Timestamp;
+};
+
+/**
+ * Describes the message servers.v1.ServerLog.
+ * Use `create(ServerLogSchema)` to create a new message.
+ */
+export const ServerLogSchema: GenMessage<ServerLog, { validType: ServerLogValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_servers, 1);
+
+/**
+ * @generated from message servers.v1.QueryLogsResponse
+ */
+export type QueryLogsResponse = Message<"servers.v1.QueryLogsResponse"> & {
+	/**
+	 * @generated from field: repeated servers.v1.ServerLog logs = 1;
+	 */
+	logs: ServerLog[];
+
+	/**
+	 * @generated from field: int32 count = 2;
+	 */
+	count: number;
+};
+
+/**
+ * @generated from message servers.v1.QueryLogsResponse
+ */
+export type QueryLogsResponseValid = Message<"servers.v1.QueryLogsResponse"> & {
+	/**
+	 * @generated from field: repeated servers.v1.ServerLog logs = 1;
+	 */
+	logs: ServerLogValid[];
+
+	/**
+	 * @generated from field: int32 count = 2;
+	 */
+	count: number;
+};
+
+/**
+ * Describes the message servers.v1.QueryLogsResponse.
+ * Use `create(QueryLogsResponseSchema)` to create a new message.
+ */
+export const QueryLogsResponseSchema: GenMessage<QueryLogsResponse, { validType: QueryLogsResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_servers, 2);
 
 /**
  * @generated from message servers.v1.StateRequest
  */
 export type StateRequest = Message<"servers.v1.StateRequest"> & {
-  /**
-   * @generated from field: network.v1.LatLong lat_long = 1;
-   */
-  latLong?: LatLong;
+	/**
+	 * @generated from field: network.v1.LatLong lat_long = 1;
+	 */
+	latLong?: LatLong;
 };
 
 /**
  * @generated from message servers.v1.StateRequest
  */
 export type StateRequestValid = Message<"servers.v1.StateRequest"> & {
-  /**
-   * @generated from field: network.v1.LatLong lat_long = 1;
-   */
-  latLong?: LatLongValid;
+	/**
+	 * @generated from field: network.v1.LatLong lat_long = 1;
+	 */
+	latLong?: LatLongValid;
 };
 
 /**
  * Describes the message servers.v1.StateRequest.
  * Use `create(StateRequestSchema)` to create a new message.
  */
-export const StateRequestSchema: GenMessage<StateRequest, {validType: StateRequestValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 0);
+export const StateRequestSchema: GenMessage<StateRequest, { validType: StateRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_servers, 3);
 
 /**
  * @generated from message servers.v1.SafeServer
  */
 export type SafeServer = Message<"servers.v1.SafeServer"> & {
-  /**
-   * @generated from field: int32 server_id = 1;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 1;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: string host = 2;
-   */
-  host: string;
+	/**
+	 * @generated from field: string host = 2;
+	 */
+	host: string;
 
-  /**
-   * @generated from field: uint32 port = 3;
-   */
-  port: number;
+	/**
+	 * @generated from field: uint32 port = 3;
+	 */
+	port: number;
 
-  /**
-   * @generated from field: string ip = 4;
-   */
-  ip: string;
+	/**
+	 * @generated from field: string ip = 4;
+	 */
+	ip: string;
 
-  /**
-   * @generated from field: string name = 5;
-   */
-  name: string;
+	/**
+	 * @generated from field: string name = 5;
+	 */
+	name: string;
 
-  /**
-   * @generated from field: string name_short = 6;
-   */
-  nameShort: string;
+	/**
+	 * @generated from field: string name_short = 6;
+	 */
+	nameShort: string;
 
-  /**
-   * @generated from field: string region = 7;
-   */
-  region: string;
+	/**
+	 * @generated from field: string region = 7;
+	 */
+	region: string;
 
-  /**
-   * @generated from field: string cc = 8;
-   */
-  cc: string;
+	/**
+	 * @generated from field: string cc = 8;
+	 */
+	cc: string;
 
-  /**
-   * @generated from field: int32 players = 9;
-   */
-  players: number;
+	/**
+	 * @generated from field: int32 players = 9;
+	 */
+	players: number;
 
-  /**
-   * @generated from field: int32 max_players = 10;
-   */
-  maxPlayers: number;
+	/**
+	 * @generated from field: int32 max_players = 10;
+	 */
+	maxPlayers: number;
 
-  /**
-   * @generated from field: int32 bot = 11;
-   */
-  bot: number;
+	/**
+	 * @generated from field: int32 bot = 11;
+	 */
+	bot: number;
 
-  /**
-   * @generated from field: string map = 12;
-   */
-  map: string;
+	/**
+	 * @generated from field: string map = 12;
+	 */
+	map: string;
 
-  /**
-   * @generated from field: repeated string game_types = 13;
-   */
-  gameTypes: string[];
+	/**
+	 * @generated from field: repeated string game_types = 13;
+	 */
+	gameTypes: string[];
 
-  /**
-   * @generated from field: network.v1.LatLong lat_long = 14;
-   */
-  latLong?: LatLong;
+	/**
+	 * @generated from field: network.v1.LatLong lat_long = 14;
+	 */
+	latLong?: LatLong;
 
-  /**
-   * @generated from field: float distance = 15;
-   */
-  distance: number;
+	/**
+	 * @generated from field: float distance = 15;
+	 */
+	distance: number;
 
-  /**
-   * @generated from field: int32 humans = 16;
-   */
-  humans: number;
+	/**
+	 * @generated from field: int32 humans = 16;
+	 */
+	humans: number;
 
-  /**
-   * @generated from field: repeated string tags = 17;
-   */
-  tags: string[];
+	/**
+	 * @generated from field: repeated string tags = 17;
+	 */
+	tags: string[];
 };
 
 /**
  * @generated from message servers.v1.SafeServer
  */
 export type SafeServerValid = Message<"servers.v1.SafeServer"> & {
-  /**
-   * @generated from field: int32 server_id = 1;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 1;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: string host = 2;
-   */
-  host: string;
+	/**
+	 * @generated from field: string host = 2;
+	 */
+	host: string;
 
-  /**
-   * @generated from field: uint32 port = 3;
-   */
-  port: number;
+	/**
+	 * @generated from field: uint32 port = 3;
+	 */
+	port: number;
 
-  /**
-   * @generated from field: string ip = 4;
-   */
-  ip: string;
+	/**
+	 * @generated from field: string ip = 4;
+	 */
+	ip: string;
 
-  /**
-   * @generated from field: string name = 5;
-   */
-  name: string;
+	/**
+	 * @generated from field: string name = 5;
+	 */
+	name: string;
 
-  /**
-   * @generated from field: string name_short = 6;
-   */
-  nameShort: string;
+	/**
+	 * @generated from field: string name_short = 6;
+	 */
+	nameShort: string;
 
-  /**
-   * @generated from field: string region = 7;
-   */
-  region: string;
+	/**
+	 * @generated from field: string region = 7;
+	 */
+	region: string;
 
-  /**
-   * @generated from field: string cc = 8;
-   */
-  cc: string;
+	/**
+	 * @generated from field: string cc = 8;
+	 */
+	cc: string;
 
-  /**
-   * @generated from field: int32 players = 9;
-   */
-  players: number;
+	/**
+	 * @generated from field: int32 players = 9;
+	 */
+	players: number;
 
-  /**
-   * @generated from field: int32 max_players = 10;
-   */
-  maxPlayers: number;
+	/**
+	 * @generated from field: int32 max_players = 10;
+	 */
+	maxPlayers: number;
 
-  /**
-   * @generated from field: int32 bot = 11;
-   */
-  bot: number;
+	/**
+	 * @generated from field: int32 bot = 11;
+	 */
+	bot: number;
 
-  /**
-   * @generated from field: string map = 12;
-   */
-  map: string;
+	/**
+	 * @generated from field: string map = 12;
+	 */
+	map: string;
 
-  /**
-   * @generated from field: repeated string game_types = 13;
-   */
-  gameTypes: string[];
+	/**
+	 * @generated from field: repeated string game_types = 13;
+	 */
+	gameTypes: string[];
 
-  /**
-   * @generated from field: network.v1.LatLong lat_long = 14;
-   */
-  latLong: LatLongValid;
+	/**
+	 * @generated from field: network.v1.LatLong lat_long = 14;
+	 */
+	latLong: LatLongValid;
 
-  /**
-   * @generated from field: float distance = 15;
-   */
-  distance: number;
+	/**
+	 * @generated from field: float distance = 15;
+	 */
+	distance: number;
 
-  /**
-   * @generated from field: int32 humans = 16;
-   */
-  humans: number;
+	/**
+	 * @generated from field: int32 humans = 16;
+	 */
+	humans: number;
 
-  /**
-   * @generated from field: repeated string tags = 17;
-   */
-  tags: string[];
+	/**
+	 * @generated from field: repeated string tags = 17;
+	 */
+	tags: string[];
 };
 
 /**
  * Describes the message servers.v1.SafeServer.
  * Use `create(SafeServerSchema)` to create a new message.
  */
-export const SafeServerSchema: GenMessage<SafeServer, {validType: SafeServerValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 1);
+export const SafeServerSchema: GenMessage<SafeServer, { validType: SafeServerValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_servers, 4);
 
 /**
  * @generated from message servers.v1.Server
  */
 export type Server = Message<"servers.v1.Server"> & {
-  /**
-   * @generated from field: int32 server_id = 1;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 1;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: string short_name = 2;
-   */
-  shortName: string;
+	/**
+	 * @generated from field: string short_name = 2;
+	 */
+	shortName: string;
 
-  /**
-   * @generated from field: string name = 3;
-   */
-  name: string;
+	/**
+	 * @generated from field: string name = 3;
+	 */
+	name: string;
 
-  /**
-   * @generated from field: string address = 4;
-   */
-  address: string;
+	/**
+	 * @generated from field: string address = 4;
+	 */
+	address: string;
 
-  /**
-   * @generated from field: string address_internal = 5;
-   */
-  addressInternal: string;
+	/**
+	 * @generated from field: string address_internal = 5;
+	 */
+	addressInternal: string;
 
-  /**
-   * @generated from field: bool sdr_enabled = 6;
-   */
-  sdrEnabled: boolean;
+	/**
+	 * @generated from field: bool sdr_enabled = 6;
+	 */
+	sdrEnabled: boolean;
 
-  /**
-   * @generated from field: int32 port = 7;
-   */
-  port: number;
+	/**
+	 * @generated from field: int32 port = 7;
+	 */
+	port: number;
 
-  /**
-   * @generated from field: string rcon = 8;
-   */
-  rcon: string;
+	/**
+	 * @generated from field: string rcon = 8;
+	 */
+	rcon: string;
 
-  /**
-   * @generated from field: string password = 9;
-   */
-  password: string;
+	/**
+	 * @generated from field: string password = 9;
+	 */
+	password: string;
 
-  /**
-   * @generated from field: bool is_enabled = 10;
-   */
-  isEnabled: boolean;
+	/**
+	 * @generated from field: bool is_enabled = 10;
+	 */
+	isEnabled: boolean;
 
-  /**
-   * @generated from field: bool deleted = 11;
-   */
-  deleted: boolean;
+	/**
+	 * @generated from field: bool deleted = 11;
+	 */
+	deleted: boolean;
 
-  /**
-   * @generated from field: string region = 12;
-   */
-  region: string;
+	/**
+	 * @generated from field: string region = 12;
+	 */
+	region: string;
 
-  /**
-   * @generated from field: string cc = 13;
-   */
-  cc: string;
+	/**
+	 * @generated from field: string cc = 13;
+	 */
+	cc: string;
 
-  /**
-   * @generated from field: network.v1.LatLong lat_long = 14;
-   */
-  latLong?: LatLong;
+	/**
+	 * @generated from field: network.v1.LatLong lat_long = 14;
+	 */
+	latLong?: LatLong;
 
-  /**
-   * @generated from field: int32 log_secret = 15;
-   */
-  logSecret: number;
+	/**
+	 * @generated from field: int32 log_secret = 15;
+	 */
+	logSecret: number;
 
-  /**
-   * @generated from field: bool enable_stats = 16;
-   */
-  enableStats: boolean;
+	/**
+	 * @generated from field: bool enable_stats = 16;
+	 */
+	enableStats: boolean;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp token_created_on = 17;
-   */
-  tokenCreatedOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp token_created_on = 17;
+	 */
+	tokenCreatedOn?: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 18;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 18;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 19;
-   */
-  updatedOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_on = 19;
+	 */
+	updatedOn?: Timestamp;
 
-  /**
-   * @generated from field: repeated string discord_seed_role_ids = 20;
-   */
-  discordSeedRoleIds: string[];
+	/**
+	 * @generated from field: repeated string discord_seed_role_ids = 20;
+	 */
+	discordSeedRoleIds: string[];
 
-  /**
-   * @generated from field: string ip = 21;
-   */
-  ip: string;
+	/**
+	 * @generated from field: string ip = 21;
+	 */
+	ip: string;
 };
 
 /**
  * @generated from message servers.v1.Server
  */
 export type ServerValid = Message<"servers.v1.Server"> & {
-  /**
-   * @generated from field: int32 server_id = 1;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 1;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: string short_name = 2;
-   */
-  shortName: string;
+	/**
+	 * @generated from field: string short_name = 2;
+	 */
+	shortName: string;
 
-  /**
-   * @generated from field: string name = 3;
-   */
-  name: string;
+	/**
+	 * @generated from field: string name = 3;
+	 */
+	name: string;
 
-  /**
-   * @generated from field: string address = 4;
-   */
-  address: string;
+	/**
+	 * @generated from field: string address = 4;
+	 */
+	address: string;
 
-  /**
-   * @generated from field: string address_internal = 5;
-   */
-  addressInternal: string;
+	/**
+	 * @generated from field: string address_internal = 5;
+	 */
+	addressInternal: string;
 
-  /**
-   * @generated from field: bool sdr_enabled = 6;
-   */
-  sdrEnabled: boolean;
+	/**
+	 * @generated from field: bool sdr_enabled = 6;
+	 */
+	sdrEnabled: boolean;
 
-  /**
-   * @generated from field: int32 port = 7;
-   */
-  port: number;
+	/**
+	 * @generated from field: int32 port = 7;
+	 */
+	port: number;
 
-  /**
-   * @generated from field: string rcon = 8;
-   */
-  rcon: string;
+	/**
+	 * @generated from field: string rcon = 8;
+	 */
+	rcon: string;
 
-  /**
-   * @generated from field: string password = 9;
-   */
-  password: string;
+	/**
+	 * @generated from field: string password = 9;
+	 */
+	password: string;
 
-  /**
-   * @generated from field: bool is_enabled = 10;
-   */
-  isEnabled: boolean;
+	/**
+	 * @generated from field: bool is_enabled = 10;
+	 */
+	isEnabled: boolean;
 
-  /**
-   * @generated from field: bool deleted = 11;
-   */
-  deleted: boolean;
+	/**
+	 * @generated from field: bool deleted = 11;
+	 */
+	deleted: boolean;
 
-  /**
-   * @generated from field: string region = 12;
-   */
-  region: string;
+	/**
+	 * @generated from field: string region = 12;
+	 */
+	region: string;
 
-  /**
-   * @generated from field: string cc = 13;
-   */
-  cc: string;
+	/**
+	 * @generated from field: string cc = 13;
+	 */
+	cc: string;
 
-  /**
-   * @generated from field: network.v1.LatLong lat_long = 14;
-   */
-  latLong: LatLongValid;
+	/**
+	 * @generated from field: network.v1.LatLong lat_long = 14;
+	 */
+	latLong: LatLongValid;
 
-  /**
-   * @generated from field: int32 log_secret = 15;
-   */
-  logSecret: number;
+	/**
+	 * @generated from field: int32 log_secret = 15;
+	 */
+	logSecret: number;
 
-  /**
-   * @generated from field: bool enable_stats = 16;
-   */
-  enableStats: boolean;
+	/**
+	 * @generated from field: bool enable_stats = 16;
+	 */
+	enableStats: boolean;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp token_created_on = 17;
-   */
-  tokenCreatedOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp token_created_on = 17;
+	 */
+	tokenCreatedOn?: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 18;
-   */
-  createdOn: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 18;
+	 */
+	createdOn: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 19;
-   */
-  updatedOn: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_on = 19;
+	 */
+	updatedOn: Timestamp;
 
-  /**
-   * @generated from field: repeated string discord_seed_role_ids = 20;
-   */
-  discordSeedRoleIds: string[];
+	/**
+	 * @generated from field: repeated string discord_seed_role_ids = 20;
+	 */
+	discordSeedRoleIds: string[];
 
-  /**
-   * @generated from field: string ip = 21;
-   */
-  ip: string;
+	/**
+	 * @generated from field: string ip = 21;
+	 */
+	ip: string;
 };
 
 /**
  * Describes the message servers.v1.Server.
  * Use `create(ServerSchema)` to create a new message.
  */
-export const ServerSchema: GenMessage<Server, {validType: ServerValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 2);
+export const ServerSchema: GenMessage<Server, { validType: ServerValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_servers, 5);
 
 /**
  * @generated from message servers.v1.StateResponse
  */
 export type StateResponse = Message<"servers.v1.StateResponse"> & {
-  /**
-   * @generated from field: repeated servers.v1.SafeServer servers = 1;
-   */
-  servers: SafeServer[];
+	/**
+	 * @generated from field: repeated servers.v1.SafeServer servers = 1;
+	 */
+	servers: SafeServer[];
 
-  /**
-   * @generated from field: network.v1.LatLong lat_long = 2;
-   */
-  latLong?: LatLong;
+	/**
+	 * @generated from field: network.v1.LatLong lat_long = 2;
+	 */
+	latLong?: LatLong;
 };
 
 /**
  * @generated from message servers.v1.StateResponse
  */
 export type StateResponseValid = Message<"servers.v1.StateResponse"> & {
-  /**
-   * @generated from field: repeated servers.v1.SafeServer servers = 1;
-   */
-  servers: SafeServerValid[];
+	/**
+	 * @generated from field: repeated servers.v1.SafeServer servers = 1;
+	 */
+	servers: SafeServerValid[];
 
-  /**
-   * @generated from field: network.v1.LatLong lat_long = 2;
-   */
-  latLong: LatLongValid;
+	/**
+	 * @generated from field: network.v1.LatLong lat_long = 2;
+	 */
+	latLong: LatLongValid;
 };
 
 /**
  * Describes the message servers.v1.StateResponse.
  * Use `create(StateResponseSchema)` to create a new message.
  */
-export const StateResponseSchema: GenMessage<StateResponse, {validType: StateResponseValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 3);
+export const StateResponseSchema: GenMessage<StateResponse, { validType: StateResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_servers, 6);
 
 /**
  * @generated from message servers.v1.ServerInfoSafe
  */
 export type ServerInfoSafe = Message<"servers.v1.ServerInfoSafe"> & {
-  /**
-   * @generated from field: string server_name_long = 1;
-   */
-  serverNameLong: string;
+	/**
+	 * @generated from field: string server_name_long = 1;
+	 */
+	serverNameLong: string;
 
-  /**
-   * @generated from field: string server_name = 2;
-   */
-  serverName: string;
+	/**
+	 * @generated from field: string server_name = 2;
+	 */
+	serverName: string;
 
-  /**
-   * @generated from field: int32 server_id = 3;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 3;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: string colour = 4;
-   */
-  colour: string;
+	/**
+	 * @generated from field: string colour = 4;
+	 */
+	colour: string;
 };
 
 /**
  * @generated from message servers.v1.ServerInfoSafe
  */
 export type ServerInfoSafeValid = Message<"servers.v1.ServerInfoSafe"> & {
-  /**
-   * @generated from field: string server_name_long = 1;
-   */
-  serverNameLong: string;
+	/**
+	 * @generated from field: string server_name_long = 1;
+	 */
+	serverNameLong: string;
 
-  /**
-   * @generated from field: string server_name = 2;
-   */
-  serverName: string;
+	/**
+	 * @generated from field: string server_name = 2;
+	 */
+	serverName: string;
 
-  /**
-   * @generated from field: int32 server_id = 3;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 3;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: string colour = 4;
-   */
-  colour: string;
+	/**
+	 * @generated from field: string colour = 4;
+	 */
+	colour: string;
 };
 
 /**
  * Describes the message servers.v1.ServerInfoSafe.
  * Use `create(ServerInfoSafeSchema)` to create a new message.
  */
-export const ServerInfoSafeSchema: GenMessage<ServerInfoSafe, {validType: ServerInfoSafeValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 4);
+export const ServerInfoSafeSchema: GenMessage<ServerInfoSafe, { validType: ServerInfoSafeValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_servers, 7);
 
 /**
  * @generated from message servers.v1.ServersResponse
  */
 export type ServersResponse = Message<"servers.v1.ServersResponse"> & {
-  /**
-   * @generated from field: repeated servers.v1.ServerInfoSafe servers = 1;
-   */
-  servers: ServerInfoSafe[];
+	/**
+	 * @generated from field: repeated servers.v1.ServerInfoSafe servers = 1;
+	 */
+	servers: ServerInfoSafe[];
 };
 
 /**
  * @generated from message servers.v1.ServersResponse
  */
 export type ServersResponseValid = Message<"servers.v1.ServersResponse"> & {
-  /**
-   * @generated from field: repeated servers.v1.ServerInfoSafe servers = 1;
-   */
-  servers: ServerInfoSafeValid[];
+	/**
+	 * @generated from field: repeated servers.v1.ServerInfoSafe servers = 1;
+	 */
+	servers: ServerInfoSafeValid[];
 };
 
 /**
  * Describes the message servers.v1.ServersResponse.
  * Use `create(ServersResponseSchema)` to create a new message.
  */
-export const ServersResponseSchema: GenMessage<ServersResponse, {validType: ServersResponseValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 5);
+export const ServersResponseSchema: GenMessage<ServersResponse, { validType: ServersResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_servers, 8);
 
 /**
  * @generated from message servers.v1.EditServerRequest
  */
 export type EditServerRequest = Message<"servers.v1.EditServerRequest"> & {
-  /**
-   * @generated from field: servers.v1.Server server = 1;
-   */
-  server?: Server;
+	/**
+	 * @generated from field: servers.v1.Server server = 1;
+	 */
+	server?: Server;
 };
 
 /**
  * @generated from message servers.v1.EditServerRequest
  */
 export type EditServerRequestValid = Message<"servers.v1.EditServerRequest"> & {
-  /**
-   * @generated from field: servers.v1.Server server = 1;
-   */
-  server: ServerValid;
+	/**
+	 * @generated from field: servers.v1.Server server = 1;
+	 */
+	server: ServerValid;
 };
 
 /**
  * Describes the message servers.v1.EditServerRequest.
  * Use `create(EditServerRequestSchema)` to create a new message.
  */
-export const EditServerRequestSchema: GenMessage<EditServerRequest, {validType: EditServerRequestValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 6);
+export const EditServerRequestSchema: GenMessage<EditServerRequest, { validType: EditServerRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_servers, 9);
 
 /**
  * @generated from message servers.v1.EditServerResponse
  */
 export type EditServerResponse = Message<"servers.v1.EditServerResponse"> & {
-  /**
-   * @generated from field: servers.v1.Server server = 1;
-   */
-  server?: Server;
+	/**
+	 * @generated from field: servers.v1.Server server = 1;
+	 */
+	server?: Server;
 };
 
 /**
  * @generated from message servers.v1.EditServerResponse
  */
 export type EditServerResponseValid = Message<"servers.v1.EditServerResponse"> & {
-  /**
-   * @generated from field: servers.v1.Server server = 1;
-   */
-  server: ServerValid;
+	/**
+	 * @generated from field: servers.v1.Server server = 1;
+	 */
+	server: ServerValid;
 };
 
 /**
  * Describes the message servers.v1.EditServerResponse.
  * Use `create(EditServerResponseSchema)` to create a new message.
  */
-export const EditServerResponseSchema: GenMessage<EditServerResponse, {validType: EditServerResponseValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 7);
+export const EditServerResponseSchema: GenMessage<EditServerResponse, { validType: EditServerResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_servers, 10);
 
 /**
  * @generated from message servers.v1.DeleteServerRequest
  */
 export type DeleteServerRequest = Message<"servers.v1.DeleteServerRequest"> & {
-  /**
-   * @generated from field: int32 server_id = 1;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 1;
+	 */
+	serverId: number;
 };
 
 /**
  * @generated from message servers.v1.DeleteServerRequest
  */
 export type DeleteServerRequestValid = Message<"servers.v1.DeleteServerRequest"> & {
-  /**
-   * @generated from field: int32 server_id = 1;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 1;
+	 */
+	serverId: number;
 };
 
 /**
  * Describes the message servers.v1.DeleteServerRequest.
  * Use `create(DeleteServerRequestSchema)` to create a new message.
  */
-export const DeleteServerRequestSchema: GenMessage<DeleteServerRequest, {validType: DeleteServerRequestValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 8);
+export const DeleteServerRequestSchema: GenMessage<DeleteServerRequest, { validType: DeleteServerRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_servers, 11);
 
 /**
  * @generated from message servers.v1.DeleteServerResponse
  */
-export type DeleteServerResponse = Message<"servers.v1.DeleteServerResponse"> & {
-};
+export type DeleteServerResponse = Message<"servers.v1.DeleteServerResponse"> & {};
 
 export type DeleteServerResponseValid = DeleteServerResponse;
 
@@ -672,80 +813,88 @@ export type DeleteServerResponseValid = DeleteServerResponse;
  * Describes the message servers.v1.DeleteServerResponse.
  * Use `create(DeleteServerResponseSchema)` to create a new message.
  */
-export const DeleteServerResponseSchema: GenMessage<DeleteServerResponse, {validType: DeleteServerResponseValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 9);
+export const DeleteServerResponseSchema: GenMessage<DeleteServerResponse, { validType: DeleteServerResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_servers, 12);
 
 /**
  * @generated from message servers.v1.ServersAdminResponse
  */
 export type ServersAdminResponse = Message<"servers.v1.ServersAdminResponse"> & {
-  /**
-   * @generated from field: repeated servers.v1.Server servers = 1;
-   */
-  servers: Server[];
+	/**
+	 * @generated from field: repeated servers.v1.Server servers = 1;
+	 */
+	servers: Server[];
 };
 
 /**
  * @generated from message servers.v1.ServersAdminResponse
  */
 export type ServersAdminResponseValid = Message<"servers.v1.ServersAdminResponse"> & {
-  /**
-   * @generated from field: repeated servers.v1.Server servers = 1;
-   */
-  servers: ServerValid[];
+	/**
+	 * @generated from field: repeated servers.v1.Server servers = 1;
+	 */
+	servers: ServerValid[];
 };
 
 /**
  * Describes the message servers.v1.ServersAdminResponse.
  * Use `create(ServersAdminResponseSchema)` to create a new message.
  */
-export const ServersAdminResponseSchema: GenMessage<ServersAdminResponse, {validType: ServersAdminResponseValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 10);
+export const ServersAdminResponseSchema: GenMessage<ServersAdminResponse, { validType: ServersAdminResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_servers, 13);
 
 /**
  * @generated from service servers.v1.ServersService
  */
 export const ServersService: GenService<{
-  /**
-   * @generated from rpc servers.v1.ServersService.State
-   */
-  state: {
-    methodKind: "unary";
-    input: typeof StateRequestSchema;
-    output: typeof StateResponseSchema;
-  },
-  /**
-   * @generated from rpc servers.v1.ServersService.Servers
-   */
-  servers: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof ServersResponseSchema;
-  },
-  /**
-   * @generated from rpc servers.v1.ServersService.EditServer
-   */
-  editServer: {
-    methodKind: "unary";
-    input: typeof EditServerRequestSchema;
-    output: typeof EditServerResponseSchema;
-  },
-  /**
-   * @generated from rpc servers.v1.ServersService.DeleteServer
-   */
-  deleteServer: {
-    methodKind: "unary";
-    input: typeof DeleteServerRequestSchema;
-    output: typeof EmptySchema;
-  },
-  /**
-   * @generated from rpc servers.v1.ServersService.ServersAdmin
-   */
-  serversAdmin: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof ServersAdminResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_servers_v1_servers, 0);
-
+	/**
+	 * @generated from rpc servers.v1.ServersService.State
+	 */
+	state: {
+		methodKind: "unary";
+		input: typeof StateRequestSchema;
+		output: typeof StateResponseSchema;
+	};
+	/**
+	 * @generated from rpc servers.v1.ServersService.Servers
+	 */
+	servers: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof ServersResponseSchema;
+	};
+	/**
+	 * @generated from rpc servers.v1.ServersService.EditServer
+	 */
+	editServer: {
+		methodKind: "unary";
+		input: typeof EditServerRequestSchema;
+		output: typeof EditServerResponseSchema;
+	};
+	/**
+	 * @generated from rpc servers.v1.ServersService.DeleteServer
+	 */
+	deleteServer: {
+		methodKind: "unary";
+		input: typeof DeleteServerRequestSchema;
+		output: typeof EmptySchema;
+	};
+	/**
+	 * @generated from rpc servers.v1.ServersService.ServersAdmin
+	 */
+	serversAdmin: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof ServersAdminResponseSchema;
+	};
+	/**
+	 * @generated from rpc servers.v1.ServersService.QueryLogs
+	 */
+	queryLogs: {
+		methodKind: "unary";
+		input: typeof QueryLogsRequestSchema;
+		output: typeof QueryLogsResponseSchema;
+	};
+}> = /*@__PURE__*/ serviceDesc(file_servers_v1_servers, 0);

@@ -840,6 +840,8 @@ type PersonConnection struct {
 	SteamId            *int64                 `protobuf:"varint,3,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	PersonaName        *string                `protobuf:"bytes,4,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
 	ServerId           *int32                 `protobuf:"varint,5,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
+	ServerNameShort    *string                `protobuf:"bytes,6,opt,name=server_name_short,json=serverNameShort" json:"server_name_short,omitempty"`
+	CreatedOn          *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -909,6 +911,20 @@ func (x *PersonConnection) GetServerId() int32 {
 	return 0
 }
 
+func (x *PersonConnection) GetServerNameShort() string {
+	if x != nil && x.ServerNameShort != nil {
+		return *x.ServerNameShort
+	}
+	return ""
+}
+
+func (x *PersonConnection) GetCreatedOn() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedOn
+	}
+	return nil
+}
+
 var File_network_v1_network_proto protoreflect.FileDescriptor
 
 const file_network_v1_network_proto_rawDesc = "" +
@@ -929,11 +945,11 @@ const file_network_v1_network_proto_rawDesc = "" +
 	"\vregion_name\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"regionName\x12#\n" +
 	"\tcity_name\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bcityName\x126\n" +
-	"\blat_long\x18\x06 \x01(\v2\x13.network.v1.LatLongB\x06\xbaH\x03\xc8\x01\x01R\alatLong\"c\n" +
+	"\blat_long\x18\x06 \x01(\v2\x13.network.v1.LatLongB\x06\xbaH\x03\xc8\x01\x01R\alatLong\"a\n" +
 	"\x03ASN\x12\x1a\n" +
-	"\x04cidr\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04cidr\x12\x1f\n" +
-	"\x06as_num\x18\x02 \x01(\x04B\b\xbaH\x03\xc8\x01\x010\x01R\x05asNum\x12\x1f\n" +
-	"\aas_name\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06asName\"\xe6\x03\n" +
+	"\x04cidr\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04cidr\x12\x1d\n" +
+	"\x06as_num\x18\x02 \x01(\x04B\x06\xbaH\x03\xc8\x01\x01R\x05asNum\x12\x1f\n" +
+	"\aas_name\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06asName\"\xe2\x03\n" +
 	"\x05Proxy\x12\x1a\n" +
 	"\x04cidr\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04cidr\x12<\n" +
 	"\n" +
@@ -946,9 +962,9 @@ const file_network_v1_network_proto_rawDesc = "" +
 	"\x03isp\x18\a \x01(\tR\x03isp\x12\x16\n" +
 	"\x06domain\x18\b \x01(\tR\x06domain\x124\n" +
 	"\n" +
-	"usage_type\x18\t \x01(\x0e2\x15.network.v1.UsageTypeR\tusageType\x12\x14\n" +
+	"usage_type\x18\t \x01(\x0e2\x15.network.v1.UsageTypeR\tusageType\x12\x10\n" +
 	"\x03asn\x18\n" +
-	" \x01(\x03B\x020\x01R\x03asn\x12\x17\n" +
+	" \x01(\x03R\x03asn\x12\x17\n" +
 	"\aas_name\x18\v \x01(\tR\x06asName\x127\n" +
 	"\tlast_seen\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\blastSeen\x127\n" +
 	"\vthreat_type\x18\r \x01(\x0e2\x16.network.v1.ThreatTypeR\n" +
@@ -973,14 +989,17 @@ const file_network_v1_network_proto_rawDesc = "" +
 	"\x18QueryConnectionsResponse\x12D\n" +
 	"\n" +
 	"connection\x18\x01 \x03(\v2\x1c.network.v1.PersonConnectionB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"connection\"\xe8\x01\n" +
-	"\x10PersonConnection\x12:\n" +
-	"\x14person_connection_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x12personConnectionId\x12#\n" +
+	"connection\"\xdb\x02\n" +
+	"\x10PersonConnection\x128\n" +
+	"\x14person_connection_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x12personConnectionId\x12#\n" +
 	"\aip_addr\x18\x02 \x01(\tB\n" +
-	"\xbaH\a\xc8\x01\x01r\x02x\x01R\x06ipAddr\x12#\n" +
-	"\bsteam_id\x18\x03 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12)\n" +
+	"\xbaH\a\xc8\x01\x01r\x02x\x01R\x06ipAddr\x12!\n" +
+	"\bsteam_id\x18\x03 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\x12)\n" +
 	"\fpersona_name\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12#\n" +
-	"\tserver_id\x18\x05 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bserverId*\xd0\x01\n" +
+	"\tserver_id\x18\x05 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bserverId\x122\n" +
+	"\x11server_name_short\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0fserverNameShort\x12A\n" +
+	"\n" +
+	"created_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn*\xd0\x01\n" +
 	"\n" +
 	"ThreatType\x12\x1b\n" +
 	"\x17THREAT_TYPE_UNSPECIFIED\x10\x00\x12\x14\n" +
@@ -1059,17 +1078,18 @@ var file_network_v1_network_proto_depIdxs = []int32{
 	4,  // 9: network.v1.QueryNetworkResponse.details:type_name -> network.v1.Details
 	13, // 10: network.v1.QueryConnectionsRequest.filter:type_name -> database.query.v1.Filter
 	12, // 11: network.v1.QueryConnectionsResponse.connection:type_name -> network.v1.PersonConnection
-	10, // 12: network.v1.NetworkService.QueryConnections:input_type -> network.v1.QueryConnectionsRequest
-	3,  // 13: network.v1.NetworkService.QueryNetwork:input_type -> network.v1.QueryNetworkRequest
-	15, // 14: network.v1.NetworkService.UpdateDB:input_type -> google.protobuf.Empty
-	11, // 15: network.v1.NetworkService.QueryConnections:output_type -> network.v1.QueryConnectionsResponse
-	9,  // 16: network.v1.NetworkService.QueryNetwork:output_type -> network.v1.QueryNetworkResponse
-	15, // 17: network.v1.NetworkService.UpdateDB:output_type -> google.protobuf.Empty
-	15, // [15:18] is the sub-list for method output_type
-	12, // [12:15] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	14, // 12: network.v1.PersonConnection.created_on:type_name -> google.protobuf.Timestamp
+	10, // 13: network.v1.NetworkService.QueryConnections:input_type -> network.v1.QueryConnectionsRequest
+	3,  // 14: network.v1.NetworkService.QueryNetwork:input_type -> network.v1.QueryNetworkRequest
+	15, // 15: network.v1.NetworkService.UpdateDB:input_type -> google.protobuf.Empty
+	11, // 16: network.v1.NetworkService.QueryConnections:output_type -> network.v1.QueryConnectionsResponse
+	9,  // 17: network.v1.NetworkService.QueryNetwork:output_type -> network.v1.QueryNetworkResponse
+	15, // 18: network.v1.NetworkService.UpdateDB:output_type -> google.protobuf.Empty
+	16, // [16:19] is the sub-list for method output_type
+	13, // [13:16] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_network_v1_network_proto_init() }

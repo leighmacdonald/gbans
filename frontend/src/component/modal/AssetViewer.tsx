@@ -2,19 +2,19 @@ import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import PermMediaIcon from "@mui/icons-material/PermMedia";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import { useMemo } from "react";
-import { type Asset, MediaTypes, mediaType } from "../../schema/asset";
 import { Heading } from "../Heading";
 import { ImageAsset } from "../ImageAsset";
 import { VideoAsset } from "../VideoAsset";
+import type { Asset } from "../../rpc/asset/v1/asset_pb.ts";
 
 export const AssetViewer = NiceModal.create((asset: Asset) => {
 	const modal = useModal();
 
 	const content = useMemo(() => {
-		switch (mediaType(asset.mime_type)) {
-			case MediaTypes.image:
+		switch (asset.mimeType) {
+			case "image":
 				return <ImageAsset asset={asset} />;
-			case MediaTypes.video:
+			case "video":
 				return <VideoAsset asset={asset} />;
 			default:
 				return;
@@ -22,7 +22,7 @@ export const AssetViewer = NiceModal.create((asset: Asset) => {
 	}, [asset]);
 
 	return (
-		<Dialog fullWidth {...muiDialogV5(modal)} fullScreen={mediaType(asset.mime_type) === MediaTypes.image}>
+		<Dialog fullWidth {...muiDialogV5(modal)} fullScreen={asset.mimeType === "image"}>
 			<DialogTitle component={Heading} iconLeft={<PermMediaIcon />}>
 				{`${asset.name}`}
 			</DialogTitle>

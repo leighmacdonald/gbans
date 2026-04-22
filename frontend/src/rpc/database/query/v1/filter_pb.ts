@@ -10,32 +10,36 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file database/query/v1/filter.proto.
  */
-export const file_database_query_v1_filter: GenFile = /*@__PURE__*/
-  fileDesc("Ch5kYXRhYmFzZS9xdWVyeS92MS9maWx0ZXIucHJvdG8SEWRhdGFiYXNlLnF1ZXJ5LnYxIk8KBkZpbHRlchISCgZvZmZzZXQYASABKARCAjABEhEKBWxpbWl0GAIgASgEQgIwARIMCgRkZXNjGAMgASgIEhAKCG9yZGVyX2J5GAQgASgJQs4BChVjb20uZGF0YWJhc2UucXVlcnkudjFCC0ZpbHRlclByb3RvUAFaQmdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvZGF0YWJhc2UvcXVlcnkvdjE7cXVlcnl2MaICA0RRWKoCEURhdGFiYXNlLlF1ZXJ5LlYxygIRRGF0YWJhc2VcUXVlcnlcVjHiAh1EYXRhYmFzZVxRdWVyeVxWMVxHUEJNZXRhZGF0YeoCE0RhdGFiYXNlOjpRdWVyeTo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate]);
+export const file_database_query_v1_filter: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"Ch5kYXRhYmFzZS9xdWVyeS92MS9maWx0ZXIucHJvdG8SEWRhdGFiYXNlLnF1ZXJ5LnYxIkcKBkZpbHRlchIOCgZvZmZzZXQYASABKAQSDQoFbGltaXQYAiABKAQSDAoEZGVzYxgDIAEoCBIQCghvcmRlcl9ieRgEIAEoCULOAQoVY29tLmRhdGFiYXNlLnF1ZXJ5LnYxQgtGaWx0ZXJQcm90b1ABWkJnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL2RhdGFiYXNlL3F1ZXJ5L3YxO3F1ZXJ5djGiAgNEUViqAhFEYXRhYmFzZS5RdWVyeS5WMcoCEURhdGFiYXNlXFF1ZXJ5XFYx4gIdRGF0YWJhc2VcUXVlcnlcVjFcR1BCTWV0YWRhdGHqAhNEYXRhYmFzZTo6UXVlcnk6OlYxYghlZGl0aW9uc3DoBw",
+		[file_buf_validate_validate],
+	);
 
 /**
  * @generated from message database.query.v1.Filter
  */
 export type Filter = Message<"database.query.v1.Filter"> & {
-  /**
-   * @generated from field: uint64 offset = 1 [jstype = JS_STRING];
-   */
-  offset: string;
+	/**
+	 * @generated from field: uint64 offset = 1;
+	 */
+	offset: bigint;
 
-  /**
-   * @generated from field: uint64 limit = 2 [jstype = JS_STRING];
-   */
-  limit: string;
+	/**
+	 * @generated from field: uint64 limit = 2;
+	 */
+	limit: bigint;
 
-  /**
-   * @generated from field: bool desc = 3;
-   */
-  desc: boolean;
+	/**
+	 * @generated from field: bool desc = 3;
+	 */
+	desc: boolean;
 
-  /**
-   * @generated from field: string order_by = 4;
-   */
-  orderBy: string;
+	/**
+	 * @generated from field: string order_by = 4;
+	 */
+	orderBy: string;
 };
 
 export type FilterValid = Filter;
@@ -44,6 +48,6 @@ export type FilterValid = Filter;
  * Describes the message database.query.v1.Filter.
  * Use `create(FilterSchema)` to create a new message.
  */
-export const FilterSchema: GenMessage<Filter, {validType: FilterValid}> = /*@__PURE__*/
-  messageDesc(file_database_query_v1_filter, 0);
-
+export const FilterSchema: GenMessage<Filter, { validType: FilterValid }> =
+	/*@__PURE__*/
+	messageDesc(file_database_query_v1_filter, 0);

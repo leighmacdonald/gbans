@@ -1033,10 +1033,10 @@ const file_servers_v1_speedruns_proto_rawDesc = "" +
 	" \x01(\tR\bcategory\x12#\n" +
 	"\rtotal_players\x18\v \x01(\x05R\ftotalPlayers\"R\n" +
 	"\x14MapSpeedrunsResponse\x12:\n" +
-	"\tspeedruns\x18\x01 \x03(\v2\x1c.servers.v1.SpeedrunOverviewR\tspeedruns\"\xc2\x01\n" +
+	"\tspeedruns\x18\x01 \x03(\v2\x1c.servers.v1.SpeedrunOverviewR\tspeedruns\"\xbe\x01\n" +
 	"\vParticipant\x12\x19\n" +
-	"\bround_id\x18\x01 \x01(\x05R\aroundId\x12\x1d\n" +
-	"\bsteam_id\x18\x02 \x01(\x03B\x020\x01R\asteamId\x125\n" +
+	"\bround_id\x18\x01 \x01(\x05R\aroundId\x12\x19\n" +
+	"\bsteam_id\x18\x02 \x01(\x03R\asteamId\x125\n" +
 	"\bduration\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\bduration\x12\x1f\n" +
 	"\vavatar_hash\x18\x04 \x01(\tR\n" +
 	"avatarHash\x12!\n" +

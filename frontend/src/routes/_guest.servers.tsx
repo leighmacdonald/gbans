@@ -9,7 +9,6 @@ import { ServerFilters } from "../component/ServerFilters.tsx";
 import { ServerList } from "../component/ServerList.tsx";
 import { ServerMap } from "../component/ServerMap.tsx";
 import { MapStateCtx } from "../contexts/MapStateCtx.tsx";
-import type { BaseServer } from "../schema/server.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 
 export const Route = createFileRoute("/_guest/servers")({

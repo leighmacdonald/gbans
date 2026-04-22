@@ -13,17 +13,17 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
 import { useNavigate } from "@tanstack/react-router";
-import { type MouseEventHandler, type PropsWithChildren, useCallback, useMemo, useState } from "react";
+import React, { type MouseEventHandler, type PropsWithChildren, useCallback, useMemo, useState } from "react";
 import SteamID from "steamid";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { PermissionLevel } from "../schema/people.ts";
 import { avatarHashToURL } from "../util/text.tsx";
 import { MenuItemLink } from "./MenuItemLink.tsx";
 import { TextLink } from "./TextLink.tsx";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 
 export type PersonCellProps = {
-	steam_id: string;
+	steam_id: string | BigInt;
 	personaname: string;
 	avatar_hash: string;
 	onClick?: MouseEventHandler | undefined;
@@ -49,7 +49,7 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 		async (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
 			event.preventDefault();
 			event.stopPropagation();
-			const sid = new SteamID(steam_id);
+			const sid = new SteamID(String(steam_id));
 			await navigator.clipboard.writeText(sid.toString());
 			handleClose();
 			sendFlash("success", `Copied to clipboard: ${sid.toString()}`);
@@ -59,7 +59,7 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 
 	const menu = useMemo(() => {
 		let items = [
-			<MenuItemLink to={`/profile/$steamId`} params={{ steamId: steam_id }} key={20}>
+			<MenuItemLink to={`/profile/$steamId`} params={{ steamId: String(steam_id) }} key={20}>
 				<ListItemIcon>
 					<AccountCircleIcon fontSize="small" color={"primary"} />
 				</ListItemIcon>
@@ -67,8 +67,8 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 			</MenuItemLink>,
 
 			<MenuItem
-				onClick={() => {
-					navigate({ href: `https://steamcommunity.com/profiles/${steam_id}` });
+				onClick={async () => {
+					await navigate({ href: `https://steamcommunity.com/profiles/${steam_id}` });
 				}}
 				key={30}
 			>
@@ -96,7 +96,7 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 				SourceTV History
 			</MenuItemLink>,
 		];
-		if (hasPermission(PermissionLevel.Moderator)) {
+		if (hasPermission(Privilege.MODERATOR)) {
 			items = [
 				...items,
 				<MenuItemLink
@@ -170,10 +170,10 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 									: theme.palette.primary.dark,
 						}}
 						to={"/profile/$steamId"}
-						params={{ steamId: steam_id }}
+						params={{ steamId: String(steam_id) }}
 						onClick={onClick ?? undefined}
 					>
-						{personaname !== "" ? personaname : steam_id}
+						{personaname !== "" ? personaname : String(steam_id)}
 					</TextLink>
 				)}
 			</Box>

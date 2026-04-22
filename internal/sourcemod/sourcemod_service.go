@@ -306,16 +306,16 @@ func (s Service) Overrides(ctx context.Context, _ *emptypb.Empty) (*v1.Overrides
 	return &resp, nil
 }
 
-func (s Service) CreateOverrides(ctx context.Context, req *v1.CreateOverrideRequest) (*v1.CreateOverrideResponse, error) {
+func (s Service) CreateOverrides(ctx context.Context, req *v1.CreateOverridesRequest) (*v1.CreateOverridesResponse, error) {
 	override, errCreate := s.sourcemod.AddOverride(ctx, req.GetName(), fromOverrideType(req.GetOverrideType()), req.GetFlags())
 	if errCreate != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	return &v1.CreateOverrideResponse{Override: toOverride(override)}, nil
+	return &v1.CreateOverridesResponse{Override: toOverride(override)}, nil
 }
 
-func (s Service) EditOverrides(ctx context.Context, req *v1.EditOverrideRequest) (*v1.EditOverrideResponse, error) {
+func (s Service) EditOverrides(ctx context.Context, req *v1.EditOverridesRequest) (*v1.EditOverridesResponse, error) {
 	override, errOverride := s.sourcemod.Override(ctx, req.GetOverrideId())
 	if errOverride != nil {
 		if errors.Is(errOverride, database.ErrNoResult) {
@@ -334,10 +334,10 @@ func (s Service) EditOverrides(ctx context.Context, req *v1.EditOverrideRequest)
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	return &v1.EditOverrideResponse{Override: toOverride(edited)}, nil
+	return &v1.EditOverridesResponse{Override: toOverride(edited)}, nil
 }
 
-func (s Service) DeleteOverrides(ctx context.Context, req *v1.DeleteOverrideRequest) (*emptypb.Empty, error) {
+func (s Service) DeleteOverrides(ctx context.Context, req *v1.DeleteOverridesRequest) (*emptypb.Empty, error) {
 	if errCreate := s.sourcemod.DelOverride(ctx, req.GetOverrideId()); errCreate != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}

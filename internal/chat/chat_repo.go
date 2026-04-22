@@ -260,7 +260,7 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 			message QueryChatHistoryResult
 			steamID int64
 			matchID []byte
-			flagged *int64
+			flagged *int32
 		)
 
 		if errScan := rows.Scan(&message.PersonMessageID,

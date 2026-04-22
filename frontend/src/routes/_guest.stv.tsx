@@ -5,7 +5,6 @@ import { IconButton, Link } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
@@ -15,7 +14,6 @@ import {
 	useMaterialReactTable,
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiGetDemos, apiGetServers } from "../api";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { TextLink } from "../component/TextLink.tsx";
@@ -30,13 +28,15 @@ import {
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
-import type { DemoFile } from "../schema/demo.ts";
 import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { humanFileSize } from "../util/text.tsx";
+import { getDemos } from "../rpc/demo/v1/demo-DemoService_connectquery.ts";
+import type { Demo } from "../rpc/demo/v1/demo_pb.ts";
+import { useQuery } from "@connectrpc/connect-query";
 
-const columnHelper = createMRTColumnHelper<DemoFile>();
-const defaultOptions = createDefaultTableOptions<DemoFile>();
+const columnHelper = createMRTColumnHelper<Demo>();
+const defaultOptions = createDefaultTableOptions<Demo>();
 const defaultValues = makeSchemaDefaults({ defaultColumn: "created_on" });
 const validateSearch = makeSchemaState("created_on");
 
@@ -80,12 +80,7 @@ function STV() {
 	const navigate = useNavigate();
 	const search = Route.useSearch();
 
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["demos"],
-		queryFn: async ({ signal }) => {
-			return await apiGetDemos(signal);
-		},
-	});
+	const { data, isLoading, isError } = useQuery(getDemos);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		(updater) => {
@@ -130,14 +125,14 @@ function STV() {
 	);
 	const columns = useMemo(() => {
 		return [
-			columnHelper.accessor("demo_id", {
+			columnHelper.accessor("demoId", {
 				header: "ID",
 				grow: false,
 				Cell: ({ cell }) => <Typography>#{cell.getValue()}</Typography>,
 			}),
-			columnHelper.accessor("server_id", {
+			columnHelper.accessor("serverId", {
 				filterFn: (row, _, filterValue) => {
-					return filterValue.length === 0 || filterValue.includes(row.original.server_id);
+					return filterValue.length === 0 || filterValue.includes(row.original.serverId);
 				},
 				filterVariant: "multi-select",
 				filterSelectOptions: servers.map((server) => ({
@@ -149,18 +144,18 @@ function STV() {
 				enableColumnFilter: true,
 				header: "Server",
 				Cell: ({ row, cell }) => (
-					<Tooltip title={row.original.server_name_long}>
+					<Tooltip title={row.original.serverNameLong}>
 						<TextLink
 							to={"/stv"}
 							search={setColumnFilter(search, "server_id", [cell.getValue()])}
-							sx={{ color: stringToColour(row.original.server_name_short) }}
+							sx={{ color: stringToColour(row.original.serverNameShort) }}
 						>
-							{row.original.server_name_short}
+							{row.original.serverNameShort}
 						</TextLink>
 					</Tooltip>
 				),
 			}),
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "Created",
 				enableColumnFilter: false,
 				enableSorting: true,
@@ -168,7 +163,7 @@ function STV() {
 				grow: false,
 				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} suffix />,
 			}),
-			columnHelper.accessor("map_name", {
+			columnHelper.accessor("mapName", {
 				enableColumnFilter: true,
 				header: "Map Name",
 				grow: true,
@@ -176,9 +171,9 @@ function STV() {
 					<TextLink
 						to={"/stv"}
 						search={setColumnFilter(search, "map_name", cell.getValue())}
-						sx={{ color: stringToColour(row.original.map_name) }}
+						sx={{ color: stringToColour(row.original.mapName) }}
 					>
-						{row.original.map_name}
+						{row.original.mapName}
 					</TextLink>
 				),
 			}),
@@ -205,7 +200,7 @@ function STV() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ?? [],
+		data: data?.demos ?? [],
 		enableFilters: true,
 		enableHiding: true,
 		enableFacetedValues: true,
@@ -236,11 +231,11 @@ function STV() {
 					disabled={!isAuthenticated()}
 					color={"error"}
 					to={"/report"}
-					search={{ demo_id: row.original.demo_id }}
+					search={{ demo_id: Number(row.original.demoId) }}
 				>
 					<FlagIcon />
 				</IconButtonLink>
-				<IconButton component={Link} key={"dl-link"} color={"success"} href={`/asset/${row.original.asset_id}`}>
+				<IconButton component={Link} key={"dl-link"} color={"success"} href={`/asset/${row.original.assetId}`}>
 					<CloudDownload />
 				</IconButton>
 			</RowActionContainer>

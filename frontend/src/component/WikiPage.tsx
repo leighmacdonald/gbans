@@ -10,7 +10,6 @@ import { z } from "zod/v4";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { PermissionLevel, PermissionLevelCollection, permissionLevelString } from "../schema/people.ts";
 import { ContainerWithHeaderAndButtons } from "./ContainerWithHeaderAndButtons.tsx";
 import { mdEditorRef } from "./form/field/MarkdownField.tsx";
 import { MarkDownRenderer } from "./MarkdownRenderer.tsx";
@@ -18,6 +17,8 @@ import { type Wiki, WikiSchema } from "../rpc/wiki/v1/wiki_pb.ts";
 import { update } from "../rpc/wiki/v1/wiki-WikiService_connectquery.ts";
 import { useMutation } from "@connectrpc/connect-query";
 import { create } from "@bufbuild/protobuf";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { enumValues } from "../util/lists.ts";
 
 export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page: Wiki; assetURL: string }) => {
 	const [editMode, setEditMode] = useState<boolean>(false);
@@ -26,7 +27,7 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 	const { sendFlash, sendError } = useUserFlashCtx();
 
 	const buttons = useMemo(() => {
-		if (!hasPermission(PermissionLevel.Editor)) {
+		if (!hasPermission(Privilege.EDITOR)) {
 			return [];
 		}
 		return [
@@ -71,12 +72,12 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 		},
 		validators: {
 			onChange: z.object({
-				permissionLevel: z.enum(PermissionLevel),
+				permissionLevel: z.enum(Privilege),
 				bodyMd: z.string(),
 			}),
 		},
 		defaultValues: {
-			permissionLevel: page?.permissionLevel ?? PermissionLevel.Guest,
+			permissionLevel: page?.permissionLevel ?? Privilege.GUEST,
 			bodyMd: page?.bodyMd ?? "",
 		},
 	});
@@ -99,11 +100,11 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 									return (
 										<field.SelectField
 											label={"Permissions"}
-											items={PermissionLevelCollection}
+											items={enumValues(Privilege)}
 											renderItem={(pl) => {
 												return (
 													<MenuItem value={pl} key={`pl-${pl}`}>
-														{permissionLevelString(pl)}
+														{Privilege[pl]}
 													</MenuItem>
 												);
 											}}

@@ -97,7 +97,7 @@ func (s BanService) Delete(ctx context.Context, req *v1.DeleteRequest) (*emptypb
 	return &emptypb.Empty{}, nil
 }
 
-func (s BanService) Get(ctx context.Context, req *v1.GetBanRequest) (*v1.GetBanResponse, error) {
+func (s BanService) Get(ctx context.Context, req *v1.GetRequest) (*v1.GetResponse, error) {
 	user, _ := rpc.UserInfoFromCtx(ctx)
 
 	bannedPerson, errGet := s.bans.QueryOne(ctx, QueryOpts{BanID: req.GetBanId(), Deleted: false, EvadeOk: true})
@@ -113,7 +113,7 @@ func (s BanService) Get(ctx context.Context, req *v1.GetBanRequest) (*v1.GetBanR
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 
-	return &v1.GetBanResponse{Ban: toBan(bannedPerson)}, nil
+	return &v1.GetResponse{Ban: toBan(bannedPerson)}, nil
 }
 
 func (s BanService) QuerySourceBans(ctx context.Context, req *v1.QuerySourceBansRequest) (*v1.QuerySourceBansResponse, error) {
@@ -128,10 +128,11 @@ func (s BanService) QuerySourceBans(ctx context.Context, req *v1.QuerySourceBans
 	resp := v1.QuerySourceBansResponse{Bans: make([]*v1.SourceBanRecord, len(*queryResp.JSON200))}
 
 	for idx, ban := range *queryResp.JSON200 {
+		sid := steamid.New(ban.SteamId)
 		resp.Bans[idx] = &v1.SourceBanRecord{
 			SiteName:    &ban.SiteName,
 			PersonaName: &ban.Name,
-			SteamId:     &ban.SteamId,
+			SteamId:     ptr.To(sid.Int64()),
 			Reason:      &ban.Reason,
 			Duration:    durationpb.New(ban.ExpiresOn.Sub(ban.CreatedOn)),
 			Permanent:   &ban.Permanent,

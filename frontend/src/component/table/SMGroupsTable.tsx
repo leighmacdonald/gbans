@@ -5,39 +5,35 @@ import EditIcon from "@mui/icons-material/Edit";
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiDeleteSMGroup, apiGetSMGroups } from "../../api";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx";
-import type { SMAdmin, SMGroups } from "../../schema/sourcemod.ts";
 import { logErr } from "../../util/errors";
-import { renderDateTime } from "../../util/time.ts";
+import { renderTimestamp } from "../../util/time.ts";
 import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
 import { SMGroupEditorModal } from "../modal/SMGroupEditorModal.tsx";
 import { SMGroupOverridesModal } from "../modal/SMGroupOverridesModal.tsx";
 import { createDefaultTableOptions } from "./options.ts";
 import { SortableTable } from "./SortableTable.tsx";
 import { TableCellString } from "./TableCellString";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
+import { deleteGroup, sMGroups } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
+import type { Group } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
 
-const columnHelper = createMRTColumnHelper<SMGroups>();
-const defaultOptions = createDefaultTableOptions<SMGroups>();
+const columnHelper = createMRTColumnHelper<Group>();
+const defaultOptions = createDefaultTableOptions<Group>();
 
 export const SMGroupsTable = () => {
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const queryClient = useQueryClient();
 
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["serverGroups"],
-		queryFn: async ({ signal }) => {
-			return await apiGetSMGroups(signal);
-		},
-	});
+	const { data, isLoading, isError } = useQuery(sMGroups);
 
 	const onCreateGroup = useCallback(async () => {
 		try {
-			const group = (await NiceModal.show(SMGroupEditorModal)) as SMGroups;
-			queryClient.setQueryData(["serverGroups"], [...(data ?? []), group]);
+			const group = (await NiceModal.show(SMGroupEditorModal)) as Group;
+			queryClient.setQueryData(["serverGroups"], [...(data?.groups ?? []), group]);
 			sendFlash("success", `Group created successfully: ${group.name}`);
 		} catch (e) {
 			logErr(e);
@@ -45,28 +41,22 @@ export const SMGroupsTable = () => {
 		}
 	}, [data, queryClient, sendFlash]);
 
-	const deleteGroupMutation = useMutation({
-		mutationKey: ["SMGroupDelete"],
-		mutationFn: async (group: SMGroups) => {
-			const ac = new AbortController();
-			await apiDeleteSMGroup(group.group_id, ac.signal);
-			return group;
-		},
-		onSuccess: (group) => {
+	const deleteGroupMutation = useMutation(deleteGroup, {
+		onSuccess: (_, req) => {
 			queryClient.setQueryData(
 				["serverGroups"],
-				(data ?? []).filter((g) => g.group_id !== group.group_id),
+				(data?.groups ?? []).filter((g) => g.groupId !== req.groupId),
 			);
 			sendFlash("success", "Group deleted successfully");
 		},
 		onError: sendError,
 	});
 
-	const onOverride = async (group: SMGroups) => {
-		(await NiceModal.show(SMGroupOverridesModal, { group })) as SMAdmin;
+	const onOverride = async (group: Group) => {
+		await NiceModal.show(SMGroupOverridesModal, { group });
 	};
 
-	const onDeleteGroup = async (group: SMGroups) => {
+	const onDeleteGroup = async (group: Group) => {
 		try {
 			const confirmed = (await NiceModal.show(ConfirmationModal, {
 				title: "Delete group?",
@@ -75,22 +65,22 @@ export const SMGroupsTable = () => {
 			if (!confirmed) {
 				return;
 			}
-			deleteGroupMutation.mutate(group);
+			deleteGroupMutation.mutate({ groupId: group.groupId });
 		} catch (e) {
 			sendFlash("error", `Failed to create confirmation modal: ${e}`);
 		}
 	};
 
 	const onEditGroup = useCallback(
-		async (group: SMGroups) => {
+		async (group: Group) => {
 			try {
 				const editedGroup = (await NiceModal.show(SMGroupEditorModal, {
 					group,
-				})) as SMGroups;
+				})) as Group;
 				queryClient.setQueryData(
 					["serverGroups"],
-					(data ?? []).map((g) => {
-						return g.group_id !== editedGroup.group_id ? g : editedGroup;
+					(data?.groups ?? []).map((g) => {
+						return g.groupId !== editedGroup.groupId ? g : editedGroup;
 					}),
 				);
 				sendFlash("success", `Group created successfully: ${group.name}`);
@@ -114,21 +104,21 @@ export const SMGroupsTable = () => {
 				grow: false,
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
-			columnHelper.accessor("immunity_level", {
+			columnHelper.accessor("immunityLevel", {
 				header: "Immunity",
 				grow: false,
 				filterVariant: "range-slider",
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "Created On",
 				grow: false,
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{renderTimestamp(cell.getValue())}</TableCellString>,
 			}),
-			columnHelper.accessor("updated_on", {
+			columnHelper.accessor("updatedOn", {
 				header: "Updated On",
 				grow: false,
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{renderTimestamp(cell.getValue())}</TableCellString>,
 			}),
 		],
 		[],
@@ -136,7 +126,7 @@ export const SMGroupsTable = () => {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ?? [],
+		data: data?.groups ?? [],
 		enableFilters: true,
 		enableRowActions: true,
 		state: {

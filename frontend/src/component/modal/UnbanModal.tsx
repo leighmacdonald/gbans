@@ -2,11 +2,11 @@ import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
-import { useMutation } from "@tanstack/react-query";
 import { z } from "zod/v4";
-import { apiDeleteBan } from "../../api/index.ts";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
+import { useMutation } from "@connectrpc/connect-query";
+import { delete$ } from "../../rpc/ban/v1/ban-BanService_connectquery.ts";
 
 const onSubmit = z.object({
 	unban_reason: z.string().min(5),
@@ -17,7 +17,7 @@ export const UnbanModal = NiceModal.create(
 		banId,
 		personaName,
 	}: {
-		banId: number; // common placeholder for any primary key id for a ban
+		banId: bigint; // common placeholder for any primary key id for a ban
 		personaName?: string;
 	}) => {
 		const modal = useModal();
@@ -27,12 +27,7 @@ export const UnbanModal = NiceModal.create(
 			unban_reason: "",
 		};
 
-		const mutation = useMutation({
-			mutationKey: ["deleteSteamBan", { banId }],
-			mutationFn: async (unban_reason: string) => {
-				const ac = new AbortController();
-				await apiDeleteBan(banId, unban_reason, ac.signal);
-			},
+		const mutation = useMutation(delete$, {
 			onSuccess: async () => {
 				modal.resolve();
 				await modal.hide();
@@ -45,7 +40,7 @@ export const UnbanModal = NiceModal.create(
 
 		const form = useAppForm({
 			onSubmit: async ({ value }) => {
-				mutation.mutate(value.unban_reason);
+				mutation.mutate({ reason: value.unban_reason, banId });
 			},
 			defaultValues,
 			validators: { onSubmit },

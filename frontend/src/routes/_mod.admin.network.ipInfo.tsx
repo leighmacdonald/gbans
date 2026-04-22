@@ -9,7 +9,6 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useMemo } from "react";
 import { MapContainer } from "react-leaflet/MapContainer";
@@ -17,12 +16,13 @@ import { Marker } from "react-leaflet/Marker";
 import { TileLayer } from "react-leaflet/TileLayer";
 import "leaflet/dist/leaflet.css";
 import { z } from "zod/v4";
-import { apiGetNetworkDetails } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { getFlagEmoji } from "../util/emoji.ts";
-import { emptyOrNullString } from "../util/types.ts";
+import { useQuery } from "@connectrpc/connect-query";
+import { queryNetwork } from "../rpc/network/v1/network-NetworkService_connectquery.ts";
+import { timestampDate } from "@bufbuild/protobuf/wkt";
 
 const searchSchema = z.object({
 	ip: z.ipv4().optional(),
@@ -54,32 +54,19 @@ const InfoRow = ({ label, children }: { label: string; children: ReactNode }) =>
 function AdminNetworkInfo() {
 	const navigate = useNavigate({ from: Route.fullPath });
 	const { ip } = Route.useSearch();
-	const { data, isLoading } = useQuery({
-		queryKey: ["ipInfo", { ip }],
-		queryFn: async ({ signal }) => {
-			if (emptyOrNullString(ip)) {
-				return;
-			}
-			return await apiGetNetworkDetails(
-				{
-					ip: ip ?? "",
-				},
-				signal,
-			);
-		},
-	});
+	const { data, isLoading } = useQuery(queryNetwork, { ip });
 
 	const defaultValues: z.input<typeof searchSchema> = {
 		ip: ip ?? "",
 	};
 
 	const pos = useMemo(() => {
-		if (!data || data?.location.lat_long.latitude === 0) {
+		if (!data || data?.details?.location?.latLong?.latitude === 0) {
 			return { lat: 50, lng: 50 };
 		}
 		return {
-			lat: data?.location.lat_long.latitude,
-			lng: data?.location.lat_long.longitude,
+			lat: data?.details?.location?.latLong?.latitude ?? 50,
+			lng: data?.details?.location?.latLong?.longitude ?? 50,
 		};
 	}, [data]);
 
@@ -174,20 +161,26 @@ function AdminNetworkInfo() {
 														<InfoRow label={"Country"}>
 															{data && (
 																<>
-																	{data?.location.country_code &&
-																		getFlagEmoji(data?.location.country_code)}{" "}
-																	{data?.location.country_code} (
-																	{data?.location.country_code})
+																	{data?.details?.location?.countryCode &&
+																		getFlagEmoji(
+																			data?.details?.location?.countryCode,
+																		)}{" "}
+																	{data?.details?.location?.countryCode} (
+																	{data?.details?.location?.countryCode})
 																</>
 															)}
 														</InfoRow>
-														<InfoRow label={"Region"}>{data?.location.region_name}</InfoRow>
-														<InfoRow label={"City"}>{data?.location.city_name}</InfoRow>
+														<InfoRow label={"Region"}>
+															{data?.details?.location?.regionName}
+														</InfoRow>
+														<InfoRow label={"City"}>
+															{data?.details?.location?.cityName}
+														</InfoRow>
 														<InfoRow label={"Latitude"}>
-															{data?.location.lat_long.latitude}
+															{data?.details?.location?.latLong?.latitude}
 														</InfoRow>
 														<InfoRow label={"Longitude"}>
-															{data?.location.lat_long.longitude}
+															{data?.details?.location?.latLong?.longitude}
 														</InfoRow>
 													</TableBody>
 												</Table>
@@ -211,7 +204,7 @@ function AdminNetworkInfo() {
 													url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 													attribution={"© OpenStreetMap contributors "}
 												/>
-												{(data?.location.lat_long.latitude || 0) > 0 && (
+												{(data?.details?.location?.latLong?.latitude || 0) > 0 && (
 													<Marker autoPan={true} title={"Location"} position={pos} />
 												)}
 											</MapContainer>
@@ -223,13 +216,19 @@ function AdminNetworkInfo() {
 											<TableContainer>
 												<Table>
 													<TableBody>
-														<InfoRow label={"AS Name"}>{data?.asn.as_name}</InfoRow>
+														<InfoRow label={"AS Name"}>
+															{data?.details?.asn?.asName}
+														</InfoRow>
 														<InfoRow label={"AS Number"}>
-															<Link href={`https://bgpview.io/asn/${data?.asn.as_num}`}>
-																{data?.asn.as_num}
+															<Link
+																href={`https://bgpview.io/asn/${data?.details?.asn?.asNum}`}
+															>
+																{data?.details?.asn?.asNum}
 															</Link>
 														</InfoRow>
-														<InfoRow label={"CIDR Block"}>{data?.asn.cidr}</InfoRow>
+														<InfoRow label={"CIDR Block"}>
+															{data?.details?.asn?.cidr}
+														</InfoRow>
 													</TableBody>
 												</Table>
 											</TableContainer>
@@ -241,12 +240,26 @@ function AdminNetworkInfo() {
 											<TableContainer>
 												<Table>
 													<TableBody>
-														<InfoRow label={"Proxy Type"}>{data?.proxy.proxy_type}</InfoRow>
-														<InfoRow label={"ISP"}>{data?.proxy.isp}</InfoRow>
-														<InfoRow label={"Domain"}>{data?.proxy.domain}</InfoRow>
-														<InfoRow label={"Usage Type"}>{data?.proxy.usage_type}</InfoRow>
-														<InfoRow label={"Last Seen"}>{data?.proxy.last_seen}</InfoRow>
-														<InfoRow label={"Threat"}>{data?.proxy.threat}</InfoRow>
+														<InfoRow label={"Proxy Type"}>
+															{data?.details?.proxy?.proxyType}
+														</InfoRow>
+														<InfoRow label={"ISP"}>{data?.details?.proxy?.isp}</InfoRow>
+														<InfoRow label={"Domain"}>
+															{data?.details?.proxy?.domain}
+														</InfoRow>
+														<InfoRow label={"Usage Type"}>
+															{data?.details?.proxy?.usageType}
+														</InfoRow>
+														{data?.details?.proxy?.lastSeen && (
+															<InfoRow label={"Last Seen"}>
+																{timestampDate(
+																	data?.details?.proxy?.lastSeen,
+																).toString()}
+															</InfoRow>
+														)}
+														<InfoRow label={"Threat"}>
+															{data?.details?.proxy?.threatType}
+														</InfoRow>
 													</TableBody>
 												</Table>
 											</TableContainer>

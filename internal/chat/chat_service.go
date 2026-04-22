@@ -3,6 +3,7 @@ package chat
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -35,7 +36,7 @@ func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResp
 
 	chatQuery := HistoryQueryFilter{
 		Filter:        rpc.FromRPC(req.Filter),
-		SourceIDField: httphelper.SourceIDField{SourceID: req.GetSteamId()},
+		SourceIDField: httphelper.SourceIDField{SourceID: fmt.Sprintf("%d", req.GetSteamId())},
 		Query:         req.GetQuery(),
 		Personaname:   "",
 		ServerID:      req.GetServerId(),
@@ -77,7 +78,7 @@ func toMessage(msg QueryChatHistoryResult) *v1.Message {
 	return &v1.Message{
 		PersonMessageId:   &msg.PersonMessageID,
 		MatchId:           ptr.To(msg.MatchID.String()),
-		SteamId:           ptr.To(msg.SteamID.String()),
+		SteamId:           ptr.To(msg.SteamID.Int64()),
 		AvatarHash:        &msg.AvatarHash,
 		PersonaName:       &msg.PersonaName,
 		ServerName:        &msg.ServerName,

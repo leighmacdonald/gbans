@@ -19,6 +19,12 @@ service ReportService {
   rpc ReportMessageCreate(ReportMessageCreateRequest) returns (ReportMessageCreateResponse) {}
   rpc ReportMessageEdit(ReportMessageEditRequest) returns (ReportMessageEditResponse) {}
   rpc ReportMessageDelete(ReportMessageDeleteRequest) returns (google.protobuf.Empty) {}
+
+  rpc Reports(google.protobuf.Empty) returns (ReportsResponse) {}
+}
+
+message ReportsResponse {
+  repeated ReportWithAuthor reports = 1 [(buf.validate.field).required = true];
 }
 
 message ReportMessageDeleteRequest {
@@ -106,10 +112,21 @@ message ReportStatusEditRequest {
 }
 
 message ReportCreateRequest {
+  option (buf.validate.message).cel = {
+    id: "valid_reason"
+    message: "ensure the reason is set when custom"
+    expression:
+      "this.reason != BAN_REASON_CUSTOM ? true "
+      ": reason_text.min_len > 10"
+  };
+
   int64 source_id = 1 [(buf.validate.field).required = true];
   int64 target_id = 2 [(buf.validate.field).required = true];
   string description = 3 [(buf.validate.field).required = true];
-  BanReason reason = 4 [(buf.validate.field).required = true];
+  BanReason reason = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
   string reason_text = 5 [(buf.validate.field).required = true];
   int64 demo_id = 6;
   int32 demo_tick = 7;

@@ -4,48 +4,35 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
-import { useMutation } from "@tanstack/react-query";
-import { apiUpdatePlayerPermission } from "../../api";
 import { useAppForm } from "../../contexts/formContext.tsx";
-import {
-	PermissionLevelCollection,
-	type PermissionLevelEnum,
-	type Person,
-	permissionLevelString,
-} from "../../schema/people.ts";
+
 import { Heading } from "../Heading";
+import type { Person } from "../../rpc/person/v1/person_pb.ts";
+import { useMutation } from "@connectrpc/connect-query";
+import { editPermissions } from "../../rpc/person/v1/person-PersonService_connectquery.ts";
+import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
+import { enumValues } from "../../util/lists.ts";
 
 export const PersonEditModal = NiceModal.create(({ person }: { person: Person }) => {
 	const modal = useModal();
 
-	const mutation = useMutation({
-		mutationKey: ["banCIDR"],
-		mutationFn: async (values: { permission_level: PermissionLevelEnum }) => {
-			try {
-				const ac = new AbortController();
-				const updatedPerson = await apiUpdatePlayerPermission(
-					person.steam_id,
-					{
-						permission_level: values.permission_level,
-					},
-					ac.signal,
-				);
-				modal.resolve(updatedPerson);
-			} catch (e) {
-				modal.reject(e);
-			}
+	const mutation = useMutation(editPermissions, {
+		onSuccess: async (response) => {
+			modal.resolve(response.person);
+			await modal.hide();
+		},
+		onError: async (err) => {
+			modal.reject(err);
 			await modal.hide();
 		},
 	});
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutation.mutate({
-				permission_level: value.permission_level,
-			});
+			mutation.mutate(value);
 		},
 		defaultValues: {
-			permission_level: person.permission_level,
+			permissionLevel: person.permissionLevel,
 		},
 	});
 
@@ -59,22 +46,22 @@ export const PersonEditModal = NiceModal.create(({ person }: { person: Person })
 				}}
 			>
 				<DialogTitle component={Heading} iconLeft={<PersonIcon />}>
-					Person Editor: {person.persona_name}
+					Person Editor: {person.personaName}
 				</DialogTitle>
 				<DialogContent>
 					<Grid container spacing={2}>
 						<Grid size={{ xs: 12 }}>
 							<form.AppField
-								name={"permission_level"}
+								name={"permissionLevel"}
 								children={(field) => {
 									return (
 										<field.SelectField
 											label={"Permissions"}
-											items={PermissionLevelCollection}
+											items={enumValues(Privilege)}
 											renderItem={(pl) => {
 												return (
 													<MenuItem value={pl} key={`pl-${pl}`}>
-														{permissionLevelString(pl)}
+														{Privilege[pl]}
 													</MenuItem>
 												);
 											}}

@@ -6,7 +6,6 @@ import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
@@ -16,7 +15,6 @@ import {
 	type MRT_PaginationState,
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiGetServersAdmin } from "../api";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { ServerEditorModal } from "../component/modal/ServerEditorModal.tsx";
 import { RowActionContainer } from "../component/RowActionContainer.tsx";
@@ -31,9 +29,12 @@ import {
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellStringHidden } from "../component/table/TableCellStringHidden.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import type { Server } from "../schema/server.ts";
 import { stringToColour } from "../util/colours.ts";
-import { renderDateTime } from "../util/time.ts";
+import { renderTimestamp } from "../util/time.ts";
+import { serversAdmin } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
+import { useQuery } from "@connectrpc/connect-query";
+import { useQueryClient } from "@tanstack/react-query";
+import type { Server } from "../rpc/servers/v1/servers_pb.ts";
 
 const columnHelper = createMRTColumnHelper<Server>();
 const defaultOptions = createDefaultTableOptions<Server>();
@@ -67,17 +68,12 @@ function AdminServers() {
 	const search = Route.useSearch();
 	const navigate = useNavigate();
 
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["serversAdmin"],
-		queryFn: async ({ signal }) => {
-			return (await apiGetServersAdmin(signal)) ?? [];
-		},
-	});
+	const { data, isLoading, isError } = useQuery(serversAdmin);
 
 	const onCreate = useCallback(async () => {
 		try {
 			const newServer = (await NiceModal.show(ServerEditorModal, {})) as Server;
-			queryClient.setQueryData(["serversAdmin"], [...(data ?? []), newServer]);
+			queryClient.setQueryData(["serversAdmin"], [...(data?.servers ?? []), newServer]);
 			sendFlash("success", "Server created successfully");
 		} catch (e) {
 			sendFlash("error", `Failed to create new server: ${e}`);
@@ -92,8 +88,8 @@ function AdminServers() {
 				})) as Server;
 				queryClient.setQueryData(
 					["serversAdmin"],
-					(data ?? []).map((s) => {
-						return s.server_id === editedServer.server_id ? editedServer : s;
+					(data?.servers ?? []).map((s) => {
+						return s.serverId === editedServer.serverId ? editedServer : s;
 					}),
 				);
 				sendFlash("success", "Server edited successfully");
@@ -106,19 +102,19 @@ function AdminServers() {
 
 	const columns = useMemo(() => {
 		return [
-			columnHelper.accessor("server_id", {
+			columnHelper.accessor("serverId", {
 				header: "ID",
 				grow: false,
 			}),
 
-			columnHelper.accessor("short_name", {
+			columnHelper.accessor("shortName", {
 				grow: false,
 				meta: {
 					tooltip: "Short unique server identifier",
 				},
 				header: "Name",
 				Cell: ({ cell, row }) => (
-					<Typography sx={{ color: stringToColour(row.original.short_name) }}>{cell.getValue()}</Typography>
+					<Typography sx={{ color: stringToColour(row.original.shortName) }}>{cell.getValue()}</Typography>
 				),
 			}),
 
@@ -129,7 +125,7 @@ function AdminServers() {
 					tooltip: "Full name of the server, AKA srcds hostname",
 				},
 				Cell: ({ cell, row }) => (
-					<Typography sx={{ color: stringToColour(row.original.short_name) }}>{cell.getValue()}</Typography>
+					<Typography sx={{ color: stringToColour(row.original.shortName) }}>{cell.getValue()}</Typography>
 				),
 			}),
 
@@ -141,7 +137,7 @@ function AdminServers() {
 				},
 			}),
 
-			columnHelper.accessor("address_internal", {
+			columnHelper.accessor("addressInternal", {
 				header: "Internal Addr",
 				grow: false,
 				meta: {
@@ -177,16 +173,16 @@ function AdminServers() {
 				grow: false,
 			}),
 
-			columnHelper.accessor("token_created_on", {
+			columnHelper.accessor("tokenCreatedOn", {
 				meta: {
 					tooltip: "Last time the server authenticated itself",
 				},
 				header: "Last Auth",
 				grow: false,
-				Cell: ({ cell }) => renderDateTime(cell.getValue() as Date),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
 
-			columnHelper.accessor("enable_stats", {
+			columnHelper.accessor("enableStats", {
 				meta: {
 					tooltip: "Stat Tracking Enabled",
 				},
@@ -196,7 +192,7 @@ function AdminServers() {
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue() as boolean} />,
 			}),
 
-			columnHelper.accessor("is_enabled", {
+			columnHelper.accessor("isEnabled", {
 				filterVariant: "checkbox",
 				meta: {
 					tooltip: "Enabled",
@@ -253,7 +249,7 @@ function AdminServers() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ?? [],
+		data: data?.servers ?? [],
 		enableFilters: true,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
@@ -297,7 +293,7 @@ function AdminServers() {
 				</IconButton>
 				<IconButtonLink
 					to={"/admin/serverlogs"}
-					search={{ server_ids: [row.original.server_id] }}
+					search={{ server_ids: [row.original.serverId] }}
 					key="logs"
 					color={"warning"}
 				>
