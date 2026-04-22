@@ -37,10 +37,9 @@ import { useAppForm } from "../contexts/formContext.tsx";
 import type { Config } from "../rpc/config/v1/config_pb.ts";
 import { get, update } from "../rpc/config/v1/config-ConfigService_connectquery.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import type { Asset } from "../schema/asset.ts";
-import { schemaExports } from "../schema/config.ts";
 import { logErr } from "../util/errors.ts";
 import { emptyOrNullString } from "../util/types.ts";
+import type { Asset } from "../rpc/asset/v1/asset_pb.ts";
 
 const settingsSchema = z.object({
 	section: z
@@ -116,14 +115,11 @@ function AdminSettings() {
 			mutation.mutate({ config: value as Config });
 		},
 		defaultValues,
-		validators: {
-			onSubmit: schemaExports,
-		},
 	});
 
 	const onSuccess = useCallback(
 		async (asset: Asset) => {
-			form.setFieldValue("favicon", asset.asset_id);
+			form.setFieldValue("favicon", asset.assetId);
 		},
 		[form],
 	);
@@ -318,7 +314,7 @@ function AdminSettings() {
 											}}
 										/>
 										<UploadButton onSuccess={onSuccess} />
-										<img src={faviconURL} width={64} height={64} />
+										<img src={faviconURL} width={64} height={64} alt={"favicon"} />
 									</Grid>
 
 									<Grid size={{ xs: 12 }}>

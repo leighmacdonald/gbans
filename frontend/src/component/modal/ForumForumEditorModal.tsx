@@ -3,85 +3,49 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
-import { useMutation } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { z } from "zod/v4";
-import { apiCreateForum, apiSaveForum } from "../../api/forum.ts";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { Forum, ForumCategory } from "../../schema/forum.ts";
-import {
-	PermissionLevel,
-	PermissionLevelCollection,
-	type PermissionLevelEnum,
-	permissionLevelString,
-} from "../../schema/people.ts";
-
-type ForumEditorValues = {
-	forum_category_id: number;
-	title: string;
-	description: string;
-	ordering: string;
-	permission_level: PermissionLevelEnum;
-};
+import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
+import type { Category, Forum } from "../../rpc/forum/v1/forum_pb.ts";
+import { useMutation } from "@connectrpc/connect-query";
+import { forumCreate } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
+import { enumValues } from "../../util/lists.ts";
 
 export const ForumForumEditorModal = NiceModal.create(
-	({ forum, categories }: { forum?: Forum; categories: ForumCategory[] }) => {
+	({ forum, categories }: { forum?: Forum; categories: Category[] }) => {
 		const modal = useModal();
 		const { sendError } = useUserFlashCtx();
 
-		const mutation = useMutation({
-			mutationKey: ["forumCategory"],
-			mutationFn: async (values: ForumEditorValues) => {
-				const ac = new AbortController();
-				if (forum?.forum_id) {
-					return await apiSaveForum(
-						forum.forum_id,
-						Number(values.forum_category_id),
-						values.title,
-						values.description,
-						Number(values.ordering),
-						values.permission_level,
-						ac.signal,
-					);
-				} else {
-					return await apiCreateForum(
-						Number(values.forum_category_id),
-						values.title,
-						values.description,
-						Number(values.ordering),
-						values.permission_level,
-						ac.signal,
-					);
-				}
-			},
-			onSuccess: async (forum: Forum) => {
-				modal.resolve(forum);
+		const mutation = useMutation(forumCreate, {
+			onSuccess: async (resp) => {
+				modal.resolve(resp.forum);
 				await modal.hide();
 			},
 			onError: sendError,
 		});
 
-		const defaultCategory = forum?.forum_category_id
-			? (categories.find((value) => value.forum_category_id === forum.forum_category_id)?.forum_category_id ??
-				categories[0].forum_category_id)
-			: categories[0].forum_category_id;
+		const defaultCategory = forum?.forumCategoryId
+			? (categories.find((value) => value.forumCategoryId === forum.forumCategoryId)?.forumCategoryId ??
+				categories[0].forumCategoryId)
+			: categories[0].forumCategoryId;
 
 		const form = useAppForm({
 			onSubmit: async ({ value }) => {
-				mutation.mutate({ ...value });
+				mutation.mutate({ ...value, ordering: Number(value.ordering) });
 			},
 			defaultValues: {
 				forum_category_id: defaultCategory,
 				title: forum?.title ?? "",
 				description: forum?.description ?? "",
 				ordering: forum?.ordering ? String(forum?.ordering) : "0",
-				permission_level: forum?.permission_level ?? PermissionLevel.User,
+				permission_level: forum?.permissionLevel ?? Privilege.USER,
 			},
 		});
 
 		const catIds = useMemo(() => {
-			return categories.map((c) => c.forum_category_id);
+			return categories.map((c) => c.forumCategoryId);
 		}, [categories]);
 
 		return (
@@ -108,7 +72,7 @@ export const ForumForumEditorModal = NiceModal.create(
 												renderItem={(catId) => {
 													return (
 														<MenuItem value={catId} key={`cat-${catId}`}>
-															{categories.find((c) => c.forum_category_id === catId)
+															{categories.find((c) => c.forumCategoryId === catId)
 																?.title ?? ""}
 														</MenuItem>
 													);
@@ -155,17 +119,17 @@ export const ForumForumEditorModal = NiceModal.create(
 								<form.AppField
 									name={"permission_level"}
 									validators={{
-										onChange: z.enum(PermissionLevel),
+										onChange: z.enum(Privilege),
 									}}
 									children={(field) => {
 										return (
 											<field.SelectField
 												label={"Permissions Required"}
-												items={PermissionLevelCollection}
+												items={enumValues(Privilege)}
 												renderItem={(pl) => {
 													return (
 														<MenuItem value={pl} key={`pl-${pl}`}>
-															{permissionLevelString(pl)}
+															{Privilege[pl]}
 														</MenuItem>
 													);
 												}}

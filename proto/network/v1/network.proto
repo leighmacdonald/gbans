@@ -126,4 +126,6 @@ message PersonConnection {
   int64 steam_id = 3 [(buf.validate.field).required = true];
   string persona_name = 4 [(buf.validate.field).required = true];
   int32 server_id = 5 [(buf.validate.field).required = true];
+  string server_name_short = 6 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 7 [(buf.validate.field).required = true];
 }

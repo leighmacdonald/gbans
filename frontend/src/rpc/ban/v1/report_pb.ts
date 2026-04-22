@@ -18,897 +18,965 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file ban/v1/report.proto.
  */
-export const file_ban_v1_report: GenFile = /*@__PURE__*/
-  fileDesc("ChNiYW4vdjEvcmVwb3J0LnByb3RvEgZiYW4udjEiQQoaUmVwb3J0TWVzc2FnZURlbGV0ZVJlcXVlc3QSIwoRcmVwb3J0X21lc3NhZ2VfaWQYASABKANCCDABukgDyAEBIlgKGFJlcG9ydE1lc3NhZ2VFZGl0UmVxdWVzdBIjChFyZXBvcnRfbWVzc2FnZV9pZBgBIAEoA0IIMAG6SAPIAQESFwoHYm9keV9tZBgCIAEoCUIGukgDyAEBIksKGVJlcG9ydE1lc3NhZ2VFZGl0UmVzcG9uc2USLgoHbWVzc2FnZRgBIAEoCzIVLmJhbi52MS5SZXBvcnRNZXNzYWdlQga6SAPIAQEiNAoVUmVwb3J0TWVzc2FnZXNSZXF1ZXN0EhsKCXJlcG9ydF9pZBgBIAEoA0IIMAG6SAPIAQEiMAoSVXNlclJlcG9ydHNSZXF1ZXN0EhoKCHN0ZWFtX2lkGAEgASgDQggwAbpIA8gBASJJChZSZXBvcnRNZXNzYWdlc1Jlc3BvbnNlEi8KCG1lc3NhZ2VzGAEgAygLMhUuYmFuLnYxLlJlcG9ydE1lc3NhZ2VCBrpIA8gBASJIChNVc2VyUmVwb3J0c1Jlc3BvbnNlEjEKB3JlcG9ydHMYASADKAsyGC5iYW4udjEuUmVwb3J0V2l0aEF1dGhvckIGukgDyAEBIiwKDVJlcG9ydFJlcXVlc3QSGwoJcmVwb3J0X2lkGAEgASgDQggwAbpIA8gBASJCCg5SZXBvcnRSZXNwb25zZRIwCgZyZXBvcnQYASABKAsyGC5iYW4udjEuUmVwb3J0V2l0aEF1dGhvckIGukgDyAEBIoYDCg1SZXBvcnRNZXNzYWdlEhsKCXJlcG9ydF9pZBgBIAEoA0IIMAG6SAPIAQESIwoRcmVwb3J0X21lc3NhZ2VfaWQYAiABKANCCDABukgDyAEBEhsKCWF1dGhvcl9pZBgDIAEoA0IIMAG6SAPIAQESGgoKbWVzc2FnZV9tZBgEIAEoCUIGukgDyAEBEhcKB2RlbGV0ZWQYBSABKAhCBrpIA8gBARI2CgpjcmVhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEjYKCnVwZGF0ZWRfb24YByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESHAoMcGVyc29uYV9uYW1lGAggASgJQga6SAPIAQESGwoLYXZhdGFyX2hhc2gYCSABKAlCBrpIA8gBARI2ChBwZXJtaXNzaW9uX2xldmVsGAogASgOMhQucGVyc29uLnYxLlByaXZpbGVnZUIGukgDyAEBIskDCgZSZXBvcnQSGwoJcmVwb3J0X2lkGAEgASgDQggwAbpIA8gBARIbCglzb3VyY2VfaWQYAiABKANCCDABukgDyAEBEhsKCXRhcmdldF9pZBgDIAEoA0IIMAG6SAPIAQESGwoLZGVzY3JpcHRpb24YBCABKAlCBrpIA8gBARIzCg1yZXBvcnRfc3RhdHVzGAUgASgOMhQuYmFuLnYxLlJlcG9ydFN0YXR1c0IGukgDyAEBEikKBnJlYXNvbhgGIAEoDjIRLmJhbi52MS5CYW5SZWFzb25CBrpIA8gBARIbCgtyZWFzb25fdGV4dBgHIAEoCUIGukgDyAEBEhcKB2RlbGV0ZWQYCCABKAhCBrpIA8gBARIRCglkZW1vX3RpY2sYCSABKAUSEwoHZGVtb19pZBgKIAEoA0ICMAESHQoRcGVyc29uX21lc3NhZ2VfaWQYCyABKANCAjABEjYKCmNyZWF0ZWRfb24YDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASKZAQoQUmVwb3J0V2l0aEF1dGhvchImCgZyZXBvcnQYASABKAsyDi5iYW4udjEuUmVwb3J0Qga6SAPIAQESLQoGYXV0aG9yGAIgASgLMhUucGVyc29uLnYxLlBlcnNvbkNvcmVCBrpIA8gBARIuCgdzdWJqZWN0GAMgASgLMhUucGVyc29uLnYxLlBlcnNvbkNvcmVCBrpIA8gBASJrChdSZXBvcnRTdGF0dXNFZGl0UmVxdWVzdBIbCglyZXBvcnRfaWQYASABKANCCDABukgDyAEBEjMKDXJlcG9ydF9zdGF0dXMYAiABKA4yFC5iYW4udjEuUmVwb3J0U3RhdHVzQga6SAPIAQEi+wEKE1JlcG9ydENyZWF0ZVJlcXVlc3QSGwoJc291cmNlX2lkGAEgASgDQggwAbpIA8gBARIbCgl0YXJnZXRfaWQYAiABKANCCDABukgDyAEBEhsKC2Rlc2NyaXB0aW9uGAMgASgJQga6SAPIAQESKQoGcmVhc29uGAQgASgOMhEuYmFuLnYxLkJhblJlYXNvbkIGukgDyAEBEhsKC3JlYXNvbl90ZXh0GAUgASgJQga6SAPIAQESEwoHZGVtb19pZBgGIAEoA0ICMAESEQoJZGVtb190aWNrGAcgASgFEh0KEXBlcnNvbl9tZXNzYWdlX2lkGAggASgDQgIwASJIChRSZXBvcnRDcmVhdGVSZXNwb25zZRIwCgZyZXBvcnQYASABKAsyGC5iYW4udjEuUmVwb3J0V2l0aEF1dGhvckIGukgDyAEBIlIKGlJlcG9ydE1lc3NhZ2VDcmVhdGVSZXF1ZXN0EhsKCXJlcG9ydF9pZBgBIAEoA0IIMAG6SAPIAQESFwoHYm9keV9tZBgCIAEoCUIGukgDyAEBIlQKG1JlcG9ydE1lc3NhZ2VDcmVhdGVSZXNwb25zZRI1Cg5yZXBvcnRfbWVzc2FnZRgBIAEoCzIVLmJhbi52MS5SZXBvcnRNZXNzYWdlQga6SAPIAQEqpQEKDFJlcG9ydFN0YXR1cxIkCiBSRVBPUlRfU1RBVFVTX09QRU5FRF9VTlNQRUNJRklFRBAAEiAKHFJFUE9SVF9TVEFUVVNfTkVFRF9NT1JFX0lORk8QARInCiNSRVBPUlRfU1RBVFVTX0NMT1NFRF9XSVRIT1VUX0FDVElPThACEiQKIFJFUE9SVF9TVEFUVVNfQ0xPU0VEX1dJVEhfQUNUSU9OEAMylgUKDVJlcG9ydFNlcnZpY2USSwoMUmVwb3J0Q3JlYXRlEhsuYmFuLnYxLlJlcG9ydENyZWF0ZVJlcXVlc3QaHC5iYW4udjEuUmVwb3J0Q3JlYXRlUmVzcG9uc2UiABI5CgZSZXBvcnQSFS5iYW4udjEuUmVwb3J0UmVxdWVzdBoWLmJhbi52MS5SZXBvcnRSZXNwb25zZSIAEk0KEFJlcG9ydFN0YXR1c0VkaXQSHy5iYW4udjEuUmVwb3J0U3RhdHVzRWRpdFJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJICgtVc2VyUmVwb3J0cxIaLmJhbi52MS5Vc2VyUmVwb3J0c1JlcXVlc3QaGy5iYW4udjEuVXNlclJlcG9ydHNSZXNwb25zZSIAElEKDlJlcG9ydE1lc3NhZ2VzEh0uYmFuLnYxLlJlcG9ydE1lc3NhZ2VzUmVxdWVzdBoeLmJhbi52MS5SZXBvcnRNZXNzYWdlc1Jlc3BvbnNlIgASYAoTUmVwb3J0TWVzc2FnZUNyZWF0ZRIiLmJhbi52MS5SZXBvcnRNZXNzYWdlQ3JlYXRlUmVxdWVzdBojLmJhbi52MS5SZXBvcnRNZXNzYWdlQ3JlYXRlUmVzcG9uc2UiABJaChFSZXBvcnRNZXNzYWdlRWRpdBIgLmJhbi52MS5SZXBvcnRNZXNzYWdlRWRpdFJlcXVlc3QaIS5iYW4udjEuUmVwb3J0TWVzc2FnZUVkaXRSZXNwb25zZSIAElMKE1JlcG9ydE1lc3NhZ2VEZWxldGUSIi5iYW4udjEuUmVwb3J0TWVzc2FnZURlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiAEKJAQoKY29tLmJhbi52MUILUmVwb3J0UHJvdG9QAVo1Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9iYW4vdjE7YmFudjGiAgNCWFiqAgZCYW4uVjHKAgZCYW5cVjHiAhJCYW5cVjFcR1BCTWV0YWRhdGHqAgdCYW46OlYxYghlZGl0aW9uc3DoBw", [file_ban_v1_ban, file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp, file_person_v1_person_core, file_person_v1_privilege]);
+export const file_ban_v1_report: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"ChNiYW4vdjEvcmVwb3J0LnByb3RvEgZiYW4udjEiRAoPUmVwb3J0c1Jlc3BvbnNlEjEKB3JlcG9ydHMYASADKAsyGC5iYW4udjEuUmVwb3J0V2l0aEF1dGhvckIGukgDyAEBIj8KGlJlcG9ydE1lc3NhZ2VEZWxldGVSZXF1ZXN0EiEKEXJlcG9ydF9tZXNzYWdlX2lkGAEgASgDQga6SAPIAQEiVgoYUmVwb3J0TWVzc2FnZUVkaXRSZXF1ZXN0EiEKEXJlcG9ydF9tZXNzYWdlX2lkGAEgASgDQga6SAPIAQESFwoHYm9keV9tZBgCIAEoCUIGukgDyAEBIksKGVJlcG9ydE1lc3NhZ2VFZGl0UmVzcG9uc2USLgoHbWVzc2FnZRgBIAEoCzIVLmJhbi52MS5SZXBvcnRNZXNzYWdlQga6SAPIAQEiMgoVUmVwb3J0TWVzc2FnZXNSZXF1ZXN0EhkKCXJlcG9ydF9pZBgBIAEoA0IGukgDyAEBIi4KElVzZXJSZXBvcnRzUmVxdWVzdBIYCghzdGVhbV9pZBgBIAEoA0IGukgDyAEBIkkKFlJlcG9ydE1lc3NhZ2VzUmVzcG9uc2USLwoIbWVzc2FnZXMYASADKAsyFS5iYW4udjEuUmVwb3J0TWVzc2FnZUIGukgDyAEBIkgKE1VzZXJSZXBvcnRzUmVzcG9uc2USMQoHcmVwb3J0cxgBIAMoCzIYLmJhbi52MS5SZXBvcnRXaXRoQXV0aG9yQga6SAPIAQEiKgoNUmVwb3J0UmVxdWVzdBIZCglyZXBvcnRfaWQYASABKANCBrpIA8gBASJCCg5SZXBvcnRSZXNwb25zZRIwCgZyZXBvcnQYASABKAsyGC5iYW4udjEuUmVwb3J0V2l0aEF1dGhvckIGukgDyAEBIoADCg1SZXBvcnRNZXNzYWdlEhkKCXJlcG9ydF9pZBgBIAEoA0IGukgDyAEBEiEKEXJlcG9ydF9tZXNzYWdlX2lkGAIgASgDQga6SAPIAQESGQoJYXV0aG9yX2lkGAMgASgDQga6SAPIAQESGgoKbWVzc2FnZV9tZBgEIAEoCUIGukgDyAEBEhcKB2RlbGV0ZWQYBSABKAhCBrpIA8gBARI2CgpjcmVhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEjYKCnVwZGF0ZWRfb24YByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESHAoMcGVyc29uYV9uYW1lGAggASgJQga6SAPIAQESGwoLYXZhdGFyX2hhc2gYCSABKAlCBrpIA8gBARI2ChBwZXJtaXNzaW9uX2xldmVsGAogASgOMhQucGVyc29uLnYxLlByaXZpbGVnZUIGukgDyAEBIrsDCgZSZXBvcnQSGQoJcmVwb3J0X2lkGAEgASgDQga6SAPIAQESGQoJc291cmNlX2lkGAIgASgDQga6SAPIAQESGQoJdGFyZ2V0X2lkGAMgASgDQga6SAPIAQESGwoLZGVzY3JpcHRpb24YBCABKAlCBrpIA8gBARIzCg1yZXBvcnRfc3RhdHVzGAUgASgOMhQuYmFuLnYxLlJlcG9ydFN0YXR1c0IGukgDyAEBEikKBnJlYXNvbhgGIAEoDjIRLmJhbi52MS5CYW5SZWFzb25CBrpIA8gBARIbCgtyZWFzb25fdGV4dBgHIAEoCUIGukgDyAEBEhcKB2RlbGV0ZWQYCCABKAhCBrpIA8gBARIRCglkZW1vX3RpY2sYCSABKAUSDwoHZGVtb19pZBgKIAEoAxIZChFwZXJzb25fbWVzc2FnZV9pZBgLIAEoAxI2CgpjcmVhdGVkX29uGAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEjYKCnVwZGF0ZWRfb24YDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEimQEKEFJlcG9ydFdpdGhBdXRob3ISJgoGcmVwb3J0GAEgASgLMg4uYmFuLnYxLlJlcG9ydEIGukgDyAEBEi0KBmF1dGhvchgCIAEoCzIVLnBlcnNvbi52MS5QZXJzb25Db3JlQga6SAPIAQESLgoHc3ViamVjdBgDIAEoCzIVLnBlcnNvbi52MS5QZXJzb25Db3JlQga6SAPIAQEiaQoXUmVwb3J0U3RhdHVzRWRpdFJlcXVlc3QSGQoJcmVwb3J0X2lkGAEgASgDQga6SAPIAQESMwoNcmVwb3J0X3N0YXR1cxgCIAEoDjIULmJhbi52MS5SZXBvcnRTdGF0dXNCBrpIA8gBASLzAgoTUmVwb3J0Q3JlYXRlUmVxdWVzdBIZCglzb3VyY2VfaWQYASABKANCBrpIA8gBARIZCgl0YXJnZXRfaWQYAiABKANCBrpIA8gBARIbCgtkZXNjcmlwdGlvbhgDIAEoCUIGukgDyAEBEi4KBnJlYXNvbhgEIAEoDjIRLmJhbi52MS5CYW5SZWFzb25CC7pICMgBAYIBAhABEhsKC3JlYXNvbl90ZXh0GAUgASgJQga6SAPIAQESDwoHZGVtb19pZBgGIAEoAxIRCglkZW1vX3RpY2sYByABKAUSGQoRcGVyc29uX21lc3NhZ2VfaWQYCCABKAM6fbpIehp4Cgx2YWxpZF9yZWFzb24SJGVuc3VyZSB0aGUgcmVhc29uIGlzIHNldCB3aGVuIGN1c3RvbRpCdGhpcy5yZWFzb24gIT0gQkFOX1JFQVNPTl9DVVNUT00gPyB0cnVlIDogcmVhc29uX3RleHQubWluX2xlbiA+IDEwIkgKFFJlcG9ydENyZWF0ZVJlc3BvbnNlEjAKBnJlcG9ydBgBIAEoCzIYLmJhbi52MS5SZXBvcnRXaXRoQXV0aG9yQga6SAPIAQEiUAoaUmVwb3J0TWVzc2FnZUNyZWF0ZVJlcXVlc3QSGQoJcmVwb3J0X2lkGAEgASgDQga6SAPIAQESFwoHYm9keV9tZBgCIAEoCUIGukgDyAEBIlQKG1JlcG9ydE1lc3NhZ2VDcmVhdGVSZXNwb25zZRI1Cg5yZXBvcnRfbWVzc2FnZRgBIAEoCzIVLmJhbi52MS5SZXBvcnRNZXNzYWdlQga6SAPIAQEqpQEKDFJlcG9ydFN0YXR1cxIkCiBSRVBPUlRfU1RBVFVTX09QRU5FRF9VTlNQRUNJRklFRBAAEiAKHFJFUE9SVF9TVEFUVVNfTkVFRF9NT1JFX0lORk8QARInCiNSRVBPUlRfU1RBVFVTX0NMT1NFRF9XSVRIT1VUX0FDVElPThACEiQKIFJFUE9SVF9TVEFUVVNfQ0xPU0VEX1dJVEhfQUNUSU9OEAMy1AUKDVJlcG9ydFNlcnZpY2USSwoMUmVwb3J0Q3JlYXRlEhsuYmFuLnYxLlJlcG9ydENyZWF0ZVJlcXVlc3QaHC5iYW4udjEuUmVwb3J0Q3JlYXRlUmVzcG9uc2UiABI5CgZSZXBvcnQSFS5iYW4udjEuUmVwb3J0UmVxdWVzdBoWLmJhbi52MS5SZXBvcnRSZXNwb25zZSIAEk0KEFJlcG9ydFN0YXR1c0VkaXQSHy5iYW4udjEuUmVwb3J0U3RhdHVzRWRpdFJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJICgtVc2VyUmVwb3J0cxIaLmJhbi52MS5Vc2VyUmVwb3J0c1JlcXVlc3QaGy5iYW4udjEuVXNlclJlcG9ydHNSZXNwb25zZSIAElEKDlJlcG9ydE1lc3NhZ2VzEh0uYmFuLnYxLlJlcG9ydE1lc3NhZ2VzUmVxdWVzdBoeLmJhbi52MS5SZXBvcnRNZXNzYWdlc1Jlc3BvbnNlIgASYAoTUmVwb3J0TWVzc2FnZUNyZWF0ZRIiLmJhbi52MS5SZXBvcnRNZXNzYWdlQ3JlYXRlUmVxdWVzdBojLmJhbi52MS5SZXBvcnRNZXNzYWdlQ3JlYXRlUmVzcG9uc2UiABJaChFSZXBvcnRNZXNzYWdlRWRpdBIgLmJhbi52MS5SZXBvcnRNZXNzYWdlRWRpdFJlcXVlc3QaIS5iYW4udjEuUmVwb3J0TWVzc2FnZUVkaXRSZXNwb25zZSIAElMKE1JlcG9ydE1lc3NhZ2VEZWxldGUSIi5iYW4udjEuUmVwb3J0TWVzc2FnZURlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABI8CgdSZXBvcnRzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhcuYmFuLnYxLlJlcG9ydHNSZXNwb25zZSIAQokBCgpjb20uYmFuLnYxQgtSZXBvcnRQcm90b1ABWjVnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL2Jhbi92MTtiYW52MaICA0JYWKoCBkJhbi5WMcoCBkJhblxWMeICEkJhblxWMVxHUEJNZXRhZGF0YeoCB0Jhbjo6VjFiCGVkaXRpb25zcOgH",
+		[
+			file_ban_v1_ban,
+			file_buf_validate_validate,
+			file_google_protobuf_empty,
+			file_google_protobuf_timestamp,
+			file_person_v1_person_core,
+			file_person_v1_privilege,
+		],
+	);
+
+/**
+ * @generated from message ban.v1.ReportsResponse
+ */
+export type ReportsResponse = Message<"ban.v1.ReportsResponse"> & {
+	/**
+	 * @generated from field: repeated ban.v1.ReportWithAuthor reports = 1;
+	 */
+	reports: ReportWithAuthor[];
+};
+
+/**
+ * @generated from message ban.v1.ReportsResponse
+ */
+export type ReportsResponseValid = Message<"ban.v1.ReportsResponse"> & {
+	/**
+	 * @generated from field: repeated ban.v1.ReportWithAuthor reports = 1;
+	 */
+	reports: ReportWithAuthorValid[];
+};
+
+/**
+ * Describes the message ban.v1.ReportsResponse.
+ * Use `create(ReportsResponseSchema)` to create a new message.
+ */
+export const ReportsResponseSchema: GenMessage<ReportsResponse, { validType: ReportsResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_ban_v1_report, 0);
 
 /**
  * @generated from message ban.v1.ReportMessageDeleteRequest
  */
 export type ReportMessageDeleteRequest = Message<"ban.v1.ReportMessageDeleteRequest"> & {
-  /**
-   * @generated from field: int64 report_message_id = 1 [jstype = JS_STRING];
-   */
-  reportMessageId: string;
+	/**
+	 * @generated from field: int64 report_message_id = 1;
+	 */
+	reportMessageId: bigint;
 };
 
 /**
  * @generated from message ban.v1.ReportMessageDeleteRequest
  */
 export type ReportMessageDeleteRequestValid = Message<"ban.v1.ReportMessageDeleteRequest"> & {
-  /**
-   * @generated from field: int64 report_message_id = 1 [jstype = JS_STRING];
-   */
-  reportMessageId: string;
+	/**
+	 * @generated from field: int64 report_message_id = 1;
+	 */
+	reportMessageId: bigint;
 };
 
 /**
  * Describes the message ban.v1.ReportMessageDeleteRequest.
  * Use `create(ReportMessageDeleteRequestSchema)` to create a new message.
  */
-export const ReportMessageDeleteRequestSchema: GenMessage<ReportMessageDeleteRequest, {validType: ReportMessageDeleteRequestValid}> = /*@__PURE__*/
-  messageDesc(file_ban_v1_report, 0);
+export const ReportMessageDeleteRequestSchema: GenMessage<
+	ReportMessageDeleteRequest,
+	{ validType: ReportMessageDeleteRequestValid }
+> = /*@__PURE__*/ messageDesc(file_ban_v1_report, 1);
 
 /**
  * @generated from message ban.v1.ReportMessageEditRequest
  */
 export type ReportMessageEditRequest = Message<"ban.v1.ReportMessageEditRequest"> & {
-  /**
-   * @generated from field: int64 report_message_id = 1 [jstype = JS_STRING];
-   */
-  reportMessageId: string;
+	/**
+	 * @generated from field: int64 report_message_id = 1;
+	 */
+	reportMessageId: bigint;
 
-  /**
-   * @generated from field: string body_md = 2;
-   */
-  bodyMd: string;
+	/**
+	 * @generated from field: string body_md = 2;
+	 */
+	bodyMd: string;
 };
 
 /**
  * @generated from message ban.v1.ReportMessageEditRequest
  */
 export type ReportMessageEditRequestValid = Message<"ban.v1.ReportMessageEditRequest"> & {
-  /**
-   * @generated from field: int64 report_message_id = 1 [jstype = JS_STRING];
-   */
-  reportMessageId: string;
+	/**
+	 * @generated from field: int64 report_message_id = 1;
+	 */
+	reportMessageId: bigint;
 
-  /**
-   * @generated from field: string body_md = 2;
-   */
-  bodyMd: string;
+	/**
+	 * @generated from field: string body_md = 2;
+	 */
+	bodyMd: string;
 };
 
 /**
  * Describes the message ban.v1.ReportMessageEditRequest.
  * Use `create(ReportMessageEditRequestSchema)` to create a new message.
  */
-export const ReportMessageEditRequestSchema: GenMessage<ReportMessageEditRequest, {validType: ReportMessageEditRequestValid}> = /*@__PURE__*/
-  messageDesc(file_ban_v1_report, 1);
+export const ReportMessageEditRequestSchema: GenMessage<
+	ReportMessageEditRequest,
+	{ validType: ReportMessageEditRequestValid }
+> = /*@__PURE__*/ messageDesc(file_ban_v1_report, 2);
 
 /**
  * @generated from message ban.v1.ReportMessageEditResponse
  */
 export type ReportMessageEditResponse = Message<"ban.v1.ReportMessageEditResponse"> & {
-  /**
-   * @generated from field: ban.v1.ReportMessage message = 1;
-   */
-  message?: ReportMessage;
+	/**
+	 * @generated from field: ban.v1.ReportMessage message = 1;
+	 */
+	message?: ReportMessage;
 };
 
 /**
  * @generated from message ban.v1.ReportMessageEditResponse
  */
 export type ReportMessageEditResponseValid = Message<"ban.v1.ReportMessageEditResponse"> & {
-  /**
-   * @generated from field: ban.v1.ReportMessage message = 1;
-   */
-  message: ReportMessageValid;
+	/**
+	 * @generated from field: ban.v1.ReportMessage message = 1;
+	 */
+	message: ReportMessageValid;
 };
 
 /**
  * Describes the message ban.v1.ReportMessageEditResponse.
  * Use `create(ReportMessageEditResponseSchema)` to create a new message.
  */
-export const ReportMessageEditResponseSchema: GenMessage<ReportMessageEditResponse, {validType: ReportMessageEditResponseValid}> = /*@__PURE__*/
-  messageDesc(file_ban_v1_report, 2);
+export const ReportMessageEditResponseSchema: GenMessage<
+	ReportMessageEditResponse,
+	{ validType: ReportMessageEditResponseValid }
+> = /*@__PURE__*/ messageDesc(file_ban_v1_report, 3);
 
 /**
  * @generated from message ban.v1.ReportMessagesRequest
  */
 export type ReportMessagesRequest = Message<"ban.v1.ReportMessagesRequest"> & {
-  /**
-   * @generated from field: int64 report_id = 1 [jstype = JS_STRING];
-   */
-  reportId: string;
+	/**
+	 * @generated from field: int64 report_id = 1;
+	 */
+	reportId: bigint;
 };
 
 /**
  * @generated from message ban.v1.ReportMessagesRequest
  */
 export type ReportMessagesRequestValid = Message<"ban.v1.ReportMessagesRequest"> & {
-  /**
-   * @generated from field: int64 report_id = 1 [jstype = JS_STRING];
-   */
-  reportId: string;
+	/**
+	 * @generated from field: int64 report_id = 1;
+	 */
+	reportId: bigint;
 };
 
 /**
  * Describes the message ban.v1.ReportMessagesRequest.
  * Use `create(ReportMessagesRequestSchema)` to create a new message.
  */
-export const ReportMessagesRequestSchema: GenMessage<ReportMessagesRequest, {validType: ReportMessagesRequestValid}> = /*@__PURE__*/
-  messageDesc(file_ban_v1_report, 3);
+export const ReportMessagesRequestSchema: GenMessage<ReportMessagesRequest, { validType: ReportMessagesRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_ban_v1_report, 4);
 
 /**
  * @generated from message ban.v1.UserReportsRequest
  */
 export type UserReportsRequest = Message<"ban.v1.UserReportsRequest"> & {
-  /**
-   * @generated from field: int64 steam_id = 1 [jstype = JS_STRING];
-   */
-  steamId: string;
+	/**
+	 * @generated from field: int64 steam_id = 1;
+	 */
+	steamId: bigint;
 };
 
 /**
  * @generated from message ban.v1.UserReportsRequest
  */
 export type UserReportsRequestValid = Message<"ban.v1.UserReportsRequest"> & {
-  /**
-   * @generated from field: int64 steam_id = 1 [jstype = JS_STRING];
-   */
-  steamId: string;
+	/**
+	 * @generated from field: int64 steam_id = 1;
+	 */
+	steamId: bigint;
 };
 
 /**
  * Describes the message ban.v1.UserReportsRequest.
  * Use `create(UserReportsRequestSchema)` to create a new message.
  */
-export const UserReportsRequestSchema: GenMessage<UserReportsRequest, {validType: UserReportsRequestValid}> = /*@__PURE__*/
-  messageDesc(file_ban_v1_report, 4);
+export const UserReportsRequestSchema: GenMessage<UserReportsRequest, { validType: UserReportsRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_ban_v1_report, 5);
 
 /**
  * @generated from message ban.v1.ReportMessagesResponse
  */
 export type ReportMessagesResponse = Message<"ban.v1.ReportMessagesResponse"> & {
-  /**
-   * @generated from field: repeated ban.v1.ReportMessage messages = 1;
-   */
-  messages: ReportMessage[];
+	/**
+	 * @generated from field: repeated ban.v1.ReportMessage messages = 1;
+	 */
+	messages: ReportMessage[];
 };
 
 /**
  * @generated from message ban.v1.ReportMessagesResponse
  */
 export type ReportMessagesResponseValid = Message<"ban.v1.ReportMessagesResponse"> & {
-  /**
-   * @generated from field: repeated ban.v1.ReportMessage messages = 1;
-   */
-  messages: ReportMessageValid[];
+	/**
+	 * @generated from field: repeated ban.v1.ReportMessage messages = 1;
+	 */
+	messages: ReportMessageValid[];
 };
 
 /**
  * Describes the message ban.v1.ReportMessagesResponse.
  * Use `create(ReportMessagesResponseSchema)` to create a new message.
  */
-export const ReportMessagesResponseSchema: GenMessage<ReportMessagesResponse, {validType: ReportMessagesResponseValid}> = /*@__PURE__*/
-  messageDesc(file_ban_v1_report, 5);
+export const ReportMessagesResponseSchema: GenMessage<
+	ReportMessagesResponse,
+	{ validType: ReportMessagesResponseValid }
+> = /*@__PURE__*/ messageDesc(file_ban_v1_report, 6);
 
 /**
  * @generated from message ban.v1.UserReportsResponse
  */
 export type UserReportsResponse = Message<"ban.v1.UserReportsResponse"> & {
-  /**
-   * @generated from field: repeated ban.v1.ReportWithAuthor reports = 1;
-   */
-  reports: ReportWithAuthor[];
+	/**
+	 * @generated from field: repeated ban.v1.ReportWithAuthor reports = 1;
+	 */
+	reports: ReportWithAuthor[];
 };
 
 /**
  * @generated from message ban.v1.UserReportsResponse
  */
 export type UserReportsResponseValid = Message<"ban.v1.UserReportsResponse"> & {
-  /**
-   * @generated from field: repeated ban.v1.ReportWithAuthor reports = 1;
-   */
-  reports: ReportWithAuthorValid[];
+	/**
+	 * @generated from field: repeated ban.v1.ReportWithAuthor reports = 1;
+	 */
+	reports: ReportWithAuthorValid[];
 };
 
 /**
  * Describes the message ban.v1.UserReportsResponse.
  * Use `create(UserReportsResponseSchema)` to create a new message.
  */
-export const UserReportsResponseSchema: GenMessage<UserReportsResponse, {validType: UserReportsResponseValid}> = /*@__PURE__*/
-  messageDesc(file_ban_v1_report, 6);
+export const UserReportsResponseSchema: GenMessage<UserReportsResponse, { validType: UserReportsResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_ban_v1_report, 7);
 
 /**
  * @generated from message ban.v1.ReportRequest
  */
 export type ReportRequest = Message<"ban.v1.ReportRequest"> & {
-  /**
-   * @generated from field: int64 report_id = 1 [jstype = JS_STRING];
-   */
-  reportId: string;
+	/**
+	 * @generated from field: int64 report_id = 1;
+	 */
+	reportId: bigint;
 };
 
 /**
  * @generated from message ban.v1.ReportRequest
  */
 export type ReportRequestValid = Message<"ban.v1.ReportRequest"> & {
-  /**
-   * @generated from field: int64 report_id = 1 [jstype = JS_STRING];
-   */
-  reportId: string;
+	/**
+	 * @generated from field: int64 report_id = 1;
+	 */
+	reportId: bigint;
 };
 
 /**
  * Describes the message ban.v1.ReportRequest.
  * Use `create(ReportRequestSchema)` to create a new message.
  */
-export const ReportRequestSchema: GenMessage<ReportRequest, {validType: ReportRequestValid}> = /*@__PURE__*/
-  messageDesc(file_ban_v1_report, 7);
+export const ReportRequestSchema: GenMessage<ReportRequest, { validType: ReportRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_ban_v1_report, 8);
 
 /**
  * @generated from message ban.v1.ReportResponse
  */
 export type ReportResponse = Message<"ban.v1.ReportResponse"> & {
-  /**
-   * @generated from field: ban.v1.ReportWithAuthor report = 1;
-   */
-  report?: ReportWithAuthor;
+	/**
+	 * @generated from field: ban.v1.ReportWithAuthor report = 1;
+	 */
+	report?: ReportWithAuthor;
 };
 
 /**
  * @generated from message ban.v1.ReportResponse
  */
 export type ReportResponseValid = Message<"ban.v1.ReportResponse"> & {
-  /**
-   * @generated from field: ban.v1.ReportWithAuthor report = 1;
-   */
-  report: ReportWithAuthorValid;
+	/**
+	 * @generated from field: ban.v1.ReportWithAuthor report = 1;
+	 */
+	report: ReportWithAuthorValid;
 };
 
 /**
  * Describes the message ban.v1.ReportResponse.
  * Use `create(ReportResponseSchema)` to create a new message.
  */
-export const ReportResponseSchema: GenMessage<ReportResponse, {validType: ReportResponseValid}> = /*@__PURE__*/
-  messageDesc(file_ban_v1_report, 8);
+export const ReportResponseSchema: GenMessage<ReportResponse, { validType: ReportResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_ban_v1_report, 9);
 
 /**
  * @generated from message ban.v1.ReportMessage
  */
 export type ReportMessage = Message<"ban.v1.ReportMessage"> & {
-  /**
-   * @generated from field: int64 report_id = 1 [jstype = JS_STRING];
-   */
-  reportId: string;
+	/**
+	 * @generated from field: int64 report_id = 1;
+	 */
+	reportId: bigint;
 
-  /**
-   * @generated from field: int64 report_message_id = 2 [jstype = JS_STRING];
-   */
-  reportMessageId: string;
+	/**
+	 * @generated from field: int64 report_message_id = 2;
+	 */
+	reportMessageId: bigint;
 
-  /**
-   * @generated from field: int64 author_id = 3 [jstype = JS_STRING];
-   */
-  authorId: string;
+	/**
+	 * @generated from field: int64 author_id = 3;
+	 */
+	authorId: bigint;
 
-  /**
-   * @generated from field: string message_md = 4;
-   */
-  messageMd: string;
+	/**
+	 * @generated from field: string message_md = 4;
+	 */
+	messageMd: string;
 
-  /**
-   * @generated from field: bool deleted = 5;
-   */
-  deleted: boolean;
+	/**
+	 * @generated from field: bool deleted = 5;
+	 */
+	deleted: boolean;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 6;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 6;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 7;
-   */
-  updatedOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_on = 7;
+	 */
+	updatedOn?: Timestamp;
 
-  /**
-   * @generated from field: string persona_name = 8;
-   */
-  personaName: string;
+	/**
+	 * @generated from field: string persona_name = 8;
+	 */
+	personaName: string;
 
-  /**
-   * @generated from field: string avatar_hash = 9;
-   */
-  avatarHash: string;
+	/**
+	 * @generated from field: string avatar_hash = 9;
+	 */
+	avatarHash: string;
 
-  /**
-   * @generated from field: person.v1.Privilege permission_level = 10;
-   */
-  permissionLevel: Privilege;
+	/**
+	 * @generated from field: person.v1.Privilege permission_level = 10;
+	 */
+	permissionLevel: Privilege;
 };
 
 /**
  * @generated from message ban.v1.ReportMessage
  */
 export type ReportMessageValid = Message<"ban.v1.ReportMessage"> & {
-  /**
-   * @generated from field: int64 report_id = 1 [jstype = JS_STRING];
-   */
-  reportId: string;
+	/**
+	 * @generated from field: int64 report_id = 1;
+	 */
+	reportId: bigint;
 
-  /**
-   * @generated from field: int64 report_message_id = 2 [jstype = JS_STRING];
-   */
-  reportMessageId: string;
+	/**
+	 * @generated from field: int64 report_message_id = 2;
+	 */
+	reportMessageId: bigint;
 
-  /**
-   * @generated from field: int64 author_id = 3 [jstype = JS_STRING];
-   */
-  authorId: string;
+	/**
+	 * @generated from field: int64 author_id = 3;
+	 */
+	authorId: bigint;
 
-  /**
-   * @generated from field: string message_md = 4;
-   */
-  messageMd: string;
+	/**
+	 * @generated from field: string message_md = 4;
+	 */
+	messageMd: string;
 
-  /**
-   * @generated from field: bool deleted = 5;
-   */
-  deleted: boolean;
+	/**
+	 * @generated from field: bool deleted = 5;
+	 */
+	deleted: boolean;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 6;
-   */
-  createdOn: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 6;
+	 */
+	createdOn: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 7;
-   */
-  updatedOn: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_on = 7;
+	 */
+	updatedOn: Timestamp;
 
-  /**
-   * @generated from field: string persona_name = 8;
-   */
-  personaName: string;
+	/**
+	 * @generated from field: string persona_name = 8;
+	 */
+	personaName: string;
 
-  /**
-   * @generated from field: string avatar_hash = 9;
-   */
-  avatarHash: string;
+	/**
+	 * @generated from field: string avatar_hash = 9;
+	 */
+	avatarHash: string;
 
-  /**
-   * @generated from field: person.v1.Privilege permission_level = 10;
-   */
-  permissionLevel: Privilege;
+	/**
+	 * @generated from field: person.v1.Privilege permission_level = 10;
+	 */
+	permissionLevel: Privilege;
 };
 
 /**
  * Describes the message ban.v1.ReportMessage.
  * Use `create(ReportMessageSchema)` to create a new message.
  */
-export const ReportMessageSchema: GenMessage<ReportMessage, {validType: ReportMessageValid}> = /*@__PURE__*/
-  messageDesc(file_ban_v1_report, 9);
+export const ReportMessageSchema: GenMessage<ReportMessage, { validType: ReportMessageValid }> =
+	/*@__PURE__*/
+	messageDesc(file_ban_v1_report, 10);
 
 /**
  * @generated from message ban.v1.Report
  */
 export type Report = Message<"ban.v1.Report"> & {
-  /**
-   * @generated from field: int64 report_id = 1 [jstype = JS_STRING];
-   */
-  reportId: string;
+	/**
+	 * @generated from field: int64 report_id = 1;
+	 */
+	reportId: bigint;
 
-  /**
-   * @generated from field: int64 source_id = 2 [jstype = JS_STRING];
-   */
-  sourceId: string;
+	/**
+	 * @generated from field: int64 source_id = 2;
+	 */
+	sourceId: bigint;
 
-  /**
-   * @generated from field: int64 target_id = 3 [jstype = JS_STRING];
-   */
-  targetId: string;
+	/**
+	 * @generated from field: int64 target_id = 3;
+	 */
+	targetId: bigint;
 
-  /**
-   * @generated from field: string description = 4;
-   */
-  description: string;
+	/**
+	 * @generated from field: string description = 4;
+	 */
+	description: string;
 
-  /**
-   * @generated from field: ban.v1.ReportStatus report_status = 5;
-   */
-  reportStatus: ReportStatus;
+	/**
+	 * @generated from field: ban.v1.ReportStatus report_status = 5;
+	 */
+	reportStatus: ReportStatus;
 
-  /**
-   * @generated from field: ban.v1.BanReason reason = 6;
-   */
-  reason: BanReason;
+	/**
+	 * @generated from field: ban.v1.BanReason reason = 6;
+	 */
+	reason: BanReason;
 
-  /**
-   * @generated from field: string reason_text = 7;
-   */
-  reasonText: string;
+	/**
+	 * @generated from field: string reason_text = 7;
+	 */
+	reasonText: string;
 
-  /**
-   * @generated from field: bool deleted = 8;
-   */
-  deleted: boolean;
+	/**
+	 * @generated from field: bool deleted = 8;
+	 */
+	deleted: boolean;
 
-  /**
-   * @generated from field: int32 demo_tick = 9;
-   */
-  demoTick: number;
+	/**
+	 * @generated from field: int32 demo_tick = 9;
+	 */
+	demoTick: number;
 
-  /**
-   * @generated from field: int64 demo_id = 10 [jstype = JS_STRING];
-   */
-  demoId: string;
+	/**
+	 * @generated from field: int64 demo_id = 10;
+	 */
+	demoId: bigint;
 
-  /**
-   * @generated from field: int64 person_message_id = 11 [jstype = JS_STRING];
-   */
-  personMessageId: string;
+	/**
+	 * @generated from field: int64 person_message_id = 11;
+	 */
+	personMessageId: bigint;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 12;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 12;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 13;
-   */
-  updatedOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_on = 13;
+	 */
+	updatedOn?: Timestamp;
 };
 
 /**
  * @generated from message ban.v1.Report
  */
 export type ReportValid = Message<"ban.v1.Report"> & {
-  /**
-   * @generated from field: int64 report_id = 1 [jstype = JS_STRING];
-   */
-  reportId: string;
+	/**
+	 * @generated from field: int64 report_id = 1;
+	 */
+	reportId: bigint;
 
-  /**
-   * @generated from field: int64 source_id = 2 [jstype = JS_STRING];
-   */
-  sourceId: string;
+	/**
+	 * @generated from field: int64 source_id = 2;
+	 */
+	sourceId: bigint;
 
-  /**
-   * @generated from field: int64 target_id = 3 [jstype = JS_STRING];
-   */
-  targetId: string;
+	/**
+	 * @generated from field: int64 target_id = 3;
+	 */
+	targetId: bigint;
 
-  /**
-   * @generated from field: string description = 4;
-   */
-  description: string;
+	/**
+	 * @generated from field: string description = 4;
+	 */
+	description: string;
 
-  /**
-   * @generated from field: ban.v1.ReportStatus report_status = 5;
-   */
-  reportStatus: ReportStatus;
+	/**
+	 * @generated from field: ban.v1.ReportStatus report_status = 5;
+	 */
+	reportStatus: ReportStatus;
 
-  /**
-   * @generated from field: ban.v1.BanReason reason = 6;
-   */
-  reason: BanReason;
+	/**
+	 * @generated from field: ban.v1.BanReason reason = 6;
+	 */
+	reason: BanReason;
 
-  /**
-   * @generated from field: string reason_text = 7;
-   */
-  reasonText: string;
+	/**
+	 * @generated from field: string reason_text = 7;
+	 */
+	reasonText: string;
 
-  /**
-   * @generated from field: bool deleted = 8;
-   */
-  deleted: boolean;
+	/**
+	 * @generated from field: bool deleted = 8;
+	 */
+	deleted: boolean;
 
-  /**
-   * @generated from field: int32 demo_tick = 9;
-   */
-  demoTick: number;
+	/**
+	 * @generated from field: int32 demo_tick = 9;
+	 */
+	demoTick: number;
 
-  /**
-   * @generated from field: int64 demo_id = 10 [jstype = JS_STRING];
-   */
-  demoId: string;
+	/**
+	 * @generated from field: int64 demo_id = 10;
+	 */
+	demoId: bigint;
 
-  /**
-   * @generated from field: int64 person_message_id = 11 [jstype = JS_STRING];
-   */
-  personMessageId: string;
+	/**
+	 * @generated from field: int64 person_message_id = 11;
+	 */
+	personMessageId: bigint;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 12;
-   */
-  createdOn: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 12;
+	 */
+	createdOn: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 13;
-   */
-  updatedOn: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_on = 13;
+	 */
+	updatedOn: Timestamp;
 };
 
 /**
  * Describes the message ban.v1.Report.
  * Use `create(ReportSchema)` to create a new message.
  */
-export const ReportSchema: GenMessage<Report, {validType: ReportValid}> = /*@__PURE__*/
-  messageDesc(file_ban_v1_report, 10);
+export const ReportSchema: GenMessage<Report, { validType: ReportValid }> =
+	/*@__PURE__*/
+	messageDesc(file_ban_v1_report, 11);
 
 /**
  * @generated from message ban.v1.ReportWithAuthor
  */
 export type ReportWithAuthor = Message<"ban.v1.ReportWithAuthor"> & {
-  /**
-   * @generated from field: ban.v1.Report report = 1;
-   */
-  report?: Report;
+	/**
+	 * @generated from field: ban.v1.Report report = 1;
+	 */
+	report?: Report;
 
-  /**
-   * @generated from field: person.v1.PersonCore author = 2;
-   */
-  author?: PersonCore;
+	/**
+	 * @generated from field: person.v1.PersonCore author = 2;
+	 */
+	author?: PersonCore;
 
-  /**
-   * @generated from field: person.v1.PersonCore subject = 3;
-   */
-  subject?: PersonCore;
+	/**
+	 * @generated from field: person.v1.PersonCore subject = 3;
+	 */
+	subject?: PersonCore;
 };
 
 /**
  * @generated from message ban.v1.ReportWithAuthor
  */
 export type ReportWithAuthorValid = Message<"ban.v1.ReportWithAuthor"> & {
-  /**
-   * @generated from field: ban.v1.Report report = 1;
-   */
-  report: ReportValid;
+	/**
+	 * @generated from field: ban.v1.Report report = 1;
+	 */
+	report: ReportValid;
 
-  /**
-   * @generated from field: person.v1.PersonCore author = 2;
-   */
-  author: PersonCoreValid;
+	/**
+	 * @generated from field: person.v1.PersonCore author = 2;
+	 */
+	author: PersonCoreValid;
 
-  /**
-   * @generated from field: person.v1.PersonCore subject = 3;
-   */
-  subject: PersonCoreValid;
+	/**
+	 * @generated from field: person.v1.PersonCore subject = 3;
+	 */
+	subject: PersonCoreValid;
 };
 
 /**
  * Describes the message ban.v1.ReportWithAuthor.
  * Use `create(ReportWithAuthorSchema)` to create a new message.
  */
-export const ReportWithAuthorSchema: GenMessage<ReportWithAuthor, {validType: ReportWithAuthorValid}> = /*@__PURE__*/
-  messageDesc(file_ban_v1_report, 11);
+export const ReportWithAuthorSchema: GenMessage<ReportWithAuthor, { validType: ReportWithAuthorValid }> =
+	/*@__PURE__*/
+	messageDesc(file_ban_v1_report, 12);
 
 /**
  * @generated from message ban.v1.ReportStatusEditRequest
  */
 export type ReportStatusEditRequest = Message<"ban.v1.ReportStatusEditRequest"> & {
-  /**
-   * @generated from field: int64 report_id = 1 [jstype = JS_STRING];
-   */
-  reportId: string;
+	/**
+	 * @generated from field: int64 report_id = 1;
+	 */
+	reportId: bigint;
 
-  /**
-   * @generated from field: ban.v1.ReportStatus report_status = 2;
-   */
-  reportStatus: ReportStatus;
+	/**
+	 * @generated from field: ban.v1.ReportStatus report_status = 2;
+	 */
+	reportStatus: ReportStatus;
 };
 
 /**
  * @generated from message ban.v1.ReportStatusEditRequest
  */
 export type ReportStatusEditRequestValid = Message<"ban.v1.ReportStatusEditRequest"> & {
-  /**
-   * @generated from field: int64 report_id = 1 [jstype = JS_STRING];
-   */
-  reportId: string;
+	/**
+	 * @generated from field: int64 report_id = 1;
+	 */
+	reportId: bigint;
 
-  /**
-   * @generated from field: ban.v1.ReportStatus report_status = 2;
-   */
-  reportStatus: ReportStatus;
+	/**
+	 * @generated from field: ban.v1.ReportStatus report_status = 2;
+	 */
+	reportStatus: ReportStatus;
 };
 
 /**
  * Describes the message ban.v1.ReportStatusEditRequest.
  * Use `create(ReportStatusEditRequestSchema)` to create a new message.
  */
-export const ReportStatusEditRequestSchema: GenMessage<ReportStatusEditRequest, {validType: ReportStatusEditRequestValid}> = /*@__PURE__*/
-  messageDesc(file_ban_v1_report, 12);
+export const ReportStatusEditRequestSchema: GenMessage<
+	ReportStatusEditRequest,
+	{ validType: ReportStatusEditRequestValid }
+> = /*@__PURE__*/ messageDesc(file_ban_v1_report, 13);
 
 /**
  * @generated from message ban.v1.ReportCreateRequest
  */
 export type ReportCreateRequest = Message<"ban.v1.ReportCreateRequest"> & {
-  /**
-   * @generated from field: int64 source_id = 1 [jstype = JS_STRING];
-   */
-  sourceId: string;
+	/**
+	 * @generated from field: int64 source_id = 1;
+	 */
+	sourceId: bigint;
 
-  /**
-   * @generated from field: int64 target_id = 2 [jstype = JS_STRING];
-   */
-  targetId: string;
+	/**
+	 * @generated from field: int64 target_id = 2;
+	 */
+	targetId: bigint;
 
-  /**
-   * @generated from field: string description = 3;
-   */
-  description: string;
+	/**
+	 * @generated from field: string description = 3;
+	 */
+	description: string;
 
-  /**
-   * @generated from field: ban.v1.BanReason reason = 4;
-   */
-  reason: BanReason;
+	/**
+	 * @generated from field: ban.v1.BanReason reason = 4;
+	 */
+	reason: BanReason;
 
-  /**
-   * @generated from field: string reason_text = 5;
-   */
-  reasonText: string;
+	/**
+	 * @generated from field: string reason_text = 5;
+	 */
+	reasonText: string;
 
-  /**
-   * @generated from field: int64 demo_id = 6 [jstype = JS_STRING];
-   */
-  demoId: string;
+	/**
+	 * @generated from field: int64 demo_id = 6;
+	 */
+	demoId: bigint;
 
-  /**
-   * @generated from field: int32 demo_tick = 7;
-   */
-  demoTick: number;
+	/**
+	 * @generated from field: int32 demo_tick = 7;
+	 */
+	demoTick: number;
 
-  /**
-   * @generated from field: int64 person_message_id = 8 [jstype = JS_STRING];
-   */
-  personMessageId: string;
+	/**
+	 * @generated from field: int64 person_message_id = 8;
+	 */
+	personMessageId: bigint;
 };
 
 /**
  * @generated from message ban.v1.ReportCreateRequest
  */
 export type ReportCreateRequestValid = Message<"ban.v1.ReportCreateRequest"> & {
-  /**
-   * @generated from field: int64 source_id = 1 [jstype = JS_STRING];
-   */
-  sourceId: string;
+	/**
+	 * @generated from field: int64 source_id = 1;
+	 */
+	sourceId: bigint;
 
-  /**
-   * @generated from field: int64 target_id = 2 [jstype = JS_STRING];
-   */
-  targetId: string;
+	/**
+	 * @generated from field: int64 target_id = 2;
+	 */
+	targetId: bigint;
 
-  /**
-   * @generated from field: string description = 3;
-   */
-  description: string;
+	/**
+	 * @generated from field: string description = 3;
+	 */
+	description: string;
 
-  /**
-   * @generated from field: ban.v1.BanReason reason = 4;
-   */
-  reason: BanReason;
+	/**
+	 * @generated from field: ban.v1.BanReason reason = 4;
+	 */
+	reason: BanReason;
 
-  /**
-   * @generated from field: string reason_text = 5;
-   */
-  reasonText: string;
+	/**
+	 * @generated from field: string reason_text = 5;
+	 */
+	reasonText: string;
 
-  /**
-   * @generated from field: int64 demo_id = 6 [jstype = JS_STRING];
-   */
-  demoId: string;
+	/**
+	 * @generated from field: int64 demo_id = 6;
+	 */
+	demoId: bigint;
 
-  /**
-   * @generated from field: int32 demo_tick = 7;
-   */
-  demoTick: number;
+	/**
+	 * @generated from field: int32 demo_tick = 7;
+	 */
+	demoTick: number;
 
-  /**
-   * @generated from field: int64 person_message_id = 8 [jstype = JS_STRING];
-   */
-  personMessageId: string;
+	/**
+	 * @generated from field: int64 person_message_id = 8;
+	 */
+	personMessageId: bigint;
 };
 
 /**
  * Describes the message ban.v1.ReportCreateRequest.
  * Use `create(ReportCreateRequestSchema)` to create a new message.
  */
-export const ReportCreateRequestSchema: GenMessage<ReportCreateRequest, {validType: ReportCreateRequestValid}> = /*@__PURE__*/
-  messageDesc(file_ban_v1_report, 13);
+export const ReportCreateRequestSchema: GenMessage<ReportCreateRequest, { validType: ReportCreateRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_ban_v1_report, 14);
 
 /**
  * @generated from message ban.v1.ReportCreateResponse
  */
 export type ReportCreateResponse = Message<"ban.v1.ReportCreateResponse"> & {
-  /**
-   * @generated from field: ban.v1.ReportWithAuthor report = 1;
-   */
-  report?: ReportWithAuthor;
+	/**
+	 * @generated from field: ban.v1.ReportWithAuthor report = 1;
+	 */
+	report?: ReportWithAuthor;
 };
 
 /**
  * @generated from message ban.v1.ReportCreateResponse
  */
 export type ReportCreateResponseValid = Message<"ban.v1.ReportCreateResponse"> & {
-  /**
-   * @generated from field: ban.v1.ReportWithAuthor report = 1;
-   */
-  report: ReportWithAuthorValid;
+	/**
+	 * @generated from field: ban.v1.ReportWithAuthor report = 1;
+	 */
+	report: ReportWithAuthorValid;
 };
 
 /**
  * Describes the message ban.v1.ReportCreateResponse.
  * Use `create(ReportCreateResponseSchema)` to create a new message.
  */
-export const ReportCreateResponseSchema: GenMessage<ReportCreateResponse, {validType: ReportCreateResponseValid}> = /*@__PURE__*/
-  messageDesc(file_ban_v1_report, 14);
+export const ReportCreateResponseSchema: GenMessage<ReportCreateResponse, { validType: ReportCreateResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_ban_v1_report, 15);
 
 /**
  * @generated from message ban.v1.ReportMessageCreateRequest
  */
 export type ReportMessageCreateRequest = Message<"ban.v1.ReportMessageCreateRequest"> & {
-  /**
-   * @generated from field: int64 report_id = 1 [jstype = JS_STRING];
-   */
-  reportId: string;
+	/**
+	 * @generated from field: int64 report_id = 1;
+	 */
+	reportId: bigint;
 
-  /**
-   * @generated from field: string body_md = 2;
-   */
-  bodyMd: string;
+	/**
+	 * @generated from field: string body_md = 2;
+	 */
+	bodyMd: string;
 };
 
 /**
  * @generated from message ban.v1.ReportMessageCreateRequest
  */
 export type ReportMessageCreateRequestValid = Message<"ban.v1.ReportMessageCreateRequest"> & {
-  /**
-   * @generated from field: int64 report_id = 1 [jstype = JS_STRING];
-   */
-  reportId: string;
+	/**
+	 * @generated from field: int64 report_id = 1;
+	 */
+	reportId: bigint;
 
-  /**
-   * @generated from field: string body_md = 2;
-   */
-  bodyMd: string;
+	/**
+	 * @generated from field: string body_md = 2;
+	 */
+	bodyMd: string;
 };
 
 /**
  * Describes the message ban.v1.ReportMessageCreateRequest.
  * Use `create(ReportMessageCreateRequestSchema)` to create a new message.
  */
-export const ReportMessageCreateRequestSchema: GenMessage<ReportMessageCreateRequest, {validType: ReportMessageCreateRequestValid}> = /*@__PURE__*/
-  messageDesc(file_ban_v1_report, 15);
+export const ReportMessageCreateRequestSchema: GenMessage<
+	ReportMessageCreateRequest,
+	{ validType: ReportMessageCreateRequestValid }
+> = /*@__PURE__*/ messageDesc(file_ban_v1_report, 16);
 
 /**
  * @generated from message ban.v1.ReportMessageCreateResponse
  */
 export type ReportMessageCreateResponse = Message<"ban.v1.ReportMessageCreateResponse"> & {
-  /**
-   * @generated from field: ban.v1.ReportMessage report_message = 1;
-   */
-  reportMessage?: ReportMessage;
+	/**
+	 * @generated from field: ban.v1.ReportMessage report_message = 1;
+	 */
+	reportMessage?: ReportMessage;
 };
 
 /**
  * @generated from message ban.v1.ReportMessageCreateResponse
  */
 export type ReportMessageCreateResponseValid = Message<"ban.v1.ReportMessageCreateResponse"> & {
-  /**
-   * @generated from field: ban.v1.ReportMessage report_message = 1;
-   */
-  reportMessage: ReportMessageValid;
+	/**
+	 * @generated from field: ban.v1.ReportMessage report_message = 1;
+	 */
+	reportMessage: ReportMessageValid;
 };
 
 /**
  * Describes the message ban.v1.ReportMessageCreateResponse.
  * Use `create(ReportMessageCreateResponseSchema)` to create a new message.
  */
-export const ReportMessageCreateResponseSchema: GenMessage<ReportMessageCreateResponse, {validType: ReportMessageCreateResponseValid}> = /*@__PURE__*/
-  messageDesc(file_ban_v1_report, 16);
+export const ReportMessageCreateResponseSchema: GenMessage<
+	ReportMessageCreateResponse,
+	{ validType: ReportMessageCreateResponseValid }
+> = /*@__PURE__*/ messageDesc(file_ban_v1_report, 17);
 
 /**
  * @generated from enum ban.v1.ReportStatus
  */
 export enum ReportStatus {
-  /**
-   * @generated from enum value: REPORT_STATUS_OPENED_UNSPECIFIED = 0;
-   */
-  OPENED_UNSPECIFIED = 0,
+	/**
+	 * @generated from enum value: REPORT_STATUS_OPENED_UNSPECIFIED = 0;
+	 */
+	OPENED_UNSPECIFIED = 0,
 
-  /**
-   * @generated from enum value: REPORT_STATUS_NEED_MORE_INFO = 1;
-   */
-  NEED_MORE_INFO = 1,
+	/**
+	 * @generated from enum value: REPORT_STATUS_NEED_MORE_INFO = 1;
+	 */
+	NEED_MORE_INFO = 1,
 
-  /**
-   * @generated from enum value: REPORT_STATUS_CLOSED_WITHOUT_ACTION = 2;
-   */
-  CLOSED_WITHOUT_ACTION = 2,
+	/**
+	 * @generated from enum value: REPORT_STATUS_CLOSED_WITHOUT_ACTION = 2;
+	 */
+	CLOSED_WITHOUT_ACTION = 2,
 
-  /**
-   * @generated from enum value: REPORT_STATUS_CLOSED_WITH_ACTION = 3;
-   */
-  CLOSED_WITH_ACTION = 3,
+	/**
+	 * @generated from enum value: REPORT_STATUS_CLOSED_WITH_ACTION = 3;
+	 */
+	CLOSED_WITH_ACTION = 3,
 }
 
 /**
  * Describes the enum ban.v1.ReportStatus.
  */
-export const ReportStatusSchema: GenEnum<ReportStatus> = /*@__PURE__*/
-  enumDesc(file_ban_v1_report, 0);
+export const ReportStatusSchema: GenEnum<ReportStatus> = /*@__PURE__*/ enumDesc(file_ban_v1_report, 0);
 
 /**
  * @generated from service ban.v1.ReportService
  */
 export const ReportService: GenService<{
-  /**
-   * @generated from rpc ban.v1.ReportService.ReportCreate
-   */
-  reportCreate: {
-    methodKind: "unary";
-    input: typeof ReportCreateRequestSchema;
-    output: typeof ReportCreateResponseSchema;
-  },
-  /**
-   * @generated from rpc ban.v1.ReportService.Report
-   */
-  report: {
-    methodKind: "unary";
-    input: typeof ReportRequestSchema;
-    output: typeof ReportResponseSchema;
-  },
-  /**
-   * @generated from rpc ban.v1.ReportService.ReportStatusEdit
-   */
-  reportStatusEdit: {
-    methodKind: "unary";
-    input: typeof ReportStatusEditRequestSchema;
-    output: typeof EmptySchema;
-  },
-  /**
-   * @generated from rpc ban.v1.ReportService.UserReports
-   */
-  userReports: {
-    methodKind: "unary";
-    input: typeof UserReportsRequestSchema;
-    output: typeof UserReportsResponseSchema;
-  },
-  /**
-   * @generated from rpc ban.v1.ReportService.ReportMessages
-   */
-  reportMessages: {
-    methodKind: "unary";
-    input: typeof ReportMessagesRequestSchema;
-    output: typeof ReportMessagesResponseSchema;
-  },
-  /**
-   * @generated from rpc ban.v1.ReportService.ReportMessageCreate
-   */
-  reportMessageCreate: {
-    methodKind: "unary";
-    input: typeof ReportMessageCreateRequestSchema;
-    output: typeof ReportMessageCreateResponseSchema;
-  },
-  /**
-   * @generated from rpc ban.v1.ReportService.ReportMessageEdit
-   */
-  reportMessageEdit: {
-    methodKind: "unary";
-    input: typeof ReportMessageEditRequestSchema;
-    output: typeof ReportMessageEditResponseSchema;
-  },
-  /**
-   * @generated from rpc ban.v1.ReportService.ReportMessageDelete
-   */
-  reportMessageDelete: {
-    methodKind: "unary";
-    input: typeof ReportMessageDeleteRequestSchema;
-    output: typeof EmptySchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_ban_v1_report, 0);
-
+	/**
+	 * @generated from rpc ban.v1.ReportService.ReportCreate
+	 */
+	reportCreate: {
+		methodKind: "unary";
+		input: typeof ReportCreateRequestSchema;
+		output: typeof ReportCreateResponseSchema;
+	};
+	/**
+	 * @generated from rpc ban.v1.ReportService.Report
+	 */
+	report: {
+		methodKind: "unary";
+		input: typeof ReportRequestSchema;
+		output: typeof ReportResponseSchema;
+	};
+	/**
+	 * @generated from rpc ban.v1.ReportService.ReportStatusEdit
+	 */
+	reportStatusEdit: {
+		methodKind: "unary";
+		input: typeof ReportStatusEditRequestSchema;
+		output: typeof EmptySchema;
+	};
+	/**
+	 * @generated from rpc ban.v1.ReportService.UserReports
+	 */
+	userReports: {
+		methodKind: "unary";
+		input: typeof UserReportsRequestSchema;
+		output: typeof UserReportsResponseSchema;
+	};
+	/**
+	 * @generated from rpc ban.v1.ReportService.ReportMessages
+	 */
+	reportMessages: {
+		methodKind: "unary";
+		input: typeof ReportMessagesRequestSchema;
+		output: typeof ReportMessagesResponseSchema;
+	};
+	/**
+	 * @generated from rpc ban.v1.ReportService.ReportMessageCreate
+	 */
+	reportMessageCreate: {
+		methodKind: "unary";
+		input: typeof ReportMessageCreateRequestSchema;
+		output: typeof ReportMessageCreateResponseSchema;
+	};
+	/**
+	 * @generated from rpc ban.v1.ReportService.ReportMessageEdit
+	 */
+	reportMessageEdit: {
+		methodKind: "unary";
+		input: typeof ReportMessageEditRequestSchema;
+		output: typeof ReportMessageEditResponseSchema;
+	};
+	/**
+	 * @generated from rpc ban.v1.ReportService.ReportMessageDelete
+	 */
+	reportMessageDelete: {
+		methodKind: "unary";
+		input: typeof ReportMessageDeleteRequestSchema;
+		output: typeof EmptySchema;
+	};
+	/**
+	 * @generated from rpc ban.v1.ReportService.Reports
+	 */
+	reports: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof ReportsResponseSchema;
+	};
+}> = /*@__PURE__*/ serviceDesc(file_ban_v1_report, 0);

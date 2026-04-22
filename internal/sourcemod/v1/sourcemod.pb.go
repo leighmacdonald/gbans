@@ -605,29 +605,32 @@ func (x *SMUsersResponse) GetUserGroups() []*SMUserGroup {
 	return nil
 }
 
-type SMGroup struct {
+type Group struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Flags         *string                `protobuf:"bytes,1,opt,name=flags" json:"flags,omitempty"`
-	Name          *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
-	ImmunityLevel *int32                 `protobuf:"varint,3,opt,name=immunity_level,json=immunityLevel" json:"immunity_level,omitempty"`
+	GroupId       *int32                 `protobuf:"varint,1,opt,name=group_id,json=groupId" json:"group_id,omitempty"`
+	Flags         *string                `protobuf:"bytes,2,opt,name=flags" json:"flags,omitempty"`
+	Name          *string                `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
+	ImmunityLevel *int32                 `protobuf:"varint,4,opt,name=immunity_level,json=immunityLevel" json:"immunity_level,omitempty"`
+	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	UpdatedOn     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SMGroup) Reset() {
-	*x = SMGroup{}
+func (x *Group) Reset() {
+	*x = Group{}
 	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SMGroup) String() string {
+func (x *Group) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SMGroup) ProtoMessage() {}
+func (*Group) ProtoMessage() {}
 
-func (x *SMGroup) ProtoReflect() protoreflect.Message {
+func (x *Group) ProtoReflect() protoreflect.Message {
 	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -639,35 +642,56 @@ func (x *SMGroup) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SMGroup.ProtoReflect.Descriptor instead.
-func (*SMGroup) Descriptor() ([]byte, []int) {
+// Deprecated: Use Group.ProtoReflect.Descriptor instead.
+func (*Group) Descriptor() ([]byte, []int) {
 	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *SMGroup) GetFlags() string {
+func (x *Group) GetGroupId() int32 {
+	if x != nil && x.GroupId != nil {
+		return *x.GroupId
+	}
+	return 0
+}
+
+func (x *Group) GetFlags() string {
 	if x != nil && x.Flags != nil {
 		return *x.Flags
 	}
 	return ""
 }
 
-func (x *SMGroup) GetName() string {
+func (x *Group) GetName() string {
 	if x != nil && x.Name != nil {
 		return *x.Name
 	}
 	return ""
 }
 
-func (x *SMGroup) GetImmunityLevel() int32 {
+func (x *Group) GetImmunityLevel() int32 {
 	if x != nil && x.ImmunityLevel != nil {
 		return *x.ImmunityLevel
 	}
 	return 0
 }
 
+func (x *Group) GetCreatedOn() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedOn
+	}
+	return nil
+}
+
+func (x *Group) GetUpdatedOn() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedOn
+	}
+	return nil
+}
+
 type SMGroupsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Groups        []*SMGroup             `protobuf:"bytes,1,rep,name=groups" json:"groups,omitempty"`
+	Groups        []*Group               `protobuf:"bytes,1,rep,name=groups" json:"groups,omitempty"`
 	Immunities    []*SMGroupImmunity     `protobuf:"bytes,2,rep,name=immunities" json:"immunities,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -703,7 +727,7 @@ func (*SMGroupsResponse) Descriptor() ([]byte, []int) {
 	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *SMGroupsResponse) GetGroups() []*SMGroup {
+func (x *SMGroupsResponse) GetGroups() []*Group {
 	if x != nil {
 		return x.Groups
 	}
@@ -2665,90 +2689,6 @@ func (x *GroupImmunity) GetCreatedOn() *timestamppb.Timestamp {
 	return nil
 }
 
-type Group struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	GroupId       *int32                 `protobuf:"varint,1,opt,name=group_id,json=groupId" json:"group_id,omitempty"`
-	Flags         *string                `protobuf:"bytes,2,opt,name=flags" json:"flags,omitempty"`
-	Name          *string                `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
-	ImmunityLevel *int32                 `protobuf:"varint,4,opt,name=immunity_level,json=immunityLevel" json:"immunity_level,omitempty"`
-	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
-	UpdatedOn     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Group) Reset() {
-	*x = Group{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[46]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Group) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Group) ProtoMessage() {}
-
-func (x *Group) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[46]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Group.ProtoReflect.Descriptor instead.
-func (*Group) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{46}
-}
-
-func (x *Group) GetGroupId() int32 {
-	if x != nil && x.GroupId != nil {
-		return *x.GroupId
-	}
-	return 0
-}
-
-func (x *Group) GetFlags() string {
-	if x != nil && x.Flags != nil {
-		return *x.Flags
-	}
-	return ""
-}
-
-func (x *Group) GetName() string {
-	if x != nil && x.Name != nil {
-		return *x.Name
-	}
-	return ""
-}
-
-func (x *Group) GetImmunityLevel() int32 {
-	if x != nil && x.ImmunityLevel != nil {
-		return *x.ImmunityLevel
-	}
-	return 0
-}
-
-func (x *Group) GetCreatedOn() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CreatedOn
-	}
-	return nil
-}
-
-func (x *Group) GetUpdatedOn() *timestamppb.Timestamp {
-	if x != nil {
-		return x.UpdatedOn
-	}
-	return nil
-}
-
 type GroupOverrides struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	GroupOverrideId *int32                 `protobuf:"varint,1,opt,name=group_override_id,json=groupOverrideId" json:"group_override_id,omitempty"`
@@ -2764,7 +2704,7 @@ type GroupOverrides struct {
 
 func (x *GroupOverrides) Reset() {
 	*x = GroupOverrides{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[47]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2776,7 +2716,7 @@ func (x *GroupOverrides) String() string {
 func (*GroupOverrides) ProtoMessage() {}
 
 func (x *GroupOverrides) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[47]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2789,7 +2729,7 @@ func (x *GroupOverrides) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupOverrides.ProtoReflect.Descriptor instead.
 func (*GroupOverrides) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{47}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *GroupOverrides) GetGroupOverrideId() int32 {
@@ -2860,7 +2800,7 @@ type Admin struct {
 
 func (x *Admin) Reset() {
 	*x = Admin{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[48]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2872,7 +2812,7 @@ func (x *Admin) String() string {
 func (*Admin) ProtoMessage() {}
 
 func (x *Admin) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[48]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2885,7 +2825,7 @@ func (x *Admin) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Admin.ProtoReflect.Descriptor instead.
 func (*Admin) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{48}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *Admin) GetAdminId() int32 {
@@ -2979,7 +2919,7 @@ type Override struct {
 
 func (x *Override) Reset() {
 	*x = Override{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[49]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2991,7 +2931,7 @@ func (x *Override) String() string {
 func (*Override) ProtoMessage() {}
 
 func (x *Override) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[49]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3004,7 +2944,7 @@ func (x *Override) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Override.ProtoReflect.Descriptor instead.
 func (*Override) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{49}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *Override) GetOverrideId() int32 {
@@ -3080,13 +3020,18 @@ const file_sourcemod_v1_sourcemod_proto_rawDesc = "" +
 	"\x0fSMUsersResponse\x122\n" +
 	"\x05users\x18\x01 \x03(\v2\x14.sourcemod.v1.SMUserB\x06\xbaH\x03\xc8\x01\x01R\x05users\x12B\n" +
 	"\vuser_groups\x18\x02 \x03(\v2\x19.sourcemod.v1.SMUserGroupB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"userGroups\"r\n" +
-	"\aSMGroup\x12\x1c\n" +
-	"\x05flags\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05flags\x12\x1a\n" +
-	"\x04name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12-\n" +
-	"\x0eimmunity_level\x18\x03 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rimmunityLevel\"\x90\x01\n" +
-	"\x10SMGroupsResponse\x125\n" +
-	"\x06groups\x18\x01 \x03(\v2\x15.sourcemod.v1.SMGroupB\x06\xbaH\x03\xc8\x01\x01R\x06groups\x12E\n" +
+	"userGroups\"\x89\x02\n" +
+	"\x05Group\x12!\n" +
+	"\bgroup_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\agroupId\x12\x1c\n" +
+	"\x05flags\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05flags\x12\x1a\n" +
+	"\x04name\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12-\n" +
+	"\x0eimmunity_level\x18\x04 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rimmunityLevel\x129\n" +
+	"\n" +
+	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"\n" +
+	"updated_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"\x8e\x01\n" +
+	"\x10SMGroupsResponse\x123\n" +
+	"\x06groups\x18\x01 \x03(\v2\x13.sourcemod.v1.GroupB\x06\xbaH\x03\xc8\x01\x01R\x06groups\x12E\n" +
 	"\n" +
 	"immunities\x18\x02 \x03(\v2\x1d.sourcemod.v1.SMGroupImmunityB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"immunities\"_\n" +
@@ -3210,16 +3155,7 @@ const file_sourcemod_v1_sourcemod_proto_rawDesc = "" +
 	"\x05group\x18\x02 \x01(\v2\x13.sourcemod.v1.GroupB\x06\xbaH\x03\xc8\x01\x01R\x05group\x121\n" +
 	"\x05other\x18\x03 \x01(\v2\x13.sourcemod.v1.GroupB\x06\xbaH\x03\xc8\x01\x01R\x05other\x12A\n" +
 	"\n" +
-	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\"\x99\x02\n" +
-	"\x05Group\x12!\n" +
-	"\bgroup_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\agroupId\x12\x1c\n" +
-	"\x05flags\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05flags\x12\x1a\n" +
-	"\x04name\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12-\n" +
-	"\x0eimmunity_level\x18\x04 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rimmunityLevel\x12A\n" +
-	"\n" +
-	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
-	"\n" +
-	"updated_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xa1\x03\n" +
+	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\"\xa1\x03\n" +
 	"\x0eGroupOverrides\x122\n" +
 	"\x11group_override_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x0fgroupOverrideId\x12!\n" +
 	"\bgroup_id\x18\x02 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\agroupId\x12G\n" +
@@ -3229,10 +3165,10 @@ const file_sourcemod_v1_sourcemod_proto_rawDesc = "" +
 	"\n" +
 	"created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xf0\x03\n" +
+	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xee\x03\n" +
 	"\x05Admin\x12!\n" +
-	"\badmin_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aadminId\x12#\n" +
-	"\bsteam_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12;\n" +
+	"\badmin_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aadminId\x12!\n" +
+	"\bsteam_id\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\x12;\n" +
 	"\tauth_type\x18\x03 \x01(\x0e2\x16.sourcemod.v1.AuthTypeB\x06\xbaH\x03\xc8\x01\x01R\bauthType\x12\"\n" +
 	"\bidentity\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bidentity\x12\"\n" +
 	"\bpassword\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bpassword\x12\x1c\n" +
@@ -3313,7 +3249,7 @@ func file_sourcemod_v1_sourcemod_proto_rawDescGZIP() []byte {
 }
 
 var file_sourcemod_v1_sourcemod_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_sourcemod_v1_sourcemod_proto_msgTypes = make([]protoimpl.MessageInfo, 50)
+var file_sourcemod_v1_sourcemod_proto_msgTypes = make([]protoimpl.MessageInfo, 49)
 var file_sourcemod_v1_sourcemod_proto_goTypes = []any{
 	(BanType)(0),                        // 0: sourcemod.v1.BanType
 	(OverrideType)(0),                   // 1: sourcemod.v1.OverrideType
@@ -3326,7 +3262,7 @@ var file_sourcemod_v1_sourcemod_proto_goTypes = []any{
 	(*SMUser)(nil),                      // 8: sourcemod.v1.SMUser
 	(*SMUserGroup)(nil),                 // 9: sourcemod.v1.SMUserGroup
 	(*SMUsersResponse)(nil),             // 10: sourcemod.v1.SMUsersResponse
-	(*SMGroup)(nil),                     // 11: sourcemod.v1.SMGroup
+	(*Group)(nil),                       // 11: sourcemod.v1.Group
 	(*SMGroupsResponse)(nil),            // 12: sourcemod.v1.SMGroupsResponse
 	(*SMGroupImmunity)(nil),             // 13: sourcemod.v1.SMGroupImmunity
 	(*CheckRequest)(nil),                // 14: sourcemod.v1.CheckRequest
@@ -3365,12 +3301,11 @@ var file_sourcemod_v1_sourcemod_proto_goTypes = []any{
 	(*CreateImmunityResponse)(nil),      // 47: sourcemod.v1.CreateImmunityResponse
 	(*DeleteImmunityRequest)(nil),       // 48: sourcemod.v1.DeleteImmunityRequest
 	(*GroupImmunity)(nil),               // 49: sourcemod.v1.GroupImmunity
-	(*Group)(nil),                       // 50: sourcemod.v1.Group
-	(*GroupOverrides)(nil),              // 51: sourcemod.v1.GroupOverrides
-	(*Admin)(nil),                       // 52: sourcemod.v1.Admin
-	(*Override)(nil),                    // 53: sourcemod.v1.Override
-	(*timestamppb.Timestamp)(nil),       // 54: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),               // 55: google.protobuf.Empty
+	(*GroupOverrides)(nil),              // 50: sourcemod.v1.GroupOverrides
+	(*Admin)(nil),                       // 51: sourcemod.v1.Admin
+	(*Override)(nil),                    // 52: sourcemod.v1.Override
+	(*timestamppb.Timestamp)(nil),       // 53: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),               // 54: google.protobuf.Empty
 }
 var file_sourcemod_v1_sourcemod_proto_depIdxs = []int32{
 	1,  // 0: sourcemod.v1.SMOverride.override_type:type_name -> sourcemod.v1.OverrideType
@@ -3378,49 +3313,49 @@ var file_sourcemod_v1_sourcemod_proto_depIdxs = []int32{
 	3,  // 2: sourcemod.v1.SMUser.auth_type:type_name -> sourcemod.v1.AuthType
 	8,  // 3: sourcemod.v1.SMUsersResponse.users:type_name -> sourcemod.v1.SMUser
 	9,  // 4: sourcemod.v1.SMUsersResponse.user_groups:type_name -> sourcemod.v1.SMUserGroup
-	11, // 5: sourcemod.v1.SMGroupsResponse.groups:type_name -> sourcemod.v1.SMGroup
-	13, // 6: sourcemod.v1.SMGroupsResponse.immunities:type_name -> sourcemod.v1.SMGroupImmunity
-	0,  // 7: sourcemod.v1.CheckResponse.ban_type:type_name -> sourcemod.v1.BanType
-	50, // 8: sourcemod.v1.GroupsResponse.groups:type_name -> sourcemod.v1.Group
-	50, // 9: sourcemod.v1.CreateGroupResponse.group:type_name -> sourcemod.v1.Group
-	50, // 10: sourcemod.v1.EditGroupsResponse.group:type_name -> sourcemod.v1.Group
-	51, // 11: sourcemod.v1.GroupOverridesResponse.overrides:type_name -> sourcemod.v1.GroupOverrides
-	1,  // 12: sourcemod.v1.CreateGroupOverrideRequest.type:type_name -> sourcemod.v1.OverrideType
-	2,  // 13: sourcemod.v1.CreateGroupOverrideRequest.access:type_name -> sourcemod.v1.OverrideAccess
-	51, // 14: sourcemod.v1.CreateGroupOverrideResponse.group_override:type_name -> sourcemod.v1.GroupOverrides
-	1,  // 15: sourcemod.v1.EditGroupOverrideRequest.override_type:type_name -> sourcemod.v1.OverrideType
-	2,  // 16: sourcemod.v1.EditGroupOverrideRequest.override_access:type_name -> sourcemod.v1.OverrideAccess
-	51, // 17: sourcemod.v1.EditGroupOverrideResponse.group_override:type_name -> sourcemod.v1.GroupOverrides
-	52, // 18: sourcemod.v1.AdminsResponse.admins:type_name -> sourcemod.v1.Admin
-	3,  // 19: sourcemod.v1.CreateAdminRequest.auth_type:type_name -> sourcemod.v1.AuthType
-	52, // 20: sourcemod.v1.CreateAdminResponse.admin:type_name -> sourcemod.v1.Admin
-	3,  // 21: sourcemod.v1.EditAdminRequest.auth_type:type_name -> sourcemod.v1.AuthType
-	52, // 22: sourcemod.v1.EditAdminResponse.admin:type_name -> sourcemod.v1.Admin
-	52, // 23: sourcemod.v1.AddAdminGroupResponse.admin:type_name -> sourcemod.v1.Admin
-	53, // 24: sourcemod.v1.OverridesResponse.overrides:type_name -> sourcemod.v1.Override
-	1,  // 25: sourcemod.v1.CreateOverridesRequest.override_type:type_name -> sourcemod.v1.OverrideType
-	53, // 26: sourcemod.v1.CreateOverridesResponse.override:type_name -> sourcemod.v1.Override
-	1,  // 27: sourcemod.v1.EditOverridesRequest.override_type:type_name -> sourcemod.v1.OverrideType
-	53, // 28: sourcemod.v1.EditOverridesResponse.override:type_name -> sourcemod.v1.Override
-	49, // 29: sourcemod.v1.GroupImmunitiesResponse.group_immunities:type_name -> sourcemod.v1.GroupImmunity
-	49, // 30: sourcemod.v1.CreateImmunityResponse.group_immunity:type_name -> sourcemod.v1.GroupImmunity
-	50, // 31: sourcemod.v1.GroupImmunity.group:type_name -> sourcemod.v1.Group
-	50, // 32: sourcemod.v1.GroupImmunity.other:type_name -> sourcemod.v1.Group
-	54, // 33: sourcemod.v1.GroupImmunity.created_on:type_name -> google.protobuf.Timestamp
-	54, // 34: sourcemod.v1.Group.created_on:type_name -> google.protobuf.Timestamp
-	54, // 35: sourcemod.v1.Group.updated_on:type_name -> google.protobuf.Timestamp
+	53, // 5: sourcemod.v1.Group.created_on:type_name -> google.protobuf.Timestamp
+	53, // 6: sourcemod.v1.Group.updated_on:type_name -> google.protobuf.Timestamp
+	11, // 7: sourcemod.v1.SMGroupsResponse.groups:type_name -> sourcemod.v1.Group
+	13, // 8: sourcemod.v1.SMGroupsResponse.immunities:type_name -> sourcemod.v1.SMGroupImmunity
+	0,  // 9: sourcemod.v1.CheckResponse.ban_type:type_name -> sourcemod.v1.BanType
+	11, // 10: sourcemod.v1.GroupsResponse.groups:type_name -> sourcemod.v1.Group
+	11, // 11: sourcemod.v1.CreateGroupResponse.group:type_name -> sourcemod.v1.Group
+	11, // 12: sourcemod.v1.EditGroupsResponse.group:type_name -> sourcemod.v1.Group
+	50, // 13: sourcemod.v1.GroupOverridesResponse.overrides:type_name -> sourcemod.v1.GroupOverrides
+	1,  // 14: sourcemod.v1.CreateGroupOverrideRequest.type:type_name -> sourcemod.v1.OverrideType
+	2,  // 15: sourcemod.v1.CreateGroupOverrideRequest.access:type_name -> sourcemod.v1.OverrideAccess
+	50, // 16: sourcemod.v1.CreateGroupOverrideResponse.group_override:type_name -> sourcemod.v1.GroupOverrides
+	1,  // 17: sourcemod.v1.EditGroupOverrideRequest.override_type:type_name -> sourcemod.v1.OverrideType
+	2,  // 18: sourcemod.v1.EditGroupOverrideRequest.override_access:type_name -> sourcemod.v1.OverrideAccess
+	50, // 19: sourcemod.v1.EditGroupOverrideResponse.group_override:type_name -> sourcemod.v1.GroupOverrides
+	51, // 20: sourcemod.v1.AdminsResponse.admins:type_name -> sourcemod.v1.Admin
+	3,  // 21: sourcemod.v1.CreateAdminRequest.auth_type:type_name -> sourcemod.v1.AuthType
+	51, // 22: sourcemod.v1.CreateAdminResponse.admin:type_name -> sourcemod.v1.Admin
+	3,  // 23: sourcemod.v1.EditAdminRequest.auth_type:type_name -> sourcemod.v1.AuthType
+	51, // 24: sourcemod.v1.EditAdminResponse.admin:type_name -> sourcemod.v1.Admin
+	51, // 25: sourcemod.v1.AddAdminGroupResponse.admin:type_name -> sourcemod.v1.Admin
+	52, // 26: sourcemod.v1.OverridesResponse.overrides:type_name -> sourcemod.v1.Override
+	1,  // 27: sourcemod.v1.CreateOverridesRequest.override_type:type_name -> sourcemod.v1.OverrideType
+	52, // 28: sourcemod.v1.CreateOverridesResponse.override:type_name -> sourcemod.v1.Override
+	1,  // 29: sourcemod.v1.EditOverridesRequest.override_type:type_name -> sourcemod.v1.OverrideType
+	52, // 30: sourcemod.v1.EditOverridesResponse.override:type_name -> sourcemod.v1.Override
+	49, // 31: sourcemod.v1.GroupImmunitiesResponse.group_immunities:type_name -> sourcemod.v1.GroupImmunity
+	49, // 32: sourcemod.v1.CreateImmunityResponse.group_immunity:type_name -> sourcemod.v1.GroupImmunity
+	11, // 33: sourcemod.v1.GroupImmunity.group:type_name -> sourcemod.v1.Group
+	11, // 34: sourcemod.v1.GroupImmunity.other:type_name -> sourcemod.v1.Group
+	53, // 35: sourcemod.v1.GroupImmunity.created_on:type_name -> google.protobuf.Timestamp
 	1,  // 36: sourcemod.v1.GroupOverrides.override_type:type_name -> sourcemod.v1.OverrideType
 	2,  // 37: sourcemod.v1.GroupOverrides.override_access:type_name -> sourcemod.v1.OverrideAccess
-	54, // 38: sourcemod.v1.GroupOverrides.created_on:type_name -> google.protobuf.Timestamp
-	54, // 39: sourcemod.v1.GroupOverrides.updated_on:type_name -> google.protobuf.Timestamp
+	53, // 38: sourcemod.v1.GroupOverrides.created_on:type_name -> google.protobuf.Timestamp
+	53, // 39: sourcemod.v1.GroupOverrides.updated_on:type_name -> google.protobuf.Timestamp
 	3,  // 40: sourcemod.v1.Admin.auth_type:type_name -> sourcemod.v1.AuthType
-	50, // 41: sourcemod.v1.Admin.groups:type_name -> sourcemod.v1.Group
-	54, // 42: sourcemod.v1.Admin.created_on:type_name -> google.protobuf.Timestamp
-	54, // 43: sourcemod.v1.Admin.updated_on:type_name -> google.protobuf.Timestamp
+	11, // 41: sourcemod.v1.Admin.groups:type_name -> sourcemod.v1.Group
+	53, // 42: sourcemod.v1.Admin.created_on:type_name -> google.protobuf.Timestamp
+	53, // 43: sourcemod.v1.Admin.updated_on:type_name -> google.protobuf.Timestamp
 	1,  // 44: sourcemod.v1.Override.override_type:type_name -> sourcemod.v1.OverrideType
-	54, // 45: sourcemod.v1.Override.created_on:type_name -> google.protobuf.Timestamp
-	54, // 46: sourcemod.v1.Override.updated_on:type_name -> google.protobuf.Timestamp
-	55, // 47: sourcemod.v1.SourcemodService.Groups:input_type -> google.protobuf.Empty
+	53, // 45: sourcemod.v1.Override.created_on:type_name -> google.protobuf.Timestamp
+	53, // 46: sourcemod.v1.Override.updated_on:type_name -> google.protobuf.Timestamp
+	54, // 47: sourcemod.v1.SourcemodService.Groups:input_type -> google.protobuf.Empty
 	17, // 48: sourcemod.v1.SourcemodService.CreateGroup:input_type -> sourcemod.v1.CreateGroupRequest
 	19, // 49: sourcemod.v1.SourcemodService.EditGroups:input_type -> sourcemod.v1.EditGroupsRequest
 	21, // 50: sourcemod.v1.SourcemodService.DeleteGroup:input_type -> sourcemod.v1.DeleteGroupRequest
@@ -3428,45 +3363,45 @@ var file_sourcemod_v1_sourcemod_proto_depIdxs = []int32{
 	24, // 52: sourcemod.v1.SourcemodService.CreateGroupOverride:input_type -> sourcemod.v1.CreateGroupOverrideRequest
 	26, // 53: sourcemod.v1.SourcemodService.EditGroupOverride:input_type -> sourcemod.v1.EditGroupOverrideRequest
 	28, // 54: sourcemod.v1.SourcemodService.DeleteGroupOverride:input_type -> sourcemod.v1.DeleteGroupOverrideRequest
-	55, // 55: sourcemod.v1.SourcemodService.Admins:input_type -> google.protobuf.Empty
+	54, // 55: sourcemod.v1.SourcemodService.Admins:input_type -> google.protobuf.Empty
 	31, // 56: sourcemod.v1.SourcemodService.CreateAdmin:input_type -> sourcemod.v1.CreateAdminRequest
 	33, // 57: sourcemod.v1.SourcemodService.EditAdmin:input_type -> sourcemod.v1.EditAdminRequest
 	35, // 58: sourcemod.v1.SourcemodService.DeleteAdmin:input_type -> sourcemod.v1.DeleteAdminRequest
 	36, // 59: sourcemod.v1.SourcemodService.AddAdminGroup:input_type -> sourcemod.v1.AddAdminGroupRequest
 	38, // 60: sourcemod.v1.SourcemodService.DeleteAdminGroup:input_type -> sourcemod.v1.DeleteAdminGroupRequest
-	55, // 61: sourcemod.v1.SourcemodService.Overrides:input_type -> google.protobuf.Empty
+	54, // 61: sourcemod.v1.SourcemodService.Overrides:input_type -> google.protobuf.Empty
 	40, // 62: sourcemod.v1.SourcemodService.CreateOverrides:input_type -> sourcemod.v1.CreateOverridesRequest
 	42, // 63: sourcemod.v1.SourcemodService.EditOverrides:input_type -> sourcemod.v1.EditOverridesRequest
 	44, // 64: sourcemod.v1.SourcemodService.DeleteOverrides:input_type -> sourcemod.v1.DeleteOverridesRequest
-	55, // 65: sourcemod.v1.SourcemodService.GroupImmunities:input_type -> google.protobuf.Empty
+	54, // 65: sourcemod.v1.SourcemodService.GroupImmunities:input_type -> google.protobuf.Empty
 	46, // 66: sourcemod.v1.SourcemodService.CreateImmunity:input_type -> sourcemod.v1.CreateImmunityRequest
 	48, // 67: sourcemod.v1.SourcemodService.DeleteImmunity:input_type -> sourcemod.v1.DeleteImmunityRequest
 	14, // 68: sourcemod.v1.SourcemodService.Check:input_type -> sourcemod.v1.CheckRequest
-	55, // 69: sourcemod.v1.SourcemodService.SMOverrides:input_type -> google.protobuf.Empty
-	55, // 70: sourcemod.v1.SourcemodService.SMUsers:input_type -> google.protobuf.Empty
-	55, // 71: sourcemod.v1.SourcemodService.SMGroups:input_type -> google.protobuf.Empty
+	54, // 69: sourcemod.v1.SourcemodService.SMOverrides:input_type -> google.protobuf.Empty
+	54, // 70: sourcemod.v1.SourcemodService.SMUsers:input_type -> google.protobuf.Empty
+	54, // 71: sourcemod.v1.SourcemodService.SMGroups:input_type -> google.protobuf.Empty
 	4,  // 72: sourcemod.v1.SourcemodService.SMSeed:input_type -> sourcemod.v1.SMSeedRequest
 	16, // 73: sourcemod.v1.SourcemodService.Groups:output_type -> sourcemod.v1.GroupsResponse
 	18, // 74: sourcemod.v1.SourcemodService.CreateGroup:output_type -> sourcemod.v1.CreateGroupResponse
 	20, // 75: sourcemod.v1.SourcemodService.EditGroups:output_type -> sourcemod.v1.EditGroupsResponse
-	55, // 76: sourcemod.v1.SourcemodService.DeleteGroup:output_type -> google.protobuf.Empty
+	54, // 76: sourcemod.v1.SourcemodService.DeleteGroup:output_type -> google.protobuf.Empty
 	23, // 77: sourcemod.v1.SourcemodService.GroupOverrides:output_type -> sourcemod.v1.GroupOverridesResponse
 	25, // 78: sourcemod.v1.SourcemodService.CreateGroupOverride:output_type -> sourcemod.v1.CreateGroupOverrideResponse
 	27, // 79: sourcemod.v1.SourcemodService.EditGroupOverride:output_type -> sourcemod.v1.EditGroupOverrideResponse
-	55, // 80: sourcemod.v1.SourcemodService.DeleteGroupOverride:output_type -> google.protobuf.Empty
+	54, // 80: sourcemod.v1.SourcemodService.DeleteGroupOverride:output_type -> google.protobuf.Empty
 	30, // 81: sourcemod.v1.SourcemodService.Admins:output_type -> sourcemod.v1.AdminsResponse
 	32, // 82: sourcemod.v1.SourcemodService.CreateAdmin:output_type -> sourcemod.v1.CreateAdminResponse
 	34, // 83: sourcemod.v1.SourcemodService.EditAdmin:output_type -> sourcemod.v1.EditAdminResponse
-	55, // 84: sourcemod.v1.SourcemodService.DeleteAdmin:output_type -> google.protobuf.Empty
+	54, // 84: sourcemod.v1.SourcemodService.DeleteAdmin:output_type -> google.protobuf.Empty
 	37, // 85: sourcemod.v1.SourcemodService.AddAdminGroup:output_type -> sourcemod.v1.AddAdminGroupResponse
-	55, // 86: sourcemod.v1.SourcemodService.DeleteAdminGroup:output_type -> google.protobuf.Empty
+	54, // 86: sourcemod.v1.SourcemodService.DeleteAdminGroup:output_type -> google.protobuf.Empty
 	39, // 87: sourcemod.v1.SourcemodService.Overrides:output_type -> sourcemod.v1.OverridesResponse
 	41, // 88: sourcemod.v1.SourcemodService.CreateOverrides:output_type -> sourcemod.v1.CreateOverridesResponse
 	43, // 89: sourcemod.v1.SourcemodService.EditOverrides:output_type -> sourcemod.v1.EditOverridesResponse
-	55, // 90: sourcemod.v1.SourcemodService.DeleteOverrides:output_type -> google.protobuf.Empty
+	54, // 90: sourcemod.v1.SourcemodService.DeleteOverrides:output_type -> google.protobuf.Empty
 	45, // 91: sourcemod.v1.SourcemodService.GroupImmunities:output_type -> sourcemod.v1.GroupImmunitiesResponse
 	47, // 92: sourcemod.v1.SourcemodService.CreateImmunity:output_type -> sourcemod.v1.CreateImmunityResponse
-	55, // 93: sourcemod.v1.SourcemodService.DeleteImmunity:output_type -> google.protobuf.Empty
+	54, // 93: sourcemod.v1.SourcemodService.DeleteImmunity:output_type -> google.protobuf.Empty
 	15, // 94: sourcemod.v1.SourcemodService.Check:output_type -> sourcemod.v1.CheckResponse
 	7,  // 95: sourcemod.v1.SourcemodService.SMOverrides:output_type -> sourcemod.v1.SMOverridesResponse
 	10, // 96: sourcemod.v1.SourcemodService.SMUsers:output_type -> sourcemod.v1.SMUsersResponse
@@ -3490,7 +3425,7 @@ func file_sourcemod_v1_sourcemod_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sourcemod_v1_sourcemod_proto_rawDesc), len(file_sourcemod_v1_sourcemod_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   50,
+			NumMessages:   49,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

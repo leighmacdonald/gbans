@@ -4,33 +4,35 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
-import { useMutation } from "@tanstack/react-query";
 import { z } from "zod/v4";
-import { apiCreateSMOverrides, apiSaveSMOverrides, hasSMFlag } from "../../api";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import { type SMOverrides, schemaFlags } from "../../schema/sourcemod.ts";
 import { Heading } from "../Heading";
+import { type Override, OverrideType } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
+import { createOverrides, editOverrides } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
+import { useMutation } from "@connectrpc/connect-query";
+import { hasSMFlag, schemaFlags } from "../../util/strings.ts";
 
 const schema = schemaFlags.extend({
 	name: z.string(),
-	type: z.enum(["command", "group"]),
+	type: z.enum(OverrideType),
 });
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const schemaValues = z.object({
-	name: z.string(),
-	type: z.enum(["command", "group"]),
-	flags: z.string(),
-});
+// const schemaValues = z.object({
+// 	name: z.string(),
+// 	type: z.enum(["command", "group"]),
+// 	flags: z.string(),
+// });
+//
+// type Values = z.infer<typeof schemaValues>;
 
-type Values = z.infer<typeof schemaValues>;
-
-export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?: SMOverrides }) => {
+export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?: Override }) => {
 	const modal = useModal();
 	const { sendError } = useUserFlashCtx();
+
 	const defaultValues: z.input<typeof schema> = {
-		type: override?.type ?? "command",
+		type: override?.overrideType ?? OverrideType.COMMAND_UNSPECIFIED,
 		name: override?.name ?? "",
 		z: hasSMFlag("z", override),
 		a: hasSMFlag("a", override),
@@ -54,14 +56,16 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
 		s: hasSMFlag("s", override),
 		t: hasSMFlag("t", override),
 	};
-	const mutation = useMutation({
-		mutationKey: ["adminSMOverride"],
-		mutationFn: async ({ name, type, flags }: Values) => {
-			const ac = new AbortController();
-			return override?.override_id
-				? await apiSaveSMOverrides(override.override_id, name, type, flags, ac.signal)
-				: await apiCreateSMOverrides(name, type, flags, ac.signal);
+
+	const createMutation = useMutation(createOverrides, {
+		onSuccess: async (admin) => {
+			modal.resolve(admin);
+			await modal.hide();
 		},
+		onError: sendError,
+	});
+
+	const editMutation = useMutation(editOverrides, {
 		onSuccess: async (admin) => {
 			modal.resolve(admin);
 			await modal.hide();
@@ -80,8 +84,11 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
 					}
 					return acc;
 				}, "");
-
-			mutation.mutate({ name: value.name, type: value.type, flags });
+			if (Number(override?.overrideId) > 0) {
+				editMutation.mutate(value);
+			} else {
+				createMutation.mutate({ name: value.name, overrideType: value.type, flags });
+			}
 		},
 		defaultValues,
 		validators: {

@@ -94,10 +94,10 @@ var File_database_query_v1_filter_proto protoreflect.FileDescriptor
 
 const file_database_query_v1_filter_proto_rawDesc = "" +
 	"\n" +
-	"\x1edatabase/query/v1/filter.proto\x12\x11database.query.v1\x1a\x1bbuf/validate/validate.proto\"m\n" +
-	"\x06Filter\x12\x1a\n" +
-	"\x06offset\x18\x01 \x01(\x04B\x020\x01R\x06offset\x12\x18\n" +
-	"\x05limit\x18\x02 \x01(\x04B\x020\x01R\x05limit\x12\x12\n" +
+	"\x1edatabase/query/v1/filter.proto\x12\x11database.query.v1\x1a\x1bbuf/validate/validate.proto\"e\n" +
+	"\x06Filter\x12\x16\n" +
+	"\x06offset\x18\x01 \x01(\x04R\x06offset\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x04R\x05limit\x12\x12\n" +
 	"\x04desc\x18\x03 \x01(\bR\x04desc\x12\x19\n" +
 	"\border_by\x18\x04 \x01(\tR\aorderByB\xce\x01\n" +
 	"\x15com.database.query.v1B\vFilterProtoP\x01ZBgithub.com/leighmacdonald/gbans/internal/database/query/v1;queryv1\xa2\x02\x03DQX\xaa\x02\x11Database.Query.V1\xca\x02\x11Database\\Query\\V1\xe2\x02\x1dDatabase\\Query\\V1\\GPBMetadata\xea\x02\x13Database::Query::V1b\beditionsp\xe8\a"

@@ -3,12 +3,10 @@ import AssuredWorkloadIcon from "@mui/icons-material/AssuredWorkload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiDeleteSMGroupImmunity, apiGetSMGroupImmunities, apiGetSMGroups } from "../../api";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx";
-import type { SMGroupImmunity } from "../../schema/sourcemod.ts";
 import { logErr } from "../../util/errors";
 import { renderDateTime } from "../../util/time.ts";
 import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
@@ -16,6 +14,13 @@ import { SMGroupImmunityCreateModal } from "../modal/SMGroupImmunityCreateModal.
 import { createDefaultTableOptions } from "./options.ts";
 import { SortableTable } from "./SortableTable.tsx";
 import { TableCellString } from "./TableCellString";
+import {
+	deleteImmunity,
+	groupImmunities,
+	groups,
+} from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
+import type { SMGroupImmunity } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 
 const columnHelper = createMRTColumnHelper<SMGroupImmunity>();
 const defaultOptions = createDefaultTableOptions<SMGroupImmunity>();
@@ -24,32 +29,14 @@ export const SMImmunityTable = () => {
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const queryClient = useQueryClient();
 
-	const {
-		data: groups,
-		isLoading: isLoadingGroups,
-		isError: isErrorGroups,
-	} = useQuery({
-		queryKey: ["serverGroups"],
-		queryFn: async ({ signal }) => {
-			return await apiGetSMGroups(signal);
-		},
-	});
+	const { data: groupList, isLoading: isLoadingGroups, isError: isErrorGroups } = useQuery(groups);
 
-	const {
-		data: immunities,
-		isLoading: isLoadingImmunities,
-		isError: isErrorImmunities,
-	} = useQuery({
-		queryKey: ["serverImmunities"],
-		queryFn: async ({ signal }) => {
-			return await apiGetSMGroupImmunities(signal);
-		},
-	});
+	const { data: immunities, isLoading: isLoadingImmunities, isError: isErrorImmunities } = useQuery(groupImmunities);
 
 	const onCreateImmunity = useCallback(async () => {
 		try {
 			const immunity = (await NiceModal.show(SMGroupImmunityCreateModal, { groups })) as SMGroupImmunity;
-			queryClient.setQueryData(["serverImmunities"], [...(immunities ?? []), immunity]);
+			queryClient.setQueryData(["serverImmunities"], [...(immunities?.groupImmunities ?? []), immunity]);
 			sendFlash("success", `Group immunity created successfully: ${immunity.group_immunity_id}`);
 		} catch (e) {
 			logErr(e);
@@ -57,21 +44,16 @@ export const SMImmunityTable = () => {
 		}
 	}, [groups, immunities, queryClient, sendFlash]);
 
-	const delImmunityMutation = useMutation({
-		mutationKey: ["delGroupImmunity"],
-		mutationFn: async ({ immunity }: { immunity: SMGroupImmunity }) => {
-			const ac = new AbortController();
-			await apiDeleteSMGroupImmunity(immunity.group_immunity_id, ac.signal);
-			return immunity;
-		},
-		onSuccess: (deleted) => {
+	// FIXME should this be a separate group immunity?
+	const delImmunityMutation = useMutation(deleteImmunity, {
+		onSuccess: (_, deleted) => {
 			queryClient.setQueryData(
 				["serverImmunities"],
-				(immunities ?? []).filter((o) => {
-					return o.group_immunity_id !== deleted.group_immunity_id;
+				(immunities?.groupImmunities ?? []).filter((o) => {
+					return o.groupImmunityId !== deleted.immunityId;
 				}),
 			);
-			sendFlash("success", `Group immunity deleted successfully: ${deleted.group_immunity_id}`);
+			sendFlash("success", `Group immunity deleted successfully: ${deleted.immunityId}`);
 		},
 		onError: sendError,
 	});
@@ -86,7 +68,7 @@ export const SMImmunityTable = () => {
 				if (!confirmed) {
 					return;
 				}
-				delImmunityMutation.mutate({ immunity });
+				delImmunityMutation.mutate({ immunityId: immunity.imm });
 			} catch (e) {
 				sendFlash("error", `Failed to create confirmation modal: ${e}`);
 			}
@@ -96,12 +78,12 @@ export const SMImmunityTable = () => {
 
 	const columns = useMemo(
 		() => [
-			columnHelper.accessor("group.name", {
+			columnHelper.accessor("groupName", {
 				header: "Group",
 				grow: true,
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
-			columnHelper.accessor("other.name", {
+			columnHelper.accessor("otherName", {
 				header: "Immunity From",
 				grow: true,
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
@@ -118,7 +100,7 @@ export const SMImmunityTable = () => {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: immunities ?? [],
+		data: immunities?.groupImmunities ?? [],
 		enableFilters: true,
 		enableRowActions: true,
 		state: {
@@ -154,7 +136,7 @@ export const SMImmunityTable = () => {
 			buttons={[
 				<IconButton
 					onClick={onCreateImmunity}
-					disabled={(groups ?? []).length < 2}
+					disabled={(groupList?.groups ?? []).length < 2}
 					key="create"
 					sx={{ color: "primary.contrastText" }}
 				>

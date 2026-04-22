@@ -2,7 +2,6 @@ import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import { formatDistanceToNowStrict } from "date-fns/formatDistanceToNowStrict";
 import {
@@ -13,7 +12,6 @@ import {
 	useMaterialReactTable,
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiGetAppeals, appealStateString } from "../api";
 import { PersonCell } from "../component/PersonCell.tsx";
 import RouterLink from "../component/RouterLink.tsx";
 import { TextLink } from "../component/TextLink.tsx";
@@ -25,11 +23,14 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { AppealState, BanReason, BanReasons, type BanRecord } from "../schema/bans.ts";
 import { renderDateTime } from "../util/time.ts";
+import { appeals } from "../rpc/ban/v1/appeal-AppealService_connectquery.ts";
+import { AppealState, BanReason } from "../rpc/ban/v1/ban_pb.ts";
+import { useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
+import type { AppealOverview } from "../rpc/ban/v1/appeal_pb.ts";
 
-const columnHelper = createMRTColumnHelper<BanRecord>();
-const defaultOptions = createDefaultTableOptions<BanRecord>();
+const columnHelper = createMRTColumnHelper<AppealOverview>();
+const defaultOptions = createDefaultTableOptions<AppealOverview>();
 const defaultValues = makeSchemaDefaults({ defaultColumn: "ban_id" });
 const validateSearch = makeSchemaState("ban_id");
 
@@ -48,12 +49,7 @@ function AdminAppeals() {
 	const navigate = useNavigate();
 	const theme = useTheme();
 	const search = Route.useSearch();
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["appeals"],
-		queryFn: async ({ signal }) => {
-			return (await apiGetAppeals({}, signal)) ?? [];
-		},
-	});
+	const { data, isLoading, isError } = useSuspenseQuery(appeals);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		(updater) => {
@@ -100,7 +96,7 @@ function AdminAppeals() {
 
 	const columns = useMemo(
 		() => [
-			columnHelper.accessor("ban_id", {
+			columnHelper.accessor("ban.banId", {
 				header: "ID",
 				grow: false,
 				Cell: ({ cell }) => (
@@ -114,7 +110,7 @@ function AdminAppeals() {
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("appeal_state", {
+			columnHelper.accessor("ban.appealState", {
 				header: "Status",
 				grow: false,
 				filterVariant: "multi-select",
@@ -125,8 +121,8 @@ function AdminAppeals() {
 				filterFn: (row, _, filterValue) => {
 					return (
 						filterValue.length === 0 ||
-						filterValue.includes(AppealState.Any) ||
-						filterValue.includes(row.original.appeal_state)
+						filterValue.includes(AppealState.OPEN_UNSPECIFIED) ||
+						filterValue.includes(row.original.ban?.appealState)
 					);
 				},
 				Cell: ({ cell }) => (
@@ -135,7 +131,7 @@ function AdminAppeals() {
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("source_id", {
+			columnHelper.accessor("ban.sourceId", {
 				header: "Author",
 				grow: true,
 				filterFn: (row, _, filterValue) => {
@@ -143,11 +139,11 @@ function AdminAppeals() {
 					if (query === "") {
 						return true;
 					}
-					const value = row.original.source_id.toLowerCase();
+					const value = row.original.ban?.sourceId.toString();
 					if (value.includes(query)) {
 						return true;
 					}
-					if (row.original.source_id.includes(query) || row.original.source_id === query) {
+					if (row.original.ban?.sourceId.toString().includes(query) || row.original.ban?.sourceId === query) {
 						return true;
 					}
 
@@ -155,9 +151,9 @@ function AdminAppeals() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.source_id}
-						personaname={row.original.source_personaname}
-						avatar_hash={row.original.source_avatarhash}
+						steam_id={row.original.ban?.sourceId}
+						personaname={row.original.sourcePersonaName}
+						avatar_hash={row.original.sourceAvatarHash}
 					>
 						<RouterLink
 							to={Route.fullPath}
@@ -167,14 +163,14 @@ function AdminAppeals() {
 										? theme.palette.primary.light
 										: theme.palette.primary.dark,
 							}}
-							search={setColumnFilter(search, "source_id", row.original.source_id)}
+							search={setColumnFilter(search, "source_id", row.original.ban.sourceId)}
 						>
-							{row.original.source_personaname ?? row.original.source_id}
+							{row.original.sourcePersonaName ?? row.original.ban.sourceId}
 						</RouterLink>
 					</PersonCell>
 				),
 			}),
-			columnHelper.accessor("target_id", {
+			columnHelper.accessor("ban.targetId", {
 				header: "Subject",
 				enableColumnFilter: true,
 				grow: true,
@@ -183,11 +179,11 @@ function AdminAppeals() {
 					if (query === "") {
 						return true;
 					}
-					const value = row.original.target_personaname.toLowerCase();
+					const value = row.original.targetPersonaName.toLowerCase();
 					if (value.includes(query)) {
 						return true;
 					}
-					if (row.original.target_id.includes(query) || row.original.target_id === query) {
+					if (row.original.ban.targetId.includes(query) || row.original.ban.targetId === query) {
 						return true;
 					}
 
@@ -195,9 +191,9 @@ function AdminAppeals() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.target_id}
-						personaname={row.original.target_personaname}
-						avatar_hash={row.original.target_avatarhash}
+						steam_id={row.original.ban?.targetId}
+						personaname={row.original.targetPersonaName}
+						avatar_hash={row.original.targetAvatarHash}
 					>
 						<RouterLink
 							style={{
@@ -207,40 +203,40 @@ function AdminAppeals() {
 										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
-							search={setColumnFilter(search, "target_id", row.original.target_id)}
+							search={setColumnFilter(search, "target_id", row.original.ban?.targetId)}
 						>
-							{row.original.target_personaname ?? row.original.target_id}
+							{row.original.targetPersonaName ?? row.original.ban?.targetId}
 						</RouterLink>
 					</PersonCell>
 				),
 			}),
-			columnHelper.accessor("reason", {
+			columnHelper.accessor("ban.reason", {
 				filterVariant: "multi-select",
 				header: "Reason",
 				size: 150,
 				filterSelectOptions: Object.values(BanReason).map((reason) => ({
-					label: BanReasons[reason],
+					label: BanReason[reason as BanReason].toString(),
 					value: reason,
 				})),
 				filterFn: (row, _, filterValue) => {
 					return (
 						filterValue.length === 0 ||
-						filterValue.includes(BanReason.Any) ||
-						filterValue.includes(row.original.reason)
+						filterValue.includes(BanReason.UNSPECIFIED) ||
+						filterValue.includes(row.original.ban?.reason)
 					);
 				},
 				Cell: ({ cell }) => (
 					<TextLink to={Route.fullPath} search={setColumnFilter(search, "reason", [cell.getValue()])}>
-						{BanReasons[cell.getValue()]}
+						{BanReason[cell.getValue() as BanReason]}
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("reason_text", {
+			columnHelper.accessor("ban.reasonText", {
 				header: "Custom",
 				filterVariant: "text",
 				grow: true,
 			}),
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("ban.createdOn", {
 				header: "Created",
 				filterVariant: "date",
 				Cell: ({ cell }) => (
@@ -249,7 +245,7 @@ function AdminAppeals() {
 					</Tooltip>
 				),
 			}),
-			columnHelper.accessor("updated_on", {
+			columnHelper.accessor("ban.updatedOn", {
 				header: "Last Active",
 				enableColumnFilter: false,
 				Cell: ({ cell }) => (
@@ -265,7 +261,7 @@ function AdminAppeals() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ?? [],
+		data: data?.appeals ?? [],
 		enableFilters: true,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,

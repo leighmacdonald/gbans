@@ -1,7 +1,6 @@
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
@@ -12,7 +11,6 @@ import {
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { z } from "zod/v4";
-import { apiGetServerLogs, apiGetServers } from "../api/index.ts";
 import { TextLink } from "../component/TextLink.tsx";
 import {
 	createDefaultTableOptions,
@@ -24,9 +22,11 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import type { ServerLog, ServerSimple } from "../schema/server.ts";
 import { stringToColour } from "../util/colours.ts";
-import { renderDateTime } from "../util/time.ts";
+import { renderTimestamp } from "../util/time.ts";
+import type { ServerLog } from "../rpc/servers/v1/servers_pb.ts";
+import { queryLogs, servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
+import { useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
 
 const columnHelper = createMRTColumnHelper<ServerLog>();
 const defaultOptions = createDefaultTableOptions<ServerLog>();
@@ -47,36 +47,17 @@ export const Route = createFileRoute("/_admin/admin/serverlogs")({
 			meta: [{ name: "description", content: "Server Logs" }, match.context.title("Server Logs")],
 		};
 	},
-	component: AdminServerlogs,
-	loader: async ({ context }) => {
-		const unsorted = await context.queryClient.ensureQueryData({
-			queryKey: ["serversSimple"],
-			queryFn: ({ signal }) => apiGetServers(signal) ?? [],
-		});
-		return (unsorted ?? []).sort((a, b) => {
-			return a.server_name > b.server_name ? 1 : a.server_name < b.server_name ? -1 : 0;
-		});
-	},
+	component: AdminServerLogs,
 });
 
-function AdminServerlogs() {
+function AdminServerLogs() {
 	const search = Route.useSearch();
 	const navigate = Route.useNavigate();
-	const servers = Route.useLoaderData();
 
-	const { data, isLoading, isError, isRefetching } = useQuery({
-		queryKey: ["serverLogs", { search }],
-		queryFn: async ({ signal }) => {
-			const server_ids = filterValueNumberArray("server_ids", search.columnFilters);
-			return (
-				(await apiGetServerLogs(
-					{
-						server_ids,
-					},
-					signal,
-				)) ?? []
-			);
-		},
+	const { data: serverData } = useSuspenseQuery(servers);
+
+	const { data, isLoading, isError, isRefetching } = useQuery(queryLogs, {
+		serverId: filterValueNumberArray("server_ids", search.columnFilters),
 	});
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
@@ -123,32 +104,32 @@ function AdminServerlogs() {
 
 	const columns = useMemo(() => {
 		return [
-			columnHelper.accessor("server_id", {
+			columnHelper.accessor("serverId", {
 				header: "Server ID",
 				grow: false,
 				enableSorting: false,
 				filterVariant: "multi-select",
-				filterSelectOptions: (servers ?? []).map((server: ServerSimple) => ({
-					label: server.server_name,
-					value: server.server_id,
+				filterSelectOptions: (serverData.servers ?? []).map((server) => ({
+					label: server.serverName,
+					value: server.serverId,
 				})),
 				filterFn: (row, _, filterValue) => {
-					return filterValue.length === 0 || filterValue.includes(row.original.server_id);
+					return filterValue.length === 0 || filterValue.includes(row.original.serverId);
 				},
 				Cell: ({ row, cell }) => (
-					<Tooltip title={row.original.server_name}>
+					<Tooltip title={row.original.serverName}>
 						<TextLink
 							to={"/chatlogs"}
 							search={setColumnFilter(search, "server_ids", [cell.getValue()])}
-							sx={{ color: stringToColour(row.original.server_name ?? "") }}
+							sx={{ color: stringToColour(row.original.serverName ?? "") }}
 						>
-							{row.original.server_name}
+							{row.original.serverName}
 						</TextLink>
 					</Tooltip>
 				),
 			}),
 
-			columnHelper.accessor("server_name", {
+			columnHelper.accessor("serverName", {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
@@ -157,7 +138,7 @@ function AdminServerlogs() {
 				},
 				header: "Server Name",
 				Cell: ({ cell, row }) => (
-					<Typography sx={{ color: stringToColour(row.original.server_name) }}>{cell.getValue()}</Typography>
+					<Typography sx={{ color: stringToColour(row.original.serverName) }}>{cell.getValue()}</Typography>
 				),
 			}),
 
@@ -167,11 +148,11 @@ function AdminServerlogs() {
 				grow: true,
 			}),
 
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "Created On",
 				enableColumnFilter: false,
 				grow: false,
-				Cell: ({ cell }) => renderDateTime(cell.getValue()),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
 		];
 	}, [servers, search]);
@@ -179,7 +160,7 @@ function AdminServerlogs() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data?.data ?? [],
+		data: data?.logs ?? [],
 		rowCount: data?.count ?? 0,
 		enableFilters: true,
 		displayColumnDefOptions: makeRowActionsDefOptions(2),

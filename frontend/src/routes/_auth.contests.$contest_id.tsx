@@ -15,8 +15,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { formatDistanceToNowStrict } from "date-fns/formatDistanceToNowStrict";
 import { isAfter } from "date-fns/fp";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { apiContest, apiContestEntries, apiContestEntryVote } from "../api";
+import { useCallback, useMemo } from "react";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { InfoBar } from "../component/InfoBar.tsx";
 import { LoadingSpinner } from "../component/LoadingSpinner.tsx";
@@ -29,27 +28,18 @@ import { PersonCell } from "../component/PersonCell.tsx";
 import { VCenterBox } from "../component/VCenterBox.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { type Asset, MediaTypes, mediaType } from "../schema/asset.ts";
-import type { ContestEntry } from "../schema/contest.ts";
-import { PermissionLevel } from "../schema/people.ts";
 import { logErr } from "../util/errors.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { humanFileSize } from "../util/text.tsx";
+import { useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
+import { contest, entries } from "../rpc/contest/v1/contest-Service_connectquery.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import type { Asset } from "../rpc/asset/v1/asset_pb.ts";
 
 export const Route = createFileRoute("/_auth/contests/$contest_id")({
 	component: Contest,
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(context.appInfo.contestsEnabled);
-	},
-	loader: async ({ context, params }) => {
-		const { contest_id } = params;
-		const contest = await context.queryClient.fetchQuery({
-			queryKey: ["contest", { contest_id }],
-			queryFn: async ({ signal }) => {
-				return await apiContest(contest_id, signal);
-			},
-		});
-		return { contest };
 	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Contests" }, match.context.title("Contests")],
@@ -58,12 +48,12 @@ export const Route = createFileRoute("/_auth/contests/$contest_id")({
 
 function Contest() {
 	const { contest_id } = Route.useParams();
-	const { contest } = Route.useLoaderData();
+
 	const { appInfo } = Route.useRouteContext();
-	const [entries, setEntries] = useState<ContestEntry[]>([]);
-	const [entriesLoading, setEntriesLoading] = useState(false);
 	const { hasPermission, profile } = useAuth();
 	const { sendFlash } = useUserFlashCtx();
+
+	const { data } = useSuspenseQuery(contest, { contestId: contest_id });
 
 	const onEnter = useCallback(async (contest_id: string) => {
 		try {
@@ -73,33 +63,15 @@ function Contest() {
 		}
 	}, []);
 
-	const updateEntries = useCallback(() => {
-		if (!contest?.contest_id) {
-			return;
-		}
-		setEntriesLoading(true);
-		const ac = new AbortController();
-		apiContestEntries(contest?.contest_id, ac.signal)
-			.then((entries) => {
-				setEntries(entries);
-			})
-			.catch(logErr)
-			.finally(() => {
-				setEntriesLoading(false);
-			});
-	}, [contest?.contest_id]);
-
-	useEffect(() => {
-		updateEntries();
-	}, [updateEntries]);
+	const { data: contestEntries, isLoading: entriesLoading } = useQuery(entries, {});
 
 	const showEntries = useMemo(() => {
-		return (contest && !contest.hide_submissions) || hasPermission(PermissionLevel.Moderator);
+		return (data.contest && !data.contest?.hideSubmissions) || hasPermission(Privilege.MODERATOR);
 	}, [contest, hasPermission]);
 
 	const vote = useCallback(
 		async (contest_entry_id: string, up_vote: boolean) => {
-			if (!contest?.contest_id) {
+			if (!data.contest?.contestId) {
 				return;
 			}
 			try {
@@ -141,11 +113,11 @@ function Contest() {
 	return (
 		<Grid container spacing={3}>
 			<Grid size={{ xs: 8 }}>
-				<ContainerWithHeader title={`Contest: ${contest?.title}`} iconLeft={<EmojiEventsIcon />}>
+				<ContainerWithHeader title={`Contest: ${data.contest?.title}`} iconLeft={<EmojiEventsIcon />}>
 					<Grid container>
 						<Grid size={{ xs: 12 }} minHeight={400}>
 							<Typography variant={"body1"} padding={2}>
-								{contest?.description}
+								{data.contest?.description}
 							</Typography>
 						</Grid>
 					</Grid>
@@ -156,37 +128,37 @@ function Contest() {
 					<Stack spacing={2}>
 						<InfoBar
 							title={"Starting Date"}
-							value={format(contest.date_start, "dd/MM/yy H:m")}
+							value={format(data.contest?.dateStart, "dd/MM/yy H:m")}
 							align={"right"}
 						/>
 
 						<InfoBar
 							title={"Ending Date"}
-							value={format(contest.date_end, "dd/MM/yy H:m")}
+							value={format(data.contest?.dateEnd, "dd/MM/yy H:m")}
 							align={"right"}
 						/>
 
 						<InfoBar
 							title={"Remaining"}
 							value={
-								isAfter(contest.date_end, new Date())
+								isAfter(data.contest?.dateEnd, new Date())
 									? "Expired"
-									: formatDistanceToNowStrict(contest.date_end)
+									: formatDistanceToNowStrict(data.contest?.dateEnd)
 							}
 							align={"right"}
 						/>
 
-						<InfoBar title={"Max Entries Per User"} value={contest.max_submissions} align={"right"} />
+						<InfoBar title={"Max Entries Per User"} value={data.contest?.maxSubmissions} align={"right"} />
 
-						<InfoBar title={"Total Entries"} value={entries.length} align={"right"} />
+						<InfoBar title={"Total Entries"} value={contestEntries?.entries.length} align={"right"} />
 						<Button
 							fullWidth
 							variant={"contained"}
 							color={"success"}
-							disabled={isAfter(contest.date_end, new Date())}
+							disabled={isAfter(data.contest?.dateEnd, new Date())}
 							startIcon={<PublishIcon />}
 							onClick={async () => {
-								await onEnter(contest.contest_id as string);
+								await onEnter(data.contest?.contestId as string);
 							}}
 						>
 							Submit Entry
@@ -209,11 +181,11 @@ function Contest() {
 					)}
 					<Grid size={{ xs: 12 }}>
 						<Stack spacing={2}>
-							{entries
-								.filter((e) => showEntries || e.steam_id === profile.steam_id)
+							{contestEntries?.entries
+								.filter((e) => showEntries || e.steamId === profile.steamId)
 								.map((entry) => {
 									return (
-										<Stack key={entry.contest_entry_id}>
+										<Stack key={entry.contestEntryId}>
 											<Paper elevation={2}>
 												<Grid container>
 													<Grid size={{ xs: 8 }} padding={2}>
@@ -229,36 +201,36 @@ function Contest() {
 													</Grid>
 													<Grid size={{ xs: 4 }} padding={2}>
 														<PersonCell
-															steam_id={entry.steam_id}
-															personaname={entry.personaname}
-															avatar_hash={entry.avatar_hash}
+															steam_id={entry.steamId}
+															personaname={entry.personaName}
+															avatar_hash={entry.avatarHash}
 														/>
 														<Typography variant={"subtitle1"}>File Details</Typography>
-														<Typography variant={"body2"}>{entry.asset.name}</Typography>
+														<Typography variant={"body2"}>{entry.asset?.name}</Typography>
 														<Typography variant={"body2"}>
-															{entry.asset.mime_type}
+															{entry.asset?.mimeType}
 														</Typography>
 														<Typography variant={"body2"}>
-															{humanFileSize(entry.asset.size)}
+															{humanFileSize(Number(entry.asset?.size))}
 														</Typography>
 														<ButtonGroup fullWidth>
 															<Button
 																disabled={
 																	!(
-																		hasPermission(PermissionLevel.Moderator) ||
-																		profile.steam_id === entry.steam_id
+																		hasPermission(Privilege.MODERATOR) ||
+																		profile.steamId === entry.steamId
 																	)
 																}
 																color={"error"}
 																variant={"contained"}
 																onClick={async () => {
-																	await onDeleteEntry(entry.contest_entry_id);
+																	await onDeleteEntry(entry.contestEntryId);
 																}}
 															>
 																Delete
 															</Button>
 
-															{mediaType(entry.asset.mime_type) !== MediaTypes.other ? (
+															{mediaType(entry.asset.mimeType) !== MediaTypes.other ? (
 																<Button
 																	startIcon={<PageviewIcon />}
 																	fullWidth
@@ -279,7 +251,10 @@ function Contest() {
 											</Paper>
 											<Stack direction={"row"} padding={1} spacing={2}>
 												<ButtonGroup
-													disabled={!contest.voting || isAfter(contest.date_end, new Date())}
+													disabled={
+														!data.contest?.voting ||
+														isAfter(data.contest?.dateEnd, new Date())
+													}
 												>
 													<Button
 														size={"small"}
@@ -287,27 +262,27 @@ function Contest() {
 														startIcon={<ThumbUpIcon />}
 														color={"success"}
 														onClick={async () => {
-															await vote(entry.contest_entry_id, true);
+															await vote(entry.contestEntryId, true);
 														}}
 													>
-														{entry.votes_up}
+														{entry.votesUp}
 													</Button>
 													<Button
 														size={"small"}
 														variant={"contained"}
 														startIcon={<ThumbDownIcon />}
 														color={"error"}
-														disabled={!contest.down_votes}
+														disabled={!data.contest?.downVotes}
 														onClick={async () => {
-															await vote(entry.contest_entry_id, false);
+															await vote(entry.contestEntryId, false);
 														}}
 													>
-														{entry.votes_down}
+														{entry.votesDown}
 													</Button>
 												</ButtonGroup>
 												<VCenterBox>
 													<Typography variant={"caption"}>
-														{`Updated: ${format(entry.updated_on, "dd/MM/yy H:m")}`}
+														{`Updated: ${format(entry.updatedOn, "dd/MM/yy H:m")}`}
 													</Typography>
 												</VCenterBox>
 											</Stack>

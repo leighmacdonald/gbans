@@ -227,8 +227,8 @@ message Forum {
   string title = 4 [(buf.validate.field).required = true];
   string description = 5 [(buf.validate.field).required = true];
   int32 ordering = 6 [(buf.validate.field).required = true];
-  int64 count_threads = 7 [(buf.validate.field).required = true];
-  int64 count_messages = 8 [(buf.validate.field).required = true];
+  int32 count_threads = 7 [(buf.validate.field).required = true];
+  int32 count_messages = 8 [(buf.validate.field).required = true];
   person.v1.Privilege permission_level = 9 [(buf.validate.field).required = true];
   int32 recent_forum_thread_id = 10;
   string recent_forum_title = 11;

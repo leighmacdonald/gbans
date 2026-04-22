@@ -43,9 +43,9 @@ type SafeServer struct {
 	Bots              int32    `json:"bots"`
 	Map               string   `json:"map"`
 	GameTypes         []string `json:"game_types"`
-	Latitude          float64  `json:"latitude"`
-	Longitude         float64  `json:"longitude"`
-	Distance          float64  `json:"distance"`
+	Latitude          float32  `json:"latitude"`
+	Longitude         float32  `json:"longitude"`
+	Distance          float32  `json:"distance"`
 	Humans            int32    `json:"humans"`
 	Tags              []string `json:"tags"`
 }
@@ -80,9 +80,9 @@ type Server struct {
 	// CC is the 2 letter country code. Used for flags emojis.
 	CC string `json:"cc"`
 	// Physical Latitude location
-	Latitude float64 `json:"latitude"`
+	Latitude float32 `json:"latitude"`
 	// Physical Longitude location
-	Longitude float64 `json:"longitude"`
+	Longitude float32 `json:"longitude"`
 	// LogSecret is a unique integer used to "authenticate" UDP log packets.
 	LogSecret   int32 `json:"log_secret"`
 	EnableStats bool  `json:"enable_stats"`

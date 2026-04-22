@@ -43,3 +43,8 @@ export const reportMessageEdit = ReportService.method.reportMessageEdit;
  * @generated from rpc ban.v1.ReportService.ReportMessageDelete
  */
 export const reportMessageDelete = ReportService.method.reportMessageDelete;
+
+/**
+ * @generated from rpc ban.v1.ReportService.Reports
+ */
+export const reports = ReportService.method.reports;

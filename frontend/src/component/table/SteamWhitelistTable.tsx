@@ -5,19 +5,20 @@ import IconButton from "@mui/material/IconButton";
 import TableCell from "@mui/material/TableCell";
 import Typography from "@mui/material/Typography";
 import { Grid } from "@mui/system";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiDeleteWhitelistSteam, apiGetCIDRBlockListsSteamWhitelist } from "../../api";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx";
-import type { WhitelistSteam } from "../../schema/network";
 import { logErr } from "../../util/errors";
-import { renderDate } from "../../util/time";
+import { renderTimestamp } from "../../util/time";
 import { ConfirmationModal } from "../modal/ConfirmationModal";
 import { SteamWhitelistEditorModal } from "../modal/SteamWhitelistEditorModal";
 import { PersonCell } from "../PersonCell";
 import { createDefaultTableOptions } from "./options";
 import { SortableTable } from "./SortableTable";
+import { whitelistSteam, whitelistSteamDelete } from "../../rpc/network/v1/blocklist-BlocklistService_connectquery.ts";
+import type { WhitelistSteam } from "../../rpc/network/v1/blocklist_pb.ts";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 
 const columnHelperSteam = createMRTColumnHelper<WhitelistSteam>();
 const defaultOptionsSteam = createDefaultTableOptions<WhitelistSteam>();
@@ -27,19 +28,9 @@ export const SteamWhitelistTable = () => {
 	const queryClient = useQueryClient();
 	const { sendFlash, sendError } = useUserFlashCtx();
 
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["networkSteamWhitelist"],
-		queryFn: async ({ signal }) => {
-			return await apiGetCIDRBlockListsSteamWhitelist(signal);
-		},
-	});
+	const { data, isLoading, isError } = useQuery(whitelistSteam);
 
-	const steamWhitelistDelete = useMutation({
-		mutationKey: ["networkSteamWhitelistDelete"],
-		mutationFn: async (variables: { steam_id: string }) => {
-			const ac = new AbortController();
-			await apiDeleteWhitelistSteam(variables.steam_id, ac.signal);
-		},
+	const steamWhitelistDelete = useMutation(whitelistSteamDelete, {
 		onSuccess: () => {
 			sendFlash("success", "Steam whitelist deleted");
 		},
@@ -52,8 +43,8 @@ export const SteamWhitelistTable = () => {
 
 			queryClient.setQueryData(
 				["networkSteamWhitelist"],
-				(data ?? []).map((src) => {
-					return src.steam_id === newSource.steam_id ? newSource : src;
+				(data?.whitelists ?? []).map((src) => {
+					return src.steamId === newSource.steamId ? newSource : src;
 				}),
 			);
 			sendFlash("success", "Steam whitelist added");
@@ -70,7 +61,7 @@ export const SteamWhitelistTable = () => {
 					children: "This action is permanent",
 				});
 				if (confirmed) {
-					steamWhitelistDelete.mutate({ steam_id: wl.steam_id });
+					steamWhitelistDelete.mutate({ steamId: wl.steamId });
 				}
 				await confirmModal.hide();
 			} catch (e) {
@@ -82,23 +73,23 @@ export const SteamWhitelistTable = () => {
 
 	const columns = useMemo(
 		() => [
-			columnHelperSteam.accessor("steam_id", {
+			columnHelperSteam.accessor("steamId", {
 				header: "Steam ID",
 				grow: true,
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.steam_id}
-						avatar_hash={row.original.avatar_hash}
-						personaname={row.original.personaname}
+						steam_id={row.original.steamId}
+						avatar_hash={row.original.avatarHash}
+						personaname={row.original.personaName}
 					/>
 				),
 			}),
-			columnHelperSteam.accessor("created_on", {
+			columnHelperSteam.accessor("createdOn", {
 				header: "Updated",
 				grow: false,
 				Cell: ({ cell }) => (
 					<TableCell>
-						<Typography>{renderDate(cell.getValue())}</Typography>
+						<Typography>{renderTimestamp(cell.getValue())}</Typography>
 					</TableCell>
 				),
 			}),
@@ -109,7 +100,7 @@ export const SteamWhitelistTable = () => {
 	const table = useMaterialReactTable({
 		...defaultOptionsSteam,
 		columns,
-		data: data ?? [],
+		data: data?.whitelists ?? [],
 		enableFilters: true,
 		enableHiding: true,
 		enableFacetedValues: true,

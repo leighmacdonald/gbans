@@ -37,13 +37,8 @@ import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import {
-	communityVisibilityState,
-	PermissionLevel,
-	type PermissionLevelEnum,
-	type Person,
-	permissionLevelString,
-} from "../schema/people.ts";
+import type { Person } from "../rpc/person/v1/person_pb.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 
 const defaultValues = makeSchemaDefaults({ defaultColumn: "created_on" });
 const validateSearch = makeSchemaState("created_on");
@@ -82,7 +77,7 @@ function AdminPeople() {
 					offset: search.pagination ? search.pagination.pageIndex * search.pagination?.pageSize : 0,
 					order_by: sort ? sort.id : "created_on",
 					with_permissions: filterValueNumberArray<Person, PermissionLevelEnum>(
-						"permission_level",
+						"permissionLevel",
 						search.columnFilters,
 					),
 					steam_ids: steam_id && steam_id !== "" ? [steam_id] : [],
@@ -110,6 +105,7 @@ function AdminPeople() {
 		},
 		[sendFlash],
 	);
+
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		(updater) => {
 			navigate({
@@ -155,15 +151,15 @@ function AdminPeople() {
 
 	const columns = useMemo(() => {
 		return [
-			columnHelper.accessor("steam_id", {
+			columnHelper.accessor("steamId", {
 				header: "SteamID",
 				grow: true,
 				Cell: ({ row }) => {
 					return (
 						<PersonCell
-							steam_id={row.original.steam_id}
-							personaname={row.original.persona_name}
-							avatar_hash={row.original.avatarhash}
+							steam_id={row.original.steamId}
+							personaname={row.original.personaName}
+							avatar_hash={row.original.avatarHash}
 						>
 							<RouterLink
 								style={{
@@ -173,15 +169,15 @@ function AdminPeople() {
 											: theme.palette.primary.dark,
 								}}
 								to={Route.fullPath}
-								search={setColumnFilter(search, "steam_id", row.original.steam_id)}
+								search={setColumnFilter(search, "steam_id", row.original.steamId)}
 							>
-								{row.original.persona_name ?? row.original.steam_id}
+								{row.original.personaName ?? row.original.steamId}
 							</RouterLink>
 						</PersonCell>
 					);
 				},
 			}),
-			columnHelper.accessor("community_visibility_state", {
+			columnHelper.accessor("visibilityState", {
 				header: "Visibility",
 				grow: false,
 				Cell: ({ cell }) => (
@@ -190,38 +186,38 @@ function AdminPeople() {
 					</Typography>
 				),
 			}),
-			columnHelper.accessor("vac_bans", {
+			columnHelper.accessor("vacBans", {
 				header: "Vac Bans",
 				grow: false,
 				Cell: ({ cell }) => (
 					<Typography variant={"body1"}>{cell.getValue() > 0 ? cell.getValue() : ""}</Typography>
 				),
 			}),
-			columnHelper.accessor("community_banned", {
+			columnHelper.accessor("communityBanned", {
 				header: "Comm Ban",
 				grow: false,
 				filterVariant: "checkbox",
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue()} />,
 			}),
 
-			columnHelper.accessor("time_created", {
+			columnHelper.accessor("timeCreated", {
 				header: "Created",
 				grow: false,
 				Cell: ({ cell }) => <TableCellRelativeDateField date={fromUnixTime(cell.getValue())} />,
 			}),
 
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "First Seen",
 				grow: false,
 				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} />,
 			}),
 
-			columnHelper.accessor("permission_level", {
+			columnHelper.accessor("permissionLevel", {
 				header: "Perms",
 				grow: false,
 				filterVariant: "multi-select",
-				filterSelectOptions: Object.values(PermissionLevel).map((perm) => ({
-					label: permissionLevelString(perm),
+				filterSelectOptions: Object.values(Privilege).map((perm) => ({
+					label: Privilege[perm],
 					value: perm,
 				})),
 				Cell: ({ row }) => (
@@ -270,7 +266,7 @@ function AdminPeople() {
 		renderRowActions: ({ row }) => (
 			<RowActionContainer>
 				<IconButton
-					disabled={!hasPermission(PermissionLevel.Admin)}
+					disabled={!hasPermission(Privilege.ADMIN)}
 					color={"warning"}
 					onClick={() => onEditPerson(row.original)}
 					key={"editperms"}

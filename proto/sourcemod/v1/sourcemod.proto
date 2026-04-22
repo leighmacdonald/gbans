@@ -84,14 +84,17 @@ message SMUsersResponse {
   repeated SMUserGroup user_groups = 2 [(buf.validate.field).required = true];
 }
 
-message SMGroup {
-  string flags = 1 [(buf.validate.field).required = true];
-  string name = 2 [(buf.validate.field).required = true];
-  int32 immunity_level = 3 [(buf.validate.field).required = true];
+message Group {
+  int32 group_id = 1 [(buf.validate.field).required = true];
+  string flags = 2 [(buf.validate.field).required = true];
+  string name = 3 [(buf.validate.field).required = true];
+  int32 immunity_level = 4 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 5;
+  google.protobuf.Timestamp updated_on = 6;
 }
 
 message SMGroupsResponse {
-  repeated SMGroup groups = 1 [(buf.validate.field).required = true];
+  repeated Group groups = 1 [(buf.validate.field).required = true];
   repeated SMGroupImmunity immunities = 2 [(buf.validate.field).required = true];
 }
 
@@ -305,15 +308,6 @@ message GroupImmunity {
   Group group = 2 [(buf.validate.field).required = true];
   Group other = 3 [(buf.validate.field).required = true];
   google.protobuf.Timestamp created_on = 4 [(buf.validate.field).required = true];
-}
-
-message Group {
-  int32 group_id = 1 [(buf.validate.field).required = true];
-  string flags = 2 [(buf.validate.field).required = true];
-  string name = 3 [(buf.validate.field).required = true];
-  int32 immunity_level = 4 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp created_on = 5 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp updated_on = 6 [(buf.validate.field).required = true];
 }
 
 enum OverrideType {

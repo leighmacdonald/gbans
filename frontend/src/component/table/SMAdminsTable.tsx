@@ -6,126 +6,97 @@ import GroupRemoveIcon from "@mui/icons-material/GroupRemove";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiAddAdminToGroup, apiDelAdminFromGroup, apiDeleteSMAdmin, apiGetSMAdmins, apiGetSMGroups } from "../../api";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { SMAdmin, SMGroups } from "../../schema/sourcemod.ts";
-import { renderDateTime } from "../../util/time.ts";
 import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
 import { SMAdminEditorModal } from "../modal/SMAdminEditorModal.tsx";
 import { SMGroupSelectModal } from "../modal/SMGroupSelectModal.tsx";
 import { createDefaultTableOptions } from "./options.ts";
 import { SortableTable } from "./SortableTable.tsx";
 import { TableCellString } from "./TableCellString.tsx";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
+import {
+	addAdminGroup,
+	deleteAdmin,
+	deleteAdminGroup,
+	sMGroups,
+	sMUsers,
+} from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
+import type { SMGroup, SMUser, SMUserValid } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
+import { useQueryClient } from "@tanstack/react-query";
 
-const columnHelperAdmins = createMRTColumnHelper<SMAdmin>();
-const defaultOptionsAdmins = createDefaultTableOptions<SMAdmin>();
+const columnHelperAdmins = createMRTColumnHelper<SMUser>();
+const defaultOptionsAdmins = createDefaultTableOptions<SMUser>();
 
 export const SMAdminsTable = () => {
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const queryClient = useQueryClient();
 
-	const {
-		data: groups,
-		isLoading: isLoadingGroups,
-		isError: isErrorGroups,
-	} = useQuery({
-		queryKey: ["serverGroups"],
-		queryFn: async ({ signal }) => {
-			return await apiGetSMGroups(signal);
-		},
-	});
+	const { data: groups, isLoading: isLoadingGroups, isError: isErrorGroups } = useQuery(sMGroups);
 
-	const {
-		data: admins,
-		isLoading: isLoadingAdmins,
-		isError: isErrorAdmins,
-	} = useQuery({
-		queryKey: ["serverAdmins"],
-		queryFn: async ({ signal }) => {
-			return await apiGetSMAdmins(signal);
-		},
-	});
+	const { data: admins, isLoading: isLoadingAdmins, isError: isErrorAdmins } = useQuery(sMUsers);
 
 	const onCreateAdmin = async () => {
 		try {
 			const admin = (await NiceModal.show(SMAdminEditorModal, {
-				groups,
-			})) as SMAdmin;
-			queryClient.setQueryData(["serverAdmins"], [...(admins ?? []), admin]);
+				groups: groups?.groups,
+			})) as SMUser;
+			queryClient.setQueryData(["serverAdmins"], [...(admins?.users ?? []), admin]);
 			sendFlash("success", `Admin created successfully: ${admin.name}`);
 		} catch (e) {
 			sendError(e);
 		}
 	};
 
-	const deleteAdmin = useMutation({
-		mutationKey: ["SMAdminDelete"],
-		mutationFn: async (admin: SMAdmin) => {
-			const ac = new AbortController();
-			await apiDeleteSMAdmin(admin.admin_id, ac.signal);
-			return admin;
-		},
-		onSuccess: (admin) => {
+	const deleteAdminFn = useMutation(deleteAdmin, {
+		onSuccess: (_, req) => {
 			queryClient.setQueryData(
 				["serverAdmins"],
-				(admins ?? []).filter((a) => a.admin_id !== admin.admin_id),
+				(admins?.users ?? []).filter((a) => a.id !== req.adminId),
 			);
 			sendFlash("success", "Admin deleted successfully");
 		},
 		onError: sendError,
 	});
 
-	const addGroupMutation = useMutation({
-		mutationKey: ["addAdminGroup"],
-		mutationFn: async ({ admin, group }: { admin: SMAdmin; group: SMGroups }) => {
-			const ac = new AbortController();
-			return await apiAddAdminToGroup(admin.admin_id, group.group_id, ac.signal);
-		},
+	const addGroupMutation = useMutation(addAdminGroup, {
 		onSuccess: (edited) => {
 			queryClient.setQueryData(
 				["serverAdmins"],
-				(admins ?? []).map((a) => {
-					return a.admin_id === edited.admin_id ? edited : a;
+				(admins?.users ?? []).map((a) => {
+					return a.id === edited.admin?.adminId ? edited : a;
 				}),
 			);
-			sendFlash("success", `Admin updated successfully: ${edited.name}`);
+			sendFlash("success", `Admin updated successfully: ${edited.admin?.name}`);
 		},
 		onError: sendError,
 	});
 
-	const delGroupMutation = useMutation({
-		mutationKey: ["addAdminGroup"],
-		mutationFn: async ({ admin, group }: { admin: SMAdmin; group: SMGroups }) => {
-			const ac = new AbortController();
-			return await apiDelAdminFromGroup(admin.admin_id, group.group_id, ac.signal);
-		},
-		onSuccess: (edited) => {
+	const delGroupMutation = useMutation(deleteAdminGroup, {
+		onSuccess: (_, req) => {
 			// FIXME
 			queryClient.setQueryData(
 				["serverAdmins"],
-				(admins ?? []).filter((a) => {
-					return a.admin_id !== edited.admin_id;
+				(admins?.users ?? []).filter((a) => {
+					return a.id !== req.adminId;
 				}),
 			);
-			sendFlash("success", `Admin updated successfully: ${edited.name}`);
 		},
 		onError: sendError,
 	});
 
 	const onEdit = useCallback(
-		async (admin: SMAdmin) => {
+		async (admin: SMUser) => {
 			try {
 				const edited = (await NiceModal.show(SMAdminEditorModal, {
-					admin,
-					groups,
-				})) as SMAdmin;
+					admin: admin,
+					groups: groups?.groups,
+				})) as SMUser;
 				queryClient.setQueryData(
 					["serverAdmins"],
-					(admins ?? []).map((a) => {
-						return a.admin_id === edited.admin_id ? edited : a;
+					(admins?.users ?? []).map((a) => {
+						return a.id === edited.id ? edited : a;
 					}),
 				);
 				sendFlash("success", `Admin updated successfully: ${admin.name}`);
@@ -137,7 +108,7 @@ export const SMAdminsTable = () => {
 	);
 
 	const onDelete = useCallback(
-		async (admin: SMAdmin) => {
+		async (admin: SMUser) => {
 			try {
 				const confirmed = (await NiceModal.show(ConfirmationModal, {
 					title: "Delete admin?",
@@ -146,7 +117,7 @@ export const SMAdminsTable = () => {
 				if (!confirmed) {
 					return;
 				}
-				deleteAdmin.mutate(admin);
+				deleteAdminFn.mutate({ adminId: admin.id });
 			} catch (e) {
 				sendFlash("error", `Failed to create confirmation modal: ${e}`);
 			}
@@ -155,12 +126,12 @@ export const SMAdminsTable = () => {
 	);
 
 	const onAddGroup = useCallback(
-		async (admin: SMAdmin) => {
+		async (admin: SMUser) => {
 			try {
 				const existingGroupIds = admin.groups.map((g) => g.group_id);
 				const group = (await NiceModal.show(SMGroupSelectModal, {
-					groups: groups?.filter((g) => !existingGroupIds.includes(g.group_id)),
-				})) as SMGroups;
+					groups: groups?.groups?.filter((g) => !existingGroupIds.includes(g.group_id)),
+				})) as SMGroup;
 				addGroupMutation.mutate({ admin, group });
 			} catch (e) {
 				sendError(e);
@@ -170,12 +141,12 @@ export const SMAdminsTable = () => {
 	);
 
 	const onDelGroup = useCallback(
-		async (admin: SMAdmin) => {
+		async (admin: SMUser) => {
 			try {
 				const existingGroupIds = admin.groups.map((g) => g.group_id);
 				const group = (await NiceModal.show(SMGroupSelectModal, {
 					groups: groups?.filter((g) => existingGroupIds.includes(g.group_id)),
-				})) as SMGroups;
+				})) as SMUserValid;
 				delGroupMutation.mutate({ admin, group });
 			} catch (e) {
 				sendError(e);
@@ -191,7 +162,7 @@ export const SMAdminsTable = () => {
 				grow: true,
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
-			columnHelperAdmins.accessor("auth_type", {
+			columnHelperAdmins.accessor("authType", {
 				header: "Auth Type",
 				grow: false,
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
@@ -201,11 +172,11 @@ export const SMAdminsTable = () => {
 				grow: false,
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
-			columnHelperAdmins.accessor("steam_id", {
-				header: "SteamID",
-				grow: false,
-				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
-			}),
+			// columnHelperAdmins.accessor("steamId", {
+			// 	header: "SteamID",
+			// 	grow: false,
+			// 	Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			// }),
 			columnHelperAdmins.accessor("password", {
 				header: "Password",
 				grow: false,
@@ -222,23 +193,23 @@ export const SMAdminsTable = () => {
 				filterVariant: "range-slider",
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
-			columnHelperAdmins.accessor("created_on", {
-				header: "Created On",
-				grow: false,
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
-			}),
-			columnHelperAdmins.accessor("updated_on", {
-				header: "Updated On",
-				grow: false,
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
-			}),
+			// columnHelperAdmins.accessor("createdOn", {
+			// 	header: "Created On",
+			// 	grow: false,
+			// 	Cell: ({ cell }) => <TableCellString>{renderTimestamp(cell.getValue())}</TableCellString>,
+			// }),
+			// columnHelperAdmins.accessor("updatedOn", {
+			// 	header: "Updated On",
+			// 	grow: false,
+			// 	Cell: ({ cell }) => <TableCellString>{renderTimestamp(cell.getValue())}</TableCellString>,
+			// }),
 		];
 	}, []);
 
 	const table = useMaterialReactTable({
 		...defaultOptionsAdmins,
 		columns,
-		data: admins ?? [],
+		data: admins?.users ?? [],
 		enableFilters: true,
 		enableRowActions: true,
 		state: {

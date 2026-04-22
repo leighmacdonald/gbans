@@ -5,14 +5,14 @@ import { StrictMode, useState } from "react";
 import { defaultAvatarHash } from "./api";
 import { AuthProvider, profileKey } from "./auth.tsx";
 import { useAuth } from "./hooks/useAuth.ts";
-import { PermissionLevel } from "./schema/people.ts";
 import { finalTransport } from "./transport.ts";
 import { logErr } from "./util/errors.ts";
+import { Privilege } from "./rpc/person/v1/privilege_pb.ts";
 
 const loadProfile = () => {
 	const defaultProfile = {
 		steam_id: "",
-		permission_level: PermissionLevel.Guest,
+		permission_level: Privilege.GUEST,
 		avatarhash: defaultAvatarHash,
 		name: "",
 		ban_id: 0,

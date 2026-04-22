@@ -3,7 +3,6 @@
 import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
@@ -13,8 +12,6 @@ import {
 	useMaterialReactTable,
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiGetServers } from "../api/server.ts";
-import { apiVotesQuery } from "../api/votes.ts";
 import { PersonCell } from "../component/PersonCell.tsx";
 import RouterLink from "../component/RouterLink.tsx";
 import { TextLink } from "../component/TextLink.tsx";
@@ -29,9 +26,12 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import type { VoteResult } from "../schema/votes.ts";
 import { stringToColour } from "../util/colours.ts";
-import { renderDateTime } from "../util/time.ts";
+import { renderTimestamp } from "../util/time.ts";
+import { useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
+import { query } from "../rpc/votes/v1/votes-VotesService_connectquery.ts";
+import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
+import type { VoteResult } from "../rpc/votes/v1/votes_pb.ts";
 
 const columnHelper = createMRTColumnHelper<VoteResult>();
 const defaultOptions = createDefaultTableOptions<VoteResult>();
@@ -44,84 +44,63 @@ export const Route = createFileRoute("/_mod/admin/votes")({
 	search: {
 		middlewares: [stripSearchParams(defaultValues)],
 	},
-	loader: async ({ context }) => {
-		const unsorted = await context.queryClient.ensureQueryData({
-			queryKey: ["serversSimple"],
-			queryFn: ({ signal }) => apiGetServers(signal),
-		});
-		return unsorted.sort((a, b) => {
-			return a.server_name > b.server_name ? 1 : a.server_name < b.server_name ? -1 : 0;
-		});
-	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Votes" }, match.context.title("Votes")],
 	}),
 });
 
 function AdminVotes() {
-	const servers = Route.useLoaderData();
 	const search = Route.useSearch();
 	const navigate = useNavigate();
 	const theme = useTheme();
-
-	const { data, isLoading, isError, isRefetching } = useQuery({
-		queryKey: ["votes", { search }],
-		queryFn: async ({ signal }) => {
-			const server_id = filterValueNumber("server_id", search.columnFilters);
-			const source_id = filterValue("source_id", search.columnFilters);
-			const target_id = filterValue("target_id", search.columnFilters);
-			const sort = search.sorting?.find((sort) => sort);
-
-			return apiVotesQuery(
-				{
-					limit: search.pagination?.pageSize,
-					offset: search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : undefined,
-					order_by: sort ? sort.id : "created_on",
-					desc: sort ? sort.desc : true,
-					source_id,
-					target_id,
-					server_id,
-					success: -1,
-				},
-				signal,
-			);
+	const { data: serverList } = useSuspenseQuery(servers);
+	const { data, isLoading, isError, isRefetching } = useQuery(query, {
+		serverId: filterValueNumber("server_id", search.columnFilters),
+		sourceId: BigInt(filterValue("source_id", search.columnFilters)),
+		targetId: BigInt(filterValue("target_id", search.columnFilters)),
+		success: -1,
+		filter: {
+			limit: BigInt(search.pagination?.pageSize ?? 25),
+			offset: BigInt(search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : 0),
+			orderBy: search.sorting?.find((sort) => sort)?.id ?? "created_on",
+			desc: search.sorting?.find((sort) => sort)?.desc ?? true,
 		},
 	});
 
 	const columns = useMemo(
 		() => [
-			columnHelper.accessor("server_id", {
+			columnHelper.accessor("serverId", {
 				header: "Server",
 				grow: false,
 				filterVariant: "multi-select",
-				filterSelectOptions: servers.map((server) => ({
-					label: server.server_name,
-					value: server.server_id,
+				filterSelectOptions: serverList.servers.map((server) => ({
+					label: server.serverName,
+					value: server.serverId,
 				})),
 				// filterFn: (row, _, filterValue) => {
 				// 	return filterValue.length === 0 || filterValue.includes(row.original.server_id);
 				// },
 				Cell: ({ row, cell }) => (
-					<Tooltip title={row.original.server_name}>
+					<Tooltip title={row.original.serverName}>
 						<TextLink
 							to={"/admin/votes"}
 							search={setColumnFilter(search, "server_id", [cell.getValue()])}
-							sx={{ color: stringToColour(row.original.server_name ?? "") }}
+							sx={{ color: stringToColour(row.original.serverName ?? "") }}
 						>
-							{row.original.server_name}
+							{row.original.serverName}
 						</TextLink>
 					</Tooltip>
 				),
 			}),
-			columnHelper.accessor("source_id", {
+			columnHelper.accessor("sourceId", {
 				header: "Initiator",
 				grow: true,
 				enableSorting: false,
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.source_id}
-						personaname={row.original.source_name}
-						avatar_hash={row.original.source_avatar_hash}
+						steam_id={row.original.sourceId.toString()}
+						personaname={row.original.sourceName}
+						avatar_hash={row.original.sourceAvatarHash}
 					>
 						<RouterLink
 							style={{
@@ -131,23 +110,23 @@ function AdminVotes() {
 										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
-							search={setColumnFilter(search, "source_id", row.original.source_id)}
+							search={setColumnFilter(search, "source_id", row.original.sourceId)}
 						>
-							{row.original.source_name ?? row.original.source_id}
+							{row.original.sourceName ?? row.original.sourceId}
 						</RouterLink>
 					</PersonCell>
 				),
 			}),
-			columnHelper.accessor("target_id", {
+			columnHelper.accessor("targetId", {
 				header: "Subject",
 				grow: true,
 				enableSorting: false,
 				Cell: ({ row }) => {
 					return (
 						<PersonCell
-							steam_id={row.original.target_id}
-							personaname={row.original.target_name}
-							avatar_hash={row.original.target_avatar_hash}
+							steam_id={row.original.targetId.toString()}
+							personaname={row.original.targetName}
+							avatar_hash={row.original.targetAvatarHash}
 						>
 							<RouterLink
 								style={{
@@ -157,9 +136,9 @@ function AdminVotes() {
 											: theme.palette.primary.dark,
 								}}
 								to={Route.fullPath}
-								search={setColumnFilter(search, "target_id", row.original.target_id)}
+								search={setColumnFilter(search, "target_id", row.original.targetId)}
 							>
-								{row.original.target_name ?? row.original.target_id}
+								{row.original.targetName ?? row.original.targetId}
 							</RouterLink>
 						</PersonCell>
 					);
@@ -176,11 +155,11 @@ function AdminVotes() {
 				},
 			}),
 
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "Created",
 				grow: false,
 				enableColumnFilter: false,
-				Cell: ({ cell }) => renderDateTime(cell.getValue()),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
 		],
 		[servers, search, theme],
@@ -231,8 +210,8 @@ function AdminVotes() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data?.data ?? [],
-		rowCount: data?.count ?? 0,
+		data: data?.results ?? [],
+		rowCount: Number(data?.count ?? 0),
 		enableFilters: true,
 		state: {
 			columnFilters: search.columnFilters,

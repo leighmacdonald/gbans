@@ -57,6 +57,8 @@ const (
 	// ReportServiceReportMessageDeleteProcedure is the fully-qualified name of the ReportService's
 	// ReportMessageDelete RPC.
 	ReportServiceReportMessageDeleteProcedure = "/ban.v1.ReportService/ReportMessageDelete"
+	// ReportServiceReportsProcedure is the fully-qualified name of the ReportService's Reports RPC.
+	ReportServiceReportsProcedure = "/ban.v1.ReportService/Reports"
 )
 
 // ReportServiceClient is a client for the ban.v1.ReportService service.
@@ -69,6 +71,7 @@ type ReportServiceClient interface {
 	ReportMessageCreate(context.Context, *v1.ReportMessageCreateRequest) (*v1.ReportMessageCreateResponse, error)
 	ReportMessageEdit(context.Context, *v1.ReportMessageEditRequest) (*v1.ReportMessageEditResponse, error)
 	ReportMessageDelete(context.Context, *v1.ReportMessageDeleteRequest) (*emptypb.Empty, error)
+	Reports(context.Context, *emptypb.Empty) (*v1.ReportsResponse, error)
 }
 
 // NewReportServiceClient constructs a client for the ban.v1.ReportService service. By default, it
@@ -130,6 +133,12 @@ func NewReportServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(reportServiceMethods.ByName("ReportMessageDelete")),
 			connect.WithClientOptions(opts...),
 		),
+		reports: connect.NewClient[emptypb.Empty, v1.ReportsResponse](
+			httpClient,
+			baseURL+ReportServiceReportsProcedure,
+			connect.WithSchema(reportServiceMethods.ByName("Reports")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -143,6 +152,7 @@ type reportServiceClient struct {
 	reportMessageCreate *connect.Client[v1.ReportMessageCreateRequest, v1.ReportMessageCreateResponse]
 	reportMessageEdit   *connect.Client[v1.ReportMessageEditRequest, v1.ReportMessageEditResponse]
 	reportMessageDelete *connect.Client[v1.ReportMessageDeleteRequest, emptypb.Empty]
+	reports             *connect.Client[emptypb.Empty, v1.ReportsResponse]
 }
 
 // ReportCreate calls ban.v1.ReportService.ReportCreate.
@@ -217,6 +227,15 @@ func (c *reportServiceClient) ReportMessageDelete(ctx context.Context, req *v1.R
 	return nil, err
 }
 
+// Reports calls ban.v1.ReportService.Reports.
+func (c *reportServiceClient) Reports(ctx context.Context, req *emptypb.Empty) (*v1.ReportsResponse, error) {
+	response, err := c.reports.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ReportServiceHandler is an implementation of the ban.v1.ReportService service.
 type ReportServiceHandler interface {
 	ReportCreate(context.Context, *v1.ReportCreateRequest) (*v1.ReportCreateResponse, error)
@@ -227,6 +246,7 @@ type ReportServiceHandler interface {
 	ReportMessageCreate(context.Context, *v1.ReportMessageCreateRequest) (*v1.ReportMessageCreateResponse, error)
 	ReportMessageEdit(context.Context, *v1.ReportMessageEditRequest) (*v1.ReportMessageEditResponse, error)
 	ReportMessageDelete(context.Context, *v1.ReportMessageDeleteRequest) (*emptypb.Empty, error)
+	Reports(context.Context, *emptypb.Empty) (*v1.ReportsResponse, error)
 }
 
 // NewReportServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -284,6 +304,12 @@ func NewReportServiceHandler(svc ReportServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(reportServiceMethods.ByName("ReportMessageDelete")),
 		connect.WithHandlerOptions(opts...),
 	)
+	reportServiceReportsHandler := connect.NewUnaryHandlerSimple(
+		ReportServiceReportsProcedure,
+		svc.Reports,
+		connect.WithSchema(reportServiceMethods.ByName("Reports")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/ban.v1.ReportService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ReportServiceReportCreateProcedure:
@@ -302,6 +328,8 @@ func NewReportServiceHandler(svc ReportServiceHandler, opts ...connect.HandlerOp
 			reportServiceReportMessageEditHandler.ServeHTTP(w, r)
 		case ReportServiceReportMessageDeleteProcedure:
 			reportServiceReportMessageDeleteHandler.ServeHTTP(w, r)
+		case ReportServiceReportsProcedure:
+			reportServiceReportsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -341,4 +369,8 @@ func (UnimplementedReportServiceHandler) ReportMessageEdit(context.Context, *v1.
 
 func (UnimplementedReportServiceHandler) ReportMessageDelete(context.Context, *v1.ReportMessageDeleteRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.ReportService.ReportMessageDelete is not implemented"))
+}
+
+func (UnimplementedReportServiceHandler) Reports(context.Context, *emptypb.Empty) (*v1.ReportsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.ReportService.Reports is not implemented"))
 }

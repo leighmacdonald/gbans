@@ -12,193 +12,197 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file servers/v1/demo.proto.
  */
-export const file_servers_v1_demo: GenFile = /*@__PURE__*/
-  fileDesc("ChVzZXJ2ZXJzL3YxL2RlbW8ucHJvdG8SCnNlcnZlcnMudjEiOwoQR2V0RGVtb3NSZXNwb25zZRInCgVkZW1vcxgBIAMoCzIQLnNlcnZlcnMudjEuRGVtb0IGukgDyAEBIrEDCgREZW1vEhkKB2RlbW9faWQYASABKANCCDABukgDyAEBEhkKCXNlcnZlcl9pZBgCIAEoBUIGukgDyAEBEiEKEXNlcnZlcl9uYW1lX3Nob3J0GAMgASgJQga6SAPIAQESIAoQc2VydmVyX25hbWVfbG9uZxgEIAEoCUIGukgDyAEBEhUKBXRpdGxlGAUgASgJQga6SAPIAQESNgoKY3JlYXRlZF9vbhgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARIbCglkb3dubG9hZHMYByABKANCCDABukgDyAEBEhYKBHNpemUYCCABKANCCDABukgDyAEBEhgKCG1hcF9uYW1lGAkgASgJQga6SAPIAQESFwoHYXJjaGl2ZRgKIAEoCEIGukgDyAEBEioKBXN0YXRzGAsgAygLMhsuc2VydmVycy52MS5EZW1vLlN0YXRzRW50cnkSHQoIYXNzZXRfaWQYDCABKAlCC7pICMgBAXIDsAEBGiwKClN0YXRzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ATKNAQoLRGVtb1NlcnZpY2USQAoIR2V0RGVtb3MSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHC5zZXJ2ZXJzLnYxLkdldERlbW9zUmVzcG9uc2USPAoKUnVuQ2xlYW51cBIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eUKjAQoOY29tLnNlcnZlcnMudjFCCURlbW9Qcm90b1ABWj1naXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3NlcnZlcnMvdjE7c2VydmVyc3YxogIDU1hYqgIKU2VydmVycy5WMcoCClNlcnZlcnNcVjHiAhZTZXJ2ZXJzXFYxXEdQQk1ldGFkYXRh6gILU2VydmVyczo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp]);
+export const file_servers_v1_demo: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"ChVzZXJ2ZXJzL3YxL2RlbW8ucHJvdG8SCnNlcnZlcnMudjEiOwoQR2V0RGVtb3NSZXNwb25zZRInCgVkZW1vcxgBIAMoCzIQLnNlcnZlcnMudjEuRGVtb0IGukgDyAEBIqsDCgREZW1vEhcKB2RlbW9faWQYASABKANCBrpIA8gBARIZCglzZXJ2ZXJfaWQYAiABKAVCBrpIA8gBARIhChFzZXJ2ZXJfbmFtZV9zaG9ydBgDIAEoCUIGukgDyAEBEiAKEHNlcnZlcl9uYW1lX2xvbmcYBCABKAlCBrpIA8gBARIVCgV0aXRsZRgFIAEoCUIGukgDyAEBEjYKCmNyZWF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESGQoJZG93bmxvYWRzGAcgASgDQga6SAPIAQESFAoEc2l6ZRgIIAEoA0IGukgDyAEBEhgKCG1hcF9uYW1lGAkgASgJQga6SAPIAQESFwoHYXJjaGl2ZRgKIAEoCEIGukgDyAEBEioKBXN0YXRzGAsgAygLMhsuc2VydmVycy52MS5EZW1vLlN0YXRzRW50cnkSHQoIYXNzZXRfaWQYDCABKAlCC7pICMgBAXIDsAEBGiwKClN0YXRzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ATKNAQoLRGVtb1NlcnZpY2USQAoIR2V0RGVtb3MSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHC5zZXJ2ZXJzLnYxLkdldERlbW9zUmVzcG9uc2USPAoKUnVuQ2xlYW51cBIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eUKjAQoOY29tLnNlcnZlcnMudjFCCURlbW9Qcm90b1ABWj1naXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3NlcnZlcnMvdjE7c2VydmVyc3YxogIDU1hYqgIKU2VydmVycy5WMcoCClNlcnZlcnNcVjHiAhZTZXJ2ZXJzXFYxXEdQQk1ldGFkYXRh6gILU2VydmVyczo6VjFiCGVkaXRpb25zcOgH",
+		[file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp],
+	);
 
 /**
  * @generated from message servers.v1.GetDemosResponse
  */
 export type GetDemosResponse = Message<"servers.v1.GetDemosResponse"> & {
-  /**
-   * @generated from field: repeated servers.v1.Demo demos = 1;
-   */
-  demos: Demo[];
+	/**
+	 * @generated from field: repeated servers.v1.Demo demos = 1;
+	 */
+	demos: Demo[];
 };
 
 /**
  * @generated from message servers.v1.GetDemosResponse
  */
 export type GetDemosResponseValid = Message<"servers.v1.GetDemosResponse"> & {
-  /**
-   * @generated from field: repeated servers.v1.Demo demos = 1;
-   */
-  demos: DemoValid[];
+	/**
+	 * @generated from field: repeated servers.v1.Demo demos = 1;
+	 */
+	demos: DemoValid[];
 };
 
 /**
  * Describes the message servers.v1.GetDemosResponse.
  * Use `create(GetDemosResponseSchema)` to create a new message.
  */
-export const GetDemosResponseSchema: GenMessage<GetDemosResponse, {validType: GetDemosResponseValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_demo, 0);
+export const GetDemosResponseSchema: GenMessage<GetDemosResponse, { validType: GetDemosResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_demo, 0);
 
 /**
  * @generated from message servers.v1.Demo
  */
 export type Demo = Message<"servers.v1.Demo"> & {
-  /**
-   * @generated from field: int64 demo_id = 1 [jstype = JS_STRING];
-   */
-  demoId: string;
+	/**
+	 * @generated from field: int64 demo_id = 1;
+	 */
+	demoId: bigint;
 
-  /**
-   * @generated from field: int32 server_id = 2;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 2;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: string server_name_short = 3;
-   */
-  serverNameShort: string;
+	/**
+	 * @generated from field: string server_name_short = 3;
+	 */
+	serverNameShort: string;
 
-  /**
-   * @generated from field: string server_name_long = 4;
-   */
-  serverNameLong: string;
+	/**
+	 * @generated from field: string server_name_long = 4;
+	 */
+	serverNameLong: string;
 
-  /**
-   * @generated from field: string title = 5;
-   */
-  title: string;
+	/**
+	 * @generated from field: string title = 5;
+	 */
+	title: string;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 6;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 6;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: int64 downloads = 7 [jstype = JS_STRING];
-   */
-  downloads: string;
+	/**
+	 * @generated from field: int64 downloads = 7;
+	 */
+	downloads: bigint;
 
-  /**
-   * @generated from field: int64 size = 8 [jstype = JS_STRING];
-   */
-  size: string;
+	/**
+	 * @generated from field: int64 size = 8;
+	 */
+	size: bigint;
 
-  /**
-   * @generated from field: string map_name = 9;
-   */
-  mapName: string;
+	/**
+	 * @generated from field: string map_name = 9;
+	 */
+	mapName: string;
 
-  /**
-   * @generated from field: bool archive = 10;
-   */
-  archive: boolean;
+	/**
+	 * @generated from field: bool archive = 10;
+	 */
+	archive: boolean;
 
-  /**
-   * @generated from field: map<string, string> stats = 11;
-   */
-  stats: { [key: string]: string };
+	/**
+	 * @generated from field: map<string, string> stats = 11;
+	 */
+	stats: { [key: string]: string };
 
-  /**
-   * @generated from field: string asset_id = 12;
-   */
-  assetId: string;
+	/**
+	 * @generated from field: string asset_id = 12;
+	 */
+	assetId: string;
 };
 
 /**
  * @generated from message servers.v1.Demo
  */
 export type DemoValid = Message<"servers.v1.Demo"> & {
-  /**
-   * @generated from field: int64 demo_id = 1 [jstype = JS_STRING];
-   */
-  demoId: string;
+	/**
+	 * @generated from field: int64 demo_id = 1;
+	 */
+	demoId: bigint;
 
-  /**
-   * @generated from field: int32 server_id = 2;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 2;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: string server_name_short = 3;
-   */
-  serverNameShort: string;
+	/**
+	 * @generated from field: string server_name_short = 3;
+	 */
+	serverNameShort: string;
 
-  /**
-   * @generated from field: string server_name_long = 4;
-   */
-  serverNameLong: string;
+	/**
+	 * @generated from field: string server_name_long = 4;
+	 */
+	serverNameLong: string;
 
-  /**
-   * @generated from field: string title = 5;
-   */
-  title: string;
+	/**
+	 * @generated from field: string title = 5;
+	 */
+	title: string;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 6;
-   */
-  createdOn: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 6;
+	 */
+	createdOn: Timestamp;
 
-  /**
-   * @generated from field: int64 downloads = 7 [jstype = JS_STRING];
-   */
-  downloads: string;
+	/**
+	 * @generated from field: int64 downloads = 7;
+	 */
+	downloads: bigint;
 
-  /**
-   * @generated from field: int64 size = 8 [jstype = JS_STRING];
-   */
-  size: string;
+	/**
+	 * @generated from field: int64 size = 8;
+	 */
+	size: bigint;
 
-  /**
-   * @generated from field: string map_name = 9;
-   */
-  mapName: string;
+	/**
+	 * @generated from field: string map_name = 9;
+	 */
+	mapName: string;
 
-  /**
-   * @generated from field: bool archive = 10;
-   */
-  archive: boolean;
+	/**
+	 * @generated from field: bool archive = 10;
+	 */
+	archive: boolean;
 
-  /**
-   * @generated from field: map<string, string> stats = 11;
-   */
-  stats: { [key: string]: string };
+	/**
+	 * @generated from field: map<string, string> stats = 11;
+	 */
+	stats: { [key: string]: string };
 
-  /**
-   * @generated from field: string asset_id = 12;
-   */
-  assetId: string;
+	/**
+	 * @generated from field: string asset_id = 12;
+	 */
+	assetId: string;
 };
 
 /**
  * Describes the message servers.v1.Demo.
  * Use `create(DemoSchema)` to create a new message.
  */
-export const DemoSchema: GenMessage<Demo, {validType: DemoValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_demo, 1);
+export const DemoSchema: GenMessage<Demo, { validType: DemoValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_demo, 1);
 
 /**
  * @generated from service servers.v1.DemoService
  */
 export const DemoService: GenService<{
-  /**
-   * @generated from rpc servers.v1.DemoService.GetDemos
-   */
-  getDemos: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof GetDemosResponseSchema;
-  },
-  /**
-   * @generated from rpc servers.v1.DemoService.RunCleanup
-   */
-  runCleanup: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof EmptySchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_servers_v1_demo, 0);
-
+	/**
+	 * @generated from rpc servers.v1.DemoService.GetDemos
+	 */
+	getDemos: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof GetDemosResponseSchema;
+	};
+	/**
+	 * @generated from rpc servers.v1.DemoService.RunCleanup
+	 */
+	runCleanup: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof EmptySchema;
+	};
+}> = /*@__PURE__*/ serviceDesc(file_servers_v1_demo, 0);

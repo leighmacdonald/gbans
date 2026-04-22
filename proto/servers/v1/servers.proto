@@ -13,6 +13,26 @@ service ServersService {
   rpc EditServer(EditServerRequest) returns (EditServerResponse);
   rpc DeleteServer(DeleteServerRequest) returns (google.protobuf.Empty);
   rpc ServersAdmin(google.protobuf.Empty) returns (ServersAdminResponse);
+  rpc QueryLogs(QueryLogsRequest) returns (QueryLogsResponse) {}
+}
+
+message QueryLogsRequest {
+  repeated int32 server_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).repeated.min_items = 1
+  ];
+}
+
+message ServerLog {
+  int32 server_id = 1 [(buf.validate.field).required = true];
+  string server_name = 2 [(buf.validate.field).required = true];
+  string body = 3 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 4 [(buf.validate.field).required = true];
+}
+
+message QueryLogsResponse {
+  repeated ServerLog logs = 1;
+  int32 count = 2;
 }
 
 message StateRequest {

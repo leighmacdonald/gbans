@@ -62,7 +62,7 @@ type Message struct {
 	Body              string          `json:"body"`
 	Team              bool            `json:"team"`
 	CreatedOn         time.Time       `json:"created_on"`
-	AutoFilterFlagged int64           `json:"auto_filter_flagged"`
+	AutoFilterFlagged int32           `json:"auto_filter_flagged"`
 }
 
 type PersonMessages []Message

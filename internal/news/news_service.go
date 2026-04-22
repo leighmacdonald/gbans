@@ -29,13 +29,13 @@ func NewService(news News, authMiddleware *rpc.Middleware, option ...connect.Han
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
-func (s Service) Latest(ctx context.Context, req *v1.LatestRequest) (*v1.NewsAllResponse, error) {
+func (s Service) Latest(ctx context.Context, req *v1.LatestRequest) (*v1.LatestResponse, error) {
 	news, errNews := s.news.GetNewsLatest(ctx, req.GetLimit(), false)
 	if errNews != nil {
 		return nil, connect.NewError(connect.CodeInternal, errNews)
 	}
 
-	resp := v1.NewsAllResponse{Article: make([]*v1.Article, len(news))}
+	resp := v1.LatestResponse{Article: make([]*v1.Article, len(news))}
 	for idx, entry := range news {
 		resp.Article[idx] = &v1.Article{
 			NewsId:      &entry.NewsID,

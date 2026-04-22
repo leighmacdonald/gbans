@@ -73,28 +73,28 @@ func (s Service) Query(ctx context.Context, request *v1.QueryRequest) (*v1.Query
 func detectionToRPC(detection logparse.Detection) *v1.Detection {
 	switch detection {
 	case logparse.SilentAim:
-		return ptr.To(v1.Detection_SilentAim)
+		return ptr.To(v1.Detection_DETECTION_SILENT_AIM)
 	case logparse.AimSnap:
-		return ptr.To(v1.Detection_AimSnap)
+		return ptr.To(v1.Detection_DETECTION_AIM_SNAP)
 	case logparse.TooManyConnectiona:
-		return ptr.To(v1.Detection_TooManyConnections)
+		return ptr.To(v1.Detection_DETECTION_TOO_MANY_CONNECTIONS)
 	case logparse.Interp:
-		return ptr.To(v1.Detection_Interp)
+		return ptr.To(v1.Detection_DETECTION_INTERP)
 	case logparse.BHop:
-		return ptr.To(v1.Detection_BHop)
+		return ptr.To(v1.Detection_DETECTION_BHOP)
 	case logparse.CmdNumSpike:
-		return ptr.To(v1.Detection_CmdNumSpike)
+		return ptr.To(v1.Detection_DETECTION_CMD_NUM_SPIKE)
 	case logparse.EyeAngles:
-		return ptr.To(v1.Detection_EyeAngles)
+		return ptr.To(v1.Detection_DETECTION_EYE_ANGLES)
 	case logparse.InvalidUserCmd:
-		return ptr.To(v1.Detection_InvalidUserCmd)
+		return ptr.To(v1.Detection_DETECTION_INVALID_USER_CMD)
 	case logparse.OOBCVar:
-		return ptr.To(v1.Detection_OOBCVar)
+		return ptr.To(v1.Detection_DETECTION_OOB_CVAR)
 	case logparse.CheatCVar:
-		return ptr.To(v1.Detection_CheatCVar)
+		return ptr.To(v1.Detection_DETECTION_CHEAT_CVAR)
 	case logparse.Unknown:
 		fallthrough
 	default:
-		return ptr.To(v1.Detection_Unknown)
+		return ptr.To(v1.Detection_DETECTION_UNSPECIFIED)
 	}
 }

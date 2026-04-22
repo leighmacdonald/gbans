@@ -28,3 +28,8 @@ export const deleteServer = ServersService.method.deleteServer;
  * @generated from rpc servers.v1.ServersService.ServersAdmin
  */
 export const serversAdmin = ServersService.method.serversAdmin;
+
+/**
+ * @generated from rpc servers.v1.ServersService.QueryLogs
+ */
+export const queryLogs = ServersService.method.queryLogs;

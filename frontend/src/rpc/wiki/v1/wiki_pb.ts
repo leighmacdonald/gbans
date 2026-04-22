@@ -14,214 +14,219 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file wiki/v1/wiki.proto.
  */
-export const file_wiki_v1_wiki: GenFile = /*@__PURE__*/
-  fileDesc("ChJ3aWtpL3YxL3dpa2kucHJvdG8SB3dpa2kudjEi9wEKBFdpa2kSFAoEc2x1ZxgBIAEoCUIGukgDyAEBEhcKB2JvZHlfbWQYAiABKAlCBrpIA8gBARIYCghyZXZpc2lvbhgDIAEoBUIGukgDyAEBEjYKEHBlcm1pc3Npb25fbGV2ZWwYBCABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlQga6SAPIAQESNgoKY3JlYXRlZF9vbhgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARI2Cgp1cGRhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBIiIKCkdldFJlcXVlc3QSFAoEc2x1ZxgBIAEoCUIGukgDyAEBIjIKC0dldFJlc3BvbnNlEiMKBHdpa2kYASABKAsyDS53aWtpLnYxLldpa2lCBrpIA8gBASI0Cg1VcGRhdGVSZXF1ZXN0EiMKBHdpa2kYASABKAsyDS53aWtpLnYxLldpa2lCBrpIA8gBASI1Cg5VcGRhdGVSZXNwb25zZRIjCgR3aWtpGAEgASgLMg0ud2lraS52MS5XaWtpQga6SAPIAQEyfgoLV2lraVNlcnZpY2USMgoDR2V0EhMud2lraS52MS5HZXRSZXF1ZXN0GhQud2lraS52MS5HZXRSZXNwb25zZSIAEjsKBlVwZGF0ZRIWLndpa2kudjEuVXBkYXRlUmVxdWVzdBoXLndpa2kudjEuVXBkYXRlUmVzcG9uc2UiAEKOAQoLY29tLndpa2kudjFCCVdpa2lQcm90b1ABWjdnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3dpa2kvdjE7d2lraXYxogIDV1hYqgIHV2lraS5WMcoCB1dpa2lcVjHiAhNXaWtpXFYxXEdQQk1ldGFkYXRh6gIIV2lraTo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate, file_google_protobuf_timestamp, file_person_v1_privilege]);
+export const file_wiki_v1_wiki: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"ChJ3aWtpL3YxL3dpa2kucHJvdG8SB3dpa2kudjEi9wEKBFdpa2kSFAoEc2x1ZxgBIAEoCUIGukgDyAEBEhcKB2JvZHlfbWQYAiABKAlCBrpIA8gBARIYCghyZXZpc2lvbhgDIAEoBUIGukgDyAEBEjYKEHBlcm1pc3Npb25fbGV2ZWwYBCABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlQga6SAPIAQESNgoKY3JlYXRlZF9vbhgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARI2Cgp1cGRhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBIiIKCkdldFJlcXVlc3QSFAoEc2x1ZxgBIAEoCUIGukgDyAEBIjIKC0dldFJlc3BvbnNlEiMKBHdpa2kYASABKAsyDS53aWtpLnYxLldpa2lCBrpIA8gBASI0Cg1VcGRhdGVSZXF1ZXN0EiMKBHdpa2kYASABKAsyDS53aWtpLnYxLldpa2lCBrpIA8gBASI1Cg5VcGRhdGVSZXNwb25zZRIjCgR3aWtpGAEgASgLMg0ud2lraS52MS5XaWtpQga6SAPIAQEyfgoLV2lraVNlcnZpY2USMgoDR2V0EhMud2lraS52MS5HZXRSZXF1ZXN0GhQud2lraS52MS5HZXRSZXNwb25zZSIAEjsKBlVwZGF0ZRIWLndpa2kudjEuVXBkYXRlUmVxdWVzdBoXLndpa2kudjEuVXBkYXRlUmVzcG9uc2UiAEKOAQoLY29tLndpa2kudjFCCVdpa2lQcm90b1ABWjdnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3dpa2kvdjE7d2lraXYxogIDV1hYqgIHV2lraS5WMcoCB1dpa2lcVjHiAhNXaWtpXFYxXEdQQk1ldGFkYXRh6gIIV2lraTo6VjFiCGVkaXRpb25zcOgH",
+		[file_buf_validate_validate, file_google_protobuf_timestamp, file_person_v1_privilege],
+	);
 
 /**
  * @generated from message wiki.v1.Wiki
  */
 export type Wiki = Message<"wiki.v1.Wiki"> & {
-  /**
-   * @generated from field: string slug = 1;
-   */
-  slug: string;
+	/**
+	 * @generated from field: string slug = 1;
+	 */
+	slug: string;
 
-  /**
-   * @generated from field: string body_md = 2;
-   */
-  bodyMd: string;
+	/**
+	 * @generated from field: string body_md = 2;
+	 */
+	bodyMd: string;
 
-  /**
-   * @generated from field: int32 revision = 3;
-   */
-  revision: number;
+	/**
+	 * @generated from field: int32 revision = 3;
+	 */
+	revision: number;
 
-  /**
-   * @generated from field: person.v1.Privilege permission_level = 4;
-   */
-  permissionLevel: Privilege;
+	/**
+	 * @generated from field: person.v1.Privilege permission_level = 4;
+	 */
+	permissionLevel: Privilege;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 5;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 5;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 6;
-   */
-  updatedOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_on = 6;
+	 */
+	updatedOn?: Timestamp;
 };
 
 /**
  * @generated from message wiki.v1.Wiki
  */
 export type WikiValid = Message<"wiki.v1.Wiki"> & {
-  /**
-   * @generated from field: string slug = 1;
-   */
-  slug: string;
+	/**
+	 * @generated from field: string slug = 1;
+	 */
+	slug: string;
 
-  /**
-   * @generated from field: string body_md = 2;
-   */
-  bodyMd: string;
+	/**
+	 * @generated from field: string body_md = 2;
+	 */
+	bodyMd: string;
 
-  /**
-   * @generated from field: int32 revision = 3;
-   */
-  revision: number;
+	/**
+	 * @generated from field: int32 revision = 3;
+	 */
+	revision: number;
 
-  /**
-   * @generated from field: person.v1.Privilege permission_level = 4;
-   */
-  permissionLevel: Privilege;
+	/**
+	 * @generated from field: person.v1.Privilege permission_level = 4;
+	 */
+	permissionLevel: Privilege;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 5;
-   */
-  createdOn: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 5;
+	 */
+	createdOn: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 6;
-   */
-  updatedOn: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_on = 6;
+	 */
+	updatedOn: Timestamp;
 };
 
 /**
  * Describes the message wiki.v1.Wiki.
  * Use `create(WikiSchema)` to create a new message.
  */
-export const WikiSchema: GenMessage<Wiki, {validType: WikiValid}> = /*@__PURE__*/
-  messageDesc(file_wiki_v1_wiki, 0);
+export const WikiSchema: GenMessage<Wiki, { validType: WikiValid }> = /*@__PURE__*/ messageDesc(file_wiki_v1_wiki, 0);
 
 /**
  * @generated from message wiki.v1.GetRequest
  */
 export type GetRequest = Message<"wiki.v1.GetRequest"> & {
-  /**
-   * @generated from field: string slug = 1;
-   */
-  slug: string;
+	/**
+	 * @generated from field: string slug = 1;
+	 */
+	slug: string;
 };
 
 /**
  * @generated from message wiki.v1.GetRequest
  */
 export type GetRequestValid = Message<"wiki.v1.GetRequest"> & {
-  /**
-   * @generated from field: string slug = 1;
-   */
-  slug: string;
+	/**
+	 * @generated from field: string slug = 1;
+	 */
+	slug: string;
 };
 
 /**
  * Describes the message wiki.v1.GetRequest.
  * Use `create(GetRequestSchema)` to create a new message.
  */
-export const GetRequestSchema: GenMessage<GetRequest, {validType: GetRequestValid}> = /*@__PURE__*/
-  messageDesc(file_wiki_v1_wiki, 1);
+export const GetRequestSchema: GenMessage<GetRequest, { validType: GetRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_wiki_v1_wiki, 1);
 
 /**
  * @generated from message wiki.v1.GetResponse
  */
 export type GetResponse = Message<"wiki.v1.GetResponse"> & {
-  /**
-   * @generated from field: wiki.v1.Wiki wiki = 1;
-   */
-  wiki?: Wiki;
+	/**
+	 * @generated from field: wiki.v1.Wiki wiki = 1;
+	 */
+	wiki?: Wiki;
 };
 
 /**
  * @generated from message wiki.v1.GetResponse
  */
 export type GetResponseValid = Message<"wiki.v1.GetResponse"> & {
-  /**
-   * @generated from field: wiki.v1.Wiki wiki = 1;
-   */
-  wiki: WikiValid;
+	/**
+	 * @generated from field: wiki.v1.Wiki wiki = 1;
+	 */
+	wiki: WikiValid;
 };
 
 /**
  * Describes the message wiki.v1.GetResponse.
  * Use `create(GetResponseSchema)` to create a new message.
  */
-export const GetResponseSchema: GenMessage<GetResponse, {validType: GetResponseValid}> = /*@__PURE__*/
-  messageDesc(file_wiki_v1_wiki, 2);
+export const GetResponseSchema: GenMessage<GetResponse, { validType: GetResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_wiki_v1_wiki, 2);
 
 /**
  * @generated from message wiki.v1.UpdateRequest
  */
 export type UpdateRequest = Message<"wiki.v1.UpdateRequest"> & {
-  /**
-   * @generated from field: wiki.v1.Wiki wiki = 1;
-   */
-  wiki?: Wiki;
+	/**
+	 * @generated from field: wiki.v1.Wiki wiki = 1;
+	 */
+	wiki?: Wiki;
 };
 
 /**
  * @generated from message wiki.v1.UpdateRequest
  */
 export type UpdateRequestValid = Message<"wiki.v1.UpdateRequest"> & {
-  /**
-   * @generated from field: wiki.v1.Wiki wiki = 1;
-   */
-  wiki: WikiValid;
+	/**
+	 * @generated from field: wiki.v1.Wiki wiki = 1;
+	 */
+	wiki: WikiValid;
 };
 
 /**
  * Describes the message wiki.v1.UpdateRequest.
  * Use `create(UpdateRequestSchema)` to create a new message.
  */
-export const UpdateRequestSchema: GenMessage<UpdateRequest, {validType: UpdateRequestValid}> = /*@__PURE__*/
-  messageDesc(file_wiki_v1_wiki, 3);
+export const UpdateRequestSchema: GenMessage<UpdateRequest, { validType: UpdateRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_wiki_v1_wiki, 3);
 
 /**
  * @generated from message wiki.v1.UpdateResponse
  */
 export type UpdateResponse = Message<"wiki.v1.UpdateResponse"> & {
-  /**
-   * @generated from field: wiki.v1.Wiki wiki = 1;
-   */
-  wiki?: Wiki;
+	/**
+	 * @generated from field: wiki.v1.Wiki wiki = 1;
+	 */
+	wiki?: Wiki;
 };
 
 /**
  * @generated from message wiki.v1.UpdateResponse
  */
 export type UpdateResponseValid = Message<"wiki.v1.UpdateResponse"> & {
-  /**
-   * @generated from field: wiki.v1.Wiki wiki = 1;
-   */
-  wiki: WikiValid;
+	/**
+	 * @generated from field: wiki.v1.Wiki wiki = 1;
+	 */
+	wiki: WikiValid;
 };
 
 /**
  * Describes the message wiki.v1.UpdateResponse.
  * Use `create(UpdateResponseSchema)` to create a new message.
  */
-export const UpdateResponseSchema: GenMessage<UpdateResponse, {validType: UpdateResponseValid}> = /*@__PURE__*/
-  messageDesc(file_wiki_v1_wiki, 4);
+export const UpdateResponseSchema: GenMessage<UpdateResponse, { validType: UpdateResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_wiki_v1_wiki, 4);
 
 /**
  * @generated from service wiki.v1.WikiService
  */
 export const WikiService: GenService<{
-  /**
-   * @generated from rpc wiki.v1.WikiService.Get
-   */
-  get: {
-    methodKind: "unary";
-    input: typeof GetRequestSchema;
-    output: typeof GetResponseSchema;
-  },
-  /**
-   * @generated from rpc wiki.v1.WikiService.Update
-   */
-  update: {
-    methodKind: "unary";
-    input: typeof UpdateRequestSchema;
-    output: typeof UpdateResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_wiki_v1_wiki, 0);
-
+	/**
+	 * @generated from rpc wiki.v1.WikiService.Get
+	 */
+	get: {
+		methodKind: "unary";
+		input: typeof GetRequestSchema;
+		output: typeof GetResponseSchema;
+	};
+	/**
+	 * @generated from rpc wiki.v1.WikiService.Update
+	 */
+	update: {
+		methodKind: "unary";
+		input: typeof UpdateRequestSchema;
+		output: typeof UpdateResponseSchema;
+	};
+}> = /*@__PURE__*/ serviceDesc(file_wiki_v1_wiki, 0);

@@ -1,70 +1,57 @@
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useMemo } from "react";
-import { apiGetMessages } from "../../api/profile.ts";
-import type { PersonMessage } from "../../schema/people.ts";
 import { stringToColour } from "../../util/colours.ts";
 import { PersonCell } from "../PersonCell.tsx";
 import { createDefaultTableOptions } from "./options.ts";
 import { SortableTable } from "./SortableTable.tsx";
 import { TableCellRelativeDateField } from "./TableCellRelativeDateField.tsx";
+import type { Message } from "../../rpc/chat/v1/chat_pb.ts";
+import { useQuery } from "@connectrpc/connect-query";
+import { query } from "../../rpc/chat/v1/chat-ChatService_connectquery.ts";
+import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
 
-const columnHelper = createMRTColumnHelper<PersonMessage>();
-const defaultOptions = createDefaultTableOptions<PersonMessage>();
+const columnHelper = createMRTColumnHelper<Message>();
+const defaultOptions = createDefaultTableOptions<Message>();
 
-export const ChatTable = ({ steamId }: { steamId: string }) => {
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["reportChat", { steamId }],
-		queryFn: async ({ signal }) => {
-			return await apiGetMessages(
-				{
-					personaname: "",
-					query: "",
-					source_id: steamId,
-					limit: 2500,
-					offset: 0,
-					order_by: "person_message_id",
-					desc: true,
-					flagged_only: false,
-				},
-				signal,
-			);
-		},
+export const ChatTable = ({ steamId }: { steamId: bigint }) => {
+	const { data, isLoading, isError } = useQuery(query, {
+		steamId: steamId,
+		filter: { limit: 2500n, orderBy: "person_message_id", desc: true },
 	});
 
 	const columns = useMemo(
 		() => [
-			columnHelper.accessor("server_id", {
+			columnHelper.accessor("serverId", {
 				header: "Server",
 				grow: false,
 				Cell: ({ row }) => (
 					<Button
 						variant="text"
 						sx={{
-							color: stringToColour(row.original.server_name),
+							color: stringToColour(row.original.serverName),
 						}}
 					>
-						{row.original.server_name}
+						{row.original.serverName}
 					</Button>
 				),
 			}),
 
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "Created",
 				grow: false,
-				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} />,
+				Cell: ({ cell }) => <TableCellRelativeDateField date={timestampDate(cell.getValue() as Timestamp)} />,
 			}),
 
-			columnHelper.accessor("persona_name", {
+			columnHelper.accessor("personaName", {
 				header: "Name",
 				grow: false,
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.steam_id}
-						avatar_hash={row.original.avatar_hash}
-						personaname={row.original.persona_name}
+						steam_id={row.original.steamId}
+						avatar_hash={row.original.avatarHash}
+						personaname={row.original.personaName}
 					/>
 				),
 			}),
@@ -85,8 +72,8 @@ export const ChatTable = ({ steamId }: { steamId: string }) => {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data?.data ?? [],
-		rowCount: data?.count ?? 0,
+		data: data?.messages ?? [],
+		rowCount: Number(data?.count ?? 0),
 		enableFilters: true,
 		enableRowActions: false,
 		state: {

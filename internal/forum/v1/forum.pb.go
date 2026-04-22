@@ -1937,8 +1937,8 @@ type Forum struct {
 	Title               *string                `protobuf:"bytes,4,opt,name=title" json:"title,omitempty"`
 	Description         *string                `protobuf:"bytes,5,opt,name=description" json:"description,omitempty"`
 	Ordering            *int32                 `protobuf:"varint,6,opt,name=ordering" json:"ordering,omitempty"`
-	CountThreads        *int64                 `protobuf:"varint,7,opt,name=count_threads,json=countThreads" json:"count_threads,omitempty"`
-	CountMessages       *int64                 `protobuf:"varint,8,opt,name=count_messages,json=countMessages" json:"count_messages,omitempty"`
+	CountThreads        *int32                 `protobuf:"varint,7,opt,name=count_threads,json=countThreads" json:"count_threads,omitempty"`
+	CountMessages       *int32                 `protobuf:"varint,8,opt,name=count_messages,json=countMessages" json:"count_messages,omitempty"`
 	PermissionLevel     *v1.Privilege          `protobuf:"varint,9,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
 	RecentForumThreadId *int32                 `protobuf:"varint,10,opt,name=recent_forum_thread_id,json=recentForumThreadId" json:"recent_forum_thread_id,omitempty"`
 	RecentForumTitle    *string                `protobuf:"bytes,11,opt,name=recent_forum_title,json=recentForumTitle" json:"recent_forum_title,omitempty"`
@@ -2024,14 +2024,14 @@ func (x *Forum) GetOrdering() int32 {
 	return 0
 }
 
-func (x *Forum) GetCountThreads() int64 {
+func (x *Forum) GetCountThreads() int32 {
 	if x != nil && x.CountThreads != nil {
 		return *x.CountThreads
 	}
 	return 0
 }
 
-func (x *Forum) GetCountMessages() int64 {
+func (x *Forum) GetCountMessages() int32 {
 	if x != nil && x.CountMessages != nil {
 		return *x.CountMessages
 	}
@@ -2282,13 +2282,13 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\x15CategoryCreateRequest\x12\x1c\n" +
 	"\x05title\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12(\n" +
 	"\vdescription\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdescription\x12\"\n" +
-	"\bordering\x18\x03 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bordering\"J\n" +
-	"\x14MessageDeleteRequest\x122\n" +
-	"\x10forum_message_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x0eforumMessageId\"E\n" +
+	"\bordering\x18\x03 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bordering\"H\n" +
+	"\x14MessageDeleteRequest\x120\n" +
+	"\x10forum_message_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x0eforumMessageId\"E\n" +
 	"\x13ThreadDeleteRequest\x12.\n" +
-	"\x0fforum_thread_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rforumThreadId\"m\n" +
-	"\x16ThreadReplyEditRequest\x122\n" +
-	"\x10forum_message_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x0eforumMessageId\x12\x1f\n" +
+	"\x0fforum_thread_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rforumThreadId\"k\n" +
+	"\x16ThreadReplyEditRequest\x120\n" +
+	"\x10forum_message_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x0eforumMessageId\x12\x1f\n" +
 	"\abody_md\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06bodyMd\"N\n" +
 	"\x17ThreadReplyEditResponse\x123\n" +
 	"\amessage\x18\x01 \x01(\v2\x11.forum.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\amessage\"k\n" +
@@ -2322,38 +2322,38 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\x0eThreadsRequest\x12!\n" +
 	"\bforum_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aforumId\"E\n" +
 	"\x0fThreadsResponse\x122\n" +
-	"\athreads\x18\x01 \x03(\v2\x10.forum.v1.ThreadB\x06\xbaH\x03\xc8\x01\x01R\athreads\"\xf6\x01\n" +
+	"\athreads\x18\x01 \x03(\v2\x10.forum.v1.ThreadB\x06\xbaH\x03\xc8\x01\x01R\athreads\"\xf4\x01\n" +
 	"\x06Thread\x12!\n" +
-	"\bforum_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aforumId\x12%\n" +
-	"\tsource_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\bsourceId\x12\x1c\n" +
+	"\bforum_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aforumId\x12#\n" +
+	"\tsource_id\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\bsourceId\x12\x1c\n" +
 	"\x05title\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12A\n" +
 	"\n" +
 	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xee\x03\n" +
+	"updated_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xe6\x03\n" +
 	"\x10ThreadWithSource\x120\n" +
 	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadB\x06\xbaH\x03\xc8\x01\x01R\x06thread\x12)\n" +
 	"\fpersona_name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12'\n" +
 	"\vavatar_hash\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"avatarHash\x12G\n" +
-	"\x10permission_level\x18\x04 \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\x129\n" +
-	"\x17recent_forum_message_id\x18\x05 \x01(\x03B\x020\x01R\x14recentForumMessageId\x12F\n" +
-	"\x11recent_created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x0frecentCreatedOn\x12*\n" +
-	"\x0frecent_steam_id\x18\a \x01(\x03B\x020\x01R\rrecentSteamId\x12.\n" +
+	"\x10permission_level\x18\x04 \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\x125\n" +
+	"\x17recent_forum_message_id\x18\x05 \x01(\x03R\x14recentForumMessageId\x12F\n" +
+	"\x11recent_created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x0frecentCreatedOn\x12&\n" +
+	"\x0frecent_steam_id\x18\a \x01(\x03R\rrecentSteamId\x12.\n" +
 	"\x13recent_persona_name\x18\b \x01(\tR\x11recentPersonaName\x12,\n" +
-	"\x12recent_avatar_hash\x18\t \x01(\tR\x10recentAvatarHash\"\xea\x01\n" +
-	"\fUserActivity\x12#\n" +
-	"\bsteam_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12)\n" +
+	"\x12recent_avatar_hash\x18\t \x01(\tR\x10recentAvatarHash\"\xe8\x01\n" +
+	"\fUserActivity\x12!\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\x12)\n" +
 	"\fpersona_name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12G\n" +
 	"\x10permission_level\x18\x03 \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\x12A\n" +
 	"\n" +
 	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\"Z\n" +
 	"\x13ActiveUsersResponse\x12C\n" +
-	"\ruser_activity\x18\x01 \x03(\v2\x16.forum.v1.UserActivityB\x06\xbaH\x03\xc8\x01\x01R\fuserActivity\"\xbc\x04\n" +
-	"\aMessage\x122\n" +
-	"\x10forum_message_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x0eforumMessageId\x12.\n" +
-	"\x0fforum_thread_id\x18\x02 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rforumThreadId\x12%\n" +
-	"\tsource_id\x18\x03 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\bsourceId\x12\x1f\n" +
+	"\ruser_activity\x18\x01 \x03(\v2\x16.forum.v1.UserActivityB\x06\xbaH\x03\xc8\x01\x01R\fuserActivity\"\xb8\x04\n" +
+	"\aMessage\x120\n" +
+	"\x10forum_message_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x0eforumMessageId\x12.\n" +
+	"\x0fforum_thread_id\x18\x02 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rforumThreadId\x12#\n" +
+	"\tsource_id\x18\x03 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\bsourceId\x12\x1f\n" +
 	"\abody_md\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06bodyMd\x12\x1c\n" +
 	"\x05title\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12\x1e\n" +
 	"\x06online\x18\x06 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x06online\x12$\n" +
@@ -2368,16 +2368,16 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\n" +
 	"updated_on\x18\f \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"O\n" +
 	"\x16RecentMessagesResponse\x125\n" +
-	"\bmessages\x18\x01 \x03(\v2\x11.forum.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\"\xd2\x06\n" +
+	"\bmessages\x18\x01 \x03(\v2\x11.forum.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\"\xce\x06\n" +
 	"\x05Forum\x12!\n" +
 	"\bforum_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aforumId\x122\n" +
 	"\x11forum_category_id\x18\x02 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x0fforumCategoryId\x12$\n" +
 	"\x0elast_thread_id\x18\x03 \x01(\x05R\flastThreadId\x12\x1c\n" +
 	"\x05title\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12(\n" +
 	"\vdescription\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdescription\x12\"\n" +
-	"\bordering\x18\x06 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bordering\x12-\n" +
-	"\rcount_threads\x18\a \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\fcountThreads\x12/\n" +
-	"\x0ecount_messages\x18\b \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\rcountMessages\x12G\n" +
+	"\bordering\x18\x06 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bordering\x12+\n" +
+	"\rcount_threads\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fcountThreads\x12-\n" +
+	"\x0ecount_messages\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rcountMessages\x12G\n" +
 	"\x10permission_level\x18\t \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\x123\n" +
 	"\x16recent_forum_thread_id\x18\n" +
 	" \x01(\x05R\x13recentForumThreadId\x12,\n" +

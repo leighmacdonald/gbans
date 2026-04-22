@@ -8,7 +8,6 @@ import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 import { z } from "zod/v4";
@@ -33,10 +32,13 @@ import { useAppForm } from "../contexts/formContext.tsx";
 import { AppError, ErrorCode } from "../error.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { AppealState, BanReasons } from "../schema/bans.ts";
-import { PermissionLevel } from "../schema/people.ts";
 import { logErr } from "../util/errors.ts";
 import { renderDateTime, renderTimeDistance } from "../util/time.ts";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
+import { deleteAppealMessage, messages } from "../rpc/ban/v1/appeal-AppealService_connectquery.ts";
+import { useQueryClient } from "@tanstack/react-query";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { AppealState } from "../rpc/ban/v1/ban_pb.ts";
 
 export const Route = createFileRoute("/_auth/ban/$ban_id")({
 	component: BanPage,
@@ -73,39 +75,33 @@ function BanPage() {
 	const { appInfo } = Route.useRouteContext();
 	const queryClient = useQueryClient();
 
-	const { data: messages } = useQuery({
-		queryKey: ["banMessages", { ban_id: ban.ban_id }],
-		queryFn: async ({ signal }) => {
-			return await apiGetBanMessages(ban.ban_id, signal);
+	const { data: banMessages } = useQuery(messages, { banId: ban.id });
+	const banMutation = useMutation();
+	const deleteMessageMutation = useMutation(deleteAppealMessage, {
+		onSuccess: async (_, req) => {
+			queryClient.setQueryData(
+				["banMessages", { ban_id: ban.ban_id }],
+				banMessages?.messages?.filter((m) => {
+					return m.banMessageId !== req.banMessageId;
+				}),
+			);
+			sendFlash("success", "Deleted message successfully");
+		},
+		onError: async (error: Error) => {
+			sendFlash("error", error.message);
 		},
 	});
 
 	const canPost = useMemo(() => {
 		return (
-			permissionLevel() >= PermissionLevel.Moderator ||
-			(ban?.appeal_state === AppealState.Open && ban?.target_id === profile.steam_id)
+			permissionLevel() >= Privilege.MODERATOR ||
+			(ban?.appeal_state === AppealState.OPEN_UNSPECIFIED && ban?.target_id === profile.steamId)
 		);
-	}, [ban?.appeal_state, ban?.target_id, permissionLevel, profile.steam_id]);
+	}, [ban?.appeal_state, ban?.target_id, permissionLevel, profile.steamId]);
 
-	const onDelete = useCallback(
-		async (message_id: number) => {
-			try {
-				const ac = new AbortController();
-				await apiDeleteBanMessage(message_id, ac.signal);
-				queryClient.setQueryData(
-					["banMessages", { ban_id: ban.ban_id }],
-					messages?.filter((m) => {
-						return m.ban_message_id !== message_id;
-					}),
-				);
-				sendFlash("success", "Deleted message successfully");
-			} catch (e) {
-				logErr(e);
-				sendFlash("error", "Failed to delete the message");
-			}
-		},
-		[ban.ban_id, messages, queryClient, sendFlash],
-	);
+	const onDelete = useCallback(async (banMessageId: bigint) => {
+		return await deleteMessageMutation.mutateAsync({ banMessageId });
+	}, []);
 
 	const mutation = useMutation({
 		mutationKey: ["banSteam"],

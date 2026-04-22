@@ -1,20 +1,21 @@
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useMemo } from "react";
-import { apiGetServers, getSpeedrunsTopMap } from "../api";
 import { TextLink } from "../component/TextLink.tsx";
 import { createDefaultTableOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellSmall } from "../component/table/TableCellSmall.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
-import type { SpeedrunMapOverview } from "../schema/speedrun.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { durationString, renderDateTime } from "../util/time.ts";
+import { mapSpeedruns } from "../rpc/servers/v1/speedruns-SpeedrunsService_connectquery.ts";
+import type { SpeedrunOverview } from "../rpc/servers/v1/speedruns_pb.ts";
+import { useQuery } from "@connectrpc/connect-query";
+import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 
-const columnHelper = createMRTColumnHelper<SpeedrunMapOverview>();
-const defaultOptions = createDefaultTableOptions<SpeedrunMapOverview>();
+const columnHelper = createMRTColumnHelper<SpeedrunOverview>();
+const defaultOptions = createDefaultTableOptions<SpeedrunOverview>();
 
 export const Route = createFileRoute("/_guest/speedruns/map/$mapName")({
 	component: SpeedrunsMap,
@@ -29,21 +30,8 @@ export const Route = createFileRoute("/_guest/speedruns/map/$mapName")({
 function SpeedrunsMap() {
 	const { mapName } = Route.useParams();
 
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["speedruns_map", mapName],
-		queryFn: ({ signal }) => {
-			return getSpeedrunsTopMap(mapName, signal);
-		},
-	});
-
-	const {
-		data: servers,
-		isLoading: isLoadingServers,
-		isError: isErrorServers,
-	} = useQuery({
-		queryKey: ["serversSimple"],
-		queryFn: ({ signal }) => apiGetServers(signal),
-	});
+	const { data, isLoading, isError } = useQuery(mapSpeedruns, { mapName });
+	const { data: serverList, isLoading: isLoadingServers, isError: isErrorServers } = useQuery(servers);
 
 	const columns = useMemo(
 		() => [
@@ -59,14 +47,14 @@ function SpeedrunsMap() {
 							textAlign={"right"}
 							paddingRight={2}
 							to={"/speedruns/id/$speedrunId"}
-							params={{ speedrunId: String(row.original.speedrun_id) }}
+							params={{ speedrunId: String(row.original.speedrunId) }}
 						>
 							{value}
 						</TextLink>
 					);
 				},
 			}),
-			columnHelper.accessor("initial_rank", {
+			columnHelper.accessor("initialRank", {
 				header: "High",
 				size: 10,
 				Cell: ({ cell }) => (
@@ -84,36 +72,36 @@ function SpeedrunsMap() {
 					</TableCellSmall>
 				),
 			}),
-			columnHelper.accessor("player_count", {
+			columnHelper.accessor("playerCount", {
 				header: "Max Players",
 				size: 100,
 				Cell: ({ cell }) => {
 					return <TableCellString>{cell.getValue()}</TableCellString>;
 				},
 			}),
-			columnHelper.accessor("bot_count", {
+			columnHelper.accessor("botCount", {
 				header: "Max Bots",
 				size: 100,
 				Cell: ({ cell }) => {
 					return <TableCellString>{cell.getValue()}</TableCellString>;
 				},
 			}),
-			columnHelper.accessor("total_players", {
+			columnHelper.accessor("totalPlayers", {
 				header: "Total Players",
 				size: 100,
 				Cell: ({ cell }) => {
 					return <TableCellString>{cell.getValue()}</TableCellString>;
 				},
 			}),
-			columnHelper.accessor("server_id", {
+			columnHelper.accessor("serverId", {
 				header: "Server",
 				size: 100,
 				Cell: ({ cell }) => {
-					const srv = (servers ?? []).find((s) => (s.server_id = cell.getValue()));
-					return <TableCellString>{srv?.server_name}</TableCellString>;
+					const srv = (serverList?.servers ?? []).find((s) => (s.serverId = cell.getValue()));
+					return <TableCellString>{srv?.serverName}</TableCellString>;
 				},
 			}),
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "Submitted",
 				size: 100,
 				Cell: ({ cell }) => {
@@ -127,7 +115,7 @@ function SpeedrunsMap() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ?? [],
+		data: data?.speedruns ?? [],
 		enableFilters: true,
 		enableRowActions: true,
 		state: {

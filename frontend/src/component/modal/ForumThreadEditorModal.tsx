@@ -5,14 +5,14 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
-import { useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { apiDeleteThread, apiUpdateThread } from "../../api/forum";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { ForumThread } from "../../schema/forum.ts";
 import { logErr } from "../../util/errors";
 import { ConfirmationModal } from "./ConfirmationModal.tsx";
+import type { Thread } from "../../rpc/forum/v1/forum_pb.ts";
+import { useMutation } from "@connectrpc/connect-query";
+import { threadDelete } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
 
 type ThreadEditValues = {
 	title: string;
@@ -20,13 +20,21 @@ type ThreadEditValues = {
 	locked: boolean;
 };
 
-export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: ForumThread }) => {
+export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Thread }) => {
 	const modal = useModal();
 	const confirmModal = useModal(ConfirmationModal);
 	const { sendFlash, sendError } = useUserFlashCtx();
 
+	const deleteMutation = useMutation(threadDelete, {
+		onSuccess: () => {
+			sendFlash("success", "Deleted thread successfully");
+		},
+		onError: (err) => {
+			logErr(err);
+		},
+	});
+
 	const onDelete = useCallback(async () => {
-		const ac = new AbortController();
 		try {
 			const confirmed = await confirmModal.show({
 				title: "Confirm Thread Deletion",
@@ -34,11 +42,10 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
 			});
 			if (confirmed) {
 				await confirmModal.hide();
-				await apiDeleteThread(thread.forum_thread_id, ac.signal);
+				await deleteMutation.mutateAsync({ forumThreadId: thread.forum_thread_id });
 				thread.forum_thread_id = 0;
 				modal.resolve(thread);
 				await modal.hide();
-				sendFlash("success", "Deleted thread successfully");
 			} else {
 				await confirmModal.hide();
 			}

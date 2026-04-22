@@ -13,71 +13,78 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file servers/v1/speedruns.proto.
  */
-export const file_servers_v1_speedruns: GenFile = /*@__PURE__*/
-  fileDesc("ChpzZXJ2ZXJzL3YxL3NwZWVkcnVucy5wcm90bxIKc2VydmVycy52MSI/ChVTcGVlZHJ1bkNyZWF0ZVJlcXVlc3QSJgoIc3BlZWRydW4YASABKAsyFC5zZXJ2ZXJzLnYxLlNwZWVkcnVuIkAKFlNwZWVkcnVuQ3JlYXRlUmVzcG9uc2USJgoIc3BlZWRydW4YASABKAsyFC5zZXJ2ZXJzLnYxLlNwZWVkcnVuIiMKDFF1ZXJ5UmVxdWVzdBITCgtzcGVlZHJ1bl9pZBgBIAEoBSI3Cg1RdWVyeVJlc3BvbnNlEiYKCHNwZWVkcnVuGAEgASgLMhQuc2VydmVycy52MS5TcGVlZHJ1biJGChNTcGVlZHJ1bk1hcE92ZXJ2aWV3Ei8KCXNwZWVkcnVucxgBIAMoCzIcLnNlcnZlcnMudjEuU3BlZWRydW5PdmVydmlldyIlChRPdmVyYWxsUmVjZW50UmVxdWVzdBINCgVjb3VudBgBIAEoBSJLChVPdmVyYWxsUmVjZW50UmVzcG9uc2USMgoJc3BlZWRydW5zGAEgAygLMh8uc2VydmVycy52MS5TcGVlZHJ1bk1hcE92ZXJ2aWV3IiMKEk92ZXJhbGxUb3BOUmVxdWVzdBINCgVjb3VudBgBIAEoBSI0CglTcGVlZHJ1bnMSJwoJc3BlZWRydW5zGAEgAygLMhQuc2VydmVycy52MS5TcGVlZHJ1biKhAQoTT3ZlcmFsbFRvcE5SZXNwb25zZRJBCglzcGVlZHJ1bnMYASADKAsyLi5zZXJ2ZXJzLnYxLk92ZXJhbGxUb3BOUmVzcG9uc2UuU3BlZWRydW5zRW50cnkaRwoOU3BlZWRydW5zRW50cnkSCwoDa2V5GAEgASgJEiQKBXZhbHVlGAIgASgLMhUuc2VydmVycy52MS5TcGVlZHJ1bnM6AjgBIicKE01hcFNwZWVkcnVuc1JlcXVlc3QSEAoIbWFwX25hbWUYASABKAki9gIKCFNwZWVkcnVuEhMKC3NwZWVkcnVuX2lkGAEgASgFEhEKCXNlcnZlcl9pZBgCIAEoBRIMCgRyYW5rGAMgASgFEhQKDGluaXRpYWxfcmFuaxgEIAEoBRIZCgNtYXAYBSABKAsyDC5tYXBzLnYxLk1hcBIrCghkdXJhdGlvbhgGIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhIUCgxwbGF5ZXJfY291bnQYByABKAUSEQoJYm90X2NvdW50GAggASgFEi4KCmNyZWF0ZWRfb24YCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhAKCGNhdGVnb3J5GAogASgJEhUKDXRvdGFsX3BsYXllcnMYCyABKAUSJQoIY2FwdHVyZXMYDCADKAsyEy5zZXJ2ZXJzLnYxLkNhcHR1cmUSLQoMcGFydGljaXBhbnRzGA0gAygLMhcuc2VydmVycy52MS5QYXJ0aWNpcGFudCKoAgoQU3BlZWRydW5PdmVydmlldxITCgtzcGVlZHJ1bl9pZBgBIAEoBRIRCglzZXJ2ZXJfaWQYAiABKAUSDAoEcmFuaxgDIAEoBRIUCgxpbml0aWFsX3JhbmsYBCABKAUSGQoDbWFwGAUgASgLMgwubWFwcy52MS5NYXASKwoIZHVyYXRpb24YBiABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SFAoMcGxheWVyX2NvdW50GAcgASgFEhEKCWJvdF9jb3VudBgIIAEoBRIuCgpjcmVhdGVkX29uGAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIQCghjYXRlZ29yeRgKIAEoCRIVCg10b3RhbF9wbGF5ZXJzGAsgASgFIkcKFE1hcFNwZWVkcnVuc1Jlc3BvbnNlEi8KCXNwZWVkcnVucxgBIAMoCzIcLnNlcnZlcnMudjEuU3BlZWRydW5PdmVydmlldyKNAQoLUGFydGljaXBhbnQSEAoIcm91bmRfaWQYASABKAUSFAoIc3RlYW1faWQYAiABKANCAjABEisKCGR1cmF0aW9uGAMgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uEhMKC2F2YXRhcl9oYXNoGAQgASgJEhQKDHBlcnNvbmFfbmFtZRgFIAEoCSKbAQoHQ2FwdHVyZRITCgtzcGVlZHJ1bl9pZBgBIAEoBRIQCghyb3VuZF9pZBgCIAEoBRIoCgdwbGF5ZXJzGAMgAygLMhcuc2VydmVycy52MS5QYXJ0aWNpcGFudBIrCghkdXJhdGlvbhgEIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhISCgpwb2ludF9uYW1lGAUgASgJMqwDChBTcGVlZHJ1bnNTZXJ2aWNlElMKDE1hcFNwZWVkcnVucxIfLnNlcnZlcnMudjEuTWFwU3BlZWRydW5zUmVxdWVzdBogLnNlcnZlcnMudjEuTWFwU3BlZWRydW5zUmVzcG9uc2UiABJQCgtPdmVyYWxsVG9wThIeLnNlcnZlcnMudjEuT3ZlcmFsbFRvcE5SZXF1ZXN0Gh8uc2VydmVycy52MS5PdmVyYWxsVG9wTlJlc3BvbnNlIgASVgoNT3ZlcmFsbFJlY2VudBIgLnNlcnZlcnMudjEuT3ZlcmFsbFJlY2VudFJlcXVlc3QaIS5zZXJ2ZXJzLnYxLk92ZXJhbGxSZWNlbnRSZXNwb25zZSIAElkKDlNwZWVkcnVuQ3JlYXRlEiEuc2VydmVycy52MS5TcGVlZHJ1bkNyZWF0ZVJlcXVlc3QaIi5zZXJ2ZXJzLnYxLlNwZWVkcnVuQ3JlYXRlUmVzcG9uc2UiABI+CgVRdWVyeRIYLnNlcnZlcnMudjEuUXVlcnlSZXF1ZXN0Ghkuc2VydmVycy52MS5RdWVyeVJlc3BvbnNlIgBCqAEKDmNvbS5zZXJ2ZXJzLnYxQg5TcGVlZHJ1bnNQcm90b1ABWj1naXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3NlcnZlcnMvdjE7c2VydmVyc3YxogIDU1hYqgIKU2VydmVycy5WMcoCClNlcnZlcnNcVjHiAhZTZXJ2ZXJzXFYxXEdQQk1ldGFkYXRh6gILU2VydmVyczo6VjFiCGVkaXRpb25zcOgH", [file_google_protobuf_duration, file_google_protobuf_timestamp, file_maps_v1_maps]);
+export const file_servers_v1_speedruns: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"ChpzZXJ2ZXJzL3YxL3NwZWVkcnVucy5wcm90bxIKc2VydmVycy52MSI/ChVTcGVlZHJ1bkNyZWF0ZVJlcXVlc3QSJgoIc3BlZWRydW4YASABKAsyFC5zZXJ2ZXJzLnYxLlNwZWVkcnVuIkAKFlNwZWVkcnVuQ3JlYXRlUmVzcG9uc2USJgoIc3BlZWRydW4YASABKAsyFC5zZXJ2ZXJzLnYxLlNwZWVkcnVuIiMKDFF1ZXJ5UmVxdWVzdBITCgtzcGVlZHJ1bl9pZBgBIAEoBSI3Cg1RdWVyeVJlc3BvbnNlEiYKCHNwZWVkcnVuGAEgASgLMhQuc2VydmVycy52MS5TcGVlZHJ1biJGChNTcGVlZHJ1bk1hcE92ZXJ2aWV3Ei8KCXNwZWVkcnVucxgBIAMoCzIcLnNlcnZlcnMudjEuU3BlZWRydW5PdmVydmlldyIlChRPdmVyYWxsUmVjZW50UmVxdWVzdBINCgVjb3VudBgBIAEoBSJLChVPdmVyYWxsUmVjZW50UmVzcG9uc2USMgoJc3BlZWRydW5zGAEgAygLMh8uc2VydmVycy52MS5TcGVlZHJ1bk1hcE92ZXJ2aWV3IiMKEk92ZXJhbGxUb3BOUmVxdWVzdBINCgVjb3VudBgBIAEoBSI0CglTcGVlZHJ1bnMSJwoJc3BlZWRydW5zGAEgAygLMhQuc2VydmVycy52MS5TcGVlZHJ1biKhAQoTT3ZlcmFsbFRvcE5SZXNwb25zZRJBCglzcGVlZHJ1bnMYASADKAsyLi5zZXJ2ZXJzLnYxLk92ZXJhbGxUb3BOUmVzcG9uc2UuU3BlZWRydW5zRW50cnkaRwoOU3BlZWRydW5zRW50cnkSCwoDa2V5GAEgASgJEiQKBXZhbHVlGAIgASgLMhUuc2VydmVycy52MS5TcGVlZHJ1bnM6AjgBIicKE01hcFNwZWVkcnVuc1JlcXVlc3QSEAoIbWFwX25hbWUYASABKAki9gIKCFNwZWVkcnVuEhMKC3NwZWVkcnVuX2lkGAEgASgFEhEKCXNlcnZlcl9pZBgCIAEoBRIMCgRyYW5rGAMgASgFEhQKDGluaXRpYWxfcmFuaxgEIAEoBRIZCgNtYXAYBSABKAsyDC5tYXBzLnYxLk1hcBIrCghkdXJhdGlvbhgGIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhIUCgxwbGF5ZXJfY291bnQYByABKAUSEQoJYm90X2NvdW50GAggASgFEi4KCmNyZWF0ZWRfb24YCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhAKCGNhdGVnb3J5GAogASgJEhUKDXRvdGFsX3BsYXllcnMYCyABKAUSJQoIY2FwdHVyZXMYDCADKAsyEy5zZXJ2ZXJzLnYxLkNhcHR1cmUSLQoMcGFydGljaXBhbnRzGA0gAygLMhcuc2VydmVycy52MS5QYXJ0aWNpcGFudCKoAgoQU3BlZWRydW5PdmVydmlldxITCgtzcGVlZHJ1bl9pZBgBIAEoBRIRCglzZXJ2ZXJfaWQYAiABKAUSDAoEcmFuaxgDIAEoBRIUCgxpbml0aWFsX3JhbmsYBCABKAUSGQoDbWFwGAUgASgLMgwubWFwcy52MS5NYXASKwoIZHVyYXRpb24YBiABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SFAoMcGxheWVyX2NvdW50GAcgASgFEhEKCWJvdF9jb3VudBgIIAEoBRIuCgpjcmVhdGVkX29uGAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIQCghjYXRlZ29yeRgKIAEoCRIVCg10b3RhbF9wbGF5ZXJzGAsgASgFIkcKFE1hcFNwZWVkcnVuc1Jlc3BvbnNlEi8KCXNwZWVkcnVucxgBIAMoCzIcLnNlcnZlcnMudjEuU3BlZWRydW5PdmVydmlldyKJAQoLUGFydGljaXBhbnQSEAoIcm91bmRfaWQYASABKAUSEAoIc3RlYW1faWQYAiABKAMSKwoIZHVyYXRpb24YAyABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SEwoLYXZhdGFyX2hhc2gYBCABKAkSFAoMcGVyc29uYV9uYW1lGAUgASgJIpsBCgdDYXB0dXJlEhMKC3NwZWVkcnVuX2lkGAEgASgFEhAKCHJvdW5kX2lkGAIgASgFEigKB3BsYXllcnMYAyADKAsyFy5zZXJ2ZXJzLnYxLlBhcnRpY2lwYW50EisKCGR1cmF0aW9uGAQgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uEhIKCnBvaW50X25hbWUYBSABKAkyrAMKEFNwZWVkcnVuc1NlcnZpY2USUwoMTWFwU3BlZWRydW5zEh8uc2VydmVycy52MS5NYXBTcGVlZHJ1bnNSZXF1ZXN0GiAuc2VydmVycy52MS5NYXBTcGVlZHJ1bnNSZXNwb25zZSIAElAKC092ZXJhbGxUb3BOEh4uc2VydmVycy52MS5PdmVyYWxsVG9wTlJlcXVlc3QaHy5zZXJ2ZXJzLnYxLk92ZXJhbGxUb3BOUmVzcG9uc2UiABJWCg1PdmVyYWxsUmVjZW50EiAuc2VydmVycy52MS5PdmVyYWxsUmVjZW50UmVxdWVzdBohLnNlcnZlcnMudjEuT3ZlcmFsbFJlY2VudFJlc3BvbnNlIgASWQoOU3BlZWRydW5DcmVhdGUSIS5zZXJ2ZXJzLnYxLlNwZWVkcnVuQ3JlYXRlUmVxdWVzdBoiLnNlcnZlcnMudjEuU3BlZWRydW5DcmVhdGVSZXNwb25zZSIAEj4KBVF1ZXJ5Ehguc2VydmVycy52MS5RdWVyeVJlcXVlc3QaGS5zZXJ2ZXJzLnYxLlF1ZXJ5UmVzcG9uc2UiAEKoAQoOY29tLnNlcnZlcnMudjFCDlNwZWVkcnVuc1Byb3RvUAFaPWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvc2VydmVycy92MTtzZXJ2ZXJzdjGiAgNTWFiqAgpTZXJ2ZXJzLlYxygIKU2VydmVyc1xWMeICFlNlcnZlcnNcVjFcR1BCTWV0YWRhdGHqAgtTZXJ2ZXJzOjpWMWIIZWRpdGlvbnNw6Ac",
+		[file_google_protobuf_duration, file_google_protobuf_timestamp, file_maps_v1_maps],
+	);
 
 /**
  * @generated from message servers.v1.SpeedrunCreateRequest
  */
 export type SpeedrunCreateRequest = Message<"servers.v1.SpeedrunCreateRequest"> & {
-  /**
-   * @generated from field: servers.v1.Speedrun speedrun = 1;
-   */
-  speedrun?: Speedrun;
+	/**
+	 * @generated from field: servers.v1.Speedrun speedrun = 1;
+	 */
+	speedrun?: Speedrun;
 };
 
 /**
  * @generated from message servers.v1.SpeedrunCreateRequest
  */
 export type SpeedrunCreateRequestValid = Message<"servers.v1.SpeedrunCreateRequest"> & {
-  /**
-   * @generated from field: servers.v1.Speedrun speedrun = 1;
-   */
-  speedrun?: SpeedrunValid;
+	/**
+	 * @generated from field: servers.v1.Speedrun speedrun = 1;
+	 */
+	speedrun?: SpeedrunValid;
 };
 
 /**
  * Describes the message servers.v1.SpeedrunCreateRequest.
  * Use `create(SpeedrunCreateRequestSchema)` to create a new message.
  */
-export const SpeedrunCreateRequestSchema: GenMessage<SpeedrunCreateRequest, {validType: SpeedrunCreateRequestValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_speedruns, 0);
+export const SpeedrunCreateRequestSchema: GenMessage<SpeedrunCreateRequest, { validType: SpeedrunCreateRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_speedruns, 0);
 
 /**
  * @generated from message servers.v1.SpeedrunCreateResponse
  */
 export type SpeedrunCreateResponse = Message<"servers.v1.SpeedrunCreateResponse"> & {
-  /**
-   * @generated from field: servers.v1.Speedrun speedrun = 1;
-   */
-  speedrun?: Speedrun;
+	/**
+	 * @generated from field: servers.v1.Speedrun speedrun = 1;
+	 */
+	speedrun?: Speedrun;
 };
 
 /**
  * @generated from message servers.v1.SpeedrunCreateResponse
  */
 export type SpeedrunCreateResponseValid = Message<"servers.v1.SpeedrunCreateResponse"> & {
-  /**
-   * @generated from field: servers.v1.Speedrun speedrun = 1;
-   */
-  speedrun?: SpeedrunValid;
+	/**
+	 * @generated from field: servers.v1.Speedrun speedrun = 1;
+	 */
+	speedrun?: SpeedrunValid;
 };
 
 /**
  * Describes the message servers.v1.SpeedrunCreateResponse.
  * Use `create(SpeedrunCreateResponseSchema)` to create a new message.
  */
-export const SpeedrunCreateResponseSchema: GenMessage<SpeedrunCreateResponse, {validType: SpeedrunCreateResponseValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_speedruns, 1);
+export const SpeedrunCreateResponseSchema: GenMessage<
+	SpeedrunCreateResponse,
+	{ validType: SpeedrunCreateResponseValid }
+> = /*@__PURE__*/ messageDesc(file_servers_v1_speedruns, 1);
 
 /**
  * @generated from message servers.v1.QueryRequest
  */
 export type QueryRequest = Message<"servers.v1.QueryRequest"> & {
-  /**
-   * @generated from field: int32 speedrun_id = 1;
-   */
-  speedrunId: number;
+	/**
+	 * @generated from field: int32 speedrun_id = 1;
+	 */
+	speedrunId: number;
 };
 
 export type QueryRequestValid = QueryRequest;
@@ -86,71 +93,74 @@ export type QueryRequestValid = QueryRequest;
  * Describes the message servers.v1.QueryRequest.
  * Use `create(QueryRequestSchema)` to create a new message.
  */
-export const QueryRequestSchema: GenMessage<QueryRequest, {validType: QueryRequestValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_speedruns, 2);
+export const QueryRequestSchema: GenMessage<QueryRequest, { validType: QueryRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_speedruns, 2);
 
 /**
  * @generated from message servers.v1.QueryResponse
  */
 export type QueryResponse = Message<"servers.v1.QueryResponse"> & {
-  /**
-   * @generated from field: servers.v1.Speedrun speedrun = 1;
-   */
-  speedrun?: Speedrun;
+	/**
+	 * @generated from field: servers.v1.Speedrun speedrun = 1;
+	 */
+	speedrun?: Speedrun;
 };
 
 /**
  * @generated from message servers.v1.QueryResponse
  */
 export type QueryResponseValid = Message<"servers.v1.QueryResponse"> & {
-  /**
-   * @generated from field: servers.v1.Speedrun speedrun = 1;
-   */
-  speedrun?: SpeedrunValid;
+	/**
+	 * @generated from field: servers.v1.Speedrun speedrun = 1;
+	 */
+	speedrun?: SpeedrunValid;
 };
 
 /**
  * Describes the message servers.v1.QueryResponse.
  * Use `create(QueryResponseSchema)` to create a new message.
  */
-export const QueryResponseSchema: GenMessage<QueryResponse, {validType: QueryResponseValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_speedruns, 3);
+export const QueryResponseSchema: GenMessage<QueryResponse, { validType: QueryResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_speedruns, 3);
 
 /**
  * @generated from message servers.v1.SpeedrunMapOverview
  */
 export type SpeedrunMapOverview = Message<"servers.v1.SpeedrunMapOverview"> & {
-  /**
-   * @generated from field: repeated servers.v1.SpeedrunOverview speedruns = 1;
-   */
-  speedruns: SpeedrunOverview[];
+	/**
+	 * @generated from field: repeated servers.v1.SpeedrunOverview speedruns = 1;
+	 */
+	speedruns: SpeedrunOverview[];
 };
 
 /**
  * @generated from message servers.v1.SpeedrunMapOverview
  */
 export type SpeedrunMapOverviewValid = Message<"servers.v1.SpeedrunMapOverview"> & {
-  /**
-   * @generated from field: repeated servers.v1.SpeedrunOverview speedruns = 1;
-   */
-  speedruns: SpeedrunOverviewValid[];
+	/**
+	 * @generated from field: repeated servers.v1.SpeedrunOverview speedruns = 1;
+	 */
+	speedruns: SpeedrunOverviewValid[];
 };
 
 /**
  * Describes the message servers.v1.SpeedrunMapOverview.
  * Use `create(SpeedrunMapOverviewSchema)` to create a new message.
  */
-export const SpeedrunMapOverviewSchema: GenMessage<SpeedrunMapOverview, {validType: SpeedrunMapOverviewValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_speedruns, 4);
+export const SpeedrunMapOverviewSchema: GenMessage<SpeedrunMapOverview, { validType: SpeedrunMapOverviewValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_speedruns, 4);
 
 /**
  * @generated from message servers.v1.OverallRecentRequest
  */
 export type OverallRecentRequest = Message<"servers.v1.OverallRecentRequest"> & {
-  /**
-   * @generated from field: int32 count = 1;
-   */
-  count: number;
+	/**
+	 * @generated from field: int32 count = 1;
+	 */
+	count: number;
 };
 
 export type OverallRecentRequestValid = OverallRecentRequest;
@@ -159,44 +169,46 @@ export type OverallRecentRequestValid = OverallRecentRequest;
  * Describes the message servers.v1.OverallRecentRequest.
  * Use `create(OverallRecentRequestSchema)` to create a new message.
  */
-export const OverallRecentRequestSchema: GenMessage<OverallRecentRequest, {validType: OverallRecentRequestValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_speedruns, 5);
+export const OverallRecentRequestSchema: GenMessage<OverallRecentRequest, { validType: OverallRecentRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_speedruns, 5);
 
 /**
  * @generated from message servers.v1.OverallRecentResponse
  */
 export type OverallRecentResponse = Message<"servers.v1.OverallRecentResponse"> & {
-  /**
-   * @generated from field: repeated servers.v1.SpeedrunMapOverview speedruns = 1;
-   */
-  speedruns: SpeedrunMapOverview[];
+	/**
+	 * @generated from field: repeated servers.v1.SpeedrunMapOverview speedruns = 1;
+	 */
+	speedruns: SpeedrunMapOverview[];
 };
 
 /**
  * @generated from message servers.v1.OverallRecentResponse
  */
 export type OverallRecentResponseValid = Message<"servers.v1.OverallRecentResponse"> & {
-  /**
-   * @generated from field: repeated servers.v1.SpeedrunMapOverview speedruns = 1;
-   */
-  speedruns: SpeedrunMapOverviewValid[];
+	/**
+	 * @generated from field: repeated servers.v1.SpeedrunMapOverview speedruns = 1;
+	 */
+	speedruns: SpeedrunMapOverviewValid[];
 };
 
 /**
  * Describes the message servers.v1.OverallRecentResponse.
  * Use `create(OverallRecentResponseSchema)` to create a new message.
  */
-export const OverallRecentResponseSchema: GenMessage<OverallRecentResponse, {validType: OverallRecentResponseValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_speedruns, 6);
+export const OverallRecentResponseSchema: GenMessage<OverallRecentResponse, { validType: OverallRecentResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_speedruns, 6);
 
 /**
  * @generated from message servers.v1.OverallTopNRequest
  */
 export type OverallTopNRequest = Message<"servers.v1.OverallTopNRequest"> & {
-  /**
-   * @generated from field: int32 count = 1;
-   */
-  count: number;
+	/**
+	 * @generated from field: int32 count = 1;
+	 */
+	count: number;
 };
 
 export type OverallTopNRequestValid = OverallTopNRequest;
@@ -205,71 +217,74 @@ export type OverallTopNRequestValid = OverallTopNRequest;
  * Describes the message servers.v1.OverallTopNRequest.
  * Use `create(OverallTopNRequestSchema)` to create a new message.
  */
-export const OverallTopNRequestSchema: GenMessage<OverallTopNRequest, {validType: OverallTopNRequestValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_speedruns, 7);
+export const OverallTopNRequestSchema: GenMessage<OverallTopNRequest, { validType: OverallTopNRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_speedruns, 7);
 
 /**
  * @generated from message servers.v1.Speedruns
  */
 export type Speedruns = Message<"servers.v1.Speedruns"> & {
-  /**
-   * @generated from field: repeated servers.v1.Speedrun speedruns = 1;
-   */
-  speedruns: Speedrun[];
+	/**
+	 * @generated from field: repeated servers.v1.Speedrun speedruns = 1;
+	 */
+	speedruns: Speedrun[];
 };
 
 /**
  * @generated from message servers.v1.Speedruns
  */
 export type SpeedrunsValid = Message<"servers.v1.Speedruns"> & {
-  /**
-   * @generated from field: repeated servers.v1.Speedrun speedruns = 1;
-   */
-  speedruns: SpeedrunValid[];
+	/**
+	 * @generated from field: repeated servers.v1.Speedrun speedruns = 1;
+	 */
+	speedruns: SpeedrunValid[];
 };
 
 /**
  * Describes the message servers.v1.Speedruns.
  * Use `create(SpeedrunsSchema)` to create a new message.
  */
-export const SpeedrunsSchema: GenMessage<Speedruns, {validType: SpeedrunsValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_speedruns, 8);
+export const SpeedrunsSchema: GenMessage<Speedruns, { validType: SpeedrunsValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_speedruns, 8);
 
 /**
  * @generated from message servers.v1.OverallTopNResponse
  */
 export type OverallTopNResponse = Message<"servers.v1.OverallTopNResponse"> & {
-  /**
-   * @generated from field: map<string, servers.v1.Speedruns> speedruns = 1;
-   */
-  speedruns: { [key: string]: Speedruns };
+	/**
+	 * @generated from field: map<string, servers.v1.Speedruns> speedruns = 1;
+	 */
+	speedruns: { [key: string]: Speedruns };
 };
 
 /**
  * @generated from message servers.v1.OverallTopNResponse
  */
 export type OverallTopNResponseValid = Message<"servers.v1.OverallTopNResponse"> & {
-  /**
-   * @generated from field: map<string, servers.v1.Speedruns> speedruns = 1;
-   */
-  speedruns: { [key: string]: SpeedrunsValid };
+	/**
+	 * @generated from field: map<string, servers.v1.Speedruns> speedruns = 1;
+	 */
+	speedruns: { [key: string]: SpeedrunsValid };
 };
 
 /**
  * Describes the message servers.v1.OverallTopNResponse.
  * Use `create(OverallTopNResponseSchema)` to create a new message.
  */
-export const OverallTopNResponseSchema: GenMessage<OverallTopNResponse, {validType: OverallTopNResponseValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_speedruns, 9);
+export const OverallTopNResponseSchema: GenMessage<OverallTopNResponse, { validType: OverallTopNResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_speedruns, 9);
 
 /**
  * @generated from message servers.v1.MapSpeedrunsRequest
  */
 export type MapSpeedrunsRequest = Message<"servers.v1.MapSpeedrunsRequest"> & {
-  /**
-   * @generated from field: string map_name = 1;
-   */
-  mapName: string;
+	/**
+	 * @generated from field: string map_name = 1;
+	 */
+	mapName: string;
 };
 
 export type MapSpeedrunsRequestValid = MapSpeedrunsRequest;
@@ -278,338 +293,342 @@ export type MapSpeedrunsRequestValid = MapSpeedrunsRequest;
  * Describes the message servers.v1.MapSpeedrunsRequest.
  * Use `create(MapSpeedrunsRequestSchema)` to create a new message.
  */
-export const MapSpeedrunsRequestSchema: GenMessage<MapSpeedrunsRequest, {validType: MapSpeedrunsRequestValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_speedruns, 10);
+export const MapSpeedrunsRequestSchema: GenMessage<MapSpeedrunsRequest, { validType: MapSpeedrunsRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_speedruns, 10);
 
 /**
  * @generated from message servers.v1.Speedrun
  */
 export type Speedrun = Message<"servers.v1.Speedrun"> & {
-  /**
-   * @generated from field: int32 speedrun_id = 1;
-   */
-  speedrunId: number;
+	/**
+	 * @generated from field: int32 speedrun_id = 1;
+	 */
+	speedrunId: number;
 
-  /**
-   * @generated from field: int32 server_id = 2;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 2;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: int32 rank = 3;
-   */
-  rank: number;
+	/**
+	 * @generated from field: int32 rank = 3;
+	 */
+	rank: number;
 
-  /**
-   * @generated from field: int32 initial_rank = 4;
-   */
-  initialRank: number;
+	/**
+	 * @generated from field: int32 initial_rank = 4;
+	 */
+	initialRank: number;
 
-  /**
-   * @generated from field: maps.v1.Map map = 5;
-   */
-  map?: Map;
+	/**
+	 * @generated from field: maps.v1.Map map = 5;
+	 */
+	map?: Map;
 
-  /**
-   * @generated from field: google.protobuf.Duration duration = 6;
-   */
-  duration?: Duration;
+	/**
+	 * @generated from field: google.protobuf.Duration duration = 6;
+	 */
+	duration?: Duration;
 
-  /**
-   * @generated from field: int32 player_count = 7;
-   */
-  playerCount: number;
+	/**
+	 * @generated from field: int32 player_count = 7;
+	 */
+	playerCount: number;
 
-  /**
-   * @generated from field: int32 bot_count = 8;
-   */
-  botCount: number;
+	/**
+	 * @generated from field: int32 bot_count = 8;
+	 */
+	botCount: number;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 9;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 9;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: string category = 10;
-   */
-  category: string;
+	/**
+	 * @generated from field: string category = 10;
+	 */
+	category: string;
 
-  /**
-   * @generated from field: int32 total_players = 11;
-   */
-  totalPlayers: number;
+	/**
+	 * @generated from field: int32 total_players = 11;
+	 */
+	totalPlayers: number;
 
-  /**
-   * @generated from field: repeated servers.v1.Capture captures = 12;
-   */
-  captures: Capture[];
+	/**
+	 * @generated from field: repeated servers.v1.Capture captures = 12;
+	 */
+	captures: Capture[];
 
-  /**
-   * @generated from field: repeated servers.v1.Participant participants = 13;
-   */
-  participants: Participant[];
+	/**
+	 * @generated from field: repeated servers.v1.Participant participants = 13;
+	 */
+	participants: Participant[];
 };
 
 /**
  * @generated from message servers.v1.Speedrun
  */
 export type SpeedrunValid = Message<"servers.v1.Speedrun"> & {
-  /**
-   * @generated from field: int32 speedrun_id = 1;
-   */
-  speedrunId: number;
+	/**
+	 * @generated from field: int32 speedrun_id = 1;
+	 */
+	speedrunId: number;
 
-  /**
-   * @generated from field: int32 server_id = 2;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 2;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: int32 rank = 3;
-   */
-  rank: number;
+	/**
+	 * @generated from field: int32 rank = 3;
+	 */
+	rank: number;
 
-  /**
-   * @generated from field: int32 initial_rank = 4;
-   */
-  initialRank: number;
+	/**
+	 * @generated from field: int32 initial_rank = 4;
+	 */
+	initialRank: number;
 
-  /**
-   * @generated from field: maps.v1.Map map = 5;
-   */
-  map?: MapValid;
+	/**
+	 * @generated from field: maps.v1.Map map = 5;
+	 */
+	map?: MapValid;
 
-  /**
-   * @generated from field: google.protobuf.Duration duration = 6;
-   */
-  duration?: Duration;
+	/**
+	 * @generated from field: google.protobuf.Duration duration = 6;
+	 */
+	duration?: Duration;
 
-  /**
-   * @generated from field: int32 player_count = 7;
-   */
-  playerCount: number;
+	/**
+	 * @generated from field: int32 player_count = 7;
+	 */
+	playerCount: number;
 
-  /**
-   * @generated from field: int32 bot_count = 8;
-   */
-  botCount: number;
+	/**
+	 * @generated from field: int32 bot_count = 8;
+	 */
+	botCount: number;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 9;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 9;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: string category = 10;
-   */
-  category: string;
+	/**
+	 * @generated from field: string category = 10;
+	 */
+	category: string;
 
-  /**
-   * @generated from field: int32 total_players = 11;
-   */
-  totalPlayers: number;
+	/**
+	 * @generated from field: int32 total_players = 11;
+	 */
+	totalPlayers: number;
 
-  /**
-   * @generated from field: repeated servers.v1.Capture captures = 12;
-   */
-  captures: CaptureValid[];
+	/**
+	 * @generated from field: repeated servers.v1.Capture captures = 12;
+	 */
+	captures: CaptureValid[];
 
-  /**
-   * @generated from field: repeated servers.v1.Participant participants = 13;
-   */
-  participants: ParticipantValid[];
+	/**
+	 * @generated from field: repeated servers.v1.Participant participants = 13;
+	 */
+	participants: ParticipantValid[];
 };
 
 /**
  * Describes the message servers.v1.Speedrun.
  * Use `create(SpeedrunSchema)` to create a new message.
  */
-export const SpeedrunSchema: GenMessage<Speedrun, {validType: SpeedrunValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_speedruns, 11);
+export const SpeedrunSchema: GenMessage<Speedrun, { validType: SpeedrunValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_speedruns, 11);
 
 /**
  * @generated from message servers.v1.SpeedrunOverview
  */
 export type SpeedrunOverview = Message<"servers.v1.SpeedrunOverview"> & {
-  /**
-   * @generated from field: int32 speedrun_id = 1;
-   */
-  speedrunId: number;
+	/**
+	 * @generated from field: int32 speedrun_id = 1;
+	 */
+	speedrunId: number;
 
-  /**
-   * @generated from field: int32 server_id = 2;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 2;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: int32 rank = 3;
-   */
-  rank: number;
+	/**
+	 * @generated from field: int32 rank = 3;
+	 */
+	rank: number;
 
-  /**
-   * @generated from field: int32 initial_rank = 4;
-   */
-  initialRank: number;
+	/**
+	 * @generated from field: int32 initial_rank = 4;
+	 */
+	initialRank: number;
 
-  /**
-   * @generated from field: maps.v1.Map map = 5;
-   */
-  map?: Map;
+	/**
+	 * @generated from field: maps.v1.Map map = 5;
+	 */
+	map?: Map;
 
-  /**
-   * @generated from field: google.protobuf.Duration duration = 6;
-   */
-  duration?: Duration;
+	/**
+	 * @generated from field: google.protobuf.Duration duration = 6;
+	 */
+	duration?: Duration;
 
-  /**
-   * @generated from field: int32 player_count = 7;
-   */
-  playerCount: number;
+	/**
+	 * @generated from field: int32 player_count = 7;
+	 */
+	playerCount: number;
 
-  /**
-   * @generated from field: int32 bot_count = 8;
-   */
-  botCount: number;
+	/**
+	 * @generated from field: int32 bot_count = 8;
+	 */
+	botCount: number;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 9;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 9;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: string category = 10;
-   */
-  category: string;
+	/**
+	 * @generated from field: string category = 10;
+	 */
+	category: string;
 
-  /**
-   * @generated from field: int32 total_players = 11;
-   */
-  totalPlayers: number;
+	/**
+	 * @generated from field: int32 total_players = 11;
+	 */
+	totalPlayers: number;
 };
 
 /**
  * @generated from message servers.v1.SpeedrunOverview
  */
 export type SpeedrunOverviewValid = Message<"servers.v1.SpeedrunOverview"> & {
-  /**
-   * @generated from field: int32 speedrun_id = 1;
-   */
-  speedrunId: number;
+	/**
+	 * @generated from field: int32 speedrun_id = 1;
+	 */
+	speedrunId: number;
 
-  /**
-   * @generated from field: int32 server_id = 2;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 2;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: int32 rank = 3;
-   */
-  rank: number;
+	/**
+	 * @generated from field: int32 rank = 3;
+	 */
+	rank: number;
 
-  /**
-   * @generated from field: int32 initial_rank = 4;
-   */
-  initialRank: number;
+	/**
+	 * @generated from field: int32 initial_rank = 4;
+	 */
+	initialRank: number;
 
-  /**
-   * @generated from field: maps.v1.Map map = 5;
-   */
-  map?: MapValid;
+	/**
+	 * @generated from field: maps.v1.Map map = 5;
+	 */
+	map?: MapValid;
 
-  /**
-   * @generated from field: google.protobuf.Duration duration = 6;
-   */
-  duration?: Duration;
+	/**
+	 * @generated from field: google.protobuf.Duration duration = 6;
+	 */
+	duration?: Duration;
 
-  /**
-   * @generated from field: int32 player_count = 7;
-   */
-  playerCount: number;
+	/**
+	 * @generated from field: int32 player_count = 7;
+	 */
+	playerCount: number;
 
-  /**
-   * @generated from field: int32 bot_count = 8;
-   */
-  botCount: number;
+	/**
+	 * @generated from field: int32 bot_count = 8;
+	 */
+	botCount: number;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 9;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 9;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: string category = 10;
-   */
-  category: string;
+	/**
+	 * @generated from field: string category = 10;
+	 */
+	category: string;
 
-  /**
-   * @generated from field: int32 total_players = 11;
-   */
-  totalPlayers: number;
+	/**
+	 * @generated from field: int32 total_players = 11;
+	 */
+	totalPlayers: number;
 };
 
 /**
  * Describes the message servers.v1.SpeedrunOverview.
  * Use `create(SpeedrunOverviewSchema)` to create a new message.
  */
-export const SpeedrunOverviewSchema: GenMessage<SpeedrunOverview, {validType: SpeedrunOverviewValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_speedruns, 12);
+export const SpeedrunOverviewSchema: GenMessage<SpeedrunOverview, { validType: SpeedrunOverviewValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_speedruns, 12);
 
 /**
  * @generated from message servers.v1.MapSpeedrunsResponse
  */
 export type MapSpeedrunsResponse = Message<"servers.v1.MapSpeedrunsResponse"> & {
-  /**
-   * @generated from field: repeated servers.v1.SpeedrunOverview speedruns = 1;
-   */
-  speedruns: SpeedrunOverview[];
+	/**
+	 * @generated from field: repeated servers.v1.SpeedrunOverview speedruns = 1;
+	 */
+	speedruns: SpeedrunOverview[];
 };
 
 /**
  * @generated from message servers.v1.MapSpeedrunsResponse
  */
 export type MapSpeedrunsResponseValid = Message<"servers.v1.MapSpeedrunsResponse"> & {
-  /**
-   * @generated from field: repeated servers.v1.SpeedrunOverview speedruns = 1;
-   */
-  speedruns: SpeedrunOverviewValid[];
+	/**
+	 * @generated from field: repeated servers.v1.SpeedrunOverview speedruns = 1;
+	 */
+	speedruns: SpeedrunOverviewValid[];
 };
 
 /**
  * Describes the message servers.v1.MapSpeedrunsResponse.
  * Use `create(MapSpeedrunsResponseSchema)` to create a new message.
  */
-export const MapSpeedrunsResponseSchema: GenMessage<MapSpeedrunsResponse, {validType: MapSpeedrunsResponseValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_speedruns, 13);
+export const MapSpeedrunsResponseSchema: GenMessage<MapSpeedrunsResponse, { validType: MapSpeedrunsResponseValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_speedruns, 13);
 
 /**
  * @generated from message servers.v1.Participant
  */
 export type Participant = Message<"servers.v1.Participant"> & {
-  /**
-   * @generated from field: int32 round_id = 1;
-   */
-  roundId: number;
+	/**
+	 * @generated from field: int32 round_id = 1;
+	 */
+	roundId: number;
 
-  /**
-   * @generated from field: int64 steam_id = 2 [jstype = JS_STRING];
-   */
-  steamId: string;
+	/**
+	 * @generated from field: int64 steam_id = 2;
+	 */
+	steamId: bigint;
 
-  /**
-   * @generated from field: google.protobuf.Duration duration = 3;
-   */
-  duration?: Duration;
+	/**
+	 * @generated from field: google.protobuf.Duration duration = 3;
+	 */
+	duration?: Duration;
 
-  /**
-   * @generated from field: string avatar_hash = 4;
-   */
-  avatarHash: string;
+	/**
+	 * @generated from field: string avatar_hash = 4;
+	 */
+	avatarHash: string;
 
-  /**
-   * @generated from field: string persona_name = 5;
-   */
-  personaName: string;
+	/**
+	 * @generated from field: string persona_name = 5;
+	 */
+	personaName: string;
 };
 
 export type ParticipantValid = Participant;
@@ -618,37 +637,38 @@ export type ParticipantValid = Participant;
  * Describes the message servers.v1.Participant.
  * Use `create(ParticipantSchema)` to create a new message.
  */
-export const ParticipantSchema: GenMessage<Participant, {validType: ParticipantValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_speedruns, 14);
+export const ParticipantSchema: GenMessage<Participant, { validType: ParticipantValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_speedruns, 14);
 
 /**
  * @generated from message servers.v1.Capture
  */
 export type Capture = Message<"servers.v1.Capture"> & {
-  /**
-   * @generated from field: int32 speedrun_id = 1;
-   */
-  speedrunId: number;
+	/**
+	 * @generated from field: int32 speedrun_id = 1;
+	 */
+	speedrunId: number;
 
-  /**
-   * @generated from field: int32 round_id = 2;
-   */
-  roundId: number;
+	/**
+	 * @generated from field: int32 round_id = 2;
+	 */
+	roundId: number;
 
-  /**
-   * @generated from field: repeated servers.v1.Participant players = 3;
-   */
-  players: Participant[];
+	/**
+	 * @generated from field: repeated servers.v1.Participant players = 3;
+	 */
+	players: Participant[];
 
-  /**
-   * @generated from field: google.protobuf.Duration duration = 4;
-   */
-  duration?: Duration;
+	/**
+	 * @generated from field: google.protobuf.Duration duration = 4;
+	 */
+	duration?: Duration;
 
-  /**
-   * @generated from field: string point_name = 5;
-   */
-  pointName: string;
+	/**
+	 * @generated from field: string point_name = 5;
+	 */
+	pointName: string;
 };
 
 export type CaptureValid = Capture;
@@ -657,53 +677,52 @@ export type CaptureValid = Capture;
  * Describes the message servers.v1.Capture.
  * Use `create(CaptureSchema)` to create a new message.
  */
-export const CaptureSchema: GenMessage<Capture, {validType: CaptureValid}> = /*@__PURE__*/
-  messageDesc(file_servers_v1_speedruns, 15);
+export const CaptureSchema: GenMessage<Capture, { validType: CaptureValid }> =
+	/*@__PURE__*/
+	messageDesc(file_servers_v1_speedruns, 15);
 
 /**
  * @generated from service servers.v1.SpeedrunsService
  */
 export const SpeedrunsService: GenService<{
-  /**
-   * @generated from rpc servers.v1.SpeedrunsService.MapSpeedruns
-   */
-  mapSpeedruns: {
-    methodKind: "unary";
-    input: typeof MapSpeedrunsRequestSchema;
-    output: typeof MapSpeedrunsResponseSchema;
-  },
-  /**
-   * @generated from rpc servers.v1.SpeedrunsService.OverallTopN
-   */
-  overallTopN: {
-    methodKind: "unary";
-    input: typeof OverallTopNRequestSchema;
-    output: typeof OverallTopNResponseSchema;
-  },
-  /**
-   * @generated from rpc servers.v1.SpeedrunsService.OverallRecent
-   */
-  overallRecent: {
-    methodKind: "unary";
-    input: typeof OverallRecentRequestSchema;
-    output: typeof OverallRecentResponseSchema;
-  },
-  /**
-   * @generated from rpc servers.v1.SpeedrunsService.SpeedrunCreate
-   */
-  speedrunCreate: {
-    methodKind: "unary";
-    input: typeof SpeedrunCreateRequestSchema;
-    output: typeof SpeedrunCreateResponseSchema;
-  },
-  /**
-   * @generated from rpc servers.v1.SpeedrunsService.Query
-   */
-  query: {
-    methodKind: "unary";
-    input: typeof QueryRequestSchema;
-    output: typeof QueryResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_servers_v1_speedruns, 0);
-
+	/**
+	 * @generated from rpc servers.v1.SpeedrunsService.MapSpeedruns
+	 */
+	mapSpeedruns: {
+		methodKind: "unary";
+		input: typeof MapSpeedrunsRequestSchema;
+		output: typeof MapSpeedrunsResponseSchema;
+	};
+	/**
+	 * @generated from rpc servers.v1.SpeedrunsService.OverallTopN
+	 */
+	overallTopN: {
+		methodKind: "unary";
+		input: typeof OverallTopNRequestSchema;
+		output: typeof OverallTopNResponseSchema;
+	};
+	/**
+	 * @generated from rpc servers.v1.SpeedrunsService.OverallRecent
+	 */
+	overallRecent: {
+		methodKind: "unary";
+		input: typeof OverallRecentRequestSchema;
+		output: typeof OverallRecentResponseSchema;
+	};
+	/**
+	 * @generated from rpc servers.v1.SpeedrunsService.SpeedrunCreate
+	 */
+	speedrunCreate: {
+		methodKind: "unary";
+		input: typeof SpeedrunCreateRequestSchema;
+		output: typeof SpeedrunCreateResponseSchema;
+	};
+	/**
+	 * @generated from rpc servers.v1.SpeedrunsService.Query
+	 */
+	query: {
+		methodKind: "unary";
+		input: typeof QueryRequestSchema;
+		output: typeof QueryResponseSchema;
+	};
+}> = /*@__PURE__*/ serviceDesc(file_servers_v1_speedruns, 0);

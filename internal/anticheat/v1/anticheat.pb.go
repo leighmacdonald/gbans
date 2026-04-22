@@ -377,18 +377,19 @@ var File_anticheat_v1_anticheat_proto protoreflect.FileDescriptor
 
 const file_anticheat_v1_anticheat_proto_rawDesc = "" +
 	"\n" +
-	"\x1canticheat/v1/anticheat.proto\x12\fanticheat.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc5\x01\n" +
+	"\x1canticheat/v1/anticheat.proto\x12\fanticheat.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc1\x01\n" +
 	"\fQueryRequest\x121\n" +
 	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1d\n" +
-	"\bsteam_id\x18\x03 \x01(\x03B\x020\x01R\asteamId\x12\x18\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x19\n" +
+	"\bsteam_id\x18\x03 \x01(\x03R\asteamId\x12\x18\n" +
 	"\asummary\x18\x04 \x01(\tR\asummary\x125\n" +
 	"\tdetection\x18\x05 \x01(\x0e2\x17.anticheat.v1.DetectionR\tdetection\"F\n" +
 	"\rQueryResponse\x125\n" +
-	"\aentries\x18\x01 \x03(\v2\x13.anticheat.v1.EntryB\x06\xbaH\x03\xc8\x01\x01R\aentries\"\xdd\x04\n" +
-	"\x05Entry\x12+\n" +
-	"\fanticheat_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\vanticheatId\x12'\n" +
-	"\bsteam_id\x18\x02 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\asteamId\x12'\n" +
+	"\aentries\x18\x01 \x03(\v2\x13.anticheat.v1.EntryB\x06\xbaH\x03\xc8\x01\x01R\aentries\"\xd9\x04\n" +
+	"\x05Entry\x12)\n" +
+	"\fanticheat_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\vanticheatId\x12%\n" +
+	"\bsteam_id\x18\x02 \x01(\x03B\n" +
+	"\xbaH\a\xc8\x01\x01\"\x02 \x00R\asteamId\x12'\n" +
 	"\tserver_id\x18\x03 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\bserverId\x12'\n" +
 	"\vserver_name\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +

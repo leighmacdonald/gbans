@@ -1,26 +1,27 @@
 import { type ReactNode, useCallback } from "react";
 import { defaultAvatarHash } from "./api";
 import { AuthContext } from "./contexts/AuthContext.tsx";
-import { PermissionLevel, type PermissionLevelEnum } from "./schema/people.ts";
 import { logoutFn } from "./util/auth/logoutFn.ts";
 import { logErr } from "./util/errors.ts";
 import { type PersonCore, PersonCoreSchema } from "./rpc/person/v1/person_core_pb.ts";
 import { create } from "@bufbuild/protobuf";
-import {timestampToDateTime} from "./util/time.ts";
+import { Privilege } from "./rpc/person/v1/privilege_pb.ts";
+import { timestampDate } from "@bufbuild/protobuf/wkt";
 
 export const accessTokenKey = "token";
 export const profileKey = "profile";
 export const logoutKey = "logout";
 
 const saveProfile = (profile: PersonCore) => {
-    const v = {
-        ...profile, steamId: profile.steamId.toString(),
-        banId: profile.banId.toString(),
-        timeCreated: profile.timeCreated ? timestampToDateTime(profile.timeCreated) : new Date()
-    };
-    console.log(v);
-    localStorage.setItem(profileKey, JSON.stringify(v));
-}
+	const v = {
+		...profile,
+		steamId: profile.steamId.toString(),
+		banId: profile.banId.toString(),
+		timeCreated: profile.timeCreated ? timestampDate(profile.timeCreated) : new Date(),
+	};
+	console.log(v);
+	localStorage.setItem(profileKey, JSON.stringify(v));
+};
 export function AuthProvider({
 	children,
 	profile,
@@ -32,7 +33,7 @@ export function AuthProvider({
 }) {
 	const login = useCallback(
 		async (profile: PersonCore) => {
-            saveProfile(profile);
+			saveProfile(profile);
 			setProfile(profile);
 		},
 		[setProfile],
@@ -46,8 +47,8 @@ export function AuthProvider({
 		} finally {
 			setProfile(
 				create(PersonCoreSchema, {
-					steamId: "",
-					permissionLevel: PermissionLevel.Guest,
+					steamId: 0n,
+					permissionLevel: Privilege.GUEST,
 					avatarHash: defaultAvatarHash,
 				}),
 			);
@@ -59,10 +60,10 @@ export function AuthProvider({
 	};
 
 	const permissionLevel = () => {
-		return profile?.permissionLevel ?? PermissionLevel.Guest;
+		return profile?.permissionLevel ?? Privilege.GUEST;
 	};
 
-	const hasPermission = (wantedLevel: PermissionLevelEnum) => {
+	const hasPermission = (wantedLevel: Privilege) => {
 		const currentLevel = permissionLevel();
 		return currentLevel >= wantedLevel;
 	};
@@ -104,6 +105,6 @@ export type AuthContextProps = {
 	login: (profile: PersonCore) => void;
 	logout: () => Promise<void>;
 	isAuthenticated: () => boolean;
-	permissionLevel: () => PermissionLevelEnum;
-	hasPermission: (level: PermissionLevelEnum) => boolean;
+	permissionLevel: () => Privilege;
+	hasPermission: (level: Privilege) => boolean;
 };

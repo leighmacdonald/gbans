@@ -1,5 +1,4 @@
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import {
 	createMRTColumnHelper,
 	type MRT_ColumnFiltersState,
@@ -8,16 +7,19 @@ import {
 	useMaterialReactTable,
 } from "material-react-table";
 import { useMemo, useState } from "react";
-import { apiGetConnections } from "../../api/profile.ts";
-import type { PersonConnection } from "../../schema/people.ts";
-import { renderDateTime } from "../../util/time.ts";
+import { renderTimestamp } from "../../util/time.ts";
 import { createDefaultTableOptions } from "./options.ts";
 import { SortableTable } from "./SortableTable.tsx";
+import type { PersonConnection } from "../../rpc/network/v1/network_pb.ts";
+import { queryConnections } from "../../rpc/network/v1/network-NetworkService_connectquery.ts";
+import { useQuery } from "@connectrpc/connect-query";
+
+``;
 
 const columnHelper = createMRTColumnHelper<PersonConnection>();
 const defaultOptions = createDefaultTableOptions<PersonConnection>();
 
-export const IPHistoryTable = ({ steamId }: { steamId: string }) => {
+export const IPHistoryTable = ({ steamId }: { steamId: bigint }) => {
 	const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
 	const [globalFilter, setGlobalFilter] = useState("");
 	const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -26,42 +28,38 @@ export const IPHistoryTable = ({ steamId }: { steamId: string }) => {
 		pageSize: 50,
 	});
 
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["connectionHist", { columnFilters, globalFilter, pagination, sorting }],
-		queryFn: async ({ signal }) => {
-			const sort = sorting.find((sort) => sort);
-			return await apiGetConnections(
-				{
-					limit: pagination.pageSize,
-					offset: pagination.pageIndex * pagination.pageSize,
-					order_by: sort ? sort.id : "created_on",
-					desc: sort ? sort.desc : false,
-					source_id: steamId,
-				},
-				signal,
-			);
+	const sort = sorting.find((sort) => sort);
+
+	const { data, isLoading, isError } = useQuery(queryConnections, {
+		steamId: steamId.toString(),
+		filter: {
+			limit: BigInt(pagination.pageSize),
+			offset: BigInt(pagination.pageIndex * pagination.pageSize),
+			orderBy: sort ? sort.id : "created_on",
+			desc: sort ? sort.desc : false,
 		},
 	});
+
 	const columns = useMemo(() => {
 		return [
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "Created",
 				size: 120,
-				Cell: ({ cell }) => <Typography>{renderDateTime(cell.getValue())}</Typography>,
+				Cell: ({ cell }) => <Typography>{renderTimestamp(cell.getValue())}</Typography>,
 			}),
-			columnHelper.accessor("persona_name", {
+			columnHelper.accessor("personaName", {
 				header: "Name",
 				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
 			}),
-			columnHelper.accessor("ip_addr", {
+			columnHelper.accessor("ipAddr", {
 				header: "IP Address",
 				size: 120,
 				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
 			}),
-			columnHelper.accessor("server_id", {
+			columnHelper.accessor("serverId", {
 				header: "Server",
 				size: 120,
-				Cell: ({ row }) => <Typography>{row.original.server_name_short}</Typography>,
+				Cell: ({ row }) => <Typography>{row.original.serverNameShort}</Typography>,
 			}),
 		];
 	}, []);
@@ -69,8 +67,8 @@ export const IPHistoryTable = ({ steamId }: { steamId: string }) => {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data?.data ?? [],
-		rowCount: data?.count ?? 0,
+		data: data?.connection ?? [],
+		// rowCount: data?.count ?? 0,
 		enableFilters: true,
 		enableHiding: true,
 		enableFacetedValues: true,

@@ -2,6 +2,10 @@ import { createConnectTransport } from "@connectrpc/connect-web";
 import type { Interceptor } from "@connectrpc/connect";
 import { accessTokenKey } from "./auth.tsx";
 import { emptyOrNullString } from "./util/types.ts";
+import { createValidateInterceptor } from "@connectrpc/validate";
+import { createValidator } from "@bufbuild/protovalidate";
+
+const validateInterceptor = createValidateInterceptor({ validator: createValidator({}) });
 
 const authInterceptor: Interceptor = (next) => async (req) => {
 	const token = localStorage.getItem(accessTokenKey);
@@ -15,5 +19,5 @@ const authInterceptor: Interceptor = (next) => async (req) => {
 export const finalTransport = createConnectTransport({
 	baseUrl: `${window.location.protocol}//${window.location.hostname}:${window.location.port}/connect/`,
 	useHttpGet: true,
-	interceptors: [authInterceptor],
+	interceptors: [validateInterceptor, authInterceptor],
 });

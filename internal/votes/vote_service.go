@@ -55,10 +55,10 @@ func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResp
 	for idx, vote := range votes {
 		resp.Results[idx] = &v1.VoteResult{
 			VoteId:           &vote.VoteID,
-			SourceId:         ptr.To(vote.SourceID.String()),
+			SourceId:         ptr.To(vote.SourceID.Int64()),
 			SourceName:       &vote.SourceName,
 			SourceAvatarHash: &vote.SourceAvatarHash,
-			TargetId:         ptr.To(vote.TargetID.String()),
+			TargetId:         ptr.To(vote.TargetID.Int64()),
 			TargetName:       &vote.TargetName,
 			TargetAvatarHash: &vote.TargetAvatarHash,
 			Name:             &vote.Name,

@@ -3,31 +3,31 @@ import PersonIcon from "@mui/icons-material/Person";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
-import { useMutation } from "@tanstack/react-query";
 import { z } from "zod/v4";
-import { apiNewsCreate, apiNewsSave } from "../../api/news.ts";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { NewsEntry } from "../../schema/news.ts";
 import { Heading } from "../Heading";
+import type { Article } from "../../rpc/news/v1/news_pb.ts";
+import { useMutation } from "@connectrpc/connect-query";
+import { create, edit } from "../../rpc/news/v1/news-NewsService_connectquery.ts";
 
-export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry }) => {
+export const NewsEditModal = NiceModal.create(({ entry }: { entry?: Article }) => {
 	const modal = useModal();
 	const { sendError, sendFlash } = useUserFlashCtx();
 
-	const mutation = useMutation({
-		mutationKey: ["newsEdit"],
-		mutationFn: async (values: { title: string; body_md: string; is_published: boolean }) => {
-			const ac = new AbortController();
-			if (entry?.news_id) {
-				return await apiNewsSave({ ...entry, ...values }, ac.signal);
-			} else {
-				return await apiNewsCreate(values.title, values.body_md, values.is_published, ac.signal);
-			}
-		},
+	const editMutation = useMutation(edit, {
 		onSuccess: async (entry) => {
-			modal.resolve(entry);
+			modal.resolve(entry.article);
 			sendFlash("success", "News edited successfully.");
+			await modal.hide();
+		},
+		onError: sendError,
+	});
+
+	const createMutation = useMutation(create, {
+		onSuccess: async (entry) => {
+			modal.resolve(entry.article);
+			sendFlash("success", "News created successfully.");
 			await modal.hide();
 		},
 		onError: sendError,
@@ -35,12 +35,16 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry })
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutation.mutate(value);
+			if (entry?.newsId) {
+				editMutation.mutate(value);
+			} else {
+				createMutation.mutate(value);
+			}
 		},
 		defaultValues: {
 			title: entry?.title ?? "",
-			body_md: entry?.body_md ?? "",
-			is_published: entry?.is_published ?? false,
+			body_md: entry?.bodyMd ?? "",
+			is_published: entry?.isPublished ?? false,
 		},
 		validators: {
 			onSubmit: z.object({

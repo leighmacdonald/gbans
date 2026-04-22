@@ -8,8 +8,8 @@ managed:
   override:
     - file_option: go_package_prefix
       value: github.com/leighmacdonald/gbans/internal
-    - field_option: jstype
-      value: JS_STRING
+#    - field_option: jstype
+#      value: JS_STRING
 plugins:
   - local: [protoc-gen-go]
     out: internal
