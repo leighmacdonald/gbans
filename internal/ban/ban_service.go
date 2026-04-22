@@ -16,7 +16,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/sosodev/duration"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -159,13 +158,9 @@ func (s BanService) Update(ctx context.Context, req *v1.UpdateRequest) (*v1.Upda
 		bannedPerson.ReasonText = ""
 	}
 
-	if req.GetDuration() != "" {
-		dur, errDur := duration.Parse(req.GetDuration())
-		if errDur != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, errDur)
-		}
-
-		bannedPerson.ValidUntil = time.Now().Add(dur.ToTimeDuration())
+	if req.GetDuration() != nil {
+		dur := req.GetDuration()
+		bannedPerson.ValidUntil = time.Now().Add(dur.AsDuration())
 	}
 
 	bannedPerson.Note = ptr.From(req.Note)

@@ -25,33 +25,17 @@ import {
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import { stringToColour } from "../util/colours.ts";
-import { renderDate } from "../util/time.ts";
-import { useQuery } from "@connectrpc/connect-query";
+import { renderTimestamp } from "../util/time.ts";
+import { useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
 import { query } from "../rpc/anticheat/v1/anticheat-AnticheatService_connectquery.ts";
 import type { Entry } from "../rpc/anticheat/v1/anticheat_pb.ts";
+import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 
 const validateSearch = makeSchemaState("anticheat_id");
 
 export const Route = createFileRoute("/_mod/admin/anticheat")({
 	component: AdminAnticheat,
 	validateSearch,
-	loader: async ({ context }) => {
-		const unsorted = await context.queryClient.ensureQueryData({
-			queryKey: ["serversSimple"],
-			queryFn: async ({ signal }) => {
-				return await apiGetServers(signal);
-			},
-		});
-		return unsorted.sort((a, b) => {
-			if (a.server_name > b.server_name) {
-				return 1;
-			}
-			if (a.server_name < b.server_name) {
-				return -1;
-			}
-			return 0;
-		});
-	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Anti-Cheat Logs" }, match.context.title("Anti-Cheat Logs")],
 	}),
@@ -63,8 +47,10 @@ const defaultOptions = createDefaultTableOptions<Entry>();
 function AdminAnticheat() {
 	const search = Route.useSearch();
 	const navigate = useNavigate();
-	const servers = Route.useLoaderData();
+
 	const theme = useTheme();
+
+	const { data: serverList } = useSuspenseQuery(servers);
 
 	const { data, isLoading, isError } = useQuery(query);
 
@@ -82,9 +68,9 @@ function AdminAnticheat() {
 				grow: false,
 				enableColumnFilter: true,
 				filterVariant: "multi-select",
-				filterSelectOptions: servers.map((server) => ({
-					label: server.server_name,
-					value: server.server_id,
+				filterSelectOptions: serverList.servers.map((server) => ({
+					label: server.serverName,
+					value: server.serverId,
 				})),
 				filterFn: (row, _, filterValue) => {
 					return filterValue.length === 0 || filterValue.includes(row.original.serverId);
@@ -135,7 +121,7 @@ function AdminAnticheat() {
 			columnHelper.accessor("createdOn", {
 				header: "Created",
 				grow: false,
-				Cell: ({ cell }) => renderDate(cell.getValue()),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
 			columnHelper.accessor("demoId", {
 				header: "Demo",

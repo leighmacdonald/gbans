@@ -115,6 +115,12 @@ message QueryRequest {
   google.protobuf.Timestamp time_created_before = 11;
 }
 
+enum VisibilityState {
+  VISIBILITY_STATE_UNSPECIFIED = 0;
+  VISIBILITY_STATE_PRIVATE = 1;
+  VISIBILITY_STATE_PUBLIC = 3;
+}
+
 message Person {
   int64 steam_id = 1 [
     (buf.validate.field).required = true,
@@ -149,9 +155,9 @@ message Person {
   string profile_url = 28 [(buf.validate.field).required = true];
   string real_name = 29 [(buf.validate.field).required = true];
   google.protobuf.Timestamp time_created = 30 [(buf.validate.field).required = true];
-  int64 visibility_state = 31 [(buf.validate.field).required = true];
+  VisibilityState visibility_state = 31 [(buf.validate.field).required = true];
 }
 message QueryResponse {
-  repeated PersonCore people = 1 [(buf.validate.field).required = true];
+  repeated Person people = 1 [(buf.validate.field).required = true];
   int64 count = 2 [(buf.validate.field).required = true];
 }

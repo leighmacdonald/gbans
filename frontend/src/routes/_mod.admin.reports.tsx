@@ -23,11 +23,13 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { renderDateTime } from "../util/time.ts";
+import { renderTimestamp } from "../util/time.ts";
 import { reports } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
 import { useSuspenseQuery } from "@connectrpc/connect-query";
 import { ReportStatus, type ReportWithAuthor } from "../rpc/ban/v1/report_pb.ts";
 import { BanReason } from "../rpc/ban/v1/ban_pb.ts";
+import { enumValues } from "../util/lists.ts";
+import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
 
 const columnHelper = createMRTColumnHelper<ReportWithAuthor>();
 const defaultOptions = createDefaultTableOptions<ReportWithAuthor>();
@@ -135,11 +137,10 @@ function AdminReports() {
 					if (query === "") {
 						return true;
 					}
-					const value = row.original.source_id.toLowerCase();
-					if (value.includes(query)) {
-						return true;
-					}
-					if (row.original.source_id.includes(query) || row.original.source_id === query) {
+					if (
+						row.original.author?.steamId.toString().includes(query) ||
+						row.original.author?.steamId.toString() === query
+					) {
 						return true;
 					}
 
@@ -147,9 +148,9 @@ function AdminReports() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.author.steam_id}
-						personaname={row.original.author.name}
-						avatar_hash={row.original.author.avatarhash}
+						steam_id={BigInt(row.original.author?.steamId ?? 0n)}
+						personaname={String(row.original.author?.name)}
+						avatar_hash={String(row.original.author?.avatarHash)}
 					>
 						<RouterLink
 							style={{
@@ -159,9 +160,9 @@ function AdminReports() {
 										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
-							search={setColumnFilter(search, "source_id", row.original.source_id)}
+							search={setColumnFilter(search, "source_id", row.original.author?.steamId)}
 						>
-							{row.original.author.name ?? row.original.author.steam_id}
+							{row.original.author?.name ?? row.original.author?.steamId}
 						</RouterLink>
 					</PersonCell>
 				),
@@ -175,11 +176,14 @@ function AdminReports() {
 					if (query === "") {
 						return true;
 					}
-					const value = row.original.target_id.toLowerCase();
-					if (value.includes(query)) {
+					const value = row.original.subject?.steamId.toString().toLowerCase();
+					if (value && value.includes(query)) {
 						return true;
 					}
-					if (row.original.target_id.includes(query) || row.original.target_id === query) {
+					if (
+						row.original.report?.targetId.toString().includes(query) ||
+						row.original.report?.targetId.toString() === query
+					) {
 						return true;
 					}
 
@@ -187,9 +191,9 @@ function AdminReports() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.subject.steam_id}
-						personaname={row.original.subject.name}
-						avatar_hash={row.original.subject?.avatarHash}
+						steam_id={BigInt(row.original.subject?.steamId ?? 0n)}
+						personaname={String(row.original.subject?.name)}
+						avatar_hash={String(row.original.subject?.avatarHash)}
 					>
 						<RouterLink
 							style={{
@@ -199,16 +203,16 @@ function AdminReports() {
 										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
-							search={setColumnFilter(search, "target_id", row.original.targetId)}
+							search={setColumnFilter(search, "target_id", row.original.subject?.steamId)}
 						>
-							{row.original.subject.name ?? row.original.subject?.steamId}
+							{row.original.subject?.name ?? row.original.subject?.steamId}
 						</RouterLink>
 					</PersonCell>
 				),
 			}),
 			columnHelper.accessor("report.reason", {
-				filterSelectOptions: Object.values(BanReason).map((reason) => ({
-					label: BanReasons[reason],
+				filterSelectOptions: enumValues(BanReason).map((reason) => ({
+					label: BanReason[reason],
 					value: reason,
 				})),
 				filterVariant: "multi-select",
@@ -223,7 +227,7 @@ function AdminReports() {
 				},
 				Cell: ({ cell }) => (
 					<TextLink to={Route.fullPath} search={setColumnFilter(search, "reason", [cell.getValue()])}>
-						{BanReasons[cell.getValue() as BanReasonEnum]}
+						{BanReason[cell.getValue()]}
 					</TextLink>
 				),
 			}),
@@ -238,8 +242,12 @@ function AdminReports() {
 				grow: false,
 				filterVariant: "date",
 				Cell: ({ cell }) => (
-					<Tooltip title={formatDistanceToNowStrict(cell.getValue(), { addSuffix: true })}>
-						<Typography>{renderDateTime(cell.getValue())}</Typography>
+					<Tooltip
+						title={formatDistanceToNowStrict(timestampDate(cell.getValue() as Timestamp), {
+							addSuffix: true,
+						})}
+					>
+						<Typography>{renderTimestamp(cell.getValue())}</Typography>
 					</Tooltip>
 				),
 			}),
@@ -248,8 +256,12 @@ function AdminReports() {
 				grow: false,
 				filterVariant: "date",
 				Cell: ({ cell }) => (
-					<Tooltip title={formatDistanceToNowStrict(cell.getValue(), { addSuffix: true })}>
-						<Typography>{renderDateTime(cell.getValue())}</Typography>
+					<Tooltip
+						title={formatDistanceToNowStrict(timestampDate(cell.getValue() as Timestamp), {
+							addSuffix: true,
+						})}
+					>
+						<Typography>{renderTimestamp(cell.getValue())}</Typography>
 					</Tooltip>
 				),
 			}),

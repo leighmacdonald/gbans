@@ -23,11 +23,13 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { renderDateTime } from "../util/time.ts";
+import { renderTimestamp } from "../util/time.ts";
 import { appeals } from "../rpc/ban/v1/appeal-AppealService_connectquery.ts";
 import { AppealState, BanReason } from "../rpc/ban/v1/ban_pb.ts";
-import { useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
+import { useSuspenseQuery } from "@connectrpc/connect-query";
 import type { AppealOverview } from "../rpc/ban/v1/appeal_pb.ts";
+import { enumValues } from "../util/lists.ts";
+import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
 
 const columnHelper = createMRTColumnHelper<AppealOverview>();
 const defaultOptions = createDefaultTableOptions<AppealOverview>();
@@ -102,8 +104,8 @@ function AdminAppeals() {
 				Cell: ({ cell }) => (
 					<TextLink
 						color={"primary"}
-						to={`/ban/$ban_id`}
-						params={{ ban_id: String(cell.getValue()) }}
+						to={`/ban/$banId`}
+						params={{ banId: String(cell.getValue()) }}
 						marginRight={2}
 					>
 						#{cell.getValue()}
@@ -114,8 +116,8 @@ function AdminAppeals() {
 				header: "Status",
 				grow: false,
 				filterVariant: "multi-select",
-				filterSelectOptions: Object.values(AppealState).map((reason) => ({
-					label: appealStateString(reason),
+				filterSelectOptions: enumValues(AppealState).map((reason) => ({
+					label: AppealState[reason],
 					value: reason,
 				})),
 				filterFn: (row, _, filterValue) => {
@@ -127,7 +129,7 @@ function AdminAppeals() {
 				},
 				Cell: ({ cell }) => (
 					<TextLink to={Route.fullPath} search={setColumnFilter(search, "appeal_state", [cell.getValue()])}>
-						{appealStateString(cell.getValue())}
+						{AppealState[cell.getValue()]}
 					</TextLink>
 				),
 			}),
@@ -151,7 +153,7 @@ function AdminAppeals() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.ban?.sourceId}
+						steam_id={BigInt(row.original.ban?.sourceId ?? 0n)}
 						personaname={row.original.sourcePersonaName}
 						avatar_hash={row.original.sourceAvatarHash}
 					>
@@ -191,7 +193,7 @@ function AdminAppeals() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.ban?.targetId}
+						steam_id={BigInt(row.original.ban?.targetId ?? 0n)}
 						personaname={row.original.targetPersonaName}
 						avatar_hash={row.original.targetAvatarHash}
 					>
@@ -240,8 +242,12 @@ function AdminAppeals() {
 				header: "Created",
 				filterVariant: "date",
 				Cell: ({ cell }) => (
-					<Tooltip title={formatDistanceToNowStrict(cell.getValue(), { addSuffix: true })}>
-						<Typography>{renderDateTime(cell.getValue())}</Typography>
+					<Tooltip
+						title={formatDistanceToNowStrict(timestampDate(cell.getValue() as Timestamp), {
+							addSuffix: true,
+						})}
+					>
+						<Typography>{renderTimestamp(cell.getValue())}</Typography>
 					</Tooltip>
 				),
 			}),
@@ -249,8 +255,12 @@ function AdminAppeals() {
 				header: "Last Active",
 				enableColumnFilter: false,
 				Cell: ({ cell }) => (
-					<Tooltip title={formatDistanceToNowStrict(cell.getValue(), { addSuffix: true })}>
-						<Typography>{renderDateTime(cell.getValue())}</Typography>
+					<Tooltip
+						title={formatDistanceToNowStrict(timestampDate(cell.getValue() as Timestamp), {
+							addSuffix: true,
+						})}
+					>
+						<Typography>{renderTimestamp(cell.getValue())}</Typography>
 					</Tooltip>
 				),
 			}),

@@ -45,6 +45,8 @@ const (
 	BanServiceQuerySourceBansProcedure = "/ban.v1.BanService/QuerySourceBans"
 	// BanServiceUpdateProcedure is the fully-qualified name of the BanService's Update RPC.
 	BanServiceUpdateProcedure = "/ban.v1.BanService/Update"
+	// BanServiceCreateProcedure is the fully-qualified name of the BanService's Create RPC.
+	BanServiceCreateProcedure = "/ban.v1.BanService/Create"
 )
 
 // BanServiceClient is a client for the ban.v1.BanService service.
@@ -55,6 +57,7 @@ type BanServiceClient interface {
 	Get(context.Context, *v1.GetRequest) (*v1.GetResponse, error)
 	QuerySourceBans(context.Context, *v1.QuerySourceBansRequest) (*v1.QuerySourceBansResponse, error)
 	Update(context.Context, *v1.UpdateRequest) (*v1.UpdateResponse, error)
+	Create(context.Context, *v1.CreateRequest) (*v1.CreateResponse, error)
 }
 
 // NewBanServiceClient constructs a client for the ban.v1.BanService service. By default, it uses
@@ -98,6 +101,12 @@ func NewBanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(banServiceMethods.ByName("Update")),
 			connect.WithClientOptions(opts...),
 		),
+		create: connect.NewClient[v1.CreateRequest, v1.CreateResponse](
+			httpClient,
+			baseURL+BanServiceCreateProcedure,
+			connect.WithSchema(banServiceMethods.ByName("Create")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -108,6 +117,7 @@ type banServiceClient struct {
 	get             *connect.Client[v1.GetRequest, v1.GetResponse]
 	querySourceBans *connect.Client[v1.QuerySourceBansRequest, v1.QuerySourceBansResponse]
 	update          *connect.Client[v1.UpdateRequest, v1.UpdateResponse]
+	create          *connect.Client[v1.CreateRequest, v1.CreateResponse]
 }
 
 // Query calls ban.v1.BanService.Query.
@@ -155,6 +165,15 @@ func (c *banServiceClient) Update(ctx context.Context, req *v1.UpdateRequest) (*
 	return nil, err
 }
 
+// Create calls ban.v1.BanService.Create.
+func (c *banServiceClient) Create(ctx context.Context, req *v1.CreateRequest) (*v1.CreateResponse, error) {
+	response, err := c.create.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // BanServiceHandler is an implementation of the ban.v1.BanService service.
 type BanServiceHandler interface {
 	Query(context.Context, *v1.QueryRequest) (*v1.QueryResponse, error)
@@ -163,6 +182,7 @@ type BanServiceHandler interface {
 	Get(context.Context, *v1.GetRequest) (*v1.GetResponse, error)
 	QuerySourceBans(context.Context, *v1.QuerySourceBansRequest) (*v1.QuerySourceBansResponse, error)
 	Update(context.Context, *v1.UpdateRequest) (*v1.UpdateResponse, error)
+	Create(context.Context, *v1.CreateRequest) (*v1.CreateResponse, error)
 }
 
 // NewBanServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -202,6 +222,12 @@ func NewBanServiceHandler(svc BanServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(banServiceMethods.ByName("Update")),
 		connect.WithHandlerOptions(opts...),
 	)
+	banServiceCreateHandler := connect.NewUnaryHandlerSimple(
+		BanServiceCreateProcedure,
+		svc.Create,
+		connect.WithSchema(banServiceMethods.ByName("Create")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/ban.v1.BanService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case BanServiceQueryProcedure:
@@ -214,6 +240,8 @@ func NewBanServiceHandler(svc BanServiceHandler, opts ...connect.HandlerOption) 
 			banServiceQuerySourceBansHandler.ServeHTTP(w, r)
 		case BanServiceUpdateProcedure:
 			banServiceUpdateHandler.ServeHTTP(w, r)
+		case BanServiceCreateProcedure:
+			banServiceCreateHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -241,4 +269,8 @@ func (UnimplementedBanServiceHandler) QuerySourceBans(context.Context, *v1.Query
 
 func (UnimplementedBanServiceHandler) Update(context.Context, *v1.UpdateRequest) (*v1.UpdateResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.BanService.Update is not implemented"))
+}
+
+func (UnimplementedBanServiceHandler) Create(context.Context, *v1.CreateRequest) (*v1.CreateResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.BanService.Create is not implemented"))
 }

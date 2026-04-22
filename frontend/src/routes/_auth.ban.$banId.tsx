@@ -11,76 +11,62 @@ import Typography from "@mui/material/Typography";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 import { z } from "zod/v4";
-import {
-	apiCreateBanMessage,
-	apiDeleteBanMessage,
-	apiGetBanMessages,
-	apiGetBanSteam,
-	appealStateString,
-	banTypeString,
-} from "../api";
 import { AppealMessageView } from "../component/AppealMessageView.tsx";
 import { BanModPanel } from "../component/BanModPanel.tsx";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
-import { ErrorDetails } from "../component/ErrorDetails.tsx";
-import { MarkdownField, mdEditorRef } from "../component/form/field/MarkdownField.tsx";
+import { MarkdownField } from "../component/form/field/MarkdownField.tsx";
 import { MarkDownRenderer } from "../component/MarkdownRenderer.tsx";
 import { ProfileInfoBox } from "../component/ProfileInfoBox.tsx";
 import { SourceBansList } from "../component/SourceBansList.tsx";
 import { SteamIDList } from "../component/SteamIDList.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
-import { AppError, ErrorCode } from "../error.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { logErr } from "../util/errors.ts";
-import { renderDateTime, renderTimeDistance } from "../util/time.ts";
-import { useMutation, useQuery } from "@connectrpc/connect-query";
-import { deleteAppealMessage, messages } from "../rpc/ban/v1/appeal-AppealService_connectquery.ts";
+import { renderTimeDistance, renderTimestamp } from "../util/time.ts";
+import { useMutation, useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
+import { deleteAppealMessage, messages, reply } from "../rpc/ban/v1/appeal-AppealService_connectquery.ts";
 import { useQueryClient } from "@tanstack/react-query";
 import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
-import { AppealState } from "../rpc/ban/v1/ban_pb.ts";
+import { AppealState, BanReason, BanType } from "../rpc/ban/v1/ban_pb.ts";
+import { get } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
+import { timestampDate } from "@bufbuild/protobuf/wkt";
 
-export const Route = createFileRoute("/_auth/ban/$ban_id")({
+export const Route = createFileRoute("/_auth/ban/$banId")({
 	component: BanPage,
-
-	loader: async ({ context, abortController, params }) => {
-		const { ban_id } = params;
-		const ban = await context.queryClient.fetchQuery({
-			queryKey: ["ban", { ban_id }],
-			queryFn: async () => {
-				const ban = await apiGetBanSteam(Number(ban_id), true, abortController.signal);
-				if (!ban) {
-					throw new AppError(ErrorCode.NotFound);
-				}
-				return ban;
-			},
-		});
-		return { ban };
-	},
-	errorComponent: (e) => {
-		return <ErrorDetails error={e.error} />;
-	},
-	head: ({ loaderData, match }) => ({
-		meta: [
-			{ name: "description", content: match.context.appInfo.siteDescription },
-			match.context.title(`Ban #${loaderData?.ban.ban_id}`),
-		],
+	// loader: async ({ context, abortController, params }) => {
+	// 	const { ban_id } = params;
+	// 	const ban = await context.queryClient.fetchQuery({
+	// 		queryKey: ["ban", { ban_id }],
+	// 		queryFn: async () => {
+	// 			const ban = await apiGetBanSteam(Number(ban_id), true, abortController.signal);
+	// 			if (!ban) {
+	// 				throw new AppError(ErrorCode.NotFound);
+	// 			}
+	// 			return ban;
+	// 		},
+	// 	});
+	// 	return { ban };
+	// },
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: match.context.appInfo.siteDescription }, match.context.title(`Ban`)],
 	}),
 });
 
 function BanPage() {
 	const { permissionLevel, profile } = useAuth();
-	const { ban } = Route.useLoaderData();
+	const { banId } = Route.useParams();
 	const { sendFlash } = useUserFlashCtx();
 	const { appInfo } = Route.useRouteContext();
 	const queryClient = useQueryClient();
 
-	const { data: banMessages } = useQuery(messages, { banId: ban.id });
-	const banMutation = useMutation();
+	const { data: banData } = useSuspenseQuery(get, { banId: BigInt(banId) });
+	const { data: banMessages } = useQuery(messages, { banId: BigInt(banId) });
+	// const banMutation = useMutation();
+
 	const deleteMessageMutation = useMutation(deleteAppealMessage, {
 		onSuccess: async (_, req) => {
 			queryClient.setQueryData(
-				["banMessages", { ban_id: ban.ban_id }],
+				["banMessages", { banId }],
 				banMessages?.messages?.filter((m) => {
 					return m.banMessageId !== req.banMessageId;
 				}),
@@ -95,64 +81,67 @@ function BanPage() {
 	const canPost = useMemo(() => {
 		return (
 			permissionLevel() >= Privilege.MODERATOR ||
-			(ban?.appeal_state === AppealState.OPEN_UNSPECIFIED && ban?.target_id === profile.steamId)
+			(banData.ban?.appealState === AppealState.OPEN_UNSPECIFIED && banData.ban?.targetId === profile.steamId)
 		);
-	}, [ban?.appeal_state, ban?.target_id, permissionLevel, profile.steamId]);
+	}, [banData.ban?.appealState, banData.ban?.targetId, permissionLevel, profile.steamId]);
 
 	const onDelete = useCallback(async (banMessageId: bigint) => {
 		return await deleteMessageMutation.mutateAsync({ banMessageId });
 	}, []);
 
-	const mutation = useMutation({
-		mutationKey: ["banSteam"],
-		mutationFn: async (values: { body_md: string }) => {
-			if (!ban) {
-				return;
-			}
-			const ac = new AbortController();
-			const msg = await apiCreateBanMessage(ban?.ban_id, values.body_md, ac.signal);
-
-			queryClient.setQueryData(["banMessages", { ban_id: ban.ban_id }], [...(messages ?? []), msg]);
-			sendFlash("success", "Created a message successfully");
-			mdEditorRef.current?.setMarkdown("");
-			form.reset();
-		},
-	});
+	const replyMutation = useMutation(reply);
+	// 	mutationFn: async (values: { body_md: string }) => {
+	// 		if (!ban) {
+	// 			return;
+	// 		}
+	// 		const ac = new AbortController();
+	// 		const msg = await apiCreateBanMessage(ban?.ban_id, values.body_md, ac.signal);
+	//
+	// 		queryClient.setQueryData(["banMessages", { ban_id: ban.ban_id }], [...(banMessages?.messages ?? []), msg]);
+	// 		sendFlash("success", "Created a message successfully");
+	// 		mdEditorRef.current?.setMarkdown("");
+	// 		form.reset();
+	// 	},
+	// });
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutation.mutate(value);
+			replyMutation.mutate({ banId: BigInt(banId), bodyMd: value.body_md });
 		},
 		defaultValues: {
 			body_md: "",
 		},
 	});
 
+	if (!banData.ban) {
+		return <></>;
+	}
+
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 8 }}>
 				<Stack spacing={2}>
-					{canPost && (messages ?? []).length === 0 && (
-						<ContainerWithHeader title={`Ban Appeal #${ban.ban_id}`}>
+					{canPost && (banMessages?.messages ?? []).length === 0 && (
+						<ContainerWithHeader title={`Ban Appeal #${banData.ban.banId}`}>
 							<Typography variant={"body2"} padding={2} textAlign={"center"}>
 								You can start the appeal process by replying on this form.
 							</Typography>
 						</ContainerWithHeader>
 					)}
 
-					{permissionLevel() >= PermissionLevel.Moderator && (
-						<SourceBansList steam_id={ban?.source_id} is_reporter={true} />
+					{permissionLevel() >= Privilege.MODERATOR && (
+						<SourceBansList steam_id={banData.ban.sourceId.toString()} is_reporter={true} />
 					)}
 
-					{permissionLevel() >= PermissionLevel.Moderator && (
-						<SourceBansList steam_id={ban?.target_id} is_reporter={false} />
+					{permissionLevel() >= Privilege.MODERATOR && (
+						<SourceBansList steam_id={banData.ban.targetId.toString()} is_reporter={false} />
 					)}
 
-					{(messages ?? []).map((m) => (
+					{(banMessages?.messages ?? []).map((m) => (
 						<AppealMessageView
 							onDelete={onDelete}
 							message={m}
-							key={`ban-appeal-msg-${m.ban_message_id}`}
+							key={`ban-appeal-msg-${m.banMessageId}`}
 							assetURL={appInfo.assetUrl}
 						/>
 					))}
@@ -198,7 +187,7 @@ function BanPage() {
 					{!canPost && (
 						<Paper elevation={1}>
 							<Typography variant={"body2"} padding={2} textAlign={"center"}>
-								The ban appeal is closed: {appealStateString(ban.appeal_state)}
+								The ban appeal is closed: {AppealState[banData.ban?.appealState]}
 							</Typography>
 						</Paper>
 					)}
@@ -206,54 +195,59 @@ function BanPage() {
 			</Grid>
 			<Grid size={{ xs: 4 }}>
 				<Stack spacing={2}>
-					<ProfileInfoBox steam_id={ban.target_id} />
+					<ProfileInfoBox steam_id={banData.ban.targetId} />
 
 					<ContainerWithHeader title={"Ban Details"} iconLeft={<InfoIcon />}>
 						<List dense={true}>
 							<ListItem>
-								<ListItemText primary={"Reason"} secondary={BanReasons[ban.reason]} />
+								<ListItemText primary={"Reason"} secondary={BanReason[banData.ban.reason]} />
 							</ListItem>
 							<ListItem>
-								<ListItemText primary={"Ban Type"} secondary={banTypeString(ban.ban_type)} />
+								<ListItemText primary={"Ban Type"} secondary={BanType[banData.ban.banType]} />
 							</ListItem>
-							{ban.reason_text !== "" && (
+							{banData.ban.reasonText !== "" && (
 								<ListItem>
-									<ListItemText primary={"Reason (Custom)"} secondary={ban.reason_text} />
+									<ListItemText primary={"Reason (Custom)"} secondary={banData.ban.reasonText} />
 								</ListItem>
 							)}
 
 							<ListItem>
-								<ListItemText primary={"Created At"} secondary={renderDateTime(ban.created_on)} />
+								<ListItemText
+									primary={"Created At"}
+									secondary={renderTimestamp(banData.ban.createdOn)}
+								/>
 							</ListItem>
 							<ListItem>
 								<ListItemText
 									primary={"Expires At"}
-									secondary={renderDateTime(ban.valid_until as Date)}
+									secondary={renderTimestamp(banData.ban.validUntil)}
 								/>
 							</ListItem>
 							<ListItem>
 								<ListItemText
 									primary={"Expires"}
-									secondary={renderTimeDistance(ban.valid_until as Date)}
+									secondary={renderTimeDistance(
+										banData.ban.validUntil ? timestampDate(banData.ban.validUntil) : new Date(),
+									)}
 								/>
 							</ListItem>
-							{permissionLevel() >= PermissionLevel.Moderator && (
+							{permissionLevel() >= Privilege.MODERATOR && (
 								<ListItem>
-									<ListItemText primary={"Author"} secondary={ban.source_id.toString()} />
+									<ListItemText primary={"Author"} secondary={banData.ban.sourceId.toString()} />
 								</ListItem>
 							)}
 						</List>
 					</ContainerWithHeader>
 
-					<SteamIDList steam_id={ban?.target_id} />
+					<SteamIDList steam_id={banData.ban.targetId} />
 
-					{permissionLevel() >= PermissionLevel.Moderator && ban.note !== "" && (
+					{permissionLevel() >= Privilege.MODERATOR && banData.ban.note !== "" && (
 						<ContainerWithHeader title={"Mod Notes"} iconLeft={<DocumentScannerIcon />}>
-							<MarkDownRenderer body_md={ban.note} assetURL={appInfo.assetUrl} />
+							<MarkDownRenderer body_md={banData.ban.note} assetURL={appInfo.assetUrl} />
 						</ContainerWithHeader>
 					)}
 
-					{permissionLevel() >= PermissionLevel.Moderator && <BanModPanel ban_id={ban.ban_id} />}
+					{permissionLevel() >= Privilege.MODERATOR && <BanModPanel ban_id={Number(banData.ban.banId)} />}
 				</Stack>
 			</Grid>
 		</Grid>

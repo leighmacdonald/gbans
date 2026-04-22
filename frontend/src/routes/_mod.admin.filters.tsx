@@ -1,3 +1,4 @@
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -22,12 +23,10 @@ import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellSmall } from "../component/table/TableCellSmall.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { renderDateTime } from "../util/time.ts";
-import { useMutation, useQuery } from "@connectrpc/connect-query";
-import { filters, warningState, filterDelete } from "../rpc/chat/v1/wordfilter-WordfilterService_connectquery.ts";
-import type { Filter, UserWarning } from "../rpc/chat/v1/wordfilter_pb.ts";
-import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { BanType } from "../rpc/ban/v1/ban_pb.ts";
+import { type Filter, FilterAction, type UserWarning } from "../rpc/chat/v1/wordfilter_pb.ts";
+import { filterDelete, filters, warningState } from "../rpc/chat/v1/wordfilter-WordfilterService_connectquery.ts";
+import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<Filter>();
 const defaultOptions = createDefaultTableOptions<Filter>();
@@ -139,7 +138,7 @@ function AdminFilters() {
 					{ label: "Mute", value: BanType.NO_COMM },
 					{ label: "Ban", value: BanType.BANNED },
 				],
-				Cell: ({ cell }) => filterActionString(cell.getValue()),
+				Cell: ({ cell }) => FilterAction[cell.getValue()],
 			}),
 			columnHelper.accessor("duration", {
 				header: "Duration",
@@ -256,7 +255,7 @@ export const WarningStateTable = () => {
 				<Typography variant={"h6"}>Matched {f.isRegex ? "Regex" : "Text"}</Typography>
 				<Typography variant={"body1"}>{pat}</Typography>
 				<Typography variant={"body1"}>Weight: {f.weight}</Typography>
-				<Typography variant={"body1"}>Action: {filterActionString(f.action)}</Typography>
+				<Typography variant={"body1"}>Action: {FilterAction[f.action]}</Typography>
 			</>
 		);
 	}, []);
@@ -277,14 +276,14 @@ export const WarningStateTable = () => {
 			}),
 			columnHelperWarn.accessor("createdOn", {
 				header: "Created",
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(timestampDate(cell.getValue()))}</TableCellString>,
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
 			columnHelperWarn.accessor("filter.action", {
 				header: "Action",
 				Cell: ({ cell }) => (
 					<TableCellSmall>
 						<Typography>
-							{typeof cell.getValue() === "undefined" ? "" : filterActionString(cell.getValue())}
+							{typeof cell.getValue() === "undefined" ? "" : FilterAction[cell.getValue()]}
 						</Typography>
 					</TableCellSmall>
 				),

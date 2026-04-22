@@ -53,7 +53,7 @@ import { Route as GuestLoginSuccessRouteImport } from './routes/_guest.login.suc
 import { Route as AuthReportReportIdRouteImport } from './routes/_auth.report.$reportId'
 import { Route as AuthForumsForum_idRouteImport } from './routes/_auth.forums.$forum_id'
 import { Route as AuthContestsContest_idRouteImport } from './routes/_auth.contests.$contest_id'
-import { Route as AuthBanBan_idRouteImport } from './routes/_auth.ban.$ban_id'
+import { Route as AuthBanBanIdRouteImport } from './routes/_auth.ban.$banId'
 import { Route as AdminAdminSettingsRouteImport } from './routes/_admin.admin.settings'
 import { Route as AdminAdminServersRouteImport } from './routes/_admin.admin.servers'
 import { Route as AdminAdminServerlogsRouteImport } from './routes/_admin.admin.serverlogs'
@@ -282,9 +282,9 @@ const AuthContestsContest_idRoute = AuthContestsContest_idRouteImport.update({
   path: '/contests/$contest_id',
   getParentRoute: () => AuthRoute,
 } as any)
-const AuthBanBan_idRoute = AuthBanBan_idRouteImport.update({
-  id: '/ban/$ban_id',
-  path: '/ban/$ban_id',
+const AuthBanBanIdRoute = AuthBanBanIdRouteImport.update({
+  id: '/ban/$banId',
+  path: '/ban/$banId',
   getParentRoute: () => AuthRoute,
 } as any)
 const AdminAdminSettingsRoute = AdminAdminSettingsRouteImport.update({
@@ -370,7 +370,7 @@ export interface FileRoutesByFullPath {
   '/admin/serverlogs': typeof AdminAdminServerlogsRoute
   '/admin/servers': typeof AdminAdminServersRoute
   '/admin/settings': typeof AdminAdminSettingsRoute
-  '/ban/$ban_id': typeof AuthBanBan_idRoute
+  '/ban/$banId': typeof AuthBanBanIdRoute
   '/contests/$contest_id': typeof AuthContestsContest_idRoute
   '/forums/$forum_id': typeof AuthForumsForum_idRoute
   '/report/$reportId': typeof AuthReportReportIdRoute
@@ -420,7 +420,7 @@ export interface FileRoutesByTo {
   '/admin/serverlogs': typeof AdminAdminServerlogsRoute
   '/admin/servers': typeof AdminAdminServersRoute
   '/admin/settings': typeof AdminAdminSettingsRoute
-  '/ban/$ban_id': typeof AuthBanBan_idRoute
+  '/ban/$banId': typeof AuthBanBanIdRoute
   '/contests/$contest_id': typeof AuthContestsContest_idRoute
   '/forums/$forum_id': typeof AuthForumsForum_idRoute
   '/report/$reportId': typeof AuthReportReportIdRoute
@@ -479,7 +479,7 @@ export interface FileRoutesById {
   '/_admin/admin/serverlogs': typeof AdminAdminServerlogsRoute
   '/_admin/admin/servers': typeof AdminAdminServersRoute
   '/_admin/admin/settings': typeof AdminAdminSettingsRoute
-  '/_auth/ban/$ban_id': typeof AuthBanBan_idRoute
+  '/_auth/ban/$banId': typeof AuthBanBanIdRoute
   '/_auth/contests/$contest_id': typeof AuthContestsContest_idRoute
   '/_auth/forums/$forum_id': typeof AuthForumsForum_idRoute
   '/_auth/report/$reportId': typeof AuthReportReportIdRoute
@@ -535,7 +535,7 @@ export interface FileRouteTypes {
     | '/admin/serverlogs'
     | '/admin/servers'
     | '/admin/settings'
-    | '/ban/$ban_id'
+    | '/ban/$banId'
     | '/contests/$contest_id'
     | '/forums/$forum_id'
     | '/report/$reportId'
@@ -585,7 +585,7 @@ export interface FileRouteTypes {
     | '/admin/serverlogs'
     | '/admin/servers'
     | '/admin/settings'
-    | '/ban/$ban_id'
+    | '/ban/$banId'
     | '/contests/$contest_id'
     | '/forums/$forum_id'
     | '/report/$reportId'
@@ -643,7 +643,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/serverlogs'
     | '/_admin/admin/servers'
     | '/_admin/admin/settings'
-    | '/_auth/ban/$ban_id'
+    | '/_auth/ban/$banId'
     | '/_auth/contests/$contest_id'
     | '/_auth/forums/$forum_id'
     | '/_auth/report/$reportId'
@@ -993,11 +993,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthContestsContest_idRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_auth/ban/$ban_id': {
-      id: '/_auth/ban/$ban_id'
-      path: '/ban/$ban_id'
-      fullPath: '/ban/$ban_id'
-      preLoaderRoute: typeof AuthBanBan_idRouteImport
+    '/_auth/ban/$banId': {
+      id: '/_auth/ban/$banId'
+      path: '/ban/$banId'
+      fullPath: '/ban/$banId'
+      preLoaderRoute: typeof AuthBanBanIdRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_admin/admin/settings': {
@@ -1135,7 +1135,7 @@ interface AuthRouteChildren {
   AuthPermissionRoute: typeof AuthPermissionRoute
   AuthReportRoute: typeof AuthReportRouteWithChildren
   AuthSettingsRoute: typeof AuthSettingsRoute
-  AuthBanBan_idRoute: typeof AuthBanBan_idRoute
+  AuthBanBanIdRoute: typeof AuthBanBanIdRoute
   AuthContestsContest_idRoute: typeof AuthContestsContest_idRoute
 }
 
@@ -1148,7 +1148,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthPermissionRoute: AuthPermissionRoute,
   AuthReportRoute: AuthReportRouteWithChildren,
   AuthSettingsRoute: AuthSettingsRoute,
-  AuthBanBan_idRoute: AuthBanBan_idRoute,
+  AuthBanBanIdRoute: AuthBanBanIdRoute,
   AuthContestsContest_idRoute: AuthContestsContest_idRoute,
 }
 
