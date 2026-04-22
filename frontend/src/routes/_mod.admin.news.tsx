@@ -26,7 +26,7 @@ import {
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { renderDateTime } from "../util/time.ts";
+import { renderTimestamp } from "../util/time.ts";
 import { all, delete$ } from "../rpc/news/v1/news-NewsService_connectquery.ts";
 import type { Article } from "../rpc/news/v1/news_pb.ts";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
@@ -128,13 +128,13 @@ function AdminNews() {
 				header: "Created",
 				grow: false,
 				enableColumnFilter: false,
-				Cell: ({ cell }) => renderDateTime(cell.getValue()),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
 			columnHelper.accessor("updatedOn", {
 				header: "Updated",
 				grow: false,
 				enableColumnFilter: false,
-				Cell: ({ cell }) => renderDateTime(cell.getValue()),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
 			columnHelper.accessor("isPublished", {
 				meta: { tooltip: "Published" },

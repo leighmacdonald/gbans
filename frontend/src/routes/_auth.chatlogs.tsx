@@ -34,10 +34,9 @@ import {
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
-import { renderDateTime } from "../util/time.ts";
+import { renderTimestamp } from "../util/time.ts";
 import { useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
 import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
-import { apiGetServers } from "../api";
 import { query } from "../rpc/chat/v1/chat-ChatService_connectquery.ts";
 import { keepPreviousData } from "@tanstack/react-query";
 import type { Message } from "../rpc/chat/v1/chat_pb.ts";
@@ -57,15 +56,6 @@ export const Route = createFileRoute("/_auth/chatlogs")({
 	validateSearch,
 	search: {
 		middlewares: [stripSearchParams(defaultValues)],
-	},
-	loader: async ({ context }) => {
-		const unsorted = await context.queryClient.ensureQueryData({
-			queryKey: ["serversSimple"],
-			queryFn: ({ signal }) => apiGetServers(signal),
-		});
-		return unsorted.sort((a, b) => {
-			return a.server_name > b.server_name ? 1 : a.server_name < b.server_name ? -1 : 0;
-		});
 	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Browse in-game chat logs" }, match.context.title("Chat Logs")],
@@ -155,7 +145,7 @@ function ChatLogs() {
 				enableColumnFilter: false,
 				grow: false,
 				size: dateTimeColumnSize,
-				Cell: ({ cell }) => renderDateTime(cell.getValue()),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
 
 			columnHelper.accessor("steamId", {

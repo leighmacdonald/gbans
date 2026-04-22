@@ -47,18 +47,39 @@ service BanService {
   rpc Get(GetRequest) returns (GetResponse) {}
   rpc QuerySourceBans(QuerySourceBansRequest) returns (QuerySourceBansResponse) {}
   rpc Update(UpdateRequest) returns (UpdateResponse) {}
+  rpc Create(CreateRequest) returns (CreateResponse) {}
+}
+
+message CreateRequest {
+  int64 target_id = 1 [(buf.validate.field).required = true];
+  int64 source_id = 2;
+  google.protobuf.Duration duration = 3;
+  BanType ban_type = 4 [(buf.validate.field).required = true];
+  BanReason reason = 5 [(buf.validate.field).required = true];
+  string reason_text = 6 [(buf.validate.field).required = true];
+  Origin origin = 7 [(buf.validate.field).required = true];
+  int64 report_id = 8;
+  string cidr = 9 [(buf.validate.field).required = true];
+  bool evade_ok = 10 [(buf.validate.field).required = true];
+  string name = 11 [(buf.validate.field).required = true];
+  int32 demo_tick = 12;
+  string demo_name = 13;
+  string note = 14 [(buf.validate.field).required = true];
+}
+
+message CreateResponse {
+  Ban ban = 1;
 }
 
 message UpdateRequest {
-  string target_id = 1;
-  BanType ban_type = 2;
-  BanReason reason = 3;
-  string reason_text = 4;
-  string note = 5;
-  bool evade_ok = 6;
-  string duration = 7;
-  string cidr = 8;
-  int64 ban_id = 9;
+  BanType ban_type = 1;
+  BanReason reason = 2;
+  string reason_text = 3;
+  string note = 4;
+  bool evade_ok = 5;
+  google.protobuf.Duration duration = 6;
+  string cidr = 7;
+  int64 ban_id = 8;
 }
 message UpdateResponse {
   Ban ban = 1 [(buf.validate.field).required = true];

@@ -8,7 +8,7 @@ import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { ContainerWithHeader } from "./ContainerWithHeader";
 
 export interface SteamIDListProps {
-	steam_id: string;
+	steam_id: string | bigint;
 }
 
 export const SteamIDList = ({ steam_id }: SteamIDListProps) => {

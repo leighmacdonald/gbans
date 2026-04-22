@@ -19,7 +19,7 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { renderDateTime } from "../util/time.ts";
+import { renderDateTime, renderTimestamp } from "../util/time.ts";
 import "leaflet/dist/leaflet.css";
 import { useTheme } from "@mui/material";
 import Paper from "@mui/material/Paper";
@@ -158,20 +158,20 @@ function AdminNetworkPlayersByCIDR() {
 							search={setColumnFilter(search, "server_id", [cell.getValue()])}
 							sx={{ color: stringToColour(row.original.serverId ?? "") }}
 						>
-							{row.original.server_name_short}
+							{row.original.serverNameShort}
 						</TextLink>
 					</Tooltip>
 				),
 			}),
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				grow: false,
 				enableSorting: true,
 				enableColumnFilter: false,
 				filterVariant: "date-range",
 				header: "Created",
-				Cell: ({ cell }) => renderDateTime(cell.getValue()),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
-			columnHelper.accessor("persona_name", {
+			columnHelper.accessor("personaName", {
 				header: "Name",
 				grow: false,
 				enableSorting: false,
@@ -296,7 +296,7 @@ function AdminNetworkPlayersByCIDR() {
 						color={"info"}
 						to={"/admin/network/ipInfo"}
 						search={{
-							ip: row.original.ip_addr,
+							ip: row.original.ipAddr,
 						}}
 					>
 						<DnsIcon />

@@ -30,3 +30,8 @@ export const querySourceBans = BanService.method.querySourceBans;
  * @generated from rpc ban.v1.BanService.Update
  */
 export const update = BanService.method.update;
+
+/**
+ * @generated from rpc ban.v1.BanService.Create
+ */
+export const create = BanService.method.create;

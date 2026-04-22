@@ -37,16 +37,17 @@ import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { isPermanentBan } from "../util/table.ts";
-import { renderDateTime } from "../util/time.ts";
+import { renderTimestamp } from "../util/time.ts";
 import { query } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
 import { useQuery } from "@connectrpc/connect-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { type Ban, BanReason } from "../rpc/ban/v1/ban_pb.ts";
+import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
 
 const columnHelper = createMRTColumnHelper<Ban>();
 const defaultOptions = createDefaultTableOptions<Ban>();
-const defaultValues = makeSchemaDefaults({ defaultColumn: "ban_id" });
-const validateSearch = makeSchemaState("ban_id");
+const defaultValues = makeSchemaDefaults({ defaultColumn: "banId" });
+const validateSearch = makeSchemaState("banId");
 
 export const Route = createFileRoute("/_mod/admin/bans")({
 	component: AdminBans,
@@ -164,7 +165,7 @@ function AdminBans() {
 				grow: false,
 				header: "Ban ID",
 				Cell: ({ cell }) => (
-					<TextLink to={`/ban/$ban_id`} params={{ ban_id: String(cell.getValue()) }}>
+					<TextLink to={`/ban/$banId`} params={{ banId: String(cell.getValue()) }}>
 						{`#${cell.getValue()}`}
 					</TextLink>
 				),
@@ -286,8 +287,12 @@ function AdminBans() {
 				filterVariant: "date-range",
 				grow: false,
 				Cell: ({ cell }) => (
-					<Tooltip title={formatDistanceToNowStrict(cell.getValue(), { addSuffix: true })}>
-						<Typography>{renderDateTime(cell.getValue())}</Typography>
+					<Tooltip
+						title={formatDistanceToNowStrict(timestampDate(cell.getValue() as Timestamp), {
+							addSuffix: true,
+						})}
+					>
+						<Typography>{renderTimestamp(cell.getValue())}</Typography>
 					</Tooltip>
 				),
 			}),
@@ -299,12 +304,15 @@ function AdminBans() {
 				Cell: ({ row }) => {
 					return typeof row.original === "undefined" ? (
 						""
-					) : isPermanentBan(row.original.createdOn, row.original.validUntil) ? (
+					) : isPermanentBan(
+							timestampDate(row.original.createdOn as Timestamp),
+							timestampDate(row.original.validUntil as Timestamp),
+						) ? (
 						"Permanent"
 					) : (
 						<TableCellRelativeDateField
-							date={row.original.createdOn}
-							compareDate={row.original.validUntil}
+							date={timestampDate(row.original.createdOn as Timestamp)}
+							compareDate={timestampDate(row.original.validUntil as Timestamp)}
 						/>
 					);
 				},
