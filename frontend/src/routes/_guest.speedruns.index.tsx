@@ -1,3 +1,4 @@
+import { useQuery } from "@connectrpc/connect-query";
 import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
 import Grid from "@mui/material/Grid";
 import TableCell from "@mui/material/TableCell";
@@ -11,11 +12,10 @@ import { createDefaultTableOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellSmall } from "../component/table/TableCellSmall.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
-import { durationString, renderDateTime } from "../util/time.ts";
-import type { SpeedrunMapOverview } from "../rpc/servers/v1/speedruns_pb.ts";
-import { useQuery } from "@connectrpc/connect-query";
-import { overallRecent } from "../rpc/servers/v1/speedruns-SpeedrunsService_connectquery.ts";
 import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
+import type { SpeedrunMapOverview } from "../rpc/servers/v1/speedruns_pb.ts";
+import { overallRecent } from "../rpc/servers/v1/speedruns-SpeedrunsService_connectquery.ts";
+import { durationString, renderDateTime } from "../util/time.ts";
 
 export const Route = createFileRoute("/_guest/speedruns/")({
 	component: SpeedrunsIndex,
@@ -79,9 +79,7 @@ const columnHelper = createMRTColumnHelper<SpeedrunMapOverview>();
 const defaultOptions = createDefaultTableOptions<SpeedrunMapOverview>();
 
 const SpeedrunRecentTable = () => {
-	const recentCount = 10;
 	const { data: recent, isLoading: isLoadingRecent, isError: isErrorRecent } = useQuery(overallRecent);
-
 	const { data: serverList, isLoading: isLoadingServers, isError: isErrorServers } = useQuery(servers);
 
 	const columns = useMemo(

@@ -1,3 +1,5 @@
+import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
+import { useQuery } from "@connectrpc/connect-query";
 import LinkIcon from "@mui/icons-material/Link";
 import Grid from "@mui/material/Grid";
 import { useTheme } from "@mui/material/styles";
@@ -11,9 +13,8 @@ import { createDefaultTableOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
-import { notifications } from "../rpc/notification/v1/notification-NotificationService_connectquery.ts";
-import { useQuery } from "@connectrpc/connect-query";
 import { Severity, type UserNotification } from "../rpc/notification/v1/notification_pb.ts";
+import { notifications } from "../rpc/notification/v1/notification-NotificationService_connectquery.ts";
 
 const columnHelper = createMRTColumnHelper<UserNotification>();
 const defaultOptions = createDefaultTableOptions<UserNotification>();
@@ -245,7 +246,9 @@ function NotificationsPage() {
 			columnHelper.accessor("createdOn", {
 				header: "Created",
 				grow: false,
-				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} suffix={true} />,
+				Cell: ({ cell }) => (
+					<TableCellRelativeDateField date={timestampDate(cell.getValue() as Timestamp)} suffix={true} />
+				),
 			}),
 			columnHelper.accessor("severity", {
 				header: "level",
@@ -259,13 +262,13 @@ function NotificationsPage() {
 				Cell: ({ cell }) => <TableCellString>{cell.getValue() as string}</TableCellString>,
 			}),
 
-			columnHelper.accessor("author", {
+			columnHelper.accessor("steamId", {
 				Cell: (info) =>
-					info.row.original.author != null ? (
+					info.row.original.steamId != null && info.row.original.steamId > 0n ? (
 						<PersonCell
-							steam_id={info.row.original.author.steam_id}
-							personaname={info.row.original.author?.name}
-							avatar_hash={info.row.original.author?.avatarhash}
+							steam_id={info.row.original.steamId}
+							personaname={info.row.original.name}
+							avatar_hash={info.row.original.avatarHash}
 						/>
 					) : (
 						""

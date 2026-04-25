@@ -25,6 +25,102 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type SetAppealStateRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BanId         *int32                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	AppealState   *AppealState           `protobuf:"varint,2,opt,name=appeal_state,json=appealState,enum=ban.v1.AppealState" json:"appeal_state,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetAppealStateRequest) Reset() {
+	*x = SetAppealStateRequest{}
+	mi := &file_ban_v1_appeal_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetAppealStateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetAppealStateRequest) ProtoMessage() {}
+
+func (x *SetAppealStateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ban_v1_appeal_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetAppealStateRequest.ProtoReflect.Descriptor instead.
+func (*SetAppealStateRequest) Descriptor() ([]byte, []int) {
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *SetAppealStateRequest) GetBanId() int32 {
+	if x != nil && x.BanId != nil {
+		return *x.BanId
+	}
+	return 0
+}
+
+func (x *SetAppealStateRequest) GetAppealState() AppealState {
+	if x != nil && x.AppealState != nil {
+		return *x.AppealState
+	}
+	return AppealState_APPEAL_STATE_OPEN_UNSPECIFIED
+}
+
+type SetAppealStateResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ban           *Ban                   `protobuf:"bytes,1,opt,name=ban" json:"ban,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetAppealStateResponse) Reset() {
+	*x = SetAppealStateResponse{}
+	mi := &file_ban_v1_appeal_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetAppealStateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetAppealStateResponse) ProtoMessage() {}
+
+func (x *SetAppealStateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ban_v1_appeal_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetAppealStateResponse.ProtoReflect.Descriptor instead.
+func (*SetAppealStateResponse) Descriptor() ([]byte, []int) {
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *SetAppealStateResponse) GetBan() *Ban {
+	if x != nil {
+		return x.Ban
+	}
+	return nil
+}
+
 type AppealsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Deleted       *bool                  `protobuf:"varint,1,opt,name=deleted" json:"deleted,omitempty"`
@@ -34,7 +130,7 @@ type AppealsRequest struct {
 
 func (x *AppealsRequest) Reset() {
 	*x = AppealsRequest{}
-	mi := &file_ban_v1_appeal_proto_msgTypes[0]
+	mi := &file_ban_v1_appeal_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -46,7 +142,7 @@ func (x *AppealsRequest) String() string {
 func (*AppealsRequest) ProtoMessage() {}
 
 func (x *AppealsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ban_v1_appeal_proto_msgTypes[0]
+	mi := &file_ban_v1_appeal_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -59,7 +155,7 @@ func (x *AppealsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AppealsRequest.ProtoReflect.Descriptor instead.
 func (*AppealsRequest) Descriptor() ([]byte, []int) {
-	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{0}
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *AppealsRequest) GetDeleted() bool {
@@ -78,7 +174,7 @@ type AppealsResponse struct {
 
 func (x *AppealsResponse) Reset() {
 	*x = AppealsResponse{}
-	mi := &file_ban_v1_appeal_proto_msgTypes[1]
+	mi := &file_ban_v1_appeal_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -90,7 +186,7 @@ func (x *AppealsResponse) String() string {
 func (*AppealsResponse) ProtoMessage() {}
 
 func (x *AppealsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ban_v1_appeal_proto_msgTypes[1]
+	mi := &file_ban_v1_appeal_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -103,7 +199,7 @@ func (x *AppealsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AppealsResponse.ProtoReflect.Descriptor instead.
 func (*AppealsResponse) Descriptor() ([]byte, []int) {
-	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{1}
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *AppealsResponse) GetAppeals() []*AppealOverview {
@@ -115,14 +211,14 @@ func (x *AppealsResponse) GetAppeals() []*AppealOverview {
 
 type MessagesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	BanId         *int64                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	BanId         *int32                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MessagesRequest) Reset() {
 	*x = MessagesRequest{}
-	mi := &file_ban_v1_appeal_proto_msgTypes[2]
+	mi := &file_ban_v1_appeal_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -134,7 +230,7 @@ func (x *MessagesRequest) String() string {
 func (*MessagesRequest) ProtoMessage() {}
 
 func (x *MessagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ban_v1_appeal_proto_msgTypes[2]
+	mi := &file_ban_v1_appeal_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -147,10 +243,10 @@ func (x *MessagesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MessagesRequest.ProtoReflect.Descriptor instead.
 func (*MessagesRequest) Descriptor() ([]byte, []int) {
-	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{2}
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *MessagesRequest) GetBanId() int64 {
+func (x *MessagesRequest) GetBanId() int32 {
 	if x != nil && x.BanId != nil {
 		return *x.BanId
 	}
@@ -166,7 +262,7 @@ type MessagesResponse struct {
 
 func (x *MessagesResponse) Reset() {
 	*x = MessagesResponse{}
-	mi := &file_ban_v1_appeal_proto_msgTypes[3]
+	mi := &file_ban_v1_appeal_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -178,7 +274,7 @@ func (x *MessagesResponse) String() string {
 func (*MessagesResponse) ProtoMessage() {}
 
 func (x *MessagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ban_v1_appeal_proto_msgTypes[3]
+	mi := &file_ban_v1_appeal_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -191,7 +287,7 @@ func (x *MessagesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MessagesResponse.ProtoReflect.Descriptor instead.
 func (*MessagesResponse) Descriptor() ([]byte, []int) {
-	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{3}
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *MessagesResponse) GetMessages() []*AppealMessage {
@@ -214,7 +310,7 @@ type AppealOverview struct {
 
 func (x *AppealOverview) Reset() {
 	*x = AppealOverview{}
-	mi := &file_ban_v1_appeal_proto_msgTypes[4]
+	mi := &file_ban_v1_appeal_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -226,7 +322,7 @@ func (x *AppealOverview) String() string {
 func (*AppealOverview) ProtoMessage() {}
 
 func (x *AppealOverview) ProtoReflect() protoreflect.Message {
-	mi := &file_ban_v1_appeal_proto_msgTypes[4]
+	mi := &file_ban_v1_appeal_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -239,7 +335,7 @@ func (x *AppealOverview) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AppealOverview.ProtoReflect.Descriptor instead.
 func (*AppealOverview) Descriptor() ([]byte, []int) {
-	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{4}
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *AppealOverview) GetBan() *Ban {
@@ -279,7 +375,7 @@ func (x *AppealOverview) GetTargetAvatarHash() string {
 
 type AppealMessage struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	BanId         *int64                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	BanId         *int32                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
 	BanMessageId  *int64                 `protobuf:"varint,2,opt,name=ban_message_id,json=banMessageId" json:"ban_message_id,omitempty"`
 	AuthorId      *int64                 `protobuf:"varint,3,opt,name=author_id,json=authorId" json:"author_id,omitempty"`
 	MessageMd     *string                `protobuf:"bytes,4,opt,name=message_md,json=messageMd" json:"message_md,omitempty"`
@@ -295,7 +391,7 @@ type AppealMessage struct {
 
 func (x *AppealMessage) Reset() {
 	*x = AppealMessage{}
-	mi := &file_ban_v1_appeal_proto_msgTypes[5]
+	mi := &file_ban_v1_appeal_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -307,7 +403,7 @@ func (x *AppealMessage) String() string {
 func (*AppealMessage) ProtoMessage() {}
 
 func (x *AppealMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_ban_v1_appeal_proto_msgTypes[5]
+	mi := &file_ban_v1_appeal_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -320,10 +416,10 @@ func (x *AppealMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AppealMessage.ProtoReflect.Descriptor instead.
 func (*AppealMessage) Descriptor() ([]byte, []int) {
-	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{5}
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *AppealMessage) GetBanId() int64 {
+func (x *AppealMessage) GetBanId() int32 {
 	if x != nil && x.BanId != nil {
 		return *x.BanId
 	}
@@ -395,7 +491,7 @@ func (x *AppealMessage) GetPrivilege() v1.Privilege {
 
 type ReplyRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	BanId         *int64                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	BanId         *int32                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
 	BodyMd        *string                `protobuf:"bytes,2,opt,name=body_md,json=bodyMd" json:"body_md,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -403,7 +499,7 @@ type ReplyRequest struct {
 
 func (x *ReplyRequest) Reset() {
 	*x = ReplyRequest{}
-	mi := &file_ban_v1_appeal_proto_msgTypes[6]
+	mi := &file_ban_v1_appeal_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -415,7 +511,7 @@ func (x *ReplyRequest) String() string {
 func (*ReplyRequest) ProtoMessage() {}
 
 func (x *ReplyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ban_v1_appeal_proto_msgTypes[6]
+	mi := &file_ban_v1_appeal_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -428,10 +524,10 @@ func (x *ReplyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReplyRequest.ProtoReflect.Descriptor instead.
 func (*ReplyRequest) Descriptor() ([]byte, []int) {
-	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{6}
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *ReplyRequest) GetBanId() int64 {
+func (x *ReplyRequest) GetBanId() int32 {
 	if x != nil && x.BanId != nil {
 		return *x.BanId
 	}
@@ -454,7 +550,7 @@ type ReplyResponse struct {
 
 func (x *ReplyResponse) Reset() {
 	*x = ReplyResponse{}
-	mi := &file_ban_v1_appeal_proto_msgTypes[7]
+	mi := &file_ban_v1_appeal_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -466,7 +562,7 @@ func (x *ReplyResponse) String() string {
 func (*ReplyResponse) ProtoMessage() {}
 
 func (x *ReplyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ban_v1_appeal_proto_msgTypes[7]
+	mi := &file_ban_v1_appeal_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -479,7 +575,7 @@ func (x *ReplyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReplyResponse.ProtoReflect.Descriptor instead.
 func (*ReplyResponse) Descriptor() ([]byte, []int) {
-	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{7}
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ReplyResponse) GetMessage() *AppealMessage {
@@ -499,7 +595,7 @@ type EditAppealMessageRequest struct {
 
 func (x *EditAppealMessageRequest) Reset() {
 	*x = EditAppealMessageRequest{}
-	mi := &file_ban_v1_appeal_proto_msgTypes[8]
+	mi := &file_ban_v1_appeal_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -511,7 +607,7 @@ func (x *EditAppealMessageRequest) String() string {
 func (*EditAppealMessageRequest) ProtoMessage() {}
 
 func (x *EditAppealMessageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ban_v1_appeal_proto_msgTypes[8]
+	mi := &file_ban_v1_appeal_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -524,7 +620,7 @@ func (x *EditAppealMessageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditAppealMessageRequest.ProtoReflect.Descriptor instead.
 func (*EditAppealMessageRequest) Descriptor() ([]byte, []int) {
-	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{8}
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *EditAppealMessageRequest) GetBanMessageId() int64 {
@@ -550,7 +646,7 @@ type EditAppealMessageResponse struct {
 
 func (x *EditAppealMessageResponse) Reset() {
 	*x = EditAppealMessageResponse{}
-	mi := &file_ban_v1_appeal_proto_msgTypes[9]
+	mi := &file_ban_v1_appeal_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -562,7 +658,7 @@ func (x *EditAppealMessageResponse) String() string {
 func (*EditAppealMessageResponse) ProtoMessage() {}
 
 func (x *EditAppealMessageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ban_v1_appeal_proto_msgTypes[9]
+	mi := &file_ban_v1_appeal_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -575,7 +671,7 @@ func (x *EditAppealMessageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditAppealMessageResponse.ProtoReflect.Descriptor instead.
 func (*EditAppealMessageResponse) Descriptor() ([]byte, []int) {
-	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{9}
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *EditAppealMessageResponse) GetMessage() *AppealMessage {
@@ -594,7 +690,7 @@ type DeleteAppealMessageRequest struct {
 
 func (x *DeleteAppealMessageRequest) Reset() {
 	*x = DeleteAppealMessageRequest{}
-	mi := &file_ban_v1_appeal_proto_msgTypes[10]
+	mi := &file_ban_v1_appeal_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -606,7 +702,7 @@ func (x *DeleteAppealMessageRequest) String() string {
 func (*DeleteAppealMessageRequest) ProtoMessage() {}
 
 func (x *DeleteAppealMessageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ban_v1_appeal_proto_msgTypes[10]
+	mi := &file_ban_v1_appeal_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -619,7 +715,7 @@ func (x *DeleteAppealMessageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAppealMessageRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAppealMessageRequest) Descriptor() ([]byte, []int) {
-	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{10}
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DeleteAppealMessageRequest) GetBanMessageId() int64 {
@@ -633,13 +729,18 @@ var File_ban_v1_appeal_proto protoreflect.FileDescriptor
 
 const file_ban_v1_appeal_proto_rawDesc = "" +
 	"\n" +
-	"\x13ban/v1/appeal.proto\x12\x06ban.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"*\n" +
+	"\x13ban/v1/appeal.proto\x12\x06ban.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"f\n" +
+	"\x15SetAppealStateRequest\x12\x15\n" +
+	"\x06ban_id\x18\x01 \x01(\x05R\x05banId\x126\n" +
+	"\fappeal_state\x18\x02 \x01(\x0e2\x13.ban.v1.AppealStateR\vappealState\"7\n" +
+	"\x16SetAppealStateResponse\x12\x1d\n" +
+	"\x03ban\x18\x01 \x01(\v2\v.ban.v1.BanR\x03ban\"*\n" +
 	"\x0eAppealsRequest\x12\x18\n" +
 	"\adeleted\x18\x01 \x01(\bR\adeleted\"K\n" +
 	"\x0fAppealsResponse\x128\n" +
 	"\aappeals\x18\x01 \x03(\v2\x16.ban.v1.AppealOverviewB\x06\xbaH\x03\xc8\x01\x01R\aappeals\"0\n" +
 	"\x0fMessagesRequest\x12\x1d\n" +
-	"\x06ban_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x05banId\"M\n" +
+	"\x06ban_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05banId\"M\n" +
 	"\x10MessagesResponse\x129\n" +
 	"\bmessages\x18\x01 \x03(\v2\x15.ban.v1.AppealMessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\"\x93\x02\n" +
 	"\x0eAppealOverview\x12%\n" +
@@ -649,7 +750,7 @@ const file_ban_v1_appeal_proto_rawDesc = "" +
 	"\x13target_persona_name\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11targetPersonaName\x124\n" +
 	"\x12target_avatar_hash\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10targetAvatarHash\"\xe0\x03\n" +
 	"\rAppealMessage\x12\x1d\n" +
-	"\x06ban_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x05banId\x12,\n" +
+	"\x06ban_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05banId\x12,\n" +
 	"\x0eban_message_id\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\fbanMessageId\x12#\n" +
 	"\tauthor_id\x18\x03 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\bauthorId\x12%\n" +
 	"\n" +
@@ -665,7 +766,7 @@ const file_ban_v1_appeal_proto_rawDesc = "" +
 	"\tprivilege\x18\n" +
 	" \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\tprivilege\"N\n" +
 	"\fReplyRequest\x12\x1d\n" +
-	"\x06ban_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x05banId\x12\x1f\n" +
+	"\x06ban_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05banId\x12\x1f\n" +
 	"\abody_md\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06bodyMd\"H\n" +
 	"\rReplyResponse\x127\n" +
 	"\amessage\x18\x01 \x01(\v2\x15.ban.v1.AppealMessageB\x06\xbaH\x03\xc8\x01\x01R\amessage\"i\n" +
@@ -675,13 +776,14 @@ const file_ban_v1_appeal_proto_rawDesc = "" +
 	"\x19EditAppealMessageResponse\x127\n" +
 	"\amessage\x18\x01 \x01(\v2\x15.ban.v1.AppealMessageB\x06\xbaH\x03\xc8\x01\x01R\amessage\"J\n" +
 	"\x1aDeleteAppealMessageRequest\x12,\n" +
-	"\x0eban_message_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\fbanMessageId2\xf7\x02\n" +
+	"\x0eban_message_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\fbanMessageId2\xca\x03\n" +
 	"\rAppealService\x12<\n" +
 	"\aAppeals\x12\x16.ban.v1.AppealsRequest\x1a\x17.ban.v1.AppealsResponse\"\x00\x12?\n" +
 	"\bMessages\x12\x17.ban.v1.MessagesRequest\x1a\x18.ban.v1.MessagesResponse\"\x00\x126\n" +
 	"\x05Reply\x12\x14.ban.v1.ReplyRequest\x1a\x15.ban.v1.ReplyResponse\"\x00\x12Z\n" +
 	"\x11EditAppealMessage\x12 .ban.v1.EditAppealMessageRequest\x1a!.ban.v1.EditAppealMessageResponse\"\x00\x12S\n" +
-	"\x13DeleteAppealMessage\x12\".ban.v1.DeleteAppealMessageRequest\x1a\x16.google.protobuf.Empty\"\x00B\x89\x01\n" +
+	"\x13DeleteAppealMessage\x12\".ban.v1.DeleteAppealMessageRequest\x1a\x16.google.protobuf.Empty\"\x00\x12Q\n" +
+	"\x0eSetAppealState\x12\x1d.ban.v1.SetAppealStateRequest\x1a\x1e.ban.v1.SetAppealStateResponse\"\x00B\x89\x01\n" +
 	"\n" +
 	"com.ban.v1B\vAppealProtoP\x01Z5github.com/leighmacdonald/gbans/internal/ban/v1;banv1\xa2\x02\x03BXX\xaa\x02\x06Ban.V1\xca\x02\x06Ban\\V1\xe2\x02\x12Ban\\V1\\GPBMetadata\xea\x02\aBan::V1b\beditionsp\xe8\a"
 
@@ -697,48 +799,55 @@ func file_ban_v1_appeal_proto_rawDescGZIP() []byte {
 	return file_ban_v1_appeal_proto_rawDescData
 }
 
-var file_ban_v1_appeal_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_ban_v1_appeal_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_ban_v1_appeal_proto_goTypes = []any{
-	(*AppealsRequest)(nil),             // 0: ban.v1.AppealsRequest
-	(*AppealsResponse)(nil),            // 1: ban.v1.AppealsResponse
-	(*MessagesRequest)(nil),            // 2: ban.v1.MessagesRequest
-	(*MessagesResponse)(nil),           // 3: ban.v1.MessagesResponse
-	(*AppealOverview)(nil),             // 4: ban.v1.AppealOverview
-	(*AppealMessage)(nil),              // 5: ban.v1.AppealMessage
-	(*ReplyRequest)(nil),               // 6: ban.v1.ReplyRequest
-	(*ReplyResponse)(nil),              // 7: ban.v1.ReplyResponse
-	(*EditAppealMessageRequest)(nil),   // 8: ban.v1.EditAppealMessageRequest
-	(*EditAppealMessageResponse)(nil),  // 9: ban.v1.EditAppealMessageResponse
-	(*DeleteAppealMessageRequest)(nil), // 10: ban.v1.DeleteAppealMessageRequest
-	(*Ban)(nil),                        // 11: ban.v1.Ban
-	(*timestamppb.Timestamp)(nil),      // 12: google.protobuf.Timestamp
-	(v1.Privilege)(0),                  // 13: person.v1.Privilege
-	(*emptypb.Empty)(nil),              // 14: google.protobuf.Empty
+	(*SetAppealStateRequest)(nil),      // 0: ban.v1.SetAppealStateRequest
+	(*SetAppealStateResponse)(nil),     // 1: ban.v1.SetAppealStateResponse
+	(*AppealsRequest)(nil),             // 2: ban.v1.AppealsRequest
+	(*AppealsResponse)(nil),            // 3: ban.v1.AppealsResponse
+	(*MessagesRequest)(nil),            // 4: ban.v1.MessagesRequest
+	(*MessagesResponse)(nil),           // 5: ban.v1.MessagesResponse
+	(*AppealOverview)(nil),             // 6: ban.v1.AppealOverview
+	(*AppealMessage)(nil),              // 7: ban.v1.AppealMessage
+	(*ReplyRequest)(nil),               // 8: ban.v1.ReplyRequest
+	(*ReplyResponse)(nil),              // 9: ban.v1.ReplyResponse
+	(*EditAppealMessageRequest)(nil),   // 10: ban.v1.EditAppealMessageRequest
+	(*EditAppealMessageResponse)(nil),  // 11: ban.v1.EditAppealMessageResponse
+	(*DeleteAppealMessageRequest)(nil), // 12: ban.v1.DeleteAppealMessageRequest
+	(AppealState)(0),                   // 13: ban.v1.AppealState
+	(*Ban)(nil),                        // 14: ban.v1.Ban
+	(*timestamppb.Timestamp)(nil),      // 15: google.protobuf.Timestamp
+	(v1.Privilege)(0),                  // 16: person.v1.Privilege
+	(*emptypb.Empty)(nil),              // 17: google.protobuf.Empty
 }
 var file_ban_v1_appeal_proto_depIdxs = []int32{
-	4,  // 0: ban.v1.AppealsResponse.appeals:type_name -> ban.v1.AppealOverview
-	5,  // 1: ban.v1.MessagesResponse.messages:type_name -> ban.v1.AppealMessage
-	11, // 2: ban.v1.AppealOverview.ban:type_name -> ban.v1.Ban
-	12, // 3: ban.v1.AppealMessage.created_on:type_name -> google.protobuf.Timestamp
-	12, // 4: ban.v1.AppealMessage.updated_on:type_name -> google.protobuf.Timestamp
-	13, // 5: ban.v1.AppealMessage.privilege:type_name -> person.v1.Privilege
-	5,  // 6: ban.v1.ReplyResponse.message:type_name -> ban.v1.AppealMessage
-	5,  // 7: ban.v1.EditAppealMessageResponse.message:type_name -> ban.v1.AppealMessage
-	0,  // 8: ban.v1.AppealService.Appeals:input_type -> ban.v1.AppealsRequest
-	2,  // 9: ban.v1.AppealService.Messages:input_type -> ban.v1.MessagesRequest
-	6,  // 10: ban.v1.AppealService.Reply:input_type -> ban.v1.ReplyRequest
-	8,  // 11: ban.v1.AppealService.EditAppealMessage:input_type -> ban.v1.EditAppealMessageRequest
-	10, // 12: ban.v1.AppealService.DeleteAppealMessage:input_type -> ban.v1.DeleteAppealMessageRequest
-	1,  // 13: ban.v1.AppealService.Appeals:output_type -> ban.v1.AppealsResponse
-	3,  // 14: ban.v1.AppealService.Messages:output_type -> ban.v1.MessagesResponse
-	7,  // 15: ban.v1.AppealService.Reply:output_type -> ban.v1.ReplyResponse
-	9,  // 16: ban.v1.AppealService.EditAppealMessage:output_type -> ban.v1.EditAppealMessageResponse
-	14, // 17: ban.v1.AppealService.DeleteAppealMessage:output_type -> google.protobuf.Empty
-	13, // [13:18] is the sub-list for method output_type
-	8,  // [8:13] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	13, // 0: ban.v1.SetAppealStateRequest.appeal_state:type_name -> ban.v1.AppealState
+	14, // 1: ban.v1.SetAppealStateResponse.ban:type_name -> ban.v1.Ban
+	6,  // 2: ban.v1.AppealsResponse.appeals:type_name -> ban.v1.AppealOverview
+	7,  // 3: ban.v1.MessagesResponse.messages:type_name -> ban.v1.AppealMessage
+	14, // 4: ban.v1.AppealOverview.ban:type_name -> ban.v1.Ban
+	15, // 5: ban.v1.AppealMessage.created_on:type_name -> google.protobuf.Timestamp
+	15, // 6: ban.v1.AppealMessage.updated_on:type_name -> google.protobuf.Timestamp
+	16, // 7: ban.v1.AppealMessage.privilege:type_name -> person.v1.Privilege
+	7,  // 8: ban.v1.ReplyResponse.message:type_name -> ban.v1.AppealMessage
+	7,  // 9: ban.v1.EditAppealMessageResponse.message:type_name -> ban.v1.AppealMessage
+	2,  // 10: ban.v1.AppealService.Appeals:input_type -> ban.v1.AppealsRequest
+	4,  // 11: ban.v1.AppealService.Messages:input_type -> ban.v1.MessagesRequest
+	8,  // 12: ban.v1.AppealService.Reply:input_type -> ban.v1.ReplyRequest
+	10, // 13: ban.v1.AppealService.EditAppealMessage:input_type -> ban.v1.EditAppealMessageRequest
+	12, // 14: ban.v1.AppealService.DeleteAppealMessage:input_type -> ban.v1.DeleteAppealMessageRequest
+	0,  // 15: ban.v1.AppealService.SetAppealState:input_type -> ban.v1.SetAppealStateRequest
+	3,  // 16: ban.v1.AppealService.Appeals:output_type -> ban.v1.AppealsResponse
+	5,  // 17: ban.v1.AppealService.Messages:output_type -> ban.v1.MessagesResponse
+	9,  // 18: ban.v1.AppealService.Reply:output_type -> ban.v1.ReplyResponse
+	11, // 19: ban.v1.AppealService.EditAppealMessage:output_type -> ban.v1.EditAppealMessageResponse
+	17, // 20: ban.v1.AppealService.DeleteAppealMessage:output_type -> google.protobuf.Empty
+	1,  // 21: ban.v1.AppealService.SetAppealState:output_type -> ban.v1.SetAppealStateResponse
+	16, // [16:22] is the sub-list for method output_type
+	10, // [10:16] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_ban_v1_appeal_proto_init() }
@@ -753,7 +862,7 @@ func file_ban_v1_appeal_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ban_v1_appeal_proto_rawDesc), len(file_ban_v1_appeal_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

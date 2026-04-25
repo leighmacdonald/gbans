@@ -1,3 +1,4 @@
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import AutoFixNormalIcon from "@mui/icons-material/AutoFixNormal";
 import GavelIcon from "@mui/icons-material/Gavel";
@@ -7,86 +8,68 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
-import { z } from "zod/v4";
-import { apiGetReport, apiReportSetState } from "../api";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { ReportStatus, ReportStatusCollection, ReportStatusEnum, reportStatusString } from "../schema/report.ts";
+import { ReportStatus } from "../rpc/ban/v1/report_pb.ts";
+import { report, reportStatusEdit } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
+import { enumValues } from "../util/lists.ts";
 import { ContainerWithHeader } from "./ContainerWithHeader";
 import { ErrorDetails } from "./ErrorDetails.tsx";
 import { LoadingPlaceholder } from "./LoadingPlaceholder.tsx";
 import { BanModal } from "./modal/BanModal.tsx";
 
-const schema = z.object({
-	report_status: ReportStatusEnum,
-});
-
 export const ReportModPanel = ({ reportId }: { reportId: number }) => {
 	const queryClient = useQueryClient();
 	const { sendFlash, sendError } = useUserFlashCtx();
+	const [status, setStatus] = useState(ReportStatus.OPENED_UNSPECIFIED);
 
-	const {
-		data: report,
-		isLoading,
-		isError,
-		error,
-	} = useQuery({
-		queryKey: ["report", { reportId }],
-		queryFn: async ({ signal }) => {
-			return await apiGetReport(Number(reportId), signal);
-		},
-	});
+	const { data: reportResponse, isLoading, isError, error } = useQuery(report, { reportId });
 
-	const stateMutation = useMutation({
-		mutationKey: ["reportState", { report_status: report?.report_status }],
-		mutationFn: async (report_status: ReportStatusEnum) => {
-			const ac = new AbortController();
-			return await apiReportSetState(Number(reportId), report_status, ac.signal);
-		},
+	const stateMutation = useMutation(reportStatusEdit, {
 		onSuccess: async (_, reportStatus) => {
-			if (!report) {
+			if (!reportResponse?.report || !reportStatus.reportStatus) {
 				return;
 			}
 			sendFlash(
 				"success",
-				`State changed from ${reportStatusString(
-					report?.report_status ?? ReportStatus.Opened,
-				)} => ${reportStatusString(reportStatus)}`,
+				`State changed from ${
+					ReportStatus[reportResponse?.report?.report?.reportStatus ?? ReportStatus.OPENED_UNSPECIFIED]
+				} => ${ReportStatus[reportStatus.reportStatus ?? ReportStatus.OPENED_UNSPECIFIED]}`,
 			);
-			report.report_status = reportStatus;
+			setStatus(reportStatus.reportStatus);
 		},
 		onError: sendError,
 	});
 
 	const onBan = useCallback(async () => {
-		if (!report) {
+		if (!reportResponse?.report) {
 			return;
 		}
 
 		try {
 			const banRecord = await NiceModal.show(BanModal, {
-				reportId: report.report_id,
-				steamId: report.subject.steam_id,
+				reportId: Number(reportResponse?.report.report?.reportId),
+				steamId: reportResponse?.report.subject?.steamId,
 			});
-			queryClient.setQueryData(["ban", { targetId: report?.target_id }], banRecord);
-			stateMutation.mutate(ReportStatus.ClosedWithAction);
+			queryClient.setQueryData(["ban", { targetId: reportResponse.report.report?.targetId }], banRecord);
+			stateMutation.mutate({});
 		} catch (e) {
 			sendFlash("error", `Failed to ban: ${e}`);
 		}
-	}, [queryClient, report, sendFlash, stateMutation.mutate]);
+	}, [queryClient, sendFlash, stateMutation.mutate, reportResponse?.report]);
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			if (value.report_status === report?.report_status) {
+			if (value.report_status === reportResponse?.report?.report?.reportStatus) {
 				return;
 			}
-			stateMutation.mutate(value.report_status);
+			stateMutation.mutate({ reportId, reportStatus: status });
 		},
-		validators: { onSubmit: schema },
+
 		defaultValues: {
-			report_status: report?.report_status ?? ReportStatus.Opened,
+			report_status: reportResponse?.report?.report?.reportStatus ?? ReportStatus.OPENED_UNSPECIFIED,
 		},
 	});
 
@@ -116,11 +99,11 @@ export const ReportModPanel = ({ reportId }: { reportId: number }) => {
 									return (
 										<field.SelectField
 											label={"Report State"}
-											items={ReportStatusCollection}
+											items={enumValues(ReportStatus)}
 											renderItem={(i) => {
 												return (
 													<MenuItem key={i} value={i}>
-														{reportStatusString(i)}
+														{ReportStatus[i]}
 													</MenuItem>
 												);
 											}}

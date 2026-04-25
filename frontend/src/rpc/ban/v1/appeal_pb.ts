@@ -4,7 +4,7 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Ban, BanValid } from "./ban_pb";
+import type { AppealState, Ban, BanValid } from "./ban_pb";
 import { file_ban_v1_ban } from "./ban_pb";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
@@ -19,7 +19,7 @@ import type { Message } from "@bufbuild/protobuf";
 export const file_ban_v1_appeal: GenFile =
 	/*@__PURE__*/
 	fileDesc(
-		"ChNiYW4vdjEvYXBwZWFsLnByb3RvEgZiYW4udjEiIQoOQXBwZWFsc1JlcXVlc3QSDwoHZGVsZXRlZBgBIAEoCCJCCg9BcHBlYWxzUmVzcG9uc2USLwoHYXBwZWFscxgBIAMoCzIWLmJhbi52MS5BcHBlYWxPdmVydmlld0IGukgDyAEBIikKD01lc3NhZ2VzUmVxdWVzdBIWCgZiYW5faWQYASABKANCBrpIA8gBASJDChBNZXNzYWdlc1Jlc3BvbnNlEi8KCG1lc3NhZ2VzGAEgAygLMhUuYmFuLnYxLkFwcGVhbE1lc3NhZ2VCBrpIA8gBASLEAQoOQXBwZWFsT3ZlcnZpZXcSIAoDYmFuGAEgASgLMgsuYmFuLnYxLkJhbkIGukgDyAEBEiMKE3NvdXJjZV9wZXJzb25hX25hbWUYAiABKAlCBrpIA8gBARIiChJzb3VyY2VfYXZhdGFyX2hhc2gYAyABKAlCBrpIA8gBARIjChN0YXJnZXRfcGVyc29uYV9uYW1lGAQgASgJQga6SAPIAQESIgoSdGFyZ2V0X2F2YXRhcl9oYXNoGAUgASgJQga6SAPIAQEi8wIKDUFwcGVhbE1lc3NhZ2USFgoGYmFuX2lkGAEgASgDQga6SAPIAQESHgoOYmFuX21lc3NhZ2VfaWQYAiABKANCBrpIA8gBARIZCglhdXRob3JfaWQYAyABKANCBrpIA8gBARIaCgptZXNzYWdlX21kGAQgASgJQga6SAPIAQESFwoHZGVsZXRlZBgFIAEoCEIGukgDyAEBEjYKCmNyZWF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARIbCgthdmF0YXJfaGFzaBgIIAEoCUIGukgDyAEBEhwKDHBlcnNvbmFfbmFtZRgJIAEoCUIGukgDyAEBEi8KCXByaXZpbGVnZRgKIAEoDjIULnBlcnNvbi52MS5Qcml2aWxlZ2VCBrpIA8gBASI/CgxSZXBseVJlcXVlc3QSFgoGYmFuX2lkGAEgASgDQga6SAPIAQESFwoHYm9keV9tZBgCIAEoCUIGukgDyAEBIj8KDVJlcGx5UmVzcG9uc2USLgoHbWVzc2FnZRgBIAEoCzIVLmJhbi52MS5BcHBlYWxNZXNzYWdlQga6SAPIAQEiUwoYRWRpdEFwcGVhbE1lc3NhZ2VSZXF1ZXN0Eh4KDmJhbl9tZXNzYWdlX2lkGAEgASgDQga6SAPIAQESFwoHYm9keV9tZBgCIAEoCUIGukgDyAEBIksKGUVkaXRBcHBlYWxNZXNzYWdlUmVzcG9uc2USLgoHbWVzc2FnZRgBIAEoCzIVLmJhbi52MS5BcHBlYWxNZXNzYWdlQga6SAPIAQEiPAoaRGVsZXRlQXBwZWFsTWVzc2FnZVJlcXVlc3QSHgoOYmFuX21lc3NhZ2VfaWQYASABKANCBrpIA8gBATL3AgoNQXBwZWFsU2VydmljZRI8CgdBcHBlYWxzEhYuYmFuLnYxLkFwcGVhbHNSZXF1ZXN0GhcuYmFuLnYxLkFwcGVhbHNSZXNwb25zZSIAEj8KCE1lc3NhZ2VzEhcuYmFuLnYxLk1lc3NhZ2VzUmVxdWVzdBoYLmJhbi52MS5NZXNzYWdlc1Jlc3BvbnNlIgASNgoFUmVwbHkSFC5iYW4udjEuUmVwbHlSZXF1ZXN0GhUuYmFuLnYxLlJlcGx5UmVzcG9uc2UiABJaChFFZGl0QXBwZWFsTWVzc2FnZRIgLmJhbi52MS5FZGl0QXBwZWFsTWVzc2FnZVJlcXVlc3QaIS5iYW4udjEuRWRpdEFwcGVhbE1lc3NhZ2VSZXNwb25zZSIAElMKE0RlbGV0ZUFwcGVhbE1lc3NhZ2USIi5iYW4udjEuRGVsZXRlQXBwZWFsTWVzc2FnZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiAEKJAQoKY29tLmJhbi52MUILQXBwZWFsUHJvdG9QAVo1Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9iYW4vdjE7YmFudjGiAgNCWFiqAgZCYW4uVjHKAgZCYW5cVjHiAhJCYW5cVjFcR1BCTWV0YWRhdGHqAgdCYW46OlYxYghlZGl0aW9uc3DoBw",
+		"ChNiYW4vdjEvYXBwZWFsLnByb3RvEgZiYW4udjEiUgoVU2V0QXBwZWFsU3RhdGVSZXF1ZXN0Eg4KBmJhbl9pZBgBIAEoBRIpCgxhcHBlYWxfc3RhdGUYAiABKA4yEy5iYW4udjEuQXBwZWFsU3RhdGUiMgoWU2V0QXBwZWFsU3RhdGVSZXNwb25zZRIYCgNiYW4YASABKAsyCy5iYW4udjEuQmFuIiEKDkFwcGVhbHNSZXF1ZXN0Eg8KB2RlbGV0ZWQYASABKAgiQgoPQXBwZWFsc1Jlc3BvbnNlEi8KB2FwcGVhbHMYASADKAsyFi5iYW4udjEuQXBwZWFsT3ZlcnZpZXdCBrpIA8gBASIpCg9NZXNzYWdlc1JlcXVlc3QSFgoGYmFuX2lkGAEgASgFQga6SAPIAQEiQwoQTWVzc2FnZXNSZXNwb25zZRIvCghtZXNzYWdlcxgBIAMoCzIVLmJhbi52MS5BcHBlYWxNZXNzYWdlQga6SAPIAQEixAEKDkFwcGVhbE92ZXJ2aWV3EiAKA2JhbhgBIAEoCzILLmJhbi52MS5CYW5CBrpIA8gBARIjChNzb3VyY2VfcGVyc29uYV9uYW1lGAIgASgJQga6SAPIAQESIgoSc291cmNlX2F2YXRhcl9oYXNoGAMgASgJQga6SAPIAQESIwoTdGFyZ2V0X3BlcnNvbmFfbmFtZRgEIAEoCUIGukgDyAEBEiIKEnRhcmdldF9hdmF0YXJfaGFzaBgFIAEoCUIGukgDyAEBIvMCCg1BcHBlYWxNZXNzYWdlEhYKBmJhbl9pZBgBIAEoBUIGukgDyAEBEh4KDmJhbl9tZXNzYWdlX2lkGAIgASgDQga6SAPIAQESGQoJYXV0aG9yX2lkGAMgASgDQga6SAPIAQESGgoKbWVzc2FnZV9tZBgEIAEoCUIGukgDyAEBEhcKB2RlbGV0ZWQYBSABKAhCBrpIA8gBARI2CgpjcmVhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEjYKCnVwZGF0ZWRfb24YByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESGwoLYXZhdGFyX2hhc2gYCCABKAlCBrpIA8gBARIcCgxwZXJzb25hX25hbWUYCSABKAlCBrpIA8gBARIvCglwcml2aWxlZ2UYCiABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlQga6SAPIAQEiPwoMUmVwbHlSZXF1ZXN0EhYKBmJhbl9pZBgBIAEoBUIGukgDyAEBEhcKB2JvZHlfbWQYAiABKAlCBrpIA8gBASI/Cg1SZXBseVJlc3BvbnNlEi4KB21lc3NhZ2UYASABKAsyFS5iYW4udjEuQXBwZWFsTWVzc2FnZUIGukgDyAEBIlMKGEVkaXRBcHBlYWxNZXNzYWdlUmVxdWVzdBIeCg5iYW5fbWVzc2FnZV9pZBgBIAEoA0IGukgDyAEBEhcKB2JvZHlfbWQYAiABKAlCBrpIA8gBASJLChlFZGl0QXBwZWFsTWVzc2FnZVJlc3BvbnNlEi4KB21lc3NhZ2UYASABKAsyFS5iYW4udjEuQXBwZWFsTWVzc2FnZUIGukgDyAEBIjwKGkRlbGV0ZUFwcGVhbE1lc3NhZ2VSZXF1ZXN0Eh4KDmJhbl9tZXNzYWdlX2lkGAEgASgDQga6SAPIAQEyygMKDUFwcGVhbFNlcnZpY2USPAoHQXBwZWFscxIWLmJhbi52MS5BcHBlYWxzUmVxdWVzdBoXLmJhbi52MS5BcHBlYWxzUmVzcG9uc2UiABI/CghNZXNzYWdlcxIXLmJhbi52MS5NZXNzYWdlc1JlcXVlc3QaGC5iYW4udjEuTWVzc2FnZXNSZXNwb25zZSIAEjYKBVJlcGx5EhQuYmFuLnYxLlJlcGx5UmVxdWVzdBoVLmJhbi52MS5SZXBseVJlc3BvbnNlIgASWgoRRWRpdEFwcGVhbE1lc3NhZ2USIC5iYW4udjEuRWRpdEFwcGVhbE1lc3NhZ2VSZXF1ZXN0GiEuYmFuLnYxLkVkaXRBcHBlYWxNZXNzYWdlUmVzcG9uc2UiABJTChNEZWxldGVBcHBlYWxNZXNzYWdlEiIuYmFuLnYxLkRlbGV0ZUFwcGVhbE1lc3NhZ2VSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASUQoOU2V0QXBwZWFsU3RhdGUSHS5iYW4udjEuU2V0QXBwZWFsU3RhdGVSZXF1ZXN0Gh4uYmFuLnYxLlNldEFwcGVhbFN0YXRlUmVzcG9uc2UiAEKJAQoKY29tLmJhbi52MUILQXBwZWFsUHJvdG9QAVo1Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9iYW4vdjE7YmFudjGiAgNCWFiqAgZCYW4uVjHKAgZCYW5cVjHiAhJCYW5cVjFcR1BCTWV0YWRhdGHqAgdCYW46OlYxYghlZGl0aW9uc3DoBw",
 		[
 			file_ban_v1_ban,
 			file_buf_validate_validate,
@@ -28,6 +28,60 @@ export const file_ban_v1_appeal: GenFile =
 			file_person_v1_privilege,
 		],
 	);
+
+/**
+ * @generated from message ban.v1.SetAppealStateRequest
+ */
+export type SetAppealStateRequest = Message<"ban.v1.SetAppealStateRequest"> & {
+	/**
+	 * @generated from field: int32 ban_id = 1;
+	 */
+	banId: number;
+
+	/**
+	 * @generated from field: ban.v1.AppealState appeal_state = 2;
+	 */
+	appealState: AppealState;
+};
+
+export type SetAppealStateRequestValid = SetAppealStateRequest;
+
+/**
+ * Describes the message ban.v1.SetAppealStateRequest.
+ * Use `create(SetAppealStateRequestSchema)` to create a new message.
+ */
+export const SetAppealStateRequestSchema: GenMessage<SetAppealStateRequest, { validType: SetAppealStateRequestValid }> =
+	/*@__PURE__*/
+	messageDesc(file_ban_v1_appeal, 0);
+
+/**
+ * @generated from message ban.v1.SetAppealStateResponse
+ */
+export type SetAppealStateResponse = Message<"ban.v1.SetAppealStateResponse"> & {
+	/**
+	 * @generated from field: ban.v1.Ban ban = 1;
+	 */
+	ban?: Ban;
+};
+
+/**
+ * @generated from message ban.v1.SetAppealStateResponse
+ */
+export type SetAppealStateResponseValid = Message<"ban.v1.SetAppealStateResponse"> & {
+	/**
+	 * @generated from field: ban.v1.Ban ban = 1;
+	 */
+	ban?: BanValid;
+};
+
+/**
+ * Describes the message ban.v1.SetAppealStateResponse.
+ * Use `create(SetAppealStateResponseSchema)` to create a new message.
+ */
+export const SetAppealStateResponseSchema: GenMessage<
+	SetAppealStateResponse,
+	{ validType: SetAppealStateResponseValid }
+> = /*@__PURE__*/ messageDesc(file_ban_v1_appeal, 1);
 
 /**
  * @generated from message ban.v1.AppealsRequest
@@ -47,7 +101,7 @@ export type AppealsRequestValid = AppealsRequest;
  */
 export const AppealsRequestSchema: GenMessage<AppealsRequest, { validType: AppealsRequestValid }> =
 	/*@__PURE__*/
-	messageDesc(file_ban_v1_appeal, 0);
+	messageDesc(file_ban_v1_appeal, 2);
 
 /**
  * @generated from message ban.v1.AppealsResponse
@@ -75,16 +129,16 @@ export type AppealsResponseValid = Message<"ban.v1.AppealsResponse"> & {
  */
 export const AppealsResponseSchema: GenMessage<AppealsResponse, { validType: AppealsResponseValid }> =
 	/*@__PURE__*/
-	messageDesc(file_ban_v1_appeal, 1);
+	messageDesc(file_ban_v1_appeal, 3);
 
 /**
  * @generated from message ban.v1.MessagesRequest
  */
 export type MessagesRequest = Message<"ban.v1.MessagesRequest"> & {
 	/**
-	 * @generated from field: int64 ban_id = 1;
+	 * @generated from field: int32 ban_id = 1;
 	 */
-	banId: bigint;
+	banId: number;
 };
 
 /**
@@ -92,9 +146,9 @@ export type MessagesRequest = Message<"ban.v1.MessagesRequest"> & {
  */
 export type MessagesRequestValid = Message<"ban.v1.MessagesRequest"> & {
 	/**
-	 * @generated from field: int64 ban_id = 1;
+	 * @generated from field: int32 ban_id = 1;
 	 */
-	banId: bigint;
+	banId: number;
 };
 
 /**
@@ -103,7 +157,7 @@ export type MessagesRequestValid = Message<"ban.v1.MessagesRequest"> & {
  */
 export const MessagesRequestSchema: GenMessage<MessagesRequest, { validType: MessagesRequestValid }> =
 	/*@__PURE__*/
-	messageDesc(file_ban_v1_appeal, 2);
+	messageDesc(file_ban_v1_appeal, 4);
 
 /**
  * @generated from message ban.v1.MessagesResponse
@@ -131,7 +185,7 @@ export type MessagesResponseValid = Message<"ban.v1.MessagesResponse"> & {
  */
 export const MessagesResponseSchema: GenMessage<MessagesResponse, { validType: MessagesResponseValid }> =
 	/*@__PURE__*/
-	messageDesc(file_ban_v1_appeal, 3);
+	messageDesc(file_ban_v1_appeal, 5);
 
 /**
  * @generated from message ban.v1.AppealOverview
@@ -199,16 +253,16 @@ export type AppealOverviewValid = Message<"ban.v1.AppealOverview"> & {
  */
 export const AppealOverviewSchema: GenMessage<AppealOverview, { validType: AppealOverviewValid }> =
 	/*@__PURE__*/
-	messageDesc(file_ban_v1_appeal, 4);
+	messageDesc(file_ban_v1_appeal, 6);
 
 /**
  * @generated from message ban.v1.AppealMessage
  */
 export type AppealMessage = Message<"ban.v1.AppealMessage"> & {
 	/**
-	 * @generated from field: int64 ban_id = 1;
+	 * @generated from field: int32 ban_id = 1;
 	 */
-	banId: bigint;
+	banId: number;
 
 	/**
 	 * @generated from field: int64 ban_message_id = 2;
@@ -261,9 +315,9 @@ export type AppealMessage = Message<"ban.v1.AppealMessage"> & {
  */
 export type AppealMessageValid = Message<"ban.v1.AppealMessage"> & {
 	/**
-	 * @generated from field: int64 ban_id = 1;
+	 * @generated from field: int32 ban_id = 1;
 	 */
-	banId: bigint;
+	banId: number;
 
 	/**
 	 * @generated from field: int64 ban_message_id = 2;
@@ -317,16 +371,16 @@ export type AppealMessageValid = Message<"ban.v1.AppealMessage"> & {
  */
 export const AppealMessageSchema: GenMessage<AppealMessage, { validType: AppealMessageValid }> =
 	/*@__PURE__*/
-	messageDesc(file_ban_v1_appeal, 5);
+	messageDesc(file_ban_v1_appeal, 7);
 
 /**
  * @generated from message ban.v1.ReplyRequest
  */
 export type ReplyRequest = Message<"ban.v1.ReplyRequest"> & {
 	/**
-	 * @generated from field: int64 ban_id = 1;
+	 * @generated from field: int32 ban_id = 1;
 	 */
-	banId: bigint;
+	banId: number;
 
 	/**
 	 * @generated from field: string body_md = 2;
@@ -339,9 +393,9 @@ export type ReplyRequest = Message<"ban.v1.ReplyRequest"> & {
  */
 export type ReplyRequestValid = Message<"ban.v1.ReplyRequest"> & {
 	/**
-	 * @generated from field: int64 ban_id = 1;
+	 * @generated from field: int32 ban_id = 1;
 	 */
-	banId: bigint;
+	banId: number;
 
 	/**
 	 * @generated from field: string body_md = 2;
@@ -355,7 +409,7 @@ export type ReplyRequestValid = Message<"ban.v1.ReplyRequest"> & {
  */
 export const ReplyRequestSchema: GenMessage<ReplyRequest, { validType: ReplyRequestValid }> =
 	/*@__PURE__*/
-	messageDesc(file_ban_v1_appeal, 6);
+	messageDesc(file_ban_v1_appeal, 8);
 
 /**
  * @generated from message ban.v1.ReplyResponse
@@ -383,7 +437,7 @@ export type ReplyResponseValid = Message<"ban.v1.ReplyResponse"> & {
  */
 export const ReplyResponseSchema: GenMessage<ReplyResponse, { validType: ReplyResponseValid }> =
 	/*@__PURE__*/
-	messageDesc(file_ban_v1_appeal, 7);
+	messageDesc(file_ban_v1_appeal, 9);
 
 /**
  * @generated from message ban.v1.EditAppealMessageRequest
@@ -422,7 +476,7 @@ export type EditAppealMessageRequestValid = Message<"ban.v1.EditAppealMessageReq
 export const EditAppealMessageRequestSchema: GenMessage<
 	EditAppealMessageRequest,
 	{ validType: EditAppealMessageRequestValid }
-> = /*@__PURE__*/ messageDesc(file_ban_v1_appeal, 8);
+> = /*@__PURE__*/ messageDesc(file_ban_v1_appeal, 10);
 
 /**
  * @generated from message ban.v1.EditAppealMessageResponse
@@ -451,7 +505,7 @@ export type EditAppealMessageResponseValid = Message<"ban.v1.EditAppealMessageRe
 export const EditAppealMessageResponseSchema: GenMessage<
 	EditAppealMessageResponse,
 	{ validType: EditAppealMessageResponseValid }
-> = /*@__PURE__*/ messageDesc(file_ban_v1_appeal, 9);
+> = /*@__PURE__*/ messageDesc(file_ban_v1_appeal, 11);
 
 /**
  * @generated from message ban.v1.DeleteAppealMessageRequest
@@ -480,7 +534,7 @@ export type DeleteAppealMessageRequestValid = Message<"ban.v1.DeleteAppealMessag
 export const DeleteAppealMessageRequestSchema: GenMessage<
 	DeleteAppealMessageRequest,
 	{ validType: DeleteAppealMessageRequestValid }
-> = /*@__PURE__*/ messageDesc(file_ban_v1_appeal, 10);
+> = /*@__PURE__*/ messageDesc(file_ban_v1_appeal, 12);
 
 /**
  * @generated from service ban.v1.AppealService
@@ -525,5 +579,13 @@ export const AppealService: GenService<{
 		methodKind: "unary";
 		input: typeof DeleteAppealMessageRequestSchema;
 		output: typeof EmptySchema;
+	};
+	/**
+	 * @generated from rpc ban.v1.AppealService.SetAppealState
+	 */
+	setAppealState: {
+		methodKind: "unary";
+		input: typeof SetAppealStateRequestSchema;
+		output: typeof SetAppealStateResponseSchema;
 	};
 }> = /*@__PURE__*/ serviceDesc(file_ban_v1_appeal, 0);

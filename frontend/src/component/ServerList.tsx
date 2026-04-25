@@ -7,21 +7,18 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { createMRTColumnHelper, type MRT_ColumnDef, useMaterialReactTable } from "material-react-table";
 import { useMemo } from "react";
-import type { z } from "zod/v4";
-import { cleanMapName } from "../api";
 import { useMapStateCtx } from "../hooks/useMapStateCtx.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import type { schemaServerRow } from "../schema/server.ts";
+import type { SafeServer } from "../rpc/servers/v1/servers_pb.ts";
 import { tf2Fonts } from "../theme";
 import { logErr } from "../util/errors";
+import { cleanMapName } from "../util/strings.ts";
 import { Flag } from "./Flag";
 import { createDefaultTableOptions } from "./table/options.ts";
 import { SortableTable } from "./table/SortableTable.tsx";
 
-type ServerRow = z.infer<typeof schemaServerRow>;
-
-const columnHelper = createMRTColumnHelper<ServerRow>();
-const defaultOptions = createDefaultTableOptions<ServerRow>();
+const columnHelper = createMRTColumnHelper<SafeServer>();
+const defaultOptions = createDefaultTableOptions<SafeServer>();
 
 export const ServerList = () => {
 	const { sendFlash } = useUserFlashCtx();
@@ -59,7 +56,7 @@ export const ServerList = () => {
 					Cell: ({ row }) => (
 						<Typography
 							variant={"body2"}
-						>{`${row.original.players}/${Number(row.original.max_players_visible) > 0 ? row.original.max_players_visible : row.original.max_players}`}</Typography>
+						>{`${row.original.players}/${Number(row.original.maxPlayers) > 0 ? row.original.maxPlayers : row.original.maxPlayers}`}</Typography>
 					),
 				}),
 				columnHelper.accessor("distance", {
@@ -101,7 +98,7 @@ export const ServerList = () => {
 						</IconButton>
 					),
 				}),
-				columnHelper.accessor("connect", {
+				columnHelper.display({
 					header: "Connect",
 					size: 125,
 					Cell: ({ row }) => (
@@ -117,7 +114,7 @@ export const ServerList = () => {
 						</Button>
 					),
 				}),
-			].filter((f) => f) as Array<MRT_ColumnDef<ServerRow>>,
+			].filter((f) => f) as Array<MRT_ColumnDef<SafeServer>>,
 		[sendFlash],
 	);
 

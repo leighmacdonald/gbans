@@ -18,7 +18,7 @@ import type { Message } from "@bufbuild/protobuf";
 export const file_person_v1_person_core: GenFile =
 	/*@__PURE__*/
 	fileDesc(
-		"ChtwZXJzb24vdjEvcGVyc29uX2NvcmUucHJvdG8SCXBlcnNvbi52MSK8AgoKUGVyc29uQ29yZRIbCghzdGVhbV9pZBgBIAEoA0IJukgGIgSA8QQBEjYKEHBlcm1pc3Npb25fbGV2ZWwYAiABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlQga6SAPIAQESFAoEbmFtZRgDIAEoCUIGukgDyAEBEiAKC2F2YXRhcl9oYXNoGAQgASgJQgu6SAjIAQFyA5gBKBIaCgpkaXNjb3JkX2lkGAUgASgJQga6SAPIAQESGAoIdmFjX2JhbnMYBiABKAVCBrpIA8gBARIZCglnYW1lX2JhbnMYByABKAVCBrpIA8gBARIWCgZiYW5faWQYCCABKANCBrpIA8gBARI4Cgx0aW1lX2NyZWF0ZWQYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQFCogEKDWNvbS5wZXJzb24udjFCD1BlcnNvbkNvcmVQcm90b1ABWjtnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3BlcnNvbi92MTtwZXJzb252MaICA1BYWKoCCVBlcnNvbi5WMcoCCVBlcnNvblxWMeICFVBlcnNvblxWMVxHUEJNZXRhZGF0YeoCClBlcnNvbjo6VjFiCGVkaXRpb25zcOgH",
+		"ChtwZXJzb24vdjEvcGVyc29uX2NvcmUucHJvdG8SCXBlcnNvbi52MSK8AgoKUGVyc29uQ29yZRIbCghzdGVhbV9pZBgBIAEoA0IJukgGIgSA8QQBEjYKEHBlcm1pc3Npb25fbGV2ZWwYAiABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlQga6SAPIAQESFAoEbmFtZRgDIAEoCUIGukgDyAEBEiAKC2F2YXRhcl9oYXNoGAQgASgJQgu6SAjIAQFyA5gBKBIaCgpkaXNjb3JkX2lkGAUgASgJQga6SAPIAQESGAoIdmFjX2JhbnMYBiABKAVCBrpIA8gBARIZCglnYW1lX2JhbnMYByABKAVCBrpIA8gBARIWCgZiYW5faWQYCCABKAVCBrpIA8gBARI4Cgx0aW1lX2NyZWF0ZWQYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQFCogEKDWNvbS5wZXJzb24udjFCD1BlcnNvbkNvcmVQcm90b1ABWjtnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3BlcnNvbi92MTtwZXJzb252MaICA1BYWKoCCVBlcnNvbi5WMcoCCVBlcnNvblxWMeICFVBlcnNvblxWMVxHUEJNZXRhZGF0YeoCClBlcnNvbjo6VjFiCGVkaXRpb25zcOgH",
 		[file_buf_validate_validate, file_google_protobuf_timestamp, file_person_v1_privilege, file_person_v1_steamid],
 	);
 
@@ -62,9 +62,9 @@ export type PersonCore = Message<"person.v1.PersonCore"> & {
 	gameBans: number;
 
 	/**
-	 * @generated from field: int64 ban_id = 8;
+	 * @generated from field: int32 ban_id = 8;
 	 */
-	banId: bigint;
+	banId: number;
 
 	/**
 	 * @generated from field: google.protobuf.Timestamp time_created = 9;
@@ -112,9 +112,9 @@ export type PersonCoreValid = Message<"person.v1.PersonCore"> & {
 	gameBans: number;
 
 	/**
-	 * @generated from field: int64 ban_id = 8;
+	 * @generated from field: int32 ban_id = 8;
 	 */
-	banId: bigint;
+	banId: number;
 
 	/**
 	 * @generated from field: google.protobuf.Timestamp time_created = 9;

@@ -1,3 +1,5 @@
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -11,11 +13,11 @@ import { BoolCell } from "../component/table/BoolCell.tsx";
 import { createDefaultTableOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
-import { logErr } from "../util/errors.ts";
-import { renderDateTime } from "../util/time.ts";
 import type { Contest } from "../rpc/contest/v1/contest_pb.ts";
-import { useQuery } from "@connectrpc/connect-query";
 import { contests } from "../rpc/contest/v1/contest-Service_connectquery.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { logErr } from "../util/errors.ts";
+import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<Contest>();
 const defaultOptions = createDefaultTableOptions<Contest>();
@@ -87,29 +89,27 @@ function AdminContests() {
 				header: "Min. Perms",
 				enableColumnFilter: false,
 				grow: false,
-				Cell: ({ cell }) => (
-					<TableCellString>{permissionLevelString(cell.getValue() as PermissionLevelEnum)}</TableCellString>
-				),
+				Cell: ({ cell }) => <TableCellString>{Privilege[cell.getValue()]}</TableCellString>,
 			}),
 			columnHelper.accessor("dateStart", {
 				meta: { tooltip: "Start date" },
 				header: "Starts",
 				filterVariant: "date",
 				grow: false,
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue() as Date)}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{renderTimestamp(cell.getValue() as Timestamp)}</TableCellString>,
 			}),
 			columnHelper.accessor("dateEnd", {
 				meta: { tooltip: "End date" },
 				filterVariant: "date",
 				header: "Ends",
 				grow: false,
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue() as Date)}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{renderTimestamp(cell.getValue() as Timestamp)}</TableCellString>,
 			}),
 			columnHelper.accessor("updatedOn", {
 				header: "Updated",
 				filterVariant: "date",
 				grow: false,
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue() as Date)}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{renderTimestamp(cell.getValue() as Timestamp)}</TableCellString>,
 			}),
 		],
 		[],

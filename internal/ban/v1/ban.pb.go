@@ -281,7 +281,7 @@ type CreateRequest struct {
 	Reason        *BanReason             `protobuf:"varint,5,opt,name=reason,enum=ban.v1.BanReason" json:"reason,omitempty"`
 	ReasonText    *string                `protobuf:"bytes,6,opt,name=reason_text,json=reasonText" json:"reason_text,omitempty"`
 	Origin        *Origin                `protobuf:"varint,7,opt,name=origin,enum=ban.v1.Origin" json:"origin,omitempty"`
-	ReportId      *int64                 `protobuf:"varint,8,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
+	ReportId      *int32                 `protobuf:"varint,8,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
 	Cidr          *string                `protobuf:"bytes,9,opt,name=cidr" json:"cidr,omitempty"`
 	EvadeOk       *bool                  `protobuf:"varint,10,opt,name=evade_ok,json=evadeOk" json:"evade_ok,omitempty"`
 	Name          *string                `protobuf:"bytes,11,opt,name=name" json:"name,omitempty"`
@@ -371,7 +371,7 @@ func (x *CreateRequest) GetOrigin() Origin {
 	return Origin_ORIGIN_SYSTEM_UNSPECIFIED
 }
 
-func (x *CreateRequest) GetReportId() int64 {
+func (x *CreateRequest) GetReportId() int32 {
 	if x != nil && x.ReportId != nil {
 		return *x.ReportId
 	}
@@ -473,7 +473,8 @@ type UpdateRequest struct {
 	EvadeOk       *bool                  `protobuf:"varint,5,opt,name=evade_ok,json=evadeOk" json:"evade_ok,omitempty"`
 	Duration      *durationpb.Duration   `protobuf:"bytes,6,opt,name=duration" json:"duration,omitempty"`
 	Cidr          *string                `protobuf:"bytes,7,opt,name=cidr" json:"cidr,omitempty"`
-	BanId         *int64                 `protobuf:"varint,8,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	BanId         *int32                 `protobuf:"varint,8,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	AppealState   *AppealState           `protobuf:"varint,9,opt,name=appeal_state,json=appealState,enum=ban.v1.AppealState" json:"appeal_state,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -557,11 +558,18 @@ func (x *UpdateRequest) GetCidr() string {
 	return ""
 }
 
-func (x *UpdateRequest) GetBanId() int64 {
+func (x *UpdateRequest) GetBanId() int32 {
 	if x != nil && x.BanId != nil {
 		return *x.BanId
 	}
 	return 0
+}
+
+func (x *UpdateRequest) GetAppealState() AppealState {
+	if x != nil && x.AppealState != nil {
+		return *x.AppealState
+	}
+	return AppealState_APPEAL_STATE_OPEN_UNSPECIFIED
 }
 
 type UpdateResponse struct {
@@ -806,7 +814,7 @@ func (x *QuerySourceBansResponse) GetBans() []*SourceBanRecord {
 
 type GetRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	BanId         *int64                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	BanId         *int32                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -841,7 +849,7 @@ func (*GetRequest) Descriptor() ([]byte, []int) {
 	return file_ban_v1_ban_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *GetRequest) GetBanId() int64 {
+func (x *GetRequest) GetBanId() int32 {
 	if x != nil && x.BanId != nil {
 		return *x.BanId
 	}
@@ -894,7 +902,7 @@ func (x *GetResponse) GetBan() *Ban {
 
 type DeleteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	BanId         *int64                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	BanId         *int32                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
 	Reason        *string                `protobuf:"bytes,2,opt,name=reason" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -930,7 +938,7 @@ func (*DeleteRequest) Descriptor() ([]byte, []int) {
 	return file_ban_v1_ban_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *DeleteRequest) GetBanId() int64 {
+func (x *DeleteRequest) GetBanId() int32 {
 	if x != nil && x.BanId != nil {
 		return *x.BanId
 	}
@@ -1092,8 +1100,8 @@ type Ban struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	TargetId          *int64                 `protobuf:"varint,1,opt,name=target_id,json=targetId" json:"target_id,omitempty"`
 	SourceId          *int64                 `protobuf:"varint,2,opt,name=source_id,json=sourceId" json:"source_id,omitempty"`
-	BanId             *int64                 `protobuf:"varint,3,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
-	ReportId          *int64                 `protobuf:"varint,4,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
+	BanId             *int32                 `protobuf:"varint,3,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	ReportId          *int32                 `protobuf:"varint,4,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
 	LastIp            *string                `protobuf:"bytes,5,opt,name=last_ip,json=lastIp" json:"last_ip,omitempty"`
 	EvadeOk           *bool                  `protobuf:"varint,6,opt,name=evade_ok,json=evadeOk" json:"evade_ok,omitempty"`
 	BanType           *BanType               `protobuf:"varint,7,opt,name=ban_type,json=banType,enum=ban.v1.BanType" json:"ban_type,omitempty"`
@@ -1107,13 +1115,14 @@ type Ban struct {
 	Name              *string                `protobuf:"bytes,15,opt,name=name" json:"name,omitempty"`
 	Deleted           *bool                  `protobuf:"varint,16,opt,name=deleted" json:"deleted,omitempty"`
 	IsEnabled         *bool                  `protobuf:"varint,17,opt,name=is_enabled,json=isEnabled" json:"is_enabled,omitempty"`
-	ValidUntil        *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=valid_until,json=validUntil" json:"valid_until,omitempty"`
-	CreatedOn         *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
-	UpdatedOn         *timestamppb.Timestamp `protobuf:"bytes,20,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
-	SourcePersonaName *string                `protobuf:"bytes,21,opt,name=source_persona_name,json=sourcePersonaName" json:"source_persona_name,omitempty"`
-	SourceAvatarHash  *string                `protobuf:"bytes,22,opt,name=source_avatar_hash,json=sourceAvatarHash" json:"source_avatar_hash,omitempty"`
-	TargetPersonaName *string                `protobuf:"bytes,23,opt,name=target_persona_name,json=targetPersonaName" json:"target_persona_name,omitempty"`
-	TargetAvatarHash  *string                `protobuf:"bytes,24,opt,name=target_avatar_hash,json=targetAvatarHash" json:"target_avatar_hash,omitempty"`
+	CreatedOn         *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	UpdatedOn         *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
+	Duration          *durationpb.Duration   `protobuf:"bytes,20,opt,name=duration" json:"duration,omitempty"`
+	ValidUntil        *timestamppb.Timestamp `protobuf:"bytes,21,opt,name=valid_until,json=validUntil" json:"valid_until,omitempty"`
+	SourcePersonaName *string                `protobuf:"bytes,22,opt,name=source_persona_name,json=sourcePersonaName" json:"source_persona_name,omitempty"`
+	SourceAvatarHash  *string                `protobuf:"bytes,23,opt,name=source_avatar_hash,json=sourceAvatarHash" json:"source_avatar_hash,omitempty"`
+	TargetPersonaName *string                `protobuf:"bytes,24,opt,name=target_persona_name,json=targetPersonaName" json:"target_persona_name,omitempty"`
+	TargetAvatarHash  *string                `protobuf:"bytes,25,opt,name=target_avatar_hash,json=targetAvatarHash" json:"target_avatar_hash,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -1162,14 +1171,14 @@ func (x *Ban) GetSourceId() int64 {
 	return 0
 }
 
-func (x *Ban) GetBanId() int64 {
+func (x *Ban) GetBanId() int32 {
 	if x != nil && x.BanId != nil {
 		return *x.BanId
 	}
 	return 0
 }
 
-func (x *Ban) GetReportId() int64 {
+func (x *Ban) GetReportId() int32 {
 	if x != nil && x.ReportId != nil {
 		return *x.ReportId
 	}
@@ -1267,13 +1276,6 @@ func (x *Ban) GetIsEnabled() bool {
 	return false
 }
 
-func (x *Ban) GetValidUntil() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ValidUntil
-	}
-	return nil
-}
-
 func (x *Ban) GetCreatedOn() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreatedOn
@@ -1284,6 +1286,20 @@ func (x *Ban) GetCreatedOn() *timestamppb.Timestamp {
 func (x *Ban) GetUpdatedOn() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedOn
+	}
+	return nil
+}
+
+func (x *Ban) GetDuration() *durationpb.Duration {
+	if x != nil {
+		return x.Duration
+	}
+	return nil
+}
+
+func (x *Ban) GetValidUntil() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ValidUntil
 	}
 	return nil
 }
@@ -1330,7 +1346,7 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\vreason_text\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"reasonText\x12.\n" +
 	"\x06origin\x18\a \x01(\x0e2\x0e.ban.v1.OriginB\x06\xbaH\x03\xc8\x01\x01R\x06origin\x12\x1b\n" +
-	"\treport_id\x18\b \x01(\x03R\breportId\x12\x1a\n" +
+	"\treport_id\x18\b \x01(\x05R\breportId\x12\x1a\n" +
 	"\x04cidr\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04cidr\x12!\n" +
 	"\bevade_ok\x18\n" +
 	" \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aevadeOk\x12\x1a\n" +
@@ -1339,17 +1355,18 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\tdemo_name\x18\r \x01(\tR\bdemoName\x12\x1a\n" +
 	"\x04note\x18\x0e \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04note\"/\n" +
 	"\x0eCreateResponse\x12\x1d\n" +
-	"\x03ban\x18\x01 \x01(\v2\v.ban.v1.BanR\x03ban\"\x98\x02\n" +
-	"\rUpdateRequest\x12*\n" +
-	"\bban_type\x18\x01 \x01(\x0e2\x0f.ban.v1.BanTypeR\abanType\x12)\n" +
-	"\x06reason\x18\x02 \x01(\x0e2\x11.ban.v1.BanReasonR\x06reason\x12\x1f\n" +
-	"\vreason_text\x18\x03 \x01(\tR\n" +
-	"reasonText\x12\x12\n" +
-	"\x04note\x18\x04 \x01(\tR\x04note\x12\x19\n" +
-	"\bevade_ok\x18\x05 \x01(\bR\aevadeOk\x125\n" +
-	"\bduration\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\bduration\x12\x12\n" +
-	"\x04cidr\x18\a \x01(\tR\x04cidr\x12\x15\n" +
-	"\x06ban_id\x18\b \x01(\x03R\x05banId\"7\n" +
+	"\x03ban\x18\x01 \x01(\v2\v.ban.v1.BanR\x03ban\"\x98\x03\n" +
+	"\rUpdateRequest\x122\n" +
+	"\bban_type\x18\x01 \x01(\x0e2\x0f.ban.v1.BanTypeB\x06\xbaH\x03\xc8\x01\x01R\abanType\x121\n" +
+	"\x06reason\x18\x02 \x01(\x0e2\x11.ban.v1.BanReasonB\x06\xbaH\x03\xc8\x01\x01R\x06reason\x12'\n" +
+	"\vreason_text\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"reasonText\x12\x1a\n" +
+	"\x04note\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04note\x12!\n" +
+	"\bevade_ok\x18\x05 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aevadeOk\x12=\n" +
+	"\bduration\x18\x06 \x01(\v2\x19.google.protobuf.DurationB\x06\xbaH\x03\xc8\x01\x01R\bduration\x12\x1a\n" +
+	"\x04cidr\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04cidr\x12\x1d\n" +
+	"\x06ban_id\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05banId\x12>\n" +
+	"\fappeal_state\x18\t \x01(\x0e2\x13.ban.v1.AppealStateB\x06\xbaH\x03\xc8\x01\x01R\vappealState\"7\n" +
 	"\x0eUpdateResponse\x12%\n" +
 	"\x03ban\x18\x01 \x01(\v2\v.ban.v1.BanB\x06\xbaH\x03\xc8\x01\x01R\x03ban\";\n" +
 	"\x16QuerySourceBansRequest\x12!\n" +
@@ -1369,11 +1386,11 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\x04bans\x18\x01 \x03(\v2\x17.ban.v1.SourceBanRecordB\x06\xbaH\x03\xc8\x01\x01R\x04bans\"+\n" +
 	"\n" +
 	"GetRequest\x12\x1d\n" +
-	"\x06ban_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x05banId\"4\n" +
+	"\x06ban_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05banId\"4\n" +
 	"\vGetResponse\x12%\n" +
 	"\x03ban\x18\x01 \x01(\v2\v.ban.v1.BanB\x06\xbaH\x03\xc8\x01\x01R\x03ban\"N\n" +
 	"\rDeleteRequest\x12\x1d\n" +
-	"\x06ban_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x05banId\x12\x1e\n" +
+	"\x06ban_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05banId\x12\x1e\n" +
 	"\x06reason\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06reason\"\x82\x02\n" +
 	"\fQueryRequest\x12\x1b\n" +
 	"\tsource_id\x18\x01 \x01(\x03R\bsourceId\x12\x1b\n" +
@@ -1386,12 +1403,12 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\x06reason\x18\a \x03(\x0e2\x11.ban.v1.BanReasonR\x06reason\x12!\n" +
 	"\fappeal_state\x18\b \x01(\x05R\vappealState\"8\n" +
 	"\rQueryResponse\x12'\n" +
-	"\x04bans\x18\x01 \x03(\v2\v.ban.v1.BanB\x06\xbaH\x03\xc8\x01\x01R\x04bans\"\xbf\b\n" +
+	"\x04bans\x18\x01 \x03(\v2\v.ban.v1.BanB\x06\xbaH\x03\xc8\x01\x01R\x04bans\"\xfe\b\n" +
 	"\x03Ban\x12#\n" +
 	"\ttarget_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\btargetId\x12#\n" +
 	"\tsource_id\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\bsourceId\x12\x1d\n" +
-	"\x06ban_id\x18\x03 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x05banId\x12\x1b\n" +
-	"\treport_id\x18\x04 \x01(\x03R\breportId\x12\x17\n" +
+	"\x06ban_id\x18\x03 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05banId\x12\x1b\n" +
+	"\treport_id\x18\x04 \x01(\x05R\breportId\x12\x17\n" +
 	"\alast_ip\x18\x05 \x01(\tR\x06lastIp\x12!\n" +
 	"\bevade_ok\x18\x06 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aevadeOk\x122\n" +
 	"\bban_type\x18\a \x01(\x0e2\x0f.ban.v1.BanTypeB\x06\xbaH\x03\xc8\x01\x01R\abanType\x121\n" +
@@ -1407,17 +1424,18 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\x04name\x18\x0f \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12 \n" +
 	"\adeleted\x18\x10 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\adeleted\x12%\n" +
 	"\n" +
-	"is_enabled\x18\x11 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\tisEnabled\x12C\n" +
-	"\vvalid_until\x18\x12 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"validUntil\x12A\n" +
+	"is_enabled\x18\x11 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\tisEnabled\x12A\n" +
 	"\n" +
-	"created_on\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
+	"created_on\x18\x12 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\x14 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\x126\n" +
-	"\x13source_persona_name\x18\x15 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11sourcePersonaName\x124\n" +
-	"\x12source_avatar_hash\x18\x16 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10sourceAvatarHash\x126\n" +
-	"\x13target_persona_name\x18\x17 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11targetPersonaName\x124\n" +
-	"\x12target_avatar_hash\x18\x18 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10targetAvatarHash*g\n" +
+	"updated_on\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\x12=\n" +
+	"\bduration\x18\x14 \x01(\v2\x19.google.protobuf.DurationB\x06\xbaH\x03\xc8\x01\x01R\bduration\x12C\n" +
+	"\vvalid_until\x18\x15 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"validUntil\x126\n" +
+	"\x13source_persona_name\x18\x16 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11sourcePersonaName\x124\n" +
+	"\x12source_avatar_hash\x18\x17 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10sourceAvatarHash\x126\n" +
+	"\x13target_persona_name\x18\x18 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11targetPersonaName\x124\n" +
+	"\x12target_avatar_hash\x18\x19 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10targetAvatarHash*g\n" +
 	"\aBanType\x12\x1b\n" +
 	"\x17BAN_TYPE_OK_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10BAN_TYPE_NO_COMM\x10\x01\x12\x13\n" +
@@ -1510,37 +1528,39 @@ var file_ban_v1_ban_proto_depIdxs = []int32{
 	0,  // 5: ban.v1.UpdateRequest.ban_type:type_name -> ban.v1.BanType
 	2,  // 6: ban.v1.UpdateRequest.reason:type_name -> ban.v1.BanReason
 	17, // 7: ban.v1.UpdateRequest.duration:type_name -> google.protobuf.Duration
-	16, // 8: ban.v1.UpdateResponse.ban:type_name -> ban.v1.Ban
-	17, // 9: ban.v1.SourceBanRecord.duration:type_name -> google.protobuf.Duration
-	18, // 10: ban.v1.SourceBanRecord.created_on:type_name -> google.protobuf.Timestamp
-	9,  // 11: ban.v1.QuerySourceBansResponse.bans:type_name -> ban.v1.SourceBanRecord
-	16, // 12: ban.v1.GetResponse.ban:type_name -> ban.v1.Ban
-	2,  // 13: ban.v1.QueryRequest.reason:type_name -> ban.v1.BanReason
-	16, // 14: ban.v1.QueryResponse.bans:type_name -> ban.v1.Ban
-	0,  // 15: ban.v1.Ban.ban_type:type_name -> ban.v1.BanType
-	2,  // 16: ban.v1.Ban.reason:type_name -> ban.v1.BanReason
-	3,  // 17: ban.v1.Ban.origin:type_name -> ban.v1.Origin
-	1,  // 18: ban.v1.Ban.appeal_state:type_name -> ban.v1.AppealState
-	18, // 19: ban.v1.Ban.valid_until:type_name -> google.protobuf.Timestamp
+	1,  // 8: ban.v1.UpdateRequest.appeal_state:type_name -> ban.v1.AppealState
+	16, // 9: ban.v1.UpdateResponse.ban:type_name -> ban.v1.Ban
+	17, // 10: ban.v1.SourceBanRecord.duration:type_name -> google.protobuf.Duration
+	18, // 11: ban.v1.SourceBanRecord.created_on:type_name -> google.protobuf.Timestamp
+	9,  // 12: ban.v1.QuerySourceBansResponse.bans:type_name -> ban.v1.SourceBanRecord
+	16, // 13: ban.v1.GetResponse.ban:type_name -> ban.v1.Ban
+	2,  // 14: ban.v1.QueryRequest.reason:type_name -> ban.v1.BanReason
+	16, // 15: ban.v1.QueryResponse.bans:type_name -> ban.v1.Ban
+	0,  // 16: ban.v1.Ban.ban_type:type_name -> ban.v1.BanType
+	2,  // 17: ban.v1.Ban.reason:type_name -> ban.v1.BanReason
+	3,  // 18: ban.v1.Ban.origin:type_name -> ban.v1.Origin
+	1,  // 19: ban.v1.Ban.appeal_state:type_name -> ban.v1.AppealState
 	18, // 20: ban.v1.Ban.created_on:type_name -> google.protobuf.Timestamp
 	18, // 21: ban.v1.Ban.updated_on:type_name -> google.protobuf.Timestamp
-	14, // 22: ban.v1.BanService.Query:input_type -> ban.v1.QueryRequest
-	13, // 23: ban.v1.BanService.Delete:input_type -> ban.v1.DeleteRequest
-	11, // 24: ban.v1.BanService.Get:input_type -> ban.v1.GetRequest
-	8,  // 25: ban.v1.BanService.QuerySourceBans:input_type -> ban.v1.QuerySourceBansRequest
-	6,  // 26: ban.v1.BanService.Update:input_type -> ban.v1.UpdateRequest
-	4,  // 27: ban.v1.BanService.Create:input_type -> ban.v1.CreateRequest
-	15, // 28: ban.v1.BanService.Query:output_type -> ban.v1.QueryResponse
-	19, // 29: ban.v1.BanService.Delete:output_type -> google.protobuf.Empty
-	12, // 30: ban.v1.BanService.Get:output_type -> ban.v1.GetResponse
-	10, // 31: ban.v1.BanService.QuerySourceBans:output_type -> ban.v1.QuerySourceBansResponse
-	7,  // 32: ban.v1.BanService.Update:output_type -> ban.v1.UpdateResponse
-	5,  // 33: ban.v1.BanService.Create:output_type -> ban.v1.CreateResponse
-	28, // [28:34] is the sub-list for method output_type
-	22, // [22:28] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	17, // 22: ban.v1.Ban.duration:type_name -> google.protobuf.Duration
+	18, // 23: ban.v1.Ban.valid_until:type_name -> google.protobuf.Timestamp
+	14, // 24: ban.v1.BanService.Query:input_type -> ban.v1.QueryRequest
+	13, // 25: ban.v1.BanService.Delete:input_type -> ban.v1.DeleteRequest
+	11, // 26: ban.v1.BanService.Get:input_type -> ban.v1.GetRequest
+	8,  // 27: ban.v1.BanService.QuerySourceBans:input_type -> ban.v1.QuerySourceBansRequest
+	6,  // 28: ban.v1.BanService.Update:input_type -> ban.v1.UpdateRequest
+	4,  // 29: ban.v1.BanService.Create:input_type -> ban.v1.CreateRequest
+	15, // 30: ban.v1.BanService.Query:output_type -> ban.v1.QueryResponse
+	19, // 31: ban.v1.BanService.Delete:output_type -> google.protobuf.Empty
+	12, // 32: ban.v1.BanService.Get:output_type -> ban.v1.GetResponse
+	10, // 33: ban.v1.BanService.QuerySourceBans:output_type -> ban.v1.QuerySourceBansResponse
+	7,  // 34: ban.v1.BanService.Update:output_type -> ban.v1.UpdateResponse
+	5,  // 35: ban.v1.BanService.Create:output_type -> ban.v1.CreateResponse
+	30, // [30:36] is the sub-list for method output_type
+	24, // [24:30] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_ban_v1_ban_proto_init() }

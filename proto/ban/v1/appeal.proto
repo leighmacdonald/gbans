@@ -14,6 +14,16 @@ service AppealService {
   rpc Reply(ReplyRequest) returns (ReplyResponse) {}
   rpc EditAppealMessage(EditAppealMessageRequest) returns (EditAppealMessageResponse) {}
   rpc DeleteAppealMessage(DeleteAppealMessageRequest) returns (google.protobuf.Empty) {}
+  rpc SetAppealState(SetAppealStateRequest) returns (SetAppealStateResponse) {}
+}
+
+message SetAppealStateRequest {
+  int32 ban_id = 1;
+  AppealState appeal_state = 2;
+}
+
+message SetAppealStateResponse {
+  Ban ban = 1;
 }
 
 message AppealsRequest {
@@ -25,7 +35,7 @@ message AppealsResponse {
 }
 
 message MessagesRequest {
-  int64 ban_id = 1 [(buf.validate.field).required = true];
+  int32 ban_id = 1 [(buf.validate.field).required = true];
 }
 
 message MessagesResponse {
@@ -41,7 +51,7 @@ message AppealOverview {
 }
 
 message AppealMessage {
-  int64 ban_id = 1 [(buf.validate.field).required = true];
+  int32 ban_id = 1 [(buf.validate.field).required = true];
   int64 ban_message_id = 2 [(buf.validate.field).required = true];
   int64 author_id = 3 [(buf.validate.field).required = true];
   string message_md = 4 [(buf.validate.field).required = true];
@@ -54,7 +64,7 @@ message AppealMessage {
 }
 
 message ReplyRequest {
-  int64 ban_id = 1 [(buf.validate.field).required = true];
+  int32 ban_id = 1 [(buf.validate.field).required = true];
   string body_md = 2 [(buf.validate.field).required = true];
 }
 

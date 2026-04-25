@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
 import ReactPlayer from "react-player";
-import { assetURL } from "../api/media";
-import type { Asset } from "../schema/asset";
+import type { Asset } from "../rpc/asset/v1/asset_pb.ts";
+import { assetURL } from "../util/strings.ts";
 
 export const VideoAsset = ({ asset }: { asset: Asset }) => (
 	<Box>

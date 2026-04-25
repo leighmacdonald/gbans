@@ -1,3 +1,4 @@
+import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -5,7 +6,6 @@ import Grid from "@mui/material/Grid";
 import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import { useMutation } from "@connectrpc/connect-query";
 import { delete$ } from "../../rpc/ban/v1/ban-BanService_connectquery.ts";
 
 const onSubmit = z.object({
@@ -17,7 +17,7 @@ export const UnbanModal = NiceModal.create(
 		banId,
 		personaName,
 	}: {
-		banId: bigint; // common placeholder for any primary key id for a ban
+		banId: number; // common placeholder for any primary key id for a ban
 		personaName?: string;
 	}) => {
 		const modal = useModal();

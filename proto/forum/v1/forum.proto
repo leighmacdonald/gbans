@@ -172,10 +172,13 @@ message ThreadsResponse {
 
 message Thread {
   int32 forum_id = 1 [(buf.validate.field).required = true];
-  int64 source_id = 2 [(buf.validate.field).required = true];
-  string title = 3 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp created_on = 4 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp updated_on = 5 [(buf.validate.field).required = true];
+  int32 forum_thread_id = 2 [(buf.validate.field).required = true];
+  int64 source_id = 3 [(buf.validate.field).required = true];
+  string title = 4 [(buf.validate.field).required = true];
+  bool sticky = 5 [(buf.validate.field).required = true];
+  bool locked = 6 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 7 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 8 [(buf.validate.field).required = true];
 }
 
 message ThreadWithSource {

@@ -58,7 +58,7 @@ message CreateRequest {
   BanReason reason = 5 [(buf.validate.field).required = true];
   string reason_text = 6 [(buf.validate.field).required = true];
   Origin origin = 7 [(buf.validate.field).required = true];
-  int64 report_id = 8;
+  int32 report_id = 8;
   string cidr = 9 [(buf.validate.field).required = true];
   bool evade_ok = 10 [(buf.validate.field).required = true];
   string name = 11 [(buf.validate.field).required = true];
@@ -72,14 +72,15 @@ message CreateResponse {
 }
 
 message UpdateRequest {
-  BanType ban_type = 1;
-  BanReason reason = 2;
-  string reason_text = 3;
-  string note = 4;
-  bool evade_ok = 5;
-  google.protobuf.Duration duration = 6;
-  string cidr = 7;
-  int64 ban_id = 8;
+  BanType ban_type = 1 [(buf.validate.field).required = true];
+  BanReason reason = 2 [(buf.validate.field).required = true];
+  string reason_text = 3 [(buf.validate.field).required = true];
+  string note = 4 [(buf.validate.field).required = true];
+  bool evade_ok = 5 [(buf.validate.field).required = true];
+  google.protobuf.Duration duration = 6 [(buf.validate.field).required = true];
+  string cidr = 7 [(buf.validate.field).required = true];
+  int32 ban_id = 8 [(buf.validate.field).required = true];
+  AppealState appeal_state = 9 [(buf.validate.field).required = true];
 }
 message UpdateResponse {
   Ban ban = 1 [(buf.validate.field).required = true];
@@ -106,7 +107,7 @@ message QuerySourceBansResponse {
 }
 
 message GetRequest {
-  int64 ban_id = 1 [(buf.validate.field).required = true];
+  int32 ban_id = 1 [(buf.validate.field).required = true];
 }
 
 message GetResponse {
@@ -114,7 +115,7 @@ message GetResponse {
 }
 
 message DeleteRequest {
-  int64 ban_id = 1 [(buf.validate.field).required = true];
+  int32 ban_id = 1 [(buf.validate.field).required = true];
   string reason = 2 [(buf.validate.field).required = true];
 }
 
@@ -144,8 +145,8 @@ enum Origin {
 message Ban {
   int64 target_id = 1 [(buf.validate.field).required = true];
   int64 source_id = 2 [(buf.validate.field).required = true];
-  int64 ban_id = 3 [(buf.validate.field).required = true];
-  int64 report_id = 4;
+  int32 ban_id = 3 [(buf.validate.field).required = true];
+  int32 report_id = 4;
   string last_ip = 5;
   bool evade_ok = 6 [(buf.validate.field).required = true];
   BanType ban_type = 7 [(buf.validate.field).required = true];
@@ -159,11 +160,12 @@ message Ban {
   string name = 15 [(buf.validate.field).required = true];
   bool deleted = 16 [(buf.validate.field).required = true];
   bool is_enabled = 17 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp valid_until = 18 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp created_on = 19 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp updated_on = 20 [(buf.validate.field).required = true];
-  string source_persona_name = 21 [(buf.validate.field).required = true];
-  string source_avatar_hash = 22 [(buf.validate.field).required = true];
-  string target_persona_name = 23 [(buf.validate.field).required = true];
-  string target_avatar_hash = 24 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 18 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 19 [(buf.validate.field).required = true];
+  google.protobuf.Duration duration = 20 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp valid_until = 21 [(buf.validate.field).required = true];
+  string source_persona_name = 22 [(buf.validate.field).required = true];
+  string source_avatar_hash = 23 [(buf.validate.field).required = true];
+  string target_persona_name = 24 [(buf.validate.field).required = true];
+  string target_avatar_hash = 25 [(buf.validate.field).required = true];
 }

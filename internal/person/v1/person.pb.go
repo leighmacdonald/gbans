@@ -268,7 +268,7 @@ func (x *ResolveSteamIDResponse) GetPersonaName() string {
 
 type CurrentProfileResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Profile       *PersonCore            `protobuf:"bytes,1,opt,name=profile" json:"profile,omitempty"`
+	Profile       *Person                `protobuf:"bytes,1,opt,name=profile" json:"profile,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -303,7 +303,7 @@ func (*CurrentProfileResponse) Descriptor() ([]byte, []int) {
 	return file_person_v1_person_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *CurrentProfileResponse) GetProfile() *PersonCore {
+func (x *CurrentProfileResponse) GetProfile() *Person {
 	if x != nil {
 		return x.Profile
 	}
@@ -1039,6 +1039,7 @@ type Person struct {
 	RealName              *string                `protobuf:"bytes,29,opt,name=real_name,json=realName" json:"real_name,omitempty"`
 	TimeCreated           *timestamppb.Timestamp `protobuf:"bytes,30,opt,name=time_created,json=timeCreated" json:"time_created,omitempty"`
 	VisibilityState       *VisibilityState       `protobuf:"varint,31,opt,name=visibility_state,json=visibilityState,enum=person.v1.VisibilityState" json:"visibility_state,omitempty"`
+	BanId                 *int32                 `protobuf:"varint,32,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -1290,6 +1291,13 @@ func (x *Person) GetVisibilityState() VisibilityState {
 	return VisibilityState_VISIBILITY_STATE_UNSPECIFIED
 }
 
+func (x *Person) GetBanId() int32 {
+	if x != nil && x.BanId != nil {
+		return *x.BanId
+	}
+	return 0
+}
+
 type QueryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	People        []*Person              `protobuf:"bytes,1,rep,name=people" json:"people,omitempty"`
@@ -1357,9 +1365,9 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"\bsteam_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\x12'\n" +
 	"\vavatar_hash\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"avatarHash\x12)\n" +
-	"\fpersona_name\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\"Q\n" +
-	"\x16CurrentProfileResponse\x127\n" +
-	"\aprofile\x18\x01 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\aprofile\"\xba\x03\n" +
+	"\fpersona_name\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\"M\n" +
+	"\x16CurrentProfileResponse\x123\n" +
+	"\aprofile\x18\x01 \x01(\v2\x11.person.v1.PersonB\x06\xbaH\x03\xc8\x01\x01R\aprofile\"\xba\x03\n" +
 	"\bSettings\x124\n" +
 	"\x12person_settings_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x10personSettingsId\x12!\n" +
 	"\bsteam_id\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\x12/\n" +
@@ -1419,7 +1427,7 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"\x10community_banned\x18\t \x01(\bR\x0fcommunityBanned\x12H\n" +
 	"\x12time_created_after\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\x10timeCreatedAfter\x12J\n" +
-	"\x13time_created_before\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\x11timeCreatedBefore\"\x98\f\n" +
+	"\x13time_created_before\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\x11timeCreatedBefore\"\xb7\f\n" +
 	"\x06Person\x12'\n" +
 	"\bsteam_id\x18\x01 \x01(\x03B\f\xbaH\t\xc8\x01\x01\"\x04\x80\xf1\x04\x01R\asteamId\x12A\n" +
 	"\n" +
@@ -1460,7 +1468,8 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"profileUrl\x12#\n" +
 	"\treal_name\x18\x1d \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\brealName\x12E\n" +
 	"\ftime_created\x18\x1e \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\vtimeCreated\x12M\n" +
-	"\x10visibility_state\x18\x1f \x01(\x0e2\x1a.person.v1.VisibilityStateB\x06\xbaH\x03\xc8\x01\x01R\x0fvisibilityState\"`\n" +
+	"\x10visibility_state\x18\x1f \x01(\x0e2\x1a.person.v1.VisibilityStateB\x06\xbaH\x03\xc8\x01\x01R\x0fvisibilityState\x12\x1d\n" +
+	"\x06ban_id\x18  \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05banId\"`\n" +
 	"\rQueryResponse\x121\n" +
 	"\x06people\x18\x01 \x03(\v2\x11.person.v1.PersonB\x06\xbaH\x03\xc8\x01\x01R\x06people\x12\x1c\n" +
 	"\x05count\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x05count*n\n" +
@@ -1512,37 +1521,37 @@ var file_person_v1_person_proto_goTypes = []any{
 	(*QueryRequest)(nil),                // 15: person.v1.QueryRequest
 	(*Person)(nil),                      // 16: person.v1.Person
 	(*QueryResponse)(nil),               // 17: person.v1.QueryResponse
-	(*PersonCore)(nil),                  // 18: person.v1.PersonCore
-	(*timestamppb.Timestamp)(nil),       // 19: google.protobuf.Timestamp
+	(*timestamppb.Timestamp)(nil),       // 18: google.protobuf.Timestamp
+	(*PersonCore)(nil),                  // 19: person.v1.PersonCore
 	(Privilege)(0),                      // 20: person.v1.Privilege
 	(*v1.Filter)(nil),                   // 21: database.query.v1.Filter
 	(*emptypb.Empty)(nil),               // 22: google.protobuf.Empty
 }
 var file_person_v1_person_proto_depIdxs = []int32{
 	8,  // 0: person.v1.ProfileResponse.profile:type_name -> person.v1.Profile
-	18, // 1: person.v1.CurrentProfileResponse.profile:type_name -> person.v1.PersonCore
-	19, // 2: person.v1.Settings.created_on:type_name -> google.protobuf.Timestamp
-	19, // 3: person.v1.Settings.updated_on:type_name -> google.protobuf.Timestamp
-	18, // 4: person.v1.Profile.player:type_name -> person.v1.PersonCore
+	16, // 1: person.v1.CurrentProfileResponse.profile:type_name -> person.v1.Person
+	18, // 2: person.v1.Settings.created_on:type_name -> google.protobuf.Timestamp
+	18, // 3: person.v1.Settings.updated_on:type_name -> google.protobuf.Timestamp
+	19, // 4: person.v1.Profile.player:type_name -> person.v1.PersonCore
 	9,  // 5: person.v1.Profile.friends:type_name -> person.v1.SteamFriend
 	6,  // 6: person.v1.Profile.settings:type_name -> person.v1.Settings
-	19, // 7: person.v1.SteamFriend.friend_since:type_name -> google.protobuf.Timestamp
-	19, // 8: person.v1.SteamFriend.removed_on:type_name -> google.protobuf.Timestamp
-	19, // 9: person.v1.UserSettings.created_on:type_name -> google.protobuf.Timestamp
-	19, // 10: person.v1.UserSettings.updated_on:type_name -> google.protobuf.Timestamp
+	18, // 7: person.v1.SteamFriend.friend_since:type_name -> google.protobuf.Timestamp
+	18, // 8: person.v1.SteamFriend.removed_on:type_name -> google.protobuf.Timestamp
+	18, // 9: person.v1.UserSettings.created_on:type_name -> google.protobuf.Timestamp
+	18, // 10: person.v1.UserSettings.updated_on:type_name -> google.protobuf.Timestamp
 	10, // 11: person.v1.ProfileSettingsResponse.settings:type_name -> person.v1.UserSettings
 	10, // 12: person.v1.EditProfileSettingsResponse.settings:type_name -> person.v1.UserSettings
 	20, // 13: person.v1.EditPermissionsRequest.permission_level:type_name -> person.v1.Privilege
-	18, // 14: person.v1.EditPermissionsResponse.person:type_name -> person.v1.PersonCore
+	19, // 14: person.v1.EditPermissionsResponse.person:type_name -> person.v1.PersonCore
 	21, // 15: person.v1.QueryRequest.filter:type_name -> database.query.v1.Filter
 	20, // 16: person.v1.QueryRequest.with_permissions:type_name -> person.v1.Privilege
-	19, // 17: person.v1.QueryRequest.time_created_after:type_name -> google.protobuf.Timestamp
-	19, // 18: person.v1.QueryRequest.time_created_before:type_name -> google.protobuf.Timestamp
-	19, // 19: person.v1.Person.created_on:type_name -> google.protobuf.Timestamp
-	19, // 20: person.v1.Person.updated_on:type_name -> google.protobuf.Timestamp
+	18, // 17: person.v1.QueryRequest.time_created_after:type_name -> google.protobuf.Timestamp
+	18, // 18: person.v1.QueryRequest.time_created_before:type_name -> google.protobuf.Timestamp
+	18, // 19: person.v1.Person.created_on:type_name -> google.protobuf.Timestamp
+	18, // 20: person.v1.Person.updated_on:type_name -> google.protobuf.Timestamp
 	20, // 21: person.v1.Person.permission_level:type_name -> person.v1.Privilege
-	19, // 22: person.v1.Person.updated_on_steam:type_name -> google.protobuf.Timestamp
-	19, // 23: person.v1.Person.time_created:type_name -> google.protobuf.Timestamp
+	18, // 22: person.v1.Person.updated_on_steam:type_name -> google.protobuf.Timestamp
+	18, // 23: person.v1.Person.time_created:type_name -> google.protobuf.Timestamp
 	0,  // 24: person.v1.Person.visibility_state:type_name -> person.v1.VisibilityState
 	16, // 25: person.v1.QueryResponse.people:type_name -> person.v1.Person
 	1,  // 26: person.v1.PersonService.Profile:input_type -> person.v1.ProfileRequest

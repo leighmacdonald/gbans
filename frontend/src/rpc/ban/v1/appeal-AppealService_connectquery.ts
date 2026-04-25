@@ -28,3 +28,8 @@ export const editAppealMessage = AppealService.method.editAppealMessage;
  * @generated from rpc ban.v1.AppealService.DeleteAppealMessage
  */
 export const deleteAppealMessage = AppealService.method.deleteAppealMessage;
+
+/**
+ * @generated from rpc ban.v1.AppealService.SetAppealState
+ */
+export const setAppealState = AppealService.method.setAppealState;

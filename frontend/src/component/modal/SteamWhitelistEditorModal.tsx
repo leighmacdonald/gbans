@@ -1,3 +1,4 @@
+import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
@@ -6,9 +7,8 @@ import Grid from "@mui/material/Grid";
 import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
+import { whitelistSteamCreate } from "../../rpc/network/v1/blocklist-BlocklistService_connectquery.ts";
 import { Heading } from "../Heading";
-import { whitelistAddressEdit } from "../../rpc/network/v1/blocklist-BlocklistService_connectquery.ts";
-import { useMutation } from "@connectrpc/connect-query";
 
 const schema = z.object({
 	steamId: z.string(),
@@ -21,7 +21,7 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
 		steamId: "",
 	};
 
-	const mutation = useMutation(whitelistAddressEdit, {
+	const mutation = useMutation(whitelistSteamCreate, {
 		onSuccess: async () => {
 			modal.resolve();
 			await modal.hide();
@@ -34,7 +34,7 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutation.mutate({ steamId: value.steamId });
+			mutation.mutate({ steamId: BigInt(value.steamId) });
 		},
 		defaultValues,
 		validators: {

@@ -1,3 +1,5 @@
+import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
+import { useSuspenseQuery } from "@connectrpc/connect-query";
 import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
@@ -23,13 +25,11 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { renderTimestamp } from "../util/time.ts";
+import type { AppealOverview } from "../rpc/ban/v1/appeal_pb.ts";
 import { appeals } from "../rpc/ban/v1/appeal-AppealService_connectquery.ts";
 import { AppealState, BanReason } from "../rpc/ban/v1/ban_pb.ts";
-import { useSuspenseQuery } from "@connectrpc/connect-query";
-import type { AppealOverview } from "../rpc/ban/v1/appeal_pb.ts";
 import { enumValues } from "../util/lists.ts";
-import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
+import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<AppealOverview>();
 const defaultOptions = createDefaultTableOptions<AppealOverview>();
@@ -141,10 +141,6 @@ function AdminAppeals() {
 					if (query === "") {
 						return true;
 					}
-					const value = row.original.ban?.sourceId.toString();
-					if (value.includes(query)) {
-						return true;
-					}
 					if (row.original.ban?.sourceId.toString().includes(query) || row.original.ban?.sourceId === query) {
 						return true;
 					}
@@ -165,9 +161,9 @@ function AdminAppeals() {
 										? theme.palette.primary.light
 										: theme.palette.primary.dark,
 							}}
-							search={setColumnFilter(search, "source_id", row.original.ban.sourceId)}
+							search={setColumnFilter(search, "source_id", row.original.ban?.sourceId ?? "")}
 						>
-							{row.original.sourcePersonaName ?? row.original.ban.sourceId}
+							{row.original.sourcePersonaName ?? row.original.ban?.sourceId}
 						</RouterLink>
 					</PersonCell>
 				),
@@ -183,9 +179,6 @@ function AdminAppeals() {
 					}
 					const value = row.original.targetPersonaName.toLowerCase();
 					if (value.includes(query)) {
-						return true;
-					}
-					if (row.original.ban.targetId.includes(query) || row.original.ban.targetId === query) {
 						return true;
 					}
 

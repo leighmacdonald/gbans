@@ -1,3 +1,4 @@
+import { useQuery } from "@connectrpc/connect-query";
 import PaymentIcon from "@mui/icons-material/Payment";
 import SearchIcon from "@mui/icons-material/Search";
 import SettingsInputComponentIcon from "@mui/icons-material/SettingsInputComponent";
@@ -11,11 +12,11 @@ import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { z } from "zod/v4";
-import { apiGetPatreonCampaigns, apiGetPatreonLogin } from "../api/patreon.ts";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { ImageBox } from "../component/ImageBox.tsx";
 import { MarkDownRenderer } from "../component/MarkdownRenderer.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
+import { campaigns } from "../rpc/patreon/v1/patreon-PatreonService_connectquery.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 
 const patreonSearchSchema = z.object({
@@ -29,52 +30,49 @@ export const Route = createFileRoute("/_guest/patreon")({
 	},
 
 	validateSearch: (search) => patreonSearchSchema.parse(search),
-	loader: async ({ context }) => {
-		const campaign = await context.queryClient.fetchQuery({
-			queryKey: ["patreonCampaign"],
-			queryFn: ({ signal }) => apiGetPatreonCampaigns(signal),
-		});
-
-		return { campaign };
-	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Patreon Campaigns" }, match.context.title("Patreon")],
 	}),
 });
 
 function Patreon() {
-	const { queryClient } = Route.useRouteContext();
 	const { isAuthenticated, profile } = useAuth();
-	const { campaign } = Route.useLoaderData();
 	const { appInfo } = Route.useRouteContext();
 	const theme = useTheme();
+
+	const { data, isLoading } = useQuery(campaigns);
+
 	const followCallback = async () => {
-		const result = await queryClient.fetchQuery({
-			queryKey: ["callback"],
-			queryFn: ({ signal }) => apiGetPatreonLogin(signal),
-		});
-		window.open(result.url, "_self");
+		// const result = await queryClient.fetchQuery({
+		// 	queryKey: ["callback"],
+		// 	queryFn: ({ signal }) => apiGetPatreonLogin(signal),
+		// });
+		// window.open(result.url, "_self");
 	};
 
 	if (!appInfo.patreonEnabled) {
 		return <Navigate to={"/"} />;
 	}
 
+	if (isLoading) {
+		return;
+	}
+
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeaderAndButtons
-					title={`Patreon Campaign: ${campaign.attributes.creation_name}`}
+					title={`Patreon Campaign: ${data?.campaigns[0].attributes?.creationName}`}
 					iconLeft={<PaymentIcon />}
 					buttons={
-						profile.patreon_id
+						profile.patreonId
 							? []
 							: [
 									<Button
 										key={"connect"}
 										variant={"contained"}
 										color={"success"}
-										disabled={!isAuthenticated() || profile.patreon_id !== ""}
+										disabled={!isAuthenticated() || profile.patreonId !== ""}
 										onClick={followCallback}
 										startIcon={<SettingsInputComponentIcon />}
 									>
@@ -91,14 +89,17 @@ function Patreon() {
 										height={"100%"}
 										width={"100%"}
 										alt={"Campaign background"}
-										src={campaign.attributes.image_url}
+										src={String(data?.campaigns[0].attributes?.imageUrl)}
 									/>
 								</Paper>
 
-								<MarkDownRenderer body_md={campaign.attributes.summary} assetURL={appInfo.assetUrl} />
+								<MarkDownRenderer
+									body_md={String(data?.campaigns[0].attributes?.summary)}
+									assetURL={appInfo.assetUrl}
+								/>
 
 								<MarkDownRenderer
-									body_md={campaign.attributes.thanks_msg}
+									body_md={String(data?.campaigns[0].attributes?.thanksMsg)}
 									assetURL={appInfo.assetUrl}
 								/>
 							</Stack>
@@ -127,7 +128,7 @@ function Patreon() {
 										padding={2}
 										sx={{ backgroundColor: theme.palette.primary.light }}
 									>
-										{campaign.attributes.patron_count}
+										{String(data?.campaigns[0].attributes?.patronCount)}
 									</Typography>
 								</Paper>
 							</Box>
@@ -139,7 +140,7 @@ function Patreon() {
 									variant={"contained"}
 									color={"success"}
 									startIcon={<SearchIcon />}
-									href={`${campaign.attributes.url}/membership`}
+									href={`${String(data?.campaigns[0].attributes?.url)}/membership`}
 								>
 									View Membership Tiers
 								</Button>

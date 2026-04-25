@@ -1,3 +1,5 @@
+import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
@@ -7,14 +9,12 @@ import MenuItem from "@mui/material/MenuItem";
 import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import { Heading } from "../Heading";
-import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
-import { useMutation } from "@connectrpc/connect-query";
-import { contestCreate } from "../../rpc/contest/v1/contest-Service_connectquery.ts";
 import type { Contest } from "../../rpc/contest/v1/contest_pb.ts";
+import { contestCreate } from "../../rpc/contest/v1/contest-Service_connectquery.ts";
+import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
 import { enumValues } from "../../util/lists.ts";
-import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { EMPTY_UUID } from "../../util/strings.ts";
+import { Heading } from "../Heading";
 
 export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest }) => {
 	const modal = useModal();

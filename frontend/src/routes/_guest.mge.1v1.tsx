@@ -1,4 +1,6 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: ts-form made me do it! */
+
+import { useQuery } from "@connectrpc/connect-query";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/system";
@@ -22,10 +24,9 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { renderDateTime } from "../util/time.ts";
-import { getHistory } from "../rpc/mge/v1/mge-MGEService_connectquery.ts";
-import { useQuery } from "@connectrpc/connect-query";
 import type { Duel } from "../rpc/mge/v1/mge_pb.ts";
+import { getHistory } from "../rpc/mge/v1/mge-MGEService_connectquery.ts";
+import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<Duel>();
 const defaultOptions = createDefaultTableOptions<Duel>();
@@ -171,7 +172,7 @@ function MGEOverall() {
 				enableColumnFilter: false,
 				grow: false,
 				header: "Game Time",
-				Cell: ({ row }) => renderDateTime(row.original.gameTime),
+				Cell: ({ row }) => renderTimestamp(row.original.gameTime),
 			}),
 			columnHelper.accessor("mapName", {
 				enableColumnFilter: false,

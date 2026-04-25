@@ -1,3 +1,4 @@
+import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -7,10 +8,9 @@ import { useMemo } from "react";
 import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
 import type { Category, Forum } from "../../rpc/forum/v1/forum_pb.ts";
-import { useMutation } from "@connectrpc/connect-query";
 import { forumCreate } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
+import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
 import { enumValues } from "../../util/lists.ts";
 
 export const ForumForumEditorModal = NiceModal.create(

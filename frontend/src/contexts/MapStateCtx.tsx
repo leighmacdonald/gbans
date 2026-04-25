@@ -1,6 +1,6 @@
 import type { LatLngLiteral } from "leaflet";
 import { createContext } from "react";
-import type { BaseServer } from "../schema/server.ts";
+import type { SafeServer } from "../rpc/servers/v1/servers_pb.ts";
 import { noop } from "../util/lists";
 
 export type MapState = {
@@ -10,11 +10,10 @@ export type MapState = {
 	customRange: number;
 	setCustomRange: (radius: number) => void;
 
-	servers: BaseServer[];
-	setServers: (servers: BaseServer[]) => void;
+	servers: SafeServer[];
 
-	selectedServers: BaseServer[];
-	setSelectedServers: (servers: BaseServer[]) => void;
+	selectedServers: SafeServer[];
+	setSelectedServers: (servers: SafeServer[]) => void;
 
 	filterByRegion: boolean;
 	setFilterByRegion: (enable: boolean) => void;
@@ -32,7 +31,6 @@ export const MapStateCtx = createContext<MapState>({
 	customRange: 1500,
 	setCustomRange: noop,
 	servers: [],
-	setServers: noop,
 	selectedServers: [],
 	setSelectedServers: noop,
 	filterByRegion: true,

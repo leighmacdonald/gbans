@@ -1,29 +1,23 @@
+import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import GroupsIcon from "@mui/icons-material/Groups";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
-import { useMutation } from "@tanstack/react-query";
-import { apiCreateSMGroupImmunity } from "../../api";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { SMGroups } from "../../schema/sourcemod.ts";
+import type { Group } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
+import { createImmunity } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
 import { Heading } from "../Heading";
 
-export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups: SMGroups[] }) => {
+export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups: Group[] }) => {
 	const modal = useModal();
 	const { sendError } = useUserFlashCtx();
 
-	const mutation = useMutation({
-		mutationKey: ["createGroupImmunity"],
-		mutationFn: async ({ group, other }: { group: SMGroups; other: SMGroups }) => {
-			// FIXME How to get number from select properly typed?
-			const ac = new AbortController();
-			return await apiCreateSMGroupImmunity(group as unknown as number, other as unknown as number, ac.signal);
-		},
+	const mutation = useMutation(createImmunity, {
 		onSuccess: async (immunity) => {
-			modal.resolve(immunity);
+			modal.resolve(immunity.groupImmunity);
 			await modal.hide();
 		},
 		onError: sendError,
@@ -31,7 +25,7 @@ export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutation.mutate(value);
+			mutation.mutate({ groupId: value.group.groupId, otherId: value.other.groupId });
 		},
 		defaultValues: {
 			group: groups[0],
@@ -67,7 +61,7 @@ export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups
 													return;
 												}
 												return (
-													<MenuItem value={i.group_id} key={i.group_id}>
+													<MenuItem value={i.groupId} key={i.groupId}>
 														{i.name}
 													</MenuItem>
 												);
@@ -90,7 +84,7 @@ export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups
 													return;
 												}
 												return (
-													<MenuItem value={i.group_id} key={i.group_id}>
+													<MenuItem value={i.groupId} key={i.groupId}>
 														{i.name}
 													</MenuItem>
 												);

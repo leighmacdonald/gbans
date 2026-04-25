@@ -1,3 +1,6 @@
+import { create } from "@bufbuild/protobuf";
+import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import AddModeratorIcon from "@mui/icons-material/AddModerator";
 import ChatIcon from "@mui/icons-material/Chat";
@@ -11,15 +14,13 @@ import ButtonGroup from "@mui/material/ButtonGroup";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 import z from "zod/v4";
-import { apiGetBanSteam, apiSetBanAppealState, appealStateString } from "../api";
 import { useAppForm } from "../contexts/formContext.tsx";
-import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { AppealState, AppealStateCollection, AppealStateEnum } from "../schema/bans.ts";
-import { logErr } from "../util/errors.ts";
+import { AppealState, UpdateRequestSchema } from "../rpc/ban/v1/ban_pb.ts";
+import { get, update } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
+import { enumValues } from "../util/lists.ts";
 import { ButtonLink } from "./ButtonLink.tsx";
 import { ContainerWithHeader } from "./ContainerWithHeader";
 import { ErrorDetails } from "./ErrorDetails.tsx";
@@ -28,69 +29,72 @@ import { BanModal } from "./modal/BanModal.tsx";
 import { UnbanModal } from "./modal/UnbanModal.tsx";
 
 const onSubmit = z.object({
-	appeal_state: AppealStateEnum,
+	appealState: z.enum(AppealState),
 });
 
-export const BanModPanel = ({ ban_id }: { ban_id: number }) => {
-	const { sendFlash } = useUserFlashCtx();
+export const BanModPanel = ({ banId }: { banId: number }) => {
 	const navigate = useNavigate();
 
-	const {
-		data: ban,
-		isLoading,
-		isError,
-		error,
-	} = useQuery({
-		queryKey: ["ban", { ban_id }],
-		queryFn: async ({ signal }) => {
-			return await apiGetBanSteam(Number(ban_id), true, signal);
-		},
-	});
+	const { data, isLoading, isError, error } = useQuery(get, { banId });
 
 	const enabled = useMemo(() => {
-		if (!ban?.valid_until) {
+		if (!data?.ban?.validUntil) {
 			return false;
 		}
 
-		return ban.valid_until ? ban.valid_until < new Date() : false;
-	}, [ban?.valid_until]);
+		return data.ban.validUntil ? timestampDate(data.ban.validUntil) < new Date() : false;
+	}, [data?.ban?.validUntil]);
 
 	const onUnban = useCallback(async () => {
 		await NiceModal.show(UnbanModal, {
-			banId: ban_id,
-			personaName: ban?.target_personaname,
+			banId,
+			personaName: data?.ban?.targetPersonaName,
 		});
-	}, [ban_id, ban?.target_personaname]);
+	}, [banId, data?.ban?.targetPersonaName]);
 
 	const onEditBan = useCallback(async () => {
 		await NiceModal.show(BanModal, {
-			banId: ban_id,
+			banId,
 		});
-	}, [ban_id]);
+	}, [banId]);
 
-	const appealStateMutation = useMutation({
-		mutationKey: ["banEdit", { ban_id }],
-		mutationFn: async (appeal_state: AppealStateEnum) => {
-			try {
-				const ac = new AbortController();
-				await apiSetBanAppealState(ban_id, appeal_state, ac.signal);
-				sendFlash("success", "Appeal state updated");
-			} catch (reason) {
-				sendFlash("error", "Could not set appeal state");
-				logErr(reason);
-			}
-		},
-	});
+	const appealStateMutation = useMutation(update);
+	// 	mutationFn: async (appeal_state: AppealStateEnum) => {
+	// 		try {
+	// 			const ac = new AbortController();
+	// 			await apiSetBanAppealState(ban_id, appeal_state, ac.signal);
+	// 			sendFlash("success", "Appeal state updated");
+	// 		} catch (reason) {
+	// 			sendFlash("error", "Could not set appeal state");
+	// 			logErr(reason);
+	// 		}
+	// 	},
+	// });
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			if (value.appeal_state === ban?.appeal_state) {
+			if (!data?.ban || value.appealState === data?.ban?.appealState) {
 				return;
 			}
-			appealStateMutation.mutate(value.appeal_state);
+
+			const ban = data.ban;
+			ban.appealState = value.appealState;
+			appealStateMutation.mutate(
+				create(UpdateRequestSchema, {
+					banType: ban.banType,
+					banId: ban.banId,
+					appealState: ban.appealState,
+					cidr: ban.cidr,
+					duration: ban.duration,
+					evadeOk: ban.evadeOk,
+					note: ban.note,
+					reason: ban.reason,
+					reasonText: ban.reasonText,
+				}),
+			);
 		},
 		validators: { onSubmit },
-		defaultValues: { appeal_state: ban?.appeal_state ?? AppealState.Any },
+		defaultValues: { appealState: data?.ban?.appealState ?? AppealState.OPEN_UNSPECIFIED },
 	});
 
 	if (isLoading) {
@@ -115,17 +119,17 @@ export const BanModPanel = ({ ban_id }: { ban_id: number }) => {
 						{!enabled ? (
 							<>
 								<form.AppField
-									name={"appeal_state"}
+									name={"appealState"}
 									children={(field) => {
 										return (
 											<field.SelectField
 												label={"Appeal State"}
 												value={field.state.value}
-												items={AppealStateCollection}
+												items={enumValues(AppealState)}
 												renderItem={(i) => {
 													return (
 														<MenuItem value={i} key={i}>
-															{appealStateString(i)}
+															{AppealState[i]}
 														</MenuItem>
 													);
 												}}
@@ -144,24 +148,27 @@ export const BanModPanel = ({ ban_id }: { ban_id: number }) => {
 						)}
 					</Stack>
 
-					{Boolean(ban?.report_id) && (
+					{Boolean(data?.ban?.reportId) && (
 						<Button
 							fullWidth
 							disabled={!enabled}
 							color={"secondary"}
 							variant={"contained"}
 							onClick={async () => {
-								await navigate({ to: `/report/${ban?.report_id}` });
+								await navigate({ to: `/report/${data?.ban?.reportId}` });
 							}}
 						>
-							View Report #{ban?.report_id}
+							View Report #{data?.ban?.reportId}
 						</Button>
 					)}
 					<ButtonLink
 						variant={"contained"}
 						color={"secondary"}
 						to={"/chatlogs"}
-						search={{ flagged_only: false, columnFilters: [{ id: "steam_id", value: ban?.target_id }] }}
+						search={{
+							flagged_only: false,
+							columnFilters: [{ id: "steam_id", value: data?.ban?.targetId }],
+						}}
 						startIcon={<ChatIcon />}
 					>
 						Chat Logs
@@ -170,7 +177,7 @@ export const BanModPanel = ({ ban_id }: { ban_id: number }) => {
 						variant={"contained"}
 						color={"secondary"}
 						to={"/stv"}
-						search={{ columnFilters: [{ id: "stats", value: ban?.target_id }] }}
+						search={{ columnFilters: [{ id: "stats", value: data?.ban?.targetId }] }}
 						startIcon={<VideocamIcon />}
 					>
 						STV History
@@ -179,7 +186,7 @@ export const BanModPanel = ({ ban_id }: { ban_id: number }) => {
 						variant={"contained"}
 						color={"secondary"}
 						to={"/admin/bans"}
-						search={{ columnFilters: [{ id: "target_id", value: ban?.target_id }] }}
+						search={{ columnFilters: [{ id: "target_id", value: data?.ban?.targetId }] }}
 						startIcon={<NoAccountsIcon />}
 					>
 						Ban History
@@ -189,7 +196,7 @@ export const BanModPanel = ({ ban_id }: { ban_id: number }) => {
 						variant={"contained"}
 						color={"secondary"}
 						to={"/admin/reports"}
-						search={{ columnFilters: [{ id: "target_id", value: ban?.target_id }] }}
+						search={{ columnFilters: [{ id: "target_id", value: data?.ban?.targetId }] }}
 						startIcon={<VideocamIcon />}
 					>
 						Report History
@@ -199,7 +206,7 @@ export const BanModPanel = ({ ban_id }: { ban_id: number }) => {
 						variant={"contained"}
 						color={"secondary"}
 						to={"/admin/network/playersbyip"}
-						search={{ columnFilters: [{ id: "target_id", value: ban?.target_id }] }}
+						search={{ columnFilters: [{ id: "target_id", value: data?.ban?.targetId }] }}
 						startIcon={<WifiFindIcon />}
 					>
 						Connection History

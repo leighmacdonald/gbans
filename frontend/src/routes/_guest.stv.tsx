@@ -1,4 +1,7 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: ts-form made me do it! */
+
+import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
+import { useQuery } from "@connectrpc/connect-query";
 import { CloudDownload } from "@mui/icons-material";
 import FlagIcon from "@mui/icons-material/Flag";
 import { IconButton, Link } from "@mui/material";
@@ -28,12 +31,12 @@ import {
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
+import type { Demo } from "../rpc/demo/v1/demo_pb.ts";
+import { getDemos } from "../rpc/demo/v1/demo-DemoService_connectquery.ts";
+import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { humanFileSize } from "../util/text.tsx";
-import { getDemos } from "../rpc/demo/v1/demo-DemoService_connectquery.ts";
-import type { Demo } from "../rpc/demo/v1/demo_pb.ts";
-import { useQuery } from "@connectrpc/connect-query";
 
 const columnHelper = createMRTColumnHelper<Demo>();
 const defaultOptions = createDefaultTableOptions<Demo>();
@@ -49,20 +52,6 @@ export const Route = createFileRoute("/_guest/stv")({
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(context.appInfo.demosEnabled);
 	},
-	loader: async ({ context }) => {
-		const unsorted = await context.queryClient.ensureQueryData({
-			queryKey: ["serversSimple"],
-			queryFn: async ({ signal }) => {
-				return await apiGetServers(signal);
-			},
-		});
-
-		return {
-			servers: unsorted.sort((a, b) =>
-				a.server_name > b.server_name ? 1 : a.server_name < b.server_name ? -1 : 0,
-			),
-		};
-	},
 	head: ({ match }) => ({
 		meta: [
 			{
@@ -76,9 +65,10 @@ export const Route = createFileRoute("/_guest/stv")({
 
 function STV() {
 	const { isAuthenticated } = useAuth();
-	const { servers } = Route.useLoaderData();
 	const navigate = useNavigate();
 	const search = Route.useSearch();
+
+	const { data: serversList, isLoading: isLoadingServers } = useQuery(servers);
 
 	const { data, isLoading, isError } = useQuery(getDemos);
 
@@ -135,9 +125,9 @@ function STV() {
 					return filterValue.length === 0 || filterValue.includes(row.original.serverId);
 				},
 				filterVariant: "multi-select",
-				filterSelectOptions: servers.map((server) => ({
-					label: server.server_name,
-					value: server.server_id,
+				filterSelectOptions: serversList?.servers.map((server) => ({
+					label: server.serverName,
+					value: server.serverId,
 				})),
 				grow: false,
 				enableSorting: true,
@@ -161,7 +151,9 @@ function STV() {
 				enableSorting: true,
 				filterVariant: "date",
 				grow: false,
-				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} suffix />,
+				Cell: ({ cell }) => (
+					<TableCellRelativeDateField date={timestampDate(cell.getValue() as Timestamp)} suffix />
+				),
 			}),
 			columnHelper.accessor("mapName", {
 				enableColumnFilter: true,
@@ -182,7 +174,7 @@ function STV() {
 				enableColumnFilter: false,
 				enableSorting: false,
 				grow: false,
-				Cell: ({ cell }) => <Typography>{humanFileSize(cell.getValue() as number)}</Typography>,
+				Cell: ({ cell }) => <Typography>{humanFileSize(Number(cell.getValue()))}</Typography>,
 			}),
 			columnHelper.accessor("stats", {
 				header: "SteamID",
@@ -195,7 +187,7 @@ function STV() {
 				Cell: ({ cell }) => <Typography>{Object.keys(Object(cell.getValue())).length} Players</Typography>,
 			}),
 		];
-	}, [servers, search]);
+	}, [serversList?.servers, search]);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,
@@ -209,7 +201,7 @@ function STV() {
 		onSortingChange: setSorting,
 		displayColumnDefOptions: makeRowActionsDefOptions(2),
 		state: {
-			isLoading,
+			isLoading: isLoading || isLoadingServers,
 			showAlertBanner: isError,
 			columnFilters: search.columnFilters,
 			pagination: search.pagination,

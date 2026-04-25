@@ -1,3 +1,4 @@
+import { useQuery } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
@@ -8,26 +9,24 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import { type ChangeEvent, useCallback, useState } from "react";
-import { logErr } from "../../util/errors";
+import type { Asset } from "../../rpc/asset/v1/asset_pb.ts";
+import { contest } from "../../rpc/contest/v1/contest-Service_connectquery.ts";
 import type { Nullable } from "../../util/types";
 import { Heading } from "../Heading";
 import { LinearProgressWithLabel } from "../LinearProgresWithLabel";
 import { LoadingSpinner } from "../LoadingSpinner";
-import { useMutation, useQuery } from "@connectrpc/connect-query";
-import { contest, upload } from "../../rpc/contest/v1/contest-Service_connectquery.ts";
-import type { Asset } from "../../rpc/asset/v1/asset_pb.ts";
 
-export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id: string }) => {
-	const [userUpload, setUserUpload] = useState<Nullable<Asset>>();
-	const [submittedOnce, setSubmittedOnce] = useState(false);
+export const ContestEntryModal = NiceModal.create(({ contestId }: { contestId: string }) => {
+	const [userUpload] = useState<Nullable<Asset>>();
+	const [submittedOnce] = useState(false);
 	const [progress, setProgress] = useState(0);
 	const [progressTotal, setProgressTotal] = useState(100);
 	const [uploadInProgress, setUploadInProgress] = useState(false);
 	const [name, setName] = useState("");
-	const [assetID, setAssetID] = useState("");
-	const [assetError, setAssetError] = useState("");
+	const [assetID] = useState("");
+	const [assetError] = useState("");
 
-	const { data, isLoading } = useQuery(contest);
+	const { data, isLoading } = useQuery(contest, { contestId });
 
 	const modal = useModal();
 	// const { sendFlash } = useUserFlashCtx();
@@ -67,18 +66,18 @@ export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id:
 		[progressTotal, name],
 	);
 
-	const _uploadMutation = useMutation(upload, {
-		onSuccess: (resp) => {
-			setAssetID(String(resp.asset?.assetId));
-			setAssetError("");
-		},
-		onError: (err) => {
-			logErr(err);
-			setName("");
-			setSubmittedOnce(false);
-			setUserUpload(undefined);
-		},
-	});
+	// const _uploadMutation = useMutation(upload, {
+	// 	onSuccess: (resp) => {
+	// 		setAssetID(String(resp.asset?.assetId));
+	// 		setAssetError("");
+	// 	},
+	// 	onError: (err) => {
+	// 		logErr(err);
+	// 		setName("");
+	// 		setSubmittedOnce(false);
+	// 		setUserUpload(undefined);
+	// 	},
+	// });
 
 	// const onSubmit = useCallback(
 	//     async (values: ContestEntryFormValues) => {

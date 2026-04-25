@@ -1,3 +1,4 @@
+import { useQuery } from "@connectrpc/connect-query";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import AddModeratorIcon from "@mui/icons-material/AddModerator";
 import ArticleIcon from "@mui/icons-material/Article";
@@ -41,16 +42,16 @@ import { useTheme } from "@mui/material/styles";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { type MenuItemData, NestedDropdown } from "mui-nested-menu";
 import { type JSX, type MouseEvent, useCallback, useMemo, useState } from "react";
-import { apiGetNotifications } from "../api";
-import type { InfoResponse } from "../rpc/config/v1/config_pb.ts";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useColourModeCtx } from "../hooks/useColourModeCtx.ts";
 import steamLogo from "../icons/steam_login_sm.png";
-import { PermissionLevel, type UserNotification } from "../schema/people.ts";
+import type { InfoResponse } from "../rpc/config/v1/config_pb.ts";
+import type { UserNotification } from "../rpc/notification/v1/notification_pb.ts";
+import { notifications } from "../rpc/notification/v1/notification-NotificationService_connectquery.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { tf2Fonts } from "../theme";
 import { generateOIDCLink } from "../util/auth/generateOIDCLink.ts";
 import RouterLink from "./RouterLink.tsx";
@@ -65,18 +66,15 @@ interface menuRoute {
 export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 	const { profile, hasPermission, isAuthenticated } = useAuth();
 
-	const { data: notifications, isLoading } = useQuery({
-		queryKey: ["notifications"],
-		queryFn: async ({ signal }) => {
-			if (profile.steam_id === "") {
-				return [];
-			}
-			return (await apiGetNotifications(signal)) ?? [];
+	const { data: notificationList, isLoading } = useQuery(
+		notifications,
+		{},
+		{
+			refetchInterval: 60 * 1000,
+			refetchIntervalInBackground: true,
+			refetchOnWindowFocus: true,
 		},
-		refetchInterval: 60 * 1000,
-		refetchIntervalInBackground: true,
-		refetchOnWindowFocus: true,
-	});
+	);
 
 	const theme = useTheme();
 	const colourMode = useColourModeCtx();
@@ -118,7 +116,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 				icon: <DashboardIcon color={"primary"} sx={topColourOpts} />,
 			},
 		];
-		if (appInfo.serversEnabled && (profile.ban_id <= 0 || profile.muted)) {
+		if (appInfo.serversEnabled && (profile.banId <= 0 || profile.muted)) {
 			items.push({
 				to: "/servers",
 				text: "Servers",
@@ -140,16 +138,16 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 			});
 		}
 		if (appInfo.reportsEnabled) {
-			if (profile.ban_id <= 0) {
+			if (profile.banId <= 0) {
 				items.push({
 					to: "/report",
 					text: "Report",
 					icon: <ReportIcon sx={topColourOpts} />,
 				});
 			}
-			if (profile.ban_id > 0) {
+			if (profile.banId > 0) {
 				items.push({
-					to: `/ban/${profile.ban_id}`,
+					to: `/ban/${profile.banId}`,
 					text: "Appeal",
 					icon: <SupportIcon sx={topColourOpts} />,
 				});
@@ -161,7 +159,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 		appInfo.reportsEnabled,
 		appInfo.serversEnabled,
 		appInfo.wikiEnabled,
-		profile.ban_id,
+		profile.banId,
 		topColourOpts,
 		profile.muted,
 	]);
@@ -169,7 +167,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 	const userItems: menuRoute[] = useMemo(() => {
 		const items = [
 			{
-				to: `/profile/${profile.steam_id}`,
+				to: `/profile/${profile.steamId}`,
 				text: "Profile",
 				icon: <AccountCircleIcon sx={colourOpts} />,
 			},
@@ -192,7 +190,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 			icon: <ExitToAppIcon sx={colourOpts} />,
 		});
 		return items;
-	}, [colourOpts, profile.steam_id]);
+	}, [colourOpts, profile.steamId]);
 
 	// @ts-expect-error label defined as string
 	const adminItems: MenuItemData = useMemo(() => {
@@ -400,15 +398,16 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 									<IconButton onClick={colourMode.toggleColorMode}>{themeIcon}</IconButton>
 								</Tooltip>
 
-								{hasPermission(PermissionLevel.User) && (
+								{hasPermission(Privilege.USER) && (
 									<IconButton component={RouterLink} to={"/notifications"} color={"inherit"}>
 										<Badge
 											color={"success"}
 											badgeContent={
 												isLoading
 													? "..."
-													: (notifications ?? []).filter((n: UserNotification) => !n.read)
-															.length
+													: (notificationList?.notifications ?? []).filter(
+															(n: UserNotification) => !n.read,
+														).length
 											}
 										>
 											<MailIcon />
@@ -428,7 +427,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 										</Button>
 									</Tooltip>
 								)}
-								{hasPermission(PermissionLevel.Moderator) && (
+								{hasPermission(Privilege.MODERATOR) && (
 									<VCenterBox>
 										<NestedDropdown
 											menuItemsData={adminItems}
@@ -447,7 +446,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 									<>
 										<Tooltip title="User Settings">
 											<IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-												<Avatar alt={profile.name} src={profile.avatarhash} />
+												<Avatar alt={profile.personaName} src={profile.avatarHash} />
 											</IconButton>
 										</Tooltip>
 										<Menu

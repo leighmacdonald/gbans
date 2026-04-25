@@ -1,14 +1,15 @@
+import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import GroupsIcon from "@mui/icons-material/Groups";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
-import { useMutation } from "@tanstack/react-query";
 import { z } from "zod/v4";
-import { apiCreateSMGroup, apiSaveSMGroup, hasSMFlag } from "../../api";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import { type SMGroups, schemaFlags } from "../../schema/sourcemod.ts";
+import type { Group } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
+import { createGroup, editGroups } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
+import { hasSMFlag, schemaFlags } from "../../util/strings.ts";
 import { Heading } from "../Heading";
 
 const schema = schemaFlags.extend({
@@ -16,12 +17,12 @@ const schema = schemaFlags.extend({
 	immunity: z.number().min(0).max(100),
 });
 
-export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroups }) => {
+export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: Group }) => {
 	const modal = useModal();
 	const { sendError } = useUserFlashCtx();
 	const defaultValues: z.input<typeof schema> = {
 		name: group?.name ?? "",
-		immunity: group?.immunity_level ?? 0,
+		immunity: group?.immunityLevel ?? 0,
 		z: hasSMFlag("z", group),
 		a: hasSMFlag("a", group),
 		b: hasSMFlag("b", group),
@@ -44,15 +45,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
 		s: hasSMFlag("s", group),
 		t: hasSMFlag("t", group),
 	};
-	const edit = useMutation({
-		mutationKey: ["adminSMGroup"],
-		mutationFn: async ({ name, immunity, flags }: { name: string; immunity: number; flags: string }) => {
-			const ac = new AbortController();
-			if (group?.group_id) {
-				return await apiSaveSMGroup(group.group_id, name, immunity, flags, ac.signal);
-			}
-			return await apiCreateSMGroup(name, immunity, flags, ac.signal);
+	const createMutation = useMutation(createGroup, {
+		onSuccess: async (group) => {
+			modal.resolve(group);
+			await modal.hide();
 		},
+		onError: sendError,
+	});
+
+	const editMutation = useMutation(editGroups, {
 		onSuccess: async (group) => {
 			modal.resolve(group);
 			await modal.hide();
@@ -70,11 +71,18 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
 					}
 					return acc;
 				}, "");
-			edit.mutate({
+
+			const args = {
 				name: value.name,
 				immunity: Number(value.immunity),
 				flags: flags,
-			});
+			};
+
+			if (group?.groupId) {
+				editMutation.mutate({ ...args, groupId: group.groupId });
+			} else {
+				createMutation.mutate(args);
+			}
 		},
 		validators: {
 			onSubmit: schema,

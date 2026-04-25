@@ -1,3 +1,4 @@
+import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -9,15 +10,14 @@ import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useAuth } from "../../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
+import type { Forum } from "../../rpc/forum/v1/forum_pb.ts";
+import { threadCreate } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
+import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
 import { logErr } from "../../util/errors";
 import { mdEditorRef } from "../form/field/MarkdownField.tsx";
 import { ConfirmationModal } from "./ConfirmationModal.tsx";
-import type { Forum } from "../../rpc/forum/v1/forum_pb.ts";
-import { useMutation } from "@connectrpc/connect-query";
-import { threadCreate } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
-import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
 
-export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: Forum }) => {
+export const ForumThreadCreatorModal = NiceModal.create(({ forum: _ }: { forum: Forum }) => {
 	const threadModal = useModal(ForumThreadCreatorModal);
 	const confirmModal = useModal(ConfirmationModal);
 	const { sendError } = useUserFlashCtx();
