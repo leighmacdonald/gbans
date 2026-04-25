@@ -2,53 +2,49 @@
 // @generated from file anticheat/v1/anticheat.proto (package anticheat.v1, edition 2023)
 /* eslint-disable */
 
-import type { Message } from "@bufbuild/protobuf";
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Timestamp } from "@bufbuild/protobuf/wkt";
-import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Filter } from "../../database/query/v1/filter_pb";
 import { file_database_query_v1_filter } from "../../database/query/v1/filter_pb";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file anticheat/v1/anticheat.proto.
  */
-export const file_anticheat_v1_anticheat: GenFile =
-	/*@__PURE__*/
-	fileDesc(
-		"ChxhbnRpY2hlYXQvdjEvYW50aWNoZWF0LnByb3RvEgxhbnRpY2hlYXQudjEilgEKDFF1ZXJ5UmVxdWVzdBIpCgZmaWx0ZXIYASABKAsyGS5kYXRhYmFzZS5xdWVyeS52MS5GaWx0ZXISDAoEbmFtZRgCIAEoCRIQCghzdGVhbV9pZBgDIAEoAxIPCgdzdW1tYXJ5GAQgASgJEioKCWRldGVjdGlvbhgFIAEoDjIXLmFudGljaGVhdC52MS5EZXRlY3Rpb24iPQoNUXVlcnlSZXNwb25zZRIsCgdlbnRyaWVzGAEgAygLMhMuYW50aWNoZWF0LnYxLkVudHJ5Qga6SAPIAQEiwAMKBUVudHJ5EhwKDGFudGljaGVhdF9pZBgBIAEoA0IGukgDyAEBEhwKCHN0ZWFtX2lkGAIgASgDQgq6SAfIAQEiAiAAEh0KCXNlcnZlcl9pZBgDIAEoBUIKukgHyAEBGgIgABIbCgtzZXJ2ZXJfbmFtZRgEIAEoCUIGukgDyAEBEg8KB2RlbW9faWQYBSABKAUSEQoJZGVtb19uYW1lGAYgASgJEhEKCWRlbW9fdGljaxgHIAEoBRIUCgRuYW1lGAggASgJQga6SAPIAQESMgoJZGV0ZWN0aW9uGAkgASgOMhcuYW50aWNoZWF0LnYxLkRldGVjdGlvbkIGukgDyAEBEhcKB3N1bW1hcnkYCiABKAlCBrpIA8gBARIXCgdyYXdfbG9nGAsgASgJQga6SAPIAQESNgoKY3JlYXRlZF9vbhgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARIcCgxwZXJzb25hX25hbWUYDSABKAlCBrpIA8gBARIbCgthdmF0YXJfaGFzaBgOIAEoCUIGukgDyAEBEhkKCXRyaWdnZXJlZBgPIAEoBUIGukgDyAEBKq8CCglEZXRlY3Rpb24SGQoVREVURUNUSU9OX1VOU1BFQ0lGSUVEEAASGAoUREVURUNUSU9OX1NJTEVOVF9BSU0QARIWChJERVRFQ1RJT05fQUlNX1NOQVAQAhIiCh5ERVRFQ1RJT05fVE9PX01BTllfQ09OTkVDVElPTlMQAxIUChBERVRFQ1RJT05fSU5URVJQEAQSEgoOREVURUNUSU9OX0JIT1AQBRIbChdERVRFQ1RJT05fQ01EX05VTV9TUElLRRAGEhgKFERFVEVDVElPTl9FWUVfQU5HTEVTEAcSHgoaREVURUNUSU9OX0lOVkFMSURfVVNFUl9DTUQQCBIWChJERVRFQ1RJT05fT09CX0NWQVIQCRIYChRERVRFQ1RJT05fQ0hFQVRfQ1ZBUhAKMlYKEEFudGljaGVhdFNlcnZpY2USQgoFUXVlcnkSGi5hbnRpY2hlYXQudjEuUXVlcnlSZXF1ZXN0GhsuYW50aWNoZWF0LnYxLlF1ZXJ5UmVzcG9uc2UiAEK2AQoQY29tLmFudGljaGVhdC52MUIOQW50aWNoZWF0UHJvdG9QAVpBZ2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9hbnRpY2hlYXQvdjE7YW50aWNoZWF0djGiAgNBWFiqAgxBbnRpY2hlYXQuVjHKAgxBbnRpY2hlYXRcVjHiAhhBbnRpY2hlYXRcVjFcR1BCTWV0YWRhdGHqAg1BbnRpY2hlYXQ6OlYxYghlZGl0aW9uc3DoBw",
-		[file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_timestamp],
-	);
+export const file_anticheat_v1_anticheat: GenFile = /*@__PURE__*/
+  fileDesc("ChxhbnRpY2hlYXQvdjEvYW50aWNoZWF0LnByb3RvEgxhbnRpY2hlYXQudjEilgEKDFF1ZXJ5UmVxdWVzdBIpCgZmaWx0ZXIYASABKAsyGS5kYXRhYmFzZS5xdWVyeS52MS5GaWx0ZXISDAoEbmFtZRgCIAEoCRIQCghzdGVhbV9pZBgDIAEoAxIPCgdzdW1tYXJ5GAQgASgJEioKCWRldGVjdGlvbhgFIAEoDjIXLmFudGljaGVhdC52MS5EZXRlY3Rpb24iPQoNUXVlcnlSZXNwb25zZRIsCgdlbnRyaWVzGAEgAygLMhMuYW50aWNoZWF0LnYxLkVudHJ5Qga6SAPIAQEiwAMKBUVudHJ5EhwKDGFudGljaGVhdF9pZBgBIAEoA0IGukgDyAEBEhwKCHN0ZWFtX2lkGAIgASgDQgq6SAfIAQEiAiAAEh0KCXNlcnZlcl9pZBgDIAEoBUIKukgHyAEBGgIgABIbCgtzZXJ2ZXJfbmFtZRgEIAEoCUIGukgDyAEBEg8KB2RlbW9faWQYBSABKAUSEQoJZGVtb19uYW1lGAYgASgJEhEKCWRlbW9fdGljaxgHIAEoBRIUCgRuYW1lGAggASgJQga6SAPIAQESMgoJZGV0ZWN0aW9uGAkgASgOMhcuYW50aWNoZWF0LnYxLkRldGVjdGlvbkIGukgDyAEBEhcKB3N1bW1hcnkYCiABKAlCBrpIA8gBARIXCgdyYXdfbG9nGAsgASgJQga6SAPIAQESNgoKY3JlYXRlZF9vbhgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARIcCgxwZXJzb25hX25hbWUYDSABKAlCBrpIA8gBARIbCgthdmF0YXJfaGFzaBgOIAEoCUIGukgDyAEBEhkKCXRyaWdnZXJlZBgPIAEoBUIGukgDyAEBKq8CCglEZXRlY3Rpb24SGQoVREVURUNUSU9OX1VOU1BFQ0lGSUVEEAASGAoUREVURUNUSU9OX1NJTEVOVF9BSU0QARIWChJERVRFQ1RJT05fQUlNX1NOQVAQAhIiCh5ERVRFQ1RJT05fVE9PX01BTllfQ09OTkVDVElPTlMQAxIUChBERVRFQ1RJT05fSU5URVJQEAQSEgoOREVURUNUSU9OX0JIT1AQBRIbChdERVRFQ1RJT05fQ01EX05VTV9TUElLRRAGEhgKFERFVEVDVElPTl9FWUVfQU5HTEVTEAcSHgoaREVURUNUSU9OX0lOVkFMSURfVVNFUl9DTUQQCBIWChJERVRFQ1RJT05fT09CX0NWQVIQCRIYChRERVRFQ1RJT05fQ0hFQVRfQ1ZBUhAKMlYKEEFudGljaGVhdFNlcnZpY2USQgoFUXVlcnkSGi5hbnRpY2hlYXQudjEuUXVlcnlSZXF1ZXN0GhsuYW50aWNoZWF0LnYxLlF1ZXJ5UmVzcG9uc2UiAEK2AQoQY29tLmFudGljaGVhdC52MUIOQW50aWNoZWF0UHJvdG9QAVpBZ2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9hbnRpY2hlYXQvdjE7YW50aWNoZWF0djGiAgNBWFiqAgxBbnRpY2hlYXQuVjHKAgxBbnRpY2hlYXRcVjHiAhhBbnRpY2hlYXRcVjFcR1BCTWV0YWRhdGHqAg1BbnRpY2hlYXQ6OlYxYghlZGl0aW9uc3DoBw", [file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message anticheat.v1.QueryRequest
  */
 export type QueryRequest = Message<"anticheat.v1.QueryRequest"> & {
-	/**
-	 * @generated from field: database.query.v1.Filter filter = 1;
-	 */
-	filter?: Filter;
+  /**
+   * @generated from field: database.query.v1.Filter filter = 1;
+   */
+  filter?: Filter;
 
-	/**
-	 * @generated from field: string name = 2;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: int64 steam_id = 3;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 3;
+   */
+  steamId: bigint;
 
-	/**
-	 * @generated from field: string summary = 4;
-	 */
-	summary: string;
+  /**
+   * @generated from field: string summary = 4;
+   */
+  summary: string;
 
-	/**
-	 * @generated from field: anticheat.v1.Detection detection = 5;
-	 */
-	detection: Detection;
+  /**
+   * @generated from field: anticheat.v1.Detection detection = 5;
+   */
+  detection: Detection;
 };
 
 export type QueryRequestValid = QueryRequest;
@@ -57,281 +53,281 @@ export type QueryRequestValid = QueryRequest;
  * Describes the message anticheat.v1.QueryRequest.
  * Use `create(QueryRequestSchema)` to create a new message.
  */
-export const QueryRequestSchema: GenMessage<QueryRequest, { validType: QueryRequestValid }> =
-	/*@__PURE__*/
-	messageDesc(file_anticheat_v1_anticheat, 0);
+export const QueryRequestSchema: GenMessage<QueryRequest, {validType: QueryRequestValid}> = /*@__PURE__*/
+  messageDesc(file_anticheat_v1_anticheat, 0);
 
 /**
  * @generated from message anticheat.v1.QueryResponse
  */
 export type QueryResponse = Message<"anticheat.v1.QueryResponse"> & {
-	/**
-	 * @generated from field: repeated anticheat.v1.Entry entries = 1;
-	 */
-	entries: Entry[];
+  /**
+   * @generated from field: repeated anticheat.v1.Entry entries = 1;
+   */
+  entries: Entry[];
 };
 
 /**
  * @generated from message anticheat.v1.QueryResponse
  */
 export type QueryResponseValid = Message<"anticheat.v1.QueryResponse"> & {
-	/**
-	 * @generated from field: repeated anticheat.v1.Entry entries = 1;
-	 */
-	entries: EntryValid[];
+  /**
+   * @generated from field: repeated anticheat.v1.Entry entries = 1;
+   */
+  entries: EntryValid[];
 };
 
 /**
  * Describes the message anticheat.v1.QueryResponse.
  * Use `create(QueryResponseSchema)` to create a new message.
  */
-export const QueryResponseSchema: GenMessage<QueryResponse, { validType: QueryResponseValid }> =
-	/*@__PURE__*/
-	messageDesc(file_anticheat_v1_anticheat, 1);
+export const QueryResponseSchema: GenMessage<QueryResponse, {validType: QueryResponseValid}> = /*@__PURE__*/
+  messageDesc(file_anticheat_v1_anticheat, 1);
 
 /**
  * @generated from message anticheat.v1.Entry
  */
 export type Entry = Message<"anticheat.v1.Entry"> & {
-	/**
-	 * @generated from field: int64 anticheat_id = 1;
-	 */
-	anticheatId: bigint;
+  /**
+   * @generated from field: int64 anticheat_id = 1;
+   */
+  anticheatId: bigint;
 
-	/**
-	 * @generated from field: int64 steam_id = 2;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 2;
+   */
+  steamId: bigint;
 
-	/**
-	 * @generated from field: int32 server_id = 3;
-	 */
-	serverId: number;
+  /**
+   * @generated from field: int32 server_id = 3;
+   */
+  serverId: number;
 
-	/**
-	 * @generated from field: string server_name = 4;
-	 */
-	serverName: string;
+  /**
+   * @generated from field: string server_name = 4;
+   */
+  serverName: string;
 
-	/**
-	 * @generated from field: int32 demo_id = 5;
-	 */
-	demoId: number;
+  /**
+   * @generated from field: int32 demo_id = 5;
+   */
+  demoId: number;
 
-	/**
-	 * @generated from field: string demo_name = 6;
-	 */
-	demoName: string;
+  /**
+   * @generated from field: string demo_name = 6;
+   */
+  demoName: string;
 
-	/**
-	 * @generated from field: int32 demo_tick = 7;
-	 */
-	demoTick: number;
+  /**
+   * @generated from field: int32 demo_tick = 7;
+   */
+  demoTick: number;
 
-	/**
-	 * @generated from field: string name = 8;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 8;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: anticheat.v1.Detection detection = 9;
-	 */
-	detection: Detection;
+  /**
+   * @generated from field: anticheat.v1.Detection detection = 9;
+   */
+  detection: Detection;
 
-	/**
-	 * @generated from field: string summary = 10;
-	 */
-	summary: string;
+  /**
+   * @generated from field: string summary = 10;
+   */
+  summary: string;
 
-	/**
-	 * @generated from field: string raw_log = 11;
-	 */
-	rawLog: string;
+  /**
+   * @generated from field: string raw_log = 11;
+   */
+  rawLog: string;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 12;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 12;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: string persona_name = 13;
-	 */
-	personaName: string;
+  /**
+   * @generated from field: string persona_name = 13;
+   */
+  personaName: string;
 
-	/**
-	 * @generated from field: string avatar_hash = 14;
-	 */
-	avatarHash: string;
+  /**
+   * @generated from field: string avatar_hash = 14;
+   */
+  avatarHash: string;
 
-	/**
-	 * @generated from field: int32 triggered = 15;
-	 */
-	triggered: number;
+  /**
+   * @generated from field: int32 triggered = 15;
+   */
+  triggered: number;
 };
 
 /**
  * @generated from message anticheat.v1.Entry
  */
 export type EntryValid = Message<"anticheat.v1.Entry"> & {
-	/**
-	 * @generated from field: int64 anticheat_id = 1;
-	 */
-	anticheatId: bigint;
+  /**
+   * @generated from field: int64 anticheat_id = 1;
+   */
+  anticheatId: bigint;
 
-	/**
-	 * @generated from field: int64 steam_id = 2;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 2;
+   */
+  steamId: bigint;
 
-	/**
-	 * @generated from field: int32 server_id = 3;
-	 */
-	serverId: number;
+  /**
+   * @generated from field: int32 server_id = 3;
+   */
+  serverId: number;
 
-	/**
-	 * @generated from field: string server_name = 4;
-	 */
-	serverName: string;
+  /**
+   * @generated from field: string server_name = 4;
+   */
+  serverName: string;
 
-	/**
-	 * @generated from field: int32 demo_id = 5;
-	 */
-	demoId: number;
+  /**
+   * @generated from field: int32 demo_id = 5;
+   */
+  demoId: number;
 
-	/**
-	 * @generated from field: string demo_name = 6;
-	 */
-	demoName: string;
+  /**
+   * @generated from field: string demo_name = 6;
+   */
+  demoName: string;
 
-	/**
-	 * @generated from field: int32 demo_tick = 7;
-	 */
-	demoTick: number;
+  /**
+   * @generated from field: int32 demo_tick = 7;
+   */
+  demoTick: number;
 
-	/**
-	 * @generated from field: string name = 8;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 8;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: anticheat.v1.Detection detection = 9;
-	 */
-	detection: Detection;
+  /**
+   * @generated from field: anticheat.v1.Detection detection = 9;
+   */
+  detection: Detection;
 
-	/**
-	 * @generated from field: string summary = 10;
-	 */
-	summary: string;
+  /**
+   * @generated from field: string summary = 10;
+   */
+  summary: string;
 
-	/**
-	 * @generated from field: string raw_log = 11;
-	 */
-	rawLog: string;
+  /**
+   * @generated from field: string raw_log = 11;
+   */
+  rawLog: string;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 12;
-	 */
-	createdOn: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 12;
+   */
+  createdOn: Timestamp;
 
-	/**
-	 * @generated from field: string persona_name = 13;
-	 */
-	personaName: string;
+  /**
+   * @generated from field: string persona_name = 13;
+   */
+  personaName: string;
 
-	/**
-	 * @generated from field: string avatar_hash = 14;
-	 */
-	avatarHash: string;
+  /**
+   * @generated from field: string avatar_hash = 14;
+   */
+  avatarHash: string;
 
-	/**
-	 * @generated from field: int32 triggered = 15;
-	 */
-	triggered: number;
+  /**
+   * @generated from field: int32 triggered = 15;
+   */
+  triggered: number;
 };
 
 /**
  * Describes the message anticheat.v1.Entry.
  * Use `create(EntrySchema)` to create a new message.
  */
-export const EntrySchema: GenMessage<Entry, { validType: EntryValid }> =
-	/*@__PURE__*/
-	messageDesc(file_anticheat_v1_anticheat, 2);
+export const EntrySchema: GenMessage<Entry, {validType: EntryValid}> = /*@__PURE__*/
+  messageDesc(file_anticheat_v1_anticheat, 2);
 
 /**
  * @generated from enum anticheat.v1.Detection
  */
 export enum Detection {
-	/**
-	 * @generated from enum value: DETECTION_UNSPECIFIED = 0;
-	 */
-	UNSPECIFIED = 0,
+  /**
+   * @generated from enum value: DETECTION_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
 
-	/**
-	 * @generated from enum value: DETECTION_SILENT_AIM = 1;
-	 */
-	SILENT_AIM = 1,
+  /**
+   * @generated from enum value: DETECTION_SILENT_AIM = 1;
+   */
+  SILENT_AIM = 1,
 
-	/**
-	 * @generated from enum value: DETECTION_AIM_SNAP = 2;
-	 */
-	AIM_SNAP = 2,
+  /**
+   * @generated from enum value: DETECTION_AIM_SNAP = 2;
+   */
+  AIM_SNAP = 2,
 
-	/**
-	 * @generated from enum value: DETECTION_TOO_MANY_CONNECTIONS = 3;
-	 */
-	TOO_MANY_CONNECTIONS = 3,
+  /**
+   * @generated from enum value: DETECTION_TOO_MANY_CONNECTIONS = 3;
+   */
+  TOO_MANY_CONNECTIONS = 3,
 
-	/**
-	 * @generated from enum value: DETECTION_INTERP = 4;
-	 */
-	INTERP = 4,
+  /**
+   * @generated from enum value: DETECTION_INTERP = 4;
+   */
+  INTERP = 4,
 
-	/**
-	 * @generated from enum value: DETECTION_BHOP = 5;
-	 */
-	BHOP = 5,
+  /**
+   * @generated from enum value: DETECTION_BHOP = 5;
+   */
+  BHOP = 5,
 
-	/**
-	 * @generated from enum value: DETECTION_CMD_NUM_SPIKE = 6;
-	 */
-	CMD_NUM_SPIKE = 6,
+  /**
+   * @generated from enum value: DETECTION_CMD_NUM_SPIKE = 6;
+   */
+  CMD_NUM_SPIKE = 6,
 
-	/**
-	 * @generated from enum value: DETECTION_EYE_ANGLES = 7;
-	 */
-	EYE_ANGLES = 7,
+  /**
+   * @generated from enum value: DETECTION_EYE_ANGLES = 7;
+   */
+  EYE_ANGLES = 7,
 
-	/**
-	 * @generated from enum value: DETECTION_INVALID_USER_CMD = 8;
-	 */
-	INVALID_USER_CMD = 8,
+  /**
+   * @generated from enum value: DETECTION_INVALID_USER_CMD = 8;
+   */
+  INVALID_USER_CMD = 8,
 
-	/**
-	 * @generated from enum value: DETECTION_OOB_CVAR = 9;
-	 */
-	OOB_CVAR = 9,
+  /**
+   * @generated from enum value: DETECTION_OOB_CVAR = 9;
+   */
+  OOB_CVAR = 9,
 
-	/**
-	 * @generated from enum value: DETECTION_CHEAT_CVAR = 10;
-	 */
-	CHEAT_CVAR = 10,
+  /**
+   * @generated from enum value: DETECTION_CHEAT_CVAR = 10;
+   */
+  CHEAT_CVAR = 10,
 }
 
 /**
  * Describes the enum anticheat.v1.Detection.
  */
-export const DetectionSchema: GenEnum<Detection> = /*@__PURE__*/ enumDesc(file_anticheat_v1_anticheat, 0);
+export const DetectionSchema: GenEnum<Detection> = /*@__PURE__*/
+  enumDesc(file_anticheat_v1_anticheat, 0);
 
 /**
  * @generated from service anticheat.v1.AnticheatService
  */
 export const AnticheatService: GenService<{
-	/**
-	 * @generated from rpc anticheat.v1.AnticheatService.Query
-	 */
-	query: {
-		methodKind: "unary";
-		input: typeof QueryRequestSchema;
-		output: typeof QueryResponseSchema;
-	};
-}> = /*@__PURE__*/ serviceDesc(file_anticheat_v1_anticheat, 0);
+  /**
+   * @generated from rpc anticheat.v1.AnticheatService.Query
+   */
+  query: {
+    methodKind: "unary";
+    input: typeof QueryRequestSchema;
+    output: typeof QueryResponseSchema;
+  },
+}> = /*@__PURE__*/
+  serviceDesc(file_anticheat_v1_anticheat, 0);
+

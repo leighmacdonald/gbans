@@ -78,7 +78,7 @@ type Core struct {
 	VacBans         int32                `json:"vac_bans"`
 	GameBans        int32                `json:"game_bans"`
 	TimeCreated     time.Time            `json:"time_created"`
-	BanID           int64                `json:"ban_id"`
+	BanID           int32                `json:"ban_id"`
 }
 
 func (p Core) Permissions() permission.Privilege {

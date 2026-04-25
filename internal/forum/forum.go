@@ -74,8 +74,8 @@ type Forum struct {
 	Title               string               `json:"title"`
 	Description         string               `json:"description"`
 	Ordering            int32                `json:"ordering"`
-	CountThreads        int64                `json:"count_threads"`
-	CountMessages       int64                `json:"count_messages"`
+	CountThreads        int32                `json:"count_threads"`
+	CountMessages       int32                `json:"count_messages"`
 	PermissionLevel     permission.Privilege `json:"permission_level"`
 	RecentForumThreadID int32                `json:"recent_forum_thread_id"`
 	RecentForumTitle    string               `json:"recent_forum_title"`

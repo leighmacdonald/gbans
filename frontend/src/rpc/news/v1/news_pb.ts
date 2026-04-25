@@ -2,437 +2,426 @@
 // @generated from file news/v1/news.proto (package news.v1, edition 2023)
 /* eslint-disable */
 
-import type { Message } from "@bufbuild/protobuf";
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
-import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
+import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file news/v1/news.proto.
  */
-export const file_news_v1_news: GenFile =
-	/*@__PURE__*/
-	fileDesc(
-		"ChJuZXdzL3YxL25ld3MucHJvdG8SB25ld3MudjEiOQoLQWxsUmVzcG9uc2USKgoIYXJ0aWNsZXMYASADKAsyEC5uZXdzLnYxLkFydGljbGVCBrpIA8gBASLzAQoHQXJ0aWNsZRIbCgduZXdzX2lkGAEgASgFQgq6SAfIAQEaAiAAEhwKBXRpdGxlGAIgASgJQg26SArIAQFyBRAFGIACEh8KB2JvZHlfbWQYAyABKAlCDrpIC8gBAXIGEAUYoI0GEhwKDGlzX3B1Ymxpc2hlZBgEIAEoCEIGukgDyAEBEjYKCmNyZWF0ZWRfb24YBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASIsCg1EZWxldGVSZXF1ZXN0EhsKB25ld3NfaWQYASABKAVCCrpIB8gBARoCIAAiJgoNTGF0ZXN0UmVxdWVzdBIVCgVsaW1pdBgBIAEoBUIGukgDyAEBIqQBCg1DcmVhdGVSZXF1ZXN0EhwKBXRpdGxlGAEgASgJQg26SArIAQFyBRAFGIACEh8KB2JvZHlfbWQYAiABKAlCDrpIC8gBAXIGEAUYoI0GEhwKDGlzX3B1Ymxpc2hlZBgDIAEoCEIGukgDyAEBEjYKCmNyZWF0ZWRfb24YBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEiOwoOQ3JlYXRlUmVzcG9uc2USKQoHYXJ0aWNsZRgBIAEoCzIQLm5ld3MudjEuQXJ0aWNsZUIGukgDyAEBIjsKDkxhdGVzdFJlc3BvbnNlEikKB2FydGljbGUYASADKAsyEC5uZXdzLnYxLkFydGljbGVCBrpIA8gBASKvAQoLRWRpdFJlcXVlc3QSGwoHbmV3c19pZBgBIAEoBUIKukgHyAEBGgIgABIcCgV0aXRsZRgCIAEoCUINukgKyAEBcgUQBRiAAhIfCgdib2R5X21kGAMgASgJQg66SAvIAQFyBhAFGKCNBhIUCgxpc19wdWJsaXNoZWQYBCABKAgSLgoKY3JlYXRlZF9vbhgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiOQoMRWRpdFJlc3BvbnNlEikKB2FydGljbGUYASABKAsyEC5uZXdzLnYxLkFydGljbGVCBrpIA8gBATKxAgoLTmV3c1NlcnZpY2USOwoGTGF0ZXN0EhYubmV3cy52MS5MYXRlc3RSZXF1ZXN0GhcubmV3cy52MS5MYXRlc3RSZXNwb25zZSIAEjUKBEVkaXQSFC5uZXdzLnYxLkVkaXRSZXF1ZXN0GhUubmV3cy52MS5FZGl0UmVzcG9uc2UiABI7CgZDcmVhdGUSFi5uZXdzLnYxLkNyZWF0ZVJlcXVlc3QaFy5uZXdzLnYxLkNyZWF0ZVJlc3BvbnNlIgASOgoGRGVsZXRlEhYubmV3cy52MS5EZWxldGVSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASNQoDQWxsEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhQubmV3cy52MS5BbGxSZXNwb25zZSIAQo4BCgtjb20ubmV3cy52MUIJTmV3c1Byb3RvUAFaN2dpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvbmV3cy92MTtuZXdzdjGiAgNOWFiqAgdOZXdzLlYxygIHTmV3c1xWMeICE05ld3NcVjFcR1BCTWV0YWRhdGHqAghOZXdzOjpWMWIIZWRpdGlvbnNw6Ac",
-		[file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp],
-	);
+export const file_news_v1_news: GenFile = /*@__PURE__*/
+  fileDesc("ChJuZXdzL3YxL25ld3MucHJvdG8SB25ld3MudjEiOQoLQWxsUmVzcG9uc2USKgoIYXJ0aWNsZXMYASADKAsyEC5uZXdzLnYxLkFydGljbGVCBrpIA8gBASLzAQoHQXJ0aWNsZRIbCgduZXdzX2lkGAEgASgFQgq6SAfIAQEaAiAAEhwKBXRpdGxlGAIgASgJQg26SArIAQFyBRAFGIACEh8KB2JvZHlfbWQYAyABKAlCDrpIC8gBAXIGEAUYoI0GEhwKDGlzX3B1Ymxpc2hlZBgEIAEoCEIGukgDyAEBEjYKCmNyZWF0ZWRfb24YBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASIsCg1EZWxldGVSZXF1ZXN0EhsKB25ld3NfaWQYASABKAVCCrpIB8gBARoCIAAiJgoNTGF0ZXN0UmVxdWVzdBIVCgVsaW1pdBgBIAEoBUIGukgDyAEBIqQBCg1DcmVhdGVSZXF1ZXN0EhwKBXRpdGxlGAEgASgJQg26SArIAQFyBRAFGIACEh8KB2JvZHlfbWQYAiABKAlCDrpIC8gBAXIGEAUYoI0GEhwKDGlzX3B1Ymxpc2hlZBgDIAEoCEIGukgDyAEBEjYKCmNyZWF0ZWRfb24YBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEiOwoOQ3JlYXRlUmVzcG9uc2USKQoHYXJ0aWNsZRgBIAEoCzIQLm5ld3MudjEuQXJ0aWNsZUIGukgDyAEBIjsKDkxhdGVzdFJlc3BvbnNlEikKB2FydGljbGUYASADKAsyEC5uZXdzLnYxLkFydGljbGVCBrpIA8gBASKvAQoLRWRpdFJlcXVlc3QSGwoHbmV3c19pZBgBIAEoBUIKukgHyAEBGgIgABIcCgV0aXRsZRgCIAEoCUINukgKyAEBcgUQBRiAAhIfCgdib2R5X21kGAMgASgJQg66SAvIAQFyBhAFGKCNBhIUCgxpc19wdWJsaXNoZWQYBCABKAgSLgoKY3JlYXRlZF9vbhgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiOQoMRWRpdFJlc3BvbnNlEikKB2FydGljbGUYASABKAsyEC5uZXdzLnYxLkFydGljbGVCBrpIA8gBATKxAgoLTmV3c1NlcnZpY2USOwoGTGF0ZXN0EhYubmV3cy52MS5MYXRlc3RSZXF1ZXN0GhcubmV3cy52MS5MYXRlc3RSZXNwb25zZSIAEjUKBEVkaXQSFC5uZXdzLnYxLkVkaXRSZXF1ZXN0GhUubmV3cy52MS5FZGl0UmVzcG9uc2UiABI7CgZDcmVhdGUSFi5uZXdzLnYxLkNyZWF0ZVJlcXVlc3QaFy5uZXdzLnYxLkNyZWF0ZVJlc3BvbnNlIgASOgoGRGVsZXRlEhYubmV3cy52MS5EZWxldGVSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASNQoDQWxsEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhQubmV3cy52MS5BbGxSZXNwb25zZSIAQo4BCgtjb20ubmV3cy52MUIJTmV3c1Byb3RvUAFaN2dpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvbmV3cy92MTtuZXdzdjGiAgNOWFiqAgdOZXdzLlYxygIHTmV3c1xWMeICE05ld3NcVjFcR1BCTWV0YWRhdGHqAghOZXdzOjpWMWIIZWRpdGlvbnNw6Ac", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message news.v1.AllResponse
  */
 export type AllResponse = Message<"news.v1.AllResponse"> & {
-	/**
-	 * @generated from field: repeated news.v1.Article articles = 1;
-	 */
-	articles: Article[];
+  /**
+   * @generated from field: repeated news.v1.Article articles = 1;
+   */
+  articles: Article[];
 };
 
 /**
  * @generated from message news.v1.AllResponse
  */
 export type AllResponseValid = Message<"news.v1.AllResponse"> & {
-	/**
-	 * @generated from field: repeated news.v1.Article articles = 1;
-	 */
-	articles: ArticleValid[];
+  /**
+   * @generated from field: repeated news.v1.Article articles = 1;
+   */
+  articles: ArticleValid[];
 };
 
 /**
  * Describes the message news.v1.AllResponse.
  * Use `create(AllResponseSchema)` to create a new message.
  */
-export const AllResponseSchema: GenMessage<AllResponse, { validType: AllResponseValid }> =
-	/*@__PURE__*/
-	messageDesc(file_news_v1_news, 0);
+export const AllResponseSchema: GenMessage<AllResponse, {validType: AllResponseValid}> = /*@__PURE__*/
+  messageDesc(file_news_v1_news, 0);
 
 /**
  * @generated from message news.v1.Article
  */
 export type Article = Message<"news.v1.Article"> & {
-	/**
-	 * @generated from field: int32 news_id = 1;
-	 */
-	newsId: number;
+  /**
+   * @generated from field: int32 news_id = 1;
+   */
+  newsId: number;
 
-	/**
-	 * @generated from field: string title = 2;
-	 */
-	title: string;
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
 
-	/**
-	 * @generated from field: string body_md = 3;
-	 */
-	bodyMd: string;
+  /**
+   * @generated from field: string body_md = 3;
+   */
+  bodyMd: string;
 
-	/**
-	 * @generated from field: bool is_published = 4;
-	 */
-	isPublished: boolean;
+  /**
+   * @generated from field: bool is_published = 4;
+   */
+  isPublished: boolean;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 5;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 5;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 6;
-	 */
-	updatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 6;
+   */
+  updatedOn?: Timestamp;
 };
 
 /**
  * @generated from message news.v1.Article
  */
 export type ArticleValid = Message<"news.v1.Article"> & {
-	/**
-	 * @generated from field: int32 news_id = 1;
-	 */
-	newsId: number;
+  /**
+   * @generated from field: int32 news_id = 1;
+   */
+  newsId: number;
 
-	/**
-	 * @generated from field: string title = 2;
-	 */
-	title: string;
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
 
-	/**
-	 * @generated from field: string body_md = 3;
-	 */
-	bodyMd: string;
+  /**
+   * @generated from field: string body_md = 3;
+   */
+  bodyMd: string;
 
-	/**
-	 * @generated from field: bool is_published = 4;
-	 */
-	isPublished: boolean;
+  /**
+   * @generated from field: bool is_published = 4;
+   */
+  isPublished: boolean;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 5;
-	 */
-	createdOn: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 5;
+   */
+  createdOn: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 6;
-	 */
-	updatedOn: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 6;
+   */
+  updatedOn: Timestamp;
 };
 
 /**
  * Describes the message news.v1.Article.
  * Use `create(ArticleSchema)` to create a new message.
  */
-export const ArticleSchema: GenMessage<Article, { validType: ArticleValid }> =
-	/*@__PURE__*/
-	messageDesc(file_news_v1_news, 1);
+export const ArticleSchema: GenMessage<Article, {validType: ArticleValid}> = /*@__PURE__*/
+  messageDesc(file_news_v1_news, 1);
 
 /**
  * @generated from message news.v1.DeleteRequest
  */
 export type DeleteRequest = Message<"news.v1.DeleteRequest"> & {
-	/**
-	 * @generated from field: int32 news_id = 1;
-	 */
-	newsId: number;
+  /**
+   * @generated from field: int32 news_id = 1;
+   */
+  newsId: number;
 };
 
 /**
  * @generated from message news.v1.DeleteRequest
  */
 export type DeleteRequestValid = Message<"news.v1.DeleteRequest"> & {
-	/**
-	 * @generated from field: int32 news_id = 1;
-	 */
-	newsId: number;
+  /**
+   * @generated from field: int32 news_id = 1;
+   */
+  newsId: number;
 };
 
 /**
  * Describes the message news.v1.DeleteRequest.
  * Use `create(DeleteRequestSchema)` to create a new message.
  */
-export const DeleteRequestSchema: GenMessage<DeleteRequest, { validType: DeleteRequestValid }> =
-	/*@__PURE__*/
-	messageDesc(file_news_v1_news, 2);
+export const DeleteRequestSchema: GenMessage<DeleteRequest, {validType: DeleteRequestValid}> = /*@__PURE__*/
+  messageDesc(file_news_v1_news, 2);
 
 /**
  * @generated from message news.v1.LatestRequest
  */
 export type LatestRequest = Message<"news.v1.LatestRequest"> & {
-	/**
-	 * @generated from field: int32 limit = 1;
-	 */
-	limit: number;
+  /**
+   * @generated from field: int32 limit = 1;
+   */
+  limit: number;
 };
 
 /**
  * @generated from message news.v1.LatestRequest
  */
 export type LatestRequestValid = Message<"news.v1.LatestRequest"> & {
-	/**
-	 * @generated from field: int32 limit = 1;
-	 */
-	limit: number;
+  /**
+   * @generated from field: int32 limit = 1;
+   */
+  limit: number;
 };
 
 /**
  * Describes the message news.v1.LatestRequest.
  * Use `create(LatestRequestSchema)` to create a new message.
  */
-export const LatestRequestSchema: GenMessage<LatestRequest, { validType: LatestRequestValid }> =
-	/*@__PURE__*/
-	messageDesc(file_news_v1_news, 3);
+export const LatestRequestSchema: GenMessage<LatestRequest, {validType: LatestRequestValid}> = /*@__PURE__*/
+  messageDesc(file_news_v1_news, 3);
 
 /**
  * @generated from message news.v1.CreateRequest
  */
 export type CreateRequest = Message<"news.v1.CreateRequest"> & {
-	/**
-	 * @generated from field: string title = 1;
-	 */
-	title: string;
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
 
-	/**
-	 * @generated from field: string body_md = 2;
-	 */
-	bodyMd: string;
+  /**
+   * @generated from field: string body_md = 2;
+   */
+  bodyMd: string;
 
-	/**
-	 * @generated from field: bool is_published = 3;
-	 */
-	isPublished: boolean;
+  /**
+   * @generated from field: bool is_published = 3;
+   */
+  isPublished: boolean;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 4;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 4;
+   */
+  createdOn?: Timestamp;
 };
 
 /**
  * @generated from message news.v1.CreateRequest
  */
 export type CreateRequestValid = Message<"news.v1.CreateRequest"> & {
-	/**
-	 * @generated from field: string title = 1;
-	 */
-	title: string;
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
 
-	/**
-	 * @generated from field: string body_md = 2;
-	 */
-	bodyMd: string;
+  /**
+   * @generated from field: string body_md = 2;
+   */
+  bodyMd: string;
 
-	/**
-	 * @generated from field: bool is_published = 3;
-	 */
-	isPublished: boolean;
+  /**
+   * @generated from field: bool is_published = 3;
+   */
+  isPublished: boolean;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 4;
-	 */
-	createdOn: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 4;
+   */
+  createdOn: Timestamp;
 };
 
 /**
  * Describes the message news.v1.CreateRequest.
  * Use `create(CreateRequestSchema)` to create a new message.
  */
-export const CreateRequestSchema: GenMessage<CreateRequest, { validType: CreateRequestValid }> =
-	/*@__PURE__*/
-	messageDesc(file_news_v1_news, 4);
+export const CreateRequestSchema: GenMessage<CreateRequest, {validType: CreateRequestValid}> = /*@__PURE__*/
+  messageDesc(file_news_v1_news, 4);
 
 /**
  * @generated from message news.v1.CreateResponse
  */
 export type CreateResponse = Message<"news.v1.CreateResponse"> & {
-	/**
-	 * @generated from field: news.v1.Article article = 1;
-	 */
-	article?: Article;
+  /**
+   * @generated from field: news.v1.Article article = 1;
+   */
+  article?: Article;
 };
 
 /**
  * @generated from message news.v1.CreateResponse
  */
 export type CreateResponseValid = Message<"news.v1.CreateResponse"> & {
-	/**
-	 * @generated from field: news.v1.Article article = 1;
-	 */
-	article: ArticleValid;
+  /**
+   * @generated from field: news.v1.Article article = 1;
+   */
+  article: ArticleValid;
 };
 
 /**
  * Describes the message news.v1.CreateResponse.
  * Use `create(CreateResponseSchema)` to create a new message.
  */
-export const CreateResponseSchema: GenMessage<CreateResponse, { validType: CreateResponseValid }> =
-	/*@__PURE__*/
-	messageDesc(file_news_v1_news, 5);
+export const CreateResponseSchema: GenMessage<CreateResponse, {validType: CreateResponseValid}> = /*@__PURE__*/
+  messageDesc(file_news_v1_news, 5);
 
 /**
  * @generated from message news.v1.LatestResponse
  */
 export type LatestResponse = Message<"news.v1.LatestResponse"> & {
-	/**
-	 * @generated from field: repeated news.v1.Article article = 1;
-	 */
-	article: Article[];
+  /**
+   * @generated from field: repeated news.v1.Article article = 1;
+   */
+  article: Article[];
 };
 
 /**
  * @generated from message news.v1.LatestResponse
  */
 export type LatestResponseValid = Message<"news.v1.LatestResponse"> & {
-	/**
-	 * @generated from field: repeated news.v1.Article article = 1;
-	 */
-	article: ArticleValid[];
+  /**
+   * @generated from field: repeated news.v1.Article article = 1;
+   */
+  article: ArticleValid[];
 };
 
 /**
  * Describes the message news.v1.LatestResponse.
  * Use `create(LatestResponseSchema)` to create a new message.
  */
-export const LatestResponseSchema: GenMessage<LatestResponse, { validType: LatestResponseValid }> =
-	/*@__PURE__*/
-	messageDesc(file_news_v1_news, 6);
+export const LatestResponseSchema: GenMessage<LatestResponse, {validType: LatestResponseValid}> = /*@__PURE__*/
+  messageDesc(file_news_v1_news, 6);
 
 /**
  * @generated from message news.v1.EditRequest
  */
 export type EditRequest = Message<"news.v1.EditRequest"> & {
-	/**
-	 * @generated from field: int32 news_id = 1;
-	 */
-	newsId: number;
+  /**
+   * @generated from field: int32 news_id = 1;
+   */
+  newsId: number;
 
-	/**
-	 * @generated from field: string title = 2;
-	 */
-	title: string;
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
 
-	/**
-	 * @generated from field: string body_md = 3;
-	 */
-	bodyMd: string;
+  /**
+   * @generated from field: string body_md = 3;
+   */
+  bodyMd: string;
 
-	/**
-	 * @generated from field: bool is_published = 4;
-	 */
-	isPublished: boolean;
+  /**
+   * @generated from field: bool is_published = 4;
+   */
+  isPublished: boolean;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 5;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 5;
+   */
+  createdOn?: Timestamp;
 };
 
 /**
  * @generated from message news.v1.EditRequest
  */
 export type EditRequestValid = Message<"news.v1.EditRequest"> & {
-	/**
-	 * @generated from field: int32 news_id = 1;
-	 */
-	newsId: number;
+  /**
+   * @generated from field: int32 news_id = 1;
+   */
+  newsId: number;
 
-	/**
-	 * @generated from field: string title = 2;
-	 */
-	title: string;
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
 
-	/**
-	 * @generated from field: string body_md = 3;
-	 */
-	bodyMd: string;
+  /**
+   * @generated from field: string body_md = 3;
+   */
+  bodyMd: string;
 
-	/**
-	 * @generated from field: bool is_published = 4;
-	 */
-	isPublished: boolean;
+  /**
+   * @generated from field: bool is_published = 4;
+   */
+  isPublished: boolean;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 5;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 5;
+   */
+  createdOn?: Timestamp;
 };
 
 /**
  * Describes the message news.v1.EditRequest.
  * Use `create(EditRequestSchema)` to create a new message.
  */
-export const EditRequestSchema: GenMessage<EditRequest, { validType: EditRequestValid }> =
-	/*@__PURE__*/
-	messageDesc(file_news_v1_news, 7);
+export const EditRequestSchema: GenMessage<EditRequest, {validType: EditRequestValid}> = /*@__PURE__*/
+  messageDesc(file_news_v1_news, 7);
 
 /**
  * @generated from message news.v1.EditResponse
  */
 export type EditResponse = Message<"news.v1.EditResponse"> & {
-	/**
-	 * @generated from field: news.v1.Article article = 1;
-	 */
-	article?: Article;
+  /**
+   * @generated from field: news.v1.Article article = 1;
+   */
+  article?: Article;
 };
 
 /**
  * @generated from message news.v1.EditResponse
  */
 export type EditResponseValid = Message<"news.v1.EditResponse"> & {
-	/**
-	 * @generated from field: news.v1.Article article = 1;
-	 */
-	article: ArticleValid;
+  /**
+   * @generated from field: news.v1.Article article = 1;
+   */
+  article: ArticleValid;
 };
 
 /**
  * Describes the message news.v1.EditResponse.
  * Use `create(EditResponseSchema)` to create a new message.
  */
-export const EditResponseSchema: GenMessage<EditResponse, { validType: EditResponseValid }> =
-	/*@__PURE__*/
-	messageDesc(file_news_v1_news, 8);
+export const EditResponseSchema: GenMessage<EditResponse, {validType: EditResponseValid}> = /*@__PURE__*/
+  messageDesc(file_news_v1_news, 8);
 
 /**
  * @generated from service news.v1.NewsService
  */
 export const NewsService: GenService<{
-	/**
-	 * @generated from rpc news.v1.NewsService.Latest
-	 */
-	latest: {
-		methodKind: "unary";
-		input: typeof LatestRequestSchema;
-		output: typeof LatestResponseSchema;
-	};
-	/**
-	 * @generated from rpc news.v1.NewsService.Edit
-	 */
-	edit: {
-		methodKind: "unary";
-		input: typeof EditRequestSchema;
-		output: typeof EditResponseSchema;
-	};
-	/**
-	 * @generated from rpc news.v1.NewsService.Create
-	 */
-	create: {
-		methodKind: "unary";
-		input: typeof CreateRequestSchema;
-		output: typeof CreateResponseSchema;
-	};
-	/**
-	 * @generated from rpc news.v1.NewsService.Delete
-	 */
-	delete: {
-		methodKind: "unary";
-		input: typeof DeleteRequestSchema;
-		output: typeof EmptySchema;
-	};
-	/**
-	 * @generated from rpc news.v1.NewsService.All
-	 */
-	all: {
-		methodKind: "unary";
-		input: typeof EmptySchema;
-		output: typeof AllResponseSchema;
-	};
-}> = /*@__PURE__*/ serviceDesc(file_news_v1_news, 0);
+  /**
+   * @generated from rpc news.v1.NewsService.Latest
+   */
+  latest: {
+    methodKind: "unary";
+    input: typeof LatestRequestSchema;
+    output: typeof LatestResponseSchema;
+  },
+  /**
+   * @generated from rpc news.v1.NewsService.Edit
+   */
+  edit: {
+    methodKind: "unary";
+    input: typeof EditRequestSchema;
+    output: typeof EditResponseSchema;
+  },
+  /**
+   * @generated from rpc news.v1.NewsService.Create
+   */
+  create: {
+    methodKind: "unary";
+    input: typeof CreateRequestSchema;
+    output: typeof CreateResponseSchema;
+  },
+  /**
+   * @generated from rpc news.v1.NewsService.Delete
+   */
+  delete: {
+    methodKind: "unary";
+    input: typeof DeleteRequestSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc news.v1.NewsService.All
+   */
+  all: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof AllResponseSchema;
+  },
+}> = /*@__PURE__*/
+  serviceDesc(file_news_v1_news, 0);
+

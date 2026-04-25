@@ -2,130 +2,126 @@
 // @generated from file person/v1/person_core.proto (package person.v1, edition 2023)
 /* eslint-disable */
 
-import type { Message } from "@bufbuild/protobuf";
 import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
-import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Privilege } from "./privilege_pb";
 import { file_person_v1_privilege } from "./privilege_pb";
 import { file_person_v1_steamid } from "./steamid_pb";
+import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file person/v1/person_core.proto.
  */
-export const file_person_v1_person_core: GenFile =
-	/*@__PURE__*/
-	fileDesc(
-		"ChtwZXJzb24vdjEvcGVyc29uX2NvcmUucHJvdG8SCXBlcnNvbi52MSK8AgoKUGVyc29uQ29yZRIbCghzdGVhbV9pZBgBIAEoA0IJukgGIgSA8QQBEjYKEHBlcm1pc3Npb25fbGV2ZWwYAiABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlQga6SAPIAQESFAoEbmFtZRgDIAEoCUIGukgDyAEBEiAKC2F2YXRhcl9oYXNoGAQgASgJQgu6SAjIAQFyA5gBKBIaCgpkaXNjb3JkX2lkGAUgASgJQga6SAPIAQESGAoIdmFjX2JhbnMYBiABKAVCBrpIA8gBARIZCglnYW1lX2JhbnMYByABKAVCBrpIA8gBARIWCgZiYW5faWQYCCABKAVCBrpIA8gBARI4Cgx0aW1lX2NyZWF0ZWQYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQFCogEKDWNvbS5wZXJzb24udjFCD1BlcnNvbkNvcmVQcm90b1ABWjtnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3BlcnNvbi92MTtwZXJzb252MaICA1BYWKoCCVBlcnNvbi5WMcoCCVBlcnNvblxWMeICFVBlcnNvblxWMVxHUEJNZXRhZGF0YeoCClBlcnNvbjo6VjFiCGVkaXRpb25zcOgH",
-		[file_buf_validate_validate, file_google_protobuf_timestamp, file_person_v1_privilege, file_person_v1_steamid],
-	);
+export const file_person_v1_person_core: GenFile = /*@__PURE__*/
+  fileDesc("ChtwZXJzb24vdjEvcGVyc29uX2NvcmUucHJvdG8SCXBlcnNvbi52MSK8AgoKUGVyc29uQ29yZRIbCghzdGVhbV9pZBgBIAEoA0IJukgGIgSA8QQBEjYKEHBlcm1pc3Npb25fbGV2ZWwYAiABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlQga6SAPIAQESFAoEbmFtZRgDIAEoCUIGukgDyAEBEiAKC2F2YXRhcl9oYXNoGAQgASgJQgu6SAjIAQFyA5gBKBIaCgpkaXNjb3JkX2lkGAUgASgJQga6SAPIAQESGAoIdmFjX2JhbnMYBiABKAVCBrpIA8gBARIZCglnYW1lX2JhbnMYByABKAVCBrpIA8gBARIWCgZiYW5faWQYCCABKAVCBrpIA8gBARI4Cgx0aW1lX2NyZWF0ZWQYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQFCogEKDWNvbS5wZXJzb24udjFCD1BlcnNvbkNvcmVQcm90b1ABWjtnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3BlcnNvbi92MTtwZXJzb252MaICA1BYWKoCCVBlcnNvbi5WMcoCCVBlcnNvblxWMeICFVBlcnNvblxWMVxHUEJNZXRhZGF0YeoCClBlcnNvbjo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate, file_google_protobuf_timestamp, file_person_v1_privilege, file_person_v1_steamid]);
 
 /**
  * @generated from message person.v1.PersonCore
  */
 export type PersonCore = Message<"person.v1.PersonCore"> & {
-	/**
-	 * @generated from field: int64 steam_id = 1;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 1;
+   */
+  steamId: bigint;
 
-	/**
-	 * @generated from field: person.v1.Privilege permission_level = 2;
-	 */
-	permissionLevel: Privilege;
+  /**
+   * @generated from field: person.v1.Privilege permission_level = 2;
+   */
+  permissionLevel: Privilege;
 
-	/**
-	 * @generated from field: string name = 3;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 3;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: string avatar_hash = 4;
-	 */
-	avatarHash: string;
+  /**
+   * @generated from field: string avatar_hash = 4;
+   */
+  avatarHash: string;
 
-	/**
-	 * @generated from field: string discord_id = 5;
-	 */
-	discordId: string;
+  /**
+   * @generated from field: string discord_id = 5;
+   */
+  discordId: string;
 
-	/**
-	 * @generated from field: int32 vac_bans = 6;
-	 */
-	vacBans: number;
+  /**
+   * @generated from field: int32 vac_bans = 6;
+   */
+  vacBans: number;
 
-	/**
-	 * @generated from field: int32 game_bans = 7;
-	 */
-	gameBans: number;
+  /**
+   * @generated from field: int32 game_bans = 7;
+   */
+  gameBans: number;
 
-	/**
-	 * @generated from field: int32 ban_id = 8;
-	 */
-	banId: number;
+  /**
+   * @generated from field: int32 ban_id = 8;
+   */
+  banId: number;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp time_created = 9;
-	 */
-	timeCreated?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp time_created = 9;
+   */
+  timeCreated?: Timestamp;
 };
 
 /**
  * @generated from message person.v1.PersonCore
  */
 export type PersonCoreValid = Message<"person.v1.PersonCore"> & {
-	/**
-	 * @generated from field: int64 steam_id = 1;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 1;
+   */
+  steamId: bigint;
 
-	/**
-	 * @generated from field: person.v1.Privilege permission_level = 2;
-	 */
-	permissionLevel: Privilege;
+  /**
+   * @generated from field: person.v1.Privilege permission_level = 2;
+   */
+  permissionLevel: Privilege;
 
-	/**
-	 * @generated from field: string name = 3;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 3;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: string avatar_hash = 4;
-	 */
-	avatarHash: string;
+  /**
+   * @generated from field: string avatar_hash = 4;
+   */
+  avatarHash: string;
 
-	/**
-	 * @generated from field: string discord_id = 5;
-	 */
-	discordId: string;
+  /**
+   * @generated from field: string discord_id = 5;
+   */
+  discordId: string;
 
-	/**
-	 * @generated from field: int32 vac_bans = 6;
-	 */
-	vacBans: number;
+  /**
+   * @generated from field: int32 vac_bans = 6;
+   */
+  vacBans: number;
 
-	/**
-	 * @generated from field: int32 game_bans = 7;
-	 */
-	gameBans: number;
+  /**
+   * @generated from field: int32 game_bans = 7;
+   */
+  gameBans: number;
 
-	/**
-	 * @generated from field: int32 ban_id = 8;
-	 */
-	banId: number;
+  /**
+   * @generated from field: int32 ban_id = 8;
+   */
+  banId: number;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp time_created = 9;
-	 */
-	timeCreated: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp time_created = 9;
+   */
+  timeCreated: Timestamp;
 };
 
 /**
  * Describes the message person.v1.PersonCore.
  * Use `create(PersonCoreSchema)` to create a new message.
  */
-export const PersonCoreSchema: GenMessage<PersonCore, { validType: PersonCoreValid }> =
-	/*@__PURE__*/
-	messageDesc(file_person_v1_person_core, 0);
+export const PersonCoreSchema: GenMessage<PersonCore, {validType: PersonCoreValid}> = /*@__PURE__*/
+  messageDesc(file_person_v1_person_core, 0);
+

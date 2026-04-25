@@ -505,13 +505,13 @@ func (s Service) SMGroups(ctx context.Context, _ *emptypb.Empty) (*v1.SMGroupsRe
 	}
 
 	resp := v1.SMGroupsResponse{
-		Groups:     make([]*v1.SMGroup, len(groups)),
+		Groups:     make([]*v1.Group, len(groups)),
 		Immunities: make([]*v1.SMGroupImmunity, len(immunities)),
 	}
 
 	//goland:noinspection ALL
 	for idx, group := range groups {
-		resp.Groups[idx] = &v1.SMGroup{
+		resp.Groups[idx] = &v1.Group{
 			Flags:         &group.Flags,
 			Name:          &group.Name,
 			ImmunityLevel: &group.ImmunityLevel,

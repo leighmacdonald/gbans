@@ -2,618 +2,606 @@
 // @generated from file chat/v1/wordfilter.proto (package chat.v1, edition 2023)
 /* eslint-disable */
 
-import type { Message } from "@bufbuild/protobuf";
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
-import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { BanReason } from "../../ban/v1/ban_pb";
 import { file_ban_v1_ban } from "../../ban/v1/ban_pb";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
+import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file chat/v1/wordfilter.proto.
  */
-export const file_chat_v1_wordfilter: GenFile =
-	/*@__PURE__*/
-	fileDesc(
-		"ChhjaGF0L3YxL3dvcmRmaWx0ZXIucHJvdG8SB2NoYXQudjEiKwoSRmlsdGVyTWF0Y2hSZXF1ZXN0EhUKBXF1ZXJ5GAEgASgJQga6SAPIAQEiPwoTRmlsdGVyTWF0Y2hSZXNwb25zZRIoCgdmaWx0ZXJzGAEgAygLMg8uY2hhdC52MS5GaWx0ZXJCBrpIA8gBASIwChNGaWx0ZXJEZWxldGVSZXF1ZXN0EhkKCWZpbHRlcl9pZBgBIAEoA0IGukgDyAEBIj4KE0ZpbHRlckNyZWF0ZVJlcXVlc3QSJwoGZmlsdGVyGAEgASgLMg8uY2hhdC52MS5GaWx0ZXJCBrpIA8gBASI/ChRGaWx0ZXJDcmVhdGVSZXNwb25zZRInCgZmaWx0ZXIYASABKAsyDy5jaGF0LnYxLkZpbHRlckIGukgDyAEBIjwKEUZpbHRlckVkaXRSZXF1ZXN0EicKBmZpbHRlchgBIAEoCzIPLmNoYXQudjEuRmlsdGVyQga6SAPIAQEiPQoSRmlsdGVyRWRpdFJlc3BvbnNlEicKBmZpbHRlchgBIAEoCzIPLmNoYXQudjEuRmlsdGVyQga6SAPIAQEi/QIKBkZpbHRlchIZCglmaWx0ZXJfaWQYASABKANCBrpIA8gBARIZCglhdXRob3JfaWQYAiABKANCBrpIA8gBARIXCgdwYXR0ZXJuGAMgASgJQga6SAPIAQESGAoIaXNfcmVnZXgYBCABKAhCBrpIA8gBARIaCgppc19lbmFibGVkGAUgASgIQga6SAPIAQESLQoGYWN0aW9uGAYgASgOMhUuY2hhdC52MS5GaWx0ZXJBY3Rpb25CBrpIA8gBARIYCghkdXJhdGlvbhgHIAEoCUIGukgDyAEBEh0KDXRyaWdnZXJfY291bnQYCCABKANCBrpIA8gBARIWCgZ3ZWlnaHQYCSABKAVCBrpIA8gBARI2CgpjcmVhdGVkX29uGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEjYKCnVwZGF0ZWRfb24YCyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEiOwoPRmlsdGVyc1Jlc3BvbnNlEigKB2ZpbHRlcnMYASADKAsyDy5jaGF0LnYxLkZpbHRlckIGukgDyAEBIvcCCgtVc2VyV2FybmluZxIpCgZyZWFzb24YASABKA4yES5iYW4udjEuQmFuUmVhc29uQga6SAPIAQESFwoHbWVzc2FnZRgCIAEoCUIGukgDyAEBEhcKB21hdGNoZWQYAyABKAlCBrpIA8gBARInCgZmaWx0ZXIYBCABKAsyDy5jaGF0LnYxLkZpbHRlckIGukgDyAEBEjYKCmNyZWF0ZWRfb24YBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESHAoMcGVyc29uYV9uYW1lGAYgASgJQga6SAPIAQESGwoLYXZhdGFyX2hhc2gYByABKAlCBrpIA8gBARIbCgtzZXJ2ZXJfbmFtZRgIIAEoCUIGukgDyAEBEhkKCXNlcnZlcl9pZBgJIAEoBUIGukgDyAEBEhgKCHN0ZWFtX2lkGAogASgDQga6SAPIAQESHQoNY3VycmVudF90b3RhbBgLIAEoBUIGukgDyAEBImEKFFdhcm5pbmdTdGF0ZVJlc3BvbnNlEhoKCm1heF93ZWlnaHQYASABKAVCBrpIA8gBARItCgdjdXJyZW50GAIgAygLMhQuY2hhdC52MS5Vc2VyV2FybmluZ0IGukgDyAEBKmEKDEZpbHRlckFjdGlvbhIiCh5GSUxURVJfQUNUSU9OX0tJQ0tfVU5TUEVDSUZJRUQQABIWChJGSUxURVJfQUNUSU9OX01VVEUQARIVChFGSUxURVJfQUNUSU9OX0JBThACMscDChFXb3JkZmlsdGVyU2VydmljZRI9CgdGaWx0ZXJzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhguY2hhdC52MS5GaWx0ZXJzUmVzcG9uc2UiABJHCgxXYXJuaW5nU3RhdGUSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHS5jaGF0LnYxLldhcm5pbmdTdGF0ZVJlc3BvbnNlIgASTQoMRmlsdGVyQ3JlYXRlEhwuY2hhdC52MS5GaWx0ZXJDcmVhdGVSZXF1ZXN0Gh0uY2hhdC52MS5GaWx0ZXJDcmVhdGVSZXNwb25zZSIAEkcKCkZpbHRlckVkaXQSGi5jaGF0LnYxLkZpbHRlckVkaXRSZXF1ZXN0GhsuY2hhdC52MS5GaWx0ZXJFZGl0UmVzcG9uc2UiABJGCgxGaWx0ZXJEZWxldGUSHC5jaGF0LnYxLkZpbHRlckRlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJKCgtGaWx0ZXJNYXRjaBIbLmNoYXQudjEuRmlsdGVyTWF0Y2hSZXF1ZXN0GhwuY2hhdC52MS5GaWx0ZXJNYXRjaFJlc3BvbnNlIgBClAEKC2NvbS5jaGF0LnYxQg9Xb3JkZmlsdGVyUHJvdG9QAVo3Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9jaGF0L3YxO2NoYXR2MaICA0NYWKoCB0NoYXQuVjHKAgdDaGF0XFYx4gITQ2hhdFxWMVxHUEJNZXRhZGF0YeoCCENoYXQ6OlYxYghlZGl0aW9uc3DoBw",
-		[file_ban_v1_ban, file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp],
-	);
+export const file_chat_v1_wordfilter: GenFile = /*@__PURE__*/
+  fileDesc("ChhjaGF0L3YxL3dvcmRmaWx0ZXIucHJvdG8SB2NoYXQudjEiKwoSRmlsdGVyTWF0Y2hSZXF1ZXN0EhUKBXF1ZXJ5GAEgASgJQga6SAPIAQEiPwoTRmlsdGVyTWF0Y2hSZXNwb25zZRIoCgdmaWx0ZXJzGAEgAygLMg8uY2hhdC52MS5GaWx0ZXJCBrpIA8gBASIwChNGaWx0ZXJEZWxldGVSZXF1ZXN0EhkKCWZpbHRlcl9pZBgBIAEoA0IGukgDyAEBIj4KE0ZpbHRlckNyZWF0ZVJlcXVlc3QSJwoGZmlsdGVyGAEgASgLMg8uY2hhdC52MS5GaWx0ZXJCBrpIA8gBASI/ChRGaWx0ZXJDcmVhdGVSZXNwb25zZRInCgZmaWx0ZXIYASABKAsyDy5jaGF0LnYxLkZpbHRlckIGukgDyAEBIjwKEUZpbHRlckVkaXRSZXF1ZXN0EicKBmZpbHRlchgBIAEoCzIPLmNoYXQudjEuRmlsdGVyQga6SAPIAQEiPQoSRmlsdGVyRWRpdFJlc3BvbnNlEicKBmZpbHRlchgBIAEoCzIPLmNoYXQudjEuRmlsdGVyQga6SAPIAQEi/QIKBkZpbHRlchIZCglmaWx0ZXJfaWQYASABKANCBrpIA8gBARIZCglhdXRob3JfaWQYAiABKANCBrpIA8gBARIXCgdwYXR0ZXJuGAMgASgJQga6SAPIAQESGAoIaXNfcmVnZXgYBCABKAhCBrpIA8gBARIaCgppc19lbmFibGVkGAUgASgIQga6SAPIAQESLQoGYWN0aW9uGAYgASgOMhUuY2hhdC52MS5GaWx0ZXJBY3Rpb25CBrpIA8gBARIYCghkdXJhdGlvbhgHIAEoCUIGukgDyAEBEh0KDXRyaWdnZXJfY291bnQYCCABKANCBrpIA8gBARIWCgZ3ZWlnaHQYCSABKAVCBrpIA8gBARI2CgpjcmVhdGVkX29uGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEjYKCnVwZGF0ZWRfb24YCyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEiOwoPRmlsdGVyc1Jlc3BvbnNlEigKB2ZpbHRlcnMYASADKAsyDy5jaGF0LnYxLkZpbHRlckIGukgDyAEBIvcCCgtVc2VyV2FybmluZxIpCgZyZWFzb24YASABKA4yES5iYW4udjEuQmFuUmVhc29uQga6SAPIAQESFwoHbWVzc2FnZRgCIAEoCUIGukgDyAEBEhcKB21hdGNoZWQYAyABKAlCBrpIA8gBARInCgZmaWx0ZXIYBCABKAsyDy5jaGF0LnYxLkZpbHRlckIGukgDyAEBEjYKCmNyZWF0ZWRfb24YBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESHAoMcGVyc29uYV9uYW1lGAYgASgJQga6SAPIAQESGwoLYXZhdGFyX2hhc2gYByABKAlCBrpIA8gBARIbCgtzZXJ2ZXJfbmFtZRgIIAEoCUIGukgDyAEBEhkKCXNlcnZlcl9pZBgJIAEoBUIGukgDyAEBEhgKCHN0ZWFtX2lkGAogASgDQga6SAPIAQESHQoNY3VycmVudF90b3RhbBgLIAEoBUIGukgDyAEBImEKFFdhcm5pbmdTdGF0ZVJlc3BvbnNlEhoKCm1heF93ZWlnaHQYASABKAVCBrpIA8gBARItCgdjdXJyZW50GAIgAygLMhQuY2hhdC52MS5Vc2VyV2FybmluZ0IGukgDyAEBKmEKDEZpbHRlckFjdGlvbhIiCh5GSUxURVJfQUNUSU9OX0tJQ0tfVU5TUEVDSUZJRUQQABIWChJGSUxURVJfQUNUSU9OX01VVEUQARIVChFGSUxURVJfQUNUSU9OX0JBThACMscDChFXb3JkZmlsdGVyU2VydmljZRI9CgdGaWx0ZXJzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhguY2hhdC52MS5GaWx0ZXJzUmVzcG9uc2UiABJHCgxXYXJuaW5nU3RhdGUSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHS5jaGF0LnYxLldhcm5pbmdTdGF0ZVJlc3BvbnNlIgASTQoMRmlsdGVyQ3JlYXRlEhwuY2hhdC52MS5GaWx0ZXJDcmVhdGVSZXF1ZXN0Gh0uY2hhdC52MS5GaWx0ZXJDcmVhdGVSZXNwb25zZSIAEkcKCkZpbHRlckVkaXQSGi5jaGF0LnYxLkZpbHRlckVkaXRSZXF1ZXN0GhsuY2hhdC52MS5GaWx0ZXJFZGl0UmVzcG9uc2UiABJGCgxGaWx0ZXJEZWxldGUSHC5jaGF0LnYxLkZpbHRlckRlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJKCgtGaWx0ZXJNYXRjaBIbLmNoYXQudjEuRmlsdGVyTWF0Y2hSZXF1ZXN0GhwuY2hhdC52MS5GaWx0ZXJNYXRjaFJlc3BvbnNlIgBClAEKC2NvbS5jaGF0LnYxQg9Xb3JkZmlsdGVyUHJvdG9QAVo3Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9jaGF0L3YxO2NoYXR2MaICA0NYWKoCB0NoYXQuVjHKAgdDaGF0XFYx4gITQ2hhdFxWMVxHUEJNZXRhZGF0YeoCCENoYXQ6OlYxYghlZGl0aW9uc3DoBw", [file_ban_v1_ban, file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message chat.v1.FilterMatchRequest
  */
 export type FilterMatchRequest = Message<"chat.v1.FilterMatchRequest"> & {
-	/**
-	 * @generated from field: string query = 1;
-	 */
-	query: string;
+  /**
+   * @generated from field: string query = 1;
+   */
+  query: string;
 };
 
 /**
  * @generated from message chat.v1.FilterMatchRequest
  */
 export type FilterMatchRequestValid = Message<"chat.v1.FilterMatchRequest"> & {
-	/**
-	 * @generated from field: string query = 1;
-	 */
-	query: string;
+  /**
+   * @generated from field: string query = 1;
+   */
+  query: string;
 };
 
 /**
  * Describes the message chat.v1.FilterMatchRequest.
  * Use `create(FilterMatchRequestSchema)` to create a new message.
  */
-export const FilterMatchRequestSchema: GenMessage<FilterMatchRequest, { validType: FilterMatchRequestValid }> =
-	/*@__PURE__*/
-	messageDesc(file_chat_v1_wordfilter, 0);
+export const FilterMatchRequestSchema: GenMessage<FilterMatchRequest, {validType: FilterMatchRequestValid}> = /*@__PURE__*/
+  messageDesc(file_chat_v1_wordfilter, 0);
 
 /**
  * @generated from message chat.v1.FilterMatchResponse
  */
 export type FilterMatchResponse = Message<"chat.v1.FilterMatchResponse"> & {
-	/**
-	 * @generated from field: repeated chat.v1.Filter filters = 1;
-	 */
-	filters: Filter[];
+  /**
+   * @generated from field: repeated chat.v1.Filter filters = 1;
+   */
+  filters: Filter[];
 };
 
 /**
  * @generated from message chat.v1.FilterMatchResponse
  */
 export type FilterMatchResponseValid = Message<"chat.v1.FilterMatchResponse"> & {
-	/**
-	 * @generated from field: repeated chat.v1.Filter filters = 1;
-	 */
-	filters: FilterValid[];
+  /**
+   * @generated from field: repeated chat.v1.Filter filters = 1;
+   */
+  filters: FilterValid[];
 };
 
 /**
  * Describes the message chat.v1.FilterMatchResponse.
  * Use `create(FilterMatchResponseSchema)` to create a new message.
  */
-export const FilterMatchResponseSchema: GenMessage<FilterMatchResponse, { validType: FilterMatchResponseValid }> =
-	/*@__PURE__*/
-	messageDesc(file_chat_v1_wordfilter, 1);
+export const FilterMatchResponseSchema: GenMessage<FilterMatchResponse, {validType: FilterMatchResponseValid}> = /*@__PURE__*/
+  messageDesc(file_chat_v1_wordfilter, 1);
 
 /**
  * @generated from message chat.v1.FilterDeleteRequest
  */
 export type FilterDeleteRequest = Message<"chat.v1.FilterDeleteRequest"> & {
-	/**
-	 * @generated from field: int64 filter_id = 1;
-	 */
-	filterId: bigint;
+  /**
+   * @generated from field: int64 filter_id = 1;
+   */
+  filterId: bigint;
 };
 
 /**
  * @generated from message chat.v1.FilterDeleteRequest
  */
 export type FilterDeleteRequestValid = Message<"chat.v1.FilterDeleteRequest"> & {
-	/**
-	 * @generated from field: int64 filter_id = 1;
-	 */
-	filterId: bigint;
+  /**
+   * @generated from field: int64 filter_id = 1;
+   */
+  filterId: bigint;
 };
 
 /**
  * Describes the message chat.v1.FilterDeleteRequest.
  * Use `create(FilterDeleteRequestSchema)` to create a new message.
  */
-export const FilterDeleteRequestSchema: GenMessage<FilterDeleteRequest, { validType: FilterDeleteRequestValid }> =
-	/*@__PURE__*/
-	messageDesc(file_chat_v1_wordfilter, 2);
+export const FilterDeleteRequestSchema: GenMessage<FilterDeleteRequest, {validType: FilterDeleteRequestValid}> = /*@__PURE__*/
+  messageDesc(file_chat_v1_wordfilter, 2);
 
 /**
  * @generated from message chat.v1.FilterCreateRequest
  */
 export type FilterCreateRequest = Message<"chat.v1.FilterCreateRequest"> & {
-	/**
-	 * @generated from field: chat.v1.Filter filter = 1;
-	 */
-	filter?: Filter;
+  /**
+   * @generated from field: chat.v1.Filter filter = 1;
+   */
+  filter?: Filter;
 };
 
 /**
  * @generated from message chat.v1.FilterCreateRequest
  */
 export type FilterCreateRequestValid = Message<"chat.v1.FilterCreateRequest"> & {
-	/**
-	 * @generated from field: chat.v1.Filter filter = 1;
-	 */
-	filter: FilterValid;
+  /**
+   * @generated from field: chat.v1.Filter filter = 1;
+   */
+  filter: FilterValid;
 };
 
 /**
  * Describes the message chat.v1.FilterCreateRequest.
  * Use `create(FilterCreateRequestSchema)` to create a new message.
  */
-export const FilterCreateRequestSchema: GenMessage<FilterCreateRequest, { validType: FilterCreateRequestValid }> =
-	/*@__PURE__*/
-	messageDesc(file_chat_v1_wordfilter, 3);
+export const FilterCreateRequestSchema: GenMessage<FilterCreateRequest, {validType: FilterCreateRequestValid}> = /*@__PURE__*/
+  messageDesc(file_chat_v1_wordfilter, 3);
 
 /**
  * @generated from message chat.v1.FilterCreateResponse
  */
 export type FilterCreateResponse = Message<"chat.v1.FilterCreateResponse"> & {
-	/**
-	 * @generated from field: chat.v1.Filter filter = 1;
-	 */
-	filter?: Filter;
+  /**
+   * @generated from field: chat.v1.Filter filter = 1;
+   */
+  filter?: Filter;
 };
 
 /**
  * @generated from message chat.v1.FilterCreateResponse
  */
 export type FilterCreateResponseValid = Message<"chat.v1.FilterCreateResponse"> & {
-	/**
-	 * @generated from field: chat.v1.Filter filter = 1;
-	 */
-	filter: FilterValid;
+  /**
+   * @generated from field: chat.v1.Filter filter = 1;
+   */
+  filter: FilterValid;
 };
 
 /**
  * Describes the message chat.v1.FilterCreateResponse.
  * Use `create(FilterCreateResponseSchema)` to create a new message.
  */
-export const FilterCreateResponseSchema: GenMessage<FilterCreateResponse, { validType: FilterCreateResponseValid }> =
-	/*@__PURE__*/
-	messageDesc(file_chat_v1_wordfilter, 4);
+export const FilterCreateResponseSchema: GenMessage<FilterCreateResponse, {validType: FilterCreateResponseValid}> = /*@__PURE__*/
+  messageDesc(file_chat_v1_wordfilter, 4);
 
 /**
  * @generated from message chat.v1.FilterEditRequest
  */
 export type FilterEditRequest = Message<"chat.v1.FilterEditRequest"> & {
-	/**
-	 * @generated from field: chat.v1.Filter filter = 1;
-	 */
-	filter?: Filter;
+  /**
+   * @generated from field: chat.v1.Filter filter = 1;
+   */
+  filter?: Filter;
 };
 
 /**
  * @generated from message chat.v1.FilterEditRequest
  */
 export type FilterEditRequestValid = Message<"chat.v1.FilterEditRequest"> & {
-	/**
-	 * @generated from field: chat.v1.Filter filter = 1;
-	 */
-	filter: FilterValid;
+  /**
+   * @generated from field: chat.v1.Filter filter = 1;
+   */
+  filter: FilterValid;
 };
 
 /**
  * Describes the message chat.v1.FilterEditRequest.
  * Use `create(FilterEditRequestSchema)` to create a new message.
  */
-export const FilterEditRequestSchema: GenMessage<FilterEditRequest, { validType: FilterEditRequestValid }> =
-	/*@__PURE__*/
-	messageDesc(file_chat_v1_wordfilter, 5);
+export const FilterEditRequestSchema: GenMessage<FilterEditRequest, {validType: FilterEditRequestValid}> = /*@__PURE__*/
+  messageDesc(file_chat_v1_wordfilter, 5);
 
 /**
  * @generated from message chat.v1.FilterEditResponse
  */
 export type FilterEditResponse = Message<"chat.v1.FilterEditResponse"> & {
-	/**
-	 * @generated from field: chat.v1.Filter filter = 1;
-	 */
-	filter?: Filter;
+  /**
+   * @generated from field: chat.v1.Filter filter = 1;
+   */
+  filter?: Filter;
 };
 
 /**
  * @generated from message chat.v1.FilterEditResponse
  */
 export type FilterEditResponseValid = Message<"chat.v1.FilterEditResponse"> & {
-	/**
-	 * @generated from field: chat.v1.Filter filter = 1;
-	 */
-	filter: FilterValid;
+  /**
+   * @generated from field: chat.v1.Filter filter = 1;
+   */
+  filter: FilterValid;
 };
 
 /**
  * Describes the message chat.v1.FilterEditResponse.
  * Use `create(FilterEditResponseSchema)` to create a new message.
  */
-export const FilterEditResponseSchema: GenMessage<FilterEditResponse, { validType: FilterEditResponseValid }> =
-	/*@__PURE__*/
-	messageDesc(file_chat_v1_wordfilter, 6);
+export const FilterEditResponseSchema: GenMessage<FilterEditResponse, {validType: FilterEditResponseValid}> = /*@__PURE__*/
+  messageDesc(file_chat_v1_wordfilter, 6);
 
 /**
  * @generated from message chat.v1.Filter
  */
 export type Filter = Message<"chat.v1.Filter"> & {
-	/**
-	 * @generated from field: int64 filter_id = 1;
-	 */
-	filterId: bigint;
+  /**
+   * @generated from field: int64 filter_id = 1;
+   */
+  filterId: bigint;
 
-	/**
-	 * @generated from field: int64 author_id = 2;
-	 */
-	authorId: bigint;
+  /**
+   * @generated from field: int64 author_id = 2;
+   */
+  authorId: bigint;
 
-	/**
-	 * @generated from field: string pattern = 3;
-	 */
-	pattern: string;
+  /**
+   * @generated from field: string pattern = 3;
+   */
+  pattern: string;
 
-	/**
-	 * @generated from field: bool is_regex = 4;
-	 */
-	isRegex: boolean;
+  /**
+   * @generated from field: bool is_regex = 4;
+   */
+  isRegex: boolean;
 
-	/**
-	 * @generated from field: bool is_enabled = 5;
-	 */
-	isEnabled: boolean;
+  /**
+   * @generated from field: bool is_enabled = 5;
+   */
+  isEnabled: boolean;
 
-	/**
-	 * @generated from field: chat.v1.FilterAction action = 6;
-	 */
-	action: FilterAction;
+  /**
+   * @generated from field: chat.v1.FilterAction action = 6;
+   */
+  action: FilterAction;
 
-	/**
-	 * @generated from field: string duration = 7;
-	 */
-	duration: string;
+  /**
+   * @generated from field: string duration = 7;
+   */
+  duration: string;
 
-	/**
-	 * @generated from field: int64 trigger_count = 8;
-	 */
-	triggerCount: bigint;
+  /**
+   * @generated from field: int64 trigger_count = 8;
+   */
+  triggerCount: bigint;
 
-	/**
-	 * @generated from field: int32 weight = 9;
-	 */
-	weight: number;
+  /**
+   * @generated from field: int32 weight = 9;
+   */
+  weight: number;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 10;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 10;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 11;
-	 */
-	updatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 11;
+   */
+  updatedOn?: Timestamp;
 };
 
 /**
  * @generated from message chat.v1.Filter
  */
 export type FilterValid = Message<"chat.v1.Filter"> & {
-	/**
-	 * @generated from field: int64 filter_id = 1;
-	 */
-	filterId: bigint;
+  /**
+   * @generated from field: int64 filter_id = 1;
+   */
+  filterId: bigint;
 
-	/**
-	 * @generated from field: int64 author_id = 2;
-	 */
-	authorId: bigint;
+  /**
+   * @generated from field: int64 author_id = 2;
+   */
+  authorId: bigint;
 
-	/**
-	 * @generated from field: string pattern = 3;
-	 */
-	pattern: string;
+  /**
+   * @generated from field: string pattern = 3;
+   */
+  pattern: string;
 
-	/**
-	 * @generated from field: bool is_regex = 4;
-	 */
-	isRegex: boolean;
+  /**
+   * @generated from field: bool is_regex = 4;
+   */
+  isRegex: boolean;
 
-	/**
-	 * @generated from field: bool is_enabled = 5;
-	 */
-	isEnabled: boolean;
+  /**
+   * @generated from field: bool is_enabled = 5;
+   */
+  isEnabled: boolean;
 
-	/**
-	 * @generated from field: chat.v1.FilterAction action = 6;
-	 */
-	action: FilterAction;
+  /**
+   * @generated from field: chat.v1.FilterAction action = 6;
+   */
+  action: FilterAction;
 
-	/**
-	 * @generated from field: string duration = 7;
-	 */
-	duration: string;
+  /**
+   * @generated from field: string duration = 7;
+   */
+  duration: string;
 
-	/**
-	 * @generated from field: int64 trigger_count = 8;
-	 */
-	triggerCount: bigint;
+  /**
+   * @generated from field: int64 trigger_count = 8;
+   */
+  triggerCount: bigint;
 
-	/**
-	 * @generated from field: int32 weight = 9;
-	 */
-	weight: number;
+  /**
+   * @generated from field: int32 weight = 9;
+   */
+  weight: number;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 10;
-	 */
-	createdOn: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 10;
+   */
+  createdOn: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 11;
-	 */
-	updatedOn: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 11;
+   */
+  updatedOn: Timestamp;
 };
 
 /**
  * Describes the message chat.v1.Filter.
  * Use `create(FilterSchema)` to create a new message.
  */
-export const FilterSchema: GenMessage<Filter, { validType: FilterValid }> =
-	/*@__PURE__*/
-	messageDesc(file_chat_v1_wordfilter, 7);
+export const FilterSchema: GenMessage<Filter, {validType: FilterValid}> = /*@__PURE__*/
+  messageDesc(file_chat_v1_wordfilter, 7);
 
 /**
  * @generated from message chat.v1.FiltersResponse
  */
 export type FiltersResponse = Message<"chat.v1.FiltersResponse"> & {
-	/**
-	 * @generated from field: repeated chat.v1.Filter filters = 1;
-	 */
-	filters: Filter[];
+  /**
+   * @generated from field: repeated chat.v1.Filter filters = 1;
+   */
+  filters: Filter[];
 };
 
 /**
  * @generated from message chat.v1.FiltersResponse
  */
 export type FiltersResponseValid = Message<"chat.v1.FiltersResponse"> & {
-	/**
-	 * @generated from field: repeated chat.v1.Filter filters = 1;
-	 */
-	filters: FilterValid[];
+  /**
+   * @generated from field: repeated chat.v1.Filter filters = 1;
+   */
+  filters: FilterValid[];
 };
 
 /**
  * Describes the message chat.v1.FiltersResponse.
  * Use `create(FiltersResponseSchema)` to create a new message.
  */
-export const FiltersResponseSchema: GenMessage<FiltersResponse, { validType: FiltersResponseValid }> =
-	/*@__PURE__*/
-	messageDesc(file_chat_v1_wordfilter, 8);
+export const FiltersResponseSchema: GenMessage<FiltersResponse, {validType: FiltersResponseValid}> = /*@__PURE__*/
+  messageDesc(file_chat_v1_wordfilter, 8);
 
 /**
  * @generated from message chat.v1.UserWarning
  */
 export type UserWarning = Message<"chat.v1.UserWarning"> & {
-	/**
-	 * @generated from field: ban.v1.BanReason reason = 1;
-	 */
-	reason: BanReason;
+  /**
+   * @generated from field: ban.v1.BanReason reason = 1;
+   */
+  reason: BanReason;
 
-	/**
-	 * @generated from field: string message = 2;
-	 */
-	message: string;
+  /**
+   * @generated from field: string message = 2;
+   */
+  message: string;
 
-	/**
-	 * @generated from field: string matched = 3;
-	 */
-	matched: string;
+  /**
+   * @generated from field: string matched = 3;
+   */
+  matched: string;
 
-	/**
-	 * @generated from field: chat.v1.Filter filter = 4;
-	 */
-	filter?: Filter;
+  /**
+   * @generated from field: chat.v1.Filter filter = 4;
+   */
+  filter?: Filter;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 5;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 5;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: string persona_name = 6;
-	 */
-	personaName: string;
+  /**
+   * @generated from field: string persona_name = 6;
+   */
+  personaName: string;
 
-	/**
-	 * @generated from field: string avatar_hash = 7;
-	 */
-	avatarHash: string;
+  /**
+   * @generated from field: string avatar_hash = 7;
+   */
+  avatarHash: string;
 
-	/**
-	 * @generated from field: string server_name = 8;
-	 */
-	serverName: string;
+  /**
+   * @generated from field: string server_name = 8;
+   */
+  serverName: string;
 
-	/**
-	 * @generated from field: int32 server_id = 9;
-	 */
-	serverId: number;
+  /**
+   * @generated from field: int32 server_id = 9;
+   */
+  serverId: number;
 
-	/**
-	 * @generated from field: int64 steam_id = 10;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 10;
+   */
+  steamId: bigint;
 
-	/**
-	 * @generated from field: int32 current_total = 11;
-	 */
-	currentTotal: number;
+  /**
+   * @generated from field: int32 current_total = 11;
+   */
+  currentTotal: number;
 };
 
 /**
  * @generated from message chat.v1.UserWarning
  */
 export type UserWarningValid = Message<"chat.v1.UserWarning"> & {
-	/**
-	 * @generated from field: ban.v1.BanReason reason = 1;
-	 */
-	reason: BanReason;
+  /**
+   * @generated from field: ban.v1.BanReason reason = 1;
+   */
+  reason: BanReason;
 
-	/**
-	 * @generated from field: string message = 2;
-	 */
-	message: string;
+  /**
+   * @generated from field: string message = 2;
+   */
+  message: string;
 
-	/**
-	 * @generated from field: string matched = 3;
-	 */
-	matched: string;
+  /**
+   * @generated from field: string matched = 3;
+   */
+  matched: string;
 
-	/**
-	 * @generated from field: chat.v1.Filter filter = 4;
-	 */
-	filter: FilterValid;
+  /**
+   * @generated from field: chat.v1.Filter filter = 4;
+   */
+  filter: FilterValid;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 5;
-	 */
-	createdOn: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 5;
+   */
+  createdOn: Timestamp;
 
-	/**
-	 * @generated from field: string persona_name = 6;
-	 */
-	personaName: string;
+  /**
+   * @generated from field: string persona_name = 6;
+   */
+  personaName: string;
 
-	/**
-	 * @generated from field: string avatar_hash = 7;
-	 */
-	avatarHash: string;
+  /**
+   * @generated from field: string avatar_hash = 7;
+   */
+  avatarHash: string;
 
-	/**
-	 * @generated from field: string server_name = 8;
-	 */
-	serverName: string;
+  /**
+   * @generated from field: string server_name = 8;
+   */
+  serverName: string;
 
-	/**
-	 * @generated from field: int32 server_id = 9;
-	 */
-	serverId: number;
+  /**
+   * @generated from field: int32 server_id = 9;
+   */
+  serverId: number;
 
-	/**
-	 * @generated from field: int64 steam_id = 10;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 10;
+   */
+  steamId: bigint;
 
-	/**
-	 * @generated from field: int32 current_total = 11;
-	 */
-	currentTotal: number;
+  /**
+   * @generated from field: int32 current_total = 11;
+   */
+  currentTotal: number;
 };
 
 /**
  * Describes the message chat.v1.UserWarning.
  * Use `create(UserWarningSchema)` to create a new message.
  */
-export const UserWarningSchema: GenMessage<UserWarning, { validType: UserWarningValid }> =
-	/*@__PURE__*/
-	messageDesc(file_chat_v1_wordfilter, 9);
+export const UserWarningSchema: GenMessage<UserWarning, {validType: UserWarningValid}> = /*@__PURE__*/
+  messageDesc(file_chat_v1_wordfilter, 9);
 
 /**
  * @generated from message chat.v1.WarningStateResponse
  */
 export type WarningStateResponse = Message<"chat.v1.WarningStateResponse"> & {
-	/**
-	 * @generated from field: int32 max_weight = 1;
-	 */
-	maxWeight: number;
+  /**
+   * @generated from field: int32 max_weight = 1;
+   */
+  maxWeight: number;
 
-	/**
-	 * @generated from field: repeated chat.v1.UserWarning current = 2;
-	 */
-	current: UserWarning[];
+  /**
+   * @generated from field: repeated chat.v1.UserWarning current = 2;
+   */
+  current: UserWarning[];
 };
 
 /**
  * @generated from message chat.v1.WarningStateResponse
  */
 export type WarningStateResponseValid = Message<"chat.v1.WarningStateResponse"> & {
-	/**
-	 * @generated from field: int32 max_weight = 1;
-	 */
-	maxWeight: number;
+  /**
+   * @generated from field: int32 max_weight = 1;
+   */
+  maxWeight: number;
 
-	/**
-	 * @generated from field: repeated chat.v1.UserWarning current = 2;
-	 */
-	current: UserWarningValid[];
+  /**
+   * @generated from field: repeated chat.v1.UserWarning current = 2;
+   */
+  current: UserWarningValid[];
 };
 
 /**
  * Describes the message chat.v1.WarningStateResponse.
  * Use `create(WarningStateResponseSchema)` to create a new message.
  */
-export const WarningStateResponseSchema: GenMessage<WarningStateResponse, { validType: WarningStateResponseValid }> =
-	/*@__PURE__*/
-	messageDesc(file_chat_v1_wordfilter, 10);
+export const WarningStateResponseSchema: GenMessage<WarningStateResponse, {validType: WarningStateResponseValid}> = /*@__PURE__*/
+  messageDesc(file_chat_v1_wordfilter, 10);
 
 /**
  * @generated from enum chat.v1.FilterAction
  */
 export enum FilterAction {
-	/**
-	 * @generated from enum value: FILTER_ACTION_KICK_UNSPECIFIED = 0;
-	 */
-	KICK_UNSPECIFIED = 0,
+  /**
+   * @generated from enum value: FILTER_ACTION_KICK_UNSPECIFIED = 0;
+   */
+  KICK_UNSPECIFIED = 0,
 
-	/**
-	 * @generated from enum value: FILTER_ACTION_MUTE = 1;
-	 */
-	MUTE = 1,
+  /**
+   * @generated from enum value: FILTER_ACTION_MUTE = 1;
+   */
+  MUTE = 1,
 
-	/**
-	 * @generated from enum value: FILTER_ACTION_BAN = 2;
-	 */
-	BAN = 2,
+  /**
+   * @generated from enum value: FILTER_ACTION_BAN = 2;
+   */
+  BAN = 2,
 }
 
 /**
  * Describes the enum chat.v1.FilterAction.
  */
-export const FilterActionSchema: GenEnum<FilterAction> = /*@__PURE__*/ enumDesc(file_chat_v1_wordfilter, 0);
+export const FilterActionSchema: GenEnum<FilterAction> = /*@__PURE__*/
+  enumDesc(file_chat_v1_wordfilter, 0);
 
 /**
  * @generated from service chat.v1.WordfilterService
  */
 export const WordfilterService: GenService<{
-	/**
-	 * @generated from rpc chat.v1.WordfilterService.Filters
-	 */
-	filters: {
-		methodKind: "unary";
-		input: typeof EmptySchema;
-		output: typeof FiltersResponseSchema;
-	};
-	/**
-	 * @generated from rpc chat.v1.WordfilterService.WarningState
-	 */
-	warningState: {
-		methodKind: "unary";
-		input: typeof EmptySchema;
-		output: typeof WarningStateResponseSchema;
-	};
-	/**
-	 * @generated from rpc chat.v1.WordfilterService.FilterCreate
-	 */
-	filterCreate: {
-		methodKind: "unary";
-		input: typeof FilterCreateRequestSchema;
-		output: typeof FilterCreateResponseSchema;
-	};
-	/**
-	 * @generated from rpc chat.v1.WordfilterService.FilterEdit
-	 */
-	filterEdit: {
-		methodKind: "unary";
-		input: typeof FilterEditRequestSchema;
-		output: typeof FilterEditResponseSchema;
-	};
-	/**
-	 * @generated from rpc chat.v1.WordfilterService.FilterDelete
-	 */
-	filterDelete: {
-		methodKind: "unary";
-		input: typeof FilterDeleteRequestSchema;
-		output: typeof EmptySchema;
-	};
-	/**
-	 * @generated from rpc chat.v1.WordfilterService.FilterMatch
-	 */
-	filterMatch: {
-		methodKind: "unary";
-		input: typeof FilterMatchRequestSchema;
-		output: typeof FilterMatchResponseSchema;
-	};
-}> = /*@__PURE__*/ serviceDesc(file_chat_v1_wordfilter, 0);
+  /**
+   * @generated from rpc chat.v1.WordfilterService.Filters
+   */
+  filters: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof FiltersResponseSchema;
+  },
+  /**
+   * @generated from rpc chat.v1.WordfilterService.WarningState
+   */
+  warningState: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof WarningStateResponseSchema;
+  },
+  /**
+   * @generated from rpc chat.v1.WordfilterService.FilterCreate
+   */
+  filterCreate: {
+    methodKind: "unary";
+    input: typeof FilterCreateRequestSchema;
+    output: typeof FilterCreateResponseSchema;
+  },
+  /**
+   * @generated from rpc chat.v1.WordfilterService.FilterEdit
+   */
+  filterEdit: {
+    methodKind: "unary";
+    input: typeof FilterEditRequestSchema;
+    output: typeof FilterEditResponseSchema;
+  },
+  /**
+   * @generated from rpc chat.v1.WordfilterService.FilterDelete
+   */
+  filterDelete: {
+    methodKind: "unary";
+    input: typeof FilterDeleteRequestSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc chat.v1.WordfilterService.FilterMatch
+   */
+  filterMatch: {
+    methodKind: "unary";
+    input: typeof FilterMatchRequestSchema;
+    output: typeof FilterMatchResponseSchema;
+  },
+}> = /*@__PURE__*/
+  serviceDesc(file_chat_v1_wordfilter, 0);
+

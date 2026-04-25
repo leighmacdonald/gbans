@@ -16,7 +16,7 @@ import (
 )
 
 type AppealMessage struct {
-	BanID           int64                `json:"ban_id"`
+	BanID           int32                `json:"ban_id"`
 	BanMessageID    int64                `json:"ban_message_id"`
 	AuthorID        steamid.SteamID      `json:"author_id"`
 	MessageMD       string               `json:"message_md"`
@@ -32,7 +32,7 @@ func (am AppealMessage) Path() string {
 	return fmt.Sprintf("/ban/%d#msg-%d", am.BanID, am.BanMessageID)
 }
 
-func NewBanAppealMessage(banID int64, authorID steamid.SteamID, message string) AppealMessage {
+func NewBanAppealMessage(banID int32, authorID steamid.SteamID, message string) AppealMessage {
 	return AppealMessage{
 		BanID:     banID,
 		AuthorID:  authorID,
@@ -144,7 +144,7 @@ func (u *Appeals) EditBanMessage(ctx context.Context, curUser person.BaseUser, b
 	return existing, nil
 }
 
-func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.BaseUser, banID int64, newMsg string) (AppealMessage, error) {
+func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.BaseUser, banID int32, newMsg string) (AppealMessage, error) {
 	if banID <= 0 {
 		return AppealMessage{}, httphelper.ErrInvalidParameter
 	}
@@ -218,7 +218,7 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.BaseUser,
 	return msg, nil
 }
 
-func (u *Appeals) Messages(ctx context.Context, userProfile person.BaseUser, banID int64) ([]AppealMessage, error) {
+func (u *Appeals) Messages(ctx context.Context, userProfile person.BaseUser, banID int32) ([]AppealMessage, error) {
 	banPerson, errGetBan := u.bans.QueryOne(ctx, QueryOpts{
 		BanID:   banID,
 		Deleted: true,

@@ -2,657 +2,632 @@
 // @generated from file ban/v1/ban.proto (package ban.v1, edition 2023)
 /* eslint-disable */
 
-import type { Message } from "@bufbuild/protobuf";
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Duration, EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
-import {
-	file_google_protobuf_duration,
-	file_google_protobuf_empty,
-	file_google_protobuf_timestamp,
-} from "@bufbuild/protobuf/wkt";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
+import type { Duration, EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_duration, file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file ban/v1/ban.proto.
  */
-export const file_ban_v1_ban: GenFile =
-	/*@__PURE__*/
-	fileDesc(
-		"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bGFzdF9pcBgFIAEoCRIYCghldmFkZV9vaxgGIAEoCEIGukgDyAEBEikKCGJhbl90eXBlGAcgASgOMg8uYmFuLnYxLkJhblR5cGVCBrpIA8gBARIpCgZyZWFzb24YCCABKA4yES5iYW4udjEuQmFuUmVhc29uQga6SAPIAQESGwoLcmVhc29uX3RleHQYCSABKAlCBrpIA8gBARIhChF1bmJhbl9yZWFzb25fdGV4dBgKIAEoCUIGukgDyAEBEhQKBG5vdGUYCyABKAlCBrpIA8gBARImCgZvcmlnaW4YDCABKA4yDi5iYW4udjEuT3JpZ2luQga6SAPIAQESFAoEY2lkchgNIAEoCUIGukgDyAEBEjEKDGFwcGVhbF9zdGF0ZRgOIAEoDjITLmJhbi52MS5BcHBlYWxTdGF0ZUIGukgDyAEBEhQKBG5hbWUYDyABKAlCBrpIA8gBARIXCgdkZWxldGVkGBAgASgIQga6SAPIAQESGgoKaXNfZW5hYmxlZBgRIAEoCEIGukgDyAEBEjYKCmNyZWF0ZWRfb24YEiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgTIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARIzCghkdXJhdGlvbhgUIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbkIGukgDyAEBEjcKC3ZhbGlkX3VudGlsGBUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEiMKE3NvdXJjZV9wZXJzb25hX25hbWUYFiABKAlCBrpIA8gBARIiChJzb3VyY2VfYXZhdGFyX2hhc2gYFyABKAlCBrpIA8gBARIjChN0YXJnZXRfcGVyc29uYV9uYW1lGBggASgJQga6SAPIAQESIgoSdGFyZ2V0X2F2YXRhcl9oYXNoGBkgASgJQga6SAPIAQEqZwoHQmFuVHlwZRIbChdCQU5fVFlQRV9PS19VTlNQRUNJRklFRBAAEhQKEEJBTl9UWVBFX05PX0NPTU0QARITCg9CQU5fVFlQRV9CQU5ORUQQAhIUChBCQU5fVFlQRV9ORVRXT1JLEAMqmgEKC0FwcGVhbFN0YXRlEiEKHUFQUEVBTF9TVEFURV9PUEVOX1VOU1BFQ0lGSUVEEAASFwoTQVBQRUFMX1NUQVRFX0RFTklFRBABEhkKFUFQUEVBTF9TVEFURV9BQ0NFUFRFRBACEhgKFEFQUEVBTF9TVEFURV9SRURVQ0VEEAMSGgoWQVBQRUFMX1NUQVRFX05PX0FQUEVBTBAEKpEDCglCYW5SZWFzb24SGgoWQkFOX1JFQVNPTl9VTlNQRUNJRklFRBAAEhUKEUJBTl9SRUFTT05fQ1VTVE9NEAESFwoTQkFOX1JFQVNPTl9FWFRFUk5BTBACEhcKE0JBTl9SRUFTT05fQ0hFQVRJTkcQAxIVChFCQU5fUkVBU09OX1JBQ0lTTRAEEhkKFUJBTl9SRUFTT05fSEFSQVNTTUVOVBAFEhkKFUJBTl9SRUFTT05fRVhQTE9JVElORxAGEiAKHEJBTl9SRUFTT05fV0FSTklOR1NfRVhDRUVERUQQBxITCg9CQU5fUkVBU09OX1NQQU0QCBIXChNCQU5fUkVBU09OX0xBTkdVQUdFEAkSFgoSQkFOX1JFQVNPTl9QUk9GSUxFEAoSIAocQkFOX1JFQVNPTl9JVEVNX0RFU0NSSVBUSU9OUxALEhcKE0JBTl9SRUFTT05fQk9UX0hPU1QQDBIWChJCQU5fUkVBU09OX0VWQURJTkcQDRIXChNCQU5fUkVBU09OX1VTRVJOQU1FEA4qcAoGT3JpZ2luEh0KGU9SSUdJTl9TWVNURU1fVU5TUEVDSUZJRUQQABIOCgpPUklHSU5fQk9UEAESDgoKT1JJR0lOX1dFQhACEhIKDk9SSUdJTl9JTl9HQU1FEAMSEwoPT1JJR0lOX1JFUE9SVEVEEAQy/QIKCkJhblNlcnZpY2USNgoFUXVlcnkSFC5iYW4udjEuUXVlcnlSZXF1ZXN0GhUuYmFuLnYxLlF1ZXJ5UmVzcG9uc2UiABI5CgZEZWxldGUSFS5iYW4udjEuRGVsZXRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEjAKA0dldBISLmJhbi52MS5HZXRSZXF1ZXN0GhMuYmFuLnYxLkdldFJlc3BvbnNlIgASVAoPUXVlcnlTb3VyY2VCYW5zEh4uYmFuLnYxLlF1ZXJ5U291cmNlQmFuc1JlcXVlc3QaHy5iYW4udjEuUXVlcnlTb3VyY2VCYW5zUmVzcG9uc2UiABI5CgZVcGRhdGUSFS5iYW4udjEuVXBkYXRlUmVxdWVzdBoWLmJhbi52MS5VcGRhdGVSZXNwb25zZSIAEjkKBkNyZWF0ZRIVLmJhbi52MS5DcmVhdGVSZXF1ZXN0GhYuYmFuLnYxLkNyZWF0ZVJlc3BvbnNlIgBChgEKCmNvbS5iYW4udjFCCEJhblByb3RvUAFaNWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvYmFuL3YxO2JhbnYxogIDQlhYqgIGQmFuLlYxygIGQmFuXFYx4gISQmFuXFYxXEdQQk1ldGFkYXRh6gIHQmFuOjpWMWIIZWRpdGlvbnNw6Ac",
-		[
-			file_buf_validate_validate,
-			file_google_protobuf_duration,
-			file_google_protobuf_empty,
-			file_google_protobuf_timestamp,
-		],
-	);
+export const file_ban_v1_ban: GenFile = /*@__PURE__*/
+  fileDesc("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bGFzdF9pcBgFIAEoCRIYCghldmFkZV9vaxgGIAEoCEIGukgDyAEBEikKCGJhbl90eXBlGAcgASgOMg8uYmFuLnYxLkJhblR5cGVCBrpIA8gBARIpCgZyZWFzb24YCCABKA4yES5iYW4udjEuQmFuUmVhc29uQga6SAPIAQESGwoLcmVhc29uX3RleHQYCSABKAlCBrpIA8gBARIhChF1bmJhbl9yZWFzb25fdGV4dBgKIAEoCUIGukgDyAEBEhQKBG5vdGUYCyABKAlCBrpIA8gBARImCgZvcmlnaW4YDCABKA4yDi5iYW4udjEuT3JpZ2luQga6SAPIAQESFAoEY2lkchgNIAEoCUIGukgDyAEBEjEKDGFwcGVhbF9zdGF0ZRgOIAEoDjITLmJhbi52MS5BcHBlYWxTdGF0ZUIGukgDyAEBEhQKBG5hbWUYDyABKAlCBrpIA8gBARIXCgdkZWxldGVkGBAgASgIQga6SAPIAQESGgoKaXNfZW5hYmxlZBgRIAEoCEIGukgDyAEBEjYKCmNyZWF0ZWRfb24YEiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgTIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARIzCghkdXJhdGlvbhgUIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbkIGukgDyAEBEjcKC3ZhbGlkX3VudGlsGBUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEiMKE3NvdXJjZV9wZXJzb25hX25hbWUYFiABKAlCBrpIA8gBARIiChJzb3VyY2VfYXZhdGFyX2hhc2gYFyABKAlCBrpIA8gBARIjChN0YXJnZXRfcGVyc29uYV9uYW1lGBggASgJQga6SAPIAQESIgoSdGFyZ2V0X2F2YXRhcl9oYXNoGBkgASgJQga6SAPIAQEqZwoHQmFuVHlwZRIbChdCQU5fVFlQRV9PS19VTlNQRUNJRklFRBAAEhQKEEJBTl9UWVBFX05PX0NPTU0QARITCg9CQU5fVFlQRV9CQU5ORUQQAhIUChBCQU5fVFlQRV9ORVRXT1JLEAMqmgEKC0FwcGVhbFN0YXRlEiEKHUFQUEVBTF9TVEFURV9PUEVOX1VOU1BFQ0lGSUVEEAASFwoTQVBQRUFMX1NUQVRFX0RFTklFRBABEhkKFUFQUEVBTF9TVEFURV9BQ0NFUFRFRBACEhgKFEFQUEVBTF9TVEFURV9SRURVQ0VEEAMSGgoWQVBQRUFMX1NUQVRFX05PX0FQUEVBTBAEKpEDCglCYW5SZWFzb24SGgoWQkFOX1JFQVNPTl9VTlNQRUNJRklFRBAAEhUKEUJBTl9SRUFTT05fQ1VTVE9NEAESFwoTQkFOX1JFQVNPTl9FWFRFUk5BTBACEhcKE0JBTl9SRUFTT05fQ0hFQVRJTkcQAxIVChFCQU5fUkVBU09OX1JBQ0lTTRAEEhkKFUJBTl9SRUFTT05fSEFSQVNTTUVOVBAFEhkKFUJBTl9SRUFTT05fRVhQTE9JVElORxAGEiAKHEJBTl9SRUFTT05fV0FSTklOR1NfRVhDRUVERUQQBxITCg9CQU5fUkVBU09OX1NQQU0QCBIXChNCQU5fUkVBU09OX0xBTkdVQUdFEAkSFgoSQkFOX1JFQVNPTl9QUk9GSUxFEAoSIAocQkFOX1JFQVNPTl9JVEVNX0RFU0NSSVBUSU9OUxALEhcKE0JBTl9SRUFTT05fQk9UX0hPU1QQDBIWChJCQU5fUkVBU09OX0VWQURJTkcQDRIXChNCQU5fUkVBU09OX1VTRVJOQU1FEA4qcAoGT3JpZ2luEh0KGU9SSUdJTl9TWVNURU1fVU5TUEVDSUZJRUQQABIOCgpPUklHSU5fQk9UEAESDgoKT1JJR0lOX1dFQhACEhIKDk9SSUdJTl9JTl9HQU1FEAMSEwoPT1JJR0lOX1JFUE9SVEVEEAQy/QIKCkJhblNlcnZpY2USNgoFUXVlcnkSFC5iYW4udjEuUXVlcnlSZXF1ZXN0GhUuYmFuLnYxLlF1ZXJ5UmVzcG9uc2UiABI5CgZEZWxldGUSFS5iYW4udjEuRGVsZXRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEjAKA0dldBISLmJhbi52MS5HZXRSZXF1ZXN0GhMuYmFuLnYxLkdldFJlc3BvbnNlIgASVAoPUXVlcnlTb3VyY2VCYW5zEh4uYmFuLnYxLlF1ZXJ5U291cmNlQmFuc1JlcXVlc3QaHy5iYW4udjEuUXVlcnlTb3VyY2VCYW5zUmVzcG9uc2UiABI5CgZVcGRhdGUSFS5iYW4udjEuVXBkYXRlUmVxdWVzdBoWLmJhbi52MS5VcGRhdGVSZXNwb25zZSIAEjkKBkNyZWF0ZRIVLmJhbi52MS5DcmVhdGVSZXF1ZXN0GhYuYmFuLnYxLkNyZWF0ZVJlc3BvbnNlIgBChgEKCmNvbS5iYW4udjFCCEJhblByb3RvUAFaNWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvYmFuL3YxO2JhbnYxogIDQlhYqgIGQmFuLlYxygIGQmFuXFYx4gISQmFuXFYxXEdQQk1ldGFkYXRh6gIHQmFuOjpWMWIIZWRpdGlvbnNw6Ac", [file_buf_validate_validate, file_google_protobuf_duration, file_google_protobuf_empty, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message ban.v1.CreateRequest
  */
 export type CreateRequest = Message<"ban.v1.CreateRequest"> & {
-	/**
-	 * @generated from field: int64 target_id = 1;
-	 */
-	targetId: bigint;
+  /**
+   * @generated from field: int64 target_id = 1;
+   */
+  targetId: bigint;
 
-	/**
-	 * @generated from field: int64 source_id = 2;
-	 */
-	sourceId: bigint;
+  /**
+   * @generated from field: int64 source_id = 2;
+   */
+  sourceId: bigint;
 
-	/**
-	 * @generated from field: google.protobuf.Duration duration = 3;
-	 */
-	duration?: Duration;
+  /**
+   * @generated from field: google.protobuf.Duration duration = 3;
+   */
+  duration?: Duration;
 
-	/**
-	 * @generated from field: ban.v1.BanType ban_type = 4;
-	 */
-	banType: BanType;
+  /**
+   * @generated from field: ban.v1.BanType ban_type = 4;
+   */
+  banType: BanType;
 
-	/**
-	 * @generated from field: ban.v1.BanReason reason = 5;
-	 */
-	reason: BanReason;
+  /**
+   * @generated from field: ban.v1.BanReason reason = 5;
+   */
+  reason: BanReason;
 
-	/**
-	 * @generated from field: string reason_text = 6;
-	 */
-	reasonText: string;
+  /**
+   * @generated from field: string reason_text = 6;
+   */
+  reasonText: string;
 
-	/**
-	 * @generated from field: ban.v1.Origin origin = 7;
-	 */
-	origin: Origin;
+  /**
+   * @generated from field: ban.v1.Origin origin = 7;
+   */
+  origin: Origin;
 
-	/**
-	 * @generated from field: int32 report_id = 8;
-	 */
-	reportId: number;
+  /**
+   * @generated from field: int32 report_id = 8;
+   */
+  reportId: number;
 
-	/**
-	 * @generated from field: string cidr = 9;
-	 */
-	cidr: string;
+  /**
+   * @generated from field: string cidr = 9;
+   */
+  cidr: string;
 
-	/**
-	 * @generated from field: bool evade_ok = 10;
-	 */
-	evadeOk: boolean;
+  /**
+   * @generated from field: bool evade_ok = 10;
+   */
+  evadeOk: boolean;
 
-	/**
-	 * @generated from field: string name = 11;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 11;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: int32 demo_tick = 12;
-	 */
-	demoTick: number;
+  /**
+   * @generated from field: int32 demo_tick = 12;
+   */
+  demoTick: number;
 
-	/**
-	 * @generated from field: string demo_name = 13;
-	 */
-	demoName: string;
+  /**
+   * @generated from field: string demo_name = 13;
+   */
+  demoName: string;
 
-	/**
-	 * @generated from field: string note = 14;
-	 */
-	note: string;
+  /**
+   * @generated from field: string note = 14;
+   */
+  note: string;
 };
 
 /**
  * @generated from message ban.v1.CreateRequest
  */
 export type CreateRequestValid = Message<"ban.v1.CreateRequest"> & {
-	/**
-	 * @generated from field: int64 target_id = 1;
-	 */
-	targetId: bigint;
+  /**
+   * @generated from field: int64 target_id = 1;
+   */
+  targetId: bigint;
 
-	/**
-	 * @generated from field: int64 source_id = 2;
-	 */
-	sourceId: bigint;
+  /**
+   * @generated from field: int64 source_id = 2;
+   */
+  sourceId: bigint;
 
-	/**
-	 * @generated from field: google.protobuf.Duration duration = 3;
-	 */
-	duration?: Duration;
+  /**
+   * @generated from field: google.protobuf.Duration duration = 3;
+   */
+  duration?: Duration;
 
-	/**
-	 * @generated from field: ban.v1.BanType ban_type = 4;
-	 */
-	banType: BanType;
+  /**
+   * @generated from field: ban.v1.BanType ban_type = 4;
+   */
+  banType: BanType;
 
-	/**
-	 * @generated from field: ban.v1.BanReason reason = 5;
-	 */
-	reason: BanReason;
+  /**
+   * @generated from field: ban.v1.BanReason reason = 5;
+   */
+  reason: BanReason;
 
-	/**
-	 * @generated from field: string reason_text = 6;
-	 */
-	reasonText: string;
+  /**
+   * @generated from field: string reason_text = 6;
+   */
+  reasonText: string;
 
-	/**
-	 * @generated from field: ban.v1.Origin origin = 7;
-	 */
-	origin: Origin;
+  /**
+   * @generated from field: ban.v1.Origin origin = 7;
+   */
+  origin: Origin;
 
-	/**
-	 * @generated from field: int32 report_id = 8;
-	 */
-	reportId: number;
+  /**
+   * @generated from field: int32 report_id = 8;
+   */
+  reportId: number;
 
-	/**
-	 * @generated from field: string cidr = 9;
-	 */
-	cidr: string;
+  /**
+   * @generated from field: string cidr = 9;
+   */
+  cidr: string;
 
-	/**
-	 * @generated from field: bool evade_ok = 10;
-	 */
-	evadeOk: boolean;
+  /**
+   * @generated from field: bool evade_ok = 10;
+   */
+  evadeOk: boolean;
 
-	/**
-	 * @generated from field: string name = 11;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 11;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: int32 demo_tick = 12;
-	 */
-	demoTick: number;
+  /**
+   * @generated from field: int32 demo_tick = 12;
+   */
+  demoTick: number;
 
-	/**
-	 * @generated from field: string demo_name = 13;
-	 */
-	demoName: string;
+  /**
+   * @generated from field: string demo_name = 13;
+   */
+  demoName: string;
 
-	/**
-	 * @generated from field: string note = 14;
-	 */
-	note: string;
+  /**
+   * @generated from field: string note = 14;
+   */
+  note: string;
 };
 
 /**
  * Describes the message ban.v1.CreateRequest.
  * Use `create(CreateRequestSchema)` to create a new message.
  */
-export const CreateRequestSchema: GenMessage<CreateRequest, { validType: CreateRequestValid }> =
-	/*@__PURE__*/
-	messageDesc(file_ban_v1_ban, 0);
+export const CreateRequestSchema: GenMessage<CreateRequest, {validType: CreateRequestValid}> = /*@__PURE__*/
+  messageDesc(file_ban_v1_ban, 0);
 
 /**
  * @generated from message ban.v1.CreateResponse
  */
 export type CreateResponse = Message<"ban.v1.CreateResponse"> & {
-	/**
-	 * @generated from field: ban.v1.Ban ban = 1;
-	 */
-	ban?: Ban;
+  /**
+   * @generated from field: ban.v1.Ban ban = 1;
+   */
+  ban?: Ban;
 };
 
 /**
  * @generated from message ban.v1.CreateResponse
  */
 export type CreateResponseValid = Message<"ban.v1.CreateResponse"> & {
-	/**
-	 * @generated from field: ban.v1.Ban ban = 1;
-	 */
-	ban?: BanValid;
+  /**
+   * @generated from field: ban.v1.Ban ban = 1;
+   */
+  ban?: BanValid;
 };
 
 /**
  * Describes the message ban.v1.CreateResponse.
  * Use `create(CreateResponseSchema)` to create a new message.
  */
-export const CreateResponseSchema: GenMessage<CreateResponse, { validType: CreateResponseValid }> =
-	/*@__PURE__*/
-	messageDesc(file_ban_v1_ban, 1);
+export const CreateResponseSchema: GenMessage<CreateResponse, {validType: CreateResponseValid}> = /*@__PURE__*/
+  messageDesc(file_ban_v1_ban, 1);
 
 /**
  * @generated from message ban.v1.UpdateRequest
  */
 export type UpdateRequest = Message<"ban.v1.UpdateRequest"> & {
-	/**
-	 * @generated from field: ban.v1.BanType ban_type = 1;
-	 */
-	banType: BanType;
+  /**
+   * @generated from field: ban.v1.BanType ban_type = 1;
+   */
+  banType: BanType;
 
-	/**
-	 * @generated from field: ban.v1.BanReason reason = 2;
-	 */
-	reason: BanReason;
+  /**
+   * @generated from field: ban.v1.BanReason reason = 2;
+   */
+  reason: BanReason;
 
-	/**
-	 * @generated from field: string reason_text = 3;
-	 */
-	reasonText: string;
+  /**
+   * @generated from field: string reason_text = 3;
+   */
+  reasonText: string;
 
-	/**
-	 * @generated from field: string note = 4;
-	 */
-	note: string;
+  /**
+   * @generated from field: string note = 4;
+   */
+  note: string;
 
-	/**
-	 * @generated from field: bool evade_ok = 5;
-	 */
-	evadeOk: boolean;
+  /**
+   * @generated from field: bool evade_ok = 5;
+   */
+  evadeOk: boolean;
 
-	/**
-	 * @generated from field: google.protobuf.Duration duration = 6;
-	 */
-	duration?: Duration;
+  /**
+   * @generated from field: google.protobuf.Duration duration = 6;
+   */
+  duration?: Duration;
 
-	/**
-	 * @generated from field: string cidr = 7;
-	 */
-	cidr: string;
+  /**
+   * @generated from field: string cidr = 7;
+   */
+  cidr: string;
 
-	/**
-	 * @generated from field: int32 ban_id = 8;
-	 */
-	banId: number;
+  /**
+   * @generated from field: int32 ban_id = 8;
+   */
+  banId: number;
 
-	/**
-	 * @generated from field: ban.v1.AppealState appeal_state = 9;
-	 */
-	appealState: AppealState;
+  /**
+   * @generated from field: ban.v1.AppealState appeal_state = 9;
+   */
+  appealState: AppealState;
 };
 
 /**
  * @generated from message ban.v1.UpdateRequest
  */
 export type UpdateRequestValid = Message<"ban.v1.UpdateRequest"> & {
-	/**
-	 * @generated from field: ban.v1.BanType ban_type = 1;
-	 */
-	banType: BanType;
+  /**
+   * @generated from field: ban.v1.BanType ban_type = 1;
+   */
+  banType: BanType;
 
-	/**
-	 * @generated from field: ban.v1.BanReason reason = 2;
-	 */
-	reason: BanReason;
+  /**
+   * @generated from field: ban.v1.BanReason reason = 2;
+   */
+  reason: BanReason;
 
-	/**
-	 * @generated from field: string reason_text = 3;
-	 */
-	reasonText: string;
+  /**
+   * @generated from field: string reason_text = 3;
+   */
+  reasonText: string;
 
-	/**
-	 * @generated from field: string note = 4;
-	 */
-	note: string;
+  /**
+   * @generated from field: string note = 4;
+   */
+  note: string;
 
-	/**
-	 * @generated from field: bool evade_ok = 5;
-	 */
-	evadeOk: boolean;
+  /**
+   * @generated from field: bool evade_ok = 5;
+   */
+  evadeOk: boolean;
 
-	/**
-	 * @generated from field: google.protobuf.Duration duration = 6;
-	 */
-	duration: Duration;
+  /**
+   * @generated from field: google.protobuf.Duration duration = 6;
+   */
+  duration: Duration;
 
-	/**
-	 * @generated from field: string cidr = 7;
-	 */
-	cidr: string;
+  /**
+   * @generated from field: string cidr = 7;
+   */
+  cidr: string;
 
-	/**
-	 * @generated from field: int32 ban_id = 8;
-	 */
-	banId: number;
+  /**
+   * @generated from field: int32 ban_id = 8;
+   */
+  banId: number;
 
-	/**
-	 * @generated from field: ban.v1.AppealState appeal_state = 9;
-	 */
-	appealState: AppealState;
+  /**
+   * @generated from field: ban.v1.AppealState appeal_state = 9;
+   */
+  appealState: AppealState;
 };
 
 /**
  * Describes the message ban.v1.UpdateRequest.
  * Use `create(UpdateRequestSchema)` to create a new message.
  */
-export const UpdateRequestSchema: GenMessage<UpdateRequest, { validType: UpdateRequestValid }> =
-	/*@__PURE__*/
-	messageDesc(file_ban_v1_ban, 2);
+export const UpdateRequestSchema: GenMessage<UpdateRequest, {validType: UpdateRequestValid}> = /*@__PURE__*/
+  messageDesc(file_ban_v1_ban, 2);
 
 /**
  * @generated from message ban.v1.UpdateResponse
  */
 export type UpdateResponse = Message<"ban.v1.UpdateResponse"> & {
-	/**
-	 * @generated from field: ban.v1.Ban ban = 1;
-	 */
-	ban?: Ban;
+  /**
+   * @generated from field: ban.v1.Ban ban = 1;
+   */
+  ban?: Ban;
 };
 
 /**
  * @generated from message ban.v1.UpdateResponse
  */
 export type UpdateResponseValid = Message<"ban.v1.UpdateResponse"> & {
-	/**
-	 * @generated from field: ban.v1.Ban ban = 1;
-	 */
-	ban: BanValid;
+  /**
+   * @generated from field: ban.v1.Ban ban = 1;
+   */
+  ban: BanValid;
 };
 
 /**
  * Describes the message ban.v1.UpdateResponse.
  * Use `create(UpdateResponseSchema)` to create a new message.
  */
-export const UpdateResponseSchema: GenMessage<UpdateResponse, { validType: UpdateResponseValid }> =
-	/*@__PURE__*/
-	messageDesc(file_ban_v1_ban, 3);
+export const UpdateResponseSchema: GenMessage<UpdateResponse, {validType: UpdateResponseValid}> = /*@__PURE__*/
+  messageDesc(file_ban_v1_ban, 3);
 
 /**
  * @generated from message ban.v1.QuerySourceBansRequest
  */
 export type QuerySourceBansRequest = Message<"ban.v1.QuerySourceBansRequest"> & {
-	/**
-	 * @generated from field: string steam_id = 1;
-	 */
-	steamId: string;
+  /**
+   * @generated from field: string steam_id = 1;
+   */
+  steamId: string;
 };
 
 /**
  * @generated from message ban.v1.QuerySourceBansRequest
  */
 export type QuerySourceBansRequestValid = Message<"ban.v1.QuerySourceBansRequest"> & {
-	/**
-	 * @generated from field: string steam_id = 1;
-	 */
-	steamId: string;
+  /**
+   * @generated from field: string steam_id = 1;
+   */
+  steamId: string;
 };
 
 /**
  * Describes the message ban.v1.QuerySourceBansRequest.
  * Use `create(QuerySourceBansRequestSchema)` to create a new message.
  */
-export const QuerySourceBansRequestSchema: GenMessage<
-	QuerySourceBansRequest,
-	{ validType: QuerySourceBansRequestValid }
-> = /*@__PURE__*/ messageDesc(file_ban_v1_ban, 4);
+export const QuerySourceBansRequestSchema: GenMessage<QuerySourceBansRequest, {validType: QuerySourceBansRequestValid}> = /*@__PURE__*/
+  messageDesc(file_ban_v1_ban, 4);
 
 /**
  * @generated from message ban.v1.SourceBanRecord
  */
 export type SourceBanRecord = Message<"ban.v1.SourceBanRecord"> & {
-	/**
-	 * @generated from field: int32 ban_id = 1;
-	 */
-	banId: number;
+  /**
+   * @generated from field: int32 ban_id = 1;
+   */
+  banId: number;
 
-	/**
-	 * @generated from field: string site_name = 2;
-	 */
-	siteName: string;
+  /**
+   * @generated from field: string site_name = 2;
+   */
+  siteName: string;
 
-	/**
-	 * @generated from field: int32 site_id = 3;
-	 */
-	siteId: number;
+  /**
+   * @generated from field: int32 site_id = 3;
+   */
+  siteId: number;
 
-	/**
-	 * @generated from field: string persona_name = 4;
-	 */
-	personaName: string;
+  /**
+   * @generated from field: string persona_name = 4;
+   */
+  personaName: string;
 
-	/**
-	 * @generated from field: int64 steam_id = 5;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 5;
+   */
+  steamId: bigint;
 
-	/**
-	 * @generated from field: string reason = 6;
-	 */
-	reason: string;
+  /**
+   * @generated from field: string reason = 6;
+   */
+  reason: string;
 
-	/**
-	 * @generated from field: google.protobuf.Duration duration = 7;
-	 */
-	duration?: Duration;
+  /**
+   * @generated from field: google.protobuf.Duration duration = 7;
+   */
+  duration?: Duration;
 
-	/**
-	 * @generated from field: bool permanent = 8;
-	 */
-	permanent: boolean;
+  /**
+   * @generated from field: bool permanent = 8;
+   */
+  permanent: boolean;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 9;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 9;
+   */
+  createdOn?: Timestamp;
 };
 
 /**
  * @generated from message ban.v1.SourceBanRecord
  */
 export type SourceBanRecordValid = Message<"ban.v1.SourceBanRecord"> & {
-	/**
-	 * @generated from field: int32 ban_id = 1;
-	 */
-	banId: number;
+  /**
+   * @generated from field: int32 ban_id = 1;
+   */
+  banId: number;
 
-	/**
-	 * @generated from field: string site_name = 2;
-	 */
-	siteName: string;
+  /**
+   * @generated from field: string site_name = 2;
+   */
+  siteName: string;
 
-	/**
-	 * @generated from field: int32 site_id = 3;
-	 */
-	siteId: number;
+  /**
+   * @generated from field: int32 site_id = 3;
+   */
+  siteId: number;
 
-	/**
-	 * @generated from field: string persona_name = 4;
-	 */
-	personaName: string;
+  /**
+   * @generated from field: string persona_name = 4;
+   */
+  personaName: string;
 
-	/**
-	 * @generated from field: int64 steam_id = 5;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 5;
+   */
+  steamId: bigint;
 
-	/**
-	 * @generated from field: string reason = 6;
-	 */
-	reason: string;
+  /**
+   * @generated from field: string reason = 6;
+   */
+  reason: string;
 
-	/**
-	 * @generated from field: google.protobuf.Duration duration = 7;
-	 */
-	duration: Duration;
+  /**
+   * @generated from field: google.protobuf.Duration duration = 7;
+   */
+  duration: Duration;
 
-	/**
-	 * @generated from field: bool permanent = 8;
-	 */
-	permanent: boolean;
+  /**
+   * @generated from field: bool permanent = 8;
+   */
+  permanent: boolean;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 9;
-	 */
-	createdOn: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 9;
+   */
+  createdOn: Timestamp;
 };
 
 /**
  * Describes the message ban.v1.SourceBanRecord.
  * Use `create(SourceBanRecordSchema)` to create a new message.
  */
-export const SourceBanRecordSchema: GenMessage<SourceBanRecord, { validType: SourceBanRecordValid }> =
-	/*@__PURE__*/
-	messageDesc(file_ban_v1_ban, 5);
+export const SourceBanRecordSchema: GenMessage<SourceBanRecord, {validType: SourceBanRecordValid}> = /*@__PURE__*/
+  messageDesc(file_ban_v1_ban, 5);
 
 /**
  * @generated from message ban.v1.QuerySourceBansResponse
  */
 export type QuerySourceBansResponse = Message<"ban.v1.QuerySourceBansResponse"> & {
-	/**
-	 * @generated from field: repeated ban.v1.SourceBanRecord bans = 1;
-	 */
-	bans: SourceBanRecord[];
+  /**
+   * @generated from field: repeated ban.v1.SourceBanRecord bans = 1;
+   */
+  bans: SourceBanRecord[];
 };
 
 /**
  * @generated from message ban.v1.QuerySourceBansResponse
  */
 export type QuerySourceBansResponseValid = Message<"ban.v1.QuerySourceBansResponse"> & {
-	/**
-	 * @generated from field: repeated ban.v1.SourceBanRecord bans = 1;
-	 */
-	bans: SourceBanRecordValid[];
+  /**
+   * @generated from field: repeated ban.v1.SourceBanRecord bans = 1;
+   */
+  bans: SourceBanRecordValid[];
 };
 
 /**
  * Describes the message ban.v1.QuerySourceBansResponse.
  * Use `create(QuerySourceBansResponseSchema)` to create a new message.
  */
-export const QuerySourceBansResponseSchema: GenMessage<
-	QuerySourceBansResponse,
-	{ validType: QuerySourceBansResponseValid }
-> = /*@__PURE__*/ messageDesc(file_ban_v1_ban, 6);
+export const QuerySourceBansResponseSchema: GenMessage<QuerySourceBansResponse, {validType: QuerySourceBansResponseValid}> = /*@__PURE__*/
+  messageDesc(file_ban_v1_ban, 6);
 
 /**
  * @generated from message ban.v1.GetRequest
  */
 export type GetRequest = Message<"ban.v1.GetRequest"> & {
-	/**
-	 * @generated from field: int32 ban_id = 1;
-	 */
-	banId: number;
+  /**
+   * @generated from field: int32 ban_id = 1;
+   */
+  banId: number;
 };
 
 /**
  * @generated from message ban.v1.GetRequest
  */
 export type GetRequestValid = Message<"ban.v1.GetRequest"> & {
-	/**
-	 * @generated from field: int32 ban_id = 1;
-	 */
-	banId: number;
+  /**
+   * @generated from field: int32 ban_id = 1;
+   */
+  banId: number;
 };
 
 /**
  * Describes the message ban.v1.GetRequest.
  * Use `create(GetRequestSchema)` to create a new message.
  */
-export const GetRequestSchema: GenMessage<GetRequest, { validType: GetRequestValid }> =
-	/*@__PURE__*/
-	messageDesc(file_ban_v1_ban, 7);
+export const GetRequestSchema: GenMessage<GetRequest, {validType: GetRequestValid}> = /*@__PURE__*/
+  messageDesc(file_ban_v1_ban, 7);
 
 /**
  * @generated from message ban.v1.GetResponse
  */
 export type GetResponse = Message<"ban.v1.GetResponse"> & {
-	/**
-	 * @generated from field: ban.v1.Ban ban = 1;
-	 */
-	ban?: Ban;
+  /**
+   * @generated from field: ban.v1.Ban ban = 1;
+   */
+  ban?: Ban;
 };
 
 /**
  * @generated from message ban.v1.GetResponse
  */
 export type GetResponseValid = Message<"ban.v1.GetResponse"> & {
-	/**
-	 * @generated from field: ban.v1.Ban ban = 1;
-	 */
-	ban: BanValid;
+  /**
+   * @generated from field: ban.v1.Ban ban = 1;
+   */
+  ban: BanValid;
 };
 
 /**
  * Describes the message ban.v1.GetResponse.
  * Use `create(GetResponseSchema)` to create a new message.
  */
-export const GetResponseSchema: GenMessage<GetResponse, { validType: GetResponseValid }> =
-	/*@__PURE__*/
-	messageDesc(file_ban_v1_ban, 8);
+export const GetResponseSchema: GenMessage<GetResponse, {validType: GetResponseValid}> = /*@__PURE__*/
+  messageDesc(file_ban_v1_ban, 8);
 
 /**
  * @generated from message ban.v1.DeleteRequest
  */
 export type DeleteRequest = Message<"ban.v1.DeleteRequest"> & {
-	/**
-	 * @generated from field: int32 ban_id = 1;
-	 */
-	banId: number;
+  /**
+   * @generated from field: int32 ban_id = 1;
+   */
+  banId: number;
 
-	/**
-	 * @generated from field: string reason = 2;
-	 */
-	reason: string;
+  /**
+   * @generated from field: string reason = 2;
+   */
+  reason: string;
 };
 
 /**
  * @generated from message ban.v1.DeleteRequest
  */
 export type DeleteRequestValid = Message<"ban.v1.DeleteRequest"> & {
-	/**
-	 * @generated from field: int32 ban_id = 1;
-	 */
-	banId: number;
+  /**
+   * @generated from field: int32 ban_id = 1;
+   */
+  banId: number;
 
-	/**
-	 * @generated from field: string reason = 2;
-	 */
-	reason: string;
+  /**
+   * @generated from field: string reason = 2;
+   */
+  reason: string;
 };
 
 /**
  * Describes the message ban.v1.DeleteRequest.
  * Use `create(DeleteRequestSchema)` to create a new message.
  */
-export const DeleteRequestSchema: GenMessage<DeleteRequest, { validType: DeleteRequestValid }> =
-	/*@__PURE__*/
-	messageDesc(file_ban_v1_ban, 9);
+export const DeleteRequestSchema: GenMessage<DeleteRequest, {validType: DeleteRequestValid}> = /*@__PURE__*/
+  messageDesc(file_ban_v1_ban, 9);
 
 /**
  * @generated from message ban.v1.QueryRequest
  */
 export type QueryRequest = Message<"ban.v1.QueryRequest"> & {
-	/**
-	 * @generated from field: int64 source_id = 1;
-	 */
-	sourceId: bigint;
+  /**
+   * @generated from field: int64 source_id = 1;
+   */
+  sourceId: bigint;
 
-	/**
-	 * @generated from field: int64 target_id = 2;
-	 */
-	targetId: bigint;
+  /**
+   * @generated from field: int64 target_id = 2;
+   */
+  targetId: bigint;
 
-	/**
-	 * @generated from field: bool groups_only = 3;
-	 */
-	groupsOnly: boolean;
+  /**
+   * @generated from field: bool groups_only = 3;
+   */
+  groupsOnly: boolean;
 
-	/**
-	 * @generated from field: bool deleted = 4;
-	 */
-	deleted: boolean;
+  /**
+   * @generated from field: bool deleted = 4;
+   */
+  deleted: boolean;
 
-	/**
-	 * @generated from field: string cidr = 5;
-	 */
-	cidr: string;
+  /**
+   * @generated from field: string cidr = 5;
+   */
+  cidr: string;
 
-	/**
-	 * @generated from field: bool cidr_only = 6;
-	 */
-	cidrOnly: boolean;
+  /**
+   * @generated from field: bool cidr_only = 6;
+   */
+  cidrOnly: boolean;
 
-	/**
-	 * @generated from field: repeated ban.v1.BanReason reason = 7;
-	 */
-	reason: BanReason[];
+  /**
+   * @generated from field: repeated ban.v1.BanReason reason = 7;
+   */
+  reason: BanReason[];
 
-	/**
-	 * @generated from field: int32 appeal_state = 8;
-	 */
-	appealState: number;
+  /**
+   * @generated from field: int32 appeal_state = 8;
+   */
+  appealState: number;
 };
 
 export type QueryRequestValid = QueryRequest;
@@ -661,541 +636,546 @@ export type QueryRequestValid = QueryRequest;
  * Describes the message ban.v1.QueryRequest.
  * Use `create(QueryRequestSchema)` to create a new message.
  */
-export const QueryRequestSchema: GenMessage<QueryRequest, { validType: QueryRequestValid }> =
-	/*@__PURE__*/
-	messageDesc(file_ban_v1_ban, 10);
+export const QueryRequestSchema: GenMessage<QueryRequest, {validType: QueryRequestValid}> = /*@__PURE__*/
+  messageDesc(file_ban_v1_ban, 10);
 
 /**
  * @generated from message ban.v1.QueryResponse
  */
 export type QueryResponse = Message<"ban.v1.QueryResponse"> & {
-	/**
-	 * @generated from field: repeated ban.v1.Ban bans = 1;
-	 */
-	bans: Ban[];
+  /**
+   * @generated from field: repeated ban.v1.Ban bans = 1;
+   */
+  bans: Ban[];
 };
 
 /**
  * @generated from message ban.v1.QueryResponse
  */
 export type QueryResponseValid = Message<"ban.v1.QueryResponse"> & {
-	/**
-	 * @generated from field: repeated ban.v1.Ban bans = 1;
-	 */
-	bans: BanValid[];
+  /**
+   * @generated from field: repeated ban.v1.Ban bans = 1;
+   */
+  bans: BanValid[];
 };
 
 /**
  * Describes the message ban.v1.QueryResponse.
  * Use `create(QueryResponseSchema)` to create a new message.
  */
-export const QueryResponseSchema: GenMessage<QueryResponse, { validType: QueryResponseValid }> =
-	/*@__PURE__*/
-	messageDesc(file_ban_v1_ban, 11);
+export const QueryResponseSchema: GenMessage<QueryResponse, {validType: QueryResponseValid}> = /*@__PURE__*/
+  messageDesc(file_ban_v1_ban, 11);
 
 /**
  * @generated from message ban.v1.Ban
  */
 export type Ban = Message<"ban.v1.Ban"> & {
-	/**
-	 * @generated from field: int64 target_id = 1;
-	 */
-	targetId: bigint;
+  /**
+   * @generated from field: int64 target_id = 1;
+   */
+  targetId: bigint;
 
-	/**
-	 * @generated from field: int64 source_id = 2;
-	 */
-	sourceId: bigint;
+  /**
+   * @generated from field: int64 source_id = 2;
+   */
+  sourceId: bigint;
 
-	/**
-	 * @generated from field: int32 ban_id = 3;
-	 */
-	banId: number;
+  /**
+   * @generated from field: int32 ban_id = 3;
+   */
+  banId: number;
 
-	/**
-	 * @generated from field: int32 report_id = 4;
-	 */
-	reportId: number;
+  /**
+   * @generated from field: int32 report_id = 4;
+   */
+  reportId: number;
 
-	/**
-	 * @generated from field: string last_ip = 5;
-	 */
-	lastIp: string;
+  /**
+   * @generated from field: string last_ip = 5;
+   */
+  lastIp: string;
 
-	/**
-	 * @generated from field: bool evade_ok = 6;
-	 */
-	evadeOk: boolean;
+  /**
+   * @generated from field: bool evade_ok = 6;
+   */
+  evadeOk: boolean;
 
-	/**
-	 * @generated from field: ban.v1.BanType ban_type = 7;
-	 */
-	banType: BanType;
+  /**
+   * @generated from field: ban.v1.BanType ban_type = 7;
+   */
+  banType: BanType;
 
-	/**
-	 * @generated from field: ban.v1.BanReason reason = 8;
-	 */
-	reason: BanReason;
+  /**
+   * @generated from field: ban.v1.BanReason reason = 8;
+   */
+  reason: BanReason;
 
-	/**
-	 * @generated from field: string reason_text = 9;
-	 */
-	reasonText: string;
+  /**
+   * @generated from field: string reason_text = 9;
+   */
+  reasonText: string;
 
-	/**
-	 * @generated from field: string unban_reason_text = 10;
-	 */
-	unbanReasonText: string;
+  /**
+   * @generated from field: string unban_reason_text = 10;
+   */
+  unbanReasonText: string;
 
-	/**
-	 * @generated from field: string note = 11;
-	 */
-	note: string;
+  /**
+   * @generated from field: string note = 11;
+   */
+  note: string;
 
-	/**
-	 * @generated from field: ban.v1.Origin origin = 12;
-	 */
-	origin: Origin;
+  /**
+   * @generated from field: ban.v1.Origin origin = 12;
+   */
+  origin: Origin;
 
-	/**
-	 * @generated from field: string cidr = 13;
-	 */
-	cidr: string;
+  /**
+   * @generated from field: string cidr = 13;
+   */
+  cidr: string;
 
-	/**
-	 * @generated from field: ban.v1.AppealState appeal_state = 14;
-	 */
-	appealState: AppealState;
+  /**
+   * @generated from field: ban.v1.AppealState appeal_state = 14;
+   */
+  appealState: AppealState;
 
-	/**
-	 * @generated from field: string name = 15;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 15;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: bool deleted = 16;
-	 */
-	deleted: boolean;
+  /**
+   * @generated from field: bool deleted = 16;
+   */
+  deleted: boolean;
 
-	/**
-	 * @generated from field: bool is_enabled = 17;
-	 */
-	isEnabled: boolean;
+  /**
+   * @generated from field: bool is_enabled = 17;
+   */
+  isEnabled: boolean;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 18;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 18;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 19;
-	 */
-	updatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 19;
+   */
+  updatedOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Duration duration = 20;
-	 */
-	duration?: Duration;
+  /**
+   * @generated from field: google.protobuf.Duration duration = 20;
+   */
+  duration?: Duration;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp valid_until = 21;
-	 */
-	validUntil?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp valid_until = 21;
+   */
+  validUntil?: Timestamp;
 
-	/**
-	 * @generated from field: string source_persona_name = 22;
-	 */
-	sourcePersonaName: string;
+  /**
+   * @generated from field: string source_persona_name = 22;
+   */
+  sourcePersonaName: string;
 
-	/**
-	 * @generated from field: string source_avatar_hash = 23;
-	 */
-	sourceAvatarHash: string;
+  /**
+   * @generated from field: string source_avatar_hash = 23;
+   */
+  sourceAvatarHash: string;
 
-	/**
-	 * @generated from field: string target_persona_name = 24;
-	 */
-	targetPersonaName: string;
+  /**
+   * @generated from field: string target_persona_name = 24;
+   */
+  targetPersonaName: string;
 
-	/**
-	 * @generated from field: string target_avatar_hash = 25;
-	 */
-	targetAvatarHash: string;
+  /**
+   * @generated from field: string target_avatar_hash = 25;
+   */
+  targetAvatarHash: string;
 };
 
 /**
  * @generated from message ban.v1.Ban
  */
 export type BanValid = Message<"ban.v1.Ban"> & {
-	/**
-	 * @generated from field: int64 target_id = 1;
-	 */
-	targetId: bigint;
+  /**
+   * @generated from field: int64 target_id = 1;
+   */
+  targetId: bigint;
 
-	/**
-	 * @generated from field: int64 source_id = 2;
-	 */
-	sourceId: bigint;
+  /**
+   * @generated from field: int64 source_id = 2;
+   */
+  sourceId: bigint;
 
-	/**
-	 * @generated from field: int32 ban_id = 3;
-	 */
-	banId: number;
+  /**
+   * @generated from field: int32 ban_id = 3;
+   */
+  banId: number;
 
-	/**
-	 * @generated from field: int32 report_id = 4;
-	 */
-	reportId: number;
+  /**
+   * @generated from field: int32 report_id = 4;
+   */
+  reportId: number;
 
-	/**
-	 * @generated from field: string last_ip = 5;
-	 */
-	lastIp: string;
+  /**
+   * @generated from field: string last_ip = 5;
+   */
+  lastIp: string;
 
-	/**
-	 * @generated from field: bool evade_ok = 6;
-	 */
-	evadeOk: boolean;
+  /**
+   * @generated from field: bool evade_ok = 6;
+   */
+  evadeOk: boolean;
 
-	/**
-	 * @generated from field: ban.v1.BanType ban_type = 7;
-	 */
-	banType: BanType;
+  /**
+   * @generated from field: ban.v1.BanType ban_type = 7;
+   */
+  banType: BanType;
 
-	/**
-	 * @generated from field: ban.v1.BanReason reason = 8;
-	 */
-	reason: BanReason;
+  /**
+   * @generated from field: ban.v1.BanReason reason = 8;
+   */
+  reason: BanReason;
 
-	/**
-	 * @generated from field: string reason_text = 9;
-	 */
-	reasonText: string;
+  /**
+   * @generated from field: string reason_text = 9;
+   */
+  reasonText: string;
 
-	/**
-	 * @generated from field: string unban_reason_text = 10;
-	 */
-	unbanReasonText: string;
+  /**
+   * @generated from field: string unban_reason_text = 10;
+   */
+  unbanReasonText: string;
 
-	/**
-	 * @generated from field: string note = 11;
-	 */
-	note: string;
+  /**
+   * @generated from field: string note = 11;
+   */
+  note: string;
 
-	/**
-	 * @generated from field: ban.v1.Origin origin = 12;
-	 */
-	origin: Origin;
+  /**
+   * @generated from field: ban.v1.Origin origin = 12;
+   */
+  origin: Origin;
 
-	/**
-	 * @generated from field: string cidr = 13;
-	 */
-	cidr: string;
+  /**
+   * @generated from field: string cidr = 13;
+   */
+  cidr: string;
 
-	/**
-	 * @generated from field: ban.v1.AppealState appeal_state = 14;
-	 */
-	appealState: AppealState;
+  /**
+   * @generated from field: ban.v1.AppealState appeal_state = 14;
+   */
+  appealState: AppealState;
 
-	/**
-	 * @generated from field: string name = 15;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 15;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: bool deleted = 16;
-	 */
-	deleted: boolean;
+  /**
+   * @generated from field: bool deleted = 16;
+   */
+  deleted: boolean;
 
-	/**
-	 * @generated from field: bool is_enabled = 17;
-	 */
-	isEnabled: boolean;
+  /**
+   * @generated from field: bool is_enabled = 17;
+   */
+  isEnabled: boolean;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 18;
-	 */
-	createdOn: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 18;
+   */
+  createdOn: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 19;
-	 */
-	updatedOn: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 19;
+   */
+  updatedOn: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Duration duration = 20;
-	 */
-	duration: Duration;
+  /**
+   * @generated from field: google.protobuf.Duration duration = 20;
+   */
+  duration: Duration;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp valid_until = 21;
-	 */
-	validUntil: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp valid_until = 21;
+   */
+  validUntil: Timestamp;
 
-	/**
-	 * @generated from field: string source_persona_name = 22;
-	 */
-	sourcePersonaName: string;
+  /**
+   * @generated from field: string source_persona_name = 22;
+   */
+  sourcePersonaName: string;
 
-	/**
-	 * @generated from field: string source_avatar_hash = 23;
-	 */
-	sourceAvatarHash: string;
+  /**
+   * @generated from field: string source_avatar_hash = 23;
+   */
+  sourceAvatarHash: string;
 
-	/**
-	 * @generated from field: string target_persona_name = 24;
-	 */
-	targetPersonaName: string;
+  /**
+   * @generated from field: string target_persona_name = 24;
+   */
+  targetPersonaName: string;
 
-	/**
-	 * @generated from field: string target_avatar_hash = 25;
-	 */
-	targetAvatarHash: string;
+  /**
+   * @generated from field: string target_avatar_hash = 25;
+   */
+  targetAvatarHash: string;
 };
 
 /**
  * Describes the message ban.v1.Ban.
  * Use `create(BanSchema)` to create a new message.
  */
-export const BanSchema: GenMessage<Ban, { validType: BanValid }> = /*@__PURE__*/ messageDesc(file_ban_v1_ban, 12);
+export const BanSchema: GenMessage<Ban, {validType: BanValid}> = /*@__PURE__*/
+  messageDesc(file_ban_v1_ban, 12);
 
 /**
  * @generated from enum ban.v1.BanType
  */
 export enum BanType {
-	/**
-	 * @generated from enum value: BAN_TYPE_OK_UNSPECIFIED = 0;
-	 */
-	OK_UNSPECIFIED = 0,
+  /**
+   * @generated from enum value: BAN_TYPE_OK_UNSPECIFIED = 0;
+   */
+  OK_UNSPECIFIED = 0,
 
-	/**
-	 * @generated from enum value: BAN_TYPE_NO_COMM = 1;
-	 */
-	NO_COMM = 1,
+  /**
+   * @generated from enum value: BAN_TYPE_NO_COMM = 1;
+   */
+  NO_COMM = 1,
 
-	/**
-	 * @generated from enum value: BAN_TYPE_BANNED = 2;
-	 */
-	BANNED = 2,
+  /**
+   * @generated from enum value: BAN_TYPE_BANNED = 2;
+   */
+  BANNED = 2,
 
-	/**
-	 * @generated from enum value: BAN_TYPE_NETWORK = 3;
-	 */
-	NETWORK = 3,
+  /**
+   * @generated from enum value: BAN_TYPE_NETWORK = 3;
+   */
+  NETWORK = 3,
 }
 
 /**
  * Describes the enum ban.v1.BanType.
  */
-export const BanTypeSchema: GenEnum<BanType> = /*@__PURE__*/ enumDesc(file_ban_v1_ban, 0);
+export const BanTypeSchema: GenEnum<BanType> = /*@__PURE__*/
+  enumDesc(file_ban_v1_ban, 0);
 
 /**
  * @generated from enum ban.v1.AppealState
  */
 export enum AppealState {
-	/**
-	 * @generated from enum value: APPEAL_STATE_OPEN_UNSPECIFIED = 0;
-	 */
-	OPEN_UNSPECIFIED = 0,
+  /**
+   * @generated from enum value: APPEAL_STATE_OPEN_UNSPECIFIED = 0;
+   */
+  OPEN_UNSPECIFIED = 0,
 
-	/**
-	 * @generated from enum value: APPEAL_STATE_DENIED = 1;
-	 */
-	DENIED = 1,
+  /**
+   * @generated from enum value: APPEAL_STATE_DENIED = 1;
+   */
+  DENIED = 1,
 
-	/**
-	 * @generated from enum value: APPEAL_STATE_ACCEPTED = 2;
-	 */
-	ACCEPTED = 2,
+  /**
+   * @generated from enum value: APPEAL_STATE_ACCEPTED = 2;
+   */
+  ACCEPTED = 2,
 
-	/**
-	 * @generated from enum value: APPEAL_STATE_REDUCED = 3;
-	 */
-	REDUCED = 3,
+  /**
+   * @generated from enum value: APPEAL_STATE_REDUCED = 3;
+   */
+  REDUCED = 3,
 
-	/**
-	 * @generated from enum value: APPEAL_STATE_NO_APPEAL = 4;
-	 */
-	NO_APPEAL = 4,
+  /**
+   * @generated from enum value: APPEAL_STATE_NO_APPEAL = 4;
+   */
+  NO_APPEAL = 4,
 }
 
 /**
  * Describes the enum ban.v1.AppealState.
  */
-export const AppealStateSchema: GenEnum<AppealState> = /*@__PURE__*/ enumDesc(file_ban_v1_ban, 1);
+export const AppealStateSchema: GenEnum<AppealState> = /*@__PURE__*/
+  enumDesc(file_ban_v1_ban, 1);
 
 /**
  * @generated from enum ban.v1.BanReason
  */
 export enum BanReason {
-	/**
-	 * @generated from enum value: BAN_REASON_UNSPECIFIED = 0;
-	 */
-	UNSPECIFIED = 0,
+  /**
+   * @generated from enum value: BAN_REASON_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
 
-	/**
-	 * @generated from enum value: BAN_REASON_CUSTOM = 1;
-	 */
-	CUSTOM = 1,
+  /**
+   * @generated from enum value: BAN_REASON_CUSTOM = 1;
+   */
+  CUSTOM = 1,
 
-	/**
-	 * @generated from enum value: BAN_REASON_EXTERNAL = 2;
-	 */
-	EXTERNAL = 2,
+  /**
+   * @generated from enum value: BAN_REASON_EXTERNAL = 2;
+   */
+  EXTERNAL = 2,
 
-	/**
-	 * @generated from enum value: BAN_REASON_CHEATING = 3;
-	 */
-	CHEATING = 3,
+  /**
+   * @generated from enum value: BAN_REASON_CHEATING = 3;
+   */
+  CHEATING = 3,
 
-	/**
-	 * @generated from enum value: BAN_REASON_RACISM = 4;
-	 */
-	RACISM = 4,
+  /**
+   * @generated from enum value: BAN_REASON_RACISM = 4;
+   */
+  RACISM = 4,
 
-	/**
-	 * @generated from enum value: BAN_REASON_HARASSMENT = 5;
-	 */
-	HARASSMENT = 5,
+  /**
+   * @generated from enum value: BAN_REASON_HARASSMENT = 5;
+   */
+  HARASSMENT = 5,
 
-	/**
-	 * @generated from enum value: BAN_REASON_EXPLOITING = 6;
-	 */
-	EXPLOITING = 6,
+  /**
+   * @generated from enum value: BAN_REASON_EXPLOITING = 6;
+   */
+  EXPLOITING = 6,
 
-	/**
-	 * @generated from enum value: BAN_REASON_WARNINGS_EXCEEDED = 7;
-	 */
-	WARNINGS_EXCEEDED = 7,
+  /**
+   * @generated from enum value: BAN_REASON_WARNINGS_EXCEEDED = 7;
+   */
+  WARNINGS_EXCEEDED = 7,
 
-	/**
-	 * @generated from enum value: BAN_REASON_SPAM = 8;
-	 */
-	SPAM = 8,
+  /**
+   * @generated from enum value: BAN_REASON_SPAM = 8;
+   */
+  SPAM = 8,
 
-	/**
-	 * @generated from enum value: BAN_REASON_LANGUAGE = 9;
-	 */
-	LANGUAGE = 9,
+  /**
+   * @generated from enum value: BAN_REASON_LANGUAGE = 9;
+   */
+  LANGUAGE = 9,
 
-	/**
-	 * @generated from enum value: BAN_REASON_PROFILE = 10;
-	 */
-	PROFILE = 10,
+  /**
+   * @generated from enum value: BAN_REASON_PROFILE = 10;
+   */
+  PROFILE = 10,
 
-	/**
-	 * @generated from enum value: BAN_REASON_ITEM_DESCRIPTIONS = 11;
-	 */
-	ITEM_DESCRIPTIONS = 11,
+  /**
+   * @generated from enum value: BAN_REASON_ITEM_DESCRIPTIONS = 11;
+   */
+  ITEM_DESCRIPTIONS = 11,
 
-	/**
-	 * @generated from enum value: BAN_REASON_BOT_HOST = 12;
-	 */
-	BOT_HOST = 12,
+  /**
+   * @generated from enum value: BAN_REASON_BOT_HOST = 12;
+   */
+  BOT_HOST = 12,
 
-	/**
-	 * @generated from enum value: BAN_REASON_EVADING = 13;
-	 */
-	EVADING = 13,
+  /**
+   * @generated from enum value: BAN_REASON_EVADING = 13;
+   */
+  EVADING = 13,
 
-	/**
-	 * @generated from enum value: BAN_REASON_USERNAME = 14;
-	 */
-	USERNAME = 14,
+  /**
+   * @generated from enum value: BAN_REASON_USERNAME = 14;
+   */
+  USERNAME = 14,
 }
 
 /**
  * Describes the enum ban.v1.BanReason.
  */
-export const BanReasonSchema: GenEnum<BanReason> = /*@__PURE__*/ enumDesc(file_ban_v1_ban, 2);
+export const BanReasonSchema: GenEnum<BanReason> = /*@__PURE__*/
+  enumDesc(file_ban_v1_ban, 2);
 
 /**
  * @generated from enum ban.v1.Origin
  */
 export enum Origin {
-	/**
-	 * @generated from enum value: ORIGIN_SYSTEM_UNSPECIFIED = 0;
-	 */
-	SYSTEM_UNSPECIFIED = 0,
+  /**
+   * @generated from enum value: ORIGIN_SYSTEM_UNSPECIFIED = 0;
+   */
+  SYSTEM_UNSPECIFIED = 0,
 
-	/**
-	 * @generated from enum value: ORIGIN_BOT = 1;
-	 */
-	BOT = 1,
+  /**
+   * @generated from enum value: ORIGIN_BOT = 1;
+   */
+  BOT = 1,
 
-	/**
-	 * @generated from enum value: ORIGIN_WEB = 2;
-	 */
-	WEB = 2,
+  /**
+   * @generated from enum value: ORIGIN_WEB = 2;
+   */
+  WEB = 2,
 
-	/**
-	 * @generated from enum value: ORIGIN_IN_GAME = 3;
-	 */
-	IN_GAME = 3,
+  /**
+   * @generated from enum value: ORIGIN_IN_GAME = 3;
+   */
+  IN_GAME = 3,
 
-	/**
-	 * @generated from enum value: ORIGIN_REPORTED = 4;
-	 */
-	REPORTED = 4,
+  /**
+   * @generated from enum value: ORIGIN_REPORTED = 4;
+   */
+  REPORTED = 4,
 }
 
 /**
  * Describes the enum ban.v1.Origin.
  */
-export const OriginSchema: GenEnum<Origin> = /*@__PURE__*/ enumDesc(file_ban_v1_ban, 3);
+export const OriginSchema: GenEnum<Origin> = /*@__PURE__*/
+  enumDesc(file_ban_v1_ban, 3);
 
 /**
  * @generated from service ban.v1.BanService
  */
 export const BanService: GenService<{
-	/**
-	 * @generated from rpc ban.v1.BanService.Query
-	 */
-	query: {
-		methodKind: "unary";
-		input: typeof QueryRequestSchema;
-		output: typeof QueryResponseSchema;
-	};
-	/**
-	 * rpc ExportValve(google.protobuf.Empty) returns (ExportValveResponse) {}
-	 *
-	 * @generated from rpc ban.v1.BanService.Delete
-	 */
-	delete: {
-		methodKind: "unary";
-		input: typeof DeleteRequestSchema;
-		output: typeof EmptySchema;
-	};
-	/**
-	 * @generated from rpc ban.v1.BanService.Get
-	 */
-	get: {
-		methodKind: "unary";
-		input: typeof GetRequestSchema;
-		output: typeof GetResponseSchema;
-	};
-	/**
-	 * @generated from rpc ban.v1.BanService.QuerySourceBans
-	 */
-	querySourceBans: {
-		methodKind: "unary";
-		input: typeof QuerySourceBansRequestSchema;
-		output: typeof QuerySourceBansResponseSchema;
-	};
-	/**
-	 * @generated from rpc ban.v1.BanService.Update
-	 */
-	update: {
-		methodKind: "unary";
-		input: typeof UpdateRequestSchema;
-		output: typeof UpdateResponseSchema;
-	};
-	/**
-	 * @generated from rpc ban.v1.BanService.Create
-	 */
-	create: {
-		methodKind: "unary";
-		input: typeof CreateRequestSchema;
-		output: typeof CreateResponseSchema;
-	};
-}> = /*@__PURE__*/ serviceDesc(file_ban_v1_ban, 0);
+  /**
+   * @generated from rpc ban.v1.BanService.Query
+   */
+  query: {
+    methodKind: "unary";
+    input: typeof QueryRequestSchema;
+    output: typeof QueryResponseSchema;
+  },
+  /**
+   * rpc ExportValve(google.protobuf.Empty) returns (ExportValveResponse) {}
+   *
+   * @generated from rpc ban.v1.BanService.Delete
+   */
+  delete: {
+    methodKind: "unary";
+    input: typeof DeleteRequestSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc ban.v1.BanService.Get
+   */
+  get: {
+    methodKind: "unary";
+    input: typeof GetRequestSchema;
+    output: typeof GetResponseSchema;
+  },
+  /**
+   * @generated from rpc ban.v1.BanService.QuerySourceBans
+   */
+  querySourceBans: {
+    methodKind: "unary";
+    input: typeof QuerySourceBansRequestSchema;
+    output: typeof QuerySourceBansResponseSchema;
+  },
+  /**
+   * @generated from rpc ban.v1.BanService.Update
+   */
+  update: {
+    methodKind: "unary";
+    input: typeof UpdateRequestSchema;
+    output: typeof UpdateResponseSchema;
+  },
+  /**
+   * @generated from rpc ban.v1.BanService.Create
+   */
+  create: {
+    methodKind: "unary";
+    input: typeof CreateRequestSchema;
+    output: typeof CreateResponseSchema;
+  },
+}> = /*@__PURE__*/
+  serviceDesc(file_ban_v1_ban, 0);
+

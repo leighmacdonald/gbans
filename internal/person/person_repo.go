@@ -88,9 +88,9 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, int64, err
 		constraints = append(constraints, sq.Eq{"p.steam_id": query.SteamIDs})
 	}
 
-	if query.Personaname != "" {
+	if query.PersonaName != "" {
 		// TODO add lower-cased functional index to avoid table scan
-		constraints = append(constraints, sq.ILike{"p.personaname": normalizeStringLikeQuery(query.Personaname)})
+		constraints = append(constraints, sq.ILike{"p.personaname": normalizeStringLikeQuery(query.PersonaName)})
 	}
 
 	if query.GameBans > 0 {
