@@ -1,34 +1,32 @@
+import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import GroupsIcon from "@mui/icons-material/Groups";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
-import { useMutation } from "@tanstack/react-query";
-import { apiCreateSMGroupOverrides, apiSaveSMGroupOverrides } from "../../api";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { OverrideAccess, OverrideType, SMGroupOverrides, SMGroups } from "../../schema/sourcemod.ts";
+import { type Group, type GroupOverrides, OverrideAccess, OverrideType } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
+import {
+	createGroupOverride,
+	editGroupOverride,
+} from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
 import { Heading } from "../Heading";
 
-type mutateOverrideArgs = {
-	name: string;
-	type: OverrideType;
-	access: OverrideAccess;
-};
-
 export const SMGroupOverrideEditorModal = NiceModal.create(
-	({ group, override }: { group: SMGroups; override?: SMGroupOverrides }) => {
+	({ group, override }: { group: Group; override?: GroupOverrides }) => {
 		const modal = useModal();
 		const { sendError } = useUserFlashCtx();
-		const mutation = useMutation({
-			mutationKey: ["adminSMGroupOverride"],
-			mutationFn: async ({ name, type, access }: mutateOverrideArgs) => {
-				const ac = new AbortController();
-				return override?.group_override_id
-					? await apiSaveSMGroupOverrides(override.group_override_id, name, type, access, ac.signal)
-					: await apiCreateSMGroupOverrides(group.group_id, name, type, access, ac.signal);
+		const createMutation = useMutation(createGroupOverride, {
+			onSuccess: async (override) => {
+				modal.resolve(override);
+				await modal.hide();
 			},
+			onError: sendError,
+		});
+
+		const editMutation = useMutation(editGroupOverride, {
 			onSuccess: async (override) => {
 				modal.resolve(override);
 				await modal.hide();
@@ -38,12 +36,16 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
 
 		const form = useAppForm({
 			onSubmit: async ({ value }) => {
-				mutation.mutate(value);
+				if (override?.groupOverrideId) {
+					editMutation.mutate({ ...value, groupOverrideId: override.groupOverrideId });
+				} else {
+					createMutation.mutate({ ...value, groupId: group.groupId });
+				}
 			},
 			defaultValues: {
-				type: override?.type ?? "command",
+				type: override?.overrideType ?? OverrideType.COMMAND_UNSPECIFIED,
 				name: override?.name ?? "",
-				access: override?.access ?? "allow",
+				access: override?.overrideAccess ?? OverrideAccess.ALLOW_UNSPECIFIED,
 			},
 		});
 

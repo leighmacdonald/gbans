@@ -1460,10 +1460,13 @@ func (x *ThreadsResponse) GetThreads() []*Thread {
 type Thread struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ForumId       *int32                 `protobuf:"varint,1,opt,name=forum_id,json=forumId" json:"forum_id,omitempty"`
-	SourceId      *int64                 `protobuf:"varint,2,opt,name=source_id,json=sourceId" json:"source_id,omitempty"`
-	Title         *string                `protobuf:"bytes,3,opt,name=title" json:"title,omitempty"`
-	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
-	UpdatedOn     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
+	ForumThreadId *int32                 `protobuf:"varint,2,opt,name=forum_thread_id,json=forumThreadId" json:"forum_thread_id,omitempty"`
+	SourceId      *int64                 `protobuf:"varint,3,opt,name=source_id,json=sourceId" json:"source_id,omitempty"`
+	Title         *string                `protobuf:"bytes,4,opt,name=title" json:"title,omitempty"`
+	Sticky        *bool                  `protobuf:"varint,5,opt,name=sticky" json:"sticky,omitempty"`
+	Locked        *bool                  `protobuf:"varint,6,opt,name=locked" json:"locked,omitempty"`
+	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	UpdatedOn     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1505,6 +1508,13 @@ func (x *Thread) GetForumId() int32 {
 	return 0
 }
 
+func (x *Thread) GetForumThreadId() int32 {
+	if x != nil && x.ForumThreadId != nil {
+		return *x.ForumThreadId
+	}
+	return 0
+}
+
 func (x *Thread) GetSourceId() int64 {
 	if x != nil && x.SourceId != nil {
 		return *x.SourceId
@@ -1517,6 +1527,20 @@ func (x *Thread) GetTitle() string {
 		return *x.Title
 	}
 	return ""
+}
+
+func (x *Thread) GetSticky() bool {
+	if x != nil && x.Sticky != nil {
+		return *x.Sticky
+	}
+	return false
+}
+
+func (x *Thread) GetLocked() bool {
+	if x != nil && x.Locked != nil {
+		return *x.Locked
+	}
+	return false
 }
 
 func (x *Thread) GetCreatedOn() *timestamppb.Timestamp {
@@ -2322,15 +2346,18 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\x0eThreadsRequest\x12!\n" +
 	"\bforum_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aforumId\"E\n" +
 	"\x0fThreadsResponse\x122\n" +
-	"\athreads\x18\x01 \x03(\v2\x10.forum.v1.ThreadB\x06\xbaH\x03\xc8\x01\x01R\athreads\"\xf4\x01\n" +
+	"\athreads\x18\x01 \x03(\v2\x10.forum.v1.ThreadB\x06\xbaH\x03\xc8\x01\x01R\athreads\"\xe4\x02\n" +
 	"\x06Thread\x12!\n" +
-	"\bforum_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aforumId\x12#\n" +
-	"\tsource_id\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\bsourceId\x12\x1c\n" +
-	"\x05title\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12A\n" +
+	"\bforum_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aforumId\x12.\n" +
+	"\x0fforum_thread_id\x18\x02 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rforumThreadId\x12#\n" +
+	"\tsource_id\x18\x03 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\bsourceId\x12\x1c\n" +
+	"\x05title\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12\x1e\n" +
+	"\x06sticky\x18\x05 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x06sticky\x12\x1e\n" +
+	"\x06locked\x18\x06 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x06locked\x12A\n" +
 	"\n" +
-	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
+	"created_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xe6\x03\n" +
+	"updated_on\x18\b \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xe6\x03\n" +
 	"\x10ThreadWithSource\x120\n" +
 	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadB\x06\xbaH\x03\xc8\x01\x01R\x06thread\x12)\n" +
 	"\fpersona_name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12'\n" +

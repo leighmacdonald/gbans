@@ -19,7 +19,7 @@ import type { Message } from "@bufbuild/protobuf";
 export const file_ban_v1_ban: GenFile =
 	/*@__PURE__*/
 	fileDesc(
-		"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b25CBrpIA8gBARIbCgtyZWFzb25fdGV4dBgJIAEoCUIGukgDyAEBEiEKEXVuYmFuX3JlYXNvbl90ZXh0GAogASgJQga6SAPIAQESFAoEbm90ZRgLIAEoCUIGukgDyAEBEiYKBm9yaWdpbhgMIAEoDjIOLmJhbi52MS5PcmlnaW5CBrpIA8gBARIUCgRjaWRyGA0gASgJQga6SAPIAQESMQoMYXBwZWFsX3N0YXRlGA4gASgOMhMuYmFuLnYxLkFwcGVhbFN0YXRlQga6SAPIAQESFAoEbmFtZRgPIAEoCUIGukgDyAEBEhcKB2RlbGV0ZWQYECABKAhCBrpIA8gBARIaCgppc19lbmFibGVkGBEgASgIQga6SAPIAQESNwoLdmFsaWRfdW50aWwYEiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKY3JlYXRlZF9vbhgTIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARI2Cgp1cGRhdGVkX29uGBQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEiMKE3NvdXJjZV9wZXJzb25hX25hbWUYFSABKAlCBrpIA8gBARIiChJzb3VyY2VfYXZhdGFyX2hhc2gYFiABKAlCBrpIA8gBARIjChN0YXJnZXRfcGVyc29uYV9uYW1lGBcgASgJQga6SAPIAQESIgoSdGFyZ2V0X2F2YXRhcl9oYXNoGBggASgJQga6SAPIAQEqZwoHQmFuVHlwZRIbChdCQU5fVFlQRV9PS19VTlNQRUNJRklFRBAAEhQKEEJBTl9UWVBFX05PX0NPTU0QARITCg9CQU5fVFlQRV9CQU5ORUQQAhIUChBCQU5fVFlQRV9ORVRXT1JLEAMqmgEKC0FwcGVhbFN0YXRlEiEKHUFQUEVBTF9TVEFURV9PUEVOX1VOU1BFQ0lGSUVEEAASFwoTQVBQRUFMX1NUQVRFX0RFTklFRBABEhkKFUFQUEVBTF9TVEFURV9BQ0NFUFRFRBACEhgKFEFQUEVBTF9TVEFURV9SRURVQ0VEEAMSGgoWQVBQRUFMX1NUQVRFX05PX0FQUEVBTBAEKpEDCglCYW5SZWFzb24SGgoWQkFOX1JFQVNPTl9VTlNQRUNJRklFRBAAEhUKEUJBTl9SRUFTT05fQ1VTVE9NEAESFwoTQkFOX1JFQVNPTl9FWFRFUk5BTBACEhcKE0JBTl9SRUFTT05fQ0hFQVRJTkcQAxIVChFCQU5fUkVBU09OX1JBQ0lTTRAEEhkKFUJBTl9SRUFTT05fSEFSQVNTTUVOVBAFEhkKFUJBTl9SRUFTT05fRVhQTE9JVElORxAGEiAKHEJBTl9SRUFTT05fV0FSTklOR1NfRVhDRUVERUQQBxITCg9CQU5fUkVBU09OX1NQQU0QCBIXChNCQU5fUkVBU09OX0xBTkdVQUdFEAkSFgoSQkFOX1JFQVNPTl9QUk9GSUxFEAoSIAocQkFOX1JFQVNPTl9JVEVNX0RFU0NSSVBUSU9OUxALEhcKE0JBTl9SRUFTT05fQk9UX0hPU1QQDBIWChJCQU5fUkVBU09OX0VWQURJTkcQDRIXChNCQU5fUkVBU09OX1VTRVJOQU1FEA4qcAoGT3JpZ2luEh0KGU9SSUdJTl9TWVNURU1fVU5TUEVDSUZJRUQQABIOCgpPUklHSU5fQk9UEAESDgoKT1JJR0lOX1dFQhACEhIKDk9SSUdJTl9JTl9HQU1FEAMSEwoPT1JJR0lOX1JFUE9SVEVEEAQy/QIKCkJhblNlcnZpY2USNgoFUXVlcnkSFC5iYW4udjEuUXVlcnlSZXF1ZXN0GhUuYmFuLnYxLlF1ZXJ5UmVzcG9uc2UiABI5CgZEZWxldGUSFS5iYW4udjEuRGVsZXRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEjAKA0dldBISLmJhbi52MS5HZXRSZXF1ZXN0GhMuYmFuLnYxLkdldFJlc3BvbnNlIgASVAoPUXVlcnlTb3VyY2VCYW5zEh4uYmFuLnYxLlF1ZXJ5U291cmNlQmFuc1JlcXVlc3QaHy5iYW4udjEuUXVlcnlTb3VyY2VCYW5zUmVzcG9uc2UiABI5CgZVcGRhdGUSFS5iYW4udjEuVXBkYXRlUmVxdWVzdBoWLmJhbi52MS5VcGRhdGVSZXNwb25zZSIAEjkKBkNyZWF0ZRIVLmJhbi52MS5DcmVhdGVSZXF1ZXN0GhYuYmFuLnYxLkNyZWF0ZVJlc3BvbnNlIgBChgEKCmNvbS5iYW4udjFCCEJhblByb3RvUAFaNWdpdGh1Yi5j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bGFzdF9pcBgFIAEoCRIYCghldmFkZV9vaxgGIAEoCEIGukgDyAEBEikKCGJhbl90eXBlGAcgASgOMg8uYmFuLnYxLkJhblR5cGVCBrpIA8gBARIpCgZyZWFzb24YCCABKA4yES5iYW4udjEuQmFuUmVhc29uQga6SAPIAQESGwoLcmVhc29uX3RleHQYCSABKAlCBrpIA8gBARIhChF1bmJhbl9yZWFzb25fdGV4dBgKIAEoCUIGukgDyAEBEhQKBG5vdGUYCyABKAlCBrpIA8gBARImCgZvcmlnaW4YDCABKA4yDi5iYW4udjEuT3JpZ2luQga6SAPIAQESFAoEY2lkchgNIAEoCUIGukgDyAEBEjEKDGFwcGVhbF9zdGF0ZRgOIAEoDjITLmJhbi52MS5BcHBlYWxTdGF0ZUIGukgDyAEBEhQKBG5hbWUYDyABKAlCBrpIA8gBARIXCgdkZWxldGVkGBAgASgIQga6SAPIAQESGgoKaXNfZW5hYmxlZBgRIAEoCEIGukgDyAEBEjYKCmNyZWF0ZWRfb24YEiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgTIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARIzCghkdXJhdGlvbhgUIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbkIGukgDyAEBEjcKC3ZhbGlkX3VudGlsGBUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEiMKE3NvdXJjZV9wZXJzb25hX25hbWUYFiABKAlCBrpIA8gBARIiChJzb3VyY2VfYXZhdGFyX2hhc2gYFyABKAlCBrpIA8gBARIjChN0YXJnZXRfcGVyc29uYV9uYW1lGBggASgJQga6SAPIAQESIgoSdGFyZ2V0X2F2YXRhcl9oYXNoGBkgASgJQga6SAPIAQEqZwoHQmFuVHlwZRIbChdCQU5fVFlQRV9PS19VTlNQRUNJRklFRBAAEhQKEEJBTl9UWVBFX05PX0NPTU0QARITCg9CQU5fVFlQRV9CQU5ORUQQAhIUChBCQU5fVFlQRV9ORVRXT1JLEAMqmgEKC0FwcGVhbFN0YXRlEiEKHUFQUEVBTF9TVEFURV9PUEVOX1VOU1BFQ0lGSUVEEAASFwoTQVBQRUFMX1NUQVRFX0RFTklFRBABEhkKFUFQUEVBTF9TVEFURV9BQ0NFUFRFRBACEhgKFEFQUEVBTF9TVEFURV9SRURVQ0VEEAMSGgoWQVBQRUFMX1NUQVRFX05PX0FQUEVBTBAEKpEDCglCYW5SZWFzb24SGgoWQkFOX1JFQVNPTl9VTlNQRUNJRklFRBAAEhUKEUJBTl9SRUFTT05fQ1VTVE9NEAESFwoTQkFOX1JFQVNPTl9FWFRFUk5BTBACEhcKE0JBTl9SRUFTT05fQ0hFQVRJTkcQAxIVChFCQU5fUkVBU09OX1JBQ0lTTRAEEhkKFUJBTl9SRUFTT05fSEFSQVNTTUVOVBAFEhkKFUJBTl9SRUFTT05fRVhQTE9JVElORxAGEiAKHEJBTl9SRUFTT05fV0FSTklOR1NfRVhDRUVERUQQBxITCg9CQU5fUkVBU09OX1NQQU0QCBIXChNCQU5fUkVBU09OX0xBTkdVQUdFEAkSFgoSQkFOX1JFQVNPTl9QUk9GSUxFEAoSIAocQkFOX1JFQVNPTl9JVEVNX0RFU0NSSVBUSU9OUxALEhcKE0JBTl9SRUFTT05fQk9UX0hPU1QQDBIWChJCQU5fUkVBU09OX0VWQURJTkcQDRIXChNCQU5fUkVBU09OX1VTRVJOQU1FEA4qcAoGT3JpZ2luEh0KGU9SSUdJTl9TWVNURU1fVU5TUEVDSUZJRUQQABIOCgpPUklHSU5fQk9UEAESDgoKT1JJR0lOX1dFQhACEhIKDk9SSUdJTl9JTl9HQU1FEAMSEwoPT1JJR0lOX1JFUE9SVEVEEAQy/QIKCkJhblNlcnZpY2USNgoFUXVlcnkSFC5iYW4udjEuUXVlcnlSZXF1ZXN0GhUuYmFuLnYxLlF1ZXJ5UmVzcG9uc2UiABI5CgZEZWxldGUSFS5iYW4udjEuRGVsZXRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEjAKA0dldBISLmJhbi52MS5HZXRSZXF1ZXN0GhMuYmFuLnYxLkdldFJlc3BvbnNlIgASVAoPUXVlcnlTb3VyY2VCYW5zEh4uYmFuLnYxLlF1ZXJ5U291cmNlQmFuc1JlcXVlc3QaHy5iYW4udjEuUXVlcnlTb3VyY2VCYW5zUmVzcG9uc2UiABI5CgZVcGRhdGUSFS5iYW4udjEuVXBkYXRlUmVxdWVzdBoWLmJhbi52MS5VcGRhdGVSZXNwb25zZSIAEjkKBkNyZWF0ZRIVLmJhbi52MS5DcmVhdGVSZXF1ZXN0GhYuYmFuLnYxLkNyZWF0ZVJlc3BvbnNlIgBChgEKCmNvbS5iYW4udjFCCEJhblByb3RvUAFaNWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvYmFuL3YxO2JhbnYxogIDQlhYqgIGQmFuLlYxygIGQmFuXFYx4gISQmFuXFYxXEdQQk1ldGFkYXRh6gIHQmFuOjpWMWIIZWRpdGlvbnNw6Ac",
 		[
 			file_buf_validate_validate,
 			file_google_protobuf_duration,
@@ -68,9 +68,9 @@ export type CreateRequest = Message<"ban.v1.CreateRequest"> & {
 	origin: Origin;
 
 	/**
-	 * @generated from field: int64 report_id = 8;
+	 * @generated from field: int32 report_id = 8;
 	 */
-	reportId: bigint;
+	reportId: number;
 
 	/**
 	 * @generated from field: string cidr = 9;
@@ -143,9 +143,9 @@ export type CreateRequestValid = Message<"ban.v1.CreateRequest"> & {
 	origin: Origin;
 
 	/**
-	 * @generated from field: int64 report_id = 8;
+	 * @generated from field: int32 report_id = 8;
 	 */
-	reportId: bigint;
+	reportId: number;
 
 	/**
 	 * @generated from field: string cidr = 9;
@@ -254,12 +254,65 @@ export type UpdateRequest = Message<"ban.v1.UpdateRequest"> & {
 	cidr: string;
 
 	/**
-	 * @generated from field: int64 ban_id = 8;
+	 * @generated from field: int32 ban_id = 8;
 	 */
-	banId: bigint;
+	banId: number;
+
+	/**
+	 * @generated from field: ban.v1.AppealState appeal_state = 9;
+	 */
+	appealState: AppealState;
 };
 
-export type UpdateRequestValid = UpdateRequest;
+/**
+ * @generated from message ban.v1.UpdateRequest
+ */
+export type UpdateRequestValid = Message<"ban.v1.UpdateRequest"> & {
+	/**
+	 * @generated from field: ban.v1.BanType ban_type = 1;
+	 */
+	banType: BanType;
+
+	/**
+	 * @generated from field: ban.v1.BanReason reason = 2;
+	 */
+	reason: BanReason;
+
+	/**
+	 * @generated from field: string reason_text = 3;
+	 */
+	reasonText: string;
+
+	/**
+	 * @generated from field: string note = 4;
+	 */
+	note: string;
+
+	/**
+	 * @generated from field: bool evade_ok = 5;
+	 */
+	evadeOk: boolean;
+
+	/**
+	 * @generated from field: google.protobuf.Duration duration = 6;
+	 */
+	duration: Duration;
+
+	/**
+	 * @generated from field: string cidr = 7;
+	 */
+	cidr: string;
+
+	/**
+	 * @generated from field: int32 ban_id = 8;
+	 */
+	banId: number;
+
+	/**
+	 * @generated from field: ban.v1.AppealState appeal_state = 9;
+	 */
+	appealState: AppealState;
+};
 
 /**
  * Describes the message ban.v1.UpdateRequest.
@@ -468,9 +521,9 @@ export const QuerySourceBansResponseSchema: GenMessage<
  */
 export type GetRequest = Message<"ban.v1.GetRequest"> & {
 	/**
-	 * @generated from field: int64 ban_id = 1;
+	 * @generated from field: int32 ban_id = 1;
 	 */
-	banId: bigint;
+	banId: number;
 };
 
 /**
@@ -478,9 +531,9 @@ export type GetRequest = Message<"ban.v1.GetRequest"> & {
  */
 export type GetRequestValid = Message<"ban.v1.GetRequest"> & {
 	/**
-	 * @generated from field: int64 ban_id = 1;
+	 * @generated from field: int32 ban_id = 1;
 	 */
-	banId: bigint;
+	banId: number;
 };
 
 /**
@@ -524,9 +577,9 @@ export const GetResponseSchema: GenMessage<GetResponse, { validType: GetResponse
  */
 export type DeleteRequest = Message<"ban.v1.DeleteRequest"> & {
 	/**
-	 * @generated from field: int64 ban_id = 1;
+	 * @generated from field: int32 ban_id = 1;
 	 */
-	banId: bigint;
+	banId: number;
 
 	/**
 	 * @generated from field: string reason = 2;
@@ -539,9 +592,9 @@ export type DeleteRequest = Message<"ban.v1.DeleteRequest"> & {
  */
 export type DeleteRequestValid = Message<"ban.v1.DeleteRequest"> & {
 	/**
-	 * @generated from field: int64 ban_id = 1;
+	 * @generated from field: int32 ban_id = 1;
 	 */
-	banId: bigint;
+	banId: number;
 
 	/**
 	 * @generated from field: string reason = 2;
@@ -655,14 +708,14 @@ export type Ban = Message<"ban.v1.Ban"> & {
 	sourceId: bigint;
 
 	/**
-	 * @generated from field: int64 ban_id = 3;
+	 * @generated from field: int32 ban_id = 3;
 	 */
-	banId: bigint;
+	banId: number;
 
 	/**
-	 * @generated from field: int64 report_id = 4;
+	 * @generated from field: int32 report_id = 4;
 	 */
-	reportId: bigint;
+	reportId: number;
 
 	/**
 	 * @generated from field: string last_ip = 5;
@@ -730,37 +783,42 @@ export type Ban = Message<"ban.v1.Ban"> & {
 	isEnabled: boolean;
 
 	/**
-	 * @generated from field: google.protobuf.Timestamp valid_until = 18;
-	 */
-	validUntil?: Timestamp;
-
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 19;
+	 * @generated from field: google.protobuf.Timestamp created_on = 18;
 	 */
 	createdOn?: Timestamp;
 
 	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 20;
+	 * @generated from field: google.protobuf.Timestamp updated_on = 19;
 	 */
 	updatedOn?: Timestamp;
 
 	/**
-	 * @generated from field: string source_persona_name = 21;
+	 * @generated from field: google.protobuf.Duration duration = 20;
+	 */
+	duration?: Duration;
+
+	/**
+	 * @generated from field: google.protobuf.Timestamp valid_until = 21;
+	 */
+	validUntil?: Timestamp;
+
+	/**
+	 * @generated from field: string source_persona_name = 22;
 	 */
 	sourcePersonaName: string;
 
 	/**
-	 * @generated from field: string source_avatar_hash = 22;
+	 * @generated from field: string source_avatar_hash = 23;
 	 */
 	sourceAvatarHash: string;
 
 	/**
-	 * @generated from field: string target_persona_name = 23;
+	 * @generated from field: string target_persona_name = 24;
 	 */
 	targetPersonaName: string;
 
 	/**
-	 * @generated from field: string target_avatar_hash = 24;
+	 * @generated from field: string target_avatar_hash = 25;
 	 */
 	targetAvatarHash: string;
 };
@@ -780,14 +838,14 @@ export type BanValid = Message<"ban.v1.Ban"> & {
 	sourceId: bigint;
 
 	/**
-	 * @generated from field: int64 ban_id = 3;
+	 * @generated from field: int32 ban_id = 3;
 	 */
-	banId: bigint;
+	banId: number;
 
 	/**
-	 * @generated from field: int64 report_id = 4;
+	 * @generated from field: int32 report_id = 4;
 	 */
-	reportId: bigint;
+	reportId: number;
 
 	/**
 	 * @generated from field: string last_ip = 5;
@@ -855,37 +913,42 @@ export type BanValid = Message<"ban.v1.Ban"> & {
 	isEnabled: boolean;
 
 	/**
-	 * @generated from field: google.protobuf.Timestamp valid_until = 18;
-	 */
-	validUntil: Timestamp;
-
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 19;
+	 * @generated from field: google.protobuf.Timestamp created_on = 18;
 	 */
 	createdOn: Timestamp;
 
 	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 20;
+	 * @generated from field: google.protobuf.Timestamp updated_on = 19;
 	 */
 	updatedOn: Timestamp;
 
 	/**
-	 * @generated from field: string source_persona_name = 21;
+	 * @generated from field: google.protobuf.Duration duration = 20;
+	 */
+	duration: Duration;
+
+	/**
+	 * @generated from field: google.protobuf.Timestamp valid_until = 21;
+	 */
+	validUntil: Timestamp;
+
+	/**
+	 * @generated from field: string source_persona_name = 22;
 	 */
 	sourcePersonaName: string;
 
 	/**
-	 * @generated from field: string source_avatar_hash = 22;
+	 * @generated from field: string source_avatar_hash = 23;
 	 */
 	sourceAvatarHash: string;
 
 	/**
-	 * @generated from field: string target_persona_name = 23;
+	 * @generated from field: string target_persona_name = 24;
 	 */
 	targetPersonaName: string;
 
 	/**
-	 * @generated from field: string target_avatar_hash = 24;
+	 * @generated from field: string target_avatar_hash = 25;
 	 */
 	targetAvatarHash: string;
 };

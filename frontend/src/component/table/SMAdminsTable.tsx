@@ -1,3 +1,4 @@
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -6,16 +7,11 @@ import GroupRemoveIcon from "@mui/icons-material/GroupRemove";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import { useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
-import { SMAdminEditorModal } from "../modal/SMAdminEditorModal.tsx";
-import { SMGroupSelectModal } from "../modal/SMGroupSelectModal.tsx";
-import { createDefaultTableOptions } from "./options.ts";
-import { SortableTable } from "./SortableTable.tsx";
-import { TableCellString } from "./TableCellString.tsx";
-import { useMutation, useQuery } from "@connectrpc/connect-query";
+import type { SMGroup, SMUser, SMUserValid } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
 import {
 	addAdminGroup,
 	deleteAdmin,
@@ -23,8 +19,12 @@ import {
 	sMGroups,
 	sMUsers,
 } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
-import type { SMGroup, SMUser, SMUserValid } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
-import { useQueryClient } from "@tanstack/react-query";
+import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
+import { SMAdminEditorModal } from "../modal/SMAdminEditorModal.tsx";
+import { SMGroupSelectModal } from "../modal/SMGroupSelectModal.tsx";
+import { createDefaultTableOptions } from "./options.ts";
+import { SortableTable } from "./SortableTable.tsx";
+import { TableCellString } from "./TableCellString.tsx";
 
 const columnHelperAdmins = createMRTColumnHelper<SMUser>();
 const defaultOptionsAdmins = createDefaultTableOptions<SMUser>();
@@ -122,7 +122,7 @@ export const SMAdminsTable = () => {
 				sendFlash("error", `Failed to create confirmation modal: ${e}`);
 			}
 		},
-		[sendFlash, deleteAdmin],
+		[sendFlash, deleteAdmin, deleteAdminFn.mutate],
 	);
 
 	const onAddGroup = useCallback(

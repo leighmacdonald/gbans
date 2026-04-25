@@ -1,5 +1,6 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: ts-form made me do it! */
 
+import { useQuery } from "@connectrpc/connect-query";
 import Filter1Icon from "@mui/icons-material/Filter1";
 import Filter2Icon from "@mui/icons-material/Filter2";
 import Grid from "@mui/material/Grid";
@@ -25,12 +26,11 @@ import {
 	type OnChangeFn,
 	setColumnFilter,
 } from "../component/table/options.ts";
-import { ensureFeatureEnabled } from "../util/features.ts";
-import { renderDate } from "../util/time.ts";
-import { useQuery } from "@connectrpc/connect-query";
-import { getRatingsOverall } from "../rpc/mge/v1/mge-MGEService_connectquery.ts";
-import type { PlayerStats } from "../rpc/mge/v1/mge_pb.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
+import type { PlayerStats } from "../rpc/mge/v1/mge_pb.ts";
+import { getRatingsOverall } from "../rpc/mge/v1/mge-MGEService_connectquery.ts";
+import { ensureFeatureEnabled } from "../util/features.ts";
+import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<PlayerStats>();
 const defaultOptions = createDefaultTableOptions<PlayerStats>();
@@ -137,7 +137,7 @@ function MGEOverall() {
 				enableColumnFilter: false,
 				enableSorting: false,
 				grow: false,
-				Cell: ({ cell }) => renderDate(cell.getValue()),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
 		];
 	}, []);

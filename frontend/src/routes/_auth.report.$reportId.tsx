@@ -1,3 +1,5 @@
+import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
+import { useQuery } from "@connectrpc/connect-query";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import GavelIcon from "@mui/icons-material/Gavel";
 import InfoIcon from "@mui/icons-material/Info";
@@ -14,7 +16,6 @@ import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { apiGetBanBySteam, apiGetReport, appealStateString } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { ProfileInfoBox } from "../component/ProfileInfoBox.tsx";
 import { ReportModPanel } from "../component/ReportModPanel.tsx";
@@ -22,25 +23,16 @@ import { ReportViewComponent } from "../component/ReportViewComponent.tsx";
 import RouterLink from "../component/RouterLink.tsx";
 import { SteamIDList } from "../component/SteamIDList.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
-import { avatarHashToURL } from "../util/text.tsx";
-import { renderDateTime, renderTimeDistance } from "../util/time.ts";
-import { useQuery } from "@connectrpc/connect-query";
+import { AppealState, BanReason, BanType } from "../rpc/ban/v1/ban_pb.ts";
+import { get } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
+import { ReportStatus } from "../rpc/ban/v1/report_pb.ts";
+import { report } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
 import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
-import { BanReason } from "../rpc/ban/v1/ban_pb.ts";
+import { avatarHashToURL, reportStatusColour } from "../util/text.tsx";
+import { renderTimeDistance, renderTimestamp } from "../util/time.ts";
 
 export const Route = createFileRoute("/_auth/report/$reportId")({
 	component: ReportView,
-	loader: async ({ params, context }) => {
-		const { reportId } = params;
-		const report = await context.queryClient.fetchQuery({
-			queryKey: ["report", { reportId }],
-			queryFn: async ({ signal }) => {
-				return await apiGetReport(Number(reportId), signal);
-			},
-		});
-
-		return { report };
-	},
 	head: ({ match }) => ({
 		meta: [
 			{ name: "description", content: "View a report" },
@@ -51,74 +43,68 @@ export const Route = createFileRoute("/_auth/report/$reportId")({
 
 function ReportView() {
 	const { reportId } = Route.useParams();
-	const { report } = Route.useLoaderData();
 	const { appInfo } = Route.useRouteContext();
 	const { hasPermission } = useAuth();
 	const theme = useTheme();
 	const navigate = useNavigate();
 
-	const { data: ban, isLoading: isLoadingBan } = useQuery({
-		queryKey: ["ban", { targetId: report.target_id }],
-		queryFn: async ({ signal }) => {
-			if (report.target_id) {
-				return await apiGetBanBySteam(report.target_id, signal);
-			}
-		},
-		enabled: Boolean(report.target_id),
-	});
+	const { data: reportResp, isLoading } = useQuery(report, { reportId: Number(reportId) });
+
+	const { data: ban, isLoading: isLoadingBan } = useQuery(
+		get,
+		{},
+		{ enabled: Boolean(reportResp?.report?.subject?.steamId) },
+	);
 
 	const renderBan = useMemo(() => {
-		if (isLoadingBan || !ban || ban.ban_id === 0) {
+		if (isLoading || isLoadingBan || !ban?.ban || ban.ban?.banId === 0) {
 			return;
 		}
 
 		return (
 			<ContainerWithHeader
-				title={ban.ban_type === BanType.Banned ? "Banned" : "Muted"}
-				iconLeft={ban.ban_type === BanType.Banned ? <GavelIcon /> : <VolumeOffIcon />}
+				title={ban.ban.banType === BanType.BANNED ? "Banned" : "Muted"}
+				iconLeft={ban.ban.banType === BanType.BANNED ? <GavelIcon /> : <VolumeOffIcon />}
 			>
 				<List dense={true}>
 					<ListItem>
-						<ListItemText primary={"Reason"} secondary={BanReasons[ban.reason]} />
+						<ListItemText primary={"Reason"} secondary={BanReason[ban.ban.reason]} />
 					</ListItem>
-					{ban.reason_text !== "" && (
+					{ban.ban.reasonText !== "" && (
 						<ListItem>
-							<ListItemText primary={"Custom Reason"} secondary={ban.note} />
+							<ListItemText primary={"Custom Reason"} secondary={ban.ban.note} />
 						</ListItem>
 					)}
 					<ListItem>
-						<ListItemText primary={"Ban ID"} secondary={ban.ban_id} />
+						<ListItemText primary={"Ban ID"} secondary={ban.ban.banId} />
 					</ListItem>
 					<ListItem>
-						<ListItemText primary={"Note"} secondary={ban.note} />
+						<ListItemText primary={"Note"} secondary={ban.ban.note} />
 					</ListItem>
 					<ListItem>
-						<ListItemText primary={"Evasion OK"} secondary={ban.evade_ok ? "Yes" : "No"} />
+						<ListItemText primary={"Evasion OK"} secondary={ban.ban.evadeOk ? "Yes" : "No"} />
 					</ListItem>
 					<ListItem>
-						<ListItemText primary={"Appeal State"} secondary={appealStateString(ban.appeal_state)} />
+						<ListItemText primary={"Appeal State"} secondary={AppealState[ban.ban.appealState]} />
 					</ListItem>
 					<ListItem>
-						<ListItemText primary={"Creation Date"} secondary={renderDateTime(ban.created_on)} />
+						<ListItemText primary={"Creation Date"} secondary={renderTimestamp(ban.ban.createdOn)} />
 					</ListItem>
 					<ListItem>
-						<ListItemText
-							primary={"Valid Until Date"}
-							secondary={renderDateTime(ban.valid_until as Date)}
-						/>
+						<ListItemText primary={"Valid Until Date"} secondary={renderTimestamp(ban.ban.validUntil)} />
 					</ListItem>
 					<ListItem>
 						<ListItemText
 							primary={"Expires"}
-							secondary={renderTimeDistance(ban.valid_until as Date, new Date())}
+							secondary={renderTimeDistance(timestampDate(ban.ban.validUntil as Timestamp), new Date())}
 						/>
 					</ListItem>
 					<ListItem>
 						<ListItemText
 							primary={"Author"}
 							secondary={
-								<Link component={RouterLink} to={`/profile/${ban.source_id}`}>
-									{ban.source_personaname}
+								<Link component={RouterLink} to={`/profile/${ban.ban.sourceId}`}>
+									{ban.ban.sourcePersonaName}
 								</Link>
 							}
 						/>
@@ -126,7 +112,7 @@ function ReportView() {
 				</List>
 			</ContainerWithHeader>
 		);
-	}, [ban, isLoadingBan]);
+	}, [ban, isLoadingBan, isLoading]);
 
 	const reportStatusView = useMemo(() => {
 		return (
@@ -137,14 +123,17 @@ function ReportView() {
 					align={"center"}
 					sx={{
 						color: "#111111",
-						backgroundColor: reportStatusColour(report?.report_status ?? ReportStatus.Any, theme),
+						backgroundColor: reportStatusColour(
+							reportResp?.report?.report?.reportStatus ?? ReportStatus.OPENED_UNSPECIFIED,
+							theme,
+						),
 					}}
 				>
-					{reportStatusString(report?.report_status ?? ReportStatus.Any)}
+					{ReportStatus[reportResp?.report?.report?.reportStatus ?? ReportStatus.OPENED_UNSPECIFIED]}
 				</Typography>
 			</ContainerWithHeader>
 		);
-	}, [report?.report_status, theme]);
+	}, [reportResp?.report?.report?.reportStatus, theme]);
 
 	return (
 		<Grid container spacing={2}>
@@ -155,11 +144,13 @@ function ReportView() {
 				<div>
 					<Grid container spacing={2}>
 						<Grid size={{ xs: 6, md: 12 }}>
-							{report?.target_id && <ProfileInfoBox steam_id={report?.target_id} />}
+							{reportResp?.report?.report?.targetId && (
+								<ProfileInfoBox steamId={reportResp?.report?.report?.targetId} />
+							)}
 						</Grid>
 						{renderBan && <Grid size={{ xs: 6, md: 12 }}>{renderBan}</Grid>}
 						<Grid size={{ xs: 6, md: 12 }}>
-							<SteamIDList steam_id={report?.subject.steam_id ?? ""} />
+							<SteamIDList steam_id={reportResp?.report?.report?.sourceId ?? ""} />
 						</Grid>
 						<Grid size={{ xs: 6, md: 12 }}>{reportStatusView}</Grid>
 						<Grid size={{ xs: 6, md: 12 }}>
@@ -174,18 +165,18 @@ function ReportView() {
 										}}
 										onClick={async () => {
 											await navigate({
-												to: `/profile/${report.author.steam_id}`,
+												to: `/profile/${reportResp?.report?.report?.sourceId}`,
 											});
 										}}
 									>
 										<ListItemAvatar>
-											<Avatar src={avatarHashToURL(report.author.avatarhash)}>
+											<Avatar src={avatarHashToURL(reportResp?.report?.author?.avatarHash)}>
 												<SendIcon />
 											</Avatar>
 										</ListItemAvatar>
-										<ListItemText primary={report.author.persona_name} secondary={"Author"} />
+										<ListItemText primary={reportResp?.report?.author?.name} secondary={"Author"} />
 									</ListItem>
-									{report?.reason && (
+									{reportResp?.report?.report?.reason && (
 										<ListItem
 											sx={{
 												"&:hover": {
@@ -194,21 +185,28 @@ function ReportView() {
 												},
 											}}
 										>
-											<ListItemText primary={"Reason"} secondary={BanReason[report.reason]} />
+											<ListItemText
+												primary={"Reason"}
+												secondary={BanReason[reportResp?.report?.report?.reason]}
+											/>
 										</ListItem>
 									)}
-									{report?.reason && report.reason_text !== "" && (
-										<ListItem
-											sx={{
-												"&:hover": {
-													cursor: "pointer",
-													backgroundColor: theme.palette.background.paper,
-												},
-											}}
-										>
-											<ListItemText primary={"Custom Reason"} secondary={report.reason_text} />
-										</ListItem>
-									)}
+									{reportResp?.report?.report?.reason &&
+										reportResp?.report?.report?.reasonText !== "" && (
+											<ListItem
+												sx={{
+													"&:hover": {
+														cursor: "pointer",
+														backgroundColor: theme.palette.background.paper,
+													},
+												}}
+											>
+												<ListItemText
+													primary={"Custom Reason"}
+													secondary={reportResp?.report?.report?.reasonText}
+												/>
+											</ListItem>
+										)}
 								</List>
 							</ContainerWithHeader>
 						</Grid>

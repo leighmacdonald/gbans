@@ -18,6 +18,6 @@ message PersonCore {
   string discord_id = 5 [(buf.validate.field).required = true];
   int32 vac_bans = 6 [(buf.validate.field).required = true];
   int32 game_bans = 7 [(buf.validate.field).required = true];
-  int64 ban_id = 8 [(buf.validate.field).required = true];
+  int32 ban_id = 8 [(buf.validate.field).required = true];
   google.protobuf.Timestamp time_created = 9 [(buf.validate.field).required = true];
 }

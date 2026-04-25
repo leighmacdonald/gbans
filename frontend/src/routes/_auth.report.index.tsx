@@ -1,3 +1,4 @@
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import EditNotificationsIcon from "@mui/icons-material/EditNotifications";
 import InfoIcon from "@mui/icons-material/Info";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -11,12 +12,10 @@ import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { type JSX, useMemo, useState } from "react";
 import { z } from "zod/v4";
-import { apiCreateReport, apiGetUserReports } from "../api";
 import { ButtonLink } from "../component/ButtonLink.tsx";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { mdEditorRef } from "../component/form/field/MarkdownField.tsx";
@@ -30,23 +29,19 @@ import { SortableTable } from "../component/table/SortableTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { BanReason, BanReasons, banReasonsReportCollection } from "../schema/bans.ts";
-import {
-	type CreateReportRequest,
-	ReportStatus,
-	type ReportWithAuthor,
-	reportStatusString,
-	schemaCreateReportRequest,
-} from "../schema/report.ts";
+import { BanReason } from "../rpc/ban/v1/ban_pb.ts";
+import { ReportStatus, type ReportWithAuthor } from "../rpc/ban/v1/report_pb.ts";
+import { reportCreate, reports } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
+import { enumValues } from "../util/lists.ts";
 import { commonTableSearchSchema } from "../util/table.ts";
 import { emptyOrNullString } from "../util/types.ts";
 
 const validateSearch = commonTableSearchSchema.extend({
 	rows: z.number().optional(),
 	sortColumn: z.enum(["report_status", "created_on"]).optional(),
-	steam_id: z.string().optional(),
-	demo_id: z.number().optional(),
-	person_message_id: z.number().optional(),
+	steamId: z.string().optional(),
+	demoId: z.number().optional(),
+	personMessageId: z.number().optional(),
 });
 
 export const Route = createFileRoute("/_auth/report/")({
@@ -60,7 +55,7 @@ export const Route = createFileRoute("/_auth/report/")({
 function ReportCreate() {
 	const { profile } = useAuth();
 	const canReport = useMemo(() => {
-		return profile.steam_id && profile.ban_id === 0;
+		return profile.steamId && profile.steamId === 0n;
 	}, [profile]);
 
 	return (
@@ -78,8 +73,8 @@ function ReportCreate() {
 								<ButtonLink
 									variant={"contained"}
 									color={"primary"}
-									to={"/ban/$ban_id"}
-									params={{ ban_id: profile.ban_id.toString() }}
+									to={"/ban/$banId"}
+									params={{ banId: profile.banId.toString() }}
 								>
 									Appeal Ban
 								</ButtonLink>
@@ -136,35 +131,30 @@ const columnHelper = createMRTColumnHelper<ReportWithAuthor>();
 const defaultOptions = createDefaultTableOptions<ReportWithAuthor>();
 
 const UserReportHistory = () => {
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["history"],
-		queryFn: async ({ signal }) => {
-			return await apiGetUserReports(signal);
-		},
-	});
+	const { data, isLoading, isError } = useQuery(reports);
 
 	const columns = useMemo(() => {
 		return [
-			columnHelper.accessor("report_status", {
+			columnHelper.accessor("report.reportStatus", {
 				header: "Status",
 				size: 150,
 				filterVariant: "multi-select",
-				filterSelectOptions: Object.values(ReportStatus).map((status) => ({
-					label: reportStatusString(status),
+				filterSelectOptions: enumValues(ReportStatus).map((status) => ({
+					label: ReportStatus[status],
 					value: status,
 				})),
 				filterFn: (row, _, filterValue) => {
 					return (
 						filterValue.length === 0 ||
-						filterValue.includes(ReportStatus.Any) ||
-						filterValue.includes(row.original.report_status)
+						filterValue.includes(ReportStatus.OPENED_UNSPECIFIED) ||
+						filterValue.includes(row.original.report?.reportStatus)
 					);
 				},
 				Cell: ({ cell }) => {
 					return (
 						<Stack direction={"row"} spacing={1}>
 							<ReportStatusIcon reportStatus={cell.getValue()} />
-							<Typography variant={"body1"}>{reportStatusString(cell.getValue())}</Typography>
+							<Typography variant={"body1"}>{ReportStatus[cell.getValue()]}</Typography>
 						</Stack>
 					);
 				},
@@ -172,15 +162,18 @@ const UserReportHistory = () => {
 			columnHelper.accessor("subject", {
 				header: "Player",
 				filterFn: (row, _, filterValue) => {
-					const query = filterValue.toLowerCase();
+					const query: string = filterValue.toLowerCase();
 					if (query === "") {
 						return true;
 					}
-					const value = row.original.subject.name.toLowerCase();
-					if (value.includes(query)) {
+					const value = String(row.original.subject?.name.toLowerCase());
+					if (value !== "" && value.includes(query)) {
 						return true;
 					}
-					if (row.original.target_id.includes(query) || row.original.target_id === query) {
+					if (
+						row.original.subject?.steamId.toString().includes(query) ||
+						row.original.subject?.steamId.toString() === query
+					) {
 						return true;
 					}
 
@@ -188,17 +181,17 @@ const UserReportHistory = () => {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.subject.steam_id}
-						personaname={
-							emptyOrNullString(row.original.subject.name)
-								? row.original.subject.steam_id
-								: row.original.subject.name
-						}
-						avatar_hash={row.original.subject.avatarhash}
+						steam_id={String(row.original.subject?.steamId)}
+						personaname={String(
+							emptyOrNullString(row.original.subject?.name)
+								? row.original.subject?.steamId.toString()
+								: row.original.subject?.name,
+						)}
+						avatar_hash={String(row.original.subject?.avatarHash)}
 					/>
 				),
 			}),
-			columnHelper.accessor("report_id", {
+			columnHelper.accessor("report.reportId", {
 				header: "View",
 				enableColumnActions: false,
 				enableColumnFilter: false,
@@ -225,7 +218,7 @@ const UserReportHistory = () => {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ?? [],
+		data: data?.reports ?? [],
 		enableFilters: true,
 		enableHiding: true,
 		enableFacetedValues: true,
@@ -252,30 +245,26 @@ const UserReportHistory = () => {
 };
 
 const ReportCreateForm = (): JSX.Element => {
-	const { demo_id, steam_id, person_message_id } = Route.useSearch();
+	const { demoId, steamId, personMessageId } = Route.useSearch();
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const [isCustom, setIsCustom] = useState(false);
 
-	const defaultValues: z.infer<typeof schemaCreateReportRequest> = {
+	const defaultValues = {
 		description: "",
-		demo_id: demo_id ?? 0,
-		demo_tick: 0,
-		person_message_id: person_message_id ?? 0,
-		target_id: steam_id ?? "",
-		reason: person_message_id ? BanReason.Language : BanReason.Cheating,
-		reason_text: "",
+		demoId: demoId ?? 0,
+		demoTick: 0,
+		personMessageId: personMessageId ?? 0,
+		targetId: steamId ?? "",
+		reason: personMessageId ? BanReason.LANGUAGE : BanReason.CHEATING,
+		reasonText: "",
 	};
 
-	const mutation = useMutation({
-		mutationFn: async (variables: CreateReportRequest) => {
-			const ac = new AbortController();
-			return await apiCreateReport(variables, ac.signal);
-		},
+	const mutation = useMutation(reportCreate, {
 		onSuccess: async (data) => {
 			mdEditorRef.current?.setMarkdown("");
 			await navigate({
 				to: "/report/$reportId",
-				params: { reportId: String(data.report_id) },
+				params: { reportId: String(data.report?.report?.reportId) },
 			});
 			sendFlash("success", "Created report successfully");
 		},
@@ -287,18 +276,16 @@ const ReportCreateForm = (): JSX.Element => {
 	const form = useAppForm({
 		onSubmit: ({ value }) => {
 			mutation.mutate({
-				demo_id: value.demo_id ?? 0,
-				target_id: value.target_id,
-				demo_tick: value.demo_tick,
+				demoId: BigInt(value.demoId ?? 0n),
+				targetId: BigInt(value.targetId),
+				demoTick: value.demoTick,
 				reason: value.reason,
-				reason_text: value.reason_text,
+				reasonText: value.reasonText,
 				description: value.description,
-				person_message_id: value.person_message_id,
+				personMessageId: BigInt(value.personMessageId),
 			});
 		},
-		validators: {
-			onSubmitAsync: schemaCreateReportRequest,
-		},
+
 		defaultValues,
 	});
 
@@ -315,9 +302,9 @@ const ReportCreateForm = (): JSX.Element => {
 				<Grid container spacing={2}>
 					<Grid size={{ xs: 12 }}>
 						<form.AppField
-							name={"target_id"}
+							name={"targetId"}
 							children={(field) => {
-								return <field.SteamIDField disabled={Boolean(steam_id)} label={"SteamID"} />;
+								return <field.SteamIDField disabled={Boolean(steamId)} label={"SteamID"} />;
 							}}
 						/>
 					</Grid>
@@ -328,15 +315,15 @@ const ReportCreateForm = (): JSX.Element => {
 								return (
 									<field.SelectField
 										label={"Ban Reason"}
-										items={banReasonsReportCollection}
+										items={enumValues(BanReason)}
 										handleChange={(value) => {
-											setIsCustom(value === BanReason.Custom);
+											setIsCustom(value === BanReason.CUSTOM);
 											field.handleChange(value);
 										}}
 										renderItem={(r) => {
 											return (
 												<MenuItem value={r} key={`reason-${r}`}>
-													{BanReasons[r]}
+													{BanReason[r]}
 												</MenuItem>
 											);
 										}}
@@ -348,7 +335,7 @@ const ReportCreateForm = (): JSX.Element => {
 
 					<Grid size={{ xs: 6 }}>
 						<form.AppField
-							name={"reason_text"}
+							name={"reasonText"}
 							children={(field) => {
 								return (
 									<field.TextField
@@ -361,31 +348,31 @@ const ReportCreateForm = (): JSX.Element => {
 							}}
 						/>
 					</Grid>
-					{Boolean(demo_id) && (
+					{Boolean(demoId) && (
 						<>
 							<Grid size={{ xs: 6 }}>
 								<form.AppField
-									name={"demo_id"}
+									name={"demoId"}
 									children={(field) => {
-										return <field.TextField disabled={Boolean(demo_id)} label="Demo ID" />;
+										return <field.TextField disabled={Boolean(demoId)} label="Demo ID" />;
 									}}
 								/>
 							</Grid>
 							<Grid size={{ xs: 6 }}>
 								<form.AppField
-									name={"demo_tick"}
+									name={"demoTick"}
 									children={(field) => {
 										return (
-											<field.TextField disabled={!demo_id} label="Demo Tick" variant="outlined" />
+											<field.TextField disabled={!demoId} label="Demo Tick" variant="outlined" />
 										);
 									}}
 								/>
 							</Grid>
 						</>
 					)}
-					{person_message_id !== undefined && person_message_id > 0 && (
+					{personMessageId !== undefined && personMessageId > 0 && (
 						<Grid size={{ md: 12 }}>
-							<PlayerMessageContext playerMessageId={person_message_id} padding={5} />
+							<PlayerMessageContext playerMessageId={personMessageId} padding={5} />
 						</Grid>
 					)}
 					<Grid size={{ xs: 12 }}>

@@ -42,4 +42,6 @@ message UserNotification {
   string link = 7 [(buf.validate.field).required = true];
   int32 count = 8 [(buf.validate.field).required = true];
   google.protobuf.Timestamp created_on = 9 [(buf.validate.field).required = true];
+  string name = 10 [(buf.validate.field).required = true];
+  string avatar_hash = 11 [(buf.validate.field).required = true];
 }

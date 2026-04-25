@@ -1,3 +1,5 @@
+import { create } from "@bufbuild/protobuf";
+import { useMutation } from "@connectrpc/connect-query";
 import ArticleIcon from "@mui/icons-material/Article";
 import BuildIcon from "@mui/icons-material/Build";
 import EditIcon from "@mui/icons-material/Edit";
@@ -10,15 +12,13 @@ import { z } from "zod/v4";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { type Wiki, WikiSchema } from "../rpc/wiki/v1/wiki_pb.ts";
+import { update } from "../rpc/wiki/v1/wiki-WikiService_connectquery.ts";
+import { enumValues } from "../util/lists.ts";
 import { ContainerWithHeaderAndButtons } from "./ContainerWithHeaderAndButtons.tsx";
 import { mdEditorRef } from "./form/field/MarkdownField.tsx";
 import { MarkDownRenderer } from "./MarkdownRenderer.tsx";
-import { type Wiki, WikiSchema } from "../rpc/wiki/v1/wiki_pb.ts";
-import { update } from "../rpc/wiki/v1/wiki-WikiService_connectquery.ts";
-import { useMutation } from "@connectrpc/connect-query";
-import { create } from "@bufbuild/protobuf";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
-import { enumValues } from "../util/lists.ts";
 
 export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page: Wiki; assetURL: string }) => {
 	const [editMode, setEditMode] = useState<boolean>(false);

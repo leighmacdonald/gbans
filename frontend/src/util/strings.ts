@@ -1,5 +1,9 @@
-import type { Group, Override, SMUser } from "../rpc/sourcemod/v1/sourcemod_pb";
+import type { Theme } from "@mui/material";
 import { z } from "zod/v4";
+import type { Asset } from "../rpc/asset/v1/asset_pb.ts";
+import { ReportStatus } from "../rpc/ban/v1/report_pb.ts";
+import type { Person } from "../rpc/person/v1/person_pb.ts";
+import type { Group, Override, SMUser } from "../rpc/sourcemod/v1/sourcemod_pb";
 
 const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -75,4 +79,96 @@ export type Flags = z.infer<typeof Flags>;
 
 export const hasSMFlag = (flag: Flags, entity?: Group | SMUser | Override) => {
 	return entity?.flags.includes(flag) ?? false;
+};
+
+export const cleanMapName = (name: string): string => {
+	if (!name.startsWith("workshop/")) {
+		return name;
+	}
+	const a = name.split("/");
+	if (a.length !== 2) {
+		return name;
+	}
+	const b = a[1].split(".ugc");
+	if (a.length !== 2) {
+		return name;
+	}
+	return b[0];
+};
+
+export const assetURL = (asset: Asset): string => `/asset/${asset.assetId}`;
+
+export const defaultAvatarHash = "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb";
+
+export const filterPerson = (people: Person[], query: string): Person[] => {
+	return people.filter((friend) => {
+		if (friend.personaName.toLowerCase().includes(query)) {
+			return true;
+		} else if (friend.steamId.toString() === query) {
+			return true;
+		}
+		// TODO convert steamids from other formats to query
+		return false;
+	});
+};
+
+const humanize = (count: number, thresh: number, dp = 1, units: string[]) => {
+	let u = -1;
+	const r = 10 ** dp;
+
+	do {
+		count /= thresh;
+		++u;
+	} while (Math.round(Math.abs(count) * r) / r >= thresh && u < units.length - 1);
+
+	return `${count.toFixed(dp)}${units[u]}`;
+};
+
+export const humanFileSize = (bytes: number, si = false, dp = 1) => {
+	const thresh = si ? 1000 : 1024;
+
+	if (Math.abs(bytes) < thresh) {
+		return `${bytes} B`;
+	}
+
+	const units = si
+		? ["kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+		: ["KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
+	return humanize(bytes, thresh, dp, units);
+};
+
+export const humanCount = (count: number, dp: number = 1): string => {
+	if (Math.abs(count) < 1000) {
+		return `${count}`;
+	}
+	return humanize(count, 1000, dp, ["K", "M", "B", "T", "Q"]);
+};
+
+export const defaultFloatFmtPct = (value: number) => `${value.toFixed(2)}%`;
+
+export const defaultFloatFmt = (value: number) => value.toFixed(2);
+
+type avatarSize = "small" | "medium" | "full";
+
+export const avatarHashToURL = (hash?: string, size: avatarSize = "full") => {
+	return `https://avatars.steamstatic.com/${hash ?? defaultAvatarHash}${size === "small" ? "" : `_${size}`}.jpg`;
+};
+
+export const toTitleCase = (str: string) =>
+	str
+		.split(" ")
+		.map((item) => item.replace(item.charAt(0), item.charAt(0).toUpperCase()))
+		.join(" ");
+
+export const reportStatusColour = (rs: ReportStatus, theme: Theme): string => {
+	switch (rs) {
+		case ReportStatus.NEED_MORE_INFO:
+			return theme.palette.warning.main;
+		case ReportStatus.CLOSED_WITHOUT_ACTION:
+			return theme.palette.error.main;
+		case ReportStatus.CLOSED_WITH_ACTION:
+			return theme.palette.success.main;
+		default:
+			return theme.palette.info.main;
+	}
 };

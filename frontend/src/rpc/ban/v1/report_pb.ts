@@ -21,7 +21,7 @@ import type { Message } from "@bufbuild/protobuf";
 export const file_ban_v1_report: GenFile =
 	/*@__PURE__*/
 	fileDesc(
-		"ChNiYW4vdjEvcmVwb3J0LnByb3RvEgZiYW4udjEiRAoPUmVwb3J0c1Jlc3BvbnNlEjEKB3JlcG9ydHMYASADKAsyGC5iYW4udjEuUmVwb3J0V2l0aEF1dGhvckIGukgDyAEBIj8KGlJlcG9ydE1lc3NhZ2VEZWxldGVSZXF1ZXN0EiEKEXJlcG9ydF9tZXNzYWdlX2lkGAEgASgDQga6SAPIAQEiVgoYUmVwb3J0TWVzc2FnZUVkaXRSZXF1ZXN0EiEKEXJlcG9ydF9tZXNzYWdlX2lkGAEgASgDQga6SAPIAQESFwoHYm9keV9tZBgCIAEoCUIGukgDyAEBIksKGVJlcG9ydE1lc3NhZ2VFZGl0UmVzcG9uc2USLgoHbWVzc2FnZRgBIAEoCzIVLmJhbi52MS5SZXBvcnRNZXNzYWdlQga6SAPIAQEiMgoVUmVwb3J0TWVzc2FnZXNSZXF1ZXN0EhkKCXJlcG9ydF9pZBgBIAEoA0IGukgDyAEBIi4KElVzZXJSZXBvcnRzUmVxdWVzdBIYCghzdGVhbV9pZBgBIAEoA0IGukgDyAEBIkkKFlJlcG9ydE1lc3NhZ2VzUmVzcG9uc2USLwoIbWVzc2FnZXMYASADKAsyFS5iYW4udjEuUmVwb3J0TWVzc2FnZUIGukgDyAEBIkgKE1VzZXJSZXBvcnRzUmVzcG9uc2USMQoHcmVwb3J0cxgBIAMoCzIYLmJhbi52MS5SZXBvcnRXaXRoQXV0aG9yQga6SAPIAQEiKgoNUmVwb3J0UmVxdWVzdBIZCglyZXBvcnRfaWQYASABKANCBrpIA8gBASJCCg5SZXBvcnRSZXNwb25zZRIwCgZyZXBvcnQYASABKAsyGC5iYW4udjEuUmVwb3J0V2l0aEF1dGhvckIGukgDyAEBIoADCg1SZXBvcnRNZXNzYWdlEhkKCXJlcG9ydF9pZBgBIAEoA0IGukgDyAEBEiEKEXJlcG9ydF9tZXNzYWdlX2lkGAIgASgDQga6SAPIAQESGQoJYXV0aG9yX2lkGAMgASgDQga6SAPIAQESGgoKbWVzc2FnZV9tZBgEIAEoCUIGukgDyAEBEhcKB2RlbGV0ZWQYBSABKAhCBrpIA8gBARI2CgpjcmVhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEjYKCnVwZGF0ZWRfb24YByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESHAoMcGVyc29uYV9uYW1lGAggASgJQga6SAPIAQESGwoLYXZhdGFyX2hhc2gYCSABKAlCBrpIA8gBARI2ChBwZXJtaXNzaW9uX2xldmVsGAogASgOMhQucGVyc29uLnYxLlByaXZpbGVnZUIGukgDyAEBIrsDCgZSZXBvcnQSGQoJcmVwb3J0X2lkGAEgASgDQga6SAPIAQESGQoJc291cmNlX2lkGAIgASgDQga6SAPIAQESGQoJdGFyZ2V0X2lkGAMgASgDQga6SAPIAQESGwoLZGVzY3JpcHRpb24YBCABKAlCBrpIA8gBARIzCg1yZXBvcnRfc3RhdHVzGAUgASgOMhQuYmFuLnYxLlJlcG9ydFN0YXR1c0IGukgDyAEBEikKBnJlYXNvbhgGIAEoDjIRLmJhbi52MS5CYW5SZWFzb25CBrpIA8gBARIbCgtyZWFzb25fdGV4dBgHIAEoCUIGukgDyAEBEhcKB2RlbGV0ZWQYCCABKAhCBrpIA8gBARIRCglkZW1vX3RpY2sYCSABKAUSDwoHZGVtb19pZBgKIAEoAxIZChFwZXJzb25fbWVzc2FnZV9pZBgLIAEoAxI2CgpjcmVhdGVkX29uGAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEjYKCnVwZGF0ZWRfb24YDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEimQEKEFJlcG9ydFdpdGhBdXRob3ISJgoGcmVwb3J0GAEgASgLMg4uYmFuLnYxLlJlcG9ydEIGukgDyAEBEi0KBmF1dGhvchgCIAEoCzIVLnBlcnNvbi52MS5QZXJzb25Db3JlQga6SAPIAQESLgoHc3ViamVjdBgDIAEoCzIVLnBlcnNvbi52MS5QZXJzb25Db3JlQga6SAPIAQEiaQoXUmVwb3J0U3RhdHVzRWRpdFJlcXVlc3QSGQoJcmVwb3J0X2lkGAEgASgDQga6SAPIAQESMwoNcmVwb3J0X3N0YXR1cxgCIAEoDjIULmJhbi52MS5SZXBvcnRTdGF0dXNCBrpIA8gBASLzAgoTUmVwb3J0Q3JlYXRlUmVxdWVzdBIZCglzb3VyY2VfaWQYASABKANCBrpIA8gBARIZCgl0YXJnZXRfaWQYAiABKANCBrpIA8gBARIbCgtkZXNjcmlwdGlvbhgDIAEoCUIGukgDyAEBEi4KBnJlYXNvbhgEIAEoDjIRLmJhbi52MS5CYW5SZWFzb25CC7pICMgBAYIBAhABEhsKC3JlYXNvbl90ZXh0GAUgASgJQga6SAPIAQESDwoHZGVtb19pZBgGIAEoAxIRCglkZW1vX3RpY2sYByABKAUSGQoRcGVyc29uX21lc3NhZ2VfaWQYCCABKAM6fbpIehp4Cgx2YWxpZF9yZWFzb24SJGVuc3VyZSB0aGUgcmVhc29uIGlzIHNldCB3aGVuIGN1c3RvbRpCdGhpcy5yZWFzb24gIT0gQkFOX1JFQVNPTl9DVVNUT00gPyB0cnVlIDogcmVhc29uX3RleHQubWluX2xlbiA+IDEwIkgKFFJlcG9ydENyZWF0ZVJlc3BvbnNlEjAKBnJlcG9ydBgBIAEoCzIYLmJhbi52MS5SZXBvcnRXaXRoQXV0aG9yQga6SAPIAQEiUAoaUmVwb3J0TWVzc2FnZUNyZWF0ZVJlcXVlc3QSGQoJcmVwb3J0X2lkGAEgASgDQga6SAPIAQESFwoHYm9keV9tZBgCIAEoCUIGukgDyAEBIlQKG1JlcG9ydE1lc3NhZ2VDcmVhdGVSZXNwb25zZRI1Cg5yZXBvcnRfbWVzc2FnZRgBIAEoCzIVLmJhbi52MS5SZXBvcnRNZXNzYWdlQga6SAPIAQEqpQEKDFJlcG9ydFN0YXR1cxIkCiBSRVBPUlRfU1RBVFVTX09QRU5FRF9VTlNQRUNJRklFRBAAEiAKHFJFUE9SVF9TVEFUVVNfTkVFRF9NT1JFX0lORk8QARInCiNSRVBPUlRfU1RBVFVTX0NMT1NFRF9XSVRIT1VUX0FDVElPThACEiQKIFJFUE9SVF9TVEFUVVNfQ0xPU0VEX1dJVEhfQUNUSU9OEAMy1AUKDVJlcG9ydFNlcnZpY2USSwoMUmVwb3J0Q3JlYXRlEhsuYmFuLnYxLlJlcG9ydENyZWF0ZVJlcXVlc3QaHC5iYW4udjEuUmVwb3J0Q3JlYXRlUmVzcG9uc2UiABI5CgZSZXBvcnQSFS5iYW4udjEuUmVwb3J0UmVxdWVzdBoWLmJhbi52MS5SZXBvcnRSZXNwb25zZSIAEk0KEFJlcG9ydFN0YXR1c0VkaXQSHy5iYW4udjEuUmVwb3J0U3RhdHVzRWRpdFJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJICgtVc2VyUmVwb3J0cxIaLmJhbi52MS5Vc2VyUmVwb3J0c1JlcXVlc3QaGy5iYW4udjEuVXNlclJlcG9ydHNSZXNwb25zZSIAElEKDlJlcG9ydE1lc3NhZ2VzEh0uYmFuLnYxLlJlcG9ydE1lc3NhZ2VzUmVxdWVzdBoeLmJhbi52MS5SZXBvcnRNZXNzYWdlc1Jlc3BvbnNlIgASYAoTUmVwb3J0TWVzc2FnZUNyZWF0ZRIiLmJhbi52MS5SZXBvcnRNZXNzYWdlQ3JlYXRlUmVxdWVzdBojLmJhbi52MS5SZXBvcnRNZXNzYWdlQ3JlYXRlUmVzcG9uc2UiABJaChFSZXBvcnRNZXNzYWdlRWRpdBIgLmJhbi52MS5SZXBvcnRNZXNzYWdlRWRpdFJlcXVlc3QaIS5iYW4udjEuUmVwb3J0TWVzc2FnZUVkaXRSZXNwb25zZSIAElMKE1JlcG9ydE1lc3NhZ2VEZWxldGUSIi5iYW4udjEuUmVwb3J0TWVzc2FnZURlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABI8CgdSZXBvcnRzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhcuYmFuLnYxLlJlcG9ydHNSZXNwb25zZSIAQokBCgpjb20uYmFuLnYxQgtSZXBvcnRQcm90b1ABWjVnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL2Jhbi92MTtiYW52MaICA0JYWKoCBkJhbi5WMcoCBkJhblxWMeICEkJhblxWMVxHUEJNZXRhZGF0YeoCB0Jhbjo6VjFiCGVkaXRpb25zcOgH",
+		"ChNiYW4vdjEvcmVwb3J0LnByb3RvEgZiYW4udjEiRAoPUmVwb3J0c1Jlc3BvbnNlEjEKB3JlcG9ydHMYASADKAsyGC5iYW4udjEuUmVwb3J0V2l0aEF1dGhvckIGukgDyAEBIj8KGlJlcG9ydE1lc3NhZ2VEZWxldGVSZXF1ZXN0EiEKEXJlcG9ydF9tZXNzYWdlX2lkGAEgASgDQga6SAPIAQEiVgoYUmVwb3J0TWVzc2FnZUVkaXRSZXF1ZXN0EiEKEXJlcG9ydF9tZXNzYWdlX2lkGAEgASgDQga6SAPIAQESFwoHYm9keV9tZBgCIAEoCUIGukgDyAEBIksKGVJlcG9ydE1lc3NhZ2VFZGl0UmVzcG9uc2USLgoHbWVzc2FnZRgBIAEoCzIVLmJhbi52MS5SZXBvcnRNZXNzYWdlQga6SAPIAQEiMgoVUmVwb3J0TWVzc2FnZXNSZXF1ZXN0EhkKCXJlcG9ydF9pZBgBIAEoBUIGukgDyAEBIi4KElVzZXJSZXBvcnRzUmVxdWVzdBIYCghzdGVhbV9pZBgBIAEoA0IGukgDyAEBIkkKFlJlcG9ydE1lc3NhZ2VzUmVzcG9uc2USLwoIbWVzc2FnZXMYASADKAsyFS5iYW4udjEuUmVwb3J0TWVzc2FnZUIGukgDyAEBIkgKE1VzZXJSZXBvcnRzUmVzcG9uc2USMQoHcmVwb3J0cxgBIAMoCzIYLmJhbi52MS5SZXBvcnRXaXRoQXV0aG9yQga6SAPIAQEiKgoNUmVwb3J0UmVxdWVzdBIZCglyZXBvcnRfaWQYASABKAVCBrpIA8gBASJCCg5SZXBvcnRSZXNwb25zZRIwCgZyZXBvcnQYASABKAsyGC5iYW4udjEuUmVwb3J0V2l0aEF1dGhvckIGukgDyAEBIoADCg1SZXBvcnRNZXNzYWdlEhkKCXJlcG9ydF9pZBgBIAEoBUIGukgDyAEBEiEKEXJlcG9ydF9tZXNzYWdlX2lkGAIgASgDQga6SAPIAQESGQoJYXV0aG9yX2lkGAMgASgDQga6SAPIAQESGgoKbWVzc2FnZV9tZBgEIAEoCUIGukgDyAEBEhcKB2RlbGV0ZWQYBSABKAhCBrpIA8gBARI2CgpjcmVhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEjYKCnVwZGF0ZWRfb24YByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESHAoMcGVyc29uYV9uYW1lGAggASgJQga6SAPIAQESGwoLYXZhdGFyX2hhc2gYCSABKAlCBrpIA8gBARI2ChBwZXJtaXNzaW9uX2xldmVsGAogASgOMhQucGVyc29uLnYxLlByaXZpbGVnZUIGukgDyAEBIrsDCgZSZXBvcnQSGQoJcmVwb3J0X2lkGAEgASgFQga6SAPIAQESGQoJc291cmNlX2lkGAIgASgDQga6SAPIAQESGQoJdGFyZ2V0X2lkGAMgASgDQga6SAPIAQESGwoLZGVzY3JpcHRpb24YBCABKAlCBrpIA8gBARIzCg1yZXBvcnRfc3RhdHVzGAUgASgOMhQuYmFuLnYxLlJlcG9ydFN0YXR1c0IGukgDyAEBEikKBnJlYXNvbhgGIAEoDjIRLmJhbi52MS5CYW5SZWFzb25CBrpIA8gBARIbCgtyZWFzb25fdGV4dBgHIAEoCUIGukgDyAEBEhcKB2RlbGV0ZWQYCCABKAhCBrpIA8gBARIRCglkZW1vX3RpY2sYCSABKAUSDwoHZGVtb19pZBgKIAEoAxIZChFwZXJzb25fbWVzc2FnZV9pZBgLIAEoAxI2CgpjcmVhdGVkX29uGAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEjYKCnVwZGF0ZWRfb24YDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEimQEKEFJlcG9ydFdpdGhBdXRob3ISJgoGcmVwb3J0GAEgASgLMg4uYmFuLnYxLlJlcG9ydEIGukgDyAEBEi0KBmF1dGhvchgCIAEoCzIVLnBlcnNvbi52MS5QZXJzb25Db3JlQga6SAPIAQESLgoHc3ViamVjdBgDIAEoCzIVLnBlcnNvbi52MS5QZXJzb25Db3JlQga6SAPIAQEiaQoXUmVwb3J0U3RhdHVzRWRpdFJlcXVlc3QSGQoJcmVwb3J0X2lkGAEgASgFQga6SAPIAQESMwoNcmVwb3J0X3N0YXR1cxgCIAEoDjIULmJhbi52MS5SZXBvcnRTdGF0dXNCBrpIA8gBASLzAgoTUmVwb3J0Q3JlYXRlUmVxdWVzdBIZCglzb3VyY2VfaWQYASABKANCBrpIA8gBARIZCgl0YXJnZXRfaWQYAiABKANCBrpIA8gBARIbCgtkZXNjcmlwdGlvbhgDIAEoCUIGukgDyAEBEi4KBnJlYXNvbhgEIAEoDjIRLmJhbi52MS5CYW5SZWFzb25CC7pICMgBAYIBAhABEhsKC3JlYXNvbl90ZXh0GAUgASgJQga6SAPIAQESDwoHZGVtb19pZBgGIAEoAxIRCglkZW1vX3RpY2sYByABKAUSGQoRcGVyc29uX21lc3NhZ2VfaWQYCCABKAM6fbpIehp4Cgx2YWxpZF9yZWFzb24SJGVuc3VyZSB0aGUgcmVhc29uIGlzIHNldCB3aGVuIGN1c3RvbRpCdGhpcy5yZWFzb24gIT0gQkFOX1JFQVNPTl9DVVNUT00gPyB0cnVlIDogcmVhc29uX3RleHQubWluX2xlbiA+IDEwIkgKFFJlcG9ydENyZWF0ZVJlc3BvbnNlEjAKBnJlcG9ydBgBIAEoCzIYLmJhbi52MS5SZXBvcnRXaXRoQXV0aG9yQga6SAPIAQEiUAoaUmVwb3J0TWVzc2FnZUNyZWF0ZVJlcXVlc3QSGQoJcmVwb3J0X2lkGAEgASgFQga6SAPIAQESFwoHYm9keV9tZBgCIAEoCUIGukgDyAEBIlQKG1JlcG9ydE1lc3NhZ2VDcmVhdGVSZXNwb25zZRI1Cg5yZXBvcnRfbWVzc2FnZRgBIAEoCzIVLmJhbi52MS5SZXBvcnRNZXNzYWdlQga6SAPIAQEqpQEKDFJlcG9ydFN0YXR1cxIkCiBSRVBPUlRfU1RBVFVTX09QRU5FRF9VTlNQRUNJRklFRBAAEiAKHFJFUE9SVF9TVEFUVVNfTkVFRF9NT1JFX0lORk8QARInCiNSRVBPUlRfU1RBVFVTX0NMT1NFRF9XSVRIT1VUX0FDVElPThACEiQKIFJFUE9SVF9TVEFUVVNfQ0xPU0VEX1dJVEhfQUNUSU9OEAMy1AUKDVJlcG9ydFNlcnZpY2USSwoMUmVwb3J0Q3JlYXRlEhsuYmFuLnYxLlJlcG9ydENyZWF0ZVJlcXVlc3QaHC5iYW4udjEuUmVwb3J0Q3JlYXRlUmVzcG9uc2UiABI5CgZSZXBvcnQSFS5iYW4udjEuUmVwb3J0UmVxdWVzdBoWLmJhbi52MS5SZXBvcnRSZXNwb25zZSIAEk0KEFJlcG9ydFN0YXR1c0VkaXQSHy5iYW4udjEuUmVwb3J0U3RhdHVzRWRpdFJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJICgtVc2VyUmVwb3J0cxIaLmJhbi52MS5Vc2VyUmVwb3J0c1JlcXVlc3QaGy5iYW4udjEuVXNlclJlcG9ydHNSZXNwb25zZSIAElEKDlJlcG9ydE1lc3NhZ2VzEh0uYmFuLnYxLlJlcG9ydE1lc3NhZ2VzUmVxdWVzdBoeLmJhbi52MS5SZXBvcnRNZXNzYWdlc1Jlc3BvbnNlIgASYAoTUmVwb3J0TWVzc2FnZUNyZWF0ZRIiLmJhbi52MS5SZXBvcnRNZXNzYWdlQ3JlYXRlUmVxdWVzdBojLmJhbi52MS5SZXBvcnRNZXNzYWdlQ3JlYXRlUmVzcG9uc2UiABJaChFSZXBvcnRNZXNzYWdlRWRpdBIgLmJhbi52MS5SZXBvcnRNZXNzYWdlRWRpdFJlcXVlc3QaIS5iYW4udjEuUmVwb3J0TWVzc2FnZUVkaXRSZXNwb25zZSIAElMKE1JlcG9ydE1lc3NhZ2VEZWxldGUSIi5iYW4udjEuUmVwb3J0TWVzc2FnZURlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABI8CgdSZXBvcnRzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhcuYmFuLnYxLlJlcG9ydHNSZXNwb25zZSIAQokBCgpjb20uYmFuLnYxQgtSZXBvcnRQcm90b1ABWjVnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL2Jhbi92MTtiYW52MaICA0JYWKoCBkJhbi5WMcoCBkJhblxWMeICEkJhblxWMVxHUEJNZXRhZGF0YeoCB0Jhbjo6VjFiCGVkaXRpb25zcOgH",
 		[
 			file_ban_v1_ban,
 			file_buf_validate_validate,
@@ -162,9 +162,9 @@ export const ReportMessageEditResponseSchema: GenMessage<
  */
 export type ReportMessagesRequest = Message<"ban.v1.ReportMessagesRequest"> & {
 	/**
-	 * @generated from field: int64 report_id = 1;
+	 * @generated from field: int32 report_id = 1;
 	 */
-	reportId: bigint;
+	reportId: number;
 };
 
 /**
@@ -172,9 +172,9 @@ export type ReportMessagesRequest = Message<"ban.v1.ReportMessagesRequest"> & {
  */
 export type ReportMessagesRequestValid = Message<"ban.v1.ReportMessagesRequest"> & {
 	/**
-	 * @generated from field: int64 report_id = 1;
+	 * @generated from field: int32 report_id = 1;
 	 */
-	reportId: bigint;
+	reportId: number;
 };
 
 /**
@@ -275,9 +275,9 @@ export const UserReportsResponseSchema: GenMessage<UserReportsResponse, { validT
  */
 export type ReportRequest = Message<"ban.v1.ReportRequest"> & {
 	/**
-	 * @generated from field: int64 report_id = 1;
+	 * @generated from field: int32 report_id = 1;
 	 */
-	reportId: bigint;
+	reportId: number;
 };
 
 /**
@@ -285,9 +285,9 @@ export type ReportRequest = Message<"ban.v1.ReportRequest"> & {
  */
 export type ReportRequestValid = Message<"ban.v1.ReportRequest"> & {
 	/**
-	 * @generated from field: int64 report_id = 1;
+	 * @generated from field: int32 report_id = 1;
 	 */
-	reportId: bigint;
+	reportId: number;
 };
 
 /**
@@ -331,9 +331,9 @@ export const ReportResponseSchema: GenMessage<ReportResponse, { validType: Repor
  */
 export type ReportMessage = Message<"ban.v1.ReportMessage"> & {
 	/**
-	 * @generated from field: int64 report_id = 1;
+	 * @generated from field: int32 report_id = 1;
 	 */
-	reportId: bigint;
+	reportId: number;
 
 	/**
 	 * @generated from field: int64 report_message_id = 2;
@@ -386,9 +386,9 @@ export type ReportMessage = Message<"ban.v1.ReportMessage"> & {
  */
 export type ReportMessageValid = Message<"ban.v1.ReportMessage"> & {
 	/**
-	 * @generated from field: int64 report_id = 1;
+	 * @generated from field: int32 report_id = 1;
 	 */
-	reportId: bigint;
+	reportId: number;
 
 	/**
 	 * @generated from field: int64 report_message_id = 2;
@@ -449,9 +449,9 @@ export const ReportMessageSchema: GenMessage<ReportMessage, { validType: ReportM
  */
 export type Report = Message<"ban.v1.Report"> & {
 	/**
-	 * @generated from field: int64 report_id = 1;
+	 * @generated from field: int32 report_id = 1;
 	 */
-	reportId: bigint;
+	reportId: number;
 
 	/**
 	 * @generated from field: int64 source_id = 2;
@@ -519,9 +519,9 @@ export type Report = Message<"ban.v1.Report"> & {
  */
 export type ReportValid = Message<"ban.v1.Report"> & {
 	/**
-	 * @generated from field: int64 report_id = 1;
+	 * @generated from field: int32 report_id = 1;
 	 */
-	reportId: bigint;
+	reportId: number;
 
 	/**
 	 * @generated from field: int64 source_id = 2;
@@ -645,9 +645,9 @@ export const ReportWithAuthorSchema: GenMessage<ReportWithAuthor, { validType: R
  */
 export type ReportStatusEditRequest = Message<"ban.v1.ReportStatusEditRequest"> & {
 	/**
-	 * @generated from field: int64 report_id = 1;
+	 * @generated from field: int32 report_id = 1;
 	 */
-	reportId: bigint;
+	reportId: number;
 
 	/**
 	 * @generated from field: ban.v1.ReportStatus report_status = 2;
@@ -660,9 +660,9 @@ export type ReportStatusEditRequest = Message<"ban.v1.ReportStatusEditRequest"> 
  */
 export type ReportStatusEditRequestValid = Message<"ban.v1.ReportStatusEditRequest"> & {
 	/**
-	 * @generated from field: int64 report_id = 1;
+	 * @generated from field: int32 report_id = 1;
 	 */
-	reportId: bigint;
+	reportId: number;
 
 	/**
 	 * @generated from field: ban.v1.ReportStatus report_status = 2;
@@ -810,9 +810,9 @@ export const ReportCreateResponseSchema: GenMessage<ReportCreateResponse, { vali
  */
 export type ReportMessageCreateRequest = Message<"ban.v1.ReportMessageCreateRequest"> & {
 	/**
-	 * @generated from field: int64 report_id = 1;
+	 * @generated from field: int32 report_id = 1;
 	 */
-	reportId: bigint;
+	reportId: number;
 
 	/**
 	 * @generated from field: string body_md = 2;
@@ -825,9 +825,9 @@ export type ReportMessageCreateRequest = Message<"ban.v1.ReportMessageCreateRequ
  */
 export type ReportMessageCreateRequestValid = Message<"ban.v1.ReportMessageCreateRequest"> & {
 	/**
-	 * @generated from field: int64 report_id = 1;
+	 * @generated from field: int32 report_id = 1;
 	 */
-	reportId: bigint;
+	reportId: number;
 
 	/**
 	 * @generated from field: string body_md = 2;

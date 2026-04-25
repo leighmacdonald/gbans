@@ -1,3 +1,6 @@
+import { create } from "@bufbuild/protobuf";
+import { DurationSchema, timestampDate } from "@bufbuild/protobuf/wkt";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import DirectionsRunIcon from "@mui/icons-material/DirectionsRun";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
@@ -9,19 +12,16 @@ import { intervalToDuration } from "date-fns/intervalToDuration";
 import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import { Duration, Duration8601ToString } from "../../util/time.ts";
+import { BanReason, BanType, Origin } from "../../rpc/ban/v1/ban_pb.ts";
+import { get, update } from "../../rpc/ban/v1/ban-BanService_connectquery.ts";
+import { enumValues } from "../../util/lists.ts";
 import { ErrorDetails } from "../ErrorDetails.tsx";
 import { MarkdownField } from "../form/field/MarkdownField.tsx";
 import { Heading } from "../Heading";
 import { LoadingPlaceholder } from "../LoadingPlaceholder.tsx";
-import { get, update } from "../../rpc/ban/v1/ban-BanService_connectquery.ts";
-import { useMutation, useQuery } from "@connectrpc/connect-query";
-import { BanReason, BanType, Origin } from "../../rpc/ban/v1/ban_pb.ts";
-import { enumValues } from "../../util/lists.ts";
-import { timestampDate } from "@bufbuild/protobuf/wkt";
 
 export const BanModal = NiceModal.create(
-	({ banId, reportId, steamId }: { banId?: bigint; reportId?: number; steamId?: string }) => {
+	({ banId, reportId, steamId }: { banId?: number; reportId?: number; steamId?: bigint }) => {
 		const { data: req, isLoading, isError, error } = useQuery(get, { banId });
 
 		const { sendFlash, sendError } = useUserFlashCtx();
@@ -46,7 +46,6 @@ export const BanModal = NiceModal.create(
 			ban_type: req?.ban?.banType ?? BanType.BANNED,
 			reason: req?.ban?.reason ?? BanReason.CHEATING,
 			reason_text: req?.ban?.reasonText ?? "",
-			duration: req?.ban ? Duration.durCustom : Duration.dur2w,
 			note: req?.ban?.note ?? "",
 			evade_ok: req?.ban?.evadeOk ?? false,
 			cidr: req?.ban?.cidr ?? "",
@@ -57,7 +56,9 @@ export const BanModal = NiceModal.create(
 
 		const form = useAppForm({
 			onSubmit: async ({ value }) => {
-				mutation.mutate(value);
+				mutation.mutate({ ...value, duration: create(DurationSchema, { seconds: 100n }) });
+				throw "fixme";
+				//const seconds = BigInt(toSeconds(parse(value.duration)));
 			},
 			defaultValues,
 		});
@@ -189,24 +190,24 @@ export const BanModal = NiceModal.create(
 										<p>Expires On: {formatISO9075(timestampDate(req?.ban.validUntil))}</p>
 									</>
 								)}
-								<form.AppField
-									name={"duration"}
-									children={(field) => {
-										return (
-											<field.SelectField
-												label={"Duration"}
-												items={Object.values(Duration)}
-												renderItem={(bt) => {
-													return (
-														<MenuItem value={bt} key={`bt-${bt}`}>
-															{Duration8601ToString(bt)}
-														</MenuItem>
-													);
-												}}
-											/>
-										);
-									}}
-								/>
+								{/*<form.AppField*/}
+								{/*	name={"duration"}*/}
+								{/*	children={(field) => {*/}
+								{/*		return (*/}
+								{/*			<field.SelectField*/}
+								{/*				label={"Duration"}*/}
+								{/*				items={Object.values(Duration)}*/}
+								{/*				renderItem={(bt) => {*/}
+								{/*					return (*/}
+								{/*						<MenuItem value={bt} key={`bt-${bt}`}>*/}
+								{/*							{Duration8601ToString(bt)}*/}
+								{/*						</MenuItem>*/}
+								{/*					);*/}
+								{/*				}}*/}
+								{/*			/>*/}
+								{/*		);*/}
+								{/*	}}*/}
+								{/*/>*/}
 							</Grid>
 
 							{/*<Grid size={{ xs: 6 }}>*/}

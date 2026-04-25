@@ -216,6 +216,8 @@ type UserNotification struct {
 	Link                 *string                `protobuf:"bytes,7,opt,name=link" json:"link,omitempty"`
 	Count                *int32                 `protobuf:"varint,8,opt,name=count" json:"count,omitempty"`
 	CreatedOn            *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	Name                 *string                `protobuf:"bytes,10,opt,name=name" json:"name,omitempty"`
+	AvatarHash           *string                `protobuf:"bytes,11,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -313,6 +315,20 @@ func (x *UserNotification) GetCreatedOn() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *UserNotification) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
+}
+
+func (x *UserNotification) GetAvatarHash() string {
+	if x != nil && x.AvatarHash != nil {
+		return *x.AvatarHash
+	}
+	return ""
+}
+
 var File_notification_v1_notification_proto protoreflect.FileDescriptor
 
 const file_notification_v1_notification_proto_rawDesc = "" +
@@ -325,7 +341,7 @@ const file_notification_v1_notification_proto_rawDesc = "" +
 	"message_id\x18\x01 \x03(\x05B\x06\xbaH\x03\xc8\x01\x01R\tmessageId\"8\n" +
 	"\x0fMarkReadRequest\x12%\n" +
 	"\n" +
-	"message_id\x18\x01 \x03(\x05B\x06\xbaH\x03\xc8\x01\x01R\tmessageId\"\x8f\x03\n" +
+	"message_id\x18\x01 \x03(\x05B\x06\xbaH\x03\xc8\x01\x01R\tmessageId\"\xd4\x03\n" +
 	"\x10UserNotification\x12<\n" +
 	"\x16person_notification_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x14personNotificationId\x12!\n" +
 	"\bsteam_id\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\x12\x1a\n" +
@@ -336,7 +352,11 @@ const file_notification_v1_notification_proto_rawDesc = "" +
 	"\x04link\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04link\x12\x1c\n" +
 	"\x05count\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05count\x12A\n" +
 	"\n" +
-	"created_on\x18\t \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn*P\n" +
+	"created_on\x18\t \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12\x1a\n" +
+	"\x04name\x18\n" +
+	" \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12'\n" +
+	"\vavatar_hash\x18\v \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"avatarHash*P\n" +
 	"\bSeverity\x12\x1d\n" +
 	"\x19SEVERITY_INFO_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rSEVERITY_WARN\x10\x01\x12\x12\n" +

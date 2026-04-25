@@ -1,3 +1,4 @@
+import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import GroupsIcon from "@mui/icons-material/Groups";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
@@ -5,36 +6,28 @@ import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
 import MenuItem from "@mui/material/MenuItem";
-import { useMutation } from "@tanstack/react-query";
 import { z } from "zod/v4";
-import { apiCreateSMAdmin, apiSaveSMAdmin, hasSMFlag } from "../../api";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import { type AuthType, type SMAdmin, type SMGroups, schemaFlags } from "../../schema/sourcemod.ts";
+import { AuthType, type Group, type SMUser } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
+import { createAdmin, editAdmin } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
+import { enumValues } from "../../util/lists.ts";
+import { hasSMFlag, schemaFlags } from "../../util/strings.ts";
 import { Heading } from "../Heading";
-
-type mutateAdminArgs = {
-	name: string;
-	immunity: number;
-	flags: string;
-	auth_type: AuthType;
-	identity: string;
-	password: string;
-};
 
 const schema = schemaFlags.extend({
 	name: z.string().min(2),
 	password: z.string(),
-	auth_type: z.enum(["steam", "name", "ip"]),
+	authType: z.enum(AuthType),
 	identity: z.string().min(1),
 	immunity: z.number().min(0).max(100),
 });
 
-export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin; groups: SMGroups[] }) => {
+export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMUser; groups: Group[] }) => {
 	const modal = useModal();
-	const { sendError } = useUserFlashCtx();
+	const { sendError, sendFlash } = useUserFlashCtx();
 	const defaultValues: z.input<typeof schema> = {
-		auth_type: admin?.auth_type ?? "steam",
+		authType: admin?.authType ?? AuthType.STEAM_UNSPECIFIED,
 		identity: admin?.identity ?? "",
 		password: admin?.password ?? "",
 		name: admin?.name ?? "",
@@ -61,19 +54,27 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
 		s: hasSMFlag("s", admin),
 		t: hasSMFlag("t", admin),
 	};
-	const edit = useMutation({
-		mutationKey: ["adminSMAdmin"],
-		mutationFn: async ({ name, immunity, flags, auth_type, identity, password }: mutateAdminArgs) => {
-			const ac = new AbortController();
-			return admin?.admin_id
-				? await apiSaveSMAdmin(admin.admin_id, name, immunity, flags, auth_type, identity, password, ac.signal)
-				: await apiCreateSMAdmin(name, immunity, flags, auth_type, identity, password, ac.signal);
-		},
-		onSuccess: async (admin) => {
-			modal.resolve(admin);
+
+	const createMutation = useMutation(createAdmin, {
+		onSuccess: async (resp) => {
+			modal.resolve(resp.admin);
 			await modal.hide();
+			sendFlash("success", "Created admin");
 		},
-		onError: sendError,
+		onError: (error) => {
+			sendError(error.message);
+		},
+	});
+
+	const editMutation = useMutation(editAdmin, {
+		onSuccess: async (resp) => {
+			modal.resolve(resp.admin);
+			await modal.hide();
+			sendFlash("success", "Edited admin");
+		},
+		onError: (error) => {
+			sendError(error.message);
+		},
 	});
 
 	const form = useAppForm({
@@ -87,11 +88,15 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
 					}
 					return acc;
 				}, "");
-			edit.mutate({
-				...value,
-				immunity: Number(value.immunity),
-				flags: flags,
-			});
+			if (admin?.id) {
+				editMutation.mutate({
+					...value,
+					immunity: Number(value.immunity),
+					flags: flags,
+				});
+			} else {
+				createMutation.mutate({ ...value });
+			}
 		},
 		defaultValues,
 		validators: {
@@ -133,16 +138,16 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
 						</Grid>
 						<Grid size={{ xs: 6 }}>
 							<form.AppField
-								name={"auth_type"}
+								name={"authType"}
 								children={(field) => {
 									return (
 										<field.SelectField
 											label={"Auth Type"}
-											items={["steam", "name", "ip"]}
+											items={enumValues(AuthType)}
 											renderItem={(i) => {
 												return (
 													<MenuItem value={i} key={i}>
-														{i}
+														{AuthType[i]}
 													</MenuItem>
 												);
 											}}
@@ -360,7 +365,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
 						</Grid>
 						<Grid size={{ xs: 12 }}>
 							<Link target={"_blank"} href={"https://wiki.alliedmods.net/Adding_Admins_(SourceMod)"}>
-								Additional Sourcemod Admin Info
+								Additional SourceMod Admin Info
 							</Link>
 						</Grid>
 					</Grid>

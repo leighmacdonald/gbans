@@ -1,22 +1,19 @@
+import { create } from "@bufbuild/protobuf";
+import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { type ReactNode, useCallback } from "react";
-import { defaultAvatarHash } from "./api";
 import { AuthContext } from "./contexts/AuthContext.tsx";
+import { type Person, PersonSchema } from "./rpc/person/v1/person_pb.ts";
+import { Privilege } from "./rpc/person/v1/privilege_pb.ts";
 import { logoutFn } from "./util/auth/logoutFn.ts";
 import { logErr } from "./util/errors.ts";
-import { type PersonCore, PersonCoreSchema } from "./rpc/person/v1/person_core_pb.ts";
-import { create } from "@bufbuild/protobuf";
-import { Privilege } from "./rpc/person/v1/privilege_pb.ts";
-import { timestampDate } from "@bufbuild/protobuf/wkt";
 
 export const accessTokenKey = "token";
 export const profileKey = "profile";
 export const logoutKey = "logout";
 
-const saveProfile = (profile: PersonCore) => {
+const saveProfile = (profile: Person) => {
 	const v = {
 		...profile,
-		steamId: profile.steamId.toString(),
-		banId: profile.banId.toString(),
 		timeCreated: profile.timeCreated ? timestampDate(profile.timeCreated) : new Date(),
 	};
 	console.log(v);
@@ -28,11 +25,11 @@ export function AuthProvider({
 	setProfile,
 }: {
 	children: ReactNode;
-	profile: PersonCore;
-	setProfile: (v?: PersonCore) => void;
+	profile: Person;
+	setProfile: (v?: Person) => void;
 }) {
 	const login = useCallback(
-		async (profile: PersonCore) => {
+		async (profile: Person) => {
 			saveProfile(profile);
 			setProfile(profile);
 		},
@@ -45,13 +42,7 @@ export function AuthProvider({
 		} catch (e) {
 			logErr(`error logging out: ${e}`);
 		} finally {
-			setProfile(
-				create(PersonCoreSchema, {
-					steamId: 0n,
-					permissionLevel: Privilege.GUEST,
-					avatarHash: defaultAvatarHash,
-				}),
-			);
+			setProfile(create(PersonSchema, {}));
 		}
 	}, [setProfile]);
 
@@ -101,8 +92,8 @@ export function AuthProvider({
 }
 
 export type AuthContextProps = {
-	profile: PersonCore;
-	login: (profile: PersonCore) => void;
+	profile: Person;
+	login: (profile: Person) => void;
 	logout: () => Promise<void>;
 	isAuthenticated: () => boolean;
 	permissionLevel: () => Privilege;

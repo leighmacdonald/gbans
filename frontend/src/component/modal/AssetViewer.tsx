@@ -2,10 +2,10 @@ import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import PermMediaIcon from "@mui/icons-material/PermMedia";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import { useMemo } from "react";
+import type { Asset } from "../../rpc/asset/v1/asset_pb.ts";
 import { Heading } from "../Heading";
 import { ImageAsset } from "../ImageAsset";
 import { VideoAsset } from "../VideoAsset";
-import type { Asset } from "../../rpc/asset/v1/asset_pb.ts";
 
 export const AssetViewer = NiceModal.create((asset: Asset) => {
 	const modal = useModal();

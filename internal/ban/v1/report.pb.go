@@ -263,7 +263,7 @@ func (x *ReportMessageEditResponse) GetMessage() *ReportMessage {
 
 type ReportMessagesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ReportId      *int64                 `protobuf:"varint,1,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
+	ReportId      *int32                 `protobuf:"varint,1,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -298,7 +298,7 @@ func (*ReportMessagesRequest) Descriptor() ([]byte, []int) {
 	return file_ban_v1_report_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *ReportMessagesRequest) GetReportId() int64 {
+func (x *ReportMessagesRequest) GetReportId() int32 {
 	if x != nil && x.ReportId != nil {
 		return *x.ReportId
 	}
@@ -439,7 +439,7 @@ func (x *UserReportsResponse) GetReports() []*ReportWithAuthor {
 
 type ReportRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ReportId      *int64                 `protobuf:"varint,1,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
+	ReportId      *int32                 `protobuf:"varint,1,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -474,7 +474,7 @@ func (*ReportRequest) Descriptor() ([]byte, []int) {
 	return file_ban_v1_report_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *ReportRequest) GetReportId() int64 {
+func (x *ReportRequest) GetReportId() int32 {
 	if x != nil && x.ReportId != nil {
 		return *x.ReportId
 	}
@@ -527,7 +527,7 @@ func (x *ReportResponse) GetReport() *ReportWithAuthor {
 
 type ReportMessage struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	ReportId        *int64                 `protobuf:"varint,1,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
+	ReportId        *int32                 `protobuf:"varint,1,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
 	ReportMessageId *int64                 `protobuf:"varint,2,opt,name=report_message_id,json=reportMessageId" json:"report_message_id,omitempty"`
 	AuthorId        *int64                 `protobuf:"varint,3,opt,name=author_id,json=authorId" json:"author_id,omitempty"`
 	MessageMd       *string                `protobuf:"bytes,4,opt,name=message_md,json=messageMd" json:"message_md,omitempty"`
@@ -571,7 +571,7 @@ func (*ReportMessage) Descriptor() ([]byte, []int) {
 	return file_ban_v1_report_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *ReportMessage) GetReportId() int64 {
+func (x *ReportMessage) GetReportId() int32 {
 	if x != nil && x.ReportId != nil {
 		return *x.ReportId
 	}
@@ -643,7 +643,7 @@ func (x *ReportMessage) GetPermissionLevel() v1.Privilege {
 
 type Report struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	ReportId        *int64                 `protobuf:"varint,1,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
+	ReportId        *int32                 `protobuf:"varint,1,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
 	SourceId        *int64                 `protobuf:"varint,2,opt,name=source_id,json=sourceId" json:"source_id,omitempty"`
 	TargetId        *int64                 `protobuf:"varint,3,opt,name=target_id,json=targetId" json:"target_id,omitempty"`
 	Description     *string                `protobuf:"bytes,4,opt,name=description" json:"description,omitempty"`
@@ -690,7 +690,7 @@ func (*Report) Descriptor() ([]byte, []int) {
 	return file_ban_v1_report_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *Report) GetReportId() int64 {
+func (x *Report) GetReportId() int32 {
 	if x != nil && x.ReportId != nil {
 		return *x.ReportId
 	}
@@ -843,7 +843,7 @@ func (x *ReportWithAuthor) GetSubject() *v1.PersonCore {
 
 type ReportStatusEditRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ReportId      *int64                 `protobuf:"varint,1,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
+	ReportId      *int32                 `protobuf:"varint,1,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
 	ReportStatus  *ReportStatus          `protobuf:"varint,2,opt,name=report_status,json=reportStatus,enum=ban.v1.ReportStatus" json:"report_status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -879,7 +879,7 @@ func (*ReportStatusEditRequest) Descriptor() ([]byte, []int) {
 	return file_ban_v1_report_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *ReportStatusEditRequest) GetReportId() int64 {
+func (x *ReportStatusEditRequest) GetReportId() int32 {
 	if x != nil && x.ReportId != nil {
 		return *x.ReportId
 	}
@@ -1039,7 +1039,7 @@ func (x *ReportCreateResponse) GetReport() *ReportWithAuthor {
 
 type ReportMessageCreateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ReportId      *int64                 `protobuf:"varint,1,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
+	ReportId      *int32                 `protobuf:"varint,1,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
 	BodyMd        *string                `protobuf:"bytes,2,opt,name=body_md,json=bodyMd" json:"body_md,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1075,7 +1075,7 @@ func (*ReportMessageCreateRequest) Descriptor() ([]byte, []int) {
 	return file_ban_v1_report_proto_rawDescGZIP(), []int{16}
 }
 
-func (x *ReportMessageCreateRequest) GetReportId() int64 {
+func (x *ReportMessageCreateRequest) GetReportId() int32 {
 	if x != nil && x.ReportId != nil {
 		return *x.ReportId
 	}
@@ -1148,7 +1148,7 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"\x19ReportMessageEditResponse\x127\n" +
 	"\amessage\x18\x01 \x01(\v2\x15.ban.v1.ReportMessageB\x06\xbaH\x03\xc8\x01\x01R\amessage\"<\n" +
 	"\x15ReportMessagesRequest\x12#\n" +
-	"\treport_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\breportId\"7\n" +
+	"\treport_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\breportId\"7\n" +
 	"\x12UserReportsRequest\x12!\n" +
 	"\bsteam_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\"S\n" +
 	"\x16ReportMessagesResponse\x129\n" +
@@ -1156,11 +1156,11 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"\x13UserReportsResponse\x12:\n" +
 	"\areports\x18\x01 \x03(\v2\x18.ban.v1.ReportWithAuthorB\x06\xbaH\x03\xc8\x01\x01R\areports\"4\n" +
 	"\rReportRequest\x12#\n" +
-	"\treport_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\breportId\"J\n" +
+	"\treport_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\breportId\"J\n" +
 	"\x0eReportResponse\x128\n" +
 	"\x06report\x18\x01 \x01(\v2\x18.ban.v1.ReportWithAuthorB\x06\xbaH\x03\xc8\x01\x01R\x06report\"\xf9\x03\n" +
 	"\rReportMessage\x12#\n" +
-	"\treport_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\breportId\x122\n" +
+	"\treport_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\breportId\x122\n" +
 	"\x11report_message_id\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x0freportMessageId\x12#\n" +
 	"\tauthor_id\x18\x03 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\bauthorId\x12%\n" +
 	"\n" +
@@ -1176,7 +1176,7 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"\x10permission_level\x18\n" +
 	" \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\"\xca\x04\n" +
 	"\x06Report\x12#\n" +
-	"\treport_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\breportId\x12#\n" +
+	"\treport_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\breportId\x12#\n" +
 	"\tsource_id\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\bsourceId\x12#\n" +
 	"\ttarget_id\x18\x03 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\btargetId\x12(\n" +
 	"\vdescription\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdescription\x12A\n" +
@@ -1198,7 +1198,7 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"\x06author\x18\x02 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\x06author\x127\n" +
 	"\asubject\x18\x03 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\asubject\"\x81\x01\n" +
 	"\x17ReportStatusEditRequest\x12#\n" +
-	"\treport_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\breportId\x12A\n" +
+	"\treport_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\breportId\x12A\n" +
 	"\rreport_status\x18\x02 \x01(\x0e2\x14.ban.v1.ReportStatusB\x06\xbaH\x03\xc8\x01\x01R\freportStatus\"\xcb\x03\n" +
 	"\x13ReportCreateRequest\x12#\n" +
 	"\tsource_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\bsourceId\x12#\n" +
@@ -1214,7 +1214,7 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"\x14ReportCreateResponse\x128\n" +
 	"\x06report\x18\x01 \x01(\v2\x18.ban.v1.ReportWithAuthorB\x06\xbaH\x03\xc8\x01\x01R\x06report\"b\n" +
 	"\x1aReportMessageCreateRequest\x12#\n" +
-	"\treport_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\breportId\x12\x1f\n" +
+	"\treport_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\breportId\x12\x1f\n" +
 	"\abody_md\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06bodyMd\"c\n" +
 	"\x1bReportMessageCreateResponse\x12D\n" +
 	"\x0ereport_message\x18\x01 \x01(\v2\x15.ban.v1.ReportMessageB\x06\xbaH\x03\xc8\x01\x01R\rreportMessage*\xa5\x01\n" +

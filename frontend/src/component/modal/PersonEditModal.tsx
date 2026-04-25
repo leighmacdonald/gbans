@@ -1,3 +1,4 @@
+import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import PersonIcon from "@mui/icons-material/Person";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
@@ -5,13 +6,11 @@ import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
 import { useAppForm } from "../../contexts/formContext.tsx";
-
-import { Heading } from "../Heading";
 import type { Person } from "../../rpc/person/v1/person_pb.ts";
-import { useMutation } from "@connectrpc/connect-query";
 import { editPermissions } from "../../rpc/person/v1/person-PersonService_connectquery.ts";
 import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
 import { enumValues } from "../../util/lists.ts";
+import { Heading } from "../Heading";
 
 export const PersonEditModal = NiceModal.create(({ person }: { person: Person }) => {
 	const modal = useModal();

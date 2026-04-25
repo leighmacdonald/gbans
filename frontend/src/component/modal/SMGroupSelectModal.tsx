@@ -5,8 +5,8 @@ import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
 import { useAppForm } from "../../contexts/formContext.tsx";
-import { Heading } from "../Heading";
 import type { Group } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
+import { Heading } from "../Heading";
 
 export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: Group[] }) => {
 	const modal = useModal();

@@ -1,16 +1,16 @@
-import { createConnectTransport } from "@connectrpc/connect-web";
+import { createValidator } from "@bufbuild/protovalidate";
 import type { Interceptor } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
+import { createValidateInterceptor } from "@connectrpc/validate";
 import { accessTokenKey } from "./auth.tsx";
 import { emptyOrNullString } from "./util/types.ts";
-import { createValidateInterceptor } from "@connectrpc/validate";
-import { createValidator } from "@bufbuild/protovalidate";
 
 const validateInterceptor = createValidateInterceptor({ validator: createValidator({}) });
 
 const authInterceptor: Interceptor = (next) => async (req) => {
 	const token = localStorage.getItem(accessTokenKey);
 	if (!emptyOrNullString(token)) {
-		req.header.set("Authorization", "Bearer " + token);
+		req.header.set("Authorization", `Bearer ${token}`);
 	}
 
 	return await next(req);

@@ -46,6 +46,9 @@ const (
 	// AppealServiceDeleteAppealMessageProcedure is the fully-qualified name of the AppealService's
 	// DeleteAppealMessage RPC.
 	AppealServiceDeleteAppealMessageProcedure = "/ban.v1.AppealService/DeleteAppealMessage"
+	// AppealServiceSetAppealStateProcedure is the fully-qualified name of the AppealService's
+	// SetAppealState RPC.
+	AppealServiceSetAppealStateProcedure = "/ban.v1.AppealService/SetAppealState"
 )
 
 // AppealServiceClient is a client for the ban.v1.AppealService service.
@@ -55,6 +58,7 @@ type AppealServiceClient interface {
 	Reply(context.Context, *v1.ReplyRequest) (*v1.ReplyResponse, error)
 	EditAppealMessage(context.Context, *v1.EditAppealMessageRequest) (*v1.EditAppealMessageResponse, error)
 	DeleteAppealMessage(context.Context, *v1.DeleteAppealMessageRequest) (*emptypb.Empty, error)
+	SetAppealState(context.Context, *v1.SetAppealStateRequest) (*v1.SetAppealStateResponse, error)
 }
 
 // NewAppealServiceClient constructs a client for the ban.v1.AppealService service. By default, it
@@ -98,6 +102,12 @@ func NewAppealServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(appealServiceMethods.ByName("DeleteAppealMessage")),
 			connect.WithClientOptions(opts...),
 		),
+		setAppealState: connect.NewClient[v1.SetAppealStateRequest, v1.SetAppealStateResponse](
+			httpClient,
+			baseURL+AppealServiceSetAppealStateProcedure,
+			connect.WithSchema(appealServiceMethods.ByName("SetAppealState")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -108,6 +118,7 @@ type appealServiceClient struct {
 	reply               *connect.Client[v1.ReplyRequest, v1.ReplyResponse]
 	editAppealMessage   *connect.Client[v1.EditAppealMessageRequest, v1.EditAppealMessageResponse]
 	deleteAppealMessage *connect.Client[v1.DeleteAppealMessageRequest, emptypb.Empty]
+	setAppealState      *connect.Client[v1.SetAppealStateRequest, v1.SetAppealStateResponse]
 }
 
 // Appeals calls ban.v1.AppealService.Appeals.
@@ -155,6 +166,15 @@ func (c *appealServiceClient) DeleteAppealMessage(ctx context.Context, req *v1.D
 	return nil, err
 }
 
+// SetAppealState calls ban.v1.AppealService.SetAppealState.
+func (c *appealServiceClient) SetAppealState(ctx context.Context, req *v1.SetAppealStateRequest) (*v1.SetAppealStateResponse, error) {
+	response, err := c.setAppealState.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // AppealServiceHandler is an implementation of the ban.v1.AppealService service.
 type AppealServiceHandler interface {
 	Appeals(context.Context, *v1.AppealsRequest) (*v1.AppealsResponse, error)
@@ -162,6 +182,7 @@ type AppealServiceHandler interface {
 	Reply(context.Context, *v1.ReplyRequest) (*v1.ReplyResponse, error)
 	EditAppealMessage(context.Context, *v1.EditAppealMessageRequest) (*v1.EditAppealMessageResponse, error)
 	DeleteAppealMessage(context.Context, *v1.DeleteAppealMessageRequest) (*emptypb.Empty, error)
+	SetAppealState(context.Context, *v1.SetAppealStateRequest) (*v1.SetAppealStateResponse, error)
 }
 
 // NewAppealServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -201,6 +222,12 @@ func NewAppealServiceHandler(svc AppealServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(appealServiceMethods.ByName("DeleteAppealMessage")),
 		connect.WithHandlerOptions(opts...),
 	)
+	appealServiceSetAppealStateHandler := connect.NewUnaryHandlerSimple(
+		AppealServiceSetAppealStateProcedure,
+		svc.SetAppealState,
+		connect.WithSchema(appealServiceMethods.ByName("SetAppealState")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/ban.v1.AppealService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AppealServiceAppealsProcedure:
@@ -213,6 +240,8 @@ func NewAppealServiceHandler(svc AppealServiceHandler, opts ...connect.HandlerOp
 			appealServiceEditAppealMessageHandler.ServeHTTP(w, r)
 		case AppealServiceDeleteAppealMessageProcedure:
 			appealServiceDeleteAppealMessageHandler.ServeHTTP(w, r)
+		case AppealServiceSetAppealStateProcedure:
+			appealServiceSetAppealStateHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -240,4 +269,8 @@ func (UnimplementedAppealServiceHandler) EditAppealMessage(context.Context, *v1.
 
 func (UnimplementedAppealServiceHandler) DeleteAppealMessage(context.Context, *v1.DeleteAppealMessageRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.AppealService.DeleteAppealMessage is not implemented"))
+}
+
+func (UnimplementedAppealServiceHandler) SetAppealState(context.Context, *v1.SetAppealStateRequest) (*v1.SetAppealStateResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.AppealService.SetAppealState is not implemented"))
 }

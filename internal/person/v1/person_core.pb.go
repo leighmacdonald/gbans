@@ -32,7 +32,7 @@ type PersonCore struct {
 	DiscordId       *string                `protobuf:"bytes,5,opt,name=discord_id,json=discordId" json:"discord_id,omitempty"`
 	VacBans         *int32                 `protobuf:"varint,6,opt,name=vac_bans,json=vacBans" json:"vac_bans,omitempty"`
 	GameBans        *int32                 `protobuf:"varint,7,opt,name=game_bans,json=gameBans" json:"game_bans,omitempty"`
-	BanId           *int64                 `protobuf:"varint,8,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	BanId           *int32                 `protobuf:"varint,8,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
 	TimeCreated     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=time_created,json=timeCreated" json:"time_created,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
@@ -117,7 +117,7 @@ func (x *PersonCore) GetGameBans() int32 {
 	return 0
 }
 
-func (x *PersonCore) GetBanId() int64 {
+func (x *PersonCore) GetBanId() int32 {
 	if x != nil && x.BanId != nil {
 		return *x.BanId
 	}
@@ -147,7 +147,7 @@ const file_person_v1_person_core_proto_rawDesc = "" +
 	"discord_id\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tdiscordId\x12!\n" +
 	"\bvac_bans\x18\x06 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\avacBans\x12#\n" +
 	"\tgame_bans\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bgameBans\x12\x1d\n" +
-	"\x06ban_id\x18\b \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x05banId\x12E\n" +
+	"\x06ban_id\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05banId\x12E\n" +
 	"\ftime_created\x18\t \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\vtimeCreatedB\xa2\x01\n" +
 	"\rcom.person.v1B\x0fPersonCoreProtoP\x01Z;github.com/leighmacdonald/gbans/internal/person/v1;personv1\xa2\x02\x03PXX\xaa\x02\tPerson.V1\xca\x02\tPerson\\V1\xe2\x02\x15Person\\V1\\GPBMetadata\xea\x02\n" +
 	"Person::V1b\beditionsp\xe8\a"
