@@ -2,14 +2,14 @@
 // @generated from file forum/v1/forum.proto (package forum.v1, edition 2023)
 /* eslint-disable */
 
+import type { Message as Message$1 } from "@bufbuild/protobuf";
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Privilege } from "../../person/v1/privilege_pb";
 import { file_person_v1_privilege } from "../../person/v1/privilege_pb";
-import type { Message as Message$1 } from "@bufbuild/protobuf";
 
 /**
  * Describes the file forum/v1/forum.proto.

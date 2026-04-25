@@ -1,9 +1,9 @@
+import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
 import { formatDistance, formatDuration, interval, intervalToDuration, parseISO, parseJSON } from "date-fns";
 import { format } from "date-fns/format";
 import { isAfter } from "date-fns/fp";
 import { end, parse } from "iso8601-duration";
 import { logErr } from "./errors.ts";
-import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
 
 export const Duration = {
 	dur15m: "PT15M",

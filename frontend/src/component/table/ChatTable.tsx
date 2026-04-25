@@ -1,16 +1,16 @@
+import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
+import { useQuery } from "@connectrpc/connect-query";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useMemo } from "react";
+import type { Message } from "../../rpc/chat/v1/chat_pb.ts";
+import { query } from "../../rpc/chat/v1/chat-ChatService_connectquery.ts";
 import { stringToColour } from "../../util/colours.ts";
 import { PersonCell } from "../PersonCell.tsx";
 import { createDefaultTableOptions } from "./options.ts";
 import { SortableTable } from "./SortableTable.tsx";
 import { TableCellRelativeDateField } from "./TableCellRelativeDateField.tsx";
-import type { Message } from "../../rpc/chat/v1/chat_pb.ts";
-import { useQuery } from "@connectrpc/connect-query";
-import { query } from "../../rpc/chat/v1/chat-ChatService_connectquery.ts";
-import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
 
 const columnHelper = createMRTColumnHelper<Message>();
 const defaultOptions = createDefaultTableOptions<Message>();

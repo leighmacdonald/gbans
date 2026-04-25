@@ -36,7 +36,7 @@ import { getDemos } from "../rpc/demo/v1/demo-DemoService_connectquery.ts";
 import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
-import { humanFileSize } from "../util/text.tsx";
+import { humanFileSize } from "../util/strings.ts";
 
 const columnHelper = createMRTColumnHelper<Demo>();
 const defaultOptions = createDefaultTableOptions<Demo>();
@@ -223,7 +223,7 @@ function STV() {
 					disabled={!isAuthenticated()}
 					color={"error"}
 					to={"/report"}
-					search={{ demo_id: Number(row.original.demoId) }}
+					search={{ demoId: Number(row.original.demoId) }}
 				>
 					<FlagIcon />
 				</IconButtonLink>

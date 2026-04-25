@@ -11,7 +11,7 @@ interface DataTableRelativeDateFieldProps {
 
 export const TableCellRelativeDateField = ({ date, compareDate, suffix = false }: DataTableRelativeDateFieldProps) => {
 	if (!date) {
-		return <></>;
+		return;
 	}
 	const opts = {
 		addSuffix: suffix,

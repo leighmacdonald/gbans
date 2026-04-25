@@ -2,8 +2,7 @@ import type { Theme } from "@mui/material";
 import { z } from "zod/v4";
 import type { Asset } from "../rpc/asset/v1/asset_pb.ts";
 import { ReportStatus } from "../rpc/ban/v1/report_pb.ts";
-import type { Person } from "../rpc/person/v1/person_pb.ts";
-import type { Group, Override, SMUser } from "../rpc/sourcemod/v1/sourcemod_pb";
+import type { Admin, Group, Override, SMUser } from "../rpc/sourcemod/v1/sourcemod_pb";
 
 const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -77,7 +76,7 @@ export const schemaFlags = z.object({
 
 export type Flags = z.infer<typeof Flags>;
 
-export const hasSMFlag = (flag: Flags, entity?: Group | SMUser | Override) => {
+export const hasSMFlag = (flag: Flags, entity?: Admin | Group | SMUser | Override) => {
 	return entity?.flags.includes(flag) ?? false;
 };
 
@@ -99,18 +98,6 @@ export const cleanMapName = (name: string): string => {
 export const assetURL = (asset: Asset): string => `/asset/${asset.assetId}`;
 
 export const defaultAvatarHash = "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb";
-
-export const filterPerson = (people: Person[], query: string): Person[] => {
-	return people.filter((friend) => {
-		if (friend.personaName.toLowerCase().includes(query)) {
-			return true;
-		} else if (friend.steamId.toString() === query) {
-			return true;
-		}
-		// TODO convert steamids from other formats to query
-		return false;
-	});
-};
 
 const humanize = (count: number, thresh: number, dp = 1, units: string[]) => {
 	let u = -1;

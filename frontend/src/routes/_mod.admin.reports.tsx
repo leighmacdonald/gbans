@@ -1,3 +1,5 @@
+import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
+import { useSuspenseQuery } from "@connectrpc/connect-query";
 import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
@@ -23,13 +25,11 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { renderTimestamp } from "../util/time.ts";
-import { reports } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
-import { useSuspenseQuery } from "@connectrpc/connect-query";
-import { ReportStatus, type ReportWithAuthor } from "../rpc/ban/v1/report_pb.ts";
 import { BanReason } from "../rpc/ban/v1/ban_pb.ts";
+import { ReportStatus, type ReportWithAuthor } from "../rpc/ban/v1/report_pb.ts";
+import { reports } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
 import { enumValues } from "../util/lists.ts";
-import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
+import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<ReportWithAuthor>();
 const defaultOptions = createDefaultTableOptions<ReportWithAuthor>();
@@ -177,7 +177,7 @@ function AdminReports() {
 						return true;
 					}
 					const value = row.original.subject?.steamId.toString().toLowerCase();
-					if (value && value.includes(query)) {
+					if (value?.includes(query)) {
 						return true;
 					}
 					if (

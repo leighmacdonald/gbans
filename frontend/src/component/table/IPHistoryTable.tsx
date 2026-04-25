@@ -1,3 +1,4 @@
+import { useQuery } from "@connectrpc/connect-query";
 import Typography from "@mui/material/Typography";
 import {
 	createMRTColumnHelper,
@@ -7,12 +8,11 @@ import {
 	useMaterialReactTable,
 } from "material-react-table";
 import { useMemo, useState } from "react";
+import type { PersonConnection } from "../../rpc/network/v1/network_pb.ts";
+import { queryConnections } from "../../rpc/network/v1/network-NetworkService_connectquery.ts";
 import { renderTimestamp } from "../../util/time.ts";
 import { createDefaultTableOptions } from "./options.ts";
 import { SortableTable } from "./SortableTable.tsx";
-import type { PersonConnection } from "../../rpc/network/v1/network_pb.ts";
-import { queryConnections } from "../../rpc/network/v1/network-NetworkService_connectquery.ts";
-import { useQuery } from "@connectrpc/connect-query";
 
 ``;
 

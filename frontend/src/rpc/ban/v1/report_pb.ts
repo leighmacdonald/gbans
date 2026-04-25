@@ -2,18 +2,18 @@
 // @generated from file ban/v1/report.proto (package ban.v1, edition 2023)
 /* eslint-disable */
 
+import type { Message } from "@bufbuild/protobuf";
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { BanReason } from "./ban_pb";
-import { file_ban_v1_ban } from "./ban_pb";
-import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { PersonCore, PersonCoreValid } from "../../person/v1/person_core_pb";
 import { file_person_v1_person_core } from "../../person/v1/person_core_pb";
 import type { Privilege } from "../../person/v1/privilege_pb";
 import { file_person_v1_privilege } from "../../person/v1/privilege_pb";
-import type { Message } from "@bufbuild/protobuf";
+import type { BanReason } from "./ban_pb";
+import { file_ban_v1_ban } from "./ban_pb";
 
 /**
  * Describes the file ban/v1/report.proto.

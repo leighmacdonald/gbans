@@ -1,3 +1,4 @@
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import AssuredWorkloadIcon from "@mui/icons-material/AssuredWorkload";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -9,6 +10,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx";
+import type { Group } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
+import { deleteGroup, sMGroups } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
 import { logErr } from "../../util/errors";
 import { renderTimestamp } from "../../util/time.ts";
 import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
@@ -17,9 +20,6 @@ import { SMGroupOverridesModal } from "../modal/SMGroupOverridesModal.tsx";
 import { createDefaultTableOptions } from "./options.ts";
 import { SortableTable } from "./SortableTable.tsx";
 import { TableCellString } from "./TableCellString";
-import { useMutation, useQuery } from "@connectrpc/connect-query";
-import { deleteGroup, sMGroups } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
-import type { Group } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
 
 const columnHelper = createMRTColumnHelper<Group>();
 const defaultOptions = createDefaultTableOptions<Group>();

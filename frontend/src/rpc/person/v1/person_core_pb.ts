@@ -2,15 +2,15 @@
 // @generated from file person/v1/person_core.proto (package person.v1, edition 2023)
 /* eslint-disable */
 
+import type { Message } from "@bufbuild/protobuf";
 import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
-import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Privilege } from "./privilege_pb";
 import { file_person_v1_privilege } from "./privilege_pb";
 import { file_person_v1_steamid } from "./steamid_pb";
-import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file person/v1/person_core.proto.

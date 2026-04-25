@@ -1,11 +1,11 @@
+import { useQuery } from "@connectrpc/connect-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod/v4";
-import { logErr } from "../util/errors.ts";
 import { accessTokenKey } from "../auth.tsx";
-import { currentProfile } from "../rpc/person/v1/person-PersonService_connectquery.ts";
-import { useQuery } from "@connectrpc/connect-query";
 import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
+import { currentProfile } from "../rpc/person/v1/person-PersonService_connectquery.ts";
+import { logErr } from "../util/errors.ts";
 import { emptyOrNullString } from "../util/types.ts";
 
 export const Route = createFileRoute("/_guest/login/success")({

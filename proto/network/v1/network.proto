@@ -127,5 +127,11 @@ message PersonConnection {
   string persona_name = 4 [(buf.validate.field).required = true];
   int32 server_id = 5 [(buf.validate.field).required = true];
   string server_name_short = 6 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp created_on = 7 [(buf.validate.field).required = true];
+  int32 as_num = 7 [(buf.validate.field).required = true];
+  string as_name = 8 [(buf.validate.field).required = true];
+  string country_code = 9 [(buf.validate.field).required = true];
+  string country_name = 10  [(buf.validate.field).required = true];
+  string city_name = 11 [(buf.validate.field).string.well_known_regex];
+  LatLong location = 12  [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 13 [(buf.validate.field).required = true];
 }

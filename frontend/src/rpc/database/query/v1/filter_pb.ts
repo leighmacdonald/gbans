@@ -2,10 +2,10 @@
 // @generated from file database/query/v1/filter.proto (package database.query.v1, edition 2023)
 /* eslint-disable */
 
+import type { Message } from "@bufbuild/protobuf";
 import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb";
-import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file database/query/v1/filter.proto.

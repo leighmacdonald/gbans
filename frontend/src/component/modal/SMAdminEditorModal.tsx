@@ -9,7 +9,7 @@ import MenuItem from "@mui/material/MenuItem";
 import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import { AuthType, type Group, type SMUser } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
+import { type Admin, AuthType, type Group } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
 import { createAdmin, editAdmin } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
 import { enumValues } from "../../util/lists.ts";
 import { hasSMFlag, schemaFlags } from "../../util/strings.ts";
@@ -23,7 +23,7 @@ const schema = schemaFlags.extend({
 	immunity: z.number().min(0).max(100),
 });
 
-export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMUser; groups: Group[] }) => {
+export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: Admin; groups: Group[] }) => {
 	const modal = useModal();
 	const { sendError, sendFlash } = useUserFlashCtx();
 	const defaultValues: z.input<typeof schema> = {
@@ -88,7 +88,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMUser;
 					}
 					return acc;
 				}, "");
-			if (admin?.id) {
+			if (admin?.adminId) {
 				editMutation.mutate({
 					...value,
 					immunity: Number(value.immunity),

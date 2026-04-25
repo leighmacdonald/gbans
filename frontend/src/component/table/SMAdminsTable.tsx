@@ -11,13 +11,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { SMGroup, SMUser, SMUserValid } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
+import type { Admin, Group, SMUser, SMUserValid } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
 import {
 	addAdminGroup,
+	admins,
 	deleteAdmin,
 	deleteAdminGroup,
-	sMGroups,
-	sMUsers,
+	groups,
 } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
 import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
 import { SMAdminEditorModal } from "../modal/SMAdminEditorModal.tsx";
@@ -26,23 +26,23 @@ import { createDefaultTableOptions } from "./options.ts";
 import { SortableTable } from "./SortableTable.tsx";
 import { TableCellString } from "./TableCellString.tsx";
 
-const columnHelperAdmins = createMRTColumnHelper<SMUser>();
-const defaultOptionsAdmins = createDefaultTableOptions<SMUser>();
+const columnHelperAdmins = createMRTColumnHelper<Admin>();
+const defaultOptionsAdmins = createDefaultTableOptions<Admin>();
 
 export const SMAdminsTable = () => {
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const queryClient = useQueryClient();
 
-	const { data: groups, isLoading: isLoadingGroups, isError: isErrorGroups } = useQuery(sMGroups);
+	const { data: groupsList, isLoading: isLoadingGroups, isError: isErrorGroups } = useQuery(groups);
 
-	const { data: admins, isLoading: isLoadingAdmins, isError: isErrorAdmins } = useQuery(sMUsers);
+	const { data: adminsList, isLoading: isLoadingAdmins, isError: isErrorAdmins } = useQuery(admins);
 
 	const onCreateAdmin = async () => {
 		try {
 			const admin = (await NiceModal.show(SMAdminEditorModal, {
-				groups: groups?.groups,
+				groups: groupsList?.groups,
 			})) as SMUser;
-			queryClient.setQueryData(["serverAdmins"], [...(admins?.users ?? []), admin]);
+			queryClient.setQueryData(["serverAdmins"], [...(adminsList?.admins ?? []), admin]);
 			sendFlash("success", `Admin created successfully: ${admin.name}`);
 		} catch (e) {
 			sendError(e);
@@ -53,7 +53,7 @@ export const SMAdminsTable = () => {
 		onSuccess: (_, req) => {
 			queryClient.setQueryData(
 				["serverAdmins"],
-				(admins?.users ?? []).filter((a) => a.id !== req.adminId),
+				(adminsList?.admins ?? []).filter((a) => a.adminId !== req.adminId),
 			);
 			sendFlash("success", "Admin deleted successfully");
 		},
@@ -64,8 +64,8 @@ export const SMAdminsTable = () => {
 		onSuccess: (edited) => {
 			queryClient.setQueryData(
 				["serverAdmins"],
-				(admins?.users ?? []).map((a) => {
-					return a.id === edited.admin?.adminId ? edited : a;
+				(adminsList?.admins ?? []).map((a) => {
+					return a.adminId === edited.admin?.adminId ? edited : a;
 				}),
 			);
 			sendFlash("success", `Admin updated successfully: ${edited.admin?.name}`);
@@ -78,8 +78,8 @@ export const SMAdminsTable = () => {
 			// FIXME
 			queryClient.setQueryData(
 				["serverAdmins"],
-				(admins?.users ?? []).filter((a) => {
-					return a.id !== req.adminId;
+				(adminsList?.admins ?? []).filter((a) => {
+					return a.adminId !== req.adminId;
 				}),
 			);
 		},
@@ -87,16 +87,16 @@ export const SMAdminsTable = () => {
 	});
 
 	const onEdit = useCallback(
-		async (admin: SMUser) => {
+		async (admin: Admin) => {
 			try {
 				const edited = (await NiceModal.show(SMAdminEditorModal, {
 					admin: admin,
-					groups: groups?.groups,
-				})) as SMUser;
+					groups: groupsList?.groups,
+				})) as Admin;
 				queryClient.setQueryData(
 					["serverAdmins"],
-					(admins?.users ?? []).map((a) => {
-						return a.id === edited.id ? edited : a;
+					(adminsList?.admins ?? []).map((a) => {
+						return a.adminId === edited.adminId ? edited : a;
 					}),
 				);
 				sendFlash("success", `Admin updated successfully: ${admin.name}`);
@@ -104,11 +104,11 @@ export const SMAdminsTable = () => {
 				sendError(e);
 			}
 		},
-		[admins, groups, queryClient, sendError, sendFlash],
+		[queryClient, sendError, sendFlash, adminsList?.admins, groupsList?.groups],
 	);
 
 	const onDelete = useCallback(
-		async (admin: SMUser) => {
+		async (admin: Admin) => {
 			try {
 				const confirmed = (await NiceModal.show(ConfirmationModal, {
 					title: "Delete admin?",
@@ -117,42 +117,42 @@ export const SMAdminsTable = () => {
 				if (!confirmed) {
 					return;
 				}
-				deleteAdminFn.mutate({ adminId: admin.id });
+				deleteAdminFn.mutate({ adminId: admin.adminId });
 			} catch (e) {
 				sendFlash("error", `Failed to create confirmation modal: ${e}`);
 			}
 		},
-		[sendFlash, deleteAdmin, deleteAdminFn.mutate],
+		[sendFlash, deleteAdminFn.mutate],
 	);
 
 	const onAddGroup = useCallback(
-		async (admin: SMUser) => {
+		async (admin: Admin) => {
 			try {
-				const existingGroupIds = admin.groups.map((g) => g.group_id);
+				const existingGroupIds = groupsList?.groups.map((g) => g.groupId) ?? [];
 				const group = (await NiceModal.show(SMGroupSelectModal, {
-					groups: groups?.groups?.filter((g) => !existingGroupIds.includes(g.group_id)),
-				})) as SMGroup;
-				addGroupMutation.mutate({ admin, group });
+					groups: groupsList?.groups?.filter((g) => !existingGroupIds.includes(g.groupId)),
+				})) as Group;
+				addGroupMutation.mutate({ adminId: admin.adminId, groupId: group.groupId });
 			} catch (e) {
 				sendError(e);
 			}
 		},
-		[addGroupMutation, groups, sendError],
+		[addGroupMutation, sendError, groupsList?.groups],
 	);
 
 	const onDelGroup = useCallback(
-		async (admin: SMUser) => {
+		async (admin: Admin) => {
 			try {
-				const existingGroupIds = admin.groups.map((g) => g.group_id);
+				const existingGroupIds = groupsList?.groups.map((g) => g.groupId) ?? [];
 				const group = (await NiceModal.show(SMGroupSelectModal, {
-					groups: groups?.filter((g) => existingGroupIds.includes(g.group_id)),
+					groups: groupsList?.groups?.filter((g) => existingGroupIds.includes(g.groupId)),
 				})) as SMUserValid;
-				delGroupMutation.mutate({ admin, group });
+				delGroupMutation.mutate({ adminId: admin.adminId, groupId: group.id });
 			} catch (e) {
 				sendError(e);
 			}
 		},
-		[delGroupMutation, groups, sendError],
+		[delGroupMutation, sendError, groupsList?.groups.map, groupsList?.groups?.filter],
 	);
 
 	const columns = useMemo(() => {
@@ -209,7 +209,7 @@ export const SMAdminsTable = () => {
 	const table = useMaterialReactTable({
 		...defaultOptionsAdmins,
 		columns,
-		data: admins?.users ?? [],
+		data: adminsList?.admins ?? [],
 		enableFilters: true,
 		enableRowActions: true,
 		state: {
@@ -220,7 +220,7 @@ export const SMAdminsTable = () => {
 			<Tooltip title={"Add user to group"} key={"add-btn"}>
 				<span>
 					<IconButton
-						disabled={row.original.groups.length === groups?.length}
+						disabled={row.original.groups.length === groupsList?.groups?.length}
 						color={"success"}
 						onClick={async () => {
 							await onAddGroup(row.original);

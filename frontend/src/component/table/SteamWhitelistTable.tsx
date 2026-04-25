@@ -1,3 +1,4 @@
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -9,6 +10,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx";
+import type { WhitelistSteam } from "../../rpc/network/v1/blocklist_pb.ts";
+import { whitelistSteam, whitelistSteamDelete } from "../../rpc/network/v1/blocklist-BlocklistService_connectquery.ts";
 import { logErr } from "../../util/errors";
 import { renderTimestamp } from "../../util/time";
 import { ConfirmationModal } from "../modal/ConfirmationModal";
@@ -16,9 +19,6 @@ import { SteamWhitelistEditorModal } from "../modal/SteamWhitelistEditorModal";
 import { PersonCell } from "../PersonCell";
 import { createDefaultTableOptions } from "./options";
 import { SortableTable } from "./SortableTable";
-import { whitelistSteam, whitelistSteamDelete } from "../../rpc/network/v1/blocklist-BlocklistService_connectquery.ts";
-import type { WhitelistSteam } from "../../rpc/network/v1/blocklist_pb.ts";
-import { useMutation, useQuery } from "@connectrpc/connect-query";
 
 const columnHelperSteam = createMRTColumnHelper<WhitelistSteam>();
 const defaultOptionsSteam = createDefaultTableOptions<WhitelistSteam>();

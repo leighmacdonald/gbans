@@ -2,14 +2,14 @@
 // @generated from file chat/v1/wordfilter.proto (package chat.v1, edition 2023)
 /* eslint-disable */
 
+import type { Message } from "@bufbuild/protobuf";
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { BanReason } from "../../ban/v1/ban_pb";
 import { file_ban_v1_ban } from "../../ban/v1/ban_pb";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
-import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
-import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
-import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file chat/v1/wordfilter.proto.

@@ -1,3 +1,5 @@
+import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import { useTheme } from "@mui/material";
@@ -35,11 +37,9 @@ import { TableCellRelativeDateField } from "../component/table/TableCellRelative
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { type Person, VisibilityState } from "../rpc/person/v1/person_pb.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
-import { useQuery } from "@connectrpc/connect-query";
 import { query } from "../rpc/person/v1/person-PersonService_connectquery.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { enumValues } from "../util/lists.ts";
-import { timestampDate } from "@bufbuild/protobuf/wkt";
 
 const defaultValues = makeSchemaDefaults({ defaultColumn: "created_on" });
 const validateSearch = makeSchemaState("created_on");
@@ -96,8 +96,8 @@ function AdminPeople() {
 	);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
-		(updater) => {
-			navigate({
+		async (updater) => {
+			await navigate({
 				to: Route.fullPath,
 				search: {
 					...search,
@@ -109,8 +109,8 @@ function AdminPeople() {
 	);
 
 	const setColumnFilters: OnChangeFn<MRT_ColumnFiltersState> = useCallback(
-		(updater) => {
-			navigate({
+		async (updater) => {
+			await navigate({
 				to: Route.fullPath,
 				search: {
 					...search,
@@ -122,8 +122,8 @@ function AdminPeople() {
 	);
 
 	const setPagination: OnChangeFn<MRT_PaginationState> = useCallback(
-		(updater) => {
-			navigate({
+		async (updater) => {
+			await navigate({
 				to: Route.fullPath,
 				search: {
 					...search,
@@ -195,7 +195,7 @@ function AdminPeople() {
 				Cell: ({ cell }) => {
 					const value = cell.getValue();
 					if (!value) {
-						return <></>;
+						return;
 					}
 
 					return <TableCellRelativeDateField date={timestampDate(value)} />;
@@ -208,8 +208,9 @@ function AdminPeople() {
 				Cell: ({ cell }) => {
 					const value = cell.getValue();
 					if (!value) {
-						return <></>;
+						return;
 					}
+
 					return <TableCellRelativeDateField date={timestampDate(value)} />;
 				},
 			}),

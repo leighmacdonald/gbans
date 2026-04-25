@@ -5,9 +5,9 @@ import { StrictMode, useState } from "react";
 import { defaultAvatarHash } from "./api";
 import { AuthProvider, profileKey } from "./auth.tsx";
 import { useAuth } from "./hooks/useAuth.ts";
+import { Privilege } from "./rpc/person/v1/privilege_pb.ts";
 import { finalTransport } from "./transport.ts";
 import { logErr } from "./util/errors.ts";
-import { Privilege } from "./rpc/person/v1/privilege_pb.ts";
 
 const loadProfile = () => {
 	const defaultProfile = {
