@@ -251,7 +251,7 @@ func (r *Repository) insertBan(ctx context.Context, ban *Ban) error {
 }
 
 func (r *Repository) updateBan(ctx context.Context, ban *Ban) error {
-	var reportID *int64
+	var reportID *int32
 	if ban.ReportID > 0 {
 		reportID = &ban.ReportID
 	}

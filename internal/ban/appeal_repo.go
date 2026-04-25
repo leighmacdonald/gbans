@@ -139,7 +139,7 @@ func (r *AppealRepository) insertBanMessage(ctx context.Context, message *Appeal
 	return nil
 }
 
-func (r *AppealRepository) Messages(ctx context.Context, banID int64) ([]AppealMessage, error) {
+func (r *AppealRepository) Messages(ctx context.Context, banID int32) ([]AppealMessage, error) {
 	query := r.Builder().
 		Select("a.ban_message_id", "a.ban_id", "a.author_id", "a.message_md", "a.deleted",
 			"a.created_on", "a.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").

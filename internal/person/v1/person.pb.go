@@ -1025,16 +1025,16 @@ type Person struct {
 	PlayerqueueChatStatus *int32                 `protobuf:"varint,15,opt,name=playerqueue_chat_status,json=playerqueueChatStatus" json:"playerqueue_chat_status,omitempty"`
 	PlayerqueueChatReason *string                `protobuf:"bytes,16,opt,name=playerqueue_chat_reason,json=playerqueueChatReason" json:"playerqueue_chat_reason,omitempty"`
 	AvatarHash            *string                `protobuf:"bytes,17,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
-	CommentPermission     *int64                 `protobuf:"varint,18,opt,name=comment_permission,json=commentPermission" json:"comment_permission,omitempty"`
-	LastLogoff            *int64                 `protobuf:"varint,19,opt,name=last_logoff,json=lastLogoff" json:"last_logoff,omitempty"`
-	LocCityId             *int64                 `protobuf:"varint,20,opt,name=loc_city_id,json=locCityId" json:"loc_city_id,omitempty"`
+	CommentPermission     *int32                 `protobuf:"varint,18,opt,name=comment_permission,json=commentPermission" json:"comment_permission,omitempty"`
+	LastLogoff            *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=last_logoff,json=lastLogoff" json:"last_logoff,omitempty"`
+	LocCityId             *int32                 `protobuf:"varint,20,opt,name=loc_city_id,json=locCityId" json:"loc_city_id,omitempty"`
 	LocCountryCode        *string                `protobuf:"bytes,21,opt,name=loc_country_code,json=locCountryCode" json:"loc_country_code,omitempty"`
 	LocStateCode          *string                `protobuf:"bytes,22,opt,name=loc_state_code,json=locStateCode" json:"loc_state_code,omitempty"`
 	PersonaName           *string                `protobuf:"bytes,23,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
 	PersonaState          *int32                 `protobuf:"varint,24,opt,name=persona_state,json=personaState" json:"persona_state,omitempty"`
 	PersonaStateFlags     *int32                 `protobuf:"varint,25,opt,name=persona_state_flags,json=personaStateFlags" json:"persona_state_flags,omitempty"`
 	PrimaryClanId         *string                `protobuf:"bytes,26,opt,name=primary_clan_id,json=primaryClanId" json:"primary_clan_id,omitempty"`
-	ProfileState          *int64                 `protobuf:"varint,27,opt,name=profile_state,json=profileState" json:"profile_state,omitempty"`
+	ProfileState          *int32                 `protobuf:"varint,27,opt,name=profile_state,json=profileState" json:"profile_state,omitempty"`
 	ProfileUrl            *string                `protobuf:"bytes,28,opt,name=profile_url,json=profileUrl" json:"profile_url,omitempty"`
 	RealName              *string                `protobuf:"bytes,29,opt,name=real_name,json=realName" json:"real_name,omitempty"`
 	TimeCreated           *timestamppb.Timestamp `protobuf:"bytes,30,opt,name=time_created,json=timeCreated" json:"time_created,omitempty"`
@@ -1193,21 +1193,21 @@ func (x *Person) GetAvatarHash() string {
 	return ""
 }
 
-func (x *Person) GetCommentPermission() int64 {
+func (x *Person) GetCommentPermission() int32 {
 	if x != nil && x.CommentPermission != nil {
 		return *x.CommentPermission
 	}
 	return 0
 }
 
-func (x *Person) GetLastLogoff() int64 {
-	if x != nil && x.LastLogoff != nil {
-		return *x.LastLogoff
+func (x *Person) GetLastLogoff() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastLogoff
 	}
-	return 0
+	return nil
 }
 
-func (x *Person) GetLocCityId() int64 {
+func (x *Person) GetLocCityId() int32 {
 	if x != nil && x.LocCityId != nil {
 		return *x.LocCityId
 	}
@@ -1256,7 +1256,7 @@ func (x *Person) GetPrimaryClanId() string {
 	return ""
 }
 
-func (x *Person) GetProfileState() int64 {
+func (x *Person) GetProfileState() int32 {
 	if x != nil && x.ProfileState != nil {
 		return *x.ProfileState
 	}
@@ -1427,7 +1427,7 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"\x10community_banned\x18\t \x01(\bR\x0fcommunityBanned\x12H\n" +
 	"\x12time_created_after\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\x10timeCreatedAfter\x12J\n" +
-	"\x13time_created_before\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\x11timeCreatedBefore\"\xb7\f\n" +
+	"\x13time_created_before\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\x11timeCreatedBefore\"\xcb\f\n" +
 	"\x06Person\x12'\n" +
 	"\bsteam_id\x18\x01 \x01(\x03B\f\xbaH\t\xc8\x01\x01\"\x04\x80\xf1\x04\x01R\asteamId\x12A\n" +
 	"\n" +
@@ -1453,17 +1453,17 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"\x17playerqueue_chat_reason\x18\x10 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x15playerqueueChatReason\x12'\n" +
 	"\vavatar_hash\x18\x11 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"avatarHash\x125\n" +
-	"\x12comment_permission\x18\x12 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x11commentPermission\x12'\n" +
-	"\vlast_logoff\x18\x13 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"\x12comment_permission\x18\x12 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11commentPermission\x12;\n" +
+	"\vlast_logoff\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"lastLogoff\x12&\n" +
-	"\vloc_city_id\x18\x14 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\tlocCityId\x120\n" +
+	"\vloc_city_id\x18\x14 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\tlocCityId\x120\n" +
 	"\x10loc_country_code\x18\x15 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0elocCountryCode\x12,\n" +
 	"\x0eloc_state_code\x18\x16 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\flocStateCode\x12)\n" +
 	"\fpersona_name\x18\x17 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12+\n" +
 	"\rpersona_state\x18\x18 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fpersonaState\x126\n" +
 	"\x13persona_state_flags\x18\x19 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11personaStateFlags\x12.\n" +
 	"\x0fprimary_clan_id\x18\x1a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rprimaryClanId\x12+\n" +
-	"\rprofile_state\x18\x1b \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\fprofileState\x12'\n" +
+	"\rprofile_state\x18\x1b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fprofileState\x12'\n" +
 	"\vprofile_url\x18\x1c \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"profileUrl\x12#\n" +
 	"\treal_name\x18\x1d \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\brealName\x12E\n" +
@@ -1551,28 +1551,29 @@ var file_person_v1_person_proto_depIdxs = []int32{
 	18, // 20: person.v1.Person.updated_on:type_name -> google.protobuf.Timestamp
 	20, // 21: person.v1.Person.permission_level:type_name -> person.v1.Privilege
 	18, // 22: person.v1.Person.updated_on_steam:type_name -> google.protobuf.Timestamp
-	18, // 23: person.v1.Person.time_created:type_name -> google.protobuf.Timestamp
-	0,  // 24: person.v1.Person.visibility_state:type_name -> person.v1.VisibilityState
-	16, // 25: person.v1.QueryResponse.people:type_name -> person.v1.Person
-	1,  // 26: person.v1.PersonService.Profile:input_type -> person.v1.ProfileRequest
-	3,  // 27: person.v1.PersonService.ResolveSteamID:input_type -> person.v1.ResolveSteamIDRequest
-	22, // 28: person.v1.PersonService.CurrentProfile:input_type -> google.protobuf.Empty
-	22, // 29: person.v1.PersonService.ProfileSettings:input_type -> google.protobuf.Empty
-	7,  // 30: person.v1.PersonService.EditProfileSettings:input_type -> person.v1.EditProfileSettingsRequest
-	15, // 31: person.v1.PersonService.Query:input_type -> person.v1.QueryRequest
-	13, // 32: person.v1.PersonService.EditPermissions:input_type -> person.v1.EditPermissionsRequest
-	2,  // 33: person.v1.PersonService.Profile:output_type -> person.v1.ProfileResponse
-	4,  // 34: person.v1.PersonService.ResolveSteamID:output_type -> person.v1.ResolveSteamIDResponse
-	5,  // 35: person.v1.PersonService.CurrentProfile:output_type -> person.v1.CurrentProfileResponse
-	11, // 36: person.v1.PersonService.ProfileSettings:output_type -> person.v1.ProfileSettingsResponse
-	12, // 37: person.v1.PersonService.EditProfileSettings:output_type -> person.v1.EditProfileSettingsResponse
-	17, // 38: person.v1.PersonService.Query:output_type -> person.v1.QueryResponse
-	14, // 39: person.v1.PersonService.EditPermissions:output_type -> person.v1.EditPermissionsResponse
-	33, // [33:40] is the sub-list for method output_type
-	26, // [26:33] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	18, // 23: person.v1.Person.last_logoff:type_name -> google.protobuf.Timestamp
+	18, // 24: person.v1.Person.time_created:type_name -> google.protobuf.Timestamp
+	0,  // 25: person.v1.Person.visibility_state:type_name -> person.v1.VisibilityState
+	16, // 26: person.v1.QueryResponse.people:type_name -> person.v1.Person
+	1,  // 27: person.v1.PersonService.Profile:input_type -> person.v1.ProfileRequest
+	3,  // 28: person.v1.PersonService.ResolveSteamID:input_type -> person.v1.ResolveSteamIDRequest
+	22, // 29: person.v1.PersonService.CurrentProfile:input_type -> google.protobuf.Empty
+	22, // 30: person.v1.PersonService.ProfileSettings:input_type -> google.protobuf.Empty
+	7,  // 31: person.v1.PersonService.EditProfileSettings:input_type -> person.v1.EditProfileSettingsRequest
+	15, // 32: person.v1.PersonService.Query:input_type -> person.v1.QueryRequest
+	13, // 33: person.v1.PersonService.EditPermissions:input_type -> person.v1.EditPermissionsRequest
+	2,  // 34: person.v1.PersonService.Profile:output_type -> person.v1.ProfileResponse
+	4,  // 35: person.v1.PersonService.ResolveSteamID:output_type -> person.v1.ResolveSteamIDResponse
+	5,  // 36: person.v1.PersonService.CurrentProfile:output_type -> person.v1.CurrentProfileResponse
+	11, // 37: person.v1.PersonService.ProfileSettings:output_type -> person.v1.ProfileSettingsResponse
+	12, // 38: person.v1.PersonService.EditProfileSettings:output_type -> person.v1.EditProfileSettingsResponse
+	17, // 39: person.v1.PersonService.Query:output_type -> person.v1.QueryResponse
+	14, // 40: person.v1.PersonService.EditPermissions:output_type -> person.v1.EditPermissionsResponse
+	34, // [34:41] is the sub-list for method output_type
+	27, // [27:34] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_person_v1_person_proto_init() }

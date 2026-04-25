@@ -2,38 +2,34 @@
 // @generated from file mge/v1/mge.proto (package mge.v1, edition 2023)
 /* eslint-disable */
 
-import type { Message } from "@bufbuild/protobuf";
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Timestamp } from "@bufbuild/protobuf/wkt";
-import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Filter } from "../../database/query/v1/filter_pb";
 import { file_database_query_v1_filter } from "../../database/query/v1/filter_pb";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file mge/v1/mge.proto.
  */
-export const file_mge_v1_mge: GenFile =
-	/*@__PURE__*/
-	fileDesc(
-		"ChBtZ2UvdjEvbWdlLnByb3RvEgZtZ2UudjEiVwoYR2V0UmF0aW5nc092ZXJhbGxSZXF1ZXN0EikKBmZpbHRlchgBIAEoCzIZLmRhdGFiYXNlLnF1ZXJ5LnYxLkZpbHRlchIQCghzdGVhbV9pZBgCIAEoCSKRAgoLUGxheWVyU3RhdHMSGAoIc3RhdHNfaWQYASABKAVCBrpIA8gBARIWCgZyYXRpbmcYAiABKAVCBrpIA8gBARIYCghzdGVhbV9pZBgDIAEoA0IGukgDyAEBEhwKDHBlcnNvbmFfbmFtZRgEIAEoCUIGukgDyAEBEhsKC2F2YXRhcl9oYXNoGAUgASgJQga6SAPIAQESFAoEbmFtZRgGIAEoCUIGukgDyAEBEhQKBHdpbnMYByABKAVCBrpIA8gBARIWCgZsb3NzZXMYCCABKAVCBrpIA8gBARI3CgtsYXN0X3BsYXllZBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASJeChlHZXRSYXRpbmdzT3ZlcmFsbFJlc3BvbnNlEioKBXN0YXRzGAEgAygLMhMubWdlLnYxLlBsYXllclN0YXRzQga6SAPIAQESFQoFY291bnQYAiABKANCBrpIA8gBASKeAQoRR2V0SGlzdG9yeVJlcXVlc3QSKQoGZmlsdGVyGAEgASgLMhkuZGF0YWJhc2UucXVlcnkudjEuRmlsdGVyEh4KBG1vZGUYAiABKA4yEC5tZ2UudjEuRHVlbE1vZGUSDgoGd2lubmVyGAMgASgJEg8KB3dpbm5lcjIYBCABKAkSDQoFbG9zZXIYBSABKAkSDgoGbG9zZXIyGAYgASgJIuYECgREdWVsEhcKB2R1ZWxfaWQYASABKAVCBrpIA8gBARIWCgZ3aW5uZXIYAiABKANCBrpIA8gBARIiChJ3aW5uZXJfYXZhdGFyX2hhc2gYAyABKAlCBrpIA8gBARIjChN3aW5uZXJfcGVyc29uYV9uYW1lGAQgASgJQga6SAPIAQESFwoHd2lubmVyMhgFIAEoA0IGukgDyAEBEiMKE3dpbm5lcjJfYXZhdGFyX2hhc2gYBiABKAlCBrpIA8gBARIkChR3aW5uZXIyX3BlcnNvbmFfbmFtZRgHIAEoCUIGukgDyAEBEhUKBWxvc2VyGAggASgDQga6SAPIAQESIQoRbG9zZXJfYXZhdGFyX2hhc2gYCSABKAlCBrpIA8gBARIiChJsb3Nlcl9wZXJzb25hX25hbWUYCiABKAlCBrpIA8gBARIWCgZsb3NlcjIYCyABKANCBrpIA8gBARIiChJsb3NlcjJfYXZhdGFyX2hhc2gYDCABKAlCBrpIA8gBARIjChNsb3NlcjJfcGVyc29uYV9uYW1lGA0gASgJQga6SAPIAQESHAoMd2lubmVyX3Njb3JlGA4gASgFQga6SAPIAQESGwoLbG9zZXJfc2NvcmUYDyABKAVCBrpIA8gBARIZCgl3aW5fbGltaXQYECABKAVCBrpIA8gBARI1CglnYW1lX3RpbWUYESABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESGAoIbWFwX25hbWUYEiABKAlCBrpIA8gBARIaCgphcmVuYV9uYW1lGBMgASgJQga6SAPIAQEiUgoSR2V0SGlzdG9yeVJlc3BvbnNlEiUKB2hpc3RvcnkYASADKAsyDC5tZ2UudjEuRHVlbEIGukgDyAEBEhUKBWNvdW50GAIgASgDQga6SAPIAQEqSgoIRHVlbE1vZGUSJAogRFVFTF9NT0RFX09ORV9WU19PTkVfVU5TUEVDSUZJRUQQABIYChREVUVMX01PREVfVFdPX1ZTX1RXTxABMqsBCgpNR0VTZXJ2aWNlElgKEUdldFJhdGluZ3NPdmVyYWxsEiAubWdlLnYxLkdldFJhdGluZ3NPdmVyYWxsUmVxdWVzdBohLm1nZS52MS5HZXRSYXRpbmdzT3ZlcmFsbFJlc3BvbnNlEkMKCkdldEhpc3RvcnkSGS5tZ2UudjEuR2V0SGlzdG9yeVJlcXVlc3QaGi5tZ2UudjEuR2V0SGlzdG9yeVJlc3BvbnNlQoYBCgpjb20ubWdlLnYxQghNZ2VQcm90b1ABWjVnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL21nZS92MTttZ2V2MaICA01YWKoCBk1nZS5WMcoCBk1nZVxWMeICEk1nZVxWMVxHUEJNZXRhZGF0YeoCB01nZTo6VjFiCGVkaXRpb25zcOgH",
-		[file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_timestamp],
-	);
+export const file_mge_v1_mge: GenFile = /*@__PURE__*/
+  fileDesc("ChBtZ2UvdjEvbWdlLnByb3RvEgZtZ2UudjEiVwoYR2V0UmF0aW5nc092ZXJhbGxSZXF1ZXN0EikKBmZpbHRlchgBIAEoCzIZLmRhdGFiYXNlLnF1ZXJ5LnYxLkZpbHRlchIQCghzdGVhbV9pZBgCIAEoCSKRAgoLUGxheWVyU3RhdHMSGAoIc3RhdHNfaWQYASABKAVCBrpIA8gBARIWCgZyYXRpbmcYAiABKAVCBrpIA8gBARIYCghzdGVhbV9pZBgDIAEoA0IGukgDyAEBEhwKDHBlcnNvbmFfbmFtZRgEIAEoCUIGukgDyAEBEhsKC2F2YXRhcl9oYXNoGAUgASgJQga6SAPIAQESFAoEbmFtZRgGIAEoCUIGukgDyAEBEhQKBHdpbnMYByABKAVCBrpIA8gBARIWCgZsb3NzZXMYCCABKAVCBrpIA8gBARI3CgtsYXN0X3BsYXllZBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASJeChlHZXRSYXRpbmdzT3ZlcmFsbFJlc3BvbnNlEioKBXN0YXRzGAEgAygLMhMubWdlLnYxLlBsYXllclN0YXRzQga6SAPIAQESFQoFY291bnQYAiABKANCBrpIA8gBASKeAQoRR2V0SGlzdG9yeVJlcXVlc3QSKQoGZmlsdGVyGAEgASgLMhkuZGF0YWJhc2UucXVlcnkudjEuRmlsdGVyEh4KBG1vZGUYAiABKA4yEC5tZ2UudjEuRHVlbE1vZGUSDgoGd2lubmVyGAMgASgJEg8KB3dpbm5lcjIYBCABKAkSDQoFbG9zZXIYBSABKAkSDgoGbG9zZXIyGAYgASgJIuYECgREdWVsEhcKB2R1ZWxfaWQYASABKAVCBrpIA8gBARIWCgZ3aW5uZXIYAiABKANCBrpIA8gBARIiChJ3aW5uZXJfYXZhdGFyX2hhc2gYAyABKAlCBrpIA8gBARIjChN3aW5uZXJfcGVyc29uYV9uYW1lGAQgASgJQga6SAPIAQESFwoHd2lubmVyMhgFIAEoA0IGukgDyAEBEiMKE3dpbm5lcjJfYXZhdGFyX2hhc2gYBiABKAlCBrpIA8gBARIkChR3aW5uZXIyX3BlcnNvbmFfbmFtZRgHIAEoCUIGukgDyAEBEhUKBWxvc2VyGAggASgDQga6SAPIAQESIQoRbG9zZXJfYXZhdGFyX2hhc2gYCSABKAlCBrpIA8gBARIiChJsb3Nlcl9wZXJzb25hX25hbWUYCiABKAlCBrpIA8gBARIWCgZsb3NlcjIYCyABKANCBrpIA8gBARIiChJsb3NlcjJfYXZhdGFyX2hhc2gYDCABKAlCBrpIA8gBARIjChNsb3NlcjJfcGVyc29uYV9uYW1lGA0gASgJQga6SAPIAQESHAoMd2lubmVyX3Njb3JlGA4gASgFQga6SAPIAQESGwoLbG9zZXJfc2NvcmUYDyABKAVCBrpIA8gBARIZCgl3aW5fbGltaXQYECABKAVCBrpIA8gBARI1CglnYW1lX3RpbWUYESABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESGAoIbWFwX25hbWUYEiABKAlCBrpIA8gBARIaCgphcmVuYV9uYW1lGBMgASgJQga6SAPIAQEiUgoSR2V0SGlzdG9yeVJlc3BvbnNlEiUKB2hpc3RvcnkYASADKAsyDC5tZ2UudjEuRHVlbEIGukgDyAEBEhUKBWNvdW50GAIgASgDQga6SAPIAQEqSgoIRHVlbE1vZGUSJAogRFVFTF9NT0RFX09ORV9WU19PTkVfVU5TUEVDSUZJRUQQABIYChREVUVMX01PREVfVFdPX1ZTX1RXTxABMqsBCgpNR0VTZXJ2aWNlElgKEUdldFJhdGluZ3NPdmVyYWxsEiAubWdlLnYxLkdldFJhdGluZ3NPdmVyYWxsUmVxdWVzdBohLm1nZS52MS5HZXRSYXRpbmdzT3ZlcmFsbFJlc3BvbnNlEkMKCkdldEhpc3RvcnkSGS5tZ2UudjEuR2V0SGlzdG9yeVJlcXVlc3QaGi5tZ2UudjEuR2V0SGlzdG9yeVJlc3BvbnNlQoYBCgpjb20ubWdlLnYxQghNZ2VQcm90b1ABWjVnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL21nZS92MTttZ2V2MaICA01YWKoCBk1nZS5WMcoCBk1nZVxWMeICEk1nZVxWMVxHUEJNZXRhZGF0YeoCB01nZTo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message mge.v1.GetRatingsOverallRequest
  */
 export type GetRatingsOverallRequest = Message<"mge.v1.GetRatingsOverallRequest"> & {
-	/**
-	 * @generated from field: database.query.v1.Filter filter = 1;
-	 */
-	filter?: Filter;
+  /**
+   * @generated from field: database.query.v1.Filter filter = 1;
+   */
+  filter?: Filter;
 
-	/**
-	 * @generated from field: string steam_id = 2;
-	 */
-	steamId: string;
+  /**
+   * @generated from field: string steam_id = 2;
+   */
+  steamId: string;
 };
 
 export type GetRatingsOverallRequestValid = GetRatingsOverallRequest;
@@ -42,191 +38,186 @@ export type GetRatingsOverallRequestValid = GetRatingsOverallRequest;
  * Describes the message mge.v1.GetRatingsOverallRequest.
  * Use `create(GetRatingsOverallRequestSchema)` to create a new message.
  */
-export const GetRatingsOverallRequestSchema: GenMessage<
-	GetRatingsOverallRequest,
-	{ validType: GetRatingsOverallRequestValid }
-> = /*@__PURE__*/ messageDesc(file_mge_v1_mge, 0);
+export const GetRatingsOverallRequestSchema: GenMessage<GetRatingsOverallRequest, {validType: GetRatingsOverallRequestValid}> = /*@__PURE__*/
+  messageDesc(file_mge_v1_mge, 0);
 
 /**
  * @generated from message mge.v1.PlayerStats
  */
 export type PlayerStats = Message<"mge.v1.PlayerStats"> & {
-	/**
-	 * @generated from field: int32 stats_id = 1;
-	 */
-	statsId: number;
+  /**
+   * @generated from field: int32 stats_id = 1;
+   */
+  statsId: number;
 
-	/**
-	 * @generated from field: int32 rating = 2;
-	 */
-	rating: number;
+  /**
+   * @generated from field: int32 rating = 2;
+   */
+  rating: number;
 
-	/**
-	 * @generated from field: int64 steam_id = 3;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 3;
+   */
+  steamId: bigint;
 
-	/**
-	 * @generated from field: string persona_name = 4;
-	 */
-	personaName: string;
+  /**
+   * @generated from field: string persona_name = 4;
+   */
+  personaName: string;
 
-	/**
-	 * @generated from field: string avatar_hash = 5;
-	 */
-	avatarHash: string;
+  /**
+   * @generated from field: string avatar_hash = 5;
+   */
+  avatarHash: string;
 
-	/**
-	 * @generated from field: string name = 6;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 6;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: int32 wins = 7;
-	 */
-	wins: number;
+  /**
+   * @generated from field: int32 wins = 7;
+   */
+  wins: number;
 
-	/**
-	 * @generated from field: int32 losses = 8;
-	 */
-	losses: number;
+  /**
+   * @generated from field: int32 losses = 8;
+   */
+  losses: number;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp last_played = 9;
-	 */
-	lastPlayed?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp last_played = 9;
+   */
+  lastPlayed?: Timestamp;
 };
 
 /**
  * @generated from message mge.v1.PlayerStats
  */
 export type PlayerStatsValid = Message<"mge.v1.PlayerStats"> & {
-	/**
-	 * @generated from field: int32 stats_id = 1;
-	 */
-	statsId: number;
+  /**
+   * @generated from field: int32 stats_id = 1;
+   */
+  statsId: number;
 
-	/**
-	 * @generated from field: int32 rating = 2;
-	 */
-	rating: number;
+  /**
+   * @generated from field: int32 rating = 2;
+   */
+  rating: number;
 
-	/**
-	 * @generated from field: int64 steam_id = 3;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 3;
+   */
+  steamId: bigint;
 
-	/**
-	 * @generated from field: string persona_name = 4;
-	 */
-	personaName: string;
+  /**
+   * @generated from field: string persona_name = 4;
+   */
+  personaName: string;
 
-	/**
-	 * @generated from field: string avatar_hash = 5;
-	 */
-	avatarHash: string;
+  /**
+   * @generated from field: string avatar_hash = 5;
+   */
+  avatarHash: string;
 
-	/**
-	 * @generated from field: string name = 6;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 6;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: int32 wins = 7;
-	 */
-	wins: number;
+  /**
+   * @generated from field: int32 wins = 7;
+   */
+  wins: number;
 
-	/**
-	 * @generated from field: int32 losses = 8;
-	 */
-	losses: number;
+  /**
+   * @generated from field: int32 losses = 8;
+   */
+  losses: number;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp last_played = 9;
-	 */
-	lastPlayed: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp last_played = 9;
+   */
+  lastPlayed: Timestamp;
 };
 
 /**
  * Describes the message mge.v1.PlayerStats.
  * Use `create(PlayerStatsSchema)` to create a new message.
  */
-export const PlayerStatsSchema: GenMessage<PlayerStats, { validType: PlayerStatsValid }> =
-	/*@__PURE__*/
-	messageDesc(file_mge_v1_mge, 1);
+export const PlayerStatsSchema: GenMessage<PlayerStats, {validType: PlayerStatsValid}> = /*@__PURE__*/
+  messageDesc(file_mge_v1_mge, 1);
 
 /**
  * @generated from message mge.v1.GetRatingsOverallResponse
  */
 export type GetRatingsOverallResponse = Message<"mge.v1.GetRatingsOverallResponse"> & {
-	/**
-	 * @generated from field: repeated mge.v1.PlayerStats stats = 1;
-	 */
-	stats: PlayerStats[];
+  /**
+   * @generated from field: repeated mge.v1.PlayerStats stats = 1;
+   */
+  stats: PlayerStats[];
 
-	/**
-	 * @generated from field: int64 count = 2;
-	 */
-	count: bigint;
+  /**
+   * @generated from field: int64 count = 2;
+   */
+  count: bigint;
 };
 
 /**
  * @generated from message mge.v1.GetRatingsOverallResponse
  */
 export type GetRatingsOverallResponseValid = Message<"mge.v1.GetRatingsOverallResponse"> & {
-	/**
-	 * @generated from field: repeated mge.v1.PlayerStats stats = 1;
-	 */
-	stats: PlayerStatsValid[];
+  /**
+   * @generated from field: repeated mge.v1.PlayerStats stats = 1;
+   */
+  stats: PlayerStatsValid[];
 
-	/**
-	 * @generated from field: int64 count = 2;
-	 */
-	count: bigint;
+  /**
+   * @generated from field: int64 count = 2;
+   */
+  count: bigint;
 };
 
 /**
  * Describes the message mge.v1.GetRatingsOverallResponse.
  * Use `create(GetRatingsOverallResponseSchema)` to create a new message.
  */
-export const GetRatingsOverallResponseSchema: GenMessage<
-	GetRatingsOverallResponse,
-	{ validType: GetRatingsOverallResponseValid }
-> = /*@__PURE__*/ messageDesc(file_mge_v1_mge, 2);
+export const GetRatingsOverallResponseSchema: GenMessage<GetRatingsOverallResponse, {validType: GetRatingsOverallResponseValid}> = /*@__PURE__*/
+  messageDesc(file_mge_v1_mge, 2);
 
 /**
  * @generated from message mge.v1.GetHistoryRequest
  */
 export type GetHistoryRequest = Message<"mge.v1.GetHistoryRequest"> & {
-	/**
-	 * @generated from field: database.query.v1.Filter filter = 1;
-	 */
-	filter?: Filter;
+  /**
+   * @generated from field: database.query.v1.Filter filter = 1;
+   */
+  filter?: Filter;
 
-	/**
-	 * @generated from field: mge.v1.DuelMode mode = 2;
-	 */
-	mode: DuelMode;
+  /**
+   * @generated from field: mge.v1.DuelMode mode = 2;
+   */
+  mode: DuelMode;
 
-	/**
-	 * @generated from field: string winner = 3;
-	 */
-	winner: string;
+  /**
+   * @generated from field: string winner = 3;
+   */
+  winner: string;
 
-	/**
-	 * @generated from field: string winner2 = 4;
-	 */
-	winner2: string;
+  /**
+   * @generated from field: string winner2 = 4;
+   */
+  winner2: string;
 
-	/**
-	 * @generated from field: string loser = 5;
-	 */
-	loser: string;
+  /**
+   * @generated from field: string loser = 5;
+   */
+  loser: string;
 
-	/**
-	 * @generated from field: string loser2 = 6;
-	 */
-	loser2: string;
+  /**
+   * @generated from field: string loser2 = 6;
+   */
+  loser2: string;
 };
 
 export type GetHistoryRequestValid = GetHistoryRequest;
@@ -235,292 +226,294 @@ export type GetHistoryRequestValid = GetHistoryRequest;
  * Describes the message mge.v1.GetHistoryRequest.
  * Use `create(GetHistoryRequestSchema)` to create a new message.
  */
-export const GetHistoryRequestSchema: GenMessage<GetHistoryRequest, { validType: GetHistoryRequestValid }> =
-	/*@__PURE__*/
-	messageDesc(file_mge_v1_mge, 3);
+export const GetHistoryRequestSchema: GenMessage<GetHistoryRequest, {validType: GetHistoryRequestValid}> = /*@__PURE__*/
+  messageDesc(file_mge_v1_mge, 3);
 
 /**
  * @generated from message mge.v1.Duel
  */
 export type Duel = Message<"mge.v1.Duel"> & {
-	/**
-	 * @generated from field: int32 duel_id = 1;
-	 */
-	duelId: number;
+  /**
+   * @generated from field: int32 duel_id = 1;
+   */
+  duelId: number;
 
-	/**
-	 * @generated from field: int64 winner = 2;
-	 */
-	winner: bigint;
+  /**
+   * @generated from field: int64 winner = 2;
+   */
+  winner: bigint;
 
-	/**
-	 * @generated from field: string winner_avatar_hash = 3;
-	 */
-	winnerAvatarHash: string;
+  /**
+   * @generated from field: string winner_avatar_hash = 3;
+   */
+  winnerAvatarHash: string;
 
-	/**
-	 * @generated from field: string winner_persona_name = 4;
-	 */
-	winnerPersonaName: string;
+  /**
+   * @generated from field: string winner_persona_name = 4;
+   */
+  winnerPersonaName: string;
 
-	/**
-	 * @generated from field: int64 winner2 = 5;
-	 */
-	winner2: bigint;
+  /**
+   * @generated from field: int64 winner2 = 5;
+   */
+  winner2: bigint;
 
-	/**
-	 * @generated from field: string winner2_avatar_hash = 6;
-	 */
-	winner2AvatarHash: string;
+  /**
+   * @generated from field: string winner2_avatar_hash = 6;
+   */
+  winner2AvatarHash: string;
 
-	/**
-	 * @generated from field: string winner2_persona_name = 7;
-	 */
-	winner2PersonaName: string;
+  /**
+   * @generated from field: string winner2_persona_name = 7;
+   */
+  winner2PersonaName: string;
 
-	/**
-	 * @generated from field: int64 loser = 8;
-	 */
-	loser: bigint;
+  /**
+   * @generated from field: int64 loser = 8;
+   */
+  loser: bigint;
 
-	/**
-	 * @generated from field: string loser_avatar_hash = 9;
-	 */
-	loserAvatarHash: string;
+  /**
+   * @generated from field: string loser_avatar_hash = 9;
+   */
+  loserAvatarHash: string;
 
-	/**
-	 * @generated from field: string loser_persona_name = 10;
-	 */
-	loserPersonaName: string;
+  /**
+   * @generated from field: string loser_persona_name = 10;
+   */
+  loserPersonaName: string;
 
-	/**
-	 * @generated from field: int64 loser2 = 11;
-	 */
-	loser2: bigint;
+  /**
+   * @generated from field: int64 loser2 = 11;
+   */
+  loser2: bigint;
 
-	/**
-	 * @generated from field: string loser2_avatar_hash = 12;
-	 */
-	loser2AvatarHash: string;
+  /**
+   * @generated from field: string loser2_avatar_hash = 12;
+   */
+  loser2AvatarHash: string;
 
-	/**
-	 * @generated from field: string loser2_persona_name = 13;
-	 */
-	loser2PersonaName: string;
+  /**
+   * @generated from field: string loser2_persona_name = 13;
+   */
+  loser2PersonaName: string;
 
-	/**
-	 * @generated from field: int32 winner_score = 14;
-	 */
-	winnerScore: number;
+  /**
+   * @generated from field: int32 winner_score = 14;
+   */
+  winnerScore: number;
 
-	/**
-	 * @generated from field: int32 loser_score = 15;
-	 */
-	loserScore: number;
+  /**
+   * @generated from field: int32 loser_score = 15;
+   */
+  loserScore: number;
 
-	/**
-	 * @generated from field: int32 win_limit = 16;
-	 */
-	winLimit: number;
+  /**
+   * @generated from field: int32 win_limit = 16;
+   */
+  winLimit: number;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp game_time = 17;
-	 */
-	gameTime?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp game_time = 17;
+   */
+  gameTime?: Timestamp;
 
-	/**
-	 * @generated from field: string map_name = 18;
-	 */
-	mapName: string;
+  /**
+   * @generated from field: string map_name = 18;
+   */
+  mapName: string;
 
-	/**
-	 * @generated from field: string arena_name = 19;
-	 */
-	arenaName: string;
+  /**
+   * @generated from field: string arena_name = 19;
+   */
+  arenaName: string;
 };
 
 /**
  * @generated from message mge.v1.Duel
  */
 export type DuelValid = Message<"mge.v1.Duel"> & {
-	/**
-	 * @generated from field: int32 duel_id = 1;
-	 */
-	duelId: number;
+  /**
+   * @generated from field: int32 duel_id = 1;
+   */
+  duelId: number;
 
-	/**
-	 * @generated from field: int64 winner = 2;
-	 */
-	winner: bigint;
+  /**
+   * @generated from field: int64 winner = 2;
+   */
+  winner: bigint;
 
-	/**
-	 * @generated from field: string winner_avatar_hash = 3;
-	 */
-	winnerAvatarHash: string;
+  /**
+   * @generated from field: string winner_avatar_hash = 3;
+   */
+  winnerAvatarHash: string;
 
-	/**
-	 * @generated from field: string winner_persona_name = 4;
-	 */
-	winnerPersonaName: string;
+  /**
+   * @generated from field: string winner_persona_name = 4;
+   */
+  winnerPersonaName: string;
 
-	/**
-	 * @generated from field: int64 winner2 = 5;
-	 */
-	winner2: bigint;
+  /**
+   * @generated from field: int64 winner2 = 5;
+   */
+  winner2: bigint;
 
-	/**
-	 * @generated from field: string winner2_avatar_hash = 6;
-	 */
-	winner2AvatarHash: string;
+  /**
+   * @generated from field: string winner2_avatar_hash = 6;
+   */
+  winner2AvatarHash: string;
 
-	/**
-	 * @generated from field: string winner2_persona_name = 7;
-	 */
-	winner2PersonaName: string;
+  /**
+   * @generated from field: string winner2_persona_name = 7;
+   */
+  winner2PersonaName: string;
 
-	/**
-	 * @generated from field: int64 loser = 8;
-	 */
-	loser: bigint;
+  /**
+   * @generated from field: int64 loser = 8;
+   */
+  loser: bigint;
 
-	/**
-	 * @generated from field: string loser_avatar_hash = 9;
-	 */
-	loserAvatarHash: string;
+  /**
+   * @generated from field: string loser_avatar_hash = 9;
+   */
+  loserAvatarHash: string;
 
-	/**
-	 * @generated from field: string loser_persona_name = 10;
-	 */
-	loserPersonaName: string;
+  /**
+   * @generated from field: string loser_persona_name = 10;
+   */
+  loserPersonaName: string;
 
-	/**
-	 * @generated from field: int64 loser2 = 11;
-	 */
-	loser2: bigint;
+  /**
+   * @generated from field: int64 loser2 = 11;
+   */
+  loser2: bigint;
 
-	/**
-	 * @generated from field: string loser2_avatar_hash = 12;
-	 */
-	loser2AvatarHash: string;
+  /**
+   * @generated from field: string loser2_avatar_hash = 12;
+   */
+  loser2AvatarHash: string;
 
-	/**
-	 * @generated from field: string loser2_persona_name = 13;
-	 */
-	loser2PersonaName: string;
+  /**
+   * @generated from field: string loser2_persona_name = 13;
+   */
+  loser2PersonaName: string;
 
-	/**
-	 * @generated from field: int32 winner_score = 14;
-	 */
-	winnerScore: number;
+  /**
+   * @generated from field: int32 winner_score = 14;
+   */
+  winnerScore: number;
 
-	/**
-	 * @generated from field: int32 loser_score = 15;
-	 */
-	loserScore: number;
+  /**
+   * @generated from field: int32 loser_score = 15;
+   */
+  loserScore: number;
 
-	/**
-	 * @generated from field: int32 win_limit = 16;
-	 */
-	winLimit: number;
+  /**
+   * @generated from field: int32 win_limit = 16;
+   */
+  winLimit: number;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp game_time = 17;
-	 */
-	gameTime: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp game_time = 17;
+   */
+  gameTime: Timestamp;
 
-	/**
-	 * @generated from field: string map_name = 18;
-	 */
-	mapName: string;
+  /**
+   * @generated from field: string map_name = 18;
+   */
+  mapName: string;
 
-	/**
-	 * @generated from field: string arena_name = 19;
-	 */
-	arenaName: string;
+  /**
+   * @generated from field: string arena_name = 19;
+   */
+  arenaName: string;
 };
 
 /**
  * Describes the message mge.v1.Duel.
  * Use `create(DuelSchema)` to create a new message.
  */
-export const DuelSchema: GenMessage<Duel, { validType: DuelValid }> = /*@__PURE__*/ messageDesc(file_mge_v1_mge, 4);
+export const DuelSchema: GenMessage<Duel, {validType: DuelValid}> = /*@__PURE__*/
+  messageDesc(file_mge_v1_mge, 4);
 
 /**
  * @generated from message mge.v1.GetHistoryResponse
  */
 export type GetHistoryResponse = Message<"mge.v1.GetHistoryResponse"> & {
-	/**
-	 * @generated from field: repeated mge.v1.Duel history = 1;
-	 */
-	history: Duel[];
+  /**
+   * @generated from field: repeated mge.v1.Duel history = 1;
+   */
+  history: Duel[];
 
-	/**
-	 * @generated from field: int64 count = 2;
-	 */
-	count: bigint;
+  /**
+   * @generated from field: int64 count = 2;
+   */
+  count: bigint;
 };
 
 /**
  * @generated from message mge.v1.GetHistoryResponse
  */
 export type GetHistoryResponseValid = Message<"mge.v1.GetHistoryResponse"> & {
-	/**
-	 * @generated from field: repeated mge.v1.Duel history = 1;
-	 */
-	history: DuelValid[];
+  /**
+   * @generated from field: repeated mge.v1.Duel history = 1;
+   */
+  history: DuelValid[];
 
-	/**
-	 * @generated from field: int64 count = 2;
-	 */
-	count: bigint;
+  /**
+   * @generated from field: int64 count = 2;
+   */
+  count: bigint;
 };
 
 /**
  * Describes the message mge.v1.GetHistoryResponse.
  * Use `create(GetHistoryResponseSchema)` to create a new message.
  */
-export const GetHistoryResponseSchema: GenMessage<GetHistoryResponse, { validType: GetHistoryResponseValid }> =
-	/*@__PURE__*/
-	messageDesc(file_mge_v1_mge, 5);
+export const GetHistoryResponseSchema: GenMessage<GetHistoryResponse, {validType: GetHistoryResponseValid}> = /*@__PURE__*/
+  messageDesc(file_mge_v1_mge, 5);
 
 /**
  * @generated from enum mge.v1.DuelMode
  */
 export enum DuelMode {
-	/**
-	 * @generated from enum value: DUEL_MODE_ONE_VS_ONE_UNSPECIFIED = 0;
-	 */
-	ONE_VS_ONE_UNSPECIFIED = 0,
+  /**
+   * @generated from enum value: DUEL_MODE_ONE_VS_ONE_UNSPECIFIED = 0;
+   */
+  ONE_VS_ONE_UNSPECIFIED = 0,
 
-	/**
-	 * @generated from enum value: DUEL_MODE_TWO_VS_TWO = 1;
-	 */
-	TWO_VS_TWO = 1,
+  /**
+   * @generated from enum value: DUEL_MODE_TWO_VS_TWO = 1;
+   */
+  TWO_VS_TWO = 1,
 }
 
 /**
  * Describes the enum mge.v1.DuelMode.
  */
-export const DuelModeSchema: GenEnum<DuelMode> = /*@__PURE__*/ enumDesc(file_mge_v1_mge, 0);
+export const DuelModeSchema: GenEnum<DuelMode> = /*@__PURE__*/
+  enumDesc(file_mge_v1_mge, 0);
 
 /**
  * @generated from service mge.v1.MGEService
  */
 export const MGEService: GenService<{
-	/**
-	 * @generated from rpc mge.v1.MGEService.GetRatingsOverall
-	 */
-	getRatingsOverall: {
-		methodKind: "unary";
-		input: typeof GetRatingsOverallRequestSchema;
-		output: typeof GetRatingsOverallResponseSchema;
-	};
-	/**
-	 * @generated from rpc mge.v1.MGEService.GetHistory
-	 */
-	getHistory: {
-		methodKind: "unary";
-		input: typeof GetHistoryRequestSchema;
-		output: typeof GetHistoryResponseSchema;
-	};
-}> = /*@__PURE__*/ serviceDesc(file_mge_v1_mge, 0);
+  /**
+   * @generated from rpc mge.v1.MGEService.GetRatingsOverall
+   */
+  getRatingsOverall: {
+    methodKind: "unary";
+    input: typeof GetRatingsOverallRequestSchema;
+    output: typeof GetRatingsOverallResponseSchema;
+  },
+  /**
+   * @generated from rpc mge.v1.MGEService.GetHistory
+   */
+  getHistory: {
+    methodKind: "unary";
+    input: typeof GetHistoryRequestSchema;
+    output: typeof GetHistoryResponseSchema;
+  },
+}> = /*@__PURE__*/
+  serviceDesc(file_mge_v1_mge, 0);
+

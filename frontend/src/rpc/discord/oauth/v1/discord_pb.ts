@@ -2,161 +2,146 @@
 // @generated from file discord/oauth/v1/discord.proto (package discord.oauth.v1, edition 2023)
 /* eslint-disable */
 
-import type { Message } from "@bufbuild/protobuf";
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Any, EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
-import {
-	file_google_protobuf_any,
-	file_google_protobuf_empty,
-	file_google_protobuf_timestamp,
-} from "@bufbuild/protobuf/wkt";
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb";
+import type { Any, EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_any, file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file discord/oauth/v1/discord.proto.
  */
-export const file_discord_oauth_v1_discord: GenFile =
-	/*@__PURE__*/
-	fileDesc(
-		"Ch5kaXNjb3JkL29hdXRoL3YxL2Rpc2NvcmQucHJvdG8SEGRpc2NvcmQub2F1dGgudjEiVAoPUHJvZmlsZVJlc3BvbnNlEkEKD2Rpc2NvcmRfcHJvZmlsZRgBIAEoCzIgLmRpc2NvcmQub2F1dGgudjEuRGlzY29yZFByb2ZpbGVCBrpIA8gBASIqCg1Mb2dpblJlc3BvbnNlEhkKCWxvZ2luX3VybBgBIAEoCUIGukgDyAEBIrADCg5EaXNjb3JkUHJvZmlsZRIQCghzdGVhbV9pZBgBIAEoAxIKCgJpZBgCIAEoCRIOCgZhdmF0YXIYAyABKAkSLwoRYXZhdGFyX2RlY29yYXRpb24YBCABKAsyFC5nb29nbGUucHJvdG9idWYuQW55EhUKDWRpc2NyaW1pbmF0b3IYBSABKAkSDQoFZmxhZ3MYBiABKAUSJAoGYmFubmVyGAcgASgLMhQuZ29vZ2xlLnByb3RvYnVmLkFueRIrCg1iYW5uZXJfY29sb3VyGAggASgLMhQuZ29vZ2xlLnByb3RvYnVmLkFueRIrCg1hY2NlbnRfY29sb3VyGAkgASgLMhQuZ29vZ2xlLnByb3RvYnVmLkFueRIOCgZsb2NhbGUYCiABKAkSEwoLbWZhX2VuYWJsZWQYCyABKAgSFAoMcHJlbWl1bV90eXBlGAwgASgFEi4KCmNyZWF0ZWRfb24YDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YDiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wMt0BChNEaXNjb3JkT0F1dGhTZXJ2aWNlEkIKBUxvZ2luEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Gh8uZGlzY29yZC5vYXV0aC52MS5Mb2dpblJlc3BvbnNlIgASOgoGTG9nb3V0EhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASRgoHUHJvZmlsZRIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRohLmRpc2NvcmQub2F1dGgudjEuUHJvZmlsZVJlc3BvbnNlIgBCyQEKFGNvbS5kaXNjb3JkLm9hdXRoLnYxQgxEaXNjb3JkUHJvdG9QAVpBZ2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9kaXNjb3JkL29hdXRoL3YxO29hdXRodjGiAgNET1iqAhBEaXNjb3JkLk9hdXRoLlYxygIQRGlzY29yZFxPYXV0aFxWMeICHERpc2NvcmRcT2F1dGhcVjFcR1BCTWV0YWRhdGHqAhJEaXNjb3JkOjpPYXV0aDo6VjFiCGVkaXRpb25zcOgH",
-		[
-			file_buf_validate_validate,
-			file_google_protobuf_any,
-			file_google_protobuf_empty,
-			file_google_protobuf_timestamp,
-		],
-	);
+export const file_discord_oauth_v1_discord: GenFile = /*@__PURE__*/
+  fileDesc("Ch5kaXNjb3JkL29hdXRoL3YxL2Rpc2NvcmQucHJvdG8SEGRpc2NvcmQub2F1dGgudjEiVAoPUHJvZmlsZVJlc3BvbnNlEkEKD2Rpc2NvcmRfcHJvZmlsZRgBIAEoCzIgLmRpc2NvcmQub2F1dGgudjEuRGlzY29yZFByb2ZpbGVCBrpIA8gBASIqCg1Mb2dpblJlc3BvbnNlEhkKCWxvZ2luX3VybBgBIAEoCUIGukgDyAEBIrADCg5EaXNjb3JkUHJvZmlsZRIQCghzdGVhbV9pZBgBIAEoAxIKCgJpZBgCIAEoCRIOCgZhdmF0YXIYAyABKAkSLwoRYXZhdGFyX2RlY29yYXRpb24YBCABKAsyFC5nb29nbGUucHJvdG9idWYuQW55EhUKDWRpc2NyaW1pbmF0b3IYBSABKAkSDQoFZmxhZ3MYBiABKAUSJAoGYmFubmVyGAcgASgLMhQuZ29vZ2xlLnByb3RvYnVmLkFueRIrCg1iYW5uZXJfY29sb3VyGAggASgLMhQuZ29vZ2xlLnByb3RvYnVmLkFueRIrCg1hY2NlbnRfY29sb3VyGAkgASgLMhQuZ29vZ2xlLnByb3RvYnVmLkFueRIOCgZsb2NhbGUYCiABKAkSEwoLbWZhX2VuYWJsZWQYCyABKAgSFAoMcHJlbWl1bV90eXBlGAwgASgFEi4KCmNyZWF0ZWRfb24YDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YDiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wMt0BChNEaXNjb3JkT0F1dGhTZXJ2aWNlEkIKBUxvZ2luEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Gh8uZGlzY29yZC5vYXV0aC52MS5Mb2dpblJlc3BvbnNlIgASOgoGTG9nb3V0EhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASRgoHUHJvZmlsZRIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRohLmRpc2NvcmQub2F1dGgudjEuUHJvZmlsZVJlc3BvbnNlIgBCyQEKFGNvbS5kaXNjb3JkLm9hdXRoLnYxQgxEaXNjb3JkUHJvdG9QAVpBZ2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9kaXNjb3JkL29hdXRoL3YxO29hdXRodjGiAgNET1iqAhBEaXNjb3JkLk9hdXRoLlYxygIQRGlzY29yZFxPYXV0aFxWMeICHERpc2NvcmRcT2F1dGhcVjFcR1BCTWV0YWRhdGHqAhJEaXNjb3JkOjpPYXV0aDo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate, file_google_protobuf_any, file_google_protobuf_empty, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message discord.oauth.v1.ProfileResponse
  */
 export type ProfileResponse = Message<"discord.oauth.v1.ProfileResponse"> & {
-	/**
-	 * @generated from field: discord.oauth.v1.DiscordProfile discord_profile = 1;
-	 */
-	discordProfile?: DiscordProfile;
+  /**
+   * @generated from field: discord.oauth.v1.DiscordProfile discord_profile = 1;
+   */
+  discordProfile?: DiscordProfile;
 };
 
 /**
  * @generated from message discord.oauth.v1.ProfileResponse
  */
 export type ProfileResponseValid = Message<"discord.oauth.v1.ProfileResponse"> & {
-	/**
-	 * @generated from field: discord.oauth.v1.DiscordProfile discord_profile = 1;
-	 */
-	discordProfile: DiscordProfileValid;
+  /**
+   * @generated from field: discord.oauth.v1.DiscordProfile discord_profile = 1;
+   */
+  discordProfile: DiscordProfileValid;
 };
 
 /**
  * Describes the message discord.oauth.v1.ProfileResponse.
  * Use `create(ProfileResponseSchema)` to create a new message.
  */
-export const ProfileResponseSchema: GenMessage<ProfileResponse, { validType: ProfileResponseValid }> =
-	/*@__PURE__*/
-	messageDesc(file_discord_oauth_v1_discord, 0);
+export const ProfileResponseSchema: GenMessage<ProfileResponse, {validType: ProfileResponseValid}> = /*@__PURE__*/
+  messageDesc(file_discord_oauth_v1_discord, 0);
 
 /**
  * @generated from message discord.oauth.v1.LoginResponse
  */
 export type LoginResponse = Message<"discord.oauth.v1.LoginResponse"> & {
-	/**
-	 * @generated from field: string login_url = 1;
-	 */
-	loginUrl: string;
+  /**
+   * @generated from field: string login_url = 1;
+   */
+  loginUrl: string;
 };
 
 /**
  * @generated from message discord.oauth.v1.LoginResponse
  */
 export type LoginResponseValid = Message<"discord.oauth.v1.LoginResponse"> & {
-	/**
-	 * @generated from field: string login_url = 1;
-	 */
-	loginUrl: string;
+  /**
+   * @generated from field: string login_url = 1;
+   */
+  loginUrl: string;
 };
 
 /**
  * Describes the message discord.oauth.v1.LoginResponse.
  * Use `create(LoginResponseSchema)` to create a new message.
  */
-export const LoginResponseSchema: GenMessage<LoginResponse, { validType: LoginResponseValid }> =
-	/*@__PURE__*/
-	messageDesc(file_discord_oauth_v1_discord, 1);
+export const LoginResponseSchema: GenMessage<LoginResponse, {validType: LoginResponseValid}> = /*@__PURE__*/
+  messageDesc(file_discord_oauth_v1_discord, 1);
 
 /**
  * @generated from message discord.oauth.v1.DiscordProfile
  */
 export type DiscordProfile = Message<"discord.oauth.v1.DiscordProfile"> & {
-	/**
-	 * @generated from field: int64 steam_id = 1;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 1;
+   */
+  steamId: bigint;
 
-	/**
-	 * @generated from field: string id = 2;
-	 */
-	id: string;
+  /**
+   * @generated from field: string id = 2;
+   */
+  id: string;
 
-	/**
-	 * @generated from field: string avatar = 3;
-	 */
-	avatar: string;
+  /**
+   * @generated from field: string avatar = 3;
+   */
+  avatar: string;
 
-	/**
-	 * @generated from field: google.protobuf.Any avatar_decoration = 4;
-	 */
-	avatarDecoration?: Any;
+  /**
+   * @generated from field: google.protobuf.Any avatar_decoration = 4;
+   */
+  avatarDecoration?: Any;
 
-	/**
-	 * @generated from field: string discriminator = 5;
-	 */
-	discriminator: string;
+  /**
+   * @generated from field: string discriminator = 5;
+   */
+  discriminator: string;
 
-	/**
-	 * @generated from field: int32 flags = 6;
-	 */
-	flags: number;
+  /**
+   * @generated from field: int32 flags = 6;
+   */
+  flags: number;
 
-	/**
-	 * @generated from field: google.protobuf.Any banner = 7;
-	 */
-	banner?: Any;
+  /**
+   * @generated from field: google.protobuf.Any banner = 7;
+   */
+  banner?: Any;
 
-	/**
-	 * @generated from field: google.protobuf.Any banner_colour = 8;
-	 */
-	bannerColour?: Any;
+  /**
+   * @generated from field: google.protobuf.Any banner_colour = 8;
+   */
+  bannerColour?: Any;
 
-	/**
-	 * @generated from field: google.protobuf.Any accent_colour = 9;
-	 */
-	accentColour?: Any;
+  /**
+   * @generated from field: google.protobuf.Any accent_colour = 9;
+   */
+  accentColour?: Any;
 
-	/**
-	 * @generated from field: string locale = 10;
-	 */
-	locale: string;
+  /**
+   * @generated from field: string locale = 10;
+   */
+  locale: string;
 
-	/**
-	 * @generated from field: bool mfa_enabled = 11;
-	 */
-	mfaEnabled: boolean;
+  /**
+   * @generated from field: bool mfa_enabled = 11;
+   */
+  mfaEnabled: boolean;
 
-	/**
-	 * @generated from field: int32 premium_type = 12;
-	 */
-	premiumType: number;
+  /**
+   * @generated from field: int32 premium_type = 12;
+   */
+  premiumType: number;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 13;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 13;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 14;
-	 */
-	updatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 14;
+   */
+  updatedOn?: Timestamp;
 };
 
 export type DiscordProfileValid = DiscordProfile;
@@ -165,36 +150,37 @@ export type DiscordProfileValid = DiscordProfile;
  * Describes the message discord.oauth.v1.DiscordProfile.
  * Use `create(DiscordProfileSchema)` to create a new message.
  */
-export const DiscordProfileSchema: GenMessage<DiscordProfile, { validType: DiscordProfileValid }> =
-	/*@__PURE__*/
-	messageDesc(file_discord_oauth_v1_discord, 2);
+export const DiscordProfileSchema: GenMessage<DiscordProfile, {validType: DiscordProfileValid}> = /*@__PURE__*/
+  messageDesc(file_discord_oauth_v1_discord, 2);
 
 /**
  * @generated from service discord.oauth.v1.DiscordOAuthService
  */
 export const DiscordOAuthService: GenService<{
-	/**
-	 * @generated from rpc discord.oauth.v1.DiscordOAuthService.Login
-	 */
-	login: {
-		methodKind: "unary";
-		input: typeof EmptySchema;
-		output: typeof LoginResponseSchema;
-	};
-	/**
-	 * @generated from rpc discord.oauth.v1.DiscordOAuthService.Logout
-	 */
-	logout: {
-		methodKind: "unary";
-		input: typeof EmptySchema;
-		output: typeof EmptySchema;
-	};
-	/**
-	 * @generated from rpc discord.oauth.v1.DiscordOAuthService.Profile
-	 */
-	profile: {
-		methodKind: "unary";
-		input: typeof EmptySchema;
-		output: typeof ProfileResponseSchema;
-	};
-}> = /*@__PURE__*/ serviceDesc(file_discord_oauth_v1_discord, 0);
+  /**
+   * @generated from rpc discord.oauth.v1.DiscordOAuthService.Login
+   */
+  login: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof LoginResponseSchema;
+  },
+  /**
+   * @generated from rpc discord.oauth.v1.DiscordOAuthService.Logout
+   */
+  logout: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc discord.oauth.v1.DiscordOAuthService.Profile
+   */
+  profile: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof ProfileResponseSchema;
+  },
+}> = /*@__PURE__*/
+  serviceDesc(file_discord_oauth_v1_discord, 0);
+

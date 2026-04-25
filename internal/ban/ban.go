@@ -94,7 +94,7 @@ type Opts struct {
 	Reason     reason.Reason      `json:"reason" binding:"required"`
 	ReasonText string             `json:"reason_text"`
 	Origin     Origin             `json:"origin" binding:"oneof=0 1 2 3"`
-	ReportID   int64              `json:"report_id" binding:"omitempty,gt=0"`
+	ReportID   int32              `json:"report_id" binding:"omitempty,gt=0"`
 	CIDR       *string            `json:"cidr"`
 	EvadeOk    bool               `json:"evade_ok"`
 	Name       string             `json:"name" binding:"max=36"`
@@ -139,8 +139,8 @@ type Ban struct {
 	// SteamID is the steamID of the banned person
 	TargetID steamid.SteamID `json:"target_id"`
 	SourceID steamid.SteamID `json:"source_id"`
-	BanID    int64           `json:"ban_id"`
-	ReportID int64           `json:"report_id"`
+	BanID    int32           `json:"ban_id"`
+	ReportID int32           `json:"report_id"`
 	LastIP   *string         `json:"last_ip"`
 	EvadeOk  bool            `json:"evade_ok"`
 
@@ -208,7 +208,7 @@ type QueryOpts struct {
 	// TargetID can represent a SteamID or a group ID. They both use steamID formats, just in a different numberspace
 	TargetID      steamid.SteamID
 	GroupsOnly    bool
-	BanID         int64
+	BanID         int32
 	Deleted       bool
 	EvadeOk       bool
 	Reasons       []reason.Reason

@@ -52,7 +52,7 @@ func (s PersonService) CurrentProfile(ctx context.Context, _ *emptypb.Empty) (*v
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	return &v1.CurrentProfileResponse{Profile: toPersonCore(response.Player)}, nil
+	return &v1.CurrentProfileResponse{Profile: toPerson(response.Player)}, nil
 }
 
 func (s PersonService) Profile(ctx context.Context, req *v1.ProfileRequest) (*v1.ProfileResponse, error) {
@@ -128,7 +128,7 @@ func (s PersonService) Query(ctx context.Context, req *v1.QueryRequest) (*v1.Que
 	}
 	query := Query{
 		Filter:            rpc.FromRPC(req.GetFilter()),
-		Personaname:       req.GetPersonaName(),
+		PersonaName:       req.GetPersonaName(),
 		WithPermissions:   perms,
 		DiscordID:         req.GetDiscordId(),
 		SteamIDs:          req.SteamIds,
@@ -144,9 +144,9 @@ func (s PersonService) Query(ctx context.Context, req *v1.QueryRequest) (*v1.Que
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	resp := v1.QueryResponse{Count: &count, People: make([]*v1.PersonCore, len(people))}
+	resp := v1.QueryResponse{Count: &count, People: make([]*v1.Person, len(people))}
 	for idx, person := range people {
-		resp.People[idx] = toPersonCore(&person)
+		resp.People[idx] = toPerson(&person)
 	}
 
 	return &resp, nil
@@ -197,6 +197,48 @@ func toPersonCore(core *Person) *v1.PersonCore {
 		VacBans:         ptr.To(core.GetVACBans()),
 		GameBans:        ptr.To(core.GetGameBans()),
 		TimeCreated:     timestamppb.New(core.GetTimeCreated()),
+	}
+}
+
+func toPerson(core *Person) *v1.Person {
+	var tsBB *timestamppb.Timestamp
+	if core.LastLogoff != nil {
+		tsBB = timestamppb.New(*core.LastLogoff)
+	}
+
+	return &v1.Person{
+		SteamId:               ptr.To(core.SteamID.Int64()),
+		CreatedOn:             timestamppb.New(core.CreatedOn),
+		UpdatedOn:             timestamppb.New(core.UpdatedOn),
+		PermissionLevel:       ptr.To(v1.Privilege(core.PermissionLevel)),
+		Muted:                 &core.Muted,
+		DiscordId:             ptr.To(core.GetDiscordID()),
+		PatreonId:             &core.PatreonID,
+		IpAddr:                ptr.To(core.IPAddr.String()),
+		CommunityBanned:       &core.CommunityBanned,
+		VacBans:               ptr.To(core.GetVACBans()),
+		GameBans:              ptr.To(core.GetGameBans()),
+		EconomyBan:            ptr.To(string(core.EconomyBan)),
+		DaysSinceLastBan:      &core.DaysSinceLastBan,
+		UpdatedOnSteam:        timestamppb.New(core.UpdatedOnSteam),
+		PlayerqueueChatStatus: nil,
+		PlayerqueueChatReason: nil,
+		AvatarHash:            ptr.To(string(core.GetAvatar())),
+		CommentPermission:     &core.CommentPermission,
+		LastLogoff:            tsBB,
+		LocCityId:             &core.LocCityID,
+		LocCountryCode:        &core.LocCountryCode,
+		LocStateCode:          &core.LocStateCode,
+		PersonaName:           ptr.To(core.GetName()),
+		PersonaState:          &core.PersonaState,
+		PersonaStateFlags:     &core.PersonaStateFlags,
+		PrimaryClanId:         &core.PrimaryClanID,
+		ProfileState:          &core.ProfileState,
+		ProfileUrl:            &core.ProfileURL,
+		RealName:              &core.RealName,
+		TimeCreated:           timestamppb.New(core.GetTimeCreated()),
+		VisibilityState:       ptr.To(v1.VisibilityState(core.VisibilityState)),
+		BanId:                 nil,
 	}
 }
 
