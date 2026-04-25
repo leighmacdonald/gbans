@@ -2,13 +2,13 @@
 // @generated from file servers/v1/speedruns.proto (package servers.v1, edition 2023)
 /* eslint-disable */
 
+import type { Message } from "@bufbuild/protobuf";
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Duration, Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_duration, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Map, MapValid } from "../../maps/v1/maps_pb";
 import { file_maps_v1_maps } from "../../maps/v1/maps_pb";
-import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file servers/v1/speedruns.proto.

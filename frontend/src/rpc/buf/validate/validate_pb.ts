@@ -45,6 +45,7 @@
 // [Python](https://github.com/bufbuild/protovalidate-python),
 // or [C++](https://github.com/bufbuild/protovalidate-cc).
 
+import type { Message } from "@bufbuild/protobuf";
 import type { GenEnum, GenExtension, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, extDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type {
@@ -62,7 +63,6 @@ import {
 	file_google_protobuf_field_mask,
 	file_google_protobuf_timestamp,
 } from "@bufbuild/protobuf/wkt";
-import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file buf/validate/validate.proto.

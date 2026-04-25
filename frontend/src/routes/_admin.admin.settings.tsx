@@ -34,12 +34,12 @@ import { SubHeading } from "../component/SubHeading.tsx";
 import { TabButton } from "../component/TabButton.tsx";
 import { TabSection } from "../component/TabSection.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
+import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
+import type { Asset } from "../rpc/asset/v1/asset_pb.ts";
 import type { Config } from "../rpc/config/v1/config_pb.ts";
 import { get, update } from "../rpc/config/v1/config-ConfigService_connectquery.ts";
-import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { logErr } from "../util/errors.ts";
 import { emptyOrNullString } from "../util/types.ts";
-import type { Asset } from "../rpc/asset/v1/asset_pb.ts";
 
 const settingsSchema = z.object({
 	section: z

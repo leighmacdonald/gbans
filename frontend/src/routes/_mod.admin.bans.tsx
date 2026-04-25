@@ -1,4 +1,7 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: form */
+
+import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
+import { useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -8,6 +11,7 @@ import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import { formatDistanceToNowStrict } from "date-fns/formatDistanceToNowStrict";
 import {
@@ -36,13 +40,10 @@ import {
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
+import { type Ban, BanReason } from "../rpc/ban/v1/ban_pb.ts";
+import { query } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
 import { isPermanentBan } from "../util/table.ts";
 import { renderTimestamp } from "../util/time.ts";
-import { query } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
-import { useQuery } from "@connectrpc/connect-query";
-import { useQueryClient } from "@tanstack/react-query";
-import { type Ban, BanReason } from "../rpc/ban/v1/ban_pb.ts";
-import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
 
 const columnHelper = createMRTColumnHelper<Ban>();
 const defaultOptions = createDefaultTableOptions<Ban>();

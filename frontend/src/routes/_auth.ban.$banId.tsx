@@ -1,3 +1,5 @@
+import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import DocumentScannerIcon from "@mui/icons-material/DocumentScanner";
 import InfoIcon from "@mui/icons-material/Info";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -8,6 +10,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 import { z } from "zod/v4";
@@ -22,31 +25,14 @@ import { SteamIDList } from "../component/SteamIDList.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { renderTimeDistance, renderTimestamp } from "../util/time.ts";
-import { useMutation, useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
 import { deleteAppealMessage, messages, reply } from "../rpc/ban/v1/appeal-AppealService_connectquery.ts";
-import { useQueryClient } from "@tanstack/react-query";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { AppealState, BanReason, BanType } from "../rpc/ban/v1/ban_pb.ts";
 import { get } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
-import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { renderTimeDistance, renderTimestamp } from "../util/time.ts";
 
 export const Route = createFileRoute("/_auth/ban/$banId")({
 	component: BanPage,
-	// loader: async ({ context, abortController, params }) => {
-	// 	const { ban_id } = params;
-	// 	const ban = await context.queryClient.fetchQuery({
-	// 		queryKey: ["ban", { ban_id }],
-	// 		queryFn: async () => {
-	// 			const ban = await apiGetBanSteam(Number(ban_id), true, abortController.signal);
-	// 			if (!ban) {
-	// 				throw new AppError(ErrorCode.NotFound);
-	// 			}
-	// 			return ban;
-	// 		},
-	// 	});
-	// 	return { ban };
-	// },
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: match.context.appInfo.siteDescription }, match.context.title(`Ban`)],
 	}),
@@ -59,8 +45,8 @@ function BanPage() {
 	const { appInfo } = Route.useRouteContext();
 	const queryClient = useQueryClient();
 
-	const { data: banData } = useSuspenseQuery(get, { banId: BigInt(banId) });
-	const { data: banMessages } = useQuery(messages, { banId: BigInt(banId) });
+	const { data: banData, isLoading: isLoadingBan } = useQuery(get, { banId: Number(banId) });
+	const { data: banMessages, isLoading: isLoadingMessages } = useQuery(messages, { banId: Number(banId) });
 	// const banMutation = useMutation();
 
 	const deleteMessageMutation = useMutation(deleteAppealMessage, {
@@ -81,13 +67,16 @@ function BanPage() {
 	const canPost = useMemo(() => {
 		return (
 			permissionLevel() >= Privilege.MODERATOR ||
-			(banData.ban?.appealState === AppealState.OPEN_UNSPECIFIED && banData.ban?.targetId === profile.steamId)
+			(banData?.ban?.appealState === AppealState.OPEN_UNSPECIFIED && banData.ban?.targetId === profile.steamId)
 		);
-	}, [banData.ban?.appealState, banData.ban?.targetId, permissionLevel, profile.steamId]);
+	}, [banData?.ban, permissionLevel, profile.steamId]);
 
-	const onDelete = useCallback(async (banMessageId: bigint) => {
-		return await deleteMessageMutation.mutateAsync({ banMessageId });
-	}, []);
+	const onDelete = useCallback(
+		async (banMessageId: bigint) => {
+			return await deleteMessageMutation.mutateAsync({ banMessageId });
+		},
+		[deleteMessageMutation.mutateAsync],
+	);
 
 	const replyMutation = useMutation(reply);
 	// 	mutationFn: async (values: { body_md: string }) => {
@@ -106,15 +95,15 @@ function BanPage() {
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			replyMutation.mutate({ banId: BigInt(banId), bodyMd: value.body_md });
+			replyMutation.mutate({ banId: Number(banId), bodyMd: value.bodyMd });
 		},
 		defaultValues: {
-			body_md: "",
+			bodyMd: "",
 		},
 	});
 
-	if (!banData.ban) {
-		return <></>;
+	if (isLoadingMessages || isLoadingBan || !banData?.ban) {
+		return;
 	}
 
 	return (
@@ -157,7 +146,7 @@ function BanPage() {
 								<Grid container spacing={2} padding={1}>
 									<Grid size={{ xs: 12 }}>
 										<form.AppField
-											name={"body_md"}
+											name={"bodyMd"}
 											validators={{
 												onChange: z.string().min(2),
 											}}
@@ -195,7 +184,7 @@ function BanPage() {
 			</Grid>
 			<Grid size={{ xs: 4 }}>
 				<Stack spacing={2}>
-					<ProfileInfoBox steam_id={banData.ban.targetId} />
+					<ProfileInfoBox steamId={banData.ban.targetId} />
 
 					<ContainerWithHeader title={"Ban Details"} iconLeft={<InfoIcon />}>
 						<List dense={true}>
@@ -247,7 +236,7 @@ function BanPage() {
 						</ContainerWithHeader>
 					)}
 
-					{permissionLevel() >= Privilege.MODERATOR && <BanModPanel ban_id={Number(banData.ban.banId)} />}
+					{permissionLevel() >= Privilege.MODERATOR && <BanModPanel banId={banData.ban.banId} />}
 				</Stack>
 			</Grid>
 		</Grid>

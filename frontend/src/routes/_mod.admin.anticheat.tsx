@@ -1,5 +1,6 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: form needs it */
 
+import { useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
 import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
@@ -24,12 +25,11 @@ import {
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
+import type { Entry } from "../rpc/anticheat/v1/anticheat_pb.ts";
+import { query } from "../rpc/anticheat/v1/anticheat-AnticheatService_connectquery.ts";
+import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
 import { renderTimestamp } from "../util/time.ts";
-import { useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
-import { query } from "../rpc/anticheat/v1/anticheat-AnticheatService_connectquery.ts";
-import type { Entry } from "../rpc/anticheat/v1/anticheat_pb.ts";
-import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 
 const validateSearch = makeSchemaState("anticheat_id");
 
@@ -148,7 +148,7 @@ function AdminAnticheat() {
 				Cell: ({ renderedCellValue }) => <TableCellString>{renderedCellValue}</TableCellString>,
 			}),
 		],
-		[search, servers, theme],
+		[search, theme, serverList.servers],
 	);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(

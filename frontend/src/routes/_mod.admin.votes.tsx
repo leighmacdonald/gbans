@@ -1,5 +1,6 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: form needs it */
 
+import { useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
 import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
@@ -26,17 +27,16 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { stringToColour } from "../util/colours.ts";
-import { renderTimestamp } from "../util/time.ts";
-import { useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
-import { query } from "../rpc/votes/v1/votes-VotesService_connectquery.ts";
 import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import type { VoteResult } from "../rpc/votes/v1/votes_pb.ts";
+import { query } from "../rpc/votes/v1/votes-VotesService_connectquery.ts";
+import { stringToColour } from "../util/colours.ts";
+import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<VoteResult>();
 const defaultOptions = createDefaultTableOptions<VoteResult>();
-const validateSearch = makeSchemaState("vote_id");
-const defaultValues = makeSchemaDefaults({ defaultColumn: "vote_id" });
+const validateSearch = makeSchemaState("voteId");
+const defaultValues = makeSchemaDefaults({ defaultColumn: "voteId" });
 
 export const Route = createFileRoute("/_mod/admin/votes")({
 	component: AdminVotes,
@@ -55,14 +55,14 @@ function AdminVotes() {
 	const theme = useTheme();
 	const { data: serverList } = useSuspenseQuery(servers);
 	const { data, isLoading, isError, isRefetching } = useQuery(query, {
-		serverId: filterValueNumber("server_id", search.columnFilters),
-		sourceId: BigInt(filterValue("source_id", search.columnFilters)),
-		targetId: BigInt(filterValue("target_id", search.columnFilters)),
+		serverId: filterValueNumber("serverId", search.columnFilters),
+		sourceId: BigInt(filterValue("sourceId", search.columnFilters)),
+		targetId: BigInt(filterValue("targetId", search.columnFilters)),
 		success: -1,
 		filter: {
 			limit: BigInt(search.pagination?.pageSize ?? 25),
 			offset: BigInt(search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : 0),
-			orderBy: search.sorting?.find((sort) => sort)?.id ?? "created_on",
+			orderBy: search.sorting?.find((sort) => sort)?.id ?? "createdOn",
 			desc: search.sorting?.find((sort) => sort)?.desc ?? true,
 		},
 	});
@@ -162,7 +162,7 @@ function AdminVotes() {
 				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
 		],
-		[servers, search, theme],
+		[search, theme, serverList.servers],
 	);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(

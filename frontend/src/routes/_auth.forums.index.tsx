@@ -1,3 +1,4 @@
+import { useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import { Person2 } from "@mui/icons-material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
@@ -24,13 +25,12 @@ import RouterLink from "../component/RouterLink.tsx";
 import { VCenterBox } from "../component/VCenterBox.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
+import type { Category } from "../rpc/forum/v1/forum_pb.ts";
+import { overview } from "../rpc/forum/v1/forum-ForumService_connectquery.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { logErr } from "../util/errors.ts";
 import { avatarHashToURL, humanCount } from "../util/text.tsx";
 import { renderTimestamp } from "../util/time.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
-import { overview } from "../rpc/forum/v1/forum-ForumService_connectquery.ts";
-import { useQuery } from "@connectrpc/connect-query";
-import type { Category } from "../rpc/forum/v1/forum_pb.ts";
 
 export const Route = createFileRoute("/_auth/forums/")({
 	component: ForumOverview,

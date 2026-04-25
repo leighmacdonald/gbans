@@ -1,3 +1,4 @@
+import { useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -22,11 +23,10 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { stringToColour } from "../util/colours.ts";
-import { renderTimestamp } from "../util/time.ts";
 import type { ServerLog } from "../rpc/servers/v1/servers_pb.ts";
 import { queryLogs, servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
-import { useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
+import { stringToColour } from "../util/colours.ts";
+import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<ServerLog>();
 const defaultOptions = createDefaultTableOptions<ServerLog>();
@@ -155,7 +155,7 @@ function AdminServerLogs() {
 				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
 		];
-	}, [servers, search]);
+	}, [search, serverData.servers]);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,

@@ -2,16 +2,16 @@
 // @generated from file contest/v1/contest.proto (package contest.v1, edition 2023)
 /* eslint-disable */
 
+import type { Message } from "@bufbuild/protobuf";
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Asset, AssetValid } from "../../asset/v1/asset_pb";
 import { file_asset_v1_asset } from "../../asset/v1/asset_pb";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
-import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
-import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Privilege } from "../../person/v1/privilege_pb";
 import { file_person_v1_privilege } from "../../person/v1/privilege_pb";
-import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file contest/v1/contest.proto.

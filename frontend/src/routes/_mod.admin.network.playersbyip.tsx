@@ -19,8 +19,9 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { renderDateTime, renderTimestamp } from "../util/time.ts";
+import { renderTimestamp } from "../util/time.ts";
 import "leaflet/dist/leaflet.css";
+import { useQuery } from "@connectrpc/connect-query";
 import { useTheme } from "@mui/material";
 import Paper from "@mui/material/Paper";
 import Tooltip from "@mui/material/Tooltip";
@@ -30,11 +31,10 @@ import * as markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import * as markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { RowActionContainer } from "../component/RowActionContainer.tsx";
-import { stringToColour } from "../util/colours.ts";
-import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import type { PersonConnection } from "../rpc/network/v1/network_pb.ts";
-import { useQuery } from "@connectrpc/connect-query";
 import { queryConnections } from "../rpc/network/v1/network-NetworkService_connectquery.ts";
+import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
+import { stringToColour } from "../util/colours.ts";
 
 // Workaround for leaflet not loading icons properly in react
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -156,7 +156,7 @@ function AdminNetworkPlayersByCIDR() {
 						<TextLink
 							to={"/admin/network/playersbyip"}
 							search={setColumnFilter(search, "server_id", [cell.getValue()])}
-							sx={{ color: stringToColour(row.original.serverId ?? "") }}
+							sx={{ color: stringToColour(row.original.serverNameShort ?? "") }}
 						>
 							{row.original.serverNameShort}
 						</TextLink>
@@ -202,7 +202,7 @@ function AdminNetworkPlayersByCIDR() {
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("as_num", {
+			columnHelper.accessor("asNum", {
 				id: "as_num",
 				header: "AS Num",
 				grow: false,
@@ -213,7 +213,7 @@ function AdminNetworkPlayersByCIDR() {
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("as_name", {
+			columnHelper.accessor("asName", {
 				header: "AS Name",
 				grow: true,
 				enableSorting: false,
@@ -223,7 +223,7 @@ function AdminNetworkPlayersByCIDR() {
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("country_code", {
+			columnHelper.accessor("countryCode", {
 				header: "Country",
 				grow: true,
 				enableSorting: false,
@@ -233,7 +233,7 @@ function AdminNetworkPlayersByCIDR() {
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("city_name", {
+			columnHelper.accessor("cityName", {
 				header: "City Name",
 				grow: true,
 				enableSorting: false,
@@ -243,14 +243,14 @@ function AdminNetworkPlayersByCIDR() {
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("lat_long", {
+			columnHelper.accessor("location", {
 				header: "Lat Long",
 				grow: true,
 				enableSorting: false,
-				Cell: ({ cell }) => `${cell.getValue().latitude} / ${cell.getValue().longitude}`,
+				Cell: ({ row }) => `${row.original.location?.latitude} / ${row.original.location?.longitude}`,
 			}),
 		],
-		[servers, search, theme],
+		[search, theme, serversList?.servers.map],
 	);
 
 	const table = useMaterialReactTable({
@@ -331,21 +331,21 @@ function AdminNetworkPlayersByCIDR() {
 									key={row.id}
 									color="red"
 									center={
-										row.original.lat_long
+										row.original.location
 											? {
-													lat: row.original.lat_long.latitude,
-													lng: row.original.lat_long.longitude,
+													lat: row.original.location.latitude,
+													lng: row.original.location.longitude,
 												}
 											: { lat: 42.4338, lng: 83.9845 }
 									}
 								/>
 							) : (
-								row.original.lat_long && (
+								row.original.location && (
 									<Marker
 										key={row.id}
 										position={{
-											lat: row.original.lat_long.latitude,
-											lng: row.original.lat_long.longitude,
+											lat: row.original.location.latitude,
+											lng: row.original.location.longitude,
 										}}
 									>
 										<Popup>{JSON.stringify(row.original)}</Popup>

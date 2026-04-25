@@ -17,13 +17,13 @@ import React, { type MouseEventHandler, type PropsWithChildren, useCallback, use
 import SteamID from "steamid";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { avatarHashToURL } from "../util/text.tsx";
 import { MenuItemLink } from "./MenuItemLink.tsx";
 import { TextLink } from "./TextLink.tsx";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 
 export type PersonCellProps = {
-	steam_id: string | BigInt;
+	steam_id: string | bigint;
 	personaname: string;
 	avatar_hash: string;
 	onClick?: MouseEventHandler | undefined;

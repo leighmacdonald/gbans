@@ -1,13 +1,12 @@
+import { useQuery } from "@connectrpc/connect-query";
 import Pagination from "@mui/material/Pagination";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-
 import { useState } from "react";
+import { latest } from "../rpc/news/v1/news-NewsService_connectquery.ts";
 import { renderDate, timestampToDateTime } from "../util/time.ts";
 import { MarkDownRenderer } from "./MarkdownRenderer";
 import { NewsHead } from "./NewsHead.tsx";
-import { latest } from "../rpc/news/v1/news-NewsService_connectquery.ts";
-import { useQuery } from "@connectrpc/connect-query";
 
 interface NewsViewProps {
 	itemsPerPage: number;

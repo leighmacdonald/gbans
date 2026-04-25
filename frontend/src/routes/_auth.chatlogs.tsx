@@ -1,3 +1,4 @@
+import { useQuery } from "@connectrpc/connect-query";
 import FlagIcon from "@mui/icons-material/Flag";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ReportIcon from "@mui/icons-material/Report";
@@ -5,6 +6,7 @@ import { IconButton, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import { useTheme } from "@mui/system";
+import { keepPreviousData } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
@@ -32,21 +34,19 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
+import type { Message } from "../rpc/chat/v1/chat_pb.ts";
+import { query } from "../rpc/chat/v1/chat-ChatService_connectquery.ts";
+import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { renderTimestamp } from "../util/time.ts";
-import { useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
-import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
-import { query } from "../rpc/chat/v1/chat-ChatService_connectquery.ts";
-import { keepPreviousData } from "@tanstack/react-query";
-import type { Message } from "../rpc/chat/v1/chat_pb.ts";
 
-const defaultValues = { ...makeSchemaDefaults({ defaultColumn: "person_message_id" }), flagged_only: false };
+const defaultValues = { ...makeSchemaDefaults({ defaultColumn: "personMessageId" }), flaggedOnly: false };
 const validateSearch = z
 	.object({
-		flagged_only: z.boolean().optional().default(false),
+		flaggedOnly: z.boolean().optional().default(false),
 	})
-	.extend(makeSchemaState("person_message_id").shape);
+	.extend(makeSchemaState("personMessageId").shape);
 
 export const Route = createFileRoute("/_auth/chatlogs")({
 	component: ChatLogs,
@@ -67,7 +67,7 @@ const defaultOptions = createDefaultTableOptions<Message>();
 
 function ChatLogs() {
 	const search = Route.useSearch();
-	const { data: serverList } = useSuspenseQuery(servers);
+	const { data: serverList, isLoading: isLoadingServers } = useQuery(servers);
 	const navigate = useNavigate();
 	const theme = useTheme();
 
@@ -120,7 +120,7 @@ function ChatLogs() {
 				grow: false,
 				enableSorting: false,
 				filterVariant: "multi-select",
-				filterSelectOptions: serverList.servers.map((server) => ({
+				filterSelectOptions: serverList?.servers.map((server) => ({
 					label: server.serverName,
 					value: server.serverId,
 				})),
@@ -131,7 +131,7 @@ function ChatLogs() {
 					<Tooltip title={row.original.serverName}>
 						<TextLink
 							to={"/chatlogs"}
-							search={setColumnFilter(search, "server_id", [cell.getValue()])}
+							search={setColumnFilter(search, "serverId", [cell.getValue()])}
 							sx={{ color: stringToColour(row.original.serverName ?? "") }}
 						>
 							{row.original.serverName}
@@ -198,7 +198,7 @@ function ChatLogs() {
 				},
 			}),
 		];
-	}, [servers, search, theme]);
+	}, [search, theme, serverList?.servers]);
 
 	const sort = search.sorting?.find((sort) => sort);
 
@@ -208,7 +208,7 @@ function ChatLogs() {
 			serverId: filterValueNumber("server_id", search.columnFilters),
 			steamId: BigInt(filterValue("steam_id", search.columnFilters)),
 			query: filterValue("body", search.columnFilters),
-			flaggedOnly: search.flagged_only,
+			flaggedOnly: search.flaggedOnly,
 			filter: {
 				limit: BigInt(search.pagination?.pageSize ?? 25n),
 				desc: sort ? sort.desc : true,
@@ -258,8 +258,8 @@ function ChatLogs() {
 						disabled={row.original.autoFilterFlagged > 0}
 						to={"/report"}
 						search={{
-							person_message_id: Number(row.original.personMessageId),
-							steam_id: String(row.original.steamId),
+							personMessageId: Number(row.original.personMessageId),
+							steamId: String(row.original.steamId),
 						}}
 					>
 						<ReportIcon />
@@ -268,6 +268,10 @@ function ChatLogs() {
 			</RowActionContainer>
 		),
 	});
+
+	if (isLoadingServers) {
+		return;
+	}
 
 	return (
 		<Grid container spacing={2}>
@@ -290,12 +294,12 @@ function ChatLogs() {
 									to: Route.fullPath,
 									search: {
 										...search,
-										flagged_only: !search.flagged_only,
+										flaggedOnly: !search.flaggedOnly,
 									},
 								});
 							}}
 						>
-							<IconButton sx={{ color: search.flagged_only ? "error" : "primary.contrastText" }}>
+							<IconButton sx={{ color: search.flaggedOnly ? "error" : "primary.contrastText" }}>
 								<FlagIcon />
 							</IconButton>
 						</Tooltip>,

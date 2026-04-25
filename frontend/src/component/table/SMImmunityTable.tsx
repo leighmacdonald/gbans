@@ -1,3 +1,4 @@
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import AssuredWorkloadIcon from "@mui/icons-material/AssuredWorkload";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -7,23 +8,22 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx";
-import { logErr } from "../../util/errors";
-import { renderDateTime } from "../../util/time.ts";
-import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
-import { SMGroupImmunityCreateModal } from "../modal/SMGroupImmunityCreateModal.tsx";
-import { createDefaultTableOptions } from "./options.ts";
-import { SortableTable } from "./SortableTable.tsx";
-import { TableCellString } from "./TableCellString";
+import type { GroupImmunity } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
 import {
 	deleteImmunity,
 	groupImmunities,
 	groups,
 } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
-import type { SMGroupImmunity } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
-import { useMutation, useQuery } from "@connectrpc/connect-query";
+import { logErr } from "../../util/errors";
+import { renderTimestamp } from "../../util/time.ts";
+import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
+import { SMGroupImmunityCreateModal } from "../modal/SMGroupImmunityCreateModal.tsx";
+import { createDefaultTableOptions } from "./options.ts";
+import { SortableTable } from "./SortableTable.tsx";
+import { TableCellString } from "./TableCellString";
 
-const columnHelper = createMRTColumnHelper<SMGroupImmunity>();
-const defaultOptions = createDefaultTableOptions<SMGroupImmunity>();
+const columnHelper = createMRTColumnHelper<GroupImmunity>();
+const defaultOptions = createDefaultTableOptions<GroupImmunity>();
 
 export const SMImmunityTable = () => {
 	const { sendFlash, sendError } = useUserFlashCtx();
@@ -35,14 +35,16 @@ export const SMImmunityTable = () => {
 
 	const onCreateImmunity = useCallback(async () => {
 		try {
-			const immunity = (await NiceModal.show(SMGroupImmunityCreateModal, { groups })) as SMGroupImmunity;
+			const immunity = (await NiceModal.show(SMGroupImmunityCreateModal, {
+				groups: groupList?.groups,
+			})) as GroupImmunity;
 			queryClient.setQueryData(["serverImmunities"], [...(immunities?.groupImmunities ?? []), immunity]);
-			sendFlash("success", `Group immunity created successfully: ${immunity.group_immunity_id}`);
+			sendFlash("success", `Group immunity created successfully: ${immunity.groupImmunityId}`);
 		} catch (e) {
 			logErr(e);
 			sendFlash("error", "Error trying to add group immunity");
 		}
-	}, [groups, immunities, queryClient, sendFlash]);
+	}, [immunities, queryClient, sendFlash, groupList?.groups]);
 
 	// FIXME should this be a separate group immunity?
 	const delImmunityMutation = useMutation(deleteImmunity, {
@@ -59,7 +61,7 @@ export const SMImmunityTable = () => {
 	});
 
 	const onDelete = useCallback(
-		async (immunity: SMGroupImmunity) => {
+		async (immunity: GroupImmunity) => {
 			try {
 				const confirmed = (await NiceModal.show(ConfirmationModal, {
 					title: "Delete group immunity?",
@@ -68,7 +70,7 @@ export const SMImmunityTable = () => {
 				if (!confirmed) {
 					return;
 				}
-				delImmunityMutation.mutate({ immunityId: immunity.imm });
+				delImmunityMutation.mutate({ immunityId: immunity.groupImmunityId });
 			} catch (e) {
 				sendFlash("error", `Failed to create confirmation modal: ${e}`);
 			}
@@ -78,20 +80,20 @@ export const SMImmunityTable = () => {
 
 	const columns = useMemo(
 		() => [
-			columnHelper.accessor("groupName", {
+			columnHelper.accessor("group.name", {
 				header: "Group",
 				grow: true,
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
-			columnHelper.accessor("otherName", {
+			columnHelper.accessor("other.name", {
 				header: "Immunity From",
 				grow: true,
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "Created On",
 				grow: false,
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{renderTimestamp(cell.getValue())}</TableCellString>,
 			}),
 		],
 		[],

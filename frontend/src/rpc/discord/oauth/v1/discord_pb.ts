@@ -2,16 +2,16 @@
 // @generated from file discord/oauth/v1/discord.proto (package discord.oauth.v1, edition 2023)
 /* eslint-disable */
 
+import type { Message } from "@bufbuild/protobuf";
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import { file_buf_validate_validate } from "../../../buf/validate/validate_pb";
 import type { Any, EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
 import {
 	file_google_protobuf_any,
 	file_google_protobuf_empty,
 	file_google_protobuf_timestamp,
 } from "@bufbuild/protobuf/wkt";
-import type { Message } from "@bufbuild/protobuf";
+import { file_buf_validate_validate } from "../../../buf/validate/validate_pb";
 
 /**
  * Describes the file discord/oauth/v1/discord.proto.

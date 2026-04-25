@@ -2,14 +2,14 @@
 // @generated from file servers/v1/servers.proto (package servers.v1, edition 2023)
 /* eslint-disable */
 
+import type { Message } from "@bufbuild/protobuf";
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { LatLong, LatLongValid } from "../../network/v1/network_pb";
 import { file_network_v1_network } from "../../network/v1/network_pb";
-import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file servers/v1/servers.proto.

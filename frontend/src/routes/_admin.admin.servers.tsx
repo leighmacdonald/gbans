@@ -1,3 +1,4 @@
+import { useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -6,13 +7,14 @@ import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
-	useMaterialReactTable,
-	type MRT_SortingState,
 	type MRT_ColumnFiltersState,
 	type MRT_PaginationState,
+	type MRT_SortingState,
+	useMaterialReactTable,
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
@@ -29,12 +31,10 @@ import {
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellStringHidden } from "../component/table/TableCellStringHidden.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
+import type { Server } from "../rpc/servers/v1/servers_pb.ts";
+import { serversAdmin } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
 import { renderTimestamp } from "../util/time.ts";
-import { serversAdmin } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
-import { useQuery } from "@connectrpc/connect-query";
-import { useQueryClient } from "@tanstack/react-query";
-import type { Server } from "../rpc/servers/v1/servers_pb.ts";
 
 const columnHelper = createMRTColumnHelper<Server>();
 const defaultOptions = createDefaultTableOptions<Server>();

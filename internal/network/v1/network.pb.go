@@ -841,7 +841,13 @@ type PersonConnection struct {
 	PersonaName        *string                `protobuf:"bytes,4,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
 	ServerId           *int32                 `protobuf:"varint,5,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
 	ServerNameShort    *string                `protobuf:"bytes,6,opt,name=server_name_short,json=serverNameShort" json:"server_name_short,omitempty"`
-	CreatedOn          *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	AsNum              *int32                 `protobuf:"varint,7,opt,name=as_num,json=asNum" json:"as_num,omitempty"`
+	AsName             *string                `protobuf:"bytes,8,opt,name=as_name,json=asName" json:"as_name,omitempty"`
+	CountryCode        *string                `protobuf:"bytes,9,opt,name=country_code,json=countryCode" json:"country_code,omitempty"`
+	CountryName        *string                `protobuf:"bytes,10,opt,name=country_name,json=countryName" json:"country_name,omitempty"`
+	CityName           *string                `protobuf:"bytes,11,opt,name=city_name,json=cityName" json:"city_name,omitempty"`
+	Location           *LatLong               `protobuf:"bytes,12,opt,name=location" json:"location,omitempty"`
+	CreatedOn          *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -918,6 +924,48 @@ func (x *PersonConnection) GetServerNameShort() string {
 	return ""
 }
 
+func (x *PersonConnection) GetAsNum() int32 {
+	if x != nil && x.AsNum != nil {
+		return *x.AsNum
+	}
+	return 0
+}
+
+func (x *PersonConnection) GetAsName() string {
+	if x != nil && x.AsName != nil {
+		return *x.AsName
+	}
+	return ""
+}
+
+func (x *PersonConnection) GetCountryCode() string {
+	if x != nil && x.CountryCode != nil {
+		return *x.CountryCode
+	}
+	return ""
+}
+
+func (x *PersonConnection) GetCountryName() string {
+	if x != nil && x.CountryName != nil {
+		return *x.CountryName
+	}
+	return ""
+}
+
+func (x *PersonConnection) GetCityName() string {
+	if x != nil && x.CityName != nil {
+		return *x.CityName
+	}
+	return ""
+}
+
+func (x *PersonConnection) GetLocation() *LatLong {
+	if x != nil {
+		return x.Location
+	}
+	return nil
+}
+
 func (x *PersonConnection) GetCreatedOn() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreatedOn
@@ -989,7 +1037,7 @@ const file_network_v1_network_proto_rawDesc = "" +
 	"\x18QueryConnectionsResponse\x12D\n" +
 	"\n" +
 	"connection\x18\x01 \x03(\v2\x1c.network.v1.PersonConnectionB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"connection\"\xdb\x02\n" +
+	"connection\"\xcf\x04\n" +
 	"\x10PersonConnection\x128\n" +
 	"\x14person_connection_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x12personConnectionId\x12#\n" +
 	"\aip_addr\x18\x02 \x01(\tB\n" +
@@ -997,9 +1045,16 @@ const file_network_v1_network_proto_rawDesc = "" +
 	"\bsteam_id\x18\x03 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\x12)\n" +
 	"\fpersona_name\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12#\n" +
 	"\tserver_id\x18\x05 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bserverId\x122\n" +
-	"\x11server_name_short\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0fserverNameShort\x12A\n" +
+	"\x11server_name_short\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0fserverNameShort\x12\x1d\n" +
+	"\x06as_num\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05asNum\x12\x1f\n" +
+	"\aas_name\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06asName\x12)\n" +
+	"\fcountry_code\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vcountryCode\x12)\n" +
+	"\fcountry_name\x18\n" +
+	" \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vcountryName\x12#\n" +
+	"\tcity_name\x18\v \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bcityName\x127\n" +
+	"\blocation\x18\f \x01(\v2\x13.network.v1.LatLongB\x06\xbaH\x03\xc8\x01\x01R\blocation\x12A\n" +
 	"\n" +
-	"created_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn*\xd0\x01\n" +
+	"created_on\x18\r \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn*\xd0\x01\n" +
 	"\n" +
 	"ThreatType\x12\x1b\n" +
 	"\x17THREAT_TYPE_UNSPECIFIED\x10\x00\x12\x14\n" +
@@ -1078,18 +1133,19 @@ var file_network_v1_network_proto_depIdxs = []int32{
 	4,  // 9: network.v1.QueryNetworkResponse.details:type_name -> network.v1.Details
 	13, // 10: network.v1.QueryConnectionsRequest.filter:type_name -> database.query.v1.Filter
 	12, // 11: network.v1.QueryConnectionsResponse.connection:type_name -> network.v1.PersonConnection
-	14, // 12: network.v1.PersonConnection.created_on:type_name -> google.protobuf.Timestamp
-	10, // 13: network.v1.NetworkService.QueryConnections:input_type -> network.v1.QueryConnectionsRequest
-	3,  // 14: network.v1.NetworkService.QueryNetwork:input_type -> network.v1.QueryNetworkRequest
-	15, // 15: network.v1.NetworkService.UpdateDB:input_type -> google.protobuf.Empty
-	11, // 16: network.v1.NetworkService.QueryConnections:output_type -> network.v1.QueryConnectionsResponse
-	9,  // 17: network.v1.NetworkService.QueryNetwork:output_type -> network.v1.QueryNetworkResponse
-	15, // 18: network.v1.NetworkService.UpdateDB:output_type -> google.protobuf.Empty
-	16, // [16:19] is the sub-list for method output_type
-	13, // [13:16] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	8,  // 12: network.v1.PersonConnection.location:type_name -> network.v1.LatLong
+	14, // 13: network.v1.PersonConnection.created_on:type_name -> google.protobuf.Timestamp
+	10, // 14: network.v1.NetworkService.QueryConnections:input_type -> network.v1.QueryConnectionsRequest
+	3,  // 15: network.v1.NetworkService.QueryNetwork:input_type -> network.v1.QueryNetworkRequest
+	15, // 16: network.v1.NetworkService.UpdateDB:input_type -> google.protobuf.Empty
+	11, // 17: network.v1.NetworkService.QueryConnections:output_type -> network.v1.QueryConnectionsResponse
+	9,  // 18: network.v1.NetworkService.QueryNetwork:output_type -> network.v1.QueryNetworkResponse
+	15, // 19: network.v1.NetworkService.UpdateDB:output_type -> google.protobuf.Empty
+	17, // [17:20] is the sub-list for method output_type
+	14, // [14:17] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_network_v1_network_proto_init() }

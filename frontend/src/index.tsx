@@ -9,8 +9,8 @@ import { App } from "./App.tsx";
 import "./fonts/tf2build.css";
 import { createClient } from "@connectrpc/connect";
 import { createConnectQueryKey } from "@connectrpc/connect-query";
-import { ConfigService } from "./rpc/config/v1/config_pb.ts";
 import { newRouter } from "./router.tsx";
+import { ConfigService } from "./rpc/config/v1/config_pb.ts";
 import { finalTransport } from "./transport.ts";
 
 // Register the router instance for type safety
