@@ -110,9 +110,9 @@ function MGEOverall() {
 				header: "Winner",
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.winner}
-						avatar_hash={row.original.winnerAvatarHash}
-						personaname={row.original.winnerPersonaName}
+						steamId={row.original.winner}
+						avatarHash={row.original.winnerAvatarHash}
+						personaName={row.original.winnerPersonaName}
 					>
 						<RouterLink
 							style={{
@@ -134,9 +134,9 @@ function MGEOverall() {
 				header: "Loser",
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.loser}
-						avatar_hash={row.original.loserAvatarHash}
-						personaname={row.original.loserPersonaName}
+						steamId={row.original.loser}
+						avatarHash={row.original.loserAvatarHash}
+						personaName={row.original.loserPersonaName}
 					>
 						<RouterLink
 							style={{

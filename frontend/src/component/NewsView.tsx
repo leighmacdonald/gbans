@@ -4,7 +4,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import { useState } from "react";
 import { latest } from "../rpc/news/v1/news-NewsService_connectquery.ts";
-import { renderDate, timestampToDateTime } from "../util/time.ts";
+import { renderTimestamp } from "../util/time.ts";
 import { MarkDownRenderer } from "./MarkdownRenderer";
 import { NewsHead } from "./NewsHead.tsx";
 
@@ -26,7 +26,7 @@ export const NewsView = ({ itemsPerPage, assetURL }: NewsViewProps) => {
 					}
 					return (
 						<Paper elevation={1} key={`news_${article.newsId}`}>
-							<NewsHead left={article.title} right={renderDate(timestampToDateTime(article.createdOn))} />
+							<NewsHead left={article.title} right={renderTimestamp(article.createdOn)} />
 							<MarkDownRenderer body_md={article.bodyMd} assetURL={assetURL} />
 						</Paper>
 					);

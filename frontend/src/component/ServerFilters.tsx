@@ -89,13 +89,13 @@ export const ServerFilters = () => {
 				}
 				return 0;
 			}
-			return `${a.short_name}`.localeCompare(b.short_name);
+			return `${a.nameShort}`.localeCompare(b.nameShort);
 		});
 		if (!filterByRegion && !selectedRegion.includes("any")) {
 			s = s.filter((srv) => selectedRegion.includes(srv.region));
 		}
 		if (showOpenOnly) {
-			s = s.filter((srv) => (srv?.players || 0) < (srv?.max_players || 32));
+			s = s.filter((srv) => (srv?.players || 0) < (srv?.maxPlayers || 32));
 		}
 		if (filterByRegion && customRange && customRange > 0) {
 			s = s.filter((srv) => srv.distance < customRange);

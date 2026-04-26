@@ -45,7 +45,7 @@ export default defineConfig({
 				changeOrigin: true,
 				secure: false,
 			},
-			"/api": {
+			"/rpc": {
 				target: "http://gbans.localhost:6006",
 				changeOrigin: true,
 				secure: false,

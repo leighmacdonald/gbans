@@ -28,11 +28,11 @@ message ReportsResponse {
 }
 
 message ReportMessageDeleteRequest {
-  int64 report_message_id = 1 [(buf.validate.field).required = true];
+  int32 report_message_id = 1 [(buf.validate.field).required = true];
 }
 
 message ReportMessageEditRequest {
-  int64 report_message_id = 1 [(buf.validate.field).required = true];
+  int32 report_message_id = 1 [(buf.validate.field).required = true];
   string body_md = 2 [(buf.validate.field).required = true];
 }
 
@@ -73,7 +73,7 @@ enum ReportStatus {
 
 message ReportMessage {
   int32 report_id = 1 [(buf.validate.field).required = true];
-  int64 report_message_id = 2 [(buf.validate.field).required = true];
+  int32 report_message_id = 2 [(buf.validate.field).required = true];
   int64 author_id = 3 [(buf.validate.field).required = true];
   string message_md = 4 [(buf.validate.field).required = true];
   bool deleted = 5 [(buf.validate.field).required = true];
@@ -112,13 +112,13 @@ message ReportStatusEditRequest {
 }
 
 message ReportCreateRequest {
-  option (buf.validate.message).cel = {
-    id: "valid_reason"
-    message: "ensure the reason is set when custom"
-    expression:
-      "this.reason != BAN_REASON_CUSTOM ? true "
-      ": reason_text.min_len > 10"
-  };
+  //  option (buf.validate.message).cel = {
+  //    id: "valid_reason"
+  //    message: "ensure the reason is set when custom"
+  //    expression:
+  //      "this.reason != 1 ? true "
+  //      ": this.reason_text.min_len > 10"
+  //  };
 
   int64 source_id = 1 [(buf.validate.field).required = true];
   int64 target_id = 2 [(buf.validate.field).required = true];
@@ -127,7 +127,7 @@ message ReportCreateRequest {
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
   ];
-  string reason_text = 5 [(buf.validate.field).required = true];
+  string reason_text = 5 [(buf.validate.field).string.min_len = 10];
   int64 demo_id = 6;
   int32 demo_tick = 7;
   int64 person_message_id = 8;

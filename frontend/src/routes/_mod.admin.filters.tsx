@@ -267,9 +267,9 @@ export const WarningStateTable = () => {
 				Cell: ({ row }) => (
 					<TableCellSmall>
 						<PersonCell
-							steam_id={row.original.steamId}
-							personaname={row.original.personaName}
-							avatar_hash={row.original.avatarHash}
+							steamId={row.original.steamId}
+							personaName={row.original.personaName}
+							avatarHash={row.original.avatarHash}
 						/>
 					</TableCellSmall>
 				),

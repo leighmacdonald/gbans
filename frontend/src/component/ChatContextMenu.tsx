@@ -9,13 +9,15 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { useNavigate } from "@tanstack/react-router";
 import React from "react";
-import { sessionKeyReportPersonMessageIdName, sessionKeyReportSteamID } from "../api";
 
 interface ChatContextMenuProps {
 	person_message_id: number;
 	flagged: boolean;
 	steamId: string;
 }
+
+export const sessionKeyReportPersonMessageIdName = "rpmid";
+export const sessionKeyReportSteamID = "report_steam_id";
 
 export const ChatContextMenu = ({ person_message_id, flagged, steamId }: ChatContextMenuProps) => {
 	const navigate = useNavigate();

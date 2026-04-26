@@ -34,14 +34,22 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// PatreonServiceCampaignsProcedure is the fully-qualified name of the PatreonService's Campaigns
-	// RPC.
-	PatreonServiceCampaignsProcedure = "/patreon.v1.PatreonService/Campaigns"
+	// PatreonServicePatronCampaignsProcedure is the fully-qualified name of the PatreonService's
+	// PatronCampaigns RPC.
+	PatreonServicePatronCampaignsProcedure = "/patreon.v1.PatreonService/PatronCampaigns"
+	// PatreonServicePatronLogoutProcedure is the fully-qualified name of the PatreonService's
+	// PatronLogout RPC.
+	PatreonServicePatronLogoutProcedure = "/patreon.v1.PatreonService/PatronLogout"
+	// PatreonServicePatronLoginProcedure is the fully-qualified name of the PatreonService's
+	// PatronLogin RPC.
+	PatreonServicePatronLoginProcedure = "/patreon.v1.PatreonService/PatronLogin"
 )
 
 // PatreonServiceClient is a client for the patreon.v1.PatreonService service.
 type PatreonServiceClient interface {
-	Campaigns(context.Context, *emptypb.Empty) (*v1.CampaignsResponse, error)
+	PatronCampaigns(context.Context, *emptypb.Empty) (*v1.PatronCampaignsResponse, error)
+	PatronLogout(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+	PatronLogin(context.Context, *emptypb.Empty) (*v1.PatronLoginResponse, error)
 }
 
 // NewPatreonServiceClient constructs a client for the patreon.v1.PatreonService service. By
@@ -55,10 +63,22 @@ func NewPatreonServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 	baseURL = strings.TrimRight(baseURL, "/")
 	patreonServiceMethods := v1.File_patreon_v1_patreon_proto.Services().ByName("PatreonService").Methods()
 	return &patreonServiceClient{
-		campaigns: connect.NewClient[emptypb.Empty, v1.CampaignsResponse](
+		patronCampaigns: connect.NewClient[emptypb.Empty, v1.PatronCampaignsResponse](
 			httpClient,
-			baseURL+PatreonServiceCampaignsProcedure,
-			connect.WithSchema(patreonServiceMethods.ByName("Campaigns")),
+			baseURL+PatreonServicePatronCampaignsProcedure,
+			connect.WithSchema(patreonServiceMethods.ByName("PatronCampaigns")),
+			connect.WithClientOptions(opts...),
+		),
+		patronLogout: connect.NewClient[emptypb.Empty, emptypb.Empty](
+			httpClient,
+			baseURL+PatreonServicePatronLogoutProcedure,
+			connect.WithSchema(patreonServiceMethods.ByName("PatronLogout")),
+			connect.WithClientOptions(opts...),
+		),
+		patronLogin: connect.NewClient[emptypb.Empty, v1.PatronLoginResponse](
+			httpClient,
+			baseURL+PatreonServicePatronLoginProcedure,
+			connect.WithSchema(patreonServiceMethods.ByName("PatronLogin")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -66,12 +86,32 @@ func NewPatreonServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 
 // patreonServiceClient implements PatreonServiceClient.
 type patreonServiceClient struct {
-	campaigns *connect.Client[emptypb.Empty, v1.CampaignsResponse]
+	patronCampaigns *connect.Client[emptypb.Empty, v1.PatronCampaignsResponse]
+	patronLogout    *connect.Client[emptypb.Empty, emptypb.Empty]
+	patronLogin     *connect.Client[emptypb.Empty, v1.PatronLoginResponse]
 }
 
-// Campaigns calls patreon.v1.PatreonService.Campaigns.
-func (c *patreonServiceClient) Campaigns(ctx context.Context, req *emptypb.Empty) (*v1.CampaignsResponse, error) {
-	response, err := c.campaigns.CallUnary(ctx, connect.NewRequest(req))
+// PatronCampaigns calls patreon.v1.PatreonService.PatronCampaigns.
+func (c *patreonServiceClient) PatronCampaigns(ctx context.Context, req *emptypb.Empty) (*v1.PatronCampaignsResponse, error) {
+	response, err := c.patronCampaigns.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// PatronLogout calls patreon.v1.PatreonService.PatronLogout.
+func (c *patreonServiceClient) PatronLogout(ctx context.Context, req *emptypb.Empty) (*emptypb.Empty, error) {
+	response, err := c.patronLogout.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// PatronLogin calls patreon.v1.PatreonService.PatronLogin.
+func (c *patreonServiceClient) PatronLogin(ctx context.Context, req *emptypb.Empty) (*v1.PatronLoginResponse, error) {
+	response, err := c.patronLogin.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -80,7 +120,9 @@ func (c *patreonServiceClient) Campaigns(ctx context.Context, req *emptypb.Empty
 
 // PatreonServiceHandler is an implementation of the patreon.v1.PatreonService service.
 type PatreonServiceHandler interface {
-	Campaigns(context.Context, *emptypb.Empty) (*v1.CampaignsResponse, error)
+	PatronCampaigns(context.Context, *emptypb.Empty) (*v1.PatronCampaignsResponse, error)
+	PatronLogout(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+	PatronLogin(context.Context, *emptypb.Empty) (*v1.PatronLoginResponse, error)
 }
 
 // NewPatreonServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -90,16 +132,32 @@ type PatreonServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewPatreonServiceHandler(svc PatreonServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	patreonServiceMethods := v1.File_patreon_v1_patreon_proto.Services().ByName("PatreonService").Methods()
-	patreonServiceCampaignsHandler := connect.NewUnaryHandlerSimple(
-		PatreonServiceCampaignsProcedure,
-		svc.Campaigns,
-		connect.WithSchema(patreonServiceMethods.ByName("Campaigns")),
+	patreonServicePatronCampaignsHandler := connect.NewUnaryHandlerSimple(
+		PatreonServicePatronCampaignsProcedure,
+		svc.PatronCampaigns,
+		connect.WithSchema(patreonServiceMethods.ByName("PatronCampaigns")),
+		connect.WithHandlerOptions(opts...),
+	)
+	patreonServicePatronLogoutHandler := connect.NewUnaryHandlerSimple(
+		PatreonServicePatronLogoutProcedure,
+		svc.PatronLogout,
+		connect.WithSchema(patreonServiceMethods.ByName("PatronLogout")),
+		connect.WithHandlerOptions(opts...),
+	)
+	patreonServicePatronLoginHandler := connect.NewUnaryHandlerSimple(
+		PatreonServicePatronLoginProcedure,
+		svc.PatronLogin,
+		connect.WithSchema(patreonServiceMethods.ByName("PatronLogin")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/patreon.v1.PatreonService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case PatreonServiceCampaignsProcedure:
-			patreonServiceCampaignsHandler.ServeHTTP(w, r)
+		case PatreonServicePatronCampaignsProcedure:
+			patreonServicePatronCampaignsHandler.ServeHTTP(w, r)
+		case PatreonServicePatronLogoutProcedure:
+			patreonServicePatronLogoutHandler.ServeHTTP(w, r)
+		case PatreonServicePatronLoginProcedure:
+			patreonServicePatronLoginHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -109,6 +167,14 @@ func NewPatreonServiceHandler(svc PatreonServiceHandler, opts ...connect.Handler
 // UnimplementedPatreonServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedPatreonServiceHandler struct{}
 
-func (UnimplementedPatreonServiceHandler) Campaigns(context.Context, *emptypb.Empty) (*v1.CampaignsResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("patreon.v1.PatreonService.Campaigns is not implemented"))
+func (UnimplementedPatreonServiceHandler) PatronCampaigns(context.Context, *emptypb.Empty) (*v1.PatronCampaignsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("patreon.v1.PatreonService.PatronCampaigns is not implemented"))
+}
+
+func (UnimplementedPatreonServiceHandler) PatronLogout(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("patreon.v1.PatreonService.PatronLogout is not implemented"))
+}
+
+func (UnimplementedPatreonServiceHandler) PatronLogin(context.Context, *emptypb.Empty) (*v1.PatronLoginResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("patreon.v1.PatreonService.PatronLogin is not implemented"))
 }

@@ -6,7 +6,9 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 service PatreonService {
-  rpc Campaigns(google.protobuf.Empty) returns (CampaignsResponse) {}
+  rpc PatronCampaigns(google.protobuf.Empty) returns (PatronCampaignsResponse) {}
+  rpc PatronLogout(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+  rpc PatronLogin(google.protobuf.Empty) returns (PatronLoginResponse) {}
 }
 
 message Campaign {
@@ -16,7 +18,11 @@ message Campaign {
   Relationships relationships = 4;
 }
 
-message CampaignsResponse {
+message PatronLoginResponse {
+  string url = 1;
+}
+
+message PatronCampaignsResponse {
   repeated Campaign campaigns = 1;
 }
 

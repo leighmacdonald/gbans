@@ -178,7 +178,7 @@ type ThreadWithSource struct {
 	PermissionLevel      permission.Privilege `json:"permission_level"`
 	RecentForumMessageID int64                `json:"recent_forum_message_id"`
 	RecentCreatedOn      time.Time            `json:"recent_created_on"`
-	RecentSteamID        string               `json:"recent_steam_id"`
+	RecentSteamID        int64                `json:"recent_steam_id"`
 	RecentPersonaname    string               `json:"recent_personaname"`
 	RecentAvatarhash     string               `json:"recent_avatarhash"`
 }

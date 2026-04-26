@@ -1,3 +1,5 @@
+import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { useQuery } from "@connectrpc/connect-query";
 import { Person2 } from "@mui/icons-material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import TodayIcon from "@mui/icons-material/Today";
@@ -6,10 +8,9 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
-import { apiForumRecentActivity } from "../../api/forum.ts";
-import { avatarHashToURL } from "../../util/text.tsx";
-import { renderDateTime, renderTime } from "../../util/time.ts";
+import { recentMessages } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
+import { avatarHashToURL } from "../../util/strings.ts";
+import { renderTime, renderTimestamp } from "../../util/time.ts";
 import { ContainerWithHeader } from "../ContainerWithHeader.tsx";
 import { VCenteredElement } from "../Heading.tsx";
 import { LoadingPlaceholder } from "../LoadingPlaceholder.tsx";
@@ -18,10 +19,7 @@ import { VCenterBox } from "../VCenterBox.tsx";
 import { ForumRowLink } from "./ForumRowLink.tsx";
 
 export const ForumRecentMessageActivity = () => {
-	const { data: messages, isLoading } = useQuery({
-		queryKey: ["forumMessageActivity"],
-		queryFn: async ({ signal }) => await apiForumRecentActivity(signal),
-	});
+	const { data, isLoading } = useQuery(recentMessages);
 
 	return (
 		<ContainerWithHeader title={"Latest Activity"} iconLeft={<TodayIcon />}>
@@ -29,11 +27,11 @@ export const ForumRecentMessageActivity = () => {
 				{isLoading ? (
 					<LoadingPlaceholder />
 				) : (
-					(messages ?? []).map((m) => {
+					(data?.messages ?? []).map((m) => {
 						return (
 							<Stack
 								direction={"row"}
-								key={`message-${m.forum_message_id}`}
+								key={`message-${m.forumMessageId}`}
 								spacing={1}
 								sx={{
 									overflow: "hidden",
@@ -43,7 +41,7 @@ export const ForumRecentMessageActivity = () => {
 								}}
 							>
 								<VCenteredElement
-									icon={<Avatar alt={m.personaname} src={avatarHashToURL(m.avatarhash, "medium")} />}
+									icon={<Avatar alt={m.personaName} src={avatarHashToURL(m.avatarHash, "medium")} />}
 								/>
 								<Stack>
 									<Box
@@ -57,15 +55,15 @@ export const ForumRecentMessageActivity = () => {
 										<ForumRowLink
 											variant={"body1"}
 											label={m.title ?? ""}
-											to={`/forums/thread/${m.forum_thread_id}#${m.forum_message_id}`}
+											to={`/forums/thread/${m.forumThreadId}#${m.forumMessageId}`}
 										/>
 									</Box>
 									<Stack direction={"row"} spacing={1}>
 										<AccessTimeIcon scale={0.5} />
 										<VCenterBox>
-											<Tooltip title={renderDateTime(m.created_on)}>
+											<Tooltip title={renderTimestamp(m.createdOn)}>
 												<Typography variant={"body2"}>
-													{renderTime(m.created_on ?? new Date())}
+													{renderTime(m.createdOn ? timestampDate(m.createdOn) : new Date())}
 												</Typography>
 											</Tooltip>
 										</VCenterBox>
@@ -74,7 +72,7 @@ export const ForumRecentMessageActivity = () => {
 											<Typography
 												overflow={"hidden"}
 												component={RouterLink}
-												to={`/profile/${m.source_id}`}
+												to={`/profile/${m.sourceId}`}
 												variant={"body2"}
 												sx={{
 													color: (theme) => theme.palette.text.secondary,
@@ -84,7 +82,7 @@ export const ForumRecentMessageActivity = () => {
 													},
 												}}
 											>
-												{m.personaname}
+												{m.personaName}
 											</Typography>
 										</VCenterBox>
 									</Stack>

@@ -689,27 +689,27 @@ func (x *CategoryCreateRequest) GetOrdering() int32 {
 	return 0
 }
 
-type MessageDeleteRequest struct {
+type ThreadMessageDeleteRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	ForumMessageId *int64                 `protobuf:"varint,1,opt,name=forum_message_id,json=forumMessageId" json:"forum_message_id,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
 
-func (x *MessageDeleteRequest) Reset() {
-	*x = MessageDeleteRequest{}
+func (x *ThreadMessageDeleteRequest) Reset() {
+	*x = ThreadMessageDeleteRequest{}
 	mi := &file_forum_v1_forum_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *MessageDeleteRequest) String() string {
+func (x *ThreadMessageDeleteRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MessageDeleteRequest) ProtoMessage() {}
+func (*ThreadMessageDeleteRequest) ProtoMessage() {}
 
-func (x *MessageDeleteRequest) ProtoReflect() protoreflect.Message {
+func (x *ThreadMessageDeleteRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_forum_v1_forum_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -721,12 +721,12 @@ func (x *MessageDeleteRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use MessageDeleteRequest.ProtoReflect.Descriptor instead.
-func (*MessageDeleteRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ThreadMessageDeleteRequest.ProtoReflect.Descriptor instead.
+func (*ThreadMessageDeleteRequest) Descriptor() ([]byte, []int) {
 	return file_forum_v1_forum_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *MessageDeleteRequest) GetForumMessageId() int64 {
+func (x *ThreadMessageDeleteRequest) GetForumMessageId() int64 {
 	if x != nil && x.ForumMessageId != nil {
 		return *x.ForumMessageId
 	}
@@ -1097,7 +1097,7 @@ func (x *ThreadCreateResponse) GetMessage() *Message {
 	return nil
 }
 
-type ForumMessagesRequest struct {
+type ThreadMessagesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ForumThreadId *int32                 `protobuf:"varint,1,opt,name=forum_thread_id,json=forumThreadId" json:"forum_thread_id,omitempty"`
 	Deleted       *bool                  `protobuf:"varint,2,opt,name=deleted" json:"deleted,omitempty"`
@@ -1105,20 +1105,20 @@ type ForumMessagesRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ForumMessagesRequest) Reset() {
-	*x = ForumMessagesRequest{}
+func (x *ThreadMessagesRequest) Reset() {
+	*x = ThreadMessagesRequest{}
 	mi := &file_forum_v1_forum_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ForumMessagesRequest) String() string {
+func (x *ThreadMessagesRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ForumMessagesRequest) ProtoMessage() {}
+func (*ThreadMessagesRequest) ProtoMessage() {}
 
-func (x *ForumMessagesRequest) ProtoReflect() protoreflect.Message {
+func (x *ThreadMessagesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_forum_v1_forum_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1130,46 +1130,46 @@ func (x *ForumMessagesRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ForumMessagesRequest.ProtoReflect.Descriptor instead.
-func (*ForumMessagesRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ThreadMessagesRequest.ProtoReflect.Descriptor instead.
+func (*ThreadMessagesRequest) Descriptor() ([]byte, []int) {
 	return file_forum_v1_forum_proto_rawDescGZIP(), []int{20}
 }
 
-func (x *ForumMessagesRequest) GetForumThreadId() int32 {
+func (x *ThreadMessagesRequest) GetForumThreadId() int32 {
 	if x != nil && x.ForumThreadId != nil {
 		return *x.ForumThreadId
 	}
 	return 0
 }
 
-func (x *ForumMessagesRequest) GetDeleted() bool {
+func (x *ThreadMessagesRequest) GetDeleted() bool {
 	if x != nil && x.Deleted != nil {
 		return *x.Deleted
 	}
 	return false
 }
 
-type ForumMessagesResponse struct {
+type ThreadMessagesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Messages      []*Message             `protobuf:"bytes,1,rep,name=messages" json:"messages,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ForumMessagesResponse) Reset() {
-	*x = ForumMessagesResponse{}
+func (x *ThreadMessagesResponse) Reset() {
+	*x = ThreadMessagesResponse{}
 	mi := &file_forum_v1_forum_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ForumMessagesResponse) String() string {
+func (x *ThreadMessagesResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ForumMessagesResponse) ProtoMessage() {}
+func (*ThreadMessagesResponse) ProtoMessage() {}
 
-func (x *ForumMessagesResponse) ProtoReflect() protoreflect.Message {
+func (x *ThreadMessagesResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_forum_v1_forum_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1181,12 +1181,12 @@ func (x *ForumMessagesResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ForumMessagesResponse.ProtoReflect.Descriptor instead.
-func (*ForumMessagesResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ThreadMessagesResponse.ProtoReflect.Descriptor instead.
+func (*ThreadMessagesResponse) Descriptor() ([]byte, []int) {
 	return file_forum_v1_forum_proto_rawDescGZIP(), []int{21}
 }
 
-func (x *ForumMessagesResponse) GetMessages() []*Message {
+func (x *ThreadMessagesResponse) GetMessages() []*Message {
 	if x != nil {
 		return x.Messages
 	}
@@ -1415,7 +1415,7 @@ func (x *ThreadsRequest) GetForumId() int32 {
 
 type ThreadsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Threads       []*Thread              `protobuf:"bytes,1,rep,name=threads" json:"threads,omitempty"`
+	Threads       []*ThreadWithSource    `protobuf:"bytes,1,rep,name=threads" json:"threads,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1450,7 +1450,7 @@ func (*ThreadsResponse) Descriptor() ([]byte, []int) {
 	return file_forum_v1_forum_proto_rawDescGZIP(), []int{27}
 }
 
-func (x *ThreadsResponse) GetThreads() []*Thread {
+func (x *ThreadsResponse) GetThreads() []*ThreadWithSource {
 	if x != nil {
 		return x.Threads
 	}
@@ -1465,8 +1465,10 @@ type Thread struct {
 	Title         *string                `protobuf:"bytes,4,opt,name=title" json:"title,omitempty"`
 	Sticky        *bool                  `protobuf:"varint,5,opt,name=sticky" json:"sticky,omitempty"`
 	Locked        *bool                  `protobuf:"varint,6,opt,name=locked" json:"locked,omitempty"`
-	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
-	UpdatedOn     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
+	Replies       *int32                 `protobuf:"varint,7,opt,name=replies" json:"replies,omitempty"`
+	Views         *int32                 `protobuf:"varint,8,opt,name=views" json:"views,omitempty"`
+	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	UpdatedOn     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1541,6 +1543,20 @@ func (x *Thread) GetLocked() bool {
 		return *x.Locked
 	}
 	return false
+}
+
+func (x *Thread) GetReplies() int32 {
+	if x != nil && x.Replies != nil {
+		return *x.Replies
+	}
+	return 0
+}
+
+func (x *Thread) GetViews() int32 {
+	if x != nil && x.Views != nil {
+		return *x.Views
+	}
+	return 0
 }
 
 func (x *Thread) GetCreatedOn() *timestamppb.Timestamp {
@@ -2306,8 +2322,8 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\x15CategoryCreateRequest\x12\x1c\n" +
 	"\x05title\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12(\n" +
 	"\vdescription\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdescription\x12\"\n" +
-	"\bordering\x18\x03 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bordering\"H\n" +
-	"\x14MessageDeleteRequest\x120\n" +
+	"\bordering\x18\x03 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bordering\"N\n" +
+	"\x1aThreadMessageDeleteRequest\x120\n" +
 	"\x10forum_message_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x0eforumMessageId\"E\n" +
 	"\x13ThreadDeleteRequest\x12.\n" +
 	"\x0fforum_thread_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rforumThreadId\"k\n" +
@@ -2329,11 +2345,11 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\x06locked\x18\x05 \x01(\bR\x06locked\"}\n" +
 	"\x14ThreadCreateResponse\x120\n" +
 	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadB\x06\xbaH\x03\xc8\x01\x01R\x06thread\x123\n" +
-	"\amessage\x18\x02 \x01(\v2\x11.forum.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\amessage\"`\n" +
-	"\x14ForumMessagesRequest\x12.\n" +
+	"\amessage\x18\x02 \x01(\v2\x11.forum.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\amessage\"a\n" +
+	"\x15ThreadMessagesRequest\x12.\n" +
 	"\x0fforum_thread_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rforumThreadId\x12\x18\n" +
-	"\adeleted\x18\x02 \x01(\bR\adeleted\"N\n" +
-	"\x15ForumMessagesResponse\x125\n" +
+	"\adeleted\x18\x02 \x01(\bR\adeleted\"O\n" +
+	"\x16ThreadMessagesResponse\x125\n" +
 	"\bmessages\x18\x01 \x03(\v2\x11.forum.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\"1\n" +
 	"\fForumRequest\x12!\n" +
 	"\bforum_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aforumId\">\n" +
@@ -2344,20 +2360,23 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\x0eThreadResponse\x120\n" +
 	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadB\x06\xbaH\x03\xc8\x01\x01R\x06thread\"3\n" +
 	"\x0eThreadsRequest\x12!\n" +
-	"\bforum_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aforumId\"E\n" +
-	"\x0fThreadsResponse\x122\n" +
-	"\athreads\x18\x01 \x03(\v2\x10.forum.v1.ThreadB\x06\xbaH\x03\xc8\x01\x01R\athreads\"\xe4\x02\n" +
+	"\bforum_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aforumId\"O\n" +
+	"\x0fThreadsResponse\x12<\n" +
+	"\athreads\x18\x01 \x03(\v2\x1a.forum.v1.ThreadWithSourceB\x06\xbaH\x03\xc8\x01\x01R\athreads\"\xa4\x03\n" +
 	"\x06Thread\x12!\n" +
 	"\bforum_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aforumId\x12.\n" +
 	"\x0fforum_thread_id\x18\x02 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\rforumThreadId\x12#\n" +
 	"\tsource_id\x18\x03 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\bsourceId\x12\x1c\n" +
 	"\x05title\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12\x1e\n" +
 	"\x06sticky\x18\x05 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x06sticky\x12\x1e\n" +
-	"\x06locked\x18\x06 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x06locked\x12A\n" +
+	"\x06locked\x18\x06 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x06locked\x12 \n" +
+	"\areplies\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\areplies\x12\x1c\n" +
+	"\x05views\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05views\x12A\n" +
 	"\n" +
-	"created_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
+	"created_on\x18\t \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\b \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xe6\x03\n" +
+	"updated_on\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xe6\x03\n" +
 	"\x10ThreadWithSource\x120\n" +
 	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadB\x06\xbaH\x03\xc8\x01\x01R\x06thread\x12)\n" +
 	"\fpersona_name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12'\n" +
@@ -2430,26 +2449,26 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\x10OverviewResponse\x12:\n" +
 	"\n" +
 	"categories\x18\x01 \x03(\v2\x12.forum.v1.CategoryB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"categories2\xe4\n" +
+	"categories2\xf3\n" +
 	"\n" +
 	"\fForumService\x12F\n" +
 	"\vActiveUsers\x12\x16.google.protobuf.Empty\x1a\x1d.forum.v1.ActiveUsersResponse\"\x00\x12@\n" +
 	"\bOverview\x12\x16.google.protobuf.Empty\x1a\x1a.forum.v1.OverviewResponse\"\x00\x12L\n" +
-	"\x0eRecentMessages\x12\x16.google.protobuf.Empty\x1a .forum.v1.RecentMessagesResponse\"\x00\x12@\n" +
-	"\aThreads\x12\x18.forum.v1.ThreadsRequest\x1a\x19.forum.v1.ThreadsResponse\"\x00\x12=\n" +
-	"\x06Thread\x12\x17.forum.v1.ThreadRequest\x1a\x18.forum.v1.ThreadResponse\"\x00\x12G\n" +
-	"\fThreadDelete\x12\x1d.forum.v1.ThreadDeleteRequest\x1a\x16.google.protobuf.Empty\"\x00\x12:\n" +
-	"\x05Forum\x12\x16.forum.v1.ForumRequest\x1a\x17.forum.v1.ForumResponse\"\x00\x12R\n" +
-	"\rForumMessages\x12\x1e.forum.v1.ForumMessagesRequest\x1a\x1f.forum.v1.ForumMessagesResponse\"\x00\x12O\n" +
+	"\x0eRecentMessages\x12\x16.google.protobuf.Empty\x1a .forum.v1.RecentMessagesResponse\"\x00\x12=\n" +
+	"\x06Thread\x12\x17.forum.v1.ThreadRequest\x1a\x18.forum.v1.ThreadResponse\"\x00\x12@\n" +
+	"\aThreads\x12\x18.forum.v1.ThreadsRequest\x1a\x19.forum.v1.ThreadsResponse\"\x00\x12G\n" +
+	"\fThreadDelete\x12\x1d.forum.v1.ThreadDeleteRequest\x1a\x16.google.protobuf.Empty\"\x00\x12U\n" +
+	"\x0eThreadMessages\x12\x1f.forum.v1.ThreadMessagesRequest\x1a .forum.v1.ThreadMessagesResponse\"\x00\x12O\n" +
 	"\fThreadCreate\x12\x1d.forum.v1.ThreadCreateRequest\x1a\x1e.forum.v1.ThreadCreateResponse\"\x00\x12I\n" +
 	"\n" +
 	"ThreadEdit\x12\x1b.forum.v1.ThreadEditRequest\x1a\x1c.forum.v1.ThreadEditResponse\"\x00\x12^\n" +
 	"\x11ThreadReplyCreate\x12\".forum.v1.ThreadReplyCreateRequest\x1a#.forum.v1.ThreadReplyCreateResponse\"\x00\x12X\n" +
-	"\x0fThreadReplyEdit\x12 .forum.v1.ThreadReplyEditRequest\x1a!.forum.v1.ThreadReplyEditResponse\"\x00\x12I\n" +
-	"\rMessageDelete\x12\x1e.forum.v1.MessageDeleteRequest\x1a\x16.google.protobuf.Empty\"\x00\x12U\n" +
+	"\x0fThreadReplyEdit\x12 .forum.v1.ThreadReplyEditRequest\x1a!.forum.v1.ThreadReplyEditResponse\"\x00\x12U\n" +
+	"\x13ThreadMessageDelete\x12$.forum.v1.ThreadMessageDeleteRequest\x1a\x16.google.protobuf.Empty\"\x00\x12U\n" +
 	"\x0eCategoryCreate\x12\x1f.forum.v1.CategoryCreateRequest\x1a .forum.v1.CategoryCreateResponse\"\x00\x12O\n" +
 	"\fCategoryEdit\x12\x1d.forum.v1.CategoryEditRequest\x1a\x1e.forum.v1.CategoryEditResponse\"\x00\x12C\n" +
-	"\bCategory\x12\x19.forum.v1.CategoryRequest\x1a\x1a.forum.v1.CategoryResponse\"\x00\x12L\n" +
+	"\bCategory\x12\x19.forum.v1.CategoryRequest\x1a\x1a.forum.v1.CategoryResponse\"\x00\x12:\n" +
+	"\x05Forum\x12\x16.forum.v1.ForumRequest\x1a\x17.forum.v1.ForumResponse\"\x00\x12L\n" +
 	"\vForumCreate\x12\x1c.forum.v1.ForumCreateRequest\x1a\x1d.forum.v1.ForumCreateResponse\"\x00\x12F\n" +
 	"\tForumEdit\x12\x1a.forum.v1.ForumEditRequest\x1a\x1b.forum.v1.ForumEditResponse\"\x00B\x96\x01\n" +
 	"\fcom.forum.v1B\n" +
@@ -2469,46 +2488,46 @@ func file_forum_v1_forum_proto_rawDescGZIP() []byte {
 
 var file_forum_v1_forum_proto_msgTypes = make([]protoimpl.MessageInfo, 37)
 var file_forum_v1_forum_proto_goTypes = []any{
-	(*ThreadEditRequest)(nil),         // 0: forum.v1.ThreadEditRequest
-	(*ThreadEditResponse)(nil),        // 1: forum.v1.ThreadEditResponse
-	(*ForumEditResponse)(nil),         // 2: forum.v1.ForumEditResponse
-	(*ForumEditRequest)(nil),          // 3: forum.v1.ForumEditRequest
-	(*ForumCreateRequest)(nil),        // 4: forum.v1.ForumCreateRequest
-	(*ForumCreateResponse)(nil),       // 5: forum.v1.ForumCreateResponse
-	(*CategoryEditRequest)(nil),       // 6: forum.v1.CategoryEditRequest
-	(*CategoryEditResponse)(nil),      // 7: forum.v1.CategoryEditResponse
-	(*CategoryRequest)(nil),           // 8: forum.v1.CategoryRequest
-	(*CategoryResponse)(nil),          // 9: forum.v1.CategoryResponse
-	(*CategoryCreateResponse)(nil),    // 10: forum.v1.CategoryCreateResponse
-	(*CategoryCreateRequest)(nil),     // 11: forum.v1.CategoryCreateRequest
-	(*MessageDeleteRequest)(nil),      // 12: forum.v1.MessageDeleteRequest
-	(*ThreadDeleteRequest)(nil),       // 13: forum.v1.ThreadDeleteRequest
-	(*ThreadReplyEditRequest)(nil),    // 14: forum.v1.ThreadReplyEditRequest
-	(*ThreadReplyEditResponse)(nil),   // 15: forum.v1.ThreadReplyEditResponse
-	(*ThreadReplyCreateRequest)(nil),  // 16: forum.v1.ThreadReplyCreateRequest
-	(*ThreadReplyCreateResponse)(nil), // 17: forum.v1.ThreadReplyCreateResponse
-	(*ThreadCreateRequest)(nil),       // 18: forum.v1.ThreadCreateRequest
-	(*ThreadCreateResponse)(nil),      // 19: forum.v1.ThreadCreateResponse
-	(*ForumMessagesRequest)(nil),      // 20: forum.v1.ForumMessagesRequest
-	(*ForumMessagesResponse)(nil),     // 21: forum.v1.ForumMessagesResponse
-	(*ForumRequest)(nil),              // 22: forum.v1.ForumRequest
-	(*ForumResponse)(nil),             // 23: forum.v1.ForumResponse
-	(*ThreadRequest)(nil),             // 24: forum.v1.ThreadRequest
-	(*ThreadResponse)(nil),            // 25: forum.v1.ThreadResponse
-	(*ThreadsRequest)(nil),            // 26: forum.v1.ThreadsRequest
-	(*ThreadsResponse)(nil),           // 27: forum.v1.ThreadsResponse
-	(*Thread)(nil),                    // 28: forum.v1.Thread
-	(*ThreadWithSource)(nil),          // 29: forum.v1.ThreadWithSource
-	(*UserActivity)(nil),              // 30: forum.v1.UserActivity
-	(*ActiveUsersResponse)(nil),       // 31: forum.v1.ActiveUsersResponse
-	(*Message)(nil),                   // 32: forum.v1.Message
-	(*RecentMessagesResponse)(nil),    // 33: forum.v1.RecentMessagesResponse
-	(*Forum)(nil),                     // 34: forum.v1.Forum
-	(*Category)(nil),                  // 35: forum.v1.Category
-	(*OverviewResponse)(nil),          // 36: forum.v1.OverviewResponse
-	(v1.Privilege)(0),                 // 37: person.v1.Privilege
-	(*timestamppb.Timestamp)(nil),     // 38: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),             // 39: google.protobuf.Empty
+	(*ThreadEditRequest)(nil),          // 0: forum.v1.ThreadEditRequest
+	(*ThreadEditResponse)(nil),         // 1: forum.v1.ThreadEditResponse
+	(*ForumEditResponse)(nil),          // 2: forum.v1.ForumEditResponse
+	(*ForumEditRequest)(nil),           // 3: forum.v1.ForumEditRequest
+	(*ForumCreateRequest)(nil),         // 4: forum.v1.ForumCreateRequest
+	(*ForumCreateResponse)(nil),        // 5: forum.v1.ForumCreateResponse
+	(*CategoryEditRequest)(nil),        // 6: forum.v1.CategoryEditRequest
+	(*CategoryEditResponse)(nil),       // 7: forum.v1.CategoryEditResponse
+	(*CategoryRequest)(nil),            // 8: forum.v1.CategoryRequest
+	(*CategoryResponse)(nil),           // 9: forum.v1.CategoryResponse
+	(*CategoryCreateResponse)(nil),     // 10: forum.v1.CategoryCreateResponse
+	(*CategoryCreateRequest)(nil),      // 11: forum.v1.CategoryCreateRequest
+	(*ThreadMessageDeleteRequest)(nil), // 12: forum.v1.ThreadMessageDeleteRequest
+	(*ThreadDeleteRequest)(nil),        // 13: forum.v1.ThreadDeleteRequest
+	(*ThreadReplyEditRequest)(nil),     // 14: forum.v1.ThreadReplyEditRequest
+	(*ThreadReplyEditResponse)(nil),    // 15: forum.v1.ThreadReplyEditResponse
+	(*ThreadReplyCreateRequest)(nil),   // 16: forum.v1.ThreadReplyCreateRequest
+	(*ThreadReplyCreateResponse)(nil),  // 17: forum.v1.ThreadReplyCreateResponse
+	(*ThreadCreateRequest)(nil),        // 18: forum.v1.ThreadCreateRequest
+	(*ThreadCreateResponse)(nil),       // 19: forum.v1.ThreadCreateResponse
+	(*ThreadMessagesRequest)(nil),      // 20: forum.v1.ThreadMessagesRequest
+	(*ThreadMessagesResponse)(nil),     // 21: forum.v1.ThreadMessagesResponse
+	(*ForumRequest)(nil),               // 22: forum.v1.ForumRequest
+	(*ForumResponse)(nil),              // 23: forum.v1.ForumResponse
+	(*ThreadRequest)(nil),              // 24: forum.v1.ThreadRequest
+	(*ThreadResponse)(nil),             // 25: forum.v1.ThreadResponse
+	(*ThreadsRequest)(nil),             // 26: forum.v1.ThreadsRequest
+	(*ThreadsResponse)(nil),            // 27: forum.v1.ThreadsResponse
+	(*Thread)(nil),                     // 28: forum.v1.Thread
+	(*ThreadWithSource)(nil),           // 29: forum.v1.ThreadWithSource
+	(*UserActivity)(nil),               // 30: forum.v1.UserActivity
+	(*ActiveUsersResponse)(nil),        // 31: forum.v1.ActiveUsersResponse
+	(*Message)(nil),                    // 32: forum.v1.Message
+	(*RecentMessagesResponse)(nil),     // 33: forum.v1.RecentMessagesResponse
+	(*Forum)(nil),                      // 34: forum.v1.Forum
+	(*Category)(nil),                   // 35: forum.v1.Category
+	(*OverviewResponse)(nil),           // 36: forum.v1.OverviewResponse
+	(v1.Privilege)(0),                  // 37: person.v1.Privilege
+	(*timestamppb.Timestamp)(nil),      // 38: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),              // 39: google.protobuf.Empty
 }
 var file_forum_v1_forum_proto_depIdxs = []int32{
 	28, // 0: forum.v1.ThreadEditResponse.thread:type_name -> forum.v1.Thread
@@ -2523,10 +2542,10 @@ var file_forum_v1_forum_proto_depIdxs = []int32{
 	32, // 9: forum.v1.ThreadReplyCreateResponse.message:type_name -> forum.v1.Message
 	28, // 10: forum.v1.ThreadCreateResponse.thread:type_name -> forum.v1.Thread
 	32, // 11: forum.v1.ThreadCreateResponse.message:type_name -> forum.v1.Message
-	32, // 12: forum.v1.ForumMessagesResponse.messages:type_name -> forum.v1.Message
+	32, // 12: forum.v1.ThreadMessagesResponse.messages:type_name -> forum.v1.Message
 	34, // 13: forum.v1.ForumResponse.forum:type_name -> forum.v1.Forum
 	28, // 14: forum.v1.ThreadResponse.thread:type_name -> forum.v1.Thread
-	28, // 15: forum.v1.ThreadsResponse.threads:type_name -> forum.v1.Thread
+	29, // 15: forum.v1.ThreadsResponse.threads:type_name -> forum.v1.ThreadWithSource
 	38, // 16: forum.v1.Thread.created_on:type_name -> google.protobuf.Timestamp
 	38, // 17: forum.v1.Thread.updated_on:type_name -> google.protobuf.Timestamp
 	28, // 18: forum.v1.ThreadWithSource.thread:type_name -> forum.v1.Thread
@@ -2550,37 +2569,37 @@ var file_forum_v1_forum_proto_depIdxs = []int32{
 	39, // 36: forum.v1.ForumService.ActiveUsers:input_type -> google.protobuf.Empty
 	39, // 37: forum.v1.ForumService.Overview:input_type -> google.protobuf.Empty
 	39, // 38: forum.v1.ForumService.RecentMessages:input_type -> google.protobuf.Empty
-	26, // 39: forum.v1.ForumService.Threads:input_type -> forum.v1.ThreadsRequest
-	24, // 40: forum.v1.ForumService.Thread:input_type -> forum.v1.ThreadRequest
+	24, // 39: forum.v1.ForumService.Thread:input_type -> forum.v1.ThreadRequest
+	26, // 40: forum.v1.ForumService.Threads:input_type -> forum.v1.ThreadsRequest
 	13, // 41: forum.v1.ForumService.ThreadDelete:input_type -> forum.v1.ThreadDeleteRequest
-	22, // 42: forum.v1.ForumService.Forum:input_type -> forum.v1.ForumRequest
-	20, // 43: forum.v1.ForumService.ForumMessages:input_type -> forum.v1.ForumMessagesRequest
-	18, // 44: forum.v1.ForumService.ThreadCreate:input_type -> forum.v1.ThreadCreateRequest
-	0,  // 45: forum.v1.ForumService.ThreadEdit:input_type -> forum.v1.ThreadEditRequest
-	16, // 46: forum.v1.ForumService.ThreadReplyCreate:input_type -> forum.v1.ThreadReplyCreateRequest
-	14, // 47: forum.v1.ForumService.ThreadReplyEdit:input_type -> forum.v1.ThreadReplyEditRequest
-	12, // 48: forum.v1.ForumService.MessageDelete:input_type -> forum.v1.MessageDeleteRequest
-	11, // 49: forum.v1.ForumService.CategoryCreate:input_type -> forum.v1.CategoryCreateRequest
-	6,  // 50: forum.v1.ForumService.CategoryEdit:input_type -> forum.v1.CategoryEditRequest
-	8,  // 51: forum.v1.ForumService.Category:input_type -> forum.v1.CategoryRequest
+	20, // 42: forum.v1.ForumService.ThreadMessages:input_type -> forum.v1.ThreadMessagesRequest
+	18, // 43: forum.v1.ForumService.ThreadCreate:input_type -> forum.v1.ThreadCreateRequest
+	0,  // 44: forum.v1.ForumService.ThreadEdit:input_type -> forum.v1.ThreadEditRequest
+	16, // 45: forum.v1.ForumService.ThreadReplyCreate:input_type -> forum.v1.ThreadReplyCreateRequest
+	14, // 46: forum.v1.ForumService.ThreadReplyEdit:input_type -> forum.v1.ThreadReplyEditRequest
+	12, // 47: forum.v1.ForumService.ThreadMessageDelete:input_type -> forum.v1.ThreadMessageDeleteRequest
+	11, // 48: forum.v1.ForumService.CategoryCreate:input_type -> forum.v1.CategoryCreateRequest
+	6,  // 49: forum.v1.ForumService.CategoryEdit:input_type -> forum.v1.CategoryEditRequest
+	8,  // 50: forum.v1.ForumService.Category:input_type -> forum.v1.CategoryRequest
+	22, // 51: forum.v1.ForumService.Forum:input_type -> forum.v1.ForumRequest
 	4,  // 52: forum.v1.ForumService.ForumCreate:input_type -> forum.v1.ForumCreateRequest
 	3,  // 53: forum.v1.ForumService.ForumEdit:input_type -> forum.v1.ForumEditRequest
 	31, // 54: forum.v1.ForumService.ActiveUsers:output_type -> forum.v1.ActiveUsersResponse
 	36, // 55: forum.v1.ForumService.Overview:output_type -> forum.v1.OverviewResponse
 	33, // 56: forum.v1.ForumService.RecentMessages:output_type -> forum.v1.RecentMessagesResponse
-	27, // 57: forum.v1.ForumService.Threads:output_type -> forum.v1.ThreadsResponse
-	25, // 58: forum.v1.ForumService.Thread:output_type -> forum.v1.ThreadResponse
+	25, // 57: forum.v1.ForumService.Thread:output_type -> forum.v1.ThreadResponse
+	27, // 58: forum.v1.ForumService.Threads:output_type -> forum.v1.ThreadsResponse
 	39, // 59: forum.v1.ForumService.ThreadDelete:output_type -> google.protobuf.Empty
-	23, // 60: forum.v1.ForumService.Forum:output_type -> forum.v1.ForumResponse
-	21, // 61: forum.v1.ForumService.ForumMessages:output_type -> forum.v1.ForumMessagesResponse
-	19, // 62: forum.v1.ForumService.ThreadCreate:output_type -> forum.v1.ThreadCreateResponse
-	1,  // 63: forum.v1.ForumService.ThreadEdit:output_type -> forum.v1.ThreadEditResponse
-	17, // 64: forum.v1.ForumService.ThreadReplyCreate:output_type -> forum.v1.ThreadReplyCreateResponse
-	15, // 65: forum.v1.ForumService.ThreadReplyEdit:output_type -> forum.v1.ThreadReplyEditResponse
-	39, // 66: forum.v1.ForumService.MessageDelete:output_type -> google.protobuf.Empty
-	10, // 67: forum.v1.ForumService.CategoryCreate:output_type -> forum.v1.CategoryCreateResponse
-	7,  // 68: forum.v1.ForumService.CategoryEdit:output_type -> forum.v1.CategoryEditResponse
-	9,  // 69: forum.v1.ForumService.Category:output_type -> forum.v1.CategoryResponse
+	21, // 60: forum.v1.ForumService.ThreadMessages:output_type -> forum.v1.ThreadMessagesResponse
+	19, // 61: forum.v1.ForumService.ThreadCreate:output_type -> forum.v1.ThreadCreateResponse
+	1,  // 62: forum.v1.ForumService.ThreadEdit:output_type -> forum.v1.ThreadEditResponse
+	17, // 63: forum.v1.ForumService.ThreadReplyCreate:output_type -> forum.v1.ThreadReplyCreateResponse
+	15, // 64: forum.v1.ForumService.ThreadReplyEdit:output_type -> forum.v1.ThreadReplyEditResponse
+	39, // 65: forum.v1.ForumService.ThreadMessageDelete:output_type -> google.protobuf.Empty
+	10, // 66: forum.v1.ForumService.CategoryCreate:output_type -> forum.v1.CategoryCreateResponse
+	7,  // 67: forum.v1.ForumService.CategoryEdit:output_type -> forum.v1.CategoryEditResponse
+	9,  // 68: forum.v1.ForumService.Category:output_type -> forum.v1.CategoryResponse
+	23, // 69: forum.v1.ForumService.Forum:output_type -> forum.v1.ForumResponse
 	5,  // 70: forum.v1.ForumService.ForumCreate:output_type -> forum.v1.ForumCreateResponse
 	2,  // 71: forum.v1.ForumService.ForumEdit:output_type -> forum.v1.ForumEditResponse
 	54, // [54:72] is the sub-list for method output_type

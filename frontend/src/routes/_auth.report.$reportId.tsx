@@ -25,10 +25,10 @@ import { SteamIDList } from "../component/SteamIDList.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { AppealState, BanReason, BanType } from "../rpc/ban/v1/ban_pb.ts";
 import { get } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
-import { ReportStatus } from "../rpc/ban/v1/report_pb.ts";
+import { ReportStatus, type ReportWithAuthorValid } from "../rpc/ban/v1/report_pb.ts";
 import { report } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
 import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
-import { avatarHashToURL, reportStatusColour } from "../util/text.tsx";
+import { avatarHashToURL, reportStatusColour } from "../util/strings.ts";
 import { renderTimeDistance, renderTimestamp } from "../util/time.ts";
 
 export const Route = createFileRoute("/_auth/report/$reportId")({
@@ -138,7 +138,12 @@ function ReportView() {
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12, md: 8 }}>
-				{report && <ReportViewComponent report={report} assetURL={appInfo.assetUrl} />}
+				{reportResp?.report && (
+					<ReportViewComponent
+						report={reportResp?.report as ReportWithAuthorValid}
+						assetURL={appInfo.assetUrl}
+					/>
+				)}
 			</Grid>
 			<Grid size={{ xs: 12, md: 4 }}>
 				<div>

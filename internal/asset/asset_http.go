@@ -20,11 +20,11 @@ func NewAssetHandler(engine *gin.Engine, assets Assets) {
 	// FIXME add auth
 	handler := assetHandler{Assets: assets}
 	engine.GET("/asset/:asset_id", handler.getAsset())
-	//optGrp := engine.Group("/")
-	//{
-	//	opt := optGrp.Use(authenticator.Middleware(permission.Guest))
-	//	opt.GET("/asset/:asset_id", handler.getAsset())
-	//}
+	// optGrp := engine.Group("/")
+	// {
+	//   opt := optGrp.Use(authenticator.Middleware(permission.Guest))
+	//	 opt.GET("/asset/:asset_id", handler.getAsset())
+	// }
 }
 
 func (h assetHandler) getAsset() gin.HandlerFunc {

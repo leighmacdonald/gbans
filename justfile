@@ -9,48 +9,49 @@ all: frontend sourcemod buildp
 fmt: fmt-proto fmt-go fmt-md
 
 fmt-go:
-    golangci-lint fmt
-    just -f frontend/justfile fmt
+    @golangci-lint fmt
+    @just -f frontend/justfile fmt
 
 test-go:
-    go test -race ./...
+    @go test -race ./...
 
 lint-nil:
-    nilaway -include-pkgs="github.com/leighmacdonald/gbans" -exclude-pkgs="github.com/jackc/pgx/v5" -test=false ./...
+    @nilaway -include-pkgs="github.com/leighmacdonald/gbans" -exclude-pkgs="github.com/jackc/pgx/v5" -test=false ./...
 
 lint-go:
-    golangci-lint run --timeout 3m ./...
+    @golangci-lint run --timeout 3m ./...
 
 generate:
-    go generate ./...
+    @go generate ./...
+    @just fmt
 
 run:
     go run -race . serve
 
 fmt-proto:
-    buf format -w
+    @buf format -w
 
 fmt-md:
-    markdownlint-cli2 --fix
+    @markdownlint-cli2 --fix
 
 lint-md:
-    markdownlint-cli2
+    @markdownlint-cli2
 
 bump-deps:
-    go get -u ./...
-    just -f frontend/justfile update
+    @go get -u ./...
+    @just -f frontend/justfile update
 
 buildp:
-    goreleaser release --clean
+    @goreleaser release --clean
 
 builds:
-    goreleaser release --clean --snapshot
+    @goreleaser release --clean --snapshot
 
 serve:
-    just -f frontend/justfile serve
+    @just -f frontend/justfile serve
 
 frontend:
-    just -f frontend/justfile
+    @just -f frontend/justfile
 
 run-forever:
     while true; do go run -race . serve; sleep 1; done
@@ -79,13 +80,13 @@ lint-proto:
     @buf lint
 
 fix: fmt
-    golangci-lint run --fix
+    @golangci-lint run --fix
 
 lint-ts:
-    just -f frontend/justfile lint
+    @just -f frontend/justfile lint
 
 typecheck-ts:
-    just -f frontend/justfile typecheck
+    @just -f frontend/justfile typecheck
 
 clean:
     go clean -i
@@ -103,16 +104,16 @@ run-docker-snapshot: builds
     docker run -it -v ./gbans.yml:/app/gbans.yml -v ./.cache:/app/.cache -p 6006:6006 ghcr.io/leighmacdonald/gbans:latest-amd64
 
 docs-install:
-    just -f docs/justfile install
+    @just -f docs/justfile install
 
 docs-start:
-    just -f docs/justfile start
+    @just -f docs/justfile start
 
 docs-deploy:
-    just -f docs/justfile deploy
+    @just -f docs/justfile deploy
 
 docs-build:
-    just -f docs/justfile build
+    @just -f docs/justfile build
 
 db:
     pushd docker && ./dev_db.sh
@@ -122,7 +123,7 @@ demostats-serve:
     ../tf2_demostats/dist/cli_x86_64-unknown-linux-musl/tf2_demostats serve
 
 dev:
-    zellij --layout .zellij.kdl
+    @zellij --layout .zellij.kdl
 
 psql host=`sed -n 's/^database_dsn: //p' gbans.yml`:
     @psql {{ host }}

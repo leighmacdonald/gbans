@@ -166,9 +166,9 @@ function ChatLogs() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.steamId}
-						avatar_hash={row.original.avatarHash}
-						personaname={row.original.personaName}
+						steamId={row.original.steamId}
+						avatarHash={row.original.avatarHash}
+						personaName={row.original.personaName}
 					>
 						<RouterLink
 							style={{ color: theme.palette.primary.light }}
@@ -258,8 +258,8 @@ function ChatLogs() {
 						disabled={row.original.autoFilterFlagged > 0}
 						to={"/report"}
 						search={{
-							personMessageId: Number(row.original.personMessageId),
-							steamId: String(row.original.steamId),
+							personMessageId: row.original.personMessageId,
+							steamId: row.original.steamId,
 						}}
 					>
 						<ReportIcon />

@@ -5,6 +5,16 @@
 import { PatreonService } from "./patreon_pb";
 
 /**
- * @generated from rpc patreon.v1.PatreonService.Campaigns
+ * @generated from rpc patreon.v1.PatreonService.PatronCampaigns
  */
-export const campaigns = PatreonService.method.campaigns;
+export const patronCampaigns = PatreonService.method.patronCampaigns;
+
+/**
+ * @generated from rpc patreon.v1.PatreonService.PatronLogout
+ */
+export const patronLogout = PatreonService.method.patronLogout;
+
+/**
+ * @generated from rpc patreon.v1.PatreonService.PatronLogin
+ */
+export const patronLogin = PatreonService.method.patronLogin;

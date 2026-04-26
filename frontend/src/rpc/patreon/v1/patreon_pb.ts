@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file patreon/v1/patreon.proto.
  */
 export const file_patreon_v1_patreon: GenFile = /*@__PURE__*/
-  fileDesc("ChhwYXRyZW9uL3YxL3BhdHJlb24ucHJvdG8SCnBhdHJlb24udjEiggEKCENhbXBhaWduEgwKBHR5cGUYASABKAkSCgoCaWQYAiABKAkSKgoKYXR0cmlidXRlcxgDIAEoCzIWLnBhdHJlb24udjEuQXR0cmlidXRlcxIwCg1yZWxhdGlvbnNoaXBzGAQgASgLMhkucGF0cmVvbi52MS5SZWxhdGlvbnNoaXBzIjwKEUNhbXBhaWduc1Jlc3BvbnNlEicKCWNhbXBhaWducxgBIAMoCzIULnBhdHJlb24udjEuQ2FtcGFpZ24imwUKCkF0dHJpYnV0ZXMSLgoKY3JlYXRlZF9hdBgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFQoNY3JlYXRpb25fbmFtZRgCIAEoCRIZChFkaXNjb3JkX3NlcnZlcl9pZBgDIAEoCRIbChNnb29nbGVfYW5hbHl0aWNzX2lkGAQgASgJEg8KB2hhc19yc3MYBSABKAgSGwoTaGFzX3NlbnRfcnNzX25vdGlmeRgGIAEoCBIXCg9pbWFnZV9zbWFsbF91cmwYByABKAkSEQoJaW1hZ2VfdXJsGAggASgJEh4KFmlzX2NoYW5nZWRfaW1tZWRpYXRlbHkYCSABKAgSEgoKaXNfbW9udGhseRgKIAEoCBIPCgdpc19uc2Z3GAsgASgIEhgKEG1haW5fdmlkZW9fZW1iZWQYDCABKAkSFgoObWFpbl92aWRlb191cmwYDSABKAkSEQoJb25lX2xpbmVyGA4gASgJEhQKDHBhdHJvbl9jb3VudBgPIAEoBRIUCgxwYXlfcGVyX25hbWUYECABKAkSEgoKcGxlZGdlX3VybBgRIAEoCRIwCgxwdWJsaXNoZWRfYXQYEiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhcKD3Jzc19hcnR3b3JrX3VybBgTIAEoCRIWCg5yc3NfZmVlZF90aXRsZRgUIAEoCRIVCg1zaG93X3dhcm5pbmdzGBUgASgIEg8KB3N1bW1hcnkYFiABKAkSFAoMdGhhbmtzX2VtYmVkGBcgASgJEhIKCnRoYW5rc19tc2cYGCABKAkSGAoQdGhhbmtzX3ZpZGVvX3VybBgZIAEoCRILCgN1cmwYGiABKAkSDgoGdmFuaXR5GBsgASgJIs0BCg1SZWxhdGlvbnNoaXBzEiYKCGJlbmVmaXRzGAEgASgLMhQucGF0cmVvbi52MS5CZW5lZml0cxIqCgpjYXRlZ29yaWVzGAIgASgLMhYucGF0cmVvbi52MS5DYXRlZ29yaWVzEiQKB2NyZWF0b3IYAyABKAsyEy5wYXRyZW9uLnYxLkNyZWF0b3ISIAoFZ29hbHMYBCABKAsyES5wYXRyZW9uLnYxLkdvYWxzEiAKBXRpZXJzGAUgASgLMhEucGF0cmVvbi52MS5UaWVycyJLCgVUaWVycxIeCgRkYXRhGAEgAygLMhAucGF0cmVvbi52MS5EYXRhEiIKBWxpbmtzGAIgASgLMhMucGF0cmVvbi52MS5SZWxhdGVkIk0KB0NyZWF0b3ISHgoEZGF0YRgBIAMoCzIQLnBhdHJlb24udjEuRGF0YRIiCgVsaW5rcxgCIAEoCzITLnBhdHJlb24udjEuUmVsYXRlZCInCgVHb2FscxIeCgRkYXRhGAEgAygLMhAucGF0cmVvbi52MS5EYXRhIiwKCkNhdGVnb3JpZXMSHgoEZGF0YRgBIAMoCzIQLnBhdHJlb24udjEuRGF0YSJOCghCZW5lZml0cxIeCgRkYXRhGAEgAygLMhAucGF0cmVvbi52MS5EYXRhEiIKBWxpbmtzGAIgASgLMhMucGF0cmVvbi52MS5SZWxhdGVkIiAKBERhdGESCgoCaWQYASABKAkSDAoEdHlwZRgCIAEoCSIaCgdSZWxhdGVkEg8KB3JlbGF0ZWQYASABKAkyVgoOUGF0cmVvblNlcnZpY2USRAoJQ2FtcGFpZ25zEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Gh0ucGF0cmVvbi52MS5DYW1wYWlnbnNSZXNwb25zZSIAQqYBCg5jb20ucGF0cmVvbi52MUIMUGF0cmVvblByb3RvUAFaPWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvcGF0cmVvbi92MTtwYXRyZW9udjGiAgNQWFiqAgpQYXRyZW9uLlYxygIKUGF0cmVvblxWMeICFlBhdHJlb25cVjFcR1BCTWV0YWRhdGHqAgtQYXRyZW9uOjpWMWIIZWRpdGlvbnNw6Ac", [file_google_protobuf_empty, file_google_protobuf_timestamp]);
+  fileDesc("ChhwYXRyZW9uL3YxL3BhdHJlb24ucHJvdG8SCnBhdHJlb24udjEiggEKCENhbXBhaWduEgwKBHR5cGUYASABKAkSCgoCaWQYAiABKAkSKgoKYXR0cmlidXRlcxgDIAEoCzIWLnBhdHJlb24udjEuQXR0cmlidXRlcxIwCg1yZWxhdGlvbnNoaXBzGAQgASgLMhkucGF0cmVvbi52MS5SZWxhdGlvbnNoaXBzIiIKE1BhdHJvbkxvZ2luUmVzcG9uc2USCwoDdXJsGAEgASgJIkIKF1BhdHJvbkNhbXBhaWduc1Jlc3BvbnNlEicKCWNhbXBhaWducxgBIAMoCzIULnBhdHJlb24udjEuQ2FtcGFpZ24imwUKCkF0dHJpYnV0ZXMSLgoKY3JlYXRlZF9hdBgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFQoNY3JlYXRpb25fbmFtZRgCIAEoCRIZChFkaXNjb3JkX3NlcnZlcl9pZBgDIAEoCRIbChNnb29nbGVfYW5hbHl0aWNzX2lkGAQgASgJEg8KB2hhc19yc3MYBSABKAgSGwoTaGFzX3NlbnRfcnNzX25vdGlmeRgGIAEoCBIXCg9pbWFnZV9zbWFsbF91cmwYByABKAkSEQoJaW1hZ2VfdXJsGAggASgJEh4KFmlzX2NoYW5nZWRfaW1tZWRpYXRlbHkYCSABKAgSEgoKaXNfbW9udGhseRgKIAEoCBIPCgdpc19uc2Z3GAsgASgIEhgKEG1haW5fdmlkZW9fZW1iZWQYDCABKAkSFgoObWFpbl92aWRlb191cmwYDSABKAkSEQoJb25lX2xpbmVyGA4gASgJEhQKDHBhdHJvbl9jb3VudBgPIAEoBRIUCgxwYXlfcGVyX25hbWUYECABKAkSEgoKcGxlZGdlX3VybBgRIAEoCRIwCgxwdWJsaXNoZWRfYXQYEiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhcKD3Jzc19hcnR3b3JrX3VybBgTIAEoCRIWCg5yc3NfZmVlZF90aXRsZRgUIAEoCRIVCg1zaG93X3dhcm5pbmdzGBUgASgIEg8KB3N1bW1hcnkYFiABKAkSFAoMdGhhbmtzX2VtYmVkGBcgASgJEhIKCnRoYW5rc19tc2cYGCABKAkSGAoQdGhhbmtzX3ZpZGVvX3VybBgZIAEoCRILCgN1cmwYGiABKAkSDgoGdmFuaXR5GBsgASgJIs0BCg1SZWxhdGlvbnNoaXBzEiYKCGJlbmVmaXRzGAEgASgLMhQucGF0cmVvbi52MS5CZW5lZml0cxIqCgpjYXRlZ29yaWVzGAIgASgLMhYucGF0cmVvbi52MS5DYXRlZ29yaWVzEiQKB2NyZWF0b3IYAyABKAsyEy5wYXRyZW9uLnYxLkNyZWF0b3ISIAoFZ29hbHMYBCABKAsyES5wYXRyZW9uLnYxLkdvYWxzEiAKBXRpZXJzGAUgASgLMhEucGF0cmVvbi52MS5UaWVycyJLCgVUaWVycxIeCgRkYXRhGAEgAygLMhAucGF0cmVvbi52MS5EYXRhEiIKBWxpbmtzGAIgASgLMhMucGF0cmVvbi52MS5SZWxhdGVkIk0KB0NyZWF0b3ISHgoEZGF0YRgBIAMoCzIQLnBhdHJlb24udjEuRGF0YRIiCgVsaW5rcxgCIAEoCzITLnBhdHJlb24udjEuUmVsYXRlZCInCgVHb2FscxIeCgRkYXRhGAEgAygLMhAucGF0cmVvbi52MS5EYXRhIiwKCkNhdGVnb3JpZXMSHgoEZGF0YRgBIAMoCzIQLnBhdHJlb24udjEuRGF0YSJOCghCZW5lZml0cxIeCgRkYXRhGAEgAygLMhAucGF0cmVvbi52MS5EYXRhEiIKBWxpbmtzGAIgASgLMhMucGF0cmVvbi52MS5SZWxhdGVkIiAKBERhdGESCgoCaWQYASABKAkSDAoEdHlwZRgCIAEoCSIaCgdSZWxhdGVkEg8KB3JlbGF0ZWQYASABKAky7gEKDlBhdHJlb25TZXJ2aWNlElAKD1BhdHJvbkNhbXBhaWducxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRojLnBhdHJlb24udjEuUGF0cm9uQ2FtcGFpZ25zUmVzcG9uc2UiABJACgxQYXRyb25Mb2dvdXQSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJICgtQYXRyb25Mb2dpbhIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRofLnBhdHJlb24udjEuUGF0cm9uTG9naW5SZXNwb25zZSIAQqYBCg5jb20ucGF0cmVvbi52MUIMUGF0cmVvblByb3RvUAFaPWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvcGF0cmVvbi92MTtwYXRyZW9udjGiAgNQWFiqAgpQYXRyZW9uLlYxygIKUGF0cmVvblxWMeICFlBhdHJlb25cVjFcR1BCTWV0YWRhdGHqAgtQYXRyZW9uOjpWMWIIZWRpdGlvbnNw6Ac", [file_google_protobuf_empty, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message patreon.v1.Campaign
@@ -49,23 +49,42 @@ export const CampaignSchema: GenMessage<Campaign, {validType: CampaignValid}> = 
   messageDesc(file_patreon_v1_patreon, 0);
 
 /**
- * @generated from message patreon.v1.CampaignsResponse
+ * @generated from message patreon.v1.PatronLoginResponse
  */
-export type CampaignsResponse = Message<"patreon.v1.CampaignsResponse"> & {
+export type PatronLoginResponse = Message<"patreon.v1.PatronLoginResponse"> & {
+  /**
+   * @generated from field: string url = 1;
+   */
+  url: string;
+};
+
+export type PatronLoginResponseValid = PatronLoginResponse;
+
+/**
+ * Describes the message patreon.v1.PatronLoginResponse.
+ * Use `create(PatronLoginResponseSchema)` to create a new message.
+ */
+export const PatronLoginResponseSchema: GenMessage<PatronLoginResponse, {validType: PatronLoginResponseValid}> = /*@__PURE__*/
+  messageDesc(file_patreon_v1_patreon, 1);
+
+/**
+ * @generated from message patreon.v1.PatronCampaignsResponse
+ */
+export type PatronCampaignsResponse = Message<"patreon.v1.PatronCampaignsResponse"> & {
   /**
    * @generated from field: repeated patreon.v1.Campaign campaigns = 1;
    */
   campaigns: Campaign[];
 };
 
-export type CampaignsResponseValid = CampaignsResponse;
+export type PatronCampaignsResponseValid = PatronCampaignsResponse;
 
 /**
- * Describes the message patreon.v1.CampaignsResponse.
- * Use `create(CampaignsResponseSchema)` to create a new message.
+ * Describes the message patreon.v1.PatronCampaignsResponse.
+ * Use `create(PatronCampaignsResponseSchema)` to create a new message.
  */
-export const CampaignsResponseSchema: GenMessage<CampaignsResponse, {validType: CampaignsResponseValid}> = /*@__PURE__*/
-  messageDesc(file_patreon_v1_patreon, 1);
+export const PatronCampaignsResponseSchema: GenMessage<PatronCampaignsResponse, {validType: PatronCampaignsResponseValid}> = /*@__PURE__*/
+  messageDesc(file_patreon_v1_patreon, 2);
 
 /**
  * @generated from message patreon.v1.Attributes
@@ -214,7 +233,7 @@ export type AttributesValid = Attributes;
  * Use `create(AttributesSchema)` to create a new message.
  */
 export const AttributesSchema: GenMessage<Attributes, {validType: AttributesValid}> = /*@__PURE__*/
-  messageDesc(file_patreon_v1_patreon, 2);
+  messageDesc(file_patreon_v1_patreon, 3);
 
 /**
  * @generated from message patreon.v1.Relationships
@@ -253,7 +272,7 @@ export type RelationshipsValid = Relationships;
  * Use `create(RelationshipsSchema)` to create a new message.
  */
 export const RelationshipsSchema: GenMessage<Relationships, {validType: RelationshipsValid}> = /*@__PURE__*/
-  messageDesc(file_patreon_v1_patreon, 3);
+  messageDesc(file_patreon_v1_patreon, 4);
 
 /**
  * @generated from message patreon.v1.Tiers
@@ -277,7 +296,7 @@ export type TiersValid = Tiers;
  * Use `create(TiersSchema)` to create a new message.
  */
 export const TiersSchema: GenMessage<Tiers, {validType: TiersValid}> = /*@__PURE__*/
-  messageDesc(file_patreon_v1_patreon, 4);
+  messageDesc(file_patreon_v1_patreon, 5);
 
 /**
  * @generated from message patreon.v1.Creator
@@ -301,7 +320,7 @@ export type CreatorValid = Creator;
  * Use `create(CreatorSchema)` to create a new message.
  */
 export const CreatorSchema: GenMessage<Creator, {validType: CreatorValid}> = /*@__PURE__*/
-  messageDesc(file_patreon_v1_patreon, 5);
+  messageDesc(file_patreon_v1_patreon, 6);
 
 /**
  * @generated from message patreon.v1.Goals
@@ -320,7 +339,7 @@ export type GoalsValid = Goals;
  * Use `create(GoalsSchema)` to create a new message.
  */
 export const GoalsSchema: GenMessage<Goals, {validType: GoalsValid}> = /*@__PURE__*/
-  messageDesc(file_patreon_v1_patreon, 6);
+  messageDesc(file_patreon_v1_patreon, 7);
 
 /**
  * @generated from message patreon.v1.Categories
@@ -339,7 +358,7 @@ export type CategoriesValid = Categories;
  * Use `create(CategoriesSchema)` to create a new message.
  */
 export const CategoriesSchema: GenMessage<Categories, {validType: CategoriesValid}> = /*@__PURE__*/
-  messageDesc(file_patreon_v1_patreon, 7);
+  messageDesc(file_patreon_v1_patreon, 8);
 
 /**
  * @generated from message patreon.v1.Benefits
@@ -363,7 +382,7 @@ export type BenefitsValid = Benefits;
  * Use `create(BenefitsSchema)` to create a new message.
  */
 export const BenefitsSchema: GenMessage<Benefits, {validType: BenefitsValid}> = /*@__PURE__*/
-  messageDesc(file_patreon_v1_patreon, 8);
+  messageDesc(file_patreon_v1_patreon, 9);
 
 /**
  * @generated from message patreon.v1.Data
@@ -387,7 +406,7 @@ export type DataValid = Data;
  * Use `create(DataSchema)` to create a new message.
  */
 export const DataSchema: GenMessage<Data, {validType: DataValid}> = /*@__PURE__*/
-  messageDesc(file_patreon_v1_patreon, 9);
+  messageDesc(file_patreon_v1_patreon, 10);
 
 /**
  * @generated from message patreon.v1.Related
@@ -406,19 +425,35 @@ export type RelatedValid = Related;
  * Use `create(RelatedSchema)` to create a new message.
  */
 export const RelatedSchema: GenMessage<Related, {validType: RelatedValid}> = /*@__PURE__*/
-  messageDesc(file_patreon_v1_patreon, 10);
+  messageDesc(file_patreon_v1_patreon, 11);
 
 /**
  * @generated from service patreon.v1.PatreonService
  */
 export const PatreonService: GenService<{
   /**
-   * @generated from rpc patreon.v1.PatreonService.Campaigns
+   * @generated from rpc patreon.v1.PatreonService.PatronCampaigns
    */
-  campaigns: {
+  patronCampaigns: {
     methodKind: "unary";
     input: typeof EmptySchema;
-    output: typeof CampaignsResponseSchema;
+    output: typeof PatronCampaignsResponseSchema;
+  },
+  /**
+   * @generated from rpc patreon.v1.PatreonService.PatronLogout
+   */
+  patronLogout: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc patreon.v1.PatreonService.PatronLogin
+   */
+  patronLogin: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof PatronLoginResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_patreon_v1_patreon, 0);

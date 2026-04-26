@@ -4,14 +4,13 @@ import "@fontsource/roboto/latin-400.css";
 import "@fontsource/roboto/latin-500.css";
 import "@fontsource/roboto/latin-700.css";
 import * as Sentry from "@sentry/react";
-import { QueryClient } from "@tanstack/react-query";
 import { App } from "./App.tsx";
 import "./fonts/tf2build.css";
 import { createClient } from "@connectrpc/connect";
 import { createConnectQueryKey } from "@connectrpc/connect-query";
 import { newRouter } from "./router.tsx";
 import { ConfigService } from "./rpc/config/v1/config_pb.ts";
-import { finalTransport } from "./transport.ts";
+import { finalTransport, queryClient } from "./transport.ts";
 
 // Register the router instance for type safety
 declare module "@tanstack/react-router" {
@@ -21,7 +20,6 @@ declare module "@tanstack/react-router" {
 	}
 }
 
-const queryClient = new QueryClient();
 const configClient = createClient(ConfigService, finalTransport);
 
 const appInfo = await queryClient.fetchQuery({
@@ -34,6 +32,7 @@ const appInfo = await queryClient.fetchQuery({
 		return await configClient.info({});
 	},
 });
+
 const router = newRouter(queryClient, appInfo);
 const container = document.getElementById("root");
 if (!container) {

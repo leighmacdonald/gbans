@@ -81,18 +81,18 @@ func (s SpeedrunsService) OverallRecent(ctx context.Context, req *v1.OverallRece
 	}
 
 	resp := v1.OverallRecentResponse{Speedruns: make([]*v1.SpeedrunMapOverview, len(top))}
-	//for idx, run := range top {
-	//	resp.Speedruns[idx] = toSpeedrunOverview(run)
-	//}
+	// for idx, run := range top {
+	//	 resp.Speedruns[idx] = toSpeedrunOverview(run)
+	// }
 	return &resp, nil
 }
 
 func (s SpeedrunsService) SpeedrunCreate(_ context.Context, _ *v1.SpeedrunCreateRequest) (*v1.SpeedrunCreateResponse, error) {
-	//newSpeedrun := req.GetSpeedrun()
-	//speedrun, errSpeedrun := s.speedruns.Save(ctx, toSpeedrun())
-	//if errSpeedrun != nil {
-	//	return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
-	//}
+	// newSpeedrun := req.GetSpeedrun()
+	// speedrun, errSpeedrun := s.speedruns.Save(ctx, toSpeedrun())
+	// if errSpeedrun != nil {
+	// 	return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	// }
 
 	return &v1.SpeedrunCreateResponse{Speedrun: nil}, nil
 }

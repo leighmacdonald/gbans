@@ -18,7 +18,7 @@ import { z } from "zod/v4";
 import { useAppForm } from "../contexts/formContext.tsx";
 import type { AppealMessage } from "../rpc/ban/v1/appeal_pb.ts";
 import { editAppealMessage } from "../rpc/ban/v1/appeal-AppealService_connectquery.ts";
-import { avatarHashToURL } from "../util/text.tsx";
+import { avatarHashToURL } from "../util/strings.ts";
 import { MarkDownRenderer } from "./MarkdownRenderer";
 
 interface AppealMessageViewProps {

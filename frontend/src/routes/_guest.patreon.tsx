@@ -16,7 +16,7 @@ import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderA
 import { ImageBox } from "../component/ImageBox.tsx";
 import { MarkDownRenderer } from "../component/MarkdownRenderer.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
-import { campaigns } from "../rpc/patreon/v1/patreon-PatreonService_connectquery.ts";
+import { patronCampaigns } from "../rpc/patreon/v1/patreon-PatreonService_connectquery.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 
 const patreonSearchSchema = z.object({
@@ -40,7 +40,7 @@ function Patreon() {
 	const { appInfo } = Route.useRouteContext();
 	const theme = useTheme();
 
-	const { data, isLoading } = useQuery(campaigns);
+	const { data, isLoading } = useQuery(patronCampaigns);
 
 	const followCallback = async () => {
 		// const result = await queryClient.fetchQuery({

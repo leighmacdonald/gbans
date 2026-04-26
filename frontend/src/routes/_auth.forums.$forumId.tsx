@@ -1,3 +1,4 @@
+import { useQuery } from "@connectrpc/connect-query";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import BuildIcon from "@mui/icons-material/Build";
 import LockIcon from "@mui/icons-material/Lock";
@@ -10,10 +11,8 @@ import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { type FetchQueryOptions, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
-import { apiForum, apiGetThreads } from "../api/forum.ts";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { ErrorDetails } from "../component/ErrorDetails.tsx";
 import { ForumRowLink } from "../component/forum/ForumRowLink.tsx";
@@ -26,46 +25,39 @@ import { VCenterBox } from "../component/VCenterBox.tsx";
 import { AppError } from "../error.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import type { Forum, ForumThread } from "../schema/forum.ts";
-import { PermissionLevel } from "../schema/people.ts";
+import type { Thread, ThreadWithSource } from "../rpc/forum/v1/forum_pb.ts";
+import { forum, threads } from "../rpc/forum/v1/forum-ForumService_connectquery.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { logErr } from "../util/errors.ts";
+import { avatarHashToURL } from "../util/strings.ts";
 import { RowsPerPage } from "../util/table.ts";
-import { avatarHashToURL } from "../util/text.tsx";
-import { renderDateTime } from "../util/time.ts";
+import { renderTimestamp } from "../util/time.ts";
 
-const forumQueryKey = (forum_id: string | number) => {
-	return ["forum", { forum_id: String(forum_id) }];
-};
-
-const forumThreadsQueryKey = (forum_id: string | number) => {
-	return ["forumThreads", { forum_id: String(forum_id) }];
-};
-
-export const Route = createFileRoute("/_auth/forums/$forum_id")({
+export const Route = createFileRoute("/_auth/forums/$forumId")({
 	component: ForumPage,
-	loader: async ({ context, abortController, params }) => {
-		const { forum_id } = params;
-		const forumQueryOpts = {
-			queryKey: forumQueryKey(forum_id),
-			queryFn: async () => {
-				return await apiForum(Number(forum_id), abortController.signal);
-			},
-		};
-		const forum = await context.queryClient.fetchQuery(forumQueryOpts);
-		const threadsQueryOpts: FetchQueryOptions<ForumThread[]> = {
-			queryKey: forumThreadsQueryKey(forum_id),
-			queryFn: async () => {
-				return (await apiGetThreads({ forum_id: Number(forum_id) }, abortController.signal)) ?? [];
-			},
-		};
-
-		const threads = await context.queryClient.fetchQuery(threadsQueryOpts);
-		return { forum, threads };
-	},
-	head: ({ loaderData, match }) => ({
+	// loader: async ({ context, abortController, params }) => {
+	// 	const { forum_id } = params;
+	// 	const forumQueryOpts = {
+	// 		queryKey: forumQueryKey(forum_id),
+	// 		queryFn: async () => {
+	// 			return await apiForum(Number(forum_id), abortController.signal);
+	// 		},
+	// 	};
+	// 	const forum = await context.queryClient.fetchQuery(forumQueryOpts);
+	// 	const threadsQueryOpts: FetchQueryOptions<ForumThread[]> = {
+	// 		queryKey: forumThreadsQueryKey(forum_id),
+	// 		queryFn: async () => {
+	// 			return (await apiGetThreads({ forum_id: Number(forum_id) }, abortController.signal)) ?? [];
+	// 		},
+	// 	};
+	//
+	// 	const threads = await context.queryClient.fetchQuery(threadsQueryOpts);
+	// 	return { forum, threads };
+	// },
+	head: ({ match }) => ({
 		meta: [
-			{ name: "description", content: loaderData?.forum.description },
-			match.context.title(loaderData?.forum.title ?? "Forum"),
+			// { name: "description", content: loaderData?.forum.description },
+			match.context.title("Forum"),
 		],
 	}),
 	errorComponent: ({ error }) => {
@@ -77,9 +69,10 @@ export const Route = createFileRoute("/_auth/forums/$forum_id")({
 });
 
 function ForumPage() {
-	const queryClient = useQueryClient();
-	const { forum_id } = Route.useParams();
-	const { forum, threads } = Route.useLoaderData();
+	//const queryClient = useQueryClient();
+	const { forumId } = Route.useParams();
+	const { data: forumData, isLoading: isLoadingForum } = useQuery(forum, { forumId: Number(forumId) });
+	const { data: threadsData, isLoading: isLoadingThreads } = useQuery(threads, { forumId: Number(forumId) });
 	const modalCreate = useModal(ForumThreadCreatorModal);
 	const { hasPermission } = useAuth();
 	const { sendFlash } = useUserFlashCtx();
@@ -92,29 +85,29 @@ function ForumPage() {
 
 	const onNewThread = useCallback(async () => {
 		try {
-			const thread = (await modalCreate.show({ forum })) as ForumThread;
-			await navigate({ to: `/forums/thread/${thread.forum_thread_id}` });
+			const thread = (await modalCreate.show({ forum: forumData?.forum })) as Thread;
+			await navigate({ to: `/forums/thread/${thread.forumThreadId}` });
 			await modalCreate.hide();
 		} catch (e) {
 			sendFlash("error", `${e}`);
 		}
-	}, [forum, modalCreate, navigate, sendFlash]);
+	}, [modalCreate, navigate, sendFlash, forumData?.forum]);
 
 	const onEditForum = useCallback(async () => {
 		try {
-			const editedForum = (await NiceModal.show(ForumForumEditorModal, {
-				forum,
-			})) as Forum;
-			queryClient.setQueryData(forumQueryKey(forum_id), editedForum);
+			await NiceModal.show(ForumForumEditorModal, {
+				forum: forumData?.forum,
+			});
+			// queryClient.setQueryData(forumQueryKey(forum_id), editedForum);
 		} catch (e) {
 			logErr(e);
 		}
-	}, [forum, forum_id, queryClient]);
+	}, [forumData?.forum]);
 
 	const headerButtons = useMemo(() => {
 		const buttons = [];
 
-		if (hasPermission(PermissionLevel.Moderator)) {
+		if (hasPermission(Privilege.MODERATOR)) {
 			buttons.push(
 				<Button
 					startIcon={<BuildIcon />}
@@ -130,7 +123,7 @@ function ForumPage() {
 		}
 		buttons.push(
 			<Button
-				disabled={!hasPermission(PermissionLevel.Guest)}
+				disabled={!hasPermission(Privilege.GUEST)}
 				variant={"contained"}
 				color={"success"}
 				size={"small"}
@@ -144,11 +137,15 @@ function ForumPage() {
 		return [<ButtonGroup key={"forum-header-buttons"}>{buttons}</ButtonGroup>];
 	}, [hasPermission, onEditForum, onNewThread]);
 
+	if (isLoadingForum || isLoadingThreads || !forumData?.forum) {
+		return;
+	}
+
 	return (
-		<ContainerWithHeaderAndButtons title={forum.title} iconLeft={<MessageIcon />} buttons={headerButtons}>
+		<ContainerWithHeaderAndButtons title={forumData.forum.title} iconLeft={<MessageIcon />} buttons={headerButtons}>
 			<Stack spacing={2}>
-				{threads.map((t) => {
-					return <ForumThreadRow thread={t} key={`ft-${t.forum_thread_id}`} />;
+				{threadsData?.threads.map((t) => {
+					return <ForumThreadRow thread={t} key={`ft-${t.thread?.forumThreadId}`} />;
 				})}
 				<PaginatorLocal
 					onRowsChange={(rows) => {
@@ -161,7 +158,7 @@ function ForumPage() {
 							return { ...prev, pageIndex: page };
 						});
 					}}
-					count={threads.length}
+					count={threadsData?.threads.length ?? 0}
 					rows={pagination.pageSize}
 					page={pagination.pageIndex}
 				/>
@@ -170,7 +167,7 @@ function ForumPage() {
 	);
 }
 
-const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
+const ForumThreadRow = ({ thread }: { thread: ThreadWithSource }) => {
 	return (
 		<Grid
 			container
@@ -184,19 +181,22 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
 			<Grid size={{ xs: 12, md: 8 }}>
 				<Stack direction={"row"} spacing={2}>
 					<VCenteredElement
-						icon={<Avatar alt={thread.personaname} src={avatarHashToURL(thread.avatarhash, "medium")} />}
+						icon={<Avatar alt={thread.personaName} src={avatarHashToURL(thread.avatarHash, "medium")} />}
 					/>
 					<Stack>
 						<Stack direction={"row"} justifyContent="space-between">
-							<ForumRowLink label={thread.title} to={`/forums/thread/${thread.forum_thread_id}`} />
+							<ForumRowLink
+								label={String(thread.thread?.title)}
+								to={`/forums/thread/${thread.thread?.forumThreadId}`}
+							/>
 						</Stack>
 						<Stack direction={"row"} spacing={1}>
-							{thread.sticky && (
+							{thread.thread?.sticky && (
 								<VCenterBox>
 									<PushPinIcon fontSize={"small"} />
 								</VCenterBox>
 							)}
-							{thread.locked && (
+							{thread.thread?.locked && (
 								<VCenterBox>
 									<LockIcon fontSize={"small"} />
 								</VCenterBox>
@@ -204,14 +204,14 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
 							<Typography
 								variant={"body2"}
 								component={RouterLink}
-								to={`/profile/${thread.source_id}`}
+								to={`/profile/${thread.thread?.sourceId}`}
 								sx={{
 									color: (theme) => theme.palette.text.secondary,
 									textDecoration: "none",
 									"&:hover": { textDecoration: "underline" },
 								}}
 							>
-								{thread.personaname}
+								{thread.personaName}
 							</Typography>
 						</Stack>
 					</Stack>
@@ -226,7 +226,7 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
 					</Grid>
 					<Grid size={{ xs: 6 }} alignContent={"flex-end"}>
 						<Typography variant={"body1"} align={"right"}>
-							{thread.replies}
+							{thread.thread?.replies}
 						</Typography>
 					</Grid>
 					<Grid size={{ xs: 6 }}>
@@ -234,13 +234,13 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
 					</Grid>
 					<Grid size={{ xs: 6 }} alignContent={"flex-end"}>
 						<Typography variant={"body2"} align={"right"}>
-							{thread.views}
+							{thread.thread?.views}
 						</Typography>
 					</Grid>
 				</Grid>
 			</Grid>
 			<Grid size={{ xs: 6, md: 3 }}>
-				{thread.recent_forum_message_id && thread.recent_forum_message_id > 0 ? (
+				{thread.recentForumMessageId && thread.recentForumMessageId > 0 ? (
 					<Stack direction={"row"} justifyContent={"end"} spacing={1}>
 						<Stack>
 							<Typography
@@ -252,9 +252,9 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
 									textDecoration: "none",
 								}}
 								component={RouterLink}
-								to={`/forums/thread/${thread.forum_thread_id}#${thread.recent_forum_message_id}`}
+								to={`/forums/thread/${thread.thread?.forumThreadId}#${thread.recentForumMessageId}`}
 							>
-								{renderDateTime(thread.recent_created_on)}
+								{renderTimestamp(thread.recentCreatedOn)}
 							</Typography>
 							<Typography
 								align={"right"}
@@ -264,15 +264,15 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
 									textDecoration: "none",
 								}}
 								component={RouterLink}
-								to={`/profile/${thread.recent_steam_id}`}
+								to={`/profile/${thread.recentSteamId}`}
 							>
-								{thread.recent_personaname}
+								{thread.recentPersonaName}
 							</Typography>
 						</Stack>
 						<VCenterBox>
 							<Avatar
 								sx={{ height: "32px", width: "32px" }}
-								alt={avatarHashToURL(thread.recent_avatarhash, "small")}
+								alt={avatarHashToURL(thread.recentAvatarHash, "small")}
 							/>
 						</VCenterBox>
 					</Stack>

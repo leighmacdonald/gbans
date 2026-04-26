@@ -342,7 +342,7 @@ func (f *Repository) ForumThreads(ctx context.Context, filter ThreadQueryFilter)
 			tws                  ThreadWithSource
 			RecentForumMessageID *int64
 			RecentCreatedOn      *time.Time
-			RecentSteamID        *string
+			RecentSteamID        *int64
 			RecentPersonaname    *string
 			RecentAvatarHash     *string
 		)

@@ -360,7 +360,7 @@ func (r ReportRepository) GetReportMessages(ctx context.Context, reportID int32)
 	return messages, nil
 }
 
-func (r ReportRepository) GetReportMessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error) {
+func (r ReportRepository) GetReportMessageByID(ctx context.Context, reportMessageID int32) (ReportMessage, error) {
 	var message ReportMessage
 
 	row, errRow := r.QueryRowBuilder(ctx, r.Builder().

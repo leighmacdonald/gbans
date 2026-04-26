@@ -30,12 +30,17 @@ import { useTheme } from "@mui/material/styles";
 import type { TextFieldProps } from "@mui/material/TextField";
 import * as Sentry from "@sentry/react";
 import { useStore } from "@tanstack/react-form";
-import { apiSaveAsset, assetURL } from "../../../api/media.ts";
 import { useFieldContext } from "../../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../../hooks/useUserFlashCtx.ts";
 import { logErr } from "../../../util/errors.ts";
 import { errorDialog } from "../../ErrorBoundary.tsx";
 import "./MarkdownField.css";
+import { create } from "@bufbuild/protobuf";
+import { createClient } from "@connectrpc/connect";
+import { createConnectQueryKey } from "@connectrpc/connect-query";
+import { AssetService, CreateRequestSchema } from "../../../rpc/asset/v1/asset_pb.ts";
+import { finalTransport, queryClient } from "../../../transport.ts";
+import { assetURL } from "../../../util/strings.ts";
 import { renderHelpText } from "./renderHelpText.ts";
 
 export type MDBodyFieldProps = {
@@ -46,10 +51,23 @@ export type MDBodyFieldProps = {
 	placeholder?: string;
 } & TextFieldProps;
 
+const assetClient = createClient(AssetService, finalTransport);
+
 const imageUploadHandler = async (media: File) => {
-	const ac = new AbortController();
-	const resp = await apiSaveAsset(media, undefined, ac.signal);
-	return assetURL(resp);
+	const resp = await queryClient.fetchQuery({
+		queryKey: createConnectQueryKey({ schema: AssetService, transport: finalTransport, cardinality: "finite" }),
+		queryFn: async () => {
+			return await assetClient.create(
+				create(CreateRequestSchema, { name: media.name, contents: await media.bytes() }),
+			);
+		},
+	});
+
+	if (!resp.asset) {
+		throw "Unable to create asset";
+	}
+
+	return assetURL(resp.asset);
 };
 
 /**

@@ -40,7 +40,7 @@ function Index() {
 			</Grid>
 			<Grid size={{ xs: 12, sm: 12, md: 3 }}>
 				<Stack spacing={3}>
-					{profile && profile.ban_id === 0 && appInfo.serversEnabled && (
+					{profile && profile.banId === 0 && appInfo.serversEnabled && (
 						<Button
 							startIcon={<StorageIcon />}
 							fullWidth
@@ -53,7 +53,7 @@ function Index() {
 							Play Now!
 						</Button>
 					)}
-					{profile && profile.ban_id !== 0 && appInfo.reportsEnabled && (
+					{profile && profile.banId !== 0 && appInfo.reportsEnabled && (
 						<Button
 							startIcon={<SupportIcon />}
 							fullWidth
@@ -61,7 +61,7 @@ function Index() {
 							variant={"contained"}
 							onClick={async () => {
 								await navigate({
-									to: `/ban/${profile.ban_id}`,
+									to: `/ban/${profile.banId}`,
 								});
 							}}
 						>

@@ -110,9 +110,9 @@ function MGEOverall() {
 				header: "Winner",
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.winner}
-						avatar_hash={row.original.winnerAvatarHash}
-						personaname={row.original.winnerPersonaName}
+						steamId={row.original.winner}
+						avatarHash={row.original.winnerAvatarHash}
+						personaName={row.original.winnerPersonaName}
 					>
 						<RouterLink
 							style={{
@@ -134,9 +134,9 @@ function MGEOverall() {
 				header: "Winner2",
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.winner2}
-						avatar_hash={row.original.winner2AvatarHash}
-						personaname={row.original.winner2PersonaName}
+						steamId={row.original.winner2}
+						avatarHash={row.original.winner2AvatarHash}
+						personaName={row.original.winner2PersonaName}
 					>
 						<RouterLink
 							style={{
@@ -158,9 +158,9 @@ function MGEOverall() {
 				header: "Loser",
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.loser}
-						avatar_hash={row.original.loserAvatarHash}
-						personaname={row.original.loserPersonaName}
+						steamId={row.original.loser}
+						avatarHash={row.original.loserAvatarHash}
+						personaName={row.original.loserPersonaName}
 					>
 						<RouterLink
 							style={{
@@ -182,9 +182,9 @@ function MGEOverall() {
 				header: "Loser2",
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.loser2}
-						avatar_hash={row.original.loser2AvatarHash}
-						personaname={row.original.loser2PersonaName}
+						steamId={row.original.loser2}
+						avatarHash={row.original.loser2AvatarHash}
+						personaName={row.original.loser2PersonaName}
 					>
 						<RouterLink
 							style={{
