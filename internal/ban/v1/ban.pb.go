@@ -618,7 +618,7 @@ func (x *UpdateResponse) GetBan() *Ban {
 
 type QuerySourceBansRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SteamId       *string                `protobuf:"bytes,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	SteamId       *int64                 `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -653,11 +653,11 @@ func (*QuerySourceBansRequest) Descriptor() ([]byte, []int) {
 	return file_ban_v1_ban_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *QuerySourceBansRequest) GetSteamId() string {
+func (x *QuerySourceBansRequest) GetSteamId() int64 {
 	if x != nil && x.SteamId != nil {
 		return *x.SteamId
 	}
-	return ""
+	return 0
 }
 
 type SourceBanRecord struct {
@@ -1370,7 +1370,7 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\x0eUpdateResponse\x12%\n" +
 	"\x03ban\x18\x01 \x01(\v2\v.ban.v1.BanB\x06\xbaH\x03\xc8\x01\x01R\x03ban\";\n" +
 	"\x16QuerySourceBansRequest\x12!\n" +
-	"\bsteam_id\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\asteamId\"\x8c\x03\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\"\x8c\x03\n" +
 	"\x0fSourceBanRecord\x12\x1d\n" +
 	"\x06ban_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05banId\x12#\n" +
 	"\tsite_name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bsiteName\x12\x1f\n" +

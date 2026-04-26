@@ -1,9 +1,14 @@
 import { create } from "@bufbuild/protobuf";
 import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { createClient } from "@connectrpc/connect";
+import { createConnectQueryKey } from "@connectrpc/connect-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useCallback } from "react";
 import { AuthContext } from "./contexts/AuthContext.tsx";
+import { AuthService } from "./rpc/auth/v1/auth_pb.ts";
 import { type Person, PersonSchema } from "./rpc/person/v1/person_pb.ts";
 import { Privilege } from "./rpc/person/v1/privilege_pb.ts";
+import { finalTransport } from "./transport.ts";
 import { logoutFn } from "./util/auth/logoutFn.ts";
 import { logErr } from "./util/errors.ts";
 
@@ -28,6 +33,7 @@ export function AuthProvider({
 	profile: Person;
 	setProfile: (v?: Person) => void;
 }) {
+	const queryClient = useQueryClient();
 	const login = useCallback(
 		async (profile: Person) => {
 			saveProfile(profile);
@@ -38,13 +44,25 @@ export function AuthProvider({
 
 	const logout = useCallback(async () => {
 		try {
+			const authClient = createClient(AuthService, finalTransport);
+
+			await queryClient.fetchQuery({
+				queryKey: createConnectQueryKey({
+					schema: AuthService,
+					transport: finalTransport,
+					cardinality: "finite",
+				}),
+				queryFn: async () => {
+					return await authClient.logout({});
+				},
+			});
 			await logoutFn();
 		} catch (e) {
 			logErr(`error logging out: ${e}`);
 		} finally {
 			setProfile(create(PersonSchema, {}));
 		}
-	}, [setProfile]);
+	}, [setProfile, queryClient.fetchQuery]);
 
 	const isAuthenticated = () => {
 		return Boolean(profile?.steamId ?? false);

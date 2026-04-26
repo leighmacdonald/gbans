@@ -1025,15 +1025,15 @@ const file_network_v1_network_proto_rawDesc = "" +
 	"\n" +
 	"\x1d\x00\x004C-\x00\x004\xc3R\tlongitude\"M\n" +
 	"\x14QueryNetworkResponse\x125\n" +
-	"\adetails\x18\x01 \x01(\v2\x13.network.v1.DetailsB\x06\xbaH\x03\xc8\x01\x01R\adetails\"\x98\x02\n" +
+	"\adetails\x18\x01 \x01(\v2\x13.network.v1.DetailsB\x06\xbaH\x03\xc8\x01\x01R\adetails\"\x8f\x02\n" +
 	"\x17QueryConnectionsRequest\x121\n" +
 	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12\x19\n" +
 	"\bsteam_id\x18\x02 \x01(\tR\asteamId\x12\x1c\n" +
 	"\x04cidr\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xd8\x01\x01R\x04cidr\x12+\n" +
 	"\fcountry_code\x18\x04 \x01(\tB\b\xbaH\x05r\x03\x98\x01\x02R\vcountryCode\x12!\n" +
 	"\fcountry_name\x18\x05 \x01(\tR\vcountryName\x12\x1b\n" +
-	"\tcity_name\x18\x06 \x01(\tR\bcityName\x12$\n" +
-	"\tserver_id\x18\a \x03(\x05B\a\xbaH\x04\x1a\x02 \x00R\bserverId\"`\n" +
+	"\tcity_name\x18\x06 \x01(\tR\bcityName\x12\x1b\n" +
+	"\tserver_id\x18\a \x03(\x05R\bserverId\"`\n" +
 	"\x18QueryConnectionsResponse\x12D\n" +
 	"\n" +
 	"connection\x18\x01 \x03(\v2\x1c.network.v1.PersonConnectionB\x06\xbaH\x03\xc8\x01\x01R\n" +

@@ -149,9 +149,9 @@ function AdminAppeals() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={BigInt(row.original.ban?.sourceId ?? 0n)}
-						personaname={row.original.sourcePersonaName}
-						avatar_hash={row.original.sourceAvatarHash}
+						steamId={BigInt(row.original.ban?.sourceId ?? 0n)}
+						personaName={row.original.sourcePersonaName}
+						avatarHash={row.original.sourceAvatarHash}
 					>
 						<RouterLink
 							to={Route.fullPath}
@@ -186,9 +186,9 @@ function AdminAppeals() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={BigInt(row.original.ban?.targetId ?? 0n)}
-						personaname={row.original.targetPersonaName}
-						avatar_hash={row.original.targetAvatarHash}
+						steamId={BigInt(row.original.ban?.targetId ?? 0n)}
+						personaName={row.original.targetPersonaName}
+						avatarHash={row.original.targetAvatarHash}
 					>
 						<RouterLink
 							style={{

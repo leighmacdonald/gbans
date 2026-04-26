@@ -78,9 +78,9 @@ export const SteamWhitelistTable = () => {
 				grow: true,
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.steamId}
-						avatar_hash={row.original.avatarHash}
-						personaname={row.original.personaName}
+						steamId={row.original.steamId}
+						avatarHash={row.original.avatarHash}
+						personaName={row.original.personaName}
 					/>
 				),
 			}),

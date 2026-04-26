@@ -6,7 +6,7 @@ import { LoadingPlaceholder } from "./component/LoadingPlaceholder.tsx";
 import { AppError, ErrorCode } from "./error.tsx";
 import { routeTree } from "./routeTree.gen.ts";
 import type { InfoResponse } from "./rpc/config/v1/config_pb.ts";
-import { toTitleCase } from "./util/text.tsx";
+import { toTitleCase } from "./util/strings.ts";
 
 export const newRouter = (queryClient: QueryClient, appInfo: InfoResponse) => {
 	return createRouter({

@@ -42,18 +42,16 @@ const (
 	// ForumServiceRecentMessagesProcedure is the fully-qualified name of the ForumService's
 	// RecentMessages RPC.
 	ForumServiceRecentMessagesProcedure = "/forum.v1.ForumService/RecentMessages"
-	// ForumServiceThreadsProcedure is the fully-qualified name of the ForumService's Threads RPC.
-	ForumServiceThreadsProcedure = "/forum.v1.ForumService/Threads"
 	// ForumServiceThreadProcedure is the fully-qualified name of the ForumService's Thread RPC.
 	ForumServiceThreadProcedure = "/forum.v1.ForumService/Thread"
+	// ForumServiceThreadsProcedure is the fully-qualified name of the ForumService's Threads RPC.
+	ForumServiceThreadsProcedure = "/forum.v1.ForumService/Threads"
 	// ForumServiceThreadDeleteProcedure is the fully-qualified name of the ForumService's ThreadDelete
 	// RPC.
 	ForumServiceThreadDeleteProcedure = "/forum.v1.ForumService/ThreadDelete"
-	// ForumServiceForumProcedure is the fully-qualified name of the ForumService's Forum RPC.
-	ForumServiceForumProcedure = "/forum.v1.ForumService/Forum"
-	// ForumServiceForumMessagesProcedure is the fully-qualified name of the ForumService's
-	// ForumMessages RPC.
-	ForumServiceForumMessagesProcedure = "/forum.v1.ForumService/ForumMessages"
+	// ForumServiceThreadMessagesProcedure is the fully-qualified name of the ForumService's
+	// ThreadMessages RPC.
+	ForumServiceThreadMessagesProcedure = "/forum.v1.ForumService/ThreadMessages"
 	// ForumServiceThreadCreateProcedure is the fully-qualified name of the ForumService's ThreadCreate
 	// RPC.
 	ForumServiceThreadCreateProcedure = "/forum.v1.ForumService/ThreadCreate"
@@ -65,9 +63,9 @@ const (
 	// ForumServiceThreadReplyEditProcedure is the fully-qualified name of the ForumService's
 	// ThreadReplyEdit RPC.
 	ForumServiceThreadReplyEditProcedure = "/forum.v1.ForumService/ThreadReplyEdit"
-	// ForumServiceMessageDeleteProcedure is the fully-qualified name of the ForumService's
-	// MessageDelete RPC.
-	ForumServiceMessageDeleteProcedure = "/forum.v1.ForumService/MessageDelete"
+	// ForumServiceThreadMessageDeleteProcedure is the fully-qualified name of the ForumService's
+	// ThreadMessageDelete RPC.
+	ForumServiceThreadMessageDeleteProcedure = "/forum.v1.ForumService/ThreadMessageDelete"
 	// ForumServiceCategoryCreateProcedure is the fully-qualified name of the ForumService's
 	// CategoryCreate RPC.
 	ForumServiceCategoryCreateProcedure = "/forum.v1.ForumService/CategoryCreate"
@@ -76,6 +74,8 @@ const (
 	ForumServiceCategoryEditProcedure = "/forum.v1.ForumService/CategoryEdit"
 	// ForumServiceCategoryProcedure is the fully-qualified name of the ForumService's Category RPC.
 	ForumServiceCategoryProcedure = "/forum.v1.ForumService/Category"
+	// ForumServiceForumProcedure is the fully-qualified name of the ForumService's Forum RPC.
+	ForumServiceForumProcedure = "/forum.v1.ForumService/Forum"
 	// ForumServiceForumCreateProcedure is the fully-qualified name of the ForumService's ForumCreate
 	// RPC.
 	ForumServiceForumCreateProcedure = "/forum.v1.ForumService/ForumCreate"
@@ -88,21 +88,19 @@ type ForumServiceClient interface {
 	ActiveUsers(context.Context, *emptypb.Empty) (*v1.ActiveUsersResponse, error)
 	Overview(context.Context, *emptypb.Empty) (*v1.OverviewResponse, error)
 	RecentMessages(context.Context, *emptypb.Empty) (*v1.RecentMessagesResponse, error)
-	Threads(context.Context, *v1.ThreadsRequest) (*v1.ThreadsResponse, error)
 	Thread(context.Context, *v1.ThreadRequest) (*v1.ThreadResponse, error)
+	Threads(context.Context, *v1.ThreadsRequest) (*v1.ThreadsResponse, error)
 	ThreadDelete(context.Context, *v1.ThreadDeleteRequest) (*emptypb.Empty, error)
-	Forum(context.Context, *v1.ForumRequest) (*v1.ForumResponse, error)
-	ForumMessages(context.Context, *v1.ForumMessagesRequest) (*v1.ForumMessagesResponse, error)
-	// authed
+	ThreadMessages(context.Context, *v1.ThreadMessagesRequest) (*v1.ThreadMessagesResponse, error)
 	ThreadCreate(context.Context, *v1.ThreadCreateRequest) (*v1.ThreadCreateResponse, error)
 	ThreadEdit(context.Context, *v1.ThreadEditRequest) (*v1.ThreadEditResponse, error)
 	ThreadReplyCreate(context.Context, *v1.ThreadReplyCreateRequest) (*v1.ThreadReplyCreateResponse, error)
 	ThreadReplyEdit(context.Context, *v1.ThreadReplyEditRequest) (*v1.ThreadReplyEditResponse, error)
-	MessageDelete(context.Context, *v1.MessageDeleteRequest) (*emptypb.Empty, error)
-	// mod
+	ThreadMessageDelete(context.Context, *v1.ThreadMessageDeleteRequest) (*emptypb.Empty, error)
 	CategoryCreate(context.Context, *v1.CategoryCreateRequest) (*v1.CategoryCreateResponse, error)
 	CategoryEdit(context.Context, *v1.CategoryEditRequest) (*v1.CategoryEditResponse, error)
 	Category(context.Context, *v1.CategoryRequest) (*v1.CategoryResponse, error)
+	Forum(context.Context, *v1.ForumRequest) (*v1.ForumResponse, error)
 	ForumCreate(context.Context, *v1.ForumCreateRequest) (*v1.ForumCreateResponse, error)
 	ForumEdit(context.Context, *v1.ForumEditRequest) (*v1.ForumEditResponse, error)
 }
@@ -136,16 +134,16 @@ func NewForumServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(forumServiceMethods.ByName("RecentMessages")),
 			connect.WithClientOptions(opts...),
 		),
-		threads: connect.NewClient[v1.ThreadsRequest, v1.ThreadsResponse](
-			httpClient,
-			baseURL+ForumServiceThreadsProcedure,
-			connect.WithSchema(forumServiceMethods.ByName("Threads")),
-			connect.WithClientOptions(opts...),
-		),
 		thread: connect.NewClient[v1.ThreadRequest, v1.ThreadResponse](
 			httpClient,
 			baseURL+ForumServiceThreadProcedure,
 			connect.WithSchema(forumServiceMethods.ByName("Thread")),
+			connect.WithClientOptions(opts...),
+		),
+		threads: connect.NewClient[v1.ThreadsRequest, v1.ThreadsResponse](
+			httpClient,
+			baseURL+ForumServiceThreadsProcedure,
+			connect.WithSchema(forumServiceMethods.ByName("Threads")),
 			connect.WithClientOptions(opts...),
 		),
 		threadDelete: connect.NewClient[v1.ThreadDeleteRequest, emptypb.Empty](
@@ -154,16 +152,10 @@ func NewForumServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(forumServiceMethods.ByName("ThreadDelete")),
 			connect.WithClientOptions(opts...),
 		),
-		forum: connect.NewClient[v1.ForumRequest, v1.ForumResponse](
+		threadMessages: connect.NewClient[v1.ThreadMessagesRequest, v1.ThreadMessagesResponse](
 			httpClient,
-			baseURL+ForumServiceForumProcedure,
-			connect.WithSchema(forumServiceMethods.ByName("Forum")),
-			connect.WithClientOptions(opts...),
-		),
-		forumMessages: connect.NewClient[v1.ForumMessagesRequest, v1.ForumMessagesResponse](
-			httpClient,
-			baseURL+ForumServiceForumMessagesProcedure,
-			connect.WithSchema(forumServiceMethods.ByName("ForumMessages")),
+			baseURL+ForumServiceThreadMessagesProcedure,
+			connect.WithSchema(forumServiceMethods.ByName("ThreadMessages")),
 			connect.WithClientOptions(opts...),
 		),
 		threadCreate: connect.NewClient[v1.ThreadCreateRequest, v1.ThreadCreateResponse](
@@ -190,10 +182,10 @@ func NewForumServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(forumServiceMethods.ByName("ThreadReplyEdit")),
 			connect.WithClientOptions(opts...),
 		),
-		messageDelete: connect.NewClient[v1.MessageDeleteRequest, emptypb.Empty](
+		threadMessageDelete: connect.NewClient[v1.ThreadMessageDeleteRequest, emptypb.Empty](
 			httpClient,
-			baseURL+ForumServiceMessageDeleteProcedure,
-			connect.WithSchema(forumServiceMethods.ByName("MessageDelete")),
+			baseURL+ForumServiceThreadMessageDeleteProcedure,
+			connect.WithSchema(forumServiceMethods.ByName("ThreadMessageDelete")),
 			connect.WithClientOptions(opts...),
 		),
 		categoryCreate: connect.NewClient[v1.CategoryCreateRequest, v1.CategoryCreateResponse](
@@ -214,6 +206,12 @@ func NewForumServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(forumServiceMethods.ByName("Category")),
 			connect.WithClientOptions(opts...),
 		),
+		forum: connect.NewClient[v1.ForumRequest, v1.ForumResponse](
+			httpClient,
+			baseURL+ForumServiceForumProcedure,
+			connect.WithSchema(forumServiceMethods.ByName("Forum")),
+			connect.WithClientOptions(opts...),
+		),
 		forumCreate: connect.NewClient[v1.ForumCreateRequest, v1.ForumCreateResponse](
 			httpClient,
 			baseURL+ForumServiceForumCreateProcedure,
@@ -231,24 +229,24 @@ func NewForumServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 
 // forumServiceClient implements ForumServiceClient.
 type forumServiceClient struct {
-	activeUsers       *connect.Client[emptypb.Empty, v1.ActiveUsersResponse]
-	overview          *connect.Client[emptypb.Empty, v1.OverviewResponse]
-	recentMessages    *connect.Client[emptypb.Empty, v1.RecentMessagesResponse]
-	threads           *connect.Client[v1.ThreadsRequest, v1.ThreadsResponse]
-	thread            *connect.Client[v1.ThreadRequest, v1.ThreadResponse]
-	threadDelete      *connect.Client[v1.ThreadDeleteRequest, emptypb.Empty]
-	forum             *connect.Client[v1.ForumRequest, v1.ForumResponse]
-	forumMessages     *connect.Client[v1.ForumMessagesRequest, v1.ForumMessagesResponse]
-	threadCreate      *connect.Client[v1.ThreadCreateRequest, v1.ThreadCreateResponse]
-	threadEdit        *connect.Client[v1.ThreadEditRequest, v1.ThreadEditResponse]
-	threadReplyCreate *connect.Client[v1.ThreadReplyCreateRequest, v1.ThreadReplyCreateResponse]
-	threadReplyEdit   *connect.Client[v1.ThreadReplyEditRequest, v1.ThreadReplyEditResponse]
-	messageDelete     *connect.Client[v1.MessageDeleteRequest, emptypb.Empty]
-	categoryCreate    *connect.Client[v1.CategoryCreateRequest, v1.CategoryCreateResponse]
-	categoryEdit      *connect.Client[v1.CategoryEditRequest, v1.CategoryEditResponse]
-	category          *connect.Client[v1.CategoryRequest, v1.CategoryResponse]
-	forumCreate       *connect.Client[v1.ForumCreateRequest, v1.ForumCreateResponse]
-	forumEdit         *connect.Client[v1.ForumEditRequest, v1.ForumEditResponse]
+	activeUsers         *connect.Client[emptypb.Empty, v1.ActiveUsersResponse]
+	overview            *connect.Client[emptypb.Empty, v1.OverviewResponse]
+	recentMessages      *connect.Client[emptypb.Empty, v1.RecentMessagesResponse]
+	thread              *connect.Client[v1.ThreadRequest, v1.ThreadResponse]
+	threads             *connect.Client[v1.ThreadsRequest, v1.ThreadsResponse]
+	threadDelete        *connect.Client[v1.ThreadDeleteRequest, emptypb.Empty]
+	threadMessages      *connect.Client[v1.ThreadMessagesRequest, v1.ThreadMessagesResponse]
+	threadCreate        *connect.Client[v1.ThreadCreateRequest, v1.ThreadCreateResponse]
+	threadEdit          *connect.Client[v1.ThreadEditRequest, v1.ThreadEditResponse]
+	threadReplyCreate   *connect.Client[v1.ThreadReplyCreateRequest, v1.ThreadReplyCreateResponse]
+	threadReplyEdit     *connect.Client[v1.ThreadReplyEditRequest, v1.ThreadReplyEditResponse]
+	threadMessageDelete *connect.Client[v1.ThreadMessageDeleteRequest, emptypb.Empty]
+	categoryCreate      *connect.Client[v1.CategoryCreateRequest, v1.CategoryCreateResponse]
+	categoryEdit        *connect.Client[v1.CategoryEditRequest, v1.CategoryEditResponse]
+	category            *connect.Client[v1.CategoryRequest, v1.CategoryResponse]
+	forum               *connect.Client[v1.ForumRequest, v1.ForumResponse]
+	forumCreate         *connect.Client[v1.ForumCreateRequest, v1.ForumCreateResponse]
+	forumEdit           *connect.Client[v1.ForumEditRequest, v1.ForumEditResponse]
 }
 
 // ActiveUsers calls forum.v1.ForumService.ActiveUsers.
@@ -278,18 +276,18 @@ func (c *forumServiceClient) RecentMessages(ctx context.Context, req *emptypb.Em
 	return nil, err
 }
 
-// Threads calls forum.v1.ForumService.Threads.
-func (c *forumServiceClient) Threads(ctx context.Context, req *v1.ThreadsRequest) (*v1.ThreadsResponse, error) {
-	response, err := c.threads.CallUnary(ctx, connect.NewRequest(req))
+// Thread calls forum.v1.ForumService.Thread.
+func (c *forumServiceClient) Thread(ctx context.Context, req *v1.ThreadRequest) (*v1.ThreadResponse, error) {
+	response, err := c.thread.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
 	return nil, err
 }
 
-// Thread calls forum.v1.ForumService.Thread.
-func (c *forumServiceClient) Thread(ctx context.Context, req *v1.ThreadRequest) (*v1.ThreadResponse, error) {
-	response, err := c.thread.CallUnary(ctx, connect.NewRequest(req))
+// Threads calls forum.v1.ForumService.Threads.
+func (c *forumServiceClient) Threads(ctx context.Context, req *v1.ThreadsRequest) (*v1.ThreadsResponse, error) {
+	response, err := c.threads.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -305,18 +303,9 @@ func (c *forumServiceClient) ThreadDelete(ctx context.Context, req *v1.ThreadDel
 	return nil, err
 }
 
-// Forum calls forum.v1.ForumService.Forum.
-func (c *forumServiceClient) Forum(ctx context.Context, req *v1.ForumRequest) (*v1.ForumResponse, error) {
-	response, err := c.forum.CallUnary(ctx, connect.NewRequest(req))
-	if response != nil {
-		return response.Msg, err
-	}
-	return nil, err
-}
-
-// ForumMessages calls forum.v1.ForumService.ForumMessages.
-func (c *forumServiceClient) ForumMessages(ctx context.Context, req *v1.ForumMessagesRequest) (*v1.ForumMessagesResponse, error) {
-	response, err := c.forumMessages.CallUnary(ctx, connect.NewRequest(req))
+// ThreadMessages calls forum.v1.ForumService.ThreadMessages.
+func (c *forumServiceClient) ThreadMessages(ctx context.Context, req *v1.ThreadMessagesRequest) (*v1.ThreadMessagesResponse, error) {
+	response, err := c.threadMessages.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -359,9 +348,9 @@ func (c *forumServiceClient) ThreadReplyEdit(ctx context.Context, req *v1.Thread
 	return nil, err
 }
 
-// MessageDelete calls forum.v1.ForumService.MessageDelete.
-func (c *forumServiceClient) MessageDelete(ctx context.Context, req *v1.MessageDeleteRequest) (*emptypb.Empty, error) {
-	response, err := c.messageDelete.CallUnary(ctx, connect.NewRequest(req))
+// ThreadMessageDelete calls forum.v1.ForumService.ThreadMessageDelete.
+func (c *forumServiceClient) ThreadMessageDelete(ctx context.Context, req *v1.ThreadMessageDeleteRequest) (*emptypb.Empty, error) {
+	response, err := c.threadMessageDelete.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -395,6 +384,15 @@ func (c *forumServiceClient) Category(ctx context.Context, req *v1.CategoryReque
 	return nil, err
 }
 
+// Forum calls forum.v1.ForumService.Forum.
+func (c *forumServiceClient) Forum(ctx context.Context, req *v1.ForumRequest) (*v1.ForumResponse, error) {
+	response, err := c.forum.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ForumCreate calls forum.v1.ForumService.ForumCreate.
 func (c *forumServiceClient) ForumCreate(ctx context.Context, req *v1.ForumCreateRequest) (*v1.ForumCreateResponse, error) {
 	response, err := c.forumCreate.CallUnary(ctx, connect.NewRequest(req))
@@ -418,21 +416,19 @@ type ForumServiceHandler interface {
 	ActiveUsers(context.Context, *emptypb.Empty) (*v1.ActiveUsersResponse, error)
 	Overview(context.Context, *emptypb.Empty) (*v1.OverviewResponse, error)
 	RecentMessages(context.Context, *emptypb.Empty) (*v1.RecentMessagesResponse, error)
-	Threads(context.Context, *v1.ThreadsRequest) (*v1.ThreadsResponse, error)
 	Thread(context.Context, *v1.ThreadRequest) (*v1.ThreadResponse, error)
+	Threads(context.Context, *v1.ThreadsRequest) (*v1.ThreadsResponse, error)
 	ThreadDelete(context.Context, *v1.ThreadDeleteRequest) (*emptypb.Empty, error)
-	Forum(context.Context, *v1.ForumRequest) (*v1.ForumResponse, error)
-	ForumMessages(context.Context, *v1.ForumMessagesRequest) (*v1.ForumMessagesResponse, error)
-	// authed
+	ThreadMessages(context.Context, *v1.ThreadMessagesRequest) (*v1.ThreadMessagesResponse, error)
 	ThreadCreate(context.Context, *v1.ThreadCreateRequest) (*v1.ThreadCreateResponse, error)
 	ThreadEdit(context.Context, *v1.ThreadEditRequest) (*v1.ThreadEditResponse, error)
 	ThreadReplyCreate(context.Context, *v1.ThreadReplyCreateRequest) (*v1.ThreadReplyCreateResponse, error)
 	ThreadReplyEdit(context.Context, *v1.ThreadReplyEditRequest) (*v1.ThreadReplyEditResponse, error)
-	MessageDelete(context.Context, *v1.MessageDeleteRequest) (*emptypb.Empty, error)
-	// mod
+	ThreadMessageDelete(context.Context, *v1.ThreadMessageDeleteRequest) (*emptypb.Empty, error)
 	CategoryCreate(context.Context, *v1.CategoryCreateRequest) (*v1.CategoryCreateResponse, error)
 	CategoryEdit(context.Context, *v1.CategoryEditRequest) (*v1.CategoryEditResponse, error)
 	Category(context.Context, *v1.CategoryRequest) (*v1.CategoryResponse, error)
+	Forum(context.Context, *v1.ForumRequest) (*v1.ForumResponse, error)
 	ForumCreate(context.Context, *v1.ForumCreateRequest) (*v1.ForumCreateResponse, error)
 	ForumEdit(context.Context, *v1.ForumEditRequest) (*v1.ForumEditResponse, error)
 }
@@ -462,16 +458,16 @@ func NewForumServiceHandler(svc ForumServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(forumServiceMethods.ByName("RecentMessages")),
 		connect.WithHandlerOptions(opts...),
 	)
-	forumServiceThreadsHandler := connect.NewUnaryHandlerSimple(
-		ForumServiceThreadsProcedure,
-		svc.Threads,
-		connect.WithSchema(forumServiceMethods.ByName("Threads")),
-		connect.WithHandlerOptions(opts...),
-	)
 	forumServiceThreadHandler := connect.NewUnaryHandlerSimple(
 		ForumServiceThreadProcedure,
 		svc.Thread,
 		connect.WithSchema(forumServiceMethods.ByName("Thread")),
+		connect.WithHandlerOptions(opts...),
+	)
+	forumServiceThreadsHandler := connect.NewUnaryHandlerSimple(
+		ForumServiceThreadsProcedure,
+		svc.Threads,
+		connect.WithSchema(forumServiceMethods.ByName("Threads")),
 		connect.WithHandlerOptions(opts...),
 	)
 	forumServiceThreadDeleteHandler := connect.NewUnaryHandlerSimple(
@@ -480,16 +476,10 @@ func NewForumServiceHandler(svc ForumServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(forumServiceMethods.ByName("ThreadDelete")),
 		connect.WithHandlerOptions(opts...),
 	)
-	forumServiceForumHandler := connect.NewUnaryHandlerSimple(
-		ForumServiceForumProcedure,
-		svc.Forum,
-		connect.WithSchema(forumServiceMethods.ByName("Forum")),
-		connect.WithHandlerOptions(opts...),
-	)
-	forumServiceForumMessagesHandler := connect.NewUnaryHandlerSimple(
-		ForumServiceForumMessagesProcedure,
-		svc.ForumMessages,
-		connect.WithSchema(forumServiceMethods.ByName("ForumMessages")),
+	forumServiceThreadMessagesHandler := connect.NewUnaryHandlerSimple(
+		ForumServiceThreadMessagesProcedure,
+		svc.ThreadMessages,
+		connect.WithSchema(forumServiceMethods.ByName("ThreadMessages")),
 		connect.WithHandlerOptions(opts...),
 	)
 	forumServiceThreadCreateHandler := connect.NewUnaryHandlerSimple(
@@ -516,10 +506,10 @@ func NewForumServiceHandler(svc ForumServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(forumServiceMethods.ByName("ThreadReplyEdit")),
 		connect.WithHandlerOptions(opts...),
 	)
-	forumServiceMessageDeleteHandler := connect.NewUnaryHandlerSimple(
-		ForumServiceMessageDeleteProcedure,
-		svc.MessageDelete,
-		connect.WithSchema(forumServiceMethods.ByName("MessageDelete")),
+	forumServiceThreadMessageDeleteHandler := connect.NewUnaryHandlerSimple(
+		ForumServiceThreadMessageDeleteProcedure,
+		svc.ThreadMessageDelete,
+		connect.WithSchema(forumServiceMethods.ByName("ThreadMessageDelete")),
 		connect.WithHandlerOptions(opts...),
 	)
 	forumServiceCategoryCreateHandler := connect.NewUnaryHandlerSimple(
@@ -538,6 +528,12 @@ func NewForumServiceHandler(svc ForumServiceHandler, opts ...connect.HandlerOpti
 		ForumServiceCategoryProcedure,
 		svc.Category,
 		connect.WithSchema(forumServiceMethods.ByName("Category")),
+		connect.WithHandlerOptions(opts...),
+	)
+	forumServiceForumHandler := connect.NewUnaryHandlerSimple(
+		ForumServiceForumProcedure,
+		svc.Forum,
+		connect.WithSchema(forumServiceMethods.ByName("Forum")),
 		connect.WithHandlerOptions(opts...),
 	)
 	forumServiceForumCreateHandler := connect.NewUnaryHandlerSimple(
@@ -560,16 +556,14 @@ func NewForumServiceHandler(svc ForumServiceHandler, opts ...connect.HandlerOpti
 			forumServiceOverviewHandler.ServeHTTP(w, r)
 		case ForumServiceRecentMessagesProcedure:
 			forumServiceRecentMessagesHandler.ServeHTTP(w, r)
-		case ForumServiceThreadsProcedure:
-			forumServiceThreadsHandler.ServeHTTP(w, r)
 		case ForumServiceThreadProcedure:
 			forumServiceThreadHandler.ServeHTTP(w, r)
+		case ForumServiceThreadsProcedure:
+			forumServiceThreadsHandler.ServeHTTP(w, r)
 		case ForumServiceThreadDeleteProcedure:
 			forumServiceThreadDeleteHandler.ServeHTTP(w, r)
-		case ForumServiceForumProcedure:
-			forumServiceForumHandler.ServeHTTP(w, r)
-		case ForumServiceForumMessagesProcedure:
-			forumServiceForumMessagesHandler.ServeHTTP(w, r)
+		case ForumServiceThreadMessagesProcedure:
+			forumServiceThreadMessagesHandler.ServeHTTP(w, r)
 		case ForumServiceThreadCreateProcedure:
 			forumServiceThreadCreateHandler.ServeHTTP(w, r)
 		case ForumServiceThreadEditProcedure:
@@ -578,14 +572,16 @@ func NewForumServiceHandler(svc ForumServiceHandler, opts ...connect.HandlerOpti
 			forumServiceThreadReplyCreateHandler.ServeHTTP(w, r)
 		case ForumServiceThreadReplyEditProcedure:
 			forumServiceThreadReplyEditHandler.ServeHTTP(w, r)
-		case ForumServiceMessageDeleteProcedure:
-			forumServiceMessageDeleteHandler.ServeHTTP(w, r)
+		case ForumServiceThreadMessageDeleteProcedure:
+			forumServiceThreadMessageDeleteHandler.ServeHTTP(w, r)
 		case ForumServiceCategoryCreateProcedure:
 			forumServiceCategoryCreateHandler.ServeHTTP(w, r)
 		case ForumServiceCategoryEditProcedure:
 			forumServiceCategoryEditHandler.ServeHTTP(w, r)
 		case ForumServiceCategoryProcedure:
 			forumServiceCategoryHandler.ServeHTTP(w, r)
+		case ForumServiceForumProcedure:
+			forumServiceForumHandler.ServeHTTP(w, r)
 		case ForumServiceForumCreateProcedure:
 			forumServiceForumCreateHandler.ServeHTTP(w, r)
 		case ForumServiceForumEditProcedure:
@@ -611,24 +607,20 @@ func (UnimplementedForumServiceHandler) RecentMessages(context.Context, *emptypb
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("forum.v1.ForumService.RecentMessages is not implemented"))
 }
 
-func (UnimplementedForumServiceHandler) Threads(context.Context, *v1.ThreadsRequest) (*v1.ThreadsResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("forum.v1.ForumService.Threads is not implemented"))
-}
-
 func (UnimplementedForumServiceHandler) Thread(context.Context, *v1.ThreadRequest) (*v1.ThreadResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("forum.v1.ForumService.Thread is not implemented"))
+}
+
+func (UnimplementedForumServiceHandler) Threads(context.Context, *v1.ThreadsRequest) (*v1.ThreadsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("forum.v1.ForumService.Threads is not implemented"))
 }
 
 func (UnimplementedForumServiceHandler) ThreadDelete(context.Context, *v1.ThreadDeleteRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("forum.v1.ForumService.ThreadDelete is not implemented"))
 }
 
-func (UnimplementedForumServiceHandler) Forum(context.Context, *v1.ForumRequest) (*v1.ForumResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("forum.v1.ForumService.Forum is not implemented"))
-}
-
-func (UnimplementedForumServiceHandler) ForumMessages(context.Context, *v1.ForumMessagesRequest) (*v1.ForumMessagesResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("forum.v1.ForumService.ForumMessages is not implemented"))
+func (UnimplementedForumServiceHandler) ThreadMessages(context.Context, *v1.ThreadMessagesRequest) (*v1.ThreadMessagesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("forum.v1.ForumService.ThreadMessages is not implemented"))
 }
 
 func (UnimplementedForumServiceHandler) ThreadCreate(context.Context, *v1.ThreadCreateRequest) (*v1.ThreadCreateResponse, error) {
@@ -647,8 +639,8 @@ func (UnimplementedForumServiceHandler) ThreadReplyEdit(context.Context, *v1.Thr
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("forum.v1.ForumService.ThreadReplyEdit is not implemented"))
 }
 
-func (UnimplementedForumServiceHandler) MessageDelete(context.Context, *v1.MessageDeleteRequest) (*emptypb.Empty, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("forum.v1.ForumService.MessageDelete is not implemented"))
+func (UnimplementedForumServiceHandler) ThreadMessageDelete(context.Context, *v1.ThreadMessageDeleteRequest) (*emptypb.Empty, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("forum.v1.ForumService.ThreadMessageDelete is not implemented"))
 }
 
 func (UnimplementedForumServiceHandler) CategoryCreate(context.Context, *v1.CategoryCreateRequest) (*v1.CategoryCreateResponse, error) {
@@ -661,6 +653,10 @@ func (UnimplementedForumServiceHandler) CategoryEdit(context.Context, *v1.Catego
 
 func (UnimplementedForumServiceHandler) Category(context.Context, *v1.CategoryRequest) (*v1.CategoryResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("forum.v1.ForumService.Category is not implemented"))
+}
+
+func (UnimplementedForumServiceHandler) Forum(context.Context, *v1.ForumRequest) (*v1.ForumResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("forum.v1.ForumService.Forum is not implemented"))
 }
 
 func (UnimplementedForumServiceHandler) ForumCreate(context.Context, *v1.ForumCreateRequest) (*v1.ForumCreateResponse, error) {

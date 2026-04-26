@@ -98,9 +98,9 @@ function AdminVotes() {
 				enableSorting: false,
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.sourceId.toString()}
-						personaname={row.original.sourceName}
-						avatar_hash={row.original.sourceAvatarHash}
+						steamId={row.original.sourceId.toString()}
+						personaName={row.original.sourceName}
+						avatarHash={row.original.sourceAvatarHash}
 					>
 						<RouterLink
 							style={{
@@ -124,9 +124,9 @@ function AdminVotes() {
 				Cell: ({ row }) => {
 					return (
 						<PersonCell
-							steam_id={row.original.targetId.toString()}
-							personaname={row.original.targetName}
-							avatar_hash={row.original.targetAvatarHash}
+							steamId={row.original.targetId.toString()}
+							personaName={row.original.targetName}
+							avatarHash={row.original.targetAvatarHash}
 						>
 							<RouterLink
 								style={{

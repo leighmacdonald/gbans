@@ -232,16 +232,16 @@ func (m *Middleware) MakeToken(user person.BaseUser) (string, string, error) {
 	}
 
 	// FIXME save auth for revocation
-	//ipAddr := net.ParseIP(ctx.ClientIP())
-	//if ipAddr == nil {
-	//	return UserTokens{}, ErrClientIP
-	//}
+	// ipAddr := net.ParseIP(ctx.ClientIP())
+	// if ipAddr == nil {
+	// 	return UserTokens{}, ErrClientIP
+	// }
 	//
-	//personAuth := NewPersonAuth(sid, ipAddr, accessToken)
+	// personAuth := NewPersonAuth(sid, ipAddr, accessToken)
 	//
-	//if saveErr := u.auth.SavePersonAuth(ctx, &personAuth); saveErr != nil {
-	//	return UserTokens{}, errors.Join(saveErr, ErrSaveToken)
-	//}
+	// if saveErr := u.auth.SavePersonAuth(ctx, &personAuth); saveErr != nil {
+	// 	return UserTokens{}, errors.Join(saveErr, ErrSaveToken)
+	// }
 
 	return accessToken, fingerprint, nil
 }

@@ -2,12 +2,12 @@ import { TransportProvider } from "@connectrpc/connect-query";
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type AnyRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode, useState } from "react";
-import { defaultAvatarHash } from "./api";
 import { AuthProvider, profileKey } from "./auth.tsx";
 import { useAuth } from "./hooks/useAuth.ts";
 import { Privilege } from "./rpc/person/v1/privilege_pb.ts";
 import { finalTransport } from "./transport.ts";
 import { logErr } from "./util/errors.ts";
+import { defaultAvatarHash } from "./util/strings.ts";
 
 const loadProfile = () => {
 	const defaultProfile = {

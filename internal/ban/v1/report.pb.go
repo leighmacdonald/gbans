@@ -123,7 +123,7 @@ func (x *ReportsResponse) GetReports() []*ReportWithAuthor {
 
 type ReportMessageDeleteRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	ReportMessageId *int64                 `protobuf:"varint,1,opt,name=report_message_id,json=reportMessageId" json:"report_message_id,omitempty"`
+	ReportMessageId *int32                 `protobuf:"varint,1,opt,name=report_message_id,json=reportMessageId" json:"report_message_id,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -158,7 +158,7 @@ func (*ReportMessageDeleteRequest) Descriptor() ([]byte, []int) {
 	return file_ban_v1_report_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ReportMessageDeleteRequest) GetReportMessageId() int64 {
+func (x *ReportMessageDeleteRequest) GetReportMessageId() int32 {
 	if x != nil && x.ReportMessageId != nil {
 		return *x.ReportMessageId
 	}
@@ -167,7 +167,7 @@ func (x *ReportMessageDeleteRequest) GetReportMessageId() int64 {
 
 type ReportMessageEditRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	ReportMessageId *int64                 `protobuf:"varint,1,opt,name=report_message_id,json=reportMessageId" json:"report_message_id,omitempty"`
+	ReportMessageId *int32                 `protobuf:"varint,1,opt,name=report_message_id,json=reportMessageId" json:"report_message_id,omitempty"`
 	BodyMd          *string                `protobuf:"bytes,2,opt,name=body_md,json=bodyMd" json:"body_md,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
@@ -203,7 +203,7 @@ func (*ReportMessageEditRequest) Descriptor() ([]byte, []int) {
 	return file_ban_v1_report_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *ReportMessageEditRequest) GetReportMessageId() int64 {
+func (x *ReportMessageEditRequest) GetReportMessageId() int32 {
 	if x != nil && x.ReportMessageId != nil {
 		return *x.ReportMessageId
 	}
@@ -528,7 +528,7 @@ func (x *ReportResponse) GetReport() *ReportWithAuthor {
 type ReportMessage struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	ReportId        *int32                 `protobuf:"varint,1,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
-	ReportMessageId *int64                 `protobuf:"varint,2,opt,name=report_message_id,json=reportMessageId" json:"report_message_id,omitempty"`
+	ReportMessageId *int32                 `protobuf:"varint,2,opt,name=report_message_id,json=reportMessageId" json:"report_message_id,omitempty"`
 	AuthorId        *int64                 `protobuf:"varint,3,opt,name=author_id,json=authorId" json:"author_id,omitempty"`
 	MessageMd       *string                `protobuf:"bytes,4,opt,name=message_md,json=messageMd" json:"message_md,omitempty"`
 	Deleted         *bool                  `protobuf:"varint,5,opt,name=deleted" json:"deleted,omitempty"`
@@ -578,7 +578,7 @@ func (x *ReportMessage) GetReportId() int32 {
 	return 0
 }
 
-func (x *ReportMessage) GetReportMessageId() int64 {
+func (x *ReportMessage) GetReportMessageId() int32 {
 	if x != nil && x.ReportMessageId != nil {
 		return *x.ReportMessageId
 	}
@@ -1141,9 +1141,9 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"\x0fReportsResponse\x12:\n" +
 	"\areports\x18\x01 \x03(\v2\x18.ban.v1.ReportWithAuthorB\x06\xbaH\x03\xc8\x01\x01R\areports\"P\n" +
 	"\x1aReportMessageDeleteRequest\x122\n" +
-	"\x11report_message_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x0freportMessageId\"o\n" +
+	"\x11report_message_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x0freportMessageId\"o\n" +
 	"\x18ReportMessageEditRequest\x122\n" +
-	"\x11report_message_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x0freportMessageId\x12\x1f\n" +
+	"\x11report_message_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x0freportMessageId\x12\x1f\n" +
 	"\abody_md\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06bodyMd\"T\n" +
 	"\x19ReportMessageEditResponse\x127\n" +
 	"\amessage\x18\x01 \x01(\v2\x15.ban.v1.ReportMessageB\x06\xbaH\x03\xc8\x01\x01R\amessage\"<\n" +
@@ -1161,7 +1161,7 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"\x06report\x18\x01 \x01(\v2\x18.ban.v1.ReportWithAuthorB\x06\xbaH\x03\xc8\x01\x01R\x06report\"\xf9\x03\n" +
 	"\rReportMessage\x12#\n" +
 	"\treport_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\breportId\x122\n" +
-	"\x11report_message_id\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x0freportMessageId\x12#\n" +
+	"\x11report_message_id\x18\x02 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x0freportMessageId\x12#\n" +
 	"\tauthor_id\x18\x03 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\bauthorId\x12%\n" +
 	"\n" +
 	"message_md\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tmessageMd\x12 \n" +
@@ -1199,18 +1199,18 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"\asubject\x18\x03 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\asubject\"\x81\x01\n" +
 	"\x17ReportStatusEditRequest\x12#\n" +
 	"\treport_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\breportId\x12A\n" +
-	"\rreport_status\x18\x02 \x01(\x0e2\x14.ban.v1.ReportStatusB\x06\xbaH\x03\xc8\x01\x01R\freportStatus\"\xcb\x03\n" +
+	"\rreport_status\x18\x02 \x01(\x0e2\x14.ban.v1.ReportStatusB\x06\xbaH\x03\xc8\x01\x01R\freportStatus\"\xcd\x02\n" +
 	"\x13ReportCreateRequest\x12#\n" +
 	"\tsource_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\bsourceId\x12#\n" +
 	"\ttarget_id\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\btargetId\x12(\n" +
 	"\vdescription\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdescription\x126\n" +
-	"\x06reason\x18\x04 \x01(\x0e2\x11.ban.v1.BanReasonB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x06reason\x12'\n" +
-	"\vreason_text\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"\x06reason\x18\x04 \x01(\x0e2\x11.ban.v1.BanReasonB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x06reason\x12(\n" +
+	"\vreason_text\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\n" +
+	"R\n" +
 	"reasonText\x12\x17\n" +
 	"\ademo_id\x18\x06 \x01(\x03R\x06demoId\x12\x1b\n" +
 	"\tdemo_tick\x18\a \x01(\x05R\bdemoTick\x12*\n" +
-	"\x11person_message_id\x18\b \x01(\x03R\x0fpersonMessageId:}\xbaHz\x1ax\n" +
-	"\fvalid_reason\x12$ensure the reason is set when custom\x1aBthis.reason != BAN_REASON_CUSTOM ? true : reason_text.min_len > 10\"P\n" +
+	"\x11person_message_id\x18\b \x01(\x03R\x0fpersonMessageId\"P\n" +
 	"\x14ReportCreateResponse\x128\n" +
 	"\x06report\x18\x01 \x01(\v2\x18.ban.v1.ReportWithAuthorB\x06\xbaH\x03\xc8\x01\x01R\x06report\"b\n" +
 	"\x1aReportMessageCreateRequest\x12#\n" +

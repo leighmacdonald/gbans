@@ -91,27 +91,27 @@ func (x *Campaign) GetRelationships() *Relationships {
 	return nil
 }
 
-type CampaignsResponse struct {
+type PatronLoginResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Campaigns     []*Campaign            `protobuf:"bytes,1,rep,name=campaigns" json:"campaigns,omitempty"`
+	Url           *string                `protobuf:"bytes,1,opt,name=url" json:"url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CampaignsResponse) Reset() {
-	*x = CampaignsResponse{}
+func (x *PatronLoginResponse) Reset() {
+	*x = PatronLoginResponse{}
 	mi := &file_patreon_v1_patreon_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CampaignsResponse) String() string {
+func (x *PatronLoginResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CampaignsResponse) ProtoMessage() {}
+func (*PatronLoginResponse) ProtoMessage() {}
 
-func (x *CampaignsResponse) ProtoReflect() protoreflect.Message {
+func (x *PatronLoginResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_patreon_v1_patreon_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -123,12 +123,56 @@ func (x *CampaignsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CampaignsResponse.ProtoReflect.Descriptor instead.
-func (*CampaignsResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use PatronLoginResponse.ProtoReflect.Descriptor instead.
+func (*PatronLoginResponse) Descriptor() ([]byte, []int) {
 	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *CampaignsResponse) GetCampaigns() []*Campaign {
+func (x *PatronLoginResponse) GetUrl() string {
+	if x != nil && x.Url != nil {
+		return *x.Url
+	}
+	return ""
+}
+
+type PatronCampaignsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Campaigns     []*Campaign            `protobuf:"bytes,1,rep,name=campaigns" json:"campaigns,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PatronCampaignsResponse) Reset() {
+	*x = PatronCampaignsResponse{}
+	mi := &file_patreon_v1_patreon_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PatronCampaignsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PatronCampaignsResponse) ProtoMessage() {}
+
+func (x *PatronCampaignsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_patreon_v1_patreon_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PatronCampaignsResponse.ProtoReflect.Descriptor instead.
+func (*PatronCampaignsResponse) Descriptor() ([]byte, []int) {
+	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *PatronCampaignsResponse) GetCampaigns() []*Campaign {
 	if x != nil {
 		return x.Campaigns
 	}
@@ -170,7 +214,7 @@ type Attributes struct {
 
 func (x *Attributes) Reset() {
 	*x = Attributes{}
-	mi := &file_patreon_v1_patreon_proto_msgTypes[2]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -182,7 +226,7 @@ func (x *Attributes) String() string {
 func (*Attributes) ProtoMessage() {}
 
 func (x *Attributes) ProtoReflect() protoreflect.Message {
-	mi := &file_patreon_v1_patreon_proto_msgTypes[2]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -195,7 +239,7 @@ func (x *Attributes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Attributes.ProtoReflect.Descriptor instead.
 func (*Attributes) Descriptor() ([]byte, []int) {
-	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{2}
+	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Attributes) GetCreatedAt() *timestamppb.Timestamp {
@@ -400,7 +444,7 @@ type Relationships struct {
 
 func (x *Relationships) Reset() {
 	*x = Relationships{}
-	mi := &file_patreon_v1_patreon_proto_msgTypes[3]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -412,7 +456,7 @@ func (x *Relationships) String() string {
 func (*Relationships) ProtoMessage() {}
 
 func (x *Relationships) ProtoReflect() protoreflect.Message {
-	mi := &file_patreon_v1_patreon_proto_msgTypes[3]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -425,7 +469,7 @@ func (x *Relationships) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Relationships.ProtoReflect.Descriptor instead.
 func (*Relationships) Descriptor() ([]byte, []int) {
-	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{3}
+	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Relationships) GetBenefits() *Benefits {
@@ -473,7 +517,7 @@ type Tiers struct {
 
 func (x *Tiers) Reset() {
 	*x = Tiers{}
-	mi := &file_patreon_v1_patreon_proto_msgTypes[4]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -485,7 +529,7 @@ func (x *Tiers) String() string {
 func (*Tiers) ProtoMessage() {}
 
 func (x *Tiers) ProtoReflect() protoreflect.Message {
-	mi := &file_patreon_v1_patreon_proto_msgTypes[4]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -498,7 +542,7 @@ func (x *Tiers) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Tiers.ProtoReflect.Descriptor instead.
 func (*Tiers) Descriptor() ([]byte, []int) {
-	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{4}
+	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Tiers) GetData() []*Data {
@@ -525,7 +569,7 @@ type Creator struct {
 
 func (x *Creator) Reset() {
 	*x = Creator{}
-	mi := &file_patreon_v1_patreon_proto_msgTypes[5]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -537,7 +581,7 @@ func (x *Creator) String() string {
 func (*Creator) ProtoMessage() {}
 
 func (x *Creator) ProtoReflect() protoreflect.Message {
-	mi := &file_patreon_v1_patreon_proto_msgTypes[5]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -550,7 +594,7 @@ func (x *Creator) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Creator.ProtoReflect.Descriptor instead.
 func (*Creator) Descriptor() ([]byte, []int) {
-	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{5}
+	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Creator) GetData() []*Data {
@@ -576,7 +620,7 @@ type Goals struct {
 
 func (x *Goals) Reset() {
 	*x = Goals{}
-	mi := &file_patreon_v1_patreon_proto_msgTypes[6]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -588,7 +632,7 @@ func (x *Goals) String() string {
 func (*Goals) ProtoMessage() {}
 
 func (x *Goals) ProtoReflect() protoreflect.Message {
-	mi := &file_patreon_v1_patreon_proto_msgTypes[6]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -601,7 +645,7 @@ func (x *Goals) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Goals.ProtoReflect.Descriptor instead.
 func (*Goals) Descriptor() ([]byte, []int) {
-	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{6}
+	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Goals) GetData() []*Data {
@@ -620,7 +664,7 @@ type Categories struct {
 
 func (x *Categories) Reset() {
 	*x = Categories{}
-	mi := &file_patreon_v1_patreon_proto_msgTypes[7]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -632,7 +676,7 @@ func (x *Categories) String() string {
 func (*Categories) ProtoMessage() {}
 
 func (x *Categories) ProtoReflect() protoreflect.Message {
-	mi := &file_patreon_v1_patreon_proto_msgTypes[7]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -645,7 +689,7 @@ func (x *Categories) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Categories.ProtoReflect.Descriptor instead.
 func (*Categories) Descriptor() ([]byte, []int) {
-	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{7}
+	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Categories) GetData() []*Data {
@@ -665,7 +709,7 @@ type Benefits struct {
 
 func (x *Benefits) Reset() {
 	*x = Benefits{}
-	mi := &file_patreon_v1_patreon_proto_msgTypes[8]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -677,7 +721,7 @@ func (x *Benefits) String() string {
 func (*Benefits) ProtoMessage() {}
 
 func (x *Benefits) ProtoReflect() protoreflect.Message {
-	mi := &file_patreon_v1_patreon_proto_msgTypes[8]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -690,7 +734,7 @@ func (x *Benefits) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Benefits.ProtoReflect.Descriptor instead.
 func (*Benefits) Descriptor() ([]byte, []int) {
-	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{8}
+	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *Benefits) GetData() []*Data {
@@ -717,7 +761,7 @@ type Data struct {
 
 func (x *Data) Reset() {
 	*x = Data{}
-	mi := &file_patreon_v1_patreon_proto_msgTypes[9]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -729,7 +773,7 @@ func (x *Data) String() string {
 func (*Data) ProtoMessage() {}
 
 func (x *Data) ProtoReflect() protoreflect.Message {
-	mi := &file_patreon_v1_patreon_proto_msgTypes[9]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -742,7 +786,7 @@ func (x *Data) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data.ProtoReflect.Descriptor instead.
 func (*Data) Descriptor() ([]byte, []int) {
-	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{9}
+	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Data) GetId() string {
@@ -768,7 +812,7 @@ type Related struct {
 
 func (x *Related) Reset() {
 	*x = Related{}
-	mi := &file_patreon_v1_patreon_proto_msgTypes[10]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -780,7 +824,7 @@ func (x *Related) String() string {
 func (*Related) ProtoMessage() {}
 
 func (x *Related) ProtoReflect() protoreflect.Message {
-	mi := &file_patreon_v1_patreon_proto_msgTypes[10]
+	mi := &file_patreon_v1_patreon_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -793,7 +837,7 @@ func (x *Related) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Related.ProtoReflect.Descriptor instead.
 func (*Related) Descriptor() ([]byte, []int) {
-	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{10}
+	return file_patreon_v1_patreon_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *Related) GetRelated() string {
@@ -815,8 +859,10 @@ const file_patreon_v1_patreon_proto_rawDesc = "" +
 	"\n" +
 	"attributes\x18\x03 \x01(\v2\x16.patreon.v1.AttributesR\n" +
 	"attributes\x12?\n" +
-	"\rrelationships\x18\x04 \x01(\v2\x19.patreon.v1.RelationshipsR\rrelationships\"G\n" +
-	"\x11CampaignsResponse\x122\n" +
+	"\rrelationships\x18\x04 \x01(\v2\x19.patreon.v1.RelationshipsR\rrelationships\"'\n" +
+	"\x13PatronLoginResponse\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\"M\n" +
+	"\x17PatronCampaignsResponse\x122\n" +
 	"\tcampaigns\x18\x01 \x03(\v2\x14.patreon.v1.CampaignR\tcampaigns\"\xf6\a\n" +
 	"\n" +
 	"Attributes\x129\n" +
@@ -879,9 +925,11 @@ const file_patreon_v1_patreon_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\"#\n" +
 	"\aRelated\x12\x18\n" +
-	"\arelated\x18\x01 \x01(\tR\arelated2V\n" +
-	"\x0ePatreonService\x12D\n" +
-	"\tCampaigns\x12\x16.google.protobuf.Empty\x1a\x1d.patreon.v1.CampaignsResponse\"\x00B\xa6\x01\n" +
+	"\arelated\x18\x01 \x01(\tR\arelated2\xee\x01\n" +
+	"\x0ePatreonService\x12P\n" +
+	"\x0fPatronCampaigns\x12\x16.google.protobuf.Empty\x1a#.patreon.v1.PatronCampaignsResponse\"\x00\x12@\n" +
+	"\fPatronLogout\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\"\x00\x12H\n" +
+	"\vPatronLogin\x12\x16.google.protobuf.Empty\x1a\x1f.patreon.v1.PatronLoginResponse\"\x00B\xa6\x01\n" +
 	"\x0ecom.patreon.v1B\fPatreonProtoP\x01Z=github.com/leighmacdonald/gbans/internal/patreon/v1;patreonv1\xa2\x02\x03PXX\xaa\x02\n" +
 	"Patreon.V1\xca\x02\n" +
 	"Patreon\\V1\xe2\x02\x16Patreon\\V1\\GPBMetadata\xea\x02\vPatreon::V1b\beditionsp\xe8\a"
@@ -898,45 +946,50 @@ func file_patreon_v1_patreon_proto_rawDescGZIP() []byte {
 	return file_patreon_v1_patreon_proto_rawDescData
 }
 
-var file_patreon_v1_patreon_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_patreon_v1_patreon_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_patreon_v1_patreon_proto_goTypes = []any{
-	(*Campaign)(nil),              // 0: patreon.v1.Campaign
-	(*CampaignsResponse)(nil),     // 1: patreon.v1.CampaignsResponse
-	(*Attributes)(nil),            // 2: patreon.v1.Attributes
-	(*Relationships)(nil),         // 3: patreon.v1.Relationships
-	(*Tiers)(nil),                 // 4: patreon.v1.Tiers
-	(*Creator)(nil),               // 5: patreon.v1.Creator
-	(*Goals)(nil),                 // 6: patreon.v1.Goals
-	(*Categories)(nil),            // 7: patreon.v1.Categories
-	(*Benefits)(nil),              // 8: patreon.v1.Benefits
-	(*Data)(nil),                  // 9: patreon.v1.Data
-	(*Related)(nil),               // 10: patreon.v1.Related
-	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),         // 12: google.protobuf.Empty
+	(*Campaign)(nil),                // 0: patreon.v1.Campaign
+	(*PatronLoginResponse)(nil),     // 1: patreon.v1.PatronLoginResponse
+	(*PatronCampaignsResponse)(nil), // 2: patreon.v1.PatronCampaignsResponse
+	(*Attributes)(nil),              // 3: patreon.v1.Attributes
+	(*Relationships)(nil),           // 4: patreon.v1.Relationships
+	(*Tiers)(nil),                   // 5: patreon.v1.Tiers
+	(*Creator)(nil),                 // 6: patreon.v1.Creator
+	(*Goals)(nil),                   // 7: patreon.v1.Goals
+	(*Categories)(nil),              // 8: patreon.v1.Categories
+	(*Benefits)(nil),                // 9: patreon.v1.Benefits
+	(*Data)(nil),                    // 10: patreon.v1.Data
+	(*Related)(nil),                 // 11: patreon.v1.Related
+	(*timestamppb.Timestamp)(nil),   // 12: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),           // 13: google.protobuf.Empty
 }
 var file_patreon_v1_patreon_proto_depIdxs = []int32{
-	2,  // 0: patreon.v1.Campaign.attributes:type_name -> patreon.v1.Attributes
-	3,  // 1: patreon.v1.Campaign.relationships:type_name -> patreon.v1.Relationships
-	0,  // 2: patreon.v1.CampaignsResponse.campaigns:type_name -> patreon.v1.Campaign
-	11, // 3: patreon.v1.Attributes.created_at:type_name -> google.protobuf.Timestamp
-	11, // 4: patreon.v1.Attributes.published_at:type_name -> google.protobuf.Timestamp
-	8,  // 5: patreon.v1.Relationships.benefits:type_name -> patreon.v1.Benefits
-	7,  // 6: patreon.v1.Relationships.categories:type_name -> patreon.v1.Categories
-	5,  // 7: patreon.v1.Relationships.creator:type_name -> patreon.v1.Creator
-	6,  // 8: patreon.v1.Relationships.goals:type_name -> patreon.v1.Goals
-	4,  // 9: patreon.v1.Relationships.tiers:type_name -> patreon.v1.Tiers
-	9,  // 10: patreon.v1.Tiers.data:type_name -> patreon.v1.Data
-	10, // 11: patreon.v1.Tiers.links:type_name -> patreon.v1.Related
-	9,  // 12: patreon.v1.Creator.data:type_name -> patreon.v1.Data
-	10, // 13: patreon.v1.Creator.links:type_name -> patreon.v1.Related
-	9,  // 14: patreon.v1.Goals.data:type_name -> patreon.v1.Data
-	9,  // 15: patreon.v1.Categories.data:type_name -> patreon.v1.Data
-	9,  // 16: patreon.v1.Benefits.data:type_name -> patreon.v1.Data
-	10, // 17: patreon.v1.Benefits.links:type_name -> patreon.v1.Related
-	12, // 18: patreon.v1.PatreonService.Campaigns:input_type -> google.protobuf.Empty
-	1,  // 19: patreon.v1.PatreonService.Campaigns:output_type -> patreon.v1.CampaignsResponse
-	19, // [19:20] is the sub-list for method output_type
-	18, // [18:19] is the sub-list for method input_type
+	3,  // 0: patreon.v1.Campaign.attributes:type_name -> patreon.v1.Attributes
+	4,  // 1: patreon.v1.Campaign.relationships:type_name -> patreon.v1.Relationships
+	0,  // 2: patreon.v1.PatronCampaignsResponse.campaigns:type_name -> patreon.v1.Campaign
+	12, // 3: patreon.v1.Attributes.created_at:type_name -> google.protobuf.Timestamp
+	12, // 4: patreon.v1.Attributes.published_at:type_name -> google.protobuf.Timestamp
+	9,  // 5: patreon.v1.Relationships.benefits:type_name -> patreon.v1.Benefits
+	8,  // 6: patreon.v1.Relationships.categories:type_name -> patreon.v1.Categories
+	6,  // 7: patreon.v1.Relationships.creator:type_name -> patreon.v1.Creator
+	7,  // 8: patreon.v1.Relationships.goals:type_name -> patreon.v1.Goals
+	5,  // 9: patreon.v1.Relationships.tiers:type_name -> patreon.v1.Tiers
+	10, // 10: patreon.v1.Tiers.data:type_name -> patreon.v1.Data
+	11, // 11: patreon.v1.Tiers.links:type_name -> patreon.v1.Related
+	10, // 12: patreon.v1.Creator.data:type_name -> patreon.v1.Data
+	11, // 13: patreon.v1.Creator.links:type_name -> patreon.v1.Related
+	10, // 14: patreon.v1.Goals.data:type_name -> patreon.v1.Data
+	10, // 15: patreon.v1.Categories.data:type_name -> patreon.v1.Data
+	10, // 16: patreon.v1.Benefits.data:type_name -> patreon.v1.Data
+	11, // 17: patreon.v1.Benefits.links:type_name -> patreon.v1.Related
+	13, // 18: patreon.v1.PatreonService.PatronCampaigns:input_type -> google.protobuf.Empty
+	13, // 19: patreon.v1.PatreonService.PatronLogout:input_type -> google.protobuf.Empty
+	13, // 20: patreon.v1.PatreonService.PatronLogin:input_type -> google.protobuf.Empty
+	2,  // 21: patreon.v1.PatreonService.PatronCampaigns:output_type -> patreon.v1.PatronCampaignsResponse
+	13, // 22: patreon.v1.PatreonService.PatronLogout:output_type -> google.protobuf.Empty
+	1,  // 23: patreon.v1.PatreonService.PatronLogin:output_type -> patreon.v1.PatronLoginResponse
+	21, // [21:24] is the sub-list for method output_type
+	18, // [18:21] is the sub-list for method input_type
 	18, // [18:18] is the sub-list for extension type_name
 	18, // [18:18] is the sub-list for extension extendee
 	0,  // [0:18] is the sub-list for field type_name
@@ -953,7 +1006,7 @@ func file_patreon_v1_patreon_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_patreon_v1_patreon_proto_rawDesc), len(file_patreon_v1_patreon_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

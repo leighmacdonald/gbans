@@ -1,32 +1,27 @@
+import { useQuery } from "@connectrpc/connect-query";
 import PeopleIcon from "@mui/icons-material/People";
 import Grid from "@mui/material/Grid";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
-import { apiForumActiveUsers } from "../../api/forum.ts";
+import { activeUsers } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
 import { ContainerWithHeader } from "../ContainerWithHeader.tsx";
 import { LoadingPlaceholder } from "../LoadingPlaceholder.tsx";
 import RouterLink from "../RouterLink.tsx";
 
 export const ForumRecentUserActivity = () => {
-	const { data: activity, isLoading } = useQuery({
-		queryKey: ["forumActivity"],
-		queryFn: async ({ signal }) => {
-			return await apiForumActiveUsers(signal);
-		},
-	});
+	const { data, isLoading } = useQuery(activeUsers);
 
 	const theme = useTheme();
 
 	return (
-		<ContainerWithHeader title={`Users Online ${activity?.length ?? 0}`} iconLeft={<PeopleIcon />}>
+		<ContainerWithHeader title={`Users Online ${data?.userActivity?.length ?? 0}`} iconLeft={<PeopleIcon />}>
 			<Grid container>
 				{isLoading ? (
 					<LoadingPlaceholder />
 				) : (
-					activity?.map((a) => {
+					data?.userActivity?.map((a) => {
 						return (
-							<Grid size={{ xs: "auto" }} spacing={1} key={`activity-${a.steam_id}`}>
+							<Grid size={{ xs: "auto" }} spacing={1} key={`activity-${a.steamId}`}>
 								<Typography
 									sx={{
 										display: "inline",
@@ -38,9 +33,9 @@ export const ForumRecentUserActivity = () => {
 									variant={"body2"}
 									color={theme.palette.text.secondary}
 									component={RouterLink}
-									to={`/profile/${a.steam_id}`}
+									to={`/profile/${a.steamId}`}
 								>
-									{a.personaname}
+									{a.personaName}
 								</Typography>
 							</Grid>
 						);

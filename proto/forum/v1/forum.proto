@@ -9,26 +9,24 @@ import "person/v1/privilege.proto";
 
 service ForumService {
   rpc ActiveUsers(google.protobuf.Empty) returns (ActiveUsersResponse) {}
-
   rpc Overview(google.protobuf.Empty) returns (OverviewResponse) {}
   rpc RecentMessages(google.protobuf.Empty) returns (RecentMessagesResponse) {}
-  rpc Threads(ThreadsRequest) returns (ThreadsResponse) {}
-  rpc Thread(ThreadRequest) returns (ThreadResponse) {}
-  rpc ThreadDelete(ThreadDeleteRequest) returns (google.protobuf.Empty) {}
-  rpc Forum(ForumRequest) returns (ForumResponse) {}
-  rpc ForumMessages(ForumMessagesRequest) returns (ForumMessagesResponse) {}
 
-  // authed
+  rpc Thread(ThreadRequest) returns (ThreadResponse) {}
+  rpc Threads(ThreadsRequest) returns (ThreadsResponse) {}
+  rpc ThreadDelete(ThreadDeleteRequest) returns (google.protobuf.Empty) {}
+  rpc ThreadMessages(ThreadMessagesRequest) returns (ThreadMessagesResponse) {}
   rpc ThreadCreate(ThreadCreateRequest) returns (ThreadCreateResponse) {}
   rpc ThreadEdit(ThreadEditRequest) returns (ThreadEditResponse) {}
   rpc ThreadReplyCreate(ThreadReplyCreateRequest) returns (ThreadReplyCreateResponse) {}
   rpc ThreadReplyEdit(ThreadReplyEditRequest) returns (ThreadReplyEditResponse) {}
-  rpc MessageDelete(MessageDeleteRequest) returns (google.protobuf.Empty) {}
+  rpc ThreadMessageDelete(ThreadMessageDeleteRequest) returns (google.protobuf.Empty) {}
 
-  // mod
   rpc CategoryCreate(CategoryCreateRequest) returns (CategoryCreateResponse) {}
   rpc CategoryEdit(CategoryEditRequest) returns (CategoryEditResponse) {}
   rpc Category(CategoryRequest) returns (CategoryResponse) {}
+
+  rpc Forum(ForumRequest) returns (ForumResponse) {}
   rpc ForumCreate(ForumCreateRequest) returns (ForumCreateResponse) {}
   rpc ForumEdit(ForumEditRequest) returns (ForumEditResponse) {}
 }
@@ -98,7 +96,7 @@ message CategoryCreateRequest {
   int32 ordering = 3 [(buf.validate.field).required = true];
 }
 
-message MessageDeleteRequest {
+message ThreadMessageDeleteRequest {
   int64 forum_message_id = 1 [(buf.validate.field).required = true];
 }
 
@@ -137,12 +135,12 @@ message ThreadCreateResponse {
   Message message = 2 [(buf.validate.field).required = true];
 }
 
-message ForumMessagesRequest {
+message ThreadMessagesRequest {
   int32 forum_thread_id = 1 [(buf.validate.field).required = true];
   bool deleted = 2;
 }
 
-message ForumMessagesResponse {
+message ThreadMessagesResponse {
   repeated Message messages = 1 [(buf.validate.field).required = true];
 }
 
@@ -167,7 +165,7 @@ message ThreadsRequest {
 }
 
 message ThreadsResponse {
-  repeated Thread threads = 1 [(buf.validate.field).required = true];
+  repeated ThreadWithSource threads = 1 [(buf.validate.field).required = true];
 }
 
 message Thread {
@@ -177,8 +175,10 @@ message Thread {
   string title = 4 [(buf.validate.field).required = true];
   bool sticky = 5 [(buf.validate.field).required = true];
   bool locked = 6 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp created_on = 7 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp updated_on = 8 [(buf.validate.field).required = true];
+  int32 replies = 7 [(buf.validate.field).required = true];
+  int32 views = 8 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 9 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 10 [(buf.validate.field).required = true];
 }
 
 message ThreadWithSource {

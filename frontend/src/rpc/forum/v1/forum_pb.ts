@@ -15,7 +15,7 @@ import type { Message as Message$1 } from "@bufbuild/protobuf";
  * Describes the file forum/v1/forum.proto.
  */
 export const file_forum_v1_forum: GenFile = /*@__PURE__*/
-  fileDesc("ChRmb3J1bS92MS9mb3J1bS5wcm90bxIIZm9ydW0udjEiewoRVGhyZWFkRWRpdFJlcXVlc3QSHwoPZm9ydW1fdGhyZWFkX2lkGAEgASgFQga6SAPIAQESFQoFdGl0bGUYAiABKAlCBrpIA8gBARIWCgZzdGlja3kYAyABKAhCBrpIA8gBARIWCgZsb2NrZWQYBCABKAhCBrpIA8gBASI+ChJUaHJlYWRFZGl0UmVzcG9uc2USKAoGdGhyZWFkGAEgASgLMhAuZm9ydW0udjEuVGhyZWFkQga6SAPIAQEiOwoRRm9ydW1FZGl0UmVzcG9uc2USJgoFZm9ydW0YASABKAsyDy5mb3J1bS52MS5Gb3J1bUIGukgDyAEBItUBChBGb3J1bUVkaXRSZXF1ZXN0EhgKCGZvcnVtX2lkGAEgASgFQga6SAPIAQESIQoRZm9ydW1fY2F0ZWdvcnlfaWQYAiABKAVCBrpIA8gBARI2ChBwZXJtaXNzaW9uX2xldmVsGAMgASgOMhQucGVyc29uLnYxLlByaXZpbGVnZUIGukgDyAEBEhUKBXRpdGxlGAQgASgJQga6SAPIAQESGwoLZGVzY3JpcHRpb24YBSABKAlCBrpIA8gBARIYCghvcmRlcmluZxgGIAEoBUIGukgDyAEBIr0BChJGb3J1bUNyZWF0ZVJlcXVlc3QSIQoRZm9ydW1fY2F0ZWdvcnlfaWQYASABKAVCBrpIA8gBARI2ChBwZXJtaXNzaW9uX2xldmVsGAIgASgOMhQucGVyc29uLnYxLlByaXZpbGVnZUIGukgDyAEBEhUKBXRpdGxlGAMgASgJQga6SAPIAQESGwoLZGVzY3JpcHRpb24YBCABKAlCBrpIA8gBARIYCghvcmRlcmluZxgFIAEoBUIGukgDyAEBIj0KE0ZvcnVtQ3JlYXRlUmVzcG9uc2USJgoFZm9ydW0YASABKAsyDy5mb3J1bS52MS5Gb3J1bUIGukgDyAEBIoYBChNDYXRlZ29yeUVkaXRSZXF1ZXN0EiEKEWZvcnVtX2NhdGVnb3J5X2lkGAEgASgFQga6SAPIAQESFQoFdGl0bGUYAiABKAlCBrpIA8gBARIbCgtkZXNjcmlwdGlvbhgDIAEoCUIGukgDyAEBEhgKCG9yZGVyaW5nGAQgASgFQga6SAPIAQEiRAoUQ2F0ZWdvcnlFZGl0UmVzcG9uc2USLAoIY2F0ZWdvcnkYASABKAsyEi5mb3J1bS52MS5DYXRlZ29yeUIGukgDyAEBIjQKD0NhdGVnb3J5UmVxdWVzdBIhChFmb3J1bV9jYXRlZ29yeV9pZBgBIAEoBUIGukgDyAEBIkAKEENhdGVnb3J5UmVzcG9uc2USLAoIY2F0ZWdvcnkYASABKAsyEi5mb3J1bS52MS5DYXRlZ29yeUIGukgDyAEBIkYKFkNhdGVnb3J5Q3JlYXRlUmVzcG9uc2USLAoIY2F0ZWdvcnkYASABKAsyEi5mb3J1bS52MS5DYXRlZ29yeUIGukgDyAEBImUKFUNhdGVnb3J5Q3JlYXRlUmVxdWVzdBIVCgV0aXRsZRgBIAEoCUIGukgDyAEBEhsKC2Rlc2NyaXB0aW9uGAIgASgJQga6SAPIAQESGAoIb3JkZXJpbmcYAyABKAVCBrpIA8gBASI4ChRNZXNzYWdlRGVsZXRlUmVxdWVzdBIgChBmb3J1bV9tZXNzYWdlX2lkGAEgASgDQga6SAPIAQEiNgoTVGhyZWFkRGVsZXRlUmVxdWVzdBIfCg9mb3J1bV90aHJlYWRfaWQYASABKAVCBrpIA8gBASJTChZUaHJlYWRSZXBseUVkaXRSZXF1ZXN0EiAKEGZvcnVtX21lc3NhZ2VfaWQYASABKANCBrpIA8gBARIXCgdib2R5X21kGAIgASgJQga6SAPIAQEiRQoXVGhyZWFkUmVwbHlFZGl0UmVzcG9uc2USKgoHbWVzc2FnZRgBIAEoCzIRLmZvcnVtLnYxLk1lc3NhZ2VCBrpIA8gBASJUChhUaHJlYWRSZXBseUNyZWF0ZVJlcXVlc3QSHwoPZm9ydW1fdGhyZWFkX2lkGAEgASgFQga6SAPIAQESFwoHYm9keV9tZBgCIAEoCUIGukgDyAEBIkcKGVRocmVhZFJlcGx5Q3JlYXRlUmVzcG9uc2USKgoHbWVzc2FnZRgBIAEoCzIRLmZvcnVtLnYxLk1lc3NhZ2VCBrpIA8gBASJ/ChNUaHJlYWRDcmVhdGVSZXF1ZXN0EhgKCGZvcnVtX2lkGAEgASgFQga6SAPIAQESFQoFdGl0bGUYAiABKAlCBrpIA8gBARIXCgdib2R5X21kGAMgASgJQga6SAPIAQESDgoGc3RpY2t5GAQgASgIEg4KBmxvY2tlZBgFIAEoCCJsChRUaHJlYWRDcmVhdGVSZXNwb25zZRIoCgZ0aHJlYWQYASABKAsyEC5mb3J1bS52MS5UaHJlYWRCBrpIA8gBARIqCgdtZXNzYWdlGAIgASgLMhEuZm9ydW0udjEuTWVzc2FnZUIGukgDyAEBIkgKFEZvcnVtTWVzc2FnZXNSZXF1ZXN0Eh8KD2ZvcnVtX3RocmVhZF9pZBgBIAEoBUIGukgDyAEBEg8KB2RlbGV0ZWQYAiABKAgiRAoVRm9ydW1NZXNzYWdlc1Jlc3BvbnNlEisKCG1lc3NhZ2VzGAEgAygLMhEuZm9ydW0udjEuTWVzc2FnZUIGukgDyAEBIigKDEZvcnVtUmVxdWVzdBIYCghmb3J1bV9pZBgBIAEoBUIGukgDyAEBIjcKDUZvcnVtUmVzcG9uc2USJgoFZm9ydW0YASABKAsyDy5mb3J1bS52MS5Gb3J1bUIGukgDyAEBIjAKDVRocmVhZFJlcXVlc3QSHwoPZm9ydW1fdGhyZWFkX2lkGAEgASgFQga6SAPIAQEiOgoOVGhyZWFkUmVzcG9uc2USKAoGdGhyZWFkGAEgASgLMhAuZm9ydW0udjEuVGhyZWFkQga6SAPIAQEiKgoOVGhyZWFkc1JlcXVlc3QSGAoIZm9ydW1faWQYASABKAVCBrpIA8gBASI8Cg9UaHJlYWRzUmVzcG9uc2USKQoHdGhyZWFkcxgBIAMoCzIQLmZvcnVtLnYxLlRocmVhZEIGukgDyAEBIpUCCgZUaHJlYWQSGAoIZm9ydW1faWQYASABKAVCBrpIA8gBARIfCg9mb3J1bV90aHJlYWRfaWQYAiABKAVCBrpIA8gBARIZCglzb3VyY2VfaWQYAyABKANCBrpIA8gBARIVCgV0aXRsZRgEIAEoCUIGukgDyAEBEhYKBnN0aWNreRgFIAEoCEIGukgDyAEBEhYKBmxvY2tlZBgGIAEoCEIGukgDyAEBEjYKCmNyZWF0ZWRfb24YByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASLZAgoQVGhyZWFkV2l0aFNvdXJjZRIoCgZ0aHJlYWQYASABKAsyEC5mb3J1bS52MS5UaHJlYWRCBrpIA8gBARIcCgxwZXJzb25hX25hbWUYAiABKAlCBrpIA8gBARIbCgthdmF0YXJfaGFzaBgDIAEoCUIGukgDyAEBEjYKEHBlcm1pc3Npb25fbGV2ZWwYBCABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlQga6SAPIAQESHwoXcmVjZW50X2ZvcnVtX21lc3NhZ2VfaWQYBSABKAMSNQoRcmVjZW50X2NyZWF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhcKD3JlY2VudF9zdGVhbV9pZBgHIAEoAxIbChNyZWNlbnRfcGVyc29uYV9uYW1lGAggASgJEhoKEnJlY2VudF9hdmF0YXJfaGFzaBgJIAEoCSK2AQoMVXNlckFjdGl2aXR5EhgKCHN0ZWFtX2lkGAEgASgDQga6SAPIAQESHAoMcGVyc29uYV9uYW1lGAIgASgJQga6SAPIAQESNgoQcGVybWlzc2lvbl9sZXZlbBgDIAEoDjIULnBlcnNvbi52MS5Qcml2aWxlZ2VCBrpIA8gBARI2CgpjcmVhdGVkX29uGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBIkwKE0FjdGl2ZVVzZXJzUmVzcG9uc2USNQoNdXNlcl9hY3Rpdml0eRgBIAMoCzIWLmZvcnVtLnYxLlVzZXJBY3Rpdml0eUIGukgDyAEBIq0DCgdNZXNzYWdlEiAKEGZvcnVtX21lc3NhZ2VfaWQYASABKANCBrpIA8gBARIfCg9mb3J1bV90aHJlYWRfaWQYAiABKAVCBrpIA8gBARIZCglzb3VyY2VfaWQYAyABKANCBrpIA8gBARIXCgdib2R5X21kGAQgASgJQga6SAPIAQESFQoFdGl0bGUYBSABKAlCBrpIA8gBARIWCgZvbmxpbmUYBiABKAhCBrpIA8gBARIZCglzaWduYXR1cmUYByABKAlCBrpIA8gBARIcCgxwZXJzb25hX25hbWUYCCABKAlCBrpIA8gBARIbCgthdmF0YXJfaGFzaBgJIAEoCUIGukgDyAEBEjYKEHBlcm1pc3Npb25fbGV2ZWwYCiABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlQga6SAPIAQESNgoKY3JlYXRlZF9vbhgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARI2Cgp1cGRhdGVkX29uGAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBIkUKFlJlY2VudE1lc3NhZ2VzUmVzcG9uc2USKwoIbWVzc2FnZXMYASADKAsyES5mb3J1bS52MS5NZXNzYWdlQga6SAPIAQEi1wQKBUZvcnVtEhgKCGZvcnVtX2lkGAEgASgFQga6SAPIAQESIQoRZm9ydW1fY2F0ZWdvcnlfaWQYAiABKAVCBrpIA8gBARIWCg5sYXN0X3RocmVhZF9pZBgDIAEoBRIVCgV0aXRsZRgEIAEoCUIGukgDyAEBEhsKC2Rlc2NyaXB0aW9uGAUgASgJQga6SAPIAQESGAoIb3JkZXJpbmcYBiABKAVCBrpIA8gBARIdCg1jb3VudF90aHJlYWRzGAcgASgFQga6SAPIAQESHgoOY291bnRfbWVzc2FnZXMYCCABKAVCBrpIA8gBARI2ChBwZXJtaXNzaW9uX2xldmVsGAkgASgOMhQucGVyc29uLnYxLlByaXZpbGVnZUIGukgDyAEBEh4KFnJlY2VudF9mb3J1bV90aHJlYWRfaWQYCiABKAUSGgoScmVjZW50X2ZvcnVtX3RpdGxlGAsgASgJEhgKEHJlY2VudF9zb3VyY2VfaWQYDCABKAkSGwoTcmVjZW50X3BlcnNvbmFfbmFtZRgNIAEoCRIaChJyZWNlbnRfYXZhdGFyX2hhc2gYDiABKAkSNQoRcmVjZW50X2NyZWF0ZWRfb24YDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjYKCmNyZWF0ZWRfb24YECABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgRIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASKUAgoIQ2F0ZWdvcnkSIQoRZm9ydW1fY2F0ZWdvcnlfaWQYASABKAVCBrpIA8gBARIVCgV0aXRsZRgCIAEoCUIGukgDyAEBEhsKC2Rlc2NyaXB0aW9uGAMgASgJQga6SAPIAQESGAoIb3JkZXJpbmcYBCABKAVCBrpIA8gBARInCgZmb3J1bXMYBSADKAsyDy5mb3J1bS52MS5Gb3J1bUIGukgDyAEBEjYKCmNyZWF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASJCChBPdmVydmlld1Jlc3BvbnNlEi4KCmNhdGVnb3JpZXMYASADKAsyEi5mb3J1bS52MS5DYXRlZ29yeUIGukgDyAEBMuQKCgxGb3J1bVNlcnZpY2USRgoLQWN0aXZlVXNlcnMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHS5mb3J1bS52MS5BY3RpdmVVc2Vyc1Jlc3BvbnNlIgASQAoIT3ZlcnZpZXcSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaGi5mb3J1bS52MS5PdmVydmlld1Jlc3BvbnNlIgASTAoOUmVjZW50TWVzc2FnZXMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaIC5mb3J1bS52MS5SZWNlbnRNZXNzYWdlc1Jlc3BvbnNlIgASQAoHVGhyZWFkcxIYLmZvcnVtLnYxLlRocmVhZHNSZXF1ZXN0GhkuZm9ydW0udjEuVGhyZWFkc1Jlc3BvbnNlIgASPQoGVGhyZWFkEhcuZm9ydW0udjEuVGhyZWFkUmVxdWVzdBoYLmZvcnVtLnYxLlRocmVhZFJlc3BvbnNlIgASRwoMVGhyZWFkRGVsZXRlEh0uZm9ydW0udjEuVGhyZWFkRGVsZXRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEjoKBUZvcnVtEhYuZm9ydW0udjEuRm9ydW1SZXF1ZXN0GhcuZm9ydW0udjEuRm9ydW1SZXNwb25zZSIAElIKDUZvcnVtTWVzc2FnZXMSHi5mb3J1bS52MS5Gb3J1bU1lc3NhZ2VzUmVxdWVzdBofLmZvcnVtLnYxLkZvcnVtTWVzc2FnZXNSZXNwb25zZSIAEk8KDFRocmVhZENyZWF0ZRIdLmZvcnVtLnYxLlRocmVhZENyZWF0ZVJlcXVlc3QaHi5mb3J1bS52MS5UaHJlYWRDcmVhdGVSZXNwb25zZSIAEkkKClRocmVhZEVkaXQSGy5mb3J1bS52MS5UaHJlYWRFZGl0UmVxdWVzdBocLmZvcnVtLnYxLlRocmVhZEVkaXRSZXNwb25zZSIAEl4KEVRocmVhZFJlcGx5Q3JlYXRlEiIuZm9ydW0udjEuVGhyZWFkUmVwbHlDcmVhdGVSZXF1ZXN0GiMuZm9ydW0udjEuVGhyZWFkUmVwbHlDcmVhdGVSZXNwb25zZSIAElgKD1RocmVhZFJlcGx5RWRpdBIgLmZvcnVtLnYxLlRocmVhZFJlcGx5RWRpdFJlcXVlc3QaIS5mb3J1bS52MS5UaHJlYWRSZXBseUVkaXRSZXNwb25zZSIAEkkKDU1lc3NhZ2VEZWxldGUSHi5mb3J1bS52MS5NZXNzYWdlRGVsZXRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAElUKDkNhdGVnb3J5Q3JlYXRlEh8uZm9ydW0udjEuQ2F0ZWdvcnlDcmVhdGVSZXF1ZXN0GiAuZm9ydW0udjEuQ2F0ZWdvcnlDcmVhdGVSZXNwb25zZSIAEk8KDENhdGVnb3J5RWRpdBIdLmZvcnVtLnYxLkNhdGVnb3J5RWRpdFJlcXVlc3QaHi5mb3J1bS52MS5DYXRlZ29yeUVkaXRSZXNwb25zZSIAEkMKCENhdGVnb3J5EhkuZm9ydW0udjEuQ2F0ZWdvcnlSZXF1ZXN0GhouZm9ydW0udjEuQ2F0ZWdvcnlSZXNwb25zZSIAEkwKC0ZvcnVtQ3JlYXRlEhwuZm9ydW0udjEuRm9ydW1DcmVhdGVSZXF1ZXN0Gh0uZm9ydW0udjEuRm9ydW1DcmVhdGVSZXNwb25zZSIAEkYKCUZvcnVtRWRpdBIaLmZvcnVtLnYxLkZvcnVtRWRpdFJlcXVlc3QaGy5mb3J1bS52MS5Gb3J1bUVkaXRSZXNwb25zZSIAQpYBCgxjb20uZm9ydW0udjFCCkZvcnVtUHJvdG9QAVo5Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9mb3J1bS92MTtmb3J1bXYxogIDRlhYqgIIRm9ydW0uVjHKAghGb3J1bVxWMeICFEZvcnVtXFYxXEdQQk1ldGFkYXRh6gIJRm9ydW06OlYxYghlZGl0aW9uc3DoBw", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp, file_person_v1_privilege]);
+  fileDesc("ChRmb3J1bS92MS9mb3J1bS5wcm90bxIIZm9ydW0udjEiewoRVGhyZWFkRWRpdFJlcXVlc3QSHwoPZm9ydW1fdGhyZWFkX2lkGAEgASgFQga6SAPIAQESFQoFdGl0bGUYAiABKAlCBrpIA8gBARIWCgZzdGlja3kYAyABKAhCBrpIA8gBARIWCgZsb2NrZWQYBCABKAhCBrpIA8gBASI+ChJUaHJlYWRFZGl0UmVzcG9uc2USKAoGdGhyZWFkGAEgASgLMhAuZm9ydW0udjEuVGhyZWFkQga6SAPIAQEiOwoRRm9ydW1FZGl0UmVzcG9uc2USJgoFZm9ydW0YASABKAsyDy5mb3J1bS52MS5Gb3J1bUIGukgDyAEBItUBChBGb3J1bUVkaXRSZXF1ZXN0EhgKCGZvcnVtX2lkGAEgASgFQga6SAPIAQESIQoRZm9ydW1fY2F0ZWdvcnlfaWQYAiABKAVCBrpIA8gBARI2ChBwZXJtaXNzaW9uX2xldmVsGAMgASgOMhQucGVyc29uLnYxLlByaXZpbGVnZUIGukgDyAEBEhUKBXRpdGxlGAQgASgJQga6SAPIAQESGwoLZGVzY3JpcHRpb24YBSABKAlCBrpIA8gBARIYCghvcmRlcmluZxgGIAEoBUIGukgDyAEBIr0BChJGb3J1bUNyZWF0ZVJlcXVlc3QSIQoRZm9ydW1fY2F0ZWdvcnlfaWQYASABKAVCBrpIA8gBARI2ChBwZXJtaXNzaW9uX2xldmVsGAIgASgOMhQucGVyc29uLnYxLlByaXZpbGVnZUIGukgDyAEBEhUKBXRpdGxlGAMgASgJQga6SAPIAQESGwoLZGVzY3JpcHRpb24YBCABKAlCBrpIA8gBARIYCghvcmRlcmluZxgFIAEoBUIGukgDyAEBIj0KE0ZvcnVtQ3JlYXRlUmVzcG9uc2USJgoFZm9ydW0YASABKAsyDy5mb3J1bS52MS5Gb3J1bUIGukgDyAEBIoYBChNDYXRlZ29yeUVkaXRSZXF1ZXN0EiEKEWZvcnVtX2NhdGVnb3J5X2lkGAEgASgFQga6SAPIAQESFQoFdGl0bGUYAiABKAlCBrpIA8gBARIbCgtkZXNjcmlwdGlvbhgDIAEoCUIGukgDyAEBEhgKCG9yZGVyaW5nGAQgASgFQga6SAPIAQEiRAoUQ2F0ZWdvcnlFZGl0UmVzcG9uc2USLAoIY2F0ZWdvcnkYASABKAsyEi5mb3J1bS52MS5DYXRlZ29yeUIGukgDyAEBIjQKD0NhdGVnb3J5UmVxdWVzdBIhChFmb3J1bV9jYXRlZ29yeV9pZBgBIAEoBUIGukgDyAEBIkAKEENhdGVnb3J5UmVzcG9uc2USLAoIY2F0ZWdvcnkYASABKAsyEi5mb3J1bS52MS5DYXRlZ29yeUIGukgDyAEBIkYKFkNhdGVnb3J5Q3JlYXRlUmVzcG9uc2USLAoIY2F0ZWdvcnkYASABKAsyEi5mb3J1bS52MS5DYXRlZ29yeUIGukgDyAEBImUKFUNhdGVnb3J5Q3JlYXRlUmVxdWVzdBIVCgV0aXRsZRgBIAEoCUIGukgDyAEBEhsKC2Rlc2NyaXB0aW9uGAIgASgJQga6SAPIAQESGAoIb3JkZXJpbmcYAyABKAVCBrpIA8gBASI+ChpUaHJlYWRNZXNzYWdlRGVsZXRlUmVxdWVzdBIgChBmb3J1bV9tZXNzYWdlX2lkGAEgASgDQga6SAPIAQEiNgoTVGhyZWFkRGVsZXRlUmVxdWVzdBIfCg9mb3J1bV90aHJlYWRfaWQYASABKAVCBrpIA8gBASJTChZUaHJlYWRSZXBseUVkaXRSZXF1ZXN0EiAKEGZvcnVtX21lc3NhZ2VfaWQYASABKANCBrpIA8gBARIXCgdib2R5X21kGAIgASgJQga6SAPIAQEiRQoXVGhyZWFkUmVwbHlFZGl0UmVzcG9uc2USKgoHbWVzc2FnZRgBIAEoCzIRLmZvcnVtLnYxLk1lc3NhZ2VCBrpIA8gBASJUChhUaHJlYWRSZXBseUNyZWF0ZVJlcXVlc3QSHwoPZm9ydW1fdGhyZWFkX2lkGAEgASgFQga6SAPIAQESFwoHYm9keV9tZBgCIAEoCUIGukgDyAEBIkcKGVRocmVhZFJlcGx5Q3JlYXRlUmVzcG9uc2USKgoHbWVzc2FnZRgBIAEoCzIRLmZvcnVtLnYxLk1lc3NhZ2VCBrpIA8gBASJ/ChNUaHJlYWRDcmVhdGVSZXF1ZXN0EhgKCGZvcnVtX2lkGAEgASgFQga6SAPIAQESFQoFdGl0bGUYAiABKAlCBrpIA8gBARIXCgdib2R5X21kGAMgASgJQga6SAPIAQESDgoGc3RpY2t5GAQgASgIEg4KBmxvY2tlZBgFIAEoCCJsChRUaHJlYWRDcmVhdGVSZXNwb25zZRIoCgZ0aHJlYWQYASABKAsyEC5mb3J1bS52MS5UaHJlYWRCBrpIA8gBARIqCgdtZXNzYWdlGAIgASgLMhEuZm9ydW0udjEuTWVzc2FnZUIGukgDyAEBIkkKFVRocmVhZE1lc3NhZ2VzUmVxdWVzdBIfCg9mb3J1bV90aHJlYWRfaWQYASABKAVCBrpIA8gBARIPCgdkZWxldGVkGAIgASgIIkUKFlRocmVhZE1lc3NhZ2VzUmVzcG9uc2USKwoIbWVzc2FnZXMYASADKAsyES5mb3J1bS52MS5NZXNzYWdlQga6SAPIAQEiKAoMRm9ydW1SZXF1ZXN0EhgKCGZvcnVtX2lkGAEgASgFQga6SAPIAQEiNwoNRm9ydW1SZXNwb25zZRImCgVmb3J1bRgBIAEoCzIPLmZvcnVtLnYxLkZvcnVtQga6SAPIAQEiMAoNVGhyZWFkUmVxdWVzdBIfCg9mb3J1bV90aHJlYWRfaWQYASABKAVCBrpIA8gBASI6Cg5UaHJlYWRSZXNwb25zZRIoCgZ0aHJlYWQYASABKAsyEC5mb3J1bS52MS5UaHJlYWRCBrpIA8gBASIqCg5UaHJlYWRzUmVxdWVzdBIYCghmb3J1bV9pZBgBIAEoBUIGukgDyAEBIkYKD1RocmVhZHNSZXNwb25zZRIzCgd0aHJlYWRzGAEgAygLMhouZm9ydW0udjEuVGhyZWFkV2l0aFNvdXJjZUIGukgDyAEBIsUCCgZUaHJlYWQSGAoIZm9ydW1faWQYASABKAVCBrpIA8gBARIfCg9mb3J1bV90aHJlYWRfaWQYAiABKAVCBrpIA8gBARIZCglzb3VyY2VfaWQYAyABKANCBrpIA8gBARIVCgV0aXRsZRgEIAEoCUIGukgDyAEBEhYKBnN0aWNreRgFIAEoCEIGukgDyAEBEhYKBmxvY2tlZBgGIAEoCEIGukgDyAEBEhcKB3JlcGxpZXMYByABKAVCBrpIA8gBARIVCgV2aWV3cxgIIAEoBUIGukgDyAEBEjYKCmNyZWF0ZWRfb24YCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASLZAgoQVGhyZWFkV2l0aFNvdXJjZRIoCgZ0aHJlYWQYASABKAsyEC5mb3J1bS52MS5UaHJlYWRCBrpIA8gBARIcCgxwZXJzb25hX25hbWUYAiABKAlCBrpIA8gBARIbCgthdmF0YXJfaGFzaBgDIAEoCUIGukgDyAEBEjYKEHBlcm1pc3Npb25fbGV2ZWwYBCABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlQga6SAPIAQESHwoXcmVjZW50X2ZvcnVtX21lc3NhZ2VfaWQYBSABKAMSNQoRcmVjZW50X2NyZWF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhcKD3JlY2VudF9zdGVhbV9pZBgHIAEoAxIbChNyZWNlbnRfcGVyc29uYV9uYW1lGAggASgJEhoKEnJlY2VudF9hdmF0YXJfaGFzaBgJIAEoCSK2AQoMVXNlckFjdGl2aXR5EhgKCHN0ZWFtX2lkGAEgASgDQga6SAPIAQESHAoMcGVyc29uYV9uYW1lGAIgASgJQga6SAPIAQESNgoQcGVybWlzc2lvbl9sZXZlbBgDIAEoDjIULnBlcnNvbi52MS5Qcml2aWxlZ2VCBrpIA8gBARI2CgpjcmVhdGVkX29uGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBIkwKE0FjdGl2ZVVzZXJzUmVzcG9uc2USNQoNdXNlcl9hY3Rpdml0eRgBIAMoCzIWLmZvcnVtLnYxLlVzZXJBY3Rpdml0eUIGukgDyAEBIq0DCgdNZXNzYWdlEiAKEGZvcnVtX21lc3NhZ2VfaWQYASABKANCBrpIA8gBARIfCg9mb3J1bV90aHJlYWRfaWQYAiABKAVCBrpIA8gBARIZCglzb3VyY2VfaWQYAyABKANCBrpIA8gBARIXCgdib2R5X21kGAQgASgJQga6SAPIAQESFQoFdGl0bGUYBSABKAlCBrpIA8gBARIWCgZvbmxpbmUYBiABKAhCBrpIA8gBARIZCglzaWduYXR1cmUYByABKAlCBrpIA8gBARIcCgxwZXJzb25hX25hbWUYCCABKAlCBrpIA8gBARIbCgthdmF0YXJfaGFzaBgJIAEoCUIGukgDyAEBEjYKEHBlcm1pc3Npb25fbGV2ZWwYCiABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlQga6SAPIAQESNgoKY3JlYXRlZF9vbhgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARI2Cgp1cGRhdGVkX29uGAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBIkUKFlJlY2VudE1lc3NhZ2VzUmVzcG9uc2USKwoIbWVzc2FnZXMYASADKAsyES5mb3J1bS52MS5NZXNzYWdlQga6SAPIAQEi1wQKBUZvcnVtEhgKCGZvcnVtX2lkGAEgASgFQga6SAPIAQESIQoRZm9ydW1fY2F0ZWdvcnlfaWQYAiABKAVCBrpIA8gBARIWCg5sYXN0X3RocmVhZF9pZBgDIAEoBRIVCgV0aXRsZRgEIAEoCUIGukgDyAEBEhsKC2Rlc2NyaXB0aW9uGAUgASgJQga6SAPIAQESGAoIb3JkZXJpbmcYBiABKAVCBrpIA8gBARIdCg1jb3VudF90aHJlYWRzGAcgASgFQga6SAPIAQESHgoOY291bnRfbWVzc2FnZXMYCCABKAVCBrpIA8gBARI2ChBwZXJtaXNzaW9uX2xldmVsGAkgASgOMhQucGVyc29uLnYxLlByaXZpbGVnZUIGukgDyAEBEh4KFnJlY2VudF9mb3J1bV90aHJlYWRfaWQYCiABKAUSGgoScmVjZW50X2ZvcnVtX3RpdGxlGAsgASgJEhgKEHJlY2VudF9zb3VyY2VfaWQYDCABKAkSGwoTcmVjZW50X3BlcnNvbmFfbmFtZRgNIAEoCRIaChJyZWNlbnRfYXZhdGFyX2hhc2gYDiABKAkSNQoRcmVjZW50X2NyZWF0ZWRfb24YDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjYKCmNyZWF0ZWRfb24YECABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgRIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASKUAgoIQ2F0ZWdvcnkSIQoRZm9ydW1fY2F0ZWdvcnlfaWQYASABKAVCBrpIA8gBARIVCgV0aXRsZRgCIAEoCUIGukgDyAEBEhsKC2Rlc2NyaXB0aW9uGAMgASgJQga6SAPIAQESGAoIb3JkZXJpbmcYBCABKAVCBrpIA8gBARInCgZmb3J1bXMYBSADKAsyDy5mb3J1bS52MS5Gb3J1bUIGukgDyAEBEjYKCmNyZWF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASJCChBPdmVydmlld1Jlc3BvbnNlEi4KCmNhdGVnb3JpZXMYASADKAsyEi5mb3J1bS52MS5DYXRlZ29yeUIGukgDyAEBMvMKCgxGb3J1bVNlcnZpY2USRgoLQWN0aXZlVXNlcnMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHS5mb3J1bS52MS5BY3RpdmVVc2Vyc1Jlc3BvbnNlIgASQAoIT3ZlcnZpZXcSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaGi5mb3J1bS52MS5PdmVydmlld1Jlc3BvbnNlIgASTAoOUmVjZW50TWVzc2FnZXMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaIC5mb3J1bS52MS5SZWNlbnRNZXNzYWdlc1Jlc3BvbnNlIgASPQoGVGhyZWFkEhcuZm9ydW0udjEuVGhyZWFkUmVxdWVzdBoYLmZvcnVtLnYxLlRocmVhZFJlc3BvbnNlIgASQAoHVGhyZWFkcxIYLmZvcnVtLnYxLlRocmVhZHNSZXF1ZXN0GhkuZm9ydW0udjEuVGhyZWFkc1Jlc3BvbnNlIgASRwoMVGhyZWFkRGVsZXRlEh0uZm9ydW0udjEuVGhyZWFkRGVsZXRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAElUKDlRocmVhZE1lc3NhZ2VzEh8uZm9ydW0udjEuVGhyZWFkTWVzc2FnZXNSZXF1ZXN0GiAuZm9ydW0udjEuVGhyZWFkTWVzc2FnZXNSZXNwb25zZSIAEk8KDFRocmVhZENyZWF0ZRIdLmZvcnVtLnYxLlRocmVhZENyZWF0ZVJlcXVlc3QaHi5mb3J1bS52MS5UaHJlYWRDcmVhdGVSZXNwb25zZSIAEkkKClRocmVhZEVkaXQSGy5mb3J1bS52MS5UaHJlYWRFZGl0UmVxdWVzdBocLmZvcnVtLnYxLlRocmVhZEVkaXRSZXNwb25zZSIAEl4KEVRocmVhZFJlcGx5Q3JlYXRlEiIuZm9ydW0udjEuVGhyZWFkUmVwbHlDcmVhdGVSZXF1ZXN0GiMuZm9ydW0udjEuVGhyZWFkUmVwbHlDcmVhdGVSZXNwb25zZSIAElgKD1RocmVhZFJlcGx5RWRpdBIgLmZvcnVtLnYxLlRocmVhZFJlcGx5RWRpdFJlcXVlc3QaIS5mb3J1bS52MS5UaHJlYWRSZXBseUVkaXRSZXNwb25zZSIAElUKE1RocmVhZE1lc3NhZ2VEZWxldGUSJC5mb3J1bS52MS5UaHJlYWRNZXNzYWdlRGVsZXRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAElUKDkNhdGVnb3J5Q3JlYXRlEh8uZm9ydW0udjEuQ2F0ZWdvcnlDcmVhdGVSZXF1ZXN0GiAuZm9ydW0udjEuQ2F0ZWdvcnlDcmVhdGVSZXNwb25zZSIAEk8KDENhdGVnb3J5RWRpdBIdLmZvcnVtLnYxLkNhdGVnb3J5RWRpdFJlcXVlc3QaHi5mb3J1bS52MS5DYXRlZ29yeUVkaXRSZXNwb25zZSIAEkMKCENhdGVnb3J5EhkuZm9ydW0udjEuQ2F0ZWdvcnlSZXF1ZXN0GhouZm9ydW0udjEuQ2F0ZWdvcnlSZXNwb25zZSIAEjoKBUZvcnVtEhYuZm9ydW0udjEuRm9ydW1SZXF1ZXN0GhcuZm9ydW0udjEuRm9ydW1SZXNwb25zZSIAEkwKC0ZvcnVtQ3JlYXRlEhwuZm9ydW0udjEuRm9ydW1DcmVhdGVSZXF1ZXN0Gh0uZm9ydW0udjEuRm9ydW1DcmVhdGVSZXNwb25zZSIAEkYKCUZvcnVtRWRpdBIaLmZvcnVtLnYxLkZvcnVtRWRpdFJlcXVlc3QaGy5mb3J1bS52MS5Gb3J1bUVkaXRSZXNwb25zZSIAQpYBCgxjb20uZm9ydW0udjFCCkZvcnVtUHJvdG9QAVo5Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9mb3J1bS92MTtmb3J1bXYxogIDRlhYqgIIRm9ydW0uVjHKAghGb3J1bVxWMeICFEZvcnVtXFYxXEdQQk1ldGFkYXRh6gIJRm9ydW06OlYxYghlZGl0aW9uc3DoBw", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp, file_person_v1_privilege]);
 
 /**
  * @generated from message forum.v1.ThreadEditRequest
@@ -512,9 +512,9 @@ export const CategoryCreateRequestSchema: GenMessage<CategoryCreateRequest, {val
   messageDesc(file_forum_v1_forum, 11);
 
 /**
- * @generated from message forum.v1.MessageDeleteRequest
+ * @generated from message forum.v1.ThreadMessageDeleteRequest
  */
-export type MessageDeleteRequest = Message$1<"forum.v1.MessageDeleteRequest"> & {
+export type ThreadMessageDeleteRequest = Message$1<"forum.v1.ThreadMessageDeleteRequest"> & {
   /**
    * @generated from field: int64 forum_message_id = 1;
    */
@@ -522,9 +522,9 @@ export type MessageDeleteRequest = Message$1<"forum.v1.MessageDeleteRequest"> & 
 };
 
 /**
- * @generated from message forum.v1.MessageDeleteRequest
+ * @generated from message forum.v1.ThreadMessageDeleteRequest
  */
-export type MessageDeleteRequestValid = Message$1<"forum.v1.MessageDeleteRequest"> & {
+export type ThreadMessageDeleteRequestValid = Message$1<"forum.v1.ThreadMessageDeleteRequest"> & {
   /**
    * @generated from field: int64 forum_message_id = 1;
    */
@@ -532,10 +532,10 @@ export type MessageDeleteRequestValid = Message$1<"forum.v1.MessageDeleteRequest
 };
 
 /**
- * Describes the message forum.v1.MessageDeleteRequest.
- * Use `create(MessageDeleteRequestSchema)` to create a new message.
+ * Describes the message forum.v1.ThreadMessageDeleteRequest.
+ * Use `create(ThreadMessageDeleteRequestSchema)` to create a new message.
  */
-export const MessageDeleteRequestSchema: GenMessage<MessageDeleteRequest, {validType: MessageDeleteRequestValid}> = /*@__PURE__*/
+export const ThreadMessageDeleteRequestSchema: GenMessage<ThreadMessageDeleteRequest, {validType: ThreadMessageDeleteRequestValid}> = /*@__PURE__*/
   messageDesc(file_forum_v1_forum, 12);
 
 /**
@@ -798,9 +798,9 @@ export const ThreadCreateResponseSchema: GenMessage<ThreadCreateResponse, {valid
   messageDesc(file_forum_v1_forum, 19);
 
 /**
- * @generated from message forum.v1.ForumMessagesRequest
+ * @generated from message forum.v1.ThreadMessagesRequest
  */
-export type ForumMessagesRequest = Message$1<"forum.v1.ForumMessagesRequest"> & {
+export type ThreadMessagesRequest = Message$1<"forum.v1.ThreadMessagesRequest"> & {
   /**
    * @generated from field: int32 forum_thread_id = 1;
    */
@@ -813,9 +813,9 @@ export type ForumMessagesRequest = Message$1<"forum.v1.ForumMessagesRequest"> & 
 };
 
 /**
- * @generated from message forum.v1.ForumMessagesRequest
+ * @generated from message forum.v1.ThreadMessagesRequest
  */
-export type ForumMessagesRequestValid = Message$1<"forum.v1.ForumMessagesRequest"> & {
+export type ThreadMessagesRequestValid = Message$1<"forum.v1.ThreadMessagesRequest"> & {
   /**
    * @generated from field: int32 forum_thread_id = 1;
    */
@@ -828,16 +828,16 @@ export type ForumMessagesRequestValid = Message$1<"forum.v1.ForumMessagesRequest
 };
 
 /**
- * Describes the message forum.v1.ForumMessagesRequest.
- * Use `create(ForumMessagesRequestSchema)` to create a new message.
+ * Describes the message forum.v1.ThreadMessagesRequest.
+ * Use `create(ThreadMessagesRequestSchema)` to create a new message.
  */
-export const ForumMessagesRequestSchema: GenMessage<ForumMessagesRequest, {validType: ForumMessagesRequestValid}> = /*@__PURE__*/
+export const ThreadMessagesRequestSchema: GenMessage<ThreadMessagesRequest, {validType: ThreadMessagesRequestValid}> = /*@__PURE__*/
   messageDesc(file_forum_v1_forum, 20);
 
 /**
- * @generated from message forum.v1.ForumMessagesResponse
+ * @generated from message forum.v1.ThreadMessagesResponse
  */
-export type ForumMessagesResponse = Message$1<"forum.v1.ForumMessagesResponse"> & {
+export type ThreadMessagesResponse = Message$1<"forum.v1.ThreadMessagesResponse"> & {
   /**
    * @generated from field: repeated forum.v1.Message messages = 1;
    */
@@ -845,9 +845,9 @@ export type ForumMessagesResponse = Message$1<"forum.v1.ForumMessagesResponse"> 
 };
 
 /**
- * @generated from message forum.v1.ForumMessagesResponse
+ * @generated from message forum.v1.ThreadMessagesResponse
  */
-export type ForumMessagesResponseValid = Message$1<"forum.v1.ForumMessagesResponse"> & {
+export type ThreadMessagesResponseValid = Message$1<"forum.v1.ThreadMessagesResponse"> & {
   /**
    * @generated from field: repeated forum.v1.Message messages = 1;
    */
@@ -855,10 +855,10 @@ export type ForumMessagesResponseValid = Message$1<"forum.v1.ForumMessagesRespon
 };
 
 /**
- * Describes the message forum.v1.ForumMessagesResponse.
- * Use `create(ForumMessagesResponseSchema)` to create a new message.
+ * Describes the message forum.v1.ThreadMessagesResponse.
+ * Use `create(ThreadMessagesResponseSchema)` to create a new message.
  */
-export const ForumMessagesResponseSchema: GenMessage<ForumMessagesResponse, {validType: ForumMessagesResponseValid}> = /*@__PURE__*/
+export const ThreadMessagesResponseSchema: GenMessage<ThreadMessagesResponse, {validType: ThreadMessagesResponseValid}> = /*@__PURE__*/
   messageDesc(file_forum_v1_forum, 21);
 
 /**
@@ -1001,9 +1001,9 @@ export const ThreadsRequestSchema: GenMessage<ThreadsRequest, {validType: Thread
  */
 export type ThreadsResponse = Message$1<"forum.v1.ThreadsResponse"> & {
   /**
-   * @generated from field: repeated forum.v1.Thread threads = 1;
+   * @generated from field: repeated forum.v1.ThreadWithSource threads = 1;
    */
-  threads: Thread[];
+  threads: ThreadWithSource[];
 };
 
 /**
@@ -1011,9 +1011,9 @@ export type ThreadsResponse = Message$1<"forum.v1.ThreadsResponse"> & {
  */
 export type ThreadsResponseValid = Message$1<"forum.v1.ThreadsResponse"> & {
   /**
-   * @generated from field: repeated forum.v1.Thread threads = 1;
+   * @generated from field: repeated forum.v1.ThreadWithSource threads = 1;
    */
-  threads: ThreadValid[];
+  threads: ThreadWithSourceValid[];
 };
 
 /**
@@ -1058,12 +1058,22 @@ export type Thread = Message$1<"forum.v1.Thread"> & {
   locked: boolean;
 
   /**
-   * @generated from field: google.protobuf.Timestamp created_on = 7;
+   * @generated from field: int32 replies = 7;
+   */
+  replies: number;
+
+  /**
+   * @generated from field: int32 views = 8;
+   */
+  views: number;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 9;
    */
   createdOn?: Timestamp;
 
   /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 8;
+   * @generated from field: google.protobuf.Timestamp updated_on = 10;
    */
   updatedOn?: Timestamp;
 };
@@ -1103,12 +1113,22 @@ export type ThreadValid = Message$1<"forum.v1.Thread"> & {
   locked: boolean;
 
   /**
-   * @generated from field: google.protobuf.Timestamp created_on = 7;
+   * @generated from field: int32 replies = 7;
+   */
+  replies: number;
+
+  /**
+   * @generated from field: int32 views = 8;
+   */
+  views: number;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 9;
    */
   createdOn: Timestamp;
 
   /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 8;
+   * @generated from field: google.protobuf.Timestamp updated_on = 10;
    */
   updatedOn: Timestamp;
 };
@@ -1805,20 +1825,20 @@ export const ForumService: GenService<{
     output: typeof RecentMessagesResponseSchema;
   },
   /**
-   * @generated from rpc forum.v1.ForumService.Threads
-   */
-  threads: {
-    methodKind: "unary";
-    input: typeof ThreadsRequestSchema;
-    output: typeof ThreadsResponseSchema;
-  },
-  /**
    * @generated from rpc forum.v1.ForumService.Thread
    */
   thread: {
     methodKind: "unary";
     input: typeof ThreadRequestSchema;
     output: typeof ThreadResponseSchema;
+  },
+  /**
+   * @generated from rpc forum.v1.ForumService.Threads
+   */
+  threads: {
+    methodKind: "unary";
+    input: typeof ThreadsRequestSchema;
+    output: typeof ThreadsResponseSchema;
   },
   /**
    * @generated from rpc forum.v1.ForumService.ThreadDelete
@@ -1829,24 +1849,14 @@ export const ForumService: GenService<{
     output: typeof EmptySchema;
   },
   /**
-   * @generated from rpc forum.v1.ForumService.Forum
+   * @generated from rpc forum.v1.ForumService.ThreadMessages
    */
-  forum: {
+  threadMessages: {
     methodKind: "unary";
-    input: typeof ForumRequestSchema;
-    output: typeof ForumResponseSchema;
+    input: typeof ThreadMessagesRequestSchema;
+    output: typeof ThreadMessagesResponseSchema;
   },
   /**
-   * @generated from rpc forum.v1.ForumService.ForumMessages
-   */
-  forumMessages: {
-    methodKind: "unary";
-    input: typeof ForumMessagesRequestSchema;
-    output: typeof ForumMessagesResponseSchema;
-  },
-  /**
-   * authed
-   *
    * @generated from rpc forum.v1.ForumService.ThreadCreate
    */
   threadCreate: {
@@ -1879,16 +1889,14 @@ export const ForumService: GenService<{
     output: typeof ThreadReplyEditResponseSchema;
   },
   /**
-   * @generated from rpc forum.v1.ForumService.MessageDelete
+   * @generated from rpc forum.v1.ForumService.ThreadMessageDelete
    */
-  messageDelete: {
+  threadMessageDelete: {
     methodKind: "unary";
-    input: typeof MessageDeleteRequestSchema;
+    input: typeof ThreadMessageDeleteRequestSchema;
     output: typeof EmptySchema;
   },
   /**
-   * mod
-   *
    * @generated from rpc forum.v1.ForumService.CategoryCreate
    */
   categoryCreate: {
@@ -1911,6 +1919,14 @@ export const ForumService: GenService<{
     methodKind: "unary";
     input: typeof CategoryRequestSchema;
     output: typeof CategoryResponseSchema;
+  },
+  /**
+   * @generated from rpc forum.v1.ForumService.Forum
+   */
+  forum: {
+    methodKind: "unary";
+    input: typeof ForumRequestSchema;
+    output: typeof ForumResponseSchema;
   },
   /**
    * @generated from rpc forum.v1.ForumService.ForumCreate

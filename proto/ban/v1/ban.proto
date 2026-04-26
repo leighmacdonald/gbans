@@ -87,7 +87,7 @@ message UpdateResponse {
 }
 
 message QuerySourceBansRequest {
-  string steam_id = 1 [(buf.validate.field).required = true];
+  int64 steam_id = 1 [(buf.validate.field).required = true];
 }
 
 message SourceBanRecord {

@@ -29,7 +29,7 @@ import type { Category } from "../rpc/forum/v1/forum_pb.ts";
 import { overview } from "../rpc/forum/v1/forum-ForumService_connectquery.ts";
 import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { logErr } from "../util/errors.ts";
-import { avatarHashToURL, humanCount } from "../util/text.tsx";
+import { avatarHashToURL, humanCount } from "../util/strings.ts";
 import { renderTimestamp } from "../util/time.ts";
 
 export const Route = createFileRoute("/_auth/forums/")({

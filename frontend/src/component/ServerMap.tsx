@@ -26,12 +26,12 @@ export const ServerMarkers = () => {
 				return (
 					<Circle
 						center={{
-							lat: s.latitude,
-							lng: s.longitude,
+							lat: s.latLong?.latitude ?? 0,
+							lng: s.latLong?.longitude ?? 0,
 						}}
 						radius={50000}
 						color={"green"}
-						key={`${s.short_name}${s.server_id}`}
+						key={`${s.nameShort}${s.serverId}`}
 					/>
 				);
 			}),

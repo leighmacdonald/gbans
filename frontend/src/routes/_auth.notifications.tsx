@@ -266,9 +266,9 @@ function NotificationsPage() {
 				Cell: (info) =>
 					info.row.original.steamId != null && info.row.original.steamId > 0n ? (
 						<PersonCell
-							steam_id={info.row.original.steamId}
-							personaname={info.row.original.name}
-							avatar_hash={info.row.original.avatarHash}
+							steamId={info.row.original.steamId}
+							personaName={info.row.original.name}
+							avatarHash={info.row.original.avatarHash}
 						/>
 					) : (
 						""

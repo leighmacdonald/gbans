@@ -1,3 +1,4 @@
+import { useQuery } from "@connectrpc/connect-query";
 import HistoryIcon from "@mui/icons-material/History";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
@@ -7,33 +8,28 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
-import { apiGetSourceBans } from "../api";
-import type { sbBanRecord } from "../schema/bans.ts";
+import type { SourceBanRecord } from "../rpc/ban/v1/ban_pb.ts";
+import { querySourceBans } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
+import { renderTimestamp } from "../util/time.ts";
 import { ContainerWithHeader } from "./ContainerWithHeader";
 import { TableCellBool } from "./table/TableCellBool.tsx";
 
 interface SourceBansListProps {
-	steam_id: string;
-	is_reporter: boolean;
+	steamId: bigint;
+	isReporter: boolean;
 }
 
-export const SourceBansList = ({ steam_id, is_reporter }: SourceBansListProps) => {
-	const { data: bans } = useQuery({
-		queryKey: ["sourcebans", { steam_id }],
-		queryFn: async ({ signal }) => {
-			return await apiGetSourceBans(steam_id, signal);
-		},
-	});
+export const SourceBansList = ({ steamId, isReporter }: SourceBansListProps) => {
+	const { data, isLoading } = useQuery(querySourceBans, { steamId });
 
-	if (!bans) {
+	if (!data?.bans || isLoading) {
 		return;
 	}
 
 	return (
 		<ContainerWithHeader title={"External Ban History"} iconLeft={<HistoryIcon />}>
 			<Stack spacing={1}>
-				<Typography variant={"h5"}>{is_reporter ? "Reporter History" : "Suspect History"}</Typography>
+				<Typography variant={"h5"}>{isReporter ? "Reporter History" : "Suspect History"}</Typography>
 				<TableContainer>
 					<Table size="small">
 						<TableHead>
@@ -46,12 +42,12 @@ export const SourceBansList = ({ steam_id, is_reporter }: SourceBansListProps) =
 							</TableRow>
 						</TableHead>
 						<TableBody>
-							{bans.map((ban: sbBanRecord) => {
+							{data.bans.map((ban: SourceBanRecord) => {
 								return (
-									<TableRow key={`ban-${ban.created_on.toDateString()}`} hover>
-										<TableCell>{ban.created_on.toDateString()}</TableCell>
-										<TableCell>{ban.site_name}</TableCell>
-										<TableCell>{ban.persona_name}</TableCell>
+									<TableRow key={`ban-${String(ban.createdOn)}`} hover>
+										<TableCell>{renderTimestamp(ban.createdOn)}</TableCell>
+										<TableCell>{ban.siteName}</TableCell>
+										<TableCell>{ban.personaName}</TableCell>
 										<TableCell>{ban.reason}</TableCell>
 										<TableCellBool enabled={ban.permanent} />
 									</TableRow>

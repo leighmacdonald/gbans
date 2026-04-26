@@ -10,7 +10,7 @@ watch:
     pnpm run watch
 
 fmt:
-    pnpm run fmt
+    @pnpm run fmt
 
 serve:
     pnpm run serve

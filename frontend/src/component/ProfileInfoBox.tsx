@@ -6,7 +6,7 @@ import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import { ErrorCode } from "../error.tsx";
 import { profile } from "../rpc/person/v1/person-PersonService_connectquery.ts";
-import { avatarHashToURL } from "../util/text.tsx";
+import { avatarHashToURL } from "../util/strings.ts";
 import { renderTimestamp } from "../util/time.ts";
 import { ContainerWithHeader } from "./ContainerWithHeader";
 import { ErrorDetails } from "./ErrorDetails.tsx";

@@ -3,27 +3,23 @@ import GavelIcon from "@mui/icons-material/Gavel";
 import NewReleasesIcon from "@mui/icons-material/NewReleases";
 import QuizIcon from "@mui/icons-material/Quiz";
 import Tooltip from "@mui/material/Tooltip";
-import { ReportStatus, type ReportStatusEnum } from "../schema/report.ts";
+import { ReportStatus } from "../rpc/ban/v1/report_pb.ts";
 
-interface ReportStatusIconProps {
-	reportStatus: ReportStatusEnum;
-}
-
-export const ReportStatusIcon = ({ reportStatus }: ReportStatusIconProps) => {
+export const ReportStatusIcon = ({ reportStatus }: { reportStatus: ReportStatus }) => {
 	switch (reportStatus) {
-		case ReportStatus.NeedMoreInfo:
+		case ReportStatus.NEED_MORE_INFO:
 			return (
 				<Tooltip title={"Needs more information"}>
 					<QuizIcon color={"warning"} />
 				</Tooltip>
 			);
-		case ReportStatus.ClosedWithoutAction:
+		case ReportStatus.CLOSED_WITHOUT_ACTION:
 			return (
 				<Tooltip title={"Report closed with no action"}>
 					<CancelPresentationIcon color={"action"} />
 				</Tooltip>
 			);
-		case ReportStatus.ClosedWithAction:
+		case ReportStatus.CLOSED_WITH_ACTION:
 			return (
 				<Tooltip title={"Report closed with action"}>
 					<GavelIcon color={"error"} />

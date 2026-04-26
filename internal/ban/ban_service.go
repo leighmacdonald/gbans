@@ -3,6 +3,7 @@ package ban
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -116,7 +117,8 @@ func (s BanService) Get(ctx context.Context, req *v1.GetRequest) (*v1.GetRespons
 }
 
 func (s BanService) QuerySourceBans(ctx context.Context, req *v1.QuerySourceBansRequest) (*v1.QuerySourceBansResponse, error) {
-	queryResp, errResp := s.client.BansSearchWithResponse(ctx, &thirdparty.BansSearchParams{Steamids: req.GetSteamId()})
+	sid := req.GetSteamId()
+	queryResp, errResp := s.client.BansSearchWithResponse(ctx, &thirdparty.BansSearchParams{Steamids: fmt.Sprintf("%d", sid)})
 	if errResp != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}

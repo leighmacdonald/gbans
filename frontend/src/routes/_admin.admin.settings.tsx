@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: form needs it */
 
-import { useMutation, useSuspenseQuery } from "@connectrpc/connect-query";
+import { createClient } from "@connectrpc/connect";
+import { createConnectQueryKey, useMutation, useSuspenseQuery } from "@connectrpc/connect-query";
 import AddModeratorIcon from "@mui/icons-material/AddModerator";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import CleaningServicesIcon from "@mui/icons-material/CleaningServices";
@@ -26,7 +27,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { z } from "zod/v4";
-import { apiGetDemoCleanup, apiGetNetworkUpdateDB } from "../api";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { UploadButton } from "../component/form/button/UploadButton.tsx";
 import { CheckboxField } from "../component/form/field/CheckboxField.tsx";
@@ -35,9 +35,12 @@ import { TabButton } from "../component/TabButton.tsx";
 import { TabSection } from "../component/TabSection.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import type { Asset } from "../rpc/asset/v1/asset_pb.ts";
+import { type Asset, AssetService } from "../rpc/asset/v1/asset_pb.ts";
 import type { Config } from "../rpc/config/v1/config_pb.ts";
 import { get, update } from "../rpc/config/v1/config-ConfigService_connectquery.ts";
+import { NetworkService } from "../rpc/network/v1/network_pb.ts";
+import { DemoService } from "../rpc/servers/v1/demo_pb.ts";
+import { finalTransport } from "../transport.ts";
 import { logErr } from "../util/errors.ts";
 import { emptyOrNullString } from "../util/types.ts";
 
@@ -123,22 +126,40 @@ function AdminSettings() {
 		},
 		[form],
 	);
+
 	const onUpdateDB = useCallback(async () => {
+		const networkClient = createClient(NetworkService, finalTransport);
 		try {
-			const ac = new AbortController();
-			await apiGetNetworkUpdateDB(ac.signal);
+			await queryClient.fetchQuery({
+				queryKey: createConnectQueryKey({
+					schema: AssetService,
+					transport: finalTransport,
+					cardinality: "finite",
+				}),
+				queryFn: async () => {
+					return await networkClient.updateDB({});
+				},
+			});
 			sendFlash("success", "Started database update");
 		} catch (e) {
 			logErr(e);
 			sendFlash("error", "Update already running");
 		}
-	}, [sendFlash]);
+	}, [sendFlash, queryClient.fetchQuery]);
 
 	const onCleanup = useCallback(async () => {
+		const demosClient = createClient(DemoService, finalTransport);
+
 		try {
 			await queryClient.fetchQuery({
-				queryKey: ["demoCleanup"],
-				queryFn: async ({ signal }) => await apiGetDemoCleanup(signal),
+				queryKey: createConnectQueryKey({
+					schema: DemoService,
+					transport: finalTransport,
+					cardinality: "finite",
+				}),
+				queryFn: async () => {
+					return await demosClient.runCleanup({});
+				},
 			});
 			sendFlash("success", "Cleanup started");
 		} catch (e) {
@@ -1054,7 +1075,7 @@ function AdminSettings() {
 										/>
 									</Grid>
 									<Grid size={{ xs: 12 }}>
-										<SubHeading>Output ingame chat messages logs.</SubHeading>
+										<SubHeading>Output in-game chat messages logs.</SubHeading>
 										<form.AppField
 											name={"chat_log_channel_id"}
 											children={(field) => {

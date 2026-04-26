@@ -119,11 +119,11 @@ function BanPage() {
 					)}
 
 					{permissionLevel() >= Privilege.MODERATOR && (
-						<SourceBansList steam_id={banData.ban.sourceId.toString()} is_reporter={true} />
+						<SourceBansList steamId={banData.ban.sourceId} isReporter={true} />
 					)}
 
 					{permissionLevel() >= Privilege.MODERATOR && (
-						<SourceBansList steam_id={banData.ban.targetId.toString()} is_reporter={false} />
+						<SourceBansList steamId={banData.ban.targetId} isReporter={false} />
 					)}
 
 					{(banMessages?.messages ?? []).map((m) => (

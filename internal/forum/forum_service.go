@@ -35,12 +35,12 @@ func NewService(forums Forums, authMiddleware *rpc.Middleware, option ...connect
 	authMiddleware.AuthedRoute(forumv1connect.ForumServiceThreadProcedure, rpc.WithMinPermissions(permission.User))
 	authMiddleware.AuthedRoute(forumv1connect.ForumServiceThreadDeleteProcedure, rpc.WithMinPermissions(permission.User))
 	authMiddleware.AuthedRoute(forumv1connect.ForumServiceForumProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(forumv1connect.ForumServiceForumMessagesProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceThreadMessagesProcedure, rpc.WithMinPermissions(permission.User))
 	authMiddleware.AuthedRoute(forumv1connect.ForumServiceThreadCreateProcedure, rpc.WithMinPermissions(permission.User))
 	authMiddleware.AuthedRoute(forumv1connect.ForumServiceThreadEditProcedure, rpc.WithMinPermissions(permission.User))
 	authMiddleware.AuthedRoute(forumv1connect.ForumServiceThreadReplyCreateProcedure, rpc.WithMinPermissions(permission.User))
 	authMiddleware.AuthedRoute(forumv1connect.ForumServiceThreadReplyEditProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(forumv1connect.ForumServiceMessageDeleteProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(forumv1connect.ForumServiceThreadMessageDeleteProcedure, rpc.WithMinPermissions(permission.User))
 	authMiddleware.AuthedRoute(forumv1connect.ForumServiceCategoryCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
 	authMiddleware.AuthedRoute(forumv1connect.ForumServiceCategoryEditProcedure, rpc.WithMinPermissions(permission.Moderator))
 	authMiddleware.AuthedRoute(forumv1connect.ForumServiceCategoryProcedure, rpc.WithMinPermissions(permission.Moderator))
@@ -155,7 +155,7 @@ func (s Service) Threads(ctx context.Context, req *v1.ThreadsRequest) (*v1.Threa
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 
-	resp := v1.ThreadsResponse{Threads: make([]*v1.Thread, len(threads))}
+	resp := v1.ThreadsResponse{Threads: make([]*v1.ThreadWithSource, len(threads))}
 	for idx, thread := range threads {
 		resp.Threads[idx] = fromThreadWithSource(thread)
 	}
@@ -228,7 +228,7 @@ func (s Service) Forum(ctx context.Context, req *v1.ForumRequest) (*v1.ForumResp
 	return &v1.ForumResponse{Forum: toForum(forum)}, nil
 }
 
-func (s Service) ForumMessages(ctx context.Context, req *v1.ForumMessagesRequest) (*v1.ForumMessagesResponse, error) {
+func (s Service) ThreadMessages(ctx context.Context, req *v1.ThreadMessagesRequest) (*v1.ThreadMessagesResponse, error) {
 	messages, errMessages := s.forums.Messages(ctx, ThreadMessagesQuery{
 		Deleted:       req.GetDeleted(),
 		ForumThreadID: req.GetForumThreadId(),
@@ -238,7 +238,7 @@ func (s Service) ForumMessages(ctx context.Context, req *v1.ForumMessagesRequest
 	}
 
 	activeUsers := s.forums.Current()
-	resp := v1.ForumMessagesResponse{Messages: make([]*v1.Message, len(messages))}
+	resp := v1.ThreadMessagesResponse{Messages: make([]*v1.Message, len(messages))}
 
 	for idx := range messages {
 		for _, activity := range activeUsers {
@@ -381,7 +381,7 @@ func (s Service) ThreadReplyEdit(ctx context.Context, req *v1.ThreadReplyEditReq
 	return &v1.ThreadReplyEditResponse{Message: toMessage(message)}, nil
 }
 
-func (s Service) MessageDelete(ctx context.Context, req *v1.MessageDeleteRequest) (*emptypb.Empty, error) {
+func (s Service) ThreadMessageDelete(ctx context.Context, req *v1.ThreadMessageDeleteRequest) (*emptypb.Empty, error) {
 	user, _ := rpc.UserInfoFromCtx(ctx)
 	if err := s.forums.MessageDelete(ctx, user, req.GetForumMessageId()); err != nil {
 		switch {
@@ -488,13 +488,17 @@ func fromThread(thread Thread) *v1.Thread {
 	}
 }
 
-func fromThreadWithSource(thread ThreadWithSource) *v1.Thread {
-	return &v1.Thread{
-		ForumId:   &thread.ForumID,
-		SourceId:  ptr.To(thread.SourceID.Int64()),
-		Title:     &thread.Title,
-		CreatedOn: timestamppb.New(thread.CreatedOn),
-		UpdatedOn: timestamppb.New(thread.UpdatedOn),
+func fromThreadWithSource(thread ThreadWithSource) *v1.ThreadWithSource {
+	return &v1.ThreadWithSource{
+		Thread:               fromThread(thread.Thread),
+		PersonaName:          &thread.Personaname,
+		AvatarHash:           &thread.Avatarhash,
+		PermissionLevel:      ptr.To(personv1.Privilege(thread.PermissionLevel)),
+		RecentForumMessageId: &thread.RecentForumMessageID,
+		RecentCreatedOn:      timestamppb.New(thread.RecentCreatedOn),
+		RecentSteamId:        &thread.RecentSteamID,
+		RecentPersonaName:    &thread.RecentPersonaname,
+		RecentAvatarHash:     &thread.RecentAvatarhash,
 	}
 }
 

@@ -20,14 +20,14 @@ export const overview = ForumService.method.overview;
 export const recentMessages = ForumService.method.recentMessages;
 
 /**
- * @generated from rpc forum.v1.ForumService.Threads
- */
-export const threads = ForumService.method.threads;
-
-/**
  * @generated from rpc forum.v1.ForumService.Thread
  */
 export const thread = ForumService.method.thread;
+
+/**
+ * @generated from rpc forum.v1.ForumService.Threads
+ */
+export const threads = ForumService.method.threads;
 
 /**
  * @generated from rpc forum.v1.ForumService.ThreadDelete
@@ -35,18 +35,11 @@ export const thread = ForumService.method.thread;
 export const threadDelete = ForumService.method.threadDelete;
 
 /**
- * @generated from rpc forum.v1.ForumService.Forum
+ * @generated from rpc forum.v1.ForumService.ThreadMessages
  */
-export const forum = ForumService.method.forum;
+export const threadMessages = ForumService.method.threadMessages;
 
 /**
- * @generated from rpc forum.v1.ForumService.ForumMessages
- */
-export const forumMessages = ForumService.method.forumMessages;
-
-/**
- * authed
- *
  * @generated from rpc forum.v1.ForumService.ThreadCreate
  */
 export const threadCreate = ForumService.method.threadCreate;
@@ -67,13 +60,11 @@ export const threadReplyCreate = ForumService.method.threadReplyCreate;
 export const threadReplyEdit = ForumService.method.threadReplyEdit;
 
 /**
- * @generated from rpc forum.v1.ForumService.MessageDelete
+ * @generated from rpc forum.v1.ForumService.ThreadMessageDelete
  */
-export const messageDelete = ForumService.method.messageDelete;
+export const threadMessageDelete = ForumService.method.threadMessageDelete;
 
 /**
- * mod
- *
  * @generated from rpc forum.v1.ForumService.CategoryCreate
  */
 export const categoryCreate = ForumService.method.categoryCreate;
@@ -87,6 +78,11 @@ export const categoryEdit = ForumService.method.categoryEdit;
  * @generated from rpc forum.v1.ForumService.Category
  */
 export const category = ForumService.method.category;
+
+/**
+ * @generated from rpc forum.v1.ForumService.Forum
+ */
+export const forum = ForumService.method.forum;
 
 /**
  * @generated from rpc forum.v1.ForumService.ForumCreate

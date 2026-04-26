@@ -1,3 +1,4 @@
+import { useQuery } from "@connectrpc/connect-query";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Grid from "@mui/material/Grid";
@@ -8,23 +9,16 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
-import { apiGetMessageContext } from "../api";
+import { queryContext } from "../rpc/chat/v1/chat-ChatService_connectquery.ts";
 import { TextLink } from "./TextLink.tsx";
 
 interface PlayerMessageContextProps {
-	playerMessageId: number;
+	playerMessageId: bigint;
 	padding: number;
 }
 
 export const PlayerMessageContext = ({ playerMessageId, padding = 3 }: PlayerMessageContextProps) => {
-	const { data: messages, isLoading } = useQuery({
-		queryKey: ["messageContext", playerMessageId],
-
-		queryFn: async ({ signal }) => {
-			return await apiGetMessageContext(playerMessageId, padding, signal);
-		},
-	});
+	const { data, isLoading } = useQuery(queryContext, { personMessageId: playerMessageId, padding });
 
 	return (
 		<Grid container>
@@ -47,18 +41,21 @@ export const PlayerMessageContext = ({ playerMessageId, padding = 3 }: PlayerMes
 								</TableRow>
 							</TableHead>
 							<TableBody>
-								{messages?.map((m) => {
+								{data?.messages?.map((m) => {
 									return (
 										<TableRow
-											key={`chat-msg-${m.person_message_id}`}
-											selected={playerMessageId === m.person_message_id}
+											key={`chat-msg-${m.personMessageId}`}
+											selected={playerMessageId === m.personMessageId}
 										>
 											<TableCell>
-												<Typography variant={"body2"}>{m.server_name}</Typography>
+												<Typography variant={"body2"}>{m.serverName}</Typography>
 											</TableCell>
 											<TableCell>
-												<TextLink to={`/profile/$steamId`} params={{ steamId: m.steam_id }}>
-													{m.persona_name}
+												<TextLink
+													to={`/profile/$steamId`}
+													params={{ steamId: String(m.steamId) }}
+												>
+													{m.personaName}
 												</TextLink>
 											</TableCell>
 											<TableCell>

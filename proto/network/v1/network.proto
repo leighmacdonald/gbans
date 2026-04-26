@@ -110,7 +110,7 @@ message QueryConnectionsRequest {
   string country_code = 4 [(buf.validate.field).string.len = 2];
   string country_name = 5;
   string city_name = 6;
-  repeated int32 server_id = 7 [(buf.validate.field).int32.gt = 0];
+  repeated int32 server_id = 7;
 }
 
 message QueryConnectionsResponse {

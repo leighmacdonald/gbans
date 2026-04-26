@@ -55,7 +55,7 @@ type RequestReportCreate struct {
 type ReportStatus int
 
 const (
-	AnyStatus ReportStatus = iota - 1
+	qAnyStatus ReportStatus = iota - 1
 	Opened
 	NeedMoreInfo
 	ClosedWithoutAction
@@ -118,7 +118,7 @@ type ReportWithAuthor struct {
 
 type ReportMessage struct {
 	ReportID        int32                `json:"report_id"`
-	ReportMessageID int64                `json:"report_message_id"`
+	ReportMessageID int32                `json:"report_message_id"`
 	AuthorID        steamid.SteamID      `json:"author_id"`
 	MessageMD       string               `json:"message_md"`
 	Deleted         bool                 `json:"deleted"`
@@ -366,11 +366,11 @@ func (r Reports) Messages(ctx context.Context, reportID int32) ([]ReportMessage,
 	return r.repository.GetReportMessages(ctx, reportID)
 }
 
-func (r Reports) MessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error) {
+func (r Reports) MessageByID(ctx context.Context, reportMessageID int32) (ReportMessage, error) {
 	return r.repository.GetReportMessageByID(ctx, reportMessageID)
 }
 
-func (r Reports) DropMessage(ctx context.Context, curUser personDomain.BaseUser, reportMessageID int64) error {
+func (r Reports) DropMessage(ctx context.Context, curUser personDomain.BaseUser, reportMessageID int32) error {
 	existing, errExist := r.repository.GetReportMessageByID(ctx, reportMessageID)
 	if errExist != nil {
 		return errExist
@@ -387,7 +387,7 @@ func (r Reports) DropMessage(ctx context.Context, curUser personDomain.BaseUser,
 	go r.notif.Send(notification.NewDiscord(r.logChannel,
 		DeleteReportMessage(existing, curUser)))
 
-	slog.Info("Deleted report message", slog.Int64("report_message_id", reportMessageID))
+	slog.Info("Deleted report message", slog.Int("report_message_id", int(reportMessageID)))
 
 	return nil
 }
@@ -491,7 +491,7 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.BaseUser, re
 	return newReport, nil
 }
 
-func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser personDomain.BaseUser, req RequestMessageBodyMD) (ReportMessage, error) {
+func (r Reports) EditMessage(ctx context.Context, reportMessageID int32, curUser personDomain.BaseUser, req RequestMessageBodyMD) (ReportMessage, error) {
 	if reportMessageID <= 0 {
 		return ReportMessage{}, httphelper.ErrParamInvalid
 	}
@@ -525,7 +525,7 @@ func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser
 		EditReportMessageResponse(req.BodyMD, existing.MessageMD,
 			link.Path(existing), curUser, link.Path(curUser))))
 
-	slog.Info("Report message edited", slog.Int64("report_message_id", reportMessageID))
+	slog.Info("Report message edited", slog.Int("report_message_id", int(reportMessageID)))
 
 	return r.MessageByID(ctx, reportMessageID)
 }

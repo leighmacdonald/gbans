@@ -193,9 +193,9 @@ function AdminBans() {
 				Cell: ({ row }) => {
 					return (
 						<PersonCell
-							steam_id={row.original.sourceId}
-							personaname={row.original.sourcePersonaName}
-							avatar_hash={row.original.sourceAvatarHash}
+							steamId={row.original.sourceId}
+							personaName={row.original.sourcePersonaName}
+							avatarHash={row.original.sourceAvatarHash}
 						>
 							<RouterLink
 								style={{
@@ -235,9 +235,9 @@ function AdminBans() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.targetId}
-						personaname={row.original.targetPersonaName}
-						avatar_hash={row.original.targetAvatarHash}
+						steamId={row.original.targetId}
+						personaName={row.original.targetPersonaName}
+						avatarHash={row.original.targetAvatarHash}
 					>
 						<RouterLink
 							style={{

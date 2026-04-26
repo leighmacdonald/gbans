@@ -15,7 +15,7 @@ import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { SteamIDList } from "../component/SteamIDList.tsx";
 import { profile } from "../rpc/person/v1/person-PersonService_connectquery.ts";
 import { createExternalLinks } from "../util/history.ts";
-import { avatarHashToURL } from "../util/text.tsx";
+import { avatarHashToURL } from "../util/strings.ts";
 import { isValidSteamDate, renderTimestamp } from "../util/time.ts";
 
 export const Route = createFileRoute("/_guest/profile/$steamId")({

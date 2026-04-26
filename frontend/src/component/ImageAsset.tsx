@@ -1,8 +1,8 @@
 import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
 import CardMedia from "@mui/material/CardMedia";
-import { assetURL } from "../api/media";
-import type { Asset } from "../schema/asset";
+import type { Asset } from "../rpc/asset/v1/asset_pb.ts";
+import { assetURL } from "../util/strings.ts";
 
 export const ImageAsset = ({ asset }: { asset: Asset }) => {
 	return (

@@ -148,9 +148,9 @@ function AdminReports() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={BigInt(row.original.author?.steamId ?? 0n)}
-						personaname={String(row.original.author?.name)}
-						avatar_hash={String(row.original.author?.avatarHash)}
+						steamId={BigInt(row.original.author?.steamId ?? 0n)}
+						personaName={String(row.original.author?.name)}
+						avatarHash={String(row.original.author?.avatarHash)}
 					>
 						<RouterLink
 							style={{
@@ -191,9 +191,9 @@ function AdminReports() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={BigInt(row.original.subject?.steamId ?? 0n)}
-						personaname={String(row.original.subject?.name)}
-						avatar_hash={String(row.original.subject?.avatarHash)}
+						steamId={BigInt(row.original.subject?.steamId ?? 0n)}
+						personaName={String(row.original.subject?.name)}
+						avatarHash={String(row.original.subject?.avatarHash)}
 					>
 						<RouterLink
 							style={{

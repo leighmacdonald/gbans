@@ -166,8 +166,8 @@ export const BanModPanel = ({ banId }: { banId: number }) => {
 						color={"secondary"}
 						to={"/chatlogs"}
 						search={{
-							flagged_only: false,
-							columnFilters: [{ id: "steam_id", value: data?.ban?.targetId }],
+							flaggedOnly: false,
+							columnFilters: [{ id: "steamId", value: data?.ban?.targetId }],
 						}}
 						startIcon={<ChatIcon />}
 					>
@@ -186,7 +186,7 @@ export const BanModPanel = ({ banId }: { banId: number }) => {
 						variant={"contained"}
 						color={"secondary"}
 						to={"/admin/bans"}
-						search={{ columnFilters: [{ id: "target_id", value: data?.ban?.targetId }] }}
+						search={{ columnFilters: [{ id: "targetId", value: data?.ban?.targetId }] }}
 						startIcon={<NoAccountsIcon />}
 					>
 						Ban History
@@ -196,7 +196,7 @@ export const BanModPanel = ({ banId }: { banId: number }) => {
 						variant={"contained"}
 						color={"secondary"}
 						to={"/admin/reports"}
-						search={{ columnFilters: [{ id: "target_id", value: data?.ban?.targetId }] }}
+						search={{ columnFilters: [{ id: "targetId", value: data?.ban?.targetId }] }}
 						startIcon={<VideocamIcon />}
 					>
 						Report History
@@ -206,7 +206,7 @@ export const BanModPanel = ({ banId }: { banId: number }) => {
 						variant={"contained"}
 						color={"secondary"}
 						to={"/admin/network/playersbyip"}
-						search={{ columnFilters: [{ id: "target_id", value: data?.ban?.targetId }] }}
+						search={{ columnFilters: [{ id: "targetId", value: data?.ban?.targetId }] }}
 						startIcon={<WifiFindIcon />}
 					>
 						Connection History

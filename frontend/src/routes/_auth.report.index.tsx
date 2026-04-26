@@ -39,9 +39,9 @@ import { emptyOrNullString } from "../util/types.ts";
 const validateSearch = commonTableSearchSchema.extend({
 	rows: z.number().optional(),
 	sortColumn: z.enum(["report_status", "created_on"]).optional(),
-	steamId: z.string().optional(),
+	steamId: z.bigint().optional(),
 	demoId: z.number().optional(),
-	personMessageId: z.number().optional(),
+	personMessageId: z.bigint().optional(),
 });
 
 export const Route = createFileRoute("/_auth/report/")({
@@ -181,13 +181,13 @@ const UserReportHistory = () => {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={String(row.original.subject?.steamId)}
-						personaname={String(
+						steamId={String(row.original.subject?.steamId)}
+						personaName={String(
 							emptyOrNullString(row.original.subject?.name)
 								? row.original.subject?.steamId.toString()
 								: row.original.subject?.name,
 						)}
-						avatar_hash={String(row.original.subject?.avatarHash)}
+						avatarHash={String(row.original.subject?.avatarHash)}
 					/>
 				),
 			}),
@@ -253,7 +253,7 @@ const ReportCreateForm = (): JSX.Element => {
 		description: "",
 		demoId: demoId ?? 0,
 		demoTick: 0,
-		personMessageId: personMessageId ?? 0,
+		personMessageId: personMessageId ?? 0n,
 		targetId: steamId ?? "",
 		reason: personMessageId ? BanReason.LANGUAGE : BanReason.CHEATING,
 		reasonText: "",

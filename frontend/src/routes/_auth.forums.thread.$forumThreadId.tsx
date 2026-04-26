@@ -1,3 +1,4 @@
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ConstructionIcon from "@mui/icons-material/Construction";
@@ -11,10 +12,9 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
-import { apiCreateThreadReply, apiDeleteMessage, apiGetThread, apiGetThreadMessages } from "../api/forum.ts";
 import { mdEditorRef } from "../component/form/field/MarkdownField.tsx";
 import { ThreadMessageContainer } from "../component/forum/ForumThreadMessageContainer.tsx";
 import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
@@ -26,40 +26,32 @@ import { VCenterBox } from "../component/VCenterBox.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import type { ForumMessage, ForumThread } from "../schema/forum.ts";
-import { PermissionLevel } from "../schema/people.ts";
+import type { Message, Thread } from "../rpc/forum/v1/forum_pb.ts";
+import {
+	thread,
+	threadMessageDelete,
+	threadMessages,
+	threadReplyCreate,
+} from "../rpc/forum/v1/forum-ForumService_connectquery.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { logErr } from "../util/errors.ts";
 import { useScrollToLocation } from "../util/history.ts";
 import { commonTableSearchSchema, RowsPerPage } from "../util/table.ts";
-import { renderDateTime } from "../util/time.ts";
+import { renderTimestamp } from "../util/time.ts";
 
 const forumThreadSearchSchema = commonTableSearchSchema;
 
-export const Route = createFileRoute("/_auth/forums/thread/$forum_thread_id")({
+export const Route = createFileRoute("/_auth/forums/thread/$forumThreadId")({
 	component: ForumThreadPage,
 	validateSearch: (search) => forumThreadSearchSchema.parse(search),
-	loader: async ({ context, params }) => {
-		const thread = await context.queryClient.fetchQuery({
-			queryKey: ["forumThread", { forum_thread_id: Number(params.forum_thread_id) }],
-			queryFn: async ({ signal }) => {
-				return await apiGetThread(Number(params.forum_thread_id), signal);
-			},
-		});
-
-		return { thread };
-	},
-	head: ({ loaderData, match }) => ({
-		meta: [
-			{ name: "description", content: loaderData?.thread?.title },
-			match.context.title(loaderData?.thread?.title ?? "Thread"),
-		],
+	head: ({ match }) => ({
+		meta: [match.context.title("Thread")],
 	}),
 });
 
 function ForumThreadPage() {
 	const { hasPermission, permissionLevel } = useAuth();
-	const { forum_thread_id } = Route.useParams();
-	const { thread } = Route.useLoaderData();
+	const { forumThreadId } = Route.useParams();
 	const { appInfo } = Route.useRouteContext();
 	const { pageIndex } = Route.useSearch();
 	const { sendFlash, sendError } = useUserFlashCtx();
@@ -68,16 +60,10 @@ function ForumThreadPage() {
 	const navigate = useNavigate();
 	const theme = useTheme();
 
-	const { data: messages, isLoading: isLoadingMessages } = useQuery({
-		queryKey: ["threadMessages", { forum_thread_id }],
-		queryFn: async ({ signal }) => {
-			return await apiGetThreadMessages(
-				{
-					forum_thread_id: Number(forum_thread_id),
-				},
-				signal,
-			);
-		},
+	const { data: threadData, isLoading: isLoadingThread } = useQuery(thread, { forumThreadId: Number(forumThreadId) });
+
+	const { data: messagesData, isLoading: isLoadingMessages } = useQuery(threadMessages, {
+		forumThreadId: Number(forumThreadId),
 	});
 
 	const [pagination, setPagination] = useState({
@@ -85,11 +71,11 @@ function ForumThreadPage() {
 		pageSize: RowsPerPage.TwentyFive, //default page size
 	});
 
-	const onSave = async (message: ForumMessage) => {
+	const onSave = async (message: Message) => {
 		queryClient.setQueryData(
-			["threadMessages", { forum_thread_id }],
-			messages?.map((m) => {
-				return message.forum_message_id === m.forum_message_id ? message : m;
+			["threadMessages", { forum_thread_id: forumThreadId }],
+			messagesData?.messages?.map((m) => {
+				return message.forumMessageId === m.forumMessageId ? message : m;
 			}),
 		);
 	};
@@ -97,43 +83,39 @@ function ForumThreadPage() {
 	useScrollToLocation();
 
 	const firstPostID = useMemo(() => {
-		if (Number(pageIndex) > 1 || !messages) {
+		if (Number(pageIndex) > 1 || !messagesData?.messages) {
 			return -1;
 		}
-		if (messages.length > 0) {
-			return messages[0].forum_message_id;
+		if (messagesData.messages.length > 0) {
+			return messagesData.messages[0].forumMessageId;
 		}
 		return -1;
-	}, [messages, pageIndex]);
+	}, [messagesData, pageIndex]);
 
 	const onEditThread = useCallback(async () => {
 		try {
 			const newThread = (await NiceModal.show(ForumThreadEditorModal, {
-				thread: thread,
-			})) as ForumThread;
+				thread: threadData?.thread,
+			})) as Thread;
 
-			if (newThread.forum_thread_id > 0) {
-				queryClient.setQueryData(["forumThread", { forum_thread_id: Number(forum_thread_id) }], newThread);
+			if (newThread.forumThreadId > 0) {
+				queryClient.setQueryData(["forumThread", { forum_thread_id: Number(forumThreadId) }], newThread);
 			} else {
 				await navigate({ to: "/forums" });
 			}
 		} catch (e) {
 			logErr(e);
 		}
-	}, [forum_thread_id, navigate, queryClient, thread]);
+	}, [forumThreadId, navigate, queryClient, threadData?.thread]);
 
-	const deleteMessageMutation = useMutation({
-		mutationFn: async ({ message }: { message: ForumMessage }) => {
-			const ac = new AbortController();
-			await apiDeleteMessage(message.forum_message_id, ac.signal);
-		},
+	const deleteMessageMutation = useMutation(threadMessageDelete, {
 		onSuccess: async (_, variables) => {
-			const newMessages = (messages ?? []).filter(
-				(m) => m.forum_message_id !== variables.message.forum_message_id,
+			const newMessages = (messagesData?.messages ?? []).filter(
+				(m) => m.forumMessageId !== variables.forumMessageId,
 			);
-			queryClient.setQueryData(["threadMessages", { forum_thread_id }], newMessages);
-			sendFlash("success", `Messages deleted successfully: #${variables.message.forum_message_id}`);
-			if (firstPostID === variables.message.forum_message_id) {
+			queryClient.setQueryData(["threadMessages", { forum_thread_id: forumThreadId }], newMessages);
+			sendFlash("success", `Messages deleted successfully: #${variables.forumMessageId}`);
+			if (firstPostID === variables.forumMessageId) {
 				await navigate({ to: "/forums" });
 			}
 		},
@@ -141,8 +123,8 @@ function ForumThreadPage() {
 	});
 
 	const onMessageDeleted = useCallback(
-		async (message: ForumMessage) => {
-			const isFirstMessage = firstPostID === message.forum_message_id;
+		async (message: Message) => {
+			const isFirstMessage = firstPostID === message.forumMessageId;
 			const confirmed = await confirmModal.show({
 				title: "Delete Post?",
 				children: (
@@ -162,22 +144,18 @@ function ForumThreadPage() {
 				return;
 			}
 
-			deleteMessageMutation.mutate({ message });
+			deleteMessageMutation.mutate({ forumMessageId: message.forumMessageId });
 		},
 		[confirmModal, deleteMessageMutation, firstPostID, theme.palette.error.dark],
 	);
 
-	const createMessageMutation = useMutation({
-		mutationFn: async ({ body_md }: { body_md: string }) => {
-			const ac = new AbortController();
-			return await apiCreateThreadReply(Number(forum_thread_id), body_md, ac.signal);
-		},
+	const createMessageMutation = useMutation(threadReplyCreate, {
 		onSuccess: (message) => {
-			const newMessages = [...(messages ?? []), message];
-			queryClient.setQueryData(["threadMessages", { forum_thread_id }], newMessages);
+			const newMessages = [...(messagesData?.messages ?? []), message];
+			queryClient.setQueryData(["threadMessages", { forum_thread_id: forumThreadId }], newMessages);
 			mdEditorRef.current?.setMarkdown("");
 			form.reset();
-			sendFlash("success", `New message created (#${message.forum_message_id})`);
+			sendFlash("success", `New message created (#${message.message?.forumMessageId})`);
 		},
 		onError: sendError,
 	});
@@ -187,12 +165,12 @@ function ForumThreadPage() {
 			createMessageMutation.mutate(value);
 		},
 		defaultValues: {
-			body_md: "",
+			bodyMd: "",
 		},
 	});
 
 	const replyContainer = useMemo(() => {
-		if (permissionLevel() === PermissionLevel.Guest) {
+		if (permissionLevel() === Privilege.GUEST) {
 			return (
 				<Navigate
 					to={"/login"}
@@ -201,7 +179,7 @@ function ForumThreadPage() {
 					}}
 				/>
 			);
-		} else if (thread?.forum_thread_id && !thread?.locked) {
+		} else if (threadData?.thread?.forumThreadId && !threadData.thread.locked) {
 			return (
 				<Paper>
 					<Box padding={2}>
@@ -215,7 +193,7 @@ function ForumThreadPage() {
 							<Grid container spacing={2} justifyItems={"flex-end"}>
 								<Grid size={{ xs: 12 }}>
 									<form.AppField
-										name={"body_md"}
+										name={"bodyMd"}
 										children={(field) => {
 											return <field.MarkdownField label={"Message"} minHeight={400} />;
 										}}
@@ -237,17 +215,21 @@ function ForumThreadPage() {
 		} else {
 			return null;
 		}
-	}, [permissionLevel, thread?.forum_thread_id, thread?.locked, form]);
+	}, [permissionLevel, threadData?.thread?.forumThreadId, threadData?.thread?.locked, form]);
+
+	if (isLoadingThread || isLoadingThread) {
+		return;
+	}
 
 	return (
 		<Stack spacing={1}>
 			<Stack direction={"row"}>
-				{hasPermission(PermissionLevel.Moderator) && (
+				{hasPermission(Privilege.MODERATOR) && (
 					<IconButton color={"warning"} onClick={onEditThread}>
 						<ConstructionIcon fontSize={"small"} />
 					</IconButton>
 				)}
-				<Typography variant={"h3"}>{thread?.title}</Typography>
+				<Typography variant={"h3"}>{threadData?.thread?.title}</Typography>
 			</Stack>
 			<Stack direction={"row"} spacing={1}>
 				<Person2Icon />
@@ -256,27 +238,28 @@ function ForumThreadPage() {
 						variant={"body2"}
 						component={RouterLink}
 						sx={{ color: (theme) => theme.palette.text.primary }}
-						to={`/profile/${thread?.source_id}`}
+						to={`/profile/${threadData?.thread?.sourceId}`}
 					>
-						{thread?.personaname ?? ""}
+						{/*{thread?.personaname ?? "FIXME"}*/}
+						{"FIXME"}
 					</Typography>
 				</VCenterBox>
 				<AccessTimeIcon />
 				<VCenterBox>
-					<Typography variant={"body2"}>{renderDateTime(thread?.created_on ?? new Date())}</Typography>
+					<Typography variant={"body2"}>{renderTimestamp(threadData?.thread?.createdOn)}</Typography>
 				</VCenterBox>
 			</Stack>
 			{isLoadingMessages ? (
 				<LoadingPlaceholder />
 			) : (
-				(messages ?? []).map((m) => (
+				(messagesData?.messages ?? []).map((m) => (
 					<ThreadMessageContainer
 						assetURL={appInfo.assetUrl}
 						onSave={onSave}
 						message={m}
-						key={`thread-message-id-${m.forum_message_id}`}
+						key={`thread-message-id-${m.forumMessageId}`}
 						onDelete={onMessageDeleted}
-						isFirstMessage={firstPostID === m.forum_message_id}
+						isFirstMessage={firstPostID === m.forumMessageId}
 					/>
 				))
 			)}
@@ -292,11 +275,11 @@ function ForumThreadPage() {
 						return { ...prev, pageIndex: page };
 					});
 				}}
-				count={(messages ?? []).length}
+				count={(messagesData?.messages ?? []).length}
 				rows={pagination.pageSize}
 				page={pagination.pageIndex}
 			/>
-			{thread?.locked && (
+			{threadData?.thread?.locked && (
 				<Paper>
 					<Typography variant={"h4"} textAlign={"center"} padding={1}>
 						<LockIcon /> Thread Locked

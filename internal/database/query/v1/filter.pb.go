@@ -7,7 +7,6 @@
 package queryv1
 
 import (
-	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -94,7 +93,7 @@ var File_database_query_v1_filter_proto protoreflect.FileDescriptor
 
 const file_database_query_v1_filter_proto_rawDesc = "" +
 	"\n" +
-	"\x1edatabase/query/v1/filter.proto\x12\x11database.query.v1\x1a\x1bbuf/validate/validate.proto\"e\n" +
+	"\x1edatabase/query/v1/filter.proto\x12\x11database.query.v1\"e\n" +
 	"\x06Filter\x12\x16\n" +
 	"\x06offset\x18\x01 \x01(\x04R\x06offset\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x04R\x05limit\x12\x12\n" +

@@ -1,3 +1,4 @@
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import DescriptionIcon from "@mui/icons-material/Description";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import LanIcon from "@mui/icons-material/Lan";
@@ -17,16 +18,14 @@ import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import Tab from "@mui/material/Tab";
 import Typography from "@mui/material/Typography";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type JSX, type SyntheticEvent, useState } from "react";
 import { z } from "zod/v4";
-import { apiCreateReportMessage } from "../api";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { reportMessagesQueryOptions } from "../queries/reportMessages.ts";
-import { PermissionLevel } from "../schema/people.ts";
-import type { Report } from "../schema/report.ts";
+import type { ReportWithAuthorValid } from "../rpc/ban/v1/report_pb.ts";
+import { reportMessageCreate, reportMessages } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { ContainerWithHeader } from "./ContainerWithHeader";
 import { ContainerWithHeaderAndButtons } from "./ContainerWithHeaderAndButtons.tsx";
 import { mdEditorRef } from "./form/field/MarkdownField.tsx";
@@ -38,28 +37,33 @@ import { TabPanel } from "./TabPanel";
 import { ChatTable } from "./table/ChatTable.tsx";
 import { IPHistoryTable } from "./table/IPHistoryTable.tsx";
 
-export const ReportViewComponent = ({ report, assetURL }: { report: Report; assetURL: string }): JSX.Element => {
+export const ReportViewComponent = ({
+	report,
+	assetURL,
+}: {
+	report: ReportWithAuthorValid;
+	assetURL: string;
+}): JSX.Element => {
 	const theme = useTheme();
-	const queryClient = useQueryClient();
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const [value, setValue] = useState<number>(0);
 	const { hasPermission } = useAuth();
-	const { data: messages, isLoading: isLoadingMessages } = useQuery(reportMessagesQueryOptions(report.report_id));
+
+	const { data: messageData, isLoading: isLoadingMessages } = useQuery(reportMessages, {
+		reportId: report.report.reportId,
+	});
 
 	const handleChange = (_: SyntheticEvent, newValue: number) => {
 		setValue(newValue);
 	};
 
-	const createMessageMutation = useMutation({
-		mutationFn: async ({ body_md }: { body_md: string }) => {
-			const ac = new AbortController();
-			return await apiCreateReportMessage(report.report_id, body_md, ac.signal);
-		},
-		onSuccess: (message) => {
-			queryClient.setQueryData(reportMessagesQueryOptions(report.report_id).queryKey, [
-				...(messages ?? []),
-				message,
-			]);
+	const createMessageMutation = useMutation(reportMessageCreate, {
+		onSuccess: () => {
+			// FIXME
+			// queryClient.setQueryData(reportMessagesQueryOptions(report.report_id).queryKey, [
+			// 	...(messageData?.messages ?? []),
+			// 	message,
+			// ]);
 			mdEditorRef.current?.setMarkdown("");
 			form.reset();
 			sendFlash("success", "Created message successfully");
@@ -69,10 +73,10 @@ export const ReportViewComponent = ({ report, assetURL }: { report: Report; asse
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			createMessageMutation.mutate(value);
+			return await createMessageMutation.mutateAsync({ ...value, reportId: report.report.reportId });
 		},
 		defaultValues: {
-			body_md: "",
+			bodyMd: "",
 		},
 	});
 
@@ -95,7 +99,7 @@ export const ReportViewComponent = ({ report, assetURL }: { report: Report; asse
 									aria-label="ReportCreatePage detail tabs"
 								>
 									<Tab label="Description" icon={<DescriptionIcon />} iconPosition={"start"} />
-									{hasPermission(PermissionLevel.Moderator) && (
+									{hasPermission(Privilege.MODERATOR) && (
 										<Tab
 											sx={{ height: 20 }}
 											label={`Chat Logs`}
@@ -103,7 +107,7 @@ export const ReportViewComponent = ({ report, assetURL }: { report: Report; asse
 											iconPosition={"start"}
 										/>
 									)}
-									{hasPermission(PermissionLevel.Moderator) && (
+									{hasPermission(Privilege.MODERATOR) && (
 										<Tab label={`Connections`} icon={<LanIcon />} iconPosition={"start"} />
 									)}
 								</TabList>
@@ -112,25 +116,25 @@ export const ReportViewComponent = ({ report, assetURL }: { report: Report; asse
 							<TabPanel value={value} index={0}>
 								{report && (
 									<Box minHeight={300}>
-										<MarkDownRenderer body_md={report.description} assetURL={assetURL} />
+										<MarkDownRenderer body_md={report.report.description} assetURL={assetURL} />
 									</Box>
 								)}
 							</TabPanel>
 
 							<TabPanel value={value} index={1}>
 								<Box minHeight={300}>
-									<ChatTable steamId={report?.target_id} />
+									<ChatTable steamId={report.report.targetId} />
 								</Box>
 							</TabPanel>
 							<TabPanel value={value} index={2}>
 								<Box minHeight={300}>
-									<IPHistoryTable steamId={report?.target_id} />
+									<IPHistoryTable steamId={report.report.targetId} />
 								</Box>
 							</TabPanel>
 						</ContainerWithHeader>
-						{report.demo_id > 0 && (
+						{report.report?.demoId > 0 && (
 							<ContainerWithHeaderAndButtons
-								title={`Demo Details: ${report.demo_name}`}
+								title={`Demo Details: ${report.report.demoId}`}
 								iconLeft={<VideocamIcon />}
 								buttons={[
 									<Button
@@ -139,7 +143,7 @@ export const ReportViewComponent = ({ report, assetURL }: { report: Report; asse
 										key={"demo_download"}
 										startIcon={<FileDownloadIcon />}
 										component={Link}
-										href={`/asset/${report.demo_id}`}
+										href={`/asset/${report.report.demoId}`}
 										color={"success"}
 									>
 										Download
@@ -154,35 +158,35 @@ export const ReportViewComponent = ({ report, assetURL }: { report: Report; asse
 									{/*    <Typography>Server:&nbsp;{report.demo.server_name_short}</Typography>*/}
 									{/*</Grid>*/}
 									<Grid size={{ xs: 2 }}>
-										<Typography>Tick:&nbsp;{report.demo_tick}</Typography>
+										<Typography>Tick:&nbsp;{report.report.demoTick}</Typography>
 									</Grid>
 									<Grid size={{ xs: 2 }}>
-										<Typography>ID:&nbsp;{report.demo_id}</Typography>
+										<Typography>ID:&nbsp;{report.report.demoId}</Typography>
 									</Grid>
 								</Grid>
 							</ContainerWithHeaderAndButtons>
 						)}
 
-						{report.person_message_id > 0 && (
+						{report.report.personMessageId > 0 && (
 							<ContainerWithHeader title={"Message Context"} iconLeft={<QuickreplyIcon />}>
-								<PlayerMessageContext playerMessageId={report.person_message_id} padding={4} />
+								<PlayerMessageContext playerMessageId={report.report.personMessageId} padding={4} />
 							</ContainerWithHeader>
 						)}
 
-						{hasPermission(PermissionLevel.Moderator) && (
-							<SourceBansList steam_id={report.source_id} is_reporter={true} />
+						{hasPermission(Privilege.MODERATOR) && (
+							<SourceBansList steamId={report.report.sourceId} isReporter={true} />
 						)}
 
-						{hasPermission(PermissionLevel.Moderator) && (
-							<SourceBansList steam_id={report.target_id} is_reporter={false} />
+						{hasPermission(Privilege.MODERATOR) && (
+							<SourceBansList steamId={report.report.targetId} isReporter={false} />
 						)}
 
 						{!isLoadingMessages &&
-							messages &&
-							messages.map((m) => (
+							messageData?.messages &&
+							messageData.messages.map((m) => (
 								<ReportMessageView
 									message={m}
-									key={`report-msg-${m.report_message_id}`}
+									key={`report-msg-${m.reportMessageId}`}
 									assetURL={assetURL}
 								/>
 							))}
@@ -197,7 +201,7 @@ export const ReportViewComponent = ({ report, assetURL }: { report: Report; asse
 								<Grid container spacing={2} padding={1}>
 									<Grid size={{ xs: 12 }}>
 										<form.AppField
-											name={"body_md"}
+											name={"bodyMd"}
 											validators={{
 												onChange: z.string().min(2),
 											}}

@@ -2,8 +2,6 @@ edition = "2023";
 
 package database.query.v1;
 
-import "buf/validate/validate.proto";
-
 message Filter {
   uint64 offset = 1;
   uint64 limit = 2;
