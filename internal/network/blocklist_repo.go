@@ -9,7 +9,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -65,7 +65,7 @@ func (b *BlocklistRepository) CreateSteamBlockWhitelists(ctx context.Context, st
 		}
 	}
 
-	return WhitelistSteam{}, httphelper.ErrInternal // TODO better error
+	return WhitelistSteam{}, rpc.ErrInternal // TODO better error
 }
 
 func (b *BlocklistRepository) GetSteamBlockWhitelists(ctx context.Context) ([]WhitelistSteam, error) {

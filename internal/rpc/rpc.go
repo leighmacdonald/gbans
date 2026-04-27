@@ -14,6 +14,7 @@ import (
 	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/stoewer/go-strcase"
 )
 
 var (
@@ -72,7 +73,7 @@ type ServerInfo struct {
 	ServerID int32 `json:"server_id"`
 }
 
-func ServerInfoFromCtx(ctx context.Context) (ServerInfo, error) {
+func ServerInfoFromCtx(_ context.Context) (ServerInfo, error) {
 	panic("fixme")
 }
 
@@ -100,7 +101,7 @@ func FromRPC(filter *v1.Filter) query.Filter {
 		Offset:  filter.GetOffset(),
 		Limit:   filter.GetLimit(),
 		Desc:    filter.GetDesc(),
-		OrderBy: filter.GetOrderBy(),
+		OrderBy: strcase.SnakeCase(filter.GetOrderBy()),
 	}
 }
 

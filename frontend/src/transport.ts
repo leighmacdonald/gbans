@@ -3,7 +3,7 @@ import type { Interceptor } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { createValidateInterceptor } from "@connectrpc/validate";
 import { QueryClient } from "@tanstack/react-query";
-import { accessTokenKey } from "./auth.tsx";
+import { StorageKey } from "./auth.tsx";
 import { emptyOrNullString } from "./util/types.ts";
 
 export const queryClient = new QueryClient();
@@ -11,7 +11,7 @@ export const queryClient = new QueryClient();
 const validateInterceptor = createValidateInterceptor({ validator: createValidator({}) });
 
 const authInterceptor: Interceptor = (next) => async (req) => {
-	const token = localStorage.getItem(accessTokenKey);
+	const token = localStorage.getItem(StorageKey.Token);
 	if (!emptyOrNullString(token)) {
 		req.header.set("Authorization", `Bearer ${token}`);
 	}

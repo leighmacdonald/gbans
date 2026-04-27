@@ -3,8 +3,6 @@ import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import IconButton from "@mui/material/IconButton";
-import TableCell from "@mui/material/TableCell";
-import Typography from "@mui/material/Typography";
 import { Grid } from "@mui/system";
 import { useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
@@ -87,11 +85,7 @@ export const SteamWhitelistTable = () => {
 			columnHelperSteam.accessor("createdOn", {
 				header: "Updated",
 				grow: false,
-				Cell: ({ cell }) => (
-					<TableCell>
-						<Typography>{renderTimestamp(cell.getValue())}</Typography>
-					</TableCell>
-				),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
 		],
 		[],
@@ -110,10 +104,10 @@ export const SteamWhitelistTable = () => {
 		},
 		initialState: {
 			...defaultOptionsSteam.initialState,
-			sorting: [{ id: "ban_id", desc: true }],
+			sorting: [{ id: "createdOn", desc: false }],
 			columnVisibility: {
-				source_id: false,
-				target_id: true,
+				sourceId: false,
+				targetId: true,
 				reason: true,
 			},
 		},

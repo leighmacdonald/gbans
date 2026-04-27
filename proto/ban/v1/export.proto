@@ -1,0 +1,47 @@
+edition = "2023";
+
+package ban.v1;
+
+import "google/protobuf/empty.proto";
+
+service ExportService {
+  rpc GetTF2BD(GetTF2BDRequest) returns (TF2BDSchema) {}
+  rpc GetValveSteamID(GetValveSteamIDRequest) returns (GetValveSteamIDResponse) {}
+}
+
+message GetValveSteamIDResponse {
+  repeated string ban_lines = 1;
+}
+
+message GetValveSteamIDRequest {
+  string key = 1;
+}
+
+message GetTF2BDRequest {
+  string key = 1;
+}
+
+message TF2BDSchema {
+  string schema = 1 [json_name = "$schema"];
+  FileInfo file_info = 2 [json_name = "file_info"];
+  repeated Player players = 3 [json_name = "players"];
+}
+
+message Player {
+  repeated string attributes = 1 [json_name = "attributes"];
+  LastSeen last_seen = 2 [json_name = "last_seen"];
+  string steam_id = 3 [json_name = "steamid"];
+  repeated string proof = 4 [json_name = "proof"];
+}
+
+message LastSeen {
+  string player_name = 1 [json_name = "player_name"];
+  int32 time = 2 [json_name = "time"];
+}
+
+message FileInfo {
+  repeated string authors = 1 [json_name = "authors"];
+  string description = 2 [json_name = "description"];
+  string title = 3 [json_name = "title"];
+  string update_url = 4 [json_name = "update_url"];
+}

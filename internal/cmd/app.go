@@ -200,6 +200,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications)
 	g.mge = mge.NewMGE(mge.NewRepository(g.database))
+	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications, conf.Discord.SafeAppealLogChannelID())
 
 	if conf.Discord.Enabled {
 		anticheat.RegisterDiscordCommands(g.bot, g.anticheat)
@@ -454,12 +455,14 @@ func (g *GBans) StartBackground(ctx context.Context) {
 func (g *GBans) createAPI(authMiddleware *rpc.Middleware) *http.ServeMux {
 	interceptors := rpc.CreateInterceptors()
 	api := http.NewServeMux()
+	conf := g.config.Config()
 
 	services := []rpc.Service{
 		anticheat.NewService(g.anticheat, authMiddleware, interceptors),
 		asset.NewService(g.assets, authMiddleware, interceptors),
 		ban.NewAppealService(g.appeals, authMiddleware, interceptors),
 		ban.NewBanService(g.bans, authMiddleware, interceptors),
+		ban.NewExportService(g.bans, strings.Split(conf.Exports.AuthorizedKeys, ","), conf.General.SiteName),
 		ban.NewReportService(g.reports, authMiddleware, interceptors),
 		chat.NewService(g.chat, authMiddleware, interceptors),
 		chat.NewWordfilterService(g.wordFilters, g.chat, g.config.Config().Filters, authMiddleware, interceptors),

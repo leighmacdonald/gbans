@@ -17,6 +17,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -196,12 +197,12 @@ func (b *Blocklists) GetCIDRBlockSource(ctx context.Context, sourceID int32, blo
 
 func (b *Blocklists) CreateCIDRBlockSources(ctx context.Context, name string, listURL string, enabled bool) (CIDRBlockSource, error) {
 	if name == "" {
-		return CIDRBlockSource{}, httphelper.ErrBadRequest // TODO better error
+		return CIDRBlockSource{}, rpc.ErrBadRequest // TODO better error
 	}
 
 	parsedURL, errURL := url.Parse(listURL)
 	if errURL != nil {
-		return CIDRBlockSource{}, httphelper.ErrBadRequest
+		return CIDRBlockSource{}, rpc.ErrBadRequest
 	}
 
 	blockList := CIDRBlockSource{
@@ -213,7 +214,7 @@ func (b *Blocklists) CreateCIDRBlockSources(ctx context.Context, name string, li
 	}
 
 	if err := b.repository.SaveCIDRBlockSources(ctx, &blockList); err != nil {
-		return CIDRBlockSource{}, httphelper.ErrInternal
+		return CIDRBlockSource{}, rpc.ErrInternal
 	}
 
 	slog.Info("Created blocklist", slog.String("name", blockList.Name))
@@ -229,7 +230,7 @@ func (b *Blocklists) UpdateCIDRBlockSource(ctx context.Context, sourceID int32, 
 			return blockSource, httphelper.ErrNotFound
 		}
 
-		return blockSource, httphelper.ErrBadRequest // TODO better errro
+		return blockSource, rpc.ErrBadRequest // TODO better errro
 	}
 
 	blockSource.Enabled = enabled

@@ -52,7 +52,7 @@ func (s PersonService) CurrentProfile(ctx context.Context, _ *emptypb.Empty) (*v
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	return &v1.CurrentProfileResponse{Profile: toPerson(response.Player)}, nil
+	return &v1.CurrentProfileResponse{Profile: toPersonCore(response.Player)}, nil
 }
 
 func (s PersonService) Profile(ctx context.Context, req *v1.ProfileRequest) (*v1.ProfileResponse, error) {
@@ -135,7 +135,7 @@ func (s PersonService) Query(ctx context.Context, req *v1.QueryRequest) (*v1.Que
 		VacBans:           req.GetVacBans(),
 		GameBans:          req.GetGameBans(),
 		AvatarHash:        req.GetAvatarHash(),
-		CommunityBanned:   req.CommunityBanned,
+		CommunityBanned:   ptr.To(req.GetCommunityBanned()),
 		TimeCreatedAfter:  ptr.To(req.TimeCreatedAfter.AsTime()),
 		TimeCreatedBefore: ptr.To(req.TimeCreatedBefore.AsTime()),
 	}

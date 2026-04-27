@@ -116,7 +116,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 				icon: <DashboardIcon color={"primary"} sx={topColourOpts} />,
 			},
 		];
-		if (appInfo.serversEnabled && (profile.banId <= 0 || profile.muted)) {
+		if (appInfo.serversEnabled && profile.banId <= 0) {
 			items.push({
 				to: "/servers",
 				text: "Servers",
@@ -161,7 +161,6 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 		appInfo.wikiEnabled,
 		profile.banId,
 		topColourOpts,
-		profile.muted,
 	]);
 
 	const userItems: menuRoute[] = useMemo(() => {
@@ -446,7 +445,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 									<>
 										<Tooltip title="User Settings">
 											<IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-												<Avatar alt={profile.personaName} src={profile.avatarHash} />
+												<Avatar alt={profile.name} src={profile.avatarHash} />
 											</IconButton>
 										</Tooltip>
 										<Menu

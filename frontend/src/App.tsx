@@ -1,52 +1,22 @@
 import { TransportProvider } from "@connectrpc/connect-query";
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type AnyRouter, RouterProvider } from "@tanstack/react-router";
-import { StrictMode, useState } from "react";
-import { AuthProvider, profileKey } from "./auth.tsx";
+import { StrictMode } from "react";
+import { AuthProvider } from "./auth.tsx";
 import { useAuth } from "./hooks/useAuth.ts";
-import { Privilege } from "./rpc/person/v1/privilege_pb.ts";
 import { finalTransport } from "./transport.ts";
-import { logErr } from "./util/errors.ts";
-import { defaultAvatarHash } from "./util/strings.ts";
-
-const loadProfile = () => {
-	const defaultProfile = {
-		steam_id: "",
-		permission_level: Privilege.GUEST,
-		avatarhash: defaultAvatarHash,
-		name: "",
-		ban_id: 0,
-		muted: false,
-		discord_id: "",
-		created_on: new Date(),
-		updated_on: new Date(),
-	};
-	try {
-		const userData = localStorage.getItem(profileKey);
-		if (!userData) {
-			return defaultProfile;
-		}
-
-		return JSON.parse(userData);
-	} catch (e) {
-		logErr(e);
-		return defaultProfile;
-	}
-};
 
 export function App({ queryClient, router }: { queryClient: QueryClient; router: AnyRouter }) {
-	const [profile, setProfile] = useState(loadProfile());
-
 	return (
-		<AuthProvider profile={profile} setProfile={setProfile}>
-			<TransportProvider transport={finalTransport}>
-				<QueryClientProvider client={queryClient}>
+		<TransportProvider transport={finalTransport}>
+			<QueryClientProvider client={queryClient}>
+				<AuthProvider>
 					<StrictMode>
 						<InnerApp router={router} />
 					</StrictMode>
-				</QueryClientProvider>
-			</TransportProvider>
-		</AuthProvider>
+				</AuthProvider>
+			</QueryClientProvider>
+		</TransportProvider>
 	);
 }
 

@@ -232,10 +232,10 @@ const UserReportHistory = () => {
 				pageSize: 10,
 				pageIndex: 0,
 			},
-			sorting: [{ id: "report_id", desc: true }],
+			sorting: [{ id: "reportId", desc: true }],
 			columnVisibility: {
-				source_id: false,
-				target_id: true,
+				sourceId: false,
+				targetId: true,
 				reason: true,
 			},
 		},

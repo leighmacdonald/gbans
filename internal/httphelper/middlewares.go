@@ -59,7 +59,7 @@ func errorHandler() gin.HandlerFunc {
 					})
 				}
 			} else {
-				abort(ctx, NewAPIError(http.StatusInternalServerError, ErrInternal))
+				abort(ctx, NewAPIError(http.StatusInternalServerError, err))
 				if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
 					hub.WithScope(func(scope *sentry.Scope) {
 						scope.SetLevel(sentry.LevelWarning)

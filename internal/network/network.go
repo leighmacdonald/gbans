@@ -271,19 +271,15 @@ func (u Networks) QueryNetwork(ctx context.Context, address netip.Addr) (Details
 		return details, ErrNetworkInvalidIP
 	}
 
-	location, errLocation := u.repository.GetLocationRecord(ctx, address)
-	if errLocation != nil {
-		return details, errors.Join(errLocation, ErrNetworkLocationUnknown)
+	location, _ := u.repository.GetLocationRecord(ctx, address)
+	if location.CIDR != "" {
+		details.Location = location
 	}
 
-	details.Location = location
-
-	asn, errASN := u.repository.GetASNRecordByIP(ctx, address)
-	if errASN != nil {
-		return details, errors.Join(errASN, ErrNetworkASNUnknown)
+	asn, _ := u.repository.GetASNRecordByIP(ctx, address)
+	if asn.ASNum > 0 {
+		details.Asn = asn
 	}
-
-	details.Asn = asn
 
 	proxy, errProxy := u.repository.GetProxyRecord(ctx, address)
 	if errProxy != nil && !errors.Is(errProxy, database.ErrNoResult) {
