@@ -348,7 +348,12 @@ function AdminNetworkPlayersByCIDR() {
 											lng: row.original.location.longitude,
 										}}
 									>
-										<Popup>{JSON.stringify(row.original)}</Popup>
+										<Popup>
+											{JSON.stringify({
+												...row.original,
+												steamId: row.original.steamId.toString(),
+											})}
+										</Popup>
 									</Marker>
 								)
 							),

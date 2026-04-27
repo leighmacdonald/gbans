@@ -11,7 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -237,7 +237,7 @@ func (c *Contests) EntryVote(ctx context.Context, contestID uuid.UUID, contestEn
 	}
 
 	if !contest.Voting || !contest.DownVotes && !vote {
-		return httphelper.ErrBadRequest // TODO proper error
+		return rpc.ErrBadRequest // TODO proper error
 	}
 
 	if err := c.repository.ContestEntryVote(ctx, contestEntryID, user.GetSteamID(), vote); err != nil {

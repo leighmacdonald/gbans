@@ -95,7 +95,7 @@ function ProfilePage() {
 				</ContainerWithHeader>
 			</Grid>
 			<Grid size={{ xs: 6, md: 2 }}>
-				<SteamIDList steam_id={data?.profile?.player?.steamId.toString() ?? ""} />
+				<SteamIDList steamId={data?.profile?.player?.steamId.toString() ?? ""} />
 			</Grid>
 			{/*{isAuthenticated() &&
 				(userProfile.steam_id === profile.player.steam_id || !profile.settings.stats_hidden) && (

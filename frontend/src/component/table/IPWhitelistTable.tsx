@@ -134,13 +134,13 @@ export const IPWhitelistTable = () => {
 		},
 		initialState: {
 			...defaultOptions.initialState,
-			sorting: [{ id: "ban_id", desc: true }],
+			sorting: [{ id: "cidrBlockWhitelistId", desc: true }],
 			columnVisibility: {
-				cidr_block_whitelist_id: false,
+				cidrBlockWhitelistId: false,
 				address: true,
 				hosts: true,
-				created_on: true,
-				updated_on: false,
+				createdOn: true,
+				updatedOn: false,
 			},
 		},
 		enableRowActions: true,

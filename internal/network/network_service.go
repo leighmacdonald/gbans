@@ -68,7 +68,6 @@ func (s NetworkService) QueryNetwork(ctx context.Context, req *v1.QueryNetworkRe
 	if errAddr != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, rpc.ErrBadRequest)
 	}
-
 	details, err := s.networks.QueryNetwork(ctx, addr)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)

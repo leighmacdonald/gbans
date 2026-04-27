@@ -40,7 +40,7 @@ message ResolveSteamIDResponse {
 }
 
 message CurrentProfileResponse {
-  Person profile = 1 [(buf.validate.field).required = true];
+  PersonCore profile = 1 [(buf.validate.field).required = true];
 }
 
 message Settings {

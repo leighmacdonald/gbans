@@ -23,6 +23,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/ptr"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -293,7 +294,7 @@ func (h Sourcemod) GroupImmunities(ctx context.Context) ([]GroupImmunity, error)
 
 func (h Sourcemod) AddGroupImmunity(ctx context.Context, groupID int32, otherID int32) (GroupImmunity, error) {
 	if groupID == otherID {
-		return GroupImmunity{}, httphelper.ErrBadRequest // TODO fix error
+		return GroupImmunity{}, rpc.ErrBadRequest // TODO fix error
 	}
 
 	group, errGroup := h.GetGroupByID(ctx, groupID)

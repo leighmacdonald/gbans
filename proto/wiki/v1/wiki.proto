@@ -14,10 +14,10 @@ service WikiService {
 message Wiki {
   string slug = 1 [(buf.validate.field).required = true];
   string body_md = 2 [(buf.validate.field).required = true];
-  int32 revision = 3 [(buf.validate.field).required = true];
+  int32 revision = 3;
   person.v1.Privilege permission_level = 4 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp created_on = 5 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp updated_on = 6 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 5;
+  google.protobuf.Timestamp updated_on = 6;
 }
 
 message GetRequest {

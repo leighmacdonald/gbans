@@ -43,7 +43,7 @@ func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResp
 	if errVotes != nil && !errors.Is(errVotes, database.ErrNoResult) {
 		slog.Error("Failed to query votes", errVotes)
 
-		return nil, connect.NewError(connect.CodeInternal, httphelper.ErrInternal)
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
 	if votes == nil {

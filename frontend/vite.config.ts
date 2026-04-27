@@ -11,6 +11,7 @@ export default defineConfig({
 	build: {
 		copyPublicDir: true,
 		sourcemap: "hidden",
+		rolldownOptions: {},
 	},
 
 	server: {

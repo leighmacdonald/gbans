@@ -1,15 +1,18 @@
-import type { JSX } from "react";
-import { logoutKey } from "../auth.tsx";
+import { StorageKey } from "../auth.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
 
-export const LogoutHandler = (): JSX.Element => {
+export const LogoutHandler = () => {
+	const { logout } = useAuth();
+
 	// Listen for storage events with the logout key and logout from all browser sessions/tabs when fired.
 	window.addEventListener("storage", async (event) => {
-		if (event.key === logoutKey) {
-			localStorage.removeItem(logoutKey);
+		if (event.key === StorageKey.Logout) {
+			localStorage.removeItem(StorageKey.Logout);
 			document.location.reload();
 		}
 	});
 
-	// biome-ignore lint/complexity/noUselessFragments: fixme
-	return <></>;
+	logout().then(() => {});
+
+	return null;
 };

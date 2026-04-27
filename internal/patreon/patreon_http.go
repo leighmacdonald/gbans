@@ -1,12 +1,10 @@
 package patreon
 
 import (
-	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -18,36 +16,36 @@ type patreonHandler struct {
 	config Config
 }
 
-func NewPatreonHandler(engine *gin.Engine, auth httphelper.Authenticator, patreon Patreon, config Config) {
-	handler := patreonHandler{
-		Patreon: patreon,
-		config:  config,
-	}
-
-	engine.GET("/api/patreon/campaigns", handler.onAPIGetPatreonCampaigns())
-	engine.GET("/patreon/oauth", handler.onOAuth())
-
-	authGrp := engine.Group("/")
-	{
-		authed := authGrp.Use(auth.Middleware(permission.User))
-		authed.GET("/api/patreon/login", handler.onLogin())
-		authed.GET("/api/patreon/logout", handler.onLogout())
-	}
-
-	// mod
-	modGrp := engine.Group("/")
-	{
-		mod := modGrp.Use(auth.Middleware(permission.Moderator))
-		mod.GET("/api/patreon/pledges", handler.onAPIGetPatreonPledges())
-	}
-}
+//func NewPatreonHandler(engine *gin.Engine, auth httphelper.Authenticator, patreon Patreon, config Config) {
+//	handler := patreonHandler{
+//		Patreon: patreon,
+//		config:  config,
+//	}
+//
+//	engine.GET("/api/patreon/campaigns", handler.onAPIGetPatreonCampaigns())
+//	engine.GET("/patreon/oauth", handler.onOAuth())
+//
+//	authGrp := engine.Group("/")
+//	{
+//		authed := authGrp.Use(auth.Middleware(permission.User))
+//		authed.GET("/api/patreon/login", handler.onLogin())
+//		authed.GET("/api/patreon/logout", handler.onLogout())
+//	}
+//
+//	// mod
+//	modGrp := engine.Group("/")
+//	{
+//		mod := modGrp.Use(auth.Middleware(permission.Moderator))
+//		mod.GET("/api/patreon/pledges", handler.onAPIGetPatreonPledges())
+//	}
+//}
 
 func (h patreonHandler) onLogout() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser, _ := session.CurrentUserProfile(ctx)
 
 		if err := h.Forget(ctx, currentUser.GetSteamID()); err != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errors.Join(err, httphelper.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, err))
 
 			return
 		}

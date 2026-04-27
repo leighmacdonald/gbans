@@ -41,16 +41,16 @@ export const BanModal = NiceModal.create(
 		});
 
 		const defaultValues = {
-			report_id: req?.ban?.reportId ?? reportId ?? 0,
-			target_id: req?.ban?.targetId ?? steamId ?? "",
-			ban_type: req?.ban?.banType ?? BanType.BANNED,
+			reportId: req?.ban?.reportId ?? reportId ?? 0,
+			targetId: req?.ban?.targetId ?? steamId ?? "",
+			banType: req?.ban?.banType ?? BanType.BANNED,
 			reason: req?.ban?.reason ?? BanReason.CHEATING,
-			reason_text: req?.ban?.reasonText ?? "",
+			reasonText: req?.ban?.reasonText ?? "",
 			note: req?.ban?.note ?? "",
-			evade_ok: req?.ban?.evadeOk ?? false,
+			evadeOk: req?.ban?.evadeOk ?? false,
 			cidr: req?.ban?.cidr ?? "",
-			demo_name: "",
-			demo_tick: 0,
+			demoName: "",
+			demoTick: 0,
 			origin: req?.ban?.origin ?? Origin.REPORTED,
 		};
 
@@ -88,7 +88,7 @@ export const BanModal = NiceModal.create(
 						<Grid container spacing={2}>
 							<Grid size={{ xs: 12 }}>
 								<form.AppField
-									name={"target_id"}
+									name={"targetId"}
 									children={(field) => {
 										return (
 											<field.SteamIDField
@@ -111,7 +111,7 @@ export const BanModal = NiceModal.create(
 
 							<Grid size={{ xs: 12 }}>
 								<form.AppField
-									name={"ban_type"}
+									name={"banType"}
 									children={(field) => {
 										return (
 											<field.SelectField
@@ -152,7 +152,7 @@ export const BanModal = NiceModal.create(
 							</Grid>
 							<Grid size={{ xs: 12 }}>
 								<form.AppField
-									name={"reason_text"}
+									name={"reasonText"}
 									validators={{
 										onSubmit: ({ value, fieldApi }) => {
 											if (fieldApi.form.getFieldValue("reason") !== BanReason.CUSTOM) {
@@ -221,7 +221,7 @@ export const BanModal = NiceModal.create(
 
 							<Grid size={{ xs: 12 }}>
 								<form.AppField
-									name={"evade_ok"}
+									name={"evadeOk"}
 									children={(field) => {
 										return <field.CheckboxField label={"IP Evading Allowed"} />;
 									}}

@@ -428,7 +428,7 @@ const ConnectionsSection = ({
 	patreon_id: string;
 }) => {
 	const queryClient = useQueryClient();
-	const { profile, login } = useAuth();
+	const { profile } = useAuth();
 	const { sendFlash } = useUserFlashCtx();
 	const confirmModal = useModal(ConfirmationModal);
 	const { appInfo } = Route.useRouteContext();
@@ -518,7 +518,8 @@ const ConnectionsSection = ({
 				},
 			});
 
-			login({ ...profile, discordId: "" });
+			// FIXME
+			// login({ ...profile, discordId: "" });
 			sendFlash("success", "Logged out successfully");
 		} catch (e) {
 			logErr(e);

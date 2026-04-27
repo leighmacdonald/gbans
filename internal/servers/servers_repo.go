@@ -21,11 +21,11 @@ func NewRepository(database database.Database) Repository {
 }
 
 func (r *Repository) InsertLogs(ctx context.Context, events []logparse.ServerEvent) error {
-	const query = "INSERT INTO server_logs (server_id, body, created_on) VALUES ($1, $2, $3)"
+	const batchQuery = "INSERT INTO server_logs (server_id, body, created_on) VALUES ($1, $2, $3)"
 
 	batch := &pgx.Batch{}
 	for _, log := range events {
-		batch.Queue(query, log.ServerID, log.Raw, log.CreatedOn)
+		batch.Queue(batchQuery, log.ServerID, log.Raw, log.CreatedOn)
 	}
 
 	batchResults := r.SendBatch(ctx, batch)
@@ -42,10 +42,10 @@ func (r *Repository) purgeLogs(ctx context.Context) error {
 		return errServers
 	}
 
-	const query = "DELETE FROM server_logs WHERE server_id = $1 ORDER BY created_on DESC OFFSET 10000"
+	const purgeQuery = "DELETE FROM server_logs WHERE server_id = $1 ORDER BY created_on DESC OFFSET 10000"
 
 	for _, server := range servers {
-		if err := r.Exec(ctx, query, server.ServerID); err != nil {
+		if err := r.Exec(ctx, purgeQuery, server.ServerID); err != nil {
 			return err
 		}
 	}
@@ -218,7 +218,7 @@ func (r *Repository) Save(ctx context.Context, server *Server) error {
 			server.AddressInternal, server.SDREnabled, server.DiscordSeedRoleIDs, server.ServerID))
 	}
 
-	const query = `
+	const serverQuery = `
 		INSERT INTO server (
 		    short_name, name, address, port, rcon, token_created_on,
 		    reserved_slots, created_on, updated_on, password, is_enabled, region, cc, latitude, longitude,
@@ -230,7 +230,7 @@ func (r *Repository) Save(ctx context.Context, server *Server) error {
       		deleted = $16, log_secret = $17, enable_stats = $18, address_internal = $19, sdr_enabled = $20, discord_seed_role_ids = $21
 		RETURNING server_id;`
 
-	err := r.QueryRow(ctx, query, server.ShortName, server.Name, server.Address, server.Port,
+	err := r.QueryRow(ctx, serverQuery, server.ShortName, server.Name, server.Address, server.Port,
 		server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.CreatedOn, server.UpdatedOn,
 		server.Password, server.IsEnabled, server.Region, server.CC,
 		server.Latitude, server.Longitude, server.Deleted, &server.LogSecret, &server.EnableStats, &server.AddressInternal,

@@ -268,7 +268,7 @@ func (x *ResolveSteamIDResponse) GetPersonaName() string {
 
 type CurrentProfileResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Profile       *Person                `protobuf:"bytes,1,opt,name=profile" json:"profile,omitempty"`
+	Profile       *PersonCore            `protobuf:"bytes,1,opt,name=profile" json:"profile,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -303,7 +303,7 @@ func (*CurrentProfileResponse) Descriptor() ([]byte, []int) {
 	return file_person_v1_person_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *CurrentProfileResponse) GetProfile() *Person {
+func (x *CurrentProfileResponse) GetProfile() *PersonCore {
 	if x != nil {
 		return x.Profile
 	}
@@ -1365,9 +1365,9 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"\bsteam_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\x12'\n" +
 	"\vavatar_hash\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"avatarHash\x12)\n" +
-	"\fpersona_name\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\"M\n" +
-	"\x16CurrentProfileResponse\x123\n" +
-	"\aprofile\x18\x01 \x01(\v2\x11.person.v1.PersonB\x06\xbaH\x03\xc8\x01\x01R\aprofile\"\xba\x03\n" +
+	"\fpersona_name\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\"Q\n" +
+	"\x16CurrentProfileResponse\x127\n" +
+	"\aprofile\x18\x01 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\aprofile\"\xba\x03\n" +
 	"\bSettings\x124\n" +
 	"\x12person_settings_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x10personSettingsId\x12!\n" +
 	"\bsteam_id\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\x12/\n" +
@@ -1521,38 +1521,38 @@ var file_person_v1_person_proto_goTypes = []any{
 	(*QueryRequest)(nil),                // 15: person.v1.QueryRequest
 	(*Person)(nil),                      // 16: person.v1.Person
 	(*QueryResponse)(nil),               // 17: person.v1.QueryResponse
-	(*timestamppb.Timestamp)(nil),       // 18: google.protobuf.Timestamp
-	(*PersonCore)(nil),                  // 19: person.v1.PersonCore
+	(*PersonCore)(nil),                  // 18: person.v1.PersonCore
+	(*timestamppb.Timestamp)(nil),       // 19: google.protobuf.Timestamp
 	(Privilege)(0),                      // 20: person.v1.Privilege
 	(*v1.Filter)(nil),                   // 21: database.query.v1.Filter
 	(*emptypb.Empty)(nil),               // 22: google.protobuf.Empty
 }
 var file_person_v1_person_proto_depIdxs = []int32{
 	8,  // 0: person.v1.ProfileResponse.profile:type_name -> person.v1.Profile
-	16, // 1: person.v1.CurrentProfileResponse.profile:type_name -> person.v1.Person
-	18, // 2: person.v1.Settings.created_on:type_name -> google.protobuf.Timestamp
-	18, // 3: person.v1.Settings.updated_on:type_name -> google.protobuf.Timestamp
-	19, // 4: person.v1.Profile.player:type_name -> person.v1.PersonCore
+	18, // 1: person.v1.CurrentProfileResponse.profile:type_name -> person.v1.PersonCore
+	19, // 2: person.v1.Settings.created_on:type_name -> google.protobuf.Timestamp
+	19, // 3: person.v1.Settings.updated_on:type_name -> google.protobuf.Timestamp
+	18, // 4: person.v1.Profile.player:type_name -> person.v1.PersonCore
 	9,  // 5: person.v1.Profile.friends:type_name -> person.v1.SteamFriend
 	6,  // 6: person.v1.Profile.settings:type_name -> person.v1.Settings
-	18, // 7: person.v1.SteamFriend.friend_since:type_name -> google.protobuf.Timestamp
-	18, // 8: person.v1.SteamFriend.removed_on:type_name -> google.protobuf.Timestamp
-	18, // 9: person.v1.UserSettings.created_on:type_name -> google.protobuf.Timestamp
-	18, // 10: person.v1.UserSettings.updated_on:type_name -> google.protobuf.Timestamp
+	19, // 7: person.v1.SteamFriend.friend_since:type_name -> google.protobuf.Timestamp
+	19, // 8: person.v1.SteamFriend.removed_on:type_name -> google.protobuf.Timestamp
+	19, // 9: person.v1.UserSettings.created_on:type_name -> google.protobuf.Timestamp
+	19, // 10: person.v1.UserSettings.updated_on:type_name -> google.protobuf.Timestamp
 	10, // 11: person.v1.ProfileSettingsResponse.settings:type_name -> person.v1.UserSettings
 	10, // 12: person.v1.EditProfileSettingsResponse.settings:type_name -> person.v1.UserSettings
 	20, // 13: person.v1.EditPermissionsRequest.permission_level:type_name -> person.v1.Privilege
-	19, // 14: person.v1.EditPermissionsResponse.person:type_name -> person.v1.PersonCore
+	18, // 14: person.v1.EditPermissionsResponse.person:type_name -> person.v1.PersonCore
 	21, // 15: person.v1.QueryRequest.filter:type_name -> database.query.v1.Filter
 	20, // 16: person.v1.QueryRequest.with_permissions:type_name -> person.v1.Privilege
-	18, // 17: person.v1.QueryRequest.time_created_after:type_name -> google.protobuf.Timestamp
-	18, // 18: person.v1.QueryRequest.time_created_before:type_name -> google.protobuf.Timestamp
-	18, // 19: person.v1.Person.created_on:type_name -> google.protobuf.Timestamp
-	18, // 20: person.v1.Person.updated_on:type_name -> google.protobuf.Timestamp
+	19, // 17: person.v1.QueryRequest.time_created_after:type_name -> google.protobuf.Timestamp
+	19, // 18: person.v1.QueryRequest.time_created_before:type_name -> google.protobuf.Timestamp
+	19, // 19: person.v1.Person.created_on:type_name -> google.protobuf.Timestamp
+	19, // 20: person.v1.Person.updated_on:type_name -> google.protobuf.Timestamp
 	20, // 21: person.v1.Person.permission_level:type_name -> person.v1.Privilege
-	18, // 22: person.v1.Person.updated_on_steam:type_name -> google.protobuf.Timestamp
-	18, // 23: person.v1.Person.last_logoff:type_name -> google.protobuf.Timestamp
-	18, // 24: person.v1.Person.time_created:type_name -> google.protobuf.Timestamp
+	19, // 22: person.v1.Person.updated_on_steam:type_name -> google.protobuf.Timestamp
+	19, // 23: person.v1.Person.last_logoff:type_name -> google.protobuf.Timestamp
+	19, // 24: person.v1.Person.time_created:type_name -> google.protobuf.Timestamp
 	0,  // 25: person.v1.Person.visibility_state:type_name -> person.v1.VisibilityState
 	16, // 26: person.v1.QueryResponse.people:type_name -> person.v1.Person
 	1,  // 27: person.v1.PersonService.Profile:input_type -> person.v1.ProfileRequest

@@ -41,8 +41,8 @@ import { query } from "../rpc/person/v1/person-PersonService_connectquery.ts";
 import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { enumValues } from "../util/lists.ts";
 
-const defaultValues = makeSchemaDefaults({ defaultColumn: "created_on" });
-const validateSearch = makeSchemaState("created_on");
+const defaultValues = makeSchemaDefaults({ defaultColumn: "createdOn" });
+const validateSearch = makeSchemaState("createdOn");
 const columnHelper = createMRTColumnHelper<Person>();
 const defaultOptions = createDefaultTableOptions<Person>();
 
@@ -64,20 +64,20 @@ function AdminPeople() {
 	const { sendFlash } = useUserFlashCtx();
 	const { hasPermission } = useAuth();
 
-	const sort = search.sorting ? sortValueDefault(search.sorting, "created_on") : undefined;
-	const steam_id = filterValue("steam_id", search.columnFilters);
+	const sort = search.sorting ? sortValueDefault(search.sorting, "createdOn") : undefined;
+	const steamId = filterValue("steamId", search.columnFilters);
 
 	const { data, isLoading, isError, isRefetching } = useQuery(query, {
 		filter: {
 			desc: sort ? sort.desc : true,
 			limit: BigInt(search.pagination?.pageSize ?? 25n),
 			offset: BigInt(search.pagination ? search.pagination.pageIndex * search.pagination?.pageSize : 0n),
-			orderBy: sort ? sort.id : "created_on",
+			orderBy: sort ? sort.id : "createdOn",
 		},
-		steamIds: steam_id && steam_id !== "" ? [steam_id] : [],
-		vacBans: filterValueNumber("vac_bans", search.columnFilters),
-		gameBans: filterValueNumber("game_bans", search.columnFilters),
-		communityBanned: filterValueBool("community_banned", search.columnFilters),
+		steamIds: steamId && steamId !== "" ? [steamId] : [],
+		vacBans: filterValueNumber("vacBans", search.columnFilters),
+		gameBans: filterValueNumber("gameBans", search.columnFilters),
+		communityBanned: filterValueBool("communityBanned", search.columnFilters),
 		withPermissions: filterValueNumberArray<Person, Privilege>("permissionLevel", search.columnFilters),
 	});
 
@@ -248,10 +248,10 @@ function AdminPeople() {
 		initialState: {
 			...defaultOptions.initialState,
 			columnVisibility: {
-				steam_id: true,
-				source_id: true,
+				steamId: true,
+				sourceId: true,
 				body: true,
-				created_on: true,
+				createdOn: true,
 			},
 		},
 		manualFiltering: true,

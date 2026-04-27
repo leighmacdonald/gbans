@@ -228,7 +228,7 @@ function BanPage() {
 						</List>
 					</ContainerWithHeader>
 
-					<SteamIDList steam_id={banData.ban.targetId} />
+					<SteamIDList steamId={banData.ban.targetId} />
 
 					{permissionLevel() >= Privilege.MODERATOR && banData.ban.note !== "" && (
 						<ContainerWithHeader title={"Mod Notes"} iconLeft={<DocumentScannerIcon />}>

@@ -7,7 +7,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
 	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
@@ -37,11 +36,11 @@ func (s Service) Get(ctx context.Context, request *v1.GetRequest) (*v1.GetRespon
 	if err != nil {
 		switch {
 		case errors.Is(err, database.ErrNoResult):
-			return nil, connect.NewError(connect.CodeNotFound, httphelper.ErrNotFound)
+			return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
 		case errors.Is(err, permission.ErrDenied):
-			return nil, connect.NewError(connect.CodePermissionDenied, permission.ErrDenied)
+			return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 		default:
-			return nil, connect.NewError(connect.CodeInternal, httphelper.ErrInternal)
+			return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 		}
 	}
 

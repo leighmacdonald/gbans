@@ -30,10 +30,11 @@ type PersonCore struct {
 	Name            *string                `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
 	AvatarHash      *string                `protobuf:"bytes,4,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
 	DiscordId       *string                `protobuf:"bytes,5,opt,name=discord_id,json=discordId" json:"discord_id,omitempty"`
-	VacBans         *int32                 `protobuf:"varint,6,opt,name=vac_bans,json=vacBans" json:"vac_bans,omitempty"`
-	GameBans        *int32                 `protobuf:"varint,7,opt,name=game_bans,json=gameBans" json:"game_bans,omitempty"`
-	BanId           *int32                 `protobuf:"varint,8,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
-	TimeCreated     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=time_created,json=timeCreated" json:"time_created,omitempty"`
+	PatreonId       *string                `protobuf:"bytes,6,opt,name=patreon_id,json=patreonId" json:"patreon_id,omitempty"`
+	VacBans         *int32                 `protobuf:"varint,7,opt,name=vac_bans,json=vacBans" json:"vac_bans,omitempty"`
+	GameBans        *int32                 `protobuf:"varint,8,opt,name=game_bans,json=gameBans" json:"game_bans,omitempty"`
+	BanId           *int32                 `protobuf:"varint,9,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	TimeCreated     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=time_created,json=timeCreated" json:"time_created,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -103,6 +104,13 @@ func (x *PersonCore) GetDiscordId() string {
 	return ""
 }
 
+func (x *PersonCore) GetPatreonId() string {
+	if x != nil && x.PatreonId != nil {
+		return *x.PatreonId
+	}
+	return ""
+}
+
 func (x *PersonCore) GetVacBans() int32 {
 	if x != nil && x.VacBans != nil {
 		return *x.VacBans
@@ -135,20 +143,23 @@ var File_person_v1_person_core_proto protoreflect.FileDescriptor
 
 const file_person_v1_person_core_proto_rawDesc = "" +
 	"\n" +
-	"\x1bperson/v1/person_core.proto\x12\tperson.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\x1a\x17person/v1/steamid.proto\"\x9a\x03\n" +
+	"\x1bperson/v1/person_core.proto\x12\tperson.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\x1a\x17person/v1/steamid.proto\"\xb1\x03\n" +
 	"\n" +
 	"PersonCore\x12$\n" +
 	"\bsteam_id\x18\x01 \x01(\x03B\t\xbaH\x06\"\x04\x80\xf1\x04\x01R\asteamId\x12G\n" +
 	"\x10permission_level\x18\x02 \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\x12\x1a\n" +
 	"\x04name\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12,\n" +
 	"\vavatar_hash\x18\x04 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x98\x01(R\n" +
-	"avatarHash\x12%\n" +
+	"avatarHash\x12\x1d\n" +
 	"\n" +
-	"discord_id\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tdiscordId\x12!\n" +
-	"\bvac_bans\x18\x06 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\avacBans\x12#\n" +
-	"\tgame_bans\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bgameBans\x12\x1d\n" +
-	"\x06ban_id\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05banId\x12E\n" +
-	"\ftime_created\x18\t \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\vtimeCreatedB\xa2\x01\n" +
+	"discord_id\x18\x05 \x01(\tR\tdiscordId\x12\x1d\n" +
+	"\n" +
+	"patreon_id\x18\x06 \x01(\tR\tpatreonId\x12!\n" +
+	"\bvac_bans\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\avacBans\x12#\n" +
+	"\tgame_bans\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bgameBans\x12\x1d\n" +
+	"\x06ban_id\x18\t \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05banId\x12E\n" +
+	"\ftime_created\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\vtimeCreatedB\xa2\x01\n" +
 	"\rcom.person.v1B\x0fPersonCoreProtoP\x01Z;github.com/leighmacdonald/gbans/internal/person/v1;personv1\xa2\x02\x03PXX\xaa\x02\tPerson.V1\xca\x02\tPerson\\V1\xe2\x02\x15Person\\V1\\GPBMetadata\xea\x02\n" +
 	"Person::V1b\beditionsp\xe8\a"
 

@@ -11,7 +11,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/notification/v1/notificationv1connect"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
-	"github.com/leighmacdonald/gbans/internal/votes/v1/votesv1connect"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -25,7 +24,11 @@ type Service struct {
 func NewService(notifications *Notifications, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := notificationv1connect.NewNotificationServiceHandler(Service{notifications: notifications}, option...)
 
-	authMiddleware.AuthedRoute(votesv1connect.VotesServiceQueryProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.AuthedRoute(notificationv1connect.NotificationServiceNotificationsProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(notificationv1connect.NotificationServiceMarkReadProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(notificationv1connect.NotificationServiceMarkReadAllProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(notificationv1connect.NotificationServiceDeleteAllProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(notificationv1connect.NotificationServiceDeleteProcedure, rpc.WithMinPermissions(permission.User))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

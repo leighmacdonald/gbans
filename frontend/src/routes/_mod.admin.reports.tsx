@@ -33,8 +33,8 @@ import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<ReportWithAuthor>();
 const defaultOptions = createDefaultTableOptions<ReportWithAuthor>();
-const defaultValues = makeSchemaDefaults({ defaultColumn: "report_id" });
-const validateSearch = makeSchemaState("report_id");
+const defaultValues = makeSchemaDefaults({ defaultColumn: "report.reportId" });
+const validateSearch = makeSchemaState("report.reportId");
 
 export const Route = createFileRoute("/_mod/admin/reports")({
 	component: AdminReports,

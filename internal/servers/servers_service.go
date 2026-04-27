@@ -34,6 +34,7 @@ func NewServersService(servers *Servers, authMiddleware *rpc.Middleware, option 
 	authMiddleware.AuthedRoute(serversv1connect.ServersServiceEditServerProcedure, rpc.WithMinPermissions(permission.Admin))
 	authMiddleware.AuthedRoute(serversv1connect.ServersServiceDeleteServerProcedure, rpc.WithMinPermissions(permission.Admin))
 	authMiddleware.AuthedRoute(serversv1connect.ServersServiceServersAdminProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.AuthedRoute(serversv1connect.ServersServiceQueryLogsProcedure, rpc.WithMinPermissions(permission.Admin))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -41,14 +42,15 @@ func NewServersService(servers *Servers, authMiddleware *rpc.Middleware, option 
 func (s ServersService) State(_ context.Context, req *v1.StateRequest) (*v1.StateResponse, error) {
 	var (
 		// TODO
-		lat = float64(ptr.From(req.LatLong.Latitude))
-		lon = float64(ptr.From(req.LatLong.Longitude))
+		ll  = req.GetLatLong()
+		lat = ll.GetLatitude()
+		lon = ll.GetLongitude()
 		// region := ctx.GetHeader("cf-region-code")
 		servers = s.servers.Current()
 	)
 
 	for index, srv := range servers {
-		servers[index].Distance = float32(distance(float64(srv.Latitude), float64(srv.Longitude), lat, lon))
+		servers[index].Distance = float32(distance(float64(srv.Latitude), float64(srv.Longitude), float64(lat), float64(lon)))
 	}
 	sort.Slice(servers, func(i, j int) bool {
 		return natural.Less(servers[i].Name, servers[j].Name)
@@ -85,8 +87,8 @@ func (s ServersService) State(_ context.Context, req *v1.StateRequest) (*v1.Stat
 
 func (s ServersService) Servers(ctx context.Context, _ *emptypb.Empty) (*v1.ServersResponse, error) {
 	fullServers, errServers := s.servers.Servers(ctx, Query{IncludeDisabled: false, IncludeDeleted: false})
-	if errServers != nil {
-		return nil, connect.NewError(connect.CodeInternal, errors.Join(errServers, httphelper.ErrInternal))
+	if errServers != nil && !errors.Is(errServers, database.ErrNoResult) {
+		return nil, connect.NewError(connect.CodeInternal, errors.Join(errServers, rpc.ErrInternal))
 	}
 
 	var resp v1.ServersResponse
@@ -105,7 +107,7 @@ func (s ServersService) Servers(ctx context.Context, _ *emptypb.Empty) (*v1.Serv
 func (s ServersService) EditServer(ctx context.Context, req *v1.EditServerRequest) (*v1.EditServerResponse, error) {
 	server, errSave := s.servers.Save(ctx, fromRPCServer(req.Server))
 	if errSave != nil {
-		return nil, connect.NewError(connect.CodeInternal, errors.Join(errSave, httphelper.ErrInternal))
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
 	return &v1.EditServerResponse{Server: toRPCServer(server)}, nil
@@ -121,7 +123,7 @@ func (s ServersService) DeleteServer(ctx context.Context, req *v1.DeleteServerRe
 			return nil, connect.NewError(connect.CodeNotFound, httphelper.ErrNotFound)
 		}
 
-		return nil, connect.NewError(connect.CodeInternal, httphelper.ErrInternal)
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
 	return &emptypb.Empty{}, nil
@@ -186,7 +188,7 @@ func toRPCServer(server Server) *v1.Server {
 func (s ServersService) ServersAdmin(ctx context.Context, _ *emptypb.Empty) (*v1.ServersAdminResponse, error) {
 	fullServers, errServers := s.servers.Servers(ctx, Query{IncludeDisabled: true})
 	if errServers != nil {
-		return nil, connect.NewError(connect.CodeInternal, errors.Join(errServers, httphelper.ErrInternal))
+		return nil, connect.NewError(connect.CodeInternal, errors.Join(errServers, rpc.ErrInternal))
 	}
 
 	var resp v1.ServersAdminResponse

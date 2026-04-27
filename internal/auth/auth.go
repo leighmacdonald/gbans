@@ -33,16 +33,6 @@ type PersonAuth struct {
 	CreatedOn    time.Time       `json:"created_on"`
 }
 
-func NewPersonAuth(sid64 steamid.SteamID, addr net.IP, accessToken string) PersonAuth {
-	return PersonAuth{
-		PersonAuthID: 0,
-		SteamID:      sid64,
-		IPAddr:       addr,
-		AccessToken:  accessToken,
-		CreatedOn:    time.Now(),
-	}
-}
-
 type ServerAuthClaims struct {
 	jwt.RegisteredClaims
 

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -42,11 +43,15 @@ func (h assetHandler) getAsset() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errors.Join(errGet, httphelper.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errGet))
 
 			return
 		}
-		defer asset.Close()
+		defer func(asset *Asset) {
+			if err := asset.Close(); err != nil {
+				slog.Error("Fauled to close asset")
+			}
+		}(&asset)
 
 		if asset.IsPrivate {
 			user, _ := session.CurrentUserProfile(ctx)
@@ -66,7 +71,7 @@ func (h assetHandler) getAsset() gin.HandlerFunc {
 		// }
 		decodedBody, errDecode := io.ReadAll(&asset)
 		if errDecode != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDecode, httphelper.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errDecode))
 
 			return
 		}
