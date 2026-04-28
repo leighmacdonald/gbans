@@ -593,7 +593,7 @@ func (s Bans) UpdateGroupCache(ctx context.Context) error {
 				continue
 			}
 
-			// Statisfy FK
+			// Satisfy FK
 			if errCreate := s.persons.EnsurePerson(ctx, steamID); errCreate != nil {
 				return errCreate
 			}

@@ -11,7 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { Admin, Group, SMUser, SMUserValid } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
+import type { Admin, Group } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
 import {
 	addAdminGroup,
 	admins,
@@ -41,7 +41,7 @@ export const SMAdminsTable = () => {
 		try {
 			const admin = (await NiceModal.show(SMAdminEditorModal, {
 				groups: groupsList?.groups,
-			})) as SMUser;
+			})) as Admin;
 			queryClient.setQueryData(["serverAdmins"], [...(adminsList?.admins ?? []), admin]);
 			sendFlash("success", `Admin created successfully: ${admin.name}`);
 		} catch (e) {
@@ -146,8 +146,8 @@ export const SMAdminsTable = () => {
 				const existingGroupIds = groupsList?.groups.map((g) => g.groupId) ?? [];
 				const group = (await NiceModal.show(SMGroupSelectModal, {
 					groups: groupsList?.groups?.filter((g) => existingGroupIds.includes(g.groupId)),
-				})) as SMUserValid;
-				delGroupMutation.mutate({ adminId: admin.adminId, groupId: group.id });
+				})) as Group;
+				delGroupMutation.mutate({ adminId: admin.adminId, groupId: group.groupId });
 			} catch (e) {
 				sendError(e);
 			}

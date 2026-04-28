@@ -3,7 +3,7 @@ import { z } from "zod/v4";
 import type { Asset } from "../rpc/asset/v1/asset_pb.ts";
 import { ReportStatus } from "../rpc/ban/v1/report_pb.ts";
 import type { DiscordProfile } from "../rpc/discord/oauth/v1/discord_pb.ts";
-import type { Admin, Group, Override, SMUser } from "../rpc/sourcemod/v1/sourcemod_pb";
+import type { Admin, Group, Override } from "../rpc/sourcemod/v1/sourcemod_pb";
 
 const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -77,7 +77,7 @@ export const schemaFlags = z.object({
 
 export type Flags = z.infer<typeof Flags>;
 
-export const hasSMFlag = (flag: Flags, entity?: Admin | Group | SMUser | Override) => {
+export const hasSMFlag = (flag: Flags, entity?: Admin | Group | Override) => {
 	return entity?.flags.includes(flag) ?? false;
 };
 

@@ -24,11 +24,11 @@ type Service struct {
 func NewService(notifications *Notifications, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := notificationv1connect.NewNotificationServiceHandler(Service{notifications: notifications}, option...)
 
-	authMiddleware.AuthedRoute(notificationv1connect.NotificationServiceNotificationsProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(notificationv1connect.NotificationServiceMarkReadProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(notificationv1connect.NotificationServiceMarkReadAllProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(notificationv1connect.NotificationServiceDeleteAllProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(notificationv1connect.NotificationServiceDeleteProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(notificationv1connect.NotificationServiceNotificationsProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(notificationv1connect.NotificationServiceMarkReadProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(notificationv1connect.NotificationServiceMarkReadAllProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(notificationv1connect.NotificationServiceDeleteAllProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(notificationv1connect.NotificationServiceDeleteProcedure, rpc.WithMinPermissions(permission.User))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

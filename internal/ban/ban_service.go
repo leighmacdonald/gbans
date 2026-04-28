@@ -37,11 +37,11 @@ func NewBanService(bans Bans, authMiddleware *rpc.Middleware, option ...connect.
 
 	pattern, handler := banv1connect.NewBanServiceHandler(BanService{bans: bans, client: client}, option...)
 
-	authMiddleware.AuthedRoute(banv1connect.BanServiceQueryProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.AuthedRoute(banv1connect.BanServiceDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.AuthedRoute(banv1connect.BanServiceGetProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(banv1connect.BanServiceQuerySourceBansProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.AuthedRoute(banv1connect.BanServiceUpdateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(banv1connect.BanServiceQueryProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(banv1connect.BanServiceDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(banv1connect.BanServiceGetProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(banv1connect.BanServiceQuerySourceBansProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(banv1connect.BanServiceUpdateProcedure, rpc.WithMinPermissions(permission.Moderator))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

@@ -24,8 +24,8 @@ type Service struct {
 func NewService(wiki Wiki, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := wikiv1connect.NewWikiServiceHandler(Service{wiki: wiki}, option...)
 
-	authMiddleware.AuthedRoute(wikiv1connect.WikiServiceGetProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.AuthedRoute(wikiv1connect.WikiServiceUpdateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(wikiv1connect.WikiServiceGetProcedure, rpc.WithMinPermissions(permission.Guest))
+	authMiddleware.UserRoute(wikiv1connect.WikiServiceUpdateProcedure, rpc.WithMinPermissions(permission.Moderator))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

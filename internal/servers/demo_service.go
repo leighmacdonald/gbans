@@ -22,8 +22,8 @@ type DemoService struct {
 func NewDemoService(demos Demos, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := serversv1connect.NewDemoServiceHandler(&DemoService{demos: demos}, option...)
 
-	authMiddleware.AuthedRoute(serversv1connect.DemoServiceGetDemosProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(serversv1connect.DemoServiceRunCleanupProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.UserRoute(serversv1connect.DemoServiceGetDemosProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(serversv1connect.DemoServiceRunCleanupProcedure, rpc.WithMinPermissions(permission.Admin))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

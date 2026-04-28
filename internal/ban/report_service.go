@@ -29,15 +29,15 @@ type ReportService struct {
 func NewReportService(reports Reports, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := banv1connect.NewReportServiceHandler(ReportService{reports: reports}, option...)
 
-	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportCreateProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportStatusEditProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.AuthedRoute(banv1connect.ReportServiceUserReportsProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportMessagesProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportMessageCreateProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportMessageEditProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportMessageDeleteProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(banv1connect.ReportServiceReportsProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(banv1connect.ReportServiceReportCreateProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(banv1connect.ReportServiceReportProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(banv1connect.ReportServiceReportStatusEditProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(banv1connect.ReportServiceUserReportsProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(banv1connect.ReportServiceReportMessagesProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(banv1connect.ReportServiceReportMessageCreateProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(banv1connect.ReportServiceReportMessageEditProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(banv1connect.ReportServiceReportMessageDeleteProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(banv1connect.ReportServiceReportsProcedure, rpc.WithMinPermissions(permission.Moderator))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

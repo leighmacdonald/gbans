@@ -26,12 +26,12 @@ type WordfilterService struct {
 func NewWordfilterService(filters WordFilters, chat *Chat, config Config, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
 	pattern, handler := chatv1connect.NewWordfilterServiceHandler(WordfilterService{filters: filters, chat: chat, config: config}, options...)
 
-	authMiddleware.AuthedRoute(chatv1connect.WordfilterServiceFiltersProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.AuthedRoute(chatv1connect.WordfilterServiceWarningStateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.AuthedRoute(chatv1connect.WordfilterServiceFilterCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.AuthedRoute(chatv1connect.WordfilterServiceFilterEditProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.AuthedRoute(chatv1connect.WordfilterServiceFilterDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.AuthedRoute(chatv1connect.WordfilterServiceFilterMatchProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(chatv1connect.WordfilterServiceFiltersProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(chatv1connect.WordfilterServiceWarningStateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(chatv1connect.WordfilterServiceFilterCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(chatv1connect.WordfilterServiceFilterEditProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(chatv1connect.WordfilterServiceFilterDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(chatv1connect.WordfilterServiceFilterMatchProcedure, rpc.WithMinPermissions(permission.Moderator))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

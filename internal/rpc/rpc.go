@@ -69,12 +69,28 @@ func (u UserInfo) GetAvatar() person.Avatar {
 	return u.AvatarHash
 }
 
-type ServerInfo struct {
-	ServerID int32 `json:"server_id"`
+type ServerAuthenticator interface {
+	GetByPassword(ctx context.Context, password string) (int32, string, error)
 }
 
-func ServerInfoFromCtx(_ context.Context) (ServerInfo, error) {
-	panic("fixme")
+func NewServerAuthenticator() ServerRouteAuthFn {
+	return func(ctx context.Context, req *http.Request, server ServerInfo) bool {
+		return server.ServerID > 0
+	}
+}
+
+type ServerInfo struct {
+	ServerID   int32  `json:"server_id"`
+	ServerName string `json:"server_name"`
+}
+
+func ServerInfoFromCtx(ctx context.Context) (*ServerInfo, bool) {
+	server, ok := authn.GetInfo(ctx).(ServerInfo)
+	if !ok {
+		return nil, false
+	}
+
+	return &server, true
 }
 
 func UserInfoFromCtx(ctx context.Context) (*UserInfo, bool) {

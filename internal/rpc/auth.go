@@ -5,9 +5,11 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -37,15 +39,24 @@ type UserClaimProvider interface {
 	GetName() string
 }
 
-type RouteAuthFn = func(ctx context.Context, req *http.Request, user UserInfo) bool
+type (
+	UserRouteAuthFn   = func(ctx context.Context, req *http.Request, user UserInfo) bool
+	ServerRouteAuthFn = func(ctx context.Context, req *http.Request, server ServerInfo) bool
+)
 
-func WithMinPermissions(permission permission.Privilege) RouteAuthFn {
+func WithServer() ServerRouteAuthFn {
+	return func(ctx context.Context, req *http.Request, server ServerInfo) bool {
+		return server.ServerID > 0
+	}
+}
+
+func WithMinPermissions(permission permission.Privilege) UserRouteAuthFn {
 	return func(ctx context.Context, req *http.Request, user UserInfo) bool {
 		return user.HasPermission(permission)
 	}
 }
 
-type Claims struct {
+type userClaims struct {
 	jwt.RegisteredClaims
 
 	// user context to prevent side-jacking
@@ -57,55 +68,105 @@ type Claims struct {
 	Name        string               `json:"name"`
 }
 
+type serverClaims struct {
+	// ID = server id
+	// Subject = Name
+	jwt.RegisteredClaims
+}
+
 type Middleware struct {
 	sync.RWMutex
 
-	siteName  string
-	cookie    string
-	allowList map[string]RouteAuthFn
+	siteName        string
+	cookie          string
+	userAllowList   map[string]UserRouteAuthFn
+	serverAllowList map[string]ServerRouteAuthFn
 }
 
 func NewMiddleware(siteName string, cookie string) *Middleware {
 	return &Middleware{
-		RWMutex:   sync.RWMutex{},
-		siteName:  siteName,
-		cookie:    cookie,
-		allowList: map[string]RouteAuthFn{},
+		RWMutex:         sync.RWMutex{},
+		siteName:        siteName,
+		cookie:          cookie,
+		userAllowList:   map[string]UserRouteAuthFn{},
+		serverAllowList: map[string]ServerRouteAuthFn{},
 	}
 }
 
-func (m *Middleware) AuthedRoute(procedure string, authFunc RouteAuthFn) {
+func (m *Middleware) UserRoute(procedure string, authFunc UserRouteAuthFn) {
 	m.Lock()
-	m.allowList[procedure] = authFunc
+	m.userAllowList[procedure] = authFunc
 	m.Unlock()
 }
 
-func (m *Middleware) findProcedure(url *url.URL) (RouteAuthFn, bool) {
+func (m *Middleware) ServerRoute(procedure string, authFunc ServerRouteAuthFn) {
+	m.Lock()
+	m.serverAllowList[procedure] = authFunc
+	m.Unlock()
+}
+
+func (m *Middleware) findProcedure(url *url.URL) (string, bool, bool) {
 	procedure, found := authn.InferProcedure(url)
 	if !found {
-		return nil, false
+		return "", false, false
 	}
 
-	m.RLock()
-	defer m.RUnlock()
-
-	authFn, ok := m.allowList[procedure]
-	if !ok {
-		return nil, false
-	}
-
-	return authFn, true
+	return procedure, strings.Contains(procedure, "Plugin"), true
 }
 
 func (m *Middleware) Authenticate(ctx context.Context, req *http.Request) (any, error) {
-	authFn, required := m.findProcedure(req.URL)
-	if !required {
+	procedure, isServer, found := m.findProcedure(req.URL)
+	if !found {
 		return nil, nil
 	}
 
+	if isServer {
+		return m.authServer(ctx, req, procedure)
+	}
+
+	return m.authUser(ctx, req, procedure)
+}
+
+func (m *Middleware) authServer(ctx context.Context, req *http.Request, procedure string) (ServerInfo, error) {
+	var info ServerInfo
+
+	authFn, found := m.serverAllowList[procedure]
+	if !found {
+		return info, nil
+	}
+
+	claims, errToken := m.serverClaimsFromRequest(req)
+	if errToken != nil {
+		return info, errToken
+	}
+
+	serverId, err := strconv.ParseInt(claims.Issuer, 10, 32)
+	if err != nil {
+		return info, err
+	}
+
+	info.ServerID = int32(serverId)
+	info.ServerName = claims.Subject
+
+	if !authFn(ctx, req, info) {
+		return info, authn.Errorf("unauthorized")
+	}
+
+	return info, nil
+}
+
+func (m *Middleware) authUser(ctx context.Context, req *http.Request, procedure string) (UserInfo, error) {
+	m.RLock()
+	defer m.RUnlock()
+
 	var info UserInfo
 
-	claims, errToken := m.claimsFromRequest(req)
+	authFn, found := m.userAllowList[procedure]
+	if !found {
+		return info, nil
+	}
+
+	claims, errToken := m.userClaimsFromRequest(req)
 	if errToken != nil {
 		return info, errToken
 	}
@@ -127,7 +188,35 @@ func (m *Middleware) Authenticate(ctx context.Context, req *http.Request) (any, 
 	return info, nil
 }
 
-func (m *Middleware) claimsFromRequest(req *http.Request) (*Claims, error) {
+func (m *Middleware) serverClaimsFromRequest(req *http.Request) (*serverClaims, error) {
+	token, ok := authn.BearerToken(req)
+	if !ok {
+		// TODO Make sure procedure is allowed
+		return nil, authn.Errorf("invalid authorization")
+	}
+
+	claims := serverClaims{}
+	tkn, errParseClaims := jwt.ParseWithClaims(token, &claims, m.makeGetTokenKey())
+	if errParseClaims != nil {
+		if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
+			return nil, authn.Errorf("invalid authorization")
+		}
+
+		if errors.Is(errParseClaims, jwt.ErrTokenExpired) {
+			return nil, authn.Errorf("expired authorization")
+		}
+
+		return nil, authn.Errorf("invalid authorization")
+	}
+
+	if !tkn.Valid {
+		return nil, authn.Errorf("invalid token")
+	}
+
+	return &claims, nil
+}
+
+func (m *Middleware) userClaimsFromRequest(req *http.Request) (*userClaims, error) {
 	fingerprint, errFP := m.fingerprintFromRequest(req)
 	if errFP != nil {
 		return nil, errFP
@@ -139,7 +228,7 @@ func (m *Middleware) claimsFromRequest(req *http.Request) (*Claims, error) {
 		return nil, authn.Errorf("invalid authorization")
 	}
 
-	claims := Claims{}
+	claims := userClaims{}
 	tkn, errParseClaims := jwt.ParseWithClaims(token, &claims, m.makeGetTokenKey())
 	if errParseClaims != nil {
 		if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
@@ -196,10 +285,35 @@ func (m *Middleware) makeGetTokenKey() func(_ *jwt.Token) (any, error) {
 	}
 }
 
+func NewServerTokenGenerator(siteName string, cookie []byte) func(serverID int32, serverName string) (string, error) {
+	return func(serverID int32, serverName string) (string, error) {
+		nowTime := time.Now()
+		claims := serverClaims{
+			RegisteredClaims: jwt.RegisteredClaims{
+				ID:        fmt.Sprintf("%d", serverID),
+				Issuer:    siteName,
+				Subject:   serverName,
+				ExpiresAt: jwt.NewNumericDate(nowTime.AddDate(0, 0, 7)),
+				IssuedAt:  jwt.NewNumericDate(nowTime),
+				NotBefore: jwt.NewNumericDate(nowTime),
+			},
+		}
+
+		tokenWithClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+		signedToken, errSigned := tokenWithClaims.SignedString(cookie)
+
+		if errSigned != nil {
+			return "", errors.Join(errSigned, ErrSignToken)
+		}
+
+		return signedToken, nil
+	}
+}
+
 func (m *Middleware) newUserToken(user UserClaimProvider, fingerPrint string, validDuration time.Duration) (string, error) {
 	nowTime := time.Now()
 	sid := user.GetSteamID()
-	claims := Claims{
+	claims := userClaims{
 		Fingerprint: m.fingerprintHash(fingerPrint),
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    m.siteName,
@@ -224,7 +338,7 @@ func (m *Middleware) newUserToken(user UserClaimProvider, fingerPrint string, va
 
 // MakeToken generates new jwt auth tokens
 // fingerprint is a random string used to prevent side-jacking.
-func (m *Middleware) MakeToken(user person.BaseUser) (string, string, error) {
+func (m *Middleware) MakeUserToken(user person.BaseUser) (string, string, error) {
 	fingerprint := stringutil.SecureRandomString(40)
 	accessToken, errAccess := m.newUserToken(user, fingerprint, TokenDuration)
 	if errAccess != nil {
@@ -242,6 +356,16 @@ func (m *Middleware) MakeToken(user person.BaseUser) (string, string, error) {
 	// if saveErr := u.auth.SavePersonAuth(ctx, &personAuth); saveErr != nil {
 	// 	return UserTokens{}, errors.Join(saveErr, ErrSaveToken)
 	// }
+
+	return accessToken, fingerprint, nil
+}
+
+func (m *Middleware) MakeServerToken(user person.BaseUser) (string, string, error) {
+	fingerprint := stringutil.SecureRandomString(40)
+	accessToken, errAccess := m.newUserToken(user, fingerprint, TokenDuration)
+	if errAccess != nil {
+		return "", "", errors.Join(errAccess, ErrCreateToken)
+	}
 
 	return accessToken, fingerprint, nil
 }

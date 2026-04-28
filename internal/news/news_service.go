@@ -21,10 +21,10 @@ type Service struct {
 func NewService(news News, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := newsv1connect.NewNewsServiceHandler(Service{news: news}, option...)
 
-	authMiddleware.AuthedRoute(newsv1connect.NewsServiceEditProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.AuthedRoute(newsv1connect.NewsServiceCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.AuthedRoute(newsv1connect.NewsServiceDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.AuthedRoute(newsv1connect.NewsServiceAllProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(newsv1connect.NewsServiceEditProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(newsv1connect.NewsServiceCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(newsv1connect.NewsServiceDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(newsv1connect.NewsServiceAllProcedure, rpc.WithMinPermissions(permission.Moderator))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
