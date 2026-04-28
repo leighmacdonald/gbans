@@ -17,7 +17,7 @@ import (
 func NewService(anticheat AntiCheat, authMiddleware *rpc.Middleware, interceptor ...connect.HandlerOption) rpc.Service {
 	pattern, handler := anticheatv1connect.NewAnticheatServiceHandler(Service{anticheat: anticheat}, interceptor...)
 
-	authMiddleware.AuthedRoute(anticheatv1connect.AnticheatServiceQueryProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(anticheatv1connect.AnticheatServiceQueryProcedure, rpc.WithMinPermissions(permission.Moderator))
 
 	return rpc.Service{
 		Pattern: pattern,

@@ -25,7 +25,7 @@ type Service struct {
 func NewService(votes Votes, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := votesv1connect.NewVotesServiceHandler(Service{votes: votes}, option...)
 
-	authMiddleware.AuthedRoute(votesv1connect.VotesServiceQueryProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(votesv1connect.VotesServiceQueryProcedure, rpc.WithMinPermissions(permission.Moderator))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

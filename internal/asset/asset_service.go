@@ -24,8 +24,8 @@ type Service struct {
 func NewService(assets Assets, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := assetv1connect.NewAssetServiceHandler(Service{assets: assets}, option...)
 
-	authMiddleware.AuthedRoute(assetv1connect.AssetServiceCreateProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(assetv1connect.AssetServiceDeleteProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(assetv1connect.AssetServiceCreateProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(assetv1connect.AssetServiceDeleteProcedure, rpc.WithMinPermissions(permission.User))
 
 	return rpc.Service{
 		Pattern: pattern,

@@ -108,30 +108,3 @@ export const createImmunity = SourcemodService.method.createImmunity;
  * @generated from rpc sourcemod.v1.SourcemodService.DeleteImmunity
  */
 export const deleteImmunity = SourcemodService.method.deleteImmunity;
-
-/**
- * Sourcemod plugin surface
- *
- * @generated from rpc sourcemod.v1.SourcemodService.Check
- */
-export const check = SourcemodService.method.check;
-
-/**
- * @generated from rpc sourcemod.v1.SourcemodService.SMOverrides
- */
-export const sMOverrides = SourcemodService.method.sMOverrides;
-
-/**
- * @generated from rpc sourcemod.v1.SourcemodService.SMUsers
- */
-export const sMUsers = SourcemodService.method.sMUsers;
-
-/**
- * @generated from rpc sourcemod.v1.SourcemodService.SMGroups
- */
-export const sMGroups = SourcemodService.method.sMGroups;
-
-/**
- * @generated from rpc sourcemod.v1.SourcemodService.SMSeed
- */
-export const sMSeed = SourcemodService.method.sMSeed;

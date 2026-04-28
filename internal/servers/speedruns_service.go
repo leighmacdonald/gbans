@@ -26,11 +26,11 @@ type SpeedrunsService struct {
 func NewSpeedrunsService(speedruns Speedruns, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := serversv1connect.NewSpeedrunsServiceHandler(&SpeedrunsService{speedruns: speedruns}, option...)
 
-	authMiddleware.AuthedRoute(serversv1connect.SpeedrunsServiceMapSpeedrunsProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(serversv1connect.SpeedrunsServiceOverallTopNProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(serversv1connect.SpeedrunsServiceOverallRecentProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(serversv1connect.SpeedrunsServiceSpeedrunCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.AuthedRoute(serversv1connect.SpeedrunsServiceQueryProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(serversv1connect.SpeedrunsServiceMapSpeedrunsProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(serversv1connect.SpeedrunsServiceOverallTopNProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(serversv1connect.SpeedrunsServiceOverallRecentProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(serversv1connect.SpeedrunsServiceSpeedrunCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(serversv1connect.SpeedrunsServiceQueryProcedure, rpc.WithMinPermissions(permission.User))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

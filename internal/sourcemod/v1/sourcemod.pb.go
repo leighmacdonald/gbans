@@ -24,58 +24,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type BanType int32
-
-const (
-	BanType_BAN_TYPE_OK_UNSPECIFIED BanType = 0
-	BanType_BAN_TYPE_NO_COMM        BanType = 1
-	BanType_BAN_TYPE_BANNED         BanType = 2
-	BanType_BAN_TYPE_NETWORK        BanType = 3
-)
-
-// Enum value maps for BanType.
-var (
-	BanType_name = map[int32]string{
-		0: "BAN_TYPE_OK_UNSPECIFIED",
-		1: "BAN_TYPE_NO_COMM",
-		2: "BAN_TYPE_BANNED",
-		3: "BAN_TYPE_NETWORK",
-	}
-	BanType_value = map[string]int32{
-		"BAN_TYPE_OK_UNSPECIFIED": 0,
-		"BAN_TYPE_NO_COMM":        1,
-		"BAN_TYPE_BANNED":         2,
-		"BAN_TYPE_NETWORK":        3,
-	}
-)
-
-func (x BanType) Enum() *BanType {
-	p := new(BanType)
-	*p = x
-	return p
-}
-
-func (x BanType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (BanType) Descriptor() protoreflect.EnumDescriptor {
-	return file_sourcemod_v1_sourcemod_proto_enumTypes[0].Descriptor()
-}
-
-func (BanType) Type() protoreflect.EnumType {
-	return &file_sourcemod_v1_sourcemod_proto_enumTypes[0]
-}
-
-func (x BanType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use BanType.Descriptor instead.
-func (BanType) EnumDescriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{0}
-}
-
 type OverrideType int32
 
 const (
@@ -106,11 +54,11 @@ func (x OverrideType) String() string {
 }
 
 func (OverrideType) Descriptor() protoreflect.EnumDescriptor {
-	return file_sourcemod_v1_sourcemod_proto_enumTypes[1].Descriptor()
+	return file_sourcemod_v1_sourcemod_proto_enumTypes[0].Descriptor()
 }
 
 func (OverrideType) Type() protoreflect.EnumType {
-	return &file_sourcemod_v1_sourcemod_proto_enumTypes[1]
+	return &file_sourcemod_v1_sourcemod_proto_enumTypes[0]
 }
 
 func (x OverrideType) Number() protoreflect.EnumNumber {
@@ -119,7 +67,7 @@ func (x OverrideType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use OverrideType.Descriptor instead.
 func (OverrideType) EnumDescriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{1}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{0}
 }
 
 type OverrideAccess int32
@@ -152,11 +100,11 @@ func (x OverrideAccess) String() string {
 }
 
 func (OverrideAccess) Descriptor() protoreflect.EnumDescriptor {
-	return file_sourcemod_v1_sourcemod_proto_enumTypes[2].Descriptor()
+	return file_sourcemod_v1_sourcemod_proto_enumTypes[1].Descriptor()
 }
 
 func (OverrideAccess) Type() protoreflect.EnumType {
-	return &file_sourcemod_v1_sourcemod_proto_enumTypes[2]
+	return &file_sourcemod_v1_sourcemod_proto_enumTypes[1]
 }
 
 func (x OverrideAccess) Number() protoreflect.EnumNumber {
@@ -165,7 +113,7 @@ func (x OverrideAccess) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use OverrideAccess.Descriptor instead.
 func (OverrideAccess) EnumDescriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{2}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{1}
 }
 
 type AuthType int32
@@ -201,11 +149,11 @@ func (x AuthType) String() string {
 }
 
 func (AuthType) Descriptor() protoreflect.EnumDescriptor {
-	return file_sourcemod_v1_sourcemod_proto_enumTypes[3].Descriptor()
+	return file_sourcemod_v1_sourcemod_proto_enumTypes[2].Descriptor()
 }
 
 func (AuthType) Type() protoreflect.EnumType {
-	return &file_sourcemod_v1_sourcemod_proto_enumTypes[3]
+	return &file_sourcemod_v1_sourcemod_proto_enumTypes[2]
 }
 
 func (x AuthType) Number() protoreflect.EnumNumber {
@@ -214,395 +162,7 @@ func (x AuthType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use AuthType.Descriptor instead.
 func (AuthType) EnumDescriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{3}
-}
-
-type SMSeedRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SteamId       *string                `protobuf:"bytes,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SMSeedRequest) Reset() {
-	*x = SMSeedRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SMSeedRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SMSeedRequest) ProtoMessage() {}
-
-func (x *SMSeedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SMSeedRequest.ProtoReflect.Descriptor instead.
-func (*SMSeedRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *SMSeedRequest) GetSteamId() string {
-	if x != nil && x.SteamId != nil {
-		return *x.SteamId
-	}
-	return ""
-}
-
-type SMSeedResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Message       *string                `protobuf:"bytes,1,opt,name=message" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SMSeedResponse) Reset() {
-	*x = SMSeedResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SMSeedResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SMSeedResponse) ProtoMessage() {}
-
-func (x *SMSeedResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SMSeedResponse.ProtoReflect.Descriptor instead.
-func (*SMSeedResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *SMSeedResponse) GetMessage() string {
-	if x != nil && x.Message != nil {
-		return *x.Message
-	}
-	return ""
-}
-
-type SMOverride struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	OverrideType  *OverrideType          `protobuf:"varint,1,opt,name=override_type,json=overrideType,enum=sourcemod.v1.OverrideType" json:"override_type,omitempty"`
-	Name          *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
-	Flags         *string                `protobuf:"bytes,3,opt,name=flags" json:"flags,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SMOverride) Reset() {
-	*x = SMOverride{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SMOverride) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SMOverride) ProtoMessage() {}
-
-func (x *SMOverride) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SMOverride.ProtoReflect.Descriptor instead.
-func (*SMOverride) Descriptor() ([]byte, []int) {
 	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *SMOverride) GetOverrideType() OverrideType {
-	if x != nil && x.OverrideType != nil {
-		return *x.OverrideType
-	}
-	return OverrideType_OVERRIDE_TYPE_COMMAND_UNSPECIFIED
-}
-
-func (x *SMOverride) GetName() string {
-	if x != nil && x.Name != nil {
-		return *x.Name
-	}
-	return ""
-}
-
-func (x *SMOverride) GetFlags() string {
-	if x != nil && x.Flags != nil {
-		return *x.Flags
-	}
-	return ""
-}
-
-type SMOverridesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Overrides     []*SMOverride          `protobuf:"bytes,1,rep,name=overrides" json:"overrides,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SMOverridesResponse) Reset() {
-	*x = SMOverridesResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SMOverridesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SMOverridesResponse) ProtoMessage() {}
-
-func (x *SMOverridesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SMOverridesResponse.ProtoReflect.Descriptor instead.
-func (*SMOverridesResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *SMOverridesResponse) GetOverrides() []*SMOverride {
-	if x != nil {
-		return x.Overrides
-	}
-	return nil
-}
-
-type SMUser struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            *int32                 `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
-	AuthType      *AuthType              `protobuf:"varint,2,opt,name=auth_type,json=authType,enum=sourcemod.v1.AuthType" json:"auth_type,omitempty"`
-	Identity      *string                `protobuf:"bytes,3,opt,name=identity" json:"identity,omitempty"`
-	Password      *string                `protobuf:"bytes,4,opt,name=password" json:"password,omitempty"`
-	Flags         *string                `protobuf:"bytes,5,opt,name=flags" json:"flags,omitempty"`
-	Name          *string                `protobuf:"bytes,6,opt,name=name" json:"name,omitempty"`
-	Immunity      *int32                 `protobuf:"varint,7,opt,name=immunity" json:"immunity,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SMUser) Reset() {
-	*x = SMUser{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SMUser) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SMUser) ProtoMessage() {}
-
-func (x *SMUser) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SMUser.ProtoReflect.Descriptor instead.
-func (*SMUser) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *SMUser) GetId() int32 {
-	if x != nil && x.Id != nil {
-		return *x.Id
-	}
-	return 0
-}
-
-func (x *SMUser) GetAuthType() AuthType {
-	if x != nil && x.AuthType != nil {
-		return *x.AuthType
-	}
-	return AuthType_AUTH_TYPE_STEAM_UNSPECIFIED
-}
-
-func (x *SMUser) GetIdentity() string {
-	if x != nil && x.Identity != nil {
-		return *x.Identity
-	}
-	return ""
-}
-
-func (x *SMUser) GetPassword() string {
-	if x != nil && x.Password != nil {
-		return *x.Password
-	}
-	return ""
-}
-
-func (x *SMUser) GetFlags() string {
-	if x != nil && x.Flags != nil {
-		return *x.Flags
-	}
-	return ""
-}
-
-func (x *SMUser) GetName() string {
-	if x != nil && x.Name != nil {
-		return *x.Name
-	}
-	return ""
-}
-
-func (x *SMUser) GetImmunity() int32 {
-	if x != nil && x.Immunity != nil {
-		return *x.Immunity
-	}
-	return 0
-}
-
-type SMUserGroup struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AdminId       *int32                 `protobuf:"varint,1,opt,name=admin_id,json=adminId" json:"admin_id,omitempty"`
-	GroupName     *string                `protobuf:"bytes,2,opt,name=group_name,json=groupName" json:"group_name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SMUserGroup) Reset() {
-	*x = SMUserGroup{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SMUserGroup) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SMUserGroup) ProtoMessage() {}
-
-func (x *SMUserGroup) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SMUserGroup.ProtoReflect.Descriptor instead.
-func (*SMUserGroup) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *SMUserGroup) GetAdminId() int32 {
-	if x != nil && x.AdminId != nil {
-		return *x.AdminId
-	}
-	return 0
-}
-
-func (x *SMUserGroup) GetGroupName() string {
-	if x != nil && x.GroupName != nil {
-		return *x.GroupName
-	}
-	return ""
-}
-
-type SMUsersResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Users         []*SMUser              `protobuf:"bytes,1,rep,name=users" json:"users,omitempty"`
-	UserGroups    []*SMUserGroup         `protobuf:"bytes,2,rep,name=user_groups,json=userGroups" json:"user_groups,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SMUsersResponse) Reset() {
-	*x = SMUsersResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SMUsersResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SMUsersResponse) ProtoMessage() {}
-
-func (x *SMUsersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SMUsersResponse.ProtoReflect.Descriptor instead.
-func (*SMUsersResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *SMUsersResponse) GetUsers() []*SMUser {
-	if x != nil {
-		return x.Users
-	}
-	return nil
-}
-
-func (x *SMUsersResponse) GetUserGroups() []*SMUserGroup {
-	if x != nil {
-		return x.UserGroups
-	}
-	return nil
 }
 
 type Group struct {
@@ -619,7 +179,7 @@ type Group struct {
 
 func (x *Group) Reset() {
 	*x = Group{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[7]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -631,7 +191,7 @@ func (x *Group) String() string {
 func (*Group) ProtoMessage() {}
 
 func (x *Group) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[7]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -644,7 +204,7 @@ func (x *Group) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Group.ProtoReflect.Descriptor instead.
 func (*Group) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{7}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Group) GetGroupId() int32 {
@@ -689,238 +249,6 @@ func (x *Group) GetUpdatedOn() *timestamppb.Timestamp {
 	return nil
 }
 
-type SMGroupsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Groups        []*Group               `protobuf:"bytes,1,rep,name=groups" json:"groups,omitempty"`
-	Immunities    []*SMGroupImmunity     `protobuf:"bytes,2,rep,name=immunities" json:"immunities,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SMGroupsResponse) Reset() {
-	*x = SMGroupsResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SMGroupsResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SMGroupsResponse) ProtoMessage() {}
-
-func (x *SMGroupsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SMGroupsResponse.ProtoReflect.Descriptor instead.
-func (*SMGroupsResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *SMGroupsResponse) GetGroups() []*Group {
-	if x != nil {
-		return x.Groups
-	}
-	return nil
-}
-
-func (x *SMGroupsResponse) GetImmunities() []*SMGroupImmunity {
-	if x != nil {
-		return x.Immunities
-	}
-	return nil
-}
-
-type SMGroupImmunity struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	GroupName     *string                `protobuf:"bytes,1,opt,name=group_name,json=groupName" json:"group_name,omitempty"`
-	OtherName     *string                `protobuf:"bytes,2,opt,name=other_name,json=otherName" json:"other_name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SMGroupImmunity) Reset() {
-	*x = SMGroupImmunity{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SMGroupImmunity) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SMGroupImmunity) ProtoMessage() {}
-
-func (x *SMGroupImmunity) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SMGroupImmunity.ProtoReflect.Descriptor instead.
-func (*SMGroupImmunity) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *SMGroupImmunity) GetGroupName() string {
-	if x != nil && x.GroupName != nil {
-		return *x.GroupName
-	}
-	return ""
-}
-
-func (x *SMGroupImmunity) GetOtherName() string {
-	if x != nil && x.OtherName != nil {
-		return *x.OtherName
-	}
-	return ""
-}
-
-type CheckRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SteamId       *string                `protobuf:"bytes,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
-	ClientId      *int32                 `protobuf:"varint,2,opt,name=client_id,json=clientId" json:"client_id,omitempty"`
-	Ip            *string                `protobuf:"bytes,3,opt,name=ip" json:"ip,omitempty"`
-	Name          *string                `protobuf:"bytes,4,opt,name=name" json:"name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CheckRequest) Reset() {
-	*x = CheckRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CheckRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CheckRequest) ProtoMessage() {}
-
-func (x *CheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CheckRequest.ProtoReflect.Descriptor instead.
-func (*CheckRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *CheckRequest) GetSteamId() string {
-	if x != nil && x.SteamId != nil {
-		return *x.SteamId
-	}
-	return ""
-}
-
-func (x *CheckRequest) GetClientId() int32 {
-	if x != nil && x.ClientId != nil {
-		return *x.ClientId
-	}
-	return 0
-}
-
-func (x *CheckRequest) GetIp() string {
-	if x != nil && x.Ip != nil {
-		return *x.Ip
-	}
-	return ""
-}
-
-func (x *CheckRequest) GetName() string {
-	if x != nil && x.Name != nil {
-		return *x.Name
-	}
-	return ""
-}
-
-type CheckResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ClientId      *int32                 `protobuf:"varint,1,opt,name=client_id,json=clientId" json:"client_id,omitempty"`
-	BanType       *BanType               `protobuf:"varint,2,opt,name=ban_type,json=banType,enum=sourcemod.v1.BanType" json:"ban_type,omitempty"`
-	Msg           *string                `protobuf:"bytes,3,opt,name=msg" json:"msg,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CheckResponse) Reset() {
-	*x = CheckResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[11]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CheckResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CheckResponse) ProtoMessage() {}
-
-func (x *CheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[11]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CheckResponse.ProtoReflect.Descriptor instead.
-func (*CheckResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *CheckResponse) GetClientId() int32 {
-	if x != nil && x.ClientId != nil {
-		return *x.ClientId
-	}
-	return 0
-}
-
-func (x *CheckResponse) GetBanType() BanType {
-	if x != nil && x.BanType != nil {
-		return *x.BanType
-	}
-	return BanType_BAN_TYPE_OK_UNSPECIFIED
-}
-
-func (x *CheckResponse) GetMsg() string {
-	if x != nil && x.Msg != nil {
-		return *x.Msg
-	}
-	return ""
-}
-
 type GroupsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Groups        []*Group               `protobuf:"bytes,1,rep,name=groups" json:"groups,omitempty"`
@@ -930,7 +258,7 @@ type GroupsResponse struct {
 
 func (x *GroupsResponse) Reset() {
 	*x = GroupsResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[12]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -942,7 +270,7 @@ func (x *GroupsResponse) String() string {
 func (*GroupsResponse) ProtoMessage() {}
 
 func (x *GroupsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[12]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -955,7 +283,7 @@ func (x *GroupsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupsResponse.ProtoReflect.Descriptor instead.
 func (*GroupsResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{12}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *GroupsResponse) GetGroups() []*Group {
@@ -976,7 +304,7 @@ type CreateGroupRequest struct {
 
 func (x *CreateGroupRequest) Reset() {
 	*x = CreateGroupRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[13]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -988,7 +316,7 @@ func (x *CreateGroupRequest) String() string {
 func (*CreateGroupRequest) ProtoMessage() {}
 
 func (x *CreateGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[13]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1001,7 +329,7 @@ func (x *CreateGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateGroupRequest.ProtoReflect.Descriptor instead.
 func (*CreateGroupRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{13}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *CreateGroupRequest) GetName() string {
@@ -1034,7 +362,7 @@ type CreateGroupResponse struct {
 
 func (x *CreateGroupResponse) Reset() {
 	*x = CreateGroupResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[14]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1046,7 +374,7 @@ func (x *CreateGroupResponse) String() string {
 func (*CreateGroupResponse) ProtoMessage() {}
 
 func (x *CreateGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[14]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1059,7 +387,7 @@ func (x *CreateGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateGroupResponse.ProtoReflect.Descriptor instead.
 func (*CreateGroupResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{14}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *CreateGroupResponse) GetGroup() *Group {
@@ -1081,7 +409,7 @@ type EditGroupsRequest struct {
 
 func (x *EditGroupsRequest) Reset() {
 	*x = EditGroupsRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[15]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1093,7 +421,7 @@ func (x *EditGroupsRequest) String() string {
 func (*EditGroupsRequest) ProtoMessage() {}
 
 func (x *EditGroupsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[15]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1106,7 +434,7 @@ func (x *EditGroupsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditGroupsRequest.ProtoReflect.Descriptor instead.
 func (*EditGroupsRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{15}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *EditGroupsRequest) GetGroupId() int32 {
@@ -1146,7 +474,7 @@ type EditGroupsResponse struct {
 
 func (x *EditGroupsResponse) Reset() {
 	*x = EditGroupsResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[16]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1158,7 +486,7 @@ func (x *EditGroupsResponse) String() string {
 func (*EditGroupsResponse) ProtoMessage() {}
 
 func (x *EditGroupsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[16]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1171,7 +499,7 @@ func (x *EditGroupsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditGroupsResponse.ProtoReflect.Descriptor instead.
 func (*EditGroupsResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{16}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *EditGroupsResponse) GetGroup() *Group {
@@ -1190,7 +518,7 @@ type DeleteGroupRequest struct {
 
 func (x *DeleteGroupRequest) Reset() {
 	*x = DeleteGroupRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[17]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1202,7 +530,7 @@ func (x *DeleteGroupRequest) String() string {
 func (*DeleteGroupRequest) ProtoMessage() {}
 
 func (x *DeleteGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[17]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1215,7 +543,7 @@ func (x *DeleteGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteGroupRequest.ProtoReflect.Descriptor instead.
 func (*DeleteGroupRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{17}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *DeleteGroupRequest) GetGroupId() int32 {
@@ -1234,7 +562,7 @@ type GroupOverridesRequest struct {
 
 func (x *GroupOverridesRequest) Reset() {
 	*x = GroupOverridesRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[18]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1246,7 +574,7 @@ func (x *GroupOverridesRequest) String() string {
 func (*GroupOverridesRequest) ProtoMessage() {}
 
 func (x *GroupOverridesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[18]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1259,7 +587,7 @@ func (x *GroupOverridesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupOverridesRequest.ProtoReflect.Descriptor instead.
 func (*GroupOverridesRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{18}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GroupOverridesRequest) GetGroupId() int32 {
@@ -1278,7 +606,7 @@ type GroupOverridesResponse struct {
 
 func (x *GroupOverridesResponse) Reset() {
 	*x = GroupOverridesResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[19]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1290,7 +618,7 @@ func (x *GroupOverridesResponse) String() string {
 func (*GroupOverridesResponse) ProtoMessage() {}
 
 func (x *GroupOverridesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[19]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1303,7 +631,7 @@ func (x *GroupOverridesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupOverridesResponse.ProtoReflect.Descriptor instead.
 func (*GroupOverridesResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{19}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GroupOverridesResponse) GetOverrides() []*GroupOverrides {
@@ -1326,7 +654,7 @@ type CreateGroupOverrideRequest struct {
 
 func (x *CreateGroupOverrideRequest) Reset() {
 	*x = CreateGroupOverrideRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[20]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1338,7 +666,7 @@ func (x *CreateGroupOverrideRequest) String() string {
 func (*CreateGroupOverrideRequest) ProtoMessage() {}
 
 func (x *CreateGroupOverrideRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[20]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1351,7 +679,7 @@ func (x *CreateGroupOverrideRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateGroupOverrideRequest.ProtoReflect.Descriptor instead.
 func (*CreateGroupOverrideRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{20}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CreateGroupOverrideRequest) GetGroupOverrideId() int32 {
@@ -1398,7 +726,7 @@ type CreateGroupOverrideResponse struct {
 
 func (x *CreateGroupOverrideResponse) Reset() {
 	*x = CreateGroupOverrideResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[21]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1410,7 +738,7 @@ func (x *CreateGroupOverrideResponse) String() string {
 func (*CreateGroupOverrideResponse) ProtoMessage() {}
 
 func (x *CreateGroupOverrideResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[21]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1423,7 +751,7 @@ func (x *CreateGroupOverrideResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateGroupOverrideResponse.ProtoReflect.Descriptor instead.
 func (*CreateGroupOverrideResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{21}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *CreateGroupOverrideResponse) GetGroupOverride() *GroupOverrides {
@@ -1446,7 +774,7 @@ type EditGroupOverrideRequest struct {
 
 func (x *EditGroupOverrideRequest) Reset() {
 	*x = EditGroupOverrideRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[22]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1458,7 +786,7 @@ func (x *EditGroupOverrideRequest) String() string {
 func (*EditGroupOverrideRequest) ProtoMessage() {}
 
 func (x *EditGroupOverrideRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[22]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1471,7 +799,7 @@ func (x *EditGroupOverrideRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditGroupOverrideRequest.ProtoReflect.Descriptor instead.
 func (*EditGroupOverrideRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{22}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *EditGroupOverrideRequest) GetGroupId() int32 {
@@ -1518,7 +846,7 @@ type EditGroupOverrideResponse struct {
 
 func (x *EditGroupOverrideResponse) Reset() {
 	*x = EditGroupOverrideResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[23]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1530,7 +858,7 @@ func (x *EditGroupOverrideResponse) String() string {
 func (*EditGroupOverrideResponse) ProtoMessage() {}
 
 func (x *EditGroupOverrideResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[23]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1543,7 +871,7 @@ func (x *EditGroupOverrideResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditGroupOverrideResponse.ProtoReflect.Descriptor instead.
 func (*EditGroupOverrideResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{23}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *EditGroupOverrideResponse) GetGroupOverride() *GroupOverrides {
@@ -1562,7 +890,7 @@ type DeleteGroupOverrideRequest struct {
 
 func (x *DeleteGroupOverrideRequest) Reset() {
 	*x = DeleteGroupOverrideRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[24]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1574,7 +902,7 @@ func (x *DeleteGroupOverrideRequest) String() string {
 func (*DeleteGroupOverrideRequest) ProtoMessage() {}
 
 func (x *DeleteGroupOverrideRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[24]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1587,7 +915,7 @@ func (x *DeleteGroupOverrideRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteGroupOverrideRequest.ProtoReflect.Descriptor instead.
 func (*DeleteGroupOverrideRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{24}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *DeleteGroupOverrideRequest) GetGroupOverrideId() int32 {
@@ -1605,7 +933,7 @@ type DeleteGroupOverrideResponse struct {
 
 func (x *DeleteGroupOverrideResponse) Reset() {
 	*x = DeleteGroupOverrideResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[25]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1617,7 +945,7 @@ func (x *DeleteGroupOverrideResponse) String() string {
 func (*DeleteGroupOverrideResponse) ProtoMessage() {}
 
 func (x *DeleteGroupOverrideResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[25]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1630,7 +958,7 @@ func (x *DeleteGroupOverrideResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteGroupOverrideResponse.ProtoReflect.Descriptor instead.
 func (*DeleteGroupOverrideResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{25}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{14}
 }
 
 type AdminsResponse struct {
@@ -1642,7 +970,7 @@ type AdminsResponse struct {
 
 func (x *AdminsResponse) Reset() {
 	*x = AdminsResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[26]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1654,7 +982,7 @@ func (x *AdminsResponse) String() string {
 func (*AdminsResponse) ProtoMessage() {}
 
 func (x *AdminsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[26]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1667,7 +995,7 @@ func (x *AdminsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AdminsResponse.ProtoReflect.Descriptor instead.
 func (*AdminsResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{26}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *AdminsResponse) GetAdmins() []*Admin {
@@ -1691,7 +1019,7 @@ type CreateAdminRequest struct {
 
 func (x *CreateAdminRequest) Reset() {
 	*x = CreateAdminRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[27]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1703,7 +1031,7 @@ func (x *CreateAdminRequest) String() string {
 func (*CreateAdminRequest) ProtoMessage() {}
 
 func (x *CreateAdminRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[27]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1716,7 +1044,7 @@ func (x *CreateAdminRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAdminRequest.ProtoReflect.Descriptor instead.
 func (*CreateAdminRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{27}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CreateAdminRequest) GetAuthType() AuthType {
@@ -1770,7 +1098,7 @@ type CreateAdminResponse struct {
 
 func (x *CreateAdminResponse) Reset() {
 	*x = CreateAdminResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[28]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1782,7 +1110,7 @@ func (x *CreateAdminResponse) String() string {
 func (*CreateAdminResponse) ProtoMessage() {}
 
 func (x *CreateAdminResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[28]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1795,7 +1123,7 @@ func (x *CreateAdminResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAdminResponse.ProtoReflect.Descriptor instead.
 func (*CreateAdminResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{28}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *CreateAdminResponse) GetAdmin() *Admin {
@@ -1820,7 +1148,7 @@ type EditAdminRequest struct {
 
 func (x *EditAdminRequest) Reset() {
 	*x = EditAdminRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[29]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1832,7 +1160,7 @@ func (x *EditAdminRequest) String() string {
 func (*EditAdminRequest) ProtoMessage() {}
 
 func (x *EditAdminRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[29]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1845,7 +1173,7 @@ func (x *EditAdminRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditAdminRequest.ProtoReflect.Descriptor instead.
 func (*EditAdminRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{29}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *EditAdminRequest) GetAdminId() int32 {
@@ -1906,7 +1234,7 @@ type EditAdminResponse struct {
 
 func (x *EditAdminResponse) Reset() {
 	*x = EditAdminResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[30]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1918,7 +1246,7 @@ func (x *EditAdminResponse) String() string {
 func (*EditAdminResponse) ProtoMessage() {}
 
 func (x *EditAdminResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[30]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1931,7 +1259,7 @@ func (x *EditAdminResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditAdminResponse.ProtoReflect.Descriptor instead.
 func (*EditAdminResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{30}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *EditAdminResponse) GetAdmin() *Admin {
@@ -1950,7 +1278,7 @@ type DeleteAdminRequest struct {
 
 func (x *DeleteAdminRequest) Reset() {
 	*x = DeleteAdminRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[31]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1962,7 +1290,7 @@ func (x *DeleteAdminRequest) String() string {
 func (*DeleteAdminRequest) ProtoMessage() {}
 
 func (x *DeleteAdminRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[31]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1975,7 +1303,7 @@ func (x *DeleteAdminRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAdminRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAdminRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{31}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *DeleteAdminRequest) GetAdminId() int32 {
@@ -1995,7 +1323,7 @@ type AddAdminGroupRequest struct {
 
 func (x *AddAdminGroupRequest) Reset() {
 	*x = AddAdminGroupRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[32]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2007,7 +1335,7 @@ func (x *AddAdminGroupRequest) String() string {
 func (*AddAdminGroupRequest) ProtoMessage() {}
 
 func (x *AddAdminGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[32]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2020,7 +1348,7 @@ func (x *AddAdminGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddAdminGroupRequest.ProtoReflect.Descriptor instead.
 func (*AddAdminGroupRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{32}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *AddAdminGroupRequest) GetAdminId() int32 {
@@ -2046,7 +1374,7 @@ type AddAdminGroupResponse struct {
 
 func (x *AddAdminGroupResponse) Reset() {
 	*x = AddAdminGroupResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[33]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2058,7 +1386,7 @@ func (x *AddAdminGroupResponse) String() string {
 func (*AddAdminGroupResponse) ProtoMessage() {}
 
 func (x *AddAdminGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[33]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2071,7 +1399,7 @@ func (x *AddAdminGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddAdminGroupResponse.ProtoReflect.Descriptor instead.
 func (*AddAdminGroupResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{33}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *AddAdminGroupResponse) GetAdmin() *Admin {
@@ -2091,7 +1419,7 @@ type DeleteAdminGroupRequest struct {
 
 func (x *DeleteAdminGroupRequest) Reset() {
 	*x = DeleteAdminGroupRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[34]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2103,7 +1431,7 @@ func (x *DeleteAdminGroupRequest) String() string {
 func (*DeleteAdminGroupRequest) ProtoMessage() {}
 
 func (x *DeleteAdminGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[34]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2116,7 +1444,7 @@ func (x *DeleteAdminGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAdminGroupRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAdminGroupRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{34}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *DeleteAdminGroupRequest) GetAdminId() int32 {
@@ -2142,7 +1470,7 @@ type OverridesResponse struct {
 
 func (x *OverridesResponse) Reset() {
 	*x = OverridesResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[35]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2154,7 +1482,7 @@ func (x *OverridesResponse) String() string {
 func (*OverridesResponse) ProtoMessage() {}
 
 func (x *OverridesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[35]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2167,7 +1495,7 @@ func (x *OverridesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OverridesResponse.ProtoReflect.Descriptor instead.
 func (*OverridesResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{35}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *OverridesResponse) GetOverrides() []*Override {
@@ -2188,7 +1516,7 @@ type CreateOverridesRequest struct {
 
 func (x *CreateOverridesRequest) Reset() {
 	*x = CreateOverridesRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[36]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2200,7 +1528,7 @@ func (x *CreateOverridesRequest) String() string {
 func (*CreateOverridesRequest) ProtoMessage() {}
 
 func (x *CreateOverridesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[36]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2213,7 +1541,7 @@ func (x *CreateOverridesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateOverridesRequest.ProtoReflect.Descriptor instead.
 func (*CreateOverridesRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{36}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *CreateOverridesRequest) GetName() string {
@@ -2246,7 +1574,7 @@ type CreateOverridesResponse struct {
 
 func (x *CreateOverridesResponse) Reset() {
 	*x = CreateOverridesResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[37]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2258,7 +1586,7 @@ func (x *CreateOverridesResponse) String() string {
 func (*CreateOverridesResponse) ProtoMessage() {}
 
 func (x *CreateOverridesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[37]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2271,7 +1599,7 @@ func (x *CreateOverridesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateOverridesResponse.ProtoReflect.Descriptor instead.
 func (*CreateOverridesResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{37}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *CreateOverridesResponse) GetOverride() *Override {
@@ -2293,7 +1621,7 @@ type EditOverridesRequest struct {
 
 func (x *EditOverridesRequest) Reset() {
 	*x = EditOverridesRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[38]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2305,7 +1633,7 @@ func (x *EditOverridesRequest) String() string {
 func (*EditOverridesRequest) ProtoMessage() {}
 
 func (x *EditOverridesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[38]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2318,7 +1646,7 @@ func (x *EditOverridesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditOverridesRequest.ProtoReflect.Descriptor instead.
 func (*EditOverridesRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{38}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *EditOverridesRequest) GetOverrideId() int32 {
@@ -2358,7 +1686,7 @@ type EditOverridesResponse struct {
 
 func (x *EditOverridesResponse) Reset() {
 	*x = EditOverridesResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[39]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2370,7 +1698,7 @@ func (x *EditOverridesResponse) String() string {
 func (*EditOverridesResponse) ProtoMessage() {}
 
 func (x *EditOverridesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[39]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2383,7 +1711,7 @@ func (x *EditOverridesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditOverridesResponse.ProtoReflect.Descriptor instead.
 func (*EditOverridesResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{39}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *EditOverridesResponse) GetOverride() *Override {
@@ -2402,7 +1730,7 @@ type DeleteOverridesRequest struct {
 
 func (x *DeleteOverridesRequest) Reset() {
 	*x = DeleteOverridesRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[40]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2414,7 +1742,7 @@ func (x *DeleteOverridesRequest) String() string {
 func (*DeleteOverridesRequest) ProtoMessage() {}
 
 func (x *DeleteOverridesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[40]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2427,7 +1755,7 @@ func (x *DeleteOverridesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteOverridesRequest.ProtoReflect.Descriptor instead.
 func (*DeleteOverridesRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{40}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *DeleteOverridesRequest) GetOverrideId() int32 {
@@ -2446,7 +1774,7 @@ type GroupImmunitiesResponse struct {
 
 func (x *GroupImmunitiesResponse) Reset() {
 	*x = GroupImmunitiesResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[41]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2458,7 +1786,7 @@ func (x *GroupImmunitiesResponse) String() string {
 func (*GroupImmunitiesResponse) ProtoMessage() {}
 
 func (x *GroupImmunitiesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[41]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2471,7 +1799,7 @@ func (x *GroupImmunitiesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupImmunitiesResponse.ProtoReflect.Descriptor instead.
 func (*GroupImmunitiesResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{41}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *GroupImmunitiesResponse) GetGroupImmunities() []*GroupImmunity {
@@ -2491,7 +1819,7 @@ type CreateImmunityRequest struct {
 
 func (x *CreateImmunityRequest) Reset() {
 	*x = CreateImmunityRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[42]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2503,7 +1831,7 @@ func (x *CreateImmunityRequest) String() string {
 func (*CreateImmunityRequest) ProtoMessage() {}
 
 func (x *CreateImmunityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[42]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2516,7 +1844,7 @@ func (x *CreateImmunityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateImmunityRequest.ProtoReflect.Descriptor instead.
 func (*CreateImmunityRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{42}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *CreateImmunityRequest) GetGroupId() int32 {
@@ -2542,7 +1870,7 @@ type CreateImmunityResponse struct {
 
 func (x *CreateImmunityResponse) Reset() {
 	*x = CreateImmunityResponse{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[43]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2554,7 +1882,7 @@ func (x *CreateImmunityResponse) String() string {
 func (*CreateImmunityResponse) ProtoMessage() {}
 
 func (x *CreateImmunityResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[43]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2567,7 +1895,7 @@ func (x *CreateImmunityResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateImmunityResponse.ProtoReflect.Descriptor instead.
 func (*CreateImmunityResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{43}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *CreateImmunityResponse) GetGroupImmunity() *GroupImmunity {
@@ -2586,7 +1914,7 @@ type DeleteImmunityRequest struct {
 
 func (x *DeleteImmunityRequest) Reset() {
 	*x = DeleteImmunityRequest{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[44]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2598,7 +1926,7 @@ func (x *DeleteImmunityRequest) String() string {
 func (*DeleteImmunityRequest) ProtoMessage() {}
 
 func (x *DeleteImmunityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[44]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2611,7 +1939,7 @@ func (x *DeleteImmunityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteImmunityRequest.ProtoReflect.Descriptor instead.
 func (*DeleteImmunityRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{44}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *DeleteImmunityRequest) GetImmunityId() int32 {
@@ -2633,7 +1961,7 @@ type GroupImmunity struct {
 
 func (x *GroupImmunity) Reset() {
 	*x = GroupImmunity{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[45]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2645,7 +1973,7 @@ func (x *GroupImmunity) String() string {
 func (*GroupImmunity) ProtoMessage() {}
 
 func (x *GroupImmunity) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[45]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2658,7 +1986,7 @@ func (x *GroupImmunity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupImmunity.ProtoReflect.Descriptor instead.
 func (*GroupImmunity) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{45}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *GroupImmunity) GetGroupImmunityId() int32 {
@@ -2704,7 +2032,7 @@ type GroupOverrides struct {
 
 func (x *GroupOverrides) Reset() {
 	*x = GroupOverrides{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[46]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2716,7 +2044,7 @@ func (x *GroupOverrides) String() string {
 func (*GroupOverrides) ProtoMessage() {}
 
 func (x *GroupOverrides) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[46]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2729,7 +2057,7 @@ func (x *GroupOverrides) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupOverrides.ProtoReflect.Descriptor instead.
 func (*GroupOverrides) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{46}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *GroupOverrides) GetGroupOverrideId() int32 {
@@ -2800,7 +2128,7 @@ type Admin struct {
 
 func (x *Admin) Reset() {
 	*x = Admin{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[47]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2812,7 +2140,7 @@ func (x *Admin) String() string {
 func (*Admin) ProtoMessage() {}
 
 func (x *Admin) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[47]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2825,7 +2153,7 @@ func (x *Admin) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Admin.ProtoReflect.Descriptor instead.
 func (*Admin) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{47}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *Admin) GetAdminId() int32 {
@@ -2919,7 +2247,7 @@ type Override struct {
 
 func (x *Override) Reset() {
 	*x = Override{}
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[48]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2931,7 +2259,7 @@ func (x *Override) String() string {
 func (*Override) ProtoMessage() {}
 
 func (x *Override) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[48]
+	mi := &file_sourcemod_v1_sourcemod_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2944,7 +2272,7 @@ func (x *Override) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Override.ProtoReflect.Descriptor instead.
 func (*Override) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{48}
+	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *Override) GetOverrideId() int32 {
@@ -2993,34 +2321,7 @@ var File_sourcemod_v1_sourcemod_proto protoreflect.FileDescriptor
 
 const file_sourcemod_v1_sourcemod_proto_rawDesc = "" +
 	"\n" +
-	"\x1csourcemod/v1/sourcemod.proto\x12\fsourcemod.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"2\n" +
-	"\rSMSeedRequest\x12!\n" +
-	"\bsteam_id\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\asteamId\"2\n" +
-	"\x0eSMSeedResponse\x12 \n" +
-	"\amessage\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\amessage\"\x8f\x01\n" +
-	"\n" +
-	"SMOverride\x12G\n" +
-	"\roverride_type\x18\x01 \x01(\x0e2\x1a.sourcemod.v1.OverrideTypeB\x06\xbaH\x03\xc8\x01\x01R\foverrideType\x12\x1a\n" +
-	"\x04name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12\x1c\n" +
-	"\x05flags\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05flags\"U\n" +
-	"\x13SMOverridesResponse\x12>\n" +
-	"\toverrides\x18\x01 \x03(\v2\x18.sourcemod.v1.SMOverrideB\x06\xbaH\x03\xc8\x01\x01R\toverrides\"\x81\x02\n" +
-	"\x06SMUser\x12\x16\n" +
-	"\x02id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x02id\x12;\n" +
-	"\tauth_type\x18\x02 \x01(\x0e2\x16.sourcemod.v1.AuthTypeB\x06\xbaH\x03\xc8\x01\x01R\bauthType\x12\"\n" +
-	"\bidentity\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bidentity\x12\x1a\n" +
-	"\bpassword\x18\x04 \x01(\tR\bpassword\x12\x1c\n" +
-	"\x05flags\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05flags\x12\x1a\n" +
-	"\x04name\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12(\n" +
-	"\bimmunity\x18\a \x01(\x05B\f\xbaH\t\xc8\x01\x01\x1a\x04\x18d(\x00R\bimmunity\"W\n" +
-	"\vSMUserGroup\x12!\n" +
-	"\badmin_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aadminId\x12%\n" +
-	"\n" +
-	"group_name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tgroupName\"\x89\x01\n" +
-	"\x0fSMUsersResponse\x122\n" +
-	"\x05users\x18\x01 \x03(\v2\x14.sourcemod.v1.SMUserB\x06\xbaH\x03\xc8\x01\x01R\x05users\x12B\n" +
-	"\vuser_groups\x18\x02 \x03(\v2\x19.sourcemod.v1.SMUserGroupB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"userGroups\"\x89\x02\n" +
+	"\x1csourcemod/v1/sourcemod.proto\x12\fsourcemod.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x89\x02\n" +
 	"\x05Group\x12!\n" +
 	"\bgroup_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\agroupId\x12\x1c\n" +
 	"\x05flags\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05flags\x12\x1a\n" +
@@ -3029,27 +2330,7 @@ const file_sourcemod_v1_sourcemod_proto_rawDesc = "" +
 	"\n" +
 	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
 	"\n" +
-	"updated_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"\x8e\x01\n" +
-	"\x10SMGroupsResponse\x123\n" +
-	"\x06groups\x18\x01 \x03(\v2\x13.sourcemod.v1.GroupB\x06\xbaH\x03\xc8\x01\x01R\x06groups\x12E\n" +
-	"\n" +
-	"immunities\x18\x02 \x03(\v2\x1d.sourcemod.v1.SMGroupImmunityB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"immunities\"_\n" +
-	"\x0fSMGroupImmunity\x12%\n" +
-	"\n" +
-	"group_name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tgroupName\x12%\n" +
-	"\n" +
-	"other_name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\totherName\"\x8e\x01\n" +
-	"\fCheckRequest\x12!\n" +
-	"\bsteam_id\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\asteamId\x12#\n" +
-	"\tclient_id\x18\x02 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bclientId\x12\x1a\n" +
-	"\x02ip\x18\x03 \x01(\tB\n" +
-	"\xbaH\a\xc8\x01\x01r\x02x\x01R\x02ip\x12\x1a\n" +
-	"\x04name\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\"\x88\x01\n" +
-	"\rCheckResponse\x12#\n" +
-	"\tclient_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bclientId\x128\n" +
-	"\bban_type\x18\x02 \x01(\x0e2\x15.sourcemod.v1.BanTypeB\x06\xbaH\x03\xc8\x01\x01R\abanType\x12\x18\n" +
-	"\x03msg\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x03msg\"E\n" +
+	"updated_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"E\n" +
 	"\x0eGroupsResponse\x123\n" +
 	"\x06groups\x18\x01 \x03(\v2\x13.sourcemod.v1.GroupB\x06\xbaH\x03\xc8\x01\x01R\x06groups\"u\n" +
 	"\x12CreateGroupRequest\x12\x1a\n" +
@@ -3190,12 +2471,7 @@ const file_sourcemod_v1_sourcemod_proto_rawDesc = "" +
 	"\n" +
 	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn*g\n" +
-	"\aBanType\x12\x1b\n" +
-	"\x17BAN_TYPE_OK_UNSPECIFIED\x10\x00\x12\x14\n" +
-	"\x10BAN_TYPE_NO_COMM\x10\x01\x12\x13\n" +
-	"\x0fBAN_TYPE_BANNED\x10\x02\x12\x14\n" +
-	"\x10BAN_TYPE_NETWORK\x10\x03*N\n" +
+	"updated_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn*N\n" +
 	"\fOverrideType\x12%\n" +
 	"!OVERRIDE_TYPE_COMMAND_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13OVERRIDE_TYPE_GROUP\x10\x01*Q\n" +
@@ -3205,7 +2481,7 @@ const file_sourcemod_v1_sourcemod_proto_rawDesc = "" +
 	"\bAuthType\x12\x1f\n" +
 	"\x1bAUTH_TYPE_STEAM_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eAUTH_TYPE_NAME\x10\x01\x12\x10\n" +
-	"\fAUTH_TYPE_IP\x10\x022\xfa\x10\n" +
+	"\fAUTH_TYPE_IP\x10\x022\x99\x0e\n" +
 	"\x10SourcemodService\x12@\n" +
 	"\x06Groups\x12\x16.google.protobuf.Empty\x1a\x1c.sourcemod.v1.GroupsResponse\"\x00\x12T\n" +
 	"\vCreateGroup\x12 .sourcemod.v1.CreateGroupRequest\x1a!.sourcemod.v1.CreateGroupResponse\"\x00\x12Q\n" +
@@ -3228,12 +2504,7 @@ const file_sourcemod_v1_sourcemod_proto_rawDesc = "" +
 	"\x0fDeleteOverrides\x12$.sourcemod.v1.DeleteOverridesRequest\x1a\x16.google.protobuf.Empty\"\x00\x12R\n" +
 	"\x0fGroupImmunities\x12\x16.google.protobuf.Empty\x1a%.sourcemod.v1.GroupImmunitiesResponse\"\x00\x12]\n" +
 	"\x0eCreateImmunity\x12#.sourcemod.v1.CreateImmunityRequest\x1a$.sourcemod.v1.CreateImmunityResponse\"\x00\x12O\n" +
-	"\x0eDeleteImmunity\x12#.sourcemod.v1.DeleteImmunityRequest\x1a\x16.google.protobuf.Empty\"\x00\x12B\n" +
-	"\x05Check\x12\x1a.sourcemod.v1.CheckRequest\x1a\x1b.sourcemod.v1.CheckResponse\"\x00\x12J\n" +
-	"\vSMOverrides\x12\x16.google.protobuf.Empty\x1a!.sourcemod.v1.SMOverridesResponse\"\x00\x12B\n" +
-	"\aSMUsers\x12\x16.google.protobuf.Empty\x1a\x1d.sourcemod.v1.SMUsersResponse\"\x00\x12D\n" +
-	"\bSMGroups\x12\x16.google.protobuf.Empty\x1a\x1e.sourcemod.v1.SMGroupsResponse\"\x00\x12E\n" +
-	"\x06SMSeed\x12\x1b.sourcemod.v1.SMSeedRequest\x1a\x1c.sourcemod.v1.SMSeedResponse\"\x00B\xb6\x01\n" +
+	"\x0eDeleteImmunity\x12#.sourcemod.v1.DeleteImmunityRequest\x1a\x16.google.protobuf.Empty\"\x00B\xb6\x01\n" +
 	"\x10com.sourcemod.v1B\x0eSourcemodProtoP\x01ZAgithub.com/leighmacdonald/gbans/internal/sourcemod/v1;sourcemodv1\xa2\x02\x03SXX\xaa\x02\fSourcemod.V1\xca\x02\fSourcemod\\V1\xe2\x02\x18Sourcemod\\V1\\GPBMetadata\xea\x02\rSourcemod::V1b\beditionsp\xe8\a"
 
 var (
@@ -3248,170 +2519,140 @@ func file_sourcemod_v1_sourcemod_proto_rawDescGZIP() []byte {
 	return file_sourcemod_v1_sourcemod_proto_rawDescData
 }
 
-var file_sourcemod_v1_sourcemod_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_sourcemod_v1_sourcemod_proto_msgTypes = make([]protoimpl.MessageInfo, 49)
+var file_sourcemod_v1_sourcemod_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_sourcemod_v1_sourcemod_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
 var file_sourcemod_v1_sourcemod_proto_goTypes = []any{
-	(BanType)(0),                        // 0: sourcemod.v1.BanType
-	(OverrideType)(0),                   // 1: sourcemod.v1.OverrideType
-	(OverrideAccess)(0),                 // 2: sourcemod.v1.OverrideAccess
-	(AuthType)(0),                       // 3: sourcemod.v1.AuthType
-	(*SMSeedRequest)(nil),               // 4: sourcemod.v1.SMSeedRequest
-	(*SMSeedResponse)(nil),              // 5: sourcemod.v1.SMSeedResponse
-	(*SMOverride)(nil),                  // 6: sourcemod.v1.SMOverride
-	(*SMOverridesResponse)(nil),         // 7: sourcemod.v1.SMOverridesResponse
-	(*SMUser)(nil),                      // 8: sourcemod.v1.SMUser
-	(*SMUserGroup)(nil),                 // 9: sourcemod.v1.SMUserGroup
-	(*SMUsersResponse)(nil),             // 10: sourcemod.v1.SMUsersResponse
-	(*Group)(nil),                       // 11: sourcemod.v1.Group
-	(*SMGroupsResponse)(nil),            // 12: sourcemod.v1.SMGroupsResponse
-	(*SMGroupImmunity)(nil),             // 13: sourcemod.v1.SMGroupImmunity
-	(*CheckRequest)(nil),                // 14: sourcemod.v1.CheckRequest
-	(*CheckResponse)(nil),               // 15: sourcemod.v1.CheckResponse
-	(*GroupsResponse)(nil),              // 16: sourcemod.v1.GroupsResponse
-	(*CreateGroupRequest)(nil),          // 17: sourcemod.v1.CreateGroupRequest
-	(*CreateGroupResponse)(nil),         // 18: sourcemod.v1.CreateGroupResponse
-	(*EditGroupsRequest)(nil),           // 19: sourcemod.v1.EditGroupsRequest
-	(*EditGroupsResponse)(nil),          // 20: sourcemod.v1.EditGroupsResponse
-	(*DeleteGroupRequest)(nil),          // 21: sourcemod.v1.DeleteGroupRequest
-	(*GroupOverridesRequest)(nil),       // 22: sourcemod.v1.GroupOverridesRequest
-	(*GroupOverridesResponse)(nil),      // 23: sourcemod.v1.GroupOverridesResponse
-	(*CreateGroupOverrideRequest)(nil),  // 24: sourcemod.v1.CreateGroupOverrideRequest
-	(*CreateGroupOverrideResponse)(nil), // 25: sourcemod.v1.CreateGroupOverrideResponse
-	(*EditGroupOverrideRequest)(nil),    // 26: sourcemod.v1.EditGroupOverrideRequest
-	(*EditGroupOverrideResponse)(nil),   // 27: sourcemod.v1.EditGroupOverrideResponse
-	(*DeleteGroupOverrideRequest)(nil),  // 28: sourcemod.v1.DeleteGroupOverrideRequest
-	(*DeleteGroupOverrideResponse)(nil), // 29: sourcemod.v1.DeleteGroupOverrideResponse
-	(*AdminsResponse)(nil),              // 30: sourcemod.v1.AdminsResponse
-	(*CreateAdminRequest)(nil),          // 31: sourcemod.v1.CreateAdminRequest
-	(*CreateAdminResponse)(nil),         // 32: sourcemod.v1.CreateAdminResponse
-	(*EditAdminRequest)(nil),            // 33: sourcemod.v1.EditAdminRequest
-	(*EditAdminResponse)(nil),           // 34: sourcemod.v1.EditAdminResponse
-	(*DeleteAdminRequest)(nil),          // 35: sourcemod.v1.DeleteAdminRequest
-	(*AddAdminGroupRequest)(nil),        // 36: sourcemod.v1.AddAdminGroupRequest
-	(*AddAdminGroupResponse)(nil),       // 37: sourcemod.v1.AddAdminGroupResponse
-	(*DeleteAdminGroupRequest)(nil),     // 38: sourcemod.v1.DeleteAdminGroupRequest
-	(*OverridesResponse)(nil),           // 39: sourcemod.v1.OverridesResponse
-	(*CreateOverridesRequest)(nil),      // 40: sourcemod.v1.CreateOverridesRequest
-	(*CreateOverridesResponse)(nil),     // 41: sourcemod.v1.CreateOverridesResponse
-	(*EditOverridesRequest)(nil),        // 42: sourcemod.v1.EditOverridesRequest
-	(*EditOverridesResponse)(nil),       // 43: sourcemod.v1.EditOverridesResponse
-	(*DeleteOverridesRequest)(nil),      // 44: sourcemod.v1.DeleteOverridesRequest
-	(*GroupImmunitiesResponse)(nil),     // 45: sourcemod.v1.GroupImmunitiesResponse
-	(*CreateImmunityRequest)(nil),       // 46: sourcemod.v1.CreateImmunityRequest
-	(*CreateImmunityResponse)(nil),      // 47: sourcemod.v1.CreateImmunityResponse
-	(*DeleteImmunityRequest)(nil),       // 48: sourcemod.v1.DeleteImmunityRequest
-	(*GroupImmunity)(nil),               // 49: sourcemod.v1.GroupImmunity
-	(*GroupOverrides)(nil),              // 50: sourcemod.v1.GroupOverrides
-	(*Admin)(nil),                       // 51: sourcemod.v1.Admin
-	(*Override)(nil),                    // 52: sourcemod.v1.Override
-	(*timestamppb.Timestamp)(nil),       // 53: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),               // 54: google.protobuf.Empty
+	(OverrideType)(0),                   // 0: sourcemod.v1.OverrideType
+	(OverrideAccess)(0),                 // 1: sourcemod.v1.OverrideAccess
+	(AuthType)(0),                       // 2: sourcemod.v1.AuthType
+	(*Group)(nil),                       // 3: sourcemod.v1.Group
+	(*GroupsResponse)(nil),              // 4: sourcemod.v1.GroupsResponse
+	(*CreateGroupRequest)(nil),          // 5: sourcemod.v1.CreateGroupRequest
+	(*CreateGroupResponse)(nil),         // 6: sourcemod.v1.CreateGroupResponse
+	(*EditGroupsRequest)(nil),           // 7: sourcemod.v1.EditGroupsRequest
+	(*EditGroupsResponse)(nil),          // 8: sourcemod.v1.EditGroupsResponse
+	(*DeleteGroupRequest)(nil),          // 9: sourcemod.v1.DeleteGroupRequest
+	(*GroupOverridesRequest)(nil),       // 10: sourcemod.v1.GroupOverridesRequest
+	(*GroupOverridesResponse)(nil),      // 11: sourcemod.v1.GroupOverridesResponse
+	(*CreateGroupOverrideRequest)(nil),  // 12: sourcemod.v1.CreateGroupOverrideRequest
+	(*CreateGroupOverrideResponse)(nil), // 13: sourcemod.v1.CreateGroupOverrideResponse
+	(*EditGroupOverrideRequest)(nil),    // 14: sourcemod.v1.EditGroupOverrideRequest
+	(*EditGroupOverrideResponse)(nil),   // 15: sourcemod.v1.EditGroupOverrideResponse
+	(*DeleteGroupOverrideRequest)(nil),  // 16: sourcemod.v1.DeleteGroupOverrideRequest
+	(*DeleteGroupOverrideResponse)(nil), // 17: sourcemod.v1.DeleteGroupOverrideResponse
+	(*AdminsResponse)(nil),              // 18: sourcemod.v1.AdminsResponse
+	(*CreateAdminRequest)(nil),          // 19: sourcemod.v1.CreateAdminRequest
+	(*CreateAdminResponse)(nil),         // 20: sourcemod.v1.CreateAdminResponse
+	(*EditAdminRequest)(nil),            // 21: sourcemod.v1.EditAdminRequest
+	(*EditAdminResponse)(nil),           // 22: sourcemod.v1.EditAdminResponse
+	(*DeleteAdminRequest)(nil),          // 23: sourcemod.v1.DeleteAdminRequest
+	(*AddAdminGroupRequest)(nil),        // 24: sourcemod.v1.AddAdminGroupRequest
+	(*AddAdminGroupResponse)(nil),       // 25: sourcemod.v1.AddAdminGroupResponse
+	(*DeleteAdminGroupRequest)(nil),     // 26: sourcemod.v1.DeleteAdminGroupRequest
+	(*OverridesResponse)(nil),           // 27: sourcemod.v1.OverridesResponse
+	(*CreateOverridesRequest)(nil),      // 28: sourcemod.v1.CreateOverridesRequest
+	(*CreateOverridesResponse)(nil),     // 29: sourcemod.v1.CreateOverridesResponse
+	(*EditOverridesRequest)(nil),        // 30: sourcemod.v1.EditOverridesRequest
+	(*EditOverridesResponse)(nil),       // 31: sourcemod.v1.EditOverridesResponse
+	(*DeleteOverridesRequest)(nil),      // 32: sourcemod.v1.DeleteOverridesRequest
+	(*GroupImmunitiesResponse)(nil),     // 33: sourcemod.v1.GroupImmunitiesResponse
+	(*CreateImmunityRequest)(nil),       // 34: sourcemod.v1.CreateImmunityRequest
+	(*CreateImmunityResponse)(nil),      // 35: sourcemod.v1.CreateImmunityResponse
+	(*DeleteImmunityRequest)(nil),       // 36: sourcemod.v1.DeleteImmunityRequest
+	(*GroupImmunity)(nil),               // 37: sourcemod.v1.GroupImmunity
+	(*GroupOverrides)(nil),              // 38: sourcemod.v1.GroupOverrides
+	(*Admin)(nil),                       // 39: sourcemod.v1.Admin
+	(*Override)(nil),                    // 40: sourcemod.v1.Override
+	(*timestamppb.Timestamp)(nil),       // 41: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),               // 42: google.protobuf.Empty
 }
 var file_sourcemod_v1_sourcemod_proto_depIdxs = []int32{
-	1,  // 0: sourcemod.v1.SMOverride.override_type:type_name -> sourcemod.v1.OverrideType
-	6,  // 1: sourcemod.v1.SMOverridesResponse.overrides:type_name -> sourcemod.v1.SMOverride
-	3,  // 2: sourcemod.v1.SMUser.auth_type:type_name -> sourcemod.v1.AuthType
-	8,  // 3: sourcemod.v1.SMUsersResponse.users:type_name -> sourcemod.v1.SMUser
-	9,  // 4: sourcemod.v1.SMUsersResponse.user_groups:type_name -> sourcemod.v1.SMUserGroup
-	53, // 5: sourcemod.v1.Group.created_on:type_name -> google.protobuf.Timestamp
-	53, // 6: sourcemod.v1.Group.updated_on:type_name -> google.protobuf.Timestamp
-	11, // 7: sourcemod.v1.SMGroupsResponse.groups:type_name -> sourcemod.v1.Group
-	13, // 8: sourcemod.v1.SMGroupsResponse.immunities:type_name -> sourcemod.v1.SMGroupImmunity
-	0,  // 9: sourcemod.v1.CheckResponse.ban_type:type_name -> sourcemod.v1.BanType
-	11, // 10: sourcemod.v1.GroupsResponse.groups:type_name -> sourcemod.v1.Group
-	11, // 11: sourcemod.v1.CreateGroupResponse.group:type_name -> sourcemod.v1.Group
-	11, // 12: sourcemod.v1.EditGroupsResponse.group:type_name -> sourcemod.v1.Group
-	50, // 13: sourcemod.v1.GroupOverridesResponse.overrides:type_name -> sourcemod.v1.GroupOverrides
-	1,  // 14: sourcemod.v1.CreateGroupOverrideRequest.type:type_name -> sourcemod.v1.OverrideType
-	2,  // 15: sourcemod.v1.CreateGroupOverrideRequest.access:type_name -> sourcemod.v1.OverrideAccess
-	50, // 16: sourcemod.v1.CreateGroupOverrideResponse.group_override:type_name -> sourcemod.v1.GroupOverrides
-	1,  // 17: sourcemod.v1.EditGroupOverrideRequest.override_type:type_name -> sourcemod.v1.OverrideType
-	2,  // 18: sourcemod.v1.EditGroupOverrideRequest.override_access:type_name -> sourcemod.v1.OverrideAccess
-	50, // 19: sourcemod.v1.EditGroupOverrideResponse.group_override:type_name -> sourcemod.v1.GroupOverrides
-	51, // 20: sourcemod.v1.AdminsResponse.admins:type_name -> sourcemod.v1.Admin
-	3,  // 21: sourcemod.v1.CreateAdminRequest.auth_type:type_name -> sourcemod.v1.AuthType
-	51, // 22: sourcemod.v1.CreateAdminResponse.admin:type_name -> sourcemod.v1.Admin
-	3,  // 23: sourcemod.v1.EditAdminRequest.auth_type:type_name -> sourcemod.v1.AuthType
-	51, // 24: sourcemod.v1.EditAdminResponse.admin:type_name -> sourcemod.v1.Admin
-	51, // 25: sourcemod.v1.AddAdminGroupResponse.admin:type_name -> sourcemod.v1.Admin
-	52, // 26: sourcemod.v1.OverridesResponse.overrides:type_name -> sourcemod.v1.Override
-	1,  // 27: sourcemod.v1.CreateOverridesRequest.override_type:type_name -> sourcemod.v1.OverrideType
-	52, // 28: sourcemod.v1.CreateOverridesResponse.override:type_name -> sourcemod.v1.Override
-	1,  // 29: sourcemod.v1.EditOverridesRequest.override_type:type_name -> sourcemod.v1.OverrideType
-	52, // 30: sourcemod.v1.EditOverridesResponse.override:type_name -> sourcemod.v1.Override
-	49, // 31: sourcemod.v1.GroupImmunitiesResponse.group_immunities:type_name -> sourcemod.v1.GroupImmunity
-	49, // 32: sourcemod.v1.CreateImmunityResponse.group_immunity:type_name -> sourcemod.v1.GroupImmunity
-	11, // 33: sourcemod.v1.GroupImmunity.group:type_name -> sourcemod.v1.Group
-	11, // 34: sourcemod.v1.GroupImmunity.other:type_name -> sourcemod.v1.Group
-	53, // 35: sourcemod.v1.GroupImmunity.created_on:type_name -> google.protobuf.Timestamp
-	1,  // 36: sourcemod.v1.GroupOverrides.override_type:type_name -> sourcemod.v1.OverrideType
-	2,  // 37: sourcemod.v1.GroupOverrides.override_access:type_name -> sourcemod.v1.OverrideAccess
-	53, // 38: sourcemod.v1.GroupOverrides.created_on:type_name -> google.protobuf.Timestamp
-	53, // 39: sourcemod.v1.GroupOverrides.updated_on:type_name -> google.protobuf.Timestamp
-	3,  // 40: sourcemod.v1.Admin.auth_type:type_name -> sourcemod.v1.AuthType
-	11, // 41: sourcemod.v1.Admin.groups:type_name -> sourcemod.v1.Group
-	53, // 42: sourcemod.v1.Admin.created_on:type_name -> google.protobuf.Timestamp
-	53, // 43: sourcemod.v1.Admin.updated_on:type_name -> google.protobuf.Timestamp
-	1,  // 44: sourcemod.v1.Override.override_type:type_name -> sourcemod.v1.OverrideType
-	53, // 45: sourcemod.v1.Override.created_on:type_name -> google.protobuf.Timestamp
-	53, // 46: sourcemod.v1.Override.updated_on:type_name -> google.protobuf.Timestamp
-	54, // 47: sourcemod.v1.SourcemodService.Groups:input_type -> google.protobuf.Empty
-	17, // 48: sourcemod.v1.SourcemodService.CreateGroup:input_type -> sourcemod.v1.CreateGroupRequest
-	19, // 49: sourcemod.v1.SourcemodService.EditGroups:input_type -> sourcemod.v1.EditGroupsRequest
-	21, // 50: sourcemod.v1.SourcemodService.DeleteGroup:input_type -> sourcemod.v1.DeleteGroupRequest
-	22, // 51: sourcemod.v1.SourcemodService.GroupOverrides:input_type -> sourcemod.v1.GroupOverridesRequest
-	24, // 52: sourcemod.v1.SourcemodService.CreateGroupOverride:input_type -> sourcemod.v1.CreateGroupOverrideRequest
-	26, // 53: sourcemod.v1.SourcemodService.EditGroupOverride:input_type -> sourcemod.v1.EditGroupOverrideRequest
-	28, // 54: sourcemod.v1.SourcemodService.DeleteGroupOverride:input_type -> sourcemod.v1.DeleteGroupOverrideRequest
-	54, // 55: sourcemod.v1.SourcemodService.Admins:input_type -> google.protobuf.Empty
-	31, // 56: sourcemod.v1.SourcemodService.CreateAdmin:input_type -> sourcemod.v1.CreateAdminRequest
-	33, // 57: sourcemod.v1.SourcemodService.EditAdmin:input_type -> sourcemod.v1.EditAdminRequest
-	35, // 58: sourcemod.v1.SourcemodService.DeleteAdmin:input_type -> sourcemod.v1.DeleteAdminRequest
-	36, // 59: sourcemod.v1.SourcemodService.AddAdminGroup:input_type -> sourcemod.v1.AddAdminGroupRequest
-	38, // 60: sourcemod.v1.SourcemodService.DeleteAdminGroup:input_type -> sourcemod.v1.DeleteAdminGroupRequest
-	54, // 61: sourcemod.v1.SourcemodService.Overrides:input_type -> google.protobuf.Empty
-	40, // 62: sourcemod.v1.SourcemodService.CreateOverrides:input_type -> sourcemod.v1.CreateOverridesRequest
-	42, // 63: sourcemod.v1.SourcemodService.EditOverrides:input_type -> sourcemod.v1.EditOverridesRequest
-	44, // 64: sourcemod.v1.SourcemodService.DeleteOverrides:input_type -> sourcemod.v1.DeleteOverridesRequest
-	54, // 65: sourcemod.v1.SourcemodService.GroupImmunities:input_type -> google.protobuf.Empty
-	46, // 66: sourcemod.v1.SourcemodService.CreateImmunity:input_type -> sourcemod.v1.CreateImmunityRequest
-	48, // 67: sourcemod.v1.SourcemodService.DeleteImmunity:input_type -> sourcemod.v1.DeleteImmunityRequest
-	14, // 68: sourcemod.v1.SourcemodService.Check:input_type -> sourcemod.v1.CheckRequest
-	54, // 69: sourcemod.v1.SourcemodService.SMOverrides:input_type -> google.protobuf.Empty
-	54, // 70: sourcemod.v1.SourcemodService.SMUsers:input_type -> google.protobuf.Empty
-	54, // 71: sourcemod.v1.SourcemodService.SMGroups:input_type -> google.protobuf.Empty
-	4,  // 72: sourcemod.v1.SourcemodService.SMSeed:input_type -> sourcemod.v1.SMSeedRequest
-	16, // 73: sourcemod.v1.SourcemodService.Groups:output_type -> sourcemod.v1.GroupsResponse
-	18, // 74: sourcemod.v1.SourcemodService.CreateGroup:output_type -> sourcemod.v1.CreateGroupResponse
-	20, // 75: sourcemod.v1.SourcemodService.EditGroups:output_type -> sourcemod.v1.EditGroupsResponse
-	54, // 76: sourcemod.v1.SourcemodService.DeleteGroup:output_type -> google.protobuf.Empty
-	23, // 77: sourcemod.v1.SourcemodService.GroupOverrides:output_type -> sourcemod.v1.GroupOverridesResponse
-	25, // 78: sourcemod.v1.SourcemodService.CreateGroupOverride:output_type -> sourcemod.v1.CreateGroupOverrideResponse
-	27, // 79: sourcemod.v1.SourcemodService.EditGroupOverride:output_type -> sourcemod.v1.EditGroupOverrideResponse
-	54, // 80: sourcemod.v1.SourcemodService.DeleteGroupOverride:output_type -> google.protobuf.Empty
-	30, // 81: sourcemod.v1.SourcemodService.Admins:output_type -> sourcemod.v1.AdminsResponse
-	32, // 82: sourcemod.v1.SourcemodService.CreateAdmin:output_type -> sourcemod.v1.CreateAdminResponse
-	34, // 83: sourcemod.v1.SourcemodService.EditAdmin:output_type -> sourcemod.v1.EditAdminResponse
-	54, // 84: sourcemod.v1.SourcemodService.DeleteAdmin:output_type -> google.protobuf.Empty
-	37, // 85: sourcemod.v1.SourcemodService.AddAdminGroup:output_type -> sourcemod.v1.AddAdminGroupResponse
-	54, // 86: sourcemod.v1.SourcemodService.DeleteAdminGroup:output_type -> google.protobuf.Empty
-	39, // 87: sourcemod.v1.SourcemodService.Overrides:output_type -> sourcemod.v1.OverridesResponse
-	41, // 88: sourcemod.v1.SourcemodService.CreateOverrides:output_type -> sourcemod.v1.CreateOverridesResponse
-	43, // 89: sourcemod.v1.SourcemodService.EditOverrides:output_type -> sourcemod.v1.EditOverridesResponse
-	54, // 90: sourcemod.v1.SourcemodService.DeleteOverrides:output_type -> google.protobuf.Empty
-	45, // 91: sourcemod.v1.SourcemodService.GroupImmunities:output_type -> sourcemod.v1.GroupImmunitiesResponse
-	47, // 92: sourcemod.v1.SourcemodService.CreateImmunity:output_type -> sourcemod.v1.CreateImmunityResponse
-	54, // 93: sourcemod.v1.SourcemodService.DeleteImmunity:output_type -> google.protobuf.Empty
-	15, // 94: sourcemod.v1.SourcemodService.Check:output_type -> sourcemod.v1.CheckResponse
-	7,  // 95: sourcemod.v1.SourcemodService.SMOverrides:output_type -> sourcemod.v1.SMOverridesResponse
-	10, // 96: sourcemod.v1.SourcemodService.SMUsers:output_type -> sourcemod.v1.SMUsersResponse
-	12, // 97: sourcemod.v1.SourcemodService.SMGroups:output_type -> sourcemod.v1.SMGroupsResponse
-	5,  // 98: sourcemod.v1.SourcemodService.SMSeed:output_type -> sourcemod.v1.SMSeedResponse
-	73, // [73:99] is the sub-list for method output_type
-	47, // [47:73] is the sub-list for method input_type
-	47, // [47:47] is the sub-list for extension type_name
-	47, // [47:47] is the sub-list for extension extendee
-	0,  // [0:47] is the sub-list for field type_name
+	41, // 0: sourcemod.v1.Group.created_on:type_name -> google.protobuf.Timestamp
+	41, // 1: sourcemod.v1.Group.updated_on:type_name -> google.protobuf.Timestamp
+	3,  // 2: sourcemod.v1.GroupsResponse.groups:type_name -> sourcemod.v1.Group
+	3,  // 3: sourcemod.v1.CreateGroupResponse.group:type_name -> sourcemod.v1.Group
+	3,  // 4: sourcemod.v1.EditGroupsResponse.group:type_name -> sourcemod.v1.Group
+	38, // 5: sourcemod.v1.GroupOverridesResponse.overrides:type_name -> sourcemod.v1.GroupOverrides
+	0,  // 6: sourcemod.v1.CreateGroupOverrideRequest.type:type_name -> sourcemod.v1.OverrideType
+	1,  // 7: sourcemod.v1.CreateGroupOverrideRequest.access:type_name -> sourcemod.v1.OverrideAccess
+	38, // 8: sourcemod.v1.CreateGroupOverrideResponse.group_override:type_name -> sourcemod.v1.GroupOverrides
+	0,  // 9: sourcemod.v1.EditGroupOverrideRequest.override_type:type_name -> sourcemod.v1.OverrideType
+	1,  // 10: sourcemod.v1.EditGroupOverrideRequest.override_access:type_name -> sourcemod.v1.OverrideAccess
+	38, // 11: sourcemod.v1.EditGroupOverrideResponse.group_override:type_name -> sourcemod.v1.GroupOverrides
+	39, // 12: sourcemod.v1.AdminsResponse.admins:type_name -> sourcemod.v1.Admin
+	2,  // 13: sourcemod.v1.CreateAdminRequest.auth_type:type_name -> sourcemod.v1.AuthType
+	39, // 14: sourcemod.v1.CreateAdminResponse.admin:type_name -> sourcemod.v1.Admin
+	2,  // 15: sourcemod.v1.EditAdminRequest.auth_type:type_name -> sourcemod.v1.AuthType
+	39, // 16: sourcemod.v1.EditAdminResponse.admin:type_name -> sourcemod.v1.Admin
+	39, // 17: sourcemod.v1.AddAdminGroupResponse.admin:type_name -> sourcemod.v1.Admin
+	40, // 18: sourcemod.v1.OverridesResponse.overrides:type_name -> sourcemod.v1.Override
+	0,  // 19: sourcemod.v1.CreateOverridesRequest.override_type:type_name -> sourcemod.v1.OverrideType
+	40, // 20: sourcemod.v1.CreateOverridesResponse.override:type_name -> sourcemod.v1.Override
+	0,  // 21: sourcemod.v1.EditOverridesRequest.override_type:type_name -> sourcemod.v1.OverrideType
+	40, // 22: sourcemod.v1.EditOverridesResponse.override:type_name -> sourcemod.v1.Override
+	37, // 23: sourcemod.v1.GroupImmunitiesResponse.group_immunities:type_name -> sourcemod.v1.GroupImmunity
+	37, // 24: sourcemod.v1.CreateImmunityResponse.group_immunity:type_name -> sourcemod.v1.GroupImmunity
+	3,  // 25: sourcemod.v1.GroupImmunity.group:type_name -> sourcemod.v1.Group
+	3,  // 26: sourcemod.v1.GroupImmunity.other:type_name -> sourcemod.v1.Group
+	41, // 27: sourcemod.v1.GroupImmunity.created_on:type_name -> google.protobuf.Timestamp
+	0,  // 28: sourcemod.v1.GroupOverrides.override_type:type_name -> sourcemod.v1.OverrideType
+	1,  // 29: sourcemod.v1.GroupOverrides.override_access:type_name -> sourcemod.v1.OverrideAccess
+	41, // 30: sourcemod.v1.GroupOverrides.created_on:type_name -> google.protobuf.Timestamp
+	41, // 31: sourcemod.v1.GroupOverrides.updated_on:type_name -> google.protobuf.Timestamp
+	2,  // 32: sourcemod.v1.Admin.auth_type:type_name -> sourcemod.v1.AuthType
+	3,  // 33: sourcemod.v1.Admin.groups:type_name -> sourcemod.v1.Group
+	41, // 34: sourcemod.v1.Admin.created_on:type_name -> google.protobuf.Timestamp
+	41, // 35: sourcemod.v1.Admin.updated_on:type_name -> google.protobuf.Timestamp
+	0,  // 36: sourcemod.v1.Override.override_type:type_name -> sourcemod.v1.OverrideType
+	41, // 37: sourcemod.v1.Override.created_on:type_name -> google.protobuf.Timestamp
+	41, // 38: sourcemod.v1.Override.updated_on:type_name -> google.protobuf.Timestamp
+	42, // 39: sourcemod.v1.SourcemodService.Groups:input_type -> google.protobuf.Empty
+	5,  // 40: sourcemod.v1.SourcemodService.CreateGroup:input_type -> sourcemod.v1.CreateGroupRequest
+	7,  // 41: sourcemod.v1.SourcemodService.EditGroups:input_type -> sourcemod.v1.EditGroupsRequest
+	9,  // 42: sourcemod.v1.SourcemodService.DeleteGroup:input_type -> sourcemod.v1.DeleteGroupRequest
+	10, // 43: sourcemod.v1.SourcemodService.GroupOverrides:input_type -> sourcemod.v1.GroupOverridesRequest
+	12, // 44: sourcemod.v1.SourcemodService.CreateGroupOverride:input_type -> sourcemod.v1.CreateGroupOverrideRequest
+	14, // 45: sourcemod.v1.SourcemodService.EditGroupOverride:input_type -> sourcemod.v1.EditGroupOverrideRequest
+	16, // 46: sourcemod.v1.SourcemodService.DeleteGroupOverride:input_type -> sourcemod.v1.DeleteGroupOverrideRequest
+	42, // 47: sourcemod.v1.SourcemodService.Admins:input_type -> google.protobuf.Empty
+	19, // 48: sourcemod.v1.SourcemodService.CreateAdmin:input_type -> sourcemod.v1.CreateAdminRequest
+	21, // 49: sourcemod.v1.SourcemodService.EditAdmin:input_type -> sourcemod.v1.EditAdminRequest
+	23, // 50: sourcemod.v1.SourcemodService.DeleteAdmin:input_type -> sourcemod.v1.DeleteAdminRequest
+	24, // 51: sourcemod.v1.SourcemodService.AddAdminGroup:input_type -> sourcemod.v1.AddAdminGroupRequest
+	26, // 52: sourcemod.v1.SourcemodService.DeleteAdminGroup:input_type -> sourcemod.v1.DeleteAdminGroupRequest
+	42, // 53: sourcemod.v1.SourcemodService.Overrides:input_type -> google.protobuf.Empty
+	28, // 54: sourcemod.v1.SourcemodService.CreateOverrides:input_type -> sourcemod.v1.CreateOverridesRequest
+	30, // 55: sourcemod.v1.SourcemodService.EditOverrides:input_type -> sourcemod.v1.EditOverridesRequest
+	32, // 56: sourcemod.v1.SourcemodService.DeleteOverrides:input_type -> sourcemod.v1.DeleteOverridesRequest
+	42, // 57: sourcemod.v1.SourcemodService.GroupImmunities:input_type -> google.protobuf.Empty
+	34, // 58: sourcemod.v1.SourcemodService.CreateImmunity:input_type -> sourcemod.v1.CreateImmunityRequest
+	36, // 59: sourcemod.v1.SourcemodService.DeleteImmunity:input_type -> sourcemod.v1.DeleteImmunityRequest
+	4,  // 60: sourcemod.v1.SourcemodService.Groups:output_type -> sourcemod.v1.GroupsResponse
+	6,  // 61: sourcemod.v1.SourcemodService.CreateGroup:output_type -> sourcemod.v1.CreateGroupResponse
+	8,  // 62: sourcemod.v1.SourcemodService.EditGroups:output_type -> sourcemod.v1.EditGroupsResponse
+	42, // 63: sourcemod.v1.SourcemodService.DeleteGroup:output_type -> google.protobuf.Empty
+	11, // 64: sourcemod.v1.SourcemodService.GroupOverrides:output_type -> sourcemod.v1.GroupOverridesResponse
+	13, // 65: sourcemod.v1.SourcemodService.CreateGroupOverride:output_type -> sourcemod.v1.CreateGroupOverrideResponse
+	15, // 66: sourcemod.v1.SourcemodService.EditGroupOverride:output_type -> sourcemod.v1.EditGroupOverrideResponse
+	42, // 67: sourcemod.v1.SourcemodService.DeleteGroupOverride:output_type -> google.protobuf.Empty
+	18, // 68: sourcemod.v1.SourcemodService.Admins:output_type -> sourcemod.v1.AdminsResponse
+	20, // 69: sourcemod.v1.SourcemodService.CreateAdmin:output_type -> sourcemod.v1.CreateAdminResponse
+	22, // 70: sourcemod.v1.SourcemodService.EditAdmin:output_type -> sourcemod.v1.EditAdminResponse
+	42, // 71: sourcemod.v1.SourcemodService.DeleteAdmin:output_type -> google.protobuf.Empty
+	25, // 72: sourcemod.v1.SourcemodService.AddAdminGroup:output_type -> sourcemod.v1.AddAdminGroupResponse
+	42, // 73: sourcemod.v1.SourcemodService.DeleteAdminGroup:output_type -> google.protobuf.Empty
+	27, // 74: sourcemod.v1.SourcemodService.Overrides:output_type -> sourcemod.v1.OverridesResponse
+	29, // 75: sourcemod.v1.SourcemodService.CreateOverrides:output_type -> sourcemod.v1.CreateOverridesResponse
+	31, // 76: sourcemod.v1.SourcemodService.EditOverrides:output_type -> sourcemod.v1.EditOverridesResponse
+	42, // 77: sourcemod.v1.SourcemodService.DeleteOverrides:output_type -> google.protobuf.Empty
+	33, // 78: sourcemod.v1.SourcemodService.GroupImmunities:output_type -> sourcemod.v1.GroupImmunitiesResponse
+	35, // 79: sourcemod.v1.SourcemodService.CreateImmunity:output_type -> sourcemod.v1.CreateImmunityResponse
+	42, // 80: sourcemod.v1.SourcemodService.DeleteImmunity:output_type -> google.protobuf.Empty
+	60, // [60:81] is the sub-list for method output_type
+	39, // [39:60] is the sub-list for method input_type
+	39, // [39:39] is the sub-list for extension type_name
+	39, // [39:39] is the sub-list for extension extendee
+	0,  // [0:39] is the sub-list for field type_name
 }
 
 func init() { file_sourcemod_v1_sourcemod_proto_init() }
@@ -3424,8 +2665,8 @@ func file_sourcemod_v1_sourcemod_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sourcemod_v1_sourcemod_proto_rawDesc), len(file_sourcemod_v1_sourcemod_proto_rawDesc)),
-			NumEnums:      4,
-			NumMessages:   49,
+			NumEnums:      3,
+			NumMessages:   38,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

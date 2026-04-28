@@ -13,296 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file sourcemod/v1/sourcemod.proto.
  */
 export const file_sourcemod_v1_sourcemod: GenFile = /*@__PURE__*/
-  fileDesc("Chxzb3VyY2Vtb2QvdjEvc291cmNlbW9kLnByb3RvEgxzb3VyY2Vtb2QudjEiKQoNU01TZWVkUmVxdWVzdBIYCghzdGVhbV9pZBgBIAEoCUIGukgDyAEBIikKDlNNU2VlZFJlc3BvbnNlEhcKB21lc3NhZ2UYASABKAlCBrpIA8gBASJ0CgpTTU92ZXJyaWRlEjkKDW92ZXJyaWRlX3R5cGUYASABKA4yGi5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVUeXBlQga6SAPIAQESFAoEbmFtZRgCIAEoCUIGukgDyAEBEhUKBWZsYWdzGAMgASgJQga6SAPIAQEiSgoTU01PdmVycmlkZXNSZXNwb25zZRIzCglvdmVycmlkZXMYASADKAsyGC5zb3VyY2Vtb2QudjEuU01PdmVycmlkZUIGukgDyAEBIsgBCgZTTVVzZXISEgoCaWQYASABKAVCBrpIA8gBARIxCglhdXRoX3R5cGUYAiABKA4yFi5zb3VyY2Vtb2QudjEuQXV0aFR5cGVCBrpIA8gBARIYCghpZGVudGl0eRgDIAEoCUIGukgDyAEBEhAKCHBhc3N3b3JkGAQgASgJEhUKBWZsYWdzGAUgASgJQga6SAPIAQESFAoEbmFtZRgGIAEoCUIGukgDyAEBEh4KCGltbXVuaXR5GAcgASgFQgy6SAnIAQEaBBhkKAAiQwoLU01Vc2VyR3JvdXASGAoIYWRtaW5faWQYASABKAVCBrpIA8gBARIaCgpncm91cF9uYW1lGAIgASgJQga6SAPIAQEidgoPU01Vc2Vyc1Jlc3BvbnNlEisKBXVzZXJzGAEgAygLMhQuc291cmNlbW9kLnYxLlNNVXNlckIGukgDyAEBEjYKC3VzZXJfZ3JvdXBzGAIgAygLMhkuc291cmNlbW9kLnYxLlNNVXNlckdyb3VwQga6SAPIAQEizgEKBUdyb3VwEhgKCGdyb3VwX2lkGAEgASgFQga6SAPIAQESFQoFZmxhZ3MYAiABKAlCBrpIA8gBARIUCgRuYW1lGAMgASgJQga6SAPIAQESHgoOaW1tdW5pdHlfbGV2ZWwYBCABKAVCBrpIA8gBARIuCgpjcmVhdGVkX29uGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJ6ChBTTUdyb3Vwc1Jlc3BvbnNlEisKBmdyb3VwcxgBIAMoCzITLnNvdXJjZW1vZC52MS5Hcm91cEIGukgDyAEBEjkKCmltbXVuaXRpZXMYAiADKAsyHS5zb3VyY2Vtb2QudjEuU01Hcm91cEltbXVuaXR5Qga6SAPIAQEiSQoPU01Hcm91cEltbXVuaXR5EhoKCmdyb3VwX25hbWUYASABKAlCBrpIA8gBARIaCgpvdGhlcl9uYW1lGAIgASgJQga6SAPIAQEicQoMQ2hlY2tSZXF1ZXN0EhgKCHN0ZWFtX2lkGAEgASgJQga6SAPIAQESGQoJY2xpZW50X2lkGAIgASgFQga6SAPIAQESFgoCaXAYAyABKAlCCrpIB8gBAXICeAESFAoEbmFtZRgEIAEoCUIGukgDyAEBInAKDUNoZWNrUmVzcG9uc2USGQoJY2xpZW50X2lkGAEgASgFQga6SAPIAQESLwoIYmFuX3R5cGUYAiABKA4yFS5zb3VyY2Vtb2QudjEuQmFuVHlwZUIGukgDyAEBEhMKA21zZxgDIAEoCUIGukgDyAEBIj0KDkdyb3Vwc1Jlc3BvbnNlEisKBmdyb3VwcxgBIAMoCzITLnNvdXJjZW1vZC52MS5Hcm91cEIGukgDyAEBIl4KEkNyZWF0ZUdyb3VwUmVxdWVzdBIUCgRuYW1lGAEgASgJQga6SAPIAQESGwoIaW1tdW5pdHkYAiABKAVCCbpIBhoEGGQoABIVCgVmbGFncxgDIAEoCUIGukgDyAEBIkEKE0NyZWF0ZUdyb3VwUmVzcG9uc2USKgoFZ3JvdXAYASABKAsyEy5zb3VyY2Vtb2QudjEuR3JvdXBCBrpIA8gBASJ3ChFFZGl0R3JvdXBzUmVxdWVzdBIYCghncm91cF9pZBgBIAEoBUIGukgDyAEBEhQKBG5hbWUYAiABKAlCBrpIA8gBARIbCghpbW11bml0eRgDIAEoBUIJukgGGgQYZCgAEhUKBWZsYWdzGAQgASgJQga6SAPIAQEiQAoSRWRpdEdyb3Vwc1Jlc3BvbnNlEioKBWdyb3VwGAEgASgLMhMuc291cmNlbW9kLnYxLkdyb3VwQga6SAPIAQEiLgoSRGVsZXRlR3JvdXBSZXF1ZXN0EhgKCGdyb3VwX2lkGAEgASgFQga6SAPIAQEiMQoVR3JvdXBPdmVycmlkZXNSZXF1ZXN0EhgKCGdyb3VwX2lkGAEgASgFQga6SAPIAQEiUQoWR3JvdXBPdmVycmlkZXNSZXNwb25zZRI3CglvdmVycmlkZXMYASADKAsyHC5zb3VyY2Vtb2QudjEuR3JvdXBPdmVycmlkZXNCBrpIA8gBASLXAQoaQ3JlYXRlR3JvdXBPdmVycmlkZVJlcXVlc3QSIQoRZ3JvdXBfb3ZlcnJpZGVfaWQYASABKAVCBrpIA8gBARIYCghncm91cF9pZBgCIAEoBUIGukgDyAEBEjAKBHR5cGUYAyABKA4yGi5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVUeXBlQga6SAPIAQESFAoEbmFtZRgEIAEoCUIGukgDyAEBEjQKBmFjY2VzcxgFIAEoDjIcLnNvdXJjZW1vZC52MS5PdmVycmlkZUFjY2Vzc0IGukgDyAEBIlsKG0NyZWF0ZUdyb3VwT3ZlcnJpZGVSZXNwb25zZRI8Cg5ncm91cF9vdmVycmlkZRgBIAEoCzIcLnNvdXJjZW1vZC52MS5Hcm91cE92ZXJyaWRlc0IGukgDyAEBIucBChhFZGl0R3JvdXBPdmVycmlkZVJlcXVlc3QSGAoIZ3JvdXBfaWQYASABKAVCBrpIA8gBARIhChFncm91cF9vdmVycmlkZV9pZBgCIAEoBUIGukgDyAEBEhQKBG5hbWUYAyABKAlCBrpIA8gBARI5Cg1vdmVycmlkZV90eXBlGAQgASgOMhouc291cmNlbW9kLnYxLk92ZXJyaWRlVHlwZUIGukgDyAEBEj0KD292ZXJyaWRlX2FjY2VzcxgFIAEoDjIcLnNvdXJjZW1vZC52MS5PdmVycmlkZUFjY2Vzc0IGukgDyAEBIlkKGUVkaXRHcm91cE92ZXJyaWRlUmVzcG9uc2USPAoOZ3JvdXBfb3ZlcnJpZGUYASABKAsyHC5zb3VyY2Vtb2QudjEuR3JvdXBPdmVycmlkZXNCBrpIA8gBASI/ChpEZWxldGVHcm91cE92ZXJyaWRlUmVxdWVzdBIhChFncm91cF9vdmVycmlkZV9pZBgBIAEoBUIGukgDyAEBIh0KG0RlbGV0ZUdyb3VwT3ZlcnJpZGVSZXNwb25zZSI9Cg5BZG1pbnNSZXNwb25zZRIrCgZhZG1pbnMYASADKAsyEy5zb3VyY2Vtb2QudjEuQWRtaW5CBrpIA8gBASLAAQoSQ3JlYXRlQWRtaW5SZXF1ZXN0EjEKCWF1dGhfdHlwZRgBIAEoDjIWLnNvdXJjZW1vZC52MS5BdXRoVHlwZUIGukgDyAEBEhgKCGlkZW50aXR5GAIgASgJQga6SAPIAQESEAoIcGFzc3dvcmQYAyABKAkSFQoFZmxhZ3MYBCABKAlCBrpIA8gBARIUCgRuYW1lGAUgASgJQga6SAPIAQESHgoIaW1tdW5pdHkYBiABKAVCDLpICcgBARoEGGQoACJBChNDcmVhdGVBZG1pblJlc3BvbnNlEioKBWFkbWluGAEgASgLMhMuc291cmNlbW9kLnYxLkFkbWluQga6SAPIAQEi2AEKEEVkaXRBZG1pblJlcXVlc3QSGAoIYWRtaW5faWQYASABKAVCBrpIA8gBARIxCglhdXRoX3R5cGUYAiABKA4yFi5zb3VyY2Vtb2QudjEuQXV0aFR5cGVCBrpIA8gBARIYCghpZGVudGl0eRgDIAEoCUIGukgDyAEBEhAKCHBhc3N3b3JkGAQgASgJEhUKBWZsYWdzGAUgASgJQga6SAPIAQESFAoEbmFtZRgGIAEoCUIGukgDyAEBEh4KCGltbXVuaXR5GAcgASgFQgy6SAnIAQEaBBhkKAAiPwoRRWRpdEFkbWluUmVzcG9uc2USKgoFYWRtaW4YASABKAsyEy5zb3VyY2Vtb2QudjEuQWRtaW5CBrpIA8gBASIuChJEZWxldGVBZG1pblJlcXVlc3QSGAoIYWRtaW5faWQYASABKAVCBrpIA8gBASJKChRBZGRBZG1pbkdyb3VwUmVxdWVzdBIYCghhZG1pbl9pZBgBIAEoBUIGukgDyAEBEhgKCGdyb3VwX2lkGAIgASgFQga6SAPIAQEiQwoVQWRkQWRtaW5Hcm91cFJlc3BvbnNlEioKBWFkbWluGAEgASgLMhMuc291cmNlbW9kLnYxLkFkbWluQga6SAPIAQEiTQoXRGVsZXRlQWRtaW5Hcm91cFJlcXVlc3QSGAoIYWRtaW5faWQYASABKAVCBrpIA8gBARIYCghncm91cF9pZBgCIAEoBUIGukgDyAEBIkYKEU92ZXJyaWRlc1Jlc3BvbnNlEjEKCW92ZXJyaWRlcxgBIAMoCzIWLnNvdXJjZW1vZC52MS5PdmVycmlkZUIGukgDyAEBIoABChZDcmVhdGVPdmVycmlkZXNSZXF1ZXN0EhQKBG5hbWUYASABKAlCBrpIA8gBARI5Cg1vdmVycmlkZV90eXBlGAIgASgOMhouc291cmNlbW9kLnYxLk92ZXJyaWRlVHlwZUIGukgDyAEBEhUKBWZsYWdzGAMgASgJQga6SAPIAQEiSwoXQ3JlYXRlT3ZlcnJpZGVzUmVzcG9uc2USMAoIb3ZlcnJpZGUYASABKAsyFi5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVCBrpIA8gBASKbAQoURWRpdE92ZXJyaWRlc1JlcXVlc3QSGwoLb3ZlcnJpZGVfaWQYASABKAVCBrpIA8gBARIUCgRuYW1lGAIgASgJQga6SAPIAQESOQoNb3ZlcnJpZGVfdHlwZRgDIAEoDjIaLnNvdXJjZW1vZC52MS5PdmVycmlkZVR5cGVCBrpIA8gBARIVCgVmbGFncxgEIAEoCUIGukgDyAEBIkkKFUVkaXRPdmVycmlkZXNSZXNwb25zZRIwCghvdmVycmlkZRgBIAEoCzIWLnNvdXJjZW1vZC52MS5PdmVycmlkZUIGukgDyAEBIjUKFkRlbGV0ZU92ZXJyaWRlc1JlcXVlc3QSGwoLb3ZlcnJpZGVfaWQYASABKAVCBrpIA8gBASJYChdHcm91cEltbXVuaXRpZXNSZXNwb25zZRI9ChBncm91cF9pbW11bml0aWVzGAEgAygLMhsuc291cmNlbW9kLnYxLkdyb3VwSW1tdW5pdHlCBrpIA8gBASJLChVDcmVhdGVJbW11bml0eVJlcXVlc3QSGAoIZ3JvdXBfaWQYASABKAVCBrpIA8gBARIYCghvdGhlcl9pZBgCIAEoBUIGukgDyAEBIlUKFkNyZWF0ZUltbXVuaXR5UmVzcG9uc2USOwoOZ3JvdXBfaW1tdW5pdHkYASABKAsyGy5zb3VyY2Vtb2QudjEuR3JvdXBJbW11bml0eUIGukgDyAEBIjQKFURlbGV0ZUltbXVuaXR5UmVxdWVzdBIbCgtpbW11bml0eV9pZBgBIAEoBUIGukgDyAEBIsIBCg1Hcm91cEltbXVuaXR5EiEKEWdyb3VwX2ltbXVuaXR5X2lkGAEgASgFQga6SAPIAQESKgoFZ3JvdXAYAiABKAsyEy5zb3VyY2Vtb2QudjEuR3JvdXBCBrpIA8gBARIqCgVvdGhlchgDIAEoCzITLnNvdXJjZW1vZC52MS5Hcm91cEIGukgDyAEBEjYKCmNyZWF0ZWRfb24YBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEizQIKDkdyb3VwT3ZlcnJpZGVzEiEKEWdyb3VwX292ZXJyaWRlX2lkGAEgASgFQga6SAPIAQESGAoIZ3JvdXBfaWQYAiABKAVCBrpIA8gBARI5Cg1vdmVycmlkZV90eXBlGAMgASgOMhouc291cmNlbW9kLnYxLk92ZXJyaWRlVHlwZUIGukgDyAEBEhQKBG5hbWUYBCABKAlCBrpIA8gBARI9Cg9vdmVycmlkZV9hY2Nlc3MYBSABKA4yHC5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVBY2Nlc3NCBrpIA8gBARI2CgpjcmVhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEjYKCnVwZGF0ZWRfb24YByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEiiQMKBUFkbWluEhgKCGFkbWluX2lkGAEgASgFQga6SAPIAQESGAoIc3RlYW1faWQYAiABKANCBrpIA8gBARIxCglhdXRoX3R5cGUYAyABKA4yFi5zb3VyY2Vtb2QudjEuQXV0aFR5cGVCBrpIA8gBARIYCghpZGVudGl0eRgEIAEoCUIGukgDyAEBEhgKCHBhc3N3b3JkGAUgASgJQga6SAPIAQESFQoFZmxhZ3MYBiABKAlCBrpIA8gBARIUCgRuYW1lGAcgASgJQga6SAPIAQESGwoIaW1tdW5pdHkYCCABKAVCCbpIBhoEGGQoABIrCgZncm91cHMYCSADKAsyEy5zb3VyY2Vtb2QudjEuR3JvdXBCBrpIA8gBARI2CgpjcmVhdGVkX29uGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEjYKCnVwZGF0ZWRfb24YCyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEi/wEKCE92ZXJyaWRlEhsKC292ZXJyaWRlX2lkGAEgASgFQga6SAPIAQESOQoNb3ZlcnJpZGVfdHlwZRgCIAEoDjIaLnNvdXJjZW1vZC52MS5PdmVycmlkZVR5cGVCBrpIA8gBARIUCgRuYW1lGAMgASgJQga6SAPIAQESFQoFZmxhZ3MYBCABKAlCBrpIA8gBARI2CgpjcmVhdGVkX29uGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEjYKCnVwZGF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEqZwoHQmFuVHlwZRIbChdCQU5fVFlQRV9PS19VTlNQRUNJRklFRBAAEhQKEEJBTl9UWVBFX05PX0NPTU0QARITCg9CQU5fVFlQRV9CQU5ORUQQAhIUChBCQU5fVFlQRV9ORVRXT1JLEAMqTgoMT3ZlcnJpZGVUeXBlEiUKIU9WRVJSSURFX1RZUEVfQ09NTUFORF9VTlNQRUNJRklFRBAAEhcKE09WRVJSSURFX1RZUEVfR1JPVVAQASpRCg5PdmVycmlkZUFjY2VzcxIlCiFPVkVSUklERV9BQ0NFU1NfQUxMT1dfVU5TUEVDSUZJRUQQABIYChRPVkVSUklERV9BQ0NFU1NfREVOWRABKlEKCEF1dGhUeXBlEh8KG0FVVEhfVFlQRV9TVEVBTV9VTlNQRUNJRklFRBAAEhIKDkFVVEhfVFlQRV9OQU1FEAESEAoMQVVUSF9UWVBFX0lQEAIy+hAKEFNvdXJjZW1vZFNlcnZpY2USQAoGR3JvdXBzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Ghwuc291cmNlbW9kLnYxLkdyb3Vwc1Jlc3BvbnNlIgASVAoLQ3JlYXRlR3JvdXASIC5zb3VyY2Vtb2QudjEuQ3JlYXRlR3JvdXBSZXF1ZXN0GiEuc291cmNlbW9kLnYxLkNyZWF0ZUdyb3VwUmVzcG9uc2UiABJRCgpFZGl0R3JvdXBzEh8uc291cmNlbW9kLnYxLkVkaXRHcm91cHNSZXF1ZXN0GiAuc291cmNlbW9kLnYxLkVkaXRHcm91cHNSZXNwb25zZSIAEkkKC0RlbGV0ZUdyb3VwEiAuc291cmNlbW9kLnYxLkRlbGV0ZUdyb3VwUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEl0KDkdyb3VwT3ZlcnJpZGVzEiMuc291cmNlbW9kLnYxLkdyb3VwT3ZlcnJpZGVzUmVxdWVzdBokLnNvdXJjZW1vZC52MS5Hcm91cE92ZXJyaWRlc1Jlc3BvbnNlIgASbAoTQ3JlYXRlR3JvdXBPdmVycmlkZRIoLnNvdXJjZW1vZC52MS5DcmVhdGVHcm91cE92ZXJyaWRlUmVxdWVzdBopLnNvdXJjZW1vZC52MS5DcmVhdGVHcm91cE92ZXJyaWRlUmVzcG9uc2UiABJmChFFZGl0R3JvdXBPdmVycmlkZRImLnNvdXJjZW1vZC52MS5FZGl0R3JvdXBPdmVycmlkZVJlcXVlc3QaJy5zb3VyY2Vtb2QudjEuRWRpdEdyb3VwT3ZlcnJpZGVSZXNwb25zZSIAElkKE0RlbGV0ZUdyb3VwT3ZlcnJpZGUSKC5zb3VyY2Vtb2QudjEuRGVsZXRlR3JvdXBPdmVycmlkZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJACgZBZG1pbnMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHC5zb3VyY2Vtb2QudjEuQWRtaW5zUmVzcG9uc2UiABJUCgtDcmVhdGVBZG1pbhIgLnNvdXJjZW1vZC52MS5DcmVhdGVBZG1pblJlcXVlc3QaIS5zb3VyY2Vtb2QudjEuQ3JlYXRlQWRtaW5SZXNwb25zZSIAEk4KCUVkaXRBZG1pbhIeLnNvdXJjZW1vZC52MS5FZGl0QWRtaW5SZXF1ZXN0Gh8uc291cmNlbW9kLnYxLkVkaXRBZG1pblJlc3BvbnNlIgASSQoLRGVsZXRlQWRtaW4SIC5zb3VyY2Vtb2QudjEuRGVsZXRlQWRtaW5SZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASWgoNQWRkQWRtaW5Hcm91cBIiLnNvdXJjZW1vZC52MS5BZGRBZG1pbkdyb3VwUmVxdWVzdBojLnNvdXJjZW1vZC52MS5BZGRBZG1pbkdyb3VwUmVzcG9uc2UiABJTChBEZWxldGVBZG1pbkdyb3VwEiUuc291cmNlbW9kLnYxLkRlbGV0ZUFkbWluR3JvdXBSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASRgoJT3ZlcnJpZGVzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Gh8uc291cmNlbW9kLnYxLk92ZXJyaWRlc1Jlc3BvbnNlIgASYAoPQ3JlYXRlT3ZlcnJpZGVzEiQuc291cmNlbW9kLnYxLkNyZWF0ZU92ZXJyaWRlc1JlcXVlc3QaJS5zb3VyY2Vtb2QudjEuQ3JlYXRlT3ZlcnJpZGVzUmVzcG9uc2UiABJaCg1FZGl0T3ZlcnJpZGVzEiIuc291cmNlbW9kLnYxLkVkaXRPdmVycmlkZXNSZXF1ZXN0GiMuc291cmNlbW9kLnYxLkVkaXRPdmVycmlkZXNSZXNwb25zZSIAElEKD0RlbGV0ZU92ZXJyaWRlcxIkLnNvdXJjZW1vZC52MS5EZWxldGVPdmVycmlkZXNSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASUgoPR3JvdXBJbW11bml0aWVzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GiUuc291cmNlbW9kLnYxLkdyb3VwSW1tdW5pdGllc1Jlc3BvbnNlIgASXQoOQ3JlYXRlSW1tdW5pdHkSIy5zb3VyY2Vtb2QudjEuQ3JlYXRlSW1tdW5pdHlSZXF1ZXN0GiQuc291cmNlbW9kLnYxLkNyZWF0ZUltbXVuaXR5UmVzcG9uc2UiABJPCg5EZWxldGVJbW11bml0eRIjLnNvdXJjZW1vZC52MS5EZWxldGVJbW11bml0eVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJCCgVDaGVjaxIaLnNvdXJjZW1vZC52MS5DaGVja1JlcXVlc3QaGy5zb3VyY2Vtb2QudjEuQ2hlY2tSZXNwb25zZSIAEkoKC1NNT3ZlcnJpZGVzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GiEuc291cmNlbW9kLnYxLlNNT3ZlcnJpZGVzUmVzcG9uc2UiABJCCgdTTVVzZXJzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Gh0uc291cmNlbW9kLnYxLlNNVXNlcnNSZXNwb25zZSIAEkQKCFNNR3JvdXBzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Gh4uc291cmNlbW9kLnYxLlNNR3JvdXBzUmVzcG9uc2UiABJFCgZTTVNlZWQSGy5zb3VyY2Vtb2QudjEuU01TZWVkUmVxdWVzdBocLnNvdXJjZW1vZC52MS5TTVNlZWRSZXNwb25zZSIAQrYBChBjb20uc291cmNlbW9kLnYxQg5Tb3VyY2Vtb2RQcm90b1ABWkFnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3NvdXJjZW1vZC92MTtzb3VyY2Vtb2R2MaICA1NYWKoCDFNvdXJjZW1vZC5WMcoCDFNvdXJjZW1vZFxWMeICGFNvdXJjZW1vZFxWMVxHUEJNZXRhZGF0YeoCDVNvdXJjZW1vZDo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp]);
-
-/**
- * @generated from message sourcemod.v1.SMSeedRequest
- */
-export type SMSeedRequest = Message<"sourcemod.v1.SMSeedRequest"> & {
-  /**
-   * @generated from field: string steam_id = 1;
-   */
-  steamId: string;
-};
-
-/**
- * @generated from message sourcemod.v1.SMSeedRequest
- */
-export type SMSeedRequestValid = Message<"sourcemod.v1.SMSeedRequest"> & {
-  /**
-   * @generated from field: string steam_id = 1;
-   */
-  steamId: string;
-};
-
-/**
- * Describes the message sourcemod.v1.SMSeedRequest.
- * Use `create(SMSeedRequestSchema)` to create a new message.
- */
-export const SMSeedRequestSchema: GenMessage<SMSeedRequest, {validType: SMSeedRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 0);
-
-/**
- * @generated from message sourcemod.v1.SMSeedResponse
- */
-export type SMSeedResponse = Message<"sourcemod.v1.SMSeedResponse"> & {
-  /**
-   * @generated from field: string message = 1;
-   */
-  message: string;
-};
-
-/**
- * @generated from message sourcemod.v1.SMSeedResponse
- */
-export type SMSeedResponseValid = Message<"sourcemod.v1.SMSeedResponse"> & {
-  /**
-   * @generated from field: string message = 1;
-   */
-  message: string;
-};
-
-/**
- * Describes the message sourcemod.v1.SMSeedResponse.
- * Use `create(SMSeedResponseSchema)` to create a new message.
- */
-export const SMSeedResponseSchema: GenMessage<SMSeedResponse, {validType: SMSeedResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 1);
-
-/**
- * @generated from message sourcemod.v1.SMOverride
- */
-export type SMOverride = Message<"sourcemod.v1.SMOverride"> & {
-  /**
-   * @generated from field: sourcemod.v1.OverrideType override_type = 1;
-   */
-  overrideType: OverrideType;
-
-  /**
-   * @generated from field: string name = 2;
-   */
-  name: string;
-
-  /**
-   * @generated from field: string flags = 3;
-   */
-  flags: string;
-};
-
-/**
- * @generated from message sourcemod.v1.SMOverride
- */
-export type SMOverrideValid = Message<"sourcemod.v1.SMOverride"> & {
-  /**
-   * @generated from field: sourcemod.v1.OverrideType override_type = 1;
-   */
-  overrideType: OverrideType;
-
-  /**
-   * @generated from field: string name = 2;
-   */
-  name: string;
-
-  /**
-   * @generated from field: string flags = 3;
-   */
-  flags: string;
-};
-
-/**
- * Describes the message sourcemod.v1.SMOverride.
- * Use `create(SMOverrideSchema)` to create a new message.
- */
-export const SMOverrideSchema: GenMessage<SMOverride, {validType: SMOverrideValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 2);
-
-/**
- * @generated from message sourcemod.v1.SMOverridesResponse
- */
-export type SMOverridesResponse = Message<"sourcemod.v1.SMOverridesResponse"> & {
-  /**
-   * @generated from field: repeated sourcemod.v1.SMOverride overrides = 1;
-   */
-  overrides: SMOverride[];
-};
-
-/**
- * @generated from message sourcemod.v1.SMOverridesResponse
- */
-export type SMOverridesResponseValid = Message<"sourcemod.v1.SMOverridesResponse"> & {
-  /**
-   * @generated from field: repeated sourcemod.v1.SMOverride overrides = 1;
-   */
-  overrides: SMOverrideValid[];
-};
-
-/**
- * Describes the message sourcemod.v1.SMOverridesResponse.
- * Use `create(SMOverridesResponseSchema)` to create a new message.
- */
-export const SMOverridesResponseSchema: GenMessage<SMOverridesResponse, {validType: SMOverridesResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 3);
-
-/**
- * @generated from message sourcemod.v1.SMUser
- */
-export type SMUser = Message<"sourcemod.v1.SMUser"> & {
-  /**
-   * @generated from field: int32 id = 1;
-   */
-  id: number;
-
-  /**
-   * @generated from field: sourcemod.v1.AuthType auth_type = 2;
-   */
-  authType: AuthType;
-
-  /**
-   * @generated from field: string identity = 3;
-   */
-  identity: string;
-
-  /**
-   * @generated from field: string password = 4;
-   */
-  password: string;
-
-  /**
-   * @generated from field: string flags = 5;
-   */
-  flags: string;
-
-  /**
-   * @generated from field: string name = 6;
-   */
-  name: string;
-
-  /**
-   * @generated from field: int32 immunity = 7;
-   */
-  immunity: number;
-};
-
-/**
- * @generated from message sourcemod.v1.SMUser
- */
-export type SMUserValid = Message<"sourcemod.v1.SMUser"> & {
-  /**
-   * @generated from field: int32 id = 1;
-   */
-  id: number;
-
-  /**
-   * @generated from field: sourcemod.v1.AuthType auth_type = 2;
-   */
-  authType: AuthType;
-
-  /**
-   * @generated from field: string identity = 3;
-   */
-  identity: string;
-
-  /**
-   * @generated from field: string password = 4;
-   */
-  password: string;
-
-  /**
-   * @generated from field: string flags = 5;
-   */
-  flags: string;
-
-  /**
-   * @generated from field: string name = 6;
-   */
-  name: string;
-
-  /**
-   * @generated from field: int32 immunity = 7;
-   */
-  immunity: number;
-};
-
-/**
- * Describes the message sourcemod.v1.SMUser.
- * Use `create(SMUserSchema)` to create a new message.
- */
-export const SMUserSchema: GenMessage<SMUser, {validType: SMUserValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 4);
-
-/**
- * @generated from message sourcemod.v1.SMUserGroup
- */
-export type SMUserGroup = Message<"sourcemod.v1.SMUserGroup"> & {
-  /**
-   * @generated from field: int32 admin_id = 1;
-   */
-  adminId: number;
-
-  /**
-   * @generated from field: string group_name = 2;
-   */
-  groupName: string;
-};
-
-/**
- * @generated from message sourcemod.v1.SMUserGroup
- */
-export type SMUserGroupValid = Message<"sourcemod.v1.SMUserGroup"> & {
-  /**
-   * @generated from field: int32 admin_id = 1;
-   */
-  adminId: number;
-
-  /**
-   * @generated from field: string group_name = 2;
-   */
-  groupName: string;
-};
-
-/**
- * Describes the message sourcemod.v1.SMUserGroup.
- * Use `create(SMUserGroupSchema)` to create a new message.
- */
-export const SMUserGroupSchema: GenMessage<SMUserGroup, {validType: SMUserGroupValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 5);
-
-/**
- * @generated from message sourcemod.v1.SMUsersResponse
- */
-export type SMUsersResponse = Message<"sourcemod.v1.SMUsersResponse"> & {
-  /**
-   * @generated from field: repeated sourcemod.v1.SMUser users = 1;
-   */
-  users: SMUser[];
-
-  /**
-   * @generated from field: repeated sourcemod.v1.SMUserGroup user_groups = 2;
-   */
-  userGroups: SMUserGroup[];
-};
-
-/**
- * @generated from message sourcemod.v1.SMUsersResponse
- */
-export type SMUsersResponseValid = Message<"sourcemod.v1.SMUsersResponse"> & {
-  /**
-   * @generated from field: repeated sourcemod.v1.SMUser users = 1;
-   */
-  users: SMUserValid[];
-
-  /**
-   * @generated from field: repeated sourcemod.v1.SMUserGroup user_groups = 2;
-   */
-  userGroups: SMUserGroupValid[];
-};
-
-/**
- * Describes the message sourcemod.v1.SMUsersResponse.
- * Use `create(SMUsersResponseSchema)` to create a new message.
- */
-export const SMUsersResponseSchema: GenMessage<SMUsersResponse, {validType: SMUsersResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 6);
+  fileDesc("Chxzb3VyY2Vtb2QvdjEvc291cmNlbW9kLnByb3RvEgxzb3VyY2Vtb2QudjEizgEKBUdyb3VwEhgKCGdyb3VwX2lkGAEgASgFQga6SAPIAQESFQoFZmxhZ3MYAiABKAlCBrpIA8gBARIUCgRuYW1lGAMgASgJQga6SAPIAQESHgoOaW1tdW5pdHlfbGV2ZWwYBCABKAVCBrpIA8gBARIuCgpjcmVhdGVkX29uGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCI9Cg5Hcm91cHNSZXNwb25zZRIrCgZncm91cHMYASADKAsyEy5zb3VyY2Vtb2QudjEuR3JvdXBCBrpIA8gBASJeChJDcmVhdGVHcm91cFJlcXVlc3QSFAoEbmFtZRgBIAEoCUIGukgDyAEBEhsKCGltbXVuaXR5GAIgASgFQgm6SAYaBBhkKAASFQoFZmxhZ3MYAyABKAlCBrpIA8gBASJBChNDcmVhdGVHcm91cFJlc3BvbnNlEioKBWdyb3VwGAEgASgLMhMuc291cmNlbW9kLnYxLkdyb3VwQga6SAPIAQEidwoRRWRpdEdyb3Vwc1JlcXVlc3QSGAoIZ3JvdXBfaWQYASABKAVCBrpIA8gBARIUCgRuYW1lGAIgASgJQga6SAPIAQESGwoIaW1tdW5pdHkYAyABKAVCCbpIBhoEGGQoABIVCgVmbGFncxgEIAEoCUIGukgDyAEBIkAKEkVkaXRHcm91cHNSZXNwb25zZRIqCgVncm91cBgBIAEoCzITLnNvdXJjZW1vZC52MS5Hcm91cEIGukgDyAEBIi4KEkRlbGV0ZUdyb3VwUmVxdWVzdBIYCghncm91cF9pZBgBIAEoBUIGukgDyAEBIjEKFUdyb3VwT3ZlcnJpZGVzUmVxdWVzdBIYCghncm91cF9pZBgBIAEoBUIGukgDyAEBIlEKFkdyb3VwT3ZlcnJpZGVzUmVzcG9uc2USNwoJb3ZlcnJpZGVzGAEgAygLMhwuc291cmNlbW9kLnYxLkdyb3VwT3ZlcnJpZGVzQga6SAPIAQEi1wEKGkNyZWF0ZUdyb3VwT3ZlcnJpZGVSZXF1ZXN0EiEKEWdyb3VwX292ZXJyaWRlX2lkGAEgASgFQga6SAPIAQESGAoIZ3JvdXBfaWQYAiABKAVCBrpIA8gBARIwCgR0eXBlGAMgASgOMhouc291cmNlbW9kLnYxLk92ZXJyaWRlVHlwZUIGukgDyAEBEhQKBG5hbWUYBCABKAlCBrpIA8gBARI0CgZhY2Nlc3MYBSABKA4yHC5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVBY2Nlc3NCBrpIA8gBASJbChtDcmVhdGVHcm91cE92ZXJyaWRlUmVzcG9uc2USPAoOZ3JvdXBfb3ZlcnJpZGUYASABKAsyHC5zb3VyY2Vtb2QudjEuR3JvdXBPdmVycmlkZXNCBrpIA8gBASLnAQoYRWRpdEdyb3VwT3ZlcnJpZGVSZXF1ZXN0EhgKCGdyb3VwX2lkGAEgASgFQga6SAPIAQESIQoRZ3JvdXBfb3ZlcnJpZGVfaWQYAiABKAVCBrpIA8gBARIUCgRuYW1lGAMgASgJQga6SAPIAQESOQoNb3ZlcnJpZGVfdHlwZRgEIAEoDjIaLnNvdXJjZW1vZC52MS5PdmVycmlkZVR5cGVCBrpIA8gBARI9Cg9vdmVycmlkZV9hY2Nlc3MYBSABKA4yHC5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVBY2Nlc3NCBrpIA8gBASJZChlFZGl0R3JvdXBPdmVycmlkZVJlc3BvbnNlEjwKDmdyb3VwX292ZXJyaWRlGAEgASgLMhwuc291cmNlbW9kLnYxLkdyb3VwT3ZlcnJpZGVzQga6SAPIAQEiPwoaRGVsZXRlR3JvdXBPdmVycmlkZVJlcXVlc3QSIQoRZ3JvdXBfb3ZlcnJpZGVfaWQYASABKAVCBrpIA8gBASIdChtEZWxldGVHcm91cE92ZXJyaWRlUmVzcG9uc2UiPQoOQWRtaW5zUmVzcG9uc2USKwoGYWRtaW5zGAEgAygLMhMuc291cmNlbW9kLnYxLkFkbWluQga6SAPIAQEiwAEKEkNyZWF0ZUFkbWluUmVxdWVzdBIxCglhdXRoX3R5cGUYASABKA4yFi5zb3VyY2Vtb2QudjEuQXV0aFR5cGVCBrpIA8gBARIYCghpZGVudGl0eRgCIAEoCUIGukgDyAEBEhAKCHBhc3N3b3JkGAMgASgJEhUKBWZsYWdzGAQgASgJQga6SAPIAQESFAoEbmFtZRgFIAEoCUIGukgDyAEBEh4KCGltbXVuaXR5GAYgASgFQgy6SAnIAQEaBBhkKAAiQQoTQ3JlYXRlQWRtaW5SZXNwb25zZRIqCgVhZG1pbhgBIAEoCzITLnNvdXJjZW1vZC52MS5BZG1pbkIGukgDyAEBItgBChBFZGl0QWRtaW5SZXF1ZXN0EhgKCGFkbWluX2lkGAEgASgFQga6SAPIAQESMQoJYXV0aF90eXBlGAIgASgOMhYuc291cmNlbW9kLnYxLkF1dGhUeXBlQga6SAPIAQESGAoIaWRlbnRpdHkYAyABKAlCBrpIA8gBARIQCghwYXNzd29yZBgEIAEoCRIVCgVmbGFncxgFIAEoCUIGukgDyAEBEhQKBG5hbWUYBiABKAlCBrpIA8gBARIeCghpbW11bml0eRgHIAEoBUIMukgJyAEBGgQYZCgAIj8KEUVkaXRBZG1pblJlc3BvbnNlEioKBWFkbWluGAEgASgLMhMuc291cmNlbW9kLnYxLkFkbWluQga6SAPIAQEiLgoSRGVsZXRlQWRtaW5SZXF1ZXN0EhgKCGFkbWluX2lkGAEgASgFQga6SAPIAQEiSgoUQWRkQWRtaW5Hcm91cFJlcXVlc3QSGAoIYWRtaW5faWQYASABKAVCBrpIA8gBARIYCghncm91cF9pZBgCIAEoBUIGukgDyAEBIkMKFUFkZEFkbWluR3JvdXBSZXNwb25zZRIqCgVhZG1pbhgBIAEoCzITLnNvdXJjZW1vZC52MS5BZG1pbkIGukgDyAEBIk0KF0RlbGV0ZUFkbWluR3JvdXBSZXF1ZXN0EhgKCGFkbWluX2lkGAEgASgFQga6SAPIAQESGAoIZ3JvdXBfaWQYAiABKAVCBrpIA8gBASJGChFPdmVycmlkZXNSZXNwb25zZRIxCglvdmVycmlkZXMYASADKAsyFi5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVCBrpIA8gBASKAAQoWQ3JlYXRlT3ZlcnJpZGVzUmVxdWVzdBIUCgRuYW1lGAEgASgJQga6SAPIAQESOQoNb3ZlcnJpZGVfdHlwZRgCIAEoDjIaLnNvdXJjZW1vZC52MS5PdmVycmlkZVR5cGVCBrpIA8gBARIVCgVmbGFncxgDIAEoCUIGukgDyAEBIksKF0NyZWF0ZU92ZXJyaWRlc1Jlc3BvbnNlEjAKCG92ZXJyaWRlGAEgASgLMhYuc291cmNlbW9kLnYxLk92ZXJyaWRlQga6SAPIAQEimwEKFEVkaXRPdmVycmlkZXNSZXF1ZXN0EhsKC292ZXJyaWRlX2lkGAEgASgFQga6SAPIAQESFAoEbmFtZRgCIAEoCUIGukgDyAEBEjkKDW92ZXJyaWRlX3R5cGUYAyABKA4yGi5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVUeXBlQga6SAPIAQESFQoFZmxhZ3MYBCABKAlCBrpIA8gBASJJChVFZGl0T3ZlcnJpZGVzUmVzcG9uc2USMAoIb3ZlcnJpZGUYASABKAsyFi5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVCBrpIA8gBASI1ChZEZWxldGVPdmVycmlkZXNSZXF1ZXN0EhsKC292ZXJyaWRlX2lkGAEgASgFQga6SAPIAQEiWAoXR3JvdXBJbW11bml0aWVzUmVzcG9uc2USPQoQZ3JvdXBfaW1tdW5pdGllcxgBIAMoCzIbLnNvdXJjZW1vZC52MS5Hcm91cEltbXVuaXR5Qga6SAPIAQEiSwoVQ3JlYXRlSW1tdW5pdHlSZXF1ZXN0EhgKCGdyb3VwX2lkGAEgASgFQga6SAPIAQESGAoIb3RoZXJfaWQYAiABKAVCBrpIA8gBASJVChZDcmVhdGVJbW11bml0eVJlc3BvbnNlEjsKDmdyb3VwX2ltbXVuaXR5GAEgASgLMhsuc291cmNlbW9kLnYxLkdyb3VwSW1tdW5pdHlCBrpIA8gBASI0ChVEZWxldGVJbW11bml0eVJlcXVlc3QSGwoLaW1tdW5pdHlfaWQYASABKAVCBrpIA8gBASLCAQoNR3JvdXBJbW11bml0eRIhChFncm91cF9pbW11bml0eV9pZBgBIAEoBUIGukgDyAEBEioKBWdyb3VwGAIgASgLMhMuc291cmNlbW9kLnYxLkdyb3VwQga6SAPIAQESKgoFb3RoZXIYAyABKAsyEy5zb3VyY2Vtb2QudjEuR3JvdXBCBrpIA8gBARI2CgpjcmVhdGVkX29uGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBIs0CCg5Hcm91cE92ZXJyaWRlcxIhChFncm91cF9vdmVycmlkZV9pZBgBIAEoBUIGukgDyAEBEhgKCGdyb3VwX2lkGAIgASgFQga6SAPIAQESOQoNb3ZlcnJpZGVfdHlwZRgDIAEoDjIaLnNvdXJjZW1vZC52MS5PdmVycmlkZVR5cGVCBrpIA8gBARIUCgRuYW1lGAQgASgJQga6SAPIAQESPQoPb3ZlcnJpZGVfYWNjZXNzGAUgASgOMhwuc291cmNlbW9kLnYxLk92ZXJyaWRlQWNjZXNzQga6SAPIAQESNgoKY3JlYXRlZF9vbhgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARI2Cgp1cGRhdGVkX29uGAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBIokDCgVBZG1pbhIYCghhZG1pbl9pZBgBIAEoBUIGukgDyAEBEhgKCHN0ZWFtX2lkGAIgASgDQga6SAPIAQESMQoJYXV0aF90eXBlGAMgASgOMhYuc291cmNlbW9kLnYxLkF1dGhUeXBlQga6SAPIAQESGAoIaWRlbnRpdHkYBCABKAlCBrpIA8gBARIYCghwYXNzd29yZBgFIAEoCUIGukgDyAEBEhUKBWZsYWdzGAYgASgJQga6SAPIAQESFAoEbmFtZRgHIAEoCUIGukgDyAEBEhsKCGltbXVuaXR5GAggASgFQgm6SAYaBBhkKAASKwoGZ3JvdXBzGAkgAygLMhMuc291cmNlbW9kLnYxLkdyb3VwQga6SAPIAQESNgoKY3JlYXRlZF9vbhgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARI2Cgp1cGRhdGVkX29uGAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBIv8BCghPdmVycmlkZRIbCgtvdmVycmlkZV9pZBgBIAEoBUIGukgDyAEBEjkKDW92ZXJyaWRlX3R5cGUYAiABKA4yGi5zb3VyY2Vtb2QudjEuT3ZlcnJpZGVUeXBlQga6SAPIAQESFAoEbmFtZRgDIAEoCUIGukgDyAEBEhUKBWZsYWdzGAQgASgJQga6SAPIAQESNgoKY3JlYXRlZF9vbhgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARI2Cgp1cGRhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBKk4KDE92ZXJyaWRlVHlwZRIlCiFPVkVSUklERV9UWVBFX0NPTU1BTkRfVU5TUEVDSUZJRUQQABIXChNPVkVSUklERV9UWVBFX0dST1VQEAEqUQoOT3ZlcnJpZGVBY2Nlc3MSJQohT1ZFUlJJREVfQUNDRVNTX0FMTE9XX1VOU1BFQ0lGSUVEEAASGAoUT1ZFUlJJREVfQUNDRVNTX0RFTlkQASpRCghBdXRoVHlwZRIfChtBVVRIX1RZUEVfU1RFQU1fVU5TUEVDSUZJRUQQABISCg5BVVRIX1RZUEVfTkFNRRABEhAKDEFVVEhfVFlQRV9JUBACMpkOChBTb3VyY2Vtb2RTZXJ2aWNlEkAKBkdyb3VwcxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRocLnNvdXJjZW1vZC52MS5Hcm91cHNSZXNwb25zZSIAElQKC0NyZWF0ZUdyb3VwEiAuc291cmNlbW9kLnYxLkNyZWF0ZUdyb3VwUmVxdWVzdBohLnNvdXJjZW1vZC52MS5DcmVhdGVHcm91cFJlc3BvbnNlIgASUQoKRWRpdEdyb3VwcxIfLnNvdXJjZW1vZC52MS5FZGl0R3JvdXBzUmVxdWVzdBogLnNvdXJjZW1vZC52MS5FZGl0R3JvdXBzUmVzcG9uc2UiABJJCgtEZWxldGVHcm91cBIgLnNvdXJjZW1vZC52MS5EZWxldGVHcm91cFJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJdCg5Hcm91cE92ZXJyaWRlcxIjLnNvdXJjZW1vZC52MS5Hcm91cE92ZXJyaWRlc1JlcXVlc3QaJC5zb3VyY2Vtb2QudjEuR3JvdXBPdmVycmlkZXNSZXNwb25zZSIAEmwKE0NyZWF0ZUdyb3VwT3ZlcnJpZGUSKC5zb3VyY2Vtb2QudjEuQ3JlYXRlR3JvdXBPdmVycmlkZVJlcXVlc3QaKS5zb3VyY2Vtb2QudjEuQ3JlYXRlR3JvdXBPdmVycmlkZVJlc3BvbnNlIgASZgoRRWRpdEdyb3VwT3ZlcnJpZGUSJi5zb3VyY2Vtb2QudjEuRWRpdEdyb3VwT3ZlcnJpZGVSZXF1ZXN0Gicuc291cmNlbW9kLnYxLkVkaXRHcm91cE92ZXJyaWRlUmVzcG9uc2UiABJZChNEZWxldGVHcm91cE92ZXJyaWRlEiguc291cmNlbW9kLnYxLkRlbGV0ZUdyb3VwT3ZlcnJpZGVSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASQAoGQWRtaW5zEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Ghwuc291cmNlbW9kLnYxLkFkbWluc1Jlc3BvbnNlIgASVAoLQ3JlYXRlQWRtaW4SIC5zb3VyY2Vtb2QudjEuQ3JlYXRlQWRtaW5SZXF1ZXN0GiEuc291cmNlbW9kLnYxLkNyZWF0ZUFkbWluUmVzcG9uc2UiABJOCglFZGl0QWRtaW4SHi5zb3VyY2Vtb2QudjEuRWRpdEFkbWluUmVxdWVzdBofLnNvdXJjZW1vZC52MS5FZGl0QWRtaW5SZXNwb25zZSIAEkkKC0RlbGV0ZUFkbWluEiAuc291cmNlbW9kLnYxLkRlbGV0ZUFkbWluUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEloKDUFkZEFkbWluR3JvdXASIi5zb3VyY2Vtb2QudjEuQWRkQWRtaW5Hcm91cFJlcXVlc3QaIy5zb3VyY2Vtb2QudjEuQWRkQWRtaW5Hcm91cFJlc3BvbnNlIgASUwoQRGVsZXRlQWRtaW5Hcm91cBIlLnNvdXJjZW1vZC52MS5EZWxldGVBZG1pbkdyb3VwUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEkYKCU92ZXJyaWRlcxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRofLnNvdXJjZW1vZC52MS5PdmVycmlkZXNSZXNwb25zZSIAEmAKD0NyZWF0ZU92ZXJyaWRlcxIkLnNvdXJjZW1vZC52MS5DcmVhdGVPdmVycmlkZXNSZXF1ZXN0GiUuc291cmNlbW9kLnYxLkNyZWF0ZU92ZXJyaWRlc1Jlc3BvbnNlIgASWgoNRWRpdE92ZXJyaWRlcxIiLnNvdXJjZW1vZC52MS5FZGl0T3ZlcnJpZGVzUmVxdWVzdBojLnNvdXJjZW1vZC52MS5FZGl0T3ZlcnJpZGVzUmVzcG9uc2UiABJRCg9EZWxldGVPdmVycmlkZXMSJC5zb3VyY2Vtb2QudjEuRGVsZXRlT3ZlcnJpZGVzUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAElIKD0dyb3VwSW1tdW5pdGllcxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRolLnNvdXJjZW1vZC52MS5Hcm91cEltbXVuaXRpZXNSZXNwb25zZSIAEl0KDkNyZWF0ZUltbXVuaXR5EiMuc291cmNlbW9kLnYxLkNyZWF0ZUltbXVuaXR5UmVxdWVzdBokLnNvdXJjZW1vZC52MS5DcmVhdGVJbW11bml0eVJlc3BvbnNlIgASTwoORGVsZXRlSW1tdW5pdHkSIy5zb3VyY2Vtb2QudjEuRGVsZXRlSW1tdW5pdHlSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgBCtgEKEGNvbS5zb3VyY2Vtb2QudjFCDlNvdXJjZW1vZFByb3RvUAFaQWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvc291cmNlbW9kL3YxO3NvdXJjZW1vZHYxogIDU1hYqgIMU291cmNlbW9kLlYxygIMU291cmNlbW9kXFYx4gIYU291cmNlbW9kXFYxXEdQQk1ldGFkYXRh6gINU291cmNlbW9kOjpWMWIIZWRpdGlvbnNw6Ac", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message sourcemod.v1.Group
@@ -379,185 +90,7 @@ export type GroupValid = Message<"sourcemod.v1.Group"> & {
  * Use `create(GroupSchema)` to create a new message.
  */
 export const GroupSchema: GenMessage<Group, {validType: GroupValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 7);
-
-/**
- * @generated from message sourcemod.v1.SMGroupsResponse
- */
-export type SMGroupsResponse = Message<"sourcemod.v1.SMGroupsResponse"> & {
-  /**
-   * @generated from field: repeated sourcemod.v1.Group groups = 1;
-   */
-  groups: Group[];
-
-  /**
-   * @generated from field: repeated sourcemod.v1.SMGroupImmunity immunities = 2;
-   */
-  immunities: SMGroupImmunity[];
-};
-
-/**
- * @generated from message sourcemod.v1.SMGroupsResponse
- */
-export type SMGroupsResponseValid = Message<"sourcemod.v1.SMGroupsResponse"> & {
-  /**
-   * @generated from field: repeated sourcemod.v1.Group groups = 1;
-   */
-  groups: GroupValid[];
-
-  /**
-   * @generated from field: repeated sourcemod.v1.SMGroupImmunity immunities = 2;
-   */
-  immunities: SMGroupImmunityValid[];
-};
-
-/**
- * Describes the message sourcemod.v1.SMGroupsResponse.
- * Use `create(SMGroupsResponseSchema)` to create a new message.
- */
-export const SMGroupsResponseSchema: GenMessage<SMGroupsResponse, {validType: SMGroupsResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 8);
-
-/**
- * @generated from message sourcemod.v1.SMGroupImmunity
- */
-export type SMGroupImmunity = Message<"sourcemod.v1.SMGroupImmunity"> & {
-  /**
-   * @generated from field: string group_name = 1;
-   */
-  groupName: string;
-
-  /**
-   * @generated from field: string other_name = 2;
-   */
-  otherName: string;
-};
-
-/**
- * @generated from message sourcemod.v1.SMGroupImmunity
- */
-export type SMGroupImmunityValid = Message<"sourcemod.v1.SMGroupImmunity"> & {
-  /**
-   * @generated from field: string group_name = 1;
-   */
-  groupName: string;
-
-  /**
-   * @generated from field: string other_name = 2;
-   */
-  otherName: string;
-};
-
-/**
- * Describes the message sourcemod.v1.SMGroupImmunity.
- * Use `create(SMGroupImmunitySchema)` to create a new message.
- */
-export const SMGroupImmunitySchema: GenMessage<SMGroupImmunity, {validType: SMGroupImmunityValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 9);
-
-/**
- * @generated from message sourcemod.v1.CheckRequest
- */
-export type CheckRequest = Message<"sourcemod.v1.CheckRequest"> & {
-  /**
-   * @generated from field: string steam_id = 1;
-   */
-  steamId: string;
-
-  /**
-   * @generated from field: int32 client_id = 2;
-   */
-  clientId: number;
-
-  /**
-   * @generated from field: string ip = 3;
-   */
-  ip: string;
-
-  /**
-   * @generated from field: string name = 4;
-   */
-  name: string;
-};
-
-/**
- * @generated from message sourcemod.v1.CheckRequest
- */
-export type CheckRequestValid = Message<"sourcemod.v1.CheckRequest"> & {
-  /**
-   * @generated from field: string steam_id = 1;
-   */
-  steamId: string;
-
-  /**
-   * @generated from field: int32 client_id = 2;
-   */
-  clientId: number;
-
-  /**
-   * @generated from field: string ip = 3;
-   */
-  ip: string;
-
-  /**
-   * @generated from field: string name = 4;
-   */
-  name: string;
-};
-
-/**
- * Describes the message sourcemod.v1.CheckRequest.
- * Use `create(CheckRequestSchema)` to create a new message.
- */
-export const CheckRequestSchema: GenMessage<CheckRequest, {validType: CheckRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 10);
-
-/**
- * @generated from message sourcemod.v1.CheckResponse
- */
-export type CheckResponse = Message<"sourcemod.v1.CheckResponse"> & {
-  /**
-   * @generated from field: int32 client_id = 1;
-   */
-  clientId: number;
-
-  /**
-   * @generated from field: sourcemod.v1.BanType ban_type = 2;
-   */
-  banType: BanType;
-
-  /**
-   * @generated from field: string msg = 3;
-   */
-  msg: string;
-};
-
-/**
- * @generated from message sourcemod.v1.CheckResponse
- */
-export type CheckResponseValid = Message<"sourcemod.v1.CheckResponse"> & {
-  /**
-   * @generated from field: int32 client_id = 1;
-   */
-  clientId: number;
-
-  /**
-   * @generated from field: sourcemod.v1.BanType ban_type = 2;
-   */
-  banType: BanType;
-
-  /**
-   * @generated from field: string msg = 3;
-   */
-  msg: string;
-};
-
-/**
- * Describes the message sourcemod.v1.CheckResponse.
- * Use `create(CheckResponseSchema)` to create a new message.
- */
-export const CheckResponseSchema: GenMessage<CheckResponse, {validType: CheckResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 11);
+  messageDesc(file_sourcemod_v1_sourcemod, 0);
 
 /**
  * @generated from message sourcemod.v1.GroupsResponse
@@ -584,7 +117,7 @@ export type GroupsResponseValid = Message<"sourcemod.v1.GroupsResponse"> & {
  * Use `create(GroupsResponseSchema)` to create a new message.
  */
 export const GroupsResponseSchema: GenMessage<GroupsResponse, {validType: GroupsResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 12);
+  messageDesc(file_sourcemod_v1_sourcemod, 1);
 
 /**
  * @generated from message sourcemod.v1.CreateGroupRequest
@@ -631,7 +164,7 @@ export type CreateGroupRequestValid = Message<"sourcemod.v1.CreateGroupRequest">
  * Use `create(CreateGroupRequestSchema)` to create a new message.
  */
 export const CreateGroupRequestSchema: GenMessage<CreateGroupRequest, {validType: CreateGroupRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 13);
+  messageDesc(file_sourcemod_v1_sourcemod, 2);
 
 /**
  * @generated from message sourcemod.v1.CreateGroupResponse
@@ -658,7 +191,7 @@ export type CreateGroupResponseValid = Message<"sourcemod.v1.CreateGroupResponse
  * Use `create(CreateGroupResponseSchema)` to create a new message.
  */
 export const CreateGroupResponseSchema: GenMessage<CreateGroupResponse, {validType: CreateGroupResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 14);
+  messageDesc(file_sourcemod_v1_sourcemod, 3);
 
 /**
  * @generated from message sourcemod.v1.EditGroupsRequest
@@ -715,7 +248,7 @@ export type EditGroupsRequestValid = Message<"sourcemod.v1.EditGroupsRequest"> &
  * Use `create(EditGroupsRequestSchema)` to create a new message.
  */
 export const EditGroupsRequestSchema: GenMessage<EditGroupsRequest, {validType: EditGroupsRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 15);
+  messageDesc(file_sourcemod_v1_sourcemod, 4);
 
 /**
  * @generated from message sourcemod.v1.EditGroupsResponse
@@ -742,7 +275,7 @@ export type EditGroupsResponseValid = Message<"sourcemod.v1.EditGroupsResponse">
  * Use `create(EditGroupsResponseSchema)` to create a new message.
  */
 export const EditGroupsResponseSchema: GenMessage<EditGroupsResponse, {validType: EditGroupsResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 16);
+  messageDesc(file_sourcemod_v1_sourcemod, 5);
 
 /**
  * @generated from message sourcemod.v1.DeleteGroupRequest
@@ -769,7 +302,7 @@ export type DeleteGroupRequestValid = Message<"sourcemod.v1.DeleteGroupRequest">
  * Use `create(DeleteGroupRequestSchema)` to create a new message.
  */
 export const DeleteGroupRequestSchema: GenMessage<DeleteGroupRequest, {validType: DeleteGroupRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 17);
+  messageDesc(file_sourcemod_v1_sourcemod, 6);
 
 /**
  * @generated from message sourcemod.v1.GroupOverridesRequest
@@ -796,7 +329,7 @@ export type GroupOverridesRequestValid = Message<"sourcemod.v1.GroupOverridesReq
  * Use `create(GroupOverridesRequestSchema)` to create a new message.
  */
 export const GroupOverridesRequestSchema: GenMessage<GroupOverridesRequest, {validType: GroupOverridesRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 18);
+  messageDesc(file_sourcemod_v1_sourcemod, 7);
 
 /**
  * @generated from message sourcemod.v1.GroupOverridesResponse
@@ -823,7 +356,7 @@ export type GroupOverridesResponseValid = Message<"sourcemod.v1.GroupOverridesRe
  * Use `create(GroupOverridesResponseSchema)` to create a new message.
  */
 export const GroupOverridesResponseSchema: GenMessage<GroupOverridesResponse, {validType: GroupOverridesResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 19);
+  messageDesc(file_sourcemod_v1_sourcemod, 8);
 
 /**
  * @generated from message sourcemod.v1.CreateGroupOverrideRequest
@@ -890,7 +423,7 @@ export type CreateGroupOverrideRequestValid = Message<"sourcemod.v1.CreateGroupO
  * Use `create(CreateGroupOverrideRequestSchema)` to create a new message.
  */
 export const CreateGroupOverrideRequestSchema: GenMessage<CreateGroupOverrideRequest, {validType: CreateGroupOverrideRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 20);
+  messageDesc(file_sourcemod_v1_sourcemod, 9);
 
 /**
  * @generated from message sourcemod.v1.CreateGroupOverrideResponse
@@ -917,7 +450,7 @@ export type CreateGroupOverrideResponseValid = Message<"sourcemod.v1.CreateGroup
  * Use `create(CreateGroupOverrideResponseSchema)` to create a new message.
  */
 export const CreateGroupOverrideResponseSchema: GenMessage<CreateGroupOverrideResponse, {validType: CreateGroupOverrideResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 21);
+  messageDesc(file_sourcemod_v1_sourcemod, 10);
 
 /**
  * @generated from message sourcemod.v1.EditGroupOverrideRequest
@@ -984,7 +517,7 @@ export type EditGroupOverrideRequestValid = Message<"sourcemod.v1.EditGroupOverr
  * Use `create(EditGroupOverrideRequestSchema)` to create a new message.
  */
 export const EditGroupOverrideRequestSchema: GenMessage<EditGroupOverrideRequest, {validType: EditGroupOverrideRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 22);
+  messageDesc(file_sourcemod_v1_sourcemod, 11);
 
 /**
  * @generated from message sourcemod.v1.EditGroupOverrideResponse
@@ -1011,7 +544,7 @@ export type EditGroupOverrideResponseValid = Message<"sourcemod.v1.EditGroupOver
  * Use `create(EditGroupOverrideResponseSchema)` to create a new message.
  */
 export const EditGroupOverrideResponseSchema: GenMessage<EditGroupOverrideResponse, {validType: EditGroupOverrideResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 23);
+  messageDesc(file_sourcemod_v1_sourcemod, 12);
 
 /**
  * @generated from message sourcemod.v1.DeleteGroupOverrideRequest
@@ -1038,7 +571,7 @@ export type DeleteGroupOverrideRequestValid = Message<"sourcemod.v1.DeleteGroupO
  * Use `create(DeleteGroupOverrideRequestSchema)` to create a new message.
  */
 export const DeleteGroupOverrideRequestSchema: GenMessage<DeleteGroupOverrideRequest, {validType: DeleteGroupOverrideRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 24);
+  messageDesc(file_sourcemod_v1_sourcemod, 13);
 
 /**
  * @generated from message sourcemod.v1.DeleteGroupOverrideResponse
@@ -1053,7 +586,7 @@ export type DeleteGroupOverrideResponseValid = DeleteGroupOverrideResponse;
  * Use `create(DeleteGroupOverrideResponseSchema)` to create a new message.
  */
 export const DeleteGroupOverrideResponseSchema: GenMessage<DeleteGroupOverrideResponse, {validType: DeleteGroupOverrideResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 25);
+  messageDesc(file_sourcemod_v1_sourcemod, 14);
 
 /**
  * @generated from message sourcemod.v1.AdminsResponse
@@ -1080,7 +613,7 @@ export type AdminsResponseValid = Message<"sourcemod.v1.AdminsResponse"> & {
  * Use `create(AdminsResponseSchema)` to create a new message.
  */
 export const AdminsResponseSchema: GenMessage<AdminsResponse, {validType: AdminsResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 26);
+  messageDesc(file_sourcemod_v1_sourcemod, 15);
 
 /**
  * @generated from message sourcemod.v1.CreateAdminRequest
@@ -1157,7 +690,7 @@ export type CreateAdminRequestValid = Message<"sourcemod.v1.CreateAdminRequest">
  * Use `create(CreateAdminRequestSchema)` to create a new message.
  */
 export const CreateAdminRequestSchema: GenMessage<CreateAdminRequest, {validType: CreateAdminRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 27);
+  messageDesc(file_sourcemod_v1_sourcemod, 16);
 
 /**
  * @generated from message sourcemod.v1.CreateAdminResponse
@@ -1184,7 +717,7 @@ export type CreateAdminResponseValid = Message<"sourcemod.v1.CreateAdminResponse
  * Use `create(CreateAdminResponseSchema)` to create a new message.
  */
 export const CreateAdminResponseSchema: GenMessage<CreateAdminResponse, {validType: CreateAdminResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 28);
+  messageDesc(file_sourcemod_v1_sourcemod, 17);
 
 /**
  * @generated from message sourcemod.v1.EditAdminRequest
@@ -1271,7 +804,7 @@ export type EditAdminRequestValid = Message<"sourcemod.v1.EditAdminRequest"> & {
  * Use `create(EditAdminRequestSchema)` to create a new message.
  */
 export const EditAdminRequestSchema: GenMessage<EditAdminRequest, {validType: EditAdminRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 29);
+  messageDesc(file_sourcemod_v1_sourcemod, 18);
 
 /**
  * @generated from message sourcemod.v1.EditAdminResponse
@@ -1298,7 +831,7 @@ export type EditAdminResponseValid = Message<"sourcemod.v1.EditAdminResponse"> &
  * Use `create(EditAdminResponseSchema)` to create a new message.
  */
 export const EditAdminResponseSchema: GenMessage<EditAdminResponse, {validType: EditAdminResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 30);
+  messageDesc(file_sourcemod_v1_sourcemod, 19);
 
 /**
  * @generated from message sourcemod.v1.DeleteAdminRequest
@@ -1325,7 +858,7 @@ export type DeleteAdminRequestValid = Message<"sourcemod.v1.DeleteAdminRequest">
  * Use `create(DeleteAdminRequestSchema)` to create a new message.
  */
 export const DeleteAdminRequestSchema: GenMessage<DeleteAdminRequest, {validType: DeleteAdminRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 31);
+  messageDesc(file_sourcemod_v1_sourcemod, 20);
 
 /**
  * @generated from message sourcemod.v1.AddAdminGroupRequest
@@ -1362,7 +895,7 @@ export type AddAdminGroupRequestValid = Message<"sourcemod.v1.AddAdminGroupReque
  * Use `create(AddAdminGroupRequestSchema)` to create a new message.
  */
 export const AddAdminGroupRequestSchema: GenMessage<AddAdminGroupRequest, {validType: AddAdminGroupRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 32);
+  messageDesc(file_sourcemod_v1_sourcemod, 21);
 
 /**
  * @generated from message sourcemod.v1.AddAdminGroupResponse
@@ -1389,7 +922,7 @@ export type AddAdminGroupResponseValid = Message<"sourcemod.v1.AddAdminGroupResp
  * Use `create(AddAdminGroupResponseSchema)` to create a new message.
  */
 export const AddAdminGroupResponseSchema: GenMessage<AddAdminGroupResponse, {validType: AddAdminGroupResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 33);
+  messageDesc(file_sourcemod_v1_sourcemod, 22);
 
 /**
  * @generated from message sourcemod.v1.DeleteAdminGroupRequest
@@ -1426,7 +959,7 @@ export type DeleteAdminGroupRequestValid = Message<"sourcemod.v1.DeleteAdminGrou
  * Use `create(DeleteAdminGroupRequestSchema)` to create a new message.
  */
 export const DeleteAdminGroupRequestSchema: GenMessage<DeleteAdminGroupRequest, {validType: DeleteAdminGroupRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 34);
+  messageDesc(file_sourcemod_v1_sourcemod, 23);
 
 /**
  * @generated from message sourcemod.v1.OverridesResponse
@@ -1453,7 +986,7 @@ export type OverridesResponseValid = Message<"sourcemod.v1.OverridesResponse"> &
  * Use `create(OverridesResponseSchema)` to create a new message.
  */
 export const OverridesResponseSchema: GenMessage<OverridesResponse, {validType: OverridesResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 35);
+  messageDesc(file_sourcemod_v1_sourcemod, 24);
 
 /**
  * @generated from message sourcemod.v1.CreateOverridesRequest
@@ -1500,7 +1033,7 @@ export type CreateOverridesRequestValid = Message<"sourcemod.v1.CreateOverridesR
  * Use `create(CreateOverridesRequestSchema)` to create a new message.
  */
 export const CreateOverridesRequestSchema: GenMessage<CreateOverridesRequest, {validType: CreateOverridesRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 36);
+  messageDesc(file_sourcemod_v1_sourcemod, 25);
 
 /**
  * @generated from message sourcemod.v1.CreateOverridesResponse
@@ -1527,7 +1060,7 @@ export type CreateOverridesResponseValid = Message<"sourcemod.v1.CreateOverrides
  * Use `create(CreateOverridesResponseSchema)` to create a new message.
  */
 export const CreateOverridesResponseSchema: GenMessage<CreateOverridesResponse, {validType: CreateOverridesResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 37);
+  messageDesc(file_sourcemod_v1_sourcemod, 26);
 
 /**
  * @generated from message sourcemod.v1.EditOverridesRequest
@@ -1584,7 +1117,7 @@ export type EditOverridesRequestValid = Message<"sourcemod.v1.EditOverridesReque
  * Use `create(EditOverridesRequestSchema)` to create a new message.
  */
 export const EditOverridesRequestSchema: GenMessage<EditOverridesRequest, {validType: EditOverridesRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 38);
+  messageDesc(file_sourcemod_v1_sourcemod, 27);
 
 /**
  * @generated from message sourcemod.v1.EditOverridesResponse
@@ -1611,7 +1144,7 @@ export type EditOverridesResponseValid = Message<"sourcemod.v1.EditOverridesResp
  * Use `create(EditOverridesResponseSchema)` to create a new message.
  */
 export const EditOverridesResponseSchema: GenMessage<EditOverridesResponse, {validType: EditOverridesResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 39);
+  messageDesc(file_sourcemod_v1_sourcemod, 28);
 
 /**
  * @generated from message sourcemod.v1.DeleteOverridesRequest
@@ -1638,7 +1171,7 @@ export type DeleteOverridesRequestValid = Message<"sourcemod.v1.DeleteOverridesR
  * Use `create(DeleteOverridesRequestSchema)` to create a new message.
  */
 export const DeleteOverridesRequestSchema: GenMessage<DeleteOverridesRequest, {validType: DeleteOverridesRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 40);
+  messageDesc(file_sourcemod_v1_sourcemod, 29);
 
 /**
  * @generated from message sourcemod.v1.GroupImmunitiesResponse
@@ -1665,7 +1198,7 @@ export type GroupImmunitiesResponseValid = Message<"sourcemod.v1.GroupImmunities
  * Use `create(GroupImmunitiesResponseSchema)` to create a new message.
  */
 export const GroupImmunitiesResponseSchema: GenMessage<GroupImmunitiesResponse, {validType: GroupImmunitiesResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 41);
+  messageDesc(file_sourcemod_v1_sourcemod, 30);
 
 /**
  * @generated from message sourcemod.v1.CreateImmunityRequest
@@ -1702,7 +1235,7 @@ export type CreateImmunityRequestValid = Message<"sourcemod.v1.CreateImmunityReq
  * Use `create(CreateImmunityRequestSchema)` to create a new message.
  */
 export const CreateImmunityRequestSchema: GenMessage<CreateImmunityRequest, {validType: CreateImmunityRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 42);
+  messageDesc(file_sourcemod_v1_sourcemod, 31);
 
 /**
  * @generated from message sourcemod.v1.CreateImmunityResponse
@@ -1729,7 +1262,7 @@ export type CreateImmunityResponseValid = Message<"sourcemod.v1.CreateImmunityRe
  * Use `create(CreateImmunityResponseSchema)` to create a new message.
  */
 export const CreateImmunityResponseSchema: GenMessage<CreateImmunityResponse, {validType: CreateImmunityResponseValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 43);
+  messageDesc(file_sourcemod_v1_sourcemod, 32);
 
 /**
  * @generated from message sourcemod.v1.DeleteImmunityRequest
@@ -1756,7 +1289,7 @@ export type DeleteImmunityRequestValid = Message<"sourcemod.v1.DeleteImmunityReq
  * Use `create(DeleteImmunityRequestSchema)` to create a new message.
  */
 export const DeleteImmunityRequestSchema: GenMessage<DeleteImmunityRequest, {validType: DeleteImmunityRequestValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 44);
+  messageDesc(file_sourcemod_v1_sourcemod, 33);
 
 /**
  * @generated from message sourcemod.v1.GroupImmunity
@@ -1813,7 +1346,7 @@ export type GroupImmunityValid = Message<"sourcemod.v1.GroupImmunity"> & {
  * Use `create(GroupImmunitySchema)` to create a new message.
  */
 export const GroupImmunitySchema: GenMessage<GroupImmunity, {validType: GroupImmunityValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 45);
+  messageDesc(file_sourcemod_v1_sourcemod, 34);
 
 /**
  * @generated from message sourcemod.v1.GroupOverrides
@@ -1900,7 +1433,7 @@ export type GroupOverridesValid = Message<"sourcemod.v1.GroupOverrides"> & {
  * Use `create(GroupOverridesSchema)` to create a new message.
  */
 export const GroupOverridesSchema: GenMessage<GroupOverrides, {validType: GroupOverridesValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 46);
+  messageDesc(file_sourcemod_v1_sourcemod, 35);
 
 /**
  * @generated from message sourcemod.v1.Admin
@@ -2027,7 +1560,7 @@ export type AdminValid = Message<"sourcemod.v1.Admin"> & {
  * Use `create(AdminSchema)` to create a new message.
  */
 export const AdminSchema: GenMessage<Admin, {validType: AdminValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 47);
+  messageDesc(file_sourcemod_v1_sourcemod, 36);
 
 /**
  * @generated from message sourcemod.v1.Override
@@ -2104,38 +1637,7 @@ export type OverrideValid = Message<"sourcemod.v1.Override"> & {
  * Use `create(OverrideSchema)` to create a new message.
  */
 export const OverrideSchema: GenMessage<Override, {validType: OverrideValid}> = /*@__PURE__*/
-  messageDesc(file_sourcemod_v1_sourcemod, 48);
-
-/**
- * @generated from enum sourcemod.v1.BanType
- */
-export enum BanType {
-  /**
-   * @generated from enum value: BAN_TYPE_OK_UNSPECIFIED = 0;
-   */
-  OK_UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: BAN_TYPE_NO_COMM = 1;
-   */
-  NO_COMM = 1,
-
-  /**
-   * @generated from enum value: BAN_TYPE_BANNED = 2;
-   */
-  BANNED = 2,
-
-  /**
-   * @generated from enum value: BAN_TYPE_NETWORK = 3;
-   */
-  NETWORK = 3,
-}
-
-/**
- * Describes the enum sourcemod.v1.BanType.
- */
-export const BanTypeSchema: GenEnum<BanType> = /*@__PURE__*/
-  enumDesc(file_sourcemod_v1_sourcemod, 0);
+  messageDesc(file_sourcemod_v1_sourcemod, 37);
 
 /**
  * @generated from enum sourcemod.v1.OverrideType
@@ -2156,7 +1658,7 @@ export enum OverrideType {
  * Describes the enum sourcemod.v1.OverrideType.
  */
 export const OverrideTypeSchema: GenEnum<OverrideType> = /*@__PURE__*/
-  enumDesc(file_sourcemod_v1_sourcemod, 1);
+  enumDesc(file_sourcemod_v1_sourcemod, 0);
 
 /**
  * @generated from enum sourcemod.v1.OverrideAccess
@@ -2177,7 +1679,7 @@ export enum OverrideAccess {
  * Describes the enum sourcemod.v1.OverrideAccess.
  */
 export const OverrideAccessSchema: GenEnum<OverrideAccess> = /*@__PURE__*/
-  enumDesc(file_sourcemod_v1_sourcemod, 2);
+  enumDesc(file_sourcemod_v1_sourcemod, 1);
 
 /**
  * @generated from enum sourcemod.v1.AuthType
@@ -2203,7 +1705,7 @@ export enum AuthType {
  * Describes the enum sourcemod.v1.AuthType.
  */
 export const AuthTypeSchema: GenEnum<AuthType> = /*@__PURE__*/
-  enumDesc(file_sourcemod_v1_sourcemod, 3);
+  enumDesc(file_sourcemod_v1_sourcemod, 2);
 
 /**
  * @generated from service sourcemod.v1.SourcemodService
@@ -2376,48 +1878,6 @@ export const SourcemodService: GenService<{
     methodKind: "unary";
     input: typeof DeleteImmunityRequestSchema;
     output: typeof EmptySchema;
-  },
-  /**
-   * Sourcemod plugin surface
-   *
-   * @generated from rpc sourcemod.v1.SourcemodService.Check
-   */
-  check: {
-    methodKind: "unary";
-    input: typeof CheckRequestSchema;
-    output: typeof CheckResponseSchema;
-  },
-  /**
-   * @generated from rpc sourcemod.v1.SourcemodService.SMOverrides
-   */
-  sMOverrides: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof SMOverridesResponseSchema;
-  },
-  /**
-   * @generated from rpc sourcemod.v1.SourcemodService.SMUsers
-   */
-  sMUsers: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof SMUsersResponseSchema;
-  },
-  /**
-   * @generated from rpc sourcemod.v1.SourcemodService.SMGroups
-   */
-  sMGroups: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof SMGroupsResponseSchema;
-  },
-  /**
-   * @generated from rpc sourcemod.v1.SourcemodService.SMSeed
-   */
-  sMSeed: {
-    methodKind: "unary";
-    input: typeof SMSeedRequestSchema;
-    output: typeof SMSeedResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_sourcemod_v1_sourcemod, 0);

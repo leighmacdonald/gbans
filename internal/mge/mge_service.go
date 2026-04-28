@@ -23,8 +23,8 @@ type Service struct {
 func NewService(mge MGE, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
 	pattern, handler := mgev1connect.NewMGEServiceHandler(Service{mge: mge}, options...)
 
-	authMiddleware.AuthedRoute(mgev1connect.MGEServiceGetRatingsOverallProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.AuthedRoute(mgev1connect.MGEServiceGetHistoryProcedure, rpc.WithMinPermissions(permission.Guest))
+	authMiddleware.UserRoute(mgev1connect.MGEServiceGetRatingsOverallProcedure, rpc.WithMinPermissions(permission.Guest))
+	authMiddleware.UserRoute(mgev1connect.MGEServiceGetHistoryProcedure, rpc.WithMinPermissions(permission.Guest))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

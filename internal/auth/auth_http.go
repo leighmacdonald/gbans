@@ -20,7 +20,7 @@ import (
 
 type TokenGenerator interface {
 	// MakeToken returns accesstoken, fingerprint, err
-	MakeToken(id person.BaseUser) (string, string, error)
+	MakeUserToken(id person.BaseUser) (string, string, error)
 }
 
 type authHandler struct {
@@ -113,7 +113,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 			slog.Error("Failed to create or load user profile", slog.String("error", errPerson.Error()))
 		}
 
-		accessToken, fingerprint, errToken := h.tokenGenerator.MakeToken(fetchedPerson)
+		accessToken, fingerprint, errToken := h.tokenGenerator.MakeUserToken(fetchedPerson)
 		if errToken != nil {
 			ctx.Redirect(302, referralURL)
 			slog.Error("Failed to create access token pair", slog.String("error", errToken.Error()))

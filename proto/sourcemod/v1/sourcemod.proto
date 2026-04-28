@@ -31,57 +31,6 @@ service SourcemodService {
   rpc GroupImmunities(google.protobuf.Empty) returns (GroupImmunitiesResponse) {}
   rpc CreateImmunity(CreateImmunityRequest) returns (CreateImmunityResponse) {}
   rpc DeleteImmunity(DeleteImmunityRequest) returns (google.protobuf.Empty) {}
-
-  // Sourcemod plugin surface
-  rpc Check(CheckRequest) returns (CheckResponse) {}
-  rpc SMOverrides(google.protobuf.Empty) returns (SMOverridesResponse) {}
-  rpc SMUsers(google.protobuf.Empty) returns (SMUsersResponse) {}
-  rpc SMGroups(google.protobuf.Empty) returns (SMGroupsResponse) {}
-  rpc SMSeed(SMSeedRequest) returns (SMSeedResponse) {}
-}
-
-message SMSeedRequest {
-  string steam_id = 1 [(buf.validate.field).required = true];
-}
-
-message SMSeedResponse {
-  string message = 1 [(buf.validate.field).required = true];
-}
-
-message SMOverride {
-  OverrideType override_type = 1 [(buf.validate.field).required = true];
-  string name = 2 [(buf.validate.field).required = true];
-  string flags = 3 [(buf.validate.field).required = true];
-}
-
-message SMOverridesResponse {
-  repeated SMOverride overrides = 1 [(buf.validate.field).required = true];
-}
-
-message SMUser {
-  int32 id = 1 [(buf.validate.field).required = true];
-  AuthType auth_type = 2 [(buf.validate.field).required = true];
-  string identity = 3 [(buf.validate.field).required = true];
-  string password = 4;
-  string flags = 5 [(buf.validate.field).required = true];
-  string name = 6 [(buf.validate.field).required = true];
-  int32 immunity = 7 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).int32 = {
-      gte: 0
-      lte: 100
-    }
-  ];
-}
-
-message SMUserGroup {
-  int32 admin_id = 1 [(buf.validate.field).required = true];
-  string group_name = 2 [(buf.validate.field).required = true];
-}
-
-message SMUsersResponse {
-  repeated SMUser users = 1 [(buf.validate.field).required = true];
-  repeated SMUserGroup user_groups = 2 [(buf.validate.field).required = true];
 }
 
 message Group {
@@ -91,39 +40,6 @@ message Group {
   int32 immunity_level = 4 [(buf.validate.field).required = true];
   google.protobuf.Timestamp created_on = 5;
   google.protobuf.Timestamp updated_on = 6;
-}
-
-message SMGroupsResponse {
-  repeated Group groups = 1 [(buf.validate.field).required = true];
-  repeated SMGroupImmunity immunities = 2 [(buf.validate.field).required = true];
-}
-
-message SMGroupImmunity {
-  string group_name = 1 [(buf.validate.field).required = true];
-  string other_name = 2 [(buf.validate.field).required = true];
-}
-
-message CheckRequest {
-  string steam_id = 1 [(buf.validate.field).required = true];
-  int32 client_id = 2 [(buf.validate.field).required = true];
-  string ip = 3 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.ipv4 = true
-  ];
-  string name = 4 [(buf.validate.field).required = true];
-}
-
-enum BanType {
-  BAN_TYPE_OK_UNSPECIFIED = 0;
-  BAN_TYPE_NO_COMM = 1;
-  BAN_TYPE_BANNED = 2;
-  BAN_TYPE_NETWORK = 3;
-}
-
-message CheckResponse {
-  int32 client_id = 1 [(buf.validate.field).required = true];
-  BanType ban_type = 2 [(buf.validate.field).required = true];
-  string msg = 3 [(buf.validate.field).required = true];
 }
 
 message GroupsResponse {

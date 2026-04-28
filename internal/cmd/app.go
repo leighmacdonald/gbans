@@ -338,7 +338,7 @@ func (g *GBans) createConfig(ctx context.Context) (*config.Configuration, error)
 	return conf, nil
 }
 
-func (g *GBans) createAPIClient() (thirdparty.APIProvider, error) { //noling:ireturn
+func (g *GBans) createAPIClient() (thirdparty.APIProvider, error) { //nolint:ireturn
 	apiURL := os.Getenv("TFAPI_URL")
 	if apiURL == "" {
 		apiURL = "https://tf-api.roto.lol"
@@ -478,9 +478,11 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware) *http.ServeMux {
 		servers.NewServersService(g.servers, authMiddleware, interceptors),
 		servers.NewDemoService(g.demos, authMiddleware, interceptors),
 		servers.NewSpeedrunsService(g.speedruns, authMiddleware, interceptors),
-		sourcemod.NewService(g.sourcemod, g.persons, g.notifications, authMiddleware, interceptors),
+		sourcemod.NewSourcemodService(g.sourcemod, authMiddleware, interceptors),
 		votes.NewService(g.votes, authMiddleware, interceptors),
 		wiki.NewService(g.wiki, authMiddleware, interceptors),
+
+		sourcemod.NewPluginService(g.sourcemod, g.persons, g.servers, g.bans, rpc.NewServerTokenGenerator(conf.General.SiteName, []byte(conf.Static.HTTPCookieKey)), g.notifications, authMiddleware, interceptors),
 	}
 
 	for _, service := range services {
@@ -805,7 +807,7 @@ func downloadManager(ctx context.Context, store database.Database, conf scp.Conf
 
 			start := time.Now()
 
-			// No errgroup since we want to continue on errors.
+			// No err group since we want to continue on errors.
 			waitGroup := &sync.WaitGroup{}
 
 			for _, handler := range connections {

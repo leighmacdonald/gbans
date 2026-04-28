@@ -343,18 +343,18 @@ func (s *Servers) GetByName(ctx context.Context, serverName string) (Server, err
 	return server[0], nil
 }
 
-func (s *Servers) GetByPassword(ctx context.Context, serverPassword string) (Server, error) {
+func (s *Servers) GetByPassword(ctx context.Context, serverPassword string) (int32, string, error) {
 	server, errServer := s.repo.Query(ctx, Query{Password: serverPassword})
 
 	if errServer != nil {
-		return Server{}, errServer
+		return 0, "", errServer
 	}
 
 	if len(server) == 0 {
-		return Server{}, ErrUnknownServer
+		return 0, "", ErrUnknownServer
 	}
 
-	return server[0], nil
+	return server[0].ServerID, server[0].ShortName, nil
 }
 
 func (s *Servers) Save(ctx context.Context, server Server) (Server, error) {

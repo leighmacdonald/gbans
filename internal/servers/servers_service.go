@@ -29,12 +29,12 @@ type ServersService struct {
 func NewServersService(servers *Servers, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := serversv1connect.NewServersServiceHandler(&ServersService{servers: servers}, option...)
 
-	authMiddleware.AuthedRoute(serversv1connect.ServersServiceStateProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.AuthedRoute(serversv1connect.ServersServiceServersProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.AuthedRoute(serversv1connect.ServersServiceEditServerProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.AuthedRoute(serversv1connect.ServersServiceDeleteServerProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.AuthedRoute(serversv1connect.ServersServiceServersAdminProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.AuthedRoute(serversv1connect.ServersServiceQueryLogsProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.UserRoute(serversv1connect.ServersServiceStateProcedure, rpc.WithMinPermissions(permission.Guest))
+	authMiddleware.UserRoute(serversv1connect.ServersServiceServersProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.UserRoute(serversv1connect.ServersServiceEditServerProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.UserRoute(serversv1connect.ServersServiceDeleteServerProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.UserRoute(serversv1connect.ServersServiceServersAdminProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.UserRoute(serversv1connect.ServersServiceQueryLogsProcedure, rpc.WithMinPermissions(permission.Admin))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

@@ -38,9 +38,9 @@ func NewService(conf *Configuration, version string, authMiddleware *rpc.Middlew
 		version: version,
 	}, options...)
 
-	// authMiddleware.AuthedRoute(configv1connect.ConfigServiceInfoProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.AuthedRoute(configv1connect.ConfigServiceGetProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.AuthedRoute(configv1connect.ConfigServiceUpdateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	// authMiddleware.UserRoute(configv1connect.ConfigServiceInfoProcedure, rpc.WithMinPermissions(permission.Guest))
+	authMiddleware.UserRoute(configv1connect.ConfigServiceGetProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(configv1connect.ConfigServiceUpdateProcedure, rpc.WithMinPermissions(permission.Moderator))
 
 	return rpc.Service{
 		Pattern: pattern,

@@ -26,12 +26,12 @@ type AppealService struct {
 func NewAppealService(appeals Appeals, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
 	pattern, handler := banv1connect.NewAppealServiceHandler(AppealService{appeals: appeals}, options...)
 
-	authMiddleware.AuthedRoute(banv1connect.AppealServiceAppealsProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.AuthedRoute(banv1connect.AppealServiceSetAppealStateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.AuthedRoute(banv1connect.AppealServiceMessagesProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(banv1connect.AppealServiceReplyProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(banv1connect.AppealServiceEditAppealMessageProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.AuthedRoute(banv1connect.AppealServiceDeleteAppealMessageProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(banv1connect.AppealServiceAppealsProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(banv1connect.AppealServiceSetAppealStateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(banv1connect.AppealServiceMessagesProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(banv1connect.AppealServiceReplyProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(banv1connect.AppealServiceEditAppealMessageProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(banv1connect.AppealServiceDeleteAppealMessageProcedure, rpc.WithMinPermissions(permission.User))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

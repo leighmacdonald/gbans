@@ -95,19 +95,6 @@ const (
 	// SourcemodServiceDeleteImmunityProcedure is the fully-qualified name of the SourcemodService's
 	// DeleteImmunity RPC.
 	SourcemodServiceDeleteImmunityProcedure = "/sourcemod.v1.SourcemodService/DeleteImmunity"
-	// SourcemodServiceCheckProcedure is the fully-qualified name of the SourcemodService's Check RPC.
-	SourcemodServiceCheckProcedure = "/sourcemod.v1.SourcemodService/Check"
-	// SourcemodServiceSMOverridesProcedure is the fully-qualified name of the SourcemodService's
-	// SMOverrides RPC.
-	SourcemodServiceSMOverridesProcedure = "/sourcemod.v1.SourcemodService/SMOverrides"
-	// SourcemodServiceSMUsersProcedure is the fully-qualified name of the SourcemodService's SMUsers
-	// RPC.
-	SourcemodServiceSMUsersProcedure = "/sourcemod.v1.SourcemodService/SMUsers"
-	// SourcemodServiceSMGroupsProcedure is the fully-qualified name of the SourcemodService's SMGroups
-	// RPC.
-	SourcemodServiceSMGroupsProcedure = "/sourcemod.v1.SourcemodService/SMGroups"
-	// SourcemodServiceSMSeedProcedure is the fully-qualified name of the SourcemodService's SMSeed RPC.
-	SourcemodServiceSMSeedProcedure = "/sourcemod.v1.SourcemodService/SMSeed"
 )
 
 // SourcemodServiceClient is a client for the sourcemod.v1.SourcemodService service.
@@ -133,12 +120,6 @@ type SourcemodServiceClient interface {
 	GroupImmunities(context.Context, *emptypb.Empty) (*v1.GroupImmunitiesResponse, error)
 	CreateImmunity(context.Context, *v1.CreateImmunityRequest) (*v1.CreateImmunityResponse, error)
 	DeleteImmunity(context.Context, *v1.DeleteImmunityRequest) (*emptypb.Empty, error)
-	// Sourcemod plugin surface
-	Check(context.Context, *v1.CheckRequest) (*v1.CheckResponse, error)
-	SMOverrides(context.Context, *emptypb.Empty) (*v1.SMOverridesResponse, error)
-	SMUsers(context.Context, *emptypb.Empty) (*v1.SMUsersResponse, error)
-	SMGroups(context.Context, *emptypb.Empty) (*v1.SMGroupsResponse, error)
-	SMSeed(context.Context, *v1.SMSeedRequest) (*v1.SMSeedResponse, error)
 }
 
 // NewSourcemodServiceClient constructs a client for the sourcemod.v1.SourcemodService service. By
@@ -278,36 +259,6 @@ func NewSourcemodServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(sourcemodServiceMethods.ByName("DeleteImmunity")),
 			connect.WithClientOptions(opts...),
 		),
-		check: connect.NewClient[v1.CheckRequest, v1.CheckResponse](
-			httpClient,
-			baseURL+SourcemodServiceCheckProcedure,
-			connect.WithSchema(sourcemodServiceMethods.ByName("Check")),
-			connect.WithClientOptions(opts...),
-		),
-		sMOverrides: connect.NewClient[emptypb.Empty, v1.SMOverridesResponse](
-			httpClient,
-			baseURL+SourcemodServiceSMOverridesProcedure,
-			connect.WithSchema(sourcemodServiceMethods.ByName("SMOverrides")),
-			connect.WithClientOptions(opts...),
-		),
-		sMUsers: connect.NewClient[emptypb.Empty, v1.SMUsersResponse](
-			httpClient,
-			baseURL+SourcemodServiceSMUsersProcedure,
-			connect.WithSchema(sourcemodServiceMethods.ByName("SMUsers")),
-			connect.WithClientOptions(opts...),
-		),
-		sMGroups: connect.NewClient[emptypb.Empty, v1.SMGroupsResponse](
-			httpClient,
-			baseURL+SourcemodServiceSMGroupsProcedure,
-			connect.WithSchema(sourcemodServiceMethods.ByName("SMGroups")),
-			connect.WithClientOptions(opts...),
-		),
-		sMSeed: connect.NewClient[v1.SMSeedRequest, v1.SMSeedResponse](
-			httpClient,
-			baseURL+SourcemodServiceSMSeedProcedure,
-			connect.WithSchema(sourcemodServiceMethods.ByName("SMSeed")),
-			connect.WithClientOptions(opts...),
-		),
 	}
 }
 
@@ -334,11 +285,6 @@ type sourcemodServiceClient struct {
 	groupImmunities     *connect.Client[emptypb.Empty, v1.GroupImmunitiesResponse]
 	createImmunity      *connect.Client[v1.CreateImmunityRequest, v1.CreateImmunityResponse]
 	deleteImmunity      *connect.Client[v1.DeleteImmunityRequest, emptypb.Empty]
-	check               *connect.Client[v1.CheckRequest, v1.CheckResponse]
-	sMOverrides         *connect.Client[emptypb.Empty, v1.SMOverridesResponse]
-	sMUsers             *connect.Client[emptypb.Empty, v1.SMUsersResponse]
-	sMGroups            *connect.Client[emptypb.Empty, v1.SMGroupsResponse]
-	sMSeed              *connect.Client[v1.SMSeedRequest, v1.SMSeedResponse]
 }
 
 // Groups calls sourcemod.v1.SourcemodService.Groups.
@@ -530,51 +476,6 @@ func (c *sourcemodServiceClient) DeleteImmunity(ctx context.Context, req *v1.Del
 	return nil, err
 }
 
-// Check calls sourcemod.v1.SourcemodService.Check.
-func (c *sourcemodServiceClient) Check(ctx context.Context, req *v1.CheckRequest) (*v1.CheckResponse, error) {
-	response, err := c.check.CallUnary(ctx, connect.NewRequest(req))
-	if response != nil {
-		return response.Msg, err
-	}
-	return nil, err
-}
-
-// SMOverrides calls sourcemod.v1.SourcemodService.SMOverrides.
-func (c *sourcemodServiceClient) SMOverrides(ctx context.Context, req *emptypb.Empty) (*v1.SMOverridesResponse, error) {
-	response, err := c.sMOverrides.CallUnary(ctx, connect.NewRequest(req))
-	if response != nil {
-		return response.Msg, err
-	}
-	return nil, err
-}
-
-// SMUsers calls sourcemod.v1.SourcemodService.SMUsers.
-func (c *sourcemodServiceClient) SMUsers(ctx context.Context, req *emptypb.Empty) (*v1.SMUsersResponse, error) {
-	response, err := c.sMUsers.CallUnary(ctx, connect.NewRequest(req))
-	if response != nil {
-		return response.Msg, err
-	}
-	return nil, err
-}
-
-// SMGroups calls sourcemod.v1.SourcemodService.SMGroups.
-func (c *sourcemodServiceClient) SMGroups(ctx context.Context, req *emptypb.Empty) (*v1.SMGroupsResponse, error) {
-	response, err := c.sMGroups.CallUnary(ctx, connect.NewRequest(req))
-	if response != nil {
-		return response.Msg, err
-	}
-	return nil, err
-}
-
-// SMSeed calls sourcemod.v1.SourcemodService.SMSeed.
-func (c *sourcemodServiceClient) SMSeed(ctx context.Context, req *v1.SMSeedRequest) (*v1.SMSeedResponse, error) {
-	response, err := c.sMSeed.CallUnary(ctx, connect.NewRequest(req))
-	if response != nil {
-		return response.Msg, err
-	}
-	return nil, err
-}
-
 // SourcemodServiceHandler is an implementation of the sourcemod.v1.SourcemodService service.
 type SourcemodServiceHandler interface {
 	Groups(context.Context, *emptypb.Empty) (*v1.GroupsResponse, error)
@@ -598,12 +499,6 @@ type SourcemodServiceHandler interface {
 	GroupImmunities(context.Context, *emptypb.Empty) (*v1.GroupImmunitiesResponse, error)
 	CreateImmunity(context.Context, *v1.CreateImmunityRequest) (*v1.CreateImmunityResponse, error)
 	DeleteImmunity(context.Context, *v1.DeleteImmunityRequest) (*emptypb.Empty, error)
-	// Sourcemod plugin surface
-	Check(context.Context, *v1.CheckRequest) (*v1.CheckResponse, error)
-	SMOverrides(context.Context, *emptypb.Empty) (*v1.SMOverridesResponse, error)
-	SMUsers(context.Context, *emptypb.Empty) (*v1.SMUsersResponse, error)
-	SMGroups(context.Context, *emptypb.Empty) (*v1.SMGroupsResponse, error)
-	SMSeed(context.Context, *v1.SMSeedRequest) (*v1.SMSeedResponse, error)
 }
 
 // NewSourcemodServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -739,36 +634,6 @@ func NewSourcemodServiceHandler(svc SourcemodServiceHandler, opts ...connect.Han
 		connect.WithSchema(sourcemodServiceMethods.ByName("DeleteImmunity")),
 		connect.WithHandlerOptions(opts...),
 	)
-	sourcemodServiceCheckHandler := connect.NewUnaryHandlerSimple(
-		SourcemodServiceCheckProcedure,
-		svc.Check,
-		connect.WithSchema(sourcemodServiceMethods.ByName("Check")),
-		connect.WithHandlerOptions(opts...),
-	)
-	sourcemodServiceSMOverridesHandler := connect.NewUnaryHandlerSimple(
-		SourcemodServiceSMOverridesProcedure,
-		svc.SMOverrides,
-		connect.WithSchema(sourcemodServiceMethods.ByName("SMOverrides")),
-		connect.WithHandlerOptions(opts...),
-	)
-	sourcemodServiceSMUsersHandler := connect.NewUnaryHandlerSimple(
-		SourcemodServiceSMUsersProcedure,
-		svc.SMUsers,
-		connect.WithSchema(sourcemodServiceMethods.ByName("SMUsers")),
-		connect.WithHandlerOptions(opts...),
-	)
-	sourcemodServiceSMGroupsHandler := connect.NewUnaryHandlerSimple(
-		SourcemodServiceSMGroupsProcedure,
-		svc.SMGroups,
-		connect.WithSchema(sourcemodServiceMethods.ByName("SMGroups")),
-		connect.WithHandlerOptions(opts...),
-	)
-	sourcemodServiceSMSeedHandler := connect.NewUnaryHandlerSimple(
-		SourcemodServiceSMSeedProcedure,
-		svc.SMSeed,
-		connect.WithSchema(sourcemodServiceMethods.ByName("SMSeed")),
-		connect.WithHandlerOptions(opts...),
-	)
 	return "/sourcemod.v1.SourcemodService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case SourcemodServiceGroupsProcedure:
@@ -813,16 +678,6 @@ func NewSourcemodServiceHandler(svc SourcemodServiceHandler, opts ...connect.Han
 			sourcemodServiceCreateImmunityHandler.ServeHTTP(w, r)
 		case SourcemodServiceDeleteImmunityProcedure:
 			sourcemodServiceDeleteImmunityHandler.ServeHTTP(w, r)
-		case SourcemodServiceCheckProcedure:
-			sourcemodServiceCheckHandler.ServeHTTP(w, r)
-		case SourcemodServiceSMOverridesProcedure:
-			sourcemodServiceSMOverridesHandler.ServeHTTP(w, r)
-		case SourcemodServiceSMUsersProcedure:
-			sourcemodServiceSMUsersHandler.ServeHTTP(w, r)
-		case SourcemodServiceSMGroupsProcedure:
-			sourcemodServiceSMGroupsHandler.ServeHTTP(w, r)
-		case SourcemodServiceSMSeedProcedure:
-			sourcemodServiceSMSeedHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -914,24 +769,4 @@ func (UnimplementedSourcemodServiceHandler) CreateImmunity(context.Context, *v1.
 
 func (UnimplementedSourcemodServiceHandler) DeleteImmunity(context.Context, *v1.DeleteImmunityRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.SourcemodService.DeleteImmunity is not implemented"))
-}
-
-func (UnimplementedSourcemodServiceHandler) Check(context.Context, *v1.CheckRequest) (*v1.CheckResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.SourcemodService.Check is not implemented"))
-}
-
-func (UnimplementedSourcemodServiceHandler) SMOverrides(context.Context, *emptypb.Empty) (*v1.SMOverridesResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.SourcemodService.SMOverrides is not implemented"))
-}
-
-func (UnimplementedSourcemodServiceHandler) SMUsers(context.Context, *emptypb.Empty) (*v1.SMUsersResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.SourcemodService.SMUsers is not implemented"))
-}
-
-func (UnimplementedSourcemodServiceHandler) SMGroups(context.Context, *emptypb.Empty) (*v1.SMGroupsResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.SourcemodService.SMGroups is not implemented"))
-}
-
-func (UnimplementedSourcemodServiceHandler) SMSeed(context.Context, *v1.SMSeedRequest) (*v1.SMSeedResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.SourcemodService.SMSeed is not implemented"))
 }
