@@ -164,7 +164,7 @@ func toRPCServer(server Server) *v1.Server {
 		Address:         &server.Address,
 		AddressInternal: &server.AddressInternal,
 		SdrEnabled:      &server.SDREnabled,
-		Port:            ptr.To(int32(server.Port)),
+		Port:            ptr.To(uint32(server.Port)),
 		Rcon:            &server.RCON,
 		Password:        &server.Password,
 		IsEnabled:       &server.IsEnabled,

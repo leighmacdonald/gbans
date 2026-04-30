@@ -18,8 +18,11 @@ service AppealService {
 }
 
 message SetAppealStateRequest {
-  int32 ban_id = 1;
-  AppealState appeal_state = 2;
+  int32 ban_id = 1 [(buf.validate.field).required = true];
+  AppealState appeal_state = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
 }
 
 message SetAppealStateResponse {
@@ -44,28 +47,76 @@ message MessagesResponse {
 
 message AppealOverview {
   Ban ban = 1 [(buf.validate.field).required = true];
-  string source_persona_name = 2 [(buf.validate.field).required = true];
-  string source_avatar_hash = 3 [(buf.validate.field).required = true];
-  string target_persona_name = 4 [(buf.validate.field).required = true];
-  string target_avatar_hash = 5 [(buf.validate.field).required = true];
+  string source_persona_name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.max_len = 32
+  ];
+  string source_avatar_hash = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.len = 40
+  ];
+  string target_persona_name = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.max_len = 32
+  ];
+  string target_avatar_hash = 5 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.len = 40
+  ];
 }
 
 message AppealMessage {
-  int32 ban_id = 1 [(buf.validate.field).required = true];
-  int64 ban_message_id = 2 [(buf.validate.field).required = true];
-  int64 author_id = 3 [(buf.validate.field).required = true];
-  string message_md = 4 [(buf.validate.field).required = true];
+  int32 ban_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  int64 ban_message_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64.gt = 0
+  ];
+  int64 author_id = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string message_md = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 50000
+    }
+  ];
   bool deleted = 5 [(buf.validate.field).required = true];
   google.protobuf.Timestamp created_on = 6 [(buf.validate.field).required = true];
   google.protobuf.Timestamp updated_on = 7 [(buf.validate.field).required = true];
-  string avatar_hash = 8 [(buf.validate.field).required = true];
-  string persona_name = 9 [(buf.validate.field).required = true];
-  person.v1.Privilege privilege = 10 [(buf.validate.field).required = true];
+  string avatar_hash = 8 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.len = 40
+  ];
+  string persona_name = 9 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 32
+    }
+  ];
+  person.v1.Privilege privilege = 10 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
 }
 
 message ReplyRequest {
-  int32 ban_id = 1 [(buf.validate.field).required = true];
-  string body_md = 2 [(buf.validate.field).required = true];
+  int32 ban_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+  string body_md = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 50000
+    }
+  ];
 }
 
 message ReplyResponse {
@@ -73,8 +124,17 @@ message ReplyResponse {
 }
 
 message EditAppealMessageRequest {
-  int64 ban_message_id = 1 [(buf.validate.field).required = true];
-  string body_md = 2 [(buf.validate.field).required = true];
+  int64 ban_message_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gt: 0}
+  ];
+  string body_md = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 50000
+    }
+  ];
 }
 
 message EditAppealMessageResponse {
@@ -82,5 +142,8 @@ message EditAppealMessageResponse {
 }
 
 message DeleteAppealMessageRequest {
-  int64 ban_message_id = 1 [(buf.validate.field).required = true];
+  int64 ban_message_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gt: 0}
+  ];
 }

@@ -32,6 +32,7 @@ pkgs.mkShell {
     oapi-codegen
     sql-formatter
     protoc-gen-es
+    protobuf-language-server
     rcon-cli
     clang-tools
     govulncheck

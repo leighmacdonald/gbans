@@ -26,10 +26,10 @@ enum Detection {
 
 message QueryRequest {
   database.query.v1.Filter filter = 1;
-  string name = 2;
+  string name = 2 [(buf.validate.field).string.max_len = 32];
   int64 steam_id = 3;
   string summary = 4;
-  Detection detection = 5;
+  Detection detection = 5 [(buf.validate.field).enum.defined_only = true];
 }
 
 message QueryResponse {
@@ -51,11 +51,26 @@ message Entry {
   string demo_name = 6;
   int32 demo_tick = 7;
   string name = 8 [(buf.validate.field).required = true];
-  Detection detection = 9 [(buf.validate.field).required = true];
+  Detection detection = 9 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
   string summary = 10 [(buf.validate.field).required = true];
-  string raw_log = 11 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp created_on = 12 [(buf.validate.field).required = true];
-  string persona_name = 13 [(buf.validate.field).required = true];
-  string avatar_hash = 14 [(buf.validate.field).required = true];
+  string raw_log = 11 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  google.protobuf.Timestamp created_on = 12 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).timestamp = {
+      gt: {seconds: 1167609600}
+      lt: {seconds: 1956528000}
+    }
+  ];
+  string persona_name = 13 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.max_len = 32
+  ];
+  string avatar_hash = 14 [(buf.validate.field).string.len = 40];
   int32 triggered = 15 [(buf.validate.field).required = true];
 }

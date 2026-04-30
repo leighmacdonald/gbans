@@ -413,7 +413,7 @@ type Server struct {
 	Address            *string                `protobuf:"bytes,4,opt,name=address" json:"address,omitempty"`
 	AddressInternal    *string                `protobuf:"bytes,5,opt,name=address_internal,json=addressInternal" json:"address_internal,omitempty"`
 	SdrEnabled         *bool                  `protobuf:"varint,6,opt,name=sdr_enabled,json=sdrEnabled" json:"sdr_enabled,omitempty"`
-	Port               *int32                 `protobuf:"varint,7,opt,name=port" json:"port,omitempty"`
+	Port               *uint32                `protobuf:"varint,7,opt,name=port" json:"port,omitempty"`
 	Rcon               *string                `protobuf:"bytes,8,opt,name=rcon" json:"rcon,omitempty"`
 	Password           *string                `protobuf:"bytes,9,opt,name=password" json:"password,omitempty"`
 	IsEnabled          *bool                  `protobuf:"varint,10,opt,name=is_enabled,json=isEnabled" json:"is_enabled,omitempty"`
@@ -504,7 +504,7 @@ func (x *Server) GetSdrEnabled() bool {
 	return false
 }
 
-func (x *Server) GetPort() int32 {
+func (x *Server) GetPort() uint32 {
 	if x != nil && x.Port != nil {
 		return *x.Port
 	}
@@ -905,42 +905,6 @@ func (x *DeleteServerRequest) GetServerId() int32 {
 	return 0
 }
 
-type DeleteServerResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DeleteServerResponse) Reset() {
-	*x = DeleteServerResponse{}
-	mi := &file_servers_v1_servers_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DeleteServerResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteServerResponse) ProtoMessage() {}
-
-func (x *DeleteServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_servers_v1_servers_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteServerResponse.ProtoReflect.Descriptor instead.
-func (*DeleteServerResponse) Descriptor() ([]byte, []int) {
-	return file_servers_v1_servers_proto_rawDescGZIP(), []int{12}
-}
-
 type ServersAdminResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Servers       []*Server              `protobuf:"bytes,1,rep,name=servers" json:"servers,omitempty"`
@@ -950,7 +914,7 @@ type ServersAdminResponse struct {
 
 func (x *ServersAdminResponse) Reset() {
 	*x = ServersAdminResponse{}
-	mi := &file_servers_v1_servers_proto_msgTypes[13]
+	mi := &file_servers_v1_servers_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -962,7 +926,7 @@ func (x *ServersAdminResponse) String() string {
 func (*ServersAdminResponse) ProtoMessage() {}
 
 func (x *ServersAdminResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_servers_v1_servers_proto_msgTypes[13]
+	mi := &file_servers_v1_servers_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -975,7 +939,7 @@ func (x *ServersAdminResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServersAdminResponse.ProtoReflect.Descriptor instead.
 func (*ServersAdminResponse) Descriptor() ([]byte, []int) {
-	return file_servers_v1_servers_proto_rawDescGZIP(), []int{13}
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ServersAdminResponse) GetServers() []*Server {
@@ -992,61 +956,76 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"\x18servers/v1/servers.proto\x12\n" +
 	"servers.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18network/v1/network.proto\"<\n" +
 	"\x10QueryLogsRequest\x12(\n" +
-	"\tserver_id\x18\x01 \x03(\x05B\v\xbaH\b\xc8\x01\x01\x92\x01\x02\b\x01R\bserverId\"\xb8\x01\n" +
-	"\tServerLog\x12#\n" +
-	"\tserver_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bserverId\x12'\n" +
-	"\vserver_name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"serverName\x12\x1a\n" +
-	"\x04body\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04body\x12A\n" +
+	"\tserver_id\x18\x01 \x03(\x05B\v\xbaH\b\xc8\x01\x01\x92\x01\x02\b\x01R\bserverId\"\xc4\x01\n" +
+	"\tServerLog\x12'\n" +
+	"\tserver_id\x18\x01 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\bserverId\x12+\n" +
+	"\vserver_name\x18\x02 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\n" +
+	"serverName\x12\x1e\n" +
+	"\x04body\x18\x03 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04body\x12A\n" +
 	"\n" +
 	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\"T\n" +
 	"\x11QueryLogsResponse\x12)\n" +
 	"\x04logs\x18\x01 \x03(\v2\x15.servers.v1.ServerLogR\x04logs\x12\x14\n" +
 	"\x05count\x18\x02 \x01(\x05R\x05count\">\n" +
 	"\fStateRequest\x12.\n" +
-	"\blat_long\x18\x01 \x01(\v2\x13.network.v1.LatLongR\alatLong\"\xc1\x04\n" +
+	"\blat_long\x18\x01 \x01(\v2\x13.network.v1.LatLongR\alatLong\"\xe7\x04\n" +
 	"\n" +
-	"SafeServer\x12\x1b\n" +
-	"\tserver_id\x18\x01 \x01(\x05R\bserverId\x12\x1f\n" +
+	"SafeServer\x12'\n" +
+	"\tserver_id\x18\x01 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\bserverId\x12\x1f\n" +
 	"\x04host\x18\x02 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xa8\x01\x01R\x04host\x12 \n" +
 	"\x04port\x18\x03 \x01(\rB\f\xbaH\t\xc8\x01\x01*\x04\x18\xff\xff\x03R\x04port\x12\x1a\n" +
 	"\x02ip\x18\x04 \x01(\tB\n" +
-	"\xbaH\a\xc8\x01\x01r\x02x\x01R\x02ip\x12\x1a\n" +
-	"\x04name\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12%\n" +
+	"\xbaH\a\xc8\x01\x01r\x02x\x01R\x02ip\x12\x1e\n" +
+	"\x04name\x18\x05 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04name\x12)\n" +
 	"\n" +
-	"name_short\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tnameShort\x12\x1e\n" +
-	"\x06region\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06region\x12\x16\n" +
-	"\x02cc\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x02cc\x12 \n" +
-	"\aplayers\x18\t \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\aplayers\x12'\n" +
+	"name_short\x18\x06 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\tnameShort\x12\x1e\n" +
+	"\x06region\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06region\x12\x18\n" +
+	"\x02cc\x18\b \x01(\tB\b\xbaH\x05r\x03\x98\x01\x02R\x02cc\x12$\n" +
+	"\aplayers\x18\t \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\aplayers\x12+\n" +
 	"\vmax_players\x18\n" +
-	" \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"maxPlayers\x12\x18\n" +
-	"\x03bot\x18\v \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x03bot\x12\x18\n" +
+	" \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\n" +
+	"maxPlayers\x12\x1c\n" +
+	"\x03bot\x18\v \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\x03bot\x12\x18\n" +
 	"\x03map\x18\f \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x03map\x12%\n" +
 	"\n" +
 	"game_types\x18\r \x03(\tB\x06\xbaH\x03\xc8\x01\x01R\tgameTypes\x126\n" +
 	"\blat_long\x18\x0e \x01(\v2\x13.network.v1.LatLongB\x06\xbaH\x03\xc8\x01\x01R\alatLong\x12\"\n" +
-	"\bdistance\x18\x0f \x01(\x02B\x06\xbaH\x03\xc8\x01\x01R\bdistance\x12\x1e\n" +
-	"\x06humans\x18\x10 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x06humans\x12\x1a\n" +
-	"\x04tags\x18\x11 \x03(\tB\x06\xbaH\x03\xc8\x01\x01R\x04tags\"\xdc\x06\n" +
-	"\x06Server\x12#\n" +
-	"\tserver_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bserverId\x12%\n" +
+	"\bdistance\x18\x0f \x01(\x02B\x06\xbaH\x03\xc8\x01\x01R\bdistance\x12\"\n" +
+	"\x06humans\x18\x10 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\x06humans\x12\x1a\n" +
+	"\x04tags\x18\x11 \x03(\tB\x06\xbaH\x03\xc8\x01\x01R\x04tags\"\x82\a\n" +
+	"\x06Server\x12'\n" +
+	"\tserver_id\x18\x01 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\bserverId\x12)\n" +
 	"\n" +
-	"short_name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tshortName\x12\x1a\n" +
-	"\x04name\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12 \n" +
-	"\aaddress\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\aaddress\x121\n" +
-	"\x10address_internal\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0faddressInternal\x12'\n" +
+	"short_name\x18\x02 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\tshortName\x12\x1e\n" +
+	"\x04name\x18\x03 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04name\x12%\n" +
+	"\aaddress\x18\x04 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xa8\x01\x01R\aaddress\x126\n" +
+	"\x10address_internal\x18\x05 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xa8\x01\x01R\x0faddressInternal\x12'\n" +
 	"\vsdr_enabled\x18\x06 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"sdrEnabled\x12\x1a\n" +
-	"\x04port\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x04port\x12\x1a\n" +
-	"\x04rcon\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04rcon\x12\"\n" +
-	"\bpassword\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bpassword\x12%\n" +
+	"sdrEnabled\x12 \n" +
+	"\x04port\x18\a \x01(\rB\f\xbaH\t\xc8\x01\x01*\x04\x18\xff\xff\x03R\x04port\x12\x1e\n" +
+	"\x04rcon\x18\b \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04rcon\x12&\n" +
+	"\bpassword\x18\t \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\bpassword\x12%\n" +
 	"\n" +
 	"is_enabled\x18\n" +
 	" \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\tisEnabled\x12\x18\n" +
 	"\adeleted\x18\v \x01(\bR\adeleted\x12\x1e\n" +
-	"\x06region\x18\f \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06region\x12\x16\n" +
-	"\x02cc\x18\r \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x02cc\x126\n" +
+	"\x06region\x18\f \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06region\x12\x18\n" +
+	"\x02cc\x18\r \x01(\tB\b\xbaH\x05r\x03\x98\x01\x02R\x02cc\x126\n" +
 	"\blat_long\x18\x0e \x01(\v2\x13.network.v1.LatLongB\x06\xbaH\x03\xc8\x01\x01R\alatLong\x12%\n" +
 	"\n" +
 	"log_secret\x18\x0f \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\tlogSecret\x12)\n" +
@@ -1060,22 +1039,25 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"\x02ip\x18\x15 \x01(\tR\x02ip\"\x81\x01\n" +
 	"\rStateResponse\x128\n" +
 	"\aservers\x18\x01 \x03(\v2\x16.servers.v1.SafeServerB\x06\xbaH\x03\xc8\x01\x01R\aservers\x126\n" +
-	"\blat_long\x18\x02 \x01(\v2\x13.network.v1.LatLongB\x06\xbaH\x03\xc8\x01\x01R\alatLong\"\xa8\x01\n" +
-	"\x0eServerInfoSafe\x120\n" +
-	"\x10server_name_long\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0eserverNameLong\x12'\n" +
-	"\vserver_name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"serverName\x12#\n" +
-	"\tserver_id\x18\x03 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bserverId\x12\x16\n" +
+	"\blat_long\x18\x02 \x01(\v2\x13.network.v1.LatLongB\x06\xbaH\x03\xc8\x01\x01R\alatLong\"\xb4\x01\n" +
+	"\x0eServerInfoSafe\x124\n" +
+	"\x10server_name_long\x18\x01 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x0eserverNameLong\x12+\n" +
+	"\vserver_name\x18\x02 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\n" +
+	"serverName\x12'\n" +
+	"\tserver_id\x18\x03 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\bserverId\x12\x16\n" +
 	"\x06colour\x18\x04 \x01(\tR\x06colour\"O\n" +
 	"\x0fServersResponse\x12<\n" +
 	"\aservers\x18\x01 \x03(\v2\x1a.servers.v1.ServerInfoSafeB\x06\xbaH\x03\xc8\x01\x01R\aservers\"G\n" +
 	"\x11EditServerRequest\x122\n" +
 	"\x06server\x18\x01 \x01(\v2\x12.servers.v1.ServerB\x06\xbaH\x03\xc8\x01\x01R\x06server\"H\n" +
 	"\x12EditServerResponse\x122\n" +
-	"\x06server\x18\x01 \x01(\v2\x12.servers.v1.ServerB\x06\xbaH\x03\xc8\x01\x01R\x06server\":\n" +
-	"\x13DeleteServerRequest\x12#\n" +
-	"\tserver_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bserverId\"\x16\n" +
-	"\x14DeleteServerResponse\"L\n" +
+	"\x06server\x18\x01 \x01(\v2\x12.servers.v1.ServerB\x06\xbaH\x03\xc8\x01\x01R\x06server\">\n" +
+	"\x13DeleteServerRequest\x12'\n" +
+	"\tserver_id\x18\x01 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\bserverId\"L\n" +
 	"\x14ServersAdminResponse\x124\n" +
 	"\aservers\x18\x01 \x03(\v2\x12.servers.v1.ServerB\x06\xbaH\x03\xc8\x01\x01R\aservers2\xba\x03\n" +
 	"\x0eServersService\x12<\n" +
@@ -1102,7 +1084,7 @@ func file_servers_v1_servers_proto_rawDescGZIP() []byte {
 	return file_servers_v1_servers_proto_rawDescData
 }
 
-var file_servers_v1_servers_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_servers_v1_servers_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_servers_v1_servers_proto_goTypes = []any{
 	(*QueryLogsRequest)(nil),      // 0: servers.v1.QueryLogsRequest
 	(*ServerLog)(nil),             // 1: servers.v1.ServerLog
@@ -1116,38 +1098,37 @@ var file_servers_v1_servers_proto_goTypes = []any{
 	(*EditServerRequest)(nil),     // 9: servers.v1.EditServerRequest
 	(*EditServerResponse)(nil),    // 10: servers.v1.EditServerResponse
 	(*DeleteServerRequest)(nil),   // 11: servers.v1.DeleteServerRequest
-	(*DeleteServerResponse)(nil),  // 12: servers.v1.DeleteServerResponse
-	(*ServersAdminResponse)(nil),  // 13: servers.v1.ServersAdminResponse
-	(*timestamppb.Timestamp)(nil), // 14: google.protobuf.Timestamp
-	(*v1.LatLong)(nil),            // 15: network.v1.LatLong
-	(*emptypb.Empty)(nil),         // 16: google.protobuf.Empty
+	(*ServersAdminResponse)(nil),  // 12: servers.v1.ServersAdminResponse
+	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
+	(*v1.LatLong)(nil),            // 14: network.v1.LatLong
+	(*emptypb.Empty)(nil),         // 15: google.protobuf.Empty
 }
 var file_servers_v1_servers_proto_depIdxs = []int32{
-	14, // 0: servers.v1.ServerLog.created_on:type_name -> google.protobuf.Timestamp
+	13, // 0: servers.v1.ServerLog.created_on:type_name -> google.protobuf.Timestamp
 	1,  // 1: servers.v1.QueryLogsResponse.logs:type_name -> servers.v1.ServerLog
-	15, // 2: servers.v1.StateRequest.lat_long:type_name -> network.v1.LatLong
-	15, // 3: servers.v1.SafeServer.lat_long:type_name -> network.v1.LatLong
-	15, // 4: servers.v1.Server.lat_long:type_name -> network.v1.LatLong
-	14, // 5: servers.v1.Server.token_created_on:type_name -> google.protobuf.Timestamp
-	14, // 6: servers.v1.Server.created_on:type_name -> google.protobuf.Timestamp
-	14, // 7: servers.v1.Server.updated_on:type_name -> google.protobuf.Timestamp
+	14, // 2: servers.v1.StateRequest.lat_long:type_name -> network.v1.LatLong
+	14, // 3: servers.v1.SafeServer.lat_long:type_name -> network.v1.LatLong
+	14, // 4: servers.v1.Server.lat_long:type_name -> network.v1.LatLong
+	13, // 5: servers.v1.Server.token_created_on:type_name -> google.protobuf.Timestamp
+	13, // 6: servers.v1.Server.created_on:type_name -> google.protobuf.Timestamp
+	13, // 7: servers.v1.Server.updated_on:type_name -> google.protobuf.Timestamp
 	4,  // 8: servers.v1.StateResponse.servers:type_name -> servers.v1.SafeServer
-	15, // 9: servers.v1.StateResponse.lat_long:type_name -> network.v1.LatLong
+	14, // 9: servers.v1.StateResponse.lat_long:type_name -> network.v1.LatLong
 	7,  // 10: servers.v1.ServersResponse.servers:type_name -> servers.v1.ServerInfoSafe
 	5,  // 11: servers.v1.EditServerRequest.server:type_name -> servers.v1.Server
 	5,  // 12: servers.v1.EditServerResponse.server:type_name -> servers.v1.Server
 	5,  // 13: servers.v1.ServersAdminResponse.servers:type_name -> servers.v1.Server
 	3,  // 14: servers.v1.ServersService.State:input_type -> servers.v1.StateRequest
-	16, // 15: servers.v1.ServersService.Servers:input_type -> google.protobuf.Empty
+	15, // 15: servers.v1.ServersService.Servers:input_type -> google.protobuf.Empty
 	9,  // 16: servers.v1.ServersService.EditServer:input_type -> servers.v1.EditServerRequest
 	11, // 17: servers.v1.ServersService.DeleteServer:input_type -> servers.v1.DeleteServerRequest
-	16, // 18: servers.v1.ServersService.ServersAdmin:input_type -> google.protobuf.Empty
+	15, // 18: servers.v1.ServersService.ServersAdmin:input_type -> google.protobuf.Empty
 	0,  // 19: servers.v1.ServersService.QueryLogs:input_type -> servers.v1.QueryLogsRequest
 	6,  // 20: servers.v1.ServersService.State:output_type -> servers.v1.StateResponse
 	8,  // 21: servers.v1.ServersService.Servers:output_type -> servers.v1.ServersResponse
 	10, // 22: servers.v1.ServersService.EditServer:output_type -> servers.v1.EditServerResponse
-	16, // 23: servers.v1.ServersService.DeleteServer:output_type -> google.protobuf.Empty
-	13, // 24: servers.v1.ServersService.ServersAdmin:output_type -> servers.v1.ServersAdminResponse
+	15, // 23: servers.v1.ServersService.DeleteServer:output_type -> google.protobuf.Empty
+	12, // 24: servers.v1.ServersService.ServersAdmin:output_type -> servers.v1.ServersAdminResponse
 	2,  // 25: servers.v1.ServersService.QueryLogs:output_type -> servers.v1.QueryLogsResponse
 	20, // [20:26] is the sub-list for method output_type
 	14, // [14:20] is the sub-list for method input_type
@@ -1167,7 +1148,7 @@ func file_servers_v1_servers_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_servers_v1_servers_proto_rawDesc), len(file_servers_v1_servers_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

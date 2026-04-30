@@ -6,8 +6,17 @@ import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 
 message Map {
-  int32 map_id = 1 [(buf.validate.field).required = true];
-  string name = 2 [(buf.validate.field).required = true];
+  int32 map_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+  string name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 256
+    }
+  ];
   google.protobuf.Timestamp created_on = 3 [(buf.validate.field).required = true];
   google.protobuf.Timestamp updated_on = 4 [(buf.validate.field).required = true];
 }

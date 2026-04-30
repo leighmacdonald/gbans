@@ -51,17 +51,29 @@ service BanService {
 }
 
 message CreateRequest {
-  int64 target_id = 1 [(buf.validate.field).required = true];
-  int64 source_id = 2;
+  int64 target_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  int64 source_id = 2 [(buf.validate.field).int64 = {gte: 76561197960265729}];
   google.protobuf.Duration duration = 3;
-  BanType ban_type = 4 [(buf.validate.field).required = true];
-  BanReason reason = 5 [(buf.validate.field).required = true];
+  BanType ban_type = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  BanReason reason = 5 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
   string reason_text = 6 [(buf.validate.field).required = true];
   Origin origin = 7 [(buf.validate.field).required = true];
   int32 report_id = 8;
-  string cidr = 9 [(buf.validate.field).required = true];
+  string cidr = 9 [(buf.validate.field).string.address = true];
   bool evade_ok = 10 [(buf.validate.field).required = true];
-  string name = 11 [(buf.validate.field).required = true];
+  string name = 11 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.max_len = 32
+  ];
   int32 demo_tick = 12;
   string demo_name = 13;
   string note = 14 [(buf.validate.field).required = true];
@@ -72,22 +84,34 @@ message CreateResponse {
 }
 
 message UpdateRequest {
-  BanType ban_type = 1 [(buf.validate.field).required = true];
-  BanReason reason = 2 [(buf.validate.field).required = true];
+  BanType ban_type = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  BanReason reason = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
   string reason_text = 3 [(buf.validate.field).required = true];
   string note = 4 [(buf.validate.field).required = true];
   bool evade_ok = 5 [(buf.validate.field).required = true];
   google.protobuf.Duration duration = 6 [(buf.validate.field).required = true];
-  string cidr = 7 [(buf.validate.field).required = true];
+  string cidr = 7 [(buf.validate.field).string.ip_with_prefixlen = true];
   int32 ban_id = 8 [(buf.validate.field).required = true];
-  AppealState appeal_state = 9 [(buf.validate.field).required = true];
+  AppealState appeal_state = 9 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
 }
 message UpdateResponse {
   Ban ban = 1 [(buf.validate.field).required = true];
 }
 
 message QuerySourceBansRequest {
-  int64 steam_id = 1 [(buf.validate.field).required = true];
+  int64 steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
 }
 
 message SourceBanRecord {
@@ -95,7 +119,10 @@ message SourceBanRecord {
   string site_name = 2 [(buf.validate.field).required = true];
   int32 site_id = 3 [(buf.validate.field).required = true];
   string persona_name = 4 [(buf.validate.field).required = true];
-  int64 steam_id = 5 [(buf.validate.field).required = true];
+  int64 steam_id = 5 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
   string reason = 6 [(buf.validate.field).required = true];
   google.protobuf.Duration duration = 7 [(buf.validate.field).required = true];
   bool permanent = 8 [(buf.validate.field).required = true];
@@ -107,7 +134,10 @@ message QuerySourceBansResponse {
 }
 
 message GetRequest {
-  int32 ban_id = 1 [(buf.validate.field).required = true];
+  int32 ban_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
 }
 
 message GetResponse {
@@ -115,19 +145,25 @@ message GetResponse {
 }
 
 message DeleteRequest {
-  int32 ban_id = 1 [(buf.validate.field).required = true];
-  string reason = 2 [(buf.validate.field).required = true];
+  int32 ban_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  string reason = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 4
+  ];
 }
 
 message QueryRequest {
-  int64 source_id = 1;
-  int64 target_id = 2;
+  int64 source_id = 1 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+  int64 target_id = 2 [(buf.validate.field).int64 = {gte: 76561197960265729}];
   bool groups_only = 3;
   bool deleted = 4;
-  string cidr = 5;
+  string cidr = 5 [(buf.validate.field).string.ipv4_with_prefixlen = true];
   bool cidr_only = 6;
-  repeated BanReason reason = 7;
-  int32 appeal_state = 8;
+  repeated BanReason reason = 7 [(buf.validate.field).enum.defined_only = true];
+  AppealState appeal_state = 8 [(buf.validate.field).enum.defined_only = true];
 }
 
 message QueryResponse {
@@ -143,29 +179,62 @@ enum Origin {
 }
 
 message Ban {
-  int64 target_id = 1 [(buf.validate.field).required = true];
-  int64 source_id = 2 [(buf.validate.field).required = true];
-  int32 ban_id = 3 [(buf.validate.field).required = true];
-  int32 report_id = 4;
-  string last_ip = 5;
-  bool evade_ok = 6 [(buf.validate.field).required = true];
-  BanType ban_type = 7 [(buf.validate.field).required = true];
-  BanReason reason = 8 [(buf.validate.field).required = true];
-  string reason_text = 9 [(buf.validate.field).required = true];
-  string unban_reason_text = 10 [(buf.validate.field).required = true];
-  string note = 11 [(buf.validate.field).required = true];
-  Origin origin = 12 [(buf.validate.field).required = true];
-  string cidr = 13 [(buf.validate.field).required = true];
-  AppealState appeal_state = 14 [(buf.validate.field).required = true];
-  string name = 15 [(buf.validate.field).required = true];
-  bool deleted = 16 [(buf.validate.field).required = true];
-  bool is_enabled = 17 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp created_on = 18 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp updated_on = 19 [(buf.validate.field).required = true];
-  google.protobuf.Duration duration = 20 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp valid_until = 21 [(buf.validate.field).required = true];
-  string source_persona_name = 22 [(buf.validate.field).required = true];
-  string source_avatar_hash = 23 [(buf.validate.field).required = true];
-  string target_persona_name = 24 [(buf.validate.field).required = true];
-  string target_avatar_hash = 25 [(buf.validate.field).required = true];
+  option (buf.validate.message).cel = {
+    id: "ban_reason_text"
+    message: "reason_text must be set when a custom BanReason is selected"
+    // The `+` is overloaded for lists (repeated fields) and it concatenates two lists.
+    // In this case `this.hot_beverages` + `this.cold_beverages` evaluates to a list
+    // containing beverages from both lists.
+    expression: "this.reason != BanReason.CUSTOM or size(this.reason_text) >= 1"
+  };
+
+  int64 target_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string target_persona_name = 2 [(buf.validate.field).required = true];
+  string target_avatar_hash = 3 [(buf.validate.field).required = true];
+  int64 source_id = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string source_persona_name = 5 [(buf.validate.field).required = true];
+  string source_avatar_hash = 6 [(buf.validate.field).required = true];
+  int32 ban_id = 7 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gt: 0}
+  ];
+  int32 report_id = 8;
+  string last_ip = 9;
+  bool evade_ok = 10 [(buf.validate.field).required = true];
+  BanType ban_type = 11 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  BanReason reason = 12 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  string reason_text = 13 [(buf.validate.field).required = true];
+  string unban_reason_text = 14 [(buf.validate.field).required = true];
+  string note = 15 [(buf.validate.field).required = true];
+  Origin origin = 16 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  string cidr = 17 [(buf.validate.field).string.ipv4_with_prefixlen = true];
+  AppealState appeal_state = 18 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  string name = 19 [(buf.validate.field).required = true];
+  bool deleted = 20 [(buf.validate.field).required = true];
+  bool is_enabled = 21 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 22 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 23 [(buf.validate.field).required = true];
+  google.protobuf.Duration duration = 24 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).duration.gt = {seconds: 60}
+  ];
+  google.protobuf.Timestamp valid_until = 25 [(buf.validate.field).required = true];
 }

@@ -700,7 +700,7 @@ func (x *QueryNetworkResponse) GetDetails() *Details {
 type QueryConnectionsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Filter        *v1.Filter             `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
-	SteamId       *string                `protobuf:"bytes,2,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	SteamId       *int64                 `protobuf:"varint,2,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	Cidr          *string                `protobuf:"bytes,3,opt,name=cidr" json:"cidr,omitempty"`
 	CountryCode   *string                `protobuf:"bytes,4,opt,name=country_code,json=countryCode" json:"country_code,omitempty"`
 	CountryName   *string                `protobuf:"bytes,5,opt,name=country_name,json=countryName" json:"country_name,omitempty"`
@@ -747,11 +747,11 @@ func (x *QueryConnectionsRequest) GetFilter() *v1.Filter {
 	return nil
 }
 
-func (x *QueryConnectionsRequest) GetSteamId() string {
+func (x *QueryConnectionsRequest) GetSteamId() int64 {
 	if x != nil && x.SteamId != nil {
 		return *x.SteamId
 	}
-	return ""
+	return 0
 }
 
 func (x *QueryConnectionsRequest) GetCidr() string {
@@ -1025,10 +1025,11 @@ const file_network_v1_network_proto_rawDesc = "" +
 	"\n" +
 	"\x1d\x00\x004C-\x00\x004\xc3R\tlongitude\"M\n" +
 	"\x14QueryNetworkResponse\x125\n" +
-	"\adetails\x18\x01 \x01(\v2\x13.network.v1.DetailsB\x06\xbaH\x03\xc8\x01\x01R\adetails\"\x8f\x02\n" +
+	"\adetails\x18\x01 \x01(\v2\x13.network.v1.DetailsB\x06\xbaH\x03\xc8\x01\x01R\adetails\"\xa0\x02\n" +
 	"\x17QueryConnectionsRequest\x121\n" +
-	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12\x19\n" +
-	"\bsteam_id\x18\x02 \x01(\tR\asteamId\x12\x1c\n" +
+	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12*\n" +
+	"\bsteam_id\x18\x02 \x01(\x03B\x0f\xbaH\f\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\asteamId\x12\x1c\n" +
 	"\x04cidr\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xd8\x01\x01R\x04cidr\x12+\n" +
 	"\fcountry_code\x18\x04 \x01(\tB\b\xbaH\x05r\x03\x98\x01\x02R\vcountryCode\x12!\n" +
 	"\fcountry_name\x18\x05 \x01(\tR\vcountryName\x12\x1b\n" +
@@ -1037,14 +1038,17 @@ const file_network_v1_network_proto_rawDesc = "" +
 	"\x18QueryConnectionsResponse\x12D\n" +
 	"\n" +
 	"connection\x18\x01 \x03(\v2\x1c.network.v1.PersonConnectionB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"connection\"\xcf\x04\n" +
-	"\x10PersonConnection\x128\n" +
-	"\x14person_connection_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x12personConnectionId\x12#\n" +
+	"connection\"\xe3\x04\n" +
+	"\x10PersonConnection\x12<\n" +
+	"\x14person_connection_id\x18\x01 \x01(\x03B\n" +
+	"\xbaH\a\xc8\x01\x01\"\x02 \x00R\x12personConnectionId\x12#\n" +
 	"\aip_addr\x18\x02 \x01(\tB\n" +
-	"\xbaH\a\xc8\x01\x01r\x02x\x01R\x06ipAddr\x12!\n" +
-	"\bsteam_id\x18\x03 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\x12)\n" +
-	"\fpersona_name\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12#\n" +
-	"\tserver_id\x18\x05 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bserverId\x122\n" +
+	"\xbaH\a\xc8\x01\x01r\x02x\x01R\x06ipAddr\x12-\n" +
+	"\bsteam_id\x18\x03 \x01(\x03B\x12\xbaH\x0f\xc8\x01\x01\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\asteamId\x12)\n" +
+	"\fpersona_name\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12'\n" +
+	"\tserver_id\x18\x05 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\"\x02 \x00R\bserverId\x122\n" +
 	"\x11server_name_short\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0fserverNameShort\x12\x1d\n" +
 	"\x06as_num\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05asNum\x12\x1f\n" +
 	"\aas_name\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06asName\x12)\n" +

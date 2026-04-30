@@ -460,6 +460,7 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware) *http.ServeMux {
 	services := []rpc.Service{
 		anticheat.NewService(g.anticheat, authMiddleware, interceptors),
 		asset.NewService(g.assets, authMiddleware, interceptors),
+		auth.NewService(authMiddleware, interceptors),
 		ban.NewAppealService(g.appeals, authMiddleware, interceptors),
 		ban.NewBanService(g.bans, authMiddleware, interceptors),
 		ban.NewExportService(g.bans, strings.Split(conf.Exports.AuthorizedKeys, ","), conf.General.SiteName),

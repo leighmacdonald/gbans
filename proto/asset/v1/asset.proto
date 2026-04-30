@@ -22,7 +22,13 @@ message DeleteResponse {
 }
 
 message CreateRequest {
-  bytes contents = 1 [(buf.validate.field).required = true];
+  bytes contents = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).bytes = {
+      min_len: 1
+      max_len: 4294967295
+    }
+  ];
   string name = 2;
 }
 
@@ -37,7 +43,10 @@ message Asset {
   ];
   string bucket = 2 [(buf.validate.field).required = true];
   int64 author_id = 3 [(buf.validate.field).required = true];
-  string hash = 4 [(buf.validate.field).required = true];
+  string hash = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.len = 40
+  ];
   bool is_private = 5 [(buf.validate.field).required = true];
   string mime_type = 6 [(buf.validate.field).required = true];
   string name = 7 [(buf.validate.field).required = true];

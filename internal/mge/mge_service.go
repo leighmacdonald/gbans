@@ -11,6 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/mge/v1/mgev1connect"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -60,10 +61,10 @@ func (s Service) GetHistory(ctx context.Context, req *v1.GetHistoryRequest) (*v1
 	history, count, errChat := s.mge.History(ctx, HistoryOpts{
 		Filter:  rpc.FromRPC(req.GetFilter()),
 		Mode:    DuelMode(ptr.From(req.Mode)),
-		Winner:  req.GetWinner(),
-		Loser:   req.GetLoser(),
-		Winner2: req.GetWinner2(),
-		Loser2:  req.GetLoser2(),
+		Winner:  steamid.New(req.GetWinner()),
+		Loser:   steamid.New(req.GetLoser()),
+		Winner2: steamid.New(req.GetWinner2()),
+		Loser2:  steamid.New(req.GetLoser2()),
 	})
 	if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)

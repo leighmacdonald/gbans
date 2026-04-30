@@ -16,8 +16,14 @@ message GetDemosResponse {
 }
 
 message Demo {
-  int64 demo_id = 1 [(buf.validate.field).required = true];
-  int32 server_id = 2 [(buf.validate.field).required = true];
+  int64 demo_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64.gt = 0
+  ];
+  int32 server_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64.gt = 0
+  ];
   string server_name_short = 3 [(buf.validate.field).required = true];
   string server_name_long = 4 [(buf.validate.field).required = true];
   string title = 5 [(buf.validate.field).required = true];

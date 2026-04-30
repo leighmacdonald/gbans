@@ -377,15 +377,15 @@ var File_anticheat_v1_anticheat_proto protoreflect.FileDescriptor
 
 const file_anticheat_v1_anticheat_proto_rawDesc = "" +
 	"\n" +
-	"\x1canticheat/v1/anticheat.proto\x12\fanticheat.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc1\x01\n" +
+	"\x1canticheat/v1/anticheat.proto\x12\fanticheat.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd4\x01\n" +
 	"\fQueryRequest\x121\n" +
-	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x19\n" +
+	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12\x1b\n" +
+	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x18 R\x04name\x12\x19\n" +
 	"\bsteam_id\x18\x03 \x01(\x03R\asteamId\x12\x18\n" +
-	"\asummary\x18\x04 \x01(\tR\asummary\x125\n" +
-	"\tdetection\x18\x05 \x01(\x0e2\x17.anticheat.v1.DetectionR\tdetection\"F\n" +
+	"\asummary\x18\x04 \x01(\tR\asummary\x12?\n" +
+	"\tdetection\x18\x05 \x01(\x0e2\x17.anticheat.v1.DetectionB\b\xbaH\x05\x82\x01\x02\x10\x01R\tdetection\"F\n" +
 	"\rQueryResponse\x125\n" +
-	"\aentries\x18\x01 \x03(\v2\x13.anticheat.v1.EntryB\x06\xbaH\x03\xc8\x01\x01R\aentries\"\xd9\x04\n" +
+	"\aentries\x18\x01 \x03(\v2\x13.anticheat.v1.EntryB\x06\xbaH\x03\xc8\x01\x01R\aentries\"\xfb\x04\n" +
 	"\x05Entry\x12)\n" +
 	"\fanticheat_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\vanticheatId\x12%\n" +
 	"\bsteam_id\x18\x02 \x01(\x03B\n" +
@@ -397,15 +397,17 @@ const file_anticheat_v1_anticheat_proto_rawDesc = "" +
 	"\ademo_id\x18\x05 \x01(\x05R\x06demoId\x12\x1b\n" +
 	"\tdemo_name\x18\x06 \x01(\tR\bdemoName\x12\x1b\n" +
 	"\tdemo_tick\x18\a \x01(\x05R\bdemoTick\x12\x1a\n" +
-	"\x04name\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12=\n" +
-	"\tdetection\x18\t \x01(\x0e2\x17.anticheat.v1.DetectionB\x06\xbaH\x03\xc8\x01\x01R\tdetection\x12 \n" +
+	"\x04name\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12B\n" +
+	"\tdetection\x18\t \x01(\x0e2\x17.anticheat.v1.DetectionB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\tdetection\x12 \n" +
 	"\asummary\x18\n" +
-	" \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\asummary\x12\x1f\n" +
-	"\araw_log\x18\v \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06rawLog\x12A\n" +
+	" \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\asummary\x12#\n" +
+	"\araw_log\x18\v \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x06rawLog\x12T\n" +
 	"\n" +
-	"created_on\x18\f \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12)\n" +
-	"\fpersona_name\x18\r \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12'\n" +
-	"\vavatar_hash\x18\x0e \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"created_on\x18\f \x01(\v2\x1a.google.protobuf.TimestampB\x19\xbaH\x16\xc8\x01\x01\xb2\x01\x10\x1a\x06\b\x80\xff\xf8\xa4\a*\x06\b\x80\x9e\xe1\xac\x04R\tcreatedOn\x12-\n" +
+	"\fpersona_name\x18\r \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x18 R\vpersonaName\x12)\n" +
+	"\vavatar_hash\x18\x0e \x01(\tB\b\xbaH\x05r\x03\x98\x01(R\n" +
 	"avatarHash\x12$\n" +
 	"\ttriggered\x18\x0f \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\ttriggered*\xaf\x02\n" +
 	"\tDetection\x12\x19\n" +

@@ -2,45 +2,16 @@
 // @generated from file auth/v1/auth.proto (package auth.v1, edition 2023)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Message } from "@bufbuild/protobuf";
+import type { GenFile, GenService } from "@bufbuild/protobuf/codegenv2";
+import { fileDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { EmptySchema } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_empty } from "@bufbuild/protobuf/wkt";
 
 /**
  * Describes the file auth/v1/auth.proto.
  */
 export const file_auth_v1_auth: GenFile = /*@__PURE__*/
-  fileDesc("ChJhdXRoL3YxL2F1dGgucHJvdG8SB2F1dGgudjEiDwoNTG9nb3V0UmVxdWVzdCIQCg5Mb2dvdXRSZXNwb25zZTJKCgtBdXRoU2VydmljZRI7CgZMb2dvdXQSFi5hdXRoLnYxLkxvZ291dFJlcXVlc3QaFy5hdXRoLnYxLkxvZ291dFJlc3BvbnNlIgBCjgEKC2NvbS5hdXRoLnYxQglBdXRoUHJvdG9QAVo3Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9hdXRoL3YxO2F1dGh2MaICA0FYWKoCB0F1dGguVjHKAgdBdXRoXFYx4gITQXV0aFxWMVxHUEJNZXRhZGF0YeoCCEF1dGg6OlYxYghlZGl0aW9uc3DoBw");
-
-/**
- * @generated from message auth.v1.LogoutRequest
- */
-export type LogoutRequest = Message<"auth.v1.LogoutRequest"> & {
-};
-
-export type LogoutRequestValid = LogoutRequest;
-
-/**
- * Describes the message auth.v1.LogoutRequest.
- * Use `create(LogoutRequestSchema)` to create a new message.
- */
-export const LogoutRequestSchema: GenMessage<LogoutRequest, {validType: LogoutRequestValid}> = /*@__PURE__*/
-  messageDesc(file_auth_v1_auth, 0);
-
-/**
- * @generated from message auth.v1.LogoutResponse
- */
-export type LogoutResponse = Message<"auth.v1.LogoutResponse"> & {
-};
-
-export type LogoutResponseValid = LogoutResponse;
-
-/**
- * Describes the message auth.v1.LogoutResponse.
- * Use `create(LogoutResponseSchema)` to create a new message.
- */
-export const LogoutResponseSchema: GenMessage<LogoutResponse, {validType: LogoutResponseValid}> = /*@__PURE__*/
-  messageDesc(file_auth_v1_auth, 1);
+  fileDesc("ChJhdXRoL3YxL2F1dGgucHJvdG8SB2F1dGgudjEySQoLQXV0aFNlcnZpY2USOgoGTG9nb3V0EhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgBCjgEKC2NvbS5hdXRoLnYxQglBdXRoUHJvdG9QAVo3Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9hdXRoL3YxO2F1dGh2MaICA0FYWKoCB0F1dGguVjHKAgdBdXRoXFYx4gITQXV0aFxWMVxHUEJNZXRhZGF0YeoCCEF1dGg6OlYxYghlZGl0aW9uc3DoBw", [file_google_protobuf_empty]);
 
 /**
  * @generated from service auth.v1.AuthService
@@ -51,8 +22,8 @@ export const AuthService: GenService<{
    */
   logout: {
     methodKind: "unary";
-    input: typeof LogoutRequestSchema;
-    output: typeof LogoutResponseSchema;
+    input: typeof EmptySchema;
+    output: typeof EmptySchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_auth_v1_auth, 0);

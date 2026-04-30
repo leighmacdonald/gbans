@@ -8,7 +8,6 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "person/v1/person_core.proto";
 import "person/v1/privilege.proto";
-import "person/v1/steamid.proto";
 
 service PersonService {
   rpc Profile(ProfileRequest) returns (ProfileResponse) {}
@@ -22,7 +21,10 @@ service PersonService {
 }
 
 message ProfileRequest {
-  string steam_id = 1 [(buf.validate.field).required = true];
+  string steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
 }
 
 message ProfileResponse {
@@ -34,9 +36,21 @@ message ResolveSteamIDRequest {
 }
 
 message ResolveSteamIDResponse {
-  int64 steam_id = 1 [(buf.validate.field).required = true];
-  string avatar_hash = 2 [(buf.validate.field).required = true];
-  string persona_name = 3 [(buf.validate.field).required = true];
+  int64 steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string avatar_hash = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.len = 40
+  ];
+  string persona_name = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 32
+    }
+  ];
 }
 
 message CurrentProfileResponse {
@@ -45,7 +59,10 @@ message CurrentProfileResponse {
 
 message Settings {
   int64 person_settings_id = 1 [(buf.validate.field).required = true];
-  int64 steam_id = 2 [(buf.validate.field).required = true];
+  int64 steam_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
   string forum_signature = 3 [(buf.validate.field).required = true];
   bool forum_profile_messages = 4 [(buf.validate.field).required = true];
   bool stats_hidden = 5 [(buf.validate.field).required = true];
@@ -62,21 +79,24 @@ message EditProfileSettingsRequest {
 }
 
 message Profile {
-  PersonCore player = 1;
+  PersonCore player = 1 [(buf.validate.field).required = true];
   repeated SteamFriend friends = 2;
-  Settings settings = 3;
+  Settings settings = 3 [(buf.validate.field).required = true];
 }
 
 message SteamFriend {
   google.protobuf.Timestamp friend_since = 1;
   string relationship = 2;
   google.protobuf.Timestamp removed_on = 3;
-  int64 steam_id = 4;
+  int64 steam_id = 4 [(buf.validate.field).int64 = {gte: 76561197960265729}];
 }
 
 message UserSettings {
   int64 person_settings_id = 1 [(buf.validate.field).required = true];
-  int64 steam_id = 2 [(buf.validate.field).required = true];
+  int64 steam_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
   string forum_signature = 3 [(buf.validate.field).required = true];
   bool forum_profile_messages = 4 [(buf.validate.field).required = true];
   bool stats_hidden = 5 [(buf.validate.field).required = true];
@@ -93,8 +113,14 @@ message EditProfileSettingsResponse {
 }
 
 message EditPermissionsRequest {
-  int64 steam_id = 1 [(buf.validate.field).required = true];
-  Privilege permission_level = 2 [(buf.validate.field).required = true];
+  int64 steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  Privilege permission_level = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
 }
 
 message EditPermissionsResponse {
@@ -104,7 +130,7 @@ message EditPermissionsResponse {
 message QueryRequest {
   database.query.v1.Filter filter = 1;
   string persona_name = 2;
-  repeated Privilege with_permissions = 3;
+  repeated Privilege with_permissions = 3 [(buf.validate.field).enum.defined_only = true];
   string discord_id = 4;
   repeated string steam_ids = 5;
   int32 vac_bans = 6;
@@ -124,11 +150,14 @@ enum VisibilityState {
 message Person {
   int64 steam_id = 1 [
     (buf.validate.field).required = true,
-    (buf.validate.field).int64.(valid_steam_id) = true
+    (buf.validate.field).int64 = {gte: 76561197960265729}
   ];
   google.protobuf.Timestamp created_on = 2 [(buf.validate.field).required = true];
   google.protobuf.Timestamp updated_on = 3 [(buf.validate.field).required = true];
-  Privilege permission_level = 4 [(buf.validate.field).required = true];
+  Privilege permission_level = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
   bool muted = 5 [(buf.validate.field).required = true];
   string discord_id = 6 [(buf.validate.field).required = true];
   string patreon_id = 7 [(buf.validate.field).required = true];
@@ -155,7 +184,10 @@ message Person {
   string profile_url = 28 [(buf.validate.field).required = true];
   string real_name = 29 [(buf.validate.field).required = true];
   google.protobuf.Timestamp time_created = 30 [(buf.validate.field).required = true];
-  VisibilityState visibility_state = 31 [(buf.validate.field).required = true];
+  VisibilityState visibility_state = 31 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
   int32 ban_id = 32 [(buf.validate.field).required = true];
 }
 

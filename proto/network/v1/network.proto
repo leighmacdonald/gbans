@@ -105,7 +105,7 @@ message QueryNetworkResponse {
 
 message QueryConnectionsRequest {
   database.query.v1.Filter filter = 1;
-  string steam_id = 2;
+  int64 steam_id = 2 [(buf.validate.field).int64 = {gte: 76561197960265729}];
   string cidr = 3 [(buf.validate.field).string.ipv4_with_prefixlen = true];
   string country_code = 4 [(buf.validate.field).string.len = 2];
   string country_name = 5;
@@ -118,14 +118,23 @@ message QueryConnectionsResponse {
 }
 
 message PersonConnection {
-  int64 person_connection_id = 1 [(buf.validate.field).required = true];
+  int64 person_connection_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gt: 0}
+  ];
   string ip_addr = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.ipv4 = true
   ];
-  int64 steam_id = 3 [(buf.validate.field).required = true];
+  int64 steam_id = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
   string persona_name = 4 [(buf.validate.field).required = true];
-  int32 server_id = 5 [(buf.validate.field).required = true];
+  int32 server_id = 5 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gt: 0}
+  ];
   string server_name_short = 6 [(buf.validate.field).required = true];
   int32 as_num = 7 [(buf.validate.field).required = true];
   string as_name = 8 [(buf.validate.field).required = true];

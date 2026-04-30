@@ -9,6 +9,7 @@ import (
 	context "context"
 	errors "errors"
 	v1 "github.com/leighmacdonald/gbans/internal/auth/v1"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	http "net/http"
 	strings "strings"
 )
@@ -39,7 +40,7 @@ const (
 
 // AuthServiceClient is a client for the auth.v1.AuthService service.
 type AuthServiceClient interface {
-	Logout(context.Context, *v1.LogoutRequest) (*v1.LogoutResponse, error)
+	Logout(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 }
 
 // NewAuthServiceClient constructs a client for the auth.v1.AuthService service. By default, it uses
@@ -53,7 +54,7 @@ func NewAuthServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 	baseURL = strings.TrimRight(baseURL, "/")
 	authServiceMethods := v1.File_auth_v1_auth_proto.Services().ByName("AuthService").Methods()
 	return &authServiceClient{
-		logout: connect.NewClient[v1.LogoutRequest, v1.LogoutResponse](
+		logout: connect.NewClient[emptypb.Empty, emptypb.Empty](
 			httpClient,
 			baseURL+AuthServiceLogoutProcedure,
 			connect.WithSchema(authServiceMethods.ByName("Logout")),
@@ -64,11 +65,11 @@ func NewAuthServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // authServiceClient implements AuthServiceClient.
 type authServiceClient struct {
-	logout *connect.Client[v1.LogoutRequest, v1.LogoutResponse]
+	logout *connect.Client[emptypb.Empty, emptypb.Empty]
 }
 
 // Logout calls auth.v1.AuthService.Logout.
-func (c *authServiceClient) Logout(ctx context.Context, req *v1.LogoutRequest) (*v1.LogoutResponse, error) {
+func (c *authServiceClient) Logout(ctx context.Context, req *emptypb.Empty) (*emptypb.Empty, error) {
 	response, err := c.logout.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -78,7 +79,7 @@ func (c *authServiceClient) Logout(ctx context.Context, req *v1.LogoutRequest) (
 
 // AuthServiceHandler is an implementation of the auth.v1.AuthService service.
 type AuthServiceHandler interface {
-	Logout(context.Context, *v1.LogoutRequest) (*v1.LogoutResponse, error)
+	Logout(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 }
 
 // NewAuthServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -107,6 +108,6 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption
 // UnimplementedAuthServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedAuthServiceHandler struct{}
 
-func (UnimplementedAuthServiceHandler) Logout(context.Context, *v1.LogoutRequest) (*v1.LogoutResponse, error) {
+func (UnimplementedAuthServiceHandler) Logout(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("auth.v1.AuthService.Logout is not implemented"))
 }
