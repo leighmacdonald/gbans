@@ -4,13 +4,14 @@
 
 import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../../buf/validate/validate_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file database/query/v1/filter.proto.
  */
 export const file_database_query_v1_filter: GenFile = /*@__PURE__*/
-  fileDesc("Ch5kYXRhYmFzZS9xdWVyeS92MS9maWx0ZXIucHJvdG8SEWRhdGFiYXNlLnF1ZXJ5LnYxIkcKBkZpbHRlchIOCgZvZmZzZXQYASABKAQSDQoFbGltaXQYAiABKAQSDAoEZGVzYxgDIAEoCBIQCghvcmRlcl9ieRgEIAEoCULOAQoVY29tLmRhdGFiYXNlLnF1ZXJ5LnYxQgtGaWx0ZXJQcm90b1ABWkJnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL2RhdGFiYXNlL3F1ZXJ5L3YxO3F1ZXJ5djGiAgNEUViqAhFEYXRhYmFzZS5RdWVyeS5WMcoCEURhdGFiYXNlXFF1ZXJ5XFYx4gIdRGF0YWJhc2VcUXVlcnlcVjFcR1BCTWV0YWRhdGHqAhNEYXRhYmFzZTo6UXVlcnk6OlYxYghlZGl0aW9uc3DoBw");
+  fileDesc("Ch5kYXRhYmFzZS9xdWVyeS92MS9maWx0ZXIucHJvdG8SEWRhdGFiYXNlLnF1ZXJ5LnYxIlkKBkZpbHRlchIXCgZvZmZzZXQYASABKARCB7pIBDICIAASFgoFbGltaXQYAiABKARCB7pIBDICIAASDAoEZGVzYxgDIAEoCBIQCghvcmRlcl9ieRgEIAEoCULOAQoVY29tLmRhdGFiYXNlLnF1ZXJ5LnYxQgtGaWx0ZXJQcm90b1ABWkJnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL2RhdGFiYXNlL3F1ZXJ5L3YxO3F1ZXJ5djGiAgNEUViqAhFEYXRhYmFzZS5RdWVyeS5WMcoCEURhdGFiYXNlXFF1ZXJ5XFYx4gIdRGF0YWJhc2VcUXVlcnlcVjFcR1BCTWV0YWRhdGHqAhNEYXRhYmFzZTo6UXVlcnk6OlYxYghlZGl0aW9uc3DoBw", [file_buf_validate_validate]);
 
 /**
  * @generated from message database.query.v1.Filter

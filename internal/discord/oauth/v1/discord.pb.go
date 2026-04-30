@@ -269,9 +269,10 @@ const file_discord_oauth_v1_discord_proto_rawDesc = "" +
 	"\x0fProfileResponse\x12Q\n" +
 	"\x0fdiscord_profile\x18\x01 \x01(\v2 .discord.oauth.v1.DiscordProfileB\x06\xbaH\x03\xc8\x01\x01R\x0ediscordProfile\"4\n" +
 	"\rLoginResponse\x12#\n" +
-	"\tlogin_url\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bloginUrl\"\xc8\x04\n" +
-	"\x0eDiscordProfile\x12\x19\n" +
-	"\bsteam_id\x18\x01 \x01(\x03R\asteamId\x12\x0e\n" +
+	"\tlogin_url\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bloginUrl\"\xd9\x04\n" +
+	"\x0eDiscordProfile\x12*\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\x0f\xbaH\f\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\asteamId\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12\x16\n" +
 	"\x06avatar\x18\x03 \x01(\tR\x06avatar\x12A\n" +
 	"\x11avatar_decoration\x18\x04 \x01(\v2\x14.google.protobuf.AnyR\x10avatarDecoration\x12$\n" +

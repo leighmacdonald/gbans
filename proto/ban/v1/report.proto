@@ -28,12 +28,24 @@ message ReportsResponse {
 }
 
 message ReportMessageDeleteRequest {
-  int32 report_message_id = 1 [(buf.validate.field).required = true];
+  int32 report_message_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
 }
 
 message ReportMessageEditRequest {
-  int32 report_message_id = 1 [(buf.validate.field).required = true];
-  string body_md = 2 [(buf.validate.field).required = true];
+  int32 report_message_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+  string body_md = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 50000
+    }
+  ];
 }
 
 message ReportMessageEditResponse {
@@ -41,11 +53,17 @@ message ReportMessageEditResponse {
 }
 
 message ReportMessagesRequest {
-  int32 report_id = 1 [(buf.validate.field).required = true];
+  int32 report_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
 }
 
 message UserReportsRequest {
-  int64 steam_id = 1 [(buf.validate.field).required = true];
+  int64 steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
 }
 
 message ReportMessagesResponse {
@@ -57,7 +75,10 @@ message UserReportsResponse {
 }
 
 message ReportRequest {
-  int32 report_id = 1 [(buf.validate.field).required = true];
+  int32 report_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
 }
 
 message ReportResponse {
@@ -72,25 +93,70 @@ enum ReportStatus {
 }
 
 message ReportMessage {
-  int32 report_id = 1 [(buf.validate.field).required = true];
-  int32 report_message_id = 2 [(buf.validate.field).required = true];
-  int64 author_id = 3 [(buf.validate.field).required = true];
-  string message_md = 4 [(buf.validate.field).required = true];
+  int32 report_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+  int32 report_message_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+  int64 author_id = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string message_md = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 50000
+    }
+  ];
   bool deleted = 5 [(buf.validate.field).required = true];
   google.protobuf.Timestamp created_on = 6 [(buf.validate.field).required = true];
   google.protobuf.Timestamp updated_on = 7 [(buf.validate.field).required = true];
-  string persona_name = 8 [(buf.validate.field).required = true];
+  string persona_name = 8 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 32
+    }
+  ];
   string avatar_hash = 9 [(buf.validate.field).required = true];
-  person.v1.Privilege permission_level = 10 [(buf.validate.field).required = true];
+  person.v1.Privilege permission_level = 10 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
 }
 
 message Report {
-  int32 report_id = 1 [(buf.validate.field).required = true];
-  int64 source_id = 2 [(buf.validate.field).required = true];
-  int64 target_id = 3 [(buf.validate.field).required = true];
-  string description = 4 [(buf.validate.field).required = true];
-  ReportStatus report_status = 5 [(buf.validate.field).required = true];
-  BanReason reason = 6 [(buf.validate.field).required = true];
+  int32 report_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+  int64 source_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  int64 target_id = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string description = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 50000
+    }
+  ];
+  ReportStatus report_status = 5 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  BanReason reason = 6 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
   string reason_text = 7 [(buf.validate.field).required = true];
   bool deleted = 8 [(buf.validate.field).required = true];
   int32 demo_tick = 9;
@@ -107,22 +173,38 @@ message ReportWithAuthor {
 }
 
 message ReportStatusEditRequest {
-  int32 report_id = 1 [(buf.validate.field).required = true];
+  int32 report_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gt: 0}
+  ];
   ReportStatus report_status = 2 [(buf.validate.field).required = true];
 }
 
 message ReportCreateRequest {
-  //  option (buf.validate.message).cel = {
-  //    id: "valid_reason"
-  //    message: "ensure the reason is set when custom"
-  //    expression:
-  //      "this.reason != 1 ? true "
-  //      ": this.reason_text.min_len > 10"
-  //  };
+  option (buf.validate.message).cel = {
+    id: "ban_reason_text"
+    message: "reason_text must be set when a custom BanReason is selected"
+    // The `+` is overloaded for lists (repeated fields) and it concatenates two lists.
+    // In this case `this.hot_beverages` + `this.cold_beverages` evaluates to a list
+    // containing beverages from both lists.
+    expression: "this.reason != BanReason.CUSTOM or size(this.reason_text) >= 1"
+  };
 
-  int64 source_id = 1 [(buf.validate.field).required = true];
-  int64 target_id = 2 [(buf.validate.field).required = true];
-  string description = 3 [(buf.validate.field).required = true];
+  int64 source_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  int64 target_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string description = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 50000
+    }
+  ];
   BanReason reason = 4 [
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
@@ -138,8 +220,17 @@ message ReportCreateResponse {
 }
 
 message ReportMessageCreateRequest {
-  int32 report_id = 1 [(buf.validate.field).required = true];
-  string body_md = 2 [(buf.validate.field).required = true];
+  int32 report_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+  string body_md = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 50000
+    }
+  ];
 }
 
 message ReportMessageCreateResponse {

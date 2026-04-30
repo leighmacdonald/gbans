@@ -22,7 +22,7 @@ message LoginResponse {
 }
 
 message DiscordProfile {
-  int64 steam_id = 1;
+  int64 steam_id = 1 [(buf.validate.field).int64 = {gte: 76561197960265729}];
   string id = 2;
   string avatar = 3;
   google.protobuf.Any avatar_decoration = 4;

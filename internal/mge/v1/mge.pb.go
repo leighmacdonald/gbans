@@ -286,10 +286,10 @@ type GetHistoryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Filter        *v1.Filter             `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
 	Mode          *DuelMode              `protobuf:"varint,2,opt,name=mode,enum=mge.v1.DuelMode" json:"mode,omitempty"`
-	Winner        *string                `protobuf:"bytes,3,opt,name=winner" json:"winner,omitempty"`
-	Winner2       *string                `protobuf:"bytes,4,opt,name=winner2" json:"winner2,omitempty"`
-	Loser         *string                `protobuf:"bytes,5,opt,name=loser" json:"loser,omitempty"`
-	Loser2        *string                `protobuf:"bytes,6,opt,name=loser2" json:"loser2,omitempty"`
+	Winner        *int64                 `protobuf:"varint,3,opt,name=winner" json:"winner,omitempty"`
+	Winner2       *int64                 `protobuf:"varint,4,opt,name=winner2" json:"winner2,omitempty"`
+	Loser         *int64                 `protobuf:"varint,5,opt,name=loser" json:"loser,omitempty"`
+	Loser2        *int64                 `protobuf:"varint,6,opt,name=loser2" json:"loser2,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -338,32 +338,32 @@ func (x *GetHistoryRequest) GetMode() DuelMode {
 	return DuelMode_DUEL_MODE_ONE_VS_ONE_UNSPECIFIED
 }
 
-func (x *GetHistoryRequest) GetWinner() string {
+func (x *GetHistoryRequest) GetWinner() int64 {
 	if x != nil && x.Winner != nil {
 		return *x.Winner
 	}
-	return ""
+	return 0
 }
 
-func (x *GetHistoryRequest) GetWinner2() string {
+func (x *GetHistoryRequest) GetWinner2() int64 {
 	if x != nil && x.Winner2 != nil {
 		return *x.Winner2
 	}
-	return ""
+	return 0
 }
 
-func (x *GetHistoryRequest) GetLoser() string {
+func (x *GetHistoryRequest) GetLoser() int64 {
 	if x != nil && x.Loser != nil {
 		return *x.Loser
 	}
-	return ""
+	return 0
 }
 
-func (x *GetHistoryRequest) GetLoser2() string {
+func (x *GetHistoryRequest) GetLoser2() int64 {
 	if x != nil && x.Loser2 != nil {
 		return *x.Loser2
 	}
-	return ""
+	return 0
 }
 
 type Duel struct {
@@ -387,6 +387,7 @@ type Duel struct {
 	GameTime           *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=game_time,json=gameTime" json:"game_time,omitempty"`
 	MapName            *string                `protobuf:"bytes,18,opt,name=map_name,json=mapName" json:"map_name,omitempty"`
 	ArenaName          *string                `protobuf:"bytes,19,opt,name=arena_name,json=arenaName" json:"arena_name,omitempty"`
+	DuelMode           *DuelMode              `protobuf:"varint,20,opt,name=duel_mode,json=duelMode,enum=mge.v1.DuelMode" json:"duel_mode,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -554,6 +555,13 @@ func (x *Duel) GetArenaName() string {
 	return ""
 }
 
+func (x *Duel) GetDuelMode() DuelMode {
+	if x != nil && x.DuelMode != nil {
+		return *x.DuelMode
+	}
+	return DuelMode_DUEL_MODE_ONE_VS_ONE_UNSPECIFIED
+}
+
 type GetHistoryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	History       []*Duel                `protobuf:"bytes,1,rep,name=history" json:"history,omitempty"`
@@ -610,14 +618,17 @@ var File_mge_v1_mge_proto protoreflect.FileDescriptor
 
 const file_mge_v1_mge_proto_rawDesc = "" +
 	"\n" +
-	"\x10mge/v1/mge.proto\x12\x06mge.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"h\n" +
+	"\x10mge/v1/mge.proto\x12\x06mge.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"y\n" +
 	"\x18GetRatingsOverallRequest\x121\n" +
-	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12\x19\n" +
-	"\bsteam_id\x18\x02 \x01(\tR\asteamId\"\xe4\x02\n" +
-	"\vPlayerStats\x12!\n" +
-	"\bstats_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\astatsId\x12\x1e\n" +
-	"\x06rating\x18\x02 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x06rating\x12!\n" +
-	"\bsteam_id\x18\x03 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\x12)\n" +
+	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12*\n" +
+	"\bsteam_id\x18\x02 \x01(\tB\x0f\xbaH\f\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\asteamId\"\xf4\x02\n" +
+	"\vPlayerStats\x12%\n" +
+	"\bstats_id\x18\x01 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\astatsId\x12\x1e\n" +
+	"\x06rating\x18\x02 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x06rating\x12-\n" +
+	"\bsteam_id\x18\x03 \x01(\x03B\x12\xbaH\x0f\xc8\x01\x01\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\asteamId\x12)\n" +
 	"\fpersona_name\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12'\n" +
 	"\vavatar_hash\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"avatarHash\x12\x1a\n" +
@@ -628,27 +639,36 @@ const file_mge_v1_mge_proto_rawDesc = "" +
 	"lastPlayed\"l\n" +
 	"\x19GetRatingsOverallResponse\x121\n" +
 	"\x05stats\x18\x01 \x03(\v2\x13.mge.v1.PlayerStatsB\x06\xbaH\x03\xc8\x01\x01R\x05stats\x12\x1c\n" +
-	"\x05count\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x05count\"\xcc\x01\n" +
+	"\x05count\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x05count\"\x9a\x02\n" +
 	"\x11GetHistoryRequest\x121\n" +
-	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12$\n" +
-	"\x04mode\x18\x02 \x01(\x0e2\x10.mge.v1.DuelModeR\x04mode\x12\x16\n" +
-	"\x06winner\x18\x03 \x01(\tR\x06winner\x12\x18\n" +
-	"\awinner2\x18\x04 \x01(\tR\awinner2\x12\x14\n" +
-	"\x05loser\x18\x05 \x01(\tR\x05loser\x12\x16\n" +
-	"\x06loser2\x18\x06 \x01(\tR\x06loser2\"\xe3\x06\n" +
-	"\x04Duel\x12\x1f\n" +
-	"\aduel_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x06duelId\x12\x1e\n" +
-	"\x06winner\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x06winner\x124\n" +
+	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12.\n" +
+	"\x04mode\x18\x02 \x01(\x0e2\x10.mge.v1.DuelModeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04mode\x12'\n" +
+	"\x06winner\x18\x03 \x01(\x03B\x0f\xbaH\f\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\x06winner\x12)\n" +
+	"\awinner2\x18\x04 \x01(\x03B\x0f\xbaH\f\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\awinner2\x12%\n" +
+	"\x05loser\x18\x05 \x01(\x03B\x0f\xbaH\f\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\x05loser\x12'\n" +
+	"\x06loser2\x18\x06 \x01(\x03B\x0f\xbaH\f\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\x06loser2\"\xfb\b\n" +
+	"\x04Duel\x12#\n" +
+	"\aduel_id\x18\x01 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x06duelId\x12*\n" +
+	"\x06winner\x18\x02 \x01(\x03B\x12\xbaH\x0f\xc8\x01\x01\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\x06winner\x124\n" +
 	"\x12winner_avatar_hash\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10winnerAvatarHash\x126\n" +
-	"\x13winner_persona_name\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11winnerPersonaName\x12 \n" +
-	"\awinner2\x18\x05 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\awinner2\x126\n" +
+	"\x13winner_persona_name\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11winnerPersonaName\x12)\n" +
+	"\awinner2\x18\x05 \x01(\x03B\x0f\xbaH\f\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\awinner2\x126\n" +
 	"\x13winner2_avatar_hash\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11winner2AvatarHash\x128\n" +
-	"\x14winner2_persona_name\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x12winner2PersonaName\x12\x1c\n" +
-	"\x05loser\x18\b \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x05loser\x122\n" +
+	"\x14winner2_persona_name\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x12winner2PersonaName\x12(\n" +
+	"\x05loser\x18\b \x01(\x03B\x12\xbaH\x0f\xc8\x01\x01\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\x05loser\x122\n" +
 	"\x11loser_avatar_hash\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0floserAvatarHash\x124\n" +
 	"\x12loser_persona_name\x18\n" +
-	" \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10loserPersonaName\x12\x1e\n" +
-	"\x06loser2\x18\v \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x06loser2\x124\n" +
+	" \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10loserPersonaName\x12'\n" +
+	"\x06loser2\x18\v \x01(\x03B\x0f\xbaH\f\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\x06loser2\x124\n" +
 	"\x12loser2_avatar_hash\x18\f \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10loser2AvatarHash\x126\n" +
 	"\x13loser2_persona_name\x18\r \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11loser2PersonaName\x12)\n" +
 	"\fwinner_score\x18\x0e \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\vwinnerScore\x12'\n" +
@@ -658,7 +678,9 @@ const file_mge_v1_mge_proto_rawDesc = "" +
 	"\tgame_time\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\bgameTime\x12!\n" +
 	"\bmap_name\x18\x12 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\amapName\x12%\n" +
 	"\n" +
-	"arena_name\x18\x13 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tarenaName\"b\n" +
+	"arena_name\x18\x13 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tarenaName\x12:\n" +
+	"\tduel_mode\x18\x14 \x01(\x0e2\x10.mge.v1.DuelModeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\bduelMode:\xab\x01\xbaH\xa7\x01\x1a\xa4\x01\n" +
+	"\x14validate_mode_values\x12+loser2 and winner2 must be set for 2v2 mode\x1a_this.duel_mode == 0 or (this.winner2 >= 76561197960265729 and this.loser2 >= 76561197960265729)\"b\n" +
 	"\x12GetHistoryResponse\x12.\n" +
 	"\ahistory\x18\x01 \x03(\v2\f.mge.v1.DuelB\x06\xbaH\x03\xc8\x01\x01R\ahistory\x12\x1c\n" +
 	"\x05count\x18\x02 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x05count*J\n" +
@@ -699,22 +721,23 @@ var file_mge_v1_mge_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),     // 8: google.protobuf.Timestamp
 }
 var file_mge_v1_mge_proto_depIdxs = []int32{
-	7, // 0: mge.v1.GetRatingsOverallRequest.filter:type_name -> database.query.v1.Filter
-	8, // 1: mge.v1.PlayerStats.last_played:type_name -> google.protobuf.Timestamp
-	2, // 2: mge.v1.GetRatingsOverallResponse.stats:type_name -> mge.v1.PlayerStats
-	7, // 3: mge.v1.GetHistoryRequest.filter:type_name -> database.query.v1.Filter
-	0, // 4: mge.v1.GetHistoryRequest.mode:type_name -> mge.v1.DuelMode
-	8, // 5: mge.v1.Duel.game_time:type_name -> google.protobuf.Timestamp
-	5, // 6: mge.v1.GetHistoryResponse.history:type_name -> mge.v1.Duel
-	1, // 7: mge.v1.MGEService.GetRatingsOverall:input_type -> mge.v1.GetRatingsOverallRequest
-	4, // 8: mge.v1.MGEService.GetHistory:input_type -> mge.v1.GetHistoryRequest
-	3, // 9: mge.v1.MGEService.GetRatingsOverall:output_type -> mge.v1.GetRatingsOverallResponse
-	6, // 10: mge.v1.MGEService.GetHistory:output_type -> mge.v1.GetHistoryResponse
-	9, // [9:11] is the sub-list for method output_type
-	7, // [7:9] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	7,  // 0: mge.v1.GetRatingsOverallRequest.filter:type_name -> database.query.v1.Filter
+	8,  // 1: mge.v1.PlayerStats.last_played:type_name -> google.protobuf.Timestamp
+	2,  // 2: mge.v1.GetRatingsOverallResponse.stats:type_name -> mge.v1.PlayerStats
+	7,  // 3: mge.v1.GetHistoryRequest.filter:type_name -> database.query.v1.Filter
+	0,  // 4: mge.v1.GetHistoryRequest.mode:type_name -> mge.v1.DuelMode
+	8,  // 5: mge.v1.Duel.game_time:type_name -> google.protobuf.Timestamp
+	0,  // 6: mge.v1.Duel.duel_mode:type_name -> mge.v1.DuelMode
+	5,  // 7: mge.v1.GetHistoryResponse.history:type_name -> mge.v1.Duel
+	1,  // 8: mge.v1.MGEService.GetRatingsOverall:input_type -> mge.v1.GetRatingsOverallRequest
+	4,  // 9: mge.v1.MGEService.GetHistory:input_type -> mge.v1.GetHistoryRequest
+	3,  // 10: mge.v1.MGEService.GetRatingsOverall:output_type -> mge.v1.GetRatingsOverallResponse
+	6,  // 11: mge.v1.MGEService.GetHistory:output_type -> mge.v1.GetHistoryResponse
+	10, // [10:12] is the sub-list for method output_type
+	8,  // [8:10] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_mge_v1_mge_proto_init() }

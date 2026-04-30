@@ -288,19 +288,19 @@ var File_wiki_v1_wiki_proto protoreflect.FileDescriptor
 
 const file_wiki_v1_wiki_proto_rawDesc = "" +
 	"\n" +
-	"\x12wiki/v1/wiki.proto\x12\awiki.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"\x9e\x02\n" +
-	"\x04Wiki\x12\x1a\n" +
-	"\x04slug\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04slug\x12\x1f\n" +
-	"\abody_md\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06bodyMd\x12\x1a\n" +
-	"\brevision\x18\x03 \x01(\x05R\brevision\x12G\n" +
-	"\x10permission_level\x18\x04 \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\x129\n" +
+	"\x12wiki/v1/wiki.proto\x12\awiki.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"\xba\x02\n" +
+	"\x04Wiki\x12 \n" +
+	"\x04slug\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18(R\x04slug\x12'\n" +
+	"\abody_md\x18\x02 \x01(\tB\x0e\xbaH\v\xc8\x01\x01r\x06\x10\x01\x18І\x03R\x06bodyMd\x12#\n" +
+	"\brevision\x18\x03 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\brevision\x12L\n" +
+	"\x10permission_level\x18\x04 \x01(\x0e2\x14.person.v1.PrivilegeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x0fpermissionLevel\x129\n" +
 	"\n" +
 	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
 	"\n" +
-	"updated_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"(\n" +
+	"updated_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\".\n" +
 	"\n" +
-	"GetRequest\x12\x1a\n" +
-	"\x04slug\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04slug\"8\n" +
+	"GetRequest\x12 \n" +
+	"\x04slug\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18(R\x04slug\"8\n" +
 	"\vGetResponse\x12)\n" +
 	"\x04wiki\x18\x01 \x01(\v2\r.wiki.v1.WikiB\x06\xbaH\x03\xc8\x01\x01R\x04wiki\":\n" +
 	"\rUpdateRequest\x12)\n" +

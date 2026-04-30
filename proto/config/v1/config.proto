@@ -73,8 +73,14 @@ enum FileServeMode {
 message General {
   string site_name = 1 [(buf.validate.field).required = true];
   string site_description = 2 [(buf.validate.field).required = true];
-  RunMode mode = 3 [(buf.validate.field).required = true];
-  FileServeMode file_serve_mode = 4 [(buf.validate.field).required = true];
+  RunMode mode = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  FileServeMode file_serve_mode = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
   string srcds_log_addr = 5 [(buf.validate.field).required = true];
   string asset_url = 6 [(buf.validate.field).required = true];
   string favicon = 7 [(buf.validate.field).required = true];
@@ -105,7 +111,10 @@ enum DemoStrategy {
 
 message Demo {
   bool cleanup_enabled = 1 [(buf.validate.field).required = true];
-  DemoStrategy strategy = 2 [(buf.validate.field).required = true];
+  DemoStrategy strategy = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
   float cleanup_min_pct = 3 [(buf.validate.field).required = true];
   string cleanup_mount = 4 [(buf.validate.field).required = true];
   int64 count_limit = 5 [(buf.validate.field).required = true];
@@ -159,11 +168,17 @@ enum Level {
 }
 
 message Log {
-  Level level = 1 [(buf.validate.field).required = true];
+  Level level = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
   string file = 2 [(buf.validate.field).required = true];
   bool http_enabled = 3 [(buf.validate.field).required = true];
   bool http_otel_enabled = 4 [(buf.validate.field).required = true];
-  Level http_level = 5 [(buf.validate.field).required = true];
+  Level http_level = 5 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
 }
 
 message GeoLocation {
@@ -192,7 +207,10 @@ message SSH {
   string username = 2 [(buf.validate.field).required = true];
   int32 port = 3 [(buf.validate.field).required = true];
   string private_key_path = 4 [(buf.validate.field).required = true];
-  HostKeyStrategy host_key_strategy = 5 [(buf.validate.field).required = true];
+  HostKeyStrategy host_key_strategy = 5 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
   string password = 6 [(buf.validate.field).required = true];
   int32 update_interval = 7 [(buf.validate.field).required = true];
   int32 timeout = 8 [(buf.validate.field).required = true];
@@ -226,7 +244,10 @@ enum Action {
 
 message Anticheat {
   bool enabled = 1 [(buf.validate.field).required = true];
-  Action action = 2 [(buf.validate.field).required = true];
+  Action action = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
   int32 duration = 3 [(buf.validate.field).required = true];
   int32 max_aim_snaps = 4 [(buf.validate.field).required = true];
   int32 max_psilent = 5 [(buf.validate.field).required = true];

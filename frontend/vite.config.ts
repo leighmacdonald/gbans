@@ -11,7 +11,11 @@ export default defineConfig({
 	build: {
 		copyPublicDir: true,
 		sourcemap: "hidden",
-		rolldownOptions: {},
+		rolldownOptions: {
+			checks: {
+				circularDependency: true,
+			},
+		},
 	},
 
 	server: {

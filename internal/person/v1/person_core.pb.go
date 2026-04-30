@@ -143,21 +143,25 @@ var File_person_v1_person_core_proto protoreflect.FileDescriptor
 
 const file_person_v1_person_core_proto_rawDesc = "" +
 	"\n" +
-	"\x1bperson/v1/person_core.proto\x12\tperson.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\x1a\x17person/v1/steamid.proto\"\xb1\x03\n" +
+	"\x1bperson/v1/person_core.proto\x12\tperson.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"\xd1\x03\n" +
 	"\n" +
-	"PersonCore\x12$\n" +
-	"\bsteam_id\x18\x01 \x01(\x03B\t\xbaH\x06\"\x04\x80\xf1\x04\x01R\asteamId\x12G\n" +
-	"\x10permission_level\x18\x02 \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\x12\x1a\n" +
-	"\x04name\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12,\n" +
+	"PersonCore\x12-\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\x12\xbaH\x0f\xc8\x01\x01\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\asteamId\x12L\n" +
+	"\x10permission_level\x18\x02 \x01(\x0e2\x14.person.v1.PrivilegeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x0fpermissionLevel\x12 \n" +
+	"\x04name\x18\x03 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x02\x18 R\x04name\x12,\n" +
 	"\vavatar_hash\x18\x04 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x98\x01(R\n" +
 	"avatarHash\x12\x1d\n" +
 	"\n" +
 	"discord_id\x18\x05 \x01(\tR\tdiscordId\x12\x1d\n" +
 	"\n" +
-	"patreon_id\x18\x06 \x01(\tR\tpatreonId\x12!\n" +
-	"\bvac_bans\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\avacBans\x12#\n" +
-	"\tgame_bans\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bgameBans\x12\x1d\n" +
-	"\x06ban_id\x18\t \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05banId\x12E\n" +
+	"patreon_id\x18\x06 \x01(\tR\tpatreonId\x12%\n" +
+	"\bvac_bans\x18\a \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\avacBans\x12'\n" +
+	"\tgame_bans\x18\b \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\bgameBans\x12!\n" +
+	"\x06ban_id\x18\t \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\x05banId\x12E\n" +
 	"\ftime_created\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\vtimeCreatedB\xa2\x01\n" +
 	"\rcom.person.v1B\x0fPersonCoreProtoP\x01Z;github.com/leighmacdonald/gbans/internal/person/v1;personv1\xa2\x02\x03PXX\xaa\x02\tPerson.V1\xca\x02\tPerson\\V1\xe2\x02\x15Person\\V1\\GPBMetadata\xea\x02\n" +
@@ -197,7 +201,6 @@ func file_person_v1_person_core_proto_init() {
 		return
 	}
 	file_person_v1_privilege_proto_init()
-	file_person_v1_steamid_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

@@ -1173,19 +1173,22 @@ var File_network_v1_blocklist_proto protoreflect.FileDescriptor
 const file_network_v1_blocklist_proto_rawDesc = "" +
 	"\n" +
 	"\x1anetwork/v1/blocklist.proto\x12\n" +
-	"network.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"@\n" +
-	"\x1bWhitelistSteamCreateRequest\x12!\n" +
-	"\bsteam_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\"`\n" +
+	"network.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"L\n" +
+	"\x1bWhitelistSteamCreateRequest\x12-\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\x12\xbaH\x0f\xc8\x01\x01\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\asteamId\"`\n" +
 	"\x1cWhitelistSteamCreateResponse\x12@\n" +
-	"\twhitelist\x18\x01 \x01(\v2\x1a.network.v1.WhitelistSteamB\x06\xbaH\x03\xc8\x01\x01R\twhitelist\"@\n" +
-	"\x1bWhitelistSteamDeleteRequest\x12!\n" +
-	"\bsteam_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\"\\\n" +
+	"\twhitelist\x18\x01 \x01(\v2\x1a.network.v1.WhitelistSteamB\x06\xbaH\x03\xc8\x01\x01R\twhitelist\"L\n" +
+	"\x1bWhitelistSteamDeleteRequest\x12-\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\x12\xbaH\x0f\xc8\x01\x01\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\asteamId\"\\\n" +
 	"\x16WhitelistSteamResponse\x12B\n" +
 	"\n" +
 	"whitelists\x18\x01 \x03(\v2\x1a.network.v1.WhitelistSteamB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"whitelists\"\x8d\x02\n" +
-	"\x0eWhitelistSteam\x12!\n" +
-	"\bsteam_id\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\asteamId\x12)\n" +
+	"whitelists\"\x99\x02\n" +
+	"\x0eWhitelistSteam\x12-\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\x12\xbaH\x0f\xc8\x01\x01\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\asteamId\x12)\n" +
 	"\fpersona_name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12'\n" +
 	"\vavatar_hash\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"avatarHash\x12A\n" +
@@ -1203,9 +1206,10 @@ const file_network_v1_blocklist_proto_rawDesc = "" +
 	"\x1dWhitelistAddressCreateRequest\x12 \n" +
 	"\aaddress\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\aaddress\"f\n" +
 	"\x1eWhitelistAddressCreateResponse\x12D\n" +
-	"\twhitelist\x18\x01 \x01(\v2\x1e.network.v1.CIDRBlockWhitelistB\x06\xbaH\x03\xc8\x01\x01R\twhitelist\"5\n" +
-	"\x11CheckBlockRequest\x12 \n" +
-	"\aaddress\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\aaddress\"V\n" +
+	"\twhitelist\x18\x01 \x01(\v2\x1e.network.v1.CIDRBlockWhitelistB\x06\xbaH\x03\xc8\x01\x01R\twhitelist\"9\n" +
+	"\x11CheckBlockRequest\x12$\n" +
+	"\aaddress\x18\x01 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02x\x01R\aaddress\"V\n" +
 	"\x12CheckBlockResponse\x12 \n" +
 	"\ablocked\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\ablocked\x12\x1e\n" +
 	"\x06source\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06source\"X\n" +
@@ -1234,19 +1238,22 @@ const file_network_v1_blocklist_proto_rawDesc = "" +
 	"\n" +
 	"updated_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"j\n" +
 	"\x18BlocklistSourcesResponse\x12N\n" +
-	"\x10blocklist_source\x18\x01 \x03(\v2\x1b.network.v1.CIDRBlockSourceB\x06\xbaH\x03\xc8\x01\x01R\x0fblocklistSource\"\xa8\x02\n" +
-	"\x0fCIDRBlockSource\x127\n" +
-	"\x14cidr_block_source_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11cidrBlockSourceId\x12\x1a\n" +
-	"\x04name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12\x18\n" +
-	"\x03url\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x03url\x12 \n" +
+	"\x10blocklist_source\x18\x01 \x03(\v2\x1b.network.v1.CIDRBlockSourceB\x06\xbaH\x03\xc8\x01\x01R\x0fblocklistSource\"\xb5\x02\n" +
+	"\x0fCIDRBlockSource\x12;\n" +
+	"\x14cidr_block_source_id\x18\x01 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x11cidrBlockSourceId\x12\x1e\n" +
+	"\x04name\x18\x02 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04name\x12\x1d\n" +
+	"\x03url\x18\x03 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x88\x01\x01R\x03url\x12 \n" +
 	"\aenabled\x18\x04 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aenabled\x12A\n" +
 	"\n" +
 	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xf4\x01\n" +
-	"\vWhitelistIP\x12=\n" +
-	"\x17cidr_block_whitelist_id\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x14cidrBlockWhitelistId\x12 \n" +
-	"\aaddress\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\aaddress\x12A\n" +
+	"updated_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xfd\x01\n" +
+	"\vWhitelistIP\x12A\n" +
+	"\x17cidr_block_whitelist_id\x18\x01 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x14cidrBlockWhitelistId\x12%\n" +
+	"\aaddress\x18\x02 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xd8\x01\x01R\aaddress\x12A\n" +
 	"\n" +
 	"created_on\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +

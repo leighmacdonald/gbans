@@ -36,7 +36,10 @@ message SMAuthenticateResponse {
 }
 
 message SMSeedRequest {
-  string steam_id = 1 [(buf.validate.field).required = true];
+  string steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
 }
 
 message SMSeedResponse {
@@ -63,7 +66,10 @@ message SMOverridesResponse {
 }
 
 message SMCheckRequest {
-  string steam_id = 1 [(buf.validate.field).required = true];
+  string steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
   int32 client_id = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).int32.gte = 0,
@@ -129,6 +135,12 @@ message SMUser {
 }
 
 message SMUserGroup {
-  int32 admin_id = 1 [(buf.validate.field).required = true];
-  string group_name = 2 [(buf.validate.field).required = true];
+  int32 admin_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  string group_name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
 }

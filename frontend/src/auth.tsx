@@ -24,12 +24,25 @@ type LocalStorageProfile = Nullable<
 	Omit<Omit<PersonCore, "steamId">, "timeCreated"> & { steamId: string; timeCreated: Date }
 >;
 
+const loadToken = () => {
+	try {
+		const value = localStorage.getItem(StorageKey.Token);
+		return { token: value ? value : "" };
+	} catch {
+		return { token: undefined };
+	}
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const queryClient = useQueryClient();
 	const authClient = createClient(AuthService, finalTransport);
 	const [profile, setProfile] = useState<PersonCore>(loadProfile());
 
-	const { deleteValue: deleteTokenValue } = useStorage<string>(StorageKey.Token, "", StorageType.Local);
+	const {
+		value: tokenValue,
+		setValue: setTokenValue,
+		deleteValue: deleteTokenValue,
+	} = useStorage<{ token?: string }>(StorageKey.Token, loadToken(), StorageType.Local);
 	const { setValue: setProfileValue, deleteValue: deleteProfileValue } = useStorage<LocalStorageProfile>(
 		StorageKey.Profile,
 		undefined,
@@ -37,7 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	);
 
 	const login = useCallback(
-		async (newProfile: PersonCore) => {
+		async (newProfile: PersonCore, token: string) => {
+			setTokenValue({ token: token });
 			setProfileValue({
 				...newProfile,
 				steamId: newProfile.steamId.toString(),
@@ -45,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			});
 			setProfile(newProfile);
 		},
-		[setProfileValue, profile],
+		[setProfileValue, profile, setTokenValue],
 	);
 
 	const logout = useCallback(async () => {
@@ -68,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, [queryClient.fetchQuery, deleteProfileValue, deleteTokenValue, authClient.logout]);
 
 	const isAuthenticated = () => {
-		return Boolean(profile?.steamId ?? false);
+		return (tokenValue?.token ? Boolean(tokenValue.token?.length > 0) : false) && profile.steamId !== 0n;
 	};
 
 	const permissionLevel = () => {
@@ -79,22 +93,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		const currentLevel = permissionLevel();
 		return currentLevel >= wantedLevel;
 	};
-
-	// useEffect(() => {
-	// 	const loadProfile = async () => {
-	// 		try {
-	// 			const token = readAccessToken();
-	// 			if (!emptyOrNullString(token)) {
-	// 				const ac = new AbortController();
-	// 				await login(await apiGetCurrentProfile(ac.signal));
-	// 			}
-	// 		} catch (e) {
-	// 			logErr(e);
-	// 			await logout();
-	// 		}
-	// 	};
-	// 	loadProfile().catch(logErr);
-	// }, [login, logout]);
 
 	return (
 		<AuthContext.Provider
@@ -147,7 +145,7 @@ const loadProfile = (): PersonCore => {
 
 export type AuthContextProps = {
 	profile: PersonCore;
-	login: (profile: PersonCore) => void;
+	login: (profile: PersonCore, token: string) => void;
 	logout: () => Promise<void>;
 	isAuthenticated: () => boolean;
 	permissionLevel: () => Privilege;

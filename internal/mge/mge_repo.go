@@ -117,11 +117,11 @@ type Duels struct {
 type HistoryOpts struct {
 	query.Filter
 
-	Mode    DuelMode `schema:"mode"`
-	Winner  string   `schema:"winner"`
-	Loser   string   `schema:"loser"`
-	Winner2 string   `schema:"winner2"`
-	Loser2  string   `schema:"loser2"`
+	Mode    DuelMode        `schema:"mode"`
+	Winner  steamid.SteamID `schema:"winner"`
+	Loser   steamid.SteamID `schema:"loser"`
+	Winner2 steamid.SteamID `schema:"winner2"`
+	Loser2  steamid.SteamID `schema:"loser2"`
 }
 
 func (r Repository) History(ctx context.Context, opts HistoryOpts) ([]Duels, int64, error) {
@@ -150,18 +150,18 @@ func (r Repository) History(ctx context.Context, opts HistoryOpts) ([]Duels, int
 		LeftJoin("person l ON m.loser = l.steam_id")
 
 	var ids steamid.Collection
-	if opts.Winner != "" {
-		ids = append(ids, steamid.New(opts.Winner))
+	if opts.Winner.Valid() {
+		ids = append(ids, opts.Winner)
 	}
-	if opts.Loser != "" {
-		ids = append(ids, steamid.New(opts.Loser))
+	if opts.Loser.Valid() {
+		ids = append(ids, opts.Loser)
 	}
 	if opts.Mode == TwoVsTwo {
-		if opts.Winner2 != "" {
-			ids = append(ids, steamid.New(opts.Winner2))
+		if opts.Winner2.Valid() {
+			ids = append(ids, opts.Winner2)
 		}
-		if opts.Loser2 != "" {
-			ids = append(ids, steamid.New(opts.Loser2))
+		if opts.Loser2.Valid() {
+			ids = append(ids, opts.Loser2)
 		}
 	}
 
