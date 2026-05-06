@@ -21,8 +21,8 @@ export const Route = createFileRoute("/_guest/")({
 	component: Index,
 	head: ({ match }) => ({
 		meta: [
-			{ name: "og:description", content: match.context.appInfo.site_description },
-			{ name: "og:title", content: `Home - ${match.context.appInfo.site_name}` },
+			{ name: "og:description", content: match.context.appInfo.siteDescription },
+			{ name: "og:title", content: `Home - ${match.context.appInfo.siteName}` },
 			match.context.title("Home"),
 		],
 	}),
@@ -36,11 +36,11 @@ function Index() {
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12, sm: 12, md: 9 }}>
-				<NewsView itemsPerPage={3} assetURL={appInfo.asset_url} />
+				<NewsView itemsPerPage={3} assetURL={appInfo.assetUrl} />
 			</Grid>
 			<Grid size={{ xs: 12, sm: 12, md: 3 }}>
 				<Stack spacing={3}>
-					{profile && profile.ban_id === 0 && appInfo.servers_enabled && (
+					{profile && profile.banId === 0 && appInfo.serversEnabled && (
 						<Button
 							startIcon={<StorageIcon />}
 							fullWidth
@@ -53,7 +53,7 @@ function Index() {
 							Play Now!
 						</Button>
 					)}
-					{profile && profile.ban_id !== 0 && appInfo.reports_enabled && (
+					{profile && profile.banId !== 0 && appInfo.reportsEnabled && (
 						<Button
 							startIcon={<SupportIcon />}
 							fullWidth
@@ -61,14 +61,14 @@ function Index() {
 							variant={"contained"}
 							onClick={async () => {
 								await navigate({
-									to: `/ban/${profile.ban_id}`,
+									to: `/ban/${profile.banId}`,
 								});
 							}}
 						>
 							Appeal Ban
 						</Button>
 					)}
-					{appInfo.wiki_enabled && (
+					{appInfo.wikiEnabled && (
 						<>
 							<Button
 								component={RouterLink}
@@ -93,7 +93,7 @@ function Index() {
 							</Button>
 						</>
 					)}
-					{appInfo.patreon_enabled && (
+					{appInfo.patreonEnabled && (
 						<Button
 							component={RouterLink}
 							startIcon={<AttachMoneyIcon />}
@@ -105,7 +105,7 @@ function Index() {
 							Donate
 						</Button>
 					)}
-					{appInfo.contests_enabled && (
+					{appInfo.contestsEnabled && (
 						<Button
 							component={RouterLink}
 							startIcon={<EmojiEventsIcon />}
@@ -117,7 +117,7 @@ function Index() {
 							Contests
 						</Button>
 					)}
-					{appInfo.mge_enabled && (
+					{appInfo.mgeEnabled && (
 						<Button
 							component={RouterLink}
 							startIcon={<AdsClickIcon />}
@@ -129,7 +129,7 @@ function Index() {
 							MGE Rankings
 						</Button>
 					)}
-					{appInfo.chatlogs_enabled && (
+					{appInfo.chatlogsEnabled && (
 						<Button
 							component={RouterLink}
 							startIcon={<ChatIcon />}
@@ -141,7 +141,7 @@ function Index() {
 							Chat Logs
 						</Button>
 					)}
-					{appInfo.demos_enabled && (
+					{appInfo.demosEnabled && (
 						<Button
 							component={RouterLink}
 							startIcon={<VideocamIcon />}
@@ -165,14 +165,14 @@ function Index() {
 							Stats (Beta)
 						</Button>
 					)}*/}
-					{appInfo.discord_enabled && appInfo.link_id !== "" && (
+					{appInfo.discordEnabled && appInfo.linkId !== "" && (
 						<Button
 							component={Link}
 							startIcon={<MarkUnreadChatAltIcon />}
 							fullWidth
 							sx={{ backgroundColor: "#5865F2" }}
 							variant={"contained"}
-							href={`https://discord.gg/${appInfo.link_id}`}
+							href={`https://discord.gg/${appInfo.linkId}`}
 						>
 							Join Discord
 						</Button>

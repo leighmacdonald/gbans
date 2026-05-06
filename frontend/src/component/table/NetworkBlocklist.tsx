@@ -1,3 +1,4 @@
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -5,14 +6,17 @@ import EditIcon from "@mui/icons-material/Edit";
 import { Link } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiDeleteCIDRBlockSource, apiGetCIDRBlockLists } from "../../api/network";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx";
-import type { CIDRBlockSource } from "../../schema/network";
+import type { CIDRBlockSource } from "../../rpc/network/v1/blocklist_pb.ts";
+import {
+	blocklistSources,
+	blocklistSourcesDelete,
+} from "../../rpc/network/v1/blocklist-BlocklistService_connectquery.ts";
 import { logErr } from "../../util/errors";
-import { renderDate } from "../../util/time";
+import { renderTimestamp } from "../../util/time";
 import { CIDRBlockEditorModal } from "../modal/CIDRBlockEditorModal";
 import { ConfirmationModal } from "../modal/ConfirmationModal";
 import { BoolCell } from "./BoolCell";
@@ -27,38 +31,28 @@ export const NetworkBlocklist = () => {
 	const confirmModal = useModal(ConfirmationModal);
 	const queryClient = useQueryClient();
 
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["networkBlockListSources"],
-		queryFn: async ({ signal }) => {
-			return await apiGetCIDRBlockLists(signal);
-		},
-	});
+	const { data, isLoading, isError } = useQuery(blocklistSources);
 
-	const sourceMutation = useMutation({
-		mutationKey: ["networkBlockSourceDelete"],
-		mutationFn: async (variables: { cidr_block_source_id: number }) => {
-			const ac = new AbortController();
-			await apiDeleteCIDRBlockSource(variables.cidr_block_source_id, ac.signal);
-		},
+	const sourceMutation = useMutation(blocklistSourcesDelete, {
 		onSuccess: (_, variables) => {
 			sendFlash("success", "Blocklist source deleted");
 			queryClient.setQueryData(
 				["networkBlockListSources"],
-				data?.filter((b) => b.cidr_block_source_id !== variables.cidr_block_source_id),
+				data?.blocklistSource?.filter((b) => b.cidrBlockSourceId !== variables.cidrBlockSourceId),
 			);
 		},
 		onError: sendError,
 	});
 
 	const onDelete = useCallback(
-		async (cidr_block_source_id: number) => {
+		async (cidrBlockSourceId: number) => {
 			try {
 				const confirmed = await confirmModal.show({
 					title: "Delete CIDR Block Source?",
 					children: "This action is permanent",
 				});
 				if (confirmed) {
-					sourceMutation.mutate({ cidr_block_source_id });
+					sourceMutation.mutate({ cidrBlockSourceId });
 				}
 				await confirmModal.hide();
 			} catch (e) {
@@ -77,8 +71,8 @@ export const NetworkBlocklist = () => {
 
 				queryClient.setQueryData(
 					["networkBlockListSources"],
-					(data ?? []).map((bs) => {
-						return bs.cidr_block_source_id === updated.cidr_block_source_id ? updated : bs;
+					(data?.blocklistSource ?? []).map((bs) => {
+						return bs.cidrBlockSourceId === updated.cidrBlockSourceId ? updated : bs;
 					}),
 				);
 			} catch (e) {
@@ -105,10 +99,10 @@ export const NetworkBlocklist = () => {
 				filterVariant: "checkbox",
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue()} />,
 			}),
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "Updated",
 				grow: false,
-				Cell: ({ cell }) => renderDate(cell.getValue()),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
 		],
 		[],
@@ -117,7 +111,7 @@ export const NetworkBlocklist = () => {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ?? [],
+		data: data?.blocklistSource ?? [],
 		enableFilters: true,
 		enableHiding: true,
 		enableFacetedValues: true,
@@ -141,7 +135,7 @@ export const NetworkBlocklist = () => {
 				key={"delete"}
 				color={"error"}
 				onClick={async () => {
-					await onDelete(row.original.cidr_block_source_id);
+					await onDelete(row.original.cidrBlockSourceId);
 				}}
 			>
 				<DeleteIcon />

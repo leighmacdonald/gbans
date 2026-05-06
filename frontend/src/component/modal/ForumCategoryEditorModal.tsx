@@ -1,18 +1,12 @@
+import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
-import { useMutation } from "@tanstack/react-query";
-import { apiCreateForumCategory, apiSaveForumCategory } from "../../api/forum.ts";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { ForumCategory } from "../../schema/forum.ts";
-
-type ForumCategoryEditorValues = {
-	title: string;
-	description: string;
-	ordering: string;
-};
+import type { Category } from "../../rpc/forum/v1/forum_pb.ts";
+import { categoryEdit } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
 
 // interface ForumCategoryEditorProps {
 //     initial_forum_category_id?: number;
@@ -22,33 +16,13 @@ type ForumCategoryEditorValues = {
 //     title: titleFieldValidator
 // });
 
-export const ForumCategoryEditorModal = NiceModal.create(({ category }: { category?: ForumCategory }) => {
+export const ForumCategoryEditorModal = NiceModal.create(({ category }: { category?: Category }) => {
 	const modal = useModal();
 	const { sendError } = useUserFlashCtx();
 
-	const mutation = useMutation({
-		mutationKey: ["forumCategory"],
-		mutationFn: async (values: ForumCategoryEditorValues) => {
-			const ac = new AbortController();
-			if (category?.forum_category_id) {
-				return await apiSaveForumCategory(
-					category.forum_category_id,
-					values.title,
-					values.description,
-					Number(values.ordering),
-					ac.signal,
-				);
-			} else {
-				return await apiCreateForumCategory(
-					values.title,
-					values.description,
-					Number(values.ordering),
-					ac.signal,
-				);
-			}
-		},
-		onSuccess: async (category: ForumCategory) => {
-			modal.resolve(category);
+	const mutation = useMutation(categoryEdit, {
+		onSuccess: async (resp) => {
+			modal.resolve(resp.category);
 			await modal.hide();
 		},
 		onError: sendError,
@@ -56,7 +30,7 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutation.mutate({ ...value });
+			mutation.mutate({ ...value, ordering: Number(value.ordering) });
 		},
 		defaultValues: {
 			title: category?.title ?? "",
@@ -98,7 +72,7 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
 							<form.AppField
 								name={"ordering"}
 								children={(field) => {
-									return <field.TextField label={"Order"} />;
+									return <field.NumberField label={"Order"} />;
 								}}
 							/>
 						</Grid>

@@ -425,7 +425,7 @@ func mapRegion(region string) string {
 func discordServersMessage(currentStateRegion map[string][]*Server) []discordgo.MessageComponent {
 	var ( //nolint:prealloc
 		stats       = map[string]float64{}
-		used, total = 0, 0
+		used, total = int32(0), int32(0)
 		regionNames = make([]string, 9)
 		rows        []string
 	)
@@ -494,7 +494,7 @@ func discordServersMessage(currentStateRegion map[string][]*Server) []discordgo.
 	}
 }
 
-func discordPlayersMessage(rows []string, maxPlayers int, serverName string) []discordgo.MessageComponent {
+func discordPlayersMessage(rows []string, maxPlayers int32, serverName string) []discordgo.MessageComponent {
 	body := "No players"
 	if len(rows) > 0 {
 		body = strings.Join(rows, "\n")

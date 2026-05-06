@@ -72,7 +72,9 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, int64, err
 
 	constraints := sq.And{}
 
-	if !query.SteamUpdateOlderThan.IsZero() {
+	minDate := time.Date(2007, 0, 0, 0, 0, 0, 0, time.UTC)
+
+	if query.SteamUpdateOlderThan.After(minDate) {
 		// builder = builder.OrderBy("p.updated_on_steam ASC")
 		constraints = append(constraints, sq.Lt{"p.updated_on_steam": query.SteamUpdateOlderThan})
 	}
@@ -88,9 +90,9 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, int64, err
 		constraints = append(constraints, sq.Eq{"p.steam_id": query.SteamIDs})
 	}
 
-	if query.Personaname != "" {
+	if query.PersonaName != "" {
 		// TODO add lower-cased functional index to avoid table scan
-		constraints = append(constraints, sq.ILike{"p.personaname": normalizeStringLikeQuery(query.Personaname)})
+		constraints = append(constraints, sq.ILike{"p.personaname": normalizeStringLikeQuery(query.PersonaName)})
 	}
 
 	if query.GameBans > 0 {
@@ -101,15 +103,16 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, int64, err
 		constraints = append(constraints, sq.GtOrEq{"p.vac_bans": query.VacBans})
 	}
 
-	if query.CommunityBanned != nil {
-		constraints = append(constraints, sq.Eq{"p.community_banned": *query.CommunityBanned})
+	if query.CommunityBanned != nil && *query.CommunityBanned {
+		constraints = append(constraints, sq.Eq{"p.community_banned": true})
 	}
+
 	switch {
-	case query.TimeCreatedAfter != nil && query.TimeCreatedBefore != nil:
+	case query.TimeCreatedAfter != nil && query.TimeCreatedAfter.After(minDate) && query.TimeCreatedBefore != nil && query.TimeCreatedBefore.After(minDate):
 		constraints = append(constraints, sq.Expr("p.timecreated BETWEEN $1 AND $2", *query.TimeCreatedAfter, *query.TimeCreatedBefore))
-	case query.TimeCreatedAfter != nil:
+	case query.TimeCreatedAfter != nil && !query.TimeCreatedAfter.After(minDate):
 		constraints = append(constraints, sq.GtOrEq{"p.timecreated": *query.TimeCreatedAfter})
-	case query.TimeCreatedBefore != nil:
+	case query.TimeCreatedBefore != nil && !query.TimeCreatedBefore.After(minDate):
 		constraints = append(constraints, sq.LtOrEq{"p.timecreated": *query.TimeCreatedBefore})
 	}
 	builder = query.ApplyLimitOffsetDefault(builder)

@@ -1,6 +1,5 @@
 import { intervalToDuration } from "date-fns";
 import { z } from "zod/v4";
-import type { DataCount } from "../api";
 export enum RowsPerPage {
 	Ten = 10,
 	TwentyFive = 25,
@@ -24,19 +23,3 @@ export const commonTableSearchSchema = z.object({
 });
 
 export type Order = "asc" | "desc";
-
-export interface LazyResult<T> extends DataCount {
-	data: T[];
-}
-
-interface ColumnSort {
-	desc: boolean;
-	id: string;
-}
-export const initSortOrder = (
-	id: string | undefined,
-	desc: "desc" | "asc" | undefined,
-	def: ColumnSort,
-): ColumnSort[] => {
-	return id ? [{ id: id, desc: (desc ?? "desc") === desc }] : [def];
-};

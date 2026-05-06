@@ -1,3 +1,4 @@
+import { useQuery } from "@connectrpc/connect-query";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import AddModeratorIcon from "@mui/icons-material/AddModerator";
 import ArticleIcon from "@mui/icons-material/Article";
@@ -41,16 +42,16 @@ import { useTheme } from "@mui/material/styles";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { type MenuItemData, NestedDropdown } from "mui-nested-menu";
 import { type JSX, type MouseEvent, useCallback, useMemo, useState } from "react";
-import { apiGetNotifications } from "../api";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useColourModeCtx } from "../hooks/useColourModeCtx.ts";
 import steamLogo from "../icons/steam_login_sm.png";
-import type { appInfoDetail } from "../schema/app.ts";
-import { PermissionLevel, type UserNotification } from "../schema/people.ts";
+import type { InfoResponse } from "../rpc/config/v1/config_pb.ts";
+import type { UserNotification } from "../rpc/notification/v1/notification_pb.ts";
+import { notifications } from "../rpc/notification/v1/notification-NotificationService_connectquery.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { tf2Fonts } from "../theme";
 import { generateOIDCLink } from "../util/auth/generateOIDCLink.ts";
 import RouterLink from "./RouterLink.tsx";
@@ -62,21 +63,18 @@ interface menuRoute {
 	icon: JSX.Element;
 }
 
-export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
+export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 	const { profile, hasPermission, isAuthenticated } = useAuth();
 
-	const { data: notifications, isLoading } = useQuery({
-		queryKey: ["notifications"],
-		queryFn: async ({ signal }) => {
-			if (profile.steam_id === "") {
-				return [];
-			}
-			return (await apiGetNotifications(signal)) ?? [];
+	const { data: notificationList, isLoading } = useQuery(
+		notifications,
+		{},
+		{
+			refetchInterval: 60 * 1000,
+			refetchIntervalInBackground: true,
+			refetchOnWindowFocus: true,
 		},
-		refetchInterval: 60 * 1000,
-		refetchIntervalInBackground: true,
-		refetchOnWindowFocus: true,
-	});
+	);
 
 	const theme = useTheme();
 	const colourMode = useColourModeCtx();
@@ -118,38 +116,38 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 				icon: <DashboardIcon color={"primary"} sx={topColourOpts} />,
 			},
 		];
-		if (appInfo.servers_enabled && (profile.ban_id <= 0 || profile.muted)) {
+		if (appInfo.serversEnabled && profile.banId <= 0) {
 			items.push({
 				to: "/servers",
 				text: "Servers",
 				icon: <StorageIcon sx={topColourOpts} />,
 			});
 		}
-		if (appInfo.forums_enabled) {
+		if (appInfo.forumsEnabled) {
 			items.push({
 				to: "/forums",
 				text: "Forums",
 				icon: <ForumIcon sx={topColourOpts} />,
 			});
 		}
-		if (appInfo.wiki_enabled) {
+		if (appInfo.wikiEnabled) {
 			items.push({
 				to: "/wiki",
 				text: "Wiki",
 				icon: <ArticleIcon sx={topColourOpts} />,
 			});
 		}
-		if (appInfo.reports_enabled) {
-			if (profile.ban_id <= 0) {
+		if (appInfo.reportsEnabled) {
+			if (profile.banId <= 0) {
 				items.push({
 					to: "/report",
 					text: "Report",
 					icon: <ReportIcon sx={topColourOpts} />,
 				});
 			}
-			if (profile.ban_id > 0) {
+			if (profile.banId > 0) {
 				items.push({
-					to: `/ban/${profile.ban_id}`,
+					to: `/ban/${profile.banId}`,
 					text: "Appeal",
 					icon: <SupportIcon sx={topColourOpts} />,
 				});
@@ -157,19 +155,18 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 		}
 		return items;
 	}, [
-		appInfo.forums_enabled,
-		appInfo.reports_enabled,
-		appInfo.servers_enabled,
-		appInfo.wiki_enabled,
-		profile.ban_id,
+		appInfo.forumsEnabled,
+		appInfo.reportsEnabled,
+		appInfo.serversEnabled,
+		appInfo.wikiEnabled,
+		profile.banId,
 		topColourOpts,
-		profile.muted,
 	]);
 
 	const userItems: menuRoute[] = useMemo(() => {
 		const items = [
 			{
-				to: `/profile/${profile.steam_id}`,
+				to: `/profile/${profile.steamId}`,
 				text: "Profile",
 				icon: <AccountCircleIcon sx={colourOpts} />,
 			},
@@ -192,7 +189,7 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 			icon: <ExitToAppIcon sx={colourOpts} />,
 		});
 		return items;
-	}, [colourOpts, profile.steam_id]);
+	}, [colourOpts, profile.steamId]);
 
 	// @ts-expect-error label defined as string
 	const adminItems: MenuItemData = useMemo(() => {
@@ -331,7 +328,7 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 								...tf2Fonts,
 							}}
 						>
-							{appInfo.site_name}
+							{appInfo.siteName}
 						</Typography>
 
 						<Box
@@ -381,7 +378,7 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 								display: { xs: "flex", md: "none" },
 							}}
 						>
-							{appInfo.site_name}
+							{appInfo.siteName}
 						</Typography>
 						<Box
 							sx={{
@@ -400,15 +397,16 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 									<IconButton onClick={colourMode.toggleColorMode}>{themeIcon}</IconButton>
 								</Tooltip>
 
-								{hasPermission(PermissionLevel.User) && (
+								{hasPermission(Privilege.USER) && (
 									<IconButton component={RouterLink} to={"/notifications"} color={"inherit"}>
 										<Badge
 											color={"success"}
 											badgeContent={
 												isLoading
 													? "..."
-													: (notifications ?? []).filter((n: UserNotification) => !n.read)
-															.length
+													: (notificationList?.notifications ?? []).filter(
+															(n: UserNotification) => !n.read,
+														).length
 											}
 										>
 											<MailIcon />
@@ -428,7 +426,7 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 										</Button>
 									</Tooltip>
 								)}
-								{hasPermission(PermissionLevel.Moderator) && (
+								{hasPermission(Privilege.MODERATOR) && (
 									<VCenterBox>
 										<NestedDropdown
 											menuItemsData={adminItems}
@@ -447,7 +445,7 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 									<>
 										<Tooltip title="User Settings">
 											<IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-												<Avatar alt={profile.name} src={profile.avatarhash} />
+												<Avatar alt={profile.name} src={profile.avatarHash} />
 											</IconButton>
 										</Tooltip>
 										<Menu

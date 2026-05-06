@@ -1,11 +1,11 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: ts-form made me do it! */
 
+import { useQuery } from "@connectrpc/connect-query";
 import Filter1Icon from "@mui/icons-material/Filter1";
 import Filter2Icon from "@mui/icons-material/Filter2";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
@@ -15,13 +15,11 @@ import {
 	useMaterialReactTable,
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiMGEOverall } from "../api/mge.ts";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import {
 	createDefaultTableOptions,
-	filterValue,
 	makeRowActionsDefOptions,
 	makeSchemaDefaults,
 	makeSchemaState,
@@ -29,12 +27,13 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import type { MGEStat } from "../schema/mge.ts";
+import type { PlayerStats } from "../rpc/mge/v1/mge_pb.ts";
+import { getRatingsOverall } from "../rpc/mge/v1/mge-MGEService_connectquery.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
-import { renderDate } from "../util/time.ts";
+import { renderTimestamp } from "../util/time.ts";
 
-const columnHelper = createMRTColumnHelper<MGEStat>();
-const defaultOptions = createDefaultTableOptions<MGEStat>();
+const columnHelper = createMRTColumnHelper<PlayerStats>();
+const defaultOptions = createDefaultTableOptions<PlayerStats>();
 const defaultValues = makeSchemaDefaults({ defaultColumn: "rating" });
 const validateSearch = makeSchemaState("rating");
 
@@ -45,7 +44,7 @@ export const Route = createFileRoute("/_guest/mge/")({
 		middlewares: [stripSearchParams(defaultValues)],
 	},
 	beforeLoad: ({ context }) => {
-		ensureFeatureEnabled(context.appInfo.demos_enabled);
+		ensureFeatureEnabled(context.appInfo.demosEnabled);
 	},
 	head: ({ match }) => ({
 		meta: [
@@ -62,25 +61,11 @@ function MGEOverall() {
 	const navigate = useNavigate();
 	const search = Route.useSearch();
 
-	const { data, isLoading, isError, isRefetching } = useQuery({
-		queryKey: ["mgeStats", { search }],
-		queryFn: async ({ signal }) => {
-			const sort = search.sorting?.find((sort) => sort);
-			const steam_id = filterValue("steam_id", search.columnFilters);
-
-			return await apiMGEOverall(signal, {
-				limit: search.pagination?.pageSize,
-				offset: search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : undefined,
-				order_by: sort ? sort.id : "created_on",
-				desc: sort ? sort.desc : true,
-				steam_id: steam_id ?? undefined,
-			});
-		},
-	});
+	const { data, isLoading, isError, isRefetching } = useQuery(getRatingsOverall);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
-		(updater) => {
-			navigate({
+		async (updater) => {
+			await navigate({
 				to: "/mge/1v1",
 				search: {
 					...search,
@@ -92,8 +77,8 @@ function MGEOverall() {
 	);
 
 	const setColumnFilters: OnChangeFn<MRT_ColumnFiltersState> = useCallback(
-		(updater) => {
-			navigate({
+		async (updater) => {
+			await navigate({
 				to: "/mge",
 				search: {
 					...search,
@@ -105,8 +90,8 @@ function MGEOverall() {
 	);
 
 	const setPagination: OnChangeFn<MRT_PaginationState> = useCallback(
-		(updater) => {
-			navigate({
+		async (updater) => {
+			await navigate({
 				to: "/mge",
 				search: {
 					...search,
@@ -126,14 +111,14 @@ function MGEOverall() {
 				grow: false,
 				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
 			}),
-			columnHelper.accessor("steam_id", {
+			columnHelper.accessor("steamId", {
 				grow: true,
 				header: "Player",
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.steam_id}
-						avatar_hash={row.original.avatarhash}
-						personaname={row.original.personaname}
+						steamId={row.original.steamId}
+						avatarHash={row.original.avatarHash}
+						personaName={row.original.personaName}
 					/>
 				),
 			}),
@@ -147,12 +132,12 @@ function MGEOverall() {
 				grow: false,
 				header: "Loses",
 			}),
-			columnHelper.accessor("last_played", {
+			columnHelper.accessor("lastPlayed", {
 				header: "Last Played",
 				enableColumnFilter: false,
 				enableSorting: false,
 				grow: false,
-				Cell: ({ cell }) => renderDate(cell.getValue()),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
 		];
 	}, []);
@@ -160,8 +145,8 @@ function MGEOverall() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data?.data ?? [],
-		rowCount: data?.count ?? 0,
+		data: data?.stats ?? [],
+		rowCount: Number(data?.count ?? 0),
 		enableFilters: true,
 		enableHiding: true,
 		enableFacetedValues: true,
@@ -188,7 +173,7 @@ function MGEOverall() {
 					<IconButtonLink
 						color="primary"
 						to={"/mge/1v1"}
-						search={setColumnFilter(search, "winner", row.original.steam_id)}
+						search={setColumnFilter(search, "winner", row.original.steamId)}
 					>
 						<Filter1Icon />
 					</IconButtonLink>
@@ -197,7 +182,7 @@ function MGEOverall() {
 					<IconButtonLink
 						color="secondary"
 						to={"/mge/2v2"}
-						search={setColumnFilter(search, "winner", row.original.steam_id)}
+						search={setColumnFilter(search, "winner", row.original.steamId)}
 					>
 						<Filter2Icon />
 					</IconButtonLink>

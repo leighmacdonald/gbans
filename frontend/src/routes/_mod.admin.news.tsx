@@ -1,10 +1,11 @@
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
@@ -14,7 +15,6 @@ import {
 	useMaterialReactTable,
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiGetNewsAll, apiNewsDelete } from "../api/news.ts";
 import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { NewsEditModal } from "../component/modal/NewsEditModal.tsx";
 import { RowActionContainer } from "../component/RowActionContainer.tsx";
@@ -28,11 +28,12 @@ import {
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import type { NewsEntry } from "../schema/news.ts";
-import { renderDateTime } from "../util/time.ts";
+import type { Article } from "../rpc/news/v1/news_pb.ts";
+import { all, delete$ } from "../rpc/news/v1/news-NewsService_connectquery.ts";
+import { renderTimestamp } from "../util/time.ts";
 
-const columnHelper = createMRTColumnHelper<NewsEntry>();
-const defaultOptions = createDefaultTableOptions<NewsEntry>();
+const columnHelper = createMRTColumnHelper<Article>();
+const defaultOptions = createDefaultTableOptions<Article>();
 const defaultValues = makeSchemaDefaults({ defaultColumn: "news_id" });
 const validateSearch = makeSchemaState("news_id");
 
@@ -52,36 +53,25 @@ function AdminNews() {
 	const queryClient = useQueryClient();
 	const search = Route.useSearch();
 
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["newsList"],
-		queryFn: async ({ signal }) => {
-			return (await apiGetNewsAll(signal)) ?? [];
-		},
-	});
+	const { data, isLoading, isError } = useQuery(all);
 
 	const { sendFlash, sendError } = useUserFlashCtx();
 
 	const onCreate = useCallback(async () => {
 		try {
 			const newEntry = await NiceModal.show(NewsEditModal);
-			queryClient.setQueryData(["newsList"], [...(data ?? []), newEntry]);
+			queryClient.setQueryData(["newsList"], [...(data?.articles ?? []), newEntry]);
 			sendFlash("success", `Entry created successfully`);
 		} catch (e) {
 			sendFlash("error", `Error trying to create entry: ${e}`);
 		}
 	}, [data, queryClient, sendFlash]);
 
-	const deleteMutation = useMutation({
-		mutationKey: ["deleteNews"],
-		mutationFn: async (variables: { news_id: number }) => {
-			const ac = new AbortController();
-			await apiNewsDelete(variables.news_id, ac.signal);
-			return variables.news_id;
-		},
-		onSuccess: (news_id) => {
+	const deleteMutation = useMutation(delete$, {
+		onSuccess: (_, req) => {
 			queryClient.setQueryData(
 				["newsList"],
-				(data ?? []).filter((e) => e.news_id !== news_id),
+				(data?.articles ?? []).filter((e) => e.newsId !== req.newsId),
 			);
 			sendFlash("success", `Entry deleted successfully`);
 		},
@@ -89,7 +79,7 @@ function AdminNews() {
 	});
 
 	const onDelete = useCallback(
-		async (entry: NewsEntry) => {
+		async (entry: Article) => {
 			try {
 				const confirmed = await NiceModal.show(ConfirmationModal, {
 					title: "Delete news entry?",
@@ -98,7 +88,7 @@ function AdminNews() {
 				if (!confirmed) {
 					return;
 				}
-				deleteMutation.mutate({ news_id: entry.news_id });
+				deleteMutation.mutate({ newsId: entry.newsId });
 			} catch (e) {
 				sendFlash("error", `Failed to create confirmation modal: ${e}`);
 			}
@@ -107,14 +97,14 @@ function AdminNews() {
 	);
 
 	const onEdit = useCallback(
-		async (entry: NewsEntry) => {
+		async (entry: Article) => {
 			try {
 				const editedEntry = (await NiceModal.show(NewsEditModal, {
 					entry: entry,
-				})) as NewsEntry;
+				})) as Article;
 				queryClient.setQueryData(
 					["newsList"],
-					data?.map((e) => (e.news_id === editedEntry.news_id ? editedEntry : e)),
+					(data?.articles ?? []).map((e) => (e.newsId === editedEntry.newsId ? editedEntry : e)),
 				);
 				sendFlash("success", `Entry updated successfully`);
 			} catch (e) {
@@ -126,7 +116,7 @@ function AdminNews() {
 
 	const columns = useMemo(() => {
 		return [
-			columnHelper.accessor("news_id", {
+			columnHelper.accessor("newsId", {
 				header: "ID",
 				grow: false,
 			}),
@@ -134,19 +124,19 @@ function AdminNews() {
 				header: "Title",
 				grow: true,
 			}),
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "Created",
 				grow: false,
 				enableColumnFilter: false,
-				Cell: ({ cell }) => renderDateTime(cell.getValue()),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
-			columnHelper.accessor("updated_on", {
+			columnHelper.accessor("updatedOn", {
 				header: "Updated",
 				grow: false,
 				enableColumnFilter: false,
-				Cell: ({ cell }) => renderDateTime(cell.getValue()),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
-			columnHelper.accessor("is_published", {
+			columnHelper.accessor("isPublished", {
 				meta: { tooltip: "Published" },
 				filterVariant: "checkbox",
 				header: "Published",
@@ -204,7 +194,7 @@ function AdminNews() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ?? [],
+		data: data?.articles ?? [],
 		enableFilters: true,
 		enableRowActions: true,
 		enableFacetedValues: true,

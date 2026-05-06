@@ -31,7 +31,7 @@ type HistoryQueryFilter struct {
 
 	Query         string     `schema:"query"`
 	Personaname   string     `schema:"personaname,omitempty"`
-	ServerID      int        `schema:"server_id,omitempty"`
+	ServerID      int32      `schema:"server_id,omitempty"`
 	DateStart     *time.Time `schema:"date_start,omitempty"`
 	DateEnd       *time.Time `schema:"date_end,omitempty"`
 	Unrestricted  bool       `schema:"-"`
@@ -58,11 +58,11 @@ type Message struct {
 	AvatarHash        string          `json:"avatar_hash"`
 	PersonaName       string          `json:"persona_name"`
 	ServerName        string          `json:"server_name"`
-	ServerID          int             `json:"server_id"`
+	ServerID          int32           `json:"server_id"`
 	Body              string          `json:"body"`
 	Team              bool            `json:"team"`
 	CreatedOn         time.Time       `json:"created_on"`
-	AutoFilterFlagged int64           `json:"auto_filter_flagged"`
+	AutoFilterFlagged int32           `json:"auto_filter_flagged"`
 }
 
 type PersonMessages []Message
@@ -82,7 +82,7 @@ type Chat struct {
 	notifications notification.Notifier
 	warningMu     *sync.RWMutex
 	dry           bool
-	maxWeight     int
+	maxWeight     int32
 	warnings      map[steamid.SteamID][]UserWarning
 	owner         steamid.SteamID
 	matchTimeout  time.Duration
@@ -231,7 +231,7 @@ func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, pers
 			Avatar:        userMsg.AvatarHash,
 			ServerName:    userMsg.ServerName,
 			ServerID:      userMsg.ServerID,
-			SteamID:       userMsg.SteamID.String(),
+			SteamID:       userMsg.SteamID.Int64(),
 		},
 	}
 
@@ -284,7 +284,7 @@ func (u *Chat) check(now time.Time) {
 			}
 		}
 
-		var newSum int
+		var newSum int32
 		for idx := range u.warnings[steamID] {
 			newSum += u.warnings[steamID][idx].MatchedFilter.Weight
 			u.warnings[steamID][idx].CurrentTotal = newSum
@@ -353,21 +353,17 @@ func (u *Chat) AddChatHistory(ctx context.Context, message *Message) error {
 	return u.repository.AddChatHistory(ctx, message)
 }
 
-func (u *Chat) QueryChatHistory(ctx context.Context, user person.Info, req HistoryQueryFilter) ([]QueryChatHistoryResult, int64, error) {
-	if req.Limit <= 0 || (req.Limit > 100 && !user.HasPermission(permission.Moderator)) {
+func (u *Chat) QueryChatHistory(ctx context.Context, permissions permission.Privilege, req HistoryQueryFilter) ([]QueryChatHistoryResult, int64, error) {
+	if req.Limit <= 0 || (req.Limit > 100 && permissions < permission.Moderator) {
 		req.Limit = 100
 	}
 
-	if !user.HasPermission(permission.Moderator) {
-		req.Unrestricted = false
-	} else {
-		req.Unrestricted = true
-	}
+	req.Unrestricted = permissions >= permission.Moderator
 
 	return u.repository.QueryChatHistory(ctx, req)
 }
 
-func (u *Chat) GetPersonMessageContext(ctx context.Context, messageID int64, paddedMessageCount int) ([]QueryChatHistoryResult, error) {
+func (u *Chat) GetPersonMessageContext(ctx context.Context, messageID int64, paddedMessageCount int32) ([]QueryChatHistoryResult, error) {
 	if paddedMessageCount > 100 || paddedMessageCount <= 0 {
 		paddedMessageCount = 100
 	}

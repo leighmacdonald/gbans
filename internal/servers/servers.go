@@ -67,7 +67,7 @@ const (
 type ServerFunc func(server *Server) error
 
 type Query struct {
-	ServerID        int    `query:"server_id"`
+	ServerID        int32  `query:"server_id"`
 	IncludeDisabled bool   `query:"include_disabled"`
 	SDROnly         bool   `query:"sdr_only"`
 	ShortName       string `query:"short_name"`
@@ -78,7 +78,7 @@ type Query struct {
 type ServerInfoSafe struct {
 	ServerNameLong string `json:"server_name_long"`
 	ServerName     string `json:"server_name"`
-	ServerID       int    `json:"server_id"`
+	ServerID       int32  `json:"server_id"`
 	Colour         string `json:"colour"`
 }
 
@@ -117,7 +117,7 @@ func (s *Servers) QueryLogs(ctx context.Context, opts QueryLogOpts) ([]ServerLog
 	return s.repo.QueryLogs(ctx, opts)
 }
 
-func (s *Servers) secretAuth(ctx context.Context, secret int64, ipAddr net.IP) (int, string, error) {
+func (s *Servers) secretAuth(ctx context.Context, secret int64, ipAddr net.IP) (int32, string, error) {
 	server, err := s.repo.ServerByLogSecret(ctx, secret)
 	if err != nil {
 		return 0, "", fmt.Errorf("%w: invalid log_secret", err)
@@ -289,7 +289,7 @@ func (s *Servers) updateStates(ctx context.Context) error {
 
 // Delete performs a soft delete of the server. We use soft deleted because we dont wand to delete all the relationships
 // that rely on this suchs a stats.
-func (s *Servers) Delete(ctx context.Context, serverID int) error {
+func (s *Servers) Delete(ctx context.Context, serverID int32) error {
 	if serverID <= 0 {
 		return httphelper.ErrInvalidParameter
 	}
@@ -308,7 +308,7 @@ func (s *Servers) Delete(ctx context.Context, serverID int) error {
 	return nil
 }
 
-func (s *Servers) Server(ctx context.Context, serverID int) (Server, error) {
+func (s *Servers) Server(ctx context.Context, serverID int32) (Server, error) {
 	if serverID <= 0 {
 		return Server{}, ErrNotFound
 	}
@@ -343,18 +343,17 @@ func (s *Servers) GetByName(ctx context.Context, serverName string) (Server, err
 	return server[0], nil
 }
 
-func (s *Servers) GetByPassword(ctx context.Context, serverPassword string) (Server, error) {
-	server, errServer := s.repo.Query(ctx, Query{Password: serverPassword})
-
+func (s *Servers) GetByPassword(ctx context.Context, serverPassword string) (int32, string, error) {
+	server, errServer := s.repo.Query(ctx, Query{Password: serverPassword, IncludeDisabled: true})
 	if errServer != nil {
-		return Server{}, errServer
+		return 0, "", errServer
 	}
 
 	if len(server) == 0 {
-		return Server{}, ErrUnknownServer
+		return 0, "", ErrUnknownServer
 	}
 
-	return server[0], nil
+	return server[0].ServerID, server[0].ShortName, nil
 }
 
 func (s *Servers) Save(ctx context.Context, server Server) (Server, error) {

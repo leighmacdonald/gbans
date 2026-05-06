@@ -1,0 +1,90 @@
+edition = "2023";
+
+package votes.v1;
+
+import "buf/validate/validate.proto";
+import "database/query/v1/filter.proto";
+import "google/protobuf/timestamp.proto";
+
+enum VoteCode {
+  VOTE_CODE_FAIL_GENERIC_UNSPECIFIED = 0;
+  VOTE_CODE_FAIL_NO_OUTNUMBER_YES = 1;
+  VOTE_CODE_FAIL_QUORUM = 2;
+}
+
+service VotesService {
+  rpc Query(QueryRequest) returns (QueryResponse) {}
+}
+
+message QueryRequest {
+  database.query.v1.Filter filter = 1;
+  int64 source_id = 2 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+  int64 target_id = 3 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+  int32 server_id = 4 [(buf.validate.field).int64 = {gt: 0}];
+  string name = 5 [(buf.validate.field).string = {
+    min_len: 2
+    max_len: 32
+  }];
+  int32 success = 6;
+  bool code = 7;
+}
+
+message VoteResult {
+  int32 vote_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+  int64 source_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string source_name = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 32
+    }
+  ];
+  string source_avatar_hash = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {len: 40}
+  ];
+  int64 target_id = 5 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string target_name = 6 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 32
+    }
+  ];
+  string target_avatar_hash = 7 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {len: 40}
+  ];
+  string name = 8 [(buf.validate.field).required = true];
+  bool success = 9 [(buf.validate.field).required = true];
+  int32 server_id = 10 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+  string server_name = 11 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 40
+    }
+  ];
+  VoteCode code = 12 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  google.protobuf.Timestamp created_on = 13 [(buf.validate.field).required = true];
+}
+
+message QueryResponse {
+  repeated VoteResult results = 1 [(buf.validate.field).required = true];
+  int64 count = 2 [(buf.validate.field).required = true];
+}

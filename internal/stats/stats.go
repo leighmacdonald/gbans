@@ -28,9 +28,8 @@ func New(repo Repository, maps maps.Maps) Stats {
 	return Stats{repo: repo, maps: maps}
 }
 
-func (s Stats) Import(ctx context.Context, serverID int, demo demoparse.Demo) (*Result, error) {
+func (s Stats) Import(ctx context.Context, serverID int32, demo demoparse.Demo) (*Result, error) {
 	timeStart := time.Now().Add(-time.Duration(demo.Duration) * time.Second)
-
 	if demo.DemoType != demoparse.HL2Demo {
 		return nil, fmt.Errorf("%w: invalid demo type", ErrInvalidState)
 	}
@@ -41,6 +40,14 @@ func (s Stats) Import(ctx context.Context, serverID int, demo demoparse.Demo) (*
 
 	if demo.Filename == "" {
 		return nil, fmt.Errorf("%w: invalid file name", ErrInvalidState)
+	}
+
+	if len(demo.SteamIDs()) < MinPlayers {
+		return nil, fmt.Errorf("%w: not enough players", ErrInvalidState)
+	}
+
+	if demo.Duration < MinDuraion {
+		return nil, fmt.Errorf("%w: demo too short in length", ErrInvalidState)
 	}
 
 	if len(demo.SteamIDs()) < MinPlayers {

@@ -1,0 +1,197 @@
+edition = "2023";
+
+package person.v1;
+
+import "buf/validate/validate.proto";
+import "database/query/v1/filter.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "person/v1/person_core.proto";
+import "person/v1/privilege.proto";
+
+service PersonService {
+  rpc Profile(ProfileRequest) returns (ProfileResponse) {}
+  rpc ResolveSteamID(ResolveSteamIDRequest) returns (ResolveSteamIDResponse) {}
+
+  rpc CurrentProfile(google.protobuf.Empty) returns (CurrentProfileResponse);
+  rpc ProfileSettings(google.protobuf.Empty) returns (ProfileSettingsResponse);
+  rpc EditProfileSettings(EditProfileSettingsRequest) returns (EditProfileSettingsResponse);
+  rpc Query(QueryRequest) returns (QueryResponse);
+  rpc EditPermissions(EditPermissionsRequest) returns (EditPermissionsResponse);
+}
+
+message ProfileRequest {
+  string steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
+message ProfileResponse {
+  Profile profile = 1 [(buf.validate.field).required = true];
+}
+
+message ResolveSteamIDRequest {
+  string steam_id = 1 [(buf.validate.field).required = true];
+}
+
+message ResolveSteamIDResponse {
+  int64 steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string avatar_hash = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.len = 40
+  ];
+  string persona_name = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 32
+    }
+  ];
+}
+
+message CurrentProfileResponse {
+  PersonCore profile = 1 [(buf.validate.field).required = true];
+}
+
+message Settings {
+  int64 person_settings_id = 1 [(buf.validate.field).required = true];
+  int64 steam_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string forum_signature = 3 [(buf.validate.field).required = true];
+  bool forum_profile_messages = 4 [(buf.validate.field).required = true];
+  bool stats_hidden = 5 [(buf.validate.field).required = true];
+  bool center_projectiles = 6 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 7 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 8 [(buf.validate.field).required = true];
+}
+
+message EditProfileSettingsRequest {
+  string forum_signature = 1 [(buf.validate.field).required = true];
+  bool forum_profile_messages = 2 [(buf.validate.field).required = true];
+  bool stats_hidden = 3 [(buf.validate.field).required = true];
+  bool center_projectiles = 4 [(buf.validate.field).required = true];
+}
+
+message Profile {
+  PersonCore player = 1 [(buf.validate.field).required = true];
+  repeated SteamFriend friends = 2;
+  Settings settings = 3 [(buf.validate.field).required = true];
+}
+
+message SteamFriend {
+  google.protobuf.Timestamp friend_since = 1;
+  string relationship = 2;
+  google.protobuf.Timestamp removed_on = 3;
+  int64 steam_id = 4 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+}
+
+message UserSettings {
+  int64 person_settings_id = 1 [(buf.validate.field).required = true];
+  int64 steam_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string forum_signature = 3 [(buf.validate.field).required = true];
+  bool forum_profile_messages = 4 [(buf.validate.field).required = true];
+  bool stats_hidden = 5 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 6 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 7 [(buf.validate.field).required = true];
+}
+
+message ProfileSettingsResponse {
+  UserSettings settings = 1 [(buf.validate.field).required = true];
+}
+
+message EditProfileSettingsResponse {
+  UserSettings settings = 1 [(buf.validate.field).required = true];
+}
+
+message EditPermissionsRequest {
+  int64 steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  Privilege permission_level = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+}
+
+message EditPermissionsResponse {
+  PersonCore person = 1 [(buf.validate.field).required = true];
+}
+
+message QueryRequest {
+  database.query.v1.Filter filter = 1;
+  string persona_name = 2;
+  repeated Privilege with_permissions = 3 [(buf.validate.field).enum.defined_only = true];
+  string discord_id = 4;
+  repeated string steam_ids = 5;
+  int32 vac_bans = 6;
+  int32 game_bans = 7;
+  string avatar_hash = 8;
+  bool community_banned = 9;
+  google.protobuf.Timestamp time_created_after = 10;
+  google.protobuf.Timestamp time_created_before = 11;
+}
+
+enum VisibilityState {
+  VISIBILITY_STATE_UNSPECIFIED = 0;
+  VISIBILITY_STATE_PRIVATE = 1;
+  VISIBILITY_STATE_PUBLIC = 3;
+}
+
+message Person {
+  int64 steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  google.protobuf.Timestamp created_on = 2 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 3 [(buf.validate.field).required = true];
+  Privilege permission_level = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  bool muted = 5 [(buf.validate.field).required = true];
+  string discord_id = 6 [(buf.validate.field).required = true];
+  string patreon_id = 7 [(buf.validate.field).required = true];
+  string ip_addr = 8 [(buf.validate.field).required = true];
+  bool community_banned = 9 [(buf.validate.field).required = true];
+  int32 vac_bans = 10 [(buf.validate.field).required = true];
+  int32 game_bans = 11 [(buf.validate.field).required = true];
+  string economy_ban = 12 [(buf.validate.field).required = true];
+  int32 days_since_last_ban = 13 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on_steam = 14 [(buf.validate.field).required = true];
+  int32 playerqueue_chat_status = 15 [(buf.validate.field).required = true];
+  string playerqueue_chat_reason = 16 [(buf.validate.field).required = true];
+  string avatar_hash = 17 [(buf.validate.field).required = true];
+  int32 comment_permission = 18 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp last_logoff = 19;
+  int32 loc_city_id = 20 [(buf.validate.field).required = true];
+  string loc_country_code = 21 [(buf.validate.field).required = true];
+  string loc_state_code = 22 [(buf.validate.field).required = true];
+  string persona_name = 23 [(buf.validate.field).required = true];
+  int32 persona_state = 24 [(buf.validate.field).required = true];
+  int32 persona_state_flags = 25 [(buf.validate.field).required = true];
+  string primary_clan_id = 26 [(buf.validate.field).required = true];
+  int32 profile_state = 27 [(buf.validate.field).required = true];
+  string profile_url = 28 [(buf.validate.field).required = true];
+  string real_name = 29 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp time_created = 30 [(buf.validate.field).required = true];
+  VisibilityState visibility_state = 31 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  int32 ban_id = 32 [(buf.validate.field).required = true];
+}
+
+message QueryResponse {
+  repeated Person people = 1 [(buf.validate.field).required = true];
+  int64 count = 2 [(buf.validate.field).required = true];
+}

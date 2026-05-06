@@ -41,13 +41,13 @@ const (
 )
 
 type StacEntry struct {
-	AnticheatID int             `json:"anticheat_id"`
+	AnticheatID int64           `json:"anticheat_id"`
 	SteamID     steamid.SteamID `json:"steam_id"`
-	ServerID    int             `json:"server_id"`
+	ServerID    int32           `json:"server_id"`
 	ServerName  string          `json:"server_name"`
-	DemoID      *int            `json:"demo_id"`
+	DemoID      *int32          `json:"demo_id"`
 	DemoName    string          `json:"demo_name"`
-	DemoTick    int             `json:"demo_tick"`
+	DemoTick    int32           `json:"demo_tick"`
 	Name        string          `json:"name"`
 	Detection   Detection       `json:"detection"`
 	Summary     string          `json:"summary"`
@@ -164,7 +164,7 @@ func (p StacParser) Parse(logName string, reader io.Reader) ([]StacEntry, error)
 				if errTick != nil {
 					slog.Warn("Failed to parse demo tick", slog.String("line", line))
 				} else {
-					current.DemoTick = tick
+					current.DemoTick = int32(tick)
 				}
 			}
 		}

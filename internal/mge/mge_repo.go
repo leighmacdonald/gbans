@@ -11,16 +11,16 @@ import (
 )
 
 type PlayerStats struct {
-	StatsID     int             `json:"stats_id"`
-	Rating      int             `json:"rating"`
+	StatsID     int32           `json:"stats_id"`
+	Rating      int32           `json:"rating"`
 	SteamID     steamid.SteamID `json:"steam_id"`
 	Personaname string          `json:"personaname"`
 	Avatarhash  string          `json:"avatarhash"`
 	Name        string          `json:"name"`
-	Wins        int             `json:"wins"`
-	Losses      int             `json:"losses"`
+	Wins        int32           `json:"wins"`
+	Losses      int32           `json:"losses"`
 	LastPlayed  time.Time       `json:"last_played"`
-	HitBlip     int             `json:"hit_blip"`
+	HitBlip     int32           `json:"hit_blip"`
 }
 
 type QueryOpts struct {
@@ -59,7 +59,7 @@ func (r Repository) Query(ctx context.Context, opts QueryOpts) ([]PlayerStats, i
 	}
 	defer rows.Close()
 
-	stats := []PlayerStats{}
+	var stats []PlayerStats
 	for rows.Next() {
 		var stat PlayerStats
 		if err := rows.Scan(&stat.StatsID, &stat.Rating, &stat.SteamID, &stat.Name, &stat.Wins,
@@ -93,7 +93,7 @@ const (
 )
 
 type Duels struct {
-	DuelID             int             `json:"duel_id"`
+	DuelID             int32           `json:"duel_id"`
 	Winner             steamid.SteamID `json:"winner"`
 	WinnerAvatarhash   string          `json:"winner_avatarhash"`
 	WinnerPersonaname  string          `json:"winner_personaname"`
@@ -106,9 +106,9 @@ type Duels struct {
 	Loser2             steamid.SteamID `json:"loser2"`
 	Loser2Avatarhash   string          `json:"loser2_avatarhash"`
 	Loser2Personaname  string          `json:"loser2_personaname"`
-	WinnerScore        int             `json:"winner_score"`
-	LoserScore         int             `json:"loser_score"`
-	Winlimit           int             `json:"winlimit"`
+	WinnerScore        int32           `json:"winner_score"`
+	LoserScore         int32           `json:"loser_score"`
+	Winlimit           int32           `json:"winlimit"`
 	GameTime           time.Time       `json:"game_time"`
 	MapName            string          `json:"map_name"`
 	ArenaName          string          `json:"arena_name"`
@@ -117,11 +117,11 @@ type Duels struct {
 type HistoryOpts struct {
 	query.Filter
 
-	Mode    DuelMode `schema:"mode"`
-	Winner  string   `schema:"winner"`
-	Loser   string   `schema:"loser"`
-	Winner2 string   `schema:"winner2"`
-	Loser2  string   `schema:"loser2"`
+	Mode    DuelMode        `schema:"mode"`
+	Winner  steamid.SteamID `schema:"winner"`
+	Loser   steamid.SteamID `schema:"loser"`
+	Winner2 steamid.SteamID `schema:"winner2"`
+	Loser2  steamid.SteamID `schema:"loser2"`
 }
 
 func (r Repository) History(ctx context.Context, opts HistoryOpts) ([]Duels, int64, error) {
@@ -150,18 +150,18 @@ func (r Repository) History(ctx context.Context, opts HistoryOpts) ([]Duels, int
 		LeftJoin("person l ON m.loser = l.steam_id")
 
 	var ids steamid.Collection
-	if opts.Winner != "" {
-		ids = append(ids, steamid.New(opts.Winner))
+	if opts.Winner.Valid() {
+		ids = append(ids, opts.Winner)
 	}
-	if opts.Loser != "" {
-		ids = append(ids, steamid.New(opts.Loser))
+	if opts.Loser.Valid() {
+		ids = append(ids, opts.Loser)
 	}
 	if opts.Mode == TwoVsTwo {
-		if opts.Winner2 != "" {
-			ids = append(ids, steamid.New(opts.Winner2))
+		if opts.Winner2.Valid() {
+			ids = append(ids, opts.Winner2)
 		}
-		if opts.Loser2 != "" {
-			ids = append(ids, steamid.New(opts.Loser2))
+		if opts.Loser2.Valid() {
+			ids = append(ids, opts.Loser2)
 		}
 	}
 

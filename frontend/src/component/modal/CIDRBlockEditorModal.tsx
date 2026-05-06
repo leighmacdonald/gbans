@@ -1,14 +1,14 @@
+import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import BlockIcon from "@mui/icons-material/Block";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
-import { useMutation } from "@tanstack/react-query";
 import { z } from "zod/v4";
-import { apiCreateCIDRBlockSource, apiUpdateCIDRBlockSource } from "../../api";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { CIDRBlockSource } from "../../schema/network.ts";
+import type { CIDRBlockSource } from "../../rpc/network/v1/blocklist_pb.ts";
+import { blocklistSourcesEdit } from "../../rpc/network/v1/blocklist-BlocklistService_connectquery.ts";
 import { Heading } from "../Heading";
 
 const schema = z.object({
@@ -25,24 +25,7 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
 		url: source?.url ?? "",
 		enabled: source?.enabled ?? true,
 	};
-	const mutation = useMutation({
-		mutationKey: ["blockSource"],
-		mutationFn: async (values: z.infer<typeof schema>) => {
-			const ac = new AbortController();
-			if (source?.cidr_block_source_id) {
-				const resp = await apiUpdateCIDRBlockSource(
-					source.cidr_block_source_id,
-					values.name,
-					values.url,
-					values.enabled,
-					ac.signal,
-				);
-				modal.resolve(resp);
-			} else {
-				const resp = await apiCreateCIDRBlockSource(values.name, values.url, values.enabled, ac.signal);
-				modal.resolve(resp);
-			}
-		},
+	const mutation = useMutation(blocklistSourcesEdit, {
 		onSuccess: async () => {
 			modal.resolve();
 			await modal.hide();

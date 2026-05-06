@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { PermissionLevel } from "../schema/people.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 
 export const Route = createFileRoute("/_admin")({
 	beforeLoad: ({ context, location }) => {
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_admin")({
 			});
 		}
 
-		if (!context.auth?.hasPermission(PermissionLevel.Admin)) {
+		if (!context.auth?.hasPermission(Privilege.ADMIN)) {
 			throw redirect({ to: "/permission" });
 		}
 

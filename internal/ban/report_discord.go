@@ -61,7 +61,7 @@ func (h discordHandler) onReportReplyButton(ctx context.Context, session *discor
 		return errCaller
 	}
 
-	report, errReport := h.reports.Report(ctx, caller, reportID)
+	report, errReport := h.reports.Report(ctx, caller, int32(reportID))
 	if errReport != nil {
 		return errReport
 	}
@@ -92,12 +92,12 @@ func (h discordHandler) onReportReplySubmit(ctx context.Context, session *discor
 		return errCaller
 	}
 
-	report, errReport := h.reports.Report(ctx, caller, reportID)
+	report, errReport := h.reports.Report(ctx, caller, int32(reportID))
 	if errReport != nil {
 		return errReport
 	}
 
-	_, errMsg := h.reports.CreateMessage(ctx, reportID, caller, RequestMessageBodyMD(req))
+	_, errMsg := h.reports.CreateMessage(ctx, int32(reportID), caller, RequestMessageBodyMD(req))
 	if errMsg != nil {
 		return errMsg
 	}

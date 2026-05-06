@@ -1,3 +1,4 @@
+import { useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import { Person2 } from "@mui/icons-material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
@@ -9,10 +10,8 @@ import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
-import { apiGetForumOverview } from "../api/forum.ts";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { ForumRecentMessageActivity } from "../component/forum/ForumRecentmessageActivity.tsx";
@@ -26,11 +25,12 @@ import RouterLink from "../component/RouterLink.tsx";
 import { VCenterBox } from "../component/VCenterBox.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import type { ForumCategory } from "../schema/forum.ts";
-import { PermissionLevel } from "../schema/people.ts";
+import type { Category } from "../rpc/forum/v1/forum_pb.ts";
+import { overview } from "../rpc/forum/v1/forum-ForumService_connectquery.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { logErr } from "../util/errors.ts";
-import { avatarHashToURL, humanCount } from "../util/text.tsx";
-import { renderDateTime } from "../util/time.ts";
+import { avatarHashToURL, humanCount } from "../util/strings.ts";
+import { renderTimestamp } from "../util/time.ts";
 
 export const Route = createFileRoute("/_auth/forums/")({
 	component: ForumOverview,
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/_auth/forums/")({
 	}),
 });
 
-const CategoryBlock = ({ category }: { category: ForumCategory }) => {
+const CategoryBlock = ({ category }: { category: Category }) => {
 	const { hasPermission } = useAuth();
 
 	const onEdit = useCallback(async () => {
@@ -53,13 +53,13 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
 	}, [category]);
 
 	const buttons = useMemo(() => {
-		return hasPermission(PermissionLevel.Moderator)
+		return hasPermission(Privilege.MODERATOR)
 			? [
 					<Button
 						size={"small"}
 						variant={"contained"}
 						color={"warning"}
-						key={`cat-edit-${category.forum_category_id}`}
+						key={`cat-edit-${category.forumCategoryId}`}
 						startIcon={<ConstructionIcon />}
 						onClick={onEdit}
 					>
@@ -67,7 +67,7 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
 					</Button>,
 				]
 			: [];
-	}, [category.forum_category_id, hasPermission, onEdit]);
+	}, [category.forumCategoryId, hasPermission, onEdit]);
 
 	return (
 		<ContainerWithHeaderAndButtons title={category.title} iconLeft={<CategoryIcon />} buttons={buttons}>
@@ -85,7 +85,7 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
 					return (
 						<Grid
 							container
-							key={`forum-${f.forum_id}`}
+							key={`forum-${f.forumId}`}
 							spacing={1}
 							sx={{
 								"&:hover": {
@@ -100,7 +100,7 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
 
 										<Stack>
 											<VCenterBox>
-												<ForumRowLink label={f.title} to={`/forums/${f.forum_id}`} />
+												<ForumRowLink label={f.title} to={`/forums/${f.forumId}`} />
 											</VCenterBox>
 											<VCenterBox>
 												<Typography variant={"body2"}>{f.description}</Typography>
@@ -116,40 +116,40 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
 											Threads
 										</Typography>
 										<Typography variant={"body1"} align={"center"}>
-											{humanCount(f.count_threads)}
+											{humanCount(f.countThreads)}
 										</Typography>
 									</Stack>
 									<Stack>
 										<Typography variant={"body2"}>Messages</Typography>
 										<Typography variant={"body1"} align={"center"}>
-											{humanCount(f.count_messages)}
+											{humanCount(f.countMessages)}
 										</Typography>
 									</Stack>
 								</Stack>
 							</Grid>
 							<Grid size={{ xs: 5 }}>
-								{f.recent_forum_thread_id && f.recent_forum_thread_id > 0 ? (
+								{f.recentForumThreadId && f.recentForumThreadId > 0 ? (
 									<Stack direction={"row"} spacing={2}>
 										<VCenteredElement
 											icon={
 												<Avatar
-													alt={f.recent_personaname}
-													src={avatarHashToURL(f.recent_avatarhash, "medium")}
+													alt={f.recentPersonaName}
+													src={avatarHashToURL(f.recentAvatarHash, "medium")}
 												/>
 											}
 										/>
 										<Stack>
 											<ForumRowLink
 												variant={"body1"}
-												label={f.recent_forum_title ?? ""}
-												to={`/forums/thread/${f.recent_forum_thread_id}`}
+												label={f.recentForumTitle ?? ""}
+												to={`/forums/thread/${f.recentForumThreadId}`}
 											/>
 
 											<Stack direction={"row"} spacing={1}>
 												<AccessTimeIcon />
 												<VCenterBox>
 													<Typography variant={"body2"}>
-														{renderDateTime(f.recent_created_on ?? new Date())}
+														{renderTimestamp(f.recentCreatedOn)}
 													</Typography>
 												</VCenterBox>
 												<Person2 />
@@ -159,10 +159,10 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
 															color: (theme) => theme.palette.text.secondary,
 														}}
 														component={RouterLink}
-														to={`/profile/${f.recent_source_id}`}
+														to={`/profile/${f.recentSourceId}`}
 														variant={"body2"}
 													>
-														{f.recent_personaname}
+														{f.recentPersonaName}
 													</Typography>
 												</VCenterBox>
 											</Stack>
@@ -182,12 +182,7 @@ function ForumOverview() {
 	const { sendFlash } = useUserFlashCtx();
 	const { appInfo } = Route.useRouteContext();
 	const { hasPermission } = useAuth();
-	const { data: overview, isLoading } = useQuery({
-		queryKey: ["forumOverview"],
-		queryFn: async ({ signal }) => {
-			return await apiGetForumOverview(signal);
-		},
-	});
+	const { data, isLoading } = useQuery(overview);
 
 	const onNewCategory = useCallback(async () => {
 		try {
@@ -201,28 +196,28 @@ function ForumOverview() {
 	const onNewForum = useCallback(async () => {
 		try {
 			await NiceModal.show(ForumForumEditorModal, {
-				categories: overview?.categories ?? [],
+				categories: data?.categories ?? [],
 			});
 			sendFlash("success", "Created new forum successfully");
 		} catch (e) {
 			logErr(e);
 		}
-	}, [overview?.categories, sendFlash]);
+	}, [data?.categories, sendFlash]);
 
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<Typography variant={"h2"}>{appInfo.site_name} community</Typography>
+				<Typography variant={"h2"}>{appInfo.siteName} community</Typography>
 			</Grid>
 			<Grid size={{ xs: 12, md: 9 }}>
 				<Stack spacing={2}>
 					{isLoading ? (
 						<LoadingPlaceholder />
 					) : (
-						overview?.categories
+						data?.categories
 							.filter((c) => c.forums.length > 0)
 							.map((cat) => {
-								return <CategoryBlock category={cat} key={`category-${cat.forum_category_id}`} />;
+								return <CategoryBlock category={cat} key={`category-${cat.forumCategoryId}`} />;
 							})
 					)}
 				</Stack>
@@ -231,7 +226,7 @@ function ForumOverview() {
 				<Stack spacing={2}>
 					<ForumRecentMessageActivity />
 					<ForumRecentUserActivity />
-					{hasPermission(PermissionLevel.Moderator) && (
+					{hasPermission(Privilege.MODERATOR) && (
 						<ContainerWithHeader title={"Mod Tools"} iconLeft={<ConstructionIcon />}>
 							<Button onClick={onNewCategory} variant={"contained"} color={"success"}>
 								New Category

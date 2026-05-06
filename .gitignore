@@ -75,3 +75,6 @@ id_stv*
 !.markdownlint-cli2.yaml
 !.envrc
 *.vdf
+!buf*.yaml
+!.env-example
+*.vdf

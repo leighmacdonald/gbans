@@ -1,0 +1,107 @@
+edition = "2023";
+
+package news.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service NewsService {
+  rpc Latest(LatestRequest) returns (LatestResponse) {}
+  rpc Edit(EditRequest) returns (EditResponse) {}
+  rpc Create(CreateRequest) returns (CreateResponse) {}
+  rpc Delete(DeleteRequest) returns (google.protobuf.Empty) {}
+  rpc All(google.protobuf.Empty) returns (AllResponse) {}
+}
+
+message AllResponse {
+  repeated Article articles = 1 [(buf.validate.field).required = true];
+}
+
+message Article {
+  int32 news_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  string title = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 5
+      max_len: 256
+    }
+  ];
+  string body_md = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 5
+      max_len: 100000
+    }
+  ];
+  bool is_published = 4 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 5 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 6 [(buf.validate.field).required = true];
+}
+
+message DeleteRequest {
+  int32 news_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+}
+
+message LatestRequest {
+  int32 limit = 1 [(buf.validate.field).required = true];
+}
+
+message CreateRequest {
+  string title = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 5
+      max_len: 256
+    }
+  ];
+  string body_md = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 5
+      max_len: 100000
+    }
+  ];
+  bool is_published = 3 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 4 [(buf.validate.field).required = true];
+}
+message CreateResponse {
+  Article article = 1 [(buf.validate.field).required = true];
+}
+
+message LatestResponse {
+  repeated Article article = 1 [(buf.validate.field).required = true];
+}
+
+message EditRequest {
+  int32 news_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  string title = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 5
+      max_len: 256
+    }
+  ];
+  string body_md = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 5
+      max_len: 100000
+    }
+  ];
+  bool is_published = 4;
+  google.protobuf.Timestamp created_on = 5;
+}
+
+message EditResponse {
+  Article article = 1 [(buf.validate.field).required = true];
+}

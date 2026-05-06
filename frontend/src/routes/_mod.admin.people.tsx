@@ -1,12 +1,12 @@
+import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
-import { fromUnixTime } from "date-fns";
 import {
 	createMRTColumnHelper,
 	type MRT_ColumnFiltersState,
@@ -15,7 +15,6 @@ import {
 	useMaterialReactTable,
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiSearchPeople } from "../api";
 import { PersonEditModal } from "../component/modal/PersonEditModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import RouterLink from "../component/RouterLink.tsx";
@@ -37,16 +36,13 @@ import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import {
-	communityVisibilityState,
-	PermissionLevel,
-	type PermissionLevelEnum,
-	type Person,
-	permissionLevelString,
-} from "../schema/people.ts";
+import { type Person, VisibilityState } from "../rpc/person/v1/person_pb.ts";
+import { query } from "../rpc/person/v1/person-PersonService_connectquery.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { enumValues } from "../util/lists.ts";
 
-const defaultValues = makeSchemaDefaults({ defaultColumn: "created_on" });
-const validateSearch = makeSchemaState("created_on");
+const defaultValues = makeSchemaDefaults({ defaultColumn: "createdOn" });
+const validateSearch = makeSchemaState("createdOn");
 const columnHelper = createMRTColumnHelper<Person>();
 const defaultOptions = createDefaultTableOptions<Person>();
 
@@ -68,33 +64,21 @@ function AdminPeople() {
 	const { sendFlash } = useUserFlashCtx();
 	const { hasPermission } = useAuth();
 
-	const { data, isLoading, isError, isRefetching } = useQuery({
-		queryKey: ["people", { search }],
-		queryFn: async ({ signal }) => {
-			const steam_id = filterValue("steam_id", search.columnFilters);
-			const sort = search.sorting ? sortValueDefault(search.sorting, "created_on") : undefined;
+	const sort = search.sorting ? sortValueDefault(search.sorting, "createdOn") : undefined;
+	const steamId = filterValue("steamId", search.columnFilters);
 
-			return await apiSearchPeople(
-				{
-					// personaname: filterValue("body", search.columnFilters),
-					desc: sort ? sort.desc : true,
-					limit: search.pagination?.pageSize,
-					offset: search.pagination ? search.pagination.pageIndex * search.pagination?.pageSize : 0,
-					order_by: sort ? sort.id : "created_on",
-					with_permissions: filterValueNumberArray<Person, PermissionLevelEnum>(
-						"permission_level",
-						search.columnFilters,
-					),
-					steam_ids: steam_id && steam_id !== "" ? [steam_id] : [],
-					vac_bans: filterValueNumber("vac_bans", search.columnFilters),
-					game_bans: filterValueNumber("game_bans", search.columnFilters),
-					community_banned: filterValueBool("community_banned", search.columnFilters),
-					// time_created_before: filterValueDate("time_created_before", search.columnFilters),
-					// time_created_after: filterValueDate("time_created_after", search.columnFilters),
-				},
-				signal,
-			);
+	const { data, isLoading, isError, isRefetching } = useQuery(query, {
+		filter: {
+			desc: sort ? sort.desc : true,
+			limit: BigInt(search.pagination?.pageSize ?? 25n),
+			offset: BigInt(search.pagination ? search.pagination.pageIndex * search.pagination?.pageSize : 0n),
+			orderBy: sort ? sort.id : "createdOn",
 		},
+		steamIds: steamId && steamId !== "" ? [steamId] : [],
+		vacBans: filterValueNumber("vacBans", search.columnFilters),
+		gameBans: filterValueNumber("gameBans", search.columnFilters),
+		communityBanned: filterValueBool("communityBanned", search.columnFilters),
+		withPermissions: filterValueNumberArray<Person, Privilege>("permissionLevel", search.columnFilters),
 	});
 
 	const onEditPerson = useCallback(
@@ -110,9 +94,10 @@ function AdminPeople() {
 		},
 		[sendFlash],
 	);
+
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
-		(updater) => {
-			navigate({
+		async (updater) => {
+			await navigate({
 				to: Route.fullPath,
 				search: {
 					...search,
@@ -124,8 +109,8 @@ function AdminPeople() {
 	);
 
 	const setColumnFilters: OnChangeFn<MRT_ColumnFiltersState> = useCallback(
-		(updater) => {
-			navigate({
+		async (updater) => {
+			await navigate({
 				to: Route.fullPath,
 				search: {
 					...search,
@@ -137,8 +122,8 @@ function AdminPeople() {
 	);
 
 	const setPagination: OnChangeFn<MRT_PaginationState> = useCallback(
-		(updater) => {
-			navigate({
+		async (updater) => {
+			await navigate({
 				to: Route.fullPath,
 				search: {
 					...search,
@@ -155,15 +140,15 @@ function AdminPeople() {
 
 	const columns = useMemo(() => {
 		return [
-			columnHelper.accessor("steam_id", {
+			columnHelper.accessor("steamId", {
 				header: "SteamID",
 				grow: true,
 				Cell: ({ row }) => {
 					return (
 						<PersonCell
-							steam_id={row.original.steam_id}
-							personaname={row.original.persona_name}
-							avatar_hash={row.original.avatarhash}
+							steamId={row.original.steamId}
+							personaName={row.original.personaName}
+							avatarHash={row.original.avatarHash}
 						>
 							<RouterLink
 								style={{
@@ -173,65 +158,73 @@ function AdminPeople() {
 											: theme.palette.primary.dark,
 								}}
 								to={Route.fullPath}
-								search={setColumnFilter(search, "steam_id", row.original.steam_id)}
+								search={setColumnFilter(search, "steam_id", row.original.steamId)}
 							>
-								{row.original.persona_name ?? row.original.steam_id}
+								{row.original.personaName ?? row.original.steamId}
 							</RouterLink>
 						</PersonCell>
 					);
 				},
 			}),
-			columnHelper.accessor("community_visibility_state", {
+			columnHelper.accessor("visibilityState", {
 				header: "Visibility",
 				grow: false,
 				Cell: ({ cell }) => (
 					<Typography variant={"body1"}>
-						{cell.getValue() === communityVisibilityState.Public ? "Public" : "Private"}
+						{cell.getValue() === VisibilityState.PUBLIC ? "Public" : "Private"}
 					</Typography>
 				),
 			}),
-			columnHelper.accessor("vac_bans", {
+			columnHelper.accessor("vacBans", {
 				header: "Vac Bans",
 				grow: false,
 				Cell: ({ cell }) => (
 					<Typography variant={"body1"}>{cell.getValue() > 0 ? cell.getValue() : ""}</Typography>
 				),
 			}),
-			columnHelper.accessor("community_banned", {
+			columnHelper.accessor("communityBanned", {
 				header: "Comm Ban",
 				grow: false,
 				filterVariant: "checkbox",
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue()} />,
 			}),
 
-			columnHelper.accessor("time_created", {
+			columnHelper.accessor("timeCreated", {
 				header: "Created",
 				grow: false,
-				Cell: ({ cell }) => <TableCellRelativeDateField date={fromUnixTime(cell.getValue())} />,
+				Cell: ({ cell }) => {
+					const value = cell.getValue();
+					if (!value) {
+						return;
+					}
+
+					return <TableCellRelativeDateField date={timestampDate(value)} />;
+				},
 			}),
 
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "First Seen",
 				grow: false,
-				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} />,
+				Cell: ({ cell }) => {
+					const value = cell.getValue();
+					if (!value) {
+						return;
+					}
+
+					return <TableCellRelativeDateField date={timestampDate(value)} />;
+				},
 			}),
 
-			columnHelper.accessor("permission_level", {
+			columnHelper.accessor("permissionLevel", {
 				header: "Perms",
 				grow: false,
 				filterVariant: "multi-select",
-				filterSelectOptions: Object.values(PermissionLevel).map((perm) => ({
-					label: permissionLevelString(perm),
+				filterSelectOptions: enumValues(Privilege).map((perm) => ({
+					label: Privilege[perm],
 					value: perm,
 				})),
 				Cell: ({ row }) => (
-					<Typography>
-						{permissionLevelString(
-							row.original
-								? row.original.permission_level
-								: (PermissionLevel.Guest as PermissionLevelEnum),
-						)}
-					</Typography>
+					<Typography>{Privilege[row.original ? row.original.permissionLevel : Privilege.GUEST]}</Typography>
 				),
 			}),
 		];
@@ -240,8 +233,8 @@ function AdminPeople() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ? data.data : [],
-		rowCount: data ? data.count : 0,
+		data: data ? data.people : [],
+		rowCount: Number(data ? data.count : 0),
 		enableFilters: true,
 		enableRowActions: true,
 		state: {
@@ -255,10 +248,10 @@ function AdminPeople() {
 		initialState: {
 			...defaultOptions.initialState,
 			columnVisibility: {
-				steam_id: true,
-				source_id: true,
+				steamId: true,
+				sourceId: true,
 				body: true,
-				created_on: true,
+				createdOn: true,
 			},
 		},
 		manualFiltering: true,
@@ -270,7 +263,7 @@ function AdminPeople() {
 		renderRowActions: ({ row }) => (
 			<RowActionContainer>
 				<IconButton
-					disabled={!hasPermission(PermissionLevel.Admin)}
+					disabled={!hasPermission(Privilege.ADMIN)}
 					color={"warning"}
 					onClick={() => onEditPerson(row.original)}
 					key={"editperms"}

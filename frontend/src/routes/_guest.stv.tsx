@@ -1,11 +1,13 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: ts-form made me do it! */
+
+import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
+import { useQuery } from "@connectrpc/connect-query";
 import { CloudDownload } from "@mui/icons-material";
 import FlagIcon from "@mui/icons-material/Flag";
 import { IconButton, Link } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
@@ -15,7 +17,6 @@ import {
 	useMaterialReactTable,
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiGetDemos, apiGetServers } from "../api";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { TextLink } from "../component/TextLink.tsx";
@@ -30,13 +31,15 @@ import {
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
-import type { DemoFile } from "../schema/demo.ts";
+import type { Demo } from "../rpc/demo/v1/demo_pb.ts";
+import { getDemos } from "../rpc/demo/v1/demo-DemoService_connectquery.ts";
+import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
-import { humanFileSize } from "../util/text.tsx";
+import { humanFileSize } from "../util/strings.ts";
 
-const columnHelper = createMRTColumnHelper<DemoFile>();
-const defaultOptions = createDefaultTableOptions<DemoFile>();
+const columnHelper = createMRTColumnHelper<Demo>();
+const defaultOptions = createDefaultTableOptions<Demo>();
 const defaultValues = makeSchemaDefaults({ defaultColumn: "created_on" });
 const validateSearch = makeSchemaState("created_on");
 
@@ -47,21 +50,7 @@ export const Route = createFileRoute("/_guest/stv")({
 		middlewares: [stripSearchParams(defaultValues)],
 	},
 	beforeLoad: ({ context }) => {
-		ensureFeatureEnabled(context.appInfo.demos_enabled);
-	},
-	loader: async ({ context }) => {
-		const unsorted = await context.queryClient.ensureQueryData({
-			queryKey: ["serversSimple"],
-			queryFn: async ({ signal }) => {
-				return await apiGetServers(signal);
-			},
-		});
-
-		return {
-			servers: unsorted.sort((a, b) =>
-				a.server_name > b.server_name ? 1 : a.server_name < b.server_name ? -1 : 0,
-			),
-		};
+		ensureFeatureEnabled(context.appInfo.demosEnabled);
 	},
 	head: ({ match }) => ({
 		meta: [
@@ -76,16 +65,12 @@ export const Route = createFileRoute("/_guest/stv")({
 
 function STV() {
 	const { isAuthenticated } = useAuth();
-	const { servers } = Route.useLoaderData();
 	const navigate = useNavigate();
 	const search = Route.useSearch();
 
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["demos"],
-		queryFn: async ({ signal }) => {
-			return await apiGetDemos(signal);
-		},
-	});
+	const { data: serversList, isLoading: isLoadingServers } = useQuery(servers);
+
+	const { data, isLoading, isError } = useQuery(getDemos);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		(updater) => {
@@ -130,45 +115,47 @@ function STV() {
 	);
 	const columns = useMemo(() => {
 		return [
-			columnHelper.accessor("demo_id", {
+			columnHelper.accessor("demoId", {
 				header: "ID",
 				grow: false,
 				Cell: ({ cell }) => <Typography>#{cell.getValue()}</Typography>,
 			}),
-			columnHelper.accessor("server_id", {
+			columnHelper.accessor("serverId", {
 				filterFn: (row, _, filterValue) => {
-					return filterValue.length === 0 || filterValue.includes(row.original.server_id);
+					return filterValue.length === 0 || filterValue.includes(row.original.serverId);
 				},
 				filterVariant: "multi-select",
-				filterSelectOptions: servers.map((server) => ({
-					label: server.server_name,
-					value: server.server_id,
+				filterSelectOptions: serversList?.servers.map((server) => ({
+					label: server.serverName,
+					value: server.serverId,
 				})),
 				grow: false,
 				enableSorting: true,
 				enableColumnFilter: true,
 				header: "Server",
 				Cell: ({ row, cell }) => (
-					<Tooltip title={row.original.server_name_long}>
+					<Tooltip title={row.original.serverNameLong}>
 						<TextLink
 							to={"/stv"}
 							search={setColumnFilter(search, "server_id", [cell.getValue()])}
-							sx={{ color: stringToColour(row.original.server_name_short) }}
+							sx={{ color: stringToColour(row.original.serverNameShort) }}
 						>
-							{row.original.server_name_short}
+							{row.original.serverNameShort}
 						</TextLink>
 					</Tooltip>
 				),
 			}),
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "Created",
 				enableColumnFilter: false,
 				enableSorting: true,
 				filterVariant: "date",
 				grow: false,
-				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} suffix />,
+				Cell: ({ cell }) => (
+					<TableCellRelativeDateField date={timestampDate(cell.getValue() as Timestamp)} suffix />
+				),
 			}),
-			columnHelper.accessor("map_name", {
+			columnHelper.accessor("mapName", {
 				enableColumnFilter: true,
 				header: "Map Name",
 				grow: true,
@@ -176,9 +163,9 @@ function STV() {
 					<TextLink
 						to={"/stv"}
 						search={setColumnFilter(search, "map_name", cell.getValue())}
-						sx={{ color: stringToColour(row.original.map_name) }}
+						sx={{ color: stringToColour(row.original.mapName) }}
 					>
-						{row.original.map_name}
+						{row.original.mapName}
 					</TextLink>
 				),
 			}),
@@ -187,7 +174,7 @@ function STV() {
 				enableColumnFilter: false,
 				enableSorting: false,
 				grow: false,
-				Cell: ({ cell }) => <Typography>{humanFileSize(cell.getValue() as number)}</Typography>,
+				Cell: ({ cell }) => <Typography>{humanFileSize(Number(cell.getValue()))}</Typography>,
 			}),
 			columnHelper.accessor("stats", {
 				header: "SteamID",
@@ -200,12 +187,12 @@ function STV() {
 				Cell: ({ cell }) => <Typography>{Object.keys(Object(cell.getValue())).length} Players</Typography>,
 			}),
 		];
-	}, [servers, search]);
+	}, [serversList?.servers, search]);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ?? [],
+		data: data?.demos ?? [],
 		enableFilters: true,
 		enableHiding: true,
 		enableFacetedValues: true,
@@ -214,7 +201,7 @@ function STV() {
 		onSortingChange: setSorting,
 		displayColumnDefOptions: makeRowActionsDefOptions(2),
 		state: {
-			isLoading,
+			isLoading: isLoading || isLoadingServers,
 			showAlertBanner: isError,
 			columnFilters: search.columnFilters,
 			pagination: search.pagination,
@@ -236,11 +223,11 @@ function STV() {
 					disabled={!isAuthenticated()}
 					color={"error"}
 					to={"/report"}
-					search={{ demo_id: row.original.demo_id }}
+					search={{ demoId: Number(row.original.demoId) }}
 				>
 					<FlagIcon />
 				</IconButtonLink>
-				<IconButton component={Link} key={"dl-link"} color={"success"} href={`/asset/${row.original.asset_id}`}>
+				<IconButton component={Link} key={"dl-link"} color={"success"} href={`/asset/${row.original.assetId}`}>
 					<CloudDownload />
 				</IconButton>
 			</RowActionContainer>

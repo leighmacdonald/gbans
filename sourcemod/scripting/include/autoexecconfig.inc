@@ -368,6 +368,7 @@ stock static int AutoExecConfig_FormatFileName(char[] buffer, int size, char[] f
  * @param max                 Maximum floating point value that the convar can have if hasMax is true.
  * @return                    Returns one of the AUTOEXEC_APPEND values
 */
+
 stock int AutoExecConfig_AppendValue(const char[] name, const char[] defaultValue, const char[] description, int flags, bool hasMin, float min, bool hasMax, float max)
 {
 	// No config set

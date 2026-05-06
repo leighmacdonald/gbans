@@ -1,3 +1,4 @@
+import { useQuery } from "@connectrpc/connect-query";
 import { QuestionMark } from "@mui/icons-material";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import HourglassBottomIcon from "@mui/icons-material/HourglassBottom";
@@ -7,55 +8,58 @@ import type { TextFieldProps } from "@mui/material/TextField";
 import * as MUITextField from "@mui/material/TextField";
 import { useStore } from "@tanstack/react-form";
 import { useAsyncDebouncedCallback } from "@tanstack/react-pacer";
-import { type ChangeEvent, useCallback, useMemo, useState } from "react";
-import { apiGetSteamValidate, defaultAvatarHash } from "../../../api";
+import { type ChangeEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldContext } from "../../../contexts/formContext.tsx";
-import type { SteamValidate } from "../../../schema/people.ts";
-import { avatarHashToURL } from "../../../util/text.tsx";
+import type { ResolveSteamIDResponse } from "../../../rpc/person/v1/person_pb.ts";
+import { resolveSteamID } from "../../../rpc/person/v1/person-PersonService_connectquery.ts";
+import { avatarHashToURL, defaultAvatarHash } from "../../../util/strings.ts";
 import { emptyOrNullString } from "../../../util/types.ts";
 import { GradientSpinner } from "../../GradientSpinner.tsx";
 import { renderHelpText } from "./renderHelpText.ts";
 
 type Props = {
-	defaultProfile?: SteamValidate;
+	defaultProfile?: ResolveSteamIDResponse;
 } & TextFieldProps;
 
 export const SteamIDField = (props: Props) => {
 	const field = useFieldContext<string>();
 	const errors = useStore(field.store, (state) => state.meta.errors);
-	const [profile, setProfile] = useState<SteamValidate | undefined>(props.defaultProfile);
+	const [profile, setProfile] = useState<ResolveSteamIDResponse | undefined>(props.defaultProfile);
 	const [error, setError] = useState<string>();
-	const [loading, setLoading] = useState(false);
+	const [steamId, setSteamId] = useState("");
+
+	const { data, isLoading, isRefetching, isError } = useQuery(
+		resolveSteamID,
+		{ steamId },
+		{ enabled: !emptyOrNullString(steamId) },
+	);
+
+	useEffect(() => {
+		if (isLoading || isRefetching || !data) {
+			return;
+		}
+		if (isError) {
+			return;
+		}
+		setProfile(data);
+		field.setValue(data.steamId.toString());
+		setError(undefined);
+	}, [data, isLoading, field.setValue, isRefetching, isError]);
 
 	const debounced = useAsyncDebouncedCallback(
 		async () => {
 			if (!emptyOrNullString(field.state.value)) {
-				try {
-					setLoading(true);
-					const ac = new AbortController();
-					const update = await apiGetSteamValidate(field.state.value, ac.signal);
-					setProfile(update);
-					field.setValue(update.steam_id);
-					setError(undefined);
-				} catch {
-					// Doesnt work?
-					field.setErrorMap({
-						onChange: errors.map(() => "Invalid steam ID / Profile link"),
-					});
-					setError("Invalid steam ID / Profile link");
-					setProfile(undefined);
-				} finally {
-					setLoading(false);
-				}
+				setSteamId(field.state.value);
 			} else {
 				setProfile(undefined);
+				setSteamId("");
 			}
 		},
 		{ wait: 500 },
 	);
 
 	const adornment = useMemo(() => {
-		if (loading) {
+		if (isLoading || isRefetching) {
 			return <GradientSpinner />;
 		}
 		if (field.state.meta.isValidating) {
@@ -68,11 +72,19 @@ export const SteamIDField = (props: Props) => {
 			return <ErrorOutlineIcon color={"error"} sx={{ width: 40 }} />;
 		}
 		if (profile) {
-			return <Avatar src={avatarHashToURL(profile.hash ?? defaultAvatarHash)} variant={"square"} />;
+			return <Avatar src={avatarHashToURL(profile.avatarHash ?? defaultAvatarHash)} variant={"square"} />;
 		}
 
 		return <QuestionMark color={"secondary"} />;
-	}, [field.state.meta.isPristine, field.state.meta.isValidating, profile, field.state.meta.errors, error, loading]);
+	}, [
+		field.state.meta.isPristine,
+		field.state.meta.isValidating,
+		profile,
+		field.state.meta.errors,
+		error,
+		isLoading,
+		isRefetching,
+	]);
 
 	const onChange = useCallback(
 		(e: ChangeEvent<HTMLInputElement>) => {

@@ -1,3 +1,5 @@
+import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { useMutation } from "@connectrpc/connect-query";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import EditIcon from "@mui/icons-material/Edit";
 import { Divider, IconButton } from "@mui/material";
@@ -8,18 +10,17 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import { useMutation } from "@tanstack/react-query";
 import { isAfter } from "date-fns/fp";
 import { useMemo, useState } from "react";
 import { z } from "zod/v4";
-import { apiSaveThreadMessage } from "../../api/forum.ts";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useAuth } from "../../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { ForumMessage } from "../../schema/forum.ts";
-import { PermissionLevel, permissionLevelString } from "../../schema/people.ts";
-import { avatarHashToURL } from "../../util/text.tsx";
-import { renderDateTime } from "../../util/time.ts";
+import type { Message } from "../../rpc/forum/v1/forum_pb.ts";
+import { threadReplyEdit } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
+import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
+import { avatarHashToURL } from "../../util/strings.ts";
+import { renderTimestamp } from "../../util/time.ts";
 import { mdEditorRef } from "../form/field/MarkdownField.tsx";
 import { MarkDownRenderer } from "../MarkdownRenderer.tsx";
 import RouterLink from "../RouterLink.tsx";
@@ -32,9 +33,9 @@ export const ThreadMessageContainer = ({
 	onSave,
 	assetURL,
 }: {
-	message: ForumMessage;
-	onDelete: (message: ForumMessage) => Promise<void>;
-	onSave: (message: ForumMessage) => Promise<void>;
+	message: Message;
+	onDelete: (message: Message) => Promise<void>;
+	onSave: (message: Message) => Promise<void>;
 	isFirstMessage: boolean;
 	assetURL: string;
 }) => {
@@ -44,18 +45,17 @@ export const ThreadMessageContainer = ({
 	const theme = useTheme();
 
 	const editable = useMemo(() => {
-		return profile.steam_id === message.source_id || hasPermission(PermissionLevel.Moderator);
-	}, [hasPermission, message.source_id, profile.steam_id]);
+		return profile.steamId === message.sourceId || hasPermission(Privilege.MODERATOR);
+	}, [hasPermission, message.sourceId, profile.steamId]);
 
-	const mutation = useMutation({
-		mutationFn: async (variables: { body_md: string }) => {
-			const ac = new AbortController();
-			return await apiSaveThreadMessage(message.forum_message_id, variables.body_md, ac.signal);
-		},
+	const mutation = useMutation(threadReplyEdit, {
 		onSuccess: async (data) => {
+			if (!data.message) {
+				return;
+			}
 			mdEditorRef.current?.setMarkdown("");
 			setEdit(false);
-			await onSave(data);
+			await onSave(data.message);
 		},
 		onError: sendError,
 	});
@@ -63,32 +63,33 @@ export const ThreadMessageContainer = ({
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
 			mutation.mutate({
-				body_md: value.body_md ?? "",
+				forumMessageId: message.forumMessageId,
+				bodyMd: value.bodyMd ?? "",
 			});
 		},
 		defaultValues: {
-			body_md: message.body_md,
+			bodyMd: message.bodyMd,
 		},
 	});
 
 	return (
-		<Paper elevation={1} id={`${message.forum_message_id}`}>
+		<Paper elevation={1} id={`${message.forumMessageId}`}>
 			<Grid container>
 				<Grid size={{ xs: 2 }} padding={2} sx={{ backgroundColor: theme.palette.background.paper }}>
 					<Stack alignItems={"center"}>
 						<ForumAvatar
-							alt={message.personaname}
+							alt={message.personaName}
 							online={message.online}
-							src={avatarHashToURL(message.avatarhash, "medium")}
+							src={avatarHashToURL(message.avatarHash, "medium")}
 						/>
 
 						<ForumRowLink
-							label={message.personaname}
-							to={`/profile/${message.source_id}`}
+							label={message.personaName}
+							to={`/profile/${message.sourceId}`}
 							align={"center"}
 						/>
 						<Typography variant={"subtitle1"} align={"center"}>
-							{permissionLevelString(message.permission_level)}
+							{Privilege[message.permissionLevel]}
 						</Typography>
 					</Stack>
 				</Grid>
@@ -103,7 +104,7 @@ export const ThreadMessageContainer = ({
 						>
 							<Stack padding={1}>
 								<form.AppField
-									name={"body_md"}
+									name={"bodyMd"}
 									validators={{
 										onChange: z.string().min(4),
 									}}
@@ -125,13 +126,18 @@ export const ThreadMessageContainer = ({
 								<Grid size={{ xs: 6 }}>
 									<Stack direction={"row"}>
 										<Typography variant={"body2"} padding={1}>
-											{renderDateTime(message.created_on)}
+											{renderTimestamp(message.createdOn)}
 										</Typography>
-										{isAfter(message.created_on, message.updated_on) && (
-											<Typography variant={"body2"} padding={1}>
-												{`Edited: ${renderDateTime(message.updated_on)}`}
-											</Typography>
-										)}
+										{message.updatedOn &&
+											message.createdOn &&
+											isAfter(
+												timestampDate(message.createdOn),
+												timestampDate(message.updatedOn),
+											) && (
+												<Typography variant={"body2"} padding={1}>
+													{`Edited: ${renderTimestamp(message.updatedOn)}`}
+												</Typography>
+											)}
 									</Stack>
 								</Grid>
 								<Grid size={{ xs: 6 }}>
@@ -160,17 +166,17 @@ export const ThreadMessageContainer = ({
 											padding={1}
 											component={RouterLink}
 											variant={"body2"}
-											to={`#${message.forum_message_id}`}
+											to={`#${message.forumMessageId}`}
 											textAlign={"right"}
 											sx={{ color: (theme) => theme.palette.text.primary }}
 										>
-											{`#${message.forum_message_id}`}
+											{`#${message.forumMessageId}`}
 										</Typography>
 									</Stack>
 								</Grid>
 							</Grid>
 							<Grid size={{ xs: 12 }} padding={1}>
-								<MarkDownRenderer body_md={message.body_md} assetURL={assetURL} />
+								<MarkDownRenderer body_md={message.bodyMd} assetURL={assetURL} />
 
 								{message.signature !== "" && (
 									<>

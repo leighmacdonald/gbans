@@ -13,23 +13,23 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
 import { useNavigate } from "@tanstack/react-router";
-import { type MouseEventHandler, type PropsWithChildren, useCallback, useMemo, useState } from "react";
+import React, { type MouseEventHandler, type PropsWithChildren, useCallback, useMemo, useState } from "react";
 import SteamID from "steamid";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { PermissionLevel } from "../schema/people.ts";
-import { avatarHashToURL } from "../util/text.tsx";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { avatarHashToURL } from "../util/strings.ts";
 import { MenuItemLink } from "./MenuItemLink.tsx";
 import { TextLink } from "./TextLink.tsx";
 
 export type PersonCellProps = {
-	steam_id: string;
-	personaname: string;
-	avatar_hash: string;
+	steamId: string | bigint;
+	personaName: string;
+	avatarHash: string;
 	onClick?: MouseEventHandler | undefined;
 } & PropsWithChildren;
 
-export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, children }: PersonCellProps) => {
+export const PersonCell = ({ steamId, avatarHash, personaName, onClick, children }: PersonCellProps) => {
 	const { hasPermission } = useAuth();
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const open = Boolean(anchorEl);
@@ -49,17 +49,17 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 		async (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
 			event.preventDefault();
 			event.stopPropagation();
-			const sid = new SteamID(steam_id);
+			const sid = new SteamID(String(steamId));
 			await navigator.clipboard.writeText(sid.toString());
 			handleClose();
 			sendFlash("success", `Copied to clipboard: ${sid.toString()}`);
 		},
-		[steam_id, sendFlash, handleClose],
+		[steamId, sendFlash, handleClose],
 	);
 
 	const menu = useMemo(() => {
 		let items = [
-			<MenuItemLink to={`/profile/$steamId`} params={{ steamId: steam_id }} key={20}>
+			<MenuItemLink to={`/profile/$steamId`} params={{ steamId: String(steamId) }} key={20}>
 				<ListItemIcon>
 					<AccountCircleIcon fontSize="small" color={"primary"} />
 				</ListItemIcon>
@@ -67,8 +67,8 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 			</MenuItemLink>,
 
 			<MenuItem
-				onClick={() => {
-					navigate({ href: `https://steamcommunity.com/profiles/${steam_id}` });
+				onClick={async () => {
+					await navigate({ href: `https://steamcommunity.com/profiles/${steamId}` });
 				}}
 				key={30}
 			>
@@ -83,25 +83,25 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 				</ListItemIcon>
 				Copy SteamID 64
 			</MenuItem>,
-			<MenuItemLink to={`/chatlogs`} search={{ columnFilters: [{ id: "steam_id", value: steam_id }] }} key={50}>
+			<MenuItemLink to={`/chatlogs`} search={{ columnFilters: [{ id: "steam_id", value: steamId }] }} key={50}>
 				<ListItemIcon>
 					<ChatIcon fontSize="small" color={"primary"} />
 				</ListItemIcon>
 				Chat Logs
 			</MenuItemLink>,
-			<MenuItemLink to={`/stv`} search={{ columnFilters: [{ id: "stats", value: steam_id }] }} key={60}>
+			<MenuItemLink to={`/stv`} search={{ columnFilters: [{ id: "stats", value: steamId }] }} key={60}>
 				<ListItemIcon>
 					<VideocamIcon fontSize="small" color={"primary"} />
 				</ListItemIcon>
 				SourceTV History
 			</MenuItemLink>,
 		];
-		if (hasPermission(PermissionLevel.Moderator)) {
+		if (hasPermission(Privilege.MODERATOR)) {
 			items = [
 				...items,
 				<MenuItemLink
 					to={"/admin/network/playersbyip"}
-					search={{ columnFilters: [{ id: "steam_id", value: steam_id }] }}
+					search={{ columnFilters: [{ id: "steam_id", value: steamId }] }}
 					key={70}
 				>
 					<ListItemIcon>
@@ -112,7 +112,7 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 
 				<MenuItemLink
 					to={"/admin/bans"}
-					search={{ columnFilters: [{ id: "target_id", value: steam_id }] }}
+					search={{ columnFilters: [{ id: "target_id", value: steamId }] }}
 					key={80}
 				>
 					<ListItemIcon>
@@ -122,7 +122,7 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 				</MenuItemLink>,
 				<MenuItemLink
 					to={"/admin/reports"}
-					search={{ columnFilters: [{ id: "target_id", value: steam_id }] }}
+					search={{ columnFilters: [{ id: "target_id", value: steamId }] }}
 					key={90}
 				>
 					<ListItemIcon>
@@ -133,7 +133,7 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 			];
 		}
 		return items;
-	}, [copySteamID, hasPermission, steam_id, navigate]);
+	}, [copySteamID, hasPermission, steamId, navigate]);
 
 	return (
 		<>
@@ -150,8 +150,8 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 						aria-expanded={open ? "true" : undefined}
 					>
 						<Avatar
-							alt={personaname}
-							src={avatarHashToURL(avatar_hash, "small")}
+							alt={personaName}
+							src={avatarHashToURL(avatarHash, "small")}
 							variant={"rounded"}
 							sizes=""
 							sx={{ height: "32px", width: "32px" }}
@@ -170,10 +170,10 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 									: theme.palette.primary.dark,
 						}}
 						to={"/profile/$steamId"}
-						params={{ steamId: steam_id }}
+						params={{ steamId: String(steamId) }}
 						onClick={onClick ?? undefined}
 					>
-						{personaname !== "" ? personaname : steam_id}
+						{personaName !== "" ? personaName : String(steamId)}
 					</TextLink>
 				)}
 			</Box>
@@ -221,8 +221,8 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 					padding={2}
 					gap={1}
 				>
-					<Avatar src={avatarHashToURL(avatar_hash)} />
-					<Typography fontWeight={700}>{personaname ?? steam_id}</Typography>
+					<Avatar src={avatarHashToURL(avatarHash)} />
+					<Typography fontWeight={700}>{personaName ?? steamId}</Typography>
 				</Box>
 				{menu}
 			</Menu>

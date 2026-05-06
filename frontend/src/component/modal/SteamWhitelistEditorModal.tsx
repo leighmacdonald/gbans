@@ -1,35 +1,27 @@
+import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
-import { useMutation } from "@tanstack/react-query";
 import { z } from "zod/v4";
-import { apiCreateWhitelistSteam } from "../../api";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
+import { whitelistSteamCreate } from "../../rpc/network/v1/blocklist-BlocklistService_connectquery.ts";
 import { Heading } from "../Heading";
 
 const schema = z.object({
-	steam_id: z.string(),
+	steamId: z.string(),
 });
-
-type ValueType = z.infer<typeof schema>;
 
 export const SteamWhitelistEditorModal = NiceModal.create(() => {
 	const modal = useModal();
 	const { sendError } = useUserFlashCtx();
 	const defaultValues: z.input<typeof schema> = {
-		steam_id: "",
+		steamId: "",
 	};
 
-	const mutation = useMutation({
-		mutationKey: ["blockSourceSteam"],
-		mutationFn: async ({ steam_id }: ValueType) => {
-			const ac = new AbortController();
-			const resp = await apiCreateWhitelistSteam(steam_id, ac.signal);
-			modal.resolve(resp);
-		},
+	const mutation = useMutation(whitelistSteamCreate, {
 		onSuccess: async () => {
 			modal.resolve();
 			await modal.hide();
@@ -42,7 +34,7 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutation.mutate(value);
+			mutation.mutate({ steamId: BigInt(value.steamId) });
 		},
 		defaultValues,
 		validators: {
@@ -65,7 +57,7 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
 					<Grid container spacing={2}>
 						<Grid size={{ xs: 12 }}>
 							<form.AppField
-								name={"steam_id"}
+								name={"steamId"}
 								children={(field) => {
 									return <field.SteamIDField label={"Steam ID"} />;
 								}}

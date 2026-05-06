@@ -1,32 +1,21 @@
+import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
-import { useMutation } from "@tanstack/react-query";
 import { z } from "zod/v4";
-import { apiCreateWhitelistIP, apiUpdateWhitelistIP } from "../../api";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { WhitelistIP } from "../../schema/network.ts";
+import type { CIDRBlockWhitelist } from "../../rpc/network/v1/blocklist_pb.ts";
+import { whitelistAddressCreate } from "../../rpc/network/v1/blocklist-BlocklistService_connectquery.ts";
 import { Heading } from "../Heading";
 
-export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: WhitelistIP }) => {
+export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: CIDRBlockWhitelist }) => {
 	const modal = useModal();
 	const { sendError } = useUserFlashCtx();
 
-	const mutation = useMutation({
-		mutationKey: ["blockSource"],
-		mutationFn: async (values: { address: string }) => {
-			const ac = new AbortController();
-			if (source?.cidr_block_whitelist_id) {
-				const resp = await apiUpdateWhitelistIP(source.cidr_block_whitelist_id, values.address, ac.signal);
-				modal.resolve(resp);
-			} else {
-				const resp = await apiCreateWhitelistIP(values.address, ac.signal);
-				modal.resolve(resp);
-			}
-		},
+	const mutation = useMutation(whitelistAddressCreate, {
 		onSuccess: async () => {
 			modal.resolve();
 			await modal.hide();

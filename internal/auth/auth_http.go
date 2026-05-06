@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"errors"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -10,8 +9,8 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
@@ -19,33 +18,40 @@ import (
 	"github.com/yohcop/openid-go"
 )
 
+type TokenGenerator interface {
+	// MakeToken returns accesstoken, fingerprint, err
+	MakeUserToken(id person.BaseUser) (string, string, error)
+}
+
 type authHandler struct {
 	*Authentication
 
-	config *config.Configuration
-	tfAPI  thirdparty.APIProvider
-	notif  notification.Notifier
+	config         *config.Configuration
+	tfAPI          thirdparty.APIProvider
+	notif          notification.Notifier
+	tokenGenerator TokenGenerator
 }
 
 func NewAuthHandler(engine *gin.Engine, auth *Authentication, config *config.Configuration,
-	tfAPI thirdparty.APIProvider, notif notification.Notifier,
+	tfAPI thirdparty.APIProvider, notif notification.Notifier, tokenGenerator TokenGenerator,
 ) {
 	handler := &authHandler{
 		Authentication: auth,
 		config:         config,
 		tfAPI:          tfAPI,
 		notif:          notif,
+		tokenGenerator: tokenGenerator,
 	}
 
 	engine.GET("/auth/callback", handler.onSteamOIDCCallback())
 
-	authGrp := engine.Group("/")
-	{
-		// authed
-		env := authGrp.Use(auth.Middleware(permission.User))
-
-		env.GET("/api/auth/logout", handler.onAPILogout())
-	}
+	//authGrp := engine.Group("/")
+	//{
+	//	// authed
+	//	env := authGrp.Use(auth.Middleware(permission.User))
+	//
+	//	env.GET("/api/auth/logout", handler.onAPILogout())
+	//}
 }
 
 func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
@@ -107,7 +113,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 			slog.Error("Failed to create or load user profile", slog.String("error", errPerson.Error()))
 		}
 
-		token, errToken := h.MakeToken(ctx, conf.HTTPCookieKey, sid)
+		accessToken, fingerprint, errToken := h.tokenGenerator.MakeUserToken(fetchedPerson)
 		if errToken != nil {
 			ctx.Redirect(302, referralURL)
 			slog.Error("Failed to create access token pair", slog.String("error", errToken.Error()))
@@ -123,7 +129,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		}
 
 		query := parsedURL.Query()
-		query.Set("token", token.Access)
+		query.Set("token", accessToken)
 		query.Set("next_url", referralURL)
 		parsedURL.RawQuery = query.Encode()
 
@@ -138,9 +144,9 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		ctx.SetSameSite(http.SameSiteStrictMode)
 		ctx.SetCookie(
 			FingerprintCookieName,
-			token.Fingerprint,
+			fingerprint,
 			int(TokenDuration.Seconds()),
-			"/api",
+			"/connect",
 			parsedExternal.Hostname(),
 			strings.HasPrefix(strings.ToLower(conf.ExternalURL), "https://"),
 			true)
@@ -162,72 +168,73 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 	}
 }
 
-func (h *authHandler) onAPILogout() gin.HandlerFunc {
-	conf := h.config.Config()
-
-	return func(ctx *gin.Context) {
-		fingerprint, errCookie := ctx.Cookie(FingerprintCookieName)
-		if errCookie != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errCookie, httphelper.ErrBadRequest),
-				"Failed to find fingerprint cookie: %s", FingerprintCookieName))
-
-			return
-		}
-
-		parsedExternal, errExternal := url.Parse(conf.ExternalURL)
-		if errExternal != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errExternal, httphelper.ErrInternal),
-				"Invalid external url: %s", conf.ExternalURL))
-
-			return
-		}
-
-		ctx.SetCookie(FingerprintCookieName, "", -1, "/api",
-			parsedExternal.Hostname(), conf.General.Mode == config.ReleaseMode, true)
-
-		token, errToken := h.TokenFromHeader(ctx, false)
-		if errToken != nil {
-			ctx.AbortWithStatus(http.StatusUnauthorized)
-
-			return
-		}
-
-		sid, errFromToken := h.Sid64FromJWTToken(token, h.cookieKey, fingerprint)
-		if errFromToken != nil {
-			if errors.Is(errFromToken, ErrExpired) {
-				ctx.AbortWithStatus(http.StatusUnauthorized)
-
-				return
-			}
-
-			slog.Error("Failed to load sid from access token", slog.String("error", errFromToken.Error()))
-			ctx.AbortWithStatus(http.StatusForbidden)
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, gin.H{})
-
-		go func(steamID steamid.SteamID) {
-			sentry.AddBreadcrumb(&sentry.Breadcrumb{
-				Category: "auth",
-				Message:  "User logged out " + steamID.String(),
-				Level:    sentry.LevelWarning,
-			})
-
-			sentry.ConfigureScope(func(scope *sentry.Scope) {
-				scope.SetUser(sentry.User{})
-			})
-			player, errPerson := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)
-			if errPerson != nil {
-				slog.Error("Failed to create or load user profile", slog.String("error", errPerson.Error()))
-
-				return
-			}
-			h.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, logoutMessage(player)))
-		}(sid)
-	}
-}
+//
+//func (h *authHandler) onAPILogout() gin.HandlerFunc {
+//	conf := h.config.Config()
+//
+//	return func(ctx *gin.Context) {
+//		fingerprint, errCookie := ctx.Cookie(FingerprintCookieName)
+//		if errCookie != nil {
+//			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errCookie, httphelper.ErrBadRequest),
+//				"Failed to find fingerprint cookie: %s", FingerprintCookieName))
+//
+//			return
+//		}
+//
+//		parsedExternal, errExternal := url.Parse(conf.ExternalURL)
+//		if errExternal != nil {
+//			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errExternal, httphelper.ErrInternal),
+//				"Invalid external url: %s", conf.ExternalURL))
+//
+//			return
+//		}
+//
+//		ctx.SetCookie(FingerprintCookieName, "", -1, "/api",
+//			parsedExternal.Hostname(), conf.General.Mode == config.ReleaseMode, true)
+//
+//		token, errToken := h.TokenFromHeader(ctx, false)
+//		if errToken != nil {
+//			ctx.AbortWithStatus(http.StatusUnauthorized)
+//
+//			return
+//		}
+//
+//		sid, errFromToken := h.Sid64FromJWTToken(token, h.cookieKey, fingerprint)
+//		if errFromToken != nil {
+//			if errors.Is(errFromToken, ErrExpired) {
+//				ctx.AbortWithStatus(http.StatusUnauthorized)
+//
+//				return
+//			}
+//
+//			slog.Error("Failed to load sid from access token", slog.String("error", errFromToken.Error()))
+//			ctx.AbortWithStatus(http.StatusForbidden)
+//
+//			return
+//		}
+//
+//		ctx.JSON(http.StatusOK, gin.H{})
+//
+//		go func(steamID steamid.SteamID) {
+//			sentry.AddBreadcrumb(&sentry.Breadcrumb{
+//				Category: "auth",
+//				Message:  "User logged out " + steamID.String(),
+//				Level:    sentry.LevelWarning,
+//			})
+//
+//			sentry.ConfigureScope(func(scope *sentry.Scope) {
+//				scope.SetUser(sentry.User{})
+//			})
+//			player, errPerson := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)
+//			if errPerson != nil {
+//				slog.Error("Failed to create or load user profile", slog.String("error", errPerson.Error()))
+//
+//				return
+//			}
+//			h.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, logoutMessage(player)))
+//		}(sid)
+//	}
+//}
 
 // noOpDiscoveryCache implements the DiscoveryCache interface and doesn't cache anything.
 type noOpDiscoveryCache struct{}

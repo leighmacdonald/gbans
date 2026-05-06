@@ -15,28 +15,22 @@ const (
 	avatarURLFullFormat   = "https://avatars.akamai.steamstatic.com/%s_full.jpg"
 )
 
-func NewAvatar(hash string) Avatar {
-	return Avatar{hash: hash}
-}
-
-type Avatar struct {
-	hash string
-}
+type Avatar string
 
 func (h Avatar) Full() string {
-	return fmt.Sprintf(avatarURLFullFormat, h.hash)
+	return fmt.Sprintf(avatarURLFullFormat, h)
 }
 
 func (h Avatar) Medium() string {
-	return fmt.Sprintf(avatarURLMediumFormat, h.hash)
+	return fmt.Sprintf(avatarURLMediumFormat, h)
 }
 
 func (h Avatar) Small() string {
-	return fmt.Sprintf(avatarURLSmallFormat, h.hash)
+	return fmt.Sprintf(avatarURLSmallFormat, h)
 }
 
 func (h Avatar) Hash() string {
-	return h.hash
+	return string(h)
 }
 
 type Provider interface {
@@ -48,14 +42,25 @@ type DiscordPersonProvider interface {
 	GetPersonByDiscordID(ctx context.Context, discordID string) (Core, error)
 }
 
+// BaseUser is the smallest profile data set. It's comprised of the most commonly used properties and is
+// small enough to be embedded into the JWT to avoid db calls.
+type BaseUser interface {
+	GetName() string
+	GetAvatar() Avatar
+	GetSteamID() steamid.SteamID
+	HasPermission(privilege permission.Privilege) bool
+	GetPrivilege() permission.Privilege
+	Path() string
+}
+
 type Info interface {
 	GetName() string
 	GetAvatar() Avatar
 	GetSteamID() steamid.SteamID
 	GetSteamIDString() string
 	GetDiscordID() string
-	GetVACBans() int
-	GetGameBans() int
+	GetVACBans() int32
+	GetGameBans() int32
 	GetTimeCreated() time.Time
 	Path() string // link.Linkable
 	HasPermission(permission permission.Privilege) bool
@@ -70,10 +75,10 @@ type Core struct {
 	Avatarhash      string               `json:"avatarhash"`
 	DiscordID       string               `json:"discord_id"`
 	PatreonID       string               `json:"patreon_id"`
-	VacBans         int                  `json:"vac_bans"`
-	GameBans        int                  `json:"game_bans"`
+	VacBans         int32                `json:"vac_bans"`
+	GameBans        int32                `json:"game_bans"`
 	TimeCreated     time.Time            `json:"time_created"`
-	BanID           int64                `json:"ban_id"`
+	BanID           int32                `json:"ban_id"`
 }
 
 func (p Core) Permissions() permission.Privilege {
@@ -84,16 +89,20 @@ func (p Core) HasPermission(privilege permission.Privilege) bool {
 	return p.PermissionLevel >= privilege
 }
 
-func (p Core) GetVACBans() int {
+func (p Core) GetVACBans() int32 {
 	return p.VacBans
 }
 
-func (p Core) GetGameBans() int {
+func (p Core) GetGameBans() int32 {
 	return p.GameBans
 }
 
 func (p Core) GetTimeCreated() time.Time {
 	return p.TimeCreated
+}
+
+func (p Core) GetPrivilege() permission.Privilege {
+	return p.PermissionLevel
 }
 
 func (p Core) GetName() string {
@@ -106,10 +115,10 @@ func (p Core) GetName() string {
 
 func (p Core) GetAvatar() Avatar {
 	if p.Avatarhash == "" {
-		return NewAvatar("fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb")
+		return "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"
 	}
 
-	return NewAvatar(p.Avatarhash)
+	return Avatar(p.Avatarhash)
 }
 
 func (p Core) GetDiscordID() string {

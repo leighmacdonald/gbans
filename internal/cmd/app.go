@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"connectrpc.com/authn"
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
@@ -38,8 +39,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/news"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/patreon"
 	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
@@ -66,11 +67,13 @@ type BuildInfo struct {
 type GBans struct {
 	anticheat      anticheat.AntiCheat
 	assets         asset.Assets
+	appeals        ban.Appeals
 	banExpirations *ban.ExpirationMonitor
 	bans           ban.Bans
 	blocklists     network.Blocklists
 	chat           *chat.Chat
 	config         *config.Configuration
+	contests       contest.Contests
 	database       database.Database
 	demos          servers.Demos
 	forums         forum.Forums
@@ -111,17 +114,16 @@ func New() (*GBans, error) {
 	return &GBans{
 		staticConfig: staticConfig,
 		broadcaster:  broadcaster.New[logparse.EventType, logparse.ServerEvent](),
+		database:     database.New(staticConfig.DatabaseDSN, staticConfig.DatabaseAutoMigrate, staticConfig.DatabaseLogQueries),
 	}, nil
 }
 
 func (g *GBans) Init(ctx context.Context) error {
-	dbConn := database.New(g.staticConfig.DatabaseDSN, g.staticConfig.DatabaseAutoMigrate, g.staticConfig.DatabaseLogQueries)
-	if errConnect := dbConn.Connect(ctx); errConnect != nil {
+	if errConnect := g.database.Connect(ctx); errConnect != nil {
 		slog.Error("Cannot initialize database", slog.String("error", errConnect.Error()))
 
 		return errConnect
 	}
-	g.database = dbConn
 
 	configuration, errConfig := g.createConfig(ctx)
 	if errConfig != nil {
@@ -188,7 +190,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.forums = forum.New(forum.NewRepository(g.database), g.notifications, g.persons, "")
 	g.metrics = metrics.New(g.broadcaster)
 	g.news = news.New(news.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID())
-	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons, g.notifications, conf.Discord.SafeSeedChannelID(), g.servers)
+	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons, g.notifications, conf.Discord.SafeSeedChannelID(), conf.Discord.LogChannelID, conf.Discord.SafeModPingRoleID(), g.servers)
 	g.wiki = wiki.New(wiki.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID(), conf.Discord.LogChannelID)
 	g.anticheat = anticheat.New(anticheat.NewRepository(g.database), conf.Anticheat, g.notifications, g.onAnticheatBan, g.persons)
 	g.votes = votes.New(votes.NewRepository(g.database), g.broadcaster, g.notifications,
@@ -198,6 +200,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications)
 	g.mge = mge.NewMGE(mge.NewRepository(g.database))
+	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications, conf.Discord.SafeAppealLogChannelID())
 
 	if conf.Discord.Enabled {
 		anticheat.RegisterDiscordCommands(g.bot, g.anticheat)
@@ -313,7 +316,7 @@ func (g *GBans) chatHandler(ctx context.Context, exceeded bool, newWarning chat.
 
 	slog.Info("Warn limit exceeded",
 		slog.String("sid64", newWarning.UserMessage.SteamID.String()),
-		slog.Int("weight", newWarning.CurrentTotal))
+		slog.Int("weight", int(newWarning.CurrentTotal)))
 
 	return nil
 }
@@ -335,7 +338,7 @@ func (g *GBans) createConfig(ctx context.Context) (*config.Configuration, error)
 	return conf, nil
 }
 
-func (g *GBans) createAPIClient() (thirdparty.APIProvider, error) { //noling:ireturn
+func (g *GBans) createAPIClient() (thirdparty.APIProvider, error) { //nolint:ireturn
 	apiURL := os.Getenv("TFAPI_URL")
 	if apiURL == "" {
 		apiURL = "https://tf-api.roto.lol"
@@ -449,6 +452,47 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	}
 }
 
+func (g *GBans) createAPI(authMiddleware *rpc.Middleware) *http.ServeMux {
+	interceptors := rpc.CreateInterceptors()
+	api := http.NewServeMux()
+	conf := g.config.Config()
+
+	services := []rpc.Service{
+		anticheat.NewService(g.anticheat, authMiddleware, interceptors),
+		asset.NewService(g.assets, authMiddleware, interceptors),
+		auth.NewService(authMiddleware, interceptors),
+		ban.NewAppealService(g.appeals, authMiddleware, interceptors),
+		ban.NewBanService(g.bans, authMiddleware, interceptors),
+		ban.NewExportService(g.bans, strings.Split(conf.Exports.AuthorizedKeys, ","), conf.General.SiteName),
+		ban.NewReportService(g.reports, authMiddleware, interceptors),
+		chat.NewService(g.chat, authMiddleware, interceptors),
+		chat.NewWordfilterService(g.wordFilters, g.chat, g.config.Config().Filters, authMiddleware, interceptors),
+		config.NewService(g.config, BuildVersion, authMiddleware, interceptors),
+		contest.NewService(g.contests, g.assets, authMiddleware, interceptors),
+		forum.NewService(g.forums, authMiddleware, interceptors),
+		mge.NewService(g.mge, authMiddleware, interceptors),
+		network.NewBlocklistService(g.blocklists, authMiddleware, interceptors),
+		network.NewNetworkService(g.networks, authMiddleware, interceptors),
+		news.NewService(g.news, authMiddleware, interceptors),
+		notification.NewService(g.notifications, authMiddleware, interceptors),
+		person.NewPersonService(g.persons, authMiddleware, interceptors),
+		servers.NewServersService(g.servers, authMiddleware, interceptors),
+		servers.NewDemoService(g.demos, authMiddleware, interceptors),
+		servers.NewSpeedrunsService(g.speedruns, authMiddleware, interceptors),
+		sourcemod.NewPluginService(g.sourcemod, g.persons, g.servers, g.bans,
+			rpc.NewServerTokenGenerator(conf.General.SiteName, []byte(conf.Static.HTTPCookieKey)), g.notifications, conf.Discord.LogChannelID, authMiddleware, interceptors),
+		sourcemod.NewSourcemodService(g.sourcemod, authMiddleware, interceptors),
+		votes.NewService(g.votes, authMiddleware, interceptors),
+		wiki.NewService(g.wiki, authMiddleware, interceptors),
+	}
+
+	for _, service := range services {
+		api.Handle(service.Pattern, service.Handler)
+	}
+
+	return api
+}
+
 func (g *GBans) Serve(rootCtx context.Context) error {
 	ctx, stop := signal.NotifyContext(rootCtx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -480,40 +524,28 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 
 	// Create authentication middlewares
 	userAuth := auth.NewAuthentication(auth.NewRepository(g.database), conf.General.SiteName, conf.HTTPCookieKey, g.persons, g.bans, g.servers, g.config.Config().General.SentryDSN)
-	serverAuth := servers.NewServerAuth(g.servers, g.config.Config().General.SentryDSN)
+	// serverAuth := servers.NewServerAuth(g.servers, g.config.Config().General.SentryDSN)
+
+	authMiddleware := rpc.NewMiddleware(conf.General.SiteName, conf.Static.HTTPCookieKey)
 
 	// Register all our handlers with router
-	anticheat.NewAnticheatHandler(router, userAuth, g.anticheat)
-	asset.NewAssetHandler(router, userAuth, g.assets)
-	auth.NewAuthHandler(router, userAuth, g.config, g.tfapiClient, g.notifications)
-	ban.NewAppealHandler(router, userAuth, ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications, conf.Discord.LogChannelID))
-	ban.NewReportHandler(router, userAuth, g.reports)
-	ban.NewHandlerBans(router, userAuth, g.bans, conf.Exports, conf.General.SiteName)
-	chat.NewChatHandler(router, g.chat, userAuth)
-	chat.NewWordFilterHandler(router, userAuth, conf.Filters, g.wordFilters, g.chat)
-	config.NewHandler(router, userAuth, g.config, BuildVersion)
-	contest.NewContestHandler(router, userAuth, contest.NewContests(contest.NewRepository(g.database)), g.assets)
-	discordoauth.NewDiscordOAuthHandler(router, userAuth, g.config, g.persons, g.discordOAuth)
-	forum.NewForumHandler(router, userAuth, g.forums)
-	// match.NewMatchHandler(ctx, router, matchUsecase, serversUC, authUsecase, configUsecase)
+	asset.NewAssetHandler(router, g.assets)
+	auth.NewAuthHandler(router, userAuth, g.config, g.tfapiClient, g.notifications, authMiddleware)
+	discordoauth.NewDiscordOAuthHandler(router, g.config, g.persons, g.discordOAuth)
 	metrics.NewMetricsHandler(router)
-	mge.NewHandler(router, userAuth, g.mge)
-	network.NewHandler(router, userAuth, g.networks)
-	network.NewBlocklistHandler(router, userAuth, g.blocklists, g.networks)
-	news.NewNewsHandler(router, g.news, userAuth)
-	notification.NewNotificationHandler(router, userAuth, g.notifications)
-	patreon.NewPatreonHandler(router, userAuth, patreon.NewPatreon(patreon.NewRepository(g.database), conf.Patreon), g.config.Config().Patreon)
-	person.NewPersonHandler(router, userAuth, g.persons)
-	servers.NewDemoHandler(router, userAuth, g.demos)
-	servers.NewServersHandler(router, userAuth, g.servers)
-	servers.NewSpeedrunsHandler(router, userAuth, serverAuth, g.speedruns)
-	sourcemod.NewHandler(router, userAuth, serverAuth, g.sourcemod, g.notifications, conf.Discord.SafeKickLogChannelID(), g.persons)
-	votes.NewVotesHandler(router, userAuth, g.votes)
-	wiki.NewWikiHandler(router, userAuth, g.wiki)
 
 	router.GET("/health", g.healthCheck)
 
-	httpServer := httphelper.NewServer(conf.Addr(), router)
+	apiHandler := g.createAPI(authMiddleware)
+
+	mux := http.NewServeMux()
+
+	mw := authn.NewMiddleware(authMiddleware.Authenticate)
+
+	mux.Handle("/connect/", http.StripPrefix("/connect", mw.Wrap(apiHandler)))
+	mux.Handle("/", router)
+
+	httpServer := httphelper.NewServer(conf.Addr(), mux)
 
 	go func() {
 		<-ctx.Done()
@@ -535,8 +567,6 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	}
 
 	<-ctx.Done()
-
-	slog.Info("Exiting...")
 
 	return nil
 }
@@ -778,7 +808,7 @@ func downloadManager(ctx context.Context, store database.Database, conf scp.Conf
 
 			start := time.Now()
 
-			// No errgroup since we want to continue on errors.
+			// No err group since we want to continue on errors.
 			waitGroup := &sync.WaitGroup{}
 
 			for _, handler := range connections {

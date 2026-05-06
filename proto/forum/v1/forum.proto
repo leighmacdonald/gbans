@@ -1,0 +1,396 @@
+edition = "2023";
+
+package forum.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "person/v1/privilege.proto";
+
+service ForumService {
+  rpc ActiveUsers(google.protobuf.Empty) returns (ActiveUsersResponse) {}
+  rpc Overview(google.protobuf.Empty) returns (OverviewResponse) {}
+  rpc RecentMessages(google.protobuf.Empty) returns (RecentMessagesResponse) {}
+
+  rpc Thread(ThreadRequest) returns (ThreadResponse) {}
+  rpc Threads(ThreadsRequest) returns (ThreadsResponse) {}
+  rpc ThreadDelete(ThreadDeleteRequest) returns (google.protobuf.Empty) {}
+  rpc ThreadMessages(ThreadMessagesRequest) returns (ThreadMessagesResponse) {}
+  rpc ThreadCreate(ThreadCreateRequest) returns (ThreadCreateResponse) {}
+  rpc ThreadEdit(ThreadEditRequest) returns (ThreadEditResponse) {}
+  rpc ThreadReplyCreate(ThreadReplyCreateRequest) returns (ThreadReplyCreateResponse) {}
+  rpc ThreadReplyEdit(ThreadReplyEditRequest) returns (ThreadReplyEditResponse) {}
+  rpc ThreadMessageDelete(ThreadMessageDeleteRequest) returns (google.protobuf.Empty) {}
+
+  rpc CategoryCreate(CategoryCreateRequest) returns (CategoryCreateResponse) {}
+  rpc CategoryEdit(CategoryEditRequest) returns (CategoryEditResponse) {}
+  rpc Category(CategoryRequest) returns (CategoryResponse) {}
+
+  rpc Forum(ForumRequest) returns (ForumResponse) {}
+  rpc ForumCreate(ForumCreateRequest) returns (ForumCreateResponse) {}
+  rpc ForumEdit(ForumEditRequest) returns (ForumEditResponse) {}
+}
+
+message ThreadEditRequest {
+  int32 forum_thread_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  string title = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 256
+    }
+  ];
+  bool sticky = 3 [(buf.validate.field).required = true];
+  bool locked = 4 [(buf.validate.field).required = true];
+}
+
+message ThreadEditResponse {
+  Thread thread = 1 [(buf.validate.field).required = true];
+}
+
+message ForumEditResponse {
+  Forum forum = 1 [(buf.validate.field).required = true];
+}
+
+message ForumEditRequest {
+  int32 forum_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  int32 forum_category_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  person.v1.Privilege permission_level = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  string title = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 256
+    }
+  ];
+  string description = 5 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 0
+      max_len: 256
+    }
+  ];
+  int32 ordering = 6 [(buf.validate.field).required = true];
+}
+
+message ForumCreateRequest {
+  int32 forum_category_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  person.v1.Privilege permission_level = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  string title = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 256
+    }
+  ];
+  string description = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 256
+    }
+  ];
+  int32 ordering = 5 [(buf.validate.field).required = true];
+}
+
+message ForumCreateResponse {
+  Forum forum = 1 [(buf.validate.field).required = true];
+}
+
+message CategoryEditRequest {
+  int32 forum_category_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  string title = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 256
+    }
+  ];
+  string description = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 1024
+    }
+  ];
+  int32 ordering = 4 [(buf.validate.field).required = true];
+}
+
+message CategoryEditResponse {
+  Category category = 1 [(buf.validate.field).required = true];
+}
+
+message CategoryRequest {
+  int32 forum_category_id = 1 [(buf.validate.field).required = true];
+}
+
+message CategoryResponse {
+  Category category = 1 [(buf.validate.field).required = true];
+}
+
+message CategoryCreateResponse {
+  Category category = 1 [(buf.validate.field).required = true];
+}
+
+message CategoryCreateRequest {
+  string title = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 256
+    }
+  ];
+  string description = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 1024
+    }
+  ];
+  int32 ordering = 3 [(buf.validate.field).required = true];
+}
+
+message ThreadMessageDeleteRequest {
+  int64 forum_message_id = 1 [(buf.validate.field).required = true];
+}
+
+message ThreadDeleteRequest {
+  int32 forum_thread_id = 1 [(buf.validate.field).required = true];
+}
+
+message ThreadReplyEditRequest {
+  int64 forum_message_id = 1 [(buf.validate.field).required = true];
+  string body_md = 2 [(buf.validate.field).required = true];
+}
+
+message ThreadReplyEditResponse {
+  Message message = 1 [(buf.validate.field).required = true];
+}
+
+message ThreadReplyCreateRequest {
+  int32 forum_thread_id = 1 [(buf.validate.field).required = true];
+  string body_md = 2 [(buf.validate.field).required = true];
+}
+
+message ThreadReplyCreateResponse {
+  Message message = 1 [(buf.validate.field).required = true];
+}
+
+message ThreadCreateRequest {
+  int32 forum_id = 1 [(buf.validate.field).required = true];
+  string title = 2 [(buf.validate.field).required = true];
+  string body_md = 3 [(buf.validate.field).required = true];
+  bool sticky = 4;
+  bool locked = 5;
+}
+
+message ThreadCreateResponse {
+  Thread thread = 1 [(buf.validate.field).required = true];
+  Message message = 2 [(buf.validate.field).required = true];
+}
+
+message ThreadMessagesRequest {
+  int32 forum_thread_id = 1 [(buf.validate.field).required = true];
+  bool deleted = 2;
+}
+
+message ThreadMessagesResponse {
+  repeated Message messages = 1 [(buf.validate.field).required = true];
+}
+
+message ForumRequest {
+  int32 forum_id = 1 [(buf.validate.field).required = true];
+}
+
+message ForumResponse {
+  Forum forum = 1 [(buf.validate.field).required = true];
+}
+
+message ThreadRequest {
+  int32 forum_thread_id = 1 [(buf.validate.field).required = true];
+}
+
+message ThreadResponse {
+  Thread thread = 1 [(buf.validate.field).required = true];
+}
+
+message ThreadsRequest {
+  int32 forum_id = 1 [(buf.validate.field).required = true];
+}
+
+message ThreadsResponse {
+  repeated ThreadWithSource threads = 1 [(buf.validate.field).required = true];
+}
+
+message Thread {
+  int32 forum_id = 1 [(buf.validate.field).required = true];
+  int32 forum_thread_id = 2 [(buf.validate.field).required = true];
+  int64 source_id = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string title = 4 [(buf.validate.field).required = true];
+  bool sticky = 5 [(buf.validate.field).required = true];
+  bool locked = 6 [(buf.validate.field).required = true];
+  int32 replies = 7 [(buf.validate.field).required = true];
+  int32 views = 8 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 9 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 10 [(buf.validate.field).required = true];
+}
+
+message ThreadWithSource {
+  Thread thread = 1 [(buf.validate.field).required = true];
+  string persona_name = 2 [(buf.validate.field).required = true];
+  string avatar_hash = 3 [(buf.validate.field).required = true];
+  person.v1.Privilege permission_level = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  int64 recent_forum_message_id = 5;
+  google.protobuf.Timestamp recent_created_on = 6;
+  int64 recent_steam_id = 7 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+  string recent_persona_name = 8;
+  string recent_avatar_hash = 9;
+}
+
+message UserActivity {
+  int64 steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string persona_name = 2 [(buf.validate.field).required = true];
+  person.v1.Privilege permission_level = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  google.protobuf.Timestamp created_on = 4 [(buf.validate.field).required = true];
+}
+
+message ActiveUsersResponse {
+  repeated UserActivity user_activity = 1 [(buf.validate.field).required = true];
+}
+
+message Message {
+  int64 forum_message_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64.gt = 0
+  ];
+  int32 forum_thread_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  int64 source_id = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string body_md = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  string title = 5; // FIXME is this needed? title message??
+  bool online = 6 [(buf.validate.field).required = true];
+  string signature = 7 [(buf.validate.field).required = true];
+  string persona_name = 8 [(buf.validate.field).required = true];
+  string avatar_hash = 9 [(buf.validate.field).required = true];
+  person.v1.Privilege permission_level = 10 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  google.protobuf.Timestamp created_on = 11 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 12 [(buf.validate.field).required = true];
+}
+
+message RecentMessagesResponse {
+  repeated Message messages = 1 [(buf.validate.field).required = true];
+}
+
+message Forum {
+  int32 forum_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  int32 forum_category_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  int32 last_thread_id = 3;
+  string title = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 256
+    }
+  ];
+  string description = 5 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 256
+    }
+  ];
+  int32 ordering = 6 [(buf.validate.field).required = true];
+  int32 count_threads = 7 [(buf.validate.field).required = true];
+  int32 count_messages = 8 [(buf.validate.field).required = true];
+  person.v1.Privilege permission_level = 9 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  int32 recent_forum_thread_id = 10;
+  string recent_forum_title = 11;
+  string recent_source_id = 12;
+  string recent_persona_name = 13;
+  string recent_avatar_hash = 14;
+  google.protobuf.Timestamp recent_created_on = 15;
+  google.protobuf.Timestamp created_on = 16 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 17 [(buf.validate.field).required = true];
+}
+
+message Category {
+  int32 forum_category_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  string title = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 256
+    }
+  ];
+  string description = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 1024
+    }
+  ];
+  int32 ordering = 4 [(buf.validate.field).required = true];
+  repeated Forum forums = 5 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 6 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 7 [(buf.validate.field).required = true];
+}
+
+message OverviewResponse {
+  repeated Category categories = 1 [(buf.validate.field).required = true];
+}

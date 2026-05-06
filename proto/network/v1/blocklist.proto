@@ -1,0 +1,161 @@
+edition = "2023";
+
+package network.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service BlocklistService {
+  rpc BlocklistSources(google.protobuf.Empty) returns (BlocklistSourcesResponse) {}
+  rpc BlocklistSourcesCreate(BlocklistSourcesCreateRequest) returns (BlocklistSourcesCreateResponse) {}
+  rpc BlocklistSourcesEdit(BlocklistSourcesEditRequest) returns (BlocklistSourcesEditResponse) {}
+  rpc BlocklistSourcesDelete(BlocklistSourcesDeleteRequest) returns (google.protobuf.Empty) {}
+
+  rpc WhitelistAddress(google.protobuf.Empty) returns (WhitelistAddressResponse) {}
+  rpc WhitelistAddressCreate(WhitelistAddressCreateRequest) returns (WhitelistAddressCreateResponse) {}
+  rpc WhitelistAddressDelete(WhitelistAddressDeleteRequest) returns (google.protobuf.Empty) {}
+  rpc WhitelistAddressEdit(WhitelistAddressEditRequest) returns (WhitelistAddressEditResponse) {}
+
+  rpc WhitelistSteam(google.protobuf.Empty) returns (WhitelistSteamResponse) {}
+  rpc WhitelistSteamDelete(WhitelistSteamDeleteRequest) returns (google.protobuf.Empty) {}
+  rpc WhitelistSteamCreate(WhitelistSteamCreateRequest) returns (WhitelistSteamCreateResponse) {}
+
+  rpc CheckBlock(CheckBlockRequest) returns (CheckBlockResponse) {}
+}
+
+message WhitelistSteamCreateRequest {
+  int64 steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+}
+
+message WhitelistSteamCreateResponse {
+  WhitelistSteam whitelist = 1 [(buf.validate.field).required = true];
+}
+
+message WhitelistSteamDeleteRequest {
+  int64 steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+}
+
+message WhitelistSteamResponse {
+  repeated WhitelistSteam whitelists = 1 [(buf.validate.field).required = true];
+}
+
+message WhitelistSteam {
+  int64 steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string persona_name = 2 [(buf.validate.field).required = true];
+  string avatar_hash = 3 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 4 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 5 [(buf.validate.field).required = true];
+}
+
+message WhitelistAddressEditRequest {
+  int32 cidr_block_whitelist_id = 1 [(buf.validate.field).required = true];
+  string address = 2 [(buf.validate.field).required = true];
+}
+
+message WhitelistAddressEditResponse {
+  WhitelistIP whitelist = 1 [(buf.validate.field).required = true];
+}
+
+message WhitelistAddressDeleteRequest {
+  int32 cidr_block_whitelist_id = 1 [(buf.validate.field).required = true];
+}
+
+message WhitelistAddressCreateRequest {
+  string address = 1 [(buf.validate.field).required = true];
+}
+
+message WhitelistAddressCreateResponse {
+  CIDRBlockWhitelist whitelist = 1 [(buf.validate.field).required = true];
+}
+message CheckBlockRequest {
+  string address = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.ipv4 = true
+  ];
+}
+
+message CheckBlockResponse {
+  bool blocked = 1 [(buf.validate.field).required = true];
+  string source = 2 [(buf.validate.field).required = true];
+}
+
+message BlocklistSourcesDeleteRequest {
+  int32 cidr_block_source_id = 1 [(buf.validate.field).required = true];
+}
+
+message BlocklistSourcesEditRequest {
+  int32 cidr_block_source_id = 1 [(buf.validate.field).required = true];
+  string name = 2 [(buf.validate.field).required = true];
+  string url = 3 [(buf.validate.field).required = true];
+  bool enabled = 4 [(buf.validate.field).required = true];
+}
+
+message BlocklistSourcesEditResponse {
+  CIDRBlockSource block_source = 1 [(buf.validate.field).required = true];
+}
+
+message BlocklistSourcesCreateRequest {
+  string name = 1 [(buf.validate.field).required = true];
+  string url = 2 [(buf.validate.field).required = true];
+  bool enabled = 3 [(buf.validate.field).required = true];
+}
+
+message BlocklistSourcesCreateResponse {
+  CIDRBlockSource block_source = 1 [(buf.validate.field).required = true];
+}
+
+message WhitelistAddressResponse {
+  repeated CIDRBlockWhitelist whitelisted = 1 [(buf.validate.field).required = true];
+}
+
+message CIDRBlockWhitelist {
+  int32 cidr_block_whitelist_id = 1 [(buf.validate.field).required = true];
+  string address = 2 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 3 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 4 [(buf.validate.field).required = true];
+}
+
+message BlocklistSourcesResponse {
+  repeated CIDRBlockSource blocklist_source = 1 [(buf.validate.field).required = true];
+}
+
+message CIDRBlockSource {
+  int32 cidr_block_source_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+  string name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  string url = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uri = true
+  ];
+  bool enabled = 4 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 5 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 6 [(buf.validate.field).required = true];
+}
+
+message WhitelistIP {
+  int32 cidr_block_whitelist_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  string address = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.ipv4_with_prefixlen = true
+  ];
+  google.protobuf.Timestamp created_on = 3 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 4 [(buf.validate.field).required = true];
+}

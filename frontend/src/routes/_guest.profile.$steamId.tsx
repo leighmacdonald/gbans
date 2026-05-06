@@ -1,3 +1,5 @@
+import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
+import { useQuery } from "@connectrpc/connect-query";
 import LinkIcon from "@mui/icons-material/Link";
 import LocalLibraryIcon from "@mui/icons-material/LocalLibrary";
 import Avatar from "@mui/material/Avatar";
@@ -7,42 +9,24 @@ import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { queryOptions } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { format, fromUnixTime } from "date-fns";
-import { apiGetProfile } from "../api";
+import { format } from "date-fns";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { SteamIDList } from "../component/SteamIDList.tsx";
+import { profile } from "../rpc/person/v1/person-PersonService_connectquery.ts";
 import { createExternalLinks } from "../util/history.ts";
-import { avatarHashToURL } from "../util/text.tsx";
-import { isValidSteamDate, renderDateTime } from "../util/time.ts";
-import { emptyOrNullString } from "../util/types.ts";
+import { avatarHashToURL } from "../util/strings.ts";
+import { isValidSteamDate, renderTimestamp } from "../util/time.ts";
 
 export const Route = createFileRoute("/_guest/profile/$steamId")({
 	component: ProfilePage,
-	loader: async ({ context, params }) => {
-		const { steamId } = params;
-
-		const profile = await context.queryClient.fetchQuery(
-			queryOptions({
-				queryKey: ["profile", { steamId }],
-				queryFn: async ({ signal }) => await apiGetProfile(steamId, signal),
-			}),
-		);
-		return { profile };
-	},
-	head: ({ match, loaderData }) => ({
-		meta: [
-			{ name: "description", content: "Player Profile" },
-			match.context.title(
-				loaderData?.profile.player.persona_name ?? loaderData?.profile.player.steam_id ?? "Unknown",
-			),
-		],
+	head: () => ({
+		meta: [{ name: "description", content: "Player Profile" }],
 	}),
 });
 
 function ProfilePage() {
-	const { profile } = Route.useLoaderData();
+	const { data } = useQuery(profile);
 
 	return (
 		<Grid container spacing={2}>
@@ -52,7 +36,7 @@ function ProfilePage() {
 						<Grid size={{ xs: 4 }}>
 							<Avatar
 								variant={"square"}
-								src={avatarHashToURL(profile.player.avatarhash)}
+								src={avatarHashToURL(data?.profile?.player?.avatarHash)}
 								alt={"Profile Avatar"}
 								sx={{ width: "100%", height: "100%", minHeight: 240 }}
 							/>
@@ -64,22 +48,26 @@ function ProfilePage() {
 									display="inline"
 									style={{ wordBreak: "break-word", whiteSpace: "pre-line" }}
 								>
-									{profile.player.persona_name}
+									{data?.profile?.player?.name}
 								</Typography>
 								<Typography variant={"body1"}>
-									First Seen: {renderDateTime(profile.player.created_on)}
+									Created: {renderTimestamp(data?.profile?.player?.timeCreated)}
 								</Typography>
-								{!emptyOrNullString(profile.player.loc_state_code) ||
-									(!emptyOrNullString(profile.player.loc_country_code) && (
-										<Typography variant={"body1"}>
-											{[profile.player.loc_state_code, profile.player.loc_country_code]
-												.filter((x) => x)
-												.join(",")}
-										</Typography>
-									))}
-								{isValidSteamDate(fromUnixTime(profile.player.time_created)) && (
+								{/*{!emptyOrNullString(data?.profile?.player?.loc_state_code) ||*/}
+								{/*	(!emptyOrNullString(profile.player.loc_country_code) && (*/}
+								{/*		<Typography variant={"body1"}>*/}
+								{/*			{[profile.player.loc_state_code, profile.player.loc_country_code]*/}
+								{/*				.filter((x) => x)*/}
+								{/*				.join(",")}*/}
+								{/*		</Typography>*/}
+								{/*	))}*/}
+								{isValidSteamDate(timestampDate(data?.profile?.player?.timeCreated as Timestamp)) && (
 									<Typography variant={"body1"}>
-										Created: {format(fromUnixTime(profile.player.time_created), "yyyy-MM-dd")}
+										Created:{" "}
+										{format(
+											timestampDate(data?.profile?.player?.timeCreated as Timestamp),
+											"yyyy-MM-dd",
+										)}
 									</Typography>
 								)}
 							</Stack>
@@ -90,18 +78,24 @@ function ProfilePage() {
 			<Grid size={{ xs: 6, md: 2 }}>
 				<ContainerWithHeader title={"Status"} iconLeft={<LocalLibraryIcon />} marginTop={0}>
 					<Stack spacing={1} padding={1} justifyContent={"space-evenly"}>
-						<Chip color={profile.player.vac_bans > 0 ? "error" : "success"} label={"VAC"} />
-						<Chip color={profile.player.game_bans > 0 ? "error" : "success"} label={"Game Ban"} />
+						<Chip color={Number(data?.profile?.player?.vacBans) > 0 ? "error" : "success"} label={"VAC"} />
 						<Chip
-							color={profile.player.economy_ban !== "none" ? "error" : "success"}
-							label={"Economy Ban"}
+							color={Number(data?.profile?.player?.gameBans) > 0 ? "error" : "success"}
+							label={"Game Ban"}
 						/>
-						<Chip color={profile.player.community_banned ? "error" : "success"} label={"Community Ban"} />
+						{/*<Chip*/}
+						{/*	color={profile.player.economy_ban !== "none" ? "error" : "success"}*/}
+						{/*	label={"Economy Ban"}*/}
+						{/*/>*/}
+						{/*<Chip*/}
+						{/*	color={data?.profile?.player?.community_banned ? "error" : "success"}*/}
+						{/*	label={"Community Ban"}*/}
+						{/*/>*/}
 					</Stack>
 				</ContainerWithHeader>
 			</Grid>
 			<Grid size={{ xs: 6, md: 2 }}>
-				<SteamIDList steam_id={profile.player.steam_id} />
+				<SteamIDList steamId={data?.profile?.player?.steamId.toString() ?? ""} />
 			</Grid>
 			{/*{isAuthenticated() &&
 				(userProfile.steam_id === profile.player.steam_id || !profile.settings.stats_hidden) && (
@@ -124,7 +118,7 @@ function ProfilePage() {
 			<Grid size={{ xs: 128 }}>
 				<ContainerWithHeader title={"External Links"} iconLeft={<LinkIcon />}>
 					<Grid container spacing={1} paddingLeft={1}>
-						{createExternalLinks(profile.player.steam_id).map((l) => {
+						{createExternalLinks(String(data?.profile?.player?.steamId)).map((l) => {
 							return (
 								<Grid size={{ xs: 4 }} key={`btn-${l.url}`} padding={1}>
 									<Button

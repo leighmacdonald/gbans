@@ -33,9 +33,6 @@ var (
 	ErrGetBan             = errors.New("failed to load existing ban")
 	ErrSaveBan            = errors.New("failed to save ban")
 	ErrInvalidBanDuration = errors.New("invalid ban duration")
-	ErrUnbanFailed        = errors.New("failed to perform unban")
-	ErrPersonSource       = errors.New("failed to load source person")
-	ErrPersonTarget       = errors.New("failed to load target person")
 	ErrDuplicateBan       = errors.New("duplicate ban")
 	ErrBanDoesNotExist    = errors.New("ban does not exist")
 )
@@ -94,12 +91,12 @@ type Opts struct {
 	Reason     reason.Reason      `json:"reason" binding:"required"`
 	ReasonText string             `json:"reason_text"`
 	Origin     Origin             `json:"origin" binding:"oneof=0 1 2 3"`
-	ReportID   int64              `json:"report_id" binding:"omitempty,gt=0"`
+	ReportID   int32              `json:"report_id" binding:"omitempty,gt=0"`
 	CIDR       *string            `json:"cidr"`
 	EvadeOk    bool               `json:"evade_ok"`
 	Name       string             `json:"name" binding:"max=36"`
 	DemoName   string             `json:"demo_name" binding:"omitempty,max=256"`
-	DemoTick   int                `json:"demo_tick" binding:"omitempty"`
+	DemoTick   int32              `json:"demo_tick" binding:"omitempty"`
 	Note       string             `json:"note" binding:"omitempty,max=100000"`
 }
 
@@ -139,8 +136,8 @@ type Ban struct {
 	// SteamID is the steamID of the banned person
 	TargetID steamid.SteamID `json:"target_id"`
 	SourceID steamid.SteamID `json:"source_id"`
-	BanID    int64           `json:"ban_id"`
-	ReportID int64           `json:"report_id"`
+	BanID    int32           `json:"ban_id"`
+	ReportID int32           `json:"report_id"`
 	LastIP   *string         `json:"last_ip"`
 	EvadeOk  bool            `json:"evade_ok"`
 
@@ -208,7 +205,7 @@ type QueryOpts struct {
 	// TargetID can represent a SteamID or a group ID. They both use steamID formats, just in a different numberspace
 	TargetID      steamid.SteamID
 	GroupsOnly    bool
-	BanID         int64
+	BanID         int32
 	Deleted       bool
 	EvadeOk       bool
 	Reasons       []reason.Reason
@@ -442,7 +439,7 @@ func (s Bans) sendBanNotification(ctx context.Context, newBan Ban, author person
 // Unban will set the Current ban to now, making it expired.
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
-func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason string, author person.Info) (bool, error) {
+func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason string, author person.BaseUser) (bool, error) {
 	playerBan, errGetBan := s.QueryOne(ctx, QueryOpts{TargetID: targetSID, EvadeOk: true})
 	if errGetBan != nil {
 		if errors.Is(errGetBan, database.ErrNoResult) {
@@ -596,7 +593,7 @@ func (s Bans) UpdateGroupCache(ctx context.Context) error {
 				continue
 			}
 
-			// Statisfy FK
+			// Satisfy FK
 			if errCreate := s.persons.EnsurePerson(ctx, steamID); errCreate != nil {
 				return errCreate
 			}

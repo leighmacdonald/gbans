@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -16,53 +17,15 @@ type assetHandler struct {
 	Assets
 }
 
-func NewAssetHandler(engine *gin.Engine, authenticator httphelper.Authenticator, assets Assets) {
+func NewAssetHandler(engine *gin.Engine, assets Assets) {
+	// FIXME add auth
 	handler := assetHandler{Assets: assets}
-
-	optGrp := engine.Group("/")
-	{
-		opt := optGrp.Use(authenticator.Middleware(permission.Guest))
-		opt.GET("/asset/:asset_id", handler.getAsset())
-	}
-
-	// authed
-	authedGrp := engine.Group("/")
-	{
-		authed := authedGrp.Use(authenticator.Middleware(permission.User))
-		authed.POST("/api/asset", handler.saveAsset())
-	}
-}
-
-func (h assetHandler) saveAsset() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		var req UserUploadedFile
-
-		if err := ctx.Bind(&req); err != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, err))
-
-			return
-		}
-
-		mediaFile, errOpen := req.File.Open()
-		if errOpen != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errOpen, httphelper.ErrInternal)))
-
-			return
-		}
-
-		if req.Name == "" {
-			req.Name = req.File.Filename
-		}
-		user, _ := session.CurrentUserProfile(ctx)
-		asset, errAsset := h.Create(ctx, user.GetSteamID(), "media", req.Name, mediaFile, false)
-		if errAsset != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errAsset, httphelper.ErrInternal)))
-
-			return
-		}
-
-		ctx.JSON(http.StatusCreated, asset)
-	}
+	engine.GET("/asset/:asset_id", handler.getAsset())
+	// optGrp := engine.Group("/")
+	// {
+	//   opt := optGrp.Use(authenticator.Middleware(permission.Guest))
+	//	 opt.GET("/asset/:asset_id", handler.getAsset())
+	// }
 }
 
 func (h assetHandler) getAsset() gin.HandlerFunc {
@@ -80,11 +43,15 @@ func (h assetHandler) getAsset() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errors.Join(errGet, httphelper.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errGet))
 
 			return
 		}
-		defer asset.Close()
+		defer func(asset *Asset) {
+			if err := asset.Close(); err != nil {
+				slog.Error("Fauled to close asset")
+			}
+		}(&asset)
 
 		if asset.IsPrivate {
 			user, _ := session.CurrentUserProfile(ctx)
@@ -104,7 +71,7 @@ func (h assetHandler) getAsset() gin.HandlerFunc {
 		// }
 		decodedBody, errDecode := io.ReadAll(&asset)
 		if errDecode != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDecode, httphelper.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errDecode))
 
 			return
 		}

@@ -1,3 +1,4 @@
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -5,23 +6,26 @@ import EditIcon from "@mui/icons-material/Edit";
 import { useTheme } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import { Grid } from "@mui/system";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiDeleteCIDRBlockWhitelist, apiGetCIDRBlockListsIPWhitelist } from "../../api";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx";
-import type { WhitelistIP } from "../../schema/network";
+import type { CIDRBlockWhitelist } from "../../rpc/network/v1/blocklist_pb.ts";
+import {
+	whitelistAddress,
+	whitelistAddressDelete,
+} from "../../rpc/network/v1/blocklist-BlocklistService_connectquery.ts";
 import { logErr } from "../../util/errors";
 import { cidrHostCount } from "../../util/strings";
-import { renderDateTime } from "../../util/time";
+import { renderTimestamp } from "../../util/time";
 import { ConfirmationModal } from "../modal/ConfirmationModal";
 import { IPWhitelistEditorModal } from "../modal/IPWhitelistEditorModal";
 import RouterLink from "../RouterLink";
 import { createDefaultTableOptions, setColumnFilter } from "./options";
 import { SortableTable } from "./SortableTable";
 
-const columnHelper = createMRTColumnHelper<WhitelistIP>();
-const defaultOptions = createDefaultTableOptions<WhitelistIP>();
+const columnHelper = createMRTColumnHelper<CIDRBlockWhitelist>();
+const defaultOptions = createDefaultTableOptions<CIDRBlockWhitelist>();
 
 export const IPWhitelistTable = () => {
 	const confirmModal = useModal(ConfirmationModal);
@@ -29,24 +33,19 @@ export const IPWhitelistTable = () => {
 	const queryClient = useQueryClient();
 	const theme = useTheme();
 
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["networkIPWhitelist"],
-		queryFn: async ({ signal }) => {
-			return await apiGetCIDRBlockListsIPWhitelist(signal);
-		},
-	});
+	const { data, isLoading, isError } = useQuery(whitelistAddress);
 
 	const onEdit = useCallback(
-		async (source?: WhitelistIP) => {
+		async (source?: CIDRBlockWhitelist) => {
 			try {
 				const newSource = (await NiceModal.show(IPWhitelistEditorModal, {
 					source,
-				})) as WhitelistIP;
+				})) as CIDRBlockWhitelist;
 
 				queryClient.setQueryData(
 					["networkBlockListSourcesAdd"],
-					(data ?? []).map((src) => {
-						return src.cidr_block_whitelist_id === newSource.cidr_block_whitelist_id ? newSource : src;
+					(data?.whitelisted ?? []).map((src) => {
+						return src.cidrBlockWhitelistId === newSource.cidrBlockWhitelistId ? newSource : src;
 					}),
 				);
 				sendFlash("success", "IP whitelist added");
@@ -57,12 +56,7 @@ export const IPWhitelistTable = () => {
 		[data, queryClient, sendFlash],
 	);
 
-	const ipWhitelistMutation = useMutation({
-		mutationKey: ["networkIPWhitelistDelete"],
-		mutationFn: async (variables: { cidr_block_whitelist_id: number }) => {
-			const ac = new AbortController();
-			await apiDeleteCIDRBlockWhitelist(variables.cidr_block_whitelist_id, ac.signal);
-		},
+	const ipWhitelistMutation = useMutation(whitelistAddressDelete, {
 		onSuccess: () => {
 			sendFlash("success", "IP whitelist deleted");
 		},
@@ -70,7 +64,7 @@ export const IPWhitelistTable = () => {
 	});
 
 	const onDelete = useCallback(
-		async (source: WhitelistIP) => {
+		async (source: CIDRBlockWhitelist) => {
 			try {
 				const confirmed = await confirmModal.show({
 					title: "Delete CIDR Whitelist?",
@@ -78,7 +72,7 @@ export const IPWhitelistTable = () => {
 				});
 				if (confirmed) {
 					ipWhitelistMutation.mutate({
-						cidr_block_whitelist_id: source.cidr_block_whitelist_id,
+						cidrBlockWhitelistId: source.cidrBlockWhitelistId,
 					});
 				}
 				await confirmModal.hide();
@@ -91,7 +85,7 @@ export const IPWhitelistTable = () => {
 
 	const columns = useMemo(
 		() => [
-			columnHelper.accessor("cidr_block_whitelist_id", {
+			columnHelper.accessor("cidrBlockWhitelistId", {
 				header: "ID",
 				grow: false,
 			}),
@@ -113,15 +107,15 @@ export const IPWhitelistTable = () => {
 				header: "Hosts",
 				Cell: ({ row }) => cidrHostCount(row.original.address),
 			}),
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "Created On",
 				grow: true,
-				Cell: ({ cell }) => renderDateTime(cell.getValue()),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
-			columnHelper.accessor("updated_on", {
+			columnHelper.accessor("updatedOn", {
 				header: "Updated On",
 				grow: false,
-				Cell: ({ cell }) => renderDateTime(cell.getValue()),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
 		],
 		[theme],
@@ -130,7 +124,7 @@ export const IPWhitelistTable = () => {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ?? [],
+		data: data?.whitelisted ?? [],
 		enableFilters: true,
 		enableHiding: true,
 		enableFacetedValues: true,
@@ -140,13 +134,13 @@ export const IPWhitelistTable = () => {
 		},
 		initialState: {
 			...defaultOptions.initialState,
-			sorting: [{ id: "ban_id", desc: true }],
+			sorting: [{ id: "cidrBlockWhitelistId", desc: true }],
 			columnVisibility: {
-				cidr_block_whitelist_id: false,
+				cidrBlockWhitelistId: false,
 				address: true,
 				hosts: true,
-				created_on: true,
-				updated_on: false,
+				createdOn: true,
+				updatedOn: false,
 			},
 		},
 		enableRowActions: true,

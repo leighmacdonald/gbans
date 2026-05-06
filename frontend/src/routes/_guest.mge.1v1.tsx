@@ -1,8 +1,9 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: ts-form made me do it! */
+
+import { useQuery } from "@connectrpc/connect-query";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/system";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
@@ -12,12 +13,10 @@ import {
 	useMaterialReactTable,
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiMGEHistory } from "../api/mge.ts";
 import { PersonCell } from "../component/PersonCell.tsx";
 import RouterLink from "../component/RouterLink.tsx";
 import {
 	createDefaultTableOptions,
-	filterValue,
 	makeRowActionsDefOptions,
 	makeSchemaDefaults,
 	makeSchemaState,
@@ -25,11 +24,12 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { DuelMode, type MGEHistory } from "../schema/mge.ts";
-import { renderDateTime } from "../util/time.ts";
+import type { Duel } from "../rpc/mge/v1/mge_pb.ts";
+import { getHistory } from "../rpc/mge/v1/mge-MGEService_connectquery.ts";
+import { renderTimestamp } from "../util/time.ts";
 
-const columnHelper = createMRTColumnHelper<MGEHistory>();
-const defaultOptions = createDefaultTableOptions<MGEHistory>();
+const columnHelper = createMRTColumnHelper<Duel>();
+const defaultOptions = createDefaultTableOptions<Duel>();
 const defaultValues = makeSchemaDefaults({ defaultColumn: "rating" });
 const validateSearch = makeSchemaState("rating");
 
@@ -55,24 +55,7 @@ function MGEOverall() {
 	const search = Route.useSearch();
 	const theme = useTheme();
 
-	const { data, isLoading, isError, isRefetching } = useQuery({
-		queryKey: ["mgeHistory", { search }],
-		queryFn: async ({ signal }) => {
-			const sort = search.sorting?.find((sort) => sort);
-			const winner = filterValue("winner", search.columnFilters);
-			const loser = filterValue("loser", search.columnFilters);
-
-			return await apiMGEHistory(signal, {
-				limit: search.pagination?.pageSize,
-				offset: search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : undefined,
-				order_by: sort ? sort.id : "game_time",
-				desc: sort ? sort.desc : true,
-				winner,
-				loser,
-				mode: DuelMode.OneVsOne,
-			});
-		},
-	});
+	const { data, isLoading, isError, isRefetching } = useQuery(getHistory);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		(updater) => {
@@ -117,7 +100,7 @@ function MGEOverall() {
 	);
 	const columns = useMemo(
 		() => [
-			columnHelper.accessor("duel_id", {
+			columnHelper.accessor("duelId", {
 				header: "ID",
 				grow: false,
 				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
@@ -127,9 +110,9 @@ function MGEOverall() {
 				header: "Winner",
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.winner}
-						avatar_hash={row.original.winner_avatarhash}
-						personaname={row.original.winner_personaname}
+						steamId={row.original.winner}
+						avatarHash={row.original.winnerAvatarHash}
+						personaName={row.original.winnerPersonaName}
 					>
 						<RouterLink
 							style={{
@@ -141,7 +124,7 @@ function MGEOverall() {
 							to={Route.fullPath}
 							search={setColumnFilter(search, "winner", row.original.winner)}
 						>
-							{row.original.winner_personaname}
+							{row.original.winnerPersonaName}
 						</RouterLink>
 					</PersonCell>
 				),
@@ -151,9 +134,9 @@ function MGEOverall() {
 				header: "Loser",
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.loser}
-						avatar_hash={row.original.loser_avatarhash}
-						personaname={row.original.loser_personaname}
+						steamId={row.original.loser}
+						avatarHash={row.original.loserAvatarHash}
+						personaName={row.original.loserPersonaName}
 					>
 						<RouterLink
 							style={{
@@ -165,38 +148,38 @@ function MGEOverall() {
 							to={Route.fullPath}
 							search={setColumnFilter(search, "loser", row.original.loser)}
 						>
-							{row.original.loser_personaname}
+							{row.original.loserPersonaName}
 						</RouterLink>
 					</PersonCell>
 				),
 			}),
-			columnHelper.accessor("winner_score", {
+			columnHelper.accessor("winnerScore", {
 				enableColumnFilter: false,
 				grow: false,
 				header: "W.Score",
 			}),
-			columnHelper.accessor("loser_score", {
+			columnHelper.accessor("loserScore", {
 				enableColumnFilter: false,
 				grow: false,
 				header: "L.Score",
 			}),
-			columnHelper.accessor("winlimit", {
+			columnHelper.accessor("winLimit", {
 				enableColumnFilter: false,
 				grow: false,
 				header: "Winlimit",
 			}),
-			columnHelper.accessor("game_time", {
+			columnHelper.accessor("gameTime", {
 				enableColumnFilter: false,
 				grow: false,
 				header: "Game Time",
-				Cell: ({ row }) => renderDateTime(row.original.game_time),
+				Cell: ({ row }) => renderTimestamp(row.original.gameTime),
 			}),
-			columnHelper.accessor("map_name", {
+			columnHelper.accessor("mapName", {
 				enableColumnFilter: false,
 				grow: false,
 				header: "Map Name",
 			}),
-			columnHelper.accessor("arena_name", {
+			columnHelper.accessor("arenaName", {
 				enableColumnFilter: false,
 				grow: true,
 				header: "Arena Name",
@@ -208,8 +191,8 @@ function MGEOverall() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data?.data ?? [],
-		rowCount: data?.count ?? 0,
+		data: data?.history ?? [],
+		rowCount: Number(data?.count ?? 0),
 		enableFilters: true,
 		enableHiding: true,
 		enableFacetedValues: true,

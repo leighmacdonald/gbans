@@ -1,3 +1,4 @@
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
@@ -9,14 +10,14 @@ import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiDeleteSMGroupOverride, apiGetSMGroupOverrides } from "../../api";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { SMGroupOverrides, SMGroups } from "../../schema/sourcemod.ts";
+import type { Group, GroupOverrides } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
+import { deleteGroupOverride, groupOverrides } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
 import { logErr } from "../../util/errors.ts";
-import { renderDateTime } from "../../util/time.ts";
+import { renderTimestamp } from "../../util/time.ts";
 import { Heading } from "../Heading";
 import { createDefaultTableOptions } from "../table/options.ts";
 import { SortableTable } from "../table/SortableTable.tsx";
@@ -24,27 +25,22 @@ import { TableCellString } from "../table/TableCellString.tsx";
 import { ConfirmationModal } from "./ConfirmationModal.tsx";
 import { SMGroupOverrideEditorModal } from "./SMGroupOverrideEditorModal.tsx";
 
-const columnHelper = createMRTColumnHelper<SMGroupOverrides>();
-const defaultOptions = createDefaultTableOptions<SMGroupOverrides>();
+const columnHelper = createMRTColumnHelper<GroupOverrides>();
+const defaultOptions = createDefaultTableOptions<GroupOverrides>();
 
-export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGroups }) => {
+export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: Group }) => {
 	const modal = useModal();
 	const queryClient = useQueryClient();
 	const { sendFlash, sendError } = useUserFlashCtx();
 
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["serverGroupOverrides", { group_id: group.group_id }],
-		queryFn: async ({ signal }) => {
-			return await apiGetSMGroupOverrides(group.group_id, signal);
-		},
-	});
+	const { data, isLoading, isError } = useQuery(groupOverrides);
 
 	const onCreate = useCallback(async () => {
 		try {
-			const created = (await NiceModal.show(SMGroupOverrideEditorModal, { group })) as SMGroupOverrides;
+			const created = (await NiceModal.show(SMGroupOverrideEditorModal, { group })) as GroupOverrides;
 			queryClient.setQueryData(
-				["serverGroupOverrides", { group_id: group.group_id }],
-				[...(data ?? []), created],
+				["serverGroupOverrides", { group_id: group.groupId }],
+				[...(data?.overrides ?? []), created],
 			);
 			sendFlash("success", `Group override created successfully: ${created.name}`);
 		} catch (e) {
@@ -53,33 +49,27 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGro
 		}
 	}, [data, queryClient, sendFlash, group]);
 
-	const delOverrideMutation = useMutation({
-		mutationKey: ["deleteGroupOverride"],
-		mutationFn: async ({ groupOverride }: { groupOverride: SMGroupOverrides }) => {
-			const ac = new AbortController();
-			await apiDeleteSMGroupOverride(groupOverride.group_override_id, ac.signal);
-			return groupOverride;
-		},
-		onSuccess: (edited) => {
+	const delOverrideMutation = useMutation(deleteGroupOverride, {
+		onSuccess: (_, req) => {
 			queryClient.setQueryData(
-				["serverGroupOverrides", { group_id: edited.group_id }],
-				(data ?? []).filter((o) => {
-					return o.group_override_id !== edited.group_override_id;
+				["serverGroupOverrides", { group_id: req.groupOverrideId }],
+				(data?.overrides ?? []).filter((o) => {
+					return o.groupOverrideId !== req.groupOverrideId;
 				}),
 			);
-			sendFlash("success", `Group override deleted successfully: ${edited.name}`);
+			sendFlash("success", `Group override deleted successfully: ${req.groupOverrideId}`);
 		},
 		onError: sendError,
 	});
 
 	const onEdit = useCallback(
-		async (override: SMGroupOverrides) => {
+		async (override: GroupOverrides) => {
 			try {
-				const edited = (await NiceModal.show(SMGroupOverrideEditorModal, { override })) as SMGroupOverrides;
+				const edited = (await NiceModal.show(SMGroupOverrideEditorModal, { override })) as GroupOverrides;
 				queryClient.setQueryData(
-					["serverGroupOverrides", { group_id: group.group_id }],
-					(data ?? []).map((o) => {
-						return o.group_override_id === edited.group_override_id ? edited : o;
+					["serverGroupOverrides", { group_id: group.groupId }],
+					(data?.overrides ?? []).map((o) => {
+						return o.groupOverrideId === edited.groupOverrideId ? edited : o;
 					}),
 				);
 				sendFlash("success", `Group override updated successfully: ${override.name}`);
@@ -92,7 +82,7 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGro
 	);
 
 	const onDelete = useCallback(
-		async (groupOverride: SMGroupOverrides) => {
+		async (groupOverride: GroupOverrides) => {
 			try {
 				const confirmed = await NiceModal.show(ConfirmationModal, {
 					title: "Delete override?",
@@ -101,7 +91,7 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGro
 				if (!confirmed) {
 					return;
 				}
-				delOverrideMutation.mutate({ groupOverride });
+				delOverrideMutation.mutate({ groupOverrideId: groupOverride.groupOverrideId });
 			} catch (e) {
 				sendFlash("error", `Failed to create confirmation modal: ${e}`);
 			}
@@ -116,25 +106,25 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGro
 				grow: true,
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
-			columnHelper.accessor("type", {
+			columnHelper.accessor("overrideType", {
 				header: "Type",
 				grow: false,
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
-			columnHelper.accessor("access", {
+			columnHelper.accessor("overrideAccess", {
 				header: "Access",
 				grow: false,
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "Created",
 				grow: false,
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{renderTimestamp(cell.getValue())}</TableCellString>,
 			}),
-			columnHelper.accessor("updated_on", {
+			columnHelper.accessor("updatedOn", {
 				header: "Updated",
 				grow: false,
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{renderTimestamp(cell.getValue())}</TableCellString>,
 			}),
 		],
 		[],
@@ -143,7 +133,7 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGro
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ?? [],
+		data: data?.overrides ?? [],
 		enableFilters: true,
 		enableRowActions: true,
 		state: {

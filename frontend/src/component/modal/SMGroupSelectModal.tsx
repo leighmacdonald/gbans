@@ -5,16 +5,16 @@ import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
 import { useAppForm } from "../../contexts/formContext.tsx";
-import type { SMGroups } from "../../schema/sourcemod.ts";
+import type { Group } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
 import { Heading } from "../Heading";
 
-export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: SMGroups[] }) => {
+export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: Group[] }) => {
 	const modal = useModal();
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
 			// TODO fix typing for select field and objects
-			const group = groups.find((v) => v.group_id === (value.group as unknown as number));
+			const group = groups.find((v) => v.groupId === (value.group as unknown as number));
 			if (group) {
 				modal.resolve(group);
 			} else {
@@ -55,7 +55,7 @@ export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: SMGrou
 													return;
 												}
 												return (
-													<MenuItem value={i.group_id} key={i.group_id}>
+													<MenuItem value={i.groupId} key={i.groupId}>
 														{i.name}
 													</MenuItem>
 												);

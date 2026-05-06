@@ -1,3 +1,4 @@
+import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Dialog from "@mui/material/Dialog";
@@ -5,28 +6,29 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
-import { useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { apiDeleteThread, apiUpdateThread } from "../../api/forum";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { ForumThread } from "../../schema/forum.ts";
+import type { Thread } from "../../rpc/forum/v1/forum_pb.ts";
+import { threadDelete, threadEdit } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
 import { logErr } from "../../util/errors";
 import { ConfirmationModal } from "./ConfirmationModal.tsx";
 
-type ThreadEditValues = {
-	title: string;
-	sticky: boolean;
-	locked: boolean;
-};
-
-export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: ForumThread }) => {
+export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Thread }) => {
 	const modal = useModal();
 	const confirmModal = useModal(ConfirmationModal);
 	const { sendFlash, sendError } = useUserFlashCtx();
 
+	const deleteMutation = useMutation(threadDelete, {
+		onSuccess: () => {
+			sendFlash("success", "Deleted thread successfully");
+		},
+		onError: (err) => {
+			logErr(err);
+		},
+	});
+
 	const onDelete = useCallback(async () => {
-		const ac = new AbortController();
 		try {
 			const confirmed = await confirmModal.show({
 				title: "Confirm Thread Deletion",
@@ -34,27 +36,21 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
 			});
 			if (confirmed) {
 				await confirmModal.hide();
-				await apiDeleteThread(thread.forum_thread_id, ac.signal);
-				thread.forum_thread_id = 0;
+				await deleteMutation.mutateAsync({ forumThreadId: thread.forumThreadId });
+				thread.forumThreadId = 0;
 				modal.resolve(thread);
 				await modal.hide();
-				sendFlash("success", "Deleted thread successfully");
 			} else {
 				await confirmModal.hide();
 			}
 		} catch (e) {
 			logErr(e);
 		}
-	}, [confirmModal, modal, sendFlash, thread]);
+	}, [confirmModal, modal, thread, deleteMutation.mutateAsync]);
 
-	const mutation = useMutation({
-		mutationKey: ["forumThread", { forum_thread_id: thread.forum_thread_id }],
-		mutationFn: async (values: ThreadEditValues) => {
-			const ac = new AbortController();
-			return await apiUpdateThread(thread.forum_thread_id, values.title, values.sticky, values.locked, ac.signal);
-		},
-		onSuccess: async (editedThread: ForumThread) => {
-			modal.resolve(editedThread);
+	const mutation = useMutation(threadEdit, {
+		onSuccess: async (resp) => {
+			modal.resolve(resp.thread);
 			await modal.hide();
 		},
 		onError: sendError,
@@ -80,7 +76,7 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
 					await form.handleSubmit();
 				}}
 			>
-				<DialogTitle>{`Edit Thread #${thread.forum_thread_id}`}</DialogTitle>
+				<DialogTitle>{`Edit Thread #${thread.forumThreadId}`}</DialogTitle>
 
 				<DialogContent>
 					<Grid container spacing={2}>

@@ -34,8 +34,8 @@ function PrivacyPolicy() {
 					<ul>
 						<li>
 							Where it is necessary for the purposes of the legitimate and legal interests of{" "}
-							{appInfo.site_name}, except where such interests are overridden by your prevailing
-							legitimate interests and rights; or
+							{appInfo.siteName}, except where such interests are overridden by your prevailing legitimate
+							interests and rights; or
 						</li>
 						<li>Where you have given consent to it.</li>
 					</ul>
@@ -130,7 +130,7 @@ function PrivacyPolicy() {
 						If you would like to delete your account, please contact an admin through the account you wish
 						to delete including reason for deletion. If you do not provide a reason for account deletion,
 						your request will not be granted. We make no guarantee that your request will be granted even if
-						a reason is provided. Per GDPR Article 6(1)(f), {appInfo.site_name} is lawfully permitted to
+						a reason is provided. Per GDPR Article 6(1)(f), {appInfo.siteName} is lawfully permitted to
 						dismiss account deletion requests to protect the legitimate interests of our community by
 						thwarting ban evasions and/or circumvention of our permissions system(s).
 					</Typography>

@@ -52,13 +52,14 @@ func errorHandler() gin.HandlerFunc {
 				abort(ctx, apiError)
 				if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
 					hub.WithScope(func(scope *sentry.Scope) {
-						scope.SetExtra("title", apiError.Title)   //nolint:staticcheck
-						scope.SetExtra("detail", apiError.Detail) //nolint:staticcheck
+						scope.SetContexts(map[string]sentry.Context{
+							"error": {"title": apiError.Title, "detail": apiError.Detail},
+						})
 						hub.CaptureException(apiError)
 					})
 				}
 			} else {
-				abort(ctx, NewAPIError(http.StatusInternalServerError, ErrInternal))
+				abort(ctx, NewAPIError(http.StatusInternalServerError, err))
 				if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
 					hub.WithScope(func(scope *sentry.Scope) {
 						scope.SetLevel(sentry.LevelWarning)

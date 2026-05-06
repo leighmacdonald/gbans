@@ -1,3 +1,4 @@
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -8,11 +9,9 @@ import IconButton from "@mui/material/IconButton";
 import TableCell from "@mui/material/TableCell";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiDeleteFilter, apiGetFilters, apiGetWarningState } from "../api/filters.ts";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { FilterEditModal } from "../component/modal/FilterEditModal.tsx";
@@ -24,9 +23,10 @@ import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellSmall } from "../component/table/TableCellSmall.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { BanType } from "../schema/bans.ts";
-import { type Filter, filterActionString, type UserWarning } from "../schema/filters.ts";
-import { renderDateTime } from "../util/time.ts";
+import { BanType } from "../rpc/ban/v1/ban_pb.ts";
+import { type Filter, FilterAction, type UserWarning } from "../rpc/chat/v1/wordfilter_pb.ts";
+import { filterDelete, filters, warningState } from "../rpc/chat/v1/wordfilter-WordfilterService_connectquery.ts";
+import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<Filter>();
 const defaultOptions = createDefaultTableOptions<Filter>();
@@ -42,17 +42,12 @@ function AdminFilters() {
 	const { queryClient } = Route.useRouteContext();
 	const { sendFlash, sendError } = useUserFlashCtx();
 
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["filters"],
-		queryFn: async ({ signal }) => {
-			return await apiGetFilters(signal);
-		},
-	});
+	const { data, isLoading, isError } = useQuery(filters);
 
 	const onCreate = useCallback(async () => {
 		try {
 			const resp = (await NiceModal.show(FilterEditModal, {})) as Filter;
-			queryClient.setQueryData(["filters"], [...(data ?? []), resp]);
+			queryClient.setQueryData(["filters"], [...(data?.filters ?? []), resp]);
 		} catch (e) {
 			sendFlash("error", `${e}`);
 		}
@@ -67,8 +62,8 @@ function AdminFilters() {
 
 				queryClient.setQueryData(
 					["filters"],
-					(data ?? []).map((f) => {
-						return f.filter_id === resp.filter_id ? resp : f;
+					(data?.filters ?? []).map((f) => {
+						return f.filterId === resp.filterId ? resp : f;
 					}),
 				);
 			} catch (e) {
@@ -78,12 +73,7 @@ function AdminFilters() {
 		[data, queryClient, sendFlash],
 	);
 
-	const deleteMutation = useMutation({
-		mutationKey: ["filters"],
-		mutationFn: async (filter_id: number) => {
-			const ac = new AbortController();
-			await apiDeleteFilter(filter_id, ac.signal);
-		},
+	const deleteMutation = useMutation(filterDelete, {
 		onSuccess: (_, filterId) => {
 			sendFlash("success", `Deleted filter: ${filterId}`);
 		},
@@ -97,14 +87,14 @@ function AdminFilters() {
 					title: `Are you sure you want to delete this filter?`,
 				})) as boolean;
 
-				if (!confirmed || !filter.filter_id) {
+				if (!confirmed || !filter.filterId) {
 					return;
 				}
-				await deleteMutation.mutateAsync(filter.filter_id);
+				await deleteMutation.mutateAsync({ filterId: filter.filterId });
 
 				queryClient.setQueryData(
 					["filters"],
-					(data ?? []).filter((f) => f.filter_id !== filter.filter_id),
+					(data?.filters ?? []).filter((f) => f.filterId !== filter.filterId),
 				);
 			} catch (e) {
 				sendFlash("success", `${e}`);
@@ -125,14 +115,14 @@ function AdminFilters() {
 					tooltip: "Find and patterns that match this word or phrase",
 				},
 				filterFn: (row, _, filterValue) => {
-					if (row.original.is_regex) {
+					if (row.original.isRegex) {
 						const rx = new RegExp(row.original.pattern);
 						return Boolean(rx.exec(filterValue.toLowerCase()));
 					}
 					return row.original.pattern.toLowerCase().includes(filterValue.toLowerCase());
 				},
 			}),
-			columnHelper.accessor("is_regex", {
+			columnHelper.accessor("isRegex", {
 				header: "Rx",
 				filterVariant: "checkbox",
 				enableColumnFilter: false,
@@ -145,10 +135,10 @@ function AdminFilters() {
 				meta: { tooltip: "What action to take?" },
 				grow: false,
 				filterSelectOptions: [
-					{ label: "Mute", value: BanType.NoComm },
-					{ label: "Ban", value: BanType.Banned },
+					{ label: "Mute", value: BanType.NO_COMM },
+					{ label: "Ban", value: BanType.BANNED },
 				],
-				Cell: ({ cell }) => filterActionString(cell.getValue()),
+				Cell: ({ cell }) => FilterAction[cell.getValue()],
 			}),
 			columnHelper.accessor("duration", {
 				header: "Duration",
@@ -161,7 +151,7 @@ function AdminFilters() {
 				enableColumnFilter: false,
 				header: "Weight",
 			}),
-			columnHelper.accessor("trigger_count", {
+			columnHelper.accessor("triggerCount", {
 				header: "Trig #",
 				enableColumnFilter: false,
 				grow: false,
@@ -173,7 +163,7 @@ function AdminFilters() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ?? [],
+		data: data?.filters ?? [],
 		enableFilters: true,
 		enableFacetedValues: true,
 		state: {
@@ -255,49 +245,45 @@ const columnHelperWarn = createMRTColumnHelper<UserWarning>();
 const defaultOptionsWarn = createDefaultTableOptions<UserWarning>();
 
 export const WarningStateTable = () => {
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["filterWarnings"],
-		queryFn: async ({ signal }) => {
-			return await apiGetWarningState(signal);
-		},
-	});
+	const { data, isLoading, isError } = useQuery(warningState);
+
 	const renderFilter = useCallback((f: Filter) => {
-		const pat = f.is_regex ? (f.pattern as string) : (f.pattern as string);
+		const pat = f.isRegex ? (f.pattern as string) : (f.pattern as string);
 
 		return (
 			<>
-				<Typography variant={"h6"}>Matched {f.is_regex ? "Regex" : "Text"}</Typography>
+				<Typography variant={"h6"}>Matched {f.isRegex ? "Regex" : "Text"}</Typography>
 				<Typography variant={"body1"}>{pat}</Typography>
 				<Typography variant={"body1"}>Weight: {f.weight}</Typography>
-				<Typography variant={"body1"}>Action: {filterActionString(f.action)}</Typography>
+				<Typography variant={"body1"}>Action: {FilterAction[f.action]}</Typography>
 			</>
 		);
 	}, []);
 
 	const columns = useMemo(
 		() => [
-			columnHelperWarn.accessor("steam_id", {
+			columnHelperWarn.accessor("steamId", {
 				header: "Pattern",
 				Cell: ({ row }) => (
 					<TableCellSmall>
 						<PersonCell
-							steam_id={row.original.steam_id}
-							personaname={row.original.personaname}
-							avatar_hash={row.original.avatar}
+							steamId={row.original.steamId}
+							personaName={row.original.personaName}
+							avatarHash={row.original.avatarHash}
 						/>
 					</TableCellSmall>
 				),
 			}),
-			columnHelperWarn.accessor("created_on", {
+			columnHelperWarn.accessor("createdOn", {
 				header: "Created",
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
-			columnHelperWarn.accessor("matched_filter.action", {
+			columnHelperWarn.accessor("filter.action", {
 				header: "Action",
 				Cell: ({ cell }) => (
 					<TableCellSmall>
 						<Typography>
-							{typeof cell.getValue() === "undefined" ? "" : filterActionString(cell.getValue())}
+							{typeof cell.getValue() === "undefined" ? "" : FilterAction[cell.getValue()]}
 						</Typography>
 					</TableCellSmall>
 				),
@@ -312,7 +298,7 @@ export const WarningStateTable = () => {
 					</TableCell>
 				),
 			}),
-			columnHelperWarn.accessor("current_total", {
+			columnHelperWarn.accessor("currentTotal", {
 				header: "Weight",
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
@@ -347,5 +333,5 @@ export const WarningStateTable = () => {
 		},
 	});
 
-	return <SortableTable table={table} title={`Current Warning State (Max Weight: ${data?.max_weight ?? "..."})`} />;
+	return <SortableTable table={table} title={`Current Warning State (Max Weight: ${data?.maxWeight ?? "..."})`} />;
 };

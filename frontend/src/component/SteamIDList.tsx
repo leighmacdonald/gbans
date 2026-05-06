@@ -7,16 +7,12 @@ import SteamID from "steamid";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { ContainerWithHeader } from "./ContainerWithHeader";
 
-export interface SteamIDListProps {
-	steam_id: string;
-}
-
-export const SteamIDList = ({ steam_id }: SteamIDListProps) => {
+export const SteamIDList = ({ steamId }: { steamId: string | bigint }) => {
 	const theme = useTheme();
 	const { sendFlash } = useUserFlashCtx();
-	const sid = new SteamID(steam_id);
+	const sid = new SteamID(steamId);
 
-	if (steam_id === "") {
+	if (steamId === "") {
 		return;
 	}
 

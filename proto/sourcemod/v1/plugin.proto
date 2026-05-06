@@ -1,0 +1,156 @@
+edition = "2023";
+
+package sourcemod.v1;
+
+import "ban/v1/ban.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+import "sourcemod/v1/sourcemod.proto";
+
+// Provides the API used to communicate with the game servers.
+service PluginService {
+  // Sourcemod plugin surface
+  rpc SMAuthenticate(SMAuthenticateRequest) returns (SMAuthenticateResponse) {}
+  rpc SMCheck(SMCheckRequest) returns (SMCheckResponse) {}
+  rpc SMOverrides(google.protobuf.Empty) returns (SMOverridesResponse) {}
+  rpc SMUsers(google.protobuf.Empty) returns (SMUsersResponse) {}
+  rpc SMGroups(google.protobuf.Empty) returns (SMGroupsResponse) {}
+  rpc SMSeed(SMSeedRequest) returns (SMSeedResponse) {}
+  rpc SMPingMod(SMPingModRequest) returns (google.protobuf.Empty) {}
+}
+
+message SMPingModRequest {
+  string steam_id = 1;
+  string name = 2;
+  string reason = 3;
+  int32 client_id = 4;
+}
+
+message SMPingModResponse {}
+
+message SMAuthenticateRequest {
+  string password = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 8
+      max_len: 20
+    }
+  ];
+}
+
+message SMAuthenticateResponse {
+  string token = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
+message SMSeedRequest {
+  string steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
+message SMSeedResponse {
+  string message = 1 [(buf.validate.field).required = true];
+}
+
+message SMOverride {
+  sourcemod.v1.OverrideType override_type = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  string name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  string flags = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
+message SMOverridesResponse {
+  repeated SMOverride overrides = 1 [(buf.validate.field).required = true];
+}
+
+message SMCheckRequest {
+  string steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  int32 client_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 65535
+  ];
+  string ip = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.ipv4 = true
+  ];
+  string name = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 32
+    }
+  ];
+}
+
+message SMCheckResponse {
+  int32 client_id = 1 [(buf.validate.field).required = true];
+  ban.v1.BanType ban_type = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  string msg = 3 [(buf.validate.field).required = true];
+}
+
+message SMGroupImmunity {
+  string group_name = 1 [(buf.validate.field).required = true];
+  string other_name = 2 [(buf.validate.field).required = true];
+}
+
+message SMGroupsResponse {
+  repeated Group groups = 1 [(buf.validate.field).required = true];
+  repeated SMGroupImmunity immunities = 2 [(buf.validate.field).required = true];
+}
+
+message SMUsersResponse {
+  repeated SMUser users = 1 [(buf.validate.field).required = true];
+  repeated SMUserGroup user_groups = 2 [(buf.validate.field).required = true];
+}
+
+message SMUser {
+  int32 id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  AuthType auth_type = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  string identity = 3 [(buf.validate.field).required = true];
+  string password = 4;
+  string flags = 5 [(buf.validate.field).required = true];
+  string name = 6 [(buf.validate.field).required = true];
+  int32 immunity = 7 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {
+      gte: 0
+      lte: 100
+    }
+  ];
+}
+
+message SMUserGroup {
+  int32 admin_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  string group_name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}

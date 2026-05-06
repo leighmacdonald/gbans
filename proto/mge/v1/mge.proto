@@ -1,0 +1,99 @@
+edition = "2023";
+
+package mge.v1;
+
+import "buf/validate/validate.proto";
+import "database/query/v1/filter.proto";
+import "google/protobuf/timestamp.proto";
+
+service MGEService {
+  rpc GetRatingsOverall(GetRatingsOverallRequest) returns (GetRatingsOverallResponse);
+  rpc GetHistory(GetHistoryRequest) returns (GetHistoryResponse);
+}
+
+message GetRatingsOverallRequest {
+  database.query.v1.Filter filter = 1;
+  string steam_id = 2 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+}
+
+message PlayerStats {
+  int32 stats_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+  int32 rating = 2 [(buf.validate.field).required = true];
+  int64 steam_id = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string persona_name = 4 [(buf.validate.field).required = true];
+  string avatar_hash = 5 [(buf.validate.field).required = true];
+  string name = 6 [(buf.validate.field).required = true];
+  int32 wins = 7 [(buf.validate.field).required = true];
+  int32 losses = 8 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp last_played = 9 [(buf.validate.field).required = true];
+}
+
+message GetRatingsOverallResponse {
+  repeated PlayerStats stats = 1 [(buf.validate.field).required = true];
+  int64 count = 2 [(buf.validate.field).required = true];
+}
+
+enum DuelMode {
+  DUEL_MODE_ONE_VS_ONE_UNSPECIFIED = 0;
+  DUEL_MODE_TWO_VS_TWO = 1;
+}
+
+message GetHistoryRequest {
+  database.query.v1.Filter filter = 1;
+  DuelMode mode = 2 [(buf.validate.field).enum.defined_only = true];
+  int64 winner = 3 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+  int64 winner2 = 4 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+  int64 loser = 5 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+  int64 loser2 = 6 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+}
+
+message Duel {
+  option (buf.validate.message).cel = {
+    id: "validate_mode_values"
+    message: "loser2 and winner2 must be set for 2v2 mode"
+    expression: "this.duel_mode == 0 or (this.winner2 >= 76561197960265729 and this.loser2 >= 76561197960265729)"
+  };
+
+  int32 duel_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  int64 winner = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string winner_avatar_hash = 3 [(buf.validate.field).required = true];
+  string winner_persona_name = 4 [(buf.validate.field).required = true];
+  int64 winner2 = 5 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+  string winner2_avatar_hash = 6 [(buf.validate.field).required = true];
+  string winner2_persona_name = 7 [(buf.validate.field).required = true];
+  int64 loser = 8 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string loser_avatar_hash = 9 [(buf.validate.field).required = true];
+  string loser_persona_name = 10 [(buf.validate.field).required = true];
+  int64 loser2 = 11 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+  string loser2_avatar_hash = 12 [(buf.validate.field).required = true];
+  string loser2_persona_name = 13 [(buf.validate.field).required = true];
+  int32 winner_score = 14 [(buf.validate.field).required = true];
+  int32 loser_score = 15 [(buf.validate.field).required = true];
+  int32 win_limit = 16 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp game_time = 17 [(buf.validate.field).required = true];
+  string map_name = 18 [(buf.validate.field).required = true];
+  string arena_name = 19 [(buf.validate.field).required = true];
+  DuelMode duel_mode = 20 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+}
+message GetHistoryResponse {
+  repeated Duel history = 1 [(buf.validate.field).required = true];
+  int64 count = 2 [(buf.validate.field).required = true];
+}

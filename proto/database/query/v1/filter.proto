@@ -1,0 +1,12 @@
+edition = "2023";
+
+package database.query.v1;
+
+import "buf/validate/validate.proto";
+
+message Filter {
+  uint64 offset = 1 [(buf.validate.field).uint64.gt = 0];
+  uint64 limit = 2 [(buf.validate.field).uint64.gt = 0];
+  bool desc = 3;
+  string order_by = 4;
+}

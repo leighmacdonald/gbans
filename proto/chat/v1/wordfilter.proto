@@ -1,0 +1,88 @@
+edition = "2023";
+
+package chat.v1;
+
+import "ban/v1/ban.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service WordfilterService {
+  rpc Filters(google.protobuf.Empty) returns (FiltersResponse) {}
+  rpc WarningState(google.protobuf.Empty) returns (WarningStateResponse) {}
+  rpc FilterCreate(FilterCreateRequest) returns (FilterCreateResponse) {}
+  rpc FilterEdit(FilterEditRequest) returns (FilterEditResponse) {}
+  rpc FilterDelete(FilterDeleteRequest) returns (google.protobuf.Empty) {}
+  rpc FilterMatch(FilterMatchRequest) returns (FilterMatchResponse) {}
+}
+
+message FilterMatchRequest {
+  string query = 1 [(buf.validate.field).required = true];
+}
+
+message FilterMatchResponse {
+  repeated Filter filters = 1 [(buf.validate.field).required = true];
+}
+
+message FilterDeleteRequest {
+  int64 filter_id = 1 [(buf.validate.field).required = true];
+}
+
+message FilterCreateRequest {
+  Filter filter = 1 [(buf.validate.field).required = true];
+}
+
+message FilterCreateResponse {
+  Filter filter = 1 [(buf.validate.field).required = true];
+}
+
+message FilterEditRequest {
+  Filter filter = 1 [(buf.validate.field).required = true];
+}
+
+message FilterEditResponse {
+  Filter filter = 1 [(buf.validate.field).required = true];
+}
+
+enum FilterAction {
+  FILTER_ACTION_KICK_UNSPECIFIED = 0;
+  FILTER_ACTION_MUTE = 1;
+  FILTER_ACTION_BAN = 2;
+}
+
+message Filter {
+  int64 filter_id = 1 [(buf.validate.field).required = true];
+  int64 author_id = 2 [(buf.validate.field).required = true];
+  string pattern = 3 [(buf.validate.field).required = true];
+  bool is_regex = 4 [(buf.validate.field).required = true];
+  bool is_enabled = 5 [(buf.validate.field).required = true];
+  FilterAction action = 6 [(buf.validate.field).required = true];
+  string duration = 7 [(buf.validate.field).required = true];
+  int64 trigger_count = 8 [(buf.validate.field).required = true];
+  int32 weight = 9 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 10 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 11 [(buf.validate.field).required = true];
+}
+
+message FiltersResponse {
+  repeated Filter filters = 1 [(buf.validate.field).required = true];
+}
+
+message UserWarning {
+  ban.v1.BanReason reason = 1 [(buf.validate.field).required = true];
+  string message = 2 [(buf.validate.field).required = true];
+  string matched = 3 [(buf.validate.field).required = true];
+  Filter filter = 4 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 5 [(buf.validate.field).required = true];
+  string persona_name = 6 [(buf.validate.field).required = true];
+  string avatar_hash = 7 [(buf.validate.field).required = true];
+  string server_name = 8 [(buf.validate.field).required = true];
+  int32 server_id = 9 [(buf.validate.field).required = true];
+  int64 steam_id = 10 [(buf.validate.field).required = true];
+  int32 current_total = 11 [(buf.validate.field).required = true];
+}
+
+message WarningStateResponse {
+  int32 max_weight = 1 [(buf.validate.field).required = true];
+  repeated UserWarning current = 2 [(buf.validate.field).required = true];
+}

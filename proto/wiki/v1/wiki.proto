@@ -1,0 +1,58 @@
+edition = "2023";
+
+package wiki.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "person/v1/privilege.proto";
+
+service WikiService {
+  rpc Get(GetRequest) returns (GetResponse) {}
+  rpc Update(UpdateRequest) returns (UpdateResponse) {}
+}
+
+message Wiki {
+  string slug = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 40
+    }
+  ];
+  string body_md = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 50000
+    }
+  ];
+  int32 revision = 3 [(buf.validate.field).int32 = {gte: 0}];
+  person.v1.Privilege permission_level = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  google.protobuf.Timestamp created_on = 5;
+  google.protobuf.Timestamp updated_on = 6;
+}
+
+message GetRequest {
+  string slug = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 40
+    }
+  ];
+}
+
+message GetResponse {
+  Wiki wiki = 1 [(buf.validate.field).required = true];
+}
+
+message UpdateRequest {
+  Wiki wiki = 1 [(buf.validate.field).required = true];
+}
+
+message UpdateResponse {
+  Wiki wiki = 1 [(buf.validate.field).required = true];
+}

@@ -1,6 +1,5 @@
 import DnsIcon from "@mui/icons-material/Dns";
 import Grid from "@mui/material/Grid";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
@@ -11,22 +10,18 @@ import {
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { CircleMarker, MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-import { apiGetConnections, apiGetServers } from "../api";
 import { TextLink } from "../component/TextLink.tsx";
 import {
 	createDefaultTableOptions,
-	filterValue,
-	filterValueNumber,
 	makeSchemaDefaults,
 	makeSchemaState,
 	type OnChangeFn,
 	setColumnFilter,
-	sortValueDefault,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import type { PersonConnection } from "../schema/people.ts";
-import { renderDateTime } from "../util/time.ts";
+import { renderTimestamp } from "../util/time.ts";
 import "leaflet/dist/leaflet.css";
+import { useQuery } from "@connectrpc/connect-query";
 import { useTheme } from "@mui/material";
 import Paper from "@mui/material/Paper";
 import Tooltip from "@mui/material/Tooltip";
@@ -36,6 +31,9 @@ import * as markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import * as markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { RowActionContainer } from "../component/RowActionContainer.tsx";
+import type { PersonConnection } from "../rpc/network/v1/network_pb.ts";
+import { queryConnections } from "../rpc/network/v1/network-NetworkService_connectquery.ts";
+import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
 
 // Workaround for leaflet not loading icons properly in react
@@ -59,53 +57,43 @@ export const Route = createFileRoute("/_mod/admin/network/playersbyip")({
 	search: {
 		middlewares: [stripSearchParams(defaultValues)],
 	},
-	loader: async ({ context }) => {
-		const unsorted = await context.queryClient.ensureQueryData({
-			queryKey: ["serversSimple"],
-			queryFn: async ({ signal }) => {
-				return await apiGetServers(signal);
-			},
-		});
-		return unsorted.sort((a, b) => {
-			return a.server_name > b.server_name ? 1 : a.server_name < b.server_name ? -1 : 0;
-		});
-	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Find players by IP address" }, match.context.title("Players By IP")],
 	}),
 });
 
 function AdminNetworkPlayersByCIDR() {
-	const servers = Route.useLoaderData();
+	const { data: serversList } = useQuery(servers);
 	const search = Route.useSearch();
 	const navigate = useNavigate();
 	const theme = useTheme();
 
-	const { data, isLoading, isError, isRefetching } = useQuery({
-		queryKey: ["playersByIP", { search }],
-		queryFn: async ({ signal }) => {
-			const server_id = filterValue<PersonConnection>("server_id", search.columnFilters);
-			const sort = search.sorting ? sortValueDefault(search.sorting, "person_connection_id") : undefined;
-
-			return await apiGetConnections(
-				{
-					desc: sort ? sort.desc : true,
-					limit: search.pagination?.pageSize,
-					offset: search.pagination ? search.pagination.pageIndex * search.pagination?.pageSize : 0,
-					order_by: sort ? sort.id : "person_connection_id",
-					source_id: filterValue<PersonConnection>("steam_id", search.columnFilters),
-					server_id: Number(server_id) > 0 ? [Number(server_id)] : [],
-					cidr: filterValue<PersonConnection>("ip_addr", search.columnFilters),
-					as_name: filterValue<PersonConnection>("as_name", search.columnFilters),
-					as_num: filterValueNumber<PersonConnection>("as_num", search.columnFilters),
-					city_name: filterValue("city_name", search.columnFilters),
-					country_code: filterValue("country_code", search.columnFilters),
-					country_name: filterValue("country_name", search.columnFilters),
-				},
-				signal,
-			);
-		},
-	});
+	const { data, isLoading, isError, isRefetching } = useQuery(queryConnections, {});
+	// {
+	// 	queryKey: ["playersByIP", { search }],
+	// 	queryFn: async ({ signal }) => {
+	// 		const server_id = filterValue<PersonConnection>("server_id", search.columnFilters);
+	// 		const sort = search.sorting ? sortValueDefault(search.sorting, "person_connection_id") : undefined;
+	//
+	// 		return await apiGetConnections(
+	// 			{
+	// 				desc: sort ? sort.desc : true,
+	// 				limit: search.pagination?.pageSize,
+	// 				offset: search.pagination ? search.pagination.pageIndex * search.pagination?.pageSize : 0,
+	// 				order_by: sort ? sort.id : "person_connection_id",
+	// 				source_id: filterValue<PersonConnection>("steam_id", search.columnFilters),
+	// 				server_id: Number(server_id) > 0 ? [Number(server_id)] : [],
+	// 				cidr: filterValue<PersonConnection>("ip_addr", search.columnFilters),
+	// 				as_name: filterValue<PersonConnection>("as_name", search.columnFilters),
+	// 				as_num: filterValueNumber<PersonConnection>("as_num", search.columnFilters),
+	// 				city_name: filterValue("city_name", search.columnFilters),
+	// 				country_code: filterValue("country_code", search.columnFilters),
+	// 				country_name: filterValue("country_name", search.columnFilters),
+	// 			},
+	// 			signal,
+	// 		);
+	// 	},
+	// });
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		(updater) => {
@@ -151,44 +139,44 @@ function AdminNetworkPlayersByCIDR() {
 
 	const columns = useMemo(
 		() => [
-			columnHelper.accessor("server_id", {
+			columnHelper.accessor("serverId", {
 				header: "Server",
 				grow: false,
 				enableSorting: false,
 				filterVariant: "multi-select",
-				filterSelectOptions: servers.map((server) => ({
-					label: server.server_name,
-					value: server.server_id,
+				filterSelectOptions: serversList?.servers.map((server) => ({
+					label: server.serverName,
+					value: server.serverId,
 				})),
 				filterFn: (row, _, filterValue) => {
-					return filterValue.length === 0 || filterValue.includes(row.original.server_id);
+					return filterValue.length === 0 || filterValue.includes(row.original.serverId);
 				},
 				Cell: ({ row, cell }) => (
-					<Tooltip title={row.original.server_name}>
+					<Tooltip title={row.original.serverId}>
 						<TextLink
 							to={"/admin/network/playersbyip"}
 							search={setColumnFilter(search, "server_id", [cell.getValue()])}
-							sx={{ color: stringToColour(row.original.server_name ?? "") }}
+							sx={{ color: stringToColour(row.original.serverNameShort ?? "") }}
 						>
-							{row.original.server_name_short}
+							{row.original.serverNameShort}
 						</TextLink>
 					</Tooltip>
 				),
 			}),
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				grow: false,
 				enableSorting: true,
 				enableColumnFilter: false,
 				filterVariant: "date-range",
 				header: "Created",
-				Cell: ({ cell }) => renderDateTime(cell.getValue()),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
-			columnHelper.accessor("persona_name", {
+			columnHelper.accessor("personaName", {
 				header: "Name",
 				grow: false,
 				enableSorting: false,
 			}),
-			columnHelper.accessor("steam_id", {
+			columnHelper.accessor("steamId", {
 				grow: false,
 				header: "Steam ID",
 				enableSorting: false,
@@ -202,7 +190,7 @@ function AdminNetworkPlayersByCIDR() {
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("ip_addr", {
+			columnHelper.accessor("ipAddr", {
 				grow: true,
 				header: "IP",
 				Cell: ({ cell }) => (
@@ -214,7 +202,7 @@ function AdminNetworkPlayersByCIDR() {
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("as_num", {
+			columnHelper.accessor("asNum", {
 				id: "as_num",
 				header: "AS Num",
 				grow: false,
@@ -225,7 +213,7 @@ function AdminNetworkPlayersByCIDR() {
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("as_name", {
+			columnHelper.accessor("asName", {
 				header: "AS Name",
 				grow: true,
 				enableSorting: false,
@@ -235,7 +223,7 @@ function AdminNetworkPlayersByCIDR() {
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("country_code", {
+			columnHelper.accessor("countryCode", {
 				header: "Country",
 				grow: true,
 				enableSorting: false,
@@ -245,7 +233,7 @@ function AdminNetworkPlayersByCIDR() {
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("city_name", {
+			columnHelper.accessor("cityName", {
 				header: "City Name",
 				grow: true,
 				enableSorting: false,
@@ -255,21 +243,21 @@ function AdminNetworkPlayersByCIDR() {
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("lat_long", {
+			columnHelper.accessor("location", {
 				header: "Lat Long",
 				grow: true,
 				enableSorting: false,
-				Cell: ({ cell }) => `${cell.getValue().latitude} / ${cell.getValue().longitude}`,
+				Cell: ({ row }) => `${row.original.location?.latitude} / ${row.original.location?.longitude}`,
 			}),
 		],
-		[servers, search, theme],
+		[search, theme, serversList?.servers.map],
 	);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		paginationDisplayMode: "pages",
 		columns,
-		data: data?.data ?? [],
+		data: data?.connection ?? [],
 		//pageCount: -1,
 		//rowCount: data?.count ?? undefined,
 		enableFilters: true,
@@ -308,7 +296,7 @@ function AdminNetworkPlayersByCIDR() {
 						color={"info"}
 						to={"/admin/network/ipInfo"}
 						search={{
-							ip: row.original.ip_addr,
+							ip: row.original.ipAddr,
 						}}
 					>
 						<DnsIcon />
@@ -343,24 +331,29 @@ function AdminNetworkPlayersByCIDR() {
 									key={row.id}
 									color="red"
 									center={
-										row.original.lat_long
+										row.original.location
 											? {
-													lat: row.original.lat_long.latitude,
-													lng: row.original.lat_long.longitude,
+													lat: row.original.location.latitude,
+													lng: row.original.location.longitude,
 												}
 											: { lat: 42.4338, lng: 83.9845 }
 									}
 								/>
 							) : (
-								row.original.lat_long && (
+								row.original.location && (
 									<Marker
 										key={row.id}
 										position={{
-											lat: row.original.lat_long.latitude,
-											lng: row.original.lat_long.longitude,
+											lat: row.original.location.latitude,
+											lng: row.original.location.longitude,
 										}}
 									>
-										<Popup>{JSON.stringify(row.original)}</Popup>
+										<Popup>
+											{JSON.stringify({
+												...row.original,
+												steamId: row.original.steamId.toString(),
+											})}
+										</Popup>
 									</Marker>
 								)
 							),

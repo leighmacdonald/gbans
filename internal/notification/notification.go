@@ -44,7 +44,7 @@ type UserNotification struct {
 	Severity             Severity        `json:"severity"`
 	Message              string          `json:"message"`
 	Link                 string          `json:"link"`
-	Count                int             `json:"count"`
+	Count                int32           `json:"count"`
 	Author               person.Info     `json:"author"`
 	CreatedOn            time.Time       `json:"created_on"`
 }
@@ -134,7 +134,7 @@ func NewSiteGroup(groups []permission.Privilege, severity Severity, message stri
 	}
 }
 
-func NewSiteGroupNotificationWithAuthor(groups []permission.Privilege, severity Severity, message string, link string, _ person.Info) Payload {
+func NewSiteGroupNotificationWithAuthor(groups []permission.Privilege, severity Severity, message string, link string, _ person.BaseUser) Payload {
 	payload := NewSiteGroup(groups, severity, message, link)
 	// payload.Author = &author
 
@@ -196,7 +196,7 @@ func (n *Notifications) GetPersonNotifications(ctx context.Context, steamID stea
 	return n.Repository.GetPersonNotifications(ctx, steamID)
 }
 
-func (n *Notifications) MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error {
+func (n *Notifications) MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int32) error {
 	if len(ids) == 0 {
 		return nil
 	}
@@ -208,7 +208,7 @@ func (n *Notifications) MarkAllRead(ctx context.Context, steamID steamid.SteamID
 	return n.Repository.MarkAllRead(ctx, steamID)
 }
 
-func (n *Notifications) DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int) error {
+func (n *Notifications) DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int32) error {
 	if len(ids) == 0 {
 		return nil
 	}

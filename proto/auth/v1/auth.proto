@@ -1,0 +1,9 @@
+edition = "2023";
+
+package auth.v1;
+
+import "google/protobuf/empty.proto";
+
+service AuthService {
+  rpc Logout(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}

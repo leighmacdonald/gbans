@@ -11,7 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -38,10 +38,10 @@ type Contest struct {
 	HideSubmissions bool      `json:"hide_submissions"` // Are user submissions visible for the public
 	DateStart       time.Time `json:"date_start"`
 	DateEnd         time.Time `json:"date_end"`
-	MaxSubmissions  int       `json:"max_submissions"`
-	OwnSubmissions  int       `json:"own_submissions"`
+	MaxSubmissions  int32     `json:"max_submissions"`
+	OwnSubmissions  int32     `json:"own_submissions"`
 	MediaTypes      string    `json:"media_types"`
-	NumEntries      int       `json:"num_entries"`
+	NumEntries      int32     `json:"num_entries"`
 	Deleted         bool      `json:"-"`
 	// Allow voting
 	Voting bool `json:"voting"`
@@ -62,17 +62,17 @@ type Entry struct {
 	AvatarHash     string          `json:"avatar_hash"`
 	AssetID        uuid.UUID       `json:"asset_id"`
 	Description    string          `json:"description"`
-	Placement      int             `json:"placement"`
+	Placement      int32           `json:"placement"`
 	Deleted        bool            `json:"deleted"`
-	VotesUp        int             `json:"votes_up"`
-	VotesDown      int             `json:"votes_down"`
+	VotesUp        int32           `json:"votes_up"`
+	VotesDown      int32           `json:"votes_down"`
 	Asset          asset.Asset     `json:"asset"`
 }
 
 type Vote struct {
 	ContestEntryID uuid.UUID       `json:"contest_entry_id"`
 	SteamID        steamid.SteamID `json:"steam_id"`
-	Vote           int             `json:"vote"`
+	Vote           int32           `json:"vote"`
 	CreatedOn      time.Time       `json:"created_on"`
 	UpdatedOn      time.Time       `json:"updated_on"`
 }
@@ -206,7 +206,7 @@ func (c *Contests) EntryDelete(ctx context.Context, contestEntryID uuid.UUID) er
 	return c.repository.ContestEntryDelete(ctx, contestEntryID)
 }
 
-func (c *Contests) Contests(ctx context.Context, user person.Info) ([]Contest, error) {
+func (c *Contests) Contests(ctx context.Context, user person.BaseUser) ([]Contest, error) {
 	return c.repository.Contests(ctx, !user.HasPermission(permission.Moderator))
 }
 
@@ -226,7 +226,7 @@ func (c *Contests) EntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, s
 	return c.repository.ContestEntryVoteGet(ctx, contestEntryID, steamID, record)
 }
 
-func (c *Contests) EntryVote(ctx context.Context, contestID uuid.UUID, contestEntryID uuid.UUID, user person.Info, vote bool) error {
+func (c *Contests) EntryVote(ctx context.Context, contestID uuid.UUID, contestEntryID uuid.UUID, user person.BaseUser, vote bool) error {
 	var contest Contest
 	if errContests := c.ByID(ctx, contestID, &contest); errContests != nil {
 		return errContests
@@ -237,7 +237,7 @@ func (c *Contests) EntryVote(ctx context.Context, contestID uuid.UUID, contestEn
 	}
 
 	if !contest.Voting || !contest.DownVotes && !vote {
-		return httphelper.ErrBadRequest // TODO proper error
+		return rpc.ErrBadRequest // TODO proper error
 	}
 
 	if err := c.repository.ContestEntryVote(ctx, contestEntryID, user.GetSteamID(), vote); err != nil {

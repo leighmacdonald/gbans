@@ -1,3 +1,5 @@
+import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
+import { useMutation } from "@connectrpc/connect-query";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
@@ -10,21 +12,19 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import { useTheme } from "@mui/material/styles";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistance } from "date-fns";
 import { type MouseEvent, useState } from "react";
 import { z } from "zod/v4";
-import { apiUpdateBanMessage } from "../api";
 import { useAppForm } from "../contexts/formContext.tsx";
-import type { BanAppealMessage } from "../schema/report.ts";
-import { avatarHashToURL } from "../util/text.tsx";
-import { mdEditorRef } from "./form/field/MarkdownField.tsx";
+import type { AppealMessage } from "../rpc/ban/v1/appeal_pb.ts";
+import { editAppealMessage } from "../rpc/ban/v1/appeal-AppealService_connectquery.ts";
+import { avatarHashToURL } from "../util/strings.ts";
 import { MarkDownRenderer } from "./MarkdownRenderer";
 
 interface AppealMessageViewProps {
-	message: BanAppealMessage;
+	message: AppealMessage;
 	assetURL: string;
-	onDelete: (report_message_id: number) => void;
+	onDelete: (report_message_id: bigint) => void;
 }
 
 export const AppealMessageView = ({ message, onDelete, assetURL }: AppealMessageViewProps) => {
@@ -33,7 +33,7 @@ export const AppealMessageView = ({ message, onDelete, assetURL }: AppealMessage
 	const open = Boolean(anchorEl);
 	const [editing, setEditing] = useState<boolean>(false);
 	const [deleted, setDeleted] = useState<boolean>(false);
-	const queryClient = useQueryClient();
+	// const queryClient = useQueryClient();
 
 	const handleClick = (event: MouseEvent<HTMLElement>) => {
 		setAnchorEl(event.currentTarget);
@@ -43,28 +43,29 @@ export const AppealMessageView = ({ message, onDelete, assetURL }: AppealMessage
 		setAnchorEl(null);
 	};
 
-	const mutation = useMutation({
-		mutationKey: ["banSteam"],
-		mutationFn: async (values: { body_md: string }) => {
-			const ac = new AbortController();
-			const msg = await apiUpdateBanMessage(message.ban_message_id, values.body_md, ac.signal);
-
-			queryClient.setQueryData(["banMessages", { ban_id: message.ban_id }], (prev: BanAppealMessage[]) => {
-				return prev.map((m) => (m.ban_message_id === message.ban_message_id ? msg : m));
-			});
-			mdEditorRef.current?.setMarkdown("");
-			setEditing(false);
-		},
-	});
+	const mutation = useMutation(editAppealMessage);
+	// {
+	// 	mutationKey: ["banSteam"],
+	// 	mutationFn: async (values: { body_md: string }) => {
+	// 		const ac = new AbortController();
+	// 		const msg = await apiUpdateBanMessage(message.ban_message_id, values.body_md, ac.signal);
+	//
+	// 		queryClient.setQueryData(["banMessages", { ban_id: message.ban_id }], (prev: BanAppealMessage[]) => {
+	// 			return prev.map((m) => (m.ban_message_id === message.ban_message_id ? msg : m));
+	// 		});
+	// 		mdEditorRef.current?.setMarkdown("");
+	// 		setEditing(false);
+	// 	},
+	// });
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
 			mutation.mutate({
-				body_md: value.body_md,
+				bodyMd: value.body_md,
 			});
 		},
 		defaultValues: {
-			body_md: message.message_md,
+			body_md: message.messageMd,
 		},
 	});
 
@@ -107,17 +108,17 @@ export const AppealMessageView = ({ message, onDelete, assetURL }: AppealMessage
 			</Box>
 		);
 	} else {
-		const d1 = formatDistance(message.created_on, new Date(), {
+		const d1 = formatDistance(timestampDate(message.createdOn as Timestamp), new Date(), {
 			addSuffix: true,
 		});
 		return (
-			<Card elevation={1} id={`msg-${message.ban_message_id}`}>
+			<Card elevation={1} id={`msg-${message.banMessageId}`}>
 				<CardHeader
 					sx={{
 						backgroundColor: theme.palette.background.paper,
 					}}
 					avatar={
-						<Avatar aria-label="Avatar" src={avatarHashToURL(message.avatarhash)}>
+						<Avatar aria-label="Avatar" src={avatarHashToURL(message.avatarHash)}>
 							?
 						</Avatar>
 					}
@@ -126,11 +127,11 @@ export const AppealMessageView = ({ message, onDelete, assetURL }: AppealMessage
 							<MoreVertIcon />
 						</IconButton>
 					}
-					title={message.personaname}
+					title={message.personaName}
 					subheader={d1}
 				/>
 
-				<MarkDownRenderer body_md={message.message_md} assetURL={assetURL} />
+				<MarkDownRenderer body_md={message.messageMd} assetURL={assetURL} />
 
 				<Menu
 					anchorEl={anchorEl}
@@ -178,7 +179,7 @@ export const AppealMessageView = ({ message, onDelete, assetURL }: AppealMessage
 					</MenuItem>
 					<MenuItem
 						onClick={() => {
-							onDelete(message.ban_message_id);
+							onDelete(message.banMessageId);
 							setDeleted(true);
 						}}
 					>

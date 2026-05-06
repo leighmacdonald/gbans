@@ -38,20 +38,3 @@ func (r Reason) String() string {
 		Username:         "Inappropriate Username",
 	}[r]
 }
-
-var Reasons = []Reason{ //nolint:gochecknoglobals
-	External,
-	Cheating,
-	Racism,
-	Harassment,
-	Exploiting,
-	WarningsExceeded,
-	Spam,
-	Language,
-	Profile,
-	ItemDescriptions,
-	BotHost,
-	Evading,
-	Username,
-	Custom,
-}

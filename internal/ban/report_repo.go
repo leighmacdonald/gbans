@@ -269,7 +269,7 @@ func (r ReportRepository) GetReportBySteamID(ctx context.Context, authorID steam
 	return report, nil
 }
 
-func (r ReportRepository) GetReport(ctx context.Context, reportID int64) (Report, error) {
+func (r ReportRepository) GetReport(ctx context.Context, reportID int32) (Report, error) {
 	var report Report
 
 	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
@@ -313,7 +313,7 @@ func (r ReportRepository) GetReport(ctx context.Context, reportID int64) (Report
 	return report, nil
 }
 
-func (r ReportRepository) GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error) {
+func (r ReportRepository) GetReportMessages(ctx context.Context, reportID int32) ([]ReportMessage, error) {
 	rows, errQuery := r.QueryBuilder(ctx, r.Builder().
 		Select("s.report_message_id", "s.report_id", "s.author_id", "s.message_md", "s.deleted",
 			"s.created_on", "s.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").
@@ -360,7 +360,7 @@ func (r ReportRepository) GetReportMessages(ctx context.Context, reportID int64)
 	return messages, nil
 }
 
-func (r ReportRepository) GetReportMessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error) {
+func (r ReportRepository) GetReportMessageByID(ctx context.Context, reportMessageID int32) (ReportMessage, error) {
 	var message ReportMessage
 
 	row, errRow := r.QueryRowBuilder(ctx, r.Builder().

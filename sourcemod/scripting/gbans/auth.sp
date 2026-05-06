@@ -2,6 +2,8 @@
 #pragma tabsize 4
 #pragma newdecls required
 
+#include "common.sp"
+
 public Action onAdminCmdReload(int clientId, int argc)
 {
 	reloadAdmins(true);
@@ -23,15 +25,47 @@ public void OnClientPostAdminCheck(int clientId) {
 	checkPlayer(clientId);
 }
 
+public void authenticateServer() {
+    if (gAuthWaiting) {
+        gbLog("Waiting to reauthenticate gbans");
+        return;
+    }
+
+    gAuthWaiting = true;
+	gbLog("Authenticating gbans...");
+
+	char passwd[40];
+	gbCoreServerKey.GetString(passwd, sizeof passwd);
+
+	JSONObject req = new JSONObject();
+	req.SetString("password", passwd);
+
+	postHTTPRequest("/connect/sourcemod.v1.PluginService/SMAuthenticate", req, onAuthenticate);
+}
+
+void onAuthenticate(HTTPResponse response, any value) {
+	switch(response.Status) {
+		case HTTPStatus_OK: {
+			JSONObject data = view_as<JSONObject>(response.Data);
+			data.GetString("token", gToken, sizeof gToken);
+			gbLog("Authenticated server successfully");
+
+			reloadAdmins(true);
+		}
+		default: {
+			gbLog("Got invalid auth response: %d", response.Status);
+		}
+	}
+
+	gAuthWaiting = false;
+}
+
 void checkPlayer(int clientId)
 {
-	
 	if (!(clientId > 0 && IsClientInGame(clientId) && !IsFakeClient(clientId))) {
 		gbLog("Skipping check on invalid player");
 		return ;
 	}
-	
-	gbLog("--- checkPlayer");
 
 	char ip[16];
 	GetClientIP(clientId, ip, sizeof ip);
@@ -42,23 +76,14 @@ void checkPlayer(int clientId)
 	char clientAuth[64];
 	GetClientAuthId(clientId, AuthId_SteamID64, clientAuth, sizeof(clientAuth));
 
-	JSONObject obj = new JSONObject(); 
-	obj.SetString("steam_id", clientAuth);
-	obj.SetInt("client_id", clientId);
+	JSONObject obj = new JSONObject();
+	obj.SetString("steamId", clientAuth);
+	obj.SetInt("clientId", clientId);
 	obj.SetString("ip", ip);
 	obj.SetString("name", name);
 
-	char url[1024];
-	makeURL("/api/sm/check", url, sizeof url);
-
-	HTTPRequest request = new HTTPRequest(url);
-	addAuthHeader(request);
-
-    request.Post(obj, onCheckResp); 
-
-	delete obj;
+	postHTTPRequest("/connect/sourcemod.v1.PluginService/SMCheck", obj, onCheckResp);
 }
-
 
 void onCheckResp(HTTPResponse response, any value) {
 	gbLog("--- onCheckResp");
@@ -67,12 +92,12 @@ void onCheckResp(HTTPResponse response, any value) {
 		// good boi
 		return;
 	case HTTPStatus_Forbidden: {
-		JSONObject data = view_as<JSONObject>(response.Data); 
+		JSONObject data = view_as<JSONObject>(response.Data);
 
 		char msg[256];
 		data.GetString("msg", msg, sizeof msg);
-		int clientId = data.GetInt("client_id");
-		int banType = data.GetInt("ban_type");
+		int clientId = data.GetInt("clientId");
+		int banType = data.GetInt("banType");
 
 		switch(banType) {
 			case BSNoComm: {
@@ -100,4 +125,3 @@ void onCheckResp(HTTPResponse response, any value) {
 	}
 	}
 }
-		

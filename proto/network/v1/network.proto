@@ -1,0 +1,146 @@
+edition = "2023";
+
+package network.v1;
+
+import "buf/validate/validate.proto";
+import "database/query/v1/filter.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service NetworkService {
+  rpc QueryConnections(QueryConnectionsRequest) returns (QueryConnectionsResponse) {}
+  rpc QueryNetwork(QueryNetworkRequest) returns (QueryNetworkResponse) {}
+  rpc UpdateDB(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
+
+message QueryNetworkRequest {
+  database.query.v1.Filter filter = 1;
+  string ip = 2;
+}
+
+message Details {
+  Location location = 1 [(buf.validate.field).required = true];
+  ASN asn = 2 [(buf.validate.field).required = true];
+  Proxy proxy = 3 [(buf.validate.field).required = true];
+}
+
+message Location {
+  string cidr = 1 [(buf.validate.field).required = true];
+  string country_code = 2 [(buf.validate.field).required = true];
+  string country_name = 3 [(buf.validate.field).required = true];
+  string region_name = 4 [(buf.validate.field).required = true];
+  string city_name = 5 [(buf.validate.field).required = true];
+  LatLong lat_long = 6 [(buf.validate.field).required = true];
+}
+
+message ASN {
+  string cidr = 1 [(buf.validate.field).required = true];
+  uint64 as_num = 2 [(buf.validate.field).required = true];
+  string as_name = 3 [(buf.validate.field).required = true];
+}
+enum ThreatType {
+  THREAT_TYPE_UNSPECIFIED = 0;
+  THREAT_TYPE_SPAM = 1;
+  THREAT_TYPE_BOTNET = 2;
+  THREAT_TYPE_SCANNER = 3;
+  THREAT_TYPE_SPAM_BOTNET = 4;
+  THREAT_TYPE_SPAM_SCANNER = 5;
+  THREAT_TYPE_SPAM_SCANNER_BOTNET = 6;
+}
+
+enum UsageType {
+  USAGE_TYPE_UNSPECIFIED = 0;
+  USAGE_TYPE_CDN = 1;
+  USAGE_TYPE_ISP_FIXED_MOBILE = 2;
+  USAGE_TYPE_COMMERCIAL = 3;
+  USAGE_TYPE_ISP_MOBILE = 4;
+  USAGE_TYPE_LIBRARY = 5;
+  USAGE_TYPE_DATA_CENTER = 6;
+  USAGE_TYPE_MILITARY = 7;
+  USAGE_TYPE_GOVERNMENT = 8;
+  USAGE_TYPE_ISP_FIXED = 9;
+  USAGE_TYPE_ORGANIZATION = 10;
+  USAGE_TYPE_EDUCATION = 11;
+}
+
+enum ProxyType {
+  PROXY_TYPE_PUB_UNSPECIFIED = 0;
+}
+
+message Proxy {
+  string cidr = 1 [(buf.validate.field).required = true];
+  ProxyType proxy_type = 2 [(buf.validate.field).required = true];
+  string country_code = 3;
+  string country_name = 4;
+  string region_name = 5;
+  string city_name = 6;
+  string isp = 7;
+  string domain = 8;
+  UsageType usage_type = 9;
+  int64 asn = 10;
+  string as_name = 11;
+  google.protobuf.Timestamp last_seen = 12;
+  ThreatType threat_type = 13;
+}
+
+message LatLong {
+  float latitude = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).float = {
+      gte: -90
+      lte: 90
+    }
+  ];
+  float longitude = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).float = {
+      gte: -180
+      lte: 180
+    }
+  ];
+}
+message QueryNetworkResponse {
+  Details details = 1 [(buf.validate.field).required = true];
+}
+
+message QueryConnectionsRequest {
+  database.query.v1.Filter filter = 1;
+  int64 steam_id = 2 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+  string cidr = 3 [(buf.validate.field).string.ipv4_with_prefixlen = true];
+  string country_code = 4 [(buf.validate.field).string.len = 2];
+  string country_name = 5;
+  string city_name = 6;
+  repeated int32 server_id = 7;
+}
+
+message QueryConnectionsResponse {
+  repeated PersonConnection connection = 1 [(buf.validate.field).required = true];
+}
+
+message PersonConnection {
+  int64 person_connection_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gt: 0}
+  ];
+  string ip_addr = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.ipv4 = true
+  ];
+  int64 steam_id = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string persona_name = 4 [(buf.validate.field).required = true];
+  int32 server_id = 5 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gt: 0}
+  ];
+  string server_name_short = 6 [(buf.validate.field).required = true];
+  int32 as_num = 7 [(buf.validate.field).required = true];
+  string as_name = 8 [(buf.validate.field).required = true];
+  string country_code = 9 [(buf.validate.field).required = true];
+  string country_name = 10 [(buf.validate.field).required = true];
+  string city_name = 11 [(buf.validate.field).required = true];
+  LatLong location = 12 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 13 [(buf.validate.field).required = true];
+}

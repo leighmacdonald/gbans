@@ -1,8 +1,9 @@
+import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
+import { useSuspenseQuery } from "@connectrpc/connect-query";
 import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import { formatDistanceToNowStrict } from "date-fns/formatDistanceToNowStrict";
 import {
@@ -13,7 +14,6 @@ import {
 	useMaterialReactTable,
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiGetReports } from "../api";
 import { PersonCell } from "../component/PersonCell.tsx";
 import RouterLink from "../component/RouterLink.tsx";
 import { TextLink } from "../component/TextLink.tsx";
@@ -25,14 +25,16 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { BanReason, type BanReasonEnum, BanReasons } from "../schema/bans.ts";
-import { ReportStatus, type ReportWithAuthor, reportStatusString } from "../schema/report.ts";
-import { renderDateTime } from "../util/time.ts";
+import { BanReason } from "../rpc/ban/v1/ban_pb.ts";
+import { ReportStatus, type ReportWithAuthor } from "../rpc/ban/v1/report_pb.ts";
+import { reports } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
+import { enumValues } from "../util/lists.ts";
+import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<ReportWithAuthor>();
 const defaultOptions = createDefaultTableOptions<ReportWithAuthor>();
-const defaultValues = makeSchemaDefaults({ defaultColumn: "report_id" });
-const validateSearch = makeSchemaState("report_id");
+const defaultValues = makeSchemaDefaults({ defaultColumn: "report.reportId" });
+const validateSearch = makeSchemaState("report.reportId");
 
 export const Route = createFileRoute("/_mod/admin/reports")({
 	component: AdminReports,
@@ -49,12 +51,7 @@ function AdminReports() {
 	const navigate = useNavigate();
 	const search = Route.useSearch();
 	const theme = useTheme();
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["adminReports"],
-		queryFn: async ({ signal }) => {
-			return apiGetReports(signal, { deleted: false });
-		},
-	});
+	const { data, isLoading, isError } = useSuspenseQuery(reports);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		(updater) => {
@@ -100,7 +97,7 @@ function AdminReports() {
 	);
 	const columns = useMemo(() => {
 		return [
-			columnHelper.accessor("report_id", {
+			columnHelper.accessor("report.reportId", {
 				header: "ID",
 				grow: false,
 				Cell: ({ cell }) => (
@@ -114,24 +111,24 @@ function AdminReports() {
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("report_status", {
+			columnHelper.accessor("report.reportStatus", {
 				header: "Status",
 				grow: false,
 				filterVariant: "multi-select",
 				filterSelectOptions: Object.values(ReportStatus).map((status) => ({
-					label: reportStatusString(status),
+					label: String(status),
 					value: status,
 				})),
 				filterFn: (row, _, filterValue) => {
-					return filterValue.length === 0 || filterValue.includes(row.original.report_status);
+					return filterValue.length === 0 || filterValue.includes(row.original.report?.reportStatus);
 				},
 				Cell: ({ cell }) => (
 					<TextLink to={Route.fullPath} search={setColumnFilter(search, "report_status", [cell.getValue()])}>
-						{reportStatusString(cell.getValue())}
+						{ReportStatus[cell.getValue()]}
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("source_id", {
+			columnHelper.accessor("report.sourceId", {
 				header: "Reporter",
 				grow: true,
 				enableColumnFilter: true,
@@ -140,11 +137,10 @@ function AdminReports() {
 					if (query === "") {
 						return true;
 					}
-					const value = row.original.source_id.toLowerCase();
-					if (value.includes(query)) {
-						return true;
-					}
-					if (row.original.source_id.includes(query) || row.original.source_id === query) {
+					if (
+						row.original.author?.steamId.toString().includes(query) ||
+						row.original.author?.steamId.toString() === query
+					) {
 						return true;
 					}
 
@@ -152,9 +148,9 @@ function AdminReports() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.author.steam_id}
-						personaname={row.original.author.name}
-						avatar_hash={row.original.author.avatarhash}
+						steamId={BigInt(row.original.author?.steamId ?? 0n)}
+						personaName={String(row.original.author?.name)}
+						avatarHash={String(row.original.author?.avatarHash)}
 					>
 						<RouterLink
 							style={{
@@ -164,14 +160,14 @@ function AdminReports() {
 										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
-							search={setColumnFilter(search, "source_id", row.original.source_id)}
+							search={setColumnFilter(search, "source_id", row.original.author?.steamId)}
 						>
-							{row.original.author.name ?? row.original.author.steam_id}
+							{row.original.author?.name ?? row.original.author?.steamId}
 						</RouterLink>
 					</PersonCell>
 				),
 			}),
-			columnHelper.accessor("target_id", {
+			columnHelper.accessor("report.targetId", {
 				header: "Subject",
 				grow: true,
 				enableColumnFilter: true,
@@ -180,11 +176,14 @@ function AdminReports() {
 					if (query === "") {
 						return true;
 					}
-					const value = row.original.target_id.toLowerCase();
-					if (value.includes(query)) {
+					const value = row.original.subject?.steamId.toString().toLowerCase();
+					if (value?.includes(query)) {
 						return true;
 					}
-					if (row.original.target_id.includes(query) || row.original.target_id === query) {
+					if (
+						row.original.report?.targetId.toString().includes(query) ||
+						row.original.report?.targetId.toString() === query
+					) {
 						return true;
 					}
 
@@ -192,9 +191,9 @@ function AdminReports() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.subject.steam_id}
-						personaname={row.original.subject.name}
-						avatar_hash={row.original.subject.avatarhash}
+						steamId={BigInt(row.original.subject?.steamId ?? 0n)}
+						personaName={String(row.original.subject?.name)}
+						avatarHash={String(row.original.subject?.avatarHash)}
 					>
 						<RouterLink
 							style={{
@@ -204,16 +203,16 @@ function AdminReports() {
 										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
-							search={setColumnFilter(search, "target_id", row.original.target_id)}
+							search={setColumnFilter(search, "target_id", row.original.subject?.steamId)}
 						>
-							{row.original.subject.name ?? row.original.subject.steam_id}
+							{row.original.subject?.name ?? row.original.subject?.steamId}
 						</RouterLink>
 					</PersonCell>
 				),
 			}),
-			columnHelper.accessor("reason", {
-				filterSelectOptions: Object.values(BanReason).map((reason) => ({
-					label: BanReasons[reason],
+			columnHelper.accessor("report.reason", {
+				filterSelectOptions: enumValues(BanReason).map((reason) => ({
+					label: BanReason[reason],
 					value: reason,
 				})),
 				filterVariant: "multi-select",
@@ -222,39 +221,47 @@ function AdminReports() {
 				filterFn: (row, _, filterValue) => {
 					return (
 						filterValue.length === 0 ||
-						filterValue.includes(BanReason.Any) ||
-						filterValue.includes(row.original.reason)
+						filterValue.includes(BanReason.UNSPECIFIED) ||
+						filterValue.includes(row.original.report?.reason)
 					);
 				},
 				Cell: ({ cell }) => (
 					<TextLink to={Route.fullPath} search={setColumnFilter(search, "reason", [cell.getValue()])}>
-						{BanReasons[cell.getValue() as BanReasonEnum]}
+						{BanReason[cell.getValue()]}
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("reason_text", {
+			columnHelper.accessor("report.reasonText", {
 				filterVariant: "text",
 				grow: false,
 				header: "Custom Reason",
 				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
 			}),
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("report.createdOn", {
 				header: "Created",
 				grow: false,
 				filterVariant: "date",
 				Cell: ({ cell }) => (
-					<Tooltip title={formatDistanceToNowStrict(cell.getValue(), { addSuffix: true })}>
-						<Typography>{renderDateTime(cell.getValue())}</Typography>
+					<Tooltip
+						title={formatDistanceToNowStrict(timestampDate(cell.getValue() as Timestamp), {
+							addSuffix: true,
+						})}
+					>
+						<Typography>{renderTimestamp(cell.getValue())}</Typography>
 					</Tooltip>
 				),
 			}),
-			columnHelper.accessor("updated_on", {
+			columnHelper.accessor("report.updatedOn", {
 				header: "Updated",
 				grow: false,
 				filterVariant: "date",
 				Cell: ({ cell }) => (
-					<Tooltip title={formatDistanceToNowStrict(cell.getValue(), { addSuffix: true })}>
-						<Typography>{renderDateTime(cell.getValue())}</Typography>
+					<Tooltip
+						title={formatDistanceToNowStrict(timestampDate(cell.getValue() as Timestamp), {
+							addSuffix: true,
+						})}
+					>
+						<Typography>{renderTimestamp(cell.getValue())}</Typography>
 					</Tooltip>
 				),
 			}),
@@ -264,7 +271,7 @@ function AdminReports() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ?? [],
+		data: data.reports,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,

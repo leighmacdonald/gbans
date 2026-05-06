@@ -1,10 +1,10 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: form needs it */
 
+import { useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
 import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
@@ -14,7 +14,6 @@ import {
 	useMaterialReactTable,
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiGetAnticheatLogs, apiGetServers } from "../api";
 import { PersonCell } from "../component/PersonCell.tsx";
 import RouterLink from "../component/RouterLink.tsx";
 import { TextLink } from "../component/TextLink.tsx";
@@ -26,110 +25,78 @@ import {
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
-import type { StacEntry } from "../schema/anticheat.ts";
+import type { Entry } from "../rpc/anticheat/v1/anticheat_pb.ts";
+import { query } from "../rpc/anticheat/v1/anticheat-AnticheatService_connectquery.ts";
+import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
-import { renderDate } from "../util/time.ts";
+import { renderTimestamp } from "../util/time.ts";
 
 const validateSearch = makeSchemaState("anticheat_id");
 
 export const Route = createFileRoute("/_mod/admin/anticheat")({
 	component: AdminAnticheat,
 	validateSearch,
-	loader: async ({ context }) => {
-		const unsorted = await context.queryClient.ensureQueryData({
-			queryKey: ["serversSimple"],
-			queryFn: async ({ signal }) => {
-				return await apiGetServers(signal);
-			},
-		});
-		return unsorted.sort((a, b) => {
-			if (a.server_name > b.server_name) {
-				return 1;
-			}
-			if (a.server_name < b.server_name) {
-				return -1;
-			}
-			return 0;
-		});
-	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Anti-Cheat Logs" }, match.context.title("Anti-Cheat Logs")],
 	}),
 });
 
-const columnHelper = createMRTColumnHelper<StacEntry>();
-const defaultOptions = createDefaultTableOptions<StacEntry>();
+const columnHelper = createMRTColumnHelper<Entry>();
+const defaultOptions = createDefaultTableOptions<Entry>();
 
 function AdminAnticheat() {
 	const search = Route.useSearch();
 	const navigate = useNavigate();
-	const servers = Route.useLoaderData();
+
 	const theme = useTheme();
 
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["anticheat", search],
-		queryFn: async ({ signal }) => {
-			try {
-				return await apiGetAnticheatLogs(signal, {
-					server_id: 0,
-					name: "",
-					summary: "",
-					steam_id: "",
-					detection: "any",
-					limit: 100000,
-					offset: 0,
-					order_by: "created_on",
-					desc: true,
-				});
-			} catch {
-				return [];
-			}
-		},
-	});
+	const { data: serverList } = useSuspenseQuery(servers);
+
+	const { data, isLoading, isError } = useQuery(query);
 
 	const columns = useMemo(
 		() => [
-			columnHelper.accessor("anticheat_id", {
+			columnHelper.accessor("anticheatId", {
 				header: "ID",
 				enableSorting: false,
 				enableColumnFilter: false,
 				grow: false,
 				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
 			}),
-			columnHelper.accessor("server_id", {
+			columnHelper.accessor("serverId", {
 				enableSorting: false,
 				grow: false,
 				enableColumnFilter: true,
 				filterVariant: "multi-select",
-				filterSelectOptions: servers.map((server) => ({
-					label: server.server_name,
-					value: server.server_id,
+				filterSelectOptions: serverList.servers.map((server) => ({
+					label: server.serverName,
+					value: server.serverId,
 				})),
 				filterFn: (row, _, filterValue) => {
-					return filterValue.length === 0 || filterValue.includes(row.original.server_id);
+					return filterValue.length === 0 || filterValue.includes(row.original.serverId);
 				},
 				header: "Server",
 				Cell: ({ row, cell }) => (
-					<Tooltip title={row.original.server_name}>
+					<Tooltip title={row.original.serverName}>
 						<TextLink
 							to={"/admin/anticheat"}
 							search={setColumnFilter(search, "server_id", [cell.getValue()])}
-							sx={{ color: stringToColour(row.original.server_name ?? "") }}
+							sx={{ color: stringToColour(row.original.serverName ?? "") }}
 						>
-							{row.original.server_name}
+							{row.original.serverName}
 						</TextLink>
 					</Tooltip>
 				),
 			}),
-			columnHelper.accessor("steam_id", {
+			columnHelper.accessor("steamId", {
 				header: "Name",
 				enableHiding: false,
 				grow: true,
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.steam_id}
-						personaname={row.original.personaname}
-						avatar_hash={row.original.avatar}
+						steamId={row.original.steamId}
+						personaName={row.original.personaName}
+						avatarHash={row.original.avatarHash}
 					>
 						<RouterLink
 							style={{
@@ -139,24 +106,24 @@ function AdminAnticheat() {
 										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
-							search={setColumnFilter(search, "steam_id", row.original.steam_id)}
+							search={setColumnFilter(search, "steam_id", row.original.steamId)}
 						>
-							{row.original.personaname ?? row.original.steam_id}
+							{row.original.personaName ?? row.original.serverId}
 						</RouterLink>
 					</PersonCell>
 				),
 			}),
-			columnHelper.accessor("personaname", {
+			columnHelper.accessor("personaName", {
 				enableHiding: true,
 				grow: false,
 				header: "Personaname",
 			}),
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "Created",
 				grow: false,
-				Cell: ({ cell }) => renderDate(cell.getValue()),
+				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
-			columnHelper.accessor("demo_id", {
+			columnHelper.accessor("demoId", {
 				header: "Demo",
 				grow: false,
 			}),
@@ -181,7 +148,7 @@ function AdminAnticheat() {
 				Cell: ({ renderedCellValue }) => <TableCellString>{renderedCellValue}</TableCellString>,
 			}),
 		],
-		[search, servers, theme],
+		[search, theme, serverList.servers],
 	);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
@@ -228,7 +195,7 @@ function AdminAnticheat() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ?? [],
+		data: data?.entries ?? [],
 		enableFilters: true,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,

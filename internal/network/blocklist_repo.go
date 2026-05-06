@@ -9,7 +9,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -65,7 +65,7 @@ func (b *BlocklistRepository) CreateSteamBlockWhitelists(ctx context.Context, st
 		}
 	}
 
-	return WhitelistSteam{}, httphelper.ErrInternal // TODO better error
+	return WhitelistSteam{}, rpc.ErrInternal // TODO better error
 }
 
 func (b *BlocklistRepository) GetSteamBlockWhitelists(ctx context.Context) ([]WhitelistSteam, error) {
@@ -140,7 +140,7 @@ func (b *BlocklistRepository) GetCIDRBlockSources(ctx context.Context) ([]CIDRBl
 	return blocks, nil
 }
 
-func (b *BlocklistRepository) GetCIDRBlockSource(ctx context.Context, sourceID int, block *CIDRBlockSource) error {
+func (b *BlocklistRepository) GetCIDRBlockSource(ctx context.Context, sourceID int32, block *CIDRBlockSource) error {
 	row, errRow := b.QueryRowBuilder(ctx, b.Builder().
 		Select("cidr_block_source_id", "name", "url", "enabled", "created_on", "updated_on").
 		From("cidr_block_source").
@@ -187,7 +187,7 @@ func (b *BlocklistRepository) SaveCIDRBlockSources(ctx context.Context, block *C
 		Suffix("RETURNING cidr_block_source_id"), &block.CIDRBlockSourceID))
 }
 
-func (b *BlocklistRepository) DeleteCIDRBlockSources(ctx context.Context, blockSourceID int) error {
+func (b *BlocklistRepository) DeleteCIDRBlockSources(ctx context.Context, blockSourceID int32) error {
 	return database.Err(b.ExecDeleteBuilder(ctx, b.Builder().
 		Delete("cidr_block_source").
 		Where(sq.Eq{"cidr_block_source_id": blockSourceID})))
@@ -221,7 +221,7 @@ func (b *BlocklistRepository) GetCIDRBlockWhitelists(ctx context.Context) ([]Whi
 	return whitelists, nil
 }
 
-func (b *BlocklistRepository) GetCIDRBlockWhitelist(ctx context.Context, whitelistID int, whitelist *WhitelistIP) error {
+func (b *BlocklistRepository) GetCIDRBlockWhitelist(ctx context.Context, whitelistID int32, whitelist *WhitelistIP) error {
 	rows, errRow := b.QueryRowBuilder(ctx, b.Builder().
 		Select("cidr_block_whitelist_id", "address", "created_on", "updated_on").
 		From("cidr_block_whitelist").
@@ -263,7 +263,7 @@ func (b *BlocklistRepository) SaveCIDRBlockWhitelist(ctx context.Context, whitel
 		Suffix("RETURNING cidr_block_whitelist_id"), &whitelist.CIDRBlockWhitelistID))
 }
 
-func (b *BlocklistRepository) DeleteCIDRBlockWhitelist(ctx context.Context, whitelistID int) error {
+func (b *BlocklistRepository) DeleteCIDRBlockWhitelist(ctx context.Context, whitelistID int32) error {
 	return database.Err(b.ExecDeleteBuilder(ctx, b.Builder().
 		Delete("cidr_block_whitelist").
 		Where(sq.Eq{"cidr_block_whitelist_id": whitelistID})))

@@ -24,7 +24,6 @@ var (
 	ErrNetworkLocationUnknown = errors.New("unknown location record")
 	ErrNetworkASNUnknown      = errors.New("unknown asn record")
 	ErrNetworkProxyUnknown    = errors.New("no proxy record")
-	ErrMissingParam           = errors.New("failed to request at least one required parameter")
 )
 
 type Config struct {
@@ -54,13 +53,13 @@ type ConnectionHistoryQuery struct {
 	query.Filter
 	httphelper.SourceIDField
 
-	CIDR        string `json:"cidr,omitempty" schema:"cidr,omitempty"`
-	ASNum       int    `json:"as_num,omitempty" schema:"as_num,omitempty"`
-	ASName      string `json:"as_name,omitempty" schema:"as_name,omitempty"`
-	CountryCode string `json:"country_code,omitempty" schema:"country_code,omitempty"`
-	CountryName string `json:"country_name,omitempty" schema:"country_name,omitempty"`
-	CityName    string `json:"city_name,omitempty" schema:"city_name,omitempty"`
-	ServerID    []int  `json:"server_id,omitempty" schema:"server_id,omitempty"`
+	CIDR        string  `json:"cidr,omitempty" schema:"cidr,omitempty"`
+	ASNum       int32   `json:"as_num,omitempty" schema:"as_num,omitempty"`
+	ASName      string  `json:"as_name,omitempty" schema:"as_name,omitempty"`
+	CountryCode string  `json:"country_code,omitempty" schema:"country_code,omitempty"`
+	CountryName string  `json:"country_name,omitempty" schema:"country_name,omitempty"`
+	CityName    string  `json:"city_name,omitempty" schema:"city_name,omitempty"`
+	ServerID    []int32 `json:"server_id,omitempty" schema:"server_id,omitempty"`
 }
 
 type PersonConnection struct {
@@ -68,11 +67,11 @@ type PersonConnection struct {
 	IPAddr             netip.Addr          `json:"ip_addr"`
 	SteamID            steamid.SteamID     `json:"steam_id"`
 	PersonaName        string              `json:"persona_name"`
-	ServerID           int                 `json:"server_id"`
+	ServerID           int32               `json:"server_id"`
 	CreatedOn          time.Time           `json:"created_on"`
 	ServerNameShort    string              `json:"server_name_short"`
 	ServerName         string              `json:"server_name"`
-	ASNum              int                 `json:"as_num"`
+	ASNum              int32               `json:"as_num"`
 	ASName             string              `json:"as_name"`
 	CountryCode        string              `json:"country_code"`
 	CountryName        string              `json:"country_name"`
@@ -272,19 +271,15 @@ func (u Networks) QueryNetwork(ctx context.Context, address netip.Addr) (Details
 		return details, ErrNetworkInvalidIP
 	}
 
-	location, errLocation := u.repository.GetLocationRecord(ctx, address)
-	if errLocation != nil {
-		return details, errors.Join(errLocation, ErrNetworkLocationUnknown)
+	location, _ := u.repository.GetLocationRecord(ctx, address)
+	if location.CIDR != "" {
+		details.Location = location
 	}
 
-	details.Location = location
-
-	asn, errASN := u.repository.GetASNRecordByIP(ctx, address)
-	if errASN != nil {
-		return details, errors.Join(errASN, ErrNetworkASNUnknown)
+	asn, _ := u.repository.GetASNRecordByIP(ctx, address)
+	if asn.ASNum > 0 {
+		details.Asn = asn
 	}
-
-	details.Asn = asn
 
 	proxy, errProxy := u.repository.GetProxyRecord(ctx, address)
 	if errProxy != nil && !errors.Is(errProxy, database.ErrNoResult) {

@@ -1,0 +1,47 @@
+edition = "2023";
+
+package notification.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service NotificationService {
+  rpc Notifications(google.protobuf.Empty) returns (NotificationsResponse) {}
+  rpc MarkRead(MarkReadRequest) returns (google.protobuf.Empty) {}
+  rpc MarkReadAll(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+  rpc DeleteAll(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+  rpc Delete(DeleteRequest) returns (google.protobuf.Empty) {}
+}
+
+message NotificationsResponse {
+  repeated UserNotification notifications = 1 [(buf.validate.field).required = true];
+}
+
+message DeleteRequest {
+  repeated int32 message_id = 1 [(buf.validate.field).required = true];
+}
+
+message MarkReadRequest {
+  repeated int32 message_id = 1 [(buf.validate.field).required = true];
+}
+
+enum Severity {
+  SEVERITY_INFO_UNSPECIFIED = 0;
+  SEVERITY_WARN = 1;
+  SEVERITY_ERROR = 2;
+}
+
+message UserNotification {
+  int64 person_notification_id = 1 [(buf.validate.field).required = true];
+  int64 steam_id = 2 [(buf.validate.field).required = true];
+  bool read = 3 [(buf.validate.field).required = true];
+  bool deleted = 4 [(buf.validate.field).required = true];
+  Severity severity = 5 [(buf.validate.field).required = true];
+  string message = 6 [(buf.validate.field).required = true];
+  string link = 7 [(buf.validate.field).required = true];
+  int32 count = 8 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 9 [(buf.validate.field).required = true];
+  string name = 10 [(buf.validate.field).required = true];
+  string avatar_hash = 11 [(buf.validate.field).required = true];
+}

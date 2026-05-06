@@ -1,0 +1,191 @@
+edition = "2023";
+
+package servers.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "network/v1/network.proto";
+
+service ServersService {
+  rpc State(StateRequest) returns (StateResponse);
+  rpc Servers(google.protobuf.Empty) returns (ServersResponse);
+  rpc EditServer(EditServerRequest) returns (EditServerResponse);
+  rpc DeleteServer(DeleteServerRequest) returns (google.protobuf.Empty);
+  rpc ServersAdmin(google.protobuf.Empty) returns (ServersAdminResponse);
+  rpc QueryLogs(QueryLogsRequest) returns (QueryLogsResponse) {}
+}
+
+message QueryLogsRequest {
+  repeated int32 server_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).repeated.min_items = 1
+  ];
+}
+
+message ServerLog {
+  int32 server_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  string server_name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  string body = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  google.protobuf.Timestamp created_on = 4 [(buf.validate.field).required = true];
+}
+
+message QueryLogsResponse {
+  repeated ServerLog logs = 1;
+  int32 count = 2;
+}
+
+message StateRequest {
+  network.v1.LatLong lat_long = 1;
+}
+
+message SafeServer {
+  int32 server_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  string host = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.address = true
+  ];
+  uint32 port = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).uint32.lte = 65535
+  ];
+  string ip = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.ipv4 = true
+  ];
+  string name = 5 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  string name_short = 6 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  string region = 7 [(buf.validate.field).required = true];
+  string cc = 8 [(buf.validate.field).string.len = 2];
+  int32 players = 9 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gte = 0
+  ];
+  int32 max_players = 10 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gte = 0
+  ];
+  int32 bot = 11 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gte = 0
+  ];
+  string map = 12 [(buf.validate.field).required = true];
+  repeated string game_types = 13 [(buf.validate.field).required = true];
+  network.v1.LatLong lat_long = 14 [(buf.validate.field).required = true];
+  float distance = 15 [(buf.validate.field).required = true];
+  int32 humans = 16 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gte = 0
+  ];
+  repeated string tags = 17 [(buf.validate.field).required = true];
+}
+
+message Server {
+  int32 server_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gte = 0
+  ];
+  string short_name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  string name = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  string address = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.address = true
+  ];
+  string address_internal = 5 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.address = true
+  ];
+  bool sdr_enabled = 6 [(buf.validate.field).required = true];
+  uint32 port = 7 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).uint32.lte = 65535
+  ];
+  string rcon = 8 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  string password = 9 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  bool is_enabled = 10 [(buf.validate.field).required = true];
+  bool deleted = 11;
+  string region = 12 [(buf.validate.field).required = true];
+  string cc = 13 [(buf.validate.field).string.len = 2];
+  network.v1.LatLong lat_long = 14 [(buf.validate.field).required = true];
+  int32 log_secret = 15 [(buf.validate.field).required = true];
+  bool enable_stats = 16 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp token_created_on = 17;
+  google.protobuf.Timestamp created_on = 18 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 19 [(buf.validate.field).required = true];
+  repeated string discord_seed_role_ids = 20;
+  string ip = 21;
+}
+
+message StateResponse {
+  repeated SafeServer servers = 1 [(buf.validate.field).required = true];
+  network.v1.LatLong lat_long = 2 [(buf.validate.field).required = true];
+}
+
+message ServerInfoSafe {
+  string server_name_long = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  string server_name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  int32 server_id = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  string colour = 4;
+}
+
+message ServersResponse {
+  repeated ServerInfoSafe servers = 1 [(buf.validate.field).required = true];
+}
+
+message EditServerRequest {
+  Server server = 1 [(buf.validate.field).required = true];
+}
+
+message EditServerResponse {
+  Server server = 1 [(buf.validate.field).required = true];
+}
+
+message DeleteServerRequest {
+  int32 server_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+}
+
+message ServersAdminResponse {
+  repeated Server servers = 1 [(buf.validate.field).required = true];
+}

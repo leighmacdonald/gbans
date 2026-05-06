@@ -1,82 +1,26 @@
+import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
-import { useMutation } from "@tanstack/react-query";
-import { parseISO } from "date-fns";
 import { z } from "zod/v4";
-import { apiContestSave, EmptyUUID } from "../../api";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { Contest } from "../../schema/contest.ts";
-import {
-	PermissionLevel,
-	PermissionLevelCollection,
-	type PermissionLevelEnum,
-	permissionLevelString,
-} from "../../schema/people.ts";
+import type { Contest } from "../../rpc/contest/v1/contest_pb.ts";
+import { contestCreate } from "../../rpc/contest/v1/contest-Service_connectquery.ts";
+import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
+import { enumValues } from "../../util/lists.ts";
+import { EMPTY_UUID } from "../../util/strings.ts";
 import { Heading } from "../Heading";
-
-type ContestEditorFormValues = {
-	title: string;
-	description: string;
-	hide_submissions: boolean;
-	public: boolean;
-	date_start: string;
-	date_end: string;
-	max_submissions: string;
-	media_types: string;
-	voting: boolean;
-	min_permission_level: PermissionLevelEnum;
-	down_votes: boolean;
-};
-
-// const validationSchema = yup.object({
-//     title: minStringValidator('Title', 4),
-//     description: minStringValidator('Description', 1),
-//     public: boolDefinedValidator('Public'),
-//     date_start: dateDefinedValidator('date_start'),
-//     date_end: dateAfterValidator('date_start', 'End date'),
-//     max_submissions: numberValidator('Submissions'),
-//     media_types: mimeTypesValidator(),
-//     voting: boolDefinedValidator('Voting'),
-//     hide_submissions: boolDefinedValidator('Hide Submissions'),
-//     down_votes: boolDefinedValidator('Down votes'),
-//     min_permission_level: permissionValidator()
-// });
 
 export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest }) => {
 	const modal = useModal();
 	const { sendError } = useUserFlashCtx();
 
-	const mutation = useMutation({
-		mutationKey: ["adminContest"],
-		mutationFn: async (values: ContestEditorFormValues) => {
-			const ac = new AbortController();
-			return await apiContestSave(
-				{
-					contest_id: contest?.contest_id ?? EmptyUUID,
-					date_start: parseISO(values.date_start),
-					date_end: parseISO(values.date_end),
-					description: values.description,
-					hide_submissions: values.hide_submissions,
-					title: values.title,
-					voting: values.voting,
-					down_votes: values.down_votes,
-					max_submissions: Number(values.max_submissions),
-					media_types: values.media_types,
-					public: values.public,
-					min_permission_level: values.min_permission_level,
-					deleted: false,
-					num_entries: 0,
-					updated_on: new Date(),
-					created_on: new Date(),
-				},
-				ac.signal,
-			);
-		},
+	const mutation = useMutation(contestCreate, {
 		onSuccess: async (contest) => {
 			modal.resolve(contest);
 			await modal.hide();
@@ -86,21 +30,21 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutation.mutate(value);
+			mutation.mutate({ contest: value });
 		},
 		defaultValues: {
-			date_start: contest?.date_start.toISOString() ?? "",
-			date_end: contest ? contest.date_end.toISOString() : "",
+			date_start: contest?.dateStart ? timestampDate(contest?.dateStart).toISOString() : "",
+			date_end: contest?.dateEnd ? timestampDate(contest.dateEnd).toISOString() : "",
 			description: contest ? contest.description : "",
-			hide_submissions: contest ? contest.hide_submissions : false,
+			hide_submissions: contest ? contest.hideSubmissions : false,
 			title: contest ? contest.title : "",
 			voting: contest ? contest.voting : true,
-			down_votes: contest ? contest.down_votes : true,
-			max_submissions: contest ? String(contest.max_submissions) : "1",
-			media_types: contest ? contest.media_types : "",
+			down_votes: contest ? contest.downVotes : true,
+			max_submissions: contest ? String(contest.maxSubmissions) : "1",
+			media_types: contest ? contest.mediaTypes : "",
 			public: contest ? contest.public : true,
-			min_permission_level: contest ? contest.min_permission_level : PermissionLevel.User,
-			deleted: contest ? contest.deleted : false,
+			min_permission_level: contest ? contest.minPermissionLevel : Privilege.USER,
+			//deleted: contest ? contest.deleted : false,
 			num_entries: 0,
 			updated_on: new Date(),
 			created_on: new Date(),
@@ -117,7 +61,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 				}}
 			>
 				<DialogTitle component={Heading} iconLeft={<EmojiEventsIcon />}>
-					{`${contest?.contest_id === EmptyUUID ? "Create" : "Edit"} A Contest`}
+					{`${contest?.contestId === EMPTY_UUID ? "Create" : "Edit"} A Contest`}
 				</DialogTitle>
 
 				<DialogContent>
@@ -181,11 +125,11 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 									return (
 										<field.SelectField
 											label={"Min Permissions"}
-											items={PermissionLevelCollection}
+											items={enumValues(Privilege)}
 											renderItem={(pl) => {
 												return (
 													<MenuItem value={pl} key={`pl-${pl}`}>
-														{permissionLevelString(pl)}
+														{Privilege[pl]}
 													</MenuItem>
 												);
 											}}

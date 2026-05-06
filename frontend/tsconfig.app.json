@@ -21,7 +21,8 @@
 		"strict": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
-		"erasableSyntaxOnly": true,
+		// When true, the generated rpc outputs generate errors
+		"erasableSyntaxOnly": false,
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedSideEffectImports": true
 	},

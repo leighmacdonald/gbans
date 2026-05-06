@@ -5,10 +5,10 @@ import { ErrorDetails } from "./component/ErrorDetails.tsx";
 import { LoadingPlaceholder } from "./component/LoadingPlaceholder.tsx";
 import { AppError, ErrorCode } from "./error.tsx";
 import { routeTree } from "./routeTree.gen.ts";
-import type { appInfoDetail } from "./schema/app.ts";
-import { toTitleCase } from "./util/text.tsx";
+import type { InfoResponse } from "./rpc/config/v1/config_pb.ts";
+import { toTitleCase } from "./util/strings.ts";
 
-export const newRouter = (queryClient: QueryClient, appInfo: appInfoDetail) => {
+export const newRouter = (queryClient: QueryClient, appInfo: InfoResponse) => {
 	return createRouter({
 		routeTree,
 		defaultPreload: "intent",
@@ -16,7 +16,7 @@ export const newRouter = (queryClient: QueryClient, appInfo: appInfoDetail) => {
 			queryClient,
 			appInfo,
 			title: (title?: string) => {
-				return { title: title ? `${toTitleCase(title)} - ${appInfo.site_name}` : appInfo.site_name };
+				return { title: title ? `${toTitleCase(title)} - ${appInfo.siteName}` : appInfo.siteName };
 			},
 		},
 		defaultPendingComponent: LoadingPlaceholder,

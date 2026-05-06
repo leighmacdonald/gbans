@@ -36,7 +36,7 @@ func (r *Repository) SendSite(ctx context.Context, targetIDs steamid.Collection,
 	return database.Err(r.SendBatch(ctx, batch).Close())
 }
 
-func (r *Repository) MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error {
+func (r *Repository) MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int32) error {
 	return database.Err(r.ExecUpdateBuilder(ctx, r.Builder().
 		Update("person_notification").
 		Set("read", true).
@@ -50,7 +50,7 @@ func (r *Repository) MarkAllRead(ctx context.Context, steamID steamid.SteamID) e
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
 }
 
-func (r *Repository) DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int) error {
+func (r *Repository) DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int32) error {
 	return database.Err(r.ExecUpdateBuilder(ctx, r.Builder().
 		Update("person_notification").
 		Set("deleted", true).

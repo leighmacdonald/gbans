@@ -1,78 +1,64 @@
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import AssuredWorkloadIcon from "@mui/icons-material/AssuredWorkload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiDeleteSMOverride, apiGetSMOverrides } from "../../api";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx";
-import type { SMOverrides } from "../../schema/sourcemod.ts";
+import type { Override } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
+import { deleteOverrides, overrides } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
 import { logErr } from "../../util/errors";
-import { renderDateTime } from "../../util/time";
+import { renderTimestamp } from "../../util/time";
 import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
 import { SMOverrideEditorModal } from "../modal/SMOverrideEditorModal.tsx";
 import { createDefaultTableOptions } from "./options.ts";
 import { SortableTable } from "./SortableTable.tsx";
 import { TableCellString } from "./TableCellString";
 
-const overrideColumnHelper = createMRTColumnHelper<SMOverrides>();
-const defaultOptions = createDefaultTableOptions<SMOverrides>();
+const overrideColumnHelper = createMRTColumnHelper<Override>();
+const defaultOptions = createDefaultTableOptions<Override>();
 
 export const SMOverridesTable = () => {
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const queryClient = useQueryClient();
 
-	const {
-		data: overrides,
-		isLoading,
-		isError,
-	} = useQuery({
-		queryKey: ["serverOverrides"],
-		queryFn: async ({ signal }) => {
-			return await apiGetSMOverrides(signal);
-		},
-	});
+	const { data: overridesList, isLoading, isError } = useQuery(overrides);
 
 	const onCreateOverride = useCallback(async () => {
 		try {
-			const override = (await NiceModal.show(SMOverrideEditorModal, {})) as SMOverrides;
-			queryClient.setQueryData(["serverOverrides"], [...(overrides ?? []), override]);
+			const override = (await NiceModal.show(SMOverrideEditorModal, {})) as Override;
+			queryClient.setQueryData(["serverOverrides"], [...(overridesList?.overrides ?? []), override]);
 			sendFlash("success", `Group created successfully: ${override.name}`);
 		} catch (e) {
 			logErr(e);
 			sendFlash("error", "Error trying to add group");
 		}
-	}, [queryClient, overrides, sendFlash]);
+	}, [queryClient, sendFlash, overridesList?.overrides]);
 
-	const delOverrideMutation = useMutation({
-		mutationKey: ["delOverride"],
-		mutationFn: async ({ override }: { override: SMOverrides }) => {
-			const ac = new AbortController();
-			await apiDeleteSMOverride(override.override_id, ac.signal);
-			return override;
-		},
-		onSuccess: (deleted) => {
+	const delOverrideMutation = useMutation(deleteOverrides, {
+		onSuccess: (_, deleted) => {
 			queryClient.setQueryData(
 				["serverOverrides"],
-				(overrides ?? []).filter((o) => {
-					return o.override_id !== deleted.override_id;
+				(overridesList?.overrides ?? []).filter((o) => {
+					return o.overrideId !== deleted.overrideId;
 				}),
 			);
-			sendFlash("success", `Override deleted successfully: ${deleted.name}`);
+			sendFlash("success", `Override deleted successfully: ${deleted.overrideId}`);
 		},
 		onError: sendError,
 	});
 
-	const onEdit = async (override: SMOverrides) => {
+	const onEdit = async (override: Override) => {
 		try {
-			const edited = (await NiceModal.show(SMOverrideEditorModal, { override })) as SMOverrides;
+			const edited = (await NiceModal.show(SMOverrideEditorModal, { override })) as Override;
 			queryClient.setQueryData(
 				["serverOverrides"],
-				(overrides ?? []).map((o) => {
-					return o.override_id === edited.override_id ? edited : o;
+				(overridesList?.overrides ?? []).map((o) => {
+					return o.overrideId === edited.overrideId ? edited : o;
 				}),
 			);
 			sendFlash("success", `Admin updated successfully: ${override.name}`);
@@ -83,7 +69,7 @@ export const SMOverridesTable = () => {
 	};
 
 	const onDelete = useCallback(
-		async (override: SMOverrides) => {
+		async (override: Override) => {
 			try {
 				const confirmed = (await NiceModal.show(ConfirmationModal, {
 					title: "Delete override?",
@@ -92,7 +78,7 @@ export const SMOverridesTable = () => {
 				if (!confirmed) {
 					return;
 				}
-				delOverrideMutation.mutate({ override });
+				delOverrideMutation.mutate({ overrideId: override.overrideId });
 			} catch (e) {
 				sendFlash("error", `Failed to create confirmation modal: ${e}`);
 			}
@@ -107,7 +93,7 @@ export const SMOverridesTable = () => {
 				grow: true,
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
-			overrideColumnHelper.accessor("type", {
+			overrideColumnHelper.accessor("overrideType", {
 				header: "Type",
 				grow: false,
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
@@ -117,15 +103,15 @@ export const SMOverridesTable = () => {
 				grow: false,
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
-			overrideColumnHelper.accessor("created_on", {
+			overrideColumnHelper.accessor("createdOn", {
 				header: "Created On",
 				grow: false,
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{renderTimestamp(cell.getValue())}</TableCellString>,
 			}),
-			overrideColumnHelper.accessor("updated_on", {
+			overrideColumnHelper.accessor("updatedOn", {
 				header: "Updated On",
 				grow: false,
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{renderTimestamp(cell.getValue())}</TableCellString>,
 			}),
 		],
 		[],
@@ -134,7 +120,7 @@ export const SMOverridesTable = () => {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: overrides ?? [],
+		data: overridesList?.overrides ?? [],
 		enableFilters: true,
 		enableRowActions: true,
 		state: {

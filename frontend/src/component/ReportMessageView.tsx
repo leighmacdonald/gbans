@@ -1,3 +1,5 @@
+import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { useMutation } from "@connectrpc/connect-query";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Avatar from "@mui/material/Avatar";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -9,16 +11,14 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import { useTheme } from "@mui/material/styles";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistance } from "date-fns";
 import { type MouseEvent, useState } from "react";
 import { z } from "zod/v4";
-import { apiDeleteReportMessage, apiUpdateReportMessage } from "../api";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { reportMessagesQueryOptions } from "../queries/reportMessages.ts";
-import type { ReportMessage } from "../schema/report.ts";
-import { avatarHashToURL } from "../util/text.tsx";
+import type { ReportMessage } from "../rpc/ban/v1/report_pb.ts";
+import { reportMessageDelete, reportMessageEdit } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
+import { avatarHashToURL } from "../util/strings.ts";
 import { mdEditorRef } from "./form/field/MarkdownField.tsx";
 import { MarkDownRenderer } from "./MarkdownRenderer";
 
@@ -32,45 +32,35 @@ export const ReportMessageView = ({ message, assetURL }: ReportMessageViewProps)
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const open = Boolean(anchorEl);
 	const { sendFlash, sendError } = useUserFlashCtx();
-	const queryClient = useQueryClient();
 
 	const [editing, setEditing] = useState<boolean>(false);
 	const [deleted, setDeleted] = useState<boolean>(false);
 
-	const deleteMessageMutation = useMutation({
-		mutationFn: async ({ message_id }: { message_id: number }) => {
-			const ac = new AbortController();
-			return await apiDeleteReportMessage(message_id, ac.signal);
-		},
-		onSuccess: (_, { message_id }) => {
-			queryClient.setQueryData(
-				reportMessagesQueryOptions(message.report_id).queryKey,
-				(messages: ReportMessage[]) => (messages ?? []).filter((m) => m.report_message_id !== message_id),
-			);
+	const deleteMessageMutation = useMutation(reportMessageDelete, {
+		onSuccess: () => {
+			// queryClient.setQueryData(
+			// 	reportMessagesQueryOptions(message.reportId).queryKey,
+			// 	(messages: ReportMessage[]) => (messages ?? []).filter((m) => m.report_message_id !== message_id),
+			// );
 			sendFlash("success", "Deleted message successfully");
 		},
 		onError: sendError,
 	});
 
-	const onDelete = async (message_id: number) => {
-		deleteMessageMutation.mutate({ message_id });
+	const onDelete = async (reportMessageId: number) => {
+		deleteMessageMutation.mutate({ reportMessageId });
 	};
 
-	const mutation = useMutation({
-		mutationKey: ["reportMessage"],
-		mutationFn: async (values: { body_md: string }) => {
-			const ac = new AbortController();
-			return await apiUpdateReportMessage(message.report_message_id, values.body_md, ac.signal);
-		},
-		onSuccess: (msg) => {
-			queryClient.setQueryData(
-				reportMessagesQueryOptions(message.report_id).queryKey,
-				(msgs: ReportMessage[]) => {
-					return msgs.map((m) => {
-						return m.report_message_id === msg.report_message_id ? msg : m;
-					});
-				},
-			);
+	const mutation = useMutation(reportMessageEdit, {
+		onSuccess: () => {
+			// queryClient.setQueryData(
+			// 	reportMessagesQueryOptions(message.report_id).queryKey,
+			// 	(msgs: ReportMessage[]) => {
+			// 		return msgs.map((m) => {
+			// 			return m.report_message_id === msg.report_message_id ? msg : m;
+			// 		});
+			// 	},
+			// );
 			mdEditorRef.current?.setMarkdown("");
 			setEditing(false);
 			sendFlash("success", "Edited message successfully");
@@ -81,11 +71,11 @@ export const ReportMessageView = ({ message, assetURL }: ReportMessageViewProps)
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
 			mutation.mutate({
-				body_md: value.body_md,
+				bodyMd: value.body_md,
 			});
 		},
 		defaultValues: {
-			body_md: message.message_md,
+			body_md: message.messageMd,
 		},
 	});
 
@@ -136,7 +126,7 @@ export const ReportMessageView = ({ message, assetURL }: ReportMessageViewProps)
 			</form>
 		);
 	} else {
-		const d1 = formatDistance(message.created_on, new Date(), {
+		const d1 = formatDistance(message.createdOn ? timestampDate(message.createdOn) : new Date(), new Date(), {
 			addSuffix: true,
 		});
 		return (
@@ -146,7 +136,7 @@ export const ReportMessageView = ({ message, assetURL }: ReportMessageViewProps)
 						backgroundColor: theme.palette.background.paper,
 					}}
 					avatar={
-						<Avatar aria-label="Avatar" src={avatarHashToURL(message.avatarhash)}>
+						<Avatar aria-label="Avatar" src={avatarHashToURL(message.avatarHash)}>
 							?
 						</Avatar>
 					}
@@ -155,11 +145,11 @@ export const ReportMessageView = ({ message, assetURL }: ReportMessageViewProps)
 							<MoreVertIcon />
 						</IconButton>
 					}
-					title={message.personaname}
+					title={message.personaName}
 					subheader={d1}
 				/>
 
-				<MarkDownRenderer body_md={message.message_md} assetURL={assetURL} />
+				<MarkDownRenderer body_md={message.messageMd} assetURL={assetURL} />
 
 				<Menu
 					anchorEl={anchorEl}
@@ -207,7 +197,7 @@ export const ReportMessageView = ({ message, assetURL }: ReportMessageViewProps)
 					</MenuItem>
 					<MenuItem
 						onClick={async () => {
-							await onDelete(message.report_message_id);
+							await onDelete(message.reportMessageId);
 							setDeleted(true);
 						}}
 					>

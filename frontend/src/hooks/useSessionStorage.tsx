@@ -1,14 +1,31 @@
 import { useEffect, useState } from "react";
 
-export function useSessionStorage<T>(key: string, initialValue: T) {
-	const state = useState<T>(() => {
-		const stored = sessionStorage.getItem(key);
-		return stored ? JSON.parse(stored) : initialValue;
+export enum StorageType {
+	Local = 0,
+	Session = 1,
+}
+
+export function useStorage<T>(key: string, initialValue: T, type = StorageType.Session) {
+	const storeInterface = type === StorageType.Session ? sessionStorage : localStorage;
+	const [state, setState] = useState<T>(() => {
+		try {
+			const stored = storeInterface.getItem(key);
+			return stored ? JSON.parse(stored) : initialValue;
+		} catch {
+			return undefined;
+		}
 	});
 
 	useEffect(() => {
-		sessionStorage.setItem(key, JSON.stringify(state[0]));
-	}, [key, state[0]]);
+		if (!state) {
+			return;
+		}
+		storeInterface.setItem(key, JSON.stringify(state));
+	}, [key, state, storeInterface]);
 
-	return state;
+	const deleteValue = () => {
+		storeInterface.removeItem(key);
+	};
+
+	return { value: state, setValue: setState, deleteValue };
 }

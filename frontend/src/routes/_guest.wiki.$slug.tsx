@@ -1,41 +1,15 @@
-import { queryOptions } from "@tanstack/react-query";
+import { create } from "@bufbuild/protobuf";
+import { useSuspenseQuery } from "@connectrpc/connect-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { apiGetWikiPage } from "../api/wiki.ts";
 import { ErrorDetails } from "../component/ErrorDetails.tsx";
 import { WikiPage } from "../component/WikiPage.tsx";
 import { AppError } from "../error.tsx";
-import { PermissionLevel } from "../schema/people.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { WikiSchema } from "../rpc/wiki/v1/wiki_pb.ts";
+import { get } from "../rpc/wiki/v1/wiki-WikiService_connectquery.ts";
 
 export const Route = createFileRoute("/_guest/wiki/$slug")({
-	component: Wiki,
-
-	loader: async ({ context, params }) => {
-		const { slug } = params;
-		const queryOpts = queryOptions({
-			queryKey: ["wiki", { slug }],
-			queryFn: async ({ signal }) => {
-				return await apiGetWikiPage(slug, signal);
-			},
-		});
-		try {
-			return { page: await context.queryClient.fetchQuery(queryOpts) };
-		} catch (e) {
-			if (e instanceof AppError) {
-				// Mostly meant for handling permission denied error
-				throw e;
-			}
-			return {
-				page: {
-					revision: 0,
-					body_md: "",
-					slug: slug,
-					permission_level: PermissionLevel.Guest,
-					created_on: new Date(),
-					updated_on: new Date(),
-				},
-			};
-		}
-	},
+	component: Component,
 	head: ({ match, params }) => ({
 		meta: [{ name: "description", content: "Wiki" }, match.context.title(params.slug)],
 	}),
@@ -43,14 +17,28 @@ export const Route = createFileRoute("/_guest/wiki/$slug")({
 		if (error instanceof AppError) {
 			return <ErrorDetails error={error} />;
 		}
-		return <div>idk</div>;
+		return <div>hmmm</div>;
 	},
 });
 
-function Wiki() {
+function Component() {
 	const { slug } = Route.useParams();
-	const { page } = Route.useLoaderData();
 	const { appInfo } = Route.useRouteContext();
 
-	return <WikiPage slug={slug} page={page} assetURL={appInfo.asset_url} />;
+	const { data, isLoading } = useSuspenseQuery(get, { slug });
+
+	if (isLoading) {
+		return <div>loading...</div>;
+	}
+
+	const page =
+		data.wiki ??
+		create(WikiSchema, {
+			revision: 0,
+			bodyMd: "",
+			slug: slug,
+			permissionLevel: Privilege.GUEST,
+		});
+
+	return <WikiPage slug={slug} page={page} assetURL={appInfo.assetUrl} />;
 }

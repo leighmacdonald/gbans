@@ -6,41 +6,54 @@ alias d := dev
 
 all: frontend sourcemod buildp
 
-fmt: fmt-go fmt-md
+fmt: fmt-proto fmt-go fmt-md
 
 fmt-go:
-    golangci-lint fmt
-    just -f frontend/justfile fmt
+    @golangci-lint fmt
+    @just -f frontend/justfile fmt
 
-fmt-md:
-    markdownlint-cli2 --fix
+test-go:
+    @go test -race ./...
 
-lint_md:
-    markdownlint-cli2
+lint-nil:
+    @nilaway -include-pkgs="github.com/leighmacdonald/gbans" -exclude-pkgs="github.com/jackc/pgx/v5" -test=false ./...
 
-bump_deps:
-    go get -u ./...
-    just -f frontend/justfile update
-
-buildp:
-    goreleaser release --clean
-
-builds:
-    goreleaser release --clean --snapshot
+lint-go:
+    @golangci-lint run --timeout 3m ./...
 
 generate:
-    go generate ./...
-
-serve:
-    just -f frontend/justfile serve
-
-frontend:
-    just -f frontend/justfile
+    @go generate ./...
+    @just fmt
 
 run:
     go run -race . serve
 
-run_forever:
+fmt-proto:
+    @buf format -w
+
+fmt-md:
+    @markdownlint-cli2 --fix
+
+lint-md:
+    @markdownlint-cli2
+
+bump-deps:
+    @go get -u ./...
+    @just -f frontend/justfile update
+
+buildp:
+    @goreleaser release --clean
+
+builds:
+    @goreleaser release --clean --snapshot
+
+serve:
+    @just -f frontend/justfile serve
+
+frontend:
+    @just -f frontend/justfile
+
+run-forever:
     while true; do go run -race . serve; sleep 1; done
 
 air:
@@ -49,7 +62,7 @@ air:
 sourcemod:
     just -f sourcemod/justfile
 
-sourcemod_devel: sourcemod
+sourcemod-devel: sourcemod
     docker cp sourcemod/plugins/gbans.smx srcds-localhost-1:/home/tf2server/tf-dedicated/tf/addons/sourcemod/plugins/
     docker restart srcds-localhost-1
 
@@ -58,28 +71,22 @@ test: test-go test-ts
 test-ts:
     just -f frontend/justfile test
 
-test-go:
-    go test -race ./...
-
-check: lint_go vulncheck lint_ts typecheck_ts lint_md
+check: lint-proto lint-go vulncheck lint-ts typecheck-ts lint-md
 
 vulncheck:
     govulncheck
 
-lint_nil:
-    nilaway -include-pkgs="github.com/leighmacdonald/gbans" -exclude-pkgs="github.com/jackc/pgx/v5" -test=false ./...
-
-lint_go:
-    golangci-lint run --timeout 3m ./...
+lint-proto:
+    @buf lint
 
 fix: fmt
-    golangci-lint run --fix
+    @golangci-lint run --fix
 
-lint_ts:
-    just -f frontend/justfile lint
+lint-ts:
+    @just -f frontend/justfile lint
 
-typecheck_ts:
-    just -f frontend/justfile typecheck
+typecheck-ts:
+    @just -f frontend/justfile typecheck
 
 clean:
     go clean -i
@@ -87,36 +94,36 @@ clean:
     just -f frontend/justfile clean
     rm -rf ./sourcemod/plugins/gbans.smx
 
-docker_dump:
+docker-dump:
     docker exec gbans-postgres pg_dump -U gbans > gbans.sql
 
-docker_restore:
+docker-restore:
     cat gbans.sql | docker exec -i docker-postgres-1 psql -U gbans
 
-run_docker_snapshot: builds
+run-docker-snapshot: builds
     docker run -it -v ./gbans.yml:/app/gbans.yml -v ./.cache:/app/.cache -p 6006:6006 ghcr.io/leighmacdonald/gbans:latest-amd64
 
-docs_install:
-    just -f docs/justfile install
+docs-install:
+    @just -f docs/justfile install
 
-docs_start:
-    just -f docs/justfile start
+docs-start:
+    @just -f docs/justfile start
 
-docs_deploy:
-    just -f docs/justfile deploy
+docs-deploy:
+    @just -f docs/justfile deploy
 
-docs_build:
-    just -f docs/justfile build
+docs-build:
+    @just -f docs/justfile build
 
 db:
     pushd docker && ./dev_db.sh
 
-demostats_serve:
+demostats-serve:
     ../tf2_demostats/dist/cli_x86_64-unknown-linux-musl/tf2_demostats update --api-key $STEAM_KEY
     ../tf2_demostats/dist/cli_x86_64-unknown-linux-musl/tf2_demostats serve
 
 dev:
-    zellij --layout .zellij.kdl
+    @zellij --layout .zellij.kdl
 
 psql host=`sed -n 's/^database_dsn: //p' gbans.yml`:
     @psql {{ host }}

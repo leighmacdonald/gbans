@@ -1,3 +1,5 @@
+import { createClient } from "@connectrpc/connect";
+import { createConnectQueryKey, useMutation, useQuery } from "@connectrpc/connect-query";
 import { useModal } from "@ebay/nice-modal-react";
 import CableIcon from "@mui/icons-material/Cable";
 import ConstructionIcon from "@mui/icons-material/Construction";
@@ -19,19 +21,10 @@ import ListItemText from "@mui/material/ListItemText";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { z } from "zod/v4";
-import {
-	apiDiscordLogout,
-	apiDiscordUser,
-	apiGetDiscordLogin,
-	apiGetPersonSettings,
-	apiSavePersonSettings,
-	discordAvatarURL,
-} from "../api";
-import { apiGetPatreonLogin, apiGetPatreonLogout } from "../api/patreon.ts";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { mdEditorRef } from "../component/form/field/MarkdownField.tsx";
 import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
@@ -41,8 +34,15 @@ import { TabSection } from "../component/TabSection.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { PermissionLevel, type PersonSettings } from "../schema/people.ts";
+import { DiscordOAuthService } from "../rpc/discord/oauth/v1/discord_pb.ts";
+import { profile as profileQuery } from "../rpc/discord/oauth/v1/discord-DiscordOAuthService_connectquery.ts";
+import { PatreonService } from "../rpc/patreon/v1/patreon_pb.ts";
+import type { UserSettings } from "../rpc/person/v1/person_pb.ts";
+import { editProfileSettings, profileSettings } from "../rpc/person/v1/person-PersonService_connectquery.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { finalTransport } from "../transport.ts";
 import { logErr } from "../util/errors.ts";
+import { discordAvatarURL } from "../util/strings.ts";
 
 const settingsSchema = z.object({
 	section: z.enum(["general", "forums", "connections", "game"]).optional().default("general"),
@@ -51,50 +51,24 @@ const settingsSchema = z.object({
 export const Route = createFileRoute("/_auth/settings")({
 	component: ProfileSettings,
 	validateSearch: (search) => settingsSchema.parse(search),
-	loader: async ({ context }) => {
-		const settings = await context.queryClient.fetchQuery({
-			queryKey: ["settings"],
-			queryFn: async ({ signal }) => {
-				return await apiGetPersonSettings(signal);
-			},
-		});
-
-		return { settings };
-	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "User Settings" }, match.context.title("User Settings")],
 	}),
 });
-
-interface SettingsValues {
-	forum_signature: string;
-	forum_profile_messages: boolean;
-	stats_hidden: boolean;
-	center_projectiles: boolean;
-}
 
 type userSettingTabs = "general" | "connections" | "forums" | "game";
 
 function ProfileSettings() {
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const { profile, hasPermission } = useAuth();
-	const { settings } = Route.useLoaderData();
 	const { appInfo } = Route.useRouteContext();
 	const { section } = Route.useSearch();
 	const [tab, setTab] = useState<userSettingTabs>(section);
 	const navigate = useNavigate();
 
-	const mutation = useMutation({
-		mutationFn: async (values: SettingsValues) => {
-			const ac = new AbortController();
-			return await apiSavePersonSettings(
-				values.forum_signature,
-				values.forum_profile_messages,
-				values.stats_hidden,
-				values.center_projectiles ?? false,
-				ac.signal,
-			);
-		},
+	const { data, isLoading } = useQuery(profileSettings);
+
+	const mutation = useMutation(editProfileSettings, {
 		onSuccess: async () => {
 			mdEditorRef.current?.setMarkdown("");
 			sendFlash("success", "Updated Settings");
@@ -106,6 +80,21 @@ function ProfileSettings() {
 		setTab(section);
 		await navigate({ to: "/settings", replace: true, search: { section } });
 	};
+
+	const onSave = useCallback(
+		async (settings: UserSettings) => {
+			return await mutation.mutateAsync({
+				forumProfileMessages: settings.forumProfileMessages,
+				forumSignature: settings.forumSignature,
+				statsHidden: settings.statsHidden,
+			});
+		},
+		[mutation.mutateAsync],
+	);
+
+	if (!data?.settings || isLoading) {
+		return;
+	}
 
 	return (
 		<ContainerWithHeader title={"User Settings"} iconLeft={<ConstructionIcon />}>
@@ -126,7 +115,7 @@ function ProfileSettings() {
 							currentTab={tab}
 							label={"Gameplay"}
 						/>
-						{hasPermission(PermissionLevel.Moderator) && (
+						{hasPermission(Privilege.MODERATOR) && (
 							<TabButton
 								tab={"forums"}
 								onClick={onTabClick}
@@ -135,7 +124,7 @@ function ProfileSettings() {
 								label={"Forums"}
 							/>
 						)}
-						{(appInfo.patreon_enabled || appInfo.discord_enabled) && (
+						{(appInfo.patreonEnabled || appInfo.discordEnabled) && (
 							<TabButton
 								tab={"connections"}
 								onClick={onTabClick}
@@ -146,16 +135,16 @@ function ProfileSettings() {
 						)}
 					</Stack>
 				</Grid>
-				<GeneralSection tab={tab} settings={settings} mutate={mutation.mutate} />
-				<GameplaySection tab={tab} settings={settings} mutate={mutation.mutate} />
-				{hasPermission(PermissionLevel.Moderator) && (
-					<ForumSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				<GeneralSection tab={tab} settings={data?.settings} onSave={onSave} />
+				<GameplaySection tab={tab} settings={data?.settings} onSave={onSave} />
+				{hasPermission(Privilege.MODERATOR) && (
+					<ForumSection tab={tab} settings={data?.settings} onSave={onSave} />
 				)}
 				<ConnectionsSection
 					tab={tab}
-					settings={settings}
-					mutate={mutation.mutate}
-					patreon_id={profile.patreon_id}
+					settings={data?.settings}
+					onSave={onSave}
+					patreon_id={profile.patreonId}
 				/>
 			</Grid>
 		</ContainerWithHeader>
@@ -169,11 +158,11 @@ type GeneralProps = {
 const GeneralSection = ({
 	tab,
 	settings,
-	mutate,
+	onSave,
 }: {
 	tab: userSettingTabs;
-	settings: PersonSettings;
-	mutate: (s: PersonSettings) => void;
+	settings: UserSettings;
+	onSave: (s: UserSettings) => void;
 }) => {
 	const [notifPerms, setNotifPerms] = useState(Notification.permission);
 
@@ -183,10 +172,10 @@ const GeneralSection = ({
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutate({ ...settings, ...value });
+			onSave({ ...settings, ...value });
 		},
 		defaultValues: {
-			stats_hidden: settings.stats_hidden,
+			stats_hidden: settings.statsHidden,
 		} as GeneralProps,
 	});
 
@@ -301,26 +290,22 @@ const GeneralSection = ({
 	);
 };
 
-type GamePlayFormValues = {
-	center_projectiles: boolean;
-};
-
 const GameplaySection = ({
 	tab,
 	settings,
-	mutate,
+	onSave,
 }: {
 	tab: userSettingTabs;
-	settings: PersonSettings;
-	mutate: (s: PersonSettings) => void;
+	settings: UserSettings;
+	onSave: (s: UserSettings) => void;
 }) => {
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutate({ ...settings, ...value });
+			onSave({ ...settings, ...value });
 		},
 		defaultValues: {
-			center_projectiles: settings.center_projectiles ?? false,
-		} as GamePlayFormValues,
+			centerProjectiles: false,
+		},
 	});
 
 	return (
@@ -335,7 +320,7 @@ const GameplaySection = ({
 				<Grid container spacing={2}>
 					<Grid size={{ xs: 12 }}>
 						<form.AppField
-							name={"center_projectiles"}
+							name={"centerProjectiles"}
 							children={(field) => {
 								return <field.CheckboxField label={"Use center projectiles"} />;
 							}}
@@ -360,19 +345,19 @@ const GameplaySection = ({
 const ForumSection = ({
 	tab,
 	settings,
-	mutate,
+	onSave,
 }: {
 	tab: userSettingTabs;
-	settings: PersonSettings;
-	mutate: (s: PersonSettings) => void;
+	settings: UserSettings;
+	onSave: (s: UserSettings) => void;
 }) => {
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutate({ ...settings, ...value });
+			onSave({ ...settings, ...value });
 		},
 		defaultValues: {
-			forum_signature: settings.forum_signature,
-			forum_profile_messages: settings.forum_profile_messages,
+			forum_signature: settings.forumSignature,
+			forum_profile_messages: settings.forumProfileMessages,
 		},
 	});
 
@@ -438,37 +423,48 @@ const ConnectionsSection = ({
 	patreon_id,
 }: {
 	tab: userSettingTabs;
-	settings: PersonSettings;
-	mutate: (s: PersonSettings) => void;
+	settings: UserSettings;
+	onSave: (s: UserSettings) => void;
 	patreon_id: string;
 }) => {
 	const queryClient = useQueryClient();
-	const { profile, login } = useAuth();
+	const { profile } = useAuth();
 	const { sendFlash } = useUserFlashCtx();
 	const confirmModal = useModal(ConfirmationModal);
 	const { appInfo } = Route.useRouteContext();
 
-	const { data: user, isLoading } = useQuery({
-		queryKey: ["discordProfile", { steamID: profile.steam_id }],
-		queryFn: async ({ signal }) => {
-			return apiDiscordUser(signal);
-		},
-	});
+	const { data: user, isLoading } = useQuery(profileQuery);
 
 	const followPatreonCallback = async () => {
-		const result = await queryClient.fetchQuery({
-			queryKey: ["callbackPatreon"],
-			queryFn: async ({ signal }) => await apiGetPatreonLogin(signal),
+		const client = createClient(PatreonService, finalTransport);
+		const resp = await queryClient.fetchQuery({
+			queryKey: createConnectQueryKey({
+				schema: PatreonService,
+				transport: finalTransport,
+				cardinality: "finite",
+			}),
+			queryFn: async () => {
+				return await client.patronLogin({});
+			},
 		});
-		window.open(result.url, "_self");
+
+		window.open(resp.url, "_self");
 	};
 
 	const followDiscordCallback = async () => {
-		const result = await queryClient.fetchQuery({
-			queryKey: ["callbackDiscord"],
-			queryFn: async ({ signal }) => await apiGetDiscordLogin(signal),
+		const discordClient = createClient(DiscordOAuthService, finalTransport);
+		const resp = await queryClient.fetchQuery({
+			queryKey: createConnectQueryKey({
+				schema: DiscordOAuthService,
+				transport: finalTransport,
+				cardinality: "finite",
+			}),
+			queryFn: async () => {
+				return await discordClient.login({});
+			},
 		});
-		window.open(result.url, "_self");
+
+		window.open(resp.loginUrl, "_self");
 	};
 
 	const onForgetDiscord = async () => {
@@ -480,12 +476,19 @@ const ConnectionsSection = ({
 			return;
 		}
 		try {
+			const discordClient = createClient(DiscordOAuthService, finalTransport);
 			await queryClient.fetchQuery({
-				queryKey: ["discordForget", { id: user?.id }],
-				queryFn: async ({ signal }) => await apiDiscordLogout(signal),
+				queryKey: createConnectQueryKey({
+					schema: DiscordOAuthService,
+					transport: finalTransport,
+					cardinality: "finite",
+				}),
+				queryFn: async () => {
+					return await discordClient.logout({});
+				},
 			});
 
-			queryClient.setQueryData(["discordProfile", { steamID: profile.steam_id }], {});
+			queryClient.setQueryData(["discordProfile", { steamID: profile.steamId }], {});
 
 			sendFlash("success", "Logged out successfully");
 		} catch (e) {
@@ -503,11 +506,20 @@ const ConnectionsSection = ({
 			return;
 		}
 		try {
+			const client = createClient(PatreonService, finalTransport);
 			await queryClient.fetchQuery({
-				queryKey: ["patreonForget", { patreon_id }],
-				queryFn: async ({ signal }) => await apiGetPatreonLogout(signal),
+				queryKey: createConnectQueryKey({
+					schema: PatreonService,
+					transport: finalTransport,
+					cardinality: "finite",
+				}),
+				queryFn: async () => {
+					return await client.patronLogout({});
+				},
 			});
-			login({ ...profile, discord_id: "" });
+
+			// FIXME
+			// login({ ...profile, discordId: "" });
 			sendFlash("success", "Logged out successfully");
 		} catch (e) {
 			logErr(e);
@@ -523,7 +535,7 @@ const ConnectionsSection = ({
 			description={"Configure your 3rd party connections to us."}
 		>
 			<Grid container spacing={2} padding={0}>
-				{appInfo.patreon_enabled ? (
+				{appInfo.patreonEnabled ? (
 					patreon_id ? (
 						<Grid size={{ xs: 12 }}>
 							<Typography variant={"h3"}>Patreon</Typography>
@@ -558,15 +570,20 @@ const ConnectionsSection = ({
 						</Grid>
 					)
 				) : null}
-				{appInfo.discord_enabled ? (
-					!isLoading && user?.username ? (
+				{appInfo.discordEnabled ? (
+					!isLoading && user?.discordProfile?.discriminator ? (
 						<Grid size={{ xs: 12 }}>
-							<Typography>You are connected to us as: {user.username}</Typography>
+							<Typography>You are connected to us as: {user.discordProfile.discriminator}</Typography>
 							<Button
 								variant={"contained"}
 								color={"error"}
 								onClick={onForgetDiscord}
-								startIcon={<Avatar src={discordAvatarURL(user)} sx={{ height: 20, width: 20 }} />}
+								startIcon={
+									<Avatar
+										src={discordAvatarURL(user.discordProfile)}
+										sx={{ height: 20, width: 20 }}
+									/>
+								}
 							>
 								Disconnect Discord
 							</Button>

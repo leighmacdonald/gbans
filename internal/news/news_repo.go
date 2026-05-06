@@ -17,7 +17,7 @@ func NewRepository(database database.Database) Repository {
 	return Repository{db: database}
 }
 
-func (r Repository) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]Article, error) {
+func (r Repository) GetNewsLatest(ctx context.Context, limit int32, includeUnpublished bool) ([]Article, error) {
 	builder := r.db.
 		Builder().
 		Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
@@ -130,7 +130,7 @@ func (r Repository) updateNewsArticle(ctx context.Context, entry *Article) error
 		Where(sq.Eq{"news_id": entry.NewsID})))
 }
 
-func (r Repository) DropNewsArticle(ctx context.Context, newsID int) error {
+func (r Repository) DropNewsArticle(ctx context.Context, newsID int32) error {
 	return database.Err(r.db.ExecDeleteBuilder(ctx, r.db.
 		Builder().
 		Delete("news").

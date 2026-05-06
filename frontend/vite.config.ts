@@ -11,6 +11,11 @@ export default defineConfig({
 	build: {
 		copyPublicDir: true,
 		sourcemap: "hidden",
+		rolldownOptions: {
+			checks: {
+				circularDependency: true,
+			},
+		},
 	},
 
 	server: {
@@ -45,7 +50,7 @@ export default defineConfig({
 				changeOrigin: true,
 				secure: false,
 			},
-			"/api": {
+			"/rpc": {
 				target: "http://gbans.localhost:6006",
 				changeOrigin: true,
 				secure: false,

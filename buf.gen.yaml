@@ -1,0 +1,37 @@
+version: v2
+
+managed:
+  enabled: true
+  disable:
+    - file_option: go_package_prefix
+      module: buf.build/bufbuild/protovalidate
+  override:
+    - file_option: go_package_prefix
+      value: github.com/leighmacdonald/gbans/internal
+#    - field_option: jstype
+#      value: JS_STRING
+plugins:
+  - local: [protoc-gen-go]
+    out: internal
+    opt: paths=source_relative
+
+  - local: [protoc-gen-connect-go]
+    out: internal
+    opt:
+      - paths=source_relative
+      - simple
+
+  - local: protoc-gen-es
+    out: frontend/src/rpc
+    include_imports: true
+    opt:
+      - target=ts
+      - valid_types=legacy_required+protovalidate_required
+
+  - local: [frontend/node_modules/.bin/protoc-gen-connect-query]
+    out: frontend/src/rpc
+    opt:
+      - target=ts
+
+#inputs:
+#  - directory: proto

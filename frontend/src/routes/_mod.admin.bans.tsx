@@ -1,4 +1,7 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: form */
+
+import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
+import { useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -8,7 +11,7 @@ import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import { formatDistanceToNowStrict } from "date-fns/formatDistanceToNowStrict";
 import {
@@ -19,7 +22,6 @@ import {
 	useMaterialReactTable,
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiGetBans } from "../api";
 import { BanModal } from "../component/modal/BanModal.tsx";
 import { UnbanModal } from "../component/modal/UnbanModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
@@ -38,14 +40,15 @@ import {
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { BanReason, type BanReasonEnum, BanReasons, type BanRecord } from "../schema/bans.ts";
+import { type Ban, BanReason } from "../rpc/ban/v1/ban_pb.ts";
+import { query } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
 import { isPermanentBan } from "../util/table.ts";
-import { renderDateTime } from "../util/time.ts";
+import { renderTimestamp } from "../util/time.ts";
 
-const columnHelper = createMRTColumnHelper<BanRecord>();
-const defaultOptions = createDefaultTableOptions<BanRecord>();
-const defaultValues = makeSchemaDefaults({ defaultColumn: "ban_id" });
-const validateSearch = makeSchemaState("ban_id");
+const columnHelper = createMRTColumnHelper<Ban>();
+const defaultOptions = createDefaultTableOptions<Ban>();
+const defaultValues = makeSchemaDefaults({ defaultColumn: "banId" });
+const validateSearch = makeSchemaState("banId");
 
 export const Route = createFileRoute("/_mod/admin/bans")({
 	component: AdminBans,
@@ -65,32 +68,27 @@ function AdminBans() {
 	const { sendFlash } = useUserFlashCtx();
 	const navigate = useNavigate();
 
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["bans"],
-		queryFn: async ({ signal }) => {
-			return (await apiGetBans({ deleted: true }, signal)) ?? [];
-		},
-	});
+	const { data, isLoading, isError } = useQuery(query, {});
 
 	const onNewBanSteam = useCallback(async () => {
 		try {
-			const ban = (await NiceModal.show(BanModal, {})) as BanRecord;
-			queryClient.setQueryData(["bans"], [...(data ?? []), ban]);
+			const ban = (await NiceModal.show(BanModal, {})) as Ban;
+			queryClient.setQueryData(["bans"], [...(data?.bans ?? []), ban]);
 		} catch (e) {
 			sendFlash("error", `Error trying to set up ban: ${e}`);
 		}
 	}, [queryClient, sendFlash, data]);
 
 	const onUnban = useCallback(
-		async (ban: BanRecord) => {
+		async (ban: Ban) => {
 			try {
 				await NiceModal.show(UnbanModal, {
-					banId: ban.ban_id,
-					personaName: ban.target_personaname,
+					banId: ban.banId,
+					personaName: ban.targetPersonaName,
 				});
 				queryClient.setQueryData(
 					["bans"],
-					(data ?? []).filter((b) => b.ban_id !== ban.ban_id),
+					(data?.bans ?? []).filter((b) => b.banId !== ban.banId),
 				);
 				sendFlash("success", "Unbanned player successfully");
 			} catch (e) {
@@ -101,16 +99,16 @@ function AdminBans() {
 	);
 
 	const onEdit = useCallback(
-		async (ban: BanRecord) => {
+		async (ban: Ban) => {
 			try {
 				const updated = (await NiceModal.show(BanModal, {
-					banId: ban.ban_id,
-					personaName: ban.target_personaname,
+					banId: ban.banId,
+					personaName: ban.targetPersonaName,
 					existing: ban,
-				})) as BanRecord;
+				})) as Ban;
 				queryClient.setQueryData(
 					["bans"],
-					(data ?? []).map((b) => (b.ban_id === updated.ban_id ? updated : b)),
+					(data?.bans ?? []).map((b) => (b.banId === updated.banId ? updated : b)),
 				);
 			} catch (e) {
 				sendFlash("error", `Error trying to edit ban: ${e}`);
@@ -164,16 +162,16 @@ function AdminBans() {
 
 	const columns = useMemo(
 		() => [
-			columnHelper.accessor("ban_id", {
+			columnHelper.accessor("banId", {
 				grow: false,
 				header: "Ban ID",
 				Cell: ({ cell }) => (
-					<TextLink to={`/ban/$ban_id`} params={{ ban_id: String(cell.getValue()) }}>
+					<TextLink to={`/ban/$banId`} params={{ banId: String(cell.getValue()) }}>
 						{`#${cell.getValue()}`}
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("source_id", {
+			columnHelper.accessor("sourceId", {
 				header: "Author",
 				enableSorting: false,
 				grow: false,
@@ -182,11 +180,11 @@ function AdminBans() {
 					if (query === "") {
 						return true;
 					}
-					const value = row.original.source_personaname.toLowerCase();
+					const value = row.original.sourcePersonaName.toLowerCase();
 					if (value.includes(query)) {
 						return true;
 					}
-					if (row.original.source_id.includes(query) || row.original.source_id === query) {
+					if (row.original.sourceId.toString().includes(query) || row.original.sourceId === query) {
 						return true;
 					}
 
@@ -195,9 +193,9 @@ function AdminBans() {
 				Cell: ({ row }) => {
 					return (
 						<PersonCell
-							steam_id={row.original.source_id}
-							personaname={row.original.source_personaname}
-							avatar_hash={row.original.source_avatarhash}
+							steamId={row.original.sourceId}
+							personaName={row.original.sourcePersonaName}
+							avatarHash={row.original.sourceAvatarHash}
 						>
 							<RouterLink
 								style={{
@@ -207,15 +205,15 @@ function AdminBans() {
 											: theme.palette.primary.dark,
 								}}
 								to={Route.fullPath}
-								search={setColumnFilter(search, "source_id", row.original.source_id)}
+								search={setColumnFilter(search, "source_id", row.original.sourceId)}
 							>
-								{row.original.source_personaname ?? row.original.source_id}
+								{row.original.sourcePersonaName ?? row.original.sourceId}
 							</RouterLink>
 						</PersonCell>
 					);
 				},
 			}),
-			columnHelper.accessor("target_id", {
+			columnHelper.accessor("targetId", {
 				header: "Subject",
 				grow: false,
 				enableSorting: false,
@@ -225,11 +223,11 @@ function AdminBans() {
 					if (query === "") {
 						return true;
 					}
-					const value = row.original.target_personaname.toLowerCase();
+					const value = row.original.targetPersonaName.toLowerCase();
 					if (value.includes(query)) {
 						return true;
 					}
-					if (row.original.target_id.includes(query) || row.original.target_id === query) {
+					if (row.original.targetId.toString().includes(query) || row.original.targetId === query) {
 						return true;
 					}
 
@@ -237,9 +235,9 @@ function AdminBans() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={row.original.target_id}
-						personaname={row.original.target_personaname}
-						avatar_hash={row.original.target_avatarhash}
+						steamId={row.original.targetId}
+						personaName={row.original.targetPersonaName}
+						avatarHash={row.original.targetAvatarHash}
 					>
 						<RouterLink
 							style={{
@@ -249,9 +247,9 @@ function AdminBans() {
 										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
-							search={setColumnFilter(search, "target_id", row.original.target_id)}
+							search={setColumnFilter(search, "target_id", row.original.targetId)}
 						>
-							{row.original.target_personaname ?? row.original.target_id}
+							{row.original.targetPersonaName ?? row.original.targetId}
 						</RouterLink>
 					</PersonCell>
 				),
@@ -267,7 +265,7 @@ function AdminBans() {
 				enableSorting: false,
 				grow: false,
 				filterSelectOptions: Object.values(BanReason).map((reason) => ({
-					label: BanReasons[reason],
+					label: BanReason[reason as BanReason],
 					value: reason,
 				})),
 				filterVariant: "multi-select",
@@ -275,27 +273,31 @@ function AdminBans() {
 				filterFn: (row, _, filterValue) => {
 					return (
 						filterValue.length === 0 ||
-						filterValue.includes(BanReason.Any) ||
+						filterValue.includes(BanReason.UNSPECIFIED) ||
 						filterValue.includes(row.original.reason)
 					);
 				},
 				Cell: ({ cell }) => (
 					<TextLink to={Route.fullPath} search={setColumnFilter(search, "reason", [cell.getValue()])}>
-						{BanReasons[cell.getValue() as BanReasonEnum]}
+						{BanReason[cell.getValue() as BanReason]}
 					</TextLink>
 				),
 			}),
-			columnHelper.accessor("created_on", {
+			columnHelper.accessor("createdOn", {
 				header: "Created",
 				filterVariant: "date-range",
 				grow: false,
 				Cell: ({ cell }) => (
-					<Tooltip title={formatDistanceToNowStrict(cell.getValue(), { addSuffix: true })}>
-						<Typography>{renderDateTime(cell.getValue())}</Typography>
+					<Tooltip
+						title={formatDistanceToNowStrict(timestampDate(cell.getValue() as Timestamp), {
+							addSuffix: true,
+						})}
+					>
+						<Typography>{renderTimestamp(cell.getValue())}</Typography>
 					</Tooltip>
 				),
 			}),
-			columnHelper.accessor("valid_until", {
+			columnHelper.accessor("validUntil", {
 				header: "Duration",
 				enableColumnFilter: false,
 				grow: false,
@@ -303,17 +305,20 @@ function AdminBans() {
 				Cell: ({ row }) => {
 					return typeof row.original === "undefined" ? (
 						""
-					) : isPermanentBan(row.original.created_on, row.original.valid_until) ? (
+					) : isPermanentBan(
+							timestampDate(row.original.createdOn as Timestamp),
+							timestampDate(row.original.validUntil as Timestamp),
+						) ? (
 						"Permanent"
 					) : (
 						<TableCellRelativeDateField
-							date={row.original.created_on}
-							compareDate={row.original.valid_until}
+							date={timestampDate(row.original.createdOn as Timestamp)}
+							compareDate={timestampDate(row.original.validUntil as Timestamp)}
 						/>
 					);
 				},
 			}),
-			columnHelper.accessor("evade_ok", {
+			columnHelper.accessor("evadeOk", {
 				meta: {
 					tooltip: "Evasion OK. Players connecting from the same ip will not be banned.",
 				},
@@ -331,7 +336,7 @@ function AdminBans() {
 				header: "Expired",
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue()} />,
 			}),
-			columnHelper.accessor("report_id", {
+			columnHelper.accessor("reportId", {
 				header: "Report",
 				grow: false,
 				meta: { tooltip: "Linked report" },
@@ -348,7 +353,7 @@ function AdminBans() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ?? [],
+		data: data?.bans ?? [],
 		enableFilters: true,
 		enableFacetedValues: true,
 		onColumnFiltersChange: setColumnFilters,

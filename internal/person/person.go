@@ -14,6 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
+	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -28,7 +29,6 @@ var (
 	ErrSteamAPISummaries    = errors.New("failed to fetch player summaries")
 	ErrSteamAPI             = errors.New("steam api requests have errors")
 	ErrUpdatePerson         = errors.New("failed to save updated person profile")
-	ErrNetworkInvalidIP     = errors.New("invalid ip")
 )
 
 type SteamMember interface {
@@ -38,13 +38,13 @@ type SteamMember interface {
 type Query struct {
 	query.Filter
 
-	Personaname          string                 `schema:"personaname,omitempty" json:"personaname,omitempty"`
+	PersonaName          string                 `schema:"persona_name,omitempty" json:"persona_name,omitempty"`
 	WithPermissions      []permission.Privilege `schema:"with_permissions,omitempty" json:"with_permissions,omitempty"`
 	DiscordID            string                 `schema:"discord_id,omitempty" json:"discord_id,omitempty"`
 	SteamUpdateOlderThan time.Time              `schema:"steam_update_older_than" json:"steam_update_older_than"`
 	SteamIDs             []string               `schema:"steam_ids,omitempty" json:"steam_ids,omitempty"` //nolint:tagliatelle
-	VacBans              int                    `schema:"vac_bans,omitempty" json:"vac_bans,omitempty"`
-	GameBans             int                    `schema:"game_bans,omitempty" json:"game_bans,omitempty"`
+	VacBans              int32                  `schema:"vac_bans,omitempty" json:"vac_bans,omitempty"`
+	GameBans             int32                  `schema:"game_bans,omitempty" json:"game_bans,omitempty"`
 	AvatarHash           string                 `schema:"avatar_hash,omitempty" json:"avatar_hash,omitempty"`
 	CommunityBanned      *bool                  `schema:"community_banned,omitempty" json:"community_banned,omitempty"`
 	TimeCreatedAfter     *time.Time             `schema:"time_created_after,omitzero" json:"time_created_after,omitzero"`
@@ -78,46 +78,50 @@ type Person struct {
 	PatreonID         string       `json:"patreon_id"`
 	IPAddr            netip.Addr   `json:"-"`
 	CommunityBanned   bool         `json:"community_banned"`
-	VACBans           int          `json:"vac_bans"`
-	GameBans          int          `json:"game_bans"`
+	VACBans           int32        `json:"vac_bans"`
+	GameBans          int32        `json:"game_bans"`
 	EconomyBan        EconBanState `json:"economy_ban"`
-	DaysSinceLastBan  int          `json:"days_since_last_ban"`
+	DaysSinceLastBan  int32        `json:"days_since_last_ban"`
 	UpdatedOnSteam    time.Time    `json:"updated_on_steam"`
 	AvatarHash        string       `json:"avatar_hash"`
-	CommentPermission int64        `json:"comment_permission"`
-	LastLogoff        int64        `json:"last_logoff"`
-	LocCityID         int64        `json:"loc_city_id"`
+	CommentPermission int32        `json:"comment_permission"`
+	LastLogoff        *time.Time   `json:"last_logoff"`
+	LocCityID         int32        `json:"loc_city_id"`
 	LocCountryCode    string       `json:"loc_country_code"`
 	LocStateCode      string       `json:"loc_state_code"`
 	PersonaName       string       `json:"persona_name"`
-	PersonaState      int64        `json:"persona_state"`
-	PersonaStateFlags int64        `json:"persona_state_flags"`
+	PersonaState      int32        `json:"persona_state"`
+	PersonaStateFlags int32        `json:"persona_state_flags"`
 	PrimaryClanID     string       `json:"primary_clan_id"`
-	ProfileState      int64        `json:"profile_state"`
+	ProfileState      int32        `json:"profile_state"`
 	ProfileURL        string       `json:"profile_url"`
 	RealName          string       `json:"real_name"`
 	TimeCreated       int64        `json:"time_created"`
-	VisibilityState   int64        `json:"visibility_state"`
+	VisibilityState   int32        `json:"visibility_state"`
+}
+
+func (p Person) GetPrivilege() permission.Privilege {
+	return p.PermissionLevel
 }
 
 func (p Person) ApplySteamInfo(summary thirdparty.PlayerSummaryResponse, steamBan thirdparty.SteamBan) Person {
 	p.PersonaName = summary.PersonaName
 	p.AvatarHash = summary.AvatarHash
-	p.LocCityID = summary.LocCityId
+	p.LocCityID = int32(summary.LocCityId)
 	p.LocCountryCode = summary.LocCountryCode
-	p.LastLogoff = summary.LastLogoff
+	p.LastLogoff = ptr.To(time.Unix(summary.LastLogoff, 0))
 	p.LocStateCode = summary.LocStateCode
-	p.VisibilityState = summary.VisibilityState
-	p.PersonaState = summary.PersonaState
-	p.PersonaStateFlags = summary.PersonaStateFlags
+	p.VisibilityState = int32(summary.VisibilityState)
+	p.PersonaState = int32(summary.PersonaState)
+	p.PersonaStateFlags = int32(summary.PersonaStateFlags)
 	p.PrimaryClanID = summary.PrimaryClanId
-	p.ProfileState = summary.ProfileState
+	p.ProfileState = int32(summary.ProfileState)
 	p.RealName = summary.RealName
 	p.TimeCreated = summary.TimeCreated
-	p.CommentPermission = summary.CommentPermission
-	p.VACBans = int(steamBan.NumberOfVacBans)
-	p.GameBans = int(steamBan.NumberOfGameBans)
-	p.DaysSinceLastBan = int(steamBan.DaysSinceLastBan)
+	p.CommentPermission = int32(summary.CommentPermission)
+	p.VACBans = int32(steamBan.NumberOfVacBans)
+	p.GameBans = int32(steamBan.NumberOfGameBans)
+	p.DaysSinceLastBan = int32(steamBan.DaysSinceLastBan)
 	p.CommunityBanned = steamBan.CommunityBanned
 	p.EconomyBan = EconBanState(steamBan.EconomyBan)
 	p.UpdatedOn = time.Now()
@@ -126,11 +130,11 @@ func (p Person) ApplySteamInfo(summary thirdparty.PlayerSummaryResponse, steamBa
 	return p
 }
 
-func (p Person) GetVACBans() int {
+func (p Person) GetVACBans() int32 {
 	return p.VACBans
 }
 
-func (p Person) GetGameBans() int {
+func (p Person) GetGameBans() int32 {
 	return p.GameBans
 }
 
@@ -179,7 +183,7 @@ func (p Person) HasPermission(privilege permission.Privilege) bool {
 }
 
 func (p Person) GetAvatar() person.Avatar {
-	return person.NewAvatar(p.AvatarHash)
+	return person.Avatar(p.AvatarHash)
 }
 
 func (p Person) GetSteamID() steamid.SteamID {
@@ -402,20 +406,20 @@ func (u *Persons) UpdateProfiles(ctx context.Context, _ pgx.Tx, people People) (
 			}
 
 			player.AvatarHash = summary.AvatarHash
-			player.CommentPermission = summary.CommentPermission
-			player.LastLogoff = summary.LastLogoff
-			player.LocCityID = summary.LocCityId
+			player.CommentPermission = int32(summary.CommentPermission)
+			player.LastLogoff = ptr.To(time.Unix(summary.LastLogoff, 0))
+			player.LocCityID = int32(summary.LocCityId)
 			player.LocCountryCode = summary.LocCountryCode
 			player.LocStateCode = summary.LocStateCode
 			player.PersonaName = summary.PersonaName
-			player.PersonaState = summary.PersonaState
-			player.PersonaStateFlags = summary.PersonaStateFlags
+			player.PersonaState = int32(summary.PersonaState)
+			player.PersonaStateFlags = int32(summary.PersonaStateFlags)
 			player.PrimaryClanID = summary.PrimaryClanId
-			player.ProfileState = summary.ProfileState
+			player.ProfileState = int32(summary.ProfileState)
 			player.ProfileURL = summary.ProfileUrl
 			player.RealName = summary.RealName
 			player.TimeCreated = summary.TimeCreated
-			player.VisibilityState = summary.VisibilityState
+			player.VisibilityState = int32(summary.VisibilityState)
 
 			break
 		}
@@ -426,11 +430,11 @@ func (u *Persons) UpdateProfiles(ctx context.Context, _ pgx.Tx, people People) (
 			}
 
 			player.CommunityBanned = banState.CommunityBanned
-			player.VACBans = int(banState.NumberOfVacBans)
-			player.GameBans = int(banState.NumberOfGameBans)
+			player.VACBans = int32(banState.NumberOfVacBans)
+			player.GameBans = int32(banState.NumberOfGameBans)
 			player.EconomyBan = EconBanState(banState.EconomyBan)
 			player.CommunityBanned = banState.CommunityBanned
-			player.DaysSinceLastBan = int(banState.DaysSinceLastBan)
+			player.DaysSinceLastBan = int32(banState.DaysSinceLastBan)
 		}
 
 		if errSavePerson := u.repo.Save(ctx, &player); errSavePerson != nil {
@@ -575,7 +579,7 @@ func (u *Persons) getFirst(ctx context.Context, query Query) (Person, error) {
 	player := people[0]
 	if player.Expired() {
 		if errGetProfile := UpdatePlayerSummary(ctx, &player, u.tfAPI); errGetProfile != nil {
-			slog.Warn("Failed to udpate player summary for expired player", slog.String("error", errGetProfile.Error()))
+			slog.Warn("Failed to update player summary for expired player", slog.String("error", errGetProfile.Error()))
 		}
 	}
 
@@ -627,7 +631,7 @@ func (u *Persons) GetPersonSettings(ctx context.Context, steamID steamid.SteamID
 	return settings, nil
 }
 
-func (u *Persons) SavePersonSettings(ctx context.Context, user person.Info, update SettingsUpdate) (Settings, error) {
+func (u *Persons) SavePersonSettings(ctx context.Context, user person.BaseUser, update SettingsUpdate) (Settings, error) {
 	settings, err := u.GetPersonSettings(ctx, user.GetSteamID())
 	if err != nil {
 		return settings, err

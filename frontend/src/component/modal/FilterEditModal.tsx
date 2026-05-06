@@ -1,39 +1,25 @@
+import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
-import { useMutation } from "@tanstack/react-query";
 import { z } from "zod/v4";
-import { apiCreateFilter, apiEditFilter } from "../../api/filters.ts";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import {
-	type Filter,
-	FilterAction,
-	FilterActionCollection,
-	FilterActionEnum,
-	filterActionString,
-} from "../../schema/filters.ts";
+import { type Filter, FilterAction } from "../../rpc/chat/v1/wordfilter_pb.ts";
+import { filterCreate } from "../../rpc/chat/v1/wordfilter-WordfilterService_connectquery.ts";
+import { enumValues } from "../../util/lists.ts";
 import { Heading } from "../Heading";
-
-type FilterEditFormValues = {
-	pattern: string;
-	is_regex: boolean;
-	is_enabled?: boolean;
-	action: FilterActionEnum;
-	duration: string;
-	weight: number;
-};
 
 const schema = z.object({
 	pattern: z.string({ message: "Must entry pattern" }).min(2),
-	is_regex: z.boolean(),
-	action: FilterActionEnum,
+	isRegex: z.boolean(),
+	action: z.enum(FilterAction),
 	duration: z.string({ message: "Must provide a duration" }),
 	weight: z.number().min(1).max(100),
-	is_enabled: z.boolean(),
+	isEnabled: z.boolean(),
 });
 
 export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }) => {
@@ -41,43 +27,13 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
 	const { sendError } = useUserFlashCtx();
 	const defaultValues: z.input<typeof schema> = {
 		pattern: filter ? String(filter.pattern) : "",
-		is_regex: filter?.is_regex ?? false,
-		is_enabled: filter?.is_enabled ?? true,
-		action: filter?.action ?? FilterAction.Kick,
+		isRegex: filter?.isRegex ?? false,
+		isEnabled: filter?.isEnabled ?? true,
+		action: filter?.action ?? FilterAction.KICK_UNSPECIFIED,
 		duration: filter?.duration ?? "1w",
 		weight: filter ? filter.weight : 1,
 	};
-	const mutation = useMutation({
-		mutationKey: ["filters"],
-		mutationFn: async (values: FilterEditFormValues) => {
-			const ac = new AbortController();
-			if (filter?.filter_id) {
-				return await apiEditFilter(
-					filter?.filter_id,
-					{
-						is_enabled: values.is_enabled,
-						is_regex: values.is_regex,
-						pattern: values.pattern,
-						action: values.action,
-						duration: values.duration,
-						weight: Number(values.weight),
-					},
-					ac.signal,
-				);
-			} else {
-				return await apiCreateFilter(
-					{
-						is_enabled: values.is_enabled,
-						is_regex: values.is_regex,
-						pattern: values.pattern,
-						action: values.action,
-						duration: values.duration,
-						weight: Number(values.weight),
-					},
-					ac.signal,
-				);
-			}
-		},
+	const mutation = useMutation(filterCreate, {
 		onSuccess: async (result) => {
 			modal.resolve(result);
 			await modal.hide();
@@ -86,8 +42,9 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
 	});
 
 	const form = useAppForm({
-		onSubmit: async ({ value }) => {
-			mutation.mutate(value);
+		onSubmit: async (value) => {
+			// FIXME add edit mutation
+			mutation.mutate({ filter: value.value });
 		},
 		defaultValues,
 		validators: {
@@ -119,7 +76,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
 						</Grid>
 						<Grid size={{ xs: 4 }}>
 							<form.AppField
-								name={"is_regex"}
+								name={"isRegex"}
 								children={(field) => {
 									return <field.CheckboxField label={"Is Regex Pattern"} />;
 								}}
@@ -132,11 +89,11 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
 									return (
 										<field.SelectField
 											label={"Action"}
-											items={FilterActionCollection}
+											items={enumValues(FilterAction)}
 											renderItem={(fa) => {
 												return (
 													<MenuItem value={fa} key={`fa-${fa}`}>
-														{filterActionString(fa)}
+														{FilterAction[fa]}
 													</MenuItem>
 												);
 											}}
@@ -164,7 +121,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
 
 						<Grid size={{ xs: 4 }}>
 							<form.AppField
-								name={"is_enabled"}
+								name={"isEnabled"}
 								validators={{
 									onSubmit: z.boolean(),
 								}}

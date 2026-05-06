@@ -1,22 +1,23 @@
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiContests } from "../api";
 import { ContestEditor } from "../component/modal/ContestEditor.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
 import { createDefaultTableOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
-import type { Contest } from "../schema/contest.ts";
-import { type PermissionLevelEnum, permissionLevelString } from "../schema/people.ts";
+import type { Contest } from "../rpc/contest/v1/contest_pb.ts";
+import { contests } from "../rpc/contest/v1/contest-Service_connectquery.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { logErr } from "../util/errors.ts";
-import { renderDateTime } from "../util/time.ts";
+import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<Contest>();
 const defaultOptions = createDefaultTableOptions<Contest>();
@@ -29,12 +30,7 @@ export const Route = createFileRoute("/_mod/admin/contests")({
 });
 
 function AdminContests() {
-	const { data, isError, isLoading } = useQuery({
-		queryKey: ["adminContests"],
-		queryFn: async ({ signal }) => {
-			return await apiContests(signal);
-		},
-	});
+	const { data, isError, isLoading } = useQuery(contests);
 
 	const onEditContest = useCallback(async (contest?: Contest) => {
 		try {
@@ -58,7 +54,7 @@ function AdminContests() {
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue()} />,
 			}),
 
-			columnHelper.accessor("hide_submissions", {
+			columnHelper.accessor("hideSubmissions", {
 				meta: { tooltip: "Are submissions hidden from public" },
 				header: "Hide Sub.",
 				enableColumnFilter: false,
@@ -72,7 +68,7 @@ function AdminContests() {
 				grow: false,
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue()} />,
 			}),
-			columnHelper.accessor("down_votes", {
+			columnHelper.accessor("downVotes", {
 				meta: {
 					tooltip: "Is down voting enabled. Required voting to be enabled",
 				},
@@ -82,40 +78,38 @@ function AdminContests() {
 				grow: false,
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue()} />,
 			}),
-			columnHelper.accessor("max_submissions", {
+			columnHelper.accessor("maxSubmissions", {
 				meta: { tooltip: "Max number of submissions a single user can make" },
 				header: "Max Subs.",
 				grow: false,
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
-			columnHelper.accessor("min_permission_level", {
+			columnHelper.accessor("minPermissionLevel", {
 				meta: { tooltip: "Minimum permission level required to participate" },
 				header: "Min. Perms",
 				enableColumnFilter: false,
 				grow: false,
-				Cell: ({ cell }) => (
-					<TableCellString>{permissionLevelString(cell.getValue() as PermissionLevelEnum)}</TableCellString>
-				),
+				Cell: ({ cell }) => <TableCellString>{Privilege[cell.getValue()]}</TableCellString>,
 			}),
-			columnHelper.accessor("date_start", {
+			columnHelper.accessor("dateStart", {
 				meta: { tooltip: "Start date" },
 				header: "Starts",
 				filterVariant: "date",
 				grow: false,
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue() as Date)}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{renderTimestamp(cell.getValue() as Timestamp)}</TableCellString>,
 			}),
-			columnHelper.accessor("date_end", {
+			columnHelper.accessor("dateEnd", {
 				meta: { tooltip: "End date" },
 				filterVariant: "date",
 				header: "Ends",
 				grow: false,
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue() as Date)}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{renderTimestamp(cell.getValue() as Timestamp)}</TableCellString>,
 			}),
-			columnHelper.accessor("updated_on", {
+			columnHelper.accessor("updatedOn", {
 				header: "Updated",
 				filterVariant: "date",
 				grow: false,
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue() as Date)}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{renderTimestamp(cell.getValue() as Timestamp)}</TableCellString>,
 			}),
 		],
 		[],
@@ -124,7 +118,7 @@ function AdminContests() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data ?? [],
+		data: data?.contests ?? [],
 		enableFilters: true,
 		enableHiding: true,
 		enableFacetedValues: true,

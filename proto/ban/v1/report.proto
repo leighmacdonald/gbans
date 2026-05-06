@@ -1,0 +1,235 @@
+edition = "2023";
+
+package ban.v1;
+
+import "ban/v1/ban.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "person/v1/person_core.proto";
+import "person/v1/privilege.proto";
+
+service ReportService {
+  rpc ReportCreate(ReportCreateRequest) returns (ReportCreateResponse) {}
+  rpc Report(ReportRequest) returns (ReportResponse) {}
+  rpc ReportStatusEdit(ReportStatusEditRequest) returns (google.protobuf.Empty) {}
+  rpc UserReports(UserReportsRequest) returns (UserReportsResponse) {}
+
+  rpc ReportMessages(ReportMessagesRequest) returns (ReportMessagesResponse) {}
+  rpc ReportMessageCreate(ReportMessageCreateRequest) returns (ReportMessageCreateResponse) {}
+  rpc ReportMessageEdit(ReportMessageEditRequest) returns (ReportMessageEditResponse) {}
+  rpc ReportMessageDelete(ReportMessageDeleteRequest) returns (google.protobuf.Empty) {}
+
+  rpc Reports(google.protobuf.Empty) returns (ReportsResponse) {}
+}
+
+message ReportsResponse {
+  repeated ReportWithAuthor reports = 1 [(buf.validate.field).required = true];
+}
+
+message ReportMessageDeleteRequest {
+  int32 report_message_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+}
+
+message ReportMessageEditRequest {
+  int32 report_message_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+  string body_md = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 50000
+    }
+  ];
+}
+
+message ReportMessageEditResponse {
+  ReportMessage message = 1 [(buf.validate.field).required = true];
+}
+
+message ReportMessagesRequest {
+  int32 report_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+}
+
+message UserReportsRequest {
+  int64 steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+}
+
+message ReportMessagesResponse {
+  repeated ReportMessage messages = 1 [(buf.validate.field).required = true];
+}
+
+message UserReportsResponse {
+  repeated ReportWithAuthor reports = 1 [(buf.validate.field).required = true];
+}
+
+message ReportRequest {
+  int32 report_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+}
+
+message ReportResponse {
+  ReportWithAuthor report = 1 [(buf.validate.field).required = true];
+}
+
+enum ReportStatus {
+  REPORT_STATUS_OPENED_UNSPECIFIED = 0;
+  REPORT_STATUS_NEED_MORE_INFO = 1;
+  REPORT_STATUS_CLOSED_WITHOUT_ACTION = 2;
+  REPORT_STATUS_CLOSED_WITH_ACTION = 3;
+}
+
+message ReportMessage {
+  int32 report_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+  int32 report_message_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+  int64 author_id = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string message_md = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 50000
+    }
+  ];
+  bool deleted = 5 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 6 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 7 [(buf.validate.field).required = true];
+  string persona_name = 8 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 32
+    }
+  ];
+  string avatar_hash = 9 [(buf.validate.field).required = true];
+  person.v1.Privilege permission_level = 10 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+}
+
+message Report {
+  int32 report_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+  int64 source_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  int64 target_id = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string description = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 50000
+    }
+  ];
+  ReportStatus report_status = 5 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  BanReason reason = 6 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  string reason_text = 7 [(buf.validate.field).required = true];
+  bool deleted = 8 [(buf.validate.field).required = true];
+  int32 demo_tick = 9;
+  int64 demo_id = 10;
+  int64 person_message_id = 11;
+  google.protobuf.Timestamp created_on = 12 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp updated_on = 13 [(buf.validate.field).required = true];
+}
+
+message ReportWithAuthor {
+  Report report = 1 [(buf.validate.field).required = true];
+  person.v1.PersonCore author = 2 [(buf.validate.field).required = true];
+  person.v1.PersonCore subject = 3 [(buf.validate.field).required = true];
+}
+
+message ReportStatusEditRequest {
+  int32 report_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+  ReportStatus report_status = 2 [(buf.validate.field).required = true];
+}
+
+message ReportCreateRequest {
+  option (buf.validate.message).cel = {
+    id: "ban_reason_text"
+    message: "reason_text must be set when a custom BanReason is selected"
+    expression: "this.reason != BanReason.CUSTOM || size(this.reason_text) >= 1"
+  };
+
+  int64 source_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  int64 target_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string description = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 50000
+    }
+  ];
+  BanReason reason = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  string reason_text = 5 [(buf.validate.field).string.min_len = 10];
+  int64 demo_id = 6;
+  int32 demo_tick = 7;
+  int64 person_message_id = 8;
+}
+
+message ReportCreateResponse {
+  ReportWithAuthor report = 1 [(buf.validate.field).required = true];
+}
+
+message ReportMessageCreateRequest {
+  int32 report_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32 = {gt: 0}
+  ];
+  string body_md = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 50000
+    }
+  ];
+}
+
+message ReportMessageCreateResponse {
+  ReportMessage report_message = 1 [(buf.validate.field).required = true];
+}
