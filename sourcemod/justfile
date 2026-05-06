@@ -10,3 +10,7 @@ build:
 
 copy:
     cp -rv scripting/* $(HOME)/projects/uncletopia/roles/sourcemod/files/addons/sourcemod/scripting/
+
+upload host="tst-1.internal.uncletopia.com" rootDir="~/srcds-tst-1/tf/addons/sourcemod" port="27015" password="testtest": build
+    scp -r plugins configs {{host}}:{{rootDir}}/
+    rcon-cli --host {{host}} --port {{port}} --password {{password}} sm plugins refresh

@@ -19,29 +19,30 @@ public void OnRebuildAdminCache(AdminCachePart part)
     }
 
     gQueuedAdminUpdate = true;
-    RebuildGroups();
+    if (gToken[0] == '\n') {
+        authenticateServer();
+    } else {
+        RebuildGroups();
+    }
 }
 
 void RebuildGroups() {
-    char url[1024];
-	makeURL("/api/sm/groups", url, sizeof url);
-	
-	HTTPRequest request = new HTTPRequest(url);
-	addAuthHeader(request);
-	
-    request.Get(onRebuildGroups); 
+    postHTTPRequest("/connect/sourcemod.v1.PluginService/SMGroups", new JSONObject(), onRebuildGroups);
 }
 
 void onRebuildGroups(HTTPResponse response, any value) {
-    if(response.Status != HTTPStatus_OK) {
+    printJSON(response.Data);
+    if (response.Status != HTTPStatus_OK) {
         gbLog("Invalid response code reading user groups: %d", response.Status);
-        gQueuedAdminUpdate = false;
 		return;
     }
 
     JSONObject groupObj = view_as<JSONObject>(response.Data);
+    if (!groupObj.HasKey("groups")) {
+        return;
+    }
+
     JSONArray groups = view_as<JSONArray>(groupObj.Get("groups"));
-    JSONArray immunities = view_as<JSONArray>(groupObj.Get("immunities"));
 
     int numGroups = groups.Length;
 
@@ -56,7 +57,7 @@ void onRebuildGroups(HTTPResponse response, any value) {
 
         group.GetString("flags", flags, sizeof(flags));
         group.GetString("name", name, sizeof(name));
-        immunity = group.GetInt("immunity_level");
+        immunity = group.GetInt("immunityLevel");
 
 
         GroupId grp;
@@ -64,10 +65,10 @@ void onRebuildGroups(HTTPResponse response, any value) {
 		{
 			grp = CreateAdmGroup(name);
 		}
-		
+
 		/* Add flags from the database to the group */
-		int num_flag_chars = strlen(flags);
-		for (int j=0; j<num_flag_chars; j++)
+		int numFlagChars = strlen(flags);
+		for (int j=0; j<numFlagChars; j++)
 		{
 			AdminFlag flag;
 			if (!FindFlagByChar(flags[j], flag))
@@ -76,60 +77,59 @@ void onRebuildGroups(HTTPResponse response, any value) {
 			}
 			grp.SetFlag(flag, true);
 		}
-		
+
 		/* Set the immunity level this group has */
 		grp.ImmunityLevel = immunity;
 
         delete group;
     }
 
-    int numImmunities = immunities.Length;
+    if (groupObj.HasKey("immunities")) {
+        JSONArray immunities = view_as<JSONArray>(groupObj.Get("immunities"));
 
-    for (int i = 0; i < numImmunities; i++) {
-        groupImmunity = view_as<JSONObject>(immunities.Get(i));
+        int numImmunities = immunities.Length;
 
-        char group_name[128];
-        char other_name[128];
-        GroupId grp, other;
+        for (int i = 0; i < numImmunities; i++) {
+            groupImmunity = view_as<JSONObject>(immunities.Get(i));
 
-        groupImmunity.GetString("group_name", group_name, sizeof(group_name));
-        groupImmunity.GetString("other_name", other_name, sizeof(other_name));
+            char groupName[128];
+            char otherName[128];
+            GroupId grp, other;
 
-        if (((grp = FindAdmGroup(group_name)) == INVALID_GROUP_ID)
-			|| (other = FindAdmGroup(other_name)) == INVALID_GROUP_ID)
-		{
-			continue;
-		}
-		
-		grp.AddGroupImmunity(other);
+            groupImmunity.GetString("groupName", groupName, sizeof(groupName));
+            groupImmunity.GetString("otherName", otherName, sizeof(otherName));
 
-#if defined _DEBUG
-		PrintToServer("SetAdmGroupImmuneFrom(%d, %d)", grp, other);
-#endif
+            if (((grp = FindAdmGroup(groupName)) == INVALID_GROUP_ID)
+    			|| (other = FindAdmGroup(otherName)) == INVALID_GROUP_ID)
+    		{
+    			continue;
+    		}
 
-        delete groupImmunity;
+    		grp.AddGroupImmunity(other);
 
+    #if defined _DEBUG
+    		PrintToServer("SetAdmGroupImmuneFrom(%d, %d)", grp, other);
+    #endif
+
+            delete groupImmunity;
+        }
+
+        delete immunities;
     }
 
-    delete immunities;
-    delete groups; 
-    
+    delete groups;
+
     gbLog("Loaded %d groups", numGroups);
 
     RebuildUsers();
 }
 
 void RebuildUsers() {
-    char url[1024];
-	makeURL("/api/sm/users", url, sizeof url);
-	
-	HTTPRequest request = new HTTPRequest(url);
-	addAuthHeader(request);
-	
-    request.Get(onRebuildUsers); 
+     postHTTPRequest("/connect/sourcemod.v1.PluginService/SMUsers", new JSONObject(), onRebuildUsers);
 }
 
 void onRebuildUsers(HTTPResponse response, any value) {
+    printJSON(response.Data);
     if(response.Status != HTTPStatus_OK) {
         gbLog("Invalid response code reading users: %d", response.Status);
         gQueuedAdminUpdate = false;
@@ -138,7 +138,7 @@ void onRebuildUsers(HTTPResponse response, any value) {
 
     JSONObject usersObj = view_as<JSONObject>(response.Data);
     JSONArray users = view_as<JSONArray>(usersObj.Get("users"));
-    JSONArray userGroups = view_as<JSONArray>(usersObj.Get("user_groups"));
+    JSONArray userGroups = view_as<JSONArray>(usersObj.Get("userGroups"));
 
     JSONObject user;
     JSONObject userGroup;
@@ -151,25 +151,29 @@ void onRebuildUsers(HTTPResponse response, any value) {
 	AdminId adm;
 	GroupId grp;
 
-    
+
     int numUsers = users.Length;
     int numUserGroups = userGroups.Length;
-    
+
 	/* Keep track of a mapping from admin DB IDs to internal AdminIds to
 	 * enable group lookups en masse */
 	StringMap htAdmins = new StringMap();
 	char key[16];
-    
+
     for (int i = 0; i < numUsers; i++) {
         user = view_as<JSONObject>(users.Get(i));
 
-        user.GetString("authtype", authtype, sizeof(authtype));
+        user.GetString("authType", authtype, sizeof(authtype));
         user.GetString("identity", identity, sizeof(identity));
         user.GetString("password", password, sizeof(password));
         user.GetString("flags", flags, sizeof(flags));
         user.GetString("name", name, sizeof(name));
-        immunity = user.GetInt("immunity");
-             
+        if (user.HasKey("immunity")) {
+            immunity = user.GetInt("immunity");
+        } else {
+            immunity = 0;
+        }
+
         /* Use a pre-existing admin if we can */
 		if ((adm = FindAdminByIdentity(authtype, identity)) == INVALID_ADMIN_ID)
 		{
@@ -182,7 +186,7 @@ void onRebuildUsers(HTTPResponse response, any value) {
 		}
 
         IntToString(user.GetInt("id"), key, sizeof(key));
-		
+
         htAdmins.SetValue(key, adm);
 
 		/* See if this admin wants a password */
@@ -190,7 +194,7 @@ void onRebuildUsers(HTTPResponse response, any value) {
 		{
 			adm.SetPassword(password);
 		}
-		
+
 		/* Apply each flag */
 		int len = strlen(flags);
 		AdminFlag flag;
@@ -212,8 +216,8 @@ void onRebuildUsers(HTTPResponse response, any value) {
     for (int i = 0; i < numUserGroups; i++) {
         userGroup = view_as<JSONObject>(userGroups.Get(i));
 
-		IntToString(userGroup.GetInt("admin_id"), key, sizeof(key));
-		userGroup.GetString("group_name", group, sizeof(group));
+		IntToString(userGroup.GetInt("adminId"), key, sizeof(key));
+		userGroup.GetString("groupName", group, sizeof(group));
 
 
 		if (htAdmins.GetValue(key, adm))
@@ -232,23 +236,19 @@ void onRebuildUsers(HTTPResponse response, any value) {
     }
 
     delete htAdmins;
-    
+
     gbLog("Loaded %d users into %d groups", numUsers, numUserGroups);
-    
+
     RebuildOverrides();
 }
 
 void RebuildOverrides() {
-    char url[1024];
-	makeURL("/api/sm/overrides", url, sizeof url);
-	
-	HTTPRequest request = new HTTPRequest(url);
-	addAuthHeader(request);
-	
-    request.Get(onRebuildOverrides);
+    postHTTPRequest("/connect/sourcemod.v1.PluginService/SMOverrides", new JSONObject(), onRebuildOverrides);
+
 }
 
 void onRebuildOverrides(HTTPResponse response, any value) {
+    printJSON(response.Data);
     if(response.Status != HTTPStatus_OK) {
         gbLog("Invalid response code reading overrides: %d", response.Status);
         gQueuedAdminUpdate = false;
@@ -263,7 +263,7 @@ void onRebuildOverrides(HTTPResponse response, any value) {
     char type[64];
 	char name[64];
 	char flags[32];
-	int flag_bits;
+	int flagBits;
 
     for (int i = 0; i < numOverrides; i++) {
         override = view_as<JSONObject>(overrides.Get(i));
@@ -276,11 +276,11 @@ void onRebuildOverrides(HTTPResponse response, any value) {
         PrintToServer("Adding override (%s, %s, %s)", type, name, flags);
 #endif
 
-        flag_bits = ReadFlagString(flags);
+        flagBits = ReadFlagString(flags);
 		if (StrEqual(type, "command")) {
-			AddCommandOverride(name, Override_Command, flag_bits);
+			AddCommandOverride(name, Override_Command, flagBits);
 		} else if (StrEqual(type, "group")) {
-			AddCommandOverride(name, Override_CommandGroup, flag_bits);
+			AddCommandOverride(name, Override_CommandGroup, flagBits);
 		}
 
         delete override;

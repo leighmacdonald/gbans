@@ -24,13 +24,9 @@
 #include "gbans/report.sp"
 #include "gbans/stv.sp"
 
-bool LateLoaded;
-
-bool PlayerStatus[MAXPLAYERS + 1];
-
 public Plugin myinfo =
 {
-	name = "gbans",
+	name = PLUGIN_NAME,
 	author = "Leigh MacDonald",
 	description = "gbans game client",
 	version = PLUGIN_VERSION,
@@ -63,36 +59,36 @@ public void OnPluginStart()
 	AutoExecConfig_SetFile("gbans");
 
 	// Core settings
-	gb_core_host = AutoExecConfig_CreateConVar("gb_core_host", "localhost", "Remote gbans host", FCVAR_NONE);
-	gb_core_port = AutoExecConfig_CreateConVar("gb_core_port", "6006", "Remote gbans port", FCVAR_NONE, true, 1.0, true, 65535.0);
-	gb_core_server_key = AutoExecConfig_CreateConVar("gb_core_server_key", "", "GBans server key used to authenticate with the service", FCVAR_NONE);
+	gbCoreHost = AutoExecConfig_CreateConVar("gb_core_host", "localhost", "Remote gbans host", FCVAR_NONE);
+	gbCorePort = AutoExecConfig_CreateConVar("gb_core_port", "6006", "Remote gbans port", FCVAR_NONE, true, 1.0, true, 65535.0);
+	gbCoreServerKey = AutoExecConfig_CreateConVar("gb_core_server_key", "", "GBans server key used to authenticate with the service", FCVAR_NONE);
 
 	// In Game Tweaks
-	gb_disable_autoteam = AutoExecConfig_CreateConVar("gb_hide_connections", "1", "Dont allow the use of autoteam command", FCVAR_NONE, true, 0.0, true, 1.0);
-	gb_hide_connections = AutoExecConfig_CreateConVar("gb_disable_autoteam", "1", "Dont show the disconnect message to users", FCVAR_NONE, true, 0.0, true, 1.0);
+	gbDisableAutoteam = AutoExecConfig_CreateConVar("gb_hide_connections", "1", "Dont allow the use of autoteam command", FCVAR_NONE, true, 0.0, true, 1.0);
+	gbHideConnections = AutoExecConfig_CreateConVar("gb_disable_autoteam", "1", "Dont show the disconnect message to users", FCVAR_NONE, true, 0.0, true, 1.0);
 
 	// STV settings
-	gb_stv_enable = AutoExecConfig_CreateConVar("gb_stv_enable", "1", "Enable SourceTV", FCVAR_NONE, true, 0.0, true, 1.0);
-	gb_auto_record = AutoExecConfig_CreateConVar("gb_auto_record", "1", "Enable automatic recording", FCVAR_NONE, true, 0.0, true, 1.0);
-	gb_stv_minplayers = AutoExecConfig_CreateConVar("gb_stv_minplayers", "1", "Minimum players on server to start recording", _, true, 0.0);
-	gb_stv_ignorebots = AutoExecConfig_CreateConVar("gb_stv_ignorebots", "1", "Ignore bots in the player count", FCVAR_NONE, true, 0.0, true, 1.0);
-	gb_stv_timestart = AutoExecConfig_CreateConVar("gb_stv_timestart", "-1", "Hour in the day to start recording (0-23, -1 disables)", FCVAR_NONE);
-	gb_stv_timestop = AutoExecConfig_CreateConVar("gb_stv_timestop", "-1", "Hour in the day to stop recording (0-23, -1 disables)", FCVAR_NONE);
-	gb_stv_finishmap = AutoExecConfig_CreateConVar("gb_stv_finishmap", "1", "If 1, continue recording until the map ends", FCVAR_NONE, true, 0.0, true, 1.0);
-	gb_stv_path = AutoExecConfig_CreateConVar("gb_stv_path", "stv_demos/active", "Path to store currently recording demos", FCVAR_NONE);
-	gb_stv_path_complete = AutoExecConfig_CreateConVar("gb_stv_path_complete", "stv_demos/complete", "Path to store complete demos", FCVAR_NONE);
+	gbStvEnable = AutoExecConfig_CreateConVar("gb_stv_enable", "1", "Enable SourceTV", FCVAR_NONE, true, 0.0, true, 1.0);
+	gbAutoRecord = AutoExecConfig_CreateConVar("gb_auto_record", "1", "Enable automatic recording", FCVAR_NONE, true, 0.0, true, 1.0);
+	gbStvMinplayers = AutoExecConfig_CreateConVar("gb_stv_minplayers", "1", "Minimum players on server to start recording", _, true, 0.0);
+	gbStvIgnorebots = AutoExecConfig_CreateConVar("gb_stv_ignorebots", "1", "Ignore bots in the player count", FCVAR_NONE, true, 0.0, true, 1.0);
+	gbStvTimestart = AutoExecConfig_CreateConVar("gb_stv_timestart", "-1", "Hour in the day to start recording (0-23, -1 disables)", FCVAR_NONE);
+	gbStvTimestop = AutoExecConfig_CreateConVar("gb_stv_timestop", "-1", "Hour in the day to stop recording (0-23, -1 disables)", FCVAR_NONE);
+	gbStvFinishmap = AutoExecConfig_CreateConVar("gb_stv_finishmap", "1", "If 1, continue recording until the map ends", FCVAR_NONE, true, 0.0, true, 1.0);
+	gbStvPath = AutoExecConfig_CreateConVar("gb_stv_path", "stv_demos/active", "Path to store currently recording demos", FCVAR_NONE);
+	gbStvPathComplete = AutoExecConfig_CreateConVar("gb_stv_path_complete", "stv_demos/complete", "Path to store complete demos", FCVAR_NONE);
 
 	AutoExecConfig_ExecuteFile();
 	AutoExecConfig_CleanFile();
 
 	//BuildPath(Path_SM, logFile, sizeof(logFile), "logs/gbans.log");
 
-	if(LateLoaded)
+	if(gLateLoaded)
 	{
 		AccountForLateLoading();
 	}
 
-	reloadAdmins(true);
+	authenticateServer();
 }
 
 
@@ -104,7 +100,7 @@ stock void AccountForLateLoading()
 	{
 		if(IsClientConnected(i) && !IsFakeClient(i))
 		{
-			PlayerStatus[i] = false;
+			gPlayerStatus[i] = false;
 		}
 		if(IsClientInGame(i) && !IsFakeClient(i) && IsClientAuthorized(i) && GetClientAuthId(i, AuthId_Steam2, auth, sizeof auth))
 		{
@@ -116,22 +112,22 @@ stock void AccountForLateLoading()
 
 public void OnConfigsExecuted()
 {
-	gb_stv_minplayers.AddChangeHook(OnConVarChanged);
-	gb_stv_ignorebots.AddChangeHook(OnConVarChanged);
-	gb_stv_timestart.AddChangeHook(OnConVarChanged);
-	gb_stv_timestop.AddChangeHook(OnConVarChanged);
-	gb_stv_path.AddChangeHook(OnConVarChanged);
+	gbStvMinplayers.AddChangeHook(OnConVarChanged);
+	gbStvIgnorebots.AddChangeHook(OnConVarChanged);
+	gbStvTimestart.AddChangeHook(OnConVarChanged);
+	gbStvTimestop.AddChangeHook(OnConVarChanged);
+	gbStvPath.AddChangeHook(OnConVarChanged);
 
 	char sPath[PLATFORM_MAX_PATH];
 
-	gb_stv_path.GetString(sPath, sizeof sPath);
+	gbStvPath.GetString(sPath, sizeof sPath);
 	if(!DirExists(sPath))
 	{
 		initDirectory(sPath);
 	}
 
 	char sPathComplete[PLATFORM_MAX_PATH];
-	GetConVarString(gb_stv_path_complete, sPathComplete, sizeof sPathComplete);
+	GetConVarString(gbStvPathComplete, sPathComplete, sizeof sPathComplete);
 	if(!DirExists(sPathComplete))
 	{
 		initDirectory(sPathComplete);
@@ -140,16 +136,6 @@ public void OnConfigsExecuted()
 	CreateTimer(300.0, Timer_CheckStatus, _, TIMER_REPEAT);
 
 	StopRecord();
-
-	if(!gStvMapChanged)
-	{
-// STV does not function until a map change has occurred.
-		gbLog("Restarting map to enabled STV");
-		gStvMapChanged = true;
-		char mapName[128];
-		GetCurrentMap(mapName, sizeof mapName);
-		ForceChangeLevel(mapName, "Enable STV");
-	}
 }
 
 
@@ -171,7 +157,7 @@ public void OnMapEnd()
 
 public void OnMapStart()
 {
-	reloadAdmins(true);
+	authenticateServer();
 }
 
 
@@ -179,7 +165,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 {
 	CreateNative("GB_BanClient", Native_GB_BanClient);
 
-	LateLoaded = late;
+	gLateLoaded = late;
 
 	return APLRes_Success;
 }

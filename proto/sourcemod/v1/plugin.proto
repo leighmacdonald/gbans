@@ -16,7 +16,17 @@ service PluginService {
   rpc SMUsers(google.protobuf.Empty) returns (SMUsersResponse) {}
   rpc SMGroups(google.protobuf.Empty) returns (SMGroupsResponse) {}
   rpc SMSeed(SMSeedRequest) returns (SMSeedResponse) {}
+  rpc SMPingMod(SMPingModRequest) returns (google.protobuf.Empty) {}
 }
+
+message SMPingModRequest {
+  string steam_id = 1;
+  string name = 2;
+  string reason = 3;
+  int32 client_id = 4;
+}
+
+message SMPingModResponse {}
 
 message SMAuthenticateRequest {
   string password = 1 [

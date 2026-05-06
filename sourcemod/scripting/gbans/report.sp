@@ -55,7 +55,7 @@ public Action OnClientSayCommand(int clientId, const char[] command, const char[
 
 	gbLog("Got report reason: %s", args);
 	report(gReportSourceId, gReportTargetId, gReportTargetReason, args);
-	
+
 	return Plugin_Continue;
 }
 
@@ -83,21 +83,14 @@ public bool report(int sourceId, int targetId, GB_BanReason reason, const char[]
 	}
 
 	JSONObject obj = new JSONObject();
-	obj.SetString("source_id", sourceSid);
-	obj.SetString("target_id", targetSid);
+	obj.SetString("sourceId", sourceSid);
+	obj.SetString("targetId", targetSid);
 	obj.SetInt("reason", view_as<int>(reason));
-	obj.SetString("reason_text", reasonText);
-	obj.SetString("demo_name", demoName);
-	obj.SetInt("demo_tick", demoTick);
+	obj.SetString("reasonText", reasonText);
+	obj.SetString("demoName", demoName);
+	obj.SetInt("demoTick", demoTick);
 
-	char url[1024];
-	makeURL("/api/sm/report/create", url, sizeof url);
-	
-	HTTPRequest request = new HTTPRequest(url);
-	addAuthHeader(request);
-    request.Post(obj, onReportRespReceived, sourceId); 
-
-	delete obj;
+	postHTTPRequest("/connect/ban.v1.ReportService/Report", obj, onReportRespReceived, sourceId);
 
 	return true;
 }
@@ -120,8 +113,11 @@ void onReportRespReceived(HTTPResponse response, any clientId)
 		return ;
 	}
 
-	JSONObject data = view_as<JSONObject>(response.Data); 
-	int reportId = data.GetInt("report_id");
+	JSONObject data = view_as<JSONObject>(response.Data);
+	JSONObject reportWithAuthor = view_as<JSONObject>(data.Get("report"));
+	JSONObject createdReport = view_as<JSONObject>(reportWithAuthor.Get("report"));
+
+	int reportId = createdReport.GetInt("reportId");
 
 	char path[PLATFORM_MAX_PATH];
 	Format(path, sizeof path, "/report/%d", reportId);
@@ -131,7 +127,7 @@ void onReportRespReceived(HTTPResponse response, any clientId)
 
 	PrintToChat(clientId, "[Report] Report created succesfully, thanks for your help");
 	PrintToChat(clientId, "[Report] %s", url);
-	
+
 	resetReportStatus();
 }
 

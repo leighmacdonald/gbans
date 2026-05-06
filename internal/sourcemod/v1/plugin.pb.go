@@ -24,6 +24,110 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type SMPingModRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SteamId       *string                `protobuf:"bytes,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	Name          *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	Reason        *string                `protobuf:"bytes,3,opt,name=reason" json:"reason,omitempty"`
+	ClientId      *int32                 `protobuf:"varint,4,opt,name=client_id,json=clientId" json:"client_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SMPingModRequest) Reset() {
+	*x = SMPingModRequest{}
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SMPingModRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SMPingModRequest) ProtoMessage() {}
+
+func (x *SMPingModRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SMPingModRequest.ProtoReflect.Descriptor instead.
+func (*SMPingModRequest) Descriptor() ([]byte, []int) {
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *SMPingModRequest) GetSteamId() string {
+	if x != nil && x.SteamId != nil {
+		return *x.SteamId
+	}
+	return ""
+}
+
+func (x *SMPingModRequest) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
+}
+
+func (x *SMPingModRequest) GetReason() string {
+	if x != nil && x.Reason != nil {
+		return *x.Reason
+	}
+	return ""
+}
+
+func (x *SMPingModRequest) GetClientId() int32 {
+	if x != nil && x.ClientId != nil {
+		return *x.ClientId
+	}
+	return 0
+}
+
+type SMPingModResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SMPingModResponse) Reset() {
+	*x = SMPingModResponse{}
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SMPingModResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SMPingModResponse) ProtoMessage() {}
+
+func (x *SMPingModResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SMPingModResponse.ProtoReflect.Descriptor instead.
+func (*SMPingModResponse) Descriptor() ([]byte, []int) {
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{1}
+}
+
 type SMAuthenticateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Password      *string                `protobuf:"bytes,1,opt,name=password" json:"password,omitempty"`
@@ -33,7 +137,7 @@ type SMAuthenticateRequest struct {
 
 func (x *SMAuthenticateRequest) Reset() {
 	*x = SMAuthenticateRequest{}
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[0]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -45,7 +149,7 @@ func (x *SMAuthenticateRequest) String() string {
 func (*SMAuthenticateRequest) ProtoMessage() {}
 
 func (x *SMAuthenticateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[0]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +162,7 @@ func (x *SMAuthenticateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SMAuthenticateRequest.ProtoReflect.Descriptor instead.
 func (*SMAuthenticateRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{0}
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *SMAuthenticateRequest) GetPassword() string {
@@ -77,7 +181,7 @@ type SMAuthenticateResponse struct {
 
 func (x *SMAuthenticateResponse) Reset() {
 	*x = SMAuthenticateResponse{}
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[1]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -89,7 +193,7 @@ func (x *SMAuthenticateResponse) String() string {
 func (*SMAuthenticateResponse) ProtoMessage() {}
 
 func (x *SMAuthenticateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[1]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -102,7 +206,7 @@ func (x *SMAuthenticateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SMAuthenticateResponse.ProtoReflect.Descriptor instead.
 func (*SMAuthenticateResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{1}
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *SMAuthenticateResponse) GetToken() string {
@@ -121,7 +225,7 @@ type SMSeedRequest struct {
 
 func (x *SMSeedRequest) Reset() {
 	*x = SMSeedRequest{}
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[2]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -133,7 +237,7 @@ func (x *SMSeedRequest) String() string {
 func (*SMSeedRequest) ProtoMessage() {}
 
 func (x *SMSeedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[2]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -146,7 +250,7 @@ func (x *SMSeedRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SMSeedRequest.ProtoReflect.Descriptor instead.
 func (*SMSeedRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{2}
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SMSeedRequest) GetSteamId() string {
@@ -165,7 +269,7 @@ type SMSeedResponse struct {
 
 func (x *SMSeedResponse) Reset() {
 	*x = SMSeedResponse{}
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[3]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -177,7 +281,7 @@ func (x *SMSeedResponse) String() string {
 func (*SMSeedResponse) ProtoMessage() {}
 
 func (x *SMSeedResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[3]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -190,7 +294,7 @@ func (x *SMSeedResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SMSeedResponse.ProtoReflect.Descriptor instead.
 func (*SMSeedResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{3}
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SMSeedResponse) GetMessage() string {
@@ -211,7 +315,7 @@ type SMOverride struct {
 
 func (x *SMOverride) Reset() {
 	*x = SMOverride{}
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[4]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -223,7 +327,7 @@ func (x *SMOverride) String() string {
 func (*SMOverride) ProtoMessage() {}
 
 func (x *SMOverride) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[4]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -236,7 +340,7 @@ func (x *SMOverride) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SMOverride.ProtoReflect.Descriptor instead.
 func (*SMOverride) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{4}
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SMOverride) GetOverrideType() OverrideType {
@@ -269,7 +373,7 @@ type SMOverridesResponse struct {
 
 func (x *SMOverridesResponse) Reset() {
 	*x = SMOverridesResponse{}
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[5]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -281,7 +385,7 @@ func (x *SMOverridesResponse) String() string {
 func (*SMOverridesResponse) ProtoMessage() {}
 
 func (x *SMOverridesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[5]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -294,7 +398,7 @@ func (x *SMOverridesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SMOverridesResponse.ProtoReflect.Descriptor instead.
 func (*SMOverridesResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{5}
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *SMOverridesResponse) GetOverrides() []*SMOverride {
@@ -316,7 +420,7 @@ type SMCheckRequest struct {
 
 func (x *SMCheckRequest) Reset() {
 	*x = SMCheckRequest{}
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[6]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -328,7 +432,7 @@ func (x *SMCheckRequest) String() string {
 func (*SMCheckRequest) ProtoMessage() {}
 
 func (x *SMCheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[6]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -341,7 +445,7 @@ func (x *SMCheckRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SMCheckRequest.ProtoReflect.Descriptor instead.
 func (*SMCheckRequest) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{6}
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *SMCheckRequest) GetSteamId() string {
@@ -383,7 +487,7 @@ type SMCheckResponse struct {
 
 func (x *SMCheckResponse) Reset() {
 	*x = SMCheckResponse{}
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[7]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -395,7 +499,7 @@ func (x *SMCheckResponse) String() string {
 func (*SMCheckResponse) ProtoMessage() {}
 
 func (x *SMCheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[7]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -408,7 +512,7 @@ func (x *SMCheckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SMCheckResponse.ProtoReflect.Descriptor instead.
 func (*SMCheckResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{7}
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *SMCheckResponse) GetClientId() int32 {
@@ -442,7 +546,7 @@ type SMGroupImmunity struct {
 
 func (x *SMGroupImmunity) Reset() {
 	*x = SMGroupImmunity{}
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[8]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -454,7 +558,7 @@ func (x *SMGroupImmunity) String() string {
 func (*SMGroupImmunity) ProtoMessage() {}
 
 func (x *SMGroupImmunity) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[8]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -467,7 +571,7 @@ func (x *SMGroupImmunity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SMGroupImmunity.ProtoReflect.Descriptor instead.
 func (*SMGroupImmunity) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{8}
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *SMGroupImmunity) GetGroupName() string {
@@ -494,7 +598,7 @@ type SMGroupsResponse struct {
 
 func (x *SMGroupsResponse) Reset() {
 	*x = SMGroupsResponse{}
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[9]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -506,7 +610,7 @@ func (x *SMGroupsResponse) String() string {
 func (*SMGroupsResponse) ProtoMessage() {}
 
 func (x *SMGroupsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[9]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -519,7 +623,7 @@ func (x *SMGroupsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SMGroupsResponse.ProtoReflect.Descriptor instead.
 func (*SMGroupsResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{9}
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *SMGroupsResponse) GetGroups() []*Group {
@@ -546,7 +650,7 @@ type SMUsersResponse struct {
 
 func (x *SMUsersResponse) Reset() {
 	*x = SMUsersResponse{}
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[10]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -558,7 +662,7 @@ func (x *SMUsersResponse) String() string {
 func (*SMUsersResponse) ProtoMessage() {}
 
 func (x *SMUsersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[10]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -571,7 +675,7 @@ func (x *SMUsersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SMUsersResponse.ProtoReflect.Descriptor instead.
 func (*SMUsersResponse) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{10}
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *SMUsersResponse) GetUsers() []*SMUser {
@@ -603,7 +707,7 @@ type SMUser struct {
 
 func (x *SMUser) Reset() {
 	*x = SMUser{}
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[11]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -615,7 +719,7 @@ func (x *SMUser) String() string {
 func (*SMUser) ProtoMessage() {}
 
 func (x *SMUser) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[11]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -628,7 +732,7 @@ func (x *SMUser) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SMUser.ProtoReflect.Descriptor instead.
 func (*SMUser) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{11}
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *SMUser) GetId() int32 {
@@ -690,7 +794,7 @@ type SMUserGroup struct {
 
 func (x *SMUserGroup) Reset() {
 	*x = SMUserGroup{}
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[12]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -702,7 +806,7 @@ func (x *SMUserGroup) String() string {
 func (*SMUserGroup) ProtoMessage() {}
 
 func (x *SMUserGroup) ProtoReflect() protoreflect.Message {
-	mi := &file_sourcemod_v1_plugin_proto_msgTypes[12]
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -715,7 +819,7 @@ func (x *SMUserGroup) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SMUserGroup.ProtoReflect.Descriptor instead.
 func (*SMUserGroup) Descriptor() ([]byte, []int) {
-	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{12}
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *SMUserGroup) GetAdminId() int32 {
@@ -736,7 +840,13 @@ var File_sourcemod_v1_plugin_proto protoreflect.FileDescriptor
 
 const file_sourcemod_v1_plugin_proto_rawDesc = "" +
 	"\n" +
-	"\x19sourcemod/v1/plugin.proto\x12\fsourcemod.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1csourcemod/v1/sourcemod.proto\"A\n" +
+	"\x19sourcemod/v1/plugin.proto\x12\fsourcemod.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1csourcemod/v1/sourcemod.proto\"v\n" +
+	"\x10SMPingModRequest\x12\x19\n" +
+	"\bsteam_id\x18\x01 \x01(\tR\asteamId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\x12\x1b\n" +
+	"\tclient_id\x18\x04 \x01(\x05R\bclientId\"\x13\n" +
+	"\x11SMPingModResponse\"A\n" +
 	"\x15SMAuthenticateRequest\x12(\n" +
 	"\bpassword\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\b\x18\x14R\bpassword\":\n" +
 	"\x16SMAuthenticateResponse\x12 \n" +
@@ -795,14 +905,15 @@ const file_sourcemod_v1_plugin_proto_rawDesc = "" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\aadminId\x12)\n" +
 	"\n" +
 	"group_name\x18\x02 \x01(\tB\n" +
-	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\tgroupName2\xd5\x03\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\tgroupName2\x9c\x04\n" +
 	"\rPluginService\x12]\n" +
 	"\x0eSMAuthenticate\x12#.sourcemod.v1.SMAuthenticateRequest\x1a$.sourcemod.v1.SMAuthenticateResponse\"\x00\x12H\n" +
 	"\aSMCheck\x12\x1c.sourcemod.v1.SMCheckRequest\x1a\x1d.sourcemod.v1.SMCheckResponse\"\x00\x12J\n" +
 	"\vSMOverrides\x12\x16.google.protobuf.Empty\x1a!.sourcemod.v1.SMOverridesResponse\"\x00\x12B\n" +
 	"\aSMUsers\x12\x16.google.protobuf.Empty\x1a\x1d.sourcemod.v1.SMUsersResponse\"\x00\x12D\n" +
 	"\bSMGroups\x12\x16.google.protobuf.Empty\x1a\x1e.sourcemod.v1.SMGroupsResponse\"\x00\x12E\n" +
-	"\x06SMSeed\x12\x1b.sourcemod.v1.SMSeedRequest\x1a\x1c.sourcemod.v1.SMSeedResponse\"\x00B\xb3\x01\n" +
+	"\x06SMSeed\x12\x1b.sourcemod.v1.SMSeedRequest\x1a\x1c.sourcemod.v1.SMSeedResponse\"\x00\x12E\n" +
+	"\tSMPingMod\x12\x1e.sourcemod.v1.SMPingModRequest\x1a\x16.google.protobuf.Empty\"\x00B\xb3\x01\n" +
 	"\x10com.sourcemod.v1B\vPluginProtoP\x01ZAgithub.com/leighmacdonald/gbans/internal/sourcemod/v1;sourcemodv1\xa2\x02\x03SXX\xaa\x02\fSourcemod.V1\xca\x02\fSourcemod\\V1\xe2\x02\x18Sourcemod\\V1\\GPBMetadata\xea\x02\rSourcemod::V1b\beditionsp\xe8\a"
 
 var (
@@ -817,50 +928,54 @@ func file_sourcemod_v1_plugin_proto_rawDescGZIP() []byte {
 	return file_sourcemod_v1_plugin_proto_rawDescData
 }
 
-var file_sourcemod_v1_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_sourcemod_v1_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_sourcemod_v1_plugin_proto_goTypes = []any{
-	(*SMAuthenticateRequest)(nil),  // 0: sourcemod.v1.SMAuthenticateRequest
-	(*SMAuthenticateResponse)(nil), // 1: sourcemod.v1.SMAuthenticateResponse
-	(*SMSeedRequest)(nil),          // 2: sourcemod.v1.SMSeedRequest
-	(*SMSeedResponse)(nil),         // 3: sourcemod.v1.SMSeedResponse
-	(*SMOverride)(nil),             // 4: sourcemod.v1.SMOverride
-	(*SMOverridesResponse)(nil),    // 5: sourcemod.v1.SMOverridesResponse
-	(*SMCheckRequest)(nil),         // 6: sourcemod.v1.SMCheckRequest
-	(*SMCheckResponse)(nil),        // 7: sourcemod.v1.SMCheckResponse
-	(*SMGroupImmunity)(nil),        // 8: sourcemod.v1.SMGroupImmunity
-	(*SMGroupsResponse)(nil),       // 9: sourcemod.v1.SMGroupsResponse
-	(*SMUsersResponse)(nil),        // 10: sourcemod.v1.SMUsersResponse
-	(*SMUser)(nil),                 // 11: sourcemod.v1.SMUser
-	(*SMUserGroup)(nil),            // 12: sourcemod.v1.SMUserGroup
-	(OverrideType)(0),              // 13: sourcemod.v1.OverrideType
-	(v1.BanType)(0),                // 14: ban.v1.BanType
-	(*Group)(nil),                  // 15: sourcemod.v1.Group
-	(AuthType)(0),                  // 16: sourcemod.v1.AuthType
-	(*emptypb.Empty)(nil),          // 17: google.protobuf.Empty
+	(*SMPingModRequest)(nil),       // 0: sourcemod.v1.SMPingModRequest
+	(*SMPingModResponse)(nil),      // 1: sourcemod.v1.SMPingModResponse
+	(*SMAuthenticateRequest)(nil),  // 2: sourcemod.v1.SMAuthenticateRequest
+	(*SMAuthenticateResponse)(nil), // 3: sourcemod.v1.SMAuthenticateResponse
+	(*SMSeedRequest)(nil),          // 4: sourcemod.v1.SMSeedRequest
+	(*SMSeedResponse)(nil),         // 5: sourcemod.v1.SMSeedResponse
+	(*SMOverride)(nil),             // 6: sourcemod.v1.SMOverride
+	(*SMOverridesResponse)(nil),    // 7: sourcemod.v1.SMOverridesResponse
+	(*SMCheckRequest)(nil),         // 8: sourcemod.v1.SMCheckRequest
+	(*SMCheckResponse)(nil),        // 9: sourcemod.v1.SMCheckResponse
+	(*SMGroupImmunity)(nil),        // 10: sourcemod.v1.SMGroupImmunity
+	(*SMGroupsResponse)(nil),       // 11: sourcemod.v1.SMGroupsResponse
+	(*SMUsersResponse)(nil),        // 12: sourcemod.v1.SMUsersResponse
+	(*SMUser)(nil),                 // 13: sourcemod.v1.SMUser
+	(*SMUserGroup)(nil),            // 14: sourcemod.v1.SMUserGroup
+	(OverrideType)(0),              // 15: sourcemod.v1.OverrideType
+	(v1.BanType)(0),                // 16: ban.v1.BanType
+	(*Group)(nil),                  // 17: sourcemod.v1.Group
+	(AuthType)(0),                  // 18: sourcemod.v1.AuthType
+	(*emptypb.Empty)(nil),          // 19: google.protobuf.Empty
 }
 var file_sourcemod_v1_plugin_proto_depIdxs = []int32{
-	13, // 0: sourcemod.v1.SMOverride.override_type:type_name -> sourcemod.v1.OverrideType
-	4,  // 1: sourcemod.v1.SMOverridesResponse.overrides:type_name -> sourcemod.v1.SMOverride
-	14, // 2: sourcemod.v1.SMCheckResponse.ban_type:type_name -> ban.v1.BanType
-	15, // 3: sourcemod.v1.SMGroupsResponse.groups:type_name -> sourcemod.v1.Group
-	8,  // 4: sourcemod.v1.SMGroupsResponse.immunities:type_name -> sourcemod.v1.SMGroupImmunity
-	11, // 5: sourcemod.v1.SMUsersResponse.users:type_name -> sourcemod.v1.SMUser
-	12, // 6: sourcemod.v1.SMUsersResponse.user_groups:type_name -> sourcemod.v1.SMUserGroup
-	16, // 7: sourcemod.v1.SMUser.auth_type:type_name -> sourcemod.v1.AuthType
-	0,  // 8: sourcemod.v1.PluginService.SMAuthenticate:input_type -> sourcemod.v1.SMAuthenticateRequest
-	6,  // 9: sourcemod.v1.PluginService.SMCheck:input_type -> sourcemod.v1.SMCheckRequest
-	17, // 10: sourcemod.v1.PluginService.SMOverrides:input_type -> google.protobuf.Empty
-	17, // 11: sourcemod.v1.PluginService.SMUsers:input_type -> google.protobuf.Empty
-	17, // 12: sourcemod.v1.PluginService.SMGroups:input_type -> google.protobuf.Empty
-	2,  // 13: sourcemod.v1.PluginService.SMSeed:input_type -> sourcemod.v1.SMSeedRequest
-	1,  // 14: sourcemod.v1.PluginService.SMAuthenticate:output_type -> sourcemod.v1.SMAuthenticateResponse
-	7,  // 15: sourcemod.v1.PluginService.SMCheck:output_type -> sourcemod.v1.SMCheckResponse
-	5,  // 16: sourcemod.v1.PluginService.SMOverrides:output_type -> sourcemod.v1.SMOverridesResponse
-	10, // 17: sourcemod.v1.PluginService.SMUsers:output_type -> sourcemod.v1.SMUsersResponse
-	9,  // 18: sourcemod.v1.PluginService.SMGroups:output_type -> sourcemod.v1.SMGroupsResponse
-	3,  // 19: sourcemod.v1.PluginService.SMSeed:output_type -> sourcemod.v1.SMSeedResponse
-	14, // [14:20] is the sub-list for method output_type
-	8,  // [8:14] is the sub-list for method input_type
+	15, // 0: sourcemod.v1.SMOverride.override_type:type_name -> sourcemod.v1.OverrideType
+	6,  // 1: sourcemod.v1.SMOverridesResponse.overrides:type_name -> sourcemod.v1.SMOverride
+	16, // 2: sourcemod.v1.SMCheckResponse.ban_type:type_name -> ban.v1.BanType
+	17, // 3: sourcemod.v1.SMGroupsResponse.groups:type_name -> sourcemod.v1.Group
+	10, // 4: sourcemod.v1.SMGroupsResponse.immunities:type_name -> sourcemod.v1.SMGroupImmunity
+	13, // 5: sourcemod.v1.SMUsersResponse.users:type_name -> sourcemod.v1.SMUser
+	14, // 6: sourcemod.v1.SMUsersResponse.user_groups:type_name -> sourcemod.v1.SMUserGroup
+	18, // 7: sourcemod.v1.SMUser.auth_type:type_name -> sourcemod.v1.AuthType
+	2,  // 8: sourcemod.v1.PluginService.SMAuthenticate:input_type -> sourcemod.v1.SMAuthenticateRequest
+	8,  // 9: sourcemod.v1.PluginService.SMCheck:input_type -> sourcemod.v1.SMCheckRequest
+	19, // 10: sourcemod.v1.PluginService.SMOverrides:input_type -> google.protobuf.Empty
+	19, // 11: sourcemod.v1.PluginService.SMUsers:input_type -> google.protobuf.Empty
+	19, // 12: sourcemod.v1.PluginService.SMGroups:input_type -> google.protobuf.Empty
+	4,  // 13: sourcemod.v1.PluginService.SMSeed:input_type -> sourcemod.v1.SMSeedRequest
+	0,  // 14: sourcemod.v1.PluginService.SMPingMod:input_type -> sourcemod.v1.SMPingModRequest
+	3,  // 15: sourcemod.v1.PluginService.SMAuthenticate:output_type -> sourcemod.v1.SMAuthenticateResponse
+	9,  // 16: sourcemod.v1.PluginService.SMCheck:output_type -> sourcemod.v1.SMCheckResponse
+	7,  // 17: sourcemod.v1.PluginService.SMOverrides:output_type -> sourcemod.v1.SMOverridesResponse
+	12, // 18: sourcemod.v1.PluginService.SMUsers:output_type -> sourcemod.v1.SMUsersResponse
+	11, // 19: sourcemod.v1.PluginService.SMGroups:output_type -> sourcemod.v1.SMGroupsResponse
+	5,  // 20: sourcemod.v1.PluginService.SMSeed:output_type -> sourcemod.v1.SMSeedResponse
+	19, // 21: sourcemod.v1.PluginService.SMPingMod:output_type -> google.protobuf.Empty
+	15, // [15:22] is the sub-list for method output_type
+	8,  // [8:15] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
 	8,  // [8:8] is the sub-list for extension extendee
 	0,  // [0:8] is the sub-list for field type_name
@@ -878,7 +993,7 @@ func file_sourcemod_v1_plugin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sourcemod_v1_plugin_proto_rawDesc), len(file_sourcemod_v1_plugin_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

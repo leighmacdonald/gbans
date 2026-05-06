@@ -2,6 +2,11 @@
 #pragma tabsize 4
 #pragma newdecls required
 
+#include "globals.sp"
+#include "common.sp"
+#include "ripext/json"
+#include "ripext/http"
+
 public Action onCmdVersion(int clientId, int args)
 {
 	ReplyToCommand(clientId, "[GB] Version %s", PLUGIN_VERSION);
@@ -29,8 +34,8 @@ public Action onCmdMod(int clientId, int argc)
 		GetCmdArg(i, buff, sizeof buff);
 		StrCat(reason, sizeof reason, buff);
 	}
-	char auth_id[50];
-	if(!GetClientAuthId(clientId, AuthId_Steam3, auth_id, sizeof auth_id, true))
+	char authId[50];
+	if(!GetClientAuthId(clientId, AuthId_Steam3, authId, sizeof authId, true))
 	{
 		ReplyToCommand(clientId, "Failed to get auth_id of user: %d", clientId);
 		return Plugin_Continue;
@@ -43,23 +48,15 @@ public Action onCmdMod(int clientId, int argc)
 	}
 
 	char serverName[PLATFORM_MAX_PATH];
-	GetConVarString(gb_core_host, serverName, sizeof serverName);
+	GetConVarString(gbCoreHost, serverName, sizeof serverName);
 
 	JSONObject obj = new JSONObject();
-	obj.SetString("server_name", serverName);
-	obj.SetString("steam_id", auth_id);
+	obj.SetString("steamId", authId);
 	obj.SetString("name", name);
 	obj.SetString("reason", reason);
 	obj.SetInt("client", clientId);
 
-	char url[1024];
-	makeURL("/api/sm/ping_mod", url, sizeof url);
-
-	HTTPRequest request = new HTTPRequest(url);
-	addAuthHeader(request);
-    request.Post(obj, onPingModRespReceived, clientId); 
-
-	delete obj;
+	postHTTPRequest("/connect/sourcemod.v1.PluginService/SMPingMod", obj, onPingModRespReceived);
 
 	return Plugin_Handled;
 }
@@ -74,24 +71,18 @@ void onPingModRespReceived(HTTPResponse response, any clientId) {
 }
 
 public Action onCmdSeed(int clientId, int argc) {
-
-	ReplyToCommand(clientId, "Computering...");
-	char auth_id[50];
-	if(!GetClientAuthId(clientId, AuthId_Steam3, auth_id, sizeof auth_id, true))
+	char authId[50];
+	if(!GetClientAuthId(clientId, AuthId_Steam3, authId, sizeof authId, true))
 	{
 		ReplyToCommand(clientId, "Failed to get auth_id of user: %d", clientId);
 		return Plugin_Continue;
 	}
 
-	char url[1024];
-	makeURL("/api/sm/seed", url, sizeof url);
-	StrCat(url, sizeof url, "?steam_id=");
-	StrCat(url, sizeof url, auth_id);
+	JSONObject obj = new JSONObject();
+	obj.SetString("steamId", authId);
+	obj.SetInt("clientId", clientId);
 
-
-	HTTPRequest request = new HTTPRequest(url);
-	addAuthHeader(request);
-    request.Get(onCmdSeedReceived, clientId); 
+	postHTTPRequest("/connect/sourcemod.v1.PluginService/SMSeed", obj, onCmdSeedReceived);
 
 	return Plugin_Handled;
 }

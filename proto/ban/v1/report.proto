@@ -175,7 +175,7 @@ message ReportWithAuthor {
 message ReportStatusEditRequest {
   int32 report_id = 1 [
     (buf.validate.field).required = true,
-    (buf.validate.field).int64 = {gt: 0}
+    (buf.validate.field).int32 = {gt: 0}
   ];
   ReportStatus report_status = 2 [(buf.validate.field).required = true];
 }
@@ -184,10 +184,7 @@ message ReportCreateRequest {
   option (buf.validate.message).cel = {
     id: "ban_reason_text"
     message: "reason_text must be set when a custom BanReason is selected"
-    // The `+` is overloaded for lists (repeated fields) and it concatenates two lists.
-    // In this case `this.hot_beverages` + `this.cold_beverages` evaluates to a list
-    // containing beverages from both lists.
-    expression: "this.reason != BanReason.CUSTOM or size(this.reason_text) >= 1"
+    expression: "this.reason != BanReason.CUSTOM || size(this.reason_text) >= 1"
   };
 
   int64 source_id = 1 [

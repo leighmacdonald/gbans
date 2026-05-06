@@ -2,6 +2,10 @@
 #pragma tabsize 4
 #pragma newdecls required
 
+#include "gbans"
+
+const TOKEN_LEN = 1024;
+
 stock void gbLog(const char[] format, any...)
 {
 	char buffer[254];
@@ -20,10 +24,35 @@ public bool parseReason(const char[] reasonStr, GB_BanReason &reason)
 	return true;
 }
 
+void postHTTPRequest(const char[] path, JSON data, HTTPRequestCallback callback, any value = 0) {
+	char url[1024];
+	makeURL(path, url, sizeof url);
+
+	HTTPRequest request = new HTTPRequest(url);
+	request.SetHeader("Content-Type", "application/json");
+	if (gToken[0] != '\0') {
+	    char authHeader[1024] = "Bearer ";
+		StrCat(authHeader, sizeof authHeader, gToken);
+		request.SetHeader("Authorization", authHeader);
+	}
+
+    request.Post(data, callback, value);
+
+	CloseHandle(data);
+}
+
+
+stock void printJSON(JSON data)
+{
+	char json[2048];
+	data.ToString(json, sizeof json);
+	gbLog("JSON: %s", json);
+}
+
 stock void makeURL(const char[] path, char[] outURL, int maxLen) {
 	char serverHost[PLATFORM_MAX_PATH];
-	GetConVarString(gb_core_host, serverHost, sizeof serverHost);
-	int port = GetConVarInt(gb_core_port);
+	GetConVarString(gbCoreHost, serverHost, sizeof serverHost);
+	int port = GetConVarInt(gbCorePort);
 
 	Format(outURL, maxLen, "%s:%d%s", serverHost, port, path);
 }
@@ -35,13 +64,6 @@ stock bool isValidClient(int client)
 		return false;
 	}
 	return true;
-}
-
-stock void addAuthHeader(HTTPRequest request) {
-	char serverKey[PLATFORM_MAX_PATH];
-	GetConVarString(gb_core_server_key, serverKey, sizeof serverKey);
-
-	request.SetHeader("Authorization", serverKey);
 }
 
 stock int GetRealClientCount()

@@ -4,14 +4,14 @@
 
 public Action Event_PlayerConnect(Event event, const char[] name, bool dontBroadcast)
 {
-	event.BroadcastDisabled = GetConVarBool(gb_hide_connections);
+	event.BroadcastDisabled = GetConVarBool(gbHideConnections);
 	return Plugin_Continue;
 }
 
 
 public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
 {
-	event.BroadcastDisabled = GetConVarBool(gb_hide_connections);
+	event.BroadcastDisabled = GetConVarBool(gbHideConnections);
 	return Plugin_Continue;
 }
 

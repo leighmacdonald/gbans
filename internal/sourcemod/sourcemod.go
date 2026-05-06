@@ -161,13 +161,15 @@ type ConfigEntry struct {
 	CfgValue string `json:"cfg_value"`
 }
 
-func New(repository Repository, person person.Provider, notifier notification.Notifier, seedChannelID string, servers *servers.Servers) Sourcemod {
+func New(repository Repository, person person.Provider, notifier notification.Notifier, seedChannelID string, modPingChannelID string, modRoleID string, servers *servers.Servers) Sourcemod {
 	return Sourcemod{
-		seedChannelID: seedChannelID,
-		repository:    repository,
-		person:        person,
-		notifier:      notifier,
-		servers:       servers,
+		seedChannelID:    seedChannelID,
+		modPingChannelID: modPingChannelID,
+		modRoleID:        modRoleID,
+		repository:       repository,
+		person:           person,
+		notifier:         notifier,
+		servers:          servers,
 		seedQueue: &SeedQueue{
 			minTime: time.Second * 300,
 			servers: make(map[int32]seedRequest),
@@ -177,12 +179,22 @@ func New(repository Repository, person person.Provider, notifier notification.No
 }
 
 type Sourcemod struct {
-	seedChannelID string
-	repository    Repository
-	person        person.Provider
-	seedQueue     *SeedQueue
-	notifier      notification.Notifier
-	servers       *servers.Servers
+	seedChannelID    string
+	modPingChannelID string
+	modRoleID        string
+	repository       Repository
+	person           person.Provider
+	seedQueue        *SeedQueue
+	notifier         notification.Notifier
+	servers          *servers.Servers
+}
+
+func (h Sourcemod) PingMod(ctx context.Context, steamId steamid.SteamID, name string, reason string, clientID int32, serverName string) error {
+	h.notifier.Send(notification.NewDiscord(h.modPingChannelID, discord.NewMessage(
+		discord.Heading("Mod Request [%s]", serverName),
+		discord.BodyText(fmt.Sprintf("Mod requested by %s (%s) @<%s>", name, reason, h.modRoleID)))))
+
+	return nil
 }
 
 func (h Sourcemod) seedRequest(ctx context.Context, server servers.Server, userID string) bool {

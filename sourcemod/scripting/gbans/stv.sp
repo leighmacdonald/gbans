@@ -7,7 +7,7 @@
 
 public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	if(convar == gb_stv_path || convar == gb_stv_path_complete)
+	if(convar == gbStvPath || convar == gbStvPathComplete)
 	{
 		if(!DirExists(newValue))
 		{
@@ -67,19 +67,19 @@ public Action Command_StopRecord(int client, int args)
 
 void CheckStatus()
 {
-	if(GetConVarBool(gb_auto_record) && !gIsManual)
+	if(GetConVarBool(gbAutoRecord) && !gIsManual)
 	{
-		int iTimeStart = GetConVarInt(gb_stv_timestart);
-		int iTimeStop = GetConVarInt(gb_stv_timestop);
+		int iTimeStart = GetConVarInt(gbStvTimestart);
+		int iTimeStop = GetConVarInt(gbStvTimestop);
 		bool bReverseTimes = (iTimeStart > iTimeStop);
 		char sCurrentTime[4];
 		FormatTime(sCurrentTime, sizeof sCurrentTime, "%H", GetTime());
 		int iCurrentTime = StringToInt(sCurrentTime);
-		if(GetPlayerCount() >= GetConVarInt(gb_stv_minplayers) && (iTimeStart < 0 || (iCurrentTime >= iTimeStart && (bReverseTimes || iCurrentTime < iTimeStop))))
+		if(GetPlayerCount() >= GetConVarInt(gbStvMinplayers) && (iTimeStart < 0 || (iCurrentTime >= iTimeStart && (bReverseTimes || iCurrentTime < iTimeStop))))
 		{
 			StartRecord();
 		}
-		else if(gIsRecording && !GetConVarBool(gb_stv_finishmap) && (iTimeStop < 0 || iCurrentTime >= iTimeStop))
+		else if(gIsRecording && !GetConVarBool(gbStvFinishmap) && (iTimeStop < 0 || iCurrentTime >= iTimeStop))
 		{
 			StopRecord();
 		}
@@ -88,7 +88,7 @@ void CheckStatus()
 
 int GetPlayerCount()
 {
-	bool bIgnoreBots = GetConVarBool(gb_stv_ignorebots);
+	bool bIgnoreBots = GetConVarBool(gbStvIgnorebots);
 
 	int iNumPlayers = 0;
 	for(int i = 1; i <= MaxClients; i++)
@@ -109,13 +109,13 @@ int GetPlayerCount()
 
 void StartRecord()
 {
-	if(GetConVarBool(gb_stv_enable) && !gIsRecording)
+	if(GetConVarBool(gbStvEnable) && !gIsRecording)
 	{
 		char sPath[PLATFORM_MAX_PATH];
 		char sTime[16];
 		char sMap[64];
 
-		gb_stv_path.GetString(sPath, sizeof sPath);
+		gbStvPath.GetString(sPath, sizeof sPath);
 		FormatTime(sTime, sizeof sTime, "%Y%m%d-%H%M%S", GetTime());
 		GetCurrentMap(sMap, sizeof sMap);
 
@@ -132,7 +132,7 @@ void StartRecord()
 
 void StopRecord()
 {
-	if(GetConVarBool(gb_stv_enable))
+	if(GetConVarBool(gbStvEnable))
 	{
 		ServerCommand("tv_stoprecord");
 		gIsRecording = false;
@@ -144,7 +144,7 @@ public void SourceTV_OnStopRecording(int instance, const char[] filename, int re
 	char sPieces[32][PLATFORM_MAX_PATH];
 	char outPath[PLATFORM_MAX_PATH];
 
-	GetConVarString(gb_stv_path_complete, outPath, sizeof outPath);
+	GetConVarString(gbStvPathComplete, outPath, sizeof outPath);
 
 	int iNumPieces = ExplodeString(filename, "/", sPieces, sizeof sPieces, sizeof sPieces[] );
 
