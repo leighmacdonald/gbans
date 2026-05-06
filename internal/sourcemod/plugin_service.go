@@ -5,6 +5,8 @@ import (
 	"errors"
 	"log/slog"
 	"net/netip"
+	"sync"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
@@ -23,23 +25,29 @@ import (
 type TokenGeneratorFn func(serverID int32, serverName string) (string, error)
 
 type PluginService struct {
-	sourcemod      Sourcemod
-	notifier       notification.Notifier
-	persons        *person.Persons
-	servers        rpc.ServerAuthenticator
-	tokenGenerator TokenGeneratorFn
-	evades         EvadeChecker
-	logChannelID   string
+	sourcemod               Sourcemod
+	notifier                notification.Notifier
+	persons                 *person.Persons
+	servers                 rpc.ServerAuthenticator
+	tokenGenerator          TokenGeneratorFn
+	evades                  EvadeChecker
+	logChannelID            string
+	pingHistory             map[steamid.SteamID]time.Time
+	pingHistoryMu           *sync.Mutex
+	minPingModRetryInterval time.Duration
 }
 
-func NewPluginService(sourcemod Sourcemod, persons *person.Persons, servers rpc.ServerAuthenticator, evades EvadeChecker, tokenGenerator TokenGeneratorFn, notifier notification.Notifier, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewPluginService(sourcemod Sourcemod, persons *person.Persons, servers rpc.ServerAuthenticator, evades EvadeChecker, tokenGenerator TokenGeneratorFn, notifier notification.Notifier, logChannelID string, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := sourcemodv1connect.NewPluginServiceHandler(PluginService{
-		sourcemod:      sourcemod,
-		persons:        persons,
-		tokenGenerator: tokenGenerator,
-		notifier:       notifier,
-		evades:         evades,
-		servers:        servers,
+		sourcemod:               sourcemod,
+		persons:                 persons,
+		tokenGenerator:          tokenGenerator,
+		notifier:                notifier,
+		evades:                  evades,
+		servers:                 servers,
+		pingHistory:             map[steamid.SteamID]time.Time{},
+		pingHistoryMu:           &sync.Mutex{},
+		minPingModRetryInterval: time.Minute * 5,
 	}, option...)
 
 	serverAuth := rpc.NewServerAuthenticator()
@@ -51,6 +59,27 @@ func NewPluginService(sourcemod Sourcemod, persons *person.Persons, servers rpc.
 	authMiddleware.ServerRoute(sourcemodv1connect.PluginServiceSMSeedProcedure, serverAuth)
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
+}
+
+func (s PluginService) SMPingMod(ctx context.Context, req *v1.SMPingModRequest) (*emptypb.Empty, error) {
+	serverInfo, _ := rpc.ServerInfoFromCtx(ctx)
+	steamId := steamid.New(req.GetSteamId())
+
+	if !steamId.Valid() {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid steam id"))
+	}
+
+	s.pingHistoryMu.Lock()
+	defer s.pingHistoryMu.Unlock()
+	lastTry, ok := s.pingHistory[steamId]
+	if ok && time.Since(lastTry) < s.minPingModRetryInterval {
+		return nil, connect.NewError(connect.CodeResourceExhausted, errors.New("You must wait before trying to mod ping again"))
+	}
+
+	s.sourcemod.PingMod(ctx, steamId, req.GetName(), req.GetReason(), req.GetClientId(), serverInfo.ServerName)
+	s.pingHistory[steamId] = time.Now()
+
+	return &emptypb.Empty{}, nil
 }
 
 func (s PluginService) SMAuthenticate(ctx context.Context, req *v1.SMAuthenticateRequest) (*v1.SMAuthenticateResponse, error) {
@@ -76,9 +105,9 @@ func (s PluginService) SMAuthenticate(ctx context.Context, req *v1.SMAuthenticat
 
 func (s PluginService) SMCheck(ctx context.Context, req *v1.SMCheckRequest) (*v1.SMCheckResponse, error) {
 	defaultResponse := &v1.SMCheckResponse{
-		ClientId: ptr.To(req.GetClientId()),
+		ClientId: new(req.GetClientId()),
 		BanType:  ptr.To(banv1.BanType_BAN_TYPE_OK_UNSPECIFIED),
-		Msg:      ptr.To(""),
+		Msg:      new(""),
 	}
 	steamID := steamid.New(req.GetSteamId())
 	// steamID, valid := req.SteamID
@@ -123,7 +152,7 @@ func (s PluginService) SMCheck(ctx context.Context, req *v1.SMCheckRequest) (*v1
 		if evadeBanned {
 			go s.notifier.Send(notification.NewDiscord(s.logChannelID, newCheckDenyMessage(banState)))
 
-			return &v1.SMCheckResponse{ClientId: defaultResponse.ClientId, BanType: toBanType(bantype.Banned), Msg: ptr.To("Evasion ban")}, nil
+			return &v1.SMCheckResponse{ClientId: defaultResponse.ClientId, BanType: toBanType(bantype.Banned), Msg: new("Evasion ban")}, nil
 		}
 	}
 
@@ -221,6 +250,14 @@ func (s PluginService) SMGroups(ctx context.Context, _ *emptypb.Empty) (*v1.SMGr
 			GroupName: &immunity.Group.Name,
 			OtherName: &immunity.Other.Name,
 		}
+	}
+
+	if resp.Groups == nil {
+		resp.Groups = []*v1.Group{}
+	}
+
+	if resp.Immunities == nil {
+		resp.Immunities = []*v1.SMGroupImmunity{}
 	}
 
 	return &resp, nil

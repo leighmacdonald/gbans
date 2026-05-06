@@ -140,7 +140,7 @@ func (m *Middleware) authServer(ctx context.Context, req *http.Request, procedur
 		return info, errToken
 	}
 
-	serverId, err := strconv.ParseInt(claims.Issuer, 10, 32)
+	serverId, err := strconv.ParseInt(claims.ID, 10, 32)
 	if err != nil {
 		return info, err
 	}
@@ -272,11 +272,7 @@ func (m *Middleware) fingerprintFromRequest(req *http.Request) (string, error) {
 		return "", authn.Errorf("empty fingerprint")
 	}
 
-	if strings.HasPrefix(fingerprint, "fingerprint=") {
-		fingerprint = strings.TrimPrefix(fingerprint, "fingerprint=")
-	}
-
-	return fingerprint, nil
+	return strings.TrimPrefix(fingerprint, "fingerprint="), nil
 }
 
 func (m *Middleware) makeGetTokenKey() func(_ *jwt.Token) (any, error) {

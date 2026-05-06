@@ -1210,7 +1210,7 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"\asubject\x18\x03 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\asubject\"\x85\x01\n" +
 	"\x17ReportStatusEditRequest\x12'\n" +
 	"\treport_id\x18\x01 \x01(\x05B\n" +
-	"\xbaH\a\xc8\x01\x01\"\x02 \x00R\breportId\x12A\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\breportId\x12A\n" +
 	"\rreport_status\x18\x02 \x01(\x0e2\x14.ban.v1.ReportStatusB\x06\xbaH\x03\xc8\x01\x01R\freportStatus\"\x85\x04\n" +
 	"\x13ReportCreateRequest\x12/\n" +
 	"\tsource_id\x18\x01 \x01(\x03B\x12\xbaH\x0f\xc8\x01\x01\"\n" +
@@ -1225,7 +1225,7 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"\ademo_id\x18\x06 \x01(\x03R\x06demoId\x12\x1b\n" +
 	"\tdemo_tick\x18\a \x01(\x05R\bdemoTick\x12*\n" +
 	"\x11person_message_id\x18\b \x01(\x03R\x0fpersonMessageId:\x95\x01\xbaH\x91\x01\x1a\x8e\x01\n" +
-	"\x0fban_reason_text\x12;reason_text must be set when a custom BanReason is selected\x1a>this.reason != BanReason.CUSTOM or size(this.reason_text) >= 1\"P\n" +
+	"\x0fban_reason_text\x12;reason_text must be set when a custom BanReason is selected\x1a>this.reason != BanReason.CUSTOM || size(this.reason_text) >= 1\"P\n" +
 	"\x14ReportCreateResponse\x128\n" +
 	"\x06report\x18\x01 \x01(\v2\x18.ban.v1.ReportWithAuthorB\x06\xbaH\x03\xc8\x01\x01R\x06report\"n\n" +
 	"\x1aReportMessageCreateRequest\x12'\n" +

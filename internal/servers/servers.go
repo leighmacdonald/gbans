@@ -344,8 +344,7 @@ func (s *Servers) GetByName(ctx context.Context, serverName string) (Server, err
 }
 
 func (s *Servers) GetByPassword(ctx context.Context, serverPassword string) (int32, string, error) {
-	server, errServer := s.repo.Query(ctx, Query{Password: serverPassword})
-
+	server, errServer := s.repo.Query(ctx, Query{Password: serverPassword, IncludeDisabled: true})
 	if errServer != nil {
 		return 0, "", errServer
 	}

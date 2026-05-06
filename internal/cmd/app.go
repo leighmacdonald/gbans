@@ -190,7 +190,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.forums = forum.New(forum.NewRepository(g.database), g.notifications, g.persons, "")
 	g.metrics = metrics.New(g.broadcaster)
 	g.news = news.New(news.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID())
-	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons, g.notifications, conf.Discord.SafeSeedChannelID(), g.servers)
+	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons, g.notifications, conf.Discord.SafeSeedChannelID(), conf.Discord.LogChannelID, conf.Discord.SafeModPingRoleID(), g.servers)
 	g.wiki = wiki.New(wiki.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID(), conf.Discord.LogChannelID)
 	g.anticheat = anticheat.New(anticheat.NewRepository(g.database), conf.Anticheat, g.notifications, g.onAnticheatBan, g.persons)
 	g.votes = votes.New(votes.NewRepository(g.database), g.broadcaster, g.notifications,
@@ -479,11 +479,11 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware) *http.ServeMux {
 		servers.NewServersService(g.servers, authMiddleware, interceptors),
 		servers.NewDemoService(g.demos, authMiddleware, interceptors),
 		servers.NewSpeedrunsService(g.speedruns, authMiddleware, interceptors),
+		sourcemod.NewPluginService(g.sourcemod, g.persons, g.servers, g.bans,
+			rpc.NewServerTokenGenerator(conf.General.SiteName, []byte(conf.Static.HTTPCookieKey)), g.notifications, conf.Discord.LogChannelID, authMiddleware, interceptors),
 		sourcemod.NewSourcemodService(g.sourcemod, authMiddleware, interceptors),
 		votes.NewService(g.votes, authMiddleware, interceptors),
 		wiki.NewService(g.wiki, authMiddleware, interceptors),
-
-		sourcemod.NewPluginService(g.sourcemod, g.persons, g.servers, g.bans, rpc.NewServerTokenGenerator(conf.General.SiteName, []byte(conf.Static.HTTPCookieKey)), g.notifications, authMiddleware, interceptors),
 	}
 
 	for _, service := range services {

@@ -35,3 +35,8 @@ export const sMGroups = PluginService.method.sMGroups;
  * @generated from rpc sourcemod.v1.PluginService.SMSeed
  */
 export const sMSeed = PluginService.method.sMSeed;
+
+/**
+ * @generated from rpc sourcemod.v1.PluginService.SMPingMod
+ */
+export const sMPingMod = PluginService.method.sMPingMod;

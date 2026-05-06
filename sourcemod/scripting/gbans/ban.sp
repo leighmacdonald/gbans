@@ -81,27 +81,19 @@ public bool ban(int sourceId, int targetId, GB_BanReason reason, int duration, i
 	}
 
 	JSONObject obj = new JSONObject();
-	obj.SetString("source_id", sourceSid);
-	obj.SetString("target_id", targetSid);
+	obj.SetString("sourceId", sourceSid);
+	obj.SetString("targetId", targetSid);
 	obj.SetString("note", note);
-	obj.SetString("reason_text", "");
-	obj.SetInt("ban_type", banType);
+	obj.SetString("reasonText", "");
+	obj.SetInt("banType", banType);
 	obj.SetInt("reason", view_as<int>(reason));
 	obj.SetInt("duration", duration);
-	obj.SetInt("report_id", 0);
-	obj.SetString("demo_name", demoName);
-	obj.SetInt("demo_tick", tick);
+	obj.SetInt("reportId", 0);
+	obj.SetString("demoName", demoName);
+	obj.SetInt("demoTick", tick);
 
-	char url[1024];
-	makeURL("/api/sm/bans/steam/create", url, sizeof url);
+	postHTTPRequest("/connect/ban.v1.BanService/Create", obj, onBanRespReceived);
 	
-	HTTPRequest request = new HTTPRequest(url);
-	addAuthHeader(request);
-	
-    request.Post(obj, onBanRespReceived, sourceId); 
-
-	delete obj;
-
 	return true;
 }
 
@@ -122,6 +114,6 @@ void onBanRespReceived(HTTPResponse response, any clientId)
 
 	JSONObject data = view_as<JSONObject>(response.Data); 
 
-	int banId = data.GetInt("ban_id");
+	int banId = data.GetInt("banId");
 	ReplyToCommand(clientId, "User banned (#%d)", banId);
 }

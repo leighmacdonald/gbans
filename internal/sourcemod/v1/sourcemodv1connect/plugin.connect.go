@@ -48,6 +48,8 @@ const (
 	PluginServiceSMGroupsProcedure = "/sourcemod.v1.PluginService/SMGroups"
 	// PluginServiceSMSeedProcedure is the fully-qualified name of the PluginService's SMSeed RPC.
 	PluginServiceSMSeedProcedure = "/sourcemod.v1.PluginService/SMSeed"
+	// PluginServiceSMPingModProcedure is the fully-qualified name of the PluginService's SMPingMod RPC.
+	PluginServiceSMPingModProcedure = "/sourcemod.v1.PluginService/SMPingMod"
 )
 
 // PluginServiceClient is a client for the sourcemod.v1.PluginService service.
@@ -59,6 +61,7 @@ type PluginServiceClient interface {
 	SMUsers(context.Context, *emptypb.Empty) (*v1.SMUsersResponse, error)
 	SMGroups(context.Context, *emptypb.Empty) (*v1.SMGroupsResponse, error)
 	SMSeed(context.Context, *v1.SMSeedRequest) (*v1.SMSeedResponse, error)
+	SMPingMod(context.Context, *v1.SMPingModRequest) (*emptypb.Empty, error)
 }
 
 // NewPluginServiceClient constructs a client for the sourcemod.v1.PluginService service. By
@@ -108,6 +111,12 @@ func NewPluginServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(pluginServiceMethods.ByName("SMSeed")),
 			connect.WithClientOptions(opts...),
 		),
+		sMPingMod: connect.NewClient[v1.SMPingModRequest, emptypb.Empty](
+			httpClient,
+			baseURL+PluginServiceSMPingModProcedure,
+			connect.WithSchema(pluginServiceMethods.ByName("SMPingMod")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -119,6 +128,7 @@ type pluginServiceClient struct {
 	sMUsers        *connect.Client[emptypb.Empty, v1.SMUsersResponse]
 	sMGroups       *connect.Client[emptypb.Empty, v1.SMGroupsResponse]
 	sMSeed         *connect.Client[v1.SMSeedRequest, v1.SMSeedResponse]
+	sMPingMod      *connect.Client[v1.SMPingModRequest, emptypb.Empty]
 }
 
 // SMAuthenticate calls sourcemod.v1.PluginService.SMAuthenticate.
@@ -175,6 +185,15 @@ func (c *pluginServiceClient) SMSeed(ctx context.Context, req *v1.SMSeedRequest)
 	return nil, err
 }
 
+// SMPingMod calls sourcemod.v1.PluginService.SMPingMod.
+func (c *pluginServiceClient) SMPingMod(ctx context.Context, req *v1.SMPingModRequest) (*emptypb.Empty, error) {
+	response, err := c.sMPingMod.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // PluginServiceHandler is an implementation of the sourcemod.v1.PluginService service.
 type PluginServiceHandler interface {
 	// Sourcemod plugin surface
@@ -184,6 +203,7 @@ type PluginServiceHandler interface {
 	SMUsers(context.Context, *emptypb.Empty) (*v1.SMUsersResponse, error)
 	SMGroups(context.Context, *emptypb.Empty) (*v1.SMGroupsResponse, error)
 	SMSeed(context.Context, *v1.SMSeedRequest) (*v1.SMSeedResponse, error)
+	SMPingMod(context.Context, *v1.SMPingModRequest) (*emptypb.Empty, error)
 }
 
 // NewPluginServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -229,6 +249,12 @@ func NewPluginServiceHandler(svc PluginServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(pluginServiceMethods.ByName("SMSeed")),
 		connect.WithHandlerOptions(opts...),
 	)
+	pluginServiceSMPingModHandler := connect.NewUnaryHandlerSimple(
+		PluginServiceSMPingModProcedure,
+		svc.SMPingMod,
+		connect.WithSchema(pluginServiceMethods.ByName("SMPingMod")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/sourcemod.v1.PluginService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PluginServiceSMAuthenticateProcedure:
@@ -243,6 +269,8 @@ func NewPluginServiceHandler(svc PluginServiceHandler, opts ...connect.HandlerOp
 			pluginServiceSMGroupsHandler.ServeHTTP(w, r)
 		case PluginServiceSMSeedProcedure:
 			pluginServiceSMSeedHandler.ServeHTTP(w, r)
+		case PluginServiceSMPingModProcedure:
+			pluginServiceSMPingModHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -274,4 +302,8 @@ func (UnimplementedPluginServiceHandler) SMGroups(context.Context, *emptypb.Empt
 
 func (UnimplementedPluginServiceHandler) SMSeed(context.Context, *v1.SMSeedRequest) (*v1.SMSeedResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.PluginService.SMSeed is not implemented"))
+}
+
+func (UnimplementedPluginServiceHandler) SMPingMod(context.Context, *v1.SMPingModRequest) (*emptypb.Empty, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.PluginService.SMPingMod is not implemented"))
 }
