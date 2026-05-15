@@ -110,7 +110,7 @@ func (s PluginService) SMCheck(ctx context.Context, req *v1.SMCheckRequest) (*v1
 		Msg:      new(""),
 	}
 	steamID := steamid.New(req.GetSteamId())
-	// steamID, valid := req.SteamID
+	// steamID, valid := req.SteamIDB
 	// if !valid {
 	// 	ctx.JSON(http.StatusOK, defaultValue)
 	// 	slog.Error("Did not receive valid steamid for check response", log.ErrAttr(steamid.ErrDecodeSID))
@@ -200,13 +200,13 @@ func (s PluginService) SMUsers(ctx context.Context, _ *emptypb.Empty) (*v1.SMUse
 
 	for idx, user := range users {
 		resp.Users[idx] = &v1.SMUser{
-			Id:       nil,
-			AuthType: nil,
-			Identity: nil,
-			Password: nil,
-			Flags:    nil,
-			Name:     nil,
-			Immunity: nil,
+			Id:       &user.AdminID,
+			AuthType: toAuthType(user.AuthType),
+			Identity: &user.Identity,
+			Password: &user.Password,
+			Flags:    &user.Flags,
+			Name:     &user.Name,
+			Immunity: &user.Immunity,
 		}
 
 		for _, ug := range user.Groups {
@@ -280,5 +280,5 @@ func (s PluginService) SMSeed(ctx context.Context, req *v1.SMSeedRequest) (*v1.S
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	return &v1.SMSeedResponse{Message: ptr.To("Successfully sent request")}, nil
+	return &v1.SMSeedResponse{Message: new("Successfully sent request")}, nil
 }

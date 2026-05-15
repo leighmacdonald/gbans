@@ -139,7 +139,6 @@ void onRebuildUsers(HTTPResponse response, any value) {
     JSONObject usersObj = view_as<JSONObject>(response.Data);
     JSONArray users = view_as<JSONArray>(usersObj.Get("users"));
     JSONArray userGroups = view_as<JSONArray>(usersObj.Get("userGroups"));
-
     JSONObject user;
     JSONObject userGroup;
     char authtype[16];
@@ -150,7 +149,6 @@ void onRebuildUsers(HTTPResponse response, any value) {
 	int immunity;
 	AdminId adm;
 	GroupId grp;
-
 
     int numUsers = users.Length;
     int numUserGroups = userGroups.Length;
@@ -244,7 +242,6 @@ void onRebuildUsers(HTTPResponse response, any value) {
 
 void RebuildOverrides() {
     postHTTPRequest("/connect/sourcemod.v1.PluginService/SMOverrides", new JSONObject(), onRebuildOverrides);
-
 }
 
 void onRebuildOverrides(HTTPResponse response, any value) {

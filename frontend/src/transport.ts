@@ -4,6 +4,7 @@ import { createConnectTransport } from "@connectrpc/connect-web";
 import { createValidateInterceptor } from "@connectrpc/validate";
 import { QueryClient } from "@tanstack/react-query";
 import { StorageKey } from "./auth.tsx";
+import { emptyOrNullString } from "./util/types.ts";
 
 export const queryClient = new QueryClient();
 
@@ -11,13 +12,16 @@ const validateInterceptor = createValidateInterceptor({ validator: createValidat
 
 const authInterceptor: Interceptor = (next) => async (req) => {
 	try {
-		const token = localStorage.getItem(StorageKey.Token) as { token?: string };
-
-		req.header.set("Authorization", `Bearer ${token.token}`);
-		console.log(token.token);
-	} catch {
-		console.log("Failed to load token");
-	}
+		const value = localStorage.getItem(StorageKey.Token);
+		if (emptyOrNullString(value)) {
+			return await next(req);
+		}
+		const token: { token: string } = JSON.parse(value);
+		if (token) {
+			const auth = `Bearer ${token.token}`;
+			req.header.set("Authorization", auth);
+		}
+	} catch {}
 
 	return await next(req);
 };

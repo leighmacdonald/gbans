@@ -127,9 +127,11 @@ message SMUser {
     (buf.validate.field).required = true,
     (buf.validate.field).int32.gt = 0
   ];
-  AuthType auth_type = 2 [
+  string auth_type = 2 [
     (buf.validate.field).required = true,
-    (buf.validate.field).enum.defined_only = true
+    (buf.validate.field).string.in = "steam",
+    (buf.validate.field).string.in = "name",
+    (buf.validate.field).string.in = "ip"
   ];
   string identity = 3 [(buf.validate.field).required = true];
   string password = 4;

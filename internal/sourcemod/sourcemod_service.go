@@ -401,16 +401,16 @@ func fromOverrideAccess(access v1.OverrideAccess) OverrideAccess {
 	}
 }
 
-func toAuthType(authType AuthType) *v1.AuthType {
+func toAuthType(authType AuthType) *string {
 	switch authType {
 	case AuthTypeName:
-		return ptr.To(v1.AuthType_AUTH_TYPE_NAME)
+		return new("name")
 	case AuthTypeIP:
-		return ptr.To(v1.AuthType_AUTH_TYPE_IP)
+		return new("ip")
 	case AuthTypeSteam:
 		fallthrough
 	default:
-		return ptr.To(v1.AuthType_AUTH_TYPE_STEAM_UNSPECIFIED)
+		return new("steam")
 	}
 }
 
