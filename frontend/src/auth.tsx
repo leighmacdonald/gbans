@@ -2,16 +2,16 @@ import { create } from "@bufbuild/protobuf";
 import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { createClient } from "@connectrpc/connect";
 import { createConnectQueryKey } from "@connectrpc/connect-query";
-import { useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useCallback, useState } from "react";
 import { AuthContext } from "./contexts/AuthContext.tsx";
 import { StorageType, useStorage } from "./hooks/useSessionStorage.tsx";
 import { AuthService } from "./rpc/auth/v1/auth_pb.ts";
 import { type PersonCore, PersonCoreSchema } from "./rpc/person/v1/person_core_pb.ts";
+import { PersonService } from "./rpc/person/v1/person_pb.ts";
 import { Privilege } from "./rpc/person/v1/privilege_pb.ts";
-import { finalTransport } from "./transport.ts";
-import { logErr } from "./util/errors.ts";
+import { finalTransport, queryClient } from "./transport.ts";
 import { defaultAvatarHash } from "./util/strings.ts";
+import { parseDateTime } from "./util/time.ts";
 import type { Nullable } from "./util/types.ts";
 
 export enum StorageKey {
@@ -34,7 +34,6 @@ const loadToken = () => {
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-	const queryClient = useQueryClient();
 	const authClient = createClient(AuthService, finalTransport);
 	const [profile, setProfile] = useState<PersonCore>(loadProfile());
 
@@ -50,14 +49,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	);
 
 	const login = useCallback(
-		async (newProfile: PersonCore, token: string) => {
-			setTokenValue({ token: token });
-			setProfileValue({
-				...newProfile,
-				steamId: newProfile.steamId.toString(),
-				timeCreated: profile.timeCreated ? timestampDate(profile.timeCreated) : new Date(),
-			});
-			setProfile(newProfile);
+		async (token: string) => {
+			try {
+				console.log(`Logging in... ${token}`);
+				const personClient = createClient(PersonService, finalTransport);
+				setTokenValue({ token: token });
+
+				queryClient
+					.fetchQuery({
+						queryKey: createConnectQueryKey({
+							schema: PersonService,
+							transport: finalTransport,
+							cardinality: "finite",
+						}),
+						queryFn: async () => {
+							return await personClient.currentProfile({});
+						},
+					})
+					.then((data) => {
+						if (!data?.profile) {
+							throw "No profile";
+						}
+
+						setProfileValue({
+							...data.profile,
+							steamId: data.profile.steamId.toString(),
+							timeCreated: profile.timeCreated ? timestampDate(profile.timeCreated) : new Date(),
+						});
+						setProfile(data.profile);
+					});
+			} catch (e) {
+				console.log(e);
+				throw "Failed to authenticate";
+			}
 		},
 		[setProfileValue, profile, setTokenValue],
 	);
@@ -79,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 		deleteProfileValue();
 		deleteTokenValue();
-	}, [queryClient.fetchQuery, deleteProfileValue, deleteTokenValue, authClient.logout]);
+	}, [deleteProfileValue, deleteTokenValue, authClient.logout]);
 
 	const isAuthenticated = () => {
 		return (tokenValue?.token ? Boolean(tokenValue.token?.length > 0) : false) && profile.steamId !== 0n;
@@ -135,17 +159,17 @@ const loadProfile = (): PersonCore => {
 		return create(PersonCoreSchema, {
 			...raw,
 			steamId: BigInt(raw.steamId),
-			timeCreated: timestampFromDate(raw.timeCreated),
+			timeCreated: timestampFromDate(parseDateTime(raw.timeCreated)),
 		});
 	} catch (e) {
-		logErr(e);
+		console.log(e);
 		return defaultProfile;
 	}
 };
 
 export type AuthContextProps = {
 	profile: PersonCore;
-	login: (profile: PersonCore, token: string) => void;
+	login: (token: string, opts: { onSuccess?: () => void; onError?: () => void }) => void;
 	logout: () => Promise<void>;
 	isAuthenticated: () => boolean;
 	permissionLevel: () => Privilege;

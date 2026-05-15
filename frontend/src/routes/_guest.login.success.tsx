@@ -1,12 +1,9 @@
-import { useQuery } from "@connectrpc/connect-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { z } from "zod/v4";
 import { StorageKey } from "../auth.tsx";
 import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
-import { currentProfile } from "../rpc/person/v1/person-PersonService_connectquery.ts";
-import { emptyOrNullString } from "../util/types.ts";
 
 export const Route = createFileRoute("/_guest/login/success")({
 	validateSearch: z.object({
@@ -17,6 +14,7 @@ export const Route = createFileRoute("/_guest/login/success")({
 	loaderDeps: ({ search }) => ({
 		token: search.token,
 	}),
+
 	loader: async ({ deps }) => {
 		const savedToken = { token: deps.token };
 		localStorage.setItem(StorageKey.Token, JSON.stringify(savedToken));
@@ -28,17 +26,19 @@ export const Route = createFileRoute("/_guest/login/success")({
 
 function LoginSteamSuccess() {
 	const search = Route.useSearch();
-
-	const navigate = useNavigate();
 	const { login } = useAuth();
-	const { data } = useQuery(currentProfile, {});
+	const navigate = useNavigate();
 
 	useEffect(() => {
-		if (data?.profile) {
-			login(data.profile, search.token);
-			navigate({ to: !emptyOrNullString(search.next_url) ? search.next_url : "/" });
-		}
-	}, [data?.profile, login, navigate, search.next_url, search.token]);
+		login(search.token, {
+			onSuccess: () => {
+				navigate({ to: search.next_url });
+			},
+			onError: () => {
+				navigate({ to: "/" });
+			},
+		});
+	}, [login, search.next_url, search.token, navigate]);
 
 	return <LoadingPlaceholder />;
 }

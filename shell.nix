@@ -1,9 +1,12 @@
 let
   #nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/tarball/nixos-25.11";
-  nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/archive/ce657ac8a02003528e4ea4bb59d58e1c634b790c.tar.gz";
+  nixpkgs = fetchTarball "https://github.com/nixos/nixpkgs/archive/nixos-unstable.tar.gz";
+  #nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/archive/ce657ac8a02003528e4ea4bb59d58e1c634b790c.tar.gz";
 
   pkgs = import nixpkgs {
-    config = {   hardeningDisable = [ "all" ]; };
+    config = {
+      hardeningDisable = [ "all" ];
+    };
     overlays = [ ];
   };
 in

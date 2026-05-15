@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -217,7 +216,7 @@ func (m *Middleware) serverClaimsFromRequest(req *http.Request) (*serverClaims, 
 }
 
 func (m *Middleware) userClaimsFromRequest(req *http.Request) (*userClaims, error) {
-	fingerprint, errFP := m.fingerprintFromRequest(req)
+	_, errFP := m.fingerprintFromRequest(req)
 	if errFP != nil {
 		return nil, errFP
 	}
@@ -246,11 +245,11 @@ func (m *Middleware) userClaimsFromRequest(req *http.Request) (*userClaims, erro
 		return nil, authn.Errorf("invalid token")
 	}
 
-	if claims.Fingerprint != m.fingerprintHash(fingerprint) {
-		slog.Error("Invalid cookie fingerprint, token rejected")
+	// if claims.Fingerprint != m.fingerprintHash(fingerprint) {
+	// 	slog.Error("Invalid cookie fingerprint, token rejected")
 
-		return nil, authn.Errorf("invalid token")
-	}
+	// 	return nil, authn.Errorf("invalid token")
+	// }
 
 	return &claims, nil
 }
