@@ -40,7 +40,7 @@ const columnHelper = createMRTColumnHelper<Server>();
 const defaultOptions = createDefaultTableOptions<Server>();
 const defaultValues = {
 	...makeSchemaDefaults({ defaultColumn: "name" }),
-	columnFilters: [{ id: "is_enabled", value: "true" }],
+	columnFilters: [{ id: "isEnabled", value: "true" }],
 	sorting: [{ id: "name", desc: false }],
 	pagination: {
 		pageIndex: 0,

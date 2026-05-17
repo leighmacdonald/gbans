@@ -14,7 +14,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -98,6 +97,7 @@ type Person struct {
 	RealName          string       `json:"real_name"`
 	TimeCreated       int64        `json:"time_created"`
 	VisibilityState   int32        `json:"visibility_state"`
+	BanID             int32        `json:"ban_id"`
 }
 
 func (p Person) GetPrivilege() permission.Privilege {
@@ -109,7 +109,7 @@ func (p Person) ApplySteamInfo(summary thirdparty.PlayerSummaryResponse, steamBa
 	p.AvatarHash = summary.AvatarHash
 	p.LocCityID = int32(summary.LocCityId)
 	p.LocCountryCode = summary.LocCountryCode
-	p.LastLogoff = ptr.To(time.Unix(summary.LastLogoff, 0))
+	p.LastLogoff = new(time.Unix(summary.LastLogoff, 0))
 	p.LocStateCode = summary.LocStateCode
 	p.VisibilityState = int32(summary.VisibilityState)
 	p.PersonaState = int32(summary.PersonaState)
@@ -407,7 +407,7 @@ func (u *Persons) UpdateProfiles(ctx context.Context, _ pgx.Tx, people People) (
 
 			player.AvatarHash = summary.AvatarHash
 			player.CommentPermission = int32(summary.CommentPermission)
-			player.LastLogoff = ptr.To(time.Unix(summary.LastLogoff, 0))
+			player.LastLogoff = new(time.Unix(summary.LastLogoff, 0))
 			player.LocCityID = int32(summary.LocCityId)
 			player.LocCountryCode = summary.LocCountryCode
 			player.LocStateCode = summary.LocStateCode

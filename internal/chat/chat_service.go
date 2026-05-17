@@ -11,7 +11,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/chat/v1/chatv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -40,8 +39,8 @@ func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResp
 		Query:         req.GetQuery(),
 		Personaname:   "",
 		ServerID:      req.GetServerId(),
-		DateStart:     ptr.To(req.GetDateStart().AsTime()),
-		DateEnd:       ptr.To(req.GetDateEnd().AsTime()),
+		DateStart:     new(req.GetDateStart().AsTime()),
+		DateEnd:       new(req.GetDateEnd().AsTime()),
 		Unrestricted:  ctxUser.HasPermission(permission.Moderator),
 		DontCalcTotal: false,
 		FlaggedOnly:   req.GetFlaggedOnly(),
@@ -77,8 +76,8 @@ func (s Service) QueryContext(ctx context.Context, req *v1.QueryContextRequest) 
 func toMessage(msg QueryChatHistoryResult) *v1.Message {
 	return &v1.Message{
 		PersonMessageId:   &msg.PersonMessageID,
-		MatchId:           ptr.To(msg.MatchID.String()),
-		SteamId:           ptr.To(msg.SteamID.Int64()),
+		MatchId:           new(msg.MatchID.String()),
+		SteamId:           new(msg.SteamID.Int64()),
 		AvatarHash:        &msg.AvatarHash,
 		PersonaName:       &msg.PersonaName,
 		ServerName:        &msg.ServerName,

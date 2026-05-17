@@ -10,7 +10,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	v1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	"github.com/leighmacdonald/gbans/internal/person/v1/personv1connect"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -89,9 +88,9 @@ func (s PersonService) ResolveSteamID(ctx context.Context, req *v1.ResolveSteamI
 	}
 
 	return &v1.ResolveSteamIDResponse{
-		SteamId:     ptr.To(response.Player.SteamID.Int64()),
-		AvatarHash:  ptr.To(string(response.Player.GetAvatar())),
-		PersonaName: ptr.To(response.Player.GetName()),
+		SteamId:     new(response.Player.SteamID.Int64()),
+		AvatarHash:  new(string(response.Player.GetAvatar())),
+		PersonaName: new(response.Player.GetName()),
 	}, nil
 }
 
@@ -135,9 +134,9 @@ func (s PersonService) Query(ctx context.Context, req *v1.QueryRequest) (*v1.Que
 		VacBans:           req.GetVacBans(),
 		GameBans:          req.GetGameBans(),
 		AvatarHash:        req.GetAvatarHash(),
-		CommunityBanned:   ptr.To(req.GetCommunityBanned()),
-		TimeCreatedAfter:  ptr.To(req.TimeCreatedAfter.AsTime()),
-		TimeCreatedBefore: ptr.To(req.TimeCreatedBefore.AsTime()),
+		CommunityBanned:   new(req.GetCommunityBanned()),
+		TimeCreatedAfter:  new(req.TimeCreatedAfter.AsTime()),
+		TimeCreatedBefore: new(req.TimeCreatedBefore.AsTime()),
 	}
 	people, count, errGetPeople := s.persons.GetPeople(ctx, query)
 	if errGetPeople != nil {
@@ -178,7 +177,7 @@ func (s PersonService) EditPermissions(ctx context.Context, req *v1.EditPermissi
 func toUserSettings(settings Settings) *v1.UserSettings {
 	return &v1.UserSettings{
 		PersonSettingsId:     &settings.PersonSettingsID,
-		SteamId:              ptr.To(settings.SteamID.Int64()),
+		SteamId:              new(settings.SteamID.Int64()),
 		ForumSignature:       &settings.ForumSignature,
 		ForumProfileMessages: &settings.ForumProfileMessages,
 		StatsHidden:          &settings.StatsHidden,
@@ -189,14 +188,16 @@ func toUserSettings(settings Settings) *v1.UserSettings {
 
 func toPersonCore(core *Person) *v1.PersonCore {
 	return &v1.PersonCore{
-		SteamId:         ptr.To(core.SteamID.Int64()),
-		PermissionLevel: ptr.To(v1.Privilege(core.PermissionLevel)),
-		Name:            ptr.To(core.GetName()),
-		AvatarHash:      ptr.To(string(core.GetAvatar())),
-		DiscordId:       ptr.To(core.GetDiscordID()),
-		VacBans:         ptr.To(core.GetVACBans()),
-		GameBans:        ptr.To(core.GetGameBans()),
+		SteamId:         new(core.SteamID.Int64()),
+		PermissionLevel: new(v1.Privilege(core.PermissionLevel)),
+		Name:            new(core.GetName()),
+		AvatarHash:      new(string(core.GetAvatar())),
+		DiscordId:       new(core.GetDiscordID()),
+		VacBans:         new(core.GetVACBans()),
+		GameBans:        new(core.GetGameBans()),
 		TimeCreated:     timestamppb.New(core.GetTimeCreated()),
+		BanId:           &core.BanID,
+		PatreonId:       &core.PatreonID,
 	}
 }
 
@@ -207,29 +208,29 @@ func toPerson(core *Person) *v1.Person {
 	}
 
 	return &v1.Person{
-		SteamId:               ptr.To(core.SteamID.Int64()),
+		SteamId:               new(core.SteamID.Int64()),
 		CreatedOn:             timestamppb.New(core.CreatedOn),
 		UpdatedOn:             timestamppb.New(core.UpdatedOn),
-		PermissionLevel:       ptr.To(v1.Privilege(core.PermissionLevel)),
+		PermissionLevel:       new(v1.Privilege(core.PermissionLevel)),
 		Muted:                 &core.Muted,
-		DiscordId:             ptr.To(core.GetDiscordID()),
+		DiscordId:             new(core.GetDiscordID()),
 		PatreonId:             &core.PatreonID,
-		IpAddr:                ptr.To(core.IPAddr.String()),
+		IpAddr:                new(core.IPAddr.String()),
 		CommunityBanned:       &core.CommunityBanned,
-		VacBans:               ptr.To(core.GetVACBans()),
-		GameBans:              ptr.To(core.GetGameBans()),
-		EconomyBan:            ptr.To(string(core.EconomyBan)),
+		VacBans:               new(core.GetVACBans()),
+		GameBans:              new(core.GetGameBans()),
+		EconomyBan:            new(string(core.EconomyBan)),
 		DaysSinceLastBan:      &core.DaysSinceLastBan,
 		UpdatedOnSteam:        timestamppb.New(core.UpdatedOnSteam),
 		PlayerqueueChatStatus: nil,
 		PlayerqueueChatReason: nil,
-		AvatarHash:            ptr.To(string(core.GetAvatar())),
+		AvatarHash:            new(string(core.GetAvatar())),
 		CommentPermission:     &core.CommentPermission,
 		LastLogoff:            tsBB,
 		LocCityId:             &core.LocCityID,
 		LocCountryCode:        &core.LocCountryCode,
 		LocStateCode:          &core.LocStateCode,
-		PersonaName:           ptr.To(core.GetName()),
+		PersonaName:           new(core.GetName()),
 		PersonaState:          &core.PersonaState,
 		PersonaStateFlags:     &core.PersonaStateFlags,
 		PrimaryClanId:         &core.PrimaryClanID,
@@ -237,7 +238,7 @@ func toPerson(core *Person) *v1.Person {
 		ProfileUrl:            &core.ProfileURL,
 		RealName:              &core.RealName,
 		TimeCreated:           timestamppb.New(core.GetTimeCreated()),
-		VisibilityState:       ptr.To(v1.VisibilityState(core.VisibilityState)),
+		VisibilityState:       new(v1.VisibilityState(core.VisibilityState)),
 		BanId:                 nil,
 	}
 }
@@ -250,7 +251,7 @@ func toFriends(friendSet []thirdparty.SteamFriend) []*v1.SteamFriend {
 			FriendSince:  timestamppb.New(friend.FriendSince),
 			Relationship: &friend.Relationship,
 			RemovedOn:    timestamppb.New(friend.RemovedOn),
-			SteamId:      ptr.To(sid.Int64()),
+			SteamId:      new(sid.Int64()),
 		}
 	}
 
@@ -260,7 +261,7 @@ func toFriends(friendSet []thirdparty.SteamFriend) []*v1.SteamFriend {
 func toSettings(settings Settings) *v1.Settings {
 	return &v1.Settings{
 		PersonSettingsId:     &settings.PersonSettingsID,
-		SteamId:              ptr.To(settings.SteamID.Int64()),
+		SteamId:              new(settings.SteamID.Int64()),
 		ForumSignature:       &settings.ForumSignature,
 		ForumProfileMessages: &settings.ForumProfileMessages,
 		StatsHidden:          &settings.StatsHidden,

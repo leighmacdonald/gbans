@@ -14,7 +14,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/sourcemod/v1"
 	"github.com/leighmacdonald/gbans/internal/sourcemod/v1/sourcemodv1connect"
@@ -106,7 +105,7 @@ func (s PluginService) SMAuthenticate(ctx context.Context, req *v1.SMAuthenticat
 func (s PluginService) SMCheck(ctx context.Context, req *v1.SMCheckRequest) (*v1.SMCheckResponse, error) {
 	defaultResponse := &v1.SMCheckResponse{
 		ClientId: new(req.GetClientId()),
-		BanType:  ptr.To(banv1.BanType_BAN_TYPE_OK_UNSPECIFIED),
+		BanType:  new(banv1.BanType_BAN_TYPE_OK_UNSPECIFIED),
 		Msg:      new(""),
 	}
 	steamID := steamid.New(req.GetSteamId())

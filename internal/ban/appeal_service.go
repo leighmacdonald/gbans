@@ -11,7 +11,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -125,13 +124,13 @@ func toAppealMessage(message AppealMessage) *v1.AppealMessage {
 	return &v1.AppealMessage{
 		BanId:        &message.BanID,
 		BanMessageId: &message.BanMessageID,
-		AuthorId:     ptr.To(message.AuthorID.Int64()),
+		AuthorId:     new(message.AuthorID.Int64()),
 		MessageMd:    &message.MessageMD,
 		Deleted:      &message.Deleted,
 		CreatedOn:    timestamppb.New(message.CreatedOn),
 		UpdatedOn:    timestamppb.New(message.UpdatedOn),
 		AvatarHash:   &message.Avatarhash,
 		PersonaName:  &message.Personaname,
-		Privilege:    ptr.To(personv1.Privilege(message.PermissionLevel)),
+		Privilege:    new(personv1.Privilege(message.PermissionLevel)),
 	}
 }

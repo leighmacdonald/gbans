@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -179,14 +178,14 @@ func toReportMessage(msg ReportMessage) *v1.ReportMessage {
 	return &v1.ReportMessage{
 		ReportId:        &msg.ReportID,
 		ReportMessageId: &msg.ReportMessageID,
-		AuthorId:        ptr.To(msg.AuthorID.Int64()),
+		AuthorId:        new(msg.AuthorID.Int64()),
 		MessageMd:       &msg.MessageMD,
 		Deleted:         &msg.Deleted,
 		CreatedOn:       timestamppb.New(msg.CreatedOn),
 		UpdatedOn:       timestamppb.New(msg.UpdatedOn),
 		PersonaName:     &msg.Personaname,
 		AvatarHash:      &msg.Avatarhash,
-		PermissionLevel: ptr.To(personv1.Privilege(msg.PermissionLevel)),
+		PermissionLevel: new(personv1.Privilege(msg.PermissionLevel)),
 	}
 }
 
@@ -200,13 +199,13 @@ func toReportWithAuthor(report ReportWithAuthor) *v1.ReportWithAuthor {
 
 func toPersonCore(person person.Core) *personv1.PersonCore {
 	return &personv1.PersonCore{
-		SteamId:         ptr.To(person.SteamID.Int64()),
-		PermissionLevel: ptr.To(personv1.Privilege(person.PermissionLevel)),
-		Name:            ptr.To(person.GetName()),
-		AvatarHash:      ptr.To(string(person.GetAvatar())),
-		DiscordId:       ptr.To(person.GetDiscordID()),
-		VacBans:         ptr.To(person.GetVACBans()),
-		GameBans:        ptr.To(person.GetGameBans()),
+		SteamId:         new(person.SteamID.Int64()),
+		PermissionLevel: new(personv1.Privilege(person.PermissionLevel)),
+		Name:            new(person.GetName()),
+		AvatarHash:      new(string(person.GetAvatar())),
+		DiscordId:       new(person.GetDiscordID()),
+		VacBans:         new(person.GetVACBans()),
+		GameBans:        new(person.GetGameBans()),
 		BanId:           &person.BanID,
 		TimeCreated:     timestamppb.New(person.GetTimeCreated()),
 	}
@@ -215,11 +214,11 @@ func toPersonCore(person person.Core) *personv1.PersonCore {
 func toReport(report Report) *v1.Report {
 	return &v1.Report{
 		ReportId:        &report.ReportID,
-		SourceId:        ptr.To(report.SourceID.Int64()),
-		TargetId:        ptr.To(report.TargetID.Int64()),
+		SourceId:        new(report.SourceID.Int64()),
+		TargetId:        new(report.TargetID.Int64()),
 		Description:     &report.Description,
-		ReportStatus:    ptr.To(v1.ReportStatus(report.ReportStatus)),
-		Reason:          ptr.To(v1.BanReason(report.Reason)),
+		ReportStatus:    new(v1.ReportStatus(report.ReportStatus)),
+		Reason:          new(v1.BanReason(report.Reason)),
 		ReasonText:      &report.ReasonText,
 		Deleted:         &report.Deleted,
 		DemoTick:        &report.DemoTick,

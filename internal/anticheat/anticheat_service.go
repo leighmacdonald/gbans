@@ -8,7 +8,6 @@ import (
 	v1 "github.com/leighmacdonald/gbans/internal/anticheat/v1"
 	"github.com/leighmacdonald/gbans/internal/anticheat/v1/anticheatv1connect"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -50,7 +49,7 @@ func (s Service) Query(ctx context.Context, request *v1.QueryRequest) (*v1.Query
 	for idx, entry := range entries {
 		results.Entries[idx] = &v1.Entry{
 			AnticheatId: &entry.AnticheatID,
-			SteamId:     ptr.To(entry.SteamID.Int64()),
+			SteamId:     new(entry.SteamID.Int64()),
 			ServerId:    &entry.ServerID,
 			ServerName:  &entry.ServerName,
 			DemoId:      entry.DemoID,
@@ -73,28 +72,28 @@ func (s Service) Query(ctx context.Context, request *v1.QueryRequest) (*v1.Query
 func detectionToRPC(detection logparse.Detection) *v1.Detection {
 	switch detection {
 	case logparse.SilentAim:
-		return ptr.To(v1.Detection_DETECTION_SILENT_AIM)
+		return new(v1.Detection_DETECTION_SILENT_AIM)
 	case logparse.AimSnap:
-		return ptr.To(v1.Detection_DETECTION_AIM_SNAP)
+		return new(v1.Detection_DETECTION_AIM_SNAP)
 	case logparse.TooManyConnectiona:
-		return ptr.To(v1.Detection_DETECTION_TOO_MANY_CONNECTIONS)
+		return new(v1.Detection_DETECTION_TOO_MANY_CONNECTIONS)
 	case logparse.Interp:
-		return ptr.To(v1.Detection_DETECTION_INTERP)
+		return new(v1.Detection_DETECTION_INTERP)
 	case logparse.BHop:
-		return ptr.To(v1.Detection_DETECTION_BHOP)
+		return new(v1.Detection_DETECTION_BHOP)
 	case logparse.CmdNumSpike:
-		return ptr.To(v1.Detection_DETECTION_CMD_NUM_SPIKE)
+		return new(v1.Detection_DETECTION_CMD_NUM_SPIKE)
 	case logparse.EyeAngles:
-		return ptr.To(v1.Detection_DETECTION_EYE_ANGLES)
+		return new(v1.Detection_DETECTION_EYE_ANGLES)
 	case logparse.InvalidUserCmd:
-		return ptr.To(v1.Detection_DETECTION_INVALID_USER_CMD)
+		return new(v1.Detection_DETECTION_INVALID_USER_CMD)
 	case logparse.OOBCVar:
-		return ptr.To(v1.Detection_DETECTION_OOB_CVAR)
+		return new(v1.Detection_DETECTION_OOB_CVAR)
 	case logparse.CheatCVar:
-		return ptr.To(v1.Detection_DETECTION_CHEAT_CVAR)
+		return new(v1.Detection_DETECTION_CHEAT_CVAR)
 	case logparse.Unknown:
 		fallthrough
 	default:
-		return ptr.To(v1.Detection_DETECTION_UNSPECIFIED)
+		return new(v1.Detection_DETECTION_UNSPECIFIED)
 	}
 }

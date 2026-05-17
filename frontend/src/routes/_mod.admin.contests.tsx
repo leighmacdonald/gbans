@@ -128,7 +128,7 @@ function AdminContests() {
 		},
 		initialState: {
 			...defaultOptions.initialState,
-			sorting: [{ id: "ban_id", desc: true }],
+			sorting: [{ id: "banId", desc: true }],
 			columnVisibility: {
 				title: true,
 				max_submissions: false,

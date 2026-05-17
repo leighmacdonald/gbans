@@ -82,7 +82,7 @@ export const ChatTable = ({ steamId }: { steamId: bigint }) => {
 		},
 		initialState: {
 			...defaultOptions.initialState,
-			sorting: [{ id: "person_message_id", desc: true }],
+			sorting: [{ id: "personMessageId", desc: true }],
 		},
 	});
 

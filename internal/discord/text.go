@@ -13,7 +13,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -106,7 +105,7 @@ func Heading(format string, args ...any) discordgo.TextDisplay {
 
 func BodyColouredText(colour int, text string) discordgo.Container {
 	body := BodyText(text)
-	body.AccentColor = ptr.To(colour)
+	body.AccentColor = new(colour)
 
 	return body
 }
@@ -121,7 +120,7 @@ func BodyText(text string) discordgo.Container {
 
 func BodyColour(colour int, components ...discordgo.MessageComponent) discordgo.Container {
 	body := Body(components...)
-	body.AccentColor = ptr.To(colour)
+	body.AccentColor = new(colour)
 
 	return body
 }
@@ -139,7 +138,7 @@ type AvatarProvider interface {
 func PlayerThumbnail(avatar AvatarProvider) discordgo.Thumbnail {
 	return discordgo.Thumbnail{
 		Media:       discordgo.UnfurledMediaItem{URL: avatar.GetAvatar().Full()},
-		Description: ptr.To(fmt.Sprintf("Profile Picure [%s]", avatar.GetAvatar().Hash())),
+		Description: new(fmt.Sprintf("Profile Picure [%s]", avatar.GetAvatar().Hash())),
 	}
 }
 

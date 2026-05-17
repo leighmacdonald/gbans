@@ -61,7 +61,7 @@ func (s ServersService) State(_ context.Context, req *v1.StateRequest) (*v1.Stat
 		resp.Servers = append(resp.Servers, &v1.SafeServer{
 			ServerId:   &current.ServerID,
 			Host:       &current.Host,
-			Port:       ptr.To(uint32(current.Port)),
+			Port:       new(uint32(current.Port)),
 			Ip:         &current.IP,
 			Name:       &current.Name,
 			NameShort:  &current.NameShort,
@@ -96,8 +96,8 @@ func (s ServersService) Servers(ctx context.Context, _ *emptypb.Empty) (*v1.Serv
 		resp.Servers = append(resp.Servers, &v1.ServerInfoSafe{
 			ServerNameLong: &server.Name,
 			ServerName:     &server.ShortName,
-			ServerId:       ptr.To(server.ServerID),
-			Colour:         ptr.To(""),
+			ServerId:       new(server.ServerID),
+			Colour:         new(""),
 		})
 	}
 
@@ -164,7 +164,7 @@ func toRPCServer(server Server) *v1.Server {
 		Address:         &server.Address,
 		AddressInternal: &server.AddressInternal,
 		SdrEnabled:      &server.SDREnabled,
-		Port:            ptr.To(uint32(server.Port)),
+		Port:            new(uint32(server.Port)),
 		Rcon:            &server.RCON,
 		Password:        &server.Password,
 		IsEnabled:       &server.IsEnabled,
@@ -181,7 +181,7 @@ func toRPCServer(server Server) *v1.Server {
 		CreatedOn:          timestamppb.New(server.CreatedOn),
 		UpdatedOn:          timestamppb.New(server.UpdatedOn),
 		DiscordSeedRoleIds: server.DiscordSeedRoleIDs,
-		Ip:                 ptr.To(server.IP.String()),
+		Ip:                 new(server.IP.String()),
 	}
 }
 

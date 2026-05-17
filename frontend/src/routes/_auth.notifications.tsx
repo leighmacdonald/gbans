@@ -304,7 +304,7 @@ function NotificationsPage() {
 		},
 		initialState: {
 			...defaultOptions.initialState,
-			sorting: [{ id: "ban_id", desc: true }],
+			sorting: [{ id: "banId", desc: true }],
 			columnVisibility: {
 				cidr_block_whitelist_id: false,
 				address: true,

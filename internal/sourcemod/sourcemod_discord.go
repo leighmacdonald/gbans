@@ -14,7 +14,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -35,7 +34,7 @@ func RegisterDiscordCommands(service discord.Service, sourcemod Sourcemod, serve
 	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "rcon",
 		Description:              "Send an rcon command",
-		DefaultMemberPermissions: ptr.To(discord.AdminPerms),
+		DefaultMemberPermissions: new(discord.AdminPerms),
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -50,7 +49,7 @@ func RegisterDiscordCommands(service discord.Service, sourcemod Sourcemod, serve
 				Name:        "command",
 				Description: "Command to run",
 				Required:    true,
-				MinLength:   ptr.To(1),
+				MinLength:   new(1),
 			},
 		},
 	}, handler.onRCON)
@@ -58,7 +57,7 @@ func RegisterDiscordCommands(service discord.Service, sourcemod Sourcemod, serve
 	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "seed",
 		Description:              "Request a server seed ping",
-		DefaultMemberPermissions: ptr.To(discord.UserPerms),
+		DefaultMemberPermissions: new(discord.UserPerms),
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -80,7 +79,7 @@ func RegisterDiscordCommands(service discord.Service, sourcemod Sourcemod, serve
 	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "sourcemod",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: ptr.To(discord.ModPerms),
+		DefaultMemberPermissions: new(discord.ModPerms),
 		Description:              "Update sourcemod configurations",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -132,7 +131,7 @@ func RegisterDiscordCommands(service discord.Service, sourcemod Sourcemod, serve
 	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "cvar",
 		Description:              "Request a server seed ping",
-		DefaultMemberPermissions: ptr.To(discord.UserPerms),
+		DefaultMemberPermissions: new(discord.UserPerms),
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
 		Options: []*discordgo.ApplicationCommandOption{
 			{

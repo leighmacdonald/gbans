@@ -1,4 +1,5 @@
 {
+	"compilerOptions": { "lib": ["ES2023", "DOM", "DOM.Iterable"] },
 	"files": [],
 	"references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }]
 }

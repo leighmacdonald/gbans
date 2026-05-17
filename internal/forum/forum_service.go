@@ -12,7 +12,6 @@ import (
 	v1 "github.com/leighmacdonald/gbans/internal/forum/v1"
 	"github.com/leighmacdonald/gbans/internal/forum/v1/forumv1connect"
 	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -57,9 +56,9 @@ func (s Service) ActiveUsers(_ context.Context, _ *emptypb.Empty) (*v1.ActiveUse
 	for idx, act := range current {
 		sid := act.Person.GetSteamID()
 		resp.UserActivity[idx] = &v1.UserActivity{
-			SteamId:         ptr.To(sid.Int64()),
-			PersonaName:     ptr.To(act.Person.GetName()),
-			PermissionLevel: ptr.To(personv1.Privilege(act.Person.GetPrivilege())),
+			SteamId:         new(sid.Int64()),
+			PersonaName:     new(act.Person.GetName()),
+			PermissionLevel: new(personv1.Privilege(act.Person.GetPrivilege())),
 			CreatedOn:       timestamppb.New(act.LastActivity),
 		}
 	}
@@ -124,14 +123,14 @@ func toMessage(msg Message) *v1.Message {
 	return &v1.Message{
 		ForumMessageId:  &msg.ForumMessageID,
 		ForumThreadId:   &msg.ForumThreadID,
-		SourceId:        ptr.To(msg.SourceID.Int64()),
+		SourceId:        new(msg.SourceID.Int64()),
 		BodyMd:          &msg.BodyMD,
 		Title:           &msg.Title,
 		Online:          &msg.Online,
 		Signature:       &msg.Signature,
 		PersonaName:     &msg.Personaname,
 		AvatarHash:      &msg.Avatarhash,
-		PermissionLevel: ptr.To(personv1.Privilege(msg.PermissionLevel)),
+		PermissionLevel: new(personv1.Privilege(msg.PermissionLevel)),
 		CreatedOn:       timestamppb.New(msg.CreatedOn),
 		UpdatedOn:       timestamppb.New(msg.UpdatedOn),
 	}
@@ -302,7 +301,7 @@ func (s Service) ThreadCreate(ctx context.Context, req *v1.ThreadCreateRequest) 
 
 func (s Service) ThreadEdit(ctx context.Context, req *v1.ThreadEditRequest) (*v1.ThreadEditResponse, error) {
 	user, _ := rpc.UserInfoFromCtx(ctx)
-	req.Title = ptr.To(stringutil.SanitizeUGC(req.GetTitle()))
+	req.Title = new(stringutil.SanitizeUGC(req.GetTitle()))
 
 	var thread Thread
 	if errGet := s.forums.Thread(ctx, req.GetForumThreadId(), &thread); errGet != nil {
@@ -481,7 +480,7 @@ func (s Service) ForumEdit(ctx context.Context, req *v1.ForumEditRequest) (*v1.F
 func fromThread(thread Thread) *v1.Thread {
 	return &v1.Thread{
 		ForumId:   &thread.ForumID,
-		SourceId:  ptr.To(thread.SourceID.Int64()),
+		SourceId:  new(thread.SourceID.Int64()),
 		Title:     &thread.Title,
 		CreatedOn: timestamppb.New(thread.CreatedOn),
 		UpdatedOn: timestamppb.New(thread.UpdatedOn),
@@ -493,7 +492,7 @@ func fromThreadWithSource(thread ThreadWithSource) *v1.ThreadWithSource {
 		Thread:               fromThread(thread.Thread),
 		PersonaName:          &thread.Personaname,
 		AvatarHash:           &thread.Avatarhash,
-		PermissionLevel:      ptr.To(personv1.Privilege(thread.PermissionLevel)),
+		PermissionLevel:      new(personv1.Privilege(thread.PermissionLevel)),
 		RecentForumMessageId: &thread.RecentForumMessageID,
 		RecentCreatedOn:      timestamppb.New(thread.RecentCreatedOn),
 		RecentSteamId:        &thread.RecentSteamID,
@@ -512,7 +511,7 @@ func toForum(forum Forum) *v1.Forum {
 		Ordering:            &forum.Ordering,
 		CountThreads:        &forum.CountThreads,
 		CountMessages:       &forum.CountMessages,
-		PermissionLevel:     ptr.To(personv1.Privilege(forum.PermissionLevel)),
+		PermissionLevel:     new(personv1.Privilege(forum.PermissionLevel)),
 		RecentForumThreadId: &forum.RecentForumThreadID,
 		RecentForumTitle:    &forum.RecentForumTitle,
 		RecentSourceId:      &forum.RecentSourceID,

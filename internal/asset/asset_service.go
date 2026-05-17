@@ -10,7 +10,6 @@ import (
 	v1 "github.com/leighmacdonald/gbans/internal/asset/v1"
 	"github.com/leighmacdonald/gbans/internal/asset/v1/assetv1connect"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -41,10 +40,10 @@ func (s Service) Create(ctx context.Context, req *v1.CreateRequest) (*v1.CreateR
 	}
 
 	return &v1.CreateResponse{Asset: &v1.Asset{
-		AssetId:   ptr.To(asset.AssetID.String()),
-		Bucket:    ptr.To(string(asset.Bucket)),
-		AuthorId:  ptr.To(asset.AuthorID.Int64()),
-		Hash:      ptr.To(fmt.Sprintf("%x", asset.Hash)),
+		AssetId:   new(asset.AssetID.String()),
+		Bucket:    new(string(asset.Bucket)),
+		AuthorId:  new(asset.AuthorID.Int64()),
+		Hash:      new(fmt.Sprintf("%x", asset.Hash)),
 		IsPrivate: &asset.IsPrivate,
 		MimeType:  &asset.MimeType,
 		Name:      &asset.Name,

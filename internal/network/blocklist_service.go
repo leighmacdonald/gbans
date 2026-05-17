@@ -8,7 +8,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	v1 "github.com/leighmacdonald/gbans/internal/network/v1"
 	"github.com/leighmacdonald/gbans/internal/network/v1/networkv1connect"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -181,7 +180,7 @@ func (s BlocklistService) CheckBlock(_ context.Context, _ *v1.CheckBlockRequest)
 func toCIDRBlockWhitelist(whitelist WhitelistIP) *v1.CIDRBlockWhitelist {
 	return &v1.CIDRBlockWhitelist{
 		CidrBlockWhitelistId: &whitelist.CIDRBlockWhitelistID,
-		Address:              ptr.To(whitelist.Address.String()),
+		Address:              new(whitelist.Address.String()),
 		CreatedOn:            timestamppb.New(whitelist.CreatedOn),
 		UpdatedOn:            timestamppb.New(whitelist.UpdatedOn),
 	}
@@ -190,7 +189,7 @@ func toCIDRBlockWhitelist(whitelist WhitelistIP) *v1.CIDRBlockWhitelist {
 func toWhitelistIP(whitelist WhitelistIP) *v1.WhitelistIP {
 	return &v1.WhitelistIP{
 		CidrBlockWhitelistId: &whitelist.CIDRBlockWhitelistID,
-		Address:              ptr.To(whitelist.Address.String()),
+		Address:              new(whitelist.Address.String()),
 		CreatedOn:            timestamppb.New(whitelist.CreatedOn),
 		UpdatedOn:            timestamppb.New(whitelist.UpdatedOn),
 	}
@@ -199,7 +198,7 @@ func toWhitelistIP(whitelist WhitelistIP) *v1.WhitelistIP {
 func toWhitelistSteam(whitelist WhitelistSteam) *v1.WhitelistSteam {
 	sid := steamid.New(whitelist.SteamIDValue)
 	return &v1.WhitelistSteam{
-		SteamId:     ptr.To(sid.Int64()),
+		SteamId:     new(sid.Int64()),
 		PersonaName: &whitelist.Personaname,
 		AvatarHash:  &whitelist.AvatarHash,
 		CreatedOn:   timestamppb.New(whitelist.CreatedOn),

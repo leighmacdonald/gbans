@@ -5,7 +5,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/servers/v1"
 	"github.com/leighmacdonald/gbans/internal/servers/v1/serversv1connect"
@@ -49,7 +48,7 @@ func (s DemoService) GetDemos(ctx context.Context, _ *emptypb.Empty) (*v1.GetDem
 			MapName:         &demo.MapName,
 			Archive:         &demo.Archive,
 			Stats:           stats,
-			AssetId:         ptr.To(demo.AssetID.String()),
+			AssetId:         new(demo.AssetID.String()),
 		}
 		for k := range demo.Stats {
 			resp.Demos[idx].Stats[k] = k

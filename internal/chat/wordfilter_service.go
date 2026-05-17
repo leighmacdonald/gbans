@@ -53,11 +53,11 @@ func (s WordfilterService) Filters(ctx context.Context, _ *emptypb.Empty) (*v1.F
 func toFilter(filter Filter) *v1.Filter {
 	return &v1.Filter{
 		FilterId:     &filter.FilterID,
-		AuthorId:     ptr.To(filter.AuthorID.Int64()),
+		AuthorId:     new(filter.AuthorID.Int64()),
 		Pattern:      &filter.Pattern,
 		IsRegex:      &filter.IsRegex,
 		IsEnabled:    &filter.IsEnabled,
-		Action:       ptr.To(v1.FilterAction(filter.Action)),
+		Action:       new(v1.FilterAction(filter.Action)),
 		Duration:     &filter.Duration,
 		TriggerCount: &filter.TriggerCount,
 		Weight:       &filter.Weight,
@@ -73,7 +73,7 @@ func (s WordfilterService) WarningState(_ context.Context, _ *emptypb.Empty) (*v
 	for _, warnings := range state {
 		for _, warn := range warnings {
 			resp.Current = append(resp.Current, &v1.UserWarning{
-				Reason:       ptr.To(banv1.BanReason(warn.WarnReason)),
+				Reason:       new(banv1.BanReason(warn.WarnReason)),
 				Message:      &warn.Message,
 				Matched:      &warn.Matched,
 				Filter:       toFilter(warn.MatchedFilter),

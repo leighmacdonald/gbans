@@ -41,7 +41,7 @@ func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResp
 		Code:          ptr.From(req.Code),
 	})
 	if errVotes != nil && !errors.Is(errVotes, database.ErrNoResult) {
-		slog.Error("Failed to query votes", errVotes)
+		slog.Error("Failed to query votes", slog.String("error", errVotes.Error()))
 
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -55,17 +55,17 @@ func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResp
 	for idx, vote := range votes {
 		resp.Results[idx] = &v1.VoteResult{
 			VoteId:           &vote.VoteID,
-			SourceId:         ptr.To(vote.SourceID.Int64()),
+			SourceId:         new(vote.SourceID.Int64()),
 			SourceName:       &vote.SourceName,
 			SourceAvatarHash: &vote.SourceAvatarHash,
-			TargetId:         ptr.To(vote.TargetID.Int64()),
+			TargetId:         new(vote.TargetID.Int64()),
 			TargetName:       &vote.TargetName,
 			TargetAvatarHash: &vote.TargetAvatarHash,
 			Name:             &vote.Name,
 			Success:          &vote.Success,
 			ServerId:         &vote.ServerID,
 			ServerName:       &vote.ServerName,
-			Code:             ptr.To(v1.VoteCode(vote.Code)),
+			Code:             new(v1.VoteCode(vote.Code)),
 			CreatedOn:        timestamppb.New(vote.CreatedOn),
 		}
 	}

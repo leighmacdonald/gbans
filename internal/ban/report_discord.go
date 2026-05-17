@@ -7,7 +7,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
 func newInGameReportResponse(report ReportWithAuthor) *discordgo.MessageSend {
@@ -29,7 +28,7 @@ func newInGameReportResponse(report ReportWithAuthor) *discordgo.MessageSend {
 			},
 			Accessory: discordgo.Thumbnail{
 				Media:       discordgo.UnfurledMediaItem{URL: report.Subject.GetAvatar().Full()},
-				Description: ptr.To(report.Subject.GetName()),
+				Description: new(report.Subject.GetName()),
 			},
 		},
 		discord.Buttons(

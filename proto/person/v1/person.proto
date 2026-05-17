@@ -130,7 +130,7 @@ message EditPermissionsResponse {
 message QueryRequest {
   database.query.v1.Filter filter = 1;
   string persona_name = 2;
-  repeated Privilege with_permissions = 3 [(buf.validate.field).enum.defined_only = true];
+  repeated Privilege with_permissions = 3;
   string discord_id = 4;
   repeated string steam_ids = 5;
   int32 vac_bans = 6;

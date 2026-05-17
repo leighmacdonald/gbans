@@ -9,7 +9,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	v1 "github.com/leighmacdonald/gbans/internal/discord/v1"
 	"github.com/leighmacdonald/gbans/internal/discord/v1/oauthv1connect"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -62,7 +61,7 @@ func (s *DiscordService) Profile(ctx context.Context, _ *emptypb.Empty) (*v1.Pro
 	}
 
 	return &v1.ProfileResponse{DiscordProfile: &v1.DiscordProfile{
-		SteamId: ptr.To(discord.SteamID.Int64()),
+		SteamId: new(discord.SteamID.Int64()),
 		Id:      &discord.ID,
 		Avatar:  &discord.Avatar,
 		// AvatarDecoration: &discord.AvatarDecoration,

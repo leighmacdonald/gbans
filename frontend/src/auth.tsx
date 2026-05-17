@@ -7,7 +7,7 @@ import { AuthContext } from "./contexts/AuthContext.tsx";
 import { StorageType, useStorage } from "./hooks/useSessionStorage.tsx";
 import { AuthService } from "./rpc/auth/v1/auth_pb.ts";
 import { type PersonCore, PersonCoreSchema } from "./rpc/person/v1/person_core_pb.ts";
-import { PersonService } from "./rpc/person/v1/person_pb.ts";
+import { type CurrentProfileResponse, PersonService } from "./rpc/person/v1/person_pb.ts";
 import { Privilege } from "./rpc/person/v1/privilege_pb.ts";
 import { finalTransport, queryClient } from "./transport.ts";
 import { defaultAvatarHash } from "./util/strings.ts";
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 							return await personClient.currentProfile({});
 						},
 					})
-					.then((data) => {
+					.then((data: CurrentProfileResponse) => {
 						if (!data?.profile) {
 							throw "No profile";
 						}

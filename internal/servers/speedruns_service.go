@@ -9,7 +9,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/maps"
 	mapsv1 "github.com/leighmacdonald/gbans/internal/maps/v1"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/servers/v1"
 	"github.com/leighmacdonald/gbans/internal/servers/v1/serversv1connect"
@@ -121,7 +120,7 @@ func toSpeedrunOverview(speedrun SpeedrunMapOverview) *v1.SpeedrunOverview {
 		PlayerCount:  &speedrun.PlayerCount,
 		BotCount:     &speedrun.BotCount,
 		CreatedOn:    timestamppb.New(speedrun.CreatedOn),
-		Category:     ptr.To(string(speedrun.Category)),
+		Category:     new(string(speedrun.Category)),
 		TotalPlayers: &speedrun.TotalPlayers,
 	}
 }
@@ -148,7 +147,7 @@ func toSpeedrun(speedrun Speedrun) *v1.Speedrun {
 		PlayerCount:  &speedrun.PlayerCount,
 		BotCount:     &speedrun.BotCount,
 		CreatedOn:    timestamppb.New(speedrun.CreatedOn),
-		Category:     ptr.To(string(speedrun.Category)),
+		Category:     new(string(speedrun.Category)),
 		TotalPlayers: &speedrun.TotalPlayers,
 	}
 

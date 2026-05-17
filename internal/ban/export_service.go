@@ -11,7 +11,6 @@ import (
 	v1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	"github.com/leighmacdonald/gbans/internal/ban/v1/banv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 )
 
@@ -57,12 +56,12 @@ func (s ExportService) GetTF2BD(ctx context.Context, req *v1.GetTF2BDRequest) (*
 	}
 
 	resp := v1.TF2BDSchema{
-		Schema: ptr.To("https://raw.githubusercontent.com/PazerOP/tf2_bot_detector/master/schemas/v3/playerlist.schema.json"),
+		Schema: new("https://raw.githubusercontent.com/PazerOP/tf2_bot_detector/master/schemas/v3/playerlist.schema.json"),
 		FileInfo: &v1.FileInfo{
 			Authors:     []string{s.siteName},
-			Description: ptr.To("Players permanently banned for cheating"),
-			Title:       ptr.To(s.siteName + " Cheater List"),
-			UpdateUrl:   ptr.To("/export/bans/tf2bd"),
+			Description: new("Players permanently banned for cheating"),
+			Title:       new(s.siteName + " Cheater List"),
+			UpdateUrl:   new("/export/bans/tf2bd"),
 		},
 		Players: []*v1.Player{},
 	}
@@ -70,10 +69,10 @@ func (s ExportService) GetTF2BD(ctx context.Context, req *v1.GetTF2BDRequest) (*
 	for _, ban := range filtered {
 		resp.Players = append(resp.Players, &v1.Player{
 			Attributes: []string{"cheater"},
-			SteamId:    ptr.To(string(ban.TargetID.Steam3())),
+			SteamId:    new(string(ban.TargetID.Steam3())),
 			LastSeen: &v1.LastSeen{
-				PlayerName: ptr.To(ban.TargetID.String()),
-				Time:       ptr.To(int32(ban.UpdatedOn.Unix())),
+				PlayerName: new(ban.TargetID.String()),
+				Time:       new(int32(ban.UpdatedOn.Unix())),
 			},
 		})
 	}
