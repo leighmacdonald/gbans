@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
 const (
@@ -187,7 +186,7 @@ func RespondUpdate(session *discordgo.Session, interaction *discordgo.Interactio
 // Error is responsible for responding with a generic error message format.
 func Error(session *discordgo.Session, interaction *discordgo.InteractionCreate, err error) {
 	if errResponse := RespondPrivate(session, interaction, discordgo.Container{
-		AccentColor: ptr.To(ColourError),
+		AccentColor: new(ColourError),
 		Components: []discordgo.MessageComponent{
 			discordgo.TextDisplay{Content: fmt.Sprintf(`🚨 Command Error 🚨
 
@@ -207,7 +206,7 @@ func Success(session *discordgo.Session, interaction *discordgo.InteractionCreat
 // SuccessMsg sends a success response with a custom message.
 func SuccessMsg(session *discordgo.Session, interaction *discordgo.InteractionCreate, msg string) error {
 	return RespondPrivate(session, interaction, discordgo.Container{
-		AccentColor: ptr.To(ColourSuccess),
+		AccentColor: new(ColourSuccess),
 		Components: []discordgo.MessageComponent{
 			discordgo.TextDisplay{Content: msg},
 		},

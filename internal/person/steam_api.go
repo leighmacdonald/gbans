@@ -7,7 +7,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/sync/errgroup"
@@ -83,7 +82,7 @@ func UpdatePlayerSummary(ctx context.Context, personUpdate *Person, tfAPI thirdp
 		}
 		personUpdate.AvatarHash = summaries[0].AvatarHash
 		personUpdate.CommentPermission = int32(summaries[0].CommentPermission)
-		personUpdate.LastLogoff = ptr.To(time.Unix(summaries[0].LastLogoff, 0))
+		personUpdate.LastLogoff = new(time.Unix(summaries[0].LastLogoff, 0))
 		personUpdate.LocCityID = int32(summaries[0].LocCityId)
 		personUpdate.LocCountryCode = summaries[0].LocCountryCode
 		personUpdate.LocStateCode = summaries[0].LocStateCode

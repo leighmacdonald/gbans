@@ -123,7 +123,7 @@ export const SMImmunityTable = () => {
 		],
 		initialState: {
 			...defaultOptions.initialState,
-			sorting: [{ id: "updated_on", desc: true }],
+			sorting: [{ id: "updatedOn", desc: true }],
 			columnVisibility: {
 				name: true,
 				identity: true,

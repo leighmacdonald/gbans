@@ -19,7 +19,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/datetime"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/sosodev/duration"
 )
@@ -50,14 +49,14 @@ func RegisterDiscordCommands(bot discord.Service, bans Bans, persons person.Prov
 		Name:                     "ban",
 		Description:              "Create Steam / CIDR ban",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: ptr.To(discord.ModPerms),
+		DefaultMemberPermissions: new(discord.ModPerms),
 	}, handler.createBanModal)
 
 	bot.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "mute",
 		Description:              "Mute a player",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: ptr.To(discord.ModPerms),
+		DefaultMemberPermissions: new(discord.ModPerms),
 	}, handler.createMuteModal)
 
 	bot.MustRegisterPrefixHandler("unban_resp", handler.onUnbanResponse)
@@ -65,13 +64,13 @@ func RegisterDiscordCommands(bot discord.Service, bans Bans, persons person.Prov
 		Name:                     "unban",
 		Description:              "Unban users",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: ptr.To(discord.ModPerms),
+		DefaultMemberPermissions: new(discord.ModPerms),
 	}, handler.onUnban)
 
 	bot.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "check",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: ptr.To(discord.ModPerms),
+		DefaultMemberPermissions: new(discord.ModPerms),
 		Description:              "Get ban status for a steam id",
 		Options: []*discordgo.ApplicationCommandOption{
 			{

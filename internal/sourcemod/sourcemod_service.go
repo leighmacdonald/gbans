@@ -10,7 +10,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	banv1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/sourcemod/v1"
 	"github.com/leighmacdonald/gbans/internal/sourcemod/v1/sourcemodv1connect"
@@ -441,7 +440,7 @@ func toOverride(override Overrides) *v1.Override {
 func toAdmin(admin Admin) *v1.Admin {
 	resp := v1.Admin{
 		AdminId:   &admin.AdminID,
-		SteamId:   ptr.To(admin.SteamID.Int64()),
+		SteamId:   new(admin.SteamID.Int64()),
 		AuthType:  toAuthType(admin.AuthType),
 		Identity:  &admin.Identity,
 		Password:  &admin.Password,
@@ -472,14 +471,14 @@ func toGroupImmunity(immunity GroupImmunity) *v1.GroupImmunity {
 func toBanType(banType bantype.Type) *banv1.BanType {
 	switch banType {
 	case bantype.NoComm:
-		return ptr.To(banv1.BanType_BAN_TYPE_NO_COMM)
+		return new(banv1.BanType_BAN_TYPE_NO_COMM)
 	case bantype.Network:
-		return ptr.To(banv1.BanType_BAN_TYPE_NETWORK)
+		return new(banv1.BanType_BAN_TYPE_NETWORK)
 	case bantype.Banned:
-		return ptr.To(banv1.BanType_BAN_TYPE_BANNED)
+		return new(banv1.BanType_BAN_TYPE_BANNED)
 	case bantype.Unknown:
-		return ptr.To(banv1.BanType_BAN_TYPE_OK_UNSPECIFIED)
+		return new(banv1.BanType_BAN_TYPE_OK_UNSPECIFIED)
 	default:
-		return ptr.To(banv1.BanType_BAN_TYPE_OK_UNSPECIFIED)
+		return new(banv1.BanType_BAN_TYPE_OK_UNSPECIFIED)
 	}
 }

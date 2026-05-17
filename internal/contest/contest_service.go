@@ -20,7 +20,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/contest/v1/contestv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
 	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -120,10 +119,10 @@ func (s Service) Upload(ctx context.Context, req *v1.UploadRequest) (*v1.UploadR
 
 func toAsset(asset asset.Asset) *assetv1.Asset {
 	return &assetv1.Asset{
-		AssetId:   ptr.To(asset.AssetID.String()),
-		Bucket:    ptr.To(string(asset.Bucket)),
-		AuthorId:  ptr.To(asset.AuthorID.Int64()),
-		Hash:      ptr.To(fmt.Sprintf("%x", asset.Hash)),
+		AssetId:   new(asset.AssetID.String()),
+		Bucket:    new(string(asset.Bucket)),
+		AuthorId:  new(asset.AuthorID.Int64()),
+		Hash:      new(fmt.Sprintf("%x", asset.Hash)),
 		IsPrivate: &asset.IsPrivate,
 		MimeType:  &asset.MimeType,
 		Name:      &asset.Name,
@@ -318,7 +317,7 @@ func toContest(contest Contest) *v1.Contest {
 		MediaTypes:         &contest.MediaTypes,
 		NumEntries:         &contest.NumEntries,
 		Voting:             &contest.Voting,
-		MinPermissionLevel: ptr.To(personv1.Privilege(contest.MinPermissionLevel)),
+		MinPermissionLevel: new(personv1.Privilege(contest.MinPermissionLevel)),
 		DownVotes:          &contest.DownVotes,
 		CreatedOn:          timestamppb.New(contest.CreatedOn),
 		UpdatedOn:          timestamppb.New(contest.UpdatedOn),
@@ -328,12 +327,12 @@ func toContest(contest Contest) *v1.Contest {
 
 func toEntry(entry *Entry) *v1.Entry {
 	return &v1.Entry{
-		ContestId:      ptr.To(entry.ContestID.String()),
-		ContestEntryId: ptr.To(entry.ContestEntryID.String()),
-		SteamId:        ptr.To(entry.SteamID.Int64()),
+		ContestId:      new(entry.ContestID.String()),
+		ContestEntryId: new(entry.ContestEntryID.String()),
+		SteamId:        new(entry.SteamID.Int64()),
 		PersonaName:    &entry.Personaname,
 		AvatarHash:     &entry.AvatarHash,
-		AssetId:        ptr.To(entry.AssetID.String()),
+		AssetId:        new(entry.AssetID.String()),
 		Description:    &entry.Description,
 		Placement:      &entry.Placement,
 		Deleted:        &entry.Deleted,

@@ -86,7 +86,7 @@ export const IPHistoryTable = ({ steamId }: { steamId: bigint }) => {
 		onSortingChange: setSorting,
 		initialState: {
 			...defaultOptions.initialState,
-			sorting: [{ id: "ban_id", desc: true }],
+			sorting: [{ id: "banId", desc: true }],
 			columnVisibility: {
 				source_id: false,
 			},

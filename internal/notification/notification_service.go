@@ -9,7 +9,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	v1 "github.com/leighmacdonald/gbans/internal/notification/v1"
 	"github.com/leighmacdonald/gbans/internal/notification/v1/notificationv1connect"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -44,10 +43,10 @@ func (s Service) Notifications(ctx context.Context, _ *emptypb.Empty) (*v1.Notif
 	for idx, notif := range notifications {
 		resp.Notifications[idx] = &v1.UserNotification{
 			PersonNotificationId: &notif.PersonNotificationID,
-			SteamId:              ptr.To(notif.SteamID.Int64()),
+			SteamId:              new(notif.SteamID.Int64()),
 			Read:                 &notif.Read,
 			Deleted:              &notif.Deleted,
-			Severity:             ptr.To(v1.Severity(notif.Severity)),
+			Severity:             new(v1.Severity(notif.Severity)),
 			Message:              &notif.Message,
 			Link:                 &notif.Link,
 			Count:                &notif.Count,

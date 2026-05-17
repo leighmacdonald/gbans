@@ -9,7 +9,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/datetime"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
 //go:embed chat_discord.gotmpl
@@ -24,7 +23,7 @@ func RegisterDiscordCommands(bot discord.Service, wordFilters WordFilters) {
 		Name:                     "filter",
 		Description:              "Manage and test global word filters",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: ptr.To(discord.ModPerms),
+		DefaultMemberPermissions: new(discord.ModPerms),
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Name:        "add",

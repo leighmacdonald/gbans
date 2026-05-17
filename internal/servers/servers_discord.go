@@ -16,7 +16,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -55,7 +54,7 @@ func RegisterDiscordCommands(service discord.Service, persons person.Provider, s
 	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "find",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: ptr.To(discord.ModPerms),
+		DefaultMemberPermissions: new(discord.ModPerms),
 		Description:              "Find a user on any of the servers",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -70,7 +69,7 @@ func RegisterDiscordCommands(service discord.Service, persons person.Provider, s
 	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "players",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: ptr.To(discord.UserPerms),
+		DefaultMemberPermissions: new(discord.UserPerms),
 		Description:              "Show a table of the current players on the server",
 		Options:                  []*discordgo.ApplicationCommandOption{serverAutoCompleteOption},
 	}, handler.onPlayers)
@@ -79,7 +78,7 @@ func RegisterDiscordCommands(service discord.Service, persons person.Provider, s
 	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "kick",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: ptr.To(discord.ModPerms),
+		DefaultMemberPermissions: new(discord.ModPerms),
 		Description:              "Kick a user from any server they are playing on",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -101,7 +100,7 @@ func RegisterDiscordCommands(service discord.Service, persons person.Provider, s
 		Name:                     "psay",
 		Description:              "Privately message a player",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: ptr.To(discord.ModPerms),
+		DefaultMemberPermissions: new(discord.ModPerms),
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
@@ -122,7 +121,7 @@ func RegisterDiscordCommands(service discord.Service, persons person.Provider, s
 		Name:                     "csay",
 		Description:              "Send a centered message to the whole server",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: ptr.To(discord.ModPerms),
+		DefaultMemberPermissions: new(discord.ModPerms),
 		Options: []*discordgo.ApplicationCommandOption{
 			serverAutoCompleteOption,
 			{
@@ -138,7 +137,7 @@ func RegisterDiscordCommands(service discord.Service, persons person.Provider, s
 		Name:                     "say",
 		Description:              "Send a console message to the whole server",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: ptr.To(discord.ModPerms),
+		DefaultMemberPermissions: new(discord.ModPerms),
 		Options: []*discordgo.ApplicationCommandOption{
 			serverAutoCompleteOption,
 			{
@@ -153,7 +152,7 @@ func RegisterDiscordCommands(service discord.Service, persons person.Provider, s
 	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "servers",
 		Description:              "Show the high level status of all servers",
-		DefaultMemberPermissions: ptr.To(discord.UserPerms),
+		DefaultMemberPermissions: new(discord.UserPerms),
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionBoolean,

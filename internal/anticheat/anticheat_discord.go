@@ -8,7 +8,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -30,7 +29,7 @@ func RegisterDiscordCommands(bot discord.Service, anticheat AntiCheat) {
 	bot.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "anticheat",
 		Description:              "Query Anticheat Logs",
-		DefaultMemberPermissions: ptr.To(discord.ModPerms),
+		DefaultMemberPermissions: new(discord.ModPerms),
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Name:        "player",

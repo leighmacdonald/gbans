@@ -196,7 +196,7 @@ function AdminFilters() {
 		),
 		initialState: {
 			...defaultOptions.initialState,
-			sorting: [{ id: "trigger_count", desc: true }],
+			sorting: [{ id: "triggerCount", desc: true }],
 			columnVisibility: {
 				source_id: false,
 				target_id: true,
@@ -321,7 +321,7 @@ export const WarningStateTable = () => {
 		},
 		initialState: {
 			...defaultOptionsWarn.initialState,
-			sorting: [{ id: "updated_on", desc: true }],
+			sorting: [{ id: "updatedOn", desc: true }],
 			columnVisibility: {
 				source_id: false,
 				target_id: true,

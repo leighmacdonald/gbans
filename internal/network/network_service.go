@@ -14,7 +14,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network/ip2location"
 	v1 "github.com/leighmacdonald/gbans/internal/network/v1"
 	"github.com/leighmacdonald/gbans/internal/network/v1/networkv1connect"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -53,8 +52,8 @@ func (s NetworkService) QueryConnections(ctx context.Context, req *v1.QueryConne
 	for idx, hist := range ipHist {
 		resp.Connection[idx] = &v1.PersonConnection{
 			PersonConnectionId: &hist.PersonConnectionID,
-			IpAddr:             ptr.To(hist.IPAddr.String()),
-			SteamId:            ptr.To(hist.SteamID.Int64()),
+			IpAddr:             new(hist.IPAddr.String()),
+			SteamId:            new(hist.SteamID.Int64()),
 			PersonaName:        &hist.PersonaName,
 			ServerId:           &hist.ServerID,
 		}

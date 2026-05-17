@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
 var (
@@ -190,8 +189,8 @@ func (b *Discord) Roles() ([]*discordgo.Role, error) {
 func (b *Discord) CreateRole(name string) (string, error) {
 	role, errRole := b.session.GuildRoleCreate(b.guildID, &discordgo.RoleParams{
 		Name:        name,
-		Mentionable: ptr.To(true),
-		Hoist:       ptr.To(false),
+		Mentionable: new(true),
+		Hoist:       new(false),
 	})
 	if errRole != nil {
 		return "", errors.Join(errRole, ErrRole)

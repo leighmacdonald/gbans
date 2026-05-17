@@ -22,7 +22,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -230,7 +229,7 @@ func (h Sourcemod) seedRequest(ctx context.Context, server servers.Server, userI
 
 		go h.notifier.Send(notification.NewDiscord(h.seedChannelID, discord.NewMessage(
 			discordgo.Container{
-				AccentColor: ptr.To(discord.ColourSuccess),
+				AccentColor: new(discord.ColourSuccess),
 				Components: []discordgo.MessageComponent{
 					discordgo.TextDisplay{Content: content},
 				},
