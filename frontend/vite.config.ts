@@ -17,7 +17,6 @@ export default defineConfig({
 			},
 		},
 	},
-
 	server: {
 		open: false,
 		port: 6007,
@@ -64,15 +63,15 @@ export default defineConfig({
 	},
 
 	plugins: [
-		tanstackRouter({
-			target: "react",
-			autoCodeSplitting: true,
-		}),
-		react(), // Must come *after* tanstackRouter
 		createHtmlPlugin({
 			entry: "./src/index.tsx",
 			template: "index.html",
 			inject: {},
 		}),
+		tanstackRouter({
+			target: "react",
+			autoCodeSplitting: true,
+		}),
+		react(), // Must come *after* tanstackRouter
 	],
 });

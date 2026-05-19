@@ -29,3 +29,5 @@ export const DateTimeField = (props: Props) => {
 		/>
 	);
 };
+
+export default DateTimeField;

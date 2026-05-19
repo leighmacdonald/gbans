@@ -26,7 +26,7 @@ import { ReportStatusIcon } from "../component/ReportStatusIcon.tsx";
 import RouterLink from "../component/RouterLink.tsx";
 import { createDefaultTableOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { useAppForm } from "../contexts/formContext.tsx";
+import { useAppForm, withForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { BanReason } from "../rpc/ban/v1/ban_pb.ts";
@@ -55,7 +55,7 @@ export const Route = createFileRoute("/_auth/report/")({
 function ReportCreate() {
 	const { profile } = useAuth();
 	const canReport = useMemo(() => {
-		return profile.steamId && profile.steamId === 0n;
+		return profile.steamId && profile.steamId !== 0n;
 	}, [profile]);
 
 	return (
@@ -232,7 +232,7 @@ const UserReportHistory = () => {
 				pageSize: 10,
 				pageIndex: 0,
 			},
-			sorting: [{ id: "reportId", desc: true }],
+			sorting: [{ id: "report.reportId", desc: true }],
 			columnVisibility: {
 				sourceId: false,
 				targetId: true,

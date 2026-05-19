@@ -46,3 +46,5 @@ export const CloseButton = (props: Props) => {
 		</form.Subscribe>
 	);
 };
+
+export default CloseButton;

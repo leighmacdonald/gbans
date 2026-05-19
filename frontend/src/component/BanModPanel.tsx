@@ -128,7 +128,7 @@ export const BanModPanel = ({ banId }: { banId: number }) => {
 												items={enumValues(AppealState)}
 												renderItem={(i) => {
 													return (
-														<MenuItem value={i} key={i}>
+														<MenuItem value={i} key={AppealState[i]}>
 															{AppealState[i]}
 														</MenuItem>
 													);

@@ -24,3 +24,4 @@ export const ClearButton = (props: Props) => {
 		</form.Subscribe>
 	);
 };
+export default ClearButton;

@@ -46,3 +46,5 @@ export const SelectField = <TData,>(props: Props<TData>) => {
 		</FormControl>
 	);
 };
+
+export default SelectField;

@@ -1418,11 +1418,11 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\asteamId\x12L\n" +
 	"\x10permission_level\x18\x02 \x01(\x0e2\x14.person.v1.PrivilegeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x0fpermissionLevel\"P\n" +
 	"\x17EditPermissionsResponse\x125\n" +
-	"\x06person\x18\x01 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\x06person\"\x85\x04\n" +
+	"\x06person\x18\x01 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\x06person\"\xfb\x03\n" +
 	"\fQueryRequest\x121\n" +
 	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12!\n" +
-	"\fpersona_name\x18\x02 \x01(\tR\vpersonaName\x12I\n" +
-	"\x10with_permissions\x18\x03 \x03(\x0e2\x14.person.v1.PrivilegeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x0fwithPermissions\x12\x1d\n" +
+	"\fpersona_name\x18\x02 \x01(\tR\vpersonaName\x12?\n" +
+	"\x10with_permissions\x18\x03 \x03(\x0e2\x14.person.v1.PrivilegeR\x0fwithPermissions\x12\x1d\n" +
 	"\n" +
 	"discord_id\x18\x04 \x01(\tR\tdiscordId\x12\x1b\n" +
 	"\tsteam_ids\x18\x05 \x03(\tR\bsteamIds\x12\x19\n" +

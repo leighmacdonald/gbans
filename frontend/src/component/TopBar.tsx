@@ -73,6 +73,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 			refetchInterval: 60 * 1000,
 			refetchIntervalInBackground: true,
 			refetchOnWindowFocus: true,
+			enabled: isAuthenticated,
 		},
 	);
 

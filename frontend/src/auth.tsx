@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const login = useCallback(
 		async (token: string) => {
 			try {
-				console.log(`Logging in... ${token}`);
+				localStorage.setItem(StorageKey.Token, JSON.stringify({ token }));
 				const personClient = createClient(PersonService, finalTransport);
 				setTokenValue({ token: token });
 

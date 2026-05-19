@@ -114,3 +114,5 @@ export const SteamIDField = (props: Props) => {
 		/>
 	);
 };
+
+export default SteamIDField;

@@ -23,3 +23,5 @@ export const TextField = (props: Props) => {
 		/>
 	);
 };
+
+export default TextField;
