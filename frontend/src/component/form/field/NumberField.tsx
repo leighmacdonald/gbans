@@ -97,3 +97,4 @@ export const NumberField = ({ label, id: idProp, min, max }: Props) => {
 		</BaseNumberField.Root>
 	);
 };
+export default NumberField;

@@ -20,3 +20,4 @@ export const SubmitButton = (props: Props) => {
 		</form.Subscribe>
 	);
 };
+export default SubmitButton;

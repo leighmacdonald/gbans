@@ -1,3 +1,6 @@
+import { create } from "@bufbuild/protobuf";
+import { createClient } from "@connectrpc/connect";
+import { createConnectQueryKey } from "@connectrpc/connect-query";
 import {
 	AdmonitionDirectiveDescriptor,
 	BoldItalicUnderlineToggles,
@@ -22,26 +25,21 @@ import {
 	toolbarPlugin,
 	UndoRedo,
 } from "@mdxeditor/editor";
-import { createRef, useCallback, useMemo } from "react";
-import "@mdxeditor/editor/style.css";
 import FormHelperText from "@mui/material/FormHelperText";
 import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import type { TextFieldProps } from "@mui/material/TextField";
-import * as Sentry from "@sentry/react";
 import { useStore } from "@tanstack/react-form";
+import { createRef, useCallback, useMemo } from "react";
 import { useFieldContext } from "../../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../../hooks/useUserFlashCtx.ts";
-import { logErr } from "../../../util/errors.ts";
-import { errorDialog } from "../../ErrorBoundary.tsx";
-import "./MarkdownField.css";
-import { create } from "@bufbuild/protobuf";
-import { createClient } from "@connectrpc/connect";
-import { createConnectQueryKey } from "@connectrpc/connect-query";
 import { AssetService, CreateRequestSchema } from "../../../rpc/asset/v1/asset_pb.ts";
 import { finalTransport, queryClient } from "../../../transport.ts";
+import { logErr } from "../../../util/errors.ts";
 import { assetURL } from "../../../util/strings.ts";
 import { renderHelpText } from "./renderHelpText.ts";
+import "./MarkdownField.css";
+import "@mdxeditor/editor/style.css";
 
 export type MDBodyFieldProps = {
 	fileUpload?: boolean;
@@ -112,8 +110,9 @@ export const MarkdownField = (props: MDBodyFieldProps) => {
 		);
 	}, [errors]);
 
+	// 	TODO  <Sentry.ErrorBoundary showDialog={true} fallback={errorDialog}>
 	return (
-		<Sentry.ErrorBoundary showDialog={true} fallback={errorDialog}>
+		<>
 			<MDXEditor
 				contentEditableClassName={"md-content-editable"}
 				className={classes}
@@ -157,6 +156,9 @@ export const MarkdownField = (props: MDBodyFieldProps) => {
 				ref={mdEditorRef}
 			/>
 			{errInfo}
-		</Sentry.ErrorBoundary>
+			{/*</Sentry.ErrorBoundary>*/}
+		</>
 	);
 };
+
+export default MarkdownField;

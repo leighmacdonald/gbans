@@ -32,3 +32,5 @@ export const ResetButton = (props: Props) => {
 		</form.Subscribe>
 	);
 };
+
+export default ResetButton;

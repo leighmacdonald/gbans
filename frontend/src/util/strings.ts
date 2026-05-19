@@ -1,6 +1,7 @@
 import type { Theme } from "@mui/material";
 import { z } from "zod/v4";
 import type { Asset } from "../rpc/asset/v1/asset_pb.ts";
+import { AppealState, BanReason, BanType } from "../rpc/ban/v1/ban_pb.ts";
 import { ReportStatus } from "../rpc/ban/v1/report_pb.ts";
 import type { DiscordProfile } from "../rpc/discord/oauth/v1/discord_pb.ts";
 import type { Admin, Group, Override } from "../rpc/sourcemod/v1/sourcemod_pb";
@@ -162,5 +163,87 @@ export const reportStatusColour = (rs: ReportStatus, theme: Theme): string => {
 			return theme.palette.success.main;
 		default:
 			return theme.palette.info.main;
+	}
+};
+
+export const appealStateString = (appealState: AppealState) => {
+	switch (appealState) {
+		case AppealState.DENIED:
+			return "Denied";
+		case AppealState.ACCEPTED:
+			return "Accepted";
+		case AppealState.REDUCED:
+			return "Reduced";
+		case AppealState.NO_APPEAL:
+			return "No Appeal";
+		case AppealState.OPEN_UNSPECIFIED:
+			return "Open";
+		default:
+			return "Open";
+	}
+};
+
+export const reportStatusString = (reportStatus: ReportStatus) => {
+	switch (reportStatus) {
+		case ReportStatus.NEED_MORE_INFO:
+			return "Need Info";
+		case ReportStatus.CLOSED_WITHOUT_ACTION:
+			return "Closed (No Action)";
+		case ReportStatus.CLOSED_WITH_ACTION:
+			return "Closed (Action)";
+		case ReportStatus.OPENED_UNSPECIFIED:
+			return "Opened";
+		default:
+			return "Opened";
+	}
+};
+
+export const banTypeString = (banType: BanType) => {
+	switch (banType) {
+		case BanType.BANNED:
+			return "Banned";
+		case BanType.NETWORK:
+			return "Network";
+		case BanType.NO_COMM:
+			return "Mute/Gag";
+		default:
+			return "OK";
+	}
+};
+
+export const banReasonString = (banReason: BanReason) => {
+	switch (banReason) {
+		case BanReason.BOT_HOST:
+			return "Bot Host";
+		case BanReason.CUSTOM:
+			return "Custom";
+		case BanReason.EXPLOITING:
+			return "Exploiting";
+		case BanReason.HARASSMENT:
+			return "Harassment";
+		case BanReason.EVADING:
+			return "Evading";
+		case BanReason.CHEATING:
+			return "Cheating";
+		case BanReason.EXTERNAL:
+			return "External";
+		case BanReason.ITEM_DESCRIPTIONS:
+			return "Item Name/Description";
+		case BanReason.LANGUAGE:
+			return "Language";
+		case BanReason.PROFILE:
+			return "Profile";
+		case BanReason.RACISM:
+			return "Racism";
+		case BanReason.SPAM:
+			return "Spam";
+		case BanReason.USERNAME:
+			return "Username";
+		case BanReason.WARNINGS_EXCEEDED:
+			return "Warnings Exceeded";
+		case BanReason.UNSPECIFIED:
+			return "Unspecified";
+		default:
+			return "Unspecified";
 	}
 };

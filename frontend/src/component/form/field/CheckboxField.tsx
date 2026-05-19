@@ -33,3 +33,5 @@ export const CheckboxField = ({ label, disabled = false }: Props) => {
 		</Box>
 	);
 };
+
+export default CheckboxField;

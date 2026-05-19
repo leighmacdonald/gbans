@@ -115,8 +115,8 @@ function AdminReports() {
 				header: "Status",
 				grow: false,
 				filterVariant: "multi-select",
-				filterSelectOptions: Object.values(ReportStatus).map((status) => ({
-					label: String(status),
+				filterSelectOptions: enumValues(ReportStatus).map((status) => ({
+					label: ReportStatus[status],
 					value: status,
 				})),
 				filterFn: (row, _, filterValue) => {
