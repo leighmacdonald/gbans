@@ -31,8 +31,8 @@ import {
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
-import type { Demo } from "../rpc/demo/v1/demo_pb.ts";
-import { getDemos } from "../rpc/demo/v1/demo-DemoService_connectquery.ts";
+import type { Demo } from "../rpc/servers/v1/demo_pb.ts";
+import { getDemos } from "../rpc/servers/v1/demo-DemoService_connectquery.ts";
 import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
@@ -40,8 +40,8 @@ import { humanFileSize } from "../util/strings.ts";
 
 const columnHelper = createMRTColumnHelper<Demo>();
 const defaultOptions = createDefaultTableOptions<Demo>();
-const defaultValues = makeSchemaDefaults({ defaultColumn: "created_on" });
-const validateSearch = makeSchemaState("created_on");
+const defaultValues = makeSchemaDefaults({ defaultColumn: "createdOn" });
+const validateSearch = makeSchemaState("createdOn");
 
 export const Route = createFileRoute("/_guest/stv")({
 	component: STV,
@@ -137,7 +137,7 @@ function STV() {
 					<Tooltip title={row.original.serverNameLong}>
 						<TextLink
 							to={"/stv"}
-							search={setColumnFilter(search, "server_id", [cell.getValue()])}
+							search={setColumnFilter(search, "serverId", [cell.getValue()])}
 							sx={{ color: stringToColour(row.original.serverNameShort) }}
 						>
 							{row.original.serverNameShort}
@@ -162,7 +162,7 @@ function STV() {
 				Cell: ({ row, cell }) => (
 					<TextLink
 						to={"/stv"}
-						search={setColumnFilter(search, "map_name", cell.getValue())}
+						search={setColumnFilter(search, "mapName", cell.getValue())}
 						sx={{ color: stringToColour(row.original.mapName) }}
 					>
 						{row.original.mapName}
@@ -210,9 +210,9 @@ function STV() {
 		initialState: {
 			...defaultOptions.initialState,
 			columnVisibility: {
-				demo_id: false,
-				server_id: true,
-				created_on: true,
+				demoId: false,
+				serverId: true,
+				createdOn: true,
 			},
 		},
 		enableRowActions: true,

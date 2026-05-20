@@ -35,7 +35,7 @@ export const IPHistoryTable = ({ steamId }: { steamId: bigint }) => {
 		filter: {
 			limit: BigInt(pagination.pageSize),
 			offset: BigInt(pagination.pageIndex * pagination.pageSize),
-			orderBy: sort ? sort.id : "created_on",
+			orderBy: sort ? sort.id : "createdOn",
 			desc: sort ? sort.desc : false,
 		},
 	});
@@ -88,7 +88,7 @@ export const IPHistoryTable = ({ steamId }: { steamId: bigint }) => {
 			...defaultOptions.initialState,
 			sorting: [{ id: "banId", desc: true }],
 			columnVisibility: {
-				source_id: false,
+				sourceId: false,
 			},
 		},
 	});

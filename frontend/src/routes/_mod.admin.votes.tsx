@@ -84,7 +84,7 @@ function AdminVotes() {
 					<Tooltip title={row.original.serverName}>
 						<TextLink
 							to={"/admin/votes"}
-							search={setColumnFilter(search, "server_id", [cell.getValue()])}
+							search={setColumnFilter(search, "serverId", [cell.getValue()])}
 							sx={{ color: stringToColour(row.original.serverName ?? "") }}
 						>
 							{row.original.serverName}
@@ -110,7 +110,7 @@ function AdminVotes() {
 										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
-							search={setColumnFilter(search, "source_id", row.original.sourceId)}
+							search={setColumnFilter(search, "sourceId", row.original.sourceId)}
 						>
 							{row.original.sourceName ?? row.original.sourceId}
 						</RouterLink>
@@ -136,7 +136,7 @@ function AdminVotes() {
 											: theme.palette.primary.dark,
 								}}
 								to={Route.fullPath}
-								search={setColumnFilter(search, "target_id", row.original.targetId)}
+								search={setColumnFilter(search, "targeId", row.original.targetId)}
 							>
 								{row.original.targetName ?? row.original.targetId}
 							</RouterLink>
@@ -230,10 +230,10 @@ function AdminVotes() {
 		initialState: {
 			...defaultOptions.initialState,
 			columnVisibility: {
-				source_id: true,
-				target_id: true,
+				sourceId: true,
+				targetId: true,
 				passed: true,
-				server_name: true,
+				serverName: true,
 			},
 		},
 	});

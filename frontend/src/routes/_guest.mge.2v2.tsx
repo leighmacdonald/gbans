@@ -262,9 +262,9 @@ function MGEOverall() {
 		initialState: {
 			...defaultOptions.initialState,
 			columnVisibility: {
-				demo_id: false,
-				server_id: true,
-				created_on: true,
+				demoId: false,
+				serverId: true,
+				createdOn: true,
 				winlimit: false,
 			},
 		},

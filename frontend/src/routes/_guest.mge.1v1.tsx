@@ -214,7 +214,7 @@ function MGEOverall() {
 		initialState: {
 			...defaultOptions.initialState,
 			columnVisibility: {
-				duel_id: false,
+				duelId: false,
 				winlimit: false,
 			},
 		},

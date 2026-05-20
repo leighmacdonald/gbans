@@ -270,9 +270,9 @@ export const SMAdminsTable = () => {
 			columnVisibility: {
 				name: true,
 				identity: true,
-				created_on: false,
-				updated_on: false,
-				steam_id: false,
+				createdOn: false,
+				updatedOn: false,
+				steamId: false,
 				password: false,
 			},
 		},

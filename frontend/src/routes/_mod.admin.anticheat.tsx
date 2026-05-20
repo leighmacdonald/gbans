@@ -1,6 +1,5 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: form needs it */
-
-import { useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
+import { useQuery } from "@connectrpc/connect-query";
 import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
@@ -25,13 +24,15 @@ import {
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
-import type { Entry } from "../rpc/anticheat/v1/anticheat_pb.ts";
+import { Detection, type Entry } from "../rpc/anticheat/v1/anticheat_pb.ts";
 import { query } from "../rpc/anticheat/v1/anticheat-AnticheatService_connectquery.ts";
 import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
+import { enumValues } from "../util/lists.ts";
+import { detectionString } from "../util/strings.ts";
 import { renderTimestamp } from "../util/time.ts";
 
-const validateSearch = makeSchemaState("anticheat_id");
+const validateSearch = makeSchemaState("anticheatId");
 
 export const Route = createFileRoute("/_mod/admin/anticheat")({
 	component: AdminAnticheat,
@@ -47,12 +48,17 @@ const defaultOptions = createDefaultTableOptions<Entry>();
 function AdminAnticheat() {
 	const search = Route.useSearch();
 	const navigate = useNavigate();
-
 	const theme = useTheme();
 
-	const { data: serverList } = useSuspenseQuery(servers);
+	const { data: serverList, isLoading: isLoadingServers } = useQuery(servers);
 
-	const { data, isLoading, isError } = useQuery(query);
+	const { data, isLoading, isError } = useQuery(
+		query,
+		{
+			steamId: 76561198084134025n,
+		},
+		{ enabled: !isLoadingServers },
+	);
 
 	const columns = useMemo(
 		() => [
@@ -68,7 +74,7 @@ function AdminAnticheat() {
 				grow: false,
 				enableColumnFilter: true,
 				filterVariant: "multi-select",
-				filterSelectOptions: serverList.servers.map((server) => ({
+				filterSelectOptions: serverList?.servers.map((server) => ({
 					label: server.serverName,
 					value: server.serverId,
 				})),
@@ -80,7 +86,7 @@ function AdminAnticheat() {
 					<Tooltip title={row.original.serverName}>
 						<TextLink
 							to={"/admin/anticheat"}
-							search={setColumnFilter(search, "server_id", [cell.getValue()])}
+							search={setColumnFilter(search, "serverId", [cell.getValue()])}
 							sx={{ color: stringToColour(row.original.serverName ?? "") }}
 						>
 							{row.original.serverName}
@@ -106,7 +112,7 @@ function AdminAnticheat() {
 										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
-							search={setColumnFilter(search, "steam_id", row.original.steamId)}
+							search={setColumnFilter(search, "steamId", row.original.steamId)}
 						>
 							{row.original.personaName ?? row.original.serverId}
 						</RouterLink>
@@ -129,11 +135,16 @@ function AdminAnticheat() {
 			}),
 			columnHelper.accessor("detection", {
 				header: "Detection",
+				enableColumnFilter: true,
 				filterVariant: "multi-select",
+				filterSelectOptions: enumValues(Detection).map((server) => ({
+					label: detectionString(server),
+					value: server,
+				})),
 				grow: false,
 				Cell: ({ cell }) => (
 					<TextLink to={"/admin/anticheat"} search={setColumnFilter(search, "detection", [cell.getValue()])}>
-						{cell.getValue()}
+						{detectionString(cell.getValue())}
 					</TextLink>
 				),
 			}),
@@ -148,7 +159,7 @@ function AdminAnticheat() {
 				Cell: ({ renderedCellValue }) => <TableCellString>{renderedCellValue}</TableCellString>,
 			}),
 		],
-		[search, theme, serverList.servers],
+		[search, theme, serverList?.servers],
 	);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
@@ -210,16 +221,16 @@ function AdminAnticheat() {
 		initialState: {
 			...defaultOptions.initialState,
 			columnVisibility: {
-				anticheat_id: false,
-				server_id: true,
+				anticheatId: false,
+				serverId: true,
 				name: true,
 				personaname: false,
-				target_id: false,
-				steam_id: true,
-				demo_id: false,
+				targetId: false,
+				steamId: true,
+				demoId: false,
 				reason: true,
-				reason_text: true,
-				created_on: false,
+				reasonText: true,
+				createdOn: false,
 			},
 		},
 	});

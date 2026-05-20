@@ -232,7 +232,7 @@ function BanPage() {
 
 					{permissionLevel() >= Privilege.MODERATOR && banData.ban.note !== "" && (
 						<ContainerWithHeader title={"Mod Notes"} iconLeft={<DocumentScannerIcon />}>
-							<MarkDownRenderer body_md={banData.ban.note} assetURL={appInfo.assetUrl} />
+							<MarkDownRenderer bodyMd={banData.ban.note} assetURL={appInfo.assetUrl} />
 						</ContainerWithHeader>
 					)}
 

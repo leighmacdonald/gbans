@@ -40,6 +40,7 @@ import { type Person, VisibilityState } from "../rpc/person/v1/person_pb.ts";
 import { query } from "../rpc/person/v1/person-PersonService_connectquery.ts";
 import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { enumValues } from "../util/lists.ts";
+import { privilegeString } from "../util/strings.ts";
 
 const defaultValues = makeSchemaDefaults({ defaultColumn: "createdOn" });
 const validateSearch = makeSchemaState("createdOn");
@@ -158,7 +159,7 @@ function AdminPeople() {
 											: theme.palette.primary.dark,
 								}}
 								to={Route.fullPath}
-								search={setColumnFilter(search, "steam_id", row.original.steamId)}
+								search={setColumnFilter(search, "steamId", row.original.steamId)}
 							>
 								{row.original.personaName ?? row.original.steamId}
 							</RouterLink>
@@ -220,11 +221,13 @@ function AdminPeople() {
 				grow: false,
 				filterVariant: "multi-select",
 				filterSelectOptions: enumValues(Privilege).map((perm) => ({
-					label: Privilege[perm],
+					label: privilegeString(perm),
 					value: perm,
 				})),
 				Cell: ({ row }) => (
-					<Typography>{Privilege[row.original ? row.original.permissionLevel : Privilege.GUEST]}</Typography>
+					<Typography>
+						{privilegeString(row.original ? row.original.permissionLevel : Privilege.GUEST)}
+					</Typography>
 				),
 			}),
 		];

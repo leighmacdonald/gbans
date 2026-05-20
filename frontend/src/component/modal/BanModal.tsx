@@ -15,7 +15,7 @@ import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import { BanReason, BanType, Origin } from "../../rpc/ban/v1/ban_pb.ts";
 import { get, update } from "../../rpc/ban/v1/ban-BanService_connectquery.ts";
 import { enumValues } from "../../util/lists.ts";
-import { banReasonString, banTypeString } from "../../util/strings.ts";
+import { banTypeString } from "../../util/strings.ts";
 import { ErrorDetails } from "../ErrorDetails.tsx";
 import { MarkdownField } from "../form/field/MarkdownField.tsx";
 import { Heading } from "../Heading";

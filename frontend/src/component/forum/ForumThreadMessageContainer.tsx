@@ -176,12 +176,12 @@ export const ThreadMessageContainer = ({
 								</Grid>
 							</Grid>
 							<Grid size={{ xs: 12 }} padding={1}>
-								<MarkDownRenderer body_md={message.bodyMd} assetURL={assetURL} />
+								<MarkDownRenderer bodyMd={message.bodyMd} assetURL={assetURL} />
 
 								{message.signature !== "" && (
 									<>
 										<Divider />
-										<MarkDownRenderer body_md={message.signature} assetURL={assetURL} />
+										<MarkDownRenderer bodyMd={message.signature} assetURL={assetURL} />
 									</>
 								)}
 							</Grid>

@@ -27,7 +27,7 @@ export const NewsView = ({ itemsPerPage, assetURL }: NewsViewProps) => {
 					return (
 						<Paper elevation={1} key={`news_${article.newsId}`}>
 							<NewsHead left={article.title} right={renderTimestamp(article.createdOn)} />
-							<MarkDownRenderer body_md={article.bodyMd} assetURL={assetURL} />
+							<MarkDownRenderer bodyMd={article.bodyMd} assetURL={assetURL} />
 						</Paper>
 					);
 				})}

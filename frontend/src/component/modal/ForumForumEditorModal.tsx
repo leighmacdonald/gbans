@@ -36,11 +36,11 @@ export const ForumForumEditorModal = NiceModal.create(
 				mutation.mutate({ ...value, ordering: Number(value.ordering) });
 			},
 			defaultValues: {
-				forum_category_id: defaultCategory,
+				forumCategoryId: defaultCategory,
 				title: forum?.title ?? "",
 				description: forum?.description ?? "",
 				ordering: forum?.ordering ? String(forum?.ordering) : "0",
-				permission_level: forum?.permissionLevel ?? Privilege.USER,
+				permissionLevel: forum?.permissionLevel ?? Privilege.USER,
 			},
 		});
 
@@ -63,7 +63,7 @@ export const ForumForumEditorModal = NiceModal.create(
 						<Grid container spacing={2}>
 							<Grid size={{ xs: 12 }}>
 								<form.AppField
-									name={"forum_category_id"}
+									name={"forumCategoryId"}
 									children={(field) => {
 										return (
 											<field.SelectField
@@ -117,7 +117,7 @@ export const ForumForumEditorModal = NiceModal.create(
 							</Grid>
 							<Grid size={{ xs: 12 }}>
 								<form.AppField
-									name={"permission_level"}
+									name={"permissionLevel"}
 									validators={{
 										onChange: z.enum(Privilege),
 									}}

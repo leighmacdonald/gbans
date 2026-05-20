@@ -42,6 +42,8 @@ import { TableCellRelativeDateField } from "../component/table/TableCellRelative
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { type Ban, BanReason } from "../rpc/ban/v1/ban_pb.ts";
 import { query } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
+import { enumValues } from "../util/lists.ts";
+import { banReasonString } from "../util/strings.ts";
 import { isPermanentBan } from "../util/table.ts";
 import { renderTimestamp } from "../util/time.ts";
 
@@ -68,7 +70,7 @@ function AdminBans() {
 	const { sendFlash } = useUserFlashCtx();
 	const navigate = useNavigate();
 
-	const { data, isLoading, isError } = useQuery(query, {});
+	const { data, isLoading, isError } = useQuery(query);
 
 	const onNewBanSteam = useCallback(async () => {
 		try {
@@ -205,7 +207,7 @@ function AdminBans() {
 											: theme.palette.primary.dark,
 								}}
 								to={Route.fullPath}
-								search={setColumnFilter(search, "source_id", row.original.sourceId)}
+								search={setColumnFilter(search, "sourceId", row.original.sourceId)}
 							>
 								{row.original.sourcePersonaName ?? row.original.sourceId}
 							</RouterLink>
@@ -247,7 +249,7 @@ function AdminBans() {
 										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
-							search={setColumnFilter(search, "target_id", row.original.targetId)}
+							search={setColumnFilter(search, "targetId", row.original.targetId)}
 						>
 							{row.original.targetPersonaName ?? row.original.targetId}
 						</RouterLink>
@@ -264,8 +266,8 @@ function AdminBans() {
 				enableColumnFilter: true,
 				enableSorting: false,
 				grow: false,
-				filterSelectOptions: Object.values(BanReason).map((reason) => ({
-					label: BanReason[reason as BanReason],
+				filterSelectOptions: enumValues(BanReason).map((reason) => ({
+					label: banReasonString(reason),
 					value: reason,
 				})),
 				filterVariant: "multi-select",
@@ -279,7 +281,7 @@ function AdminBans() {
 				},
 				Cell: ({ cell }) => (
 					<TextLink to={Route.fullPath} search={setColumnFilter(search, "reason", [cell.getValue()])}>
-						{BanReason[cell.getValue() as BanReason]}
+						{banReasonString(cell.getValue() as BanReason)}
 					</TextLink>
 				),
 			}),
@@ -370,15 +372,15 @@ function AdminBans() {
 		initialState: {
 			...defaultOptions.initialState,
 			columnVisibility: {
-				source_id: false,
-				target_id: true,
+				sourceId: false,
+				targetId: true,
 				reason: true,
-				evade_ok: false,
+				evadeOk: false,
 				deleted: false,
-				valid_until: true,
-				created_on: true,
+				validUntil: true,
+				createdOn: true,
 				active: false,
-				report_id: true,
+				reportId: true,
 				cidr: false,
 			},
 		},

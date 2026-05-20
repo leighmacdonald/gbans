@@ -22,7 +22,7 @@ const randBGNum = () => {
 };
 
 const getPausedState = () => {
-	const bgPaused = localStorage.getItem("bg_paused");
+	const bgPaused = localStorage.getItem("bgPaused");
 	if (!bgPaused) {
 		return false;
 	}
@@ -31,15 +31,15 @@ const getPausedState = () => {
 };
 
 const savePausedState = (state: boolean) => {
-	localStorage.setItem("bg_paused", state.toString());
+	localStorage.setItem("bgPaused", state.toString());
 };
 
 const saveBGNum = (num: number) => {
-	localStorage.setItem("bg_num", num.toString());
+	localStorage.setItem("bgNum", num.toString());
 };
 
 const getBGNum = () => {
-	return Number(localStorage.getItem("bg_num"));
+	return Number(localStorage.getItem("bgNum"));
 };
 
 export const BackgroundImageProvider = () => {

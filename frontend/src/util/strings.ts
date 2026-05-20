@@ -1,9 +1,11 @@
 import type { Theme } from "@mui/material";
 import { z } from "zod/v4";
+import { Detection } from "../rpc/anticheat/v1/anticheat_pb.ts";
 import type { Asset } from "../rpc/asset/v1/asset_pb.ts";
 import { AppealState, BanReason, BanType } from "../rpc/ban/v1/ban_pb.ts";
 import { ReportStatus } from "../rpc/ban/v1/report_pb.ts";
 import type { DiscordProfile } from "../rpc/discord/oauth/v1/discord_pb.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import type { Admin, Group, Override } from "../rpc/sourcemod/v1/sourcemod_pb";
 
 const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -166,6 +168,27 @@ export const reportStatusColour = (rs: ReportStatus, theme: Theme): string => {
 	}
 };
 
+export const privilegeString = (privilege: Privilege) => {
+	switch (privilege) {
+		case Privilege.ADMIN:
+			return "Admin";
+		case Privilege.MODERATOR:
+			return "Moderator";
+		case Privilege.EDITOR:
+			return "Editor";
+		case Privilege.RESERVED:
+			return "Reserved";
+		case Privilege.USER:
+			return "User";
+		case Privilege.GUEST:
+			return "Guest";
+		case Privilege.BANNED_UNSPECIFIED:
+			return "Banned";
+		default:
+			return "Unknown";
+	}
+};
+
 export const appealStateString = (appealState: AppealState) => {
 	switch (appealState) {
 		case AppealState.DENIED:
@@ -195,6 +218,35 @@ export const reportStatusString = (reportStatus: ReportStatus) => {
 			return "Opened";
 		default:
 			return "Opened";
+	}
+};
+
+export const detectionString = (detection: Detection) => {
+	switch (detection) {
+		case Detection.AIM_SNAP:
+			return "Aim Snap";
+		case Detection.BHOP:
+			return "BHop";
+		case Detection.CHEAT_CVAR:
+			return "Cheat CVar";
+		case Detection.CMD_NUM_SPIKE:
+			return "Cmd Num Spike";
+		case Detection.EYE_ANGLES:
+			return "Eye Angles";
+		case Detection.INTERP:
+			return "Interp";
+		case Detection.INVALID_USER_CMD:
+			return "Invalid User Cmd";
+		case Detection.OOB_CVAR:
+			return "OOB CVar";
+		case Detection.SILENT_AIM:
+			return "Silent Aim";
+		case Detection.TOO_MANY_CONNECTIONS:
+			return "Too Many Conn";
+		case Detection.UNSPECIFIED:
+			return "Unknown";
+		default:
+			return "Unknown";
 	}
 };
 

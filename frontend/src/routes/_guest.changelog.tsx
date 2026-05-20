@@ -49,7 +49,7 @@ function Changelogs() {
 						}
 						iconLeft={<NewReleasesIcon />}
 					>
-						<MarkDownRenderer body_md={changelog.body} assetURL={appInfo.assetUrl} />
+						<MarkDownRenderer bodyMd={changelog.body} assetURL={appInfo.assetUrl} />
 					</ContainerWithHeader>
 				</Grid>
 			))}

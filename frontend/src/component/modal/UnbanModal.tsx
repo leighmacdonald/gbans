@@ -9,7 +9,7 @@ import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import { delete$ } from "../../rpc/ban/v1/ban-BanService_connectquery.ts";
 
 const onSubmit = z.object({
-	unban_reason: z.string().min(5),
+	unbanReason: z.string().min(5),
 });
 
 export const UnbanModal = NiceModal.create(
@@ -24,7 +24,7 @@ export const UnbanModal = NiceModal.create(
 		const { sendError } = useUserFlashCtx();
 
 		const defaultValues: z.input<typeof onSubmit> = {
-			unban_reason: "",
+			unbanReason: "",
 		};
 
 		const mutation = useMutation(delete$, {
@@ -40,7 +40,7 @@ export const UnbanModal = NiceModal.create(
 
 		const form = useAppForm({
 			onSubmit: async ({ value }) => {
-				mutation.mutate({ reason: value.unban_reason, banId });
+				mutation.mutate({ reason: value.unbanReason, banId });
 			},
 			defaultValues,
 			validators: { onSubmit },
@@ -63,7 +63,7 @@ export const UnbanModal = NiceModal.create(
 						<Grid container spacing={2}>
 							<Grid size={{ xs: 12 }}>
 								<form.AppField
-									name={"unban_reason"}
+									name={"unbanReason"}
 									children={(field) => {
 										return <field.TextField label={"Unban Reason"} />;
 									}}

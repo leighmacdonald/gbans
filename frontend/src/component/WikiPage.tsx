@@ -144,7 +144,7 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 					iconLeft={<ArticleIcon />}
 					buttons={buttons}
 				>
-					<MarkDownRenderer body_md={currentPage?.bodyMd ?? ""} assetURL={assetURL} />
+					<MarkDownRenderer bodyMd={currentPage?.bodyMd ?? ""} assetURL={assetURL} />
 				</ContainerWithHeaderAndButtons>
 			</Grid>
 		</Grid>

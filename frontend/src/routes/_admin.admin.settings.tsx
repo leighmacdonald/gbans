@@ -53,9 +53,9 @@ const settingsSchema = z.object({
 			"patreon",
 			"discord",
 			"logging",
-			"geo_location",
+			"geoLocation",
 			"debug",
-			"local_store",
+			"localStore",
 			"anticheat",
 			"network",
 			"ssh",
@@ -80,11 +80,11 @@ type tabs =
 	| "patreon"
 	| "discord"
 	| "logging"
-	| "geo_location"
+	| "geoLocation"
 	| "debug"
 	| "anticheat"
 	| "network"
-	| "local_store"
+	| "localStore"
 	| "ssh"
 	| "exports";
 
@@ -232,7 +232,7 @@ function AdminSettings() {
 							label={"Logging"}
 						/>
 						<TabButton
-							tab={"geo_location"}
+							tab={"geoLocation"}
 							onClick={onTabClick}
 							icon={<TravelExploreIcon />}
 							currentTab={tab}
@@ -246,7 +246,7 @@ function AdminSettings() {
 							label={"Debug"}
 						/>
 						<TabButton
-							tab={"local_store"}
+							tab={"localStore"}
 							onClick={onTabClick}
 							icon={<WebAssetIcon />}
 							currentTab={tab}
@@ -309,7 +309,7 @@ function AdminSettings() {
 											title bar and site heading. It should be short and simple.
 										</SubHeading>
 										<form.AppField
-											name={"site_name"}
+											name={"siteName"}
 											children={(field) => {
 												return <field.TextField label={"Site Name"} />;
 											}}
@@ -319,7 +319,7 @@ function AdminSettings() {
 									<Grid size={{ xs: 12 }}>
 										<SubHeading>Description of the community</SubHeading>
 										<form.AppField
-											name={"site_description"}
+											name={"siteDescription"}
 											children={(field) => {
 												return <field.TextField label={"Description"} />;
 											}}
@@ -343,7 +343,7 @@ function AdminSettings() {
 											If you have an asset under a different subdir you should change this.
 										</SubHeading>
 										<form.AppField
-											name={"asset_url"}
+											name={"assetUrl"}
 											children={(field) => {
 												return <field.TextField label={"URL path pointing to assets"} />;
 											}}

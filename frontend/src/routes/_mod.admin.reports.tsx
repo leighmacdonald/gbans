@@ -29,6 +29,7 @@ import { BanReason } from "../rpc/ban/v1/ban_pb.ts";
 import { ReportStatus, type ReportWithAuthor } from "../rpc/ban/v1/report_pb.ts";
 import { reports } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
 import { enumValues } from "../util/lists.ts";
+import { reportStatusString } from "../util/strings.ts";
 import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<ReportWithAuthor>();
@@ -116,15 +117,15 @@ function AdminReports() {
 				grow: false,
 				filterVariant: "multi-select",
 				filterSelectOptions: enumValues(ReportStatus).map((status) => ({
-					label: ReportStatus[status],
+					label: reportStatusString(status),
 					value: status,
 				})),
 				filterFn: (row, _, filterValue) => {
 					return filterValue.length === 0 || filterValue.includes(row.original.report?.reportStatus);
 				},
 				Cell: ({ cell }) => (
-					<TextLink to={Route.fullPath} search={setColumnFilter(search, "report_status", [cell.getValue()])}>
-						{ReportStatus[cell.getValue()]}
+					<TextLink to={Route.fullPath} search={setColumnFilter(search, "reportStatus", [cell.getValue()])}>
+						{reportStatusString(cell.getValue())}
 					</TextLink>
 				),
 			}),
@@ -160,7 +161,7 @@ function AdminReports() {
 										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
-							search={setColumnFilter(search, "source_id", row.original.author?.steamId)}
+							search={setColumnFilter(search, "sourceId", row.original.author?.steamId)}
 						>
 							{row.original.author?.name ?? row.original.author?.steamId}
 						</RouterLink>
@@ -203,7 +204,7 @@ function AdminReports() {
 										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
-							search={setColumnFilter(search, "target_id", row.original.subject?.steamId)}
+							search={setColumnFilter(search, "targetId", row.original.subject?.steamId)}
 						>
 							{row.original.subject?.name ?? row.original.subject?.steamId}
 						</RouterLink>
@@ -286,14 +287,14 @@ function AdminReports() {
 		initialState: {
 			...defaultOptions.initialState,
 			columnVisibility: {
-				source_id: false,
-				target_id: true,
+				sourceId: false,
+				targetId: true,
 				reason: true,
-				reason_text: false,
-				created_on: false,
-				report_status: true,
-				updated_on: true,
-				report_id: true,
+				reasonText: false,
+				createdOn: false,
+				reportStatus: true,
+				updatedOn: true,
+				reportId: true,
 			},
 		},
 	});

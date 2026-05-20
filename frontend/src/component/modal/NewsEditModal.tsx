@@ -43,14 +43,14 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: Article }) =
 		},
 		defaultValues: {
 			title: entry?.title ?? "",
-			body_md: entry?.bodyMd ?? "",
-			is_published: entry?.isPublished ?? false,
+			bodyMd: entry?.bodyMd ?? "",
+			isPublished: entry?.isPublished ?? false,
 		},
 		validators: {
 			onSubmit: z.object({
-				body_md: z.string().min(10),
+				bodyMd: z.string().min(10),
 				title: z.string().min(4),
-				is_published: z.boolean(),
+				isPublished: z.boolean(),
 			}),
 		},
 	});
@@ -79,7 +79,7 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: Article }) =
 						</Grid>
 						<Grid size={{ xs: 12 }}>
 							<form.AppField
-								name={"body_md"}
+								name={"bodyMd"}
 								children={(field) => {
 									return <field.MarkdownField label={"Body"} />;
 								}}
@@ -87,7 +87,7 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: Article }) =
 						</Grid>
 						<Grid size={{ xs: 12 }}>
 							<form.AppField
-								name={"is_published"}
+								name={"isPublished"}
 								children={(field) => {
 									return <field.CheckboxField label={"Is Published"} />;
 								}}

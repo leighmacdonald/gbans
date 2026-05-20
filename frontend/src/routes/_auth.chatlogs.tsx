@@ -173,7 +173,7 @@ function ChatLogs() {
 						<RouterLink
 							style={{ color: theme.palette.primary.light }}
 							to={Route.fullPath}
-							search={setColumnFilter(search, "steam_id", row.original.steamId)}
+							search={setColumnFilter(search, "steamId", row.original.steamId)}
 						>
 							{row.original.personaName ?? row.original.steamId}
 						</RouterLink>
@@ -205,15 +205,15 @@ function ChatLogs() {
 	const { data, isLoading, isError, isRefetching, refetch } = useQuery(
 		query,
 		{
-			serverId: filterValueNumber("server_id", search.columnFilters),
-			steamId: BigInt(filterValue("steam_id", search.columnFilters)),
+			serverId: filterValueNumber("serverId", search.columnFilters),
+			steamId: BigInt(filterValue("steamId", search.columnFilters)),
 			query: filterValue("body", search.columnFilters),
 			flaggedOnly: search.flaggedOnly,
 			filter: {
 				limit: BigInt(search.pagination?.pageSize ?? 25n),
 				desc: sort ? sort.desc : true,
 				offset: BigInt(search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : 0),
-				orderBy: sort ? sort.id : "created_on",
+				orderBy: sort ? sort.id : "createdOn",
 			},
 		},
 		{ placeholderData: keepPreviousData },
@@ -238,10 +238,10 @@ function ChatLogs() {
 		initialState: {
 			...defaultOptions.initialState,
 			columnVisibility: {
-				server_id: true,
-				source_id: true,
+				serverId: true,
+				sourceId: true,
 				body: true,
-				created_on: true,
+				createdOn: true,
 			},
 		},
 		manualFiltering: true,

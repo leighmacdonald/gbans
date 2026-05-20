@@ -266,14 +266,14 @@ function AdminServers() {
 			pagination: defaultValues.pagination,
 			sorting: defaultValues.sorting,
 			columnVisibility: {
-				server_id: false,
-				short_name: true,
+				serverId: false,
+				shortName: true,
 				password: false,
 				region: false,
 				rcon: false,
-				token_created_on: false,
-				enable_stats: false,
-				is_enabled: true,
+				tokeCreatedOn: false,
+				enableStats: false,
+				isEnabled: true,
 			},
 		},
 		enableRowActions: true,
@@ -293,7 +293,7 @@ function AdminServers() {
 				</IconButton>
 				<IconButtonLink
 					to={"/admin/serverlogs"}
-					search={{ server_ids: [row.original.serverId] }}
+					search={{ serverIds: [row.original.serverId] }}
 					key="logs"
 					color={"warning"}
 				>

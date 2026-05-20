@@ -48,8 +48,8 @@ L.Icon.Default.mergeOptions({
 
 const columnHelper = createMRTColumnHelper<PersonConnection>();
 const defaultOptions = createDefaultTableOptions<PersonConnection>();
-const defaultValues = makeSchemaDefaults({ defaultColumn: "person_connection_id" });
-const validateSearch = makeSchemaState("person_connection_id");
+const defaultValues = makeSchemaDefaults({ defaultColumn: "personConnectionId" });
+const validateSearch = makeSchemaState("personConnectionId");
 
 export const Route = createFileRoute("/_mod/admin/network/playersbyip")({
 	component: AdminNetworkPlayersByCIDR,
@@ -155,7 +155,7 @@ function AdminNetworkPlayersByCIDR() {
 					<Tooltip title={row.original.serverId}>
 						<TextLink
 							to={"/admin/network/playersbyip"}
-							search={setColumnFilter(search, "server_id", [cell.getValue()])}
+							search={setColumnFilter(search, "serverId", [cell.getValue()])}
 							sx={{ color: stringToColour(row.original.serverNameShort ?? "") }}
 						>
 							{row.original.serverNameShort}
@@ -184,7 +184,7 @@ function AdminNetworkPlayersByCIDR() {
 					<TextLink
 						color={theme.palette.mode === "dark" ? theme.palette.primary.light : theme.palette.primary.dark}
 						to={"/admin/network/playersbyip"}
-						search={setColumnFilter(search, "steam_id", cell.getValue())}
+						search={setColumnFilter(search, "steamId", cell.getValue())}
 					>
 						{cell.getValue()}
 					</TextLink>
@@ -196,19 +196,19 @@ function AdminNetworkPlayersByCIDR() {
 				Cell: ({ cell }) => (
 					<TextLink
 						to={"/admin/network/playersbyip"}
-						search={setColumnFilter(search, "ip_addr", [cell.getValue()])}
+						search={setColumnFilter(search, "ipAddr", [cell.getValue()])}
 					>
 						{cell.getValue()}
 					</TextLink>
 				),
 			}),
 			columnHelper.accessor("asNum", {
-				id: "as_num",
+				id: "asNum",
 				header: "AS Num",
 				grow: false,
 				enableSorting: false,
 				Cell: ({ cell }) => (
-					<TextLink to={Route.fullPath} search={setColumnFilter(search, "as_num", cell.getValue())}>
+					<TextLink to={Route.fullPath} search={setColumnFilter(search, "asNum", cell.getValue())}>
 						{cell.getValue()}
 					</TextLink>
 				),
@@ -218,7 +218,7 @@ function AdminNetworkPlayersByCIDR() {
 				grow: true,
 				enableSorting: false,
 				Cell: ({ cell }) => (
-					<TextLink to={Route.fullPath} search={setColumnFilter(search, "as_name", cell.getValue())}>
+					<TextLink to={Route.fullPath} search={setColumnFilter(search, "asName", cell.getValue())}>
 						{cell.getValue()}
 					</TextLink>
 				),
@@ -228,7 +228,7 @@ function AdminNetworkPlayersByCIDR() {
 				grow: true,
 				enableSorting: false,
 				Cell: ({ cell }) => (
-					<TextLink to={Route.fullPath} search={setColumnFilter(search, "country_code", cell.getValue())}>
+					<TextLink to={Route.fullPath} search={setColumnFilter(search, "countryCode", cell.getValue())}>
 						{cell.getValue()}
 					</TextLink>
 				),
@@ -238,7 +238,7 @@ function AdminNetworkPlayersByCIDR() {
 				grow: true,
 				enableSorting: false,
 				Cell: ({ cell }) => (
-					<TextLink to={Route.fullPath} search={setColumnFilter(search, "city_name", cell.getValue())}>
+					<TextLink to={Route.fullPath} search={setColumnFilter(search, "cityName", cell.getValue())}>
 						{cell.getValue()}
 					</TextLink>
 				),
@@ -276,12 +276,12 @@ function AdminNetworkPlayersByCIDR() {
 		initialState: {
 			...defaultOptions.initialState,
 			columnVisibility: {
-				person_connection_id: false,
-				server_id: true,
+				personConnectionId: false,
+				serverId: true,
 				address: true,
-				created_on: true,
-				updated_on: false,
-				lat_long: false,
+				createdOn: true,
+				updatedOn: false,
+				latLong: false,
 			},
 		},
 		onColumnFiltersChange: setColumnFilters,

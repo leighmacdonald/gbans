@@ -94,12 +94,12 @@ function Patreon() {
 								</Paper>
 
 								<MarkDownRenderer
-									body_md={String(data?.campaigns[0].attributes?.summary)}
+									bodyMd={String(data?.campaigns[0].attributes?.summary)}
 									assetURL={appInfo.assetUrl}
 								/>
 
 								<MarkDownRenderer
-									body_md={String(data?.campaigns[0].attributes?.thanksMsg)}
+									bodyMd={String(data?.campaigns[0].attributes?.thanksMsg)}
 									assetURL={appInfo.assetUrl}
 								/>
 							</Stack>

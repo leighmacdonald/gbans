@@ -24,7 +24,7 @@ import { MarkDownRenderer } from "./MarkdownRenderer";
 interface AppealMessageViewProps {
 	message: AppealMessage;
 	assetURL: string;
-	onDelete: (report_message_id: bigint) => void;
+	onDelete: (reportMessageId: bigint) => void;
 }
 
 export const AppealMessageView = ({ message, onDelete, assetURL }: AppealMessageViewProps) => {
@@ -61,11 +61,11 @@ export const AppealMessageView = ({ message, onDelete, assetURL }: AppealMessage
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
 			mutation.mutate({
-				bodyMd: value.body_md,
+				bodyMd: value.bodyMd,
 			});
 		},
 		defaultValues: {
-			body_md: message.messageMd,
+			bodyMd: message.messageMd,
 		},
 	});
 
@@ -89,7 +89,7 @@ export const AppealMessageView = ({ message, onDelete, assetURL }: AppealMessage
 								validators={{
 									onChange: z.string().min(4),
 								}}
-								name={"body_md"}
+								name={"bodyMd"}
 								children={(field) => {
 									return <field.MarkdownField label={"Message"} />;
 								}}
@@ -131,7 +131,7 @@ export const AppealMessageView = ({ message, onDelete, assetURL }: AppealMessage
 					subheader={d1}
 				/>
 
-				<MarkDownRenderer body_md={message.messageMd} assetURL={assetURL} />
+				<MarkDownRenderer bodyMd={message.messageMd} assetURL={assetURL} />
 
 				<Menu
 					anchorEl={anchorEl}

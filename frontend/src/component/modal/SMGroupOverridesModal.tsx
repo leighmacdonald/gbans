@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
+import type { SettingsSystemDaydreamOutlined } from "@mui/icons-material";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -39,7 +40,7 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: Group
 		try {
 			const created = (await NiceModal.show(SMGroupOverrideEditorModal, { group })) as GroupOverrides;
 			queryClient.setQueryData(
-				["serverGroupOverrides", { group_id: group.groupId }],
+				["serverGroupOverrides", { groupId: group.groupId }],
 				[...(data?.overrides ?? []), created],
 			);
 			sendFlash("success", `Group override created successfully: ${created.name}`);
@@ -52,7 +53,7 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: Group
 	const delOverrideMutation = useMutation(deleteGroupOverride, {
 		onSuccess: (_, req) => {
 			queryClient.setQueryData(
-				["serverGroupOverrides", { group_id: req.groupOverrideId }],
+				["serverGroupOverrides", { groupId: req.groupOverrideId }],
 				(data?.overrides ?? []).filter((o) => {
 					return o.groupOverrideId !== req.groupOverrideId;
 				}),
@@ -67,7 +68,7 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: Group
 			try {
 				const edited = (await NiceModal.show(SMGroupOverrideEditorModal, { override })) as GroupOverrides;
 				queryClient.setQueryData(
-					["serverGroupOverrides", { group_id: group.groupId }],
+					["serverGroupOverrides", { groupId: group.groupId }],
 					(data?.overrides ?? []).map((o) => {
 						return o.groupOverrideId === edited.groupOverrideId ? edited : o;
 					}),
@@ -166,9 +167,9 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: Group
 			columnVisibility: {
 				name: true,
 				identity: true,
-				created_on: false,
-				updated_on: false,
-				steam_id: false,
+				createdOn: false,
+				updatedOn: false,
+				steamId: false,
 				password: false,
 			},
 		},
