@@ -62,14 +62,14 @@ export const ReportModPanel = ({ reportId }: { reportId: number }) => {
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			if (value.report_status === reportResponse?.report?.report?.reportStatus) {
+			if (value.reportStatus === reportResponse?.report?.report?.reportStatus) {
 				return;
 			}
 			stateMutation.mutate({ reportId, reportStatus: status });
 		},
 
 		defaultValues: {
-			report_status: reportResponse?.report?.report?.reportStatus ?? ReportStatus.OPENED_UNSPECIFIED,
+			reportStatus: reportResponse?.report?.report?.reportStatus ?? ReportStatus.OPENED_UNSPECIFIED,
 		},
 	});
 
@@ -94,7 +94,7 @@ export const ReportModPanel = ({ reportId }: { reportId: number }) => {
 					<ListItem>
 						<Stack sx={{ width: "100%" }} spacing={2}>
 							<form.AppField
-								name={"report_status"}
+								name={"reportStatus"}
 								children={(field) => {
 									return (
 										<field.SelectField

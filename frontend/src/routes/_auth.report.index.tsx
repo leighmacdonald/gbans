@@ -26,7 +26,7 @@ import { ReportStatusIcon } from "../component/ReportStatusIcon.tsx";
 import RouterLink from "../component/RouterLink.tsx";
 import { createDefaultTableOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { useAppForm, withForm } from "../contexts/formContext.tsx";
+import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { BanReason } from "../rpc/ban/v1/ban_pb.ts";
@@ -38,7 +38,7 @@ import { emptyOrNullString } from "../util/types.ts";
 
 const validateSearch = commonTableSearchSchema.extend({
 	rows: z.number().optional(),
-	sortColumn: z.enum(["report_status", "created_on"]).optional(),
+	sortColumn: z.enum(["reportStatus", "createdOn"]).optional(),
 	steamId: z.bigint().optional(),
 	demoId: z.number().optional(),
 	personMessageId: z.bigint().optional(),

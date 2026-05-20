@@ -34,8 +34,8 @@ import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<Article>();
 const defaultOptions = createDefaultTableOptions<Article>();
-const defaultValues = makeSchemaDefaults({ defaultColumn: "news_id" });
-const validateSearch = makeSchemaState("news_id");
+const defaultValues = makeSchemaDefaults({ defaultColumn: "newsId" });
+const validateSearch = makeSchemaState("newsId");
 
 export const Route = createFileRoute("/_mod/admin/news")({
 	component: AdminNews,
@@ -235,10 +235,10 @@ function AdminNews() {
 			...defaultOptions.initialState,
 			columnVisibility: {
 				title: true,
-				news_id: false,
-				created_on: false,
-				updated_on: true,
-				is_published: true,
+				newsId: false,
+				createdOn: false,
+				updatedOn: true,
+				isPublished: true,
 			},
 		},
 	});

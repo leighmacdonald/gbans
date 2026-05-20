@@ -126,7 +126,7 @@ export const NetworkBlocklist = () => {
 				name: true,
 				url: true,
 				enabled: true,
-				created_on: true,
+				createdOn: true,
 			},
 		},
 		enableRowActions: true,

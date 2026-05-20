@@ -28,7 +28,7 @@ import { get } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
 import { ReportStatus, type ReportWithAuthorValid } from "../rpc/ban/v1/report_pb.ts";
 import { report } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
 import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
-import { avatarHashToURL, reportStatusColour } from "../util/strings.ts";
+import { avatarHashToURL, reportStatusColour, reportStatusString } from "../util/strings.ts";
 import { renderTimeDistance, renderTimestamp } from "../util/time.ts";
 
 export const Route = createFileRoute("/_auth/report/$reportId")({
@@ -129,7 +129,7 @@ function ReportView() {
 						),
 					}}
 				>
-					{ReportStatus[reportResp?.report?.report?.reportStatus ?? ReportStatus.OPENED_UNSPECIFIED]}
+					{reportStatusString(reportResp?.report?.report?.reportStatus ?? ReportStatus.OPENED_UNSPECIFIED)}
 				</Typography>
 			</ContainerWithHeader>
 		);

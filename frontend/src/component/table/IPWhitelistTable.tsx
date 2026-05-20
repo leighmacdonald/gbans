@@ -96,7 +96,7 @@ export const IPWhitelistTable = () => {
 					<RouterLink
 						style={{ color: theme.palette.primary.light }}
 						to={"/admin/network/playersbyip"}
-						search={setColumnFilter({}, "ip_addr", cell.getValue())}
+						search={setColumnFilter({}, "ipAddr", cell.getValue())}
 					>
 						{cell.getValue()}
 					</RouterLink>

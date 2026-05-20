@@ -71,11 +71,11 @@ export const ReportMessageView = ({ message, assetURL }: ReportMessageViewProps)
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
 			mutation.mutate({
-				bodyMd: value.body_md,
+				bodyMd: value.bodyMd,
 			});
 		},
 		defaultValues: {
-			body_md: message.messageMd,
+			bodyMd: message.messageMd,
 		},
 	});
 
@@ -104,7 +104,7 @@ export const ReportMessageView = ({ message, assetURL }: ReportMessageViewProps)
 					<Grid container spacing={2} padding={1}>
 						<Grid size={{ xs: 12 }}>
 							<form.AppField
-								name={"body_md"}
+								name={"bodyMd"}
 								validators={{
 									onChange: z.string().min(3),
 								}}
@@ -149,7 +149,7 @@ export const ReportMessageView = ({ message, assetURL }: ReportMessageViewProps)
 					subheader={d1}
 				/>
 
-				<MarkDownRenderer body_md={message.messageMd} assetURL={assetURL} />
+				<MarkDownRenderer bodyMd={message.messageMd} assetURL={assetURL} />
 
 				<Menu
 					anchorEl={anchorEl}

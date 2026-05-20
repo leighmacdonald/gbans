@@ -30,12 +30,12 @@ import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<ServerLog>();
 const defaultOptions = createDefaultTableOptions<ServerLog>();
-const defaultValues = { ...makeSchemaDefaults({ defaultColumn: "person_message_id" }), server_ids: [] };
+const defaultValues = { ...makeSchemaDefaults({ defaultColumn: "personMessageId" }), serverIds: [] };
 const validateSearch = z
 	.object({
-		server_ids: z.number().array().optional().default([]),
+		serverIds: z.number().array().optional().default([]),
 	})
-	.extend(makeSchemaState("person_message_id").shape);
+	.extend(makeSchemaState("personMessageId").shape);
 
 export const Route = createFileRoute("/_admin/admin/serverlogs")({
 	validateSearch,
@@ -57,7 +57,7 @@ function AdminServerLogs() {
 	const { data: serverData } = useSuspenseQuery(servers);
 
 	const { data, isLoading, isError, isRefetching } = useQuery(queryLogs, {
-		serverId: filterValueNumberArray("server_ids", search.columnFilters),
+		serverId: filterValueNumberArray("serverIds", search.columnFilters),
 	});
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
@@ -120,7 +120,7 @@ function AdminServerLogs() {
 					<Tooltip title={row.original.serverName}>
 						<TextLink
 							to={"/chatlogs"}
-							search={setColumnFilter(search, "server_ids", [cell.getValue()])}
+							search={setColumnFilter(search, "serverIds", [cell.getValue()])}
 							sx={{ color: stringToColour(row.original.serverName ?? "") }}
 						>
 							{row.original.serverName}
@@ -186,10 +186,10 @@ function AdminServerLogs() {
 				pageSize: 100,
 			},
 			columnVisibility: {
-				server_id: true,
-				server_name: true,
+				serverId: true,
+				serverName: true,
 				body: true,
-				created_on: true,
+				createdOn: true,
 			},
 		},
 	});

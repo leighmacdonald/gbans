@@ -11,15 +11,15 @@ import { useNavigate } from "@tanstack/react-router";
 import React from "react";
 
 interface ChatContextMenuProps {
-	person_message_id: number;
+	personMessageId: number;
 	flagged: boolean;
 	steamId: string;
 }
 
 export const sessionKeyReportPersonMessageIdName = "rpmid";
-export const sessionKeyReportSteamID = "report_steam_id";
+export const sessionKeyReportSteamID = "reportSteamId";
 
-export const ChatContextMenu = ({ person_message_id, flagged, steamId }: ChatContextMenuProps) => {
+export const ChatContextMenu = ({ personMessageId, flagged, steamId }: ChatContextMenuProps) => {
 	const navigate = useNavigate();
 
 	const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -32,7 +32,7 @@ export const ChatContextMenu = ({ person_message_id, flagged, steamId }: ChatCon
 	};
 
 	const onClickReport = () => {
-		sessionStorage.setItem(sessionKeyReportPersonMessageIdName, `${person_message_id}`);
+		sessionStorage.setItem(sessionKeyReportPersonMessageIdName, `${personMessageId}`);
 		sessionStorage.setItem(sessionKeyReportSteamID, steamId);
 		navigate({ to: "/report" });
 		handleClose();

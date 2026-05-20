@@ -306,10 +306,10 @@ function NotificationsPage() {
 			...defaultOptions.initialState,
 			sorting: [{ id: "banId", desc: true }],
 			columnVisibility: {
-				cidr_block_whitelist_id: false,
+				cidrBlockWhitelistId: false,
 				address: true,
-				created_on: true,
-				updated_on: false,
+				createdOn: true,
+				updatedOn: false,
 			},
 		},
 		enableRowActions: true,

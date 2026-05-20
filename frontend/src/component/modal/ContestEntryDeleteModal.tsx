@@ -3,7 +3,7 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-export const ContestEntryDeleteModal = NiceModal.create(({ contest_entry_id }: { contest_entry_id: string }) => {
+export const ContestEntryDeleteModal = NiceModal.create(({ contestEntryId }: { contestEntryId: string }) => {
 	const modal = useModal();
 
 	// const onSubmit = useCallback(async () => {
@@ -20,7 +20,7 @@ export const ContestEntryDeleteModal = NiceModal.create(({ contest_entry_id }: {
 	return (
 		// <Formik initialValues={{}} onSubmit={onSubmit}>
 		<Dialog {...muiDialogV5(modal)}>
-			<DialogTitle>Are you sure you want to delete contest entry? ({contest_entry_id})</DialogTitle>
+			<DialogTitle>Are you sure you want to delete contest entry? ({contestEntryId})</DialogTitle>
 
 			<DialogContent>
 				<Stack spacing={2}>

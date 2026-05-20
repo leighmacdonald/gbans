@@ -7,7 +7,7 @@ import { useAuth } from "../hooks/useAuth.ts";
 
 export const Route = createFileRoute("/_guest/login/success")({
 	validateSearch: z.object({
-		next_url: z.string().optional().catch(""),
+		nextUrl: z.string().optional().catch(""),
 		token: z.string(),
 	}),
 	component: LoginSteamSuccess,
@@ -32,13 +32,13 @@ function LoginSteamSuccess() {
 	useEffect(() => {
 		login(search.token, {
 			onSuccess: () => {
-				navigate({ to: search.next_url });
+				navigate({ to: search.nextUrl });
 			},
 			onError: () => {
 				navigate({ to: "/" });
 			},
 		});
-	}, [login, search.next_url, search.token, navigate]);
+	}, [login, search.nextUrl, search.token, navigate]);
 
 	return <LoadingPlaceholder />;
 }

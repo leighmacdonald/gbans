@@ -73,7 +73,7 @@ function ForumThreadPage() {
 
 	const onSave = async (message: Message) => {
 		queryClient.setQueryData(
-			["threadMessages", { forum_thread_id: forumThreadId }],
+			["threadMessages", { forumThreadId: forumThreadId }],
 			messagesData?.messages?.map((m) => {
 				return message.forumMessageId === m.forumMessageId ? message : m;
 			}),
@@ -99,7 +99,7 @@ function ForumThreadPage() {
 			})) as Thread;
 
 			if (newThread.forumThreadId > 0) {
-				queryClient.setQueryData(["forumThread", { forum_thread_id: Number(forumThreadId) }], newThread);
+				queryClient.setQueryData(["forumThread", { forumThreadId: Number(forumThreadId) }], newThread);
 			} else {
 				await navigate({ to: "/forums" });
 			}
@@ -113,7 +113,7 @@ function ForumThreadPage() {
 			const newMessages = (messagesData?.messages ?? []).filter(
 				(m) => m.forumMessageId !== variables.forumMessageId,
 			);
-			queryClient.setQueryData(["threadMessages", { forum_thread_id: forumThreadId }], newMessages);
+			queryClient.setQueryData(["threadMessages", { forumThreadId: forumThreadId }], newMessages);
 			sendFlash("success", `Messages deleted successfully: #${variables.forumMessageId}`);
 			if (firstPostID === variables.forumMessageId) {
 				await navigate({ to: "/forums" });
@@ -152,7 +152,7 @@ function ForumThreadPage() {
 	const createMessageMutation = useMutation(threadReplyCreate, {
 		onSuccess: (message) => {
 			const newMessages = [...(messagesData?.messages ?? []), message];
-			queryClient.setQueryData(["threadMessages", { forum_thread_id: forumThreadId }], newMessages);
+			queryClient.setQueryData(["threadMessages", { forumThreadId: forumThreadId }], newMessages);
 			mdEditorRef.current?.setMarkdown("");
 			form.reset();
 			sendFlash("success", `New message created (#${message.message?.forumMessageId})`);

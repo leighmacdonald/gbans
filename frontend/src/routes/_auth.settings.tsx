@@ -140,19 +140,14 @@ function ProfileSettings() {
 				{hasPermission(Privilege.MODERATOR) && (
 					<ForumSection tab={tab} settings={data?.settings} onSave={onSave} />
 				)}
-				<ConnectionsSection
-					tab={tab}
-					settings={data?.settings}
-					onSave={onSave}
-					patreon_id={profile.patreonId}
-				/>
+				<ConnectionsSection tab={tab} settings={data?.settings} onSave={onSave} patreonId={profile.patreonId} />
 			</Grid>
 		</ContainerWithHeader>
 	);
 }
 
 type GeneralProps = {
-	stats_hidden: boolean;
+	statsHidden: boolean;
 };
 
 const GeneralSection = ({
@@ -175,7 +170,7 @@ const GeneralSection = ({
 			onSave({ ...settings, ...value });
 		},
 		defaultValues: {
-			stats_hidden: settings.statsHidden,
+			statsHidden: settings.statsHidden,
 		} as GeneralProps,
 	});
 
@@ -266,7 +261,7 @@ const GeneralSection = ({
 					)}
 					<Grid size={{ xs: 12 }}>
 						<form.AppField
-							name={"stats_hidden"}
+							name={"statsHidden"}
 							validators={{
 								onChange: z.boolean(),
 							}}
@@ -356,8 +351,8 @@ const ForumSection = ({
 			onSave({ ...settings, ...value });
 		},
 		defaultValues: {
-			forum_signature: settings.forumSignature,
-			forum_profile_messages: settings.forumProfileMessages,
+			forumSignature: settings.forumSignature,
+			forumProfileMessages: settings.forumProfileMessages,
 		},
 	});
 
@@ -373,7 +368,7 @@ const ForumSection = ({
 				<Grid container spacing={2}>
 					<Grid size={{ xs: 12 }}>
 						<form.AppField
-							name={"forum_signature"}
+							name={"forumSignature"}
 							validators={{
 								onChange: z.string(),
 							}}
@@ -393,7 +388,7 @@ const ForumSection = ({
 
 					<Grid size={{ xs: 12 }}>
 						<form.AppField
-							name={"forum_profile_messages"}
+							name={"forumProfileMessages"}
 							validators={{
 								onChange: z.boolean(),
 							}}
@@ -420,12 +415,12 @@ const ForumSection = ({
 
 const ConnectionsSection = ({
 	tab,
-	patreon_id,
+	patreonId,
 }: {
 	tab: userSettingTabs;
 	settings: UserSettings;
 	onSave: (s: UserSettings) => void;
-	patreon_id: string;
+	patreonId: string;
 }) => {
 	const queryClient = useQueryClient();
 	const { profile } = useAuth();
@@ -536,14 +531,14 @@ const ConnectionsSection = ({
 		>
 			<Grid container spacing={2} padding={0}>
 				{appInfo.patreonEnabled ? (
-					patreon_id ? (
+					patreonId ? (
 						<Grid size={{ xs: 12 }}>
 							<Typography variant={"h3"}>Patreon</Typography>
 							<Box>
 								<SubHeading>
 									You are currently authenticated to us as:{" "}
-									<Link href={`https://www.patreon.com/user/creators?u=${patreon_id}`}>
-										{patreon_id}
+									<Link href={`https://www.patreon.com/user/creators?u=${patreonId}`}>
+										{patreonId}
 									</Link>
 								</SubHeading>
 							</Box>

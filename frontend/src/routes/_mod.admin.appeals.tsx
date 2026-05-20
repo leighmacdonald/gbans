@@ -29,12 +29,13 @@ import type { AppealOverview } from "../rpc/ban/v1/appeal_pb.ts";
 import { appeals } from "../rpc/ban/v1/appeal-AppealService_connectquery.ts";
 import { AppealState, BanReason } from "../rpc/ban/v1/ban_pb.ts";
 import { enumValues } from "../util/lists.ts";
+import { appealStateString, banReasonString } from "../util/strings.ts";
 import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<AppealOverview>();
 const defaultOptions = createDefaultTableOptions<AppealOverview>();
-const defaultValues = makeSchemaDefaults({ defaultColumn: "ban_id" });
-const validateSearch = makeSchemaState("ban_id");
+const defaultValues = makeSchemaDefaults({ defaultColumn: "banId" });
+const validateSearch = makeSchemaState("banId");
 
 export const Route = createFileRoute("/_mod/admin/appeals")({
 	component: AdminAppeals,
@@ -117,7 +118,7 @@ function AdminAppeals() {
 				grow: false,
 				filterVariant: "multi-select",
 				filterSelectOptions: enumValues(AppealState).map((reason) => ({
-					label: AppealState[reason],
+					label: appealStateString(reason),
 					value: reason,
 				})),
 				filterFn: (row, _, filterValue) => {
@@ -128,8 +129,8 @@ function AdminAppeals() {
 					);
 				},
 				Cell: ({ cell }) => (
-					<TextLink to={Route.fullPath} search={setColumnFilter(search, "appeal_state", [cell.getValue()])}>
-						{AppealState[cell.getValue()]}
+					<TextLink to={Route.fullPath} search={setColumnFilter(search, "appealState", [cell.getValue()])}>
+						{appealStateString(cell.getValue())}
 					</TextLink>
 				),
 			}),
@@ -161,7 +162,7 @@ function AdminAppeals() {
 										? theme.palette.primary.light
 										: theme.palette.primary.dark,
 							}}
-							search={setColumnFilter(search, "source_id", row.original.ban?.sourceId ?? "")}
+							search={setColumnFilter(search, "sourceId", row.original.ban?.sourceId ?? "")}
 						>
 							{row.original.sourcePersonaName ?? row.original.ban?.sourceId}
 						</RouterLink>
@@ -198,7 +199,7 @@ function AdminAppeals() {
 										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
-							search={setColumnFilter(search, "target_id", row.original.ban?.targetId)}
+							search={setColumnFilter(search, "targetId", row.original.ban?.targetId)}
 						>
 							{row.original.targetPersonaName ?? row.original.ban?.targetId}
 						</RouterLink>
@@ -209,8 +210,8 @@ function AdminAppeals() {
 				filterVariant: "multi-select",
 				header: "Reason",
 				size: 150,
-				filterSelectOptions: Object.values(BanReason).map((reason) => ({
-					label: BanReason[reason as BanReason].toString(),
+				filterSelectOptions: enumValues(BanReason).map((reason) => ({
+					label: banReasonString(reason),
 					value: reason,
 				})),
 				filterFn: (row, _, filterValue) => {
@@ -222,7 +223,7 @@ function AdminAppeals() {
 				},
 				Cell: ({ cell }) => (
 					<TextLink to={Route.fullPath} search={setColumnFilter(search, "reason", [cell.getValue()])}>
-						{BanReason[cell.getValue() as BanReason]}
+						{banReasonString(cell.getValue())}
 					</TextLink>
 				),
 			}),
@@ -280,12 +281,12 @@ function AdminAppeals() {
 			...defaultOptions.initialState,
 			sorting: [{ id: "updatedOn", desc: true }],
 			columnVisibility: {
-				source_id: false,
-				target_id: true,
+				sourceId: false,
+				targetId: true,
 				reason: true,
-				reason_text: true,
-				created_on: false,
-				updated_on: true,
+				reasonText: true,
+				createdOn: false,
+				updatedOn: true,
 			},
 		},
 	});

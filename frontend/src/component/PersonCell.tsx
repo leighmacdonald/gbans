@@ -83,13 +83,17 @@ export const PersonCell = ({ steamId, avatarHash, personaName, onClick, children
 				</ListItemIcon>
 				Copy SteamID 64
 			</MenuItem>,
-			<MenuItemLink to={`/chatlogs`} search={{ columnFilters: [{ id: "steam_id", value: steamId }] }} key={50}>
+			<MenuItemLink
+				to={`/chatlogs`}
+				search={{ columnFilters: [{ id: "steamId", value: String(steamId) }] }}
+				key={50}
+			>
 				<ListItemIcon>
 					<ChatIcon fontSize="small" color={"primary"} />
 				</ListItemIcon>
 				Chat Logs
 			</MenuItemLink>,
-			<MenuItemLink to={`/stv`} search={{ columnFilters: [{ id: "stats", value: steamId }] }} key={60}>
+			<MenuItemLink to={`/stv`} search={{ columnFilters: [{ id: "stats", value: String(steamId) }] }} key={60}>
 				<ListItemIcon>
 					<VideocamIcon fontSize="small" color={"primary"} />
 				</ListItemIcon>
@@ -101,7 +105,7 @@ export const PersonCell = ({ steamId, avatarHash, personaName, onClick, children
 				...items,
 				<MenuItemLink
 					to={"/admin/network/playersbyip"}
-					search={{ columnFilters: [{ id: "steam_id", value: steamId }] }}
+					search={{ columnFilters: [{ id: "steamId", value: String(steamId) }] }}
 					key={70}
 				>
 					<ListItemIcon>
@@ -112,7 +116,7 @@ export const PersonCell = ({ steamId, avatarHash, personaName, onClick, children
 
 				<MenuItemLink
 					to={"/admin/bans"}
-					search={{ columnFilters: [{ id: "target_id", value: steamId }] }}
+					search={{ columnFilters: [{ id: "targetId", value: String(steamId) }] }}
 					key={80}
 				>
 					<ListItemIcon>
@@ -122,7 +126,7 @@ export const PersonCell = ({ steamId, avatarHash, personaName, onClick, children
 				</MenuItemLink>,
 				<MenuItemLink
 					to={"/admin/reports"}
-					search={{ columnFilters: [{ id: "target_id", value: steamId }] }}
+					search={{ columnFilters: [{ id: "targetId", value: String(steamId) }] }}
 					key={90}
 				>
 					<ListItemIcon>
@@ -222,7 +226,7 @@ export const PersonCell = ({ steamId, avatarHash, personaName, onClick, children
 					gap={1}
 				>
 					<Avatar src={avatarHashToURL(avatarHash)} />
-					<Typography fontWeight={700}>{personaName ?? steamId}</Typography>
+					<Typography fontWeight={700}>{String(personaName ?? steamId)}</Typography>
 				</Box>
 				{menu}
 			</Menu>

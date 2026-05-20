@@ -116,7 +116,7 @@ export const ReportViewComponent = ({
 							<TabPanel value={value} index={0}>
 								{report && (
 									<Box minHeight={300}>
-										<MarkDownRenderer body_md={report.report.description} assetURL={assetURL} />
+										<MarkDownRenderer bodyMd={report.report.description} assetURL={assetURL} />
 									</Box>
 								)}
 							</TabPanel>
@@ -140,7 +140,7 @@ export const ReportViewComponent = ({
 									<Button
 										variant={"contained"}
 										fullWidth
-										key={"demo_download"}
+										key={"demoDownload"}
 										startIcon={<FileDownloadIcon />}
 										component={Link}
 										href={`/asset/${report.report.demoId}`}

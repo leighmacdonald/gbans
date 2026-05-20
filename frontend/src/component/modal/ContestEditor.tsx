@@ -33,21 +33,21 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 			mutation.mutate({ contest: value });
 		},
 		defaultValues: {
-			date_start: contest?.dateStart ? timestampDate(contest?.dateStart).toISOString() : "",
-			date_end: contest?.dateEnd ? timestampDate(contest.dateEnd).toISOString() : "",
+			dateStart: contest?.dateStart ? timestampDate(contest?.dateStart).toISOString() : "",
+			dateEnd: contest?.dateEnd ? timestampDate(contest.dateEnd).toISOString() : "",
 			description: contest ? contest.description : "",
-			hide_submissions: contest ? contest.hideSubmissions : false,
+			hideSubmissions: contest ? contest.hideSubmissions : false,
 			title: contest ? contest.title : "",
 			voting: contest ? contest.voting : true,
-			down_votes: contest ? contest.downVotes : true,
-			max_submissions: contest ? String(contest.maxSubmissions) : "1",
-			media_types: contest ? contest.mediaTypes : "",
+			downVotes: contest ? contest.downVotes : true,
+			maxSubmissions: contest ? String(contest.maxSubmissions) : "1",
+			mediaTypes: contest ? contest.mediaTypes : "",
 			public: contest ? contest.public : true,
-			min_permission_level: contest ? contest.minPermissionLevel : Privilege.USER,
+			minPermissionLevel: contest ? contest.minPermissionLevel : Privilege.USER,
 			//deleted: contest ? contest.deleted : false,
-			num_entries: 0,
-			updated_on: new Date(),
-			created_on: new Date(),
+			numEntries: 0,
+			updatedOn: new Date(),
+			createdOn: new Date(),
 		},
 	});
 
@@ -101,7 +101,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 						</Grid>
 						<Grid size={{ xs: 4 }}>
 							<form.AppField
-								name={"hide_submissions"}
+								name={"hideSubmissions"}
 								validators={{
 									onChange: z.boolean(),
 								}}
@@ -112,7 +112,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 						</Grid>
 						<Grid size={{ xs: 4 }}>
 							<form.AppField
-								name={"max_submissions"}
+								name={"maxSubmissions"}
 								children={(field) => {
 									return <field.TextField label={"Max Submissions"} />;
 								}}
@@ -120,7 +120,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 						</Grid>
 						<Grid size={{ xs: 6 }}>
 							<form.AppField
-								name={"min_permission_level"}
+								name={"minPermissionLevel"}
 								children={(field) => {
 									return (
 										<field.SelectField
@@ -151,7 +151,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 						</Grid>
 						<Grid size={{ xs: 6 }}>
 							<form.AppField
-								name={"down_votes"}
+								name={"downVotes"}
 								validators={{
 									onChange: z.boolean(),
 								}}
@@ -162,7 +162,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 						</Grid>
 						<Grid size={{ xs: 6 }}>
 							<form.AppField
-								name={"date_start"}
+								name={"dateStart"}
 								children={(field) => {
 									return <field.DateTimeField label={"Custom Expire Date"} />;
 								}}
@@ -170,7 +170,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 						</Grid>
 						<Grid size={{ xs: 6 }}>
 							<form.AppField
-								name={"date_end"}
+								name={"dateEnd"}
 								children={(field) => {
 									return <field.DateTimeField label={"Custom Expire Date"} />;
 								}}
@@ -178,7 +178,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 						</Grid>
 						<Grid size={{ xs: 6 }}>
 							<form.AppField
-								name={"media_types"}
+								name={"mediaTypes"}
 								validators={{
 									onChange: z.string().refine((arg) => {
 										if (arg === "") {

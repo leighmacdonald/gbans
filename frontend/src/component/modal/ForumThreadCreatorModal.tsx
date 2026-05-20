@@ -63,7 +63,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum: _ }: { forum: 
 		},
 		defaultValues: {
 			title: "",
-			body_md: "",
+			bodyMd: "",
 			sticky: false,
 			locked: false,
 		},
@@ -104,7 +104,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum: _ }: { forum: 
 								validators={{
 									onChange: z.string().min(10),
 								}}
-								name={"body_md"}
+								name={"bodyMd"}
 								children={(field) => {
 									return <field.MarkdownField label={"Message"} />;
 								}}

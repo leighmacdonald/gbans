@@ -5,11 +5,11 @@ import { type JSX, useMemo } from "react";
 import { ImageBox } from "./ImageBox.tsx";
 import RouterLink from "./RouterLink.tsx";
 
-const renderLinks = (body_md: string, asset_url: string): string => {
-	return body_md
+const renderLinks = (bodyMd: string, assetUrl: string): string => {
+	return bodyMd
 		.replace("/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/", "")
 		.replace(/(wiki:\/\/)/gi, "/wiki/")
-		.replace(/(media:\/\/)/gi, asset_url !== "" ? asset_url : "/asset/" + "/");
+		.replace(/(media:\/\/)/gi, assetUrl !== "" ? assetUrl : "/asset/" + "/");
 };
 
 interface MDImgProps {
@@ -81,21 +81,21 @@ const mdRenderOpts: Options = {
 };
 
 export const MarkDownRenderer = ({
-	body_md,
+	bodyMd,
 	minHeight,
 	assetURL,
 }: {
-	body_md: string;
+	bodyMd: string;
 	assetURL: string;
 	minHeight?: number;
 }) => {
 	const links = useMemo(() => {
-		return renderLinks(body_md, assetURL)
+		return renderLinks(bodyMd, assetURL)
 			.trim()
 			.split("\n")
 			.map((v) => (v.startsWith("\\") ? v.slice(1) : v))
 			.join("\n");
-	}, [assetURL, body_md]);
+	}, [assetURL, bodyMd]);
 
 	return (
 		<Box paddingLeft={2} paddingRight={2} paddingBottom={2} maxWidth={"100%"} minHeight={minHeight}>
