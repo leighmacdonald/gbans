@@ -6,7 +6,7 @@ full_bin = "dlv exec --listen=127.0.0.1:2345 --headless=true --api-version=2 --a
 rerun = true
 include_dir = ["internal", "pkg", "proto"]
 include_file = ["main.go"]
-exclude_regex = ["testdata", "frotend/rpc", "internal/rpc"]
+exclude_regex = ["testdata", "frotend/rpc"]
 delay = 2500
 send_interrupt = false
 stop_on_error = true

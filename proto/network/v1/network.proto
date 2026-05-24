@@ -133,7 +133,7 @@ message PersonConnection {
   string persona_name = 4 [(buf.validate.field).required = true];
   int32 server_id = 5 [
     (buf.validate.field).required = true,
-    (buf.validate.field).int64 = {gt: 0}
+    (buf.validate.field).int32 = {gt: 0}
   ];
   string server_name_short = 6 [(buf.validate.field).required = true];
   int32 as_num = 7 [(buf.validate.field).required = true];

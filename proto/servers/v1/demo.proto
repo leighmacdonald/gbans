@@ -22,7 +22,7 @@ message Demo {
   ];
   int32 server_id = 2 [
     (buf.validate.field).required = true,
-    (buf.validate.field).int64.gt = 0
+    (buf.validate.field).int32.gt = 0
   ];
   string server_name_short = 3 [(buf.validate.field).required = true];
   string server_name_long = 4 [(buf.validate.field).required = true];

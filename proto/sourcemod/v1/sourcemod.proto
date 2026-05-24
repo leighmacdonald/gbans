@@ -36,7 +36,7 @@ service SourcemodService {
 message Group {
   int32 group_id = 1 [
     (buf.validate.field).required = true,
-    (buf.validate.field).int64 = {gt: 0}
+    (buf.validate.field).int32 = {gt: 0}
   ];
   string flags = 2 [(buf.validate.field).required = true];
   string name = 3 [

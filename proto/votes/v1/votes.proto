@@ -20,7 +20,7 @@ message QueryRequest {
   database.query.v1.Filter filter = 1;
   int64 source_id = 2 [(buf.validate.field).int64 = {gte: 76561197960265729}];
   int64 target_id = 3 [(buf.validate.field).int64 = {gte: 76561197960265729}];
-  int32 server_id = 4 [(buf.validate.field).int64 = {gt: 0}];
+  int32 server_id = 4 [(buf.validate.field).int32 = {gt: 0}];
   string name = 5 [(buf.validate.field).string = {
     min_len: 2
     max_len: 32

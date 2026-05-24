@@ -25,19 +25,24 @@ func NewService(anticheat AntiCheat, authMiddleware *rpc.Middleware, interceptor
 }
 
 type Service struct {
-	anticheatv1connect.UnimplementedAnticheatServiceHandler
+	// anticheatv1connect.UnimplementedAnticheatServiceHandler
 
 	anticheat AntiCheat
 }
 
 func (s Service) Query(ctx context.Context, request *v1.QueryRequest) (*v1.QueryResponse, error) {
 	opts := Query{
-		Filter:    rpc.FromRPC(request.Filter),
-		Name:      request.GetName(),
-		SteamID:   fmt.Sprintf("%d", request.GetSteamId()),
-		ServerID:  0,
-		Summary:   request.GetSummary(),
-		Detection: "",
+		Filter:  rpc.FromRPC(request.Filter),
+		Name:    request.GetName(),
+		Summary: request.GetSummary(),
+	}
+
+	if request.Detection != nil {
+		opts.Detection = toDetection(request.GetDetection())
+	}
+
+	if request.SteamId != nil {
+		opts.SteamID = fmt.Sprintf("%d", request.GetSteamId())
 	}
 
 	entries, errResults := s.anticheat.Query(ctx, opts)
@@ -95,5 +100,34 @@ func detectionToRPC(detection logparse.Detection) *v1.Detection {
 		fallthrough
 	default:
 		return new(v1.Detection_DETECTION_UNSPECIFIED)
+	}
+}
+
+func toDetection(detection v1.Detection) logparse.Detection {
+	switch detection {
+	case v1.Detection_DETECTION_AIM_SNAP:
+		return logparse.AimSnap
+	case v1.Detection_DETECTION_BHOP:
+		return logparse.BHop
+	case v1.Detection_DETECTION_CHEAT_CVAR:
+		return logparse.CheatCVar
+	case v1.Detection_DETECTION_CMD_NUM_SPIKE:
+		return logparse.CmdNumSpike
+	case v1.Detection_DETECTION_EYE_ANGLES:
+		return logparse.EyeAngles
+	case v1.Detection_DETECTION_INTERP:
+		return logparse.Interp
+	case v1.Detection_DETECTION_INVALID_USER_CMD:
+		return logparse.InvalidUserCmd
+	case v1.Detection_DETECTION_OOB_CVAR:
+		return logparse.OOBCVar
+	case v1.Detection_DETECTION_SILENT_AIM:
+		return logparse.SilentAim
+	case v1.Detection_DETECTION_TOO_MANY_CONNECTIONS:
+		return logparse.TooManyConnectiona
+	case v1.Detection_DETECTION_UNSPECIFIED:
+		fallthrough
+	default:
+		return logparse.Any
 	}
 }
