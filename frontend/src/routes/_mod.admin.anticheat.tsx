@@ -3,7 +3,6 @@ import { useQuery } from "@connectrpc/connect-query";
 import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
@@ -55,7 +54,7 @@ function AdminAnticheat() {
 	const { data, isLoading, isError } = useQuery(
 		query,
 		{
-			steamId: 76561198084134025n,
+			steamId: undefined,
 		},
 		{ enabled: !isLoadingServers },
 	);
@@ -67,7 +66,6 @@ function AdminAnticheat() {
 				enableSorting: false,
 				enableColumnFilter: false,
 				grow: false,
-				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
 			}),
 			columnHelper.accessor("serverId", {
 				enableSorting: false,

@@ -143,11 +143,11 @@ var File_person_v1_person_core_proto protoreflect.FileDescriptor
 
 const file_person_v1_person_core_proto_rawDesc = "" +
 	"\n" +
-	"\x1bperson/v1/person_core.proto\x12\tperson.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"\xd1\x03\n" +
+	"\x1bperson/v1/person_core.proto\x12\tperson.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"\xd3\x03\n" +
 	"\n" +
-	"PersonCore\x12-\n" +
-	"\bsteam_id\x18\x01 \x01(\x03B\x12\xbaH\x0f\xc8\x01\x01\"\n" +
-	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\asteamId\x12L\n" +
+	"PersonCore\x12/\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\x14\xbaH\x0f\xc8\x01\x01\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\x12L\n" +
 	"\x10permission_level\x18\x02 \x01(\x0e2\x14.person.v1.PrivilegeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x0fpermissionLevel\x12 \n" +
 	"\x04name\x18\x03 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x02\x18 R\x04name\x12,\n" +
 	"\vavatar_hash\x18\x04 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x98\x01(R\n" +

@@ -181,11 +181,11 @@ message ReportStatusEditRequest {
 }
 
 message ReportCreateRequest {
-  option (buf.validate.message).cel = {
-    id: "ban_reason_text"
-    message: "reason_text must be set when a custom BanReason is selected"
-    expression: "this.reason != BanReason.CUSTOM || size(this.reason_text) >= 1"
-  };
+  // option (buf.validate.message).cel = {
+  //   id: "ban_reason_text"
+  //   message: "reason_text must be set when a custom BanReason is selected"
+  //   expression: "this.reason != BanReason.CUSTOM || size(this.reason_text) >= 1"
+  // };
 
   int64 source_id = 1 [
     (buf.validate.field).required = true,

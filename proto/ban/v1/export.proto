@@ -2,10 +2,8 @@ edition = "2023";
 
 package ban.v1;
 
-import "google/protobuf/empty.proto";
-
 service ExportService {
-  rpc GetTF2BD(GetTF2BDRequest) returns (TF2BDSchema) {}
+  rpc GetTF2BD(GetTF2BDRequest) returns (GetTF2BDResponse) {}
   rpc GetValveSteamID(GetValveSteamIDRequest) returns (GetValveSteamIDResponse) {}
 }
 
@@ -21,7 +19,7 @@ message GetTF2BDRequest {
   string key = 1;
 }
 
-message TF2BDSchema {
+message GetTF2BDResponse {
   string schema = 1 [json_name = "$schema"];
   FileInfo file_info = 2 [json_name = "file_info"];
   repeated Player players = 3 [json_name = "players"];

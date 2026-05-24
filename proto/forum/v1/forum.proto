@@ -313,10 +313,7 @@ message Message {
   string signature = 7 [(buf.validate.field).required = true];
   string persona_name = 8 [(buf.validate.field).required = true];
   string avatar_hash = 9 [(buf.validate.field).required = true];
-  person.v1.Privilege permission_level = 10 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).int64 = {gte: 76561197960265729}
-  ];
+  person.v1.Privilege permission_level = 10 [(buf.validate.field).required = true];
   google.protobuf.Timestamp created_on = 11 [(buf.validate.field).required = true];
   google.protobuf.Timestamp updated_on = 12 [(buf.validate.field).required = true];
 }
