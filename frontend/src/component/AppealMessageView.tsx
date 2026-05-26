@@ -24,7 +24,7 @@ import { MarkDownRenderer } from "./MarkdownRenderer";
 interface AppealMessageViewProps {
 	message: AppealMessage;
 	assetURL: string;
-	onDelete: (reportMessageId: bigint) => void;
+	onDelete: (reportMessageId: string) => void;
 }
 
 export const AppealMessageView = ({ message, onDelete, assetURL }: AppealMessageViewProps) => {

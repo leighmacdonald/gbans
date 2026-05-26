@@ -19,7 +19,7 @@ import { SortableTable } from "./SortableTable.tsx";
 const columnHelper = createMRTColumnHelper<PersonConnection>();
 const defaultOptions = createDefaultTableOptions<PersonConnection>();
 
-export const IPHistoryTable = ({ steamId }: { steamId: bigint }) => {
+export const IPHistoryTable = ({ steamId }: { steamId: string }) => {
 	const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
 	const [globalFilter, setGlobalFilter] = useState("");
 	const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -33,8 +33,8 @@ export const IPHistoryTable = ({ steamId }: { steamId: bigint }) => {
 	const { data, isLoading, isError } = useQuery(queryConnections, {
 		steamId: steamId.toString(),
 		filter: {
-			limit: BigInt(pagination.pageSize),
-			offset: BigInt(pagination.pageIndex * pagination.pageSize),
+			limit: String(pagination.pageSize),
+			offset: String(pagination.pageIndex * pagination.pageSize),
 			orderBy: sort ? sort.id : "createdOn",
 			desc: sort ? sort.desc : false,
 		},

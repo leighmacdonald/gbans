@@ -9,7 +9,6 @@ package banv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -154,7 +153,7 @@ func (x *GetTF2BDRequest) GetKey() string {
 	return ""
 }
 
-type TF2BDSchema struct {
+type GetTF2BDResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Schema        *string                `protobuf:"bytes,1,opt,name=schema,json=$schema" json:"schema,omitempty"`
 	FileInfo      *FileInfo              `protobuf:"bytes,2,opt,name=file_info" json:"file_info,omitempty"`
@@ -163,20 +162,20 @@ type TF2BDSchema struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *TF2BDSchema) Reset() {
-	*x = TF2BDSchema{}
+func (x *GetTF2BDResponse) Reset() {
+	*x = GetTF2BDResponse{}
 	mi := &file_ban_v1_export_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *TF2BDSchema) String() string {
+func (x *GetTF2BDResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TF2BDSchema) ProtoMessage() {}
+func (*GetTF2BDResponse) ProtoMessage() {}
 
-func (x *TF2BDSchema) ProtoReflect() protoreflect.Message {
+func (x *GetTF2BDResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_ban_v1_export_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -188,26 +187,26 @@ func (x *TF2BDSchema) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TF2BDSchema.ProtoReflect.Descriptor instead.
-func (*TF2BDSchema) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetTF2BDResponse.ProtoReflect.Descriptor instead.
+func (*GetTF2BDResponse) Descriptor() ([]byte, []int) {
 	return file_ban_v1_export_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *TF2BDSchema) GetSchema() string {
+func (x *GetTF2BDResponse) GetSchema() string {
 	if x != nil && x.Schema != nil {
 		return *x.Schema
 	}
 	return ""
 }
 
-func (x *TF2BDSchema) GetFileInfo() *FileInfo {
+func (x *GetTF2BDResponse) GetFileInfo() *FileInfo {
 	if x != nil {
 		return x.FileInfo
 	}
 	return nil
 }
 
-func (x *TF2BDSchema) GetPlayers() []*Player {
+func (x *GetTF2BDResponse) GetPlayers() []*Player {
 	if x != nil {
 		return x.Players
 	}
@@ -406,14 +405,14 @@ var File_ban_v1_export_proto protoreflect.FileDescriptor
 
 const file_ban_v1_export_proto_rawDesc = "" +
 	"\n" +
-	"\x13ban/v1/export.proto\x12\x06ban.v1\x1a\x1bgoogle/protobuf/empty.proto\"6\n" +
+	"\x13ban/v1/export.proto\x12\x06ban.v1\"6\n" +
 	"\x17GetValveSteamIDResponse\x12\x1b\n" +
 	"\tban_lines\x18\x01 \x03(\tR\bbanLines\"*\n" +
 	"\x16GetValveSteamIDRequest\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\"#\n" +
 	"\x0fGetTF2BDRequest\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\"\x80\x01\n" +
-	"\vTF2BDSchema\x12\x17\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\"\x85\x01\n" +
+	"\x10GetTF2BDResponse\x12\x17\n" +
 	"\x06schema\x18\x01 \x01(\tR\a$schema\x12.\n" +
 	"\tfile_info\x18\x02 \x01(\v2\x10.ban.v1.FileInfoR\tfile_info\x12(\n" +
 	"\aplayers\x18\x03 \x03(\v2\x0e.ban.v1.PlayerR\aplayers\"\x89\x01\n" +
@@ -433,9 +432,9 @@ const file_ban_v1_export_proto_rawDesc = "" +
 	"\x05title\x18\x03 \x01(\tR\x05title\x12\x1e\n" +
 	"\n" +
 	"update_url\x18\x04 \x01(\tR\n" +
-	"update_url2\xa1\x01\n" +
-	"\rExportService\x12:\n" +
-	"\bGetTF2BD\x12\x17.ban.v1.GetTF2BDRequest\x1a\x13.ban.v1.TF2BDSchema\"\x00\x12T\n" +
+	"update_url2\xa6\x01\n" +
+	"\rExportService\x12?\n" +
+	"\bGetTF2BD\x12\x17.ban.v1.GetTF2BDRequest\x1a\x18.ban.v1.GetTF2BDResponse\"\x00\x12T\n" +
 	"\x0fGetValveSteamID\x12\x1e.ban.v1.GetValveSteamIDRequest\x1a\x1f.ban.v1.GetValveSteamIDResponse\"\x00B\x89\x01\n" +
 	"\n" +
 	"com.ban.v1B\vExportProtoP\x01Z5github.com/leighmacdonald/gbans/internal/ban/v1;banv1\xa2\x02\x03BXX\xaa\x02\x06Ban.V1\xca\x02\x06Ban\\V1\xe2\x02\x12Ban\\V1\\GPBMetadata\xea\x02\aBan::V1b\beditionsp\xe8\a"
@@ -457,18 +456,18 @@ var file_ban_v1_export_proto_goTypes = []any{
 	(*GetValveSteamIDResponse)(nil), // 0: ban.v1.GetValveSteamIDResponse
 	(*GetValveSteamIDRequest)(nil),  // 1: ban.v1.GetValveSteamIDRequest
 	(*GetTF2BDRequest)(nil),         // 2: ban.v1.GetTF2BDRequest
-	(*TF2BDSchema)(nil),             // 3: ban.v1.TF2BDSchema
+	(*GetTF2BDResponse)(nil),        // 3: ban.v1.GetTF2BDResponse
 	(*Player)(nil),                  // 4: ban.v1.Player
 	(*LastSeen)(nil),                // 5: ban.v1.LastSeen
 	(*FileInfo)(nil),                // 6: ban.v1.FileInfo
 }
 var file_ban_v1_export_proto_depIdxs = []int32{
-	6, // 0: ban.v1.TF2BDSchema.file_info:type_name -> ban.v1.FileInfo
-	4, // 1: ban.v1.TF2BDSchema.players:type_name -> ban.v1.Player
+	6, // 0: ban.v1.GetTF2BDResponse.file_info:type_name -> ban.v1.FileInfo
+	4, // 1: ban.v1.GetTF2BDResponse.players:type_name -> ban.v1.Player
 	5, // 2: ban.v1.Player.last_seen:type_name -> ban.v1.LastSeen
 	2, // 3: ban.v1.ExportService.GetTF2BD:input_type -> ban.v1.GetTF2BDRequest
 	1, // 4: ban.v1.ExportService.GetValveSteamID:input_type -> ban.v1.GetValveSteamIDRequest
-	3, // 5: ban.v1.ExportService.GetTF2BD:output_type -> ban.v1.TF2BDSchema
+	3, // 5: ban.v1.ExportService.GetTF2BD:output_type -> ban.v1.GetTF2BDResponse
 	0, // 6: ban.v1.ExportService.GetValveSteamID:output_type -> ban.v1.GetValveSteamIDResponse
 	5, // [5:7] is the sub-list for method output_type
 	3, // [3:5] is the sub-list for method input_type

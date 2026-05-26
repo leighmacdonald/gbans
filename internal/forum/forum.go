@@ -108,8 +108,8 @@ type Thread struct {
 	Title           string               `json:"title"`
 	Sticky          bool                 `json:"sticky"`
 	Locked          bool                 `json:"locked"`
-	Views           int64                `json:"views"`
-	Replies         int64                `json:"replies"`
+	Views           int32                `json:"views"`
+	Replies         int32                `json:"replies"`
 	Personaname     string               `json:"personaname"`
 	Avatarhash      string               `json:"avatarhash"`
 	PermissionLevel permission.Privilege `json:"permission_level"`

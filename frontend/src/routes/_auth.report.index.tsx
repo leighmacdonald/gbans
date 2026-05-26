@@ -31,7 +31,7 @@ import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { BanReason } from "../rpc/ban/v1/ban_pb.ts";
 import { ReportStatus, type ReportWithAuthor } from "../rpc/ban/v1/report_pb.ts";
-import { reportCreate, reports } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
+import { reportCreate, userReports } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
 import { enumValues } from "../util/lists.ts";
 import { commonTableSearchSchema } from "../util/table.ts";
 import { emptyOrNullString } from "../util/types.ts";
@@ -39,9 +39,9 @@ import { emptyOrNullString } from "../util/types.ts";
 const validateSearch = commonTableSearchSchema.extend({
 	rows: z.number().optional(),
 	sortColumn: z.enum(["reportStatus", "createdOn"]).optional(),
-	steamId: z.bigint().optional(),
+	steamId: z.string().optional(),
 	demoId: z.number().optional(),
-	personMessageId: z.bigint().optional(),
+	personMessageId: z.string().optional(),
 });
 
 export const Route = createFileRoute("/_auth/report/")({
@@ -54,8 +54,9 @@ export const Route = createFileRoute("/_auth/report/")({
 
 function ReportCreate() {
 	const { profile } = useAuth();
+
 	const canReport = useMemo(() => {
-		return profile.steamId && profile.steamId !== 0n;
+		return !emptyOrNullString(profile.steamId);
 	}, [profile]);
 
 	return (
@@ -131,7 +132,8 @@ const columnHelper = createMRTColumnHelper<ReportWithAuthor>();
 const defaultOptions = createDefaultTableOptions<ReportWithAuthor>();
 
 const UserReportHistory = () => {
-	const { data, isLoading, isError } = useQuery(reports);
+	const { profile } = useAuth();
+	const { data, isLoading, isError } = useQuery(userReports, { steamId: profile.steamId });
 
 	const columns = useMemo(() => {
 		return [
@@ -245,6 +247,8 @@ const UserReportHistory = () => {
 };
 
 const ReportCreateForm = (): JSX.Element => {
+	const { profile } = useAuth();
+
 	const { demoId, steamId, personMessageId } = Route.useSearch();
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const [isCustom, setIsCustom] = useState(false);
@@ -253,7 +257,7 @@ const ReportCreateForm = (): JSX.Element => {
 		description: "",
 		demoId: demoId ?? 0,
 		demoTick: 0,
-		personMessageId: personMessageId ?? 0n,
+		personMessageId: personMessageId ?? "",
 		targetId: steamId ?? "",
 		reason: personMessageId ? BanReason.LANGUAGE : BanReason.CHEATING,
 		reasonText: "",
@@ -276,13 +280,14 @@ const ReportCreateForm = (): JSX.Element => {
 	const form = useAppForm({
 		onSubmit: ({ value }) => {
 			mutation.mutate({
-				demoId: BigInt(value.demoId ?? 0n),
-				targetId: BigInt(value.targetId),
+				demoId: String(value.demoId ?? ""),
+				sourceId: profile.steamId,
+				targetId: value.targetId,
 				demoTick: value.demoTick,
 				reason: value.reason,
 				reasonText: value.reasonText,
 				description: value.description,
-				personMessageId: BigInt(value.personMessageId),
+				personMessageId: value.personMessageId,
 			});
 		},
 
@@ -313,7 +318,7 @@ const ReportCreateForm = (): JSX.Element => {
 							name={"reason"}
 							children={(field) => {
 								return (
-									<field.SelectField
+									<field.BanReasonField
 										label={"Ban Reason"}
 										items={enumValues(BanReason)}
 										handleChange={(value) => {
@@ -370,7 +375,7 @@ const ReportCreateForm = (): JSX.Element => {
 							</Grid>
 						</>
 					)}
-					{personMessageId !== undefined && personMessageId > 0 && (
+					{!emptyOrNullString(personMessageId) && (
 						<Grid size={{ md: 12 }}>
 							<PlayerMessageContext playerMessageId={personMessageId} padding={5} />
 						</Grid>

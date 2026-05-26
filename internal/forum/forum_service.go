@@ -479,11 +479,16 @@ func (s Service) ForumEdit(ctx context.Context, req *v1.ForumEditRequest) (*v1.F
 
 func fromThread(thread Thread) *v1.Thread {
 	return &v1.Thread{
-		ForumId:   &thread.ForumID,
-		SourceId:  new(thread.SourceID.Int64()),
-		Title:     &thread.Title,
-		CreatedOn: timestamppb.New(thread.CreatedOn),
-		UpdatedOn: timestamppb.New(thread.UpdatedOn),
+		ForumId:       &thread.ForumID,
+		SourceId:      new(thread.SourceID.Int64()),
+		Title:         &thread.Title,
+		CreatedOn:     timestamppb.New(thread.CreatedOn),
+		UpdatedOn:     timestamppb.New(thread.UpdatedOn),
+		ForumThreadId: &thread.ForumThreadID,
+		Sticky:        &thread.Sticky,
+		Locked:        &thread.Locked,
+		Replies:       &thread.Replies,
+		Views:         &thread.Views,
 	}
 }
 
@@ -531,6 +536,7 @@ func toCategory(cat Category) *v1.Category {
 		Ordering:        &cat.Ordering,
 		CreatedOn:       timestamppb.New(cat.CreatedOn),
 		UpdatedOn:       timestamppb.New(cat.UpdatedOn),
+		Forums:          make([]*v1.Forum, len(cat.Forums)),
 	}
 
 	for index, forum := range cat.Forums {

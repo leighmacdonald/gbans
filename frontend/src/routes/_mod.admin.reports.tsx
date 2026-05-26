@@ -25,6 +25,7 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
+import { renderTableError } from "../error.tsx";
 import { BanReason } from "../rpc/ban/v1/ban_pb.ts";
 import { ReportStatus, type ReportWithAuthor } from "../rpc/ban/v1/report_pb.ts";
 import { reports } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
@@ -52,7 +53,7 @@ function AdminReports() {
 	const navigate = useNavigate();
 	const search = Route.useSearch();
 	const theme = useTheme();
-	const { data, isLoading, isError } = useSuspenseQuery(reports);
+	const { data, isLoading, isError, error } = useSuspenseQuery(reports);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		(updater) => {
@@ -149,7 +150,7 @@ function AdminReports() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steamId={BigInt(row.original.author?.steamId ?? 0n)}
+						steamId={row.original.author?.steamId ?? ""}
 						personaName={String(row.original.author?.name)}
 						avatarHash={String(row.original.author?.avatarHash)}
 					>
@@ -192,7 +193,7 @@ function AdminReports() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steamId={BigInt(row.original.subject?.steamId ?? 0n)}
+						steamId={row.original.subject?.steamId ?? ""}
 						personaName={String(row.original.subject?.name)}
 						avatarHash={String(row.original.subject?.avatarHash)}
 					>
@@ -283,6 +284,7 @@ function AdminReports() {
 			sorting: search.sorting,
 			pagination: search.pagination,
 		},
+		muiToolbarAlertBannerProps: renderTableError(error),
 		enableFilters: true,
 		initialState: {
 			...defaultOptions.initialState,

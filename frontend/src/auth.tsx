@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, [deleteProfileValue, deleteTokenValue, authClient.logout]);
 
 	const isAuthenticated = () => {
-		return (tokenValue?.token ? Boolean(tokenValue.token?.length > 0) : false) && profile.steamId !== 0n;
+		return (tokenValue?.token ? Boolean(tokenValue.token?.length > 0) : false) && profile.steamId !== "";
 	};
 
 	const permissionLevel = () => {
@@ -135,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 const defaultProfile = create(PersonCoreSchema, {
-	steamId: 0n,
+	steamId: "",
 	permissionLevel: Privilege.GUEST,
 	avatarHash: defaultAvatarHash,
 	name: "",
@@ -158,7 +158,7 @@ const loadProfile = (): PersonCore => {
 
 		return create(PersonCoreSchema, {
 			...raw,
-			steamId: BigInt(raw.steamId),
+			steamId: raw.steamId,
 			timeCreated: timestampFromDate(parseDateTime(raw.timeCreated)),
 		});
 	} catch (e) {

@@ -4,14 +4,13 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import { file_google_protobuf_empty } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file ban/v1/export.proto.
  */
 export const file_ban_v1_export: GenFile = /*@__PURE__*/
-  fileDesc("ChNiYW4vdjEvZXhwb3J0LnByb3RvEgZiYW4udjEiLAoXR2V0VmFsdmVTdGVhbUlEUmVzcG9uc2USEQoJYmFuX2xpbmVzGAEgAygJIiUKFkdldFZhbHZlU3RlYW1JRFJlcXVlc3QSCwoDa2V5GAEgASgJIh4KD0dldFRGMkJEUmVxdWVzdBILCgNrZXkYASABKAkidwoLVEYyQkRTY2hlbWESFwoGc2NoZW1hGAEgASgJUgckc2NoZW1hEi4KCWZpbGVfaW5mbxgCIAEoCzIQLmJhbi52MS5GaWxlSW5mb1IJZmlsZV9pbmZvEh8KB3BsYXllcnMYAyADKAsyDi5iYW4udjEuUGxheWVyInYKBlBsYXllchISCgphdHRyaWJ1dGVzGAEgAygJEi4KCWxhc3Rfc2VlbhgCIAEoCzIQLmJhbi52MS5MYXN0U2VlblIJbGFzdF9zZWVuEhkKCHN0ZWFtX2lkGAMgASgJUgdzdGVhbWlkEg0KBXByb29mGAQgAygJIjoKCExhc3RTZWVuEiAKC3BsYXllcl9uYW1lGAEgASgJUgtwbGF5ZXJfbmFtZRIMCgR0aW1lGAIgASgFIl8KCEZpbGVJbmZvEg8KB2F1dGhvcnMYASADKAkSEwoLZGVzY3JpcHRpb24YAiABKAkSDQoFdGl0bGUYAyABKAkSHgoKdXBkYXRlX3VybBgEIAEoCVIKdXBkYXRlX3VybDKhAQoNRXhwb3J0U2VydmljZRI6CghHZXRURjJCRBIXLmJhbi52MS5HZXRURjJCRFJlcXVlc3QaEy5iYW4udjEuVEYyQkRTY2hlbWEiABJUCg9HZXRWYWx2ZVN0ZWFtSUQSHi5iYW4udjEuR2V0VmFsdmVTdGVhbUlEUmVxdWVzdBofLmJhbi52MS5HZXRWYWx2ZVN0ZWFtSURSZXNwb25zZSIAQokBCgpjb20uYmFuLnYxQgtFeHBvcnRQcm90b1ABWjVnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL2Jhbi92MTtiYW52MaICA0JYWKoCBkJhbi5WMcoCBkJhblxWMeICEkJhblxWMVxHUEJNZXRhZGF0YeoCB0Jhbjo6VjFiCGVkaXRpb25zcOgH", [file_google_protobuf_empty]);
+  fileDesc("ChNiYW4vdjEvZXhwb3J0LnByb3RvEgZiYW4udjEiLAoXR2V0VmFsdmVTdGVhbUlEUmVzcG9uc2USEQoJYmFuX2xpbmVzGAEgAygJIiUKFkdldFZhbHZlU3RlYW1JRFJlcXVlc3QSCwoDa2V5GAEgASgJIh4KD0dldFRGMkJEUmVxdWVzdBILCgNrZXkYASABKAkifAoQR2V0VEYyQkRSZXNwb25zZRIXCgZzY2hlbWEYASABKAlSByRzY2hlbWESLgoJZmlsZV9pbmZvGAIgASgLMhAuYmFuLnYxLkZpbGVJbmZvUglmaWxlX2luZm8SHwoHcGxheWVycxgDIAMoCzIOLmJhbi52MS5QbGF5ZXIidgoGUGxheWVyEhIKCmF0dHJpYnV0ZXMYASADKAkSLgoJbGFzdF9zZWVuGAIgASgLMhAuYmFuLnYxLkxhc3RTZWVuUglsYXN0X3NlZW4SGQoIc3RlYW1faWQYAyABKAlSB3N0ZWFtaWQSDQoFcHJvb2YYBCADKAkiOgoITGFzdFNlZW4SIAoLcGxheWVyX25hbWUYASABKAlSC3BsYXllcl9uYW1lEgwKBHRpbWUYAiABKAUiXwoIRmlsZUluZm8SDwoHYXV0aG9ycxgBIAMoCRITCgtkZXNjcmlwdGlvbhgCIAEoCRINCgV0aXRsZRgDIAEoCRIeCgp1cGRhdGVfdXJsGAQgASgJUgp1cGRhdGVfdXJsMqYBCg1FeHBvcnRTZXJ2aWNlEj8KCEdldFRGMkJEEhcuYmFuLnYxLkdldFRGMkJEUmVxdWVzdBoYLmJhbi52MS5HZXRURjJCRFJlc3BvbnNlIgASVAoPR2V0VmFsdmVTdGVhbUlEEh4uYmFuLnYxLkdldFZhbHZlU3RlYW1JRFJlcXVlc3QaHy5iYW4udjEuR2V0VmFsdmVTdGVhbUlEUmVzcG9uc2UiAEKJAQoKY29tLmJhbi52MUILRXhwb3J0UHJvdG9QAVo1Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9iYW4vdjE7YmFudjGiAgNCWFiqAgZCYW4uVjHKAgZCYW5cVjHiAhJCYW5cVjFcR1BCTWV0YWRhdGHqAgdCYW46OlYxYghlZGl0aW9uc3DoBw");
 
 /**
  * @generated from message ban.v1.GetValveSteamIDResponse
@@ -65,9 +64,9 @@ export const GetTF2BDRequestSchema: GenMessage<GetTF2BDRequest> = /*@__PURE__*/
   messageDesc(file_ban_v1_export, 2);
 
 /**
- * @generated from message ban.v1.TF2BDSchema
+ * @generated from message ban.v1.GetTF2BDResponse
  */
-export type TF2BDSchema = Message<"ban.v1.TF2BDSchema"> & {
+export type GetTF2BDResponse = Message<"ban.v1.GetTF2BDResponse"> & {
   /**
    * @generated from field: string schema = 1 [json_name = "$schema"];
    */
@@ -85,10 +84,10 @@ export type TF2BDSchema = Message<"ban.v1.TF2BDSchema"> & {
 };
 
 /**
- * Describes the message ban.v1.TF2BDSchema.
- * Use `create(TF2BDSchemaSchema)` to create a new message.
+ * Describes the message ban.v1.GetTF2BDResponse.
+ * Use `create(GetTF2BDResponseSchema)` to create a new message.
  */
-export const TF2BDSchemaSchema: GenMessage<TF2BDSchema> = /*@__PURE__*/
+export const GetTF2BDResponseSchema: GenMessage<GetTF2BDResponse> = /*@__PURE__*/
   messageDesc(file_ban_v1_export, 3);
 
 /**
@@ -187,7 +186,7 @@ export const ExportService: GenService<{
   getTF2BD: {
     methodKind: "unary";
     input: typeof GetTF2BDRequestSchema;
-    output: typeof TF2BDSchemaSchema;
+    output: typeof GetTF2BDResponseSchema;
   },
   /**
    * @generated from rpc ban.v1.ExportService.GetValveSteamID

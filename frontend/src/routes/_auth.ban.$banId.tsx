@@ -72,7 +72,7 @@ function BanPage() {
 	}, [banData?.ban, permissionLevel, profile.steamId]);
 
 	const onDelete = useCallback(
-		async (banMessageId: bigint) => {
+		async (banMessageId: string) => {
 			return await deleteMessageMutation.mutateAsync({ banMessageId });
 		},
 		[deleteMessageMutation.mutateAsync],

@@ -1,3 +1,4 @@
+import { create } from "@bufbuild/protobuf";
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
@@ -22,10 +23,10 @@ import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
 import {
 	createDefaultTableOptions,
-	filterValue,
 	filterValueBool,
 	filterValueNumber,
 	filterValueNumberArray,
+	filterValueString,
 	makeSchemaDefaults,
 	makeSchemaState,
 	type OnChangeFn,
@@ -34,9 +35,10 @@ import {
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
+import { renderTableError } from "../error.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { type Person, VisibilityState } from "../rpc/person/v1/person_pb.ts";
+import { type Person, QueryRequestSchema, VisibilityState } from "../rpc/person/v1/person_pb.ts";
 import { query } from "../rpc/person/v1/person-PersonService_connectquery.ts";
 import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { enumValues } from "../util/lists.ts";
@@ -65,22 +67,48 @@ function AdminPeople() {
 	const { sendFlash } = useUserFlashCtx();
 	const { hasPermission } = useAuth();
 
-	const sort = search.sorting ? sortValueDefault(search.sorting, "createdOn") : undefined;
-	const steamId = filterValue("steamId", search.columnFilters);
+	const opts = useMemo(() => {
+		const sort = search.sorting ? sortValueDefault(search.sorting, "createdOn") : undefined;
+		const steamId = filterValueString("steamId", search.columnFilters);
 
-	const { data, isLoading, isError, isRefetching } = useQuery(query, {
-		filter: {
-			desc: sort ? sort.desc : true,
-			limit: BigInt(search.pagination?.pageSize ?? 25n),
-			offset: BigInt(search.pagination ? search.pagination.pageIndex * search.pagination?.pageSize : 0n),
-			orderBy: sort ? sort.id : "createdOn",
-		},
-		steamIds: steamId && steamId !== "" ? [steamId] : [],
-		vacBans: filterValueNumber("vacBans", search.columnFilters),
-		gameBans: filterValueNumber("gameBans", search.columnFilters),
-		communityBanned: filterValueBool("communityBanned", search.columnFilters),
-		withPermissions: filterValueNumberArray<Person, Privilege>("permissionLevel", search.columnFilters),
-	});
+		const o = create(QueryRequestSchema, {
+			filter: {
+				desc: sort ? sort.desc : true,
+				limit: String(search.pagination?.pageSize ?? 25n),
+				offset: String(search.pagination ? search.pagination.pageIndex * search.pagination?.pageSize : 0n),
+				orderBy: sort ? sort.id : "createdOn",
+			},
+		});
+
+		const steamIds = steamId && steamId !== "" ? [steamId] : [];
+		const vacBans = filterValueNumber("vacBans", search.columnFilters);
+		const gameBans = filterValueNumber("gameBans", search.columnFilters);
+		const communityBanned = filterValueBool("communityBanned", search.columnFilters);
+		const withPermissions = filterValueNumberArray<Person, Privilege>("permissionLevel", search.columnFilters);
+
+		if (withPermissions !== undefined && withPermissions.length > 0) {
+			o.withPermissions = withPermissions;
+		}
+
+		if (vacBans !== undefined) {
+			o.vacBans = vacBans;
+		}
+
+		if (gameBans !== undefined) {
+			o.gameBans = gameBans;
+		}
+		if (communityBanned !== undefined) {
+			o.communityBanned = communityBanned;
+		}
+
+		if (steamIds.length > 0) {
+			o.steamIds = steamIds;
+		}
+
+		return o;
+	}, [search]);
+
+	const { data, isLoading, isError, isRefetching, error } = useQuery(query, opts);
 
 	const onEditPerson = useCallback(
 		async (person: Person) => {
@@ -263,6 +291,7 @@ function AdminPeople() {
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
+		muiToolbarAlertBannerProps: renderTableError(error),
 		renderRowActions: ({ row }) => (
 			<RowActionContainer>
 				<IconButton

@@ -12,8 +12,8 @@ import { ContainerWithHeader } from "./ContainerWithHeader";
 import { ErrorDetails } from "./ErrorDetails.tsx";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
 
-export const ProfileInfoBox = ({ steamId }: { steamId: bigint }) => {
-	const { data, isLoading } = useQuery(profile, { steamId: steamId.toString() });
+export const ProfileInfoBox = ({ steamId }: { steamId: string }) => {
+	const { data, isLoading } = useQuery(profile, { steamId });
 
 	if (isLoading) {
 		return <LoadingPlaceholder />;

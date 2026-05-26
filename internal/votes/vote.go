@@ -19,7 +19,7 @@ type Query struct {
 	httphelper.SourceIDField
 	httphelper.TargetIDField
 
-	ServerID int32  `json:"server_id"`
+	ServerID int32  `json:"serverId"`
 	Name     string `json:"name"`
 	Success  int32  `json:"success"` // -1 = any, 0 = false, 1 = true
 	Code     bool   `json:"code"`

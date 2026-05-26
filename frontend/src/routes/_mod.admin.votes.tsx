@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: form needs it */
 
-import { useQuery, useSuspenseQuery } from "@connectrpc/connect-query";
+import { create } from "@bufbuild/protobuf";
+import { useQuery } from "@connectrpc/connect-query";
 import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
@@ -19,19 +20,21 @@ import { TextLink } from "../component/TextLink.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
 import {
 	createDefaultTableOptions,
-	filterValue,
 	filterValueNumber,
+	filterValueString,
 	makeSchemaDefaults,
 	makeSchemaState,
 	type OnChangeFn,
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
+import { renderTableError } from "../error.tsx";
 import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
-import type { VoteResult } from "../rpc/votes/v1/votes_pb.ts";
+import { QueryRequestSchema, type VoteResult } from "../rpc/votes/v1/votes_pb.ts";
 import { query } from "../rpc/votes/v1/votes-VotesService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
 import { renderTimestamp } from "../util/time.ts";
+import { emptyOrNullString } from "../util/types.ts";
 
 const columnHelper = createMRTColumnHelper<VoteResult>();
 const defaultOptions = createDefaultTableOptions<VoteResult>();
@@ -53,19 +56,36 @@ function AdminVotes() {
 	const search = Route.useSearch();
 	const navigate = useNavigate();
 	const theme = useTheme();
-	const { data: serverList } = useSuspenseQuery(servers);
-	const { data, isLoading, isError, isRefetching } = useQuery(query, {
-		serverId: filterValueNumber("serverId", search.columnFilters),
-		sourceId: BigInt(filterValue("sourceId", search.columnFilters)),
-		targetId: BigInt(filterValue("targetId", search.columnFilters)),
-		success: -1,
-		filter: {
-			limit: BigInt(search.pagination?.pageSize ?? 25),
-			offset: BigInt(search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : 0),
-			orderBy: search.sorting?.find((sort) => sort)?.id ?? "createdOn",
-			desc: search.sorting?.find((sort) => sort)?.desc ?? true,
-		},
-	});
+	const { data: serverList, isLoading: isLoadingServers } = useQuery(servers);
+
+	const opts = useMemo(() => {
+		const serverId = filterValueNumber("serverId", search.columnFilters);
+		const sourceId = filterValueString("sourceId", search.columnFilters);
+		const targetId = filterValueString("targetId", search.columnFilters);
+		const opts = create(QueryRequestSchema, {
+			filter: {
+				limit: String(search.pagination?.pageSize ?? 25),
+				offset: String(search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : 0),
+				orderBy: search.sorting?.find((sort) => sort)?.id ?? "createdOn",
+				desc: search.sorting?.find((sort) => sort)?.desc ?? true,
+			},
+		});
+		if (serverId > 0) {
+			opts.serverId = serverId;
+		}
+
+		if (!emptyOrNullString(sourceId)) {
+			opts.sourceId = sourceId;
+		}
+
+		if (!emptyOrNullString(targetId)) {
+			opts.targetId = targetId;
+		}
+
+		return opts;
+	}, [search]);
+
+	const { data, isLoading, isError, isRefetching, error } = useQuery(query, opts);
 
 	const columns = useMemo(
 		() => [
@@ -73,7 +93,7 @@ function AdminVotes() {
 				header: "Server",
 				grow: false,
 				filterVariant: "multi-select",
-				filterSelectOptions: serverList.servers.map((server) => ({
+				filterSelectOptions: serverList?.servers.map((server) => ({
 					label: server.serverName,
 					value: server.serverId,
 				})),
@@ -162,7 +182,7 @@ function AdminVotes() {
 				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
 		],
-		[search, theme, serverList.servers],
+		[search, theme, serverList?.servers],
 	);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
@@ -215,7 +235,7 @@ function AdminVotes() {
 		enableFilters: true,
 		state: {
 			columnFilters: search.columnFilters,
-			isLoading: isLoading || isRefetching,
+			isLoading: isLoadingServers || isLoading || isRefetching,
 			pagination: search.pagination,
 			showAlertBanner: isError,
 			showProgressBars: isRefetching,
@@ -227,6 +247,7 @@ function AdminVotes() {
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
+		muiToolbarAlertBannerProps: renderTableError(error),
 		initialState: {
 			...defaultOptions.initialState,
 			columnVisibility: {

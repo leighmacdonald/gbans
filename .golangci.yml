@@ -53,7 +53,7 @@ linters:
     tagliatelle:
       case:
         rules:
-          json: snake
+          json: camel
           yaml: snake
         use-field-name: true
     wrapcheck:

@@ -34,7 +34,7 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutation.mutate({ steamId: BigInt(value.steamId) });
+			mutation.mutate({ steamId: value.steamId });
 		},
 		defaultValues,
 		validators: {

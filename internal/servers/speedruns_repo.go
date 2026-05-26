@@ -263,6 +263,7 @@ func (r *SpeedrunRepository) Query(_ context.Context, _ SpeedrunQuery) ([]Speedr
 }
 
 func (r *SpeedrunRepository) TopNOverall(ctx context.Context, count int32) (map[string][]Speedrun, error) {
+	//nolint:unqueryvet
 	const query = `
 		SELECT
 			*
@@ -275,7 +276,7 @@ func (r *SpeedrunRepository) TopNOverall(ctx context.Context, count int32) (map[
 					  LEFT JOIN map m ON m.map_id = s.map_id
 			) s
 		WHERE s.rank <= $1
-	` //nolint:unqueryvet
+	`
 	rows, errRows := r.Database.Query(ctx, query, count)
 	if errRows != nil {
 		return nil, database.Err(errRows)
@@ -319,6 +320,7 @@ func (r *SpeedrunRepository) TopNOverall(ctx context.Context, count int32) (map[
 }
 
 func (r *SpeedrunRepository) ByID(ctx context.Context, speedrunID int32) (Speedrun, error) {
+	//nolint:unqueryvet
 	const query = `
 		SELECT *
 		FROM (
@@ -355,6 +357,7 @@ func (r *SpeedrunRepository) ByID(ctx context.Context, speedrunID int32) (Speedr
 }
 
 func (r *SpeedrunRepository) Recent(ctx context.Context, limit int32) ([]SpeedrunMapOverview, error) {
+	//nolint:unqueryvet
 	const query = `
 		SELECT s.*,
 			   r.count,
@@ -397,6 +400,7 @@ func (r *SpeedrunRepository) Recent(ctx context.Context, limit int32) ([]Speedru
 }
 
 func (r *SpeedrunRepository) ByMap(ctx context.Context, mapName string) ([]SpeedrunMapOverview, error) {
+	//nolint:unqueryvet
 	const query = `
 		SELECT s.*,
 			   r.count,

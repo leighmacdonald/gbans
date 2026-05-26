@@ -24,7 +24,7 @@ const (
 
 // TimeStamp is the base event for all other events. It just contains a timestamp.
 type TimeStamp struct {
-	CreatedOn time.Time `json:"created_on" mapstructure:"created_on"`
+	CreatedOn time.Time `json:"createdOn" mapstructure:"created_on"`
 }
 
 type IgnoredMsgEvt struct {
@@ -155,7 +155,7 @@ type JoinedTeamEvt struct {
 	TimeStamp
 	SourcePlayer
 
-	NewTeam Team `json:"new_team" mapstructure:"new_team"`
+	NewTeam Team `json:"newTeam" mapstructure:"new_team"`
 }
 
 type SpawnedAsEvt struct {
@@ -176,7 +176,7 @@ type SuicideEvt struct {
 	TimeStamp
 	SourcePlayer
 
-	AttackerPosition Pos    `json:"attacker_position" mapstructure:"attacker_position"`
+	AttackerPosition Pos    `json:"attackerPosition" mapstructure:"attacker_position"`
 	Weapon           Weapon `json:"weapon" mapstructure:"weapon"`
 }
 
@@ -186,8 +186,8 @@ type JarateAttackEvt struct {
 	TargetPlayer
 
 	Weapon           Weapon `json:"weapon" mapstructure:"weapon"`
-	AttackerPosition Pos    `json:"attacker_position" mapstructure:"attacker_position"`
-	VictimPosition   Pos    `json:"victim_position" mapstructure:"victim_position"`
+	AttackerPosition Pos    `json:"attackerPosition" mapstructure:"attacker_position"`
+	VictimPosition   Pos    `json:"victimPosition" mapstructure:"victim_position"`
 }
 
 type MilkAttackEvt JarateAttackEvt
@@ -217,8 +217,8 @@ type KilledEvt struct {
 	SourcePlayer
 	TargetPlayer
 
-	AttackerPosition Pos    `json:"attacker_position" mapstructure:"attacker_position"`
-	VictimPosition   Pos    `json:"victim_position" mapstructure:"victim_position"`
+	AttackerPosition Pos    `json:"attackerPosition" mapstructure:"attacker_position"`
+	VictimPosition   Pos    `json:"victimPosition" mapstructure:"victim_position"`
 	Weapon           Weapon `json:"weapon" mapstructure:"weapon"`
 }
 
@@ -227,8 +227,8 @@ type CustomKilledEvt struct {
 	SourcePlayer
 	TargetPlayer
 
-	AttackerPosition Pos    `json:"attacker_position" mapstructure:"attacker_position"`
-	VictimPosition   Pos    `json:"victim_position" mapstructure:"victim_position"`
+	AttackerPosition Pos    `json:"attackerPosition" mapstructure:"attacker_position"`
+	VictimPosition   Pos    `json:"victimPosition" mapstructure:"victim_position"`
 	Customkill       string `json:"customkill" mapstructure:"customkill"`
 	Weapon           Weapon `json:"weapon" mapstructure:"weapon"`
 }
@@ -238,9 +238,9 @@ type KillAssistEvt struct {
 	SourcePlayer
 	TargetPlayer
 
-	AssisterPosition Pos `json:"assister_position" mapstructure:"assister_position"`
-	AttackerPosition Pos `json:"attacker_position" mapstructure:"attacker_position"`
-	VictimPosition   Pos `json:"victim_position" mapstructure:"victim_position"`
+	AssisterPosition Pos `json:"assisterPosition" mapstructure:"assister_position"`
+	AttackerPosition Pos `json:"attackerPosition" mapstructure:"attacker_position"`
+	VictimPosition   Pos `json:"victimPosition" mapstructure:"victim_position"`
 }
 
 type SourcePlayerPosition struct {
@@ -332,7 +332,7 @@ type KilledObjectEvt struct {
 
 	Object           string `json:"object" mapstructure:"object"`
 	Weapon           Weapon `json:"weapon" mapstructure:"weapon"`
-	AttackerPosition Pos    `json:"attacker_position" mapstructure:"attacker_position"`
+	AttackerPosition Pos    `json:"attackerPosition" mapstructure:"attacker_position"`
 }
 
 type CarryObjectEvt struct {
@@ -377,7 +377,7 @@ type WTeamScoreEvt struct {
 
 type SayEvt struct {
 	TimeStamp
-	SourcePlayer `json:"source_player"`
+	SourcePlayer `json:"sourcePlayer"`
 
 	Msg  string `json:"msg" mapstructure:"msg"`
 	Team bool   `json:"team"`
@@ -385,8 +385,8 @@ type SayEvt struct {
 
 type DominationEvt struct {
 	TimeStamp
-	SourcePlayer `json:"source_player"`
-	TargetPlayer `json:"target_player"`
+	SourcePlayer `json:"sourcePlayer"`
+	TargetPlayer `json:"targetPlayer"`
 }
 
 type RevengeEvt DominationEvt

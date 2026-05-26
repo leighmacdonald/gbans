@@ -17,6 +17,7 @@ func NewRepository(db database.Database) Repository {
 }
 
 func (r Repository) GetOrCreate(ctx context.Context, mapName string) (Map, error) {
+	//nolint:unqueryvet
 	const query = `
 		WITH ins AS (
     		INSERT INTO map (map_id, map_name, updated_on, created_on) VALUES (DEFAULT, lower($1), now(),now())

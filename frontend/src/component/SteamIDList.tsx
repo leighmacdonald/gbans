@@ -7,7 +7,7 @@ import SteamID from "steamid";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { ContainerWithHeader } from "./ContainerWithHeader";
 
-export const SteamIDList = ({ steamId }: { steamId: string | bigint }) => {
+export const SteamIDList = ({ steamId }: { steamId: string }) => {
 	const theme = useTheme();
 	const { sendFlash } = useUserFlashCtx();
 	const sid = new SteamID(steamId);

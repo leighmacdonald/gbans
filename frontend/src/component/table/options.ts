@@ -113,8 +113,17 @@ export const setColumnFilter = (search: SearchSchema, id: string, value: unknown
 	};
 };
 
-export const filterValue = <T>(id: keyof T, s?: MRT_ColumnFiltersState): string =>
-	String(s?.find((filter) => filter.id === id)?.value ?? "");
+export const filterValue = <T>(id: keyof T, s?: MRT_ColumnFiltersState): string | unknown | undefined =>
+	s?.find((filter) => filter.id === id)?.value;
+
+export const filterValueString = <T>(id: keyof T, s?: MRT_ColumnFiltersState): string | undefined => {
+	const v = s?.find((filter) => filter.id === id)?.value;
+	if (v) {
+		return String(v);
+	}
+
+	return undefined;
+};
 
 export const filterValueNumber = <T>(id: keyof T, s?: MRT_ColumnFiltersState): number =>
 	Number(s?.find((filter) => filter.id === id)?.value ?? 0);
@@ -122,8 +131,14 @@ export const filterValueNumber = <T>(id: keyof T, s?: MRT_ColumnFiltersState): n
 export const filterValueNumberArray = <T, V extends number>(id: keyof T, s?: MRT_ColumnFiltersState): V[] =>
 	(s?.find((filter) => filter.id === id)?.value as V[]) ?? ([] as V[]);
 
-export const filterValueBool = <T>(id: keyof T, s?: MRT_ColumnFiltersState): boolean =>
-	Boolean(s?.find((filter) => filter.id === id)?.value ?? false);
+export const filterValueBool = <T>(id: keyof T, s?: MRT_ColumnFiltersState): boolean | undefined => {
+	const v = s?.find((filter) => filter.id === id)?.value;
+	if (v !== undefined) {
+		return Boolean(v);
+	}
+
+	return undefined;
+};
 
 export const filterValueDefault = <T>(id: keyof T, defaultValue?: unknown, s?: MRT_ColumnFiltersState) =>
 	filterValue(id, s) ?? defaultValue;

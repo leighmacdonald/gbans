@@ -3,6 +3,7 @@ package mge
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -33,7 +34,7 @@ func NewService(mge MGE, authMiddleware *rpc.Middleware, options ...connect.Hand
 func (s Service) GetRatingsOverall(ctx context.Context, req *v1.GetRatingsOverallRequest) (*v1.GetRatingsOverallResponse, error) {
 	history, count, errChat := s.mge.Query(ctx, QueryOpts{
 		Filter:  rpc.FromRPC(req.GetFilter()),
-		SteamID: req.GetSteamId(),
+		SteamID: fmt.Sprintf("%d", req.GetSteamId()),
 	})
 	if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)

@@ -9,7 +9,7 @@ export const DesktopNotifications = ({
 	notifications?: UserNotification[];
 	isLoading: boolean;
 }) => {
-	const [newest, setNewest] = useState<bigint>();
+	const [newest, setNewest] = useState<string>();
 
 	useEffect(() => {
 		if (isLoading || notifications == null) {
@@ -18,7 +18,7 @@ export const DesktopNotifications = ({
 
 		// Track the newest one we get on initial load so we are only showing items that are newer.
 		if (newest == null) {
-			setNewest(notifications.length > 0 ? notifications[0].personNotificationId : 0n);
+			setNewest(notifications.length > 0 ? notifications[0].personNotificationId : "");
 			return;
 		}
 
