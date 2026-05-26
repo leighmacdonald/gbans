@@ -16,16 +16,16 @@ import (
 )
 
 type AppealMessage struct {
-	BanID           int32                `json:"ban_id"`
-	BanMessageID    int64                `json:"ban_message_id"`
-	AuthorID        steamid.SteamID      `json:"author_id"`
-	MessageMD       string               `json:"message_md"`
-	Deleted         bool                 `json:"deleted"`
-	CreatedOn       time.Time            `json:"created_on"`
-	UpdatedOn       time.Time            `json:"updated_on"`
-	Avatarhash      string               `json:"avatarhash"`
-	Personaname     string               `json:"personaname"`
-	PermissionLevel permission.Privilege `json:"permission_level"`
+	BanID           int32
+	BanMessageID    int64
+	AuthorID        steamid.SteamID
+	MessageMD       string
+	Deleted         bool
+	CreatedOn       time.Time
+	UpdatedOn       time.Time
+	Avatarhash      string
+	Personaname     string
+	PermissionLevel permission.Privilege
 }
 
 func (am AppealMessage) Path() string {
@@ -45,10 +45,10 @@ func NewBanAppealMessage(banID int32, authorID steamid.SteamID, message string) 
 type AppealOverview struct {
 	Ban
 
-	SourcePersonaname string `json:"source_personaname"`
-	SourceAvatarhash  string `json:"source_avatarhash"`
-	TargetPersonaname string `json:"target_personaname"`
-	TargetAvatarhash  string `json:"target_avatarhash"`
+	SourcePersonaname string
+	SourceAvatarhash  string
+	TargetPersonaname string
+	TargetAvatarhash  string
 }
 
 type AppealState int
@@ -82,7 +82,7 @@ func (as AppealState) String() string {
 }
 
 type AppealQueryFilter struct {
-	Deleted bool `json:"deleted"`
+	Deleted bool
 }
 
 type Appeals struct {

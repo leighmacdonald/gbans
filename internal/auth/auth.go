@@ -26,11 +26,11 @@ const (
 )
 
 type PersonAuth struct {
-	PersonAuthID int64           `json:"person_auth_id"`
-	SteamID      steamid.SteamID `json:"steam_id"`
-	IPAddr       net.IP          `json:"ip_addr"`
-	AccessToken  string          `json:"access_token"`
-	CreatedOn    time.Time       `json:"created_on"`
+	PersonAuthID int64
+	SteamID      steamid.SteamID
+	IPAddr       net.IP
+	AccessToken  string
+	CreatedOn    time.Time
 }
 
 type ServerAuthClaims struct {
