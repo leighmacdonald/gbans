@@ -55,7 +55,10 @@ message CreateRequest {
     (buf.validate.field).required = true,
     (buf.validate.field).int64 = {gte: 76561197960265729}
   ];
-  int64 source_id = 2 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+  int64 source_id = 2 [
+    (buf.validate.field).required = false,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
   google.protobuf.Duration duration = 3;
   BanType ban_type = 4 [
     (buf.validate.field).required = true,

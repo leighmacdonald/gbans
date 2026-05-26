@@ -1336,11 +1336,11 @@ var File_ban_v1_ban_proto protoreflect.FileDescriptor
 
 const file_ban_v1_ban_proto_rawDesc = "" +
 	"\n" +
-	"\x10ban/v1/ban.proto\x12\x06ban.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc7\x04\n" +
+	"\x10ban/v1/ban.proto\x12\x06ban.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xca\x04\n" +
 	"\rCreateRequest\x121\n" +
 	"\ttarget_id\x18\x01 \x01(\x03B\x14\xbaH\x0f\xc8\x01\x01\"\n" +
-	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\btargetId\x12.\n" +
-	"\tsource_id\x18\x02 \x01(\x03B\x11\xbaH\f\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\btargetId\x121\n" +
+	"\tsource_id\x18\x02 \x01(\x03B\x14\xbaH\x0f\xc8\x01\x00\"\n" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\bsourceId\x125\n" +
 	"\bduration\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\bduration\x127\n" +
 	"\bban_type\x18\x04 \x01(\x0e2\x0f.ban.v1.BanTypeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\abanType\x126\n" +
@@ -1399,7 +1399,7 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\x06ban_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x05banId\x12\"\n" +
 	"\x06reason\x18\x02 \x01(\tB\n" +
-	"\xbaH\a\xc8\x01\x01r\x02\x10\x04R\x06reason\"\xdb\x02\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x04R\x06reason\"\xd1\x02\n" +
 	"\fQueryRequest\x12.\n" +
 	"\tsource_id\x18\x01 \x01(\x03B\x11\xbaH\f\"\n" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\bsourceId\x12.\n" +
@@ -1409,12 +1409,11 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"groupsOnly\x12\x18\n" +
 	"\adeleted\x18\x04 \x01(\bR\adeleted\x12\x1c\n" +
 	"\x04cidr\x18\x05 \x01(\tB\b\xbaH\x05r\x03\xd8\x01\x01R\x04cidr\x12\x1b\n" +
-	"\tcidr_only\x18\x06 \x01(\bR\bcidrOnly\x123\n" +
-	"\x06reason\x18\a \x03(\x0e2\x11.ban.v1.BanReasonB\b\xbaH\x05\x82\x01\x02\x10\x01R\x06reason\x12@\n" +
+	"\tcidr_only\x18\x06 \x01(\bR\bcidrOnly\x12)\n" +
+	"\x06reason\x18\a \x03(\x0e2\x11.ban.v1.BanReasonR\x06reason\x12@\n" +
 	"\fappeal_state\x18\b \x01(\x0e2\x13.ban.v1.AppealStateB\b\xbaH\x05\x82\x01\x02\x10\x01R\vappealState\"8\n" +
 	"\rQueryResponse\x12'\n" +
-	"\x04bans\x18\x01 \x03(\v2\v.ban.v1.BanB\x06\xbaH\x03\xc8\x01\x01R\x04bans\"\xd3\n" +
-	"\n" +
+	"\x04bans\x18\x01 \x03(\v2\v.ban.v1.BanB\x06\xbaH\x03\xc8\x01\x01R\x04bans\"\xbb\t\n" +
 	"\x03Ban\x121\n" +
 	"\ttarget_id\x18\x01 \x01(\x03B\x14\xbaH\x0f\xc8\x01\x01\"\n" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\btargetId\x126\n" +
@@ -1425,7 +1424,7 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\x13source_persona_name\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11sourcePersonaName\x124\n" +
 	"\x12source_avatar_hash\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10sourceAvatarHash\x12!\n" +
 	"\x06ban_id\x18\a \x01(\x05B\n" +
-	"\xbaH\a\xc8\x01\x01\"\x02 \x00R\x05banId\x12\x1b\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x05banId\x12\x1b\n" +
 	"\treport_id\x18\b \x01(\x05R\breportId\x12\x17\n" +
 	"\alast_ip\x18\t \x01(\tR\x06lastIp\x12!\n" +
 	"\bevade_ok\x18\n" +
@@ -1450,8 +1449,7 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\bduration\x18\x18 \x01(\v2\x19.google.protobuf.DurationB\r\xbaH\n" +
 	"\xc8\x01\x01\xaa\x01\x04*\x02\b<R\bduration\x12C\n" +
 	"\vvalid_until\x18\x19 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"validUntil:\x95\x01\xbaH\x91\x01\x1a\x8e\x01\n" +
-	"\x0fban_reason_text\x12;reason_text must be set when a custom BanReason is selected\x1a>this.reason != BanReason.CUSTOM or size(this.reason_text) >= 1*g\n" +
+	"validUntil*g\n" +
 	"\aBanType\x12\x1b\n" +
 	"\x17BAN_TYPE_OK_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10BAN_TYPE_NO_COMM\x10\x01\x12\x13\n" +

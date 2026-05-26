@@ -13,7 +13,7 @@ import { queryContext } from "../rpc/chat/v1/chat-ChatService_connectquery.ts";
 import { TextLink } from "./TextLink.tsx";
 
 interface PlayerMessageContextProps {
-	playerMessageId: bigint;
+	playerMessageId: string;
 	padding: number;
 }
 

@@ -42,7 +42,7 @@ const (
 
 // ExportServiceClient is a client for the ban.v1.ExportService service.
 type ExportServiceClient interface {
-	GetTF2BD(context.Context, *v1.GetTF2BDRequest) (*v1.TF2BDSchema, error)
+	GetTF2BD(context.Context, *v1.GetTF2BDRequest) (*v1.GetTF2BDResponse, error)
 	GetValveSteamID(context.Context, *v1.GetValveSteamIDRequest) (*v1.GetValveSteamIDResponse, error)
 }
 
@@ -57,7 +57,7 @@ func NewExportServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 	baseURL = strings.TrimRight(baseURL, "/")
 	exportServiceMethods := v1.File_ban_v1_export_proto.Services().ByName("ExportService").Methods()
 	return &exportServiceClient{
-		getTF2BD: connect.NewClient[v1.GetTF2BDRequest, v1.TF2BDSchema](
+		getTF2BD: connect.NewClient[v1.GetTF2BDRequest, v1.GetTF2BDResponse](
 			httpClient,
 			baseURL+ExportServiceGetTF2BDProcedure,
 			connect.WithSchema(exportServiceMethods.ByName("GetTF2BD")),
@@ -74,12 +74,12 @@ func NewExportServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 
 // exportServiceClient implements ExportServiceClient.
 type exportServiceClient struct {
-	getTF2BD        *connect.Client[v1.GetTF2BDRequest, v1.TF2BDSchema]
+	getTF2BD        *connect.Client[v1.GetTF2BDRequest, v1.GetTF2BDResponse]
 	getValveSteamID *connect.Client[v1.GetValveSteamIDRequest, v1.GetValveSteamIDResponse]
 }
 
 // GetTF2BD calls ban.v1.ExportService.GetTF2BD.
-func (c *exportServiceClient) GetTF2BD(ctx context.Context, req *v1.GetTF2BDRequest) (*v1.TF2BDSchema, error) {
+func (c *exportServiceClient) GetTF2BD(ctx context.Context, req *v1.GetTF2BDRequest) (*v1.GetTF2BDResponse, error) {
 	response, err := c.getTF2BD.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -98,7 +98,7 @@ func (c *exportServiceClient) GetValveSteamID(ctx context.Context, req *v1.GetVa
 
 // ExportServiceHandler is an implementation of the ban.v1.ExportService service.
 type ExportServiceHandler interface {
-	GetTF2BD(context.Context, *v1.GetTF2BDRequest) (*v1.TF2BDSchema, error)
+	GetTF2BD(context.Context, *v1.GetTF2BDRequest) (*v1.GetTF2BDResponse, error)
 	GetValveSteamID(context.Context, *v1.GetValveSteamIDRequest) (*v1.GetValveSteamIDResponse, error)
 }
 
@@ -136,7 +136,7 @@ func NewExportServiceHandler(svc ExportServiceHandler, opts ...connect.HandlerOp
 // UnimplementedExportServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedExportServiceHandler struct{}
 
-func (UnimplementedExportServiceHandler) GetTF2BD(context.Context, *v1.GetTF2BDRequest) (*v1.TF2BDSchema, error) {
+func (UnimplementedExportServiceHandler) GetTF2BD(context.Context, *v1.GetTF2BDRequest) (*v1.GetTF2BDResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.ExportService.GetTF2BD is not implemented"))
 }
 

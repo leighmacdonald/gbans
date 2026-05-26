@@ -240,7 +240,7 @@ const ForumThreadRow = ({ thread }: { thread: ThreadWithSource }) => {
 				</Grid>
 			</Grid>
 			<Grid size={{ xs: 6, md: 3 }}>
-				{thread.recentForumMessageId && thread.recentForumMessageId > 0 ? (
+				{thread.recentForumMessageId && Number(thread.recentForumMessageId) > 0 ? (
 					<Stack direction={"row"} justifyContent={"end"} spacing={1}>
 						<Stack>
 							<Typography

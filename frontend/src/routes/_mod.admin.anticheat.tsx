@@ -51,13 +51,7 @@ function AdminAnticheat() {
 
 	const { data: serverList, isLoading: isLoadingServers } = useQuery(servers);
 
-	const { data, isLoading, isError } = useQuery(
-		query,
-		{
-			steamId: undefined,
-		},
-		{ enabled: !isLoadingServers },
-	);
+	const { data, isLoading, isError } = useQuery(query, {}, { enabled: !isLoadingServers });
 
 	const columns = useMemo(
 		() => [

@@ -35,15 +35,26 @@ func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResp
 
 	chatQuery := HistoryQueryFilter{
 		Filter:        rpc.FromRPC(req.Filter),
-		SourceIDField: httphelper.SourceIDField{SourceID: fmt.Sprintf("%d", req.GetSteamId())},
 		Query:         req.GetQuery(),
 		Personaname:   "",
-		ServerID:      req.GetServerId(),
-		DateStart:     new(req.GetDateStart().AsTime()),
-		DateEnd:       new(req.GetDateEnd().AsTime()),
 		Unrestricted:  ctxUser.HasPermission(permission.Moderator),
 		DontCalcTotal: false,
 		FlaggedOnly:   req.GetFlaggedOnly(),
+	}
+
+	if req.ServerId != nil {
+		chatQuery.ServerID = req.GetServerId()
+	}
+	if req.DateStart != nil {
+		chatQuery.DateStart = new(req.GetDateStart().AsTime())
+	}
+
+	if req.DateEnd != nil {
+		chatQuery.DateEnd = new(req.GetDateEnd().AsTime())
+	}
+
+	if req.SteamId != nil && *req.SteamId > 0 {
+		chatQuery.SourceIDField = httphelper.SourceIDField{SourceID: fmt.Sprintf("%d", req.GetSteamId())}
 	}
 
 	messages, count, errChat := s.chat.QueryChatHistory(ctx, ctxUser.Privilege, chatQuery)

@@ -39,6 +39,7 @@ import {
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
+import { renderTableError } from "../error.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { type Ban, BanReason } from "../rpc/ban/v1/ban_pb.ts";
 import { query } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
@@ -70,7 +71,7 @@ function AdminBans() {
 	const { sendFlash } = useUserFlashCtx();
 	const navigate = useNavigate();
 
-	const { data, isLoading, isError } = useQuery(query);
+	const { data, isLoading, isError, error } = useQuery(query, {});
 
 	const onNewBanSteam = useCallback(async () => {
 		try {
@@ -384,7 +385,7 @@ function AdminBans() {
 				cidr: false,
 			},
 		},
-
+		muiToolbarAlertBannerProps: renderTableError(error),
 		enableRowActions: true,
 		renderRowActions: ({ row }) => (
 			<RowActionContainer>

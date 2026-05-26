@@ -15,7 +15,7 @@ import { TableCellRelativeDateField } from "./TableCellRelativeDateField.tsx";
 const columnHelper = createMRTColumnHelper<Message>();
 const defaultOptions = createDefaultTableOptions<Message>();
 
-export const ChatTable = ({ steamId }: { steamId: bigint }) => {
+export const ChatTable = ({ steamId }: { steamId: string }) => {
 	const { data, isLoading, isError } = useQuery(query, {
 		steamId: steamId,
 		filter: { limit: 2500n, orderBy: "person_message_id", desc: true },

@@ -186,6 +186,12 @@ message ReportCreateRequest {
   //   message: "reason_text must be set when a custom BanReason is selected"
   //   expression: "this.reason != BanReason.CUSTOM || size(this.reason_text) >= 1"
   // };
+  //
+  option (buf.validate.message).cel = {
+    id: "report_custom_reason_text"
+    message: "reason_text must be at least 10 characters when reason is CUSTOM"
+    expression: "this.reason != ban.v1.BanReason.BAN_REASON_CUSTOM || size(this.reason_text) >= 10"
+  };
 
   int64 source_id = 1 [
     (buf.validate.field).required = true,
@@ -206,7 +212,10 @@ message ReportCreateRequest {
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
   ];
-  string reason_text = 5 [(buf.validate.field).string.min_len = 10];
+  string reason_text = 5 [
+    (buf.validate.field).required = false,
+    (buf.validate.field).string.min_len = 10
+  ];
   int64 demo_id = 6;
   int32 demo_tick = 7;
   int64 person_message_id = 8;

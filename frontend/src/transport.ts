@@ -1,4 +1,3 @@
-import { createValidator } from "@bufbuild/protovalidate";
 import type { Interceptor } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { createValidateInterceptor } from "@connectrpc/validate";
@@ -8,7 +7,7 @@ import { emptyOrNullString } from "./util/types.ts";
 
 export const queryClient = new QueryClient();
 
-const validateInterceptor = createValidateInterceptor({ validator: createValidator({}) });
+const validateInterceptor = createValidateInterceptor();
 
 const authInterceptor: Interceptor = (next) => async (req) => {
 	try {
@@ -26,8 +25,26 @@ const authInterceptor: Interceptor = (next) => async (req) => {
 	return await next(req);
 };
 
+const apiLogInterceptor: Interceptor = (next) => async (req) => {
+	console.log(`sending message to ${req.url}`);
+	return await next(req);
+};
+
 export const finalTransport = createConnectTransport({
 	baseUrl: `${window.location.protocol}//${window.location.hostname}:${window.location.port}/connect/`,
 	useHttpGet: true,
-	interceptors: [validateInterceptor, authInterceptor],
+	interceptors: [validateInterceptor, authInterceptor, apiLogInterceptor],
 });
+
+export function removeUndefinedDeep<T>(obj: T): T {
+	if (obj === null || typeof obj !== "object") return obj;
+	if (Array.isArray(obj)) return obj.map(removeUndefinedDeep) as T;
+
+	const result = {} as T;
+	for (const [key, value] of Object.entries(obj)) {
+		if (value !== undefined) {
+			result[key as keyof T] = removeUndefinedDeep(value);
+		}
+	}
+	return result;
+}

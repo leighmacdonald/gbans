@@ -32,7 +32,7 @@ func NewExportService(bans Bans, authorizedKeys []string, siteName string, optio
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
-func (s ExportService) GetTF2BD(ctx context.Context, req *v1.GetTF2BDRequest) (*v1.TF2BDSchema, error) {
+func (s ExportService) GetTF2BD(ctx context.Context, req *v1.GetTF2BDRequest) (*v1.GetTF2BDResponse, error) {
 	if len(s.authorizedKeys) > 0 {
 		key := req.GetKey()
 		if key == "" || !slices.Contains(s.authorizedKeys, key) {
@@ -55,7 +55,7 @@ func (s ExportService) GetTF2BD(ctx context.Context, req *v1.GetTF2BDRequest) (*
 		filtered = append(filtered, curBan)
 	}
 
-	resp := v1.TF2BDSchema{
+	resp := v1.GetTF2BDResponse{
 		Schema: new("https://raw.githubusercontent.com/PazerOP/tf2_bot_detector/master/schemas/v3/playerlist.schema.json"),
 		FileInfo: &v1.FileInfo{
 			Authors:     []string{s.siteName},

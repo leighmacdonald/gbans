@@ -1,3 +1,4 @@
+import { create } from "@bufbuild/protobuf";
 import { useQuery } from "@connectrpc/connect-query";
 import FlagIcon from "@mui/icons-material/Flag";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -25,8 +26,8 @@ import { TextLink } from "../component/TextLink.tsx";
 import {
 	createDefaultTableOptions,
 	dateTimeColumnSize,
-	filterValue,
 	filterValueNumber,
+	filterValueString,
 	makeRowActionsDefOptions,
 	makeSchemaDefaults,
 	makeSchemaState,
@@ -34,12 +35,14 @@ import {
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import type { Message } from "../rpc/chat/v1/chat_pb.ts";
+import { renderTableError } from "../error.tsx";
+import { type Message, QueryRequestSchema } from "../rpc/chat/v1/chat_pb.ts";
 import { query } from "../rpc/chat/v1/chat-ChatService_connectquery.ts";
 import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { renderTimestamp } from "../util/time.ts";
+import { emptyOrNullString } from "../util/types.ts";
 
 const defaultValues = { ...makeSchemaDefaults({ defaultColumn: "personMessageId" }), flaggedOnly: false };
 const validateSearch = z
@@ -200,24 +203,39 @@ function ChatLogs() {
 		];
 	}, [search, theme, serverList?.servers]);
 
-	const sort = search.sorting?.find((sort) => sort);
+	const opts = useMemo(() => {
+		const sort = search.sorting?.find((sort) => sort);
 
-	const { data, isLoading, isError, isRefetching, refetch } = useQuery(
-		query,
-		{
-			serverId: filterValueNumber("serverId", search.columnFilters),
-			steamId: BigInt(filterValue("steamId", search.columnFilters)),
-			query: filterValue("body", search.columnFilters),
-			flaggedOnly: search.flaggedOnly,
+		const o = create(QueryRequestSchema, {
 			filter: {
-				limit: BigInt(search.pagination?.pageSize ?? 25n),
+				limit: String(search.pagination?.pageSize ?? 25),
 				desc: sort ? sort.desc : true,
-				offset: BigInt(search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : 0),
+				offset: String(search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : 0),
 				orderBy: sort ? sort.id : "createdOn",
 			},
-		},
-		{ placeholderData: keepPreviousData },
-	);
+		});
+
+		const serverId = filterValueNumber("serverId", search.columnFilters);
+		if (serverId) {
+			o.serverId = serverId;
+		}
+		try {
+			const steamId = filterValueString("steamId", search.columnFilters);
+			if (!emptyOrNullString(steamId)) {
+				o.steamId = steamId;
+			}
+		} catch (e) {
+			console.log(e);
+		}
+		o.flaggedOnly = search.flaggedOnly ?? undefined;
+
+		return o;
+	}, [search]);
+
+	const { data, isLoading, isError, isRefetching, refetch, error } = useQuery(query, opts, {
+		placeholderData: keepPreviousData,
+	});
+	console.log(data, isLoading, isRefetching, error);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,
@@ -250,6 +268,7 @@ function ChatLogs() {
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
+		muiToolbarAlertBannerProps: renderTableError(error),
 		renderRowActions: ({ row }) => (
 			<RowActionContainer>
 				<Tooltip title={"Create Report"} key={row.original.personMessageId}>

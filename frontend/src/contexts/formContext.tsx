@@ -10,6 +10,11 @@ const DateTimeField = lazy(() => import("../component/form/field/DateTimeField.t
 const MarkdownField = lazy(() => import("../component/form/field/MarkdownField.tsx"));
 const NumberField = lazy(() => import("../component/form/field/NumberField.tsx"));
 const SelectField = lazy(() => import("../component/form/field/SelectField.tsx"));
+const BanReasonField = lazy(() => import("../component/form/field/BanReasonField.tsx"));
+const BanTypeField = lazy(() => import("../component/form/field/BanTypeField.tsx"));
+const AppealStateField = lazy(() => import("../component/form/field/AppealStateField.tsx"));
+const ReportStatusField = lazy(() => import("../component/form/field/ReportStatusField.tsx"));
+const PrivilegeField = lazy(() => import("../component/form/field/PrivilegeField.tsx"));
 const SteamIDField = lazy(() => import("../component/form/field/SteamIDField.tsx"));
 const TextField = lazy(() => import("../component/form/field/TextField.tsx"));
 
@@ -23,7 +28,12 @@ export const { useAppForm, withForm } = createFormHook({
 		TextField,
 		SteamIDField,
 		SelectField,
+		BanReasonField,
+		BanTypeField,
+		AppealStateField,
 		DateTimeField,
+		PrivilegeField,
+		ReportStatusField,
 		NumberField,
 		MarkdownField,
 	},

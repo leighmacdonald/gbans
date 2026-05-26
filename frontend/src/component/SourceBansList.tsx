@@ -15,7 +15,7 @@ import { ContainerWithHeader } from "./ContainerWithHeader";
 import { TableCellBool } from "./table/TableCellBool.tsx";
 
 interface SourceBansListProps {
-	steamId: bigint;
+	steamId: string;
 	isReporter: boolean;
 }
 

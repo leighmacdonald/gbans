@@ -2412,7 +2412,7 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\n" +
 	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\"Z\n" +
 	"\x13ActiveUsersResponse\x12C\n" +
-	"\ruser_activity\x18\x01 \x03(\v2\x16.forum.v1.UserActivityB\x06\xbaH\x03\xc8\x01\x01R\fuserActivity\"\xd8\x04\n" +
+	"\ruser_activity\x18\x01 \x03(\v2\x16.forum.v1.UserActivityB\x06\xbaH\x03\xc8\x01\x01R\fuserActivity\"\xcc\x04\n" +
 	"\aMessage\x126\n" +
 	"\x10forum_message_id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\x0eforumMessageId\x122\n" +
 	"\x0fforum_thread_id\x18\x02 \x01(\x05B\n" +
@@ -2426,10 +2426,9 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\tsignature\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tsignature\x12)\n" +
 	"\fpersona_name\x18\b \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vpersonaName\x12'\n" +
 	"\vavatar_hash\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"avatarHash\x12S\n" +
+	"avatarHash\x12G\n" +
 	"\x10permission_level\x18\n" +
-	" \x01(\x0e2\x14.person.v1.PrivilegeB\x12\xbaH\x0f\xc8\x01\x01\"\n" +
-	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\x0fpermissionLevel\x12A\n" +
+	" \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x0fpermissionLevel\x12A\n" +
 	"\n" +
 	"created_on\x18\v \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +

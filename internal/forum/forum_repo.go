@@ -307,7 +307,7 @@ func (f *Repository) ForumThreads(ctx context.Context, filter ThreadQueryFilter)
 
 	// todo deleted archive
 	constraints := sq.And{sq.Eq{"forum_id": filter.ForumID}}
-
+	//nolint:unqueryvet
 	builder := f.Builder().
 		Select("t.forum_thread_id", "t.forum_id", "t.source_id", "t.title", "t.sticky",
 			"t.locked", "t.views", "t.created_on", "t.updated_on", "p.personaname", "p.avatarhash", "p.permission_level",

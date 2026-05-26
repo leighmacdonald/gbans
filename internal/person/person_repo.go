@@ -108,12 +108,12 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, int64, err
 	}
 
 	switch {
-	case query.TimeCreatedAfter != nil && query.TimeCreatedAfter.After(minDate) && query.TimeCreatedBefore != nil && query.TimeCreatedBefore.After(minDate):
-		constraints = append(constraints, sq.Expr("p.timecreated BETWEEN $1 AND $2", *query.TimeCreatedAfter, *query.TimeCreatedBefore))
-	case query.TimeCreatedAfter != nil && !query.TimeCreatedAfter.After(minDate):
-		constraints = append(constraints, sq.GtOrEq{"p.timecreated": *query.TimeCreatedAfter})
-	case query.TimeCreatedBefore != nil && !query.TimeCreatedBefore.After(minDate):
-		constraints = append(constraints, sq.LtOrEq{"p.timecreated": *query.TimeCreatedBefore})
+	case query.TimeCreatedAfter != nil && !query.TimeCreatedAfter.IsZero() && !query.TimeCreatedBefore.IsZero() && query.TimeCreatedAfter.After(minDate) && query.TimeCreatedBefore != nil && query.TimeCreatedBefore.After(minDate):
+		constraints = append(constraints, sq.Expr("p.timecreated BETWEEN $1 AND $2", query.TimeCreatedAfter.Unix(), query.TimeCreatedBefore.Unix()))
+	case query.TimeCreatedAfter != nil && !query.TimeCreatedAfter.IsZero() && !query.TimeCreatedAfter.After(minDate):
+		constraints = append(constraints, sq.GtOrEq{"p.timecreated": query.TimeCreatedAfter.Unix()})
+	case query.TimeCreatedBefore != nil && !query.TimeCreatedBefore.IsZero() && !query.TimeCreatedBefore.After(minDate):
+		constraints = append(constraints, sq.LtOrEq{"p.timecreated": query.TimeCreatedBefore.Unix()})
 	}
 	builder = query.ApplyLimitOffsetDefault(builder)
 	builder = query.ApplySafeOrder(builder, map[string][]string{

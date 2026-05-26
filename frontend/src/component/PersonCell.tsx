@@ -23,7 +23,7 @@ import { MenuItemLink } from "./MenuItemLink.tsx";
 import { TextLink } from "./TextLink.tsx";
 
 export type PersonCellProps = {
-	steamId: string | bigint;
+	steamId: string;
 	personaName: string;
 	avatarHash: string;
 	onClick?: MouseEventHandler | undefined;

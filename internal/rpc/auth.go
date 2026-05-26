@@ -163,7 +163,7 @@ func (m *Middleware) authServer(ctx context.Context, req *http.Request, procedur
 
 	serverId, err := strconv.ParseInt(claims.ID, 10, 32)
 	if err != nil {
-		return info, err
+		return info, errors.Join(err, ErrBadRequest)
 	}
 
 	info.ServerID = int32(serverId)

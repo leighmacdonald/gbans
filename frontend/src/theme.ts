@@ -96,6 +96,13 @@ export const createThemeByMode = (mode: PaletteMode) => {
 						},
 					},
 				},
+				MuiAlert: {
+					styleOverrides: {
+						message: {
+							maxWidth: "100% !important",
+						},
+					},
+				},
 				MuiCssBaseline: {
 					styleOverrides: {
 						body: darkScrollbar(),

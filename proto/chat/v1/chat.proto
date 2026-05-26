@@ -32,7 +32,7 @@ message QueryContextResponse {
 message QueryRequest {
   database.query.v1.Filter filter = 1;
   string query = 2;
-  int32 server_id = 3 [(buf.validate.field).int32 = {gt: 0}];
+  int32 server_id = 3 [(buf.validate.field).int32 = {gte: 0}];
   google.protobuf.Timestamp date_start = 4;
   google.protobuf.Timestamp date_end = 5;
   bool flagged_only = 6;

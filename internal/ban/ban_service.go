@@ -52,16 +52,24 @@ func (s BanService) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryR
 		reasons = append(reasons, reason.Reason(reqReason))
 	}
 
-	bans, errBans := s.bans.Query(ctx, QueryOpts{
+	opts := QueryOpts{
 		Deleted:       req.GetDeleted(),
-		SourceID:      steamid.New(req.GetSourceId()),
-		TargetID:      steamid.New(req.GetTargetId()),
 		GroupsOnly:    req.GetGroupsOnly(),
 		CIDR:          req.GetCidr(),
 		CIDROnly:      req.GetCidrOnly(),
 		Reasons:       reasons,
 		IncludeGroups: req.GetGroupsOnly(),
-	})
+	}
+
+	if req.SourceId != nil {
+		opts.SourceID = steamid.New(req.GetSourceId())
+	}
+
+	if req.TargetId != nil {
+		opts.TargetID = steamid.New(req.GetTargetId())
+	}
+
+	bans, errBans := s.bans.Query(ctx, opts)
 	if errBans != nil {
 		return nil, connect.NewError(connect.CodeInternal, errBans)
 	}

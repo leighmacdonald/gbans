@@ -162,7 +162,7 @@ function ForumThreadPage() {
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			createMessageMutation.mutate(value);
+			createMessageMutation.mutate({ bodyMd: value.bodyMd, forumThreadId: Number(forumThreadId) });
 		},
 		defaultValues: {
 			bodyMd: "",

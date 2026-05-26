@@ -1,5 +1,5 @@
 import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
-import { useSuspenseQuery } from "@connectrpc/connect-query";
+import { useQuery } from "@connectrpc/connect-query";
 import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
@@ -34,8 +34,8 @@ import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<AppealOverview>();
 const defaultOptions = createDefaultTableOptions<AppealOverview>();
-const defaultValues = makeSchemaDefaults({ defaultColumn: "banId" });
-const validateSearch = makeSchemaState("banId");
+const defaultValues = makeSchemaDefaults({ defaultColumn: "ban.updatedOn" });
+const validateSearch = makeSchemaState("ban.updatedOn");
 
 export const Route = createFileRoute("/_mod/admin/appeals")({
 	component: AdminAppeals,
@@ -52,7 +52,7 @@ function AdminAppeals() {
 	const navigate = useNavigate();
 	const theme = useTheme();
 	const search = Route.useSearch();
-	const { data, isLoading, isError } = useSuspenseQuery(appeals);
+	const { data, isLoading, isError } = useQuery(appeals);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		(updater) => {
@@ -129,7 +129,10 @@ function AdminAppeals() {
 					);
 				},
 				Cell: ({ cell }) => (
-					<TextLink to={Route.fullPath} search={setColumnFilter(search, "appealState", [cell.getValue()])}>
+					<TextLink
+						to={Route.fullPath}
+						search={setColumnFilter(search, "ban.appealState", [cell.getValue()])}
+					>
 						{appealStateString(cell.getValue())}
 					</TextLink>
 				),
@@ -150,7 +153,7 @@ function AdminAppeals() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steamId={BigInt(row.original.ban?.sourceId ?? 0n)}
+						steamId={String(row.original.ban?.sourceId ?? 0n)}
 						personaName={row.original.sourcePersonaName}
 						avatarHash={row.original.sourceAvatarHash}
 					>
@@ -162,7 +165,7 @@ function AdminAppeals() {
 										? theme.palette.primary.light
 										: theme.palette.primary.dark,
 							}}
-							search={setColumnFilter(search, "sourceId", row.original.ban?.sourceId ?? "")}
+							search={setColumnFilter(search, "ban.sourceId", row.original.ban?.sourceId ?? "")}
 						>
 							{row.original.sourcePersonaName ?? row.original.ban?.sourceId}
 						</RouterLink>
@@ -187,7 +190,7 @@ function AdminAppeals() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						steamId={BigInt(row.original.ban?.targetId ?? 0n)}
+						steamId={String(row.original.ban?.targetId ?? 0n)}
 						personaName={row.original.targetPersonaName}
 						avatarHash={row.original.targetAvatarHash}
 					>
@@ -199,7 +202,7 @@ function AdminAppeals() {
 										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
-							search={setColumnFilter(search, "targetId", row.original.ban?.targetId)}
+							search={setColumnFilter(search, "ban.targetId", row.original.ban?.targetId)}
 						>
 							{row.original.targetPersonaName ?? row.original.ban?.targetId}
 						</RouterLink>
@@ -222,7 +225,7 @@ function AdminAppeals() {
 					);
 				},
 				Cell: ({ cell }) => (
-					<TextLink to={Route.fullPath} search={setColumnFilter(search, "reason", [cell.getValue()])}>
+					<TextLink to={Route.fullPath} search={setColumnFilter(search, "ban.reason", [cell.getValue()])}>
 						{banReasonString(cell.getValue())}
 					</TextLink>
 				),
@@ -279,7 +282,7 @@ function AdminAppeals() {
 		},
 		initialState: {
 			...defaultOptions.initialState,
-			sorting: [{ id: "updatedOn", desc: true }],
+			sorting: [{ id: "ban.updatedOn", desc: false }],
 			columnVisibility: {
 				sourceId: false,
 				targetId: true,

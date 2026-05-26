@@ -22,7 +22,7 @@ import { Heading } from "../Heading";
 import { LoadingPlaceholder } from "../LoadingPlaceholder.tsx";
 
 export const BanModal = NiceModal.create(
-	({ banId, reportId, steamId }: { banId?: number; reportId?: number; steamId?: bigint }) => {
+	({ banId, reportId, steamId }: { banId?: number; reportId?: number; steamId?: string }) => {
 		const { data: req, isLoading, isError, error } = useQuery(get, { banId });
 
 		const { sendFlash, sendError } = useUserFlashCtx();
@@ -115,7 +115,7 @@ export const BanModal = NiceModal.create(
 									name={"banType"}
 									children={(field) => {
 										return (
-											<field.SelectField
+											<field.BanTypeField
 												label={"Ban Action Type"}
 												items={enumValues(BanType)}
 												renderItem={(bt) => {
@@ -136,7 +136,7 @@ export const BanModal = NiceModal.create(
 									name={"reason"}
 									children={(field) => {
 										return (
-											<field.SelectField
+											<field.BanReasonField
 												label={"Reason"}
 												items={enumValues(BanReason)}
 												renderItem={(br) => {

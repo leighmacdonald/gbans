@@ -73,7 +73,7 @@ func (DuelMode) EnumDescriptor() ([]byte, []int) {
 type GetRatingsOverallRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Filter        *v1.Filter             `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
-	SteamId       *string                `protobuf:"bytes,2,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	SteamId       *int64                 `protobuf:"varint,2,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -115,11 +115,11 @@ func (x *GetRatingsOverallRequest) GetFilter() *v1.Filter {
 	return nil
 }
 
-func (x *GetRatingsOverallRequest) GetSteamId() string {
+func (x *GetRatingsOverallRequest) GetSteamId() int64 {
 	if x != nil && x.SteamId != nil {
 		return *x.SteamId
 	}
-	return ""
+	return 0
 }
 
 type PlayerStats struct {
@@ -618,11 +618,11 @@ var File_mge_v1_mge_proto protoreflect.FileDescriptor
 
 const file_mge_v1_mge_proto_rawDesc = "" +
 	"\n" +
-	"\x10mge/v1/mge.proto\x12\x06mge.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"y\n" +
+	"\x10mge/v1/mge.proto\x12\x06mge.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"{\n" +
 	"\x18GetRatingsOverallRequest\x121\n" +
-	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12*\n" +
-	"\bsteam_id\x18\x02 \x01(\tB\x0f\xbaH\f\"\n" +
-	"(\x81\x80\x80\x80\x90\x80\x80\x88\x01R\asteamId\"\xf6\x02\n" +
+	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12,\n" +
+	"\bsteam_id\x18\x02 \x01(\x03B\x11\xbaH\f\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\"\xf6\x02\n" +
 	"\vPlayerStats\x12%\n" +
 	"\bstats_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\astatsId\x12\x1e\n" +
@@ -650,7 +650,7 @@ const file_mge_v1_mge_proto_rawDesc = "" +
 	"\x05loser\x18\x05 \x01(\x03B\x11\xbaH\f\"\n" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\x05loser\x12)\n" +
 	"\x06loser2\x18\x06 \x01(\x03B\x11\xbaH\f\"\n" +
-	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\x06loser2\"\x83\t\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\x06loser2\"\xd5\a\n" +
 	"\x04Duel\x12#\n" +
 	"\aduel_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x06duelId\x12,\n" +
@@ -679,8 +679,7 @@ const file_mge_v1_mge_proto_rawDesc = "" +
 	"\bmap_name\x18\x12 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\amapName\x12%\n" +
 	"\n" +
 	"arena_name\x18\x13 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tarenaName\x12:\n" +
-	"\tduel_mode\x18\x14 \x01(\x0e2\x10.mge.v1.DuelModeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\bduelMode:\xab\x01\xbaH\xa7\x01\x1a\xa4\x01\n" +
-	"\x14validate_mode_values\x12+loser2 and winner2 must be set for 2v2 mode\x1a_this.duel_mode == 0 or (this.winner2 >= 76561197960265729 and this.loser2 >= 76561197960265729)\"d\n" +
+	"\tduel_mode\x18\x14 \x01(\x0e2\x10.mge.v1.DuelModeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\bduelMode\"d\n" +
 	"\x12GetHistoryResponse\x12.\n" +
 	"\ahistory\x18\x01 \x03(\v2\f.mge.v1.DuelB\x06\xbaH\x03\xc8\x01\x01R\ahistory\x12\x1e\n" +
 	"\x05count\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x05count*J\n" +

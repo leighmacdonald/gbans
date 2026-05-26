@@ -402,7 +402,7 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"\fQueryRequest\x121\n" +
 	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12\x14\n" +
 	"\x05query\x18\x02 \x01(\tR\x05query\x12$\n" +
-	"\tserver_id\x18\x03 \x01(\x05B\a\xbaH\x04\x1a\x02 \x00R\bserverId\x129\n" +
+	"\tserver_id\x18\x03 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\bserverId\x129\n" +
 	"\n" +
 	"date_start\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tdateStart\x125\n" +
 	"\bdate_end\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\adateEnd\x12!\n" +
