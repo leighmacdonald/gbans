@@ -76,10 +76,10 @@ type Query struct {
 }
 
 type ServerInfoSafe struct {
-	ServerNameLong string `json:"server_name_long"`
-	ServerName     string `json:"server_name"`
-	ServerID       int32  `json:"server_id"`
-	Colour         string `json:"colour"`
+	ServerNameLong string
+	ServerName     string
+	ServerID       int32
+	Colour         string
 }
 
 type Servers struct {

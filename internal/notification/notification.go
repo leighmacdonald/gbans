@@ -37,16 +37,16 @@ const (
 )
 
 type UserNotification struct {
-	PersonNotificationID int64           `json:"person_notification_id"`
-	SteamID              steamid.SteamID `json:"steam_id"`
-	Read                 bool            `json:"read"`
-	Deleted              bool            `json:"deleted"`
-	Severity             Severity        `json:"severity"`
-	Message              string          `json:"message"`
-	Link                 string          `json:"link"`
-	Count                int32           `json:"count"`
-	Author               person.Info     `json:"author"`
-	CreatedOn            time.Time       `json:"created_on"`
+	PersonNotificationID int64
+	SteamID              steamid.SteamID
+	Read                 bool
+	Deleted              bool
+	Severity             Severity
+	Message              string
+	Link                 string
+	Count                int32
+	Author               person.Info
+	CreatedOn            time.Time
 }
 
 type MessageType int // TODO discord dms

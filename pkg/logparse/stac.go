@@ -14,6 +14,7 @@ import (
 )
 
 var (
+	ErrParse         = errors.New("failed to parse stac log")
 	ErrParsePlayer   = errors.New("failed to parse player info")
 	ErrParseSummary  = errors.New("failed to parse summary info")
 	ErrParseFileName = errors.New("failed to parse file name")
@@ -41,18 +42,18 @@ const (
 )
 
 type StacEntry struct {
-	AnticheatID int64           `json:"anticheat_id"`
-	SteamID     steamid.SteamID `json:"steam_id"`
-	ServerID    int32           `json:"server_id"`
-	ServerName  string          `json:"server_name"`
-	DemoID      *int32          `json:"demo_id"`
-	DemoName    string          `json:"demo_name"`
-	DemoTick    int32           `json:"demo_tick"`
+	AnticheatID int64           `json:"anticheatId"`
+	SteamID     steamid.SteamID `json:"steamId"`
+	ServerID    int32           `json:"serverId"`
+	ServerName  string          `json:"serverName"`
+	DemoID      *int32          `json:"demoId"`
+	DemoName    string          `json:"demoName"`
+	DemoTick    int32           `json:"demoTick"`
 	Name        string          `json:"name"`
 	Detection   Detection       `json:"detection"`
 	Summary     string          `json:"summary"`
-	RawLog      string          `json:"raw_log"`
-	CreatedOn   time.Time       `json:"created_on"`
+	RawLog      string          `json:"rawLog"`
+	CreatedOn   time.Time       `json:"createdOn"`
 }
 
 // StacParser is responsible for parsing stac logs without going wild trying to parse everything
@@ -174,6 +175,9 @@ func (p StacParser) Parse(logName string, reader io.Reader) ([]StacEntry, error)
 		}
 	}
 
+	if errScan := scan.Err(); errScan != nil {
+		return entries, errors.Join(errScan, ErrParse)
+	}
 	if current.Summary != "" {
 		if !current.SteamID.Valid() {
 			slog.Debug("Anticheat entry had invalid steam_id", slog.String("raw", current.RawLog))

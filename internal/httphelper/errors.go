@@ -58,12 +58,12 @@ func NewAPIError(code int, err error) APIError {
 // application/problem+json.
 type APIError struct {
 	err       error
-	Type      string    `json:"type"`
-	Title     string    `json:"title"`
-	Status    int       `json:"status"`
-	Detail    string    `json:"detail"`
-	Instance  string    `json:"instance"`
-	Timestamp time.Time `json:"timestamp"`
+	Type      string
+	Title     string
+	Status    int
+	Detail    string
+	Instance  string
+	Timestamp time.Time
 }
 
 func (e APIError) Error() string {

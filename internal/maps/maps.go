@@ -10,10 +10,10 @@ import (
 var ErrInvalidMap = errors.New("invalid map")
 
 type Map struct {
-	MapID     int32     `json:"map_id"`
-	MapName   string    `json:"map_name"`
-	CreatedOn time.Time `json:"created_on"`
-	UpdatedOn time.Time `json:"updated_on"`
+	MapID     int32
+	MapName   string
+	CreatedOn time.Time
+	UpdatedOn time.Time
 }
 
 type Maps struct {

@@ -38,16 +38,16 @@ const (
 )
 
 type Config struct {
-	Enabled         bool            `json:"enabled"`
-	Username        string          `json:"username"`
-	Port            int             `json:"port"`
-	PrivateKeyPath  string          `json:"private_key_path"`
-	HostKeyStrategy HostKeyStrategy `json:"host_key_strategy"`
-	Password        string          `json:"password"`
-	UpdateInterval  int             `json:"update_interval"`
-	Timeout         int             `json:"timeout"`
-	DemoPathFmt     string          `json:"demo_path_fmt"`
-	StacPathFmt     string          `json:"stac_path_fmt"`
+	Enabled         bool
+	Username        string
+	Port            int
+	PrivateKeyPath  string
+	HostKeyStrategy HostKeyStrategy
+	Password        string
+	UpdateInterval  int
+	Timeout         int
+	DemoPathFmt     string
+	StacPathFmt     string
 }
 
 // KeyStore is responsible for storing and retrieving host keys.

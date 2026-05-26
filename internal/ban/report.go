@@ -111,22 +111,22 @@ func NewReport() Report {
 type ReportWithAuthor struct {
 	Report
 
-	Author  personDomain.Core `json:"author"`
-	Subject personDomain.Core `json:"subject"`
+	Author  personDomain.Core
+	Subject personDomain.Core
 	// TODO FIX Demo    demo.DemoFile `json:"demo"`
 }
 
 type ReportMessage struct {
-	ReportID        int32                `json:"report_id"`
-	ReportMessageID int32                `json:"report_message_id"`
-	AuthorID        steamid.SteamID      `json:"author_id"`
-	MessageMD       string               `json:"message_md"`
-	Deleted         bool                 `json:"deleted"`
-	CreatedOn       time.Time            `json:"created_on"`
-	UpdatedOn       time.Time            `json:"updated_on"`
-	Personaname     string               `json:"personaname"`
-	Avatarhash      string               `json:"avatarhash"`
-	PermissionLevel permission.Privilege `json:"permission_level"`
+	ReportID        int32
+	ReportMessageID int32
+	AuthorID        steamid.SteamID
+	MessageMD       string
+	Deleted         bool
+	CreatedOn       time.Time
+	UpdatedOn       time.Time
+	Personaname     string
+	Avatarhash      string
+	PermissionLevel permission.Privilege
 }
 
 func (m ReportMessage) Path() string {

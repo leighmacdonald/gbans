@@ -11,16 +11,16 @@ import (
 )
 
 type PlayerStats struct {
-	StatsID     int32           `json:"stats_id"`
-	Rating      int32           `json:"rating"`
-	SteamID     steamid.SteamID `json:"steam_id"`
-	Personaname string          `json:"personaname"`
-	Avatarhash  string          `json:"avatarhash"`
-	Name        string          `json:"name"`
-	Wins        int32           `json:"wins"`
-	Losses      int32           `json:"losses"`
-	LastPlayed  time.Time       `json:"last_played"`
-	HitBlip     int32           `json:"hit_blip"`
+	StatsID     int32
+	Rating      int32
+	SteamID     steamid.SteamID
+	Personaname string
+	Avatarhash  string
+	Name        string
+	Wins        int32
+	Losses      int32
+	LastPlayed  time.Time
+	HitBlip     int32
 }
 
 type QueryOpts struct {
@@ -93,25 +93,25 @@ const (
 )
 
 type Duels struct {
-	DuelID             int32           `json:"duel_id"`
-	Winner             steamid.SteamID `json:"winner"`
-	WinnerAvatarhash   string          `json:"winner_avatarhash"`
-	WinnerPersonaname  string          `json:"winner_personaname"`
-	Winner2            steamid.SteamID `json:"winner2"`
-	Winner2Avatarhash  string          `json:"winner2_avatarhash"`
-	Winner2Personaname string          `json:"winner2_personaname"`
-	Loser              steamid.SteamID `json:"loser"`
-	LoserAvatarhash    string          `json:"loser_avatarhash"`
-	LoserPersonaname   string          `json:"loser_personaname"`
-	Loser2             steamid.SteamID `json:"loser2"`
-	Loser2Avatarhash   string          `json:"loser2_avatarhash"`
-	Loser2Personaname  string          `json:"loser2_personaname"`
-	WinnerScore        int32           `json:"winner_score"`
-	LoserScore         int32           `json:"loser_score"`
-	Winlimit           int32           `json:"winlimit"`
-	GameTime           time.Time       `json:"game_time"`
-	MapName            string          `json:"map_name"`
-	ArenaName          string          `json:"arena_name"`
+	DuelID             int32
+	Winner             steamid.SteamID
+	WinnerAvatarhash   string
+	WinnerPersonaname  string
+	Winner2            steamid.SteamID
+	Winner2Avatarhash  string
+	Winner2Personaname string
+	Loser              steamid.SteamID
+	LoserAvatarhash    string
+	LoserPersonaname   string
+	Loser2             steamid.SteamID
+	Loser2Avatarhash   string
+	Loser2Personaname  string
+	WinnerScore        int32
+	LoserScore         int32
+	Winlimit           int32
+	GameTime           time.Time
+	MapName            string
+	ArenaName          string
 }
 
 type HistoryOpts struct {

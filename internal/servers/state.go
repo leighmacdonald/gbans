@@ -22,12 +22,12 @@ type LogFilePayload struct {
 }
 
 type PartialStateUpdate struct {
-	Hostname       string `json:"hostname"`
-	ShortName      string `json:"short_name"`
-	CurrentMap     string `json:"current_map"`
-	PlayersReal    int    `json:"players_real"`
-	PlayersTotal   int    `json:"players_total"`
-	PlayersVisible int    `json:"players_visible"`
+	Hostname       string
+	ShortName      string
+	CurrentMap     string
+	PlayersReal    int
+	PlayersTotal   int
+	PlayersVisible int
 }
 
 type Status struct {
@@ -39,59 +39,59 @@ type Status struct {
 
 type state struct {
 	// IP is a distinct entry vs host since steam no longer allows steam:// protocol handler links to use a fqdn
-	IP         string `json:"ip"`
-	Port       uint16 `json:"port"`
-	IPPublic   string `json:"ip_public"`
-	PortPublic uint16 `json:"port_public"`
+	IP         string
+	Port       uint16
+	IPPublic   string
+	PortPublic uint16
 
-	LastUpdate    time.Time `json:"last_update"`
-	ReservedSlots int       `json:"reserved_slots"`
-	Protocol      uint8     `json:"protocol"`
-	Map           string    `json:"map"`
+	LastUpdate    time.Time
+	ReservedSlots int
+	Protocol      uint8
+	Map           string
 	// Name of the folder containing the game files.
-	Folder   string `json:"folder"`
-	ServerOS string `json:"server_os"`
+	Folder   string
+	ServerOS string
 	// Full name of the game.
-	Game string `json:"game"`
+	Game string
 	// Steam Application ID of game.
-	AppID uint16 `json:"app_id"`
+	AppID uint16
 	// Number of players on the server.
-	PlayerCount int32 `json:"player_count"`
+	PlayerCount int32
 	// Maximum number of players the server reports it can hold.
-	MaxPlayers int32 `json:"max_players"`
+	MaxPlayers int32
 	// Maximum number of players the server reports it can hold, visible to the public.
-	MaxPlayersVisible int32 `json:"max_players_visible"`
+	MaxPlayersVisible int32
 	// Number of bots on the server.
-	Bots int32 `json:"bots"`
+	Bots int32
 	// Indicates whether the server requires a password
-	Password bool `json:"password"`
+	Password bool
 	// Specifies whether the server uses VAC
-	VAC bool `json:"vac"`
+	VAC bool
 	// Version of the game installed on the server.
-	Version string `json:"version"`
+	Version string
 	// ServerStore's SteamID.
-	SteamID steamid.SteamID `json:"steam_id"`
+	SteamID steamid.SteamID
 	// Tags that describe the game according to the server (for future use.)
-	Keywords []string `json:"keywords"`
-	Edicts   []int    `json:"edicts"`
+	Keywords []string
+	Edicts   []int
 	// The server's 64-bit GameID. If this is present, a more accurate AppID is present in the low 24 bits.
 	// The earlier AppID could have been truncated as it was forced into 16-bit storage.
-	GameID uint64 `json:"game_id"` // Needed?
+	GameID uint64 // Needed?
 	// STVIP is the public ip of the stv server
-	STVIP string `json:"stvip"`
+	STVIP string
 	// Spectator port number for SourceTV.
-	STVPort uint16 `json:"stv_port"`
+	STVPort uint16
 	// Name of the spectator server for SourceTV.
-	STVName string `json:"stv_name"`
+	STVName string
 	// A collection of the comma delimited values of sv_tags
-	Tags    []string  `json:"tags"`
-	Players []*Player `json:"players"`
+	Tags    []string
+	Players []*Player
 	// How many human players in the server
-	Humans int32 `json:"humans"`
+	Humans int32
 	// HasSynchronizedDNS tracks if the server has done its initial DNS update cycle. This is required
 	// for future change detection and updates.
-	HasSynchronizedDNS bool              `json:"has_synchronized_dns"`
-	Rules              map[string]string `json:"rules"`
+	HasSynchronizedDNS bool
+	Rules              map[string]string
 }
 
 type Player struct {

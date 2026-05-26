@@ -56,14 +56,14 @@ const (
 )
 
 type PlayerBanState struct {
-	SteamID    steamid.SteamID `json:"steam_id"`
-	BanSource  BanSource       `json:"ban_source"`
-	BanID      int             `json:"ban_id"`
-	BanType    bantype.Type    `json:"ban_type"`
-	Reason     reason.Reason   `json:"reason"`
-	EvadeOK    bool            `json:"evade_ok"`
-	IP         netip.Addr      `json:"ip"`
-	ValidUntil time.Time       `json:"valid_until"`
+	SteamID    steamid.SteamID
+	BanSource  BanSource
+	BanID      int
+	BanType    bantype.Type
+	Reason     reason.Reason
+	EvadeOK    bool
+	IP         netip.Addr
+	ValidUntil time.Time
 }
 
 func (p PlayerBanState) Path() string {
@@ -93,71 +93,71 @@ const (
 )
 
 type ServerPermission struct {
-	SteamID         steamid.SID          `json:"steam_id"`
-	PermissionLevel permission.Privilege `json:"permission_level"`
-	Flags           string               `json:"flags"`
+	SteamID         steamid.SID
+	PermissionLevel permission.Privilege
+	Flags           string
 }
 
 type Admin struct {
-	AdminID   int32           `json:"admin_id"`
-	SteamID   steamid.SteamID `json:"steam_id"`
-	AuthType  AuthType        `json:"auth_type"` // steam | name |ip
-	Identity  string          `json:"identity"`
-	Password  string          `json:"password"`
-	Flags     string          `json:"flags"`
-	Name      string          `json:"name"`
-	Immunity  int32           `json:"immunity"`
-	Groups    []Groups        `json:"groups"`
-	CreatedOn time.Time       `json:"created_on"`
-	UpdatedOn time.Time       `json:"updated_on"`
+	AdminID   int32
+	SteamID   steamid.SteamID
+	AuthType  AuthType // steam | name |ip
+	Identity  string
+	Password  string
+	Flags     string
+	Name      string
+	Immunity  int32
+	Groups    []Groups
+	CreatedOn time.Time
+	UpdatedOn time.Time
 }
 
 type Groups struct {
-	GroupID       int32     `json:"group_id"`
-	Flags         string    `json:"flags"`
-	Name          string    `json:"name"`
-	ImmunityLevel int32     `json:"immunity_level"`
-	CreatedOn     time.Time `json:"created_on"`
-	UpdatedOn     time.Time `json:"updated_on"`
+	GroupID       int32
+	Flags         string
+	Name          string
+	ImmunityLevel int32
+	CreatedOn     time.Time
+	UpdatedOn     time.Time
 }
 
 type GroupImmunity struct {
-	GroupImmunityID int32     `json:"group_immunity_id"`
-	Group           Groups    `json:"group"`
-	Other           Groups    `json:"other"`
-	CreatedOn       time.Time `json:"created_on"`
+	GroupImmunityID int32
+	Group           Groups
+	Other           Groups
+	CreatedOn       time.Time
 }
 
 type GroupOverrides struct {
-	GroupOverrideID int32          `json:"group_override_id"`
-	GroupID         int32          `json:"group_id"`
-	Type            OverrideType   `json:"type"` // command | group
-	Name            string         `json:"name"`
-	Access          OverrideAccess `json:"access"` // allow | deny
-	CreatedOn       time.Time      `json:"created_on"`
-	UpdatedOn       time.Time      `json:"updated_on"`
+	GroupOverrideID int32
+	GroupID         int32
+	Type            OverrideType // command | group
+	Name            string
+	Access          OverrideAccess // allow | deny
+	CreatedOn       time.Time
+	UpdatedOn       time.Time
 }
 
 type Overrides struct {
-	OverrideID int32        `json:"override_id"`
-	Type       OverrideType `json:"type"` // command | group
-	Name       string       `json:"name"`
-	Flags      string       `json:"flags"`
-	CreatedOn  time.Time    `json:"created_on"`
-	UpdatedOn  time.Time    `json:"updated_on"`
+	OverrideID int32
+	Type       OverrideType // command | group
+	Name       string
+	Flags      string
+	CreatedOn  time.Time
+	UpdatedOn  time.Time
 }
 
 type AdminGroups struct {
-	AdminID      int32     `json:"admin_id"`
-	GroupID      int32     `json:"group_id"`
-	InheritOrder int32     `json:"inherit_order"`
-	CreatedOn    time.Time `json:"created_on"`
-	UpdatedOn    time.Time `json:"updated_on"`
+	AdminID      int32
+	GroupID      int32
+	InheritOrder int32
+	CreatedOn    time.Time
+	UpdatedOn    time.Time
 }
 
 type ConfigEntry struct {
-	CfgKey   string `json:"cfg_key"`
-	CfgValue string `json:"cfg_value"`
+	CfgKey   string
+	CfgValue string
 }
 
 func New(repository Repository, person person.Provider, notifier notification.Notifier, seedChannelID string, modPingChannelID string, modRoleID string, servers *servers.Servers) Sourcemod {

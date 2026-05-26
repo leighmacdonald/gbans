@@ -56,6 +56,13 @@ linters:
           json: camel
           yaml: snake
         use-field-name: true
+        overrides:
+          - pkg: pkg/demoparse
+            rules:
+              json: snake
+          - pkg: internal/thirdparty
+            rules:
+              json: snake
     wrapcheck:
       ignore-sigs:
         - .Errorf(

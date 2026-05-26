@@ -37,21 +37,21 @@ type SteamMember interface {
 type Query struct {
 	query.Filter
 
-	PersonaName          string                 `schema:"persona_name,omitempty" json:"persona_name,omitempty"`
-	WithPermissions      []permission.Privilege `schema:"with_permissions,omitempty" json:"with_permissions,omitempty"`
-	DiscordID            string                 `schema:"discord_id,omitempty" json:"discord_id,omitempty"`
-	SteamUpdateOlderThan time.Time              `schema:"steam_update_older_than" json:"steam_update_older_than"`
-	SteamIDs             []string               `schema:"steam_ids,omitempty" json:"steam_ids,omitempty"` //nolint:tagliatelle
-	VacBans              int32                  `schema:"vac_bans,omitempty" json:"vac_bans,omitempty"`
-	GameBans             int32                  `schema:"game_bans,omitempty" json:"game_bans,omitempty"`
-	AvatarHash           string                 `schema:"avatar_hash,omitempty" json:"avatar_hash,omitempty"`
-	CommunityBanned      *bool                  `schema:"community_banned,omitempty" json:"community_banned,omitempty"`
-	TimeCreatedAfter     *time.Time             `schema:"time_created_after,omitzero" json:"time_created_after,omitzero"`
-	TimeCreatedBefore    *time.Time             `schema:"time_created_before,omitzero" json:"time_created_before,omitzero"`
+	PersonaName          string
+	WithPermissions      []permission.Privilege
+	DiscordID            string
+	SteamUpdateOlderThan time.Time
+	SteamIDs             []string
+	VacBans              int32
+	GameBans             int32
+	AvatarHash           string
+	CommunityBanned      *bool
+	TimeCreatedAfter     *time.Time
+	TimeCreatedBefore    *time.Time
 }
 
 type RequestPermissionLevelUpdate struct {
-	PermissionLevel permission.Privilege `json:"permission_level"`
+	PermissionLevel permission.Privilege
 }
 
 // EconBanState  holds the users current economy ban status.
@@ -67,37 +67,37 @@ const (
 )
 
 type Person struct {
-	SteamID           steamid.SteamID      `json:"steam_id"`
-	CreatedOn         time.Time            `json:"created_on"`
-	UpdatedOn         time.Time            `json:"updated_on"`
-	PermissionLevel   permission.Privilege `json:"permission_level"`
-	Muted             bool                 `json:"muted"`
+	SteamID           steamid.SteamID
+	CreatedOn         time.Time
+	UpdatedOn         time.Time
+	PermissionLevel   permission.Privilege
+	Muted             bool
 	isNew             bool
-	DiscordID         string       `json:"discord_id"`
-	PatreonID         string       `json:"patreon_id"`
-	IPAddr            netip.Addr   `json:"-"`
-	CommunityBanned   bool         `json:"community_banned"`
-	VACBans           int32        `json:"vac_bans"`
-	GameBans          int32        `json:"game_bans"`
-	EconomyBan        EconBanState `json:"economy_ban"`
-	DaysSinceLastBan  int32        `json:"days_since_last_ban"`
-	UpdatedOnSteam    time.Time    `json:"updated_on_steam"`
-	AvatarHash        string       `json:"avatar_hash"`
-	CommentPermission int32        `json:"comment_permission"`
-	LastLogoff        *time.Time   `json:"last_logoff"`
-	LocCityID         int32        `json:"loc_city_id"`
-	LocCountryCode    string       `json:"loc_country_code"`
-	LocStateCode      string       `json:"loc_state_code"`
-	PersonaName       string       `json:"persona_name"`
-	PersonaState      int32        `json:"persona_state"`
-	PersonaStateFlags int32        `json:"persona_state_flags"`
-	PrimaryClanID     string       `json:"primary_clan_id"`
-	ProfileState      int32        `json:"profile_state"`
-	ProfileURL        string       `json:"profile_url"`
-	RealName          string       `json:"real_name"`
-	TimeCreated       int64        `json:"time_created"`
-	VisibilityState   int32        `json:"visibility_state"`
-	BanID             int32        `json:"ban_id"`
+	DiscordID         string
+	PatreonID         string
+	IPAddr            netip.Addr
+	CommunityBanned   bool
+	VACBans           int32
+	GameBans          int32
+	EconomyBan        EconBanState
+	DaysSinceLastBan  int32
+	UpdatedOnSteam    time.Time
+	AvatarHash        string
+	CommentPermission int32
+	LastLogoff        *time.Time
+	LocCityID         int32
+	LocCountryCode    string
+	LocStateCode      string
+	PersonaName       string
+	PersonaState      int32
+	PersonaStateFlags int32
+	PrimaryClanID     string
+	ProfileState      int32
+	ProfileURL        string
+	RealName          string
+	TimeCreated       int64
+	VisibilityState   int32
+	BanID             int32
 }
 
 func (p Person) GetPrivilege() permission.Privilege {
@@ -218,9 +218,9 @@ func (p Person) Core() person.Core {
 }
 
 type ProfileResponse struct {
-	Player   *Person                  `json:"player"`
-	Friends  []thirdparty.SteamFriend `json:"friends"`
-	Settings Settings                 `json:"settings"`
+	Player   *Person
+	Friends  []thirdparty.SteamFriend
+	Settings Settings
 }
 
 // New allocates a new default person instance.
@@ -266,25 +266,25 @@ func (p People) AsMap() map[steamid.SteamID]Person {
 }
 
 type Settings struct {
-	PersonSettingsID     int64           `json:"person_settings_id"`
-	SteamID              steamid.SteamID `json:"steam_id"`
-	ForumSignature       string          `json:"forum_signature"`
-	ForumProfileMessages bool            `json:"forum_profile_messages"`
-	StatsHidden          bool            `json:"stats_hidden"`
+	PersonSettingsID     int64
+	SteamID              steamid.SteamID
+	ForumSignature       string
+	ForumProfileMessages bool
+	StatsHidden          bool
 
 	// This key will be absent to indicate that this feature
 	// is disabled (and UI should not be shown to the user).
-	CenterProjectiles *bool `json:"center_projectiles,omitempty"`
+	CenterProjectiles *bool
 
-	CreatedOn time.Time `json:"created_on"`
-	UpdatedOn time.Time `json:"updated_on"`
+	CreatedOn time.Time
+	UpdatedOn time.Time
 }
 
 type SettingsUpdate struct {
-	ForumSignature       string `json:"forum_signature"`
-	ForumProfileMessages bool   `json:"forum_profile_messages"`
-	StatsHidden          bool   `json:"stats_hidden"`
-	CenterProjectiles    *bool  `json:"center_projectiles,omitempty"`
+	ForumSignature       string
+	ForumProfileMessages bool
+	StatsHidden          bool
+	CenterProjectiles    *bool
 }
 
 type Persons struct {

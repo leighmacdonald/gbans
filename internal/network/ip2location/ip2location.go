@@ -27,9 +27,9 @@ import (
 )
 
 type Config struct {
-	Enabled   bool   `json:"enabled"`
-	CachePath string `json:"cache_path"`
-	Token     string `json:"token"`
+	Enabled   bool
+	CachePath string
+	Token     string
 }
 
 const downloadURL = "https://www.ip2location.com/download/?token=%s&file=%s"
@@ -206,8 +206,8 @@ func (r ASNRecords) Hosts() uint32 {
 }
 
 type LatLong struct {
-	Latitude  float32 `json:"latitude"`
-	Longitude float32 `json:"longitude"`
+	Latitude  float32
+	Longitude float32
 }
 
 // Value implements the driver.Valuer interface for our custom type.

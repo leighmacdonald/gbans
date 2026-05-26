@@ -83,17 +83,17 @@ func NewWeaponStats() *WeaponStats {
 //   - Simplify implementation of the maps with generics
 //   - Track players taking packs when they are close to 100% hp
 type Match struct {
-	MatchID    uuid.UUID        `json:"match_id"`
-	ServerID   int              `json:"server_id"`
-	Title      string           `json:"title"`
-	MapName    string           `json:"map_name"`
-	DemoName   string           `json:"demo_name"`
-	TeamScores TeamScores       `json:"team_scores"`
-	PlayerSums MatchPlayerSums  `json:"player_sums"`
-	Rounds     []*MatchRoundSum `json:"rounds"`
-	Chat       []MatchChat      `json:"chat"`
-	TimeStart  *time.Time       `json:"time_start"`
-	TimeEnd    *time.Time       `json:"time_end"`
+	MatchID    uuid.UUID
+	ServerID   int
+	Title      string
+	MapName    string
+	DemoName   string
+	TeamScores TeamScores
+	PlayerSums MatchPlayerSums
+	Rounds     []*MatchRoundSum
+	Chat       []MatchChat
+	TimeStart  *time.Time
+	TimeEnd    *time.Time
 	curRound   int
 }
 
@@ -1004,49 +1004,49 @@ func (match *Match) miniRoundLen(evt WMiniRoundLenEvt) {
 }
 
 type PointCaptureBlocked struct {
-	CP       int    `json:"cp"`
-	CPName   string `json:"cp_name"`
-	Position Pos    `json:"position"`
+	CP       int
+	CPName   string
+	Position Pos
 }
 
 type PointCapture struct {
-	SteamID  steamid.SteamID `json:"steam_id"`
-	CP       int             `json:"cp"`
-	CPName   string          `json:"cp_name"`
-	Position Pos             `json:"position"`
+	SteamID  steamid.SteamID
+	CP       int
+	CPName   string
+	Position Pos
 }
 
 type KillInfo struct {
-	Weapon    Weapon `json:"weapon"`
-	SourcePos Pos    `json:"source_pos"`
-	TargetPos Pos    `json:"target_pos"`
+	Weapon    Weapon
+	SourcePos Pos
+	TargetPos Pos
 }
 
 type TargetStats struct {
-	SteamID      steamid.SteamID `json:"steam_id"`
-	KilledInfo   []KillInfo      `json:"killed_info"`
-	Dominations  int             `json:"dominations"`
-	DamageTaken  int             `json:"damage_taken"`
-	HealingTaken int             `json:"healing_taken"`
-	Revenges     int             `json:"revenges"`
-	Extinguishes int             `json:"extinguishes"`
+	SteamID      steamid.SteamID
+	KilledInfo   []KillInfo
+	Dominations  int
+	DamageTaken  int
+	HealingTaken int
+	Revenges     int
+	Extinguishes int
 }
 
 type PlayerClassStats struct {
 	startTime          time.Time
-	Kills              int `json:"kills"`
-	Assists            int `json:"assists"`
-	Deaths             int `json:"deaths"`
-	Playtime           int `json:"playtime"`
-	Dominations        int `json:"dominations"`
-	Dominated          int `json:"dominated"`
-	Revenges           int `json:"revenges"`
-	Damage             int `json:"damage"`
-	DamageTaken        int `json:"damage_taken"`
-	HealingTaken       int `json:"healing_taken"`
-	Captures           int `json:"captures"`
-	CapturesBlocked    int `json:"captures_blocked"`
-	BuildingsDestroyed int `json:"buildings_destroyed"`
+	Kills              int
+	Assists            int
+	Deaths             int
+	Playtime           int
+	Dominations        int
+	Dominated          int
+	Revenges           int
+	Damage             int
+	DamageTaken        int
+	HealingTaken       int
+	Captures           int
+	CapturesBlocked    int
+	BuildingsDestroyed int
 }
 
 type PlayerKillstreak struct {
@@ -1056,29 +1056,29 @@ type PlayerKillstreak struct {
 }
 
 type PlayerStats struct {
-	MatchPlayerID     int64 `json:"match_player_id"`
+	MatchPlayerID     int64
 	match             *Match
-	SteamID           steamid.SteamID                   `json:"steam_id"`
-	Team              Team                              `json:"team"`
-	Name              string                            `json:"name"`
-	TimeStart         *time.Time                        `json:"time_start"`
-	TimeEnd           *time.Time                        `json:"time_end"`
-	TargetInfo        map[steamid.SteamID]*TargetStats  `json:"target_info"`
-	WeaponInfo        map[Weapon]*WeaponStats           `json:"weapon_info"`
-	Assists           int                               `json:"assists"`
-	Suicides          int                               `json:"suicides"`
-	HealingPacks      int                               `json:"healing_packs"` // Healing from packs
-	HealingStats      *HealingStats                     `json:"healing_stats"`
-	Pickups           map[PickupItem]int                `json:"pickups"`
-	Captures          []*PointCapture                   `json:"captures"`
-	CapturesBlocked   []*PointCaptureBlocked            `json:"captures_blocked"`
-	BuildingBuilt     int                               `json:"building_built"`
-	BuildingDetonated int                               `json:"building_detonated"` // self-destruct buildings
-	BuildingDestroyed int                               `json:"building_destroyed"` // Opposing team buildings
-	BuildingDropped   int                               `json:"building_dropped"`   // Buildings destroyed while carrying
-	BuildingCarried   int                               `json:"building_carried"`   // Building pickup count
-	Classes           map[PlayerClass]*PlayerClassStats `json:"classes"`
-	KillStreaks       []PlayerKillstreak                `json:"kill_streaks"`
+	SteamID           steamid.SteamID
+	Team              Team
+	Name              string
+	TimeStart         *time.Time
+	TimeEnd           *time.Time
+	TargetInfo        map[steamid.SteamID]*TargetStats
+	WeaponInfo        map[Weapon]*WeaponStats
+	Assists           int
+	Suicides          int
+	HealingPacks      int // Healing from packs
+	HealingStats      *HealingStats
+	Pickups           map[PickupItem]int
+	Captures          []*PointCapture
+	CapturesBlocked   []*PointCaptureBlocked
+	BuildingBuilt     int
+	BuildingDetonated int // self-destruct buildings
+	BuildingDestroyed int // Opposing team buildings
+	BuildingDropped   int // Buildings destroyed while carrying
+	BuildingCarried   int // Building pickup count
+	Classes           map[PlayerClass]*PlayerClassStats
+	KillStreaks       []PlayerKillstreak
 	currentKillStreak int
 	currentLifeStart  time.Time
 	currentClass      PlayerClass
@@ -1407,39 +1407,39 @@ func (player *PlayerStats) onClassChangeOrGameEnd(eventTime time.Time) {
 }
 
 type TeamScores struct {
-	Red     int `json:"red"`
-	RedTime int `json:"red_time"`
-	Blu     int `json:"blu"`
-	BluTime int `json:"blu_time"`
+	Red     int
+	RedTime int
+	Blu     int
+	BluTime int
 }
 
 type MatchRoundSum struct {
-	Length      time.Duration `json:"length"`
-	Score       TeamScores    `json:"score"`
-	KillsBlu    int           `json:"kills_blu"`
-	KillsRed    int           `json:"kills_red"`
-	UbersBlu    float64       `json:"ubers_blu"`
-	UbersRed    float64       `json:"ubers_red"`
-	DamageBlu   int           `json:"damage_blu"`
-	DamageRed   int           `json:"damage_red"`
-	RoundWinner Team          `json:"round_winner"`
+	Length      time.Duration
+	Score       TeamScores
+	KillsBlu    int
+	KillsRed    int
+	UbersBlu    float64
+	UbersRed    float64
+	DamageBlu   int
+	DamageRed   int
+	RoundWinner Team
 	// MidFight    Team          `json:"mid_fight"`
 }
 
 type HealingStats struct {
-	MatchMedicID        int64 `json:"match_medic_id"`
+	MatchMedicID        int64
 	player              *PlayerStats
-	FirstHealAfterSpawn []float64           `json:"first_heal_after_spawn"`
-	Healing             int                 `json:"healing"`
-	Charges             map[MedigunType]int `json:"charges"`
-	Drops               []steamid.SteamID   `json:"drops"`
+	FirstHealAfterSpawn []float64
+	Healing             int
+	Charges             map[MedigunType]int
+	Drops               []steamid.SteamID
 	// AvgTimeToBuild      int
 	// AvgTimeBeforeUse    int
-	NearFullChargeDeath int       `json:"near_full_charge_death"`
-	UberDurations       []float32 `json:"uber_durations"`
+	NearFullChargeDeath int
+	UberDurations       []float32
 	// DeathAfterCharge    int
-	MajorAdvLost   int `json:"major_adv_lost"`
-	BiggestAdvLost int `json:"biggest_adv_lost"`
+	MajorAdvLost   int
+	BiggestAdvLost int
 }
 
 func (ms *HealingStats) ChargesTotal() int {

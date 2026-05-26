@@ -7,7 +7,7 @@ import (
 )
 
 type SteamIDField struct {
-	SteamIDValue string `json:"steam_id"  url:"steam_id"` //nolint:tagliatelle
+	SteamIDValue string //nolint:tagliatelle
 }
 
 func (f SteamIDField) SteamID(ctx context.Context) (steamid.SteamID, bool) {
@@ -24,7 +24,7 @@ func (f SteamIDField) SteamID(ctx context.Context) (steamid.SteamID, bool) {
 }
 
 type SourceIDField struct {
-	SourceID string `json:"source_id"  schema:"source_id"`
+	SourceID string
 }
 
 func (f SourceIDField) SourceSteamID(ctx context.Context) (steamid.SteamID, bool) {
@@ -41,7 +41,7 @@ func (f SourceIDField) SourceSteamID(ctx context.Context) (steamid.SteamID, bool
 }
 
 type TargetIDField struct {
-	TargetID string `json:"target_id" url:"target_id"`
+	TargetID string
 }
 
 func (f TargetIDField) TargetSteamID(ctx context.Context) (steamid.SteamID, bool) {

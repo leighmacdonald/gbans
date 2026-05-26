@@ -6,170 +6,170 @@ import (
 )
 
 type MapUseDetail struct {
-	Map      string  `json:"map"`
-	Playtime int64   `json:"playtime"`
-	Percent  float64 `json:"percent"`
+	Map      string
+	Playtime int64
+	Percent  float64
 }
 
 type Weapon struct {
-	WeaponID int             `json:"weapon_id"`
-	Key      logparse.Weapon `json:"key"`
-	Name     string          `json:"name"`
+	WeaponID int
+	Key      logparse.Weapon
+	Name     string
 }
 
 type RankedResult struct {
-	Rank int `json:"rank"`
+	Rank int
 }
 
 type WeaponsOverallResult struct {
 	Weapon
 	RankedResult
 
-	Kills        int64   `json:"kills"`
-	KillsPct     float64 `json:"kills_pct"`
-	Damage       int64   `json:"damage"`
-	DamagePct    float64 `json:"damage_pct"`
-	Headshots    int64   `json:"headshots"`
-	HeadshotsPct float64 `json:"headshots_pct"`
-	Airshots     int64   `json:"airshots"`
-	AirshotsPct  float64 `json:"airshots_pct"`
-	Backstabs    int64   `json:"backstabs"`
-	BackstabsPct float64 `json:"backstabs_pct"`
-	Shots        int64   `json:"shots"`
-	ShotsPct     float64 `json:"shots_pct"`
-	Hits         int64   `json:"hits"`
-	HitsPct      float64 `json:"hits_pct"`
+	Kills        int64
+	KillsPct     float64
+	Damage       int64
+	DamagePct    float64
+	Headshots    int64
+	HeadshotsPct float64
+	Airshots     int64
+	AirshotsPct  float64
+	Backstabs    int64
+	BackstabsPct float64
+	Shots        int64
+	ShotsPct     float64
+	Hits         int64
+	HitsPct      float64
 }
 
 type PlayerWeaponResult struct {
-	Rank               int             `json:"rank"`
-	SteamID            steamid.SteamID `json:"steam_id"`
-	Personaname        string          `json:"personaname"`
-	AvatarHash         string          `json:"avatar_hash"`
-	KA                 int64           `json:"ka"`
-	Kills              int64           `json:"kills"`
-	Assists            int64           `json:"assists"`
-	Deaths             int64           `json:"deaths"`
-	KD                 float64         `json:"kd"`
-	KAD                float64         `json:"kad"`
-	DPM                float64         `json:"dpm"`
-	Shots              int64           `json:"shots"`
-	Hits               int64           `json:"hits"`
-	Accuracy           float64         `json:"accuracy"`
-	Airshots           int64           `json:"airshots"`
-	Backstabs          int64           `json:"backstabs"`
-	Headshots          int64           `json:"headshots"`
-	Playtime           int64           `json:"playtime"`
-	Dominations        int64           `json:"dominations"`
-	Dominated          int64           `json:"dominated"`
-	Revenges           int64           `json:"revenges"`
-	Damage             int64           `json:"damage"`
-	DamageTaken        int64           `json:"damage_taken"`
-	Captures           int64           `json:"captures"`
-	CapturesBlocked    int64           `json:"captures_blocked"`
-	BuildingsDestroyed int64           `json:"buildings_destroyed"`
+	Rank               int
+	SteamID            steamid.SteamID
+	Personaname        string
+	AvatarHash         string
+	KA                 int64
+	Kills              int64
+	Assists            int64
+	Deaths             int64
+	KD                 float64
+	KAD                float64
+	DPM                float64
+	Shots              int64
+	Hits               int64
+	Accuracy           float64
+	Airshots           int64
+	Backstabs          int64
+	Headshots          int64
+	Playtime           int64
+	Dominations        int64
+	Dominated          int64
+	Revenges           int64
+	Damage             int64
+	DamageTaken        int64
+	Captures           int64
+	CapturesBlocked    int64
+	BuildingsDestroyed int64
 }
 
 type HealingOverallResult struct {
 	RankedResult
 
-	SteamID             steamid.SteamID `json:"steam_id"`
-	Personaname         string          `json:"personaname"`
-	AvatarHash          string          `json:"avatar_hash"`
-	Healing             int             `json:"healing"`
-	Drops               int             `json:"drops"`
-	NearFullChargeDeath int             `json:"near_full_charge_death"`
-	ChargesUber         int             `json:"charges_uber"`
-	ChargesKritz        int             `json:"charges_kritz"`
-	ChargesVacc         int             `json:"charges_vacc"`
-	ChargesQuickfix     int             `json:"charges_quickfix"`
-	AvgUberLength       float32         `json:"avg_uber_length"`
-	MajorAdvLost        int             `json:"major_adv_lost"`
-	BiggestAdvLost      int             `json:"biggest_adv_lost"`
-	Extinguishes        int64           `json:"extinguishes"`
-	HealthPacks         int64           `json:"health_packs"`
-	Assists             int64           `json:"assists"`
-	Deaths              int64           `json:"deaths"`
-	HPM                 float64         `json:"hpm"`
-	KA                  float64         `json:"ka"`
-	KAD                 float64         `json:"kad"`
-	Playtime            int64           `json:"playtime"`
-	Dominations         int64           `json:"dominations"`
-	Dominated           int64           `json:"dominated"`
-	Revenges            int64           `json:"revenges"`
-	DamageTaken         int64           `json:"damage_taken"`
-	DTM                 float64         `json:"dtm"`
-	Wins                int64           `json:"wins"`
-	Matches             int64           `json:"matches"`
-	WinRate             float64         `json:"win_rate"`
+	SteamID             steamid.SteamID
+	Personaname         string
+	AvatarHash          string
+	Healing             int
+	Drops               int
+	NearFullChargeDeath int
+	ChargesUber         int
+	ChargesKritz        int
+	ChargesVacc         int
+	ChargesQuickfix     int
+	AvgUberLength       float32
+	MajorAdvLost        int
+	BiggestAdvLost      int
+	Extinguishes        int64
+	HealthPacks         int64
+	Assists             int64
+	Deaths              int64
+	HPM                 float64
+	KA                  float64
+	KAD                 float64
+	Playtime            int64
+	Dominations         int64
+	Dominated           int64
+	Revenges            int64
+	DamageTaken         int64
+	DTM                 float64
+	Wins                int64
+	Matches             int64
+	WinRate             float64
 }
 
 type PlayerClass struct {
-	PlayerClassID int    `json:"player_class_id"`
-	ClassName     string `json:"class_name"`
-	ClassKey      string `json:"class_key"`
+	PlayerClassID int
+	ClassName     string
+	ClassKey      string
 }
 
 type PlayerClassOverallResult struct {
 	PlayerClass
 
-	Kills              int64   `json:"kills"`
-	KA                 int64   `json:"ka"`
-	Assists            int64   `json:"assists"`
-	Deaths             int64   `json:"deaths"`
-	KD                 float64 `json:"kd"`
-	KAD                float64 `json:"kad"`
-	DPM                float64 `json:"dpm"`
-	Playtime           int64   `json:"playtime"`
-	Dominations        int64   `json:"dominations"`
-	Dominated          int64   `json:"dominated"`
-	Revenges           int64   `json:"revenges"`
-	Damage             int64   `json:"damage"`
-	DamageTaken        int64   `json:"damage_taken"`
-	HealingTaken       int64   `json:"healing_taken"`
-	Captures           int64   `json:"captures"`
-	CapturesBlocked    int64   `json:"captures_blocked"`
-	BuildingsDestroyed int64   `json:"buildings_destroyed"`
+	Kills              int64
+	KA                 int64
+	Assists            int64
+	Deaths             int64
+	KD                 float64
+	KAD                float64
+	DPM                float64
+	Playtime           int64
+	Dominations        int64
+	Dominated          int64
+	Revenges           int64
+	Damage             int64
+	DamageTaken        int64
+	HealingTaken       int64
+	Captures           int64
+	CapturesBlocked    int64
+	BuildingsDestroyed int64
 }
 
 type PlayerOverallResult struct {
-	Healing             int64   `json:"healing"`
-	Drops               int64   `json:"drops"`
-	NearFullChargeDeath int64   `json:"near_full_charge_death"`
-	AvgUberLen          float64 `json:"avg_uber_len"`
-	BiggestAdvLost      float64 `json:"biggest_adv_lost"`
-	MajorAdvLost        float64 `json:"major_adv_lost"`
-	ChargesUber         int64   `json:"charges_uber"`
-	ChargesKritz        int64   `json:"charges_kritz"`
-	ChargesVacc         int64   `json:"charges_vacc"`
-	ChargesQuickfix     int64   `json:"charges_quickfix"`
-	Buildings           int64   `json:"buildings"`
-	Extinguishes        int64   `json:"extinguishes"`
-	HealthPacks         int64   `json:"health_packs"`
-	KA                  int64   `json:"ka"`
-	Kills               int64   `json:"kills"`
-	Assists             int64   `json:"assists"`
-	Deaths              int64   `json:"deaths"`
-	KD                  float64 `json:"kd"`
-	KAD                 float64 `json:"kad"`
-	DPM                 float64 `json:"dpm"`
-	Shots               int64   `json:"shots"`
-	Hits                int64   `json:"hits"`
-	Accuracy            float64 `json:"accuracy"`
-	Airshots            int64   `json:"airshots"`
-	Backstabs           int64   `json:"backstabs"`
-	Headshots           int64   `json:"headshots"`
-	Playtime            int64   `json:"playtime"`
-	Dominations         int64   `json:"dominations"`
-	Dominated           int64   `json:"dominated"`
-	Revenges            int64   `json:"revenges"`
-	Damage              int64   `json:"damage"`
-	DamageTaken         int64   `json:"damage_taken"`
-	Captures            int64   `json:"captures"`
-	CapturesBlocked     int64   `json:"captures_blocked"`
-	BuildingsDestroyed  int64   `json:"buildings_destroyed"`
-	HealingTaken        int64   `json:"healing_taken"`
-	Wins                int64   `json:"wins"`
-	Matches             int64   `json:"matches"`
-	WinRate             float64 `json:"win_rate"`
+	Healing             int64
+	Drops               int64
+	NearFullChargeDeath int64
+	AvgUberLen          float64
+	BiggestAdvLost      float64
+	MajorAdvLost        float64
+	ChargesUber         int64
+	ChargesKritz        int64
+	ChargesVacc         int64
+	ChargesQuickfix     int64
+	Buildings           int64
+	Extinguishes        int64
+	HealthPacks         int64
+	KA                  int64
+	Kills               int64
+	Assists             int64
+	Deaths              int64
+	KD                  float64
+	KAD                 float64
+	DPM                 float64
+	Shots               int64
+	Hits                int64
+	Accuracy            float64
+	Airshots            int64
+	Backstabs           int64
+	Headshots           int64
+	Playtime            int64
+	Dominations         int64
+	Dominated           int64
+	Revenges            int64
+	Damage              int64
+	DamageTaken         int64
+	Captures            int64
+	CapturesBlocked     int64
+	BuildingsDestroyed  int64
+	HealingTaken        int64
+	Wins                int64
+	Matches             int64
+	WinRate             float64
 }

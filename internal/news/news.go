@@ -10,12 +10,12 @@ import (
 )
 
 type Article struct {
-	NewsID      int32     `json:"news_id"`
-	Title       string    `json:"title"`
-	BodyMD      string    `json:"body_md"`
-	IsPublished bool      `json:"is_published"`
-	CreatedOn   time.Time `json:"created_on"`
-	UpdatedOn   time.Time `json:"updated_on"`
+	NewsID      int32
+	Title       string
+	BodyMD      string
+	IsPublished bool
+	CreatedOn   time.Time
+	UpdatedOn   time.Time
 }
 
 type News struct {

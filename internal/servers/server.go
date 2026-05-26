@@ -29,75 +29,75 @@ var (
 // SafeServer provides a server struct stripped of any sensitive info suitable for public-facing
 // services.
 type SafeServer struct {
-	ServerID          int32    `json:"server_id"`
-	Host              string   `json:"host"`
-	Port              uint16   `json:"port"`
-	IP                string   `json:"ip"`
-	Name              string   `json:"name"`
-	NameShort         string   `json:"name_short"`
-	Region            string   `json:"region"`
-	CC                string   `json:"cc"`
-	Players           int32    `json:"players"`
-	MaxPlayers        int32    `json:"max_players"`
-	MaxPlayersVisible int32    `json:"max_players_visible"`
-	Bots              int32    `json:"bots"`
-	Map               string   `json:"map"`
-	GameTypes         []string `json:"game_types"`
-	Latitude          float32  `json:"latitude"`
-	Longitude         float32  `json:"longitude"`
-	Distance          float32  `json:"distance"`
-	Humans            int32    `json:"humans"`
-	Tags              []string `json:"tags"`
+	ServerID          int32
+	Host              string
+	Port              uint16
+	IP                string
+	Name              string
+	NameShort         string
+	Region            string
+	CC                string
+	Players           int32
+	MaxPlayers        int32
+	MaxPlayersVisible int32
+	Bots              int32
+	Map               string
+	GameTypes         []string
+	Latitude          float32
+	Longitude         float32
+	Distance          float32
+	Humans            int32
+	Tags              []string
 }
 
 type Server struct {
 	*sync.RWMutex
 
 	// Auto generated id
-	ServerID int32 `json:"server_id"`
+	ServerID int32
 	// ShortName is a short reference name for the server eg: us-1
 	// This is used as a unique identifier for servers and is used for many different things such as paths,
 	// so it's best to keep it short and without whitespace.
-	ShortName string `json:"short_name"`
+	ShortName string
 	// Name holds a default hostname. But its replaced with any updated title as they come in.
-	Name string `json:"name"`
+	Name string
 	// Address is the ip of the server
-	Address string `json:"address"`
+	Address string
 	// Internal/VPN network. When defined it's used for things like pulling demos over ssh.
-	AddressInternal string `json:"address_internal"`
-	SDREnabled      bool   `json:"sdr_enabled"`
+	AddressInternal string
+	SDREnabled      bool
 	// Port is the port of the server
-	Port uint16 `json:"port"`
+	Port uint16
 	// RCON is the RCON password for the server
-	RCON          string `json:"rcon"`
-	ReservedSlots int32  `json:"reserved_slots"` // TODO remove and ignore
+	RCON          string
+	ReservedSlots int32 // TODO remove and ignore
 	// Password is what the sourcemod plugin on each server uses to generate a token to make authenticated calls.
 	// This is *NOT* the general game server password (sv_password)
-	Password  string `json:"password"`
-	IsEnabled bool   `json:"is_enabled"`
-	Deleted   bool   `json:"deleted"`
-	Region    string `json:"region"`
+	Password  string
+	IsEnabled bool
+	Deleted   bool
+	Region    string
 	// CC is the 2 letter country code. Used for flags emojis.
-	CC string `json:"cc"`
+	CC string
 	// Physical Latitude location
-	Latitude float32 `json:"latitude"`
+	Latitude float32
 	// Physical Longitude location
-	Longitude float32 `json:"longitude"`
+	Longitude float32
 	// LogSecret is a unique integer used to "authenticate" UDP log packets.
-	LogSecret   int32 `json:"log_secret"`
-	EnableStats bool  `json:"enable_stats"`
+	LogSecret   int32
+	EnableStats bool
 	// TokenCreatedOn is set when changing the token
-	TokenCreatedOn time.Time `json:"token_created_on"`
-	CreatedOn      time.Time `json:"created_on"`
-	UpdatedOn      time.Time `json:"updated_on"`
+	TokenCreatedOn time.Time
+	CreatedOn      time.Time
+	UpdatedOn      time.Time
 	// DiscordSeedRoleIDs stores the discord role IDs for those who which to be notified of seed requests.
-	DiscordSeedRoleIDs []string `json:"discord_seed_role_ids"` //nolint:tagliatelle
+	DiscordSeedRoleIDs []string //nolint:tagliatelle
 	// IP is distinct from Address as it can only contain a real IP and not DNS name like Address.
-	IP net.IP `json:"ip"`
+	IP net.IP
 	// IPInternal works identical to IP except it uses the internal/VPN address from AddressInternal.
 	// This is never exposed to client facing systems and is meant for when you want to communicate over
 	// a VPN to the RCOn port instead of having it exposed publicly.
-	IPInternal net.IP `json:"-"`
+	IPInternal net.IP
 
 	lastMaxPlayersUpdate        time.Time
 	lastMaxVisiblePlayersUpdate time.Time

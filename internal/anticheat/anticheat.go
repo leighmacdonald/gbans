@@ -49,7 +49,7 @@ type Config struct {
 }
 
 type ConfigStore struct {
-	PathRoot string `json:"path_root"`
+	PathRoot string
 }
 
 // Entry represents a stac log entry and some associated metadata.
