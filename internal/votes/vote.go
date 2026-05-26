@@ -19,26 +19,26 @@ type Query struct {
 	httphelper.SourceIDField
 	httphelper.TargetIDField
 
-	ServerID int32  `json:"serverId"`
-	Name     string `json:"name"`
-	Success  int32  `json:"success"` // -1 = any, 0 = false, 1 = true
-	Code     bool   `json:"code"`
+	ServerID int32
+	Name     string
+	Success  int32 // -1 = any, 0 = false, 1 = true
+	Code     bool
 }
 
 type Result struct {
-	VoteID           int32             `json:"vote_id"`
-	SourceID         steamid.SteamID   `json:"source_id"`
-	SourceName       string            `json:"source_name"`
-	SourceAvatarHash string            `json:"source_avatar_hash"`
-	TargetID         steamid.SteamID   `json:"target_id"`
-	TargetName       string            `json:"target_name"`
-	TargetAvatarHash string            `json:"target_avatar_hash"`
-	Name             string            `json:"name"`
-	Success          bool              `json:"success"`
-	ServerID         int32             `json:"server_id"`
-	ServerName       string            `json:"server_name"`
-	Code             logparse.VoteCode `json:"code"`
-	CreatedOn        time.Time         `json:"created_on"`
+	VoteID           int32
+	SourceID         steamid.SteamID
+	SourceName       string
+	SourceAvatarHash string
+	TargetID         steamid.SteamID
+	TargetName       string
+	TargetAvatarHash string
+	Name             string
+	Success          bool
+	ServerID         int32
+	ServerName       string
+	Code             logparse.VoteCode
+	CreatedOn        time.Time
 }
 
 type Votes struct {

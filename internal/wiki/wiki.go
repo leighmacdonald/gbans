@@ -33,12 +33,12 @@ func NewParser() *parser.Parser {
 const RootSlug = "home"
 
 type Page struct {
-	Slug            string               `json:"slug" binding:"required,gte=1,lte=64"`
-	BodyMD          string               `json:"body_md" binding:"required,gte=1"`
-	Revision        int32                `json:"revision" binding:"gte=0"`
-	PermissionLevel permission.Privilege `json:"permission_level" binding:"required"`
-	CreatedOn       time.Time            `json:"created_on"`
-	UpdatedOn       time.Time            `json:"updated_on"`
+	Slug            string
+	BodyMD          string
+	Revision        int32
+	PermissionLevel permission.Privilege
+	CreatedOn       time.Time
+	UpdatedOn       time.Time
 }
 
 func (page Page) NewRevision() Page {

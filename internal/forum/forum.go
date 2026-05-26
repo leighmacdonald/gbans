@@ -27,12 +27,12 @@ var (
 )
 
 type ThreadMessagesQuery struct {
-	Deleted       bool  `json:"deleted,omitempty" uri:"deleted"`
-	ForumThreadID int32 `json:"forum_thread_id"`
+	Deleted       bool
+	ForumThreadID int32
 }
 
 type ThreadQueryFilter struct {
-	ForumID int32 `json:"forum_id"`
+	ForumID int32
 }
 
 type Activity struct {
@@ -45,13 +45,13 @@ func (activity Activity) Expired() bool {
 }
 
 type Category struct {
-	ForumCategoryID int32     `json:"forum_category_id"`
-	Title           string    `json:"title"`
-	Description     string    `json:"description"`
-	Ordering        int32     `json:"ordering"`
-	Forums          []Forum   `json:"forums"`
-	CreatedOn       time.Time `json:"created_on"`
-	UpdatedOn       time.Time `json:"updated_on"`
+	ForumCategoryID int32
+	Title           string
+	Description     string
+	Ordering        int32
+	Forums          []Forum
+	CreatedOn       time.Time
+	UpdatedOn       time.Time
 }
 
 func (category Category) NewForum(title string, description string) Forum {
@@ -68,23 +68,23 @@ func (category Category) NewForum(title string, description string) Forum {
 }
 
 type Forum struct {
-	ForumID             int32                `json:"forum_id"`
-	ForumCategoryID     int32                `json:"forum_category_id"`
-	LastThreadID        int32                `json:"last_thread_id"`
-	Title               string               `json:"title"`
-	Description         string               `json:"description"`
-	Ordering            int32                `json:"ordering"`
-	CountThreads        int32                `json:"count_threads"`
-	CountMessages       int32                `json:"count_messages"`
-	PermissionLevel     permission.Privilege `json:"permission_level"`
-	RecentForumThreadID int32                `json:"recent_forum_thread_id"`
-	RecentForumTitle    string               `json:"recent_forum_title"`
-	RecentSourceID      string               `json:"recent_source_id"`
-	RecentPersonaname   string               `json:"recent_personaname"`
-	RecentAvatarhash    string               `json:"recent_avatarhash"`
-	RecentCreatedOn     time.Time            `json:"recent_created_on"`
-	CreatedOn           time.Time            `json:"created_on"`
-	UpdatedOn           time.Time            `json:"updated_on"`
+	ForumID             int32
+	ForumCategoryID     int32
+	LastThreadID        int32
+	Title               string
+	Description         string
+	Ordering            int32
+	CountThreads        int32
+	CountMessages       int32
+	PermissionLevel     permission.Privilege
+	RecentForumThreadID int32
+	RecentForumTitle    string
+	RecentSourceID      string
+	RecentPersonaname   string
+	RecentAvatarhash    string
+	RecentCreatedOn     time.Time
+	CreatedOn           time.Time
+	UpdatedOn           time.Time
 }
 
 func (f Forum) Path() string {
@@ -102,19 +102,19 @@ func (f Forum) NewThread(title string, sourceID steamid.SteamID) Thread {
 }
 
 type Thread struct {
-	ForumThreadID   int32                `json:"forum_thread_id"`
-	ForumID         int32                `json:"forum_id"`
-	SourceID        steamid.SteamID      `json:"source_id"`
-	Title           string               `json:"title"`
-	Sticky          bool                 `json:"sticky"`
-	Locked          bool                 `json:"locked"`
-	Views           int32                `json:"views"`
-	Replies         int32                `json:"replies"`
-	Personaname     string               `json:"personaname"`
-	Avatarhash      string               `json:"avatarhash"`
-	PermissionLevel permission.Privilege `json:"permission_level"`
-	CreatedOn       time.Time            `json:"created_on"`
-	UpdatedOn       time.Time            `json:"updated_on"`
+	ForumThreadID   int32
+	ForumID         int32
+	SourceID        steamid.SteamID
+	Title           string
+	Sticky          bool
+	Locked          bool
+	Views           int32
+	Replies         int32
+	Personaname     string
+	Avatarhash      string
+	PermissionLevel permission.Privilege
+	CreatedOn       time.Time
+	UpdatedOn       time.Time
 }
 
 func (t Thread) Path() string {
@@ -133,18 +133,18 @@ func (t Thread) NewMessage(sourceID steamid.SteamID, body string) Message {
 }
 
 type Message struct {
-	ForumMessageID  int64                `json:"forum_message_id"`
-	ForumThreadID   int32                `json:"forum_thread_id"`
-	SourceID        steamid.SteamID      `json:"source_id"`
-	BodyMD          string               `json:"body_md"`
-	Title           string               `json:"title"`
-	Online          bool                 `json:"online"`
-	Signature       string               `json:"signature"`
-	Personaname     string               `json:"personaname"`
-	Avatarhash      string               `json:"avatarhash"`
-	PermissionLevel permission.Privilege `json:"permission_level"`
-	CreatedOn       time.Time            `json:"created_on"`
-	UpdatedOn       time.Time            `json:"updated_on"`
+	ForumMessageID  int64
+	ForumThreadID   int32
+	SourceID        steamid.SteamID
+	BodyMD          string
+	Title           string
+	Online          bool
+	Signature       string
+	Personaname     string
+	Avatarhash      string
+	PermissionLevel permission.Privilege
+	CreatedOn       time.Time
+	UpdatedOn       time.Time
 }
 
 func (m Message) Path() string {
@@ -162,25 +162,25 @@ func (m Message) NewVote(sourceID steamid.SteamID, vote Vote) MessageVote {
 }
 
 type MessageVote struct {
-	ForumMessageVoteID int64           `json:"forum_message_vote_id"`
-	ForumMessageID     int64           `json:"forum_message_id"`
-	SourceID           steamid.SteamID `json:"source_id"`
-	Vote               Vote            `json:"vote"` // -1/+1
-	CreatedOn          time.Time       `json:"created_on"`
-	UpdatedOn          time.Time       `json:"updated_on"`
+	ForumMessageVoteID int64
+	ForumMessageID     int64
+	SourceID           steamid.SteamID
+	Vote               Vote // -1/+1
+	CreatedOn          time.Time
+	UpdatedOn          time.Time
 }
 
 type ThreadWithSource struct {
 	Thread
 
-	Personaname          string               `json:"personaname"`
-	Avatarhash           string               `json:"avatarhash"`
-	PermissionLevel      permission.Privilege `json:"permission_level"`
-	RecentForumMessageID int64                `json:"recent_forum_message_id"`
-	RecentCreatedOn      time.Time            `json:"recent_created_on"`
-	RecentSteamID        int64                `json:"recent_steam_id"`
-	RecentPersonaname    string               `json:"recent_personaname"`
-	RecentAvatarhash     string               `json:"recent_avatarhash"`
+	Personaname          string
+	Avatarhash           string
+	PermissionLevel      permission.Privilege
+	RecentForumMessageID int64
+	RecentCreatedOn      time.Time
+	RecentSteamID        int64
+	RecentPersonaname    string
+	RecentAvatarhash     string
 }
 
 type Vote int

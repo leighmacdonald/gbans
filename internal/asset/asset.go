@@ -54,7 +54,7 @@ type UserUploadedFile struct {
 }
 
 type Config struct {
-	PathRoot string `json:"path_root"`
+	PathRoot string
 }
 
 type Asset struct {

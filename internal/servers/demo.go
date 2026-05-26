@@ -40,20 +40,20 @@ const (
 )
 
 type DemoConfig struct {
-	DemoCleanupEnabled  bool         `json:"demo_cleanup_enabled"`
-	DemoCleanupStrategy DemoStrategy `json:"demo_cleanup_strategy"`
-	DemoCleanupMinPct   float32      `json:"demo_cleanup_min_pct"`
-	DemoCleanupMount    string       `json:"demo_cleanup_mount"`
-	DemoCountLimit      uint64       `json:"demo_count_limit"`
-	DemoParserURL       string       `json:"demo_parser_url"`
+	DemoCleanupEnabled  bool
+	DemoCleanupStrategy DemoStrategy
+	DemoCleanupMinPct   float32
+	DemoCleanupMount    string
+	DemoCountLimit      uint64
+	DemoParserURL       string
 }
 
 type DemoFilter struct {
 	query.Filter
 
-	SteamID   string `json:"steam_id"`
-	ServerIDs []int  `json:"server_ids"` //nolint:tagliatelle
-	MapName   string `json:"map_name"`
+	SteamID   string
+	ServerIDs []int //nolint:tagliatelle
+	MapName   string
 }
 
 func (f DemoFilter) SourceSteamID() (steamid.SteamID, bool) {
@@ -63,29 +63,29 @@ func (f DemoFilter) SourceSteamID() (steamid.SteamID, bool) {
 }
 
 type DemoPlayerStats struct {
-	Score      int `json:"score"`
-	ScoreTotal int `json:"score_total"`
-	Deaths     int `json:"deaths"`
+	Score      int
+	ScoreTotal int
+	Deaths     int
 }
 
 type DemoMetaData struct {
-	MapName string                     `json:"map_name"`
-	Scores  map[string]DemoPlayerStats `json:"scores"`
+	MapName string
+	Scores  map[string]DemoPlayerStats
 }
 
 type DemoFile struct {
-	DemoID          int64                     `json:"demo_id"`
-	ServerID        int32                     `json:"server_id"`
-	ServerNameShort string                    `json:"server_name_short"`
-	ServerNameLong  string                    `json:"server_name_long"`
-	Title           string                    `json:"title"`
-	CreatedOn       time.Time                 `json:"created_on"`
-	Downloads       int64                     `json:"downloads"`
-	Size            int64                     `json:"size"`
-	MapName         string                    `json:"map_name"`
-	Archive         bool                      `json:"archive"` // When true, will not get auto deleted when flushing old demos
-	Stats           map[string]map[string]any `json:"stats"`
-	AssetID         uuid.UUID                 `json:"asset_id"`
+	DemoID          int64
+	ServerID        int32
+	ServerNameShort string
+	ServerNameLong  string
+	Title           string
+	CreatedOn       time.Time
+	Downloads       int64
+	Size            int64
+	MapName         string
+	Archive         bool // When true, will not get auto deleted when flushing old demos
+	Stats           map[string]map[string]any
+	AssetID         uuid.UUID
 }
 
 type DemoInfo struct {

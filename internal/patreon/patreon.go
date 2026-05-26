@@ -27,25 +27,25 @@ const (
 var ErrQueryPatreon = errors.New("failed to query patreon")
 
 type Config struct {
-	Enabled             bool   `json:"enabled"`
-	IntegrationsEnabled bool   `json:"integrations_enabled"`
-	ClientID            string `json:"client_id"`
-	ClientSecret        string `json:"client_secret"`
-	CreatorAccessToken  string `json:"creator_access_token"`
-	CreatorRefreshToken string `json:"creator_refresh_token"`
+	Enabled             bool
+	IntegrationsEnabled bool
+	ClientID            string
+	ClientSecret        string
+	CreatorAccessToken  string
+	CreatorRefreshToken string
 }
 
 type Credential struct {
-	SteamID      steamid.SteamID `json:"steam_id"`
-	PatreonID    string          `json:"patreon_id"`
-	AccessToken  string          `json:"access_token"`
-	RefreshToken string          `json:"refresh_token"`
-	ExpiresIn    int             `json:"expires_in"`
-	Scope        string          `json:"scope"`
-	TokenType    string          `json:"token_type"`
-	Version      string          `json:"version"`
-	CreatedOn    time.Time       `json:"created_on"`
-	UpdatedOn    time.Time       `json:"updated_on"`
+	SteamID      steamid.SteamID
+	PatreonID    string
+	AccessToken  string
+	RefreshToken string
+	ExpiresIn    int
+	Scope        string
+	TokenType    string
+	Version      string
+	CreatedOn    time.Time
+	UpdatedOn    time.Time
 }
 
 type Manager struct {

@@ -68,18 +68,18 @@ func NewFilter(author steamid.SteamID, pattern string, regex bool, action Filter
 }
 
 type Filter struct {
-	FilterID     int64           `json:"filter_id"`
-	AuthorID     steamid.SteamID `json:"author_id"`
-	Pattern      string          `json:"pattern"`
-	IsRegex      bool            `json:"is_regex"`
-	IsEnabled    bool            `json:"is_enabled"`
-	Action       FilterAction    `json:"action"`
-	Duration     string          `json:"duration"`
-	Regex        *regexp.Regexp  `json:"-"`
-	TriggerCount int64           `json:"trigger_count"`
-	Weight       int32           `json:"weight"`
-	CreatedOn    time.Time       `json:"created_on"`
-	UpdatedOn    time.Time       `json:"updated_on"`
+	FilterID     int64
+	AuthorID     steamid.SteamID
+	Pattern      string
+	IsRegex      bool
+	IsEnabled    bool
+	Action       FilterAction
+	Duration     string
+	Regex        *regexp.Regexp
+	TriggerCount int64
+	Weight       int32
+	CreatedOn    time.Time
+	UpdatedOn    time.Time
 }
 
 func (f *Filter) Init() {
@@ -97,17 +97,17 @@ func (f *Filter) Match(value string) bool {
 }
 
 type UserWarning struct {
-	WarnReason    reason.Reason `json:"warn_reason"`
-	Message       string        `json:"message"`
-	Matched       string        `json:"matched"`
-	MatchedFilter Filter        `json:"matched_filter"`
-	CreatedOn     time.Time     `json:"created_on"`
-	Personaname   string        `json:"personaname"`
-	Avatar        string        `json:"avatar"`
-	ServerName    string        `json:"server_name"`
-	ServerID      int32         `json:"server_id"`
-	SteamID       int64         `json:"steam_id"`
-	CurrentTotal  int32         `json:"current_total"`
+	WarnReason    reason.Reason
+	Message       string
+	Matched       string
+	MatchedFilter Filter
+	CreatedOn     time.Time
+	Personaname   string
+	Avatar        string
+	ServerName    string
+	ServerID      int32
+	SteamID       int64
+	CurrentTotal  int32
 }
 
 type NewUserWarning struct {
@@ -122,14 +122,14 @@ type Warnings interface {
 }
 
 type Config struct {
-	Enabled        bool  `json:"enabled"`
-	WarningTimeout int   `json:"warning_timeout"`
-	WarningLimit   int   `json:"warning_limit"`
-	Dry            bool  `json:"dry"`
-	PingDiscord    bool  `json:"ping_discord"`
-	MaxWeight      int32 `json:"max_weight"`
-	CheckTimeout   int   `json:"check_timeout"`
-	MatchTimeout   int   `json:"match_timeout"`
+	Enabled        bool
+	WarningTimeout int
+	WarningLimit   int
+	Dry            bool
+	PingDiscord    bool
+	MaxWeight      int32
+	CheckTimeout   int
+	MatchTimeout   int
 }
 
 type WordFilters struct {

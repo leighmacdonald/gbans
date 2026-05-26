@@ -69,16 +69,16 @@ type Info interface {
 
 // Core is the model used in the webui representing the logged-in user.
 type Core struct {
-	SteamID         steamid.SteamID      `json:"steam_id"`
-	PermissionLevel permission.Privilege `json:"permission_level"`
-	Name            string               `json:"name"`
-	Avatarhash      string               `json:"avatarhash"`
-	DiscordID       string               `json:"discord_id"`
-	PatreonID       string               `json:"patreon_id"`
-	VacBans         int32                `json:"vac_bans"`
-	GameBans        int32                `json:"game_bans"`
-	TimeCreated     time.Time            `json:"time_created"`
-	BanID           int32                `json:"ban_id"`
+	SteamID         steamid.SteamID
+	PermissionLevel permission.Privilege
+	Name            string
+	Avatarhash      string
+	DiscordID       string
+	PatreonID       string
+	VacBans         int32
+	GameBans        int32
+	TimeCreated     time.Time
+	BanID           int32
 }
 
 func (p Core) Permissions() permission.Privilege {

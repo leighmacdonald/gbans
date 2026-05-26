@@ -26,28 +26,28 @@ var ErrInvalidCIDR = errors.New("failed to parse CIDR address")
 const maskSingleHost = "/32"
 
 type CIDRBlockSource struct {
-	CIDRBlockSourceID int32     `json:"cidr_block_source_id"`
-	Name              string    `json:"name"`
-	URL               string    `json:"url"`
-	Enabled           bool      `json:"enabled"`
-	CreatedOn         time.Time `json:"created_on"`
-	UpdatedOn         time.Time `json:"updated_on"`
+	CIDRBlockSourceID int32
+	Name              string
+	URL               string
+	Enabled           bool
+	CreatedOn         time.Time
+	UpdatedOn         time.Time
 }
 
 type WhitelistIP struct {
-	CIDRBlockWhitelistID int32      `json:"cidr_block_whitelist_id"`
-	Address              *net.IPNet `json:"address"`
-	CreatedOn            time.Time  `json:"created_on"`
-	UpdatedOn            time.Time  `json:"updated_on"`
+	CIDRBlockWhitelistID int32
+	Address              *net.IPNet
+	CreatedOn            time.Time
+	UpdatedOn            time.Time
 }
 
 type WhitelistSteam struct {
 	httphelper.SteamIDField
 
-	CreatedOn   time.Time `json:"created_on"`
-	UpdatedOn   time.Time `json:"updated_on"`
-	Personaname string    `json:"personaname"`
-	AvatarHash  string    `json:"avatar_hash"`
+	CreatedOn   time.Time
+	UpdatedOn   time.Time
+	Personaname string
+	AvatarHash  string
 }
 
 type CacheUpdater interface {

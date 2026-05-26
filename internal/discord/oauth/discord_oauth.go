@@ -24,34 +24,34 @@ var (
 )
 
 type Credential struct {
-	SteamID      steamid.SteamID `json:"steam_id"`
-	DiscordID    string          `json:"discord_id"`
-	AccessToken  string          `json:"access_token"`
-	RefreshToken string          `json:"refresh_token"`
-	ExpiresIn    int             `json:"expires_in"`
-	Scope        string          `json:"scope"`
-	TokenType    string          `json:"token_type"`
-	CreatedOn    time.Time       `json:"created_on"`
-	UpdatedOn    time.Time       `json:"updated_on"`
+	SteamID      steamid.SteamID
+	DiscordID    string
+	AccessToken  string
+	RefreshToken string
+	ExpiresIn    int
+	Scope        string
+	TokenType    string
+	CreatedOn    time.Time
+	UpdatedOn    time.Time
 }
 
 type UserDetail struct {
-	SteamID          steamid.SteamID `json:"steam_id"`
-	ID               string          `json:"id"`
-	Username         string          `json:"username"`
-	Avatar           string          `json:"avatar"`
-	AvatarDecoration any             `json:"avatar_decoration"`
-	Discriminator    string          `json:"discriminator"`
-	PublicFlags      int32           `json:"public_flags"`
-	Flags            int32           `json:"flags"`
-	Banner           any             `json:"banner"`
-	BannerColor      any             `json:"banner_color"`
-	AccentColor      any             `json:"accent_color"`
-	Locale           string          `json:"locale"`
-	MfaEnabled       bool            `json:"mfa_enabled"`
-	PremiumType      int32           `json:"premium_type"`
-	CreatedOn        time.Time       `json:"created_on"`
-	UpdatedOn        time.Time       `json:"updated_on"`
+	SteamID          steamid.SteamID
+	ID               string
+	Username         string
+	Avatar           string
+	AvatarDecoration any
+	Discriminator    string
+	PublicFlags      int32
+	Flags            int32
+	Banner           any
+	BannerColor      any
+	AccentColor      any
+	Locale           string
+	MfaEnabled       bool
+	PremiumType      int32
+	CreatedOn        time.Time
+	UpdatedOn        time.Time
 }
 
 type DiscordOAuth struct {

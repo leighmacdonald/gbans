@@ -77,22 +77,22 @@ type Config struct {
 	Static
 
 	// General config opts.
-	General General `json:"general"`
-	Debug   Debug   `json:"debug"`
+	General General
+	Debug   Debug
 
 	// Package configs.
-	Demo        servers.DemoConfig `json:"demo"`
-	Filters     chat.Config        `json:"filters"`
-	Discord     discord.Config     `json:"discord"`
-	Clientprefs sourcemod.Config   `json:"clientprefs"`
-	Log         log.Config         `json:"log"`
-	GeoLocation ip2location.Config `json:"geo_location"`
-	Patreon     patreon.Config     `json:"patreon"`
-	SSH         scp.Config         `json:"ssh"`
-	Network     network.Config     `json:"network"`
-	LocalStore  asset.Config       `json:"local_store"`
-	Exports     ban.Config         `json:"exports"`
-	Anticheat   anticheat.Config   `json:"anticheat"`
+	Demo        servers.DemoConfig
+	Filters     chat.Config
+	Discord     discord.Config
+	Clientprefs sourcemod.Config
+	Log         log.Config
+	GeoLocation ip2location.Config
+	Patreon     patreon.Config
+	SSH         scp.Config
+	Network     network.Config
+	LocalStore  asset.Config
+	Exports     ban.Config
+	Anticheat   anticheat.Config
 }
 
 func (c Config) ExtURLRaw(path string, args ...any) string {
@@ -122,28 +122,28 @@ const (
 )
 
 type General struct {
-	SiteName           string        `json:"site_name"`
-	SiteDescription    string        `json:"site_description"`
-	Mode               RunMode       `json:"mode"`
-	FileServeMode      FileServeMode `json:"file_serve_mode"`
-	SrcdsLogAddr       string        `json:"srcds_log_addr"`
-	AssetURL           string        `json:"asset_url"`
-	Favicon            string        `json:"favicon"`
-	DefaultRoute       string        `json:"default_route"`
-	NewsEnabled        bool          `json:"news_enabled"`
-	ForumsEnabled      bool          `json:"forums_enabled"`
-	ContestsEnabled    bool          `json:"contests_enabled"`
-	WikiEnabled        bool          `json:"wiki_enabled"`
-	StatsEnabled       bool          `json:"stats_enabled"`
-	ServersEnabled     bool          `json:"servers_enabled"`
-	ReportsEnabled     bool          `json:"reports_enabled"`
-	ChatlogsEnabled    bool          `json:"chatlogs_enabled"`
-	DemosEnabled       bool          `json:"demos_enabled"`
-	SpeedrunsEnabled   bool          `json:"speedruns_enabled"`
-	PlayerqueueEnabled bool          `json:"playerqueue_enabled"`
-	SentryDSN          string        `json:"sentry_dsn"`
-	SentryDSNWeb       string        `json:"sentry_dsn_web"`
-	MGEEnabled         bool          `json:"mge_enabled"`
+	SiteName           string
+	SiteDescription    string
+	Mode               RunMode
+	FileServeMode      FileServeMode
+	SrcdsLogAddr       string
+	AssetURL           string
+	Favicon            string
+	DefaultRoute       string
+	NewsEnabled        bool
+	ForumsEnabled      bool
+	ContestsEnabled    bool
+	WikiEnabled        bool
+	StatsEnabled       bool
+	ServersEnabled     bool
+	ReportsEnabled     bool
+	ChatlogsEnabled    bool
+	DemosEnabled       bool
+	SpeedrunsEnabled   bool
+	PlayerqueueEnabled bool
+	SentryDSN          string
+	SentryDSNWeb       string
+	MGEEnabled         bool
 }
 
 func (c General) FaviconURL() string {
@@ -155,10 +155,10 @@ func (c General) FaviconURL() string {
 }
 
 type Debug struct {
-	SkipOpenIDValidation bool `json:"skip_open_id_validation"`
+	SkipOpenIDValidation bool
 	// Will send the `logaddress_add <ip>:<port>` rcon command to all enabled servers so that
 	// you can forward them to yourself for testing. This does not remove any existing entries.
-	AddRCONLogAddress string `json:"add_rcon_log_address"`
+	AddRCONLogAddress string
 }
 
 type Configuration struct {
@@ -283,6 +283,7 @@ func applyGlobalConfig(config Config) error {
 	return nil
 }
 
+//nolint:tagliatelle
 type GithubRelease struct {
 	URL             string    `json:"url"`
 	HTMLUrl         string    `json:"html_url"`

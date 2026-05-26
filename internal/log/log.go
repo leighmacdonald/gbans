@@ -15,15 +15,15 @@ import (
 )
 
 type Config struct {
-	Level Level `json:"level"`
+	Level Level
 	// If set to a non-empty path, logs will also be written to the log file.
-	File string `json:"file"`
+	File string
 	// Enable using the sloggin library for logging HTTP requests
-	HTTPEnabled bool `json:"http_enabled"`
+	HTTPEnabled bool
 	// Enable support for OpenTelemetry by adding span/trace IDs
-	HTTPOtelEnabled bool `json:"http_otel_enabled"`
+	HTTPOtelEnabled bool
 	// Log level to use for http requests
-	HTTPLevel Level `json:"http_level"`
+	HTTPLevel Level
 }
 
 type Level string

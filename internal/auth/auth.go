@@ -36,7 +36,7 @@ type PersonAuth struct {
 type ServerAuthClaims struct {
 	jwt.RegisteredClaims
 
-	ServerID int `json:"server_id"`
+	ServerID int
 }
 
 const CtxKeyUserProfile = "user_profile"

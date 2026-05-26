@@ -33,11 +33,11 @@ type Trigger struct {
 type QueryOpts struct {
 	query.Filter
 
-	SteamID   string     `json:"steam_id"`
-	ServerID  int        `json:"server_id"`
-	Map       string     `json:"map"`
-	TimeStart *time.Time `json:"time_start,omitempty"`
-	TimeEnd   *time.Time `json:"time_end,omitempty"`
+	SteamID   string
+	ServerID  int
+	Map       string
+	TimeStart *time.Time
+	TimeEnd   *time.Time
 }
 
 func (mqf QueryOpts) TargetSteamID() (steamid.SteamID, bool) {
@@ -49,44 +49,44 @@ func (mqf QueryOpts) TargetSteamID() (steamid.SteamID, bool) {
 const MinMedicHealing = 500
 
 type PlayerKillstreak struct {
-	MatchKillstreakID int64                `json:"match_killstreak_id"`
-	MatchPlayerID     int64                `json:"match_player_id"`
-	PlayerClass       logparse.PlayerClass `json:"player_class"`
-	Killstreak        int                  `json:"killstreak"`
+	MatchKillstreakID int64
+	MatchPlayerID     int64
+	PlayerClass       logparse.PlayerClass
+	Killstreak        int
 	// Seconds
-	Duration int `json:"duration"`
+	Duration int
 }
 
 type PlayerClassDetail struct {
-	MatchPlayerClassID int                  `json:"match_player_class_id"`
-	MatchPlayerID      int64                `json:"match_player_id"`
-	PlayerClass        logparse.PlayerClass `json:"player_class"`
-	Kills              int                  `json:"kills"`
-	Assists            int                  `json:"assists"`
-	Deaths             int                  `json:"deaths"`
-	Playtime           int                  `json:"playtime"`
-	Dominations        int                  `json:"dominations"`
-	Dominated          int                  `json:"dominated"`
-	Revenges           int                  `json:"revenges"`
-	Damage             int                  `json:"damage"`
-	DamageTaken        int                  `json:"damage_taken"`
-	HealingTaken       int                  `json:"healing_taken"`
-	Captures           int                  `json:"captures"`
-	CapturesBlocked    int                  `json:"captures_blocked"`
-	BuildingDestroyed  int                  `json:"building_destroyed"`
+	MatchPlayerClassID int
+	MatchPlayerID      int64
+	PlayerClass        logparse.PlayerClass
+	Kills              int
+	Assists            int
+	Deaths             int
+	Playtime           int
+	Dominations        int
+	Dominated          int
+	Revenges           int
+	Damage             int
+	DamageTaken        int
+	HealingTaken       int
+	Captures           int
+	CapturesBlocked    int
+	BuildingDestroyed  int
 }
 
 type Player struct {
 	CommonPlayerStats
 
-	MatchPlayerID int64               `json:"match_player_id"`
-	Team          logparse.Team       `json:"team"`
-	TimeStart     time.Time           `json:"time_start"`
-	TimeEnd       time.Time           `json:"time_end"`
-	MedicStats    *PlayerMedicStats   `json:"medic_stats"`
-	Classes       []PlayerClassDetail `json:"classes"`
-	Killstreaks   []PlayerKillstreak  `json:"killstreaks"`
-	Weapons       []PlayerWeapon      `json:"weapons"`
+	MatchPlayerID int64
+	Team          logparse.Team
+	TimeStart     time.Time
+	TimeEnd       time.Time
+	MedicStats    *PlayerMedicStats
+	Classes       []PlayerClassDetail
+	Killstreaks   []PlayerKillstreak
+	Weapons       []PlayerWeapon
 }
 
 func (p *Player) ApplySummary(update *demoparse.PlayerSummary) {
@@ -172,18 +172,18 @@ func (p *Player) DamagePerMin() int {
 }
 
 type Healer struct {
-	MatchMedicID        int64   `json:"match_medic_id"`
-	MatchPlayerID       int64   `json:"match_player_id"`
-	Healing             int     `json:"healing"`
-	ChargesUber         int     `json:"charges_uber"`
-	ChargesKritz        int     `json:"charges_kritz"`
-	ChargesVacc         int     `json:"charges_vacc"`
-	ChargesQuickfix     int     `json:"charges_quickfix"`
-	Drops               int     `json:"drops"`
-	NearFullChargeDeath int     `json:"near_full_charge_death"`
-	AvgUberLength       float32 `json:"avg_uber_length"`
-	MajorAdvLost        int     `json:"major_adv_lost"`
-	BiggestAdvLost      int     `json:"biggest_adv_lost"`
+	MatchMedicID        int64
+	MatchPlayerID       int64
+	Healing             int
+	ChargesUber         int
+	ChargesKritz        int
+	ChargesVacc         int
+	ChargesQuickfix     int
+	Drops               int
+	NearFullChargeDeath int
+	AvgUberLength       float32
+	MajorAdvLost        int
+	BiggestAdvLost      int
 }
 
 func (h Healer) HealingPerMin(matchDuration time.Duration) int {
@@ -195,35 +195,35 @@ func (h Healer) HealingPerMin(matchDuration time.Duration) int {
 }
 
 type PlayerMatchWeapon struct {
-	PlayerWeaponID int64 `json:"player_weapon_id"`
-	MatchPlayerID  int64 `json:"match_player_id"`
+	PlayerWeaponID int64
+	MatchPlayerID  int64
 }
 
 type Result struct {
-	MatchID    uuid.UUID           `json:"match_id"`
-	ServerID   int32               `json:"server_id"`
-	Title      string              `json:"title"`
-	Map        maps.Map            `json:"map"`
-	TeamScores logparse.TeamScores `json:"team_scores"`
-	TimeStart  time.Time           `json:"time_start"`
-	TimeEnd    time.Time           `json:"time_end"`
-	Winner     logparse.Team       `json:"winner"`
-	Players    []*Player           `json:"players"`
-	Chat       []PersonMessage     `json:"chat"`
+	MatchID    uuid.UUID
+	ServerID   int32
+	Title      string
+	Map        maps.Map
+	TeamScores logparse.TeamScores
+	TimeStart  time.Time
+	TimeEnd    time.Time
+	Winner     logparse.Team
+	Players    []*Player
+	Chat       []PersonMessage
 }
 type PersonMessage struct {
-	PersonMessageID   int64           `json:"person_message_id"`
-	MatchID           uuid.UUID       `json:"match_id"`
-	SteamID           steamid.SteamID `json:"steam_id"`
-	AvatarHash        string          `json:"avatar_hash"`
-	PersonaName       string          `json:"persona_name"`
-	ServerName        string          `json:"server_name"`
-	ServerID          int32           `json:"server_id"`
-	Body              string          `json:"body"`
-	Tick              int64           `json:"tick"`
-	Team              bool            `json:"team"`
-	CreatedOn         time.Time       `json:"created_on"`
-	AutoFilterFlagged int64           `json:"auto_filter_flagged"`
+	PersonMessageID   int64
+	MatchID           uuid.UUID
+	SteamID           steamid.SteamID
+	AvatarHash        string
+	PersonaName       string
+	ServerName        string
+	ServerID          int32
+	Body              string
+	Tick              int64
+	Team              bool
+	CreatedOn         time.Time
+	AutoFilterFlagged int64
 }
 
 func (match *Result) TopPlayers() []*Player {
@@ -275,14 +275,14 @@ func (match *Result) Healers() []*Player {
 type PlayerWeapon struct {
 	Weapon
 
-	Kills     int     `json:"kills"`
-	Damage    int     `json:"damage"`
-	Shots     int     `json:"shots"`
-	Hits      int     `json:"hits"`
-	Accuracy  float64 `json:"accuracy"`
-	Backstabs int     `json:"backstabs"`
-	Headshots int     `json:"headshots"`
-	Airshots  int     `json:"airshots"`
+	Kills     int
+	Damage    int
+	Shots     int
+	Hits      int
+	Accuracy  float64
+	Backstabs int
+	Headshots int
+	Airshots  int
 }
 
 type ClassStats struct {
@@ -450,82 +450,82 @@ func (ws PlayerWeaponStats) Accuracy() float64 {
 }
 
 type PlayerKillstreakStats struct {
-	Class     logparse.PlayerClass `json:"class"`
-	ClassName string               `json:"class_name"`
-	Kills     int                  `json:"kills"`
-	Duration  int                  `json:"duration"`
-	CreatedOn time.Time            `json:"created_on"`
+	Class     logparse.PlayerClass
+	ClassName string
+	Kills     int
+	Duration  int
+	CreatedOn time.Time
 }
 
 type PlayerMedicStats struct {
-	Healing             int     `json:"healing"`
-	Drops               int     `json:"drops"`
-	NearFullChargeDeath int     `json:"near_full_charge_death"`
-	AvgUberLength       float64 `json:"avg_uber_length"`
-	ChargesUber         int     `json:"charges_uber"`
-	ChargesKritz        int     `json:"charges_kritz"`
-	ChargesVacc         int     `json:"charges_vacc"`
-	ChargesQuickfix     int     `json:"charges_quickfix"`
-	PreroundHealing     int     `json:"preround_healing"`
-	PostroundHealing    int     `json:"postround_healing"`
+	Healing             int
+	Drops               int
+	NearFullChargeDeath int
+	AvgUberLength       float64
+	ChargesUber         int
+	ChargesKritz        int
+	ChargesVacc         int
+	ChargesQuickfix     int
+	PreroundHealing     int
+	PostroundHealing    int
 }
 
 type CommonPlayerStats struct {
-	SteamID           steamid.SteamID `json:"steam_id"`
-	Name              string          `json:"name"`
-	AvatarHash        string          `json:"avatar_hash"` // todo make
-	Kills             int             `json:"kills"`
-	Assists           int             `json:"assists"`
-	Deaths            int             `json:"deaths"`
-	Suicides          int             `json:"suicides"`
-	Dominations       int             `json:"dominations"`
-	Dominated         int             `json:"dominated"`
-	Revenges          int             `json:"revenges"`
-	Revenged          int             `json:"revenged"`
-	Damage            int             `json:"damage"`
-	DamageTaken       int             `json:"damage_taken"`
-	HealingTaken      int             `json:"healing_taken"`
-	HealthPacks       int             `json:"health_packs"`
-	HealingPacks      int             `json:"healing_packs"` // Healing from packs
-	Captures          int             `json:"captures"`
-	CapturesBlocked   int             `json:"captures_blocked"`
-	Extinguishes      int             `json:"extinguishes"`
-	BuildingBuilt     int             `json:"building_built"`
-	BuildingDestroyed int             `json:"building_destroyed"` // Opposing team buildings
-	Backstabs         int             `json:"backstabs"`
-	Airshots          int             `json:"airshots"`
-	Headshots         int             `json:"headshots"`
-	Shots             int             `json:"shots"`
-	Hits              int             `json:"hits"`
-	HeadshotKills     int             `json:"headshot_kills"`
-	BackstabKills     int             `json:"backstab_kills"`
-	WasHeadshot       int             `json:"was_headshot"`
-	WasBackstabbed    int             `json:"was_backstabbed"`
-	PostroundKills    int             `json:"postround_kills"`
-	PostroundAssists  int             `json:"postround_assists"`
-	PostroundDeaths   int             `json:"postround_deaths"`
+	SteamID           steamid.SteamID
+	Name              string
+	AvatarHash        string
+	Kills             int
+	Assists           int
+	Deaths            int
+	Suicides          int
+	Dominations       int
+	Dominated         int
+	Revenges          int
+	Revenged          int
+	Damage            int
+	DamageTaken       int
+	HealingTaken      int
+	HealthPacks       int
+	HealingPacks      int
+	Captures          int
+	CapturesBlocked   int
+	Extinguishes      int
+	BuildingBuilt     int
+	BuildingDestroyed int
+	Backstabs         int
+	Airshots          int
+	Headshots         int
+	Shots             int
+	Hits              int
+	HeadshotKills     int
+	BackstabKills     int
+	WasHeadshot       int
+	WasBackstabbed    int
+	PostroundKills    int
+	PostroundAssists  int
+	PostroundDeaths   int
 }
 
 type PlayerStats struct {
 	CommonPlayerStats
 	PlayerMedicStats
 
-	MatchesTotal int           `json:"matches_total"`
-	MatchesWon   int           `json:"matches_won"`
-	PlayTime     time.Duration `json:"play_time"`
+	MatchesTotal int
+	MatchesWon   int
+	PlayTime     time.Duration
 }
 
 type Summary struct {
-	MatchID   uuid.UUID `json:"match_id"`
-	ServerID  int       `json:"server_id"`
-	IsWinner  bool      `json:"is_winner"`
-	ShortName string    `json:"short_name"`
-	Title     string    `json:"title"`
-	MapName   string    `json:"map_name"`
-	ScoreBlu  int       `json:"score_blu"`
-	ScoreRed  int       `json:"score_red"`
-	TimeStart time.Time `json:"time_start"`
-	TimeEnd   time.Time `json:"time_end"`
+	MatchID   uuid.UUID
+	ServerID  int
+	IsWinner  bool
+	ShortName string
+	Title     string
+	MapName   string
+	ScoreBlu  int
+	ScoreRed  int
+	TimeStart time.Time
+	TimeEnd   time.Time
 }
 
 func (m Summary) Path() string {

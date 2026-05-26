@@ -29,52 +29,52 @@ var (
 const EmptyUUID = "feb4bf16-7f55-4cb4-923c-4de69a093b79"
 
 type Contest struct {
-	CreatedOn       time.Time `json:"created_on"`
-	UpdatedOn       time.Time `json:"updated_on"`
-	ContestID       uuid.UUID `json:"contest_id"`
-	Title           string    `json:"title"`
-	Description     string    `json:"description"`
-	Public          bool      `json:"public"`
-	HideSubmissions bool      `json:"hide_submissions"` // Are user submissions visible for the public
-	DateStart       time.Time `json:"date_start"`
-	DateEnd         time.Time `json:"date_end"`
-	MaxSubmissions  int32     `json:"max_submissions"`
-	OwnSubmissions  int32     `json:"own_submissions"`
-	MediaTypes      string    `json:"media_types"`
-	NumEntries      int32     `json:"num_entries"`
-	Deleted         bool      `json:"-"`
+	CreatedOn       time.Time
+	UpdatedOn       time.Time
+	ContestID       uuid.UUID
+	Title           string
+	Description     string
+	Public          bool
+	HideSubmissions bool // Are user submissions visible for the public
+	DateStart       time.Time
+	DateEnd         time.Time
+	MaxSubmissions  int32
+	OwnSubmissions  int32
+	MediaTypes      string
+	NumEntries      int32
+	Deleted         bool
 	// Allow voting
-	Voting bool `json:"voting"`
+	Voting bool
 	// Minimum permission level allowed to vote
-	MinPermissionLevel permission.Privilege `json:"min_permission_level"`
+	MinPermissionLevel permission.Privilege
 	// Allow down voting
-	DownVotes bool `json:"down_votes"`
+	DownVotes bool
 	IsNew     bool
 }
 
 type Entry struct {
-	CreatedOn      time.Time       `json:"created_on"`
-	UpdatedOn      time.Time       `json:"updated_on"`
-	ContestEntryID uuid.UUID       `json:"contest_entry_id"`
-	ContestID      uuid.UUID       `json:"contest_id"`
-	SteamID        steamid.SteamID `json:"steam_id"`
-	Personaname    string          `json:"personaname"`
-	AvatarHash     string          `json:"avatar_hash"`
-	AssetID        uuid.UUID       `json:"asset_id"`
-	Description    string          `json:"description"`
-	Placement      int32           `json:"placement"`
-	Deleted        bool            `json:"deleted"`
-	VotesUp        int32           `json:"votes_up"`
-	VotesDown      int32           `json:"votes_down"`
-	Asset          asset.Asset     `json:"asset"`
+	CreatedOn      time.Time
+	UpdatedOn      time.Time
+	ContestEntryID uuid.UUID
+	ContestID      uuid.UUID
+	SteamID        steamid.SteamID
+	Personaname    string
+	AvatarHash     string
+	AssetID        uuid.UUID
+	Description    string
+	Placement      int32
+	Deleted        bool
+	VotesUp        int32
+	VotesDown      int32
+	Asset          asset.Asset
 }
 
 type Vote struct {
-	ContestEntryID uuid.UUID       `json:"contest_entry_id"`
-	SteamID        steamid.SteamID `json:"steam_id"`
-	Vote           int32           `json:"vote"`
-	CreatedOn      time.Time       `json:"created_on"`
-	UpdatedOn      time.Time       `json:"updated_on"`
+	ContestEntryID uuid.UUID
+	SteamID        steamid.SteamID
+	Vote           int32
+	CreatedOn      time.Time
+	UpdatedOn      time.Time
 }
 
 func (c Contest) NewEntry(steamID steamid.SteamID, assetID uuid.UUID, description string) (Entry, error) {
@@ -151,12 +151,12 @@ func NewContest(title string, description string, dateStart time.Time, dateEnd t
 }
 
 type VoteRecord struct {
-	ContestEntryVoteID int64           `json:"contest_entry_vote_id"`
-	ContestEntryID     uuid.UUID       `json:"contest_entry_id"`
-	SteamID            steamid.SteamID `json:"steam_id"`
-	Vote               bool            `json:"vote"`
-	CreatedOn          time.Time       `json:"created_on"`
-	UpdatedOn          time.Time       `json:"updated_on"`
+	ContestEntryVoteID int64
+	ContestEntryID     uuid.UUID
+	SteamID            steamid.SteamID
+	Vote               bool
+	CreatedOn          time.Time
+	UpdatedOn          time.Time
 }
 
 type Contests struct {

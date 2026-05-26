@@ -1418,9 +1418,9 @@ func (p *LogParser) unmarshal(input any, output any) error {
 
 // Pos is a position in 3D space.
 type Pos struct {
-	X float64 `json:"x"`
-	Y float64 `json:"y"`
-	Z float64 `json:"z"`
+	X float64
+	Y float64
+	Z float64
 }
 
 // Encode returns an ST_MakePointM

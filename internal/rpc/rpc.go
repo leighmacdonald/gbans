@@ -31,10 +31,10 @@ type Service struct {
 }
 
 type UserInfo struct {
-	SteamID    steamid.SteamID      `json:"steam_id"`
-	AvatarHash person.Avatar        `json:"avatar_hash"`
-	Name       string               `json:"name"`
-	Privilege  permission.Privilege `json:"privilege"`
+	SteamID    steamid.SteamID
+	AvatarHash person.Avatar
+	Name       string
+	Privilege  permission.Privilege
 }
 
 func (u UserInfo) Path() string {

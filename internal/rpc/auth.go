@@ -66,11 +66,11 @@ type userClaims struct {
 
 	// user context to prevent side-jacking
 	// https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html#token-sidejacking
-	Fingerprint string               `json:"fingerprint"`
-	Privilege   permission.Privilege `json:"privilege"`
-	SteamID     string               `json:"steamID"`
-	AvatarHash  person.Avatar        `json:"avatarHash"`
-	Name        string               `json:"name"`
+	Fingerprint string
+	Privilege   permission.Privilege
+	SteamID     string
+	AvatarHash  person.Avatar
+	Name        string
 }
 
 type serverClaims struct {

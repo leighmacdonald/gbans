@@ -14,13 +14,13 @@ var (
 
 // Block represents a autonomous systems number based network block.
 type Block struct {
-	ASNum int `json:"as_num"`
+	ASNum int
 	// Reason is the one liner reason shown to banned users upon connect.
-	Reason string `json:"reason"`
+	Reason string
 	// Notes is the hidden moderator/admin notes for the ban.
-	Notes     string    `json:"notes"`
-	CreatedOn time.Time `json:"created_on"`
-	UpdatedOn time.Time `json:"updated_on"`
+	Notes     string
+	CreatedOn time.Time
+	UpdatedOn time.Time
 }
 
 func NewBlock(asNum int, reason string) Block {

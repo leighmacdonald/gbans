@@ -1,28 +1,28 @@
 package discord
 
 type Config struct {
-	Enabled                 bool   `json:"enabled"`
-	BotEnabled              bool   `json:"bot_enabled"`
-	IntegrationsEnabled     bool   `json:"integrations_enabled"`
-	AppID                   string `json:"app_id"`
-	AppSecret               string `json:"app_secret"`
-	LinkID                  string `json:"link_id"`
-	Token                   string `json:"token"`
-	GuildID                 string `json:"guild_id"`
-	PublicLogChannelEnable  bool   `json:"public_log_channel_enable"`
-	LogChannelID            string `json:"log_channel_id"`
-	PublicLogChannelID      string `json:"public_log_channel_id"`
-	PublicMatchLogChannelID string `json:"public_match_log_channel_id"`
-	VoteLogChannelID        string `json:"vote_log_channel_id"`
-	AppealLogChannelID      string `json:"appeal_log_channel_id"`
-	BanLogChannelID         string `json:"ban_log_channel_id"`
-	ForumLogChannelID       string `json:"forum_log_channel_id"`
-	KickLogChannelID        string `json:"kick_log_channel_id"`
-	ModPingRoleID           string `json:"mod_ping_role_id"`
-	AnticheatChannelID      string `json:"anticheat_channel_id"`
-	SeedChannelID           string `json:"seed_channel_id"`
-	WordFilterLogChannelID  string `json:"word_filter_log_channel_id"`
-	ChatLogChannelID        string `json:"chat_log_channel_id"`
+	Enabled                 bool
+	BotEnabled              bool
+	IntegrationsEnabled     bool
+	AppID                   string
+	AppSecret               string
+	LinkID                  string
+	Token                   string
+	GuildID                 string
+	PublicLogChannelEnable  bool
+	LogChannelID            string
+	PublicLogChannelID      string
+	PublicMatchLogChannelID string
+	VoteLogChannelID        string
+	AppealLogChannelID      string
+	BanLogChannelID         string
+	ForumLogChannelID       string
+	KickLogChannelID        string
+	ModPingRoleID           string
+	AnticheatChannelID      string
+	SeedChannelID           string
+	WordFilterLogChannelID  string
+	ChatLogChannelID        string
 }
 
 func (c Config) SafePublicLogChannelID() string {

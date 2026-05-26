@@ -54,16 +54,16 @@ func (r *Repository) purgeLogs(ctx context.Context) error {
 }
 
 type ServerLog struct {
-	ServerID   int       `json:"server_id"`
-	ServerName string    `json:"server_name"`
-	Body       string    `json:"body"`
-	CreatedOn  time.Time `json:"created_on"`
+	ServerID   int
+	ServerName string
+	Body       string
+	CreatedOn  time.Time
 }
 
 type QueryLogOpts struct {
 	query.Filter
 
-	ServerIDs []int `json:"server_ids" schema:"server_ids"` //nolint:tagliatelle
+	ServerIDs []int
 }
 
 func (r *Repository) QueryLogs(ctx context.Context, opts QueryLogOpts) ([]ServerLog, int64, error) {

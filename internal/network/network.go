@@ -27,11 +27,11 @@ var (
 )
 
 type Config struct {
-	SDREnabled    bool   `mapstructure:"sdr_enabled" json:"sdr_enabled"`
-	SDRDNSEnabled bool   `mapstructure:"sdr_dns_enabled" json:"sdr_dns_enabled"` // nolint:tagliatelle
-	CFKey         string `mapstructure:"cf_key" json:"cf_key"`
-	CFEmail       string `mapstructure:"cf_email" json:"cf_email"`
-	CFZoneID      string `mapstructure:"cf_zone_id" json:"cf_zone_id"`
+	SDREnabled    bool
+	SDRDNSEnabled bool // nolint:tagliatelle
+	CFKey         string
+	CFEmail       string
+	CFZoneID      string
 }
 
 // PersonIPRecord holds a composite result of the more relevant ip2location results.
@@ -53,30 +53,30 @@ type ConnectionHistoryQuery struct {
 	query.Filter
 	httphelper.SourceIDField
 
-	CIDR        string  `json:"cidr,omitempty" schema:"cidr,omitempty"`
-	ASNum       int32   `json:"as_num,omitempty" schema:"as_num,omitempty"`
-	ASName      string  `json:"as_name,omitempty" schema:"as_name,omitempty"`
-	CountryCode string  `json:"country_code,omitempty" schema:"country_code,omitempty"`
-	CountryName string  `json:"country_name,omitempty" schema:"country_name,omitempty"`
-	CityName    string  `json:"city_name,omitempty" schema:"city_name,omitempty"`
-	ServerID    []int32 `json:"server_id,omitempty" schema:"server_id,omitempty"`
+	CIDR        string
+	ASNum       int32
+	ASName      string
+	CountryCode string
+	CountryName string
+	CityName    string
+	ServerID    []int32
 }
 
 type PersonConnection struct {
-	PersonConnectionID int64               `json:"person_connection_id"`
-	IPAddr             netip.Addr          `json:"ip_addr"`
-	SteamID            steamid.SteamID     `json:"steam_id"`
-	PersonaName        string              `json:"persona_name"`
-	ServerID           int32               `json:"server_id"`
-	CreatedOn          time.Time           `json:"created_on"`
-	ServerNameShort    string              `json:"server_name_short"`
-	ServerName         string              `json:"server_name"`
-	ASNum              int32               `json:"as_num"`
-	ASName             string              `json:"as_name"`
-	CountryCode        string              `json:"country_code"`
-	CountryName        string              `json:"country_name"`
-	CityName           string              `json:"city_name"`
-	LatLong            ip2location.LatLong `json:"lat_long"`
+	PersonConnectionID int64
+	IPAddr             netip.Addr
+	SteamID            steamid.SteamID
+	PersonaName        string
+	ServerID           int32
+	CreatedOn          time.Time
+	ServerNameShort    string
+	ServerName         string
+	ASNum              int32
+	ASName             string
+	CountryCode        string
+	CountryName        string
+	CityName           string
+	LatLong            ip2location.LatLong
 }
 
 type PersonConnections []PersonConnection
@@ -84,44 +84,44 @@ type PersonConnections []PersonConnection
 type DetailsQuery struct {
 	query.Filter
 
-	IP netip.Addr `json:"ip"`
+	IP netip.Addr
 }
 
 type Details struct {
-	Location Location `json:"location"`
-	Asn      ASN      `json:"asn"`
-	Proxy    Proxy    `json:"proxy"`
+	Location Location
+	Asn      ASN
+	Proxy    Proxy
 }
 
 type Location struct {
-	CIDR        string              `json:"cidr"`
-	CountryCode string              `json:"country_code"`
-	CountryName string              `json:"country_name"`
-	RegionName  string              `json:"region_name"`
-	CityName    string              `json:"city_name"`
-	LatLong     ip2location.LatLong `json:"lat_long"`
+	CIDR        string
+	CountryCode string
+	CountryName string
+	RegionName  string
+	CityName    string
+	LatLong     ip2location.LatLong
 }
 
 type ASN struct {
-	CIDR   string `json:"cidr"`
-	ASNum  uint64 `json:"as_num"`
-	ASName string `json:"as_name"`
+	CIDR   string
+	ASNum  uint64
+	ASName string
 }
 
 type Proxy struct {
-	CIDR        string                 `json:"cidr"`
-	ProxyType   ip2location.ProxyType  `json:"proxy_type"`
-	CountryCode string                 `json:"country_code"`
-	CountryName string                 `json:"country_name"`
-	RegionName  string                 `json:"region_name"`
-	CityName    string                 `json:"city_name"`
-	ISP         string                 `json:"isp"`
-	Domain      string                 `json:"domain"`
-	UsageType   ip2location.UsageType  `json:"usage_type"`
-	ASN         int64                  `json:"as_num"`  //nolint:tagliatelle
-	AS          string                 `json:"as_name"` //nolint:tagliatelle
-	LastSeen    time.Time              `json:"last_seen"`
-	Threat      ip2location.ThreatType `json:"threat"`
+	CIDR        string
+	ProxyType   ip2location.ProxyType
+	CountryCode string
+	CountryName string
+	RegionName  string
+	CityName    string
+	ISP         string
+	Domain      string
+	UsageType   ip2location.UsageType
+	ASN         int64  //nolint:tagliatelle
+	AS          string //nolint:tagliatelle
+	LastSeen    time.Time
+	Threat      ip2location.ThreatType
 }
 
 type Networks struct {
