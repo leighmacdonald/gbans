@@ -80,8 +80,8 @@ func NewServerAuthenticator() ServerRouteAuthFn {
 }
 
 type ServerInfo struct {
-	ServerID   int32  `json:"server_id"`
-	ServerName string `json:"server_name"`
+	ServerID   int32
+	ServerName string
 }
 
 func ServerInfoFromCtx(ctx context.Context) (*ServerInfo, bool) {

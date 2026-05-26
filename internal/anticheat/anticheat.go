@@ -34,18 +34,18 @@ type OnEntry func(ctx context.Context, entry logparse.StacEntry, duration time.D
 var ErrOpenClient = errors.New("failed to open client")
 
 type Config struct {
-	Enabled               bool   `mapstructure:"enabled" json:"enabled"`
-	Action                Action `mapstructure:"action" json:"action"`
-	Duration              int    `mapstructure:"duration" json:"duration"`
-	MaxAimSnap            int    `mapstructure:"max_aim_snap" json:"max_aim_snap"`
-	MaxPsilent            int    `mapstructure:"max_psilent" json:"max_psilent"`
-	MaxBhop               int    `mapstructure:"max_bhop" json:"max_bhop"`
-	MaxFakeAng            int    `mapstructure:"max_fake_ang" json:"max_fake_ang"`
-	MaxCmdNum             int    `mapstructure:"max_cmd_num" json:"max_cmd_num"`
-	MaxTooManyConnections int    `mapstructure:"max_too_many_connections" json:"max_too_many_connections"`
-	MaxCheatCvar          int    `mapstructure:"max_cheat_cvar" json:"max_cheat_cvar"`
-	MaxOOBVar             int    `mapstructure:"max_oob_var" json:"max_oob_var"`
-	MaxInvalidUserCmd     int    `mapstructure:"max_invalid_user_cmd" json:"max_invalid_user_cmd"`
+	Enabled               bool   `mapstructure:"enabled"`
+	Action                Action `mapstructure:"action"`
+	Duration              int    `mapstructure:"duration"`
+	MaxAimSnap            int    `mapstructure:"max_aim_snap"`
+	MaxPsilent            int    `mapstructure:"max_psilent"`
+	MaxBhop               int    `mapstructure:"max_bhop"`
+	MaxFakeAng            int    `mapstructure:"max_fake_ang"`
+	MaxCmdNum             int    `mapstructure:"max_cmd_num"`
+	MaxTooManyConnections int    `mapstructure:"max_too_many_connections"`
+	MaxCheatCvar          int    `mapstructure:"max_cheat_cvar"`
+	MaxOOBVar             int    `mapstructure:"max_oob_var"`
+	MaxInvalidUserCmd     int    `mapstructure:"max_invalid_user_cmd"`
 }
 
 type ConfigStore struct {
@@ -56,19 +56,19 @@ type ConfigStore struct {
 type Entry struct {
 	logparse.StacEntry
 
-	Personaname string `json:"personaname"`
-	AvatarHash  string `json:"avatar_hash"`
-	Triggered   int32  `json:"triggered"`
+	Personaname string
+	AvatarHash  string
+	Triggered   int32
 }
 
 type Query struct {
 	query.Filter
 
-	Name      string             `json:"name" schema:"name"`
-	SteamID   string             `json:"steam_id" schema:"steam_id"`
-	ServerID  int                `json:"server_id" schema:"server_id"`
-	Summary   string             `json:"summary" schema:"summary"`
-	Detection logparse.Detection `json:"detection" schema:"detection"`
+	Name      string             `schema:"name"`
+	SteamID   string             `schema:"steam_id"`
+	ServerID  int                `schema:"server_id"`
+	Summary   string             `schema:"summary"`
+	Detection logparse.Detection `schema:"detection"`
 }
 
 // AntiCheat handles parsing and processing of stac anti-cheat logs.

@@ -28,28 +28,28 @@ var (
 )
 
 type RequestMessageBodyMD struct {
-	BodyMD string `json:"body_md"`
+	BodyMD string
 }
 
 type ReportQueryFilter struct {
 	httphelper.SourceIDField
 
-	Deleted bool `json:"deleted"`
+	Deleted bool
 }
 
 type RequestReportStatusUpdate struct {
-	Status ReportStatus `json:"status"`
+	Status ReportStatus
 }
 
 type RequestReportCreate struct {
-	SourceID        steamid.SteamID `json:"source_id"`
-	TargetID        steamid.SteamID `json:"target_id"`
-	Description     string          `json:"description"`
-	Reason          reason.Reason   `json:"reason"`
-	ReasonText      string          `json:"reason_text"`
-	DemoID          int64           `json:"demo_id"`
-	DemoTick        int32           `json:"demo_tick"`
-	PersonMessageID int64           `json:"person_message_id"`
+	SourceID        steamid.SteamID
+	TargetID        steamid.SteamID
+	Description     string
+	Reason          reason.Reason
+	ReasonText      string
+	DemoID          int64
+	DemoTick        int32
+	PersonMessageID int64
 }
 
 type ReportStatus int
@@ -76,19 +76,19 @@ func (status ReportStatus) String() string {
 }
 
 type Report struct {
-	ReportID        int32           `json:"report_id"`
-	SourceID        steamid.SteamID `json:"source_id"`
-	TargetID        steamid.SteamID `json:"target_id"`
-	Description     string          `json:"description"`
-	ReportStatus    ReportStatus    `json:"report_status"`
-	Reason          reason.Reason   `json:"reason"`
-	ReasonText      string          `json:"reason_text"`
-	Deleted         bool            `json:"deleted"`
-	DemoTick        int32           `json:"demo_tick"`
-	DemoID          int64           `json:"demo_id"`
-	PersonMessageID int64           `json:"person_message_id"`
-	CreatedOn       time.Time       `json:"created_on"`
-	UpdatedOn       time.Time       `json:"updated_on"`
+	ReportID        int32
+	SourceID        steamid.SteamID
+	TargetID        steamid.SteamID
+	Description     string
+	ReportStatus    ReportStatus
+	Reason          reason.Reason
+	ReasonText      string
+	Deleted         bool
+	DemoTick        int32
+	DemoID          int64
+	PersonMessageID int64
+	CreatedOn       time.Time
+	UpdatedOn       time.Time
 }
 
 func (report Report) Path() string {

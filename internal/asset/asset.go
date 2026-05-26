@@ -58,17 +58,17 @@ type Config struct {
 }
 
 type Asset struct {
-	AssetID   uuid.UUID       `json:"asset_id"`
-	Hash      []byte          `json:"-"` // 32 bytes
-	AuthorID  steamid.SteamID `json:"author_id"`
-	Bucket    Bucket          `json:"bucket"`
-	MimeType  string          `json:"mime_type"`
-	Name      string          `json:"name"`
-	Size      int64           `json:"size"`
-	IsPrivate bool            `json:"is_private"`
-	CreatedOn time.Time       `json:"created_on"`
-	UpdatedOn time.Time       `json:"updated_on"`
-	LocalPath string          `json:"-"`
+	AssetID   uuid.UUID
+	Hash      []byte // 32 bytes
+	AuthorID  steamid.SteamID
+	Bucket    Bucket
+	MimeType  string
+	Name      string
+	Size      int64
+	IsPrivate bool
+	CreatedOn time.Time
+	UpdatedOn time.Time
+	LocalPath string
 	wasRead   bool
 	file      *os.File
 	decoder   io.ReadCloser

@@ -39,9 +39,9 @@ var (
 const maxCIDRHosts = 256 * 256
 
 type Config struct {
-	BDEnabled      bool   `json:"bd_enabled"`
-	ValveEnabled   bool   `json:"valve_enabled"`
-	AuthorizedKeys string `json:"authorized_keys"`
+	BDEnabled      bool
+	ValveEnabled   bool
+	AuthorizedKeys string
 }
 
 // Origin defines the origin of the ban or action.
@@ -82,21 +82,21 @@ const Permanent = "Permanent"
 // It should not be instantiated directly, but instead use one of the composites that build
 // upon it.
 type Opts struct {
-	TargetID steamid.SteamID `json:"target_id" binding:"required,steamid"`
-	SourceID steamid.SteamID `json:"source_id" binding:"required,steamid"`
+	TargetID steamid.SteamID
+	SourceID steamid.SteamID
 	// ISO8601
-	Duration   *duration.Duration `json:"duration" binding:"required,duration"`
-	BanType    bantype.Type       `json:"ban_type" binding:"required"`
-	Reason     reason.Reason      `json:"reason" binding:"required"`
-	ReasonText string             `json:"reason_text"`
-	Origin     Origin             `json:"origin" binding:"oneof=0 1 2 3"`
-	ReportID   int32              `json:"report_id" binding:"omitempty,gt=0"`
-	CIDR       *string            `json:"cidr"`
-	EvadeOk    bool               `json:"evade_ok"`
-	Name       string             `json:"name" binding:"max=36"`
-	DemoName   string             `json:"demo_name" binding:"omitempty,max=256"`
-	DemoTick   int32              `json:"demo_tick" binding:"omitempty"`
-	Note       string             `json:"note" binding:"omitempty,max=100000"`
+	Duration   *duration.Duration
+	BanType    bantype.Type
+	Reason     reason.Reason
+	ReasonText string
+	Origin     Origin
+	ReportID   int32
+	CIDR       *string
+	EvadeOk    bool
+	Name       string
+	DemoName   string
+	DemoTick   int32
+	Note       string
 }
 
 func (opts *Opts) Validate() error {
@@ -133,40 +133,40 @@ func AddressCount(network *net.IPNet) uint64 {
 
 type Ban struct {
 	// SteamID is the steamID of the banned person
-	TargetID steamid.SteamID `json:"target_id"`
-	SourceID steamid.SteamID `json:"source_id"`
-	BanID    int32           `json:"ban_id"`
-	ReportID int32           `json:"report_id"`
-	LastIP   *string         `json:"last_ip"`
-	EvadeOk  bool            `json:"evade_ok"`
+	TargetID steamid.SteamID
+	SourceID steamid.SteamID
+	BanID    int32
+	ReportID int32
+	LastIP   *string
+	EvadeOk  bool
 
 	// Reason defines the overall ban classification
-	BanType bantype.Type `json:"ban_type"`
+	BanType bantype.Type
 	// Reason defines the overall ban classification
-	Reason reason.Reason `json:"reason"`
+	Reason reason.Reason
 	// ReasonText is returned to the client when kicked trying to join the server
-	ReasonText      string `json:"reason_text"`
-	UnbanReasonText string `json:"unban_reason_text"`
+	ReasonText      string
+	UnbanReasonText string
 	// Note is a supplementary note added by admins that is hidden from normal view
-	Note        string      `json:"note"`
-	Origin      Origin      `json:"origin"`
-	CIDR        *string     `json:"cidr"`
-	AppealState AppealState `json:"appeal_state"`
+	Note        string
+	Origin      Origin
+	CIDR        *string
+	AppealState AppealState
 	// Name is the name at time of banning.
-	Name string `json:"name"`
+	Name string
 
 	// Deleted is used for soft-deletes
-	Deleted   bool `json:"deleted"`
-	IsEnabled bool `json:"is_enabled"`
+	Deleted   bool
+	IsEnabled bool
 	// ValidUntil is when the ban will be no longer valid. 0 denotes forever
-	ValidUntil time.Time `json:"valid_until" `
-	CreatedOn  time.Time `json:"created_on"`
-	UpdatedOn  time.Time `json:"updated_on"`
+	ValidUntil time.Time
+	CreatedOn  time.Time
+	UpdatedOn  time.Time
 
-	SourcePersonaname string `json:"source_personaname"`
-	SourceAvatarhash  string `json:"source_avatarhash"`
-	TargetPersonaname string `json:"target_personaname"`
-	TargetAvatarhash  string `json:"target_avatarhash"`
+	SourcePersonaname string
+	SourceAvatarhash  string
+	TargetPersonaname string
+	TargetAvatarhash  string
 }
 
 func (b Ban) IsGroup() bool {
@@ -188,15 +188,15 @@ func (b Ban) Expired() bool {
 type BansQueryFilter struct {
 	httphelper.TargetIDField
 
-	Deleted bool `json:"deleted"`
+	Deleted bool
 }
 
 type NewBanMessage struct {
-	Message string `json:"message"`
+	Message string
 }
 
 type RequestUnban struct {
-	UnbanReasonText string `json:"unban_reason_text"`
+	UnbanReasonText string
 }
 
 type QueryOpts struct {
@@ -217,19 +217,19 @@ type QueryOpts struct {
 }
 
 type Stats struct {
-	BansTotal     int `json:"bans_total"`
-	BansDay       int `json:"bans_day"`
-	BansWeek      int `json:"bans_week"`
-	BansMonth     int `json:"bans_month"`
-	Bans3Month    int `json:"bans3_month"`
-	Bans6Month    int `json:"bans6_month"`
-	BansYear      int `json:"bans_year"`
-	BansCIDRTotal int `json:"bans_cidr_total"`
-	AppealsOpen   int `json:"appeals_open"`
-	AppealsClosed int `json:"appeals_closed"`
-	FilteredWords int `json:"filtered_words"`
-	ServersAlive  int `json:"servers_alive"`
-	ServersTotal  int `json:"servers_total"`
+	BansTotal     int
+	BansDay       int
+	BansWeek      int
+	BansMonth     int
+	Bans3Month    int
+	Bans6Month    int
+	BansYear      int
+	BansCIDRTotal int
+	AppealsOpen   int
+	AppealsClosed int
+	FilteredWords int
+	ServersAlive  int
+	ServersTotal  int
 }
 
 type LastIPProvider interface {
