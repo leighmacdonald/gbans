@@ -95,7 +95,7 @@ type Opts struct {
 	EvadeOk    bool
 	Name       string
 	DemoName   string
-	DemoTick   int32
+	DemoTick   uint32
 	Note       string
 }
 

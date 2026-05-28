@@ -81,20 +81,20 @@ func UpdatePlayerSummary(ctx context.Context, personUpdate *Person, tfAPI thirdp
 			return ErrInvalidResult
 		}
 		personUpdate.AvatarHash = summaries[0].AvatarHash
-		personUpdate.CommentPermission = int32(summaries[0].CommentPermission)
+		personUpdate.CommentPermission = int32(summaries[0].CommentPermission) //nolint:gosec
 		personUpdate.LastLogoff = new(time.Unix(summaries[0].LastLogoff, 0))
-		personUpdate.LocCityID = int32(summaries[0].LocCityId)
+		personUpdate.LocCityID = int32(summaries[0].LocCityId) //nolint:gosec
 		personUpdate.LocCountryCode = summaries[0].LocCountryCode
 		personUpdate.LocStateCode = summaries[0].LocStateCode
 		personUpdate.PersonaName = summaries[0].PersonaName
-		personUpdate.PersonaState = int32(summaries[0].PersonaState)
-		personUpdate.PersonaStateFlags = int32(summaries[0].PersonaStateFlags)
+		personUpdate.PersonaState = int32(summaries[0].PersonaState)           //nolint:gosec
+		personUpdate.PersonaStateFlags = int32(summaries[0].PersonaStateFlags) //nolint:gosec
 		personUpdate.PrimaryClanID = summaries[0].PrimaryClanId
-		personUpdate.ProfileState = int32(summaries[0].ProfileState)
+		personUpdate.ProfileState = int32(summaries[0].ProfileState) //nolint:gosec
 		personUpdate.ProfileURL = summaries[0].ProfileUrl
 		personUpdate.RealName = summaries[0].RealName
 		personUpdate.TimeCreated = summaries[0].TimeCreated
-		personUpdate.VisibilityState = int32(summaries[0].VisibilityState)
+		personUpdate.VisibilityState = int32(summaries[0].VisibilityState) //nolint:gosec
 
 		return nil
 	})
@@ -106,11 +106,11 @@ func UpdatePlayerSummary(ctx context.Context, personUpdate *Person, tfAPI thirdp
 		}
 
 		personUpdate.CommunityBanned = vac[0].CommunityBanned
-		personUpdate.VACBans = int32(vac[0].NumberOfVacBans)
-		personUpdate.GameBans = int32(vac[0].NumberOfGameBans)
+		personUpdate.VACBans = int32(vac[0].NumberOfVacBans)   //nolint:gosec
+		personUpdate.GameBans = int32(vac[0].NumberOfGameBans) //nolint:gosec
 		personUpdate.EconomyBan = EconBanState(vac[0].EconomyBan)
 		personUpdate.CommunityBanned = vac[0].CommunityBanned
-		personUpdate.DaysSinceLastBan = int32(vac[0].DaysSinceLastBan)
+		personUpdate.DaysSinceLastBan = int32(vac[0].DaysSinceLastBan) //nolint:gosec
 		personUpdate.UpdatedOnSteam = time.Now()
 
 		return nil

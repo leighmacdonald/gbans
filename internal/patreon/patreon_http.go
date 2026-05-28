@@ -16,7 +16,7 @@ type patreonHandler struct {
 	config Config
 }
 
-//func NewPatreonHandler(engine *gin.Engine, auth httphelper.Authenticator, patreon Patreon, config Config) {
+// func NewPatreonHandler(engine *gin.Engine, auth httphelper.Authenticator, patreon Patreon, config Config) {
 //	handler := patreonHandler{
 //		Patreon: patreon,
 //		config:  config,
@@ -38,7 +38,7 @@ type patreonHandler struct {
 //		mod := modGrp.Use(auth.Middleware(permission.Moderator))
 //		mod.GET("/api/patreon/pledges", handler.onAPIGetPatreonPledges())
 //	}
-//}
+// }
 
 func (h patreonHandler) onLogout() gin.HandlerFunc {
 	return func(ctx *gin.Context) {

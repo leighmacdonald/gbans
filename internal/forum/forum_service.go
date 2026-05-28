@@ -446,7 +446,7 @@ func (s Service) ForumCreate(ctx context.Context, req *v1.ForumCreateRequest) (*
 		Title:           stringutil.SanitizeUGC(req.GetTitle()),
 		Description:     stringutil.SanitizeUGC(req.GetDescription()),
 		Ordering:        req.GetOrdering(),
-		PermissionLevel: permission.Privilege(req.GetPermissionLevel()),
+		PermissionLevel: permission.Privilege(req.GetPermissionLevel()), //nolint:gosec
 		CreatedOn:       time.Now(),
 		UpdatedOn:       time.Now(),
 	}
@@ -468,7 +468,7 @@ func (s Service) ForumEdit(ctx context.Context, req *v1.ForumEditRequest) (*v1.F
 	forum.Title = stringutil.SanitizeUGC(req.GetTitle())
 	forum.Description = stringutil.SanitizeUGC(req.GetDescription())
 	forum.Ordering = req.GetOrdering()
-	forum.PermissionLevel = permission.Privilege(req.GetPermissionLevel())
+	forum.PermissionLevel = permission.Privilege(req.GetPermissionLevel()) //nolint:gosec
 
 	if errSave := s.forums.ForumSave(ctx, &forum); errSave != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)

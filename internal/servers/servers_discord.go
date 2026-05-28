@@ -425,7 +425,7 @@ func discordServersMessage(currentStateRegion map[string][]*Server) []discordgo.
 	var ( //nolint:prealloc
 		stats       = map[string]float64{}
 		used, total = int32(0), int32(0)
-		regionNames = make([]string, 9)
+		regionNames = make([]string, 9) //nolint:prealloc
 		rows        []string
 	)
 

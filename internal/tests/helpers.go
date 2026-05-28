@@ -99,9 +99,9 @@ func newDB(ctx context.Context) (*postgresContainer, error) {
 	cont, errContainer := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			FromDockerfile: fromDockerfile,
-			//HostConfigModifier: func(config *container.HostConfig) {
+			// HostConfigModifier: func(config *container.HostConfig) {
 			//	config.AutoRemove = false
-			//},
+			// },
 
 			Env: map[string]string{
 				"POSTGRES_DB":       dbName,

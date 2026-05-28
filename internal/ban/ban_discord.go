@@ -234,7 +234,7 @@ func (h discordHandler) onUnbanButton(ctx context.Context, session *discordgo.Se
 	if errID != nil {
 		return errID
 	}
-	ban, errBan := h.QueryOne(ctx, QueryOpts{BanID: int32(banID)})
+	ban, errBan := h.QueryOne(ctx, QueryOpts{BanID: int32(banID)}) //nolint:gosec
 	if errBan != nil {
 		return errBan
 	}

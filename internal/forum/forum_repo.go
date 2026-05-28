@@ -116,9 +116,9 @@ func (f *Repository) Forums(ctx context.Context) ([]Forum, error) {
 
 	for rows.Next() {
 		var (
-			lastID           *int64
+			lastID           *int32
 			frm              Forum
-			lastForumTheadID *int64
+			lastForumTheadID *int32
 			lastSourceID     *steamid.SteamID
 			lastPersonaname  *string
 			lastAvatarhash   *string
@@ -135,11 +135,11 @@ func (f *Repository) Forums(ctx context.Context) ([]Forum, error) {
 		}
 
 		if lastID != nil {
-			frm.LastThreadID = int32(ptr.From(lastID))
+			frm.LastThreadID = ptr.From(lastID)
 		}
 
 		if lastForumTheadID != nil && lastPersonaname != nil && lastAvatarhash != nil && lastCreatedOn != nil && lastTitle != nil {
-			frm.RecentForumThreadID = int32(ptr.From(lastForumTheadID))
+			frm.RecentForumThreadID = ptr.From(lastForumTheadID)
 			frm.RecentSourceID = lastSourceID.String()
 			frm.RecentPersonaname = *lastPersonaname
 			frm.RecentAvatarhash = *lastAvatarhash

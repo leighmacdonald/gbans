@@ -480,7 +480,7 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware) *http.ServeMux {
 		servers.NewDemoService(g.demos, authMiddleware, interceptors),
 		servers.NewSpeedrunsService(g.speedruns, authMiddleware, interceptors),
 		sourcemod.NewPluginService(g.sourcemod, g.persons, g.servers, g.bans,
-			rpc.NewServerTokenGenerator(conf.General.SiteName, []byte(conf.Static.HTTPCookieKey)), g.notifications, conf.Discord.LogChannelID, authMiddleware, interceptors),
+			rpc.NewServerTokenGenerator(conf.General.SiteName, []byte(conf.HTTPCookieKey)), g.notifications, conf.Discord.LogChannelID, authMiddleware, interceptors),
 		sourcemod.NewSourcemodService(g.sourcemod, authMiddleware, interceptors),
 		votes.NewService(g.votes, authMiddleware, interceptors),
 		wiki.NewService(g.wiki, authMiddleware, interceptors),
@@ -526,7 +526,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	userAuth := auth.NewAuthentication(auth.NewRepository(g.database), conf.General.SiteName, conf.HTTPCookieKey, g.persons, g.bans, g.servers, g.config.Config().General.SentryDSN)
 	// serverAuth := servers.NewServerAuth(g.servers, g.config.Config().General.SentryDSN)
 
-	authMiddleware := rpc.NewMiddleware(conf.General.SiteName, conf.Static.HTTPCookieKey)
+	authMiddleware := rpc.NewMiddleware(conf.General.SiteName, conf.HTTPCookieKey)
 
 	// Register all our handlers with router
 	asset.NewAssetHandler(router, g.assets)
@@ -547,12 +547,13 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 
 	httpServer := httphelper.NewServer(conf.Addr(), mux)
 
+	//nolint:gosec
 	go func() {
 		<-ctx.Done()
 
 		slog.Debug("Shutting down HTTP service")
 
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10) //nolint:gosec
 		defer cancel()
 
 		if errShutdown := httpServer.Shutdown(shutdownCtx); errShutdown != nil { //nolint:contextcheck
@@ -708,7 +709,7 @@ func (g *GBans) onChatBan(ctx context.Context, warning chat.NewUserWarning) erro
 	return nil
 }
 
-func (g *GBans) onAnticheatBan(ctx context.Context, entry logparse.StacEntry, dur time.Duration, count int) error {
+func (g *GBans) onAnticheatBan(ctx context.Context, entry logparse.StacEntry, dur time.Duration, count int32) error {
 	conf := g.config.Config()
 	newBan, err := g.bans.Create(ctx, ban.Opts{
 		Origin:     ban.System,

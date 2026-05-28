@@ -48,7 +48,7 @@ type StacEntry struct {
 	ServerName  string          `json:"serverName"`
 	DemoID      *int32          `json:"demoId"`
 	DemoName    string          `json:"demoName"`
-	DemoTick    int32           `json:"demoTick"`
+	DemoTick    uint32          `json:"demoTick"`
 	Name        string          `json:"name"`
 	Detection   Detection       `json:"detection"`
 	Summary     string          `json:"summary"`
@@ -86,7 +86,7 @@ func NewStacParser() StacParser {
 
 // Parse handles reading and parsing the log file io.Reader.
 // Disabling OnPlayerRunCmd checks for 5.00 seconds.
-func (p StacParser) Parse(logName string, reader io.Reader) ([]StacEntry, error) {
+func (p StacParser) Parse(logName string, reader io.Reader) ([]StacEntry, error) { //nolint:cyclop
 	// Get the date from the file name eg: stac_052224.log
 	date, errDate := p.parseFileName(logName)
 	if errDate != nil {
@@ -161,11 +161,11 @@ func (p StacParser) Parse(logName string, reader io.Reader) ([]StacEntry, error)
 			matches := p.reDemo.FindStringSubmatch(line)
 			if len(matches) == 3 {
 				current.DemoName = matches[1]
-				tick, errTick := strconv.Atoi(matches[2])
+				tick, errTick := strconv.ParseUint(matches[2], 10, 32)
 				if errTick != nil {
 					slog.Warn("Failed to parse demo tick", slog.String("line", line))
 				} else {
-					current.DemoTick = int32(tick)
+					current.DemoTick = uint32(tick)
 				}
 			}
 		}

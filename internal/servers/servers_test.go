@@ -53,8 +53,8 @@ func TestServers(t *testing.T) {
 		_, deletedErr := serversCase.Server(t.Context(), otherServer.ServerID)
 		require.ErrorIs(t, servers.ErrNotFound, deletedErr)
 
-		serverId, _, _ := serversCase.GetByPassword(t.Context(), saved.Password)
-		require.Equal(t, saved.ServerID, serverId)
+		serverID, _, _ := serversCase.GetByPassword(t.Context(), saved.Password)
+		require.Equal(t, saved.ServerID, serverID)
 
 		byName, _ := serversCase.GetByName(t.Context(), saved.ShortName)
 		require.Equal(t, saved, byName)

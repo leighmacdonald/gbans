@@ -68,7 +68,7 @@ func (s Service) Update(ctx context.Context, request *v1.UpdateRequest) (*v1.Upd
 
 	page.Slug = update.GetSlug()
 	page.BodyMD = update.GetBodyMd()
-	page.PermissionLevel = permission.Privilege(update.GetPermissionLevel())
+	page.PermissionLevel = permission.Privilege(update.GetPermissionLevel()) //nolint:gosec
 
 	updatedPage, errSave := s.wiki.Save(ctx, page)
 	if errSave != nil {

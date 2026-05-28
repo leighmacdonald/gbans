@@ -3,8 +3,8 @@ package contest
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"errors"
-	"fmt"
 	"log/slog"
 	"slices"
 	"strings"
@@ -90,9 +90,9 @@ func (s Service) Entries(ctx context.Context, req *v1.EntriesRequest) (*v1.Entri
 }
 
 func (s Service) Upload(ctx context.Context, req *v1.UploadRequest) (*v1.UploadResponse, error) {
-	contestId, _ := uuid.FromString(req.GetContestId())
+	contestID, _ := uuid.FromString(req.GetContestId())
 	var contest Contest
-	if errContest := s.contests.ByID(ctx, contestId, &contest); errContest != nil {
+	if errContest := s.contests.ByID(ctx, contestID, &contest); errContest != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
@@ -122,7 +122,7 @@ func toAsset(asset asset.Asset) *assetv1.Asset {
 		AssetId:   new(asset.AssetID.String()),
 		Bucket:    new(string(asset.Bucket)),
 		AuthorId:  new(asset.AuthorID.Int64()),
-		Hash:      new(fmt.Sprintf("%x", asset.Hash)),
+		Hash:      new(hex.EncodeToString(asset.Hash)),
 		IsPrivate: &asset.IsPrivate,
 		MimeType:  &asset.MimeType,
 		Name:      &asset.Name,
@@ -242,7 +242,7 @@ func (s Service) EntryDelete(ctx context.Context, req *v1.EntryDeleteRequest) (*
 }
 
 func (s Service) ContestCreate(ctx context.Context, req *v1.ContestCreateRequest) (*v1.ContestCreateResponse, error) {
-	contest, errSave := s.contests.Save(ctx, fromContest(req.Contest))
+	contest, errSave := s.contests.Save(ctx, fromContest(req.GetContest()))
 	if errSave != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -290,14 +290,14 @@ func fromContest(contest *v1.Contest) Contest {
 		Description:        contest.GetDescription(),
 		Public:             contest.GetPublic(),
 		HideSubmissions:    contest.GetHideSubmissions(),
-		DateStart:          contest.DateStart.AsTime(),
-		DateEnd:            contest.DateEnd.AsTime(),
+		DateStart:          contest.GetDateStart().AsTime(),
+		DateEnd:            contest.GetDateEnd().AsTime(),
 		MaxSubmissions:     contest.GetMaxSubmissions(),
 		OwnSubmissions:     contest.GetOwnSubmissions(),
 		MediaTypes:         contest.GetMediaTypes(),
 		NumEntries:         contest.GetNumEntries(),
 		Deleted:            false,
-		Voting:             contest.GetVoting(),
+		Voting:             contest.GetVoting(), //nolint:gosec
 		MinPermissionLevel: permission.Privilege(contest.GetMinPermissionLevel()),
 		DownVotes:          contest.GetDownVotes(),
 		IsNew:              false,

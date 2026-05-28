@@ -126,10 +126,10 @@ func ACPlayerLogs(_ person.Info, entries []Entry) []discordgo.MessageComponent {
 	return []discordgo.MessageComponent{discord.BodyText(content)}
 }
 
-func NewAnticheatTrigger(note string, action Action, entry logparse.StacEntry, count int) *discordgo.MessageSend {
+func NewAnticheatTrigger(note string, action Action, entry logparse.StacEntry, count int32) *discordgo.MessageSend {
 	content, errContent := discord.RenderTemplate("ac_trigger", struct {
 		Detection string
-		Count     int
+		Count     int32
 		Action    string
 		Note      string
 		Entry     logparse.StacEntry

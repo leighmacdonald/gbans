@@ -56,8 +56,8 @@ func (s Service) Edit(ctx context.Context, req *v1.EditRequest) (*v1.EditRespons
 		Title:       req.GetTitle(),
 		BodyMD:      req.GetBodyMd(),
 		IsPublished: req.GetIsPublished(),
-		CreatedOn:   req.CreatedOn.AsTime(),
-		UpdatedOn:   req.CreatedOn.AsTime(),
+		CreatedOn:   req.GetCreatedOn().AsTime(),
+		UpdatedOn:   req.GetCreatedOn().AsTime(),
 	}
 	if errEntry := s.news.Save(ctx, entry); errEntry != nil {
 		return nil, connect.NewError(connect.CodeInternal, errEntry)
@@ -93,8 +93,8 @@ func (s Service) Create(ctx context.Context, req *v1.CreateRequest) (*v1.CreateR
 		Title:       req.GetTitle(),
 		BodyMD:      req.GetBodyMd(),
 		IsPublished: req.GetIsPublished(),
-		CreatedOn:   req.CreatedOn.AsTime(),
-		UpdatedOn:   req.CreatedOn.AsTime(),
+		CreatedOn:   req.GetCreatedOn().AsTime(),
+		UpdatedOn:   req.GetCreatedOn().AsTime(),
 	}
 	if errEntry := s.news.Save(ctx, entry); errEntry != nil {
 		return nil, connect.NewError(connect.CodeInternal, errEntry)

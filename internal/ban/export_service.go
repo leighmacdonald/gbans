@@ -72,7 +72,7 @@ func (s ExportService) GetTF2BD(ctx context.Context, req *v1.GetTF2BDRequest) (*
 			SteamId:    new(string(ban.TargetID.Steam3())),
 			LastSeen: &v1.LastSeen{
 				PlayerName: new(ban.TargetID.String()),
-				Time:       new(int32(ban.UpdatedOn.Unix())),
+				Time:       new(int32(ban.UpdatedOn.Unix())), //nolint:gosec
 			},
 		})
 	}

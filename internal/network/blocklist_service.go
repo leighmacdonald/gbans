@@ -197,6 +197,7 @@ func toWhitelistIP(whitelist WhitelistIP) *v1.WhitelistIP {
 
 func toWhitelistSteam(whitelist WhitelistSteam) *v1.WhitelistSteam {
 	sid := steamid.New(whitelist.SteamIDValue)
+
 	return &v1.WhitelistSteam{
 		SteamId:     new(sid.Int64()),
 		PersonaName: &whitelist.Personaname,

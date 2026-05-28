@@ -46,7 +46,7 @@ func (s Service) Notifications(ctx context.Context, _ *emptypb.Empty) (*v1.Notif
 			SteamId:              new(notif.SteamID.Int64()),
 			Read:                 &notif.Read,
 			Deleted:              &notif.Deleted,
-			Severity:             new(v1.Severity(notif.Severity)),
+			Severity:             new(v1.Severity(notif.Severity)), //nolint:gosec
 			Message:              &notif.Message,
 			Link:                 &notif.Link,
 			Count:                &notif.Count,

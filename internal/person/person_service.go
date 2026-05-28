@@ -17,14 +17,14 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type PersonService struct {
+type Service struct {
 	personv1connect.UnimplementedPersonServiceHandler
 
 	persons *Persons
 }
 
 func NewPersonService(persons *Persons, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := personv1connect.NewPersonServiceHandler(PersonService{persons: persons}, option...)
+	pattern, handler := personv1connect.NewPersonServiceHandler(Service{persons: persons}, option...)
 
 	authMiddleware.UserRoute(personv1connect.PersonServiceProfileProcedure, rpc.WithMinPermissions(permission.User))
 	authMiddleware.UserRoute(personv1connect.PersonServiceResolveSteamIDProcedure, rpc.WithMinPermissions(permission.User))
@@ -37,7 +37,7 @@ func NewPersonService(persons *Persons, authMiddleware *rpc.Middleware, option .
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
-func (s PersonService) CurrentProfile(ctx context.Context, _ *emptypb.Empty) (*v1.CurrentProfileResponse, error) {
+func (s Service) CurrentProfile(ctx context.Context, _ *emptypb.Empty) (*v1.CurrentProfileResponse, error) {
 	user, _ := rpc.UserInfoFromCtx(ctx)
 	requestCtx, cancelRequest := context.WithTimeout(ctx, time.Second*15)
 	defer cancelRequest()
@@ -54,7 +54,7 @@ func (s PersonService) CurrentProfile(ctx context.Context, _ *emptypb.Empty) (*v
 	return &v1.CurrentProfileResponse{Profile: toPersonCore(response.Player)}, nil
 }
 
-func (s PersonService) Profile(ctx context.Context, req *v1.ProfileRequest) (*v1.ProfileResponse, error) {
+func (s Service) Profile(ctx context.Context, req *v1.ProfileRequest) (*v1.ProfileResponse, error) {
 	requestCtx, cancelRequest := context.WithTimeout(ctx, time.Second*15)
 	defer cancelRequest()
 
@@ -74,7 +74,7 @@ func (s PersonService) Profile(ctx context.Context, req *v1.ProfileRequest) (*v1
 	}}, nil
 }
 
-func (s PersonService) ResolveSteamID(ctx context.Context, req *v1.ResolveSteamIDRequest) (*v1.ResolveSteamIDResponse, error) {
+func (s Service) ResolveSteamID(ctx context.Context, req *v1.ResolveSteamIDRequest) (*v1.ResolveSteamIDResponse, error) {
 	requestCtx, cancelRequest := context.WithTimeout(ctx, time.Second*15)
 	defer cancelRequest()
 
@@ -94,7 +94,7 @@ func (s PersonService) ResolveSteamID(ctx context.Context, req *v1.ResolveSteamI
 	}, nil
 }
 
-func (s PersonService) ProfileSettings(ctx context.Context, _ *emptypb.Empty) (*v1.ProfileSettingsResponse, error) {
+func (s Service) ProfileSettings(ctx context.Context, _ *emptypb.Empty) (*v1.ProfileSettingsResponse, error) {
 	user, _ := rpc.UserInfoFromCtx(ctx)
 
 	settings, err := s.persons.GetPersonSettings(ctx, user.GetSteamID())
@@ -105,7 +105,7 @@ func (s PersonService) ProfileSettings(ctx context.Context, _ *emptypb.Empty) (*
 	return &v1.ProfileSettingsResponse{Settings: toUserSettings(settings)}, nil
 }
 
-func (s PersonService) EditProfileSettings(ctx context.Context, req *v1.EditProfileSettingsRequest) (*v1.EditProfileSettingsResponse, error) {
+func (s Service) EditProfileSettings(ctx context.Context, req *v1.EditProfileSettingsRequest) (*v1.EditProfileSettingsResponse, error) {
 	user, _ := rpc.UserInfoFromCtx(ctx)
 	settings, err := s.persons.SavePersonSettings(ctx, user, SettingsUpdate{
 		ForumSignature:       req.GetForumSignature(),
@@ -120,23 +120,23 @@ func (s PersonService) EditProfileSettings(ctx context.Context, req *v1.EditProf
 	return &v1.EditProfileSettingsResponse{Settings: toUserSettings(settings)}, nil
 }
 
-func (s PersonService) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResponse, error) {
-	var perms []permission.Privilege
+func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResponse, error) {
+	var perms []permission.Privilege //nolint:prealloc
 	for _, perm := range req.GetWithPermissions() {
-		perms = append(perms, permission.Privilege(perm))
+		perms = append(perms, permission.Privilege(perm)) //nolint:gosec
 	}
 	query := Query{
 		Filter:            rpc.FromRPC(req.GetFilter()),
 		PersonaName:       req.GetPersonaName(),
 		WithPermissions:   perms,
 		DiscordID:         req.GetDiscordId(),
-		SteamIDs:          req.SteamIds,
+		SteamIDs:          req.GetSteamIds(),
 		VacBans:           req.GetVacBans(),
 		GameBans:          req.GetGameBans(),
 		AvatarHash:        req.GetAvatarHash(),
 		CommunityBanned:   new(req.GetCommunityBanned()),
-		TimeCreatedAfter:  new(req.TimeCreatedAfter.AsTime()),
-		TimeCreatedBefore: new(req.TimeCreatedBefore.AsTime()),
+		TimeCreatedAfter:  new(req.GetTimeCreatedAfter().AsTime()),
+		TimeCreatedBefore: new(req.GetTimeCreatedBefore().AsTime()),
 	}
 	people, count, errGetPeople := s.persons.GetPeople(ctx, query)
 	if errGetPeople != nil {
@@ -151,13 +151,13 @@ func (s PersonService) Query(ctx context.Context, req *v1.QueryRequest) (*v1.Que
 	return &resp, nil
 }
 
-func (s PersonService) EditPermissions(ctx context.Context, req *v1.EditPermissionsRequest) (*v1.EditPermissionsResponse, error) {
+func (s Service) EditPermissions(ctx context.Context, req *v1.EditPermissionsRequest) (*v1.EditPermissionsResponse, error) {
 	player, errPerson := s.persons.BySteamID(ctx, steamid.New(req.GetSteamId()))
 	if errPerson != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	player.PermissionLevel = permission.Privilege(req.GetPermissionLevel())
+	player.PermissionLevel = permission.Privilege(req.GetPermissionLevel()) //nolint:gosec
 
 	if err := s.persons.Save(ctx, &player); err != nil {
 		if errors.Is(err, permission.ErrDenied) {
@@ -169,7 +169,7 @@ func (s PersonService) EditPermissions(ctx context.Context, req *v1.EditPermissi
 
 	slog.Info("Player permission updated",
 		slog.Int64("steam_id", player.SteamID.Int64()),
-		slog.String("permissions", req.PermissionLevel.String()))
+		slog.String("permissions", player.PermissionLevel.String()))
 
 	return &v1.EditPermissionsResponse{Person: toPersonCore(&player)}, nil
 }

@@ -60,7 +60,7 @@ func normalizeStringLikeQuery(input string) string {
 	return fmt.Sprintf("%%%s%%", strings.ToLower(strings.Trim(space.ReplaceAllString(input, "%"), "%")))
 }
 
-func (r *Repository) Query(ctx context.Context, query Query) (People, int64, error) {
+func (r *Repository) Query(ctx context.Context, query Query) (People, int64, error) { //nolint:cyclop
 	builder := r.Builder().
 		Select("p.steam_id", "p.created_on", "p.updated_on",
 			"p.communityvisibilitystate", "p.profilestate", "p.personaname", "p.avatarhash", "p.personastate", "p.realname", "p.timecreated",
@@ -212,16 +212,13 @@ func (r *Repository) Settings(ctx context.Context, steamID steamid.SteamID) (Set
 			}
 
 			if key == "tf2centerprojectiles" {
-				settings.CenterProjectiles = makeBool(value == "1")
+				settings.CenterProjectiles = new(value == "1")
 			}
 		}
 	}
 
 	return settings, nil
 }
-
-// Helper to make a bool pointer, useful for optional json fields.
-func makeBool(v bool) *bool { return &v }
 
 // Format booleans for storage as a sourcemod Clientpref.
 func boolToStringDigit(b bool) string {

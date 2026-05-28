@@ -535,9 +535,7 @@ func (t *Tracker) Current() []Activity {
 	t.activityMu.RLock()
 	defer t.activityMu.RUnlock()
 
-	var activity []Activity
-
-	activity = append(activity, t.activity...)
+	activity := t.activity
 
 	return activity
 }

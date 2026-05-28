@@ -40,12 +40,12 @@ const (
 type Config struct {
 	Enabled         bool
 	Username        string
-	Port            int
+	Port            uint16
 	PrivateKeyPath  string
 	HostKeyStrategy HostKeyStrategy
 	Password        string
-	UpdateInterval  int
-	Timeout         int
+	UpdateInterval  int32
+	Timeout         int32
 	DemoPathFmt     string
 	StacPathFmt     string
 }
@@ -123,7 +123,7 @@ func (f *Connection) connect() error {
 		return nil
 	}
 
-	client, errClient := configAndDialClient(f.repo, f.config, net.JoinHostPort(f.details.InternalOrDefaultAddress(), strconv.Itoa(f.config.Port)))
+	client, errClient := configAndDialClient(f.repo, f.config, net.JoinHostPort(f.details.InternalOrDefaultAddress(), strconv.FormatInt(int64(f.config.Port), 10)))
 	if errClient != nil {
 		return errClient
 	}

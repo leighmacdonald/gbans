@@ -188,10 +188,10 @@ type Sourcemod struct {
 	servers          *servers.Servers
 }
 
-func (h Sourcemod) PingMod(ctx context.Context, steamId steamid.SteamID, name string, reason string, clientID int32, serverName string) error {
+func (h Sourcemod) PingMod(_ context.Context, _ steamid.SteamID, name string, reason string, clientID int32, serverName string) error {
 	h.notifier.Send(notification.NewDiscord(h.modPingChannelID, discord.NewMessage(
 		discord.Heading("Mod Request [%s]", serverName),
-		discord.BodyText(fmt.Sprintf("Mod requested by %s (%s) @<%s>", name, reason, h.modRoleID)))))
+		discord.BodyText(fmt.Sprintf("Mod requested by %s (%s) @<%s> (cid %d)", name, reason, h.modRoleID, clientID)))))
 
 	return nil
 }

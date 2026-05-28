@@ -467,7 +467,7 @@ func (s *Server) updateStatus(ctx context.Context) error {
 	s.state.Players = players
 	if s.state.MaxPlayers == 0 && status.PlayersMax > 0 {
 		// Prefer the sv_visiblemaxplayers value
-		s.state.MaxPlayers = int32(status.PlayersMax)
+		s.state.MaxPlayers = int32(status.PlayersMax) //nolint:gosec
 	}
 	s.state.Map = status.Map
 	s.state.IP = status.IPInfo.FakeIP

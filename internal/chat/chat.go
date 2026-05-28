@@ -261,9 +261,7 @@ func (u *Chat) State() map[string][]UserWarning {
 	out := make(map[string][]UserWarning)
 
 	for steamID, v := range u.warnings {
-		var warnings []UserWarning
-		warnings = append(warnings, v...)
-		out[steamID.String()] = warnings
+		out[steamID.String()] = v
 	}
 
 	return out
