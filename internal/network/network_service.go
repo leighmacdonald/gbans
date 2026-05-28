@@ -18,14 +18,15 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type NetworkService struct {
+type Service struct {
 	networkv1connect.UnimplementedNetworkServiceHandler
 
-	networks Networks
+	updateInProgress atomic.Bool
+	networks         Networks
 }
 
 func NewNetworkService(networks Networks, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := networkv1connect.NewNetworkServiceHandler(NetworkService{networks: networks}, option...)
+	pattern, handler := networkv1connect.NewNetworkServiceHandler(&Service{networks: networks}, option...)
 
 	authMiddleware.UserRoute(networkv1connect.NetworkServiceQueryConnectionsProcedure, rpc.WithMinPermissions(permission.Moderator))
 	authMiddleware.UserRoute(networkv1connect.NetworkServiceQueryNetworkProcedure, rpc.WithMinPermissions(permission.Moderator))
@@ -34,7 +35,7 @@ func NewNetworkService(networks Networks, authMiddleware *rpc.Middleware, option
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
-func (s NetworkService) QueryConnections(ctx context.Context, req *v1.QueryConnectionsRequest) (*v1.QueryConnectionsResponse, error) {
+func (s *Service) QueryConnections(ctx context.Context, req *v1.QueryConnectionsRequest) (*v1.QueryConnectionsResponse, error) {
 	ipHist, errIPHist := s.networks.QueryConnectionHistory(ctx, ConnectionHistoryQuery{
 		Filter:        rpc.FromRPC(req.GetFilter()),
 		SourceIDField: httphelper.SourceIDField{},
@@ -62,7 +63,7 @@ func (s NetworkService) QueryConnections(ctx context.Context, req *v1.QueryConne
 	return &resp, nil
 }
 
-func (s NetworkService) QueryNetwork(ctx context.Context, req *v1.QueryNetworkRequest) (*v1.QueryNetworkResponse, error) {
+func (s *Service) QueryNetwork(ctx context.Context, req *v1.QueryNetworkRequest) (*v1.QueryNetworkResponse, error) {
 	addr, errAddr := netip.ParseAddr(req.GetIp())
 	if errAddr != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, rpc.ErrBadRequest)
@@ -79,6 +80,26 @@ func (s NetworkService) QueryNetwork(ctx context.Context, req *v1.QueryNetworkRe
 	}}
 
 	return &resp, nil
+}
+
+func (s *Service) UpdateDB(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
+	if !s.updateInProgress.Load() {
+		go func() {
+			s.updateInProgress.Store(true)
+
+			if err := s.networks.RefreshLocationData(ctx); err != nil {
+				slog.Error("Failed to update location data", slog.String("error", err.Error()))
+			}
+
+			s.updateInProgress.Store(false)
+		}()
+
+		return &emptypb.Empty{}, nil
+	}
+
+	slog.Warn("Tried to start concurrent location update")
+
+	return &emptypb.Empty{}, nil
 }
 
 func toLocation(loc Location) *v1.Location {
@@ -106,26 +127,4 @@ func toASN(asn ASN) *v1.ASN {
 
 func toProxy(proxy Proxy) *v1.Proxy {
 	return &v1.Proxy{Cidr: &proxy.CIDR}
-}
-
-var updateInProgress atomic.Bool
-
-func (s NetworkService) UpdateDB(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
-	if !updateInProgress.Load() {
-		go func() {
-			updateInProgress.Store(true)
-
-			if err := s.networks.RefreshLocationData(ctx); err != nil {
-				slog.Error("Failed to update location data", slog.String("error", err.Error()))
-			}
-
-			updateInProgress.Store(false)
-		}()
-
-		return &emptypb.Empty{}, nil
-	}
-
-	slog.Warn("Tried to start concurrent location update")
-
-	return &emptypb.Empty{}, nil
 }

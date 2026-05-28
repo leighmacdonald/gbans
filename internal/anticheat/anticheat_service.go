@@ -2,7 +2,7 @@ package anticheat
 
 import (
 	"context"
-	"fmt"
+	"strconv"
 
 	"connectrpc.com/connect"
 	v1 "github.com/leighmacdonald/gbans/internal/anticheat/v1"
@@ -32,7 +32,7 @@ type Service struct {
 
 func (s Service) Query(ctx context.Context, request *v1.QueryRequest) (*v1.QueryResponse, error) {
 	opts := Query{
-		Filter:  rpc.FromRPC(request.Filter),
+		Filter:  rpc.FromRPC(request.GetFilter()),
 		Name:    request.GetName(),
 		Summary: request.GetSummary(),
 	}
@@ -42,7 +42,7 @@ func (s Service) Query(ctx context.Context, request *v1.QueryRequest) (*v1.Query
 	}
 
 	if request.SteamId != nil {
-		opts.SteamID = fmt.Sprintf("%d", request.GetSteamId())
+		opts.SteamID = strconv.FormatInt(request.GetSteamId(), 10)
 	}
 
 	entries, errResults := s.anticheat.Query(ctx, opts)
@@ -59,7 +59,7 @@ func (s Service) Query(ctx context.Context, request *v1.QueryRequest) (*v1.Query
 			ServerName:  &entry.ServerName,
 			DemoId:      entry.DemoID,
 			DemoName:    &entry.DemoName,
-			DemoTick:    &entry.DemoTick,
+			DemoTick:    new(int32(entry.DemoTick)), //nolint:gosec
 			Name:        &entry.Name,
 			Detection:   detectionToRPC(entry.Detection),
 			Summary:     &entry.Summary,

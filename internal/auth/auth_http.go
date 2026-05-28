@@ -45,13 +45,13 @@ func NewAuthHandler(engine *gin.Engine, auth *Authentication, config *config.Con
 
 	engine.GET("/auth/callback", handler.onSteamOIDCCallback())
 
-	//authGrp := engine.Group("/")
-	//{
+	// authGrp := engine.Group("/")
+	// {
 	//	// authed
 	//	env := authGrp.Use(auth.Middleware(permission.User))
 	//
 	//	env.GET("/api/auth/logout", handler.onAPILogout())
-	//}
+	// }
 }
 
 func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
@@ -168,8 +168,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 	}
 }
 
-//
-//func (h *authHandler) onAPILogout() gin.HandlerFunc {
+// func (h *authHandler) onAPILogout() gin.HandlerFunc {
 //	conf := h.config.Config()
 //
 //	return func(ctx *gin.Context) {
@@ -234,7 +233,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 //			h.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, logoutMessage(player)))
 //		}(sid)
 //	}
-//}
+// }
 
 // noOpDiscoveryCache implements the DiscoveryCache interface and doesn't cache anything.
 type noOpDiscoveryCache struct{}

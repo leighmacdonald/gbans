@@ -3,7 +3,7 @@ package ban
 import (
 	"context"
 	"errors"
-	"fmt"
+	"strconv"
 	"time"
 
 	"connectrpc.com/connect"
@@ -22,7 +22,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type BanService struct {
+type Service struct {
 	banv1connect.UnimplementedBanServiceHandler
 
 	client thirdparty.ClientWithResponsesInterface
@@ -35,7 +35,7 @@ func NewBanService(bans Bans, authMiddleware *rpc.Middleware, option ...connect.
 		panic(errClient)
 	}
 
-	pattern, handler := banv1connect.NewBanServiceHandler(BanService{bans: bans, client: client}, option...)
+	pattern, handler := banv1connect.NewBanServiceHandler(Service{bans: bans, client: client}, option...)
 
 	authMiddleware.UserRoute(banv1connect.BanServiceQueryProcedure, rpc.WithMinPermissions(permission.Moderator))
 	authMiddleware.UserRoute(banv1connect.BanServiceDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
@@ -46,10 +46,10 @@ func NewBanService(bans Bans, authMiddleware *rpc.Middleware, option ...connect.
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
-func (s BanService) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResponse, error) {
-	var reasons []reason.Reason
-	for _, reqReason := range req.GetReason() {
-		reasons = append(reasons, reason.Reason(reqReason))
+func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResponse, error) {
+	reasons := make([]reason.Reason, len(req.GetReason()))
+	for idx, reqReason := range req.GetReason() {
+		reasons[idx] = reason.Reason(reqReason)
 	}
 
 	opts := QueryOpts{
@@ -82,7 +82,7 @@ func (s BanService) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryR
 	return resp, nil
 }
 
-func (s BanService) Delete(ctx context.Context, req *v1.DeleteRequest) (*emptypb.Empty, error) {
+func (s Service) Delete(ctx context.Context, req *v1.DeleteRequest) (*emptypb.Empty, error) {
 	bannedPerson, errBan := s.bans.QueryOne(ctx, QueryOpts{BanID: ptr.From(req.BanId), EvadeOk: true})
 	if errBan != nil {
 		if errors.Is(errBan, database.ErrNoResult) {
@@ -105,7 +105,7 @@ func (s BanService) Delete(ctx context.Context, req *v1.DeleteRequest) (*emptypb
 	return &emptypb.Empty{}, nil
 }
 
-func (s BanService) Get(ctx context.Context, req *v1.GetRequest) (*v1.GetResponse, error) {
+func (s Service) Get(ctx context.Context, req *v1.GetRequest) (*v1.GetResponse, error) {
 	user, _ := rpc.UserInfoFromCtx(ctx)
 
 	bannedPerson, errGet := s.bans.QueryOne(ctx, QueryOpts{BanID: req.GetBanId(), Deleted: false, EvadeOk: true})
@@ -124,9 +124,10 @@ func (s BanService) Get(ctx context.Context, req *v1.GetRequest) (*v1.GetRespons
 	return &v1.GetResponse{Ban: toBan(bannedPerson)}, nil
 }
 
-func (s BanService) QuerySourceBans(ctx context.Context, req *v1.QuerySourceBansRequest) (*v1.QuerySourceBansResponse, error) {
+func (s Service) QuerySourceBans(ctx context.Context, req *v1.QuerySourceBansRequest) (*v1.QuerySourceBansResponse, error) {
 	sid := req.GetSteamId()
-	queryResp, errResp := s.client.BansSearchWithResponse(ctx, &thirdparty.BansSearchParams{Steamids: fmt.Sprintf("%d", sid)})
+
+	queryResp, errResp := s.client.BansSearchWithResponse(ctx, &thirdparty.BansSearchParams{Steamids: strconv.FormatInt(sid, 10)})
 	if errResp != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -152,7 +153,7 @@ func (s BanService) QuerySourceBans(ctx context.Context, req *v1.QuerySourceBans
 	return &resp, nil
 }
 
-func (s BanService) Update(ctx context.Context, req *v1.UpdateRequest) (*v1.UpdateResponse, error) {
+func (s Service) Update(ctx context.Context, req *v1.UpdateRequest) (*v1.UpdateResponse, error) {
 	bannedPerson, banErr := s.bans.QueryOne(ctx, QueryOpts{BanID: req.GetBanId(), Deleted: true, EvadeOk: true})
 	if banErr != nil {
 		return nil, connect.NewError(connect.CodeNotFound, banErr)
@@ -197,14 +198,14 @@ func toBan(ban Ban) *v1.Ban {
 		ReportId:          &ban.ReportID,
 		LastIp:            ban.LastIP,
 		EvadeOk:           &ban.EvadeOk,
-		BanType:           new(v1.BanType(ban.BanType)),
-		Reason:            new(v1.BanReason(ban.Reason)),
+		BanType:           new(v1.BanType(ban.BanType)),  //nolint:gosec
+		Reason:            new(v1.BanReason(ban.Reason)), //nolint:gosec
 		ReasonText:        &ban.ReasonText,
 		UnbanReasonText:   &ban.UnbanReasonText,
 		Note:              &ban.Note,
-		Origin:            new(v1.Origin(ban.Origin)),
+		Origin:            new(v1.Origin(ban.Origin)), //nolint:gosec
 		Cidr:              ban.CIDR,
-		AppealState:       new(v1.AppealState(ban.AppealState)),
+		AppealState:       new(v1.AppealState(ban.AppealState)), //nolint:gosec
 		Name:              &ban.Name,
 		Deleted:           &ban.Deleted,
 		IsEnabled:         &ban.IsEnabled,

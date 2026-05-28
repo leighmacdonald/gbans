@@ -21,6 +21,8 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+var errTooOften = errors.New("you must wait before trying to mod ping again")
+
 type TokenGeneratorFn func(serverID int32, serverName string) (string, error)
 
 type PluginService struct {
@@ -43,6 +45,7 @@ func NewPluginService(sourcemod Sourcemod, persons *person.Persons, servers rpc.
 		tokenGenerator:          tokenGenerator,
 		notifier:                notifier,
 		evades:                  evades,
+		logChannelID:            logChannelID,
 		servers:                 servers,
 		pingHistory:             map[steamid.SteamID]time.Time{},
 		pingHistoryMu:           &sync.Mutex{},
@@ -62,21 +65,23 @@ func NewPluginService(sourcemod Sourcemod, persons *person.Persons, servers rpc.
 
 func (s PluginService) SMPingMod(ctx context.Context, req *v1.SMPingModRequest) (*emptypb.Empty, error) {
 	serverInfo, _ := rpc.ServerInfoFromCtx(ctx)
-	steamId := steamid.New(req.GetSteamId())
+	steamID := steamid.New(req.GetSteamId())
 
-	if !steamId.Valid() {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid steam id"))
+	if !steamID.Valid() {
+		return nil, connect.NewError(connect.CodeInvalidArgument, rpc.ErrBadRequest)
 	}
 
 	s.pingHistoryMu.Lock()
 	defer s.pingHistoryMu.Unlock()
-	lastTry, ok := s.pingHistory[steamId]
+	lastTry, ok := s.pingHistory[steamID]
 	if ok && time.Since(lastTry) < s.minPingModRetryInterval {
-		return nil, connect.NewError(connect.CodeResourceExhausted, errors.New("You must wait before trying to mod ping again"))
+		return nil, connect.NewError(connect.CodeResourceExhausted, errTooOften)
 	}
 
-	s.sourcemod.PingMod(ctx, steamId, req.GetName(), req.GetReason(), req.GetClientId(), serverInfo.ServerName)
-	s.pingHistory[steamId] = time.Now()
+	if err := s.sourcemod.PingMod(ctx, steamID, req.GetName(), req.GetReason(), req.GetClientId(), serverInfo.ServerName); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+	s.pingHistory[steamID] = time.Now()
 
 	return &emptypb.Empty{}, nil
 }
@@ -87,21 +92,25 @@ func (s PluginService) SMAuthenticate(ctx context.Context, req *v1.SMAuthenticat
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 
-	serverId, name, err := s.servers.GetByPassword(ctx, password)
+	serverID, name, err := s.servers.GetByPassword(ctx, password)
 	if err != nil {
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 
-	token, errToken := s.tokenGenerator(serverId, name)
+	token, errToken := s.tokenGenerator(serverID, name)
 	if errToken != nil || token == "" {
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 
-	slog.Debug("Server authentication", slog.Int("serverId", int(serverId)), slog.String("name", name))
+	slog.Debug("Server authentication", slog.Int("serverId", int(serverID)), slog.String("name", name))
 
 	return &v1.SMAuthenticateResponse{Token: &token}, nil
 }
 
+// SMCheck verifies whether a connecting player is banned by their SteamID or IP address.
+// It fails open on errors, allowing the player to connect rather than causing a denial-of-service.
+// If a ban is found that doesn't match the provided SteamID directly, it checks for evasion
+// bans before returning the result. Discord notifications are sent asynchronously on denials.
 func (s PluginService) SMCheck(ctx context.Context, req *v1.SMCheckRequest) (*v1.SMCheckResponse, error) {
 	defaultResponse := &v1.SMCheckResponse{
 		ClientId: new(req.GetClientId()),
@@ -121,7 +130,7 @@ func (s PluginService) SMCheck(ctx context.Context, req *v1.SMCheckRequest) (*v1
 	if errIP != nil {
 		slog.Error("Failed to parse IP", slog.String("error", errIP.Error()))
 
-		return defaultResponse, nil
+		return defaultResponse, nil //nolint:nilerr
 	}
 
 	banState, msg, errBS := s.sourcemod.GetBanState(ctx, steamID, ipAddr)
@@ -129,7 +138,7 @@ func (s PluginService) SMCheck(ctx context.Context, req *v1.SMCheckRequest) (*v1
 		slog.Error("failed to get ban state", slog.String("error", errBS.Error()))
 
 		// Fail Open
-		return defaultResponse, nil
+		return defaultResponse, nil //nolint:nilerr
 	}
 
 	if banState.BanID == 0 {
@@ -139,13 +148,15 @@ func (s PluginService) SMCheck(ctx context.Context, req *v1.SMCheckRequest) (*v1
 	if errPlayer := s.persons.EnsurePerson(ctx, steamID); errPlayer != nil {
 		slog.Error("Failed to load or create player on connect")
 
-		return defaultResponse, nil
+		return defaultResponse, nil //nolint:nilerr
 	}
 
 	if banState.SteamID != steamID && !banState.EvadeOK {
 		evadeBanned, err := s.evades.CheckEvadeStatus(ctx, steamID, ipAddr)
 		if err != nil {
-			return defaultResponse, nil
+			slog.Error("Failed to check evade status", slog.String("error", err.Error()))
+
+			return defaultResponse, nil //nolint:nilerr
 		}
 
 		if evadeBanned {

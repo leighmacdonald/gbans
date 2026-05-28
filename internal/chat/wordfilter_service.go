@@ -57,7 +57,7 @@ func toFilter(filter Filter) *v1.Filter {
 		Pattern:      &filter.Pattern,
 		IsRegex:      &filter.IsRegex,
 		IsEnabled:    &filter.IsEnabled,
-		Action:       new(v1.FilterAction(filter.Action)),
+		Action:       new(v1.FilterAction(filter.Action)), //nolint:gosec
 		Duration:     &filter.Duration,
 		TriggerCount: &filter.TriggerCount,
 		Weight:       &filter.Weight,
@@ -73,7 +73,7 @@ func (s WordfilterService) WarningState(_ context.Context, _ *emptypb.Empty) (*v
 	for _, warnings := range state {
 		for _, warn := range warnings {
 			resp.Current = append(resp.Current, &v1.UserWarning{
-				Reason:       new(banv1.BanReason(warn.WarnReason)),
+				Reason:       new(banv1.BanReason(warn.WarnReason)), //nolint:gosec
 				Message:      &warn.Message,
 				Matched:      &warn.Matched,
 				Filter:       toFilter(warn.MatchedFilter),
@@ -94,7 +94,7 @@ func (s WordfilterService) WarningState(_ context.Context, _ *emptypb.Empty) (*v
 func (s WordfilterService) FilterCreate(ctx context.Context, req *v1.FilterCreateRequest) (*v1.FilterCreateResponse, error) {
 	user, _ := rpc.UserInfoFromCtx(ctx)
 
-	reqFilter := req.Filter
+	reqFilter := req.GetFilter()
 
 	filter := Filter{
 		AuthorID:     user.SteamID,
@@ -117,22 +117,21 @@ func (s WordfilterService) FilterCreate(ctx context.Context, req *v1.FilterCreat
 
 func (s WordfilterService) FilterEdit(ctx context.Context, req *v1.FilterEditRequest) (*v1.FilterEditResponse, error) {
 	user, _ := rpc.UserInfoFromCtx(ctx)
+	reqFilter := req.GetFilter()
 
-	reqFilter := req.Filter
-
-	existingFilter, errGet := s.filters.repository.GetFilterByID(ctx, *reqFilter.FilterId)
+	existingFilter, errGet := s.filters.repository.GetFilterByID(ctx, reqFilter.GetFilterId())
 	if errGet != nil {
 		return nil, connect.NewError(connect.CodeInternal, errGet)
 	}
 
 	existingFilter.AuthorID = user.SteamID
 	existingFilter.UpdatedOn = time.Now()
-	existingFilter.Pattern = ptr.From(reqFilter.Pattern)
-	existingFilter.IsRegex = ptr.From(reqFilter.IsRegex)
-	existingFilter.IsEnabled = ptr.From(reqFilter.IsEnabled)
-	existingFilter.Action = FilterAction(ptr.From(reqFilter.Action))
-	existingFilter.Duration = ptr.From(reqFilter.Duration)
-	existingFilter.Weight = ptr.From(reqFilter.Weight)
+	existingFilter.Pattern = reqFilter.GetPattern()
+	existingFilter.IsRegex = reqFilter.GetIsRegex()
+	existingFilter.IsEnabled = reqFilter.GetIsEnabled()
+	existingFilter.Action = FilterAction(reqFilter.GetAction())
+	existingFilter.Duration = reqFilter.GetDuration()
+	existingFilter.Weight = reqFilter.GetWeight()
 
 	if errSave := s.filters.repository.SaveFilter(ctx, &existingFilter); errSave != nil {
 		return nil, connect.NewError(connect.CodeInternal, errSave)

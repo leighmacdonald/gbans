@@ -18,11 +18,12 @@ import (
 )
 
 var (
-	ErrBadRequest = errors.New("invalid request")
-	ErrInternal   = errors.New("internal server error")
-	ErrNotFound   = errors.New("entity not found")
-	ErrPermission = errors.New("permission denied")
-	ErrExists     = errors.New("entity already exists")
+	ErrBadRequest  = errors.New("invalid request")
+	ErrInternal    = errors.New("internal server error")
+	ErrNotFound    = errors.New("entity not found")
+	ErrPermission  = errors.New("permission denied")
+	ErrExists      = errors.New("entity already exists")
+	ErrNoProcedure = errors.New("no matching procedure for route")
 )
 
 type Service struct {
@@ -74,7 +75,7 @@ type ServerAuthenticator interface {
 }
 
 func NewServerAuthenticator() ServerRouteAuthFn {
-	return func(ctx context.Context, req *http.Request, server ServerInfo) bool {
+	return func(_ context.Context, _ *http.Request, server ServerInfo) bool {
 		return server.ServerID > 0
 	}
 }

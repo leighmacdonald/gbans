@@ -225,7 +225,7 @@ func (r Reports) MetaStats(ctx context.Context) error {
 }
 
 func (r Reports) addAuthorsToReports(ctx context.Context, reports []Report) ([]ReportWithAuthor, error) {
-	var peopleIDs steamid.Collection
+	var peopleIDs steamid.Collection //nolint:prealloc
 	for _, report := range reports {
 		peopleIDs = append(peopleIDs, report.SourceID, report.TargetID)
 	}

@@ -123,13 +123,13 @@ type Warnings interface {
 
 type Config struct {
 	Enabled        bool
-	WarningTimeout int
-	WarningLimit   int
+	WarningTimeout int32
+	WarningLimit   int32
 	Dry            bool
 	PingDiscord    bool
 	MaxWeight      int32
-	CheckTimeout   int
-	MatchTimeout   int
+	CheckTimeout   int32
+	MatchTimeout   int32
 }
 
 type WordFilters struct {

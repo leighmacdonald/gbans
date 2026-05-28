@@ -15,7 +15,7 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-//func TestAnticheat(t *testing.T) {
+// func TestAnticheat(t *testing.T) {
 //	var (
 //		auth      = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User)}
 //		server    = fixture.CreateTestServer(t.Context())
@@ -38,7 +38,7 @@ func TestMain(m *testing.M) {
 //	entries, err := antiCheat.Import(t.Context(), "stac_052224.log", io.NopCloser(strings.NewReader(testData)), server.ServerID)
 //	require.NoError(t, err)
 //	require.Len(t, entries, 9)
-//}
+// }
 
 const _testData = `<01:13:00>
 

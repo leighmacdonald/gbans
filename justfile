@@ -1,4 +1,4 @@
-set dotenv-load := true
+set dotenv-load
 
 alias c := check
 alias f := fmt
@@ -74,7 +74,7 @@ test-ts:
 check: lint-proto lint-go vulncheck lint-ts typecheck-ts lint-md
 
 vulncheck:
-    govulncheck
+    govulncheck -show verbose ./...
 
 lint-proto:
     @buf lint

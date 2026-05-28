@@ -371,7 +371,7 @@ func (h discordHandler) onGroupsEdit(ctx context.Context, session *discordgo.Ses
 
 	gidOption, found := opts["groupid"]
 	if found && gidOption.StringValue() != "" {
-		gid, errGID := strconv.Atoi(gidOption.StringValue())
+		gid, errGID := strconv.ParseInt(gidOption.StringValue(), 10, 32)
 		if errGID != nil {
 			return errors.Join(errGID, discord.ErrCommandInvalid)
 		}
@@ -384,7 +384,7 @@ func (h discordHandler) onGroupsEdit(ctx context.Context, session *discordgo.Ses
 		alias = group.Name
 		flags = group.Flags
 		immunity = strconv.Itoa(int(group.ImmunityLevel))
-		customID += "_" + strconv.Itoa(gid)
+		customID += fmt.Sprintf("_%d", gid)
 	}
 
 	return discord.RespondModal(session, interaction, customID,

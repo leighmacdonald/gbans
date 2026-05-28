@@ -1,4 +1,8 @@
 version: "2"
+run:
+  concurrency: 12
+  timeout: 3m
+
 linters:
   default: all
   disable:
@@ -22,6 +26,8 @@ linters:
     - wsl_v5
     - wsl
     - unused
+    - goconst
+    - gomoddirectives
   settings:
     cyclop:
       # The maximal code complexity to report.

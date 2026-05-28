@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -49,14 +48,14 @@ type ServerRouteAuthFn = func(ctx context.Context, req *http.Request, server Ser
 
 // WithServer returns a ServerRouteAuthFn that requires a valid server ID (> 0) to authorize the request.
 func WithServer() ServerRouteAuthFn {
-	return func(ctx context.Context, req *http.Request, server ServerInfo) bool {
+	return func(_ context.Context, _ *http.Request, server ServerInfo) bool {
 		return server.ServerID > 0
 	}
 }
 
 // WithMinPermissions returns a UserRouteAuthFn that checks if the user has at least the specified privilege level.
 func WithMinPermissions(permission permission.Privilege) UserRouteAuthFn {
-	return func(ctx context.Context, req *http.Request, user UserInfo) bool {
+	return func(_ context.Context, _ *http.Request, user UserInfo) bool {
 		return user.HasPermission(permission)
 	}
 }
@@ -133,12 +132,13 @@ func (m *Middleware) findProcedure(url *url.URL) (string, bool, bool) {
 
 // Authenticate extracts and validates authentication information from an incoming RPC request.
 // It determines whether the target procedure is server-facing or user-facing and delegates
-// to the appropriate auth handler. Returns nil for procedures not registered in the allowlists,
+// to the appropriate auth handler. Returns rpc.ErrNoProcedure for procedures not registered in the allowlists,
 // allowing unauthenticated access. Implements authn.Authenticator.
 func (m *Middleware) Authenticate(ctx context.Context, req *http.Request) (any, error) {
 	procedure, isServer, found := m.findProcedure(req.URL)
 	if !found {
-		return nil, nil
+		// Unauthenticated routes that exist outside of ConnectRPC.
+		return nil, nil //nolint:nilnil
 	}
 
 	if isServer {
@@ -161,12 +161,12 @@ func (m *Middleware) authServer(ctx context.Context, req *http.Request, procedur
 		return info, errToken
 	}
 
-	serverId, err := strconv.ParseInt(claims.ID, 10, 32)
+	serverID, err := strconv.ParseInt(claims.ID, 10, 32)
 	if err != nil {
 		return info, errors.Join(err, ErrBadRequest)
 	}
 
-	info.ServerID = int32(serverId)
+	info.ServerID = int32(serverID)
 	info.ServerName = claims.Subject
 
 	if !authFn(ctx, req, info) {
@@ -309,7 +309,7 @@ func NewServerTokenGenerator(siteName string, cookie []byte) func(serverID int32
 		nowTime := time.Now()
 		claims := serverClaims{
 			RegisteredClaims: jwt.RegisteredClaims{
-				ID:        fmt.Sprintf("%d", serverID),
+				ID:        strconv.FormatInt(int64(serverID), 10),
 				Issuer:    siteName,
 				Subject:   serverName,
 				ExpiresAt: jwt.NewNumericDate(nowTime.AddDate(0, 0, 7)),

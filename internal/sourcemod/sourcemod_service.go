@@ -22,12 +22,12 @@ type EvadeChecker interface {
 	CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, address netip.Addr) (bool, error)
 }
 
-type SourcemodService struct {
+type Service struct {
 	sourcemod Sourcemod
 }
 
 func NewSourcemodService(sourcemod Sourcemod, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := sourcemodv1connect.NewSourcemodServiceHandler(SourcemodService{sourcemod: sourcemod}, option...)
+	pattern, handler := sourcemodv1connect.NewSourcemodServiceHandler(Service{sourcemod: sourcemod}, option...)
 
 	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceGroupsProcedure, rpc.WithMinPermissions(permission.Admin))
 	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateGroupProcedure, rpc.WithMinPermissions(permission.Admin))
@@ -53,7 +53,7 @@ func NewSourcemodService(sourcemod Sourcemod, authMiddleware *rpc.Middleware, op
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
-func (s SourcemodService) Groups(ctx context.Context, _ *emptypb.Empty) (*v1.GroupsResponse, error) {
+func (s Service) Groups(ctx context.Context, _ *emptypb.Empty) (*v1.GroupsResponse, error) {
 	groups, errGroups := s.sourcemod.Groups(ctx)
 	if errGroups != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -78,7 +78,7 @@ func toGroup(group Groups) *v1.Group {
 	}
 }
 
-func (s SourcemodService) CreateGroup(ctx context.Context, req *v1.CreateGroupRequest) (*v1.CreateGroupResponse, error) {
+func (s Service) CreateGroup(ctx context.Context, req *v1.CreateGroupRequest) (*v1.CreateGroupResponse, error) {
 	group, errGroup := s.sourcemod.AddGroup(ctx, req.GetName(), req.GetFlags(), req.GetImmunity())
 	if errGroup != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -87,7 +87,7 @@ func (s SourcemodService) CreateGroup(ctx context.Context, req *v1.CreateGroupRe
 	return &v1.CreateGroupResponse{Group: toGroup(group)}, nil
 }
 
-func (s SourcemodService) EditGroups(ctx context.Context, req *v1.EditGroupsRequest) (*v1.EditGroupsResponse, error) {
+func (s Service) EditGroups(ctx context.Context, req *v1.EditGroupsRequest) (*v1.EditGroupsResponse, error) {
 	group, errGroup := s.sourcemod.GetGroupByID(ctx, req.GetGroupId())
 	if errGroup != nil {
 		if errors.Is(errGroup, database.ErrNoResult) {
@@ -109,7 +109,7 @@ func (s SourcemodService) EditGroups(ctx context.Context, req *v1.EditGroupsRequ
 	return &v1.EditGroupsResponse{Group: toGroup(editedGroup)}, nil
 }
 
-func (s SourcemodService) DeleteGroup(ctx context.Context, req *v1.DeleteGroupRequest) (*emptypb.Empty, error) {
+func (s Service) DeleteGroup(ctx context.Context, req *v1.DeleteGroupRequest) (*emptypb.Empty, error) {
 	if err := s.sourcemod.DelGroup(ctx, req.GetGroupId()); err != nil {
 		if errors.Is(err, database.ErrNoResult) {
 			return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
@@ -121,7 +121,7 @@ func (s SourcemodService) DeleteGroup(ctx context.Context, req *v1.DeleteGroupRe
 	return &emptypb.Empty{}, nil
 }
 
-func (s SourcemodService) GroupOverrides(ctx context.Context, req *v1.GroupOverridesRequest) (*v1.GroupOverridesResponse, error) {
+func (s Service) GroupOverrides(ctx context.Context, req *v1.GroupOverridesRequest) (*v1.GroupOverridesResponse, error) {
 	overrides, errOverrides := s.sourcemod.GroupOverrides(ctx, req.GetGroupId())
 	if errOverrides != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -143,7 +143,7 @@ func (s SourcemodService) GroupOverrides(ctx context.Context, req *v1.GroupOverr
 	return &resp, nil
 }
 
-func (s SourcemodService) CreateGroupOverride(ctx context.Context, req *v1.CreateGroupOverrideRequest) (*v1.CreateGroupOverrideResponse, error) {
+func (s Service) CreateGroupOverride(ctx context.Context, req *v1.CreateGroupOverrideRequest) (*v1.CreateGroupOverrideResponse, error) {
 	override, errOverride := s.sourcemod.AddGroupOverride(ctx, req.GetGroupId(), req.GetName(),
 		fromOverrideType(req.GetType()),
 		fromOverrideAccess(req.GetAccess()))
@@ -162,7 +162,7 @@ func (s SourcemodService) CreateGroupOverride(ctx context.Context, req *v1.Creat
 	}}, nil
 }
 
-func (s SourcemodService) EditGroupOverride(ctx context.Context, req *v1.EditGroupOverrideRequest) (*v1.EditGroupOverrideResponse, error) {
+func (s Service) EditGroupOverride(ctx context.Context, req *v1.EditGroupOverrideRequest) (*v1.EditGroupOverrideResponse, error) {
 	override, errOverride := s.sourcemod.GroupOverride(ctx, req.GetGroupOverrideId())
 	if errOverride != nil {
 		if errors.Is(errOverride, database.ErrNoResult) {
@@ -192,7 +192,7 @@ func (s SourcemodService) EditGroupOverride(ctx context.Context, req *v1.EditGro
 	}}, nil
 }
 
-func (s SourcemodService) DeleteGroupOverride(ctx context.Context, req *v1.DeleteGroupOverrideRequest) (*emptypb.Empty, error) {
+func (s Service) DeleteGroupOverride(ctx context.Context, req *v1.DeleteGroupOverrideRequest) (*emptypb.Empty, error) {
 	if err := s.sourcemod.DelGroupOverride(ctx, req.GetGroupOverrideId()); err != nil {
 		if errors.Is(err, database.ErrNoResult) {
 			return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
@@ -204,7 +204,7 @@ func (s SourcemodService) DeleteGroupOverride(ctx context.Context, req *v1.Delet
 	return &emptypb.Empty{}, nil
 }
 
-func (s SourcemodService) Admins(ctx context.Context, _ *emptypb.Empty) (*v1.AdminsResponse, error) {
+func (s Service) Admins(ctx context.Context, _ *emptypb.Empty) (*v1.AdminsResponse, error) {
 	admins, errAdmins := s.sourcemod.Admins(ctx)
 	if errAdmins != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -218,7 +218,7 @@ func (s SourcemodService) Admins(ctx context.Context, _ *emptypb.Empty) (*v1.Adm
 	return &resp, nil
 }
 
-func (s SourcemodService) CreateAdmin(ctx context.Context, req *v1.CreateAdminRequest) (*v1.CreateAdminResponse, error) {
+func (s Service) CreateAdmin(ctx context.Context, req *v1.CreateAdminRequest) (*v1.CreateAdminResponse, error) {
 	admin, errAdmin := s.sourcemod.AddAdmin(ctx, req.GetName(), fromAuthType(req.GetAuthType()), req.GetIdentity(), req.GetFlags(), req.GetImmunity(), req.GetPassword())
 	if errAdmin != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -227,7 +227,7 @@ func (s SourcemodService) CreateAdmin(ctx context.Context, req *v1.CreateAdminRe
 	return &v1.CreateAdminResponse{Admin: toAdmin(admin)}, nil
 }
 
-func (s SourcemodService) EditAdmin(ctx context.Context, req *v1.EditAdminRequest) (*v1.EditAdminResponse, error) {
+func (s Service) EditAdmin(ctx context.Context, req *v1.EditAdminRequest) (*v1.EditAdminResponse, error) {
 	admin, errAdmin := s.sourcemod.AdminByID(ctx, req.GetAdminId())
 	if errAdmin != nil {
 		if errors.Is(errAdmin, database.ErrNoResult) {
@@ -252,7 +252,7 @@ func (s SourcemodService) EditAdmin(ctx context.Context, req *v1.EditAdminReques
 	return &v1.EditAdminResponse{Admin: toAdmin(edited)}, nil
 }
 
-func (s SourcemodService) DeleteAdmin(ctx context.Context, req *v1.DeleteAdminRequest) (*emptypb.Empty, error) {
+func (s Service) DeleteAdmin(ctx context.Context, req *v1.DeleteAdminRequest) (*emptypb.Empty, error) {
 	if err := s.sourcemod.DelAdmin(ctx, req.GetAdminId()); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -260,7 +260,7 @@ func (s SourcemodService) DeleteAdmin(ctx context.Context, req *v1.DeleteAdminRe
 	return &emptypb.Empty{}, nil
 }
 
-func (s SourcemodService) AddAdminGroup(ctx context.Context, req *v1.AddAdminGroupRequest) (*v1.AddAdminGroupResponse, error) {
+func (s Service) AddAdminGroup(ctx context.Context, req *v1.AddAdminGroupRequest) (*v1.AddAdminGroupResponse, error) {
 	adminGroup, err := s.sourcemod.AddAdminGroup(ctx, req.GetAdminId(), req.GetGroupId())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -269,7 +269,7 @@ func (s SourcemodService) AddAdminGroup(ctx context.Context, req *v1.AddAdminGro
 	return &v1.AddAdminGroupResponse{Admin: toAdmin(adminGroup)}, nil
 }
 
-func (s SourcemodService) DeleteAdminGroup(ctx context.Context, req *v1.DeleteAdminGroupRequest) (*emptypb.Empty, error) {
+func (s Service) DeleteAdminGroup(ctx context.Context, req *v1.DeleteAdminGroupRequest) (*emptypb.Empty, error) {
 	if _, errDel := s.sourcemod.DelAdminGroup(ctx, req.GetAdminId(), req.GetGroupId()); errDel != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -277,7 +277,7 @@ func (s SourcemodService) DeleteAdminGroup(ctx context.Context, req *v1.DeleteAd
 	return &emptypb.Empty{}, nil
 }
 
-func (s SourcemodService) Overrides(ctx context.Context, _ *emptypb.Empty) (*v1.OverridesResponse, error) {
+func (s Service) Overrides(ctx context.Context, _ *emptypb.Empty) (*v1.OverridesResponse, error) {
 	overrides, errOverrides := s.sourcemod.Overrides(ctx)
 	if errOverrides != nil && !errors.Is(errOverrides, database.ErrNoResult) {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -292,7 +292,7 @@ func (s SourcemodService) Overrides(ctx context.Context, _ *emptypb.Empty) (*v1.
 	return &resp, nil
 }
 
-func (s SourcemodService) CreateOverrides(ctx context.Context, req *v1.CreateOverridesRequest) (*v1.CreateOverridesResponse, error) {
+func (s Service) CreateOverrides(ctx context.Context, req *v1.CreateOverridesRequest) (*v1.CreateOverridesResponse, error) {
 	override, errCreate := s.sourcemod.AddOverride(ctx, req.GetName(), fromOverrideType(req.GetOverrideType()), req.GetFlags())
 	if errCreate != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -301,7 +301,7 @@ func (s SourcemodService) CreateOverrides(ctx context.Context, req *v1.CreateOve
 	return &v1.CreateOverridesResponse{Override: toOverride(override)}, nil
 }
 
-func (s SourcemodService) EditOverrides(ctx context.Context, req *v1.EditOverridesRequest) (*v1.EditOverridesResponse, error) {
+func (s Service) EditOverrides(ctx context.Context, req *v1.EditOverridesRequest) (*v1.EditOverridesResponse, error) {
 	override, errOverride := s.sourcemod.Override(ctx, req.GetOverrideId())
 	if errOverride != nil {
 		if errors.Is(errOverride, database.ErrNoResult) {
@@ -323,7 +323,7 @@ func (s SourcemodService) EditOverrides(ctx context.Context, req *v1.EditOverrid
 	return &v1.EditOverridesResponse{Override: toOverride(edited)}, nil
 }
 
-func (s SourcemodService) DeleteOverrides(ctx context.Context, req *v1.DeleteOverridesRequest) (*emptypb.Empty, error) {
+func (s Service) DeleteOverrides(ctx context.Context, req *v1.DeleteOverridesRequest) (*emptypb.Empty, error) {
 	if errCreate := s.sourcemod.DelOverride(ctx, req.GetOverrideId()); errCreate != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -331,7 +331,7 @@ func (s SourcemodService) DeleteOverrides(ctx context.Context, req *v1.DeleteOve
 	return &emptypb.Empty{}, nil
 }
 
-func (s SourcemodService) GroupImmunities(ctx context.Context, _ *emptypb.Empty) (*v1.GroupImmunitiesResponse, error) {
+func (s Service) GroupImmunities(ctx context.Context, _ *emptypb.Empty) (*v1.GroupImmunitiesResponse, error) {
 	immunities, errImmunities := s.sourcemod.GroupImmunities(ctx)
 	if errImmunities != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -345,7 +345,7 @@ func (s SourcemodService) GroupImmunities(ctx context.Context, _ *emptypb.Empty)
 	return &resp, nil
 }
 
-func (s SourcemodService) CreateImmunity(ctx context.Context, req *v1.CreateImmunityRequest) (*v1.CreateImmunityResponse, error) {
+func (s Service) CreateImmunity(ctx context.Context, req *v1.CreateImmunityRequest) (*v1.CreateImmunityResponse, error) {
 	immunity, errImmunity := s.sourcemod.AddGroupImmunity(ctx, req.GetGroupId(), req.GetOtherId())
 	if errImmunity != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -354,7 +354,7 @@ func (s SourcemodService) CreateImmunity(ctx context.Context, req *v1.CreateImmu
 	return &v1.CreateImmunityResponse{GroupImmunity: toGroupImmunity(immunity)}, nil
 }
 
-func (s SourcemodService) DeleteImmunity(ctx context.Context, req *v1.DeleteImmunityRequest) (*emptypb.Empty, error) {
+func (s Service) DeleteImmunity(ctx context.Context, req *v1.DeleteImmunityRequest) (*emptypb.Empty, error) {
 	if err := s.sourcemod.DelGroupImmunity(ctx, req.GetImmunityId()); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}

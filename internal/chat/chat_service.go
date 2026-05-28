@@ -3,7 +3,7 @@ package chat
 import (
 	"context"
 	"errors"
-	"fmt"
+	"strconv"
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -34,7 +34,7 @@ func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResp
 	ctxUser, _ := rpc.UserInfoFromCtx(ctx)
 
 	chatQuery := HistoryQueryFilter{
-		Filter:        rpc.FromRPC(req.Filter),
+		Filter:        rpc.FromRPC(req.GetFilter()),
 		Query:         req.GetQuery(),
 		Personaname:   "",
 		Unrestricted:  ctxUser.HasPermission(permission.Moderator),
@@ -42,19 +42,20 @@ func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResp
 		FlaggedOnly:   req.GetFlaggedOnly(),
 	}
 
-	if req.ServerId != nil {
+	if serverID := req.GetServerId(); serverID > 0 {
 		chatQuery.ServerID = req.GetServerId()
 	}
-	if req.DateStart != nil {
+
+	if dateStart := req.GetDateStart(); dateStart.IsValid() {
 		chatQuery.DateStart = new(req.GetDateStart().AsTime())
 	}
 
-	if req.DateEnd != nil {
+	if dateEnd := req.GetDateEnd(); dateEnd.IsValid() {
 		chatQuery.DateEnd = new(req.GetDateEnd().AsTime())
 	}
 
-	if req.SteamId != nil && *req.SteamId > 0 {
-		chatQuery.SourceIDField = httphelper.SourceIDField{SourceID: fmt.Sprintf("%d", req.GetSteamId())}
+	if steamID := req.GetSteamId(); steamID > 0 {
+		chatQuery.SourceIDField = httphelper.SourceIDField{SourceID: strconv.FormatInt(steamID, 10)}
 	}
 
 	messages, count, errChat := s.chat.QueryChatHistory(ctx, ctxUser.Privilege, chatQuery)

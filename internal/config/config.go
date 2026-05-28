@@ -427,6 +427,7 @@ func setDefaultConfigValues() {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
+	//nolint:gosec
 	defaultConfig := map[string]any{
 		"owner":                 "",
 		"external_url":          "",
@@ -438,7 +439,7 @@ func setDefaultConfigValues() {
 		"http_client_timeout":   "10",
 		"http_cors_enabled":     true,
 		"http_cors_origins":     []string{"http://gbans.localhost"},
-		"database_dsn":          "postgresql://gbans:gbans@localhost/gbans",
+		"database_dsn":          "postgresql://gbans:gbans@localhost/gbans", //nolint:gosec
 		"database_auto_migrate": true,
 		"database_log_queries":  false,
 		"prometheus_enabled":    false,

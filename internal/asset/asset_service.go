@@ -3,7 +3,7 @@ package asset
 import (
 	"bytes"
 	"context"
-	"fmt"
+	"encoding/hex"
 
 	"connectrpc.com/connect"
 	"github.com/gofrs/uuid/v5"
@@ -43,7 +43,7 @@ func (s Service) Create(ctx context.Context, req *v1.CreateRequest) (*v1.CreateR
 		AssetId:   new(asset.AssetID.String()),
 		Bucket:    new(string(asset.Bucket)),
 		AuthorId:  new(asset.AuthorID.Int64()),
-		Hash:      new(fmt.Sprintf("%x", asset.Hash)),
+		Hash:      new(hex.EncodeToString(asset.Hash)),
 		IsPrivate: &asset.IsPrivate,
 		MimeType:  &asset.MimeType,
 		Name:      &asset.Name,
@@ -61,7 +61,7 @@ func (s Service) Delete(ctx context.Context, req *v1.DeleteRequest) (*v1.DeleteR
 
 	size, errDelete := s.assets.Delete(ctx, id)
 	if errDelete != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errID)
+		return nil, connect.NewError(connect.CodeInvalidArgument, errDelete)
 	}
 
 	return &v1.DeleteResponse{Size: &size}, nil

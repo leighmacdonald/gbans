@@ -29,23 +29,23 @@ const (
 	ActionBan  Action = "ban"
 )
 
-type OnEntry func(ctx context.Context, entry logparse.StacEntry, duration time.Duration, count int) error
+type OnEntry func(ctx context.Context, entry logparse.StacEntry, duration time.Duration, count int32) error
 
 var ErrOpenClient = errors.New("failed to open client")
 
 type Config struct {
 	Enabled               bool   `mapstructure:"enabled"`
 	Action                Action `mapstructure:"action"`
-	Duration              int    `mapstructure:"duration"`
-	MaxAimSnap            int    `mapstructure:"max_aim_snap"`
-	MaxPsilent            int    `mapstructure:"max_psilent"`
-	MaxBhop               int    `mapstructure:"max_bhop"`
-	MaxFakeAng            int    `mapstructure:"max_fake_ang"`
-	MaxCmdNum             int    `mapstructure:"max_cmd_num"`
-	MaxTooManyConnections int    `mapstructure:"max_too_many_connections"`
-	MaxCheatCvar          int    `mapstructure:"max_cheat_cvar"`
-	MaxOOBVar             int    `mapstructure:"max_oob_var"`
-	MaxInvalidUserCmd     int    `mapstructure:"max_invalid_user_cmd"`
+	Duration              int32  `mapstructure:"duration"`
+	MaxAimSnap            int32  `mapstructure:"max_aim_snap"`
+	MaxPsilent            int32  `mapstructure:"max_psilent"`
+	MaxBhop               int32  `mapstructure:"max_bhop"`
+	MaxFakeAng            int32  `mapstructure:"max_fake_ang"`
+	MaxCmdNum             int32  `mapstructure:"max_cmd_num"`
+	MaxTooManyConnections int32  `mapstructure:"max_too_many_connections"`
+	MaxCheatCvar          int32  `mapstructure:"max_cheat_cvar"`
+	MaxOOBVar             int32  `mapstructure:"max_oob_var"`
+	MaxInvalidUserCmd     int32  `mapstructure:"max_invalid_user_cmd"`
 }
 
 type ConfigStore struct {
@@ -155,7 +155,7 @@ func (a AntiCheat) BySteamID(ctx context.Context, steamID steamid.SteamID) ([]lo
 
 func (a AntiCheat) Handle(ctx context.Context, entries []logparse.StacEntry) error { //nolint:cyclop
 	var ( //nolint:prealloc
-		results       = map[steamid.SteamID]map[logparse.Detection]int{}
+		results       = map[steamid.SteamID]map[logparse.Detection]int32{}
 		hasBeenBanned []steamid.SteamID
 	)
 	for _, entry := range entries {
@@ -166,7 +166,7 @@ func (a AntiCheat) Handle(ctx context.Context, entries []logparse.StacEntry) err
 			if err := a.persons.EnsurePerson(ctx, entry.SteamID); err != nil {
 				return err
 			}
-			results[entry.SteamID] = map[logparse.Detection]int{}
+			results[entry.SteamID] = map[logparse.Detection]int32{}
 		}
 
 		if _, ok := results[entry.SteamID][entry.Detection]; !ok {

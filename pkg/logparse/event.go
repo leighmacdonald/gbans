@@ -110,7 +110,7 @@ type RCONEvt struct {
 	Cmd string `json:"cmd" mapstructure:"cmd"`
 }
 
-type VoteCode int
+type VoteCode int32
 
 const (
 	VoteCodeFailGeneric        VoteCode = 0 // VOTE_FAILED_GENERIC - Generic "Vote Failed" message

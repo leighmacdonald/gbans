@@ -9,7 +9,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/votes/v1"
 	"github.com/leighmacdonald/gbans/internal/votes/v1/votesv1connect"
@@ -32,13 +31,13 @@ func NewService(votes Votes, authMiddleware *rpc.Middleware, option ...connect.H
 
 func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResponse, error) {
 	votes, count, errVotes := s.votes.Query(ctx, Query{
-		Filter:        rpc.FromRPC(req.Filter),
+		Filter:        rpc.FromRPC(req.GetFilter()),
 		SourceIDField: httphelper.SourceIDField{},
 		TargetIDField: httphelper.TargetIDField{},
-		ServerID:      ptr.From(req.ServerId),
-		Name:          ptr.From(req.Name),
-		Success:       ptr.From(req.Success),
-		Code:          ptr.From(req.Code),
+		ServerID:      req.GetServerId(),
+		Name:          req.GetName(),
+		Success:       req.GetSuccess(),
+		Code:          req.GetCode(),
 	})
 	if errVotes != nil && !errors.Is(errVotes, database.ErrNoResult) {
 		slog.Error("Failed to query votes", slog.String("error", errVotes.Error()))

@@ -11,7 +11,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	networkv1 "github.com/leighmacdonald/gbans/internal/network/v1"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/servers/v1"
 	"github.com/leighmacdonald/gbans/internal/servers/v1/serversv1connect"
@@ -20,14 +19,14 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type ServersService struct {
+type Service struct {
 	serversv1connect.UnimplementedServersServiceHandler
 
 	servers *Servers
 }
 
 func NewServersService(servers *Servers, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := serversv1connect.NewServersServiceHandler(&ServersService{servers: servers}, option...)
+	pattern, handler := serversv1connect.NewServersServiceHandler(&Service{servers: servers}, option...)
 
 	authMiddleware.UserRoute(serversv1connect.ServersServiceStateProcedure, rpc.WithMinPermissions(permission.Guest))
 	authMiddleware.UserRoute(serversv1connect.ServersServiceServersProcedure, rpc.WithMinPermissions(permission.Admin))
@@ -39,7 +38,7 @@ func NewServersService(servers *Servers, authMiddleware *rpc.Middleware, option 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
-func (s ServersService) State(_ context.Context, req *v1.StateRequest) (*v1.StateResponse, error) {
+func (s Service) State(_ context.Context, req *v1.StateRequest) (*v1.StateResponse, error) {
 	var (
 		// TODO
 		ll  = req.GetLatLong()
@@ -85,7 +84,7 @@ func (s ServersService) State(_ context.Context, req *v1.StateRequest) (*v1.Stat
 	return &resp, nil
 }
 
-func (s ServersService) Servers(ctx context.Context, _ *emptypb.Empty) (*v1.ServersResponse, error) {
+func (s Service) Servers(ctx context.Context, _ *emptypb.Empty) (*v1.ServersResponse, error) {
 	fullServers, errServers := s.servers.Servers(ctx, Query{IncludeDisabled: false, IncludeDeleted: false})
 	if errServers != nil && !errors.Is(errServers, database.ErrNoResult) {
 		return nil, connect.NewError(connect.CodeInternal, errors.Join(errServers, rpc.ErrInternal))
@@ -104,8 +103,8 @@ func (s ServersService) Servers(ctx context.Context, _ *emptypb.Empty) (*v1.Serv
 	return &resp, nil
 }
 
-func (s ServersService) EditServer(ctx context.Context, req *v1.EditServerRequest) (*v1.EditServerResponse, error) {
-	server, errSave := s.servers.Save(ctx, fromRPCServer(req.Server))
+func (s Service) EditServer(ctx context.Context, req *v1.EditServerRequest) (*v1.EditServerResponse, error) {
+	server, errSave := s.servers.Save(ctx, fromRPCServer(req.GetServer()))
 	if errSave != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -113,12 +112,13 @@ func (s ServersService) EditServer(ctx context.Context, req *v1.EditServerReques
 	return &v1.EditServerResponse{Server: toRPCServer(server)}, nil
 }
 
-func (s ServersService) DeleteServer(ctx context.Context, req *v1.DeleteServerRequest) (*emptypb.Empty, error) {
-	if req.ServerId == nil || *req.ServerId <= 0 {
+func (s Service) DeleteServer(ctx context.Context, req *v1.DeleteServerRequest) (*emptypb.Empty, error) {
+	serverID := req.GetServerId()
+	if serverID <= 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, httphelper.ErrNotFound)
 	}
 
-	if err := s.servers.Delete(ctx, *req.ServerId); err != nil {
+	if err := s.servers.Delete(ctx, serverID); err != nil {
 		if errors.Is(err, database.ErrNoResult) {
 			return nil, connect.NewError(connect.CodeNotFound, httphelper.ErrNotFound)
 		}
@@ -131,28 +131,28 @@ func (s ServersService) DeleteServer(ctx context.Context, req *v1.DeleteServerRe
 
 func fromRPCServer(server *v1.Server) Server {
 	return Server{
-		ServerID:           ptr.From(server.ServerId),
-		ShortName:          ptr.From(server.ShortName),
-		Name:               ptr.From(server.Name),
-		Address:            ptr.From(server.Address),
-		AddressInternal:    ptr.From(server.AddressInternal),
-		SDREnabled:         ptr.From(server.SdrEnabled),
-		Port:               uint16(ptr.From(server.Port)),
-		RCON:               ptr.From(server.Rcon),
-		Password:           ptr.From(server.Password),
-		IsEnabled:          ptr.From(server.IsEnabled),
-		Deleted:            ptr.From(server.Deleted),
-		Region:             ptr.From(server.Region),
-		CC:                 ptr.From(server.Cc),
-		Latitude:           ptr.From(server.LatLong.Latitude),
-		Longitude:          ptr.From(server.LatLong.Longitude),
-		LogSecret:          ptr.From(server.LogSecret),
-		EnableStats:        ptr.From(server.EnableStats),
-		TokenCreatedOn:     server.TokenCreatedOn.AsTime(),
-		CreatedOn:          server.CreatedOn.AsTime(),
-		UpdatedOn:          server.UpdatedOn.AsTime(),
-		DiscordSeedRoleIDs: server.DiscordSeedRoleIds,
-		IP:                 net.ParseIP(ptr.From(server.Ip)),
+		ServerID:           server.GetServerId(),
+		ShortName:          server.GetShortName(),
+		Name:               server.GetName(),
+		Address:            server.GetAddress(),
+		AddressInternal:    server.GetAddressInternal(),
+		SDREnabled:         server.GetSdrEnabled(),
+		Port:               uint16(server.GetPort()), //nolint:gosec
+		RCON:               server.GetRcon(),
+		Password:           server.GetPassword(),
+		IsEnabled:          server.GetIsEnabled(),
+		Deleted:            server.GetDeleted(),
+		Region:             server.GetRegion(),
+		CC:                 server.GetCc(),
+		Latitude:           server.GetLatLong().GetLatitude(),
+		Longitude:          server.GetLatLong().GetLongitude(),
+		LogSecret:          server.GetLogSecret(),
+		EnableStats:        server.GetEnableStats(),
+		TokenCreatedOn:     server.GetTokenCreatedOn().AsTime(),
+		CreatedOn:          server.GetCreatedOn().AsTime(),
+		UpdatedOn:          server.GetUpdatedOn().AsTime(),
+		DiscordSeedRoleIDs: server.GetDiscordSeedRoleIds(),
+		IP:                 net.ParseIP(server.GetIp()),
 	}
 }
 
@@ -185,7 +185,7 @@ func toRPCServer(server Server) *v1.Server {
 	}
 }
 
-func (s ServersService) ServersAdmin(ctx context.Context, _ *emptypb.Empty) (*v1.ServersAdminResponse, error) {
+func (s Service) ServersAdmin(ctx context.Context, _ *emptypb.Empty) (*v1.ServersAdminResponse, error) {
 	fullServers, errServers := s.servers.Servers(ctx, Query{IncludeDisabled: true})
 	if errServers != nil {
 		return nil, connect.NewError(connect.CodeInternal, errors.Join(errServers, rpc.ErrInternal))

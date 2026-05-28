@@ -217,8 +217,8 @@ func toReport(report Report) *v1.Report {
 		SourceId:        new(report.SourceID.Int64()),
 		TargetId:        new(report.TargetID.Int64()),
 		Description:     &report.Description,
-		ReportStatus:    new(v1.ReportStatus(report.ReportStatus)),
-		Reason:          new(v1.BanReason(report.Reason)),
+		ReportStatus:    new(v1.ReportStatus(report.ReportStatus)), //nolint:gosec
+		Reason:          new(v1.BanReason(report.Reason)),          //nolint:gosec
 		ReasonText:      &report.ReasonText,
 		Deleted:         &report.Deleted,
 		DemoTick:        &report.DemoTick,
