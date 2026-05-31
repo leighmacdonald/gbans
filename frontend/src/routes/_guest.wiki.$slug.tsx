@@ -1,11 +1,10 @@
-import { create } from "@bufbuild/protobuf";
-import { useSuspenseQuery } from "@connectrpc/connect-query";
+import { ConnectError } from "@connectrpc/connect";
+import { useQuery } from "@connectrpc/connect-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { ErrorDetails } from "../component/ErrorDetails.tsx";
 import { WikiPage } from "../component/WikiPage.tsx";
 import { AppError } from "../error.tsx";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
-import { WikiSchema } from "../rpc/wiki/v1/wiki_pb.ts";
 import { get } from "../rpc/wiki/v1/wiki-WikiService_connectquery.ts";
 
 export const Route = createFileRoute("/_guest/wiki/$slug")({
@@ -24,21 +23,22 @@ export const Route = createFileRoute("/_guest/wiki/$slug")({
 function Component() {
 	const { slug } = Route.useParams();
 	const { appInfo } = Route.useRouteContext();
+	const { data, isLoading, isError, error } = useQuery(get, { slug }, { retry: false });
 
-	const { data, isLoading } = useSuspenseQuery(get, { slug });
+	useEffect(() => {
+		if (isError) {
+			if (error instanceof ConnectError) {
+			}
+		}
+	}, [isError, error]);
 
-	if (isLoading) {
+	if (isError) {
+		return <ErrorDetails error={error} />;
+	}
+
+	if (isLoading || !data?.wiki) {
 		return <div>loading...</div>;
 	}
 
-	const page =
-		data.wiki ??
-		create(WikiSchema, {
-			revision: 0,
-			bodyMd: "",
-			slug: slug,
-			permissionLevel: Privilege.GUEST,
-		});
-
-	return <WikiPage slug={slug} page={page} assetURL={appInfo.assetUrl} />;
+	return <WikiPage slug={slug} page={data?.wiki} assetURL={appInfo.assetUrl} />;
 }

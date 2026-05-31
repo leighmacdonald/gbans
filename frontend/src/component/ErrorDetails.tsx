@@ -1,9 +1,10 @@
+import { Code, ConnectError } from "@connectrpc/connect";
 import ErrorIcon from "@mui/icons-material/Error";
 import Button from "@mui/material/Button";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { AppError, ErrorCode } from "../error.tsx";
+import type { AppError } from "../error.tsx";
 import steamLogo from "../icons/steam_login_lg.png";
 import { generateOIDCLink } from "../util/auth/generateOIDCLink.ts";
 import { logErr } from "../util/errors.ts";
@@ -19,10 +20,10 @@ const ErrorBox = ({ error }: { error: string }) => {
 
 export const ErrorDetails = ({ error }: { error: AppError | unknown }) => {
 	logErr(error);
-	if (error instanceof AppError) {
+	if (error instanceof ConnectError) {
 		return (
-			<ContainerWithHeader title={error.name} iconLeft={<ErrorIcon />}>
-				{error.code === ErrorCode.LoginRequired ? (
+			<ContainerWithHeader title={"Error"} iconLeft={<ErrorIcon />}>
+				{error.code === Code.PermissionDenied ? (
 					<>
 						<ErrorBox error={error.message} />
 						<Stack
@@ -39,7 +40,7 @@ export const ErrorDetails = ({ error }: { error: AppError | unknown }) => {
 						</Stack>
 					</>
 				) : (
-					<ErrorBox error={error.message} />
+					<ErrorBox error={error.rawMessage} />
 				)}
 			</ContainerWithHeader>
 		);

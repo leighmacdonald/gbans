@@ -1,5 +1,5 @@
 import { create } from "@bufbuild/protobuf";
-import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
+import { EmptySchema, timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { createClient } from "@connectrpc/connect";
 import { createConnectQueryKey } from "@connectrpc/connect-query";
 import { type ReactNode, useCallback, useState } from "react";
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	);
 
 	const login = useCallback(
-		async (token: string) => {
+		async (token: string, opts: { onSuccess: () => void; onError: (error: Error) => void }) => {
 			try {
 				localStorage.setItem(StorageKey.Token, JSON.stringify({ token }));
 				const personClient = createClient(PersonService, finalTransport);
@@ -63,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 							cardinality: "finite",
 						}),
 						queryFn: async () => {
+							console.log("fetching 1");
 							return await personClient.currentProfile({});
 						},
 					})
@@ -77,10 +78,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 							timeCreated: profile.timeCreated ? timestampDate(profile.timeCreated) : new Date(),
 						});
 						setProfile(data.profile);
-					});
+					})
+					.then(opts.onSuccess)
+					.catch(opts.onError);
 			} catch (e) {
-				console.log(e);
-				throw "Failed to authenticate";
+				opts.onError(e as Error);
 			}
 		},
 		[setProfileValue, profile, setTokenValue],
@@ -94,7 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				cardinality: "finite",
 			}),
 			queryFn: async () => {
-				return await authClient.logout({});
+				await authClient.logout(create(EmptySchema, {}));
+				setProfile(defaultProfile);
 			},
 		});
 
@@ -169,7 +172,7 @@ const loadProfile = (): PersonCore => {
 
 export type AuthContextProps = {
 	profile: PersonCore;
-	login: (token: string, opts: { onSuccess?: () => void; onError?: () => void }) => void;
+	login: (token: string, opts: { onSuccess: () => void; onError: (error: Error) => void }) => void;
 	logout: () => Promise<void>;
 	isAuthenticated: () => boolean;
 	permissionLevel: () => Privilege;

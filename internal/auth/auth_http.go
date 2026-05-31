@@ -44,14 +44,6 @@ func NewAuthHandler(engine *gin.Engine, auth *Authentication, config *config.Con
 	}
 
 	engine.GET("/auth/callback", handler.onSteamOIDCCallback())
-
-	// authGrp := engine.Group("/")
-	// {
-	//	// authed
-	//	env := authGrp.Use(auth.Middleware(permission.User))
-	//
-	//	env.GET("/api/auth/logout", handler.onAPILogout())
-	// }
 }
 
 func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {

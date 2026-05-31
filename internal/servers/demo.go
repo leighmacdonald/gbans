@@ -74,7 +74,7 @@ type DemoMetaData struct {
 }
 
 type DemoFile struct {
-	DemoID          int64
+	DemoID          int32
 	ServerID        int32
 	ServerNameShort string
 	ServerNameLong  string
@@ -89,7 +89,7 @@ type DemoFile struct {
 }
 
 type DemoInfo struct {
-	DemoID  int64
+	DemoID  int32
 	Title   string
 	AssetID uuid.UUID
 }
@@ -226,10 +226,10 @@ func (d Demos) MarkArchived(ctx context.Context, demo *DemoFile) error {
 	demo.Archive = true
 
 	if err := d.repository.SaveDemo(ctx, demo); err != nil {
-		slog.Error("Failed to mark demo as archived", slog.String("error", err.Error()), slog.Int64("demo_id", demo.DemoID))
+		slog.Error("Failed to mark demo as archived", slog.String("error", err.Error()), slog.Int64("demo_id", int64(demo.DemoID)))
 	}
 
-	slog.Debug("Demo marked as archived", slog.Int64("demo_id", demo.DemoID))
+	slog.Debug("Demo marked as archived", slog.Int64("demo_id", int64(demo.DemoID)))
 
 	return nil
 }
@@ -307,7 +307,7 @@ func (d Demos) TruncateByCount(ctx context.Context, maxCount uint64) (int, int64
 
 		if err := d.repository.Delete(ctx, demo.DemoID); err != nil {
 			slog.Error("Failed to remove demo entry",
-				slog.Int64("demo_id", demo.DemoID),
+				slog.Int64("demo_id", int64(demo.DemoID)),
 				slog.String("asset_id", demo.AssetID.String()),
 				slog.String("error", err.Error()))
 		}
@@ -356,7 +356,7 @@ func (d Demos) ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, erro
 	return d.repository.ExpiredDemos(ctx, limit)
 }
 
-func (d Demos) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error {
+func (d Demos) GetDemoByID(ctx context.Context, demoID int32, demoFile *DemoFile) error {
 	return d.repository.GetDemoByID(ctx, demoID, demoFile)
 }
 
@@ -425,7 +425,7 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID
 		return nil, errSave
 	}
 
-	slog.Debug("Created demo from asset successfully", slog.Int64("demo_id", newDemo.DemoID), slog.String("title", newDemo.Title))
+	slog.Debug("Created demo from asset successfully", slog.Int64("demo_id", int64(newDemo.DemoID)), slog.String("title", newDemo.Title))
 
 	return &newDemo, nil
 }
@@ -459,7 +459,7 @@ func (d Demos) RemoveOrphans(ctx context.Context) error {
 			continue
 		}
 
-		slog.Debug("Removing orphan demo", slog.Int64("demo_id", demo.DemoID),
+		slog.Debug("Removing orphan demo", slog.Int64("demo_id", int64(demo.DemoID)),
 			slog.String("title", demo.Title), slog.String("asset_id", demo.AssetID.String()))
 		if _, err := d.asset.Delete(ctx, demo.AssetID); err != nil {
 			slog.Error("Failed to remove orphan demo asset", slog.String("error", err.Error()))

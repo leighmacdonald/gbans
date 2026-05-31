@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"sort"
+	"strconv"
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -38,18 +39,26 @@ func NewServersService(servers *Servers, authMiddleware *rpc.Middleware, option 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
-func (s Service) State(_ context.Context, req *v1.StateRequest) (*v1.StateResponse, error) {
-	var (
-		// TODO
-		ll  = req.GetLatLong()
-		lat = ll.GetLatitude()
-		lon = ll.GetLongitude()
-		// region := ctx.GetHeader("cf-region-code")
-		servers = s.servers.Current()
-	)
+func getLatLong(ctx context.Context) (float64, float64) {
+	callInfo, ok := connect.CallInfoForHandlerContext(ctx)
+	if !ok {
+		return 0, 0
+	}
+
+	head := callInfo.RequestHeader()
+	lat, _ := strconv.ParseFloat(head.Get("CF-IPLatitude"), 64)
+	long, _ := strconv.ParseFloat(head.Get("CF-IPLongitude"), 64)
+
+	return lat, long
+
+}
+
+func (s Service) State(ctx context.Context, req *v1.StateRequest) (*v1.StateResponse, error) {
+	lat, lon := getLatLong(ctx)
+	servers := s.servers.Current()
 
 	for index, srv := range servers {
-		servers[index].Distance = float32(distance(float64(srv.Latitude), float64(srv.Longitude), float64(lat), float64(lon)))
+		servers[index].Distance = float32(distance(float64(srv.Latitude), float64(srv.Longitude), lat, lon))
 	}
 	sort.Slice(servers, func(i, j int) bool {
 		return natural.Less(servers[i].Name, servers[j].Name)
@@ -67,7 +76,7 @@ func (s Service) State(_ context.Context, req *v1.StateRequest) (*v1.StateRespon
 			Region:     &current.Region,
 			Cc:         &current.CC,
 			Players:    &current.Players,
-			MaxPlayers: &current.MaxPlayers,
+			MaxPlayers: new(current.MaxPlayerDisplay()),
 			Bot:        &current.Bots,
 			Map:        &current.Map,
 			GameTypes:  current.GameTypes,

@@ -9,7 +9,7 @@ import ListItem from "@mui/material/ListItem";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { ReportStatus } from "../rpc/ban/v1/report_pb.ts";
@@ -18,27 +18,24 @@ import { enumValues } from "../util/lists.ts";
 import { ContainerWithHeader } from "./ContainerWithHeader";
 import { ErrorDetails } from "./ErrorDetails.tsx";
 import { LoadingPlaceholder } from "./LoadingPlaceholder.tsx";
-import { BanModal } from "./modal/BanModal.tsx";
+import { BanCreateModal } from "./modal/BanCreateModal.tsx";
 
 export const ReportModPanel = ({ reportId }: { reportId: number }) => {
 	const queryClient = useQueryClient();
 	const { sendFlash, sendError } = useUserFlashCtx();
-	const [status, setStatus] = useState(ReportStatus.OPENED_UNSPECIFIED);
-
 	const { data: reportResponse, isLoading, isError, error } = useQuery(report, { reportId });
 
 	const stateMutation = useMutation(reportStatusEdit, {
 		onSuccess: async (_, reportStatus) => {
-			if (!reportResponse?.report || !reportStatus.reportStatus) {
+			if (!reportStatus.reportStatus) {
 				return;
 			}
 			sendFlash(
 				"success",
 				`State changed from ${
 					ReportStatus[reportResponse?.report?.report?.reportStatus ?? ReportStatus.OPENED_UNSPECIFIED]
-				} => ${ReportStatus[reportStatus.reportStatus ?? ReportStatus.OPENED_UNSPECIFIED]}`,
+				} => ${ReportStatus[reportStatus.reportStatus]}`,
 			);
-			setStatus(reportStatus.reportStatus);
 		},
 		onError: sendError,
 	});
@@ -49,7 +46,7 @@ export const ReportModPanel = ({ reportId }: { reportId: number }) => {
 		}
 
 		try {
-			const banRecord = await NiceModal.show(BanModal, {
+			const banRecord = await NiceModal.show(BanCreateModal, {
 				reportId: Number(reportResponse?.report.report?.reportId),
 				steamId: reportResponse?.report.subject?.steamId,
 			});
@@ -65,7 +62,7 @@ export const ReportModPanel = ({ reportId }: { reportId: number }) => {
 			if (value.reportStatus === reportResponse?.report?.report?.reportStatus) {
 				return;
 			}
-			stateMutation.mutate({ reportId, reportStatus: status });
+			stateMutation.mutate({ reportId, reportStatus: value.reportStatus });
 		},
 
 		defaultValues: {
@@ -97,7 +94,7 @@ export const ReportModPanel = ({ reportId }: { reportId: number }) => {
 								name={"reportStatus"}
 								children={(field) => {
 									return (
-										<field.SelectField
+										<field.ReportStatusField
 											label={"Report State"}
 											items={enumValues(ReportStatus)}
 											renderItem={(i) => {

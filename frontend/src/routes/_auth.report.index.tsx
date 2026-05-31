@@ -34,7 +34,8 @@ import { ReportStatus, type ReportWithAuthor } from "../rpc/ban/v1/report_pb.ts"
 import { reportCreate, userReports } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
 import { enumValues } from "../util/lists.ts";
 import { commonTableSearchSchema } from "../util/table.ts";
-import { emptyOrNullString } from "../util/types.ts";
+import { renderTimestamp } from "../util/time.ts";
+import { emptyOrNullString, zeroStringUndefined } from "../util/types.ts";
 
 const validateSearch = commonTableSearchSchema.extend({
 	rows: z.number().optional(),
@@ -137,6 +138,13 @@ const UserReportHistory = () => {
 
 	const columns = useMemo(() => {
 		return [
+			columnHelper.accessor("report.updatedOn", {
+				header: "Updated",
+				size: 120,
+				Cell: ({ cell }) => {
+					return <Typography> {renderTimestamp(cell.getValue())}</Typography>;
+				},
+			}),
 			columnHelper.accessor("report.reportStatus", {
 				header: "Status",
 				size: 150,
@@ -224,6 +232,7 @@ const UserReportHistory = () => {
 		enableFilters: true,
 		enableHiding: true,
 		enableFacetedValues: true,
+		enableSorting: true,
 		state: {
 			isLoading,
 			showAlertBanner: isError,
@@ -234,7 +243,7 @@ const UserReportHistory = () => {
 				pageSize: 10,
 				pageIndex: 0,
 			},
-			sorting: [{ id: "report.reportId", desc: true }],
+			sorting: [{ id: "report.updatedOn", desc: true }],
 			columnVisibility: {
 				sourceId: false,
 				targetId: true,
@@ -247,18 +256,15 @@ const UserReportHistory = () => {
 };
 
 const ReportCreateForm = (): JSX.Element => {
-	const { profile } = useAuth();
-
 	const { demoId, steamId, personMessageId } = Route.useSearch();
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const [isCustom, setIsCustom] = useState(false);
 
 	const defaultValues = {
 		description: "",
-		demoId: demoId ?? 0,
+		demoId: demoId,
 		demoTick: 0,
-		personMessageId: personMessageId ?? "",
-		targetId: steamId ?? "",
+		targetId: steamId,
 		reason: personMessageId ? BanReason.LANGUAGE : BanReason.CHEATING,
 		reasonText: "",
 	};
@@ -280,17 +286,15 @@ const ReportCreateForm = (): JSX.Element => {
 	const form = useAppForm({
 		onSubmit: ({ value }) => {
 			mutation.mutate({
-				demoId: String(value.demoId ?? ""),
-				sourceId: profile.steamId,
+				demoId: value.demoId,
 				targetId: value.targetId,
-				demoTick: value.demoTick,
+				demoTick: value.demoTick > 0 ? value.demoTick : undefined,
 				reason: value.reason,
-				reasonText: value.reasonText,
-				description: value.description,
-				personMessageId: value.personMessageId,
+				reasonText: zeroStringUndefined(value.reasonText),
+				description: zeroStringUndefined(value.description),
+				personMessageId: personMessageId,
 			});
 		},
-
 		defaultValues,
 	});
 
@@ -367,9 +371,7 @@ const ReportCreateForm = (): JSX.Element => {
 								<form.AppField
 									name={"demoTick"}
 									children={(field) => {
-										return (
-											<field.TextField disabled={!demoId} label="Demo Tick" variant="outlined" />
-										);
+										return <field.NumberField disabled={!demoId} label="Demo Tick" />;
 									}}
 								/>
 							</Grid>

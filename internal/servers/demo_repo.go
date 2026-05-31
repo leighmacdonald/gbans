@@ -60,7 +60,7 @@ func (r *DemoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]Demo
 	return demos, nil
 }
 
-func (r *DemoRepository) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error {
+func (r *DemoRepository) GetDemoByID(ctx context.Context, demoID int32, demoFile *DemoFile) error {
 	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
 			"d.map_name", "d.archive", "d.stats", "d.asset_id", "a.size", "s.short_name", "s.name").
@@ -213,7 +213,7 @@ func (r *DemoRepository) updateDemo(ctx context.Context, demoFile *DemoFile) err
 	return nil
 }
 
-func (r *DemoRepository) Delete(ctx context.Context, demoID int64) error {
+func (r *DemoRepository) Delete(ctx context.Context, demoID int32) error {
 	const query = `DELETE FROM demo WHERE demo_id = $1`
 	if err := r.Exec(ctx, query, demoID); err != nil {
 		return database.Err(err)

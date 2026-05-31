@@ -121,6 +121,7 @@ export const MarkdownField = (props: MDBodyFieldProps) => {
 				placeholder={props.placeholder ?? "Message (Min length: 10 characters)"}
 				plugins={[
 					toolbarPlugin({
+						// toolbarClassName: "md-toolbar",
 						toolbarContents: () => (
 							<Stack direction={"row"}>
 								<UndoRedo />

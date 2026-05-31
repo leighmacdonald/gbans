@@ -157,10 +157,10 @@ message Report {
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
   ];
-  string reason_text = 7 [(buf.validate.field).required = true];
+  string reason_text = 7;
   bool deleted = 8 [(buf.validate.field).required = true];
   int32 demo_tick = 9;
-  int64 demo_id = 10;
+  int32 demo_id = 10;
   int64 person_message_id = 11;
   google.protobuf.Timestamp created_on = 12 [(buf.validate.field).required = true];
   google.protobuf.Timestamp updated_on = 13 [(buf.validate.field).required = true];
@@ -181,22 +181,7 @@ message ReportStatusEditRequest {
 }
 
 message ReportCreateRequest {
-  // option (buf.validate.message).cel = {
-  //   id: "ban_reason_text"
-  //   message: "reason_text must be set when a custom BanReason is selected"
-  //   expression: "this.reason != BanReason.CUSTOM || size(this.reason_text) >= 1"
-  // };
-  //
-  option (buf.validate.message).cel = {
-    id: "report_custom_reason_text"
-    message: "reason_text must be at least 10 characters when reason is CUSTOM"
-    expression: "this.reason != ban.v1.BanReason.BAN_REASON_CUSTOM || size(this.reason_text) >= 10"
-  };
-
-  int64 source_id = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).int64 = {gte: 76561197960265729}
-  ];
+  int64 source_id = 1 [(buf.validate.field).int64 = {gte: 76561197960265729}];
   int64 target_id = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).int64 = {gte: 76561197960265729}
@@ -212,11 +197,8 @@ message ReportCreateRequest {
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
   ];
-  string reason_text = 5 [
-    (buf.validate.field).required = false,
-    (buf.validate.field).string.min_len = 10
-  ];
-  int64 demo_id = 6;
+  string reason_text = 5 [(buf.validate.field).string.min_len = 10];
+  int32 demo_id = 6;
   int32 demo_tick = 7;
   int64 person_message_id = 8;
 }

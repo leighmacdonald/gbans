@@ -18,14 +18,16 @@ import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 import z from "zod/v4";
 import { useAppForm } from "../contexts/formContext.tsx";
+import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { AppealState, UpdateRequestSchema } from "../rpc/ban/v1/ban_pb.ts";
 import { get, update } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
 import { enumValues } from "../util/lists.ts";
+import { zeroStringUndefined } from "../util/types.ts";
 import { ButtonLink } from "./ButtonLink.tsx";
 import { ContainerWithHeader } from "./ContainerWithHeader";
 import { ErrorDetails } from "./ErrorDetails.tsx";
 import { LoadingPlaceholder } from "./LoadingPlaceholder.tsx";
-import { BanModal } from "./modal/BanModal.tsx";
+import { BanCreateModal } from "./modal/BanCreateModal.tsx";
 import { UnbanModal } from "./modal/UnbanModal.tsx";
 
 const onSubmit = z.object({
@@ -34,6 +36,7 @@ const onSubmit = z.object({
 
 export const BanModPanel = ({ banId }: { banId: number }) => {
 	const navigate = useNavigate();
+	const { sendFlash, sendError } = useUserFlashCtx();
 
 	const { data, isLoading, isError, error } = useQuery(get, { banId });
 
@@ -53,45 +56,33 @@ export const BanModPanel = ({ banId }: { banId: number }) => {
 	}, [banId, data?.ban?.targetPersonaName]);
 
 	const onEditBan = useCallback(async () => {
-		await NiceModal.show(BanModal, {
-			banId,
-		});
-	}, [banId]);
+		await NiceModal.show(BanCreateModal, {});
+	}, []);
 
-	const appealStateMutation = useMutation(update);
-	// 	mutationFn: async (appeal_state: AppealStateEnum) => {
-	// 		try {
-	// 			const ac = new AbortController();
-	// 			await apiSetBanAppealState(ban_id, appeal_state, ac.signal);
-	// 			sendFlash("success", "Appeal state updated");
-	// 		} catch (reason) {
-	// 			sendFlash("error", "Could not set appeal state");
-	// 			logErr(reason);
-	// 		}
-	// 	},
-	// });
+	const appealStateMutation = useMutation(update, {
+		onSuccess: () => {
+			sendFlash("success", "Appeal State Updated");
+		},
+		onError: (err) => {
+			sendError(err);
+		},
+	});
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			if (!data?.ban || value.appealState === data?.ban?.appealState) {
-				return;
-			}
-
-			const ban = data.ban;
-			ban.appealState = value.appealState;
-			appealStateMutation.mutate(
-				create(UpdateRequestSchema, {
-					banType: ban.banType,
-					banId: ban.banId,
-					appealState: ban.appealState,
-					cidr: ban.cidr,
-					duration: ban.duration,
-					evadeOk: ban.evadeOk,
-					note: ban.note,
-					reason: ban.reason,
-					reasonText: ban.reasonText,
-				}),
-			);
+			const opts = {
+				banType: data?.ban?.banType,
+				banId: data?.ban?.banId,
+				appealState: value.appealState,
+				cidr: zeroStringUndefined(data?.ban?.cidr),
+				validUntil: data?.ban?.validUntil,
+				evadeOk: data?.ban?.evadeOk,
+				note: zeroStringUndefined(data?.ban?.note),
+				reason: data?.ban?.reason,
+				reasonText: zeroStringUndefined(data?.ban?.reasonText),
+			};
+			console.log(opts);
+			appealStateMutation.mutate(create(UpdateRequestSchema, opts));
 		},
 		validators: { onSubmit },
 		defaultValues: { appealState: data?.ban?.appealState ?? AppealState.OPEN_UNSPECIFIED },
@@ -122,7 +113,7 @@ export const BanModPanel = ({ banId }: { banId: number }) => {
 									name={"appealState"}
 									children={(field) => {
 										return (
-											<field.SelectField
+											<field.AppealStateField
 												label={"Appeal State"}
 												value={field.state.value}
 												items={enumValues(AppealState)}

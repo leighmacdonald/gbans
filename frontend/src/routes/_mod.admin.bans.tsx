@@ -22,7 +22,8 @@ import {
 	useMaterialReactTable,
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { BanModal } from "../component/modal/BanModal.tsx";
+import { BanCreateModal } from "../component/modal/BanCreateModal.tsx";
+import { BanEditModal } from "../component/modal/BanEditModal.tsx";
 import { UnbanModal } from "../component/modal/UnbanModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import RouterLink from "../component/RouterLink.tsx";
@@ -75,7 +76,7 @@ function AdminBans() {
 
 	const onNewBanSteam = useCallback(async () => {
 		try {
-			const ban = (await NiceModal.show(BanModal, {})) as Ban;
+			const ban = (await NiceModal.show(BanCreateModal, {})) as Ban;
 			queryClient.setQueryData(["bans"], [...(data?.bans ?? []), ban]);
 		} catch (e) {
 			sendFlash("error", `Error trying to set up ban: ${e}`);
@@ -104,10 +105,8 @@ function AdminBans() {
 	const onEdit = useCallback(
 		async (ban: Ban) => {
 			try {
-				const updated = (await NiceModal.show(BanModal, {
+				const updated = (await NiceModal.show(BanEditModal, {
 					banId: ban.banId,
-					personaName: ban.targetPersonaName,
-					existing: ban,
 				})) as Ban;
 				queryClient.setQueryData(
 					["bans"],

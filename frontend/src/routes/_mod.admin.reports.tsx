@@ -205,7 +205,7 @@ function AdminReports() {
 										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
-							search={setColumnFilter(search, "targetId", row.original.subject?.steamId)}
+							search={setColumnFilter(search, "report.targetId", row.original.subject?.steamId)}
 						>
 							{row.original.subject?.name ?? row.original.subject?.steamId}
 						</RouterLink>
@@ -289,8 +289,8 @@ function AdminReports() {
 		initialState: {
 			...defaultOptions.initialState,
 			columnVisibility: {
-				sourceId: false,
-				targetId: true,
+				"report.sourceId": false,
+				"report.targetId": true,
 				reason: true,
 				reasonText: false,
 				createdOn: false,

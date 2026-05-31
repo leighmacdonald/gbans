@@ -47,7 +47,7 @@ type RequestReportCreate struct {
 	Description     string
 	Reason          reason.Reason
 	ReasonText      string
-	DemoID          int64
+	DemoID          int32
 	DemoTick        int32
 	PersonMessageID int64
 }
@@ -85,7 +85,7 @@ type Report struct {
 	ReasonText      string
 	Deleted         bool
 	DemoTick        int32
-	DemoID          int64
+	DemoID          int32
 	PersonMessageID int64
 	CreatedOn       time.Time
 	UpdatedOn       time.Time

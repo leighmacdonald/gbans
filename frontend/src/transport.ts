@@ -25,15 +25,10 @@ const authInterceptor: Interceptor = (next) => async (req) => {
 	return await next(req);
 };
 
-const apiLogInterceptor: Interceptor = (next) => async (req) => {
-	console.log(`sending message to ${req.url}`);
-	return await next(req);
-};
-
 export const finalTransport = createConnectTransport({
 	baseUrl: `${window.location.protocol}//${window.location.hostname}:${window.location.port}/connect/`,
 	useHttpGet: true,
-	interceptors: [validateInterceptor, authInterceptor, apiLogInterceptor],
+	interceptors: [validateInterceptor, authInterceptor],
 });
 
 export function removeUndefinedDeep<T>(obj: T): T {
