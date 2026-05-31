@@ -50,6 +50,14 @@ type SafeServer struct {
 	Tags              []string
 }
 
+func (s SafeServer) MaxPlayerDisplay() int32 {
+	if s.MaxPlayersVisible > 0 {
+		return s.MaxPlayersVisible
+	}
+
+	return s.MaxPlayers
+}
+
 type Server struct {
 	*sync.RWMutex
 

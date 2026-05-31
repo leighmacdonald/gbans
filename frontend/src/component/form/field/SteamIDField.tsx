@@ -19,6 +19,7 @@ import { renderHelpText } from "./renderHelpText.ts";
 
 type Props = {
 	defaultProfile?: ResolveSteamIDResponse;
+	defaultSteamID?: string;
 } & TextFieldProps;
 
 export const SteamIDField = (props: Props) => {
@@ -26,7 +27,7 @@ export const SteamIDField = (props: Props) => {
 	const errors = useStore(field.store, (state) => state.meta.errors);
 	const [profile, setProfile] = useState<ResolveSteamIDResponse | undefined>(props.defaultProfile);
 	const [error, setError] = useState<string>();
-	const [steamId, setSteamId] = useState("");
+	const [steamId, setSteamId] = useState(props.defaultSteamID ?? "");
 
 	const { data, isLoading, isRefetching, isError } = useQuery(
 		resolveSteamID,

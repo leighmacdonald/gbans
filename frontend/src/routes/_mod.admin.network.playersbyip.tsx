@@ -31,11 +31,11 @@ import * as markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import * as markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { RowActionContainer } from "../component/RowActionContainer.tsx";
+import { renderTableError } from "../error.tsx";
 import type { PersonConnection } from "../rpc/network/v1/network_pb.ts";
 import { queryConnections } from "../rpc/network/v1/network-NetworkService_connectquery.ts";
 import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
-import { renderTableError } from "../error.tsx";
 
 // Workaround for leaflet not loading icons properly in react
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment

@@ -14,6 +14,9 @@ const BanReasonField = lazy(() => import("../component/form/field/BanReasonField
 const BanTypeField = lazy(() => import("../component/form/field/BanTypeField.tsx"));
 const AppealStateField = lazy(() => import("../component/form/field/AppealStateField.tsx"));
 const ReportStatusField = lazy(() => import("../component/form/field/ReportStatusField.tsx"));
+const DemoStrategyField = lazy(() => import("../component/form/field/DemoStrategyField.tsx"));
+const LevelField = lazy(() => import("../component/form/field/LevelField.tsx"));
+const ActionField = lazy(() => import("../component/form/field/ActionField.tsx"));
 const PrivilegeField = lazy(() => import("../component/form/field/PrivilegeField.tsx"));
 const SteamIDField = lazy(() => import("../component/form/field/SteamIDField.tsx"));
 const TextField = lazy(() => import("../component/form/field/TextField.tsx"));
@@ -36,6 +39,9 @@ export const { useAppForm, withForm } = createFormHook({
 		ReportStatusField,
 		NumberField,
 		MarkdownField,
+		DemoStrategyField,
+		LevelField,
+		ActionField,
 	},
 	formComponents: {
 		SubmitButton,

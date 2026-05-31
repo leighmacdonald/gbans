@@ -70,7 +70,7 @@ func (x *GetDemosResponse) GetDemos() []*Demo {
 
 type Demo struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	DemoId          *int64                 `protobuf:"varint,1,opt,name=demo_id,json=demoId" json:"demo_id,omitempty"`
+	DemoId          *int32                 `protobuf:"varint,1,opt,name=demo_id,json=demoId" json:"demo_id,omitempty"`
 	ServerId        *int32                 `protobuf:"varint,2,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
 	ServerNameShort *string                `protobuf:"bytes,3,opt,name=server_name_short,json=serverNameShort" json:"server_name_short,omitempty"`
 	ServerNameLong  *string                `protobuf:"bytes,4,opt,name=server_name_long,json=serverNameLong" json:"server_name_long,omitempty"`
@@ -116,7 +116,7 @@ func (*Demo) Descriptor() ([]byte, []int) {
 	return file_servers_v1_demo_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *Demo) GetDemoId() int64 {
+func (x *Demo) GetDemoId() int32 {
 	if x != nil && x.DemoId != nil {
 		return *x.DemoId
 	}
@@ -207,9 +207,10 @@ const file_servers_v1_demo_proto_rawDesc = "" +
 	"\x15servers/v1/demo.proto\x12\n" +
 	"servers.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"B\n" +
 	"\x10GetDemosResponse\x12.\n" +
-	"\x05demos\x18\x01 \x03(\v2\x10.servers.v1.DemoB\x06\xbaH\x03\xc8\x01\x01R\x05demos\"\xbd\x04\n" +
-	"\x04Demo\x12%\n" +
-	"\ademo_id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\x06demoId\x12'\n" +
+	"\x05demos\x18\x01 \x03(\v2\x10.servers.v1.DemoB\x06\xbaH\x03\xc8\x01\x01R\x05demos\"\xbb\x04\n" +
+	"\x04Demo\x12#\n" +
+	"\ademo_id\x18\x01 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x06demoId\x12'\n" +
 	"\tserver_id\x18\x02 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\bserverId\x122\n" +
 	"\x11server_name_short\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0fserverNameShort\x120\n" +

@@ -3,6 +3,7 @@ package wiki
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -35,7 +36,16 @@ func (s Service) Get(ctx context.Context, request *v1.GetRequest) (*v1.GetRespon
 	if err != nil {
 		switch {
 		case errors.Is(err, database.ErrNoResult):
-			return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
+			return &v1.GetResponse{
+				Wiki: &v1.Wiki{
+					Slug:            &slug,
+					BodyMd:          new(fmt.Sprintf("# New %s Wiki", slug)),
+					Revision:        new(int32(0)),
+					PermissionLevel: new(personv1.Privilege(page.PermissionLevel)),
+					CreatedOn:       timestamppb.Now(),
+					UpdatedOn:       timestamppb.Now(),
+				},
+			}, nil
 		case errors.Is(err, permission.ErrDenied):
 			return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 		default:

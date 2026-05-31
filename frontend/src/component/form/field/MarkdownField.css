@@ -72,6 +72,12 @@
 		color: #f5e7de;
 	}
 }
+.mdxeditor-toolbar {
+	border-radius: 0 !important;
+}
+.md-toolbar {
+	background-color: #395c78 !important;
+}
 
 .mdxeditor-root-contenteditable-dark {
 	background-color: #452c22;

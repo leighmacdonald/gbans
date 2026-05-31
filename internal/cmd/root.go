@@ -47,5 +47,12 @@ func setupRootCmd() *cobra.Command {
 
 	root.AddCommand(healthCmd())
 
+	backupCmd := backupCmd()
+	backupCmd.Flags().StringVarP(&backupDir, "dest", "d", "", "Destination path")
+	backupCmd.Flags().StringVarP(&username, "user", "u", "tf2server", "SSH Username")
+	backupCmd.Flags().StringVarP(&baseDir, "basedir", "b", "/home/tf2server", "Base root dir containing srcds instances")
+
+	root.AddCommand(backupCmd)
+
 	return root
 }

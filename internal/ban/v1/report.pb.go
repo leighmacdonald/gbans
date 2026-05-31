@@ -652,7 +652,7 @@ type Report struct {
 	ReasonText      *string                `protobuf:"bytes,7,opt,name=reason_text,json=reasonText" json:"reason_text,omitempty"`
 	Deleted         *bool                  `protobuf:"varint,8,opt,name=deleted" json:"deleted,omitempty"`
 	DemoTick        *int32                 `protobuf:"varint,9,opt,name=demo_tick,json=demoTick" json:"demo_tick,omitempty"`
-	DemoId          *int64                 `protobuf:"varint,10,opt,name=demo_id,json=demoId" json:"demo_id,omitempty"`
+	DemoId          *int32                 `protobuf:"varint,10,opt,name=demo_id,json=demoId" json:"demo_id,omitempty"`
 	PersonMessageId *int64                 `protobuf:"varint,11,opt,name=person_message_id,json=personMessageId" json:"person_message_id,omitempty"`
 	CreatedOn       *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
 	UpdatedOn       *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
@@ -753,7 +753,7 @@ func (x *Report) GetDemoTick() int32 {
 	return 0
 }
 
-func (x *Report) GetDemoId() int64 {
+func (x *Report) GetDemoId() int32 {
 	if x != nil && x.DemoId != nil {
 		return *x.DemoId
 	}
@@ -900,7 +900,7 @@ type ReportCreateRequest struct {
 	Description     *string                `protobuf:"bytes,3,opt,name=description" json:"description,omitempty"`
 	Reason          *BanReason             `protobuf:"varint,4,opt,name=reason,enum=ban.v1.BanReason" json:"reason,omitempty"`
 	ReasonText      *string                `protobuf:"bytes,5,opt,name=reason_text,json=reasonText" json:"reason_text,omitempty"`
-	DemoId          *int64                 `protobuf:"varint,6,opt,name=demo_id,json=demoId" json:"demo_id,omitempty"`
+	DemoId          *int32                 `protobuf:"varint,6,opt,name=demo_id,json=demoId" json:"demo_id,omitempty"`
 	DemoTick        *int32                 `protobuf:"varint,7,opt,name=demo_tick,json=demoTick" json:"demo_tick,omitempty"`
 	PersonMessageId *int64                 `protobuf:"varint,8,opt,name=person_message_id,json=personMessageId" json:"person_message_id,omitempty"`
 	unknownFields   protoimpl.UnknownFields
@@ -972,7 +972,7 @@ func (x *ReportCreateRequest) GetReasonText() string {
 	return ""
 }
 
-func (x *ReportCreateRequest) GetDemoId() int64 {
+func (x *ReportCreateRequest) GetDemoId() int32 {
 	if x != nil && x.DemoId != nil {
 		return *x.DemoId
 	}
@@ -1182,7 +1182,7 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"\vavatar_hash\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"avatarHash\x12L\n" +
 	"\x10permission_level\x18\n" +
-	" \x01(\x0e2\x14.person.v1.PrivilegeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x0fpermissionLevel\"\x84\x05\n" +
+	" \x01(\x0e2\x14.person.v1.PrivilegeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x0fpermissionLevel\"\xf8\x04\n" +
 	"\x06Report\x12'\n" +
 	"\treport_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\breportId\x121\n" +
@@ -1192,13 +1192,13 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\btargetId\x120\n" +
 	"\vdescription\x18\x04 \x01(\tB\x0e\xbaH\v\xc8\x01\x01r\x06\x10\x01\x18І\x03R\vdescription\x12F\n" +
 	"\rreport_status\x18\x05 \x01(\x0e2\x14.ban.v1.ReportStatusB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\freportStatus\x126\n" +
-	"\x06reason\x18\x06 \x01(\x0e2\x11.ban.v1.BanReasonB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x06reason\x12'\n" +
-	"\vreason_text\x18\a \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"\x06reason\x18\x06 \x01(\x0e2\x11.ban.v1.BanReasonB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x06reason\x12\x1f\n" +
+	"\vreason_text\x18\a \x01(\tR\n" +
 	"reasonText\x12 \n" +
 	"\adeleted\x18\b \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\adeleted\x12\x1b\n" +
-	"\tdemo_tick\x18\t \x01(\x05R\bdemoTick\x12\x1b\n" +
+	"\tdemo_tick\x18\t \x01(\x05R\bdemoTick\x12\x17\n" +
 	"\ademo_id\x18\n" +
-	" \x01(\x03B\x020\x01R\x06demoId\x12.\n" +
+	" \x01(\x05R\x06demoId\x12.\n" +
 	"\x11person_message_id\x18\v \x01(\x03B\x020\x01R\x0fpersonMessageId\x12A\n" +
 	"\n" +
 	"created_on\x18\f \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
@@ -1211,22 +1211,20 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"\x17ReportStatusEditRequest\x12'\n" +
 	"\treport_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\breportId\x12A\n" +
-	"\rreport_status\x18\x02 \x01(\x0e2\x14.ban.v1.ReportStatusB\x06\xbaH\x03\xc8\x01\x01R\freportStatus\"\xb6\x04\n" +
-	"\x13ReportCreateRequest\x121\n" +
-	"\tsource_id\x18\x01 \x01(\x03B\x14\xbaH\x0f\xc8\x01\x01\"\n" +
+	"\rreport_status\x18\x02 \x01(\x0e2\x14.ban.v1.ReportStatusB\x06\xbaH\x03\xc8\x01\x01R\freportStatus\"\xf2\x02\n" +
+	"\x13ReportCreateRequest\x12.\n" +
+	"\tsource_id\x18\x01 \x01(\x03B\x11\xbaH\f\"\n" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\bsourceId\x121\n" +
 	"\ttarget_id\x18\x02 \x01(\x03B\x14\xbaH\x0f\xc8\x01\x01\"\n" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\btargetId\x120\n" +
 	"\vdescription\x18\x03 \x01(\tB\x0e\xbaH\v\xc8\x01\x01r\x06\x10\x01\x18І\x03R\vdescription\x126\n" +
-	"\x06reason\x18\x04 \x01(\x0e2\x11.ban.v1.BanReasonB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x06reason\x12+\n" +
-	"\vreason_text\x18\x05 \x01(\tB\n" +
-	"\xbaH\a\xc8\x01\x00r\x02\x10\n" +
+	"\x06reason\x18\x04 \x01(\x0e2\x11.ban.v1.BanReasonB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x06reason\x12(\n" +
+	"\vreason_text\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\n" +
 	"R\n" +
-	"reasonText\x12\x1b\n" +
-	"\ademo_id\x18\x06 \x01(\x03B\x020\x01R\x06demoId\x12\x1b\n" +
+	"reasonText\x12\x17\n" +
+	"\ademo_id\x18\x06 \x01(\x05R\x06demoId\x12\x1b\n" +
 	"\tdemo_tick\x18\a \x01(\x05R\bdemoTick\x12.\n" +
-	"\x11person_message_id\x18\b \x01(\x03B\x020\x01R\x0fpersonMessageId:\xb7\x01\xbaH\xb3\x01\x1a\xb0\x01\n" +
-	"\x19report_custom_reason_text\x12@reason_text must be at least 10 characters when reason is CUSTOM\x1aQthis.reason != ban.v1.BanReason.BAN_REASON_CUSTOM || size(this.reason_text) >= 10\"P\n" +
+	"\x11person_message_id\x18\b \x01(\x03B\x020\x01R\x0fpersonMessageId\"P\n" +
 	"\x14ReportCreateResponse\x128\n" +
 	"\x06report\x18\x01 \x01(\v2\x18.ban.v1.ReportWithAuthorB\x06\xbaH\x03\xc8\x01\x01R\x06report\"n\n" +
 	"\x1aReportMessageCreateRequest\x12'\n" +

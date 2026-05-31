@@ -55,10 +55,7 @@ message CreateRequest {
     (buf.validate.field).required = true,
     (buf.validate.field).int64 = {gte: 76561197960265729}
   ];
-  int64 source_id = 2 [
-    (buf.validate.field).required = false,
-    (buf.validate.field).int64 = {gte: 76561197960265729}
-  ];
+  int64 source_id = 2 [(buf.validate.field).int64 = {gte: 76561197960265729}];
   google.protobuf.Duration duration = 3;
   BanType ban_type = 4 [
     (buf.validate.field).required = true,
@@ -68,16 +65,13 @@ message CreateRequest {
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
   ];
-  string reason_text = 6 [(buf.validate.field).required = true];
+  string reason_text = 6;
   Origin origin = 7 [(buf.validate.field).required = true];
-  int32 report_id = 8;
+  int32 report_id = 8 [(buf.validate.field).int32.gt = 0];
   string cidr = 9 [(buf.validate.field).string.address = true];
   bool evade_ok = 10 [(buf.validate.field).required = true];
-  string name = 11 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.max_len = 32
-  ];
-  int32 demo_tick = 12;
+  string name = 11 [(buf.validate.field).string.max_len = 32];
+  int32 demo_tick = 12 [(buf.validate.field).int32.gte = 0];
   string demo_name = 13;
   string note = 14 [(buf.validate.field).required = true];
 }
@@ -95,12 +89,15 @@ message UpdateRequest {
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
   ];
-  string reason_text = 3 [(buf.validate.field).required = true];
-  string note = 4 [(buf.validate.field).required = true];
-  bool evade_ok = 5 [(buf.validate.field).required = true];
-  google.protobuf.Duration duration = 6 [(buf.validate.field).required = true];
+  string reason_text = 3;
+  string note = 4;
+  bool evade_ok = 5;
+  google.protobuf.Timestamp valid_until = 6;
   string cidr = 7 [(buf.validate.field).string.ip_with_prefixlen = true];
-  int32 ban_id = 8 [(buf.validate.field).required = true];
+  int32 ban_id = 8 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
   AppealState appeal_state = 9 [
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
@@ -182,14 +179,11 @@ enum Origin {
 }
 
 message Ban {
-  // option (buf.validate.message).cel = {
-  //   id: "ban_reason_text"
-  //   message: "reason_text must be set when a custom BanReason is selected"
-  //   // The `+` is overloaded for lists (repeated fields) and it concatenates two lists.
-  //   // In this case `this.hot_beverages` + `this.cold_beverages` evaluates to a list
-  //   // containing beverages from both lists.
-  //   expression: "this.reason != BanReason.CUSTOM or size(this.reason_text) >= 1"
-  // };
+  option (buf.validate.message).cel = {
+    id: "string.custom_reason"
+    message: "reason_text must be at least 10 characters when reason is CUSTOM"
+    expression: "this.reason != ban.v1.BanReason.BAN_REASON_CUSTOM || size(this.reason_text) >= 10"
+  };
 
   int64 target_id = 1 [
     (buf.validate.field).required = true,
@@ -218,7 +212,7 @@ message Ban {
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
   ];
-  string reason_text = 13 [(buf.validate.field).required = true];
+  string reason_text = 13;
   string unban_reason_text = 14 [(buf.validate.field).required = true];
   string note = 15 [(buf.validate.field).required = true];
   Origin origin = 16 [

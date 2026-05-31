@@ -211,7 +211,7 @@ function ChatLogs() {
 				limit: String(search.pagination?.pageSize ?? 25),
 				desc: sort ? sort.desc : true,
 				offset: String(search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : 0),
-				orderBy: sort ? sort.id : "createdOn",
+				orderBy: sort ? sort.id : "personMessageId",
 			},
 		});
 
@@ -235,7 +235,7 @@ function ChatLogs() {
 	const { data, isLoading, isError, isRefetching, refetch, error } = useQuery(query, opts, {
 		placeholderData: keepPreviousData,
 	});
-	console.log(data, isLoading, isRefetching, error);
+	// console.log(data, isLoading, isRefetching, error);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,

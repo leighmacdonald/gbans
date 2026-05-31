@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"strconv"
-	"time"
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -159,7 +158,7 @@ func (s Service) Update(ctx context.Context, req *v1.UpdateRequest) (*v1.UpdateR
 		return nil, connect.NewError(connect.CodeNotFound, banErr)
 	}
 
-	if reason.Reason(ptr.From(req.Reason)) == reason.Custom {
+	if reason.Reason(req.GetReason()) == reason.Custom {
 		if req.GetReasonText() == "" {
 			return nil, connect.NewError(connect.CodeInvalidArgument, rpc.ErrBadRequest)
 		}
@@ -169,18 +168,18 @@ func (s Service) Update(ctx context.Context, req *v1.UpdateRequest) (*v1.UpdateR
 		bannedPerson.ReasonText = ""
 	}
 
-	if req.GetDuration() != nil {
-		dur := req.GetDuration()
-		bannedPerson.ValidUntil = time.Now().Add(dur.AsDuration())
+	if validUntil := req.GetValidUntil(); validUntil.IsValid() && !validUntil.AsTime().IsZero() {
+		bannedPerson.ValidUntil = validUntil.AsTime()
 	}
 
-	bannedPerson.Note = ptr.From(req.Note)
-	bannedPerson.BanType = bantype.Type(ptr.From(req.BanType))
-	bannedPerson.Reason = reason.Reason(ptr.From(req.Reason))
-	bannedPerson.EvadeOk = ptr.From(req.EvadeOk)
+	bannedPerson.AppealState = AppealState(req.GetAppealState())
+	bannedPerson.Note = req.GetNote()
+	bannedPerson.BanType = bantype.Type(req.GetBanType())
+	bannedPerson.Reason = reason.Reason(req.GetReason())
+	bannedPerson.EvadeOk = req.GetEvadeOk()
 
-	if req.Cidr != nil {
-		bannedPerson.CIDR = req.Cidr
+	if cidr := req.GetCidr(); cidr != "" {
+		bannedPerson.CIDR = &cidr
 	}
 
 	if errSave := s.bans.Save(ctx, &bannedPerson); errSave != nil {

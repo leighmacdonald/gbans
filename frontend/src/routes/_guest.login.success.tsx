@@ -7,7 +7,7 @@ import { useAuth } from "../hooks/useAuth.ts";
 
 export const Route = createFileRoute("/_guest/login/success")({
 	validateSearch: z.object({
-		nextUrl: z.string().optional().catch(""),
+		nextUrl: z.string().optional().catch("/"),
 		token: z.string(),
 	}),
 	component: LoginSteamSuccess,
@@ -25,20 +25,26 @@ export const Route = createFileRoute("/_guest/login/success")({
 });
 
 function LoginSteamSuccess() {
+	const { token } = Route.useLoaderDeps();
 	const search = Route.useSearch();
 	const { login } = useAuth();
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		login(search.token, {
-			onSuccess: () => {
-				navigate({ to: search.nextUrl });
-			},
-			onError: () => {
-				navigate({ to: "/" });
-			},
-		});
-	}, [login, search.nextUrl, search.token, navigate]);
+		try {
+			login(token, {
+				onSuccess: async () => {
+					console.log(`Logging Success, redirecting to ${search.nextUrl ?? "/"}`);
+					await navigate({ to: search.nextUrl });
+				},
+				onError: () => {
+					navigate({ to: "/" });
+				},
+			});
+		} catch {
+			navigate({ to: "/" });
+		}
+	}, [login, search.nextUrl, token, navigate]);
 
 	return <LoadingPlaceholder />;
 }

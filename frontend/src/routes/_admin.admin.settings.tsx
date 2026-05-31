@@ -36,12 +36,13 @@ import { TabSection } from "../component/TabSection.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { type Asset, AssetService } from "../rpc/asset/v1/asset_pb.ts";
-import type { Config } from "../rpc/config/v1/config_pb.ts";
+import { Action, type Config, DemoStrategy, Level } from "../rpc/config/v1/config_pb.ts";
 import { get, update } from "../rpc/config/v1/config-ConfigService_connectquery.ts";
 import { NetworkService } from "../rpc/network/v1/network_pb.ts";
 import { DemoService } from "../rpc/servers/v1/demo_pb.ts";
 import { finalTransport } from "../transport.ts";
 import { logErr } from "../util/errors.ts";
+import { enumValues } from "../util/lists.ts";
 import { emptyOrNullString } from "../util/types.ts";
 
 const settingsSchema = z.object({
@@ -722,9 +723,9 @@ function AdminSettings() {
 											name={"demo_cleanup_strategy"}
 											children={(field) => {
 												return (
-													<field.SelectField
+													<field.DemoStrategyField
 														label={"Cleanup Strategy"}
-														items={["pctfree", "count"]}
+														items={enumValues(DemoStrategy)}
 														renderItem={(item) => {
 															return (
 																<MenuItem key={item} value={item}>
@@ -1186,9 +1187,9 @@ function AdminSettings() {
 											name={"level"}
 											children={(field) => {
 												return (
-													<field.SelectField
+													<field.LevelField
 														label={"Log Level"}
-														items={["debug", "info", "warn", "error"]}
+														items={enumValues(Level)}
 														renderItem={(item) => {
 															return (
 																<MenuItem key={item} value={item}>
@@ -1238,9 +1239,9 @@ function AdminSettings() {
 											name={"http_level"}
 											children={(field) => {
 												return (
-													<field.SelectField
+													<field.LevelField
 														label={"HTTP Log Level"}
-														items={["debug", "info", "warn", "error"]}
+														items={enumValues(Level)}
 														renderItem={(item) => {
 															return (
 																<MenuItem key={item} value={item}>
@@ -1497,9 +1498,9 @@ function AdminSettings() {
 											name={"action"}
 											children={(field) => {
 												return (
-													<field.SelectField
+													<field.ActionField
 														label={"Punishment Strategy"}
-														items={["gag", "kick", "ban"]}
+														items={enumValues(Action)}
 														renderItem={(item) => {
 															return (
 																<MenuItem key={item} value={item}>

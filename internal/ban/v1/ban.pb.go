@@ -471,7 +471,7 @@ type UpdateRequest struct {
 	ReasonText    *string                `protobuf:"bytes,3,opt,name=reason_text,json=reasonText" json:"reason_text,omitempty"`
 	Note          *string                `protobuf:"bytes,4,opt,name=note" json:"note,omitempty"`
 	EvadeOk       *bool                  `protobuf:"varint,5,opt,name=evade_ok,json=evadeOk" json:"evade_ok,omitempty"`
-	Duration      *durationpb.Duration   `protobuf:"bytes,6,opt,name=duration" json:"duration,omitempty"`
+	ValidUntil    *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=valid_until,json=validUntil" json:"valid_until,omitempty"`
 	Cidr          *string                `protobuf:"bytes,7,opt,name=cidr" json:"cidr,omitempty"`
 	BanId         *int32                 `protobuf:"varint,8,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
 	AppealState   *AppealState           `protobuf:"varint,9,opt,name=appeal_state,json=appealState,enum=ban.v1.AppealState" json:"appeal_state,omitempty"`
@@ -544,9 +544,9 @@ func (x *UpdateRequest) GetEvadeOk() bool {
 	return false
 }
 
-func (x *UpdateRequest) GetDuration() *durationpb.Duration {
+func (x *UpdateRequest) GetValidUntil() *timestamppb.Timestamp {
 	if x != nil {
-		return x.Duration
+		return x.ValidUntil
 	}
 	return nil
 }
@@ -1336,39 +1336,40 @@ var File_ban_v1_ban_proto protoreflect.FileDescriptor
 
 const file_ban_v1_ban_proto_rawDesc = "" +
 	"\n" +
-	"\x10ban/v1/ban.proto\x12\x06ban.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xca\x04\n" +
+	"\x10ban/v1/ban.proto\x12\x06ban.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xce\x04\n" +
 	"\rCreateRequest\x121\n" +
 	"\ttarget_id\x18\x01 \x01(\x03B\x14\xbaH\x0f\xc8\x01\x01\"\n" +
-	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\btargetId\x121\n" +
-	"\tsource_id\x18\x02 \x01(\x03B\x14\xbaH\x0f\xc8\x01\x00\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\btargetId\x12.\n" +
+	"\tsource_id\x18\x02 \x01(\x03B\x11\xbaH\f\"\n" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\bsourceId\x125\n" +
 	"\bduration\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\bduration\x127\n" +
 	"\bban_type\x18\x04 \x01(\x0e2\x0f.ban.v1.BanTypeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\abanType\x126\n" +
-	"\x06reason\x18\x05 \x01(\x0e2\x11.ban.v1.BanReasonB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x06reason\x12'\n" +
-	"\vreason_text\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"\x06reason\x18\x05 \x01(\x0e2\x11.ban.v1.BanReasonB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x06reason\x12\x1f\n" +
+	"\vreason_text\x18\x06 \x01(\tR\n" +
 	"reasonText\x12.\n" +
-	"\x06origin\x18\a \x01(\x0e2\x0e.ban.v1.OriginB\x06\xbaH\x03\xc8\x01\x01R\x06origin\x12\x1b\n" +
-	"\treport_id\x18\b \x01(\x05R\breportId\x12\x1c\n" +
+	"\x06origin\x18\a \x01(\x0e2\x0e.ban.v1.OriginB\x06\xbaH\x03\xc8\x01\x01R\x06origin\x12$\n" +
+	"\treport_id\x18\b \x01(\x05B\a\xbaH\x04\x1a\x02 \x00R\breportId\x12\x1c\n" +
 	"\x04cidr\x18\t \x01(\tB\b\xbaH\x05r\x03\xa8\x01\x01R\x04cidr\x12!\n" +
 	"\bevade_ok\x18\n" +
-	" \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aevadeOk\x12\x1e\n" +
-	"\x04name\x18\v \x01(\tB\n" +
-	"\xbaH\a\xc8\x01\x01r\x02\x18 R\x04name\x12\x1b\n" +
-	"\tdemo_tick\x18\f \x01(\x05R\bdemoTick\x12\x1b\n" +
+	" \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aevadeOk\x12\x1b\n" +
+	"\x04name\x18\v \x01(\tB\a\xbaH\x04r\x02\x18 R\x04name\x12$\n" +
+	"\tdemo_tick\x18\f \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\bdemoTick\x12\x1b\n" +
 	"\tdemo_name\x18\r \x01(\tR\bdemoName\x12\x1a\n" +
 	"\x04note\x18\x0e \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04note\"/\n" +
 	"\x0eCreateResponse\x12\x1d\n" +
-	"\x03ban\x18\x01 \x01(\v2\v.ban.v1.BanR\x03ban\"\xa9\x03\n" +
+	"\x03ban\x18\x01 \x01(\v2\v.ban.v1.BanR\x03ban\"\x93\x03\n" +
 	"\rUpdateRequest\x127\n" +
 	"\bban_type\x18\x01 \x01(\x0e2\x0f.ban.v1.BanTypeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\abanType\x126\n" +
-	"\x06reason\x18\x02 \x01(\x0e2\x11.ban.v1.BanReasonB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x06reason\x12'\n" +
-	"\vreason_text\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"reasonText\x12\x1a\n" +
-	"\x04note\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04note\x12!\n" +
-	"\bevade_ok\x18\x05 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aevadeOk\x12=\n" +
-	"\bduration\x18\x06 \x01(\v2\x19.google.protobuf.DurationB\x06\xbaH\x03\xc8\x01\x01R\bduration\x12\x1c\n" +
-	"\x04cidr\x18\a \x01(\tB\b\xbaH\x05r\x03\xd0\x01\x01R\x04cidr\x12\x1d\n" +
-	"\x06ban_id\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05banId\x12C\n" +
+	"\x06reason\x18\x02 \x01(\x0e2\x11.ban.v1.BanReasonB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x06reason\x12\x1f\n" +
+	"\vreason_text\x18\x03 \x01(\tR\n" +
+	"reasonText\x12\x12\n" +
+	"\x04note\x18\x04 \x01(\tR\x04note\x12\x19\n" +
+	"\bevade_ok\x18\x05 \x01(\bR\aevadeOk\x12;\n" +
+	"\vvalid_until\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"validUntil\x12\x1c\n" +
+	"\x04cidr\x18\a \x01(\tB\b\xbaH\x05r\x03\xd0\x01\x01R\x04cidr\x12!\n" +
+	"\x06ban_id\x18\b \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x05banId\x12C\n" +
 	"\fappeal_state\x18\t \x01(\x0e2\x13.ban.v1.AppealStateB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\vappealState\"7\n" +
 	"\x0eUpdateResponse\x12%\n" +
 	"\x03ban\x18\x01 \x01(\v2\v.ban.v1.BanB\x06\xbaH\x03\xc8\x01\x01R\x03ban\"I\n" +
@@ -1413,7 +1414,8 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\x06reason\x18\a \x03(\x0e2\x11.ban.v1.BanReasonR\x06reason\x12@\n" +
 	"\fappeal_state\x18\b \x01(\x0e2\x13.ban.v1.AppealStateB\b\xbaH\x05\x82\x01\x02\x10\x01R\vappealState\"8\n" +
 	"\rQueryResponse\x12'\n" +
-	"\x04bans\x18\x01 \x03(\v2\v.ban.v1.BanB\x06\xbaH\x03\xc8\x01\x01R\x04bans\"\xbb\t\n" +
+	"\x04bans\x18\x01 \x03(\v2\v.ban.v1.BanB\x06\xbaH\x03\xc8\x01\x01R\x04bans\"\xe8\n" +
+	"\n" +
 	"\x03Ban\x121\n" +
 	"\ttarget_id\x18\x01 \x01(\x03B\x14\xbaH\x0f\xc8\x01\x01\"\n" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\btargetId\x126\n" +
@@ -1430,8 +1432,8 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\bevade_ok\x18\n" +
 	" \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aevadeOk\x127\n" +
 	"\bban_type\x18\v \x01(\x0e2\x0f.ban.v1.BanTypeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\abanType\x126\n" +
-	"\x06reason\x18\f \x01(\x0e2\x11.ban.v1.BanReasonB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x06reason\x12'\n" +
-	"\vreason_text\x18\r \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"\x06reason\x18\f \x01(\x0e2\x11.ban.v1.BanReasonB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x06reason\x12\x1f\n" +
+	"\vreason_text\x18\r \x01(\tR\n" +
 	"reasonText\x122\n" +
 	"\x11unban_reason_text\x18\x0e \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0funbanReasonText\x12\x1a\n" +
 	"\x04note\x18\x0f \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04note\x123\n" +
@@ -1449,7 +1451,8 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\bduration\x18\x18 \x01(\v2\x19.google.protobuf.DurationB\r\xbaH\n" +
 	"\xc8\x01\x01\xaa\x01\x04*\x02\b<R\bduration\x12C\n" +
 	"\vvalid_until\x18\x19 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"validUntil*g\n" +
+	"validUntil:\xb2\x01\xbaH\xae\x01\x1a\xab\x01\n" +
+	"\x14string.custom_reason\x12@reason_text must be at least 10 characters when reason is CUSTOM\x1aQthis.reason != ban.v1.BanReason.BAN_REASON_CUSTOM || size(this.reason_text) >= 10*g\n" +
 	"\aBanType\x12\x1b\n" +
 	"\x17BAN_TYPE_OK_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10BAN_TYPE_NO_COMM\x10\x01\x12\x13\n" +
@@ -1541,7 +1544,7 @@ var file_ban_v1_ban_proto_depIdxs = []int32{
 	16, // 4: ban.v1.CreateResponse.ban:type_name -> ban.v1.Ban
 	0,  // 5: ban.v1.UpdateRequest.ban_type:type_name -> ban.v1.BanType
 	2,  // 6: ban.v1.UpdateRequest.reason:type_name -> ban.v1.BanReason
-	17, // 7: ban.v1.UpdateRequest.duration:type_name -> google.protobuf.Duration
+	18, // 7: ban.v1.UpdateRequest.valid_until:type_name -> google.protobuf.Timestamp
 	1,  // 8: ban.v1.UpdateRequest.appeal_state:type_name -> ban.v1.AppealState
 	16, // 9: ban.v1.UpdateResponse.ban:type_name -> ban.v1.Ban
 	17, // 10: ban.v1.SourceBanRecord.duration:type_name -> google.protobuf.Duration
