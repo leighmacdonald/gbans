@@ -103,8 +103,8 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 		General: General{
 			SiteName:         inGeneral.GetSiteName(),
 			SiteDescription:  inGeneral.GetSiteDescription(),
-			Mode:             RunMode(inGeneral.GetMode()),                         // FIXME
-			FileServeMode:    FileServeMode(inGeneral.GetFileServeMode().String()), // FIXME
+			Mode:             fromRunMode(inGeneral.GetMode()),
+			FileServeMode:    fromServeMode(inGeneral.GetFileServeMode()),
 			SrcdsLogAddr:     inGeneral.GetSrcdsLogAddr(),
 			AssetURL:         inGeneral.GetAssetUrl(),
 			Favicon:          inGeneral.GetFavicon(),
@@ -128,7 +128,7 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 		},
 		Demo: servers.DemoConfig{
 			DemoCleanupEnabled:  inDemo.GetCleanupEnabled(),
-			DemoCleanupStrategy: servers.DemoStrategy(inDemo.GetStrategy().String()), // FIXME
+			DemoCleanupStrategy: fromDemoStrategy(inDemo.GetStrategy()), // FIXME
 			DemoCleanupMinPct:   inDemo.GetCleanupMinPct(),
 			DemoCleanupMount:    inDemo.GetCleanupMount(),
 			DemoCountLimit:      uint64(inDemo.GetCountLimit()), //nolint:gosec
@@ -172,11 +172,11 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 			CenterProjectiles: false,
 		},
 		Log: log.Config{
-			Level:           log.Level(inLog.GetLevel().String()), // FIXME
+			Level:           fromLevel(inLog.GetLevel()), // FIXME
 			File:            inLog.GetFile(),
 			HTTPEnabled:     inLog.GetHttpEnabled(),
 			HTTPOtelEnabled: inLog.GetHttpOtelEnabled(),
-			HTTPLevel:       log.Level(inLog.GetHttpLevel().String()), // FIXME
+			HTTPLevel:       fromLevel(inLog.GetHttpLevel()), // FIXME
 		},
 		GeoLocation: ip2location.Config{
 			Enabled:   inGeo.GetEnabled(),
@@ -220,7 +220,7 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 		},
 		Anticheat: anticheat.Config{
 			Enabled:               inAC.GetEnabled(),
-			Action:                anticheat.Action(inAC.GetAction().String()), // FIXME
+			Action:                fromAction(inAC.GetAction()), // FIXME
 			Duration:              inAC.GetDuration(),
 			MaxAimSnap:            inAC.GetMaxAimSnaps(),
 			MaxPsilent:            inAC.GetMaxPsilent(),
@@ -373,6 +373,19 @@ func toConfig(conf Config) *configv1.Config {
 	}
 }
 
+func fromRunMode(mode configv1.RunMode) RunMode {
+	switch mode {
+	case configv1.RunMode_RUN_MODE_DEBUG:
+		return DebugMode
+	case configv1.RunMode_RUN_MODE_TEST:
+		return TestMode
+	case configv1.RunMode_RUN_MODE_RELEASE_UNSPECIFIED:
+		fallthrough
+	default:
+		return ReleaseMode
+	}
+}
+
 func toRunMode(mode RunMode) configv1.RunMode {
 	switch mode {
 	case DebugMode:
@@ -385,6 +398,14 @@ func toRunMode(mode RunMode) configv1.RunMode {
 		return configv1.RunMode_RUN_MODE_RELEASE_UNSPECIFIED
 	}
 }
+func fromServeMode(mode configv1.FileServeMode) FileServeMode {
+	switch mode {
+	case configv1.FileServeMode_FILE_SERVE_MODE_LOCAL_UNSPECIFIED:
+		fallthrough
+	default:
+		return LocalMode
+	}
+}
 
 func toServeMode(mode FileServeMode) configv1.FileServeMode {
 	switch mode {
@@ -392,6 +413,17 @@ func toServeMode(mode FileServeMode) configv1.FileServeMode {
 		fallthrough
 	default:
 		return configv1.FileServeMode_FILE_SERVE_MODE_LOCAL_UNSPECIFIED
+	}
+}
+
+func fromDemoStrategy(strategy configv1.DemoStrategy) servers.DemoStrategy {
+	switch strategy {
+	case configv1.DemoStrategy_DEMO_STRATEGY_COUNT:
+		return servers.DemoStrategyCount
+	case configv1.DemoStrategy_DEMO_STRATEGY_PCTFREE_UNSPECIFIED:
+		fallthrough
+	default:
+		return servers.DemoStrategyPctFree
 	}
 }
 
@@ -403,6 +435,20 @@ func toDemoStrategy(strategy servers.DemoStrategy) configv1.DemoStrategy {
 		fallthrough
 	default:
 		return configv1.DemoStrategy_DEMO_STRATEGY_PCTFREE_UNSPECIFIED
+	}
+}
+func fromLevel(level configv1.Level) log.Level {
+	switch level {
+	case configv1.Level_LEVEL_DEBUG:
+		return log.Debug
+	case configv1.Level_LEVEL_WARNING:
+		return log.Warn
+	case configv1.Level_LEVEL_INFO:
+		return log.Info
+	case configv1.Level_LEVEL_ERROR_UNSPECIFIED:
+		fallthrough
+	default:
+		return log.Error
 	}
 }
 
@@ -431,5 +477,18 @@ func toAction(action anticheat.Action) configv1.Action {
 		fallthrough
 	default:
 		return configv1.Action_ACTION_KICK_UNSPECIFIED
+	}
+}
+
+func fromAction(action configv1.Action) anticheat.Action {
+	switch action {
+	case configv1.Action_ACTION_BAN:
+		return anticheat.ActionBan
+	case configv1.Action_ACTION_GAG:
+		return anticheat.ActionGag
+	case configv1.Action_ACTION_KICK_UNSPECIFIED:
+		fallthrough
+	default:
+		return anticheat.ActionKick
 	}
 }
