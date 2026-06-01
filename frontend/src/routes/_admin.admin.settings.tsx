@@ -138,9 +138,8 @@ function AdminSettings() {
 	});
 
 	const form = useAppForm({
-		onSubmit: async ({ value, formApi }) => {
-			console.log(formApi.formId, formApi.);
-			mutation.mutate(create(UpdateRequestSchema, { config: { ...config, ...value } }));
+		onSubmit: async ({ value }) => {
+			mutation.mutate(create(UpdateRequestSchema, { config: { ...config, ...(value as object) } }));
 		},
 		defaultValues,
 	});
