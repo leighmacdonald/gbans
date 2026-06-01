@@ -73,10 +73,8 @@
 	}
 }
 .mdxeditor-toolbar {
+	/* biome-ignore lint/complexity/noImportantStyles: todo */
 	border-radius: 0 !important;
-}
-.md-toolbar {
-	background-color: #395c78 !important;
 }
 
 .mdxeditor-root-contenteditable-dark {

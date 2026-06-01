@@ -2090,21 +2090,21 @@ func (x *Clientprefs) GetCenterProjectiles() bool {
 }
 
 type Config struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	General       *General               `protobuf:"bytes,1,opt,name=general" json:"general,omitempty"`
-	Debug         *Debug                 `protobuf:"bytes,2,opt,name=debug" json:"debug,omitempty"`
-	Demo          *Demo                  `protobuf:"bytes,3,opt,name=demo" json:"demo,omitempty"`
-	Filters       *Filters               `protobuf:"bytes,4,opt,name=filters" json:"filters,omitempty"`
-	Discord       *Discord               `protobuf:"bytes,5,opt,name=discord" json:"discord,omitempty"`
-	ClientPrefs   *Clientprefs           `protobuf:"bytes,6,opt,name=client_prefs,json=clientPrefs" json:"client_prefs,omitempty"`
-	Log           *Log                   `protobuf:"bytes,7,opt,name=log" json:"log,omitempty"`
-	GeoLocation   *GeoLocation           `protobuf:"bytes,8,opt,name=geo_location,json=geoLocation" json:"geo_location,omitempty"`
-	Patreon       *Patreon               `protobuf:"bytes,9,opt,name=patreon" json:"patreon,omitempty"`
-	Ssh           *SSH                   `protobuf:"bytes,10,opt,name=ssh" json:"ssh,omitempty"`
-	Network       *Network               `protobuf:"bytes,11,opt,name=network" json:"network,omitempty"`
-	LocalStore    *LocalStore            `protobuf:"bytes,12,opt,name=local_store,json=localStore" json:"local_store,omitempty"`
-	Exports       *Exports               `protobuf:"bytes,13,opt,name=exports" json:"exports,omitempty"`
-	Anticheat     *Anticheat             `protobuf:"bytes,14,opt,name=anticheat" json:"anticheat,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	General *General               `protobuf:"bytes,1,opt,name=general" json:"general,omitempty"`
+	Debug   *Debug                 `protobuf:"bytes,2,opt,name=debug" json:"debug,omitempty"`
+	Demo    *Demo                  `protobuf:"bytes,3,opt,name=demo" json:"demo,omitempty"`
+	Filters *Filters               `protobuf:"bytes,4,opt,name=filters" json:"filters,omitempty"`
+	Discord *Discord               `protobuf:"bytes,5,opt,name=discord" json:"discord,omitempty"`
+	// Clientprefs client_prefs = 6;
+	Log           *Log         `protobuf:"bytes,7,opt,name=log" json:"log,omitempty"`
+	GeoLocation   *GeoLocation `protobuf:"bytes,8,opt,name=geo_location,json=geoLocation" json:"geo_location,omitempty"`
+	Patreon       *Patreon     `protobuf:"bytes,9,opt,name=patreon" json:"patreon,omitempty"`
+	Ssh           *SSH         `protobuf:"bytes,10,opt,name=ssh" json:"ssh,omitempty"`
+	Network       *Network     `protobuf:"bytes,11,opt,name=network" json:"network,omitempty"`
+	LocalStore    *LocalStore  `protobuf:"bytes,12,opt,name=local_store,json=localStore" json:"local_store,omitempty"`
+	Exports       *Exports     `protobuf:"bytes,13,opt,name=exports" json:"exports,omitempty"`
+	Anticheat     *Anticheat   `protobuf:"bytes,14,opt,name=anticheat" json:"anticheat,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2170,13 +2170,6 @@ func (x *Config) GetFilters() *Filters {
 func (x *Config) GetDiscord() *Discord {
 	if x != nil {
 		return x.Discord
-	}
-	return nil
-}
-
-func (x *Config) GetClientPrefs() *Clientprefs {
-	if x != nil {
-		return x.ClientPrefs
 	}
 	return nil
 }
@@ -2898,24 +2891,23 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x14max_invalid_user_cmd\x18\v \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11maxInvalidUserCmd\x12,\n" +
 	"\x0emax_cheat_cvar\x18\f \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fmaxCheatCvar\"D\n" +
 	"\vClientprefs\x125\n" +
-	"\x12center_projectiles\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x11centerProjectiles\"\xff\x05\n" +
-	"\x06Config\x124\n" +
-	"\ageneral\x18\x01 \x01(\v2\x12.config.v1.GeneralB\x06\xbaH\x03\xc8\x01\x01R\ageneral\x12.\n" +
-	"\x05debug\x18\x02 \x01(\v2\x10.config.v1.DebugB\x06\xbaH\x03\xc8\x01\x01R\x05debug\x12+\n" +
-	"\x04demo\x18\x03 \x01(\v2\x0f.config.v1.DemoB\x06\xbaH\x03\xc8\x01\x01R\x04demo\x124\n" +
-	"\afilters\x18\x04 \x01(\v2\x12.config.v1.FiltersB\x06\xbaH\x03\xc8\x01\x01R\afilters\x124\n" +
-	"\adiscord\x18\x05 \x01(\v2\x12.config.v1.DiscordB\x06\xbaH\x03\xc8\x01\x01R\adiscord\x12A\n" +
-	"\fclient_prefs\x18\x06 \x01(\v2\x16.config.v1.ClientprefsB\x06\xbaH\x03\xc8\x01\x01R\vclientPrefs\x12(\n" +
-	"\x03log\x18\a \x01(\v2\x0e.config.v1.LogB\x06\xbaH\x03\xc8\x01\x01R\x03log\x12A\n" +
-	"\fgeo_location\x18\b \x01(\v2\x16.config.v1.GeoLocationB\x06\xbaH\x03\xc8\x01\x01R\vgeoLocation\x124\n" +
-	"\apatreon\x18\t \x01(\v2\x12.config.v1.PatreonB\x06\xbaH\x03\xc8\x01\x01R\apatreon\x12(\n" +
+	"\x12center_projectiles\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x11centerProjectiles\"\xd4\x04\n" +
+	"\x06Config\x12,\n" +
+	"\ageneral\x18\x01 \x01(\v2\x12.config.v1.GeneralR\ageneral\x12&\n" +
+	"\x05debug\x18\x02 \x01(\v2\x10.config.v1.DebugR\x05debug\x12#\n" +
+	"\x04demo\x18\x03 \x01(\v2\x0f.config.v1.DemoR\x04demo\x12,\n" +
+	"\afilters\x18\x04 \x01(\v2\x12.config.v1.FiltersR\afilters\x12,\n" +
+	"\adiscord\x18\x05 \x01(\v2\x12.config.v1.DiscordR\adiscord\x12 \n" +
+	"\x03log\x18\a \x01(\v2\x0e.config.v1.LogR\x03log\x129\n" +
+	"\fgeo_location\x18\b \x01(\v2\x16.config.v1.GeoLocationR\vgeoLocation\x12,\n" +
+	"\apatreon\x18\t \x01(\v2\x12.config.v1.PatreonR\apatreon\x12 \n" +
 	"\x03ssh\x18\n" +
-	" \x01(\v2\x0e.config.v1.SSHB\x06\xbaH\x03\xc8\x01\x01R\x03ssh\x124\n" +
-	"\anetwork\x18\v \x01(\v2\x12.config.v1.NetworkB\x06\xbaH\x03\xc8\x01\x01R\anetwork\x12>\n" +
-	"\vlocal_store\x18\f \x01(\v2\x15.config.v1.LocalStoreB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"localStore\x124\n" +
-	"\aexports\x18\r \x01(\v2\x12.config.v1.ExportsB\x06\xbaH\x03\xc8\x01\x01R\aexports\x12:\n" +
-	"\tanticheat\x18\x0e \x01(\v2\x14.config.v1.AnticheatB\x06\xbaH\x03\xc8\x01\x01R\tanticheat\"\x9f\f\n" +
+	" \x01(\v2\x0e.config.v1.SSHR\x03ssh\x12,\n" +
+	"\anetwork\x18\v \x01(\v2\x12.config.v1.NetworkR\anetwork\x126\n" +
+	"\vlocal_store\x18\f \x01(\v2\x15.config.v1.LocalStoreR\n" +
+	"localStore\x12,\n" +
+	"\aexports\x18\r \x01(\v2\x12.config.v1.ExportsR\aexports\x122\n" +
+	"\tanticheat\x18\x0e \x01(\v2\x14.config.v1.AnticheatR\tanticheat\"\x9f\f\n" +
 	"\rGithubRelease\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\x19\n" +
 	"\bhtml_url\x18\x02 \x01(\tR\ahtmlUrl\x12\x1b\n" +
@@ -3078,34 +3070,33 @@ var file_config_v1_config_proto_depIdxs = []int32{
 	13, // 13: config.v1.Config.demo:type_name -> config.v1.Demo
 	14, // 14: config.v1.Config.filters:type_name -> config.v1.Filters
 	15, // 15: config.v1.Config.discord:type_name -> config.v1.Discord
-	25, // 16: config.v1.Config.client_prefs:type_name -> config.v1.Clientprefs
-	17, // 17: config.v1.Config.log:type_name -> config.v1.Log
-	18, // 18: config.v1.Config.geo_location:type_name -> config.v1.GeoLocation
-	19, // 19: config.v1.Config.patreon:type_name -> config.v1.Patreon
-	20, // 20: config.v1.Config.ssh:type_name -> config.v1.SSH
-	21, // 21: config.v1.Config.network:type_name -> config.v1.Network
-	22, // 22: config.v1.Config.local_store:type_name -> config.v1.LocalStore
-	23, // 23: config.v1.Config.exports:type_name -> config.v1.Exports
-	24, // 24: config.v1.Config.anticheat:type_name -> config.v1.Anticheat
-	30, // 25: config.v1.GithubRelease.created_at:type_name -> google.protobuf.Timestamp
-	30, // 26: config.v1.GithubRelease.published_at:type_name -> google.protobuf.Timestamp
-	28, // 27: config.v1.GithubRelease.author:type_name -> config.v1.GithubRelease.Author
-	30, // 28: config.v1.GithubRelease.Asset.created_at:type_name -> google.protobuf.Timestamp
-	30, // 29: config.v1.GithubRelease.Asset.updated_at:type_name -> google.protobuf.Timestamp
-	28, // 30: config.v1.GithubRelease.Asset.uploader:type_name -> config.v1.GithubRelease.Author
-	31, // 31: config.v1.ConfigService.Info:input_type -> google.protobuf.Empty
-	31, // 32: config.v1.ConfigService.Get:input_type -> google.protobuf.Empty
-	9,  // 33: config.v1.ConfigService.Update:input_type -> config.v1.UpdateRequest
-	31, // 34: config.v1.ConfigService.Changelog:input_type -> google.protobuf.Empty
-	7,  // 35: config.v1.ConfigService.Info:output_type -> config.v1.InfoResponse
-	8,  // 36: config.v1.ConfigService.Get:output_type -> config.v1.GetResponse
-	10, // 37: config.v1.ConfigService.Update:output_type -> config.v1.UpdateResponse
-	6,  // 38: config.v1.ConfigService.Changelog:output_type -> config.v1.ChangelogResponse
-	35, // [35:39] is the sub-list for method output_type
-	31, // [31:35] is the sub-list for method input_type
-	31, // [31:31] is the sub-list for extension type_name
-	31, // [31:31] is the sub-list for extension extendee
-	0,  // [0:31] is the sub-list for field type_name
+	17, // 16: config.v1.Config.log:type_name -> config.v1.Log
+	18, // 17: config.v1.Config.geo_location:type_name -> config.v1.GeoLocation
+	19, // 18: config.v1.Config.patreon:type_name -> config.v1.Patreon
+	20, // 19: config.v1.Config.ssh:type_name -> config.v1.SSH
+	21, // 20: config.v1.Config.network:type_name -> config.v1.Network
+	22, // 21: config.v1.Config.local_store:type_name -> config.v1.LocalStore
+	23, // 22: config.v1.Config.exports:type_name -> config.v1.Exports
+	24, // 23: config.v1.Config.anticheat:type_name -> config.v1.Anticheat
+	30, // 24: config.v1.GithubRelease.created_at:type_name -> google.protobuf.Timestamp
+	30, // 25: config.v1.GithubRelease.published_at:type_name -> google.protobuf.Timestamp
+	28, // 26: config.v1.GithubRelease.author:type_name -> config.v1.GithubRelease.Author
+	30, // 27: config.v1.GithubRelease.Asset.created_at:type_name -> google.protobuf.Timestamp
+	30, // 28: config.v1.GithubRelease.Asset.updated_at:type_name -> google.protobuf.Timestamp
+	28, // 29: config.v1.GithubRelease.Asset.uploader:type_name -> config.v1.GithubRelease.Author
+	31, // 30: config.v1.ConfigService.Info:input_type -> google.protobuf.Empty
+	31, // 31: config.v1.ConfigService.Get:input_type -> google.protobuf.Empty
+	9,  // 32: config.v1.ConfigService.Update:input_type -> config.v1.UpdateRequest
+	31, // 33: config.v1.ConfigService.Changelog:input_type -> google.protobuf.Empty
+	7,  // 34: config.v1.ConfigService.Info:output_type -> config.v1.InfoResponse
+	8,  // 35: config.v1.ConfigService.Get:output_type -> config.v1.GetResponse
+	10, // 36: config.v1.ConfigService.Update:output_type -> config.v1.UpdateResponse
+	6,  // 37: config.v1.ConfigService.Changelog:output_type -> config.v1.ChangelogResponse
+	34, // [34:38] is the sub-list for method output_type
+	30, // [30:34] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_config_v1_config_proto_init() }

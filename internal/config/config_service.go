@@ -93,7 +93,6 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 	inDemo := inCfg.GetDemo()
 	inNetwork := inCfg.GetNetwork()
 	inDiscord := inCfg.GetDiscord()
-	inClientPrefs := inCfg.GetClientPrefs()
 	inSSH := inCfg.GetSsh()
 	inPatreon := inCfg.GetPatreon()
 	inGeo := inCfg.GetGeoLocation()
@@ -170,7 +169,7 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 			ChatLogChannelID:        inDiscord.GetChatLogChannelId(),
 		},
 		Clientprefs: sourcemod.Config{
-			CenterProjectiles: inClientPrefs.GetCenterProjectiles(),
+			CenterProjectiles: false,
 		},
 		Log: log.Config{
 			Level:           log.Level(inLog.GetLevel().String()), // FIXME
@@ -369,6 +368,7 @@ func toConfig(conf Config) *configv1.Config {
 			MaxTooManyConnections: new(conf.Anticheat.MaxTooManyConnections),
 			MaxOobVar:             new(conf.Anticheat.MaxOOBVar),
 			MaxInvalidUserCmd:     new(conf.Anticheat.MaxInvalidUserCmd),
+			MaxCheatCvar:          new(conf.Anticheat.MaxCheatCvar),
 		},
 	}
 }

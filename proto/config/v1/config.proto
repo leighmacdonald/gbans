@@ -265,20 +265,20 @@ message Clientprefs {
 }
 
 message Config {
-  General general = 1 [(buf.validate.field).required = true];
-  Debug debug = 2 [(buf.validate.field).required = true];
-  Demo demo = 3 [(buf.validate.field).required = true];
-  Filters filters = 4 [(buf.validate.field).required = true];
-  Discord discord = 5 [(buf.validate.field).required = true];
-  Clientprefs client_prefs = 6 [(buf.validate.field).required = true];
-  Log log = 7 [(buf.validate.field).required = true];
-  GeoLocation geo_location = 8 [(buf.validate.field).required = true];
-  Patreon patreon = 9 [(buf.validate.field).required = true];
-  SSH ssh = 10 [(buf.validate.field).required = true];
-  Network network = 11 [(buf.validate.field).required = true];
-  LocalStore local_store = 12 [(buf.validate.field).required = true];
-  Exports exports = 13 [(buf.validate.field).required = true];
-  Anticheat anticheat = 14 [(buf.validate.field).required = true];
+  General general = 1;
+  Debug debug = 2;
+  Demo demo = 3;
+  Filters filters = 4;
+  Discord discord = 5;
+  // Clientprefs client_prefs = 6;
+  Log log = 7;
+  GeoLocation geo_location = 8;
+  Patreon patreon = 9;
+  SSH ssh = 10;
+  Network network = 11;
+  LocalStore local_store = 12;
+  Exports exports = 13;
+  Anticheat anticheat = 14;
 }
 
 message GithubRelease {
