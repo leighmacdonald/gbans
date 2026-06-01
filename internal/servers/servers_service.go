@@ -50,7 +50,6 @@ func getLatLong(ctx context.Context) (float64, float64) {
 	long, _ := strconv.ParseFloat(head.Get("CF-IPLongitude"), 64)
 
 	return lat, long
-
 }
 
 func (s Service) State(ctx context.Context, req *v1.StateRequest) (*v1.StateResponse, error) {

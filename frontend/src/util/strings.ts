@@ -299,3 +299,32 @@ export const banReasonString = (banReason: BanReason) => {
 			return "Unspecified";
 	}
 };
+
+type DeepNullifyStrings<T> = T extends string
+	? string | undefined
+	: T extends Array<infer U>
+		? Array<DeepNullifyStrings<U>>
+		: T extends object
+			? { [K in keyof T]: DeepNullifyStrings<T[K]> }
+			: T;
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+	typeof value === "object" && value !== null && !Array.isArray(value);
+
+const nullifyValue = <T>(value: T): DeepNullifyStrings<T> => {
+	if (value === "" || value === null) {
+		return undefined as unknown as DeepNullifyStrings<T>;
+	}
+	if (Array.isArray(value)) {
+		return value.map((item) => nullifyValue(item)) as DeepNullifyStrings<T>;
+	}
+	if (isPlainObject(value)) {
+		const entries = Object.entries(value).map(([key, v]) => [key, nullifyValue(v)] as const);
+		return Object.fromEntries(entries) as DeepNullifyStrings<T>;
+	}
+	return value as DeepNullifyStrings<T>;
+};
+
+export const nullifyEmptyStrings = <T>(obj: T): DeepNullifyStrings<T> => {
+	return nullifyValue(obj);
+};
