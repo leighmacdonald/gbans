@@ -67,7 +67,7 @@ func (s Service) ActiveUsers(_ context.Context, _ *emptypb.Empty) (*v1.ActiveUse
 }
 
 func (s Service) Overview(ctx context.Context, _ *emptypb.Empty) (*v1.OverviewResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	s.forums.Touch(user)
 
 	categories, errCats := s.forums.Categories(ctx)
@@ -105,7 +105,7 @@ func (s Service) Overview(ctx context.Context, _ *emptypb.Empty) (*v1.OverviewRe
 }
 
 func (s Service) RecentMessages(ctx context.Context, _ *emptypb.Empty) (*v1.RecentMessagesResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	messages, errThreads := s.forums.RecentActivity(ctx, 5, user.GetPrivilege())
 	if errThreads != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -137,7 +137,7 @@ func toMessage(msg Message) *v1.Message {
 }
 
 func (s Service) Threads(ctx context.Context, req *v1.ThreadsRequest) (*v1.ThreadsResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	s.forums.Touch(user)
 
 	threads, errThreads := s.forums.Threads(ctx, ThreadQueryFilter{ForumID: req.GetForumId()})
@@ -163,7 +163,7 @@ func (s Service) Threads(ctx context.Context, req *v1.ThreadsRequest) (*v1.Threa
 }
 
 func (s Service) Thread(ctx context.Context, req *v1.ThreadRequest) (*v1.ThreadResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	s.forums.Touch(user)
 
 	var thread Thread
@@ -212,7 +212,7 @@ func (s Service) ThreadDelete(ctx context.Context, req *v1.ThreadDeleteRequest) 
 }
 
 func (s Service) Forum(ctx context.Context, req *v1.ForumRequest) (*v1.ForumResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 
 	var forum Forum
 
@@ -255,7 +255,7 @@ func (s Service) ThreadMessages(ctx context.Context, req *v1.ThreadMessagesReque
 }
 
 func (s Service) ThreadCreate(ctx context.Context, req *v1.ThreadCreateRequest) (*v1.ThreadCreateResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	s.forums.Touch(user)
 
 	var forum Forum
@@ -300,7 +300,7 @@ func (s Service) ThreadCreate(ctx context.Context, req *v1.ThreadCreateRequest) 
 }
 
 func (s Service) ThreadEdit(ctx context.Context, req *v1.ThreadEditRequest) (*v1.ThreadEditResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	req.Title = new(stringutil.SanitizeUGC(req.GetTitle()))
 
 	var thread Thread
@@ -328,7 +328,7 @@ func (s Service) ThreadEdit(ctx context.Context, req *v1.ThreadEditRequest) (*v1
 }
 
 func (s Service) ThreadReplyCreate(ctx context.Context, req *v1.ThreadReplyCreateRequest) (*v1.ThreadReplyCreateResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	s.forums.Touch(user)
 
 	var thread Thread
@@ -355,7 +355,7 @@ func (s Service) ThreadReplyCreate(ctx context.Context, req *v1.ThreadReplyCreat
 }
 
 func (s Service) ThreadReplyEdit(ctx context.Context, req *v1.ThreadReplyEditRequest) (*v1.ThreadReplyEditResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	s.forums.Touch(user)
 
 	var message Message
@@ -381,7 +381,7 @@ func (s Service) ThreadReplyEdit(ctx context.Context, req *v1.ThreadReplyEditReq
 }
 
 func (s Service) ThreadMessageDelete(ctx context.Context, req *v1.ThreadMessageDeleteRequest) (*emptypb.Empty, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	if err := s.forums.MessageDelete(ctx, user, req.GetForumMessageId()); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNoResult):

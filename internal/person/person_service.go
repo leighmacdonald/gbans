@@ -38,7 +38,7 @@ func NewPersonService(persons *Persons, authMiddleware *rpc.Middleware, option .
 }
 
 func (s Service) CurrentProfile(ctx context.Context, _ *emptypb.Empty) (*v1.CurrentProfileResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	requestCtx, cancelRequest := context.WithTimeout(ctx, time.Second*15)
 	defer cancelRequest()
 
@@ -95,7 +95,7 @@ func (s Service) ResolveSteamID(ctx context.Context, req *v1.ResolveSteamIDReque
 }
 
 func (s Service) ProfileSettings(ctx context.Context, _ *emptypb.Empty) (*v1.ProfileSettingsResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 
 	settings, err := s.persons.GetPersonSettings(ctx, user.GetSteamID())
 	if err != nil {
@@ -106,7 +106,7 @@ func (s Service) ProfileSettings(ctx context.Context, _ *emptypb.Empty) (*v1.Pro
 }
 
 func (s Service) EditProfileSettings(ctx context.Context, req *v1.EditProfileSettingsRequest) (*v1.EditProfileSettingsResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	settings, err := s.persons.SavePersonSettings(ctx, user, SettingsUpdate{
 		ForumSignature:       req.GetForumSignature(),
 		ForumProfileMessages: req.GetForumProfileMessages(),

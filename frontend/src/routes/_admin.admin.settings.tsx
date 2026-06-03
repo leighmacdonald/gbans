@@ -51,6 +51,7 @@ import { DemoService } from "../rpc/servers/v1/demo_pb.ts";
 import { finalTransport } from "../transport.ts";
 import { logErr } from "../util/errors.ts";
 import { enumValues } from "../util/lists.ts";
+import { toTitleCase } from "../util/strings.ts";
 import { emptyOrNullString } from "../util/types.ts";
 
 const settingsSchema = z.object({
@@ -1178,7 +1179,7 @@ function AdminSettings() {
 												renderItem={(item) => {
 													return (
 														<MenuItem key={item} value={item}>
-															{item}
+															{toTitleCase(Level[item])}
 														</MenuItem>
 													);
 												}}
@@ -1228,7 +1229,7 @@ function AdminSettings() {
 												renderItem={(item) => {
 													return (
 														<MenuItem key={item} value={item}>
-															{item}
+															{toTitleCase(Level[item])}
 														</MenuItem>
 													);
 												}}

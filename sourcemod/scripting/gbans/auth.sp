@@ -17,7 +17,6 @@ public void reloadAdmins(bool force)
 }
 
 public void OnClientPostAdminCheck(int clientId) {
-	gbLog("--- OnClientPostAdminCheck");
 	if (!(clientId > 0 && IsClientInGame(clientId) && !IsFakeClient(clientId))) {
 		return;
 	}
@@ -26,14 +25,6 @@ public void OnClientPostAdminCheck(int clientId) {
 }
 
 public void authenticateServer() {
-    if (gAuthWaiting) {
-        gbLog("Waiting to reauthenticate gbans");
-        return;
-    }
-
-    gAuthWaiting = true;
-	gbLog("Authenticating gbans...");
-
 	char passwd[40];
 	gbCoreServerKey.GetString(passwd, sizeof passwd);
 
@@ -48,22 +39,19 @@ void onAuthenticate(HTTPResponse response, any value) {
 		case HTTPStatus_OK: {
 			JSONObject data = view_as<JSONObject>(response.Data);
 			data.GetString("token", gToken, sizeof gToken);
-			gbLog("Authenticated server successfully");
+			LogMessage("Authenticated server successfully");
 
 			reloadAdmins(true);
 		}
 		default: {
-			gbLog("Got invalid auth response: %d", response.Status);
+			LogError("Got invalid auth response: %d", response.Status);
 		}
 	}
-
-	gAuthWaiting = false;
 }
 
 void checkPlayer(int clientId)
 {
 	if (!(clientId > 0 && IsClientInGame(clientId) && !IsFakeClient(clientId))) {
-		gbLog("Skipping check on invalid player");
 		return ;
 	}
 
@@ -86,7 +74,7 @@ void checkPlayer(int clientId)
 }
 
 void onCheckResp(HTTPResponse response, any value) {
-	gbLog("--- onCheckResp");
+	LogMessage("--- onCheckResp");
 	switch (response.Status) {
 	case HTTPStatus_OK:
 		// good boi
@@ -108,7 +96,7 @@ void onCheckResp(HTTPResponse response, any value) {
 					BaseComm_SetClientGag(clientId, true);
 				}
 				ReplyToCommand(clientId, "You are currently muted/gag, it will expire automatically");
-				gbLog("Muted \"%L\" for an unfinished mute punishment.", clientId);
+				LogMessage("Muted \"%L\" for an unfinished mute punishment.", clientId);
 			}
 			case BSNetwork: {
 				KickClient(clientId, msg);
@@ -121,7 +109,7 @@ void onCheckResp(HTTPResponse response, any value) {
 		}
 	}
 	default: {
-		LogError("Invalid check response code: %d", response.Status);
+		PrintRPCError(response);
 	}
 	}
 }

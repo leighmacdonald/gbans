@@ -21,7 +21,7 @@ type DiscordService struct {
 }
 
 func (s *DiscordService) Login(ctx context.Context, _ *emptypb.Empty) (*v1.LoginResponse, error) {
-	currentUser, _ := rpc.UserInfoFromCtx(ctx)
+	currentUser := rpc.UserInfoFromCtx(ctx)
 	sid := currentUser.GetSteamID()
 
 	loginURL, errURL := s.discord.CreateStatefulLoginURL(sid)
@@ -35,7 +35,7 @@ func (s *DiscordService) Login(ctx context.Context, _ *emptypb.Empty) (*v1.Login
 }
 
 func (s *DiscordService) Logout(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 
 	errUser := s.discord.Logout(ctx, user.GetSteamID())
 	if errUser != nil {
@@ -50,7 +50,7 @@ func (s *DiscordService) Logout(ctx context.Context, _ *emptypb.Empty) (*emptypb
 }
 
 func (s *DiscordService) Profile(ctx context.Context, _ *emptypb.Empty) (*v1.ProfileResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	discord, errUser := s.discord.GetUserDetail(ctx, user.GetSteamID())
 	if errUser != nil {
 		if errors.Is(errUser, database.ErrNoResult) {

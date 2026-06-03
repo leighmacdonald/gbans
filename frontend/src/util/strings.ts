@@ -151,8 +151,10 @@ export const avatarHashToURL = (hash?: string, size: avatarSize = "full") => {
 
 export const toTitleCase = (str: string) =>
 	str
-		.split(" ")
-		.map((item) => item.replace(item.charAt(0), item.charAt(0).toUpperCase()))
+		.toLowerCase()
+		.replace(/S+/, "_")
+		.split("_")
+		.map((item) => (item === "unspecified" ? "" : item.replace(item.charAt(0), item.charAt(0).toUpperCase())))
 		.join(" ");
 
 export const reportStatusColour = (rs: ReportStatus, theme: Theme): string => {

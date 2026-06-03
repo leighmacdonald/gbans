@@ -140,7 +140,6 @@ message CreateGroupOverrideResponse {
 }
 
 message EditGroupOverrideRequest {
-  // FIXME Are both ids needed??
   int32 group_id = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).int32 = {gt: 0}

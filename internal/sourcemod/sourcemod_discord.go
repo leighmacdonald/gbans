@@ -397,12 +397,28 @@ func (h discordHandler) onGroupsEdit(ctx context.Context, session *discordgo.Ses
 
 func (h discordHandler) onSeed(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
 	data := discord.OptionMap(interaction.ApplicationCommandData().Options)
-	server, errServer := h.servers.GetByName(ctx, data["target_server"].StringValue())
+	targetServer := data["target_server"].StringValue()
+	server, errServer := h.servers.GetByName(ctx, targetServer)
 	if errServer != nil {
 		return errServer
 	}
 
-	if !h.sourcemod.seedRequest(ctx, server, interaction.Member.User.ID) {
+	var safeServer servers.SafeServer
+	for _, ss := range h.servers.Current() {
+		if ss.ServerID == server.ServerID {
+			safeServer = ss
+
+			break
+		}
+	}
+
+	if safeServer.ServerID == 0 {
+		slog.Warn("Seed request for server without state", slog.String("target_server", targetServer))
+
+		return nil
+	}
+
+	if !h.sourcemod.seedRequest(server.DiscordSeedRoleIDs, safeServer, interaction.Member.User.ID) {
 		discord.Error(session, interaction, ErrReqTooSoon)
 
 		return nil

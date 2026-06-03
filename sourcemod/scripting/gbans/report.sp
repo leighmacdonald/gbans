@@ -53,7 +53,7 @@ public Action OnClientSayCommand(int clientId, const char[] command, const char[
 		return Plugin_Continue;
 	}
 
-	gbLog("Got report reason: %s", args);
+	LogMessage("Got report reason: %s", args);
 	report(gReportSourceId, gReportTargetId, gReportTargetReason, args);
 
 	return Plugin_Continue;
@@ -106,7 +106,7 @@ void onReportRespReceived(HTTPResponse response, any clientId)
 			return ;
 		}
 
-		gbLog("Invalid report response status: %d", response.Status);
+		LogError("Invalid report response status: %d", response.Status);
 
 		PrintToChat(clientId, "[Report] Error creating report");
 		resetReportStatus();

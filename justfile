@@ -62,6 +62,11 @@ air:
 sourcemod:
     just -f sourcemod/justfile
 
+upload-plugin:
+    @just sourcemod
+    @scp sourcemod/plugins/gbans.smx $SOURCEMOD_SCP_URI
+    @rcon-cli --host $SOURCEMOD_HOST --port $SOURCEMOD_PORT --password $SOURCEMOD_RCON "$SOURCEMOD_RELOAD_COMMAND"
+
 sourcemod-devel: sourcemod
     docker cp sourcemod/plugins/gbans.smx srcds-localhost-1:/home/tf2server/tf-dedicated/tf/addons/sourcemod/plugins/
     docker restart srcds-localhost-1
@@ -119,8 +124,8 @@ db:
     pushd docker && ./dev_db.sh
 
 demostats-serve:
-    ../tf2_demostats/dist/cli_x86_64-unknown-linux-musl/tf2_demostats update --api-key $STEAM_KEY
-    ../tf2_demostats/dist/cli_x86_64-unknown-linux-musl/tf2_demostats serve
+    $DEMOSTATS_BIN update --api-key $STEAM_KEY
+    $DEMOSTATS_BIN serve
 
 dev:
     @zellij --layout .zellij.kdl

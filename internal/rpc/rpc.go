@@ -85,28 +85,27 @@ type ServerInfo struct {
 	ServerName string
 }
 
-func ServerInfoFromCtx(ctx context.Context) (*ServerInfo, bool) {
+func ServerInfoFromCtx(ctx context.Context) *ServerInfo {
 	server, ok := authn.GetInfo(ctx).(ServerInfo)
 	if !ok {
-		return nil, false
+		return nil
 	}
 
-	return &server, true
+	return &server
 }
 
-func UserInfoFromCtx(ctx context.Context) (*UserInfo, bool) {
+func UserInfoFromCtx(ctx context.Context) *UserInfo {
 	user, ok := authn.GetInfo(ctx).(UserInfo)
 	if !ok {
-		return nil, false
+		return nil
 	}
 
-	return &user, true
+	return &user
 }
 
 func UserInfoFromCtxWithCheck(ctx context.Context, privilege permission.Privilege) (*UserInfo, error) {
-	user, authed := UserInfoFromCtx(ctx)
-
-	if !authed || !user.HasPermission(privilege) {
+	user := UserInfoFromCtx(ctx)
+	if user == nil || !user.HasPermission(privilege) {
 		return nil, connect.NewError(connect.CodePermissionDenied, permission.ErrDenied)
 	}
 

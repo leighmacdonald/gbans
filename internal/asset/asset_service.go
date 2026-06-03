@@ -33,7 +33,7 @@ func NewService(assets Assets, authMiddleware *rpc.Middleware, option ...connect
 }
 
 func (s Service) Create(ctx context.Context, req *v1.CreateRequest) (*v1.CreateResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	asset, errAsset := s.assets.Create(ctx, user.SteamID, "media", req.GetName(), bytes.NewReader(req.GetContents()), false)
 	if errAsset != nil {
 		return nil, connect.NewError(connect.CodeInternal, errAsset)

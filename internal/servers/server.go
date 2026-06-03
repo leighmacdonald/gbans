@@ -50,6 +50,14 @@ type SafeServer struct {
 	Tags              []string
 }
 
+func (s SafeServer) Addr() string {
+	return fmt.Sprintf("%s:%d", s.Host, s.Port)
+}
+
+func (s SafeServer) Connect() string {
+	return link.Raw(fmt.Sprintf("/connect/%d", s.ServerID))
+}
+
 func (s SafeServer) MaxPlayerDisplay() int32 {
 	if s.MaxPlayersVisible > 0 {
 		return s.MaxPlayersVisible
@@ -92,7 +100,7 @@ type Server struct {
 	// Physical Longitude location
 	Longitude float32
 	// LogSecret is a unique integer used to "authenticate" UDP log packets.
-	LogSecret   int32
+	LogSecret   uint32
 	EnableStats bool
 	// TokenCreatedOn is set when changing the token
 	TokenCreatedOn time.Time
@@ -484,6 +492,8 @@ func (s *Server) updateStatus(ctx context.Context) error {
 	s.state.PortPublic = uint16(status.IPInfo.PublicPort) //nolint:gosec
 	s.state.Tags = status.Tags
 	s.state.Edicts = status.Edicts
+	s.state.Hostname = status.ServerName
+	s.state.Humans = int32(status.Humans) //nolint:gosec
 	s.state.Version = status.Version
 	s.state.STVIP = status.IPInfo.SourceTVIP
 	s.state.STVPort = uint16(status.IPInfo.SourceTVFPort) //nolint:gosec

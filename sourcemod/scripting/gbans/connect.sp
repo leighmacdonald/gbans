@@ -17,7 +17,7 @@ public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBr
 
 public bool OnClientPreConnectEx(const char[] name, char password[255], const char[] ip, const char[] steamID, char rejectReason[255]  )
 {
-	gbLog("OnClientPreConnectEx: %s : %s : %s : %s", name, password, ip, steamID);
+	LogMessage("OnClientPreConnectEx: %s : %s : %s : %s", name, password, ip, steamID);
 	if(GetClientCount(false) < MaxClients)
 	{
 		return true;
@@ -28,7 +28,7 @@ public bool OnClientPreConnectEx(const char[] name, char password[255], const ch
 	{
 		return true;
 	}
-	
+
 	if(GetAdminFlag(admin, Admin_Reservation))
 	{
 		int target = selectKickClient();

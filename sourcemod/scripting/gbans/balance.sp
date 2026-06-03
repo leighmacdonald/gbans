@@ -17,11 +17,11 @@ public Action onCmdAutoTeamAction(int clientId, int argc)
         char name[64];
         if(!GetClientName(clientId, name, sizeof name))
         {
-            gbLog("Failed to get user name?");
+            LogError("Failed to get user name?");
             return Plugin_Continue;
         }
 
-        gbLog("Autoteam blocked: %s [%s]", name, auth_id);
+        LogMessage("Autoteam blocked: %s [%s]", name, auth_id);
         return Plugin_Handled;
     }
 

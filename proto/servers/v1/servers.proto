@@ -8,7 +8,7 @@ import "google/protobuf/timestamp.proto";
 import "network/v1/network.proto";
 
 service ServersService {
-  rpc State(StateRequest) returns (StateResponse);
+  rpc State(google.protobuf.Empty) returns (StateResponse);
   rpc Servers(google.protobuf.Empty) returns (ServersResponse);
   rpc EditServer(EditServerRequest) returns (EditServerResponse);
   rpc DeleteServer(DeleteServerRequest) returns (google.protobuf.Empty);
@@ -42,10 +42,6 @@ message ServerLog {
 message QueryLogsResponse {
   repeated ServerLog logs = 1;
   int32 count = 2;
-}
-
-message StateRequest {
-  network.v1.LatLong lat_long = 1;
 }
 
 message SafeServer {
@@ -115,11 +111,8 @@ message Server {
     (buf.validate.field).required = true,
     (buf.validate.field).string.address = true
   ];
-  string address_internal = 5 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.address = true
-  ];
-  bool sdr_enabled = 6 [(buf.validate.field).required = true];
+  string address_internal = 5 [(buf.validate.field).string.address = true];
+  bool sdr_enabled = 6;
   uint32 port = 7 [
     (buf.validate.field).required = true,
     (buf.validate.field).uint32.lte = 65535
@@ -128,22 +121,22 @@ message Server {
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1
   ];
-  string password = 9 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1
-  ];
+  string password = 9 [(buf.validate.field).string.min_len = 1];
   bool is_enabled = 10 [(buf.validate.field).required = true];
   bool deleted = 11;
   string region = 12 [(buf.validate.field).required = true];
   string cc = 13 [(buf.validate.field).string.len = 2];
-  network.v1.LatLong lat_long = 14 [(buf.validate.field).required = true];
-  int32 log_secret = 15 [(buf.validate.field).required = true];
-  bool enable_stats = 16 [(buf.validate.field).required = true];
+  network.v1.LatLong lat_long = 14;
+  uint32 log_secret = 15 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).uint32.gt = 100000
+  ];
+  bool enable_stats = 16;
   google.protobuf.Timestamp token_created_on = 17;
-  google.protobuf.Timestamp created_on = 18 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp updated_on = 19 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp created_on = 18;
+  google.protobuf.Timestamp updated_on = 19;
   repeated string discord_seed_role_ids = 20;
-  string ip = 21;
+  string ip = 21 [(buf.validate.field).string.ipv4 = true];
 }
 
 message StateResponse {

@@ -31,7 +31,7 @@ func NewService(chat *Chat, authMiddleware *rpc.Middleware, option ...connect.Ha
 }
 
 func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResponse, error) {
-	ctxUser, _ := rpc.UserInfoFromCtx(ctx)
+	ctxUser := rpc.UserInfoFromCtx(ctx)
 
 	chatQuery := HistoryQueryFilter{
 		Filter:        rpc.FromRPC(req.GetFilter()),

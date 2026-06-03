@@ -43,7 +43,7 @@ public Action onCmdMod(int clientId, int argc)
 	char name[64];
 	if(!GetClientName(clientId, name, sizeof name))
 	{
-		gbLog("Failed to get user name?");
+		LogError("Failed to get user name?");
 		return Plugin_Continue;
 	}
 
@@ -66,7 +66,7 @@ void onPingModRespReceived(HTTPResponse response, any clientId) {
 		LogError("Invalid report response code: %d", response.Status);
 
         return;
-    } 
+    }
 	ReplyToCommand(clientId, "Mods have been alerted, thanks!");
 }
 
@@ -163,14 +163,14 @@ public Action onAdminCmdBan(int clientId, int argc)
 		return Plugin_Handled;
 	}
 
-	gbLog("args: %d", argc);
+	LogMessage("args: %d", argc);
 	if (argc > 4) {
 		GetCmdArg(5, memo, sizeof memo);
 	} else {
 		Format(memo, sizeof memo, "in-game ban");
 	}
-	
-	gbLog("Target: %s reason: %d duration: %d bantype: %d memo: %s", targetIdStr, reason, duration, bantype, memo);
+
+	LogMessage("Target: %s reason: %d duration: %d bantype: %d memo: %s", targetIdStr, reason, duration, bantype, memo);
 
 	int targetIdx = FindTarget(clientId, targetIdStr, true, false);
 	if(targetIdx < 0)

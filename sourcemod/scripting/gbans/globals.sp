@@ -44,5 +44,4 @@ bool gIsManual = false;
 
 // jwt returned and used once authenticated
 char gToken[1024] = "";
-bool gAuthWaiting = false;
 //int gLastAuthAttempt = 0;

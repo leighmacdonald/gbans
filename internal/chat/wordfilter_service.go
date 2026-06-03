@@ -92,7 +92,7 @@ func (s WordfilterService) WarningState(_ context.Context, _ *emptypb.Empty) (*v
 }
 
 func (s WordfilterService) FilterCreate(ctx context.Context, req *v1.FilterCreateRequest) (*v1.FilterCreateResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 
 	reqFilter := req.GetFilter()
 
@@ -116,7 +116,7 @@ func (s WordfilterService) FilterCreate(ctx context.Context, req *v1.FilterCreat
 }
 
 func (s WordfilterService) FilterEdit(ctx context.Context, req *v1.FilterEditRequest) (*v1.FilterEditResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	reqFilter := req.GetFilter()
 
 	existingFilter, errGet := s.filters.repository.GetFilterByID(ctx, reqFilter.GetFilterId())

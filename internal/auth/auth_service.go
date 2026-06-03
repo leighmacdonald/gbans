@@ -22,7 +22,7 @@ func NewService(authMiddleware *rpc.Middleware, option ...connect.HandlerOption)
 }
 
 func (s Service) Logout(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	slog.Info("User logged out", slog.String("user", user.Name), slog.String("steamId", user.SteamID.String()))
 
 	return &emptypb.Empty{}, nil

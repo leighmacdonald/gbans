@@ -23,12 +23,13 @@ import { z } from "zod/v4";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import type { ReportWithAuthorValid } from "../rpc/ban/v1/report_pb.ts";
+import type { ReportWithAuthor } from "../rpc/ban/v1/report_pb.ts";
 import { reportMessageCreate, reportMessages } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
 import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { ContainerWithHeader } from "./ContainerWithHeader";
 import { ContainerWithHeaderAndButtons } from "./ContainerWithHeaderAndButtons.tsx";
 import { mdEditorRef } from "./form/field/MarkdownField.tsx";
+import { LoadingPlaceholder } from "./LoadingPlaceholder.tsx";
 import { MarkDownRenderer } from "./MarkdownRenderer";
 import { PlayerMessageContext } from "./PlayerMessageContext";
 import { ReportMessageView } from "./ReportMessageView";
@@ -41,7 +42,7 @@ export const ReportViewComponent = ({
 	report,
 	assetURL,
 }: {
-	report: ReportWithAuthorValid;
+	report: ReportWithAuthor;
 	assetURL: string;
 }): JSX.Element => {
 	const theme = useTheme();
@@ -49,9 +50,13 @@ export const ReportViewComponent = ({
 	const [value, setValue] = useState<number>(0);
 	const { hasPermission } = useAuth();
 
-	const { data: messageData, isLoading: isLoadingMessages } = useQuery(reportMessages, {
-		reportId: report.report.reportId,
-	});
+	const { data: messageData, isLoading: isLoadingMessages } = useQuery(
+		reportMessages,
+		{
+			reportId: report?.report?.reportId,
+		},
+		{ enabled: Boolean(report?.report?.reportId) },
+	);
 
 	const handleChange = (_: SyntheticEvent, newValue: number) => {
 		setValue(newValue);
@@ -73,13 +78,15 @@ export const ReportViewComponent = ({
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			return await createMessageMutation.mutateAsync({ ...value, reportId: report.report.reportId });
+			return await createMessageMutation.mutateAsync({ ...value, reportId: report?.report?.reportId });
 		},
 		defaultValues: {
 			bodyMd: "",
 		},
 	});
-
+	if (!report.report) {
+		return <LoadingPlaceholder />;
+	}
 	return (
 		<Grid container>
 			<Grid size={{ xs: 12 }}>
@@ -167,7 +174,7 @@ export const ReportViewComponent = ({
 							</ContainerWithHeaderAndButtons>
 						)}
 
-						{report.report.personMessageId > 0 && (
+						{report.report.personMessageId !== "" && (
 							<ContainerWithHeader title={"Message Context"} iconLeft={<QuickreplyIcon />}>
 								<PlayerMessageContext playerMessageId={report.report.personMessageId} padding={4} />
 							</ContainerWithHeader>
