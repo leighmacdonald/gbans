@@ -32,7 +32,7 @@ any Native_GB_BanClient(Handle plugin, int numParams)
 	if(banType != BSBanned && banType != BSNoComm) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid banType, but must be 1: mute/gag  or 2: ban");
 	}
-	
+
 	char note[256];
 	if(GetNativeString(6, note, sizeof note) != SP_ERROR_NONE) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid note");
@@ -51,9 +51,9 @@ any Native_GB_BanClient(Handle plugin, int numParams)
  * NOTE: There is currently no way to set a custom ban reason string
  */
 public bool ban(int sourceId, int targetId, GB_BanReason reason, int duration, int banType, const char[] note)
-{	
+{
 	char sourceSid[50];
-	if (sourceId > 0) {	
+	if (sourceId > 0) {
 		if(!GetClientAuthId(sourceId, AuthId_Steam3, sourceSid, sizeof sourceSid, true))
 		{
 			ReplyToCommand(sourceId, "Failed to get sourceId of user: %d", sourceId);
@@ -73,7 +73,7 @@ public bool ban(int sourceId, int targetId, GB_BanReason reason, int duration, i
 
 	if (SourceTV_IsRecording()) {
 		if(!SourceTV_GetDemoFileName(demoName, sizeof demoName)) {
-			gbLog("Could not read demo name");
+			LogError("Could not read demo name");
 			return false;
 		}
 
@@ -93,7 +93,7 @@ public bool ban(int sourceId, int targetId, GB_BanReason reason, int duration, i
 	obj.SetInt("demoTick", tick);
 
 	postHTTPRequest("/connect/ban.v1.BanService/Create", obj, onBanRespReceived);
-	
+
 	return true;
 }
 
@@ -112,7 +112,7 @@ void onBanRespReceived(HTTPResponse response, any clientId)
 	}
 
 
-	JSONObject data = view_as<JSONObject>(response.Data); 
+	JSONObject data = view_as<JSONObject>(response.Data);
 
 	int banId = data.GetInt("banId");
 	ReplyToCommand(clientId, "User banned (#%d)", banId);

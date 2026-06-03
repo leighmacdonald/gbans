@@ -126,7 +126,7 @@ void StartRecord()
 		ServerCommand("tv_record \"%s/%s-%s\"", sPath, sTime, sMap);
 		gIsRecording = true;
 
-		gbLog("Recording to %s-%s.dem", sTime, sMap);
+		LogMessage("Recording to %s-%s.dem", sTime, sMap);
 	}
 }
 
@@ -140,7 +140,7 @@ void StopRecord()
 }
 
 public void SourceTV_OnStopRecording(int instance, const char[] filename, int recordingtick)
-{	
+{
 	char sPieces[32][PLATFORM_MAX_PATH];
 	char outPath[PLATFORM_MAX_PATH];
 
@@ -150,13 +150,12 @@ public void SourceTV_OnStopRecording(int instance, const char[] filename, int re
 
 	Format(outPath, sizeof outPath, "%s/%s", outPath, sPieces[iNumPieces - 1]);
 
-	gbLog("Writing stv: %s dest: %s", filename, outPath);
+	LogMessage("Writing stv: %s dest: %s", filename, outPath);
 	if(!RenameFile(outPath, filename))
 	{
-		gbLog("Failed to rename completed demo file");
+		LogError("Failed to rename completed demo file");
 		return ;
 	}
-	gbLog("Wrote demo");
 }
 
 void initDirectory(const char[] sDir)

@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file servers/v1/servers.proto.
  */
 export const file_servers_v1_servers: GenFile = /*@__PURE__*/
-  fileDesc("ChhzZXJ2ZXJzL3YxL3NlcnZlcnMucHJvdG8SCnNlcnZlcnMudjEiMgoQUXVlcnlMb2dzUmVxdWVzdBIeCglzZXJ2ZXJfaWQYASADKAVCC7pICMgBAZIBAggBIp0BCglTZXJ2ZXJMb2cSHQoJc2VydmVyX2lkGAEgASgFQgq6SAfIAQEaAiAAEh8KC3NlcnZlcl9uYW1lGAIgASgJQgq6SAfIAQFyAhABEhgKBGJvZHkYAyABKAlCCrpIB8gBAXICEAESNgoKY3JlYXRlZF9vbhgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASJHChFRdWVyeUxvZ3NSZXNwb25zZRIjCgRsb2dzGAEgAygLMhUuc2VydmVycy52MS5TZXJ2ZXJMb2cSDQoFY291bnQYAiABKAUiNQoMU3RhdGVSZXF1ZXN0EiUKCGxhdF9sb25nGAEgASgLMhMubmV0d29yay52MS5MYXRMb25nIuUDCgpTYWZlU2VydmVyEh0KCXNlcnZlcl9pZBgBIAEoBUIKukgHyAEBGgIgABIZCgRob3N0GAIgASgJQgu6SAjIAQFyA6gBARIaCgRwb3J0GAMgASgNQgy6SAnIAQEqBBj//wMSFgoCaXAYBCABKAlCCrpIB8gBAXICeAESGAoEbmFtZRgFIAEoCUIKukgHyAEBcgIQARIeCgpuYW1lX3Nob3J0GAYgASgJQgq6SAfIAQFyAhABEhYKBnJlZ2lvbhgHIAEoCUIGukgDyAEBEhQKAmNjGAggASgJQgi6SAVyA5gBAhIbCgdwbGF5ZXJzGAkgASgFQgq6SAfIAQEaAigAEh8KC21heF9wbGF5ZXJzGAogASgFQgq6SAfIAQEaAigAEhcKA2JvdBgLIAEoBUIKukgHyAEBGgIoABITCgNtYXAYDCABKAlCBrpIA8gBARIaCgpnYW1lX3R5cGVzGA0gAygJQga6SAPIAQESLQoIbGF0X2xvbmcYDiABKAsyEy5uZXR3b3JrLnYxLkxhdExvbmdCBrpIA8gBARIYCghkaXN0YW5jZRgPIAEoAkIGukgDyAEBEhoKBmh1bWFucxgQIAEoBUIKukgHyAEBGgIoABIUCgR0YWdzGBEgAygJQga6SAPIAQEirAUKBlNlcnZlchIdCglzZXJ2ZXJfaWQYASABKAVCCrpIB8gBARoCKAASHgoKc2hvcnRfbmFtZRgCIAEoCUIKukgHyAEBcgIQARIYCgRuYW1lGAMgASgJQgq6SAfIAQFyAhABEhwKB2FkZHJlc3MYBCABKAlCC7pICMgBAXIDqAEBEiUKEGFkZHJlc3NfaW50ZXJuYWwYBSABKAlCC7pICMgBAXIDqAEBEhsKC3Nkcl9lbmFibGVkGAYgASgIQga6SAPIAQESGgoEcG9ydBgHIAEoDUIMukgJyAEBKgQY//8DEhgKBHJjb24YCCABKAlCCrpIB8gBAXICEAESHAoIcGFzc3dvcmQYCSABKAlCCrpIB8gBAXICEAESGgoKaXNfZW5hYmxlZBgKIAEoCEIGukgDyAEBEg8KB2RlbGV0ZWQYCyABKAgSFgoGcmVnaW9uGAwgASgJQga6SAPIAQESFAoCY2MYDSABKAlCCLpIBXIDmAECEi0KCGxhdF9sb25nGA4gASgLMhMubmV0d29yay52MS5MYXRMb25nQga6SAPIAQESGgoKbG9nX3NlY3JldBgPIAEoBUIGukgDyAEBEhwKDGVuYWJsZV9zdGF0cxgQIAEoCEIGukgDyAEBEjQKEHRva2VuX2NyZWF0ZWRfb24YESABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjYKCmNyZWF0ZWRfb24YEiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgTIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARIdChVkaXNjb3JkX3NlZWRfcm9sZV9pZHMYFCADKAkSCgoCaXAYFSABKAkibwoNU3RhdGVSZXNwb25zZRIvCgdzZXJ2ZXJzGAEgAygLMhYuc2VydmVycy52MS5TYWZlU2VydmVyQga6SAPIAQESLQoIbGF0X2xvbmcYAiABKAsyEy5uZXR3b3JrLnYxLkxhdExvbmdCBrpIA8gBASKGAQoOU2VydmVySW5mb1NhZmUSJAoQc2VydmVyX25hbWVfbG9uZxgBIAEoCUIKukgHyAEBcgIQARIfCgtzZXJ2ZXJfbmFtZRgCIAEoCUIKukgHyAEBcgIQARIdCglzZXJ2ZXJfaWQYAyABKAVCCrpIB8gBARoCIAASDgoGY29sb3VyGAQgASgJIkYKD1NlcnZlcnNSZXNwb25zZRIzCgdzZXJ2ZXJzGAEgAygLMhouc2VydmVycy52MS5TZXJ2ZXJJbmZvU2FmZUIGukgDyAEBIj8KEUVkaXRTZXJ2ZXJSZXF1ZXN0EioKBnNlcnZlchgBIAEoCzISLnNlcnZlcnMudjEuU2VydmVyQga6SAPIAQEiQAoSRWRpdFNlcnZlclJlc3BvbnNlEioKBnNlcnZlchgBIAEoCzISLnNlcnZlcnMudjEuU2VydmVyQga6SAPIAQEiNAoTRGVsZXRlU2VydmVyUmVxdWVzdBIdCglzZXJ2ZXJfaWQYASABKAVCCrpIB8gBARoCIAAiQwoUU2VydmVyc0FkbWluUmVzcG9uc2USKwoHc2VydmVycxgBIAMoCzISLnNlcnZlcnMudjEuU2VydmVyQga6SAPIAQEyugMKDlNlcnZlcnNTZXJ2aWNlEjwKBVN0YXRlEhguc2VydmVycy52MS5TdGF0ZVJlcXVlc3QaGS5zZXJ2ZXJzLnYxLlN0YXRlUmVzcG9uc2USPgoHU2VydmVycxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRobLnNlcnZlcnMudjEuU2VydmVyc1Jlc3BvbnNlEksKCkVkaXRTZXJ2ZXISHS5zZXJ2ZXJzLnYxLkVkaXRTZXJ2ZXJSZXF1ZXN0Gh4uc2VydmVycy52MS5FZGl0U2VydmVyUmVzcG9uc2USRwoMRGVsZXRlU2VydmVyEh8uc2VydmVycy52MS5EZWxldGVTZXJ2ZXJSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5EkgKDFNlcnZlcnNBZG1pbhIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRogLnNlcnZlcnMudjEuU2VydmVyc0FkbWluUmVzcG9uc2USSgoJUXVlcnlMb2dzEhwuc2VydmVycy52MS5RdWVyeUxvZ3NSZXF1ZXN0Gh0uc2VydmVycy52MS5RdWVyeUxvZ3NSZXNwb25zZSIAQqYBCg5jb20uc2VydmVycy52MUIMU2VydmVyc1Byb3RvUAFaPWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvc2VydmVycy92MTtzZXJ2ZXJzdjGiAgNTWFiqAgpTZXJ2ZXJzLlYxygIKU2VydmVyc1xWMeICFlNlcnZlcnNcVjFcR1BCTWV0YWRhdGHqAgtTZXJ2ZXJzOjpWMWIIZWRpdGlvbnNw6Ac", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp, file_network_v1_network]);
+  fileDesc("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dmVyUmVxdWVzdBIqCgZzZXJ2ZXIYASABKAsyEi5zZXJ2ZXJzLnYxLlNlcnZlckIGukgDyAEBIkAKEkVkaXRTZXJ2ZXJSZXNwb25zZRIqCgZzZXJ2ZXIYASABKAsyEi5zZXJ2ZXJzLnYxLlNlcnZlckIGukgDyAEBIjQKE0RlbGV0ZVNlcnZlclJlcXVlc3QSHQoJc2VydmVyX2lkGAEgASgFQgq6SAfIAQEaAiAAIkMKFFNlcnZlcnNBZG1pblJlc3BvbnNlEisKB3NlcnZlcnMYASADKAsyEi5zZXJ2ZXJzLnYxLlNlcnZlckIGukgDyAEBMrgDCg5TZXJ2ZXJzU2VydmljZRI6CgVTdGF0ZRIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoZLnNlcnZlcnMudjEuU3RhdGVSZXNwb25zZRI+CgdTZXJ2ZXJzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Ghsuc2VydmVycy52MS5TZXJ2ZXJzUmVzcG9uc2USSwoKRWRpdFNlcnZlchIdLnNlcnZlcnMudjEuRWRpdFNlcnZlclJlcXVlc3QaHi5zZXJ2ZXJzLnYxLkVkaXRTZXJ2ZXJSZXNwb25zZRJHCgxEZWxldGVTZXJ2ZXISHy5zZXJ2ZXJzLnYxLkRlbGV0ZVNlcnZlclJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkSSAoMU2VydmVyc0FkbWluEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GiAuc2VydmVycy52MS5TZXJ2ZXJzQWRtaW5SZXNwb25zZRJKCglRdWVyeUxvZ3MSHC5zZXJ2ZXJzLnYxLlF1ZXJ5TG9nc1JlcXVlc3QaHS5zZXJ2ZXJzLnYxLlF1ZXJ5TG9nc1Jlc3BvbnNlIgBCpgEKDmNvbS5zZXJ2ZXJzLnYxQgxTZXJ2ZXJzUHJvdG9QAVo9Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9zZXJ2ZXJzL3YxO3NlcnZlcnN2MaICA1NYWKoCClNlcnZlcnMuVjHKAgpTZXJ2ZXJzXFYx4gIWU2VydmVyc1xWMVxHUEJNZXRhZGF0YeoCC1NlcnZlcnM6OlYxYghlZGl0aW9uc3DoBw", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp, file_network_v1_network]);
 
 /**
  * @generated from message servers.v1.QueryLogsRequest
@@ -87,23 +87,6 @@ export type QueryLogsResponse = Message<"servers.v1.QueryLogsResponse"> & {
  */
 export const QueryLogsResponseSchema: GenMessage<QueryLogsResponse> = /*@__PURE__*/
   messageDesc(file_servers_v1_servers, 2);
-
-/**
- * @generated from message servers.v1.StateRequest
- */
-export type StateRequest = Message<"servers.v1.StateRequest"> & {
-  /**
-   * @generated from field: network.v1.LatLong lat_long = 1;
-   */
-  latLong?: LatLong | undefined;
-};
-
-/**
- * Describes the message servers.v1.StateRequest.
- * Use `create(StateRequestSchema)` to create a new message.
- */
-export const StateRequestSchema: GenMessage<StateRequest> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 3);
 
 /**
  * @generated from message servers.v1.SafeServer
@@ -200,7 +183,7 @@ export type SafeServer = Message<"servers.v1.SafeServer"> & {
  * Use `create(SafeServerSchema)` to create a new message.
  */
 export const SafeServerSchema: GenMessage<SafeServer> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 4);
+  messageDesc(file_servers_v1_servers, 3);
 
 /**
  * @generated from message servers.v1.Server
@@ -277,7 +260,7 @@ export type Server = Message<"servers.v1.Server"> & {
   latLong?: LatLong | undefined;
 
   /**
-   * @generated from field: int32 log_secret = 15;
+   * @generated from field: uint32 log_secret = 15;
    */
   logSecret: number;
 
@@ -317,7 +300,7 @@ export type Server = Message<"servers.v1.Server"> & {
  * Use `create(ServerSchema)` to create a new message.
  */
 export const ServerSchema: GenMessage<Server> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 5);
+  messageDesc(file_servers_v1_servers, 4);
 
 /**
  * @generated from message servers.v1.StateResponse
@@ -339,7 +322,7 @@ export type StateResponse = Message<"servers.v1.StateResponse"> & {
  * Use `create(StateResponseSchema)` to create a new message.
  */
 export const StateResponseSchema: GenMessage<StateResponse> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 6);
+  messageDesc(file_servers_v1_servers, 5);
 
 /**
  * @generated from message servers.v1.ServerInfoSafe
@@ -371,7 +354,7 @@ export type ServerInfoSafe = Message<"servers.v1.ServerInfoSafe"> & {
  * Use `create(ServerInfoSafeSchema)` to create a new message.
  */
 export const ServerInfoSafeSchema: GenMessage<ServerInfoSafe> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 7);
+  messageDesc(file_servers_v1_servers, 6);
 
 /**
  * @generated from message servers.v1.ServersResponse
@@ -388,7 +371,7 @@ export type ServersResponse = Message<"servers.v1.ServersResponse"> & {
  * Use `create(ServersResponseSchema)` to create a new message.
  */
 export const ServersResponseSchema: GenMessage<ServersResponse> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 8);
+  messageDesc(file_servers_v1_servers, 7);
 
 /**
  * @generated from message servers.v1.EditServerRequest
@@ -405,7 +388,7 @@ export type EditServerRequest = Message<"servers.v1.EditServerRequest"> & {
  * Use `create(EditServerRequestSchema)` to create a new message.
  */
 export const EditServerRequestSchema: GenMessage<EditServerRequest> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 9);
+  messageDesc(file_servers_v1_servers, 8);
 
 /**
  * @generated from message servers.v1.EditServerResponse
@@ -422,7 +405,7 @@ export type EditServerResponse = Message<"servers.v1.EditServerResponse"> & {
  * Use `create(EditServerResponseSchema)` to create a new message.
  */
 export const EditServerResponseSchema: GenMessage<EditServerResponse> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 10);
+  messageDesc(file_servers_v1_servers, 9);
 
 /**
  * @generated from message servers.v1.DeleteServerRequest
@@ -439,7 +422,7 @@ export type DeleteServerRequest = Message<"servers.v1.DeleteServerRequest"> & {
  * Use `create(DeleteServerRequestSchema)` to create a new message.
  */
 export const DeleteServerRequestSchema: GenMessage<DeleteServerRequest> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 11);
+  messageDesc(file_servers_v1_servers, 10);
 
 /**
  * @generated from message servers.v1.ServersAdminResponse
@@ -456,7 +439,7 @@ export type ServersAdminResponse = Message<"servers.v1.ServersAdminResponse"> & 
  * Use `create(ServersAdminResponseSchema)` to create a new message.
  */
 export const ServersAdminResponseSchema: GenMessage<ServersAdminResponse> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 12);
+  messageDesc(file_servers_v1_servers, 11);
 
 /**
  * @generated from service servers.v1.ServersService
@@ -467,7 +450,7 @@ export const ServersService: GenService<{
    */
   state: {
     methodKind: "unary";
-    input: typeof StateRequestSchema;
+    input: typeof EmptySchema;
     output: typeof StateResponseSchema;
   },
   /**

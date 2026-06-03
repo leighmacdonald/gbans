@@ -6,11 +6,20 @@
 
 const TOKEN_LEN = 1024;
 
-stock void gbLog(const char[] format, any...)
-{
-	char buffer[254];
-	VFormat(buffer, sizeof buffer, format, 2);
-	PrintToServer("[GB] %s", buffer);
+void PrintRPCError(HTTPResponse response) {
+    char code[64];
+    char message[1024];
+
+    LogError("Invalid response code: %d", response.Status);
+    JSONObject err_obj = view_as<JSONObject>(response.Data);
+    if (!err_obj.GetString("code", code, sizeof code)) {
+        return;
+    }
+    if (!err_obj.GetString("message", message, sizeof code)) {
+        return;
+    }
+
+	LogError("ConnectRPC Error code=%s message=%s", code, message);
 }
 
 public bool parseReason(const char[] reasonStr, GB_BanReason &reason)
@@ -39,14 +48,6 @@ void postHTTPRequest(const char[] path, JSON data, HTTPRequestCallback callback,
     request.Post(data, callback, value);
 
 	CloseHandle(data);
-}
-
-
-stock void printJSON(JSON data)
-{
-	char json[2048];
-	data.ToString(json, sizeof json);
-	gbLog("JSON: %s", json);
 }
 
 stock void makeURL(const char[] path, char[] outURL, int maxLen) {
@@ -98,6 +99,6 @@ stock void reply(int clientId, const char[] message) {
 	if (clientId > 0) {
 		ReplyToCommand(clientId, message);
 	} else {
-		gbLog(message);
+		LogMessage(message);
 	}
 }

@@ -196,29 +196,32 @@ func (h Sourcemod) PingMod(_ context.Context, _ steamid.SteamID, name string, re
 	return nil
 }
 
-func (h Sourcemod) seedRequest(ctx context.Context, server servers.Server, userID string) bool {
+type seedRequestView struct {
+	Name        string
+	Short       string
+	Connect     string
+	Link        string
+	CC          string
+	Roles       []string
+	PlayerCount int32
+	MaxPlayers  int32
+}
+
+func (h Sourcemod) seedRequest(roleIDs []string, server servers.SafeServer, userID string) bool {
 	if !h.seedQueue.Allowed(server.ServerID, userID) {
 		return false
 	}
 
-	_, _ = h.servers.Server(ctx, server.ServerID)
-	if len(server.DiscordSeedRoleIDs) > 0 {
-		content, errContent := discord.RenderTemplate("seed_req", struct {
-			Name    string
-			Short   string
-			Connect string
-			Link    string
-			CC      string
-			Roles   []string
-			// State   servers.state
-		}{
-			Name:    server.Name,
-			Short:   server.ShortName,
-			CC:      server.CC,
-			Connect: server.Addr(),
-			Link:    server.Connect(),
-			Roles:   server.DiscordSeedRoleIDs,
-			// State:   curState.S, TODO
+	if len(roleIDs) > 0 {
+		content, errContent := discord.RenderTemplate("seed_req", seedRequestView{
+			Name:        server.Name,
+			Short:       server.NameShort,
+			CC:          server.CC,
+			Connect:     server.Addr(),
+			Link:        server.Connect(),
+			Roles:       roleIDs,
+			PlayerCount: server.Players,
+			MaxPlayers:  server.MaxPlayerDisplay(),
 		})
 
 		if errContent != nil {
@@ -246,7 +249,7 @@ func (h Sourcemod) seedRequest(ctx context.Context, server servers.Server, userI
 		return true
 	}
 
-	slog.Error("No seed channel found", slog.String("server", server.ShortName))
+	slog.Error("No seed channel found", slog.String("server", server.NameShort))
 
 	return false
 }

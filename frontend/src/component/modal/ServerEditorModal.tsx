@@ -1,3 +1,4 @@
+import { create } from "@bufbuild/protobuf";
 import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import RouterIcon from "@mui/icons-material/Router";
@@ -5,32 +6,11 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import { useAppForm } from "../../contexts/formContext.tsx";
-import type { Server } from "../../rpc/servers/v1/servers_pb.ts";
+import { EditServerRequestSchema, type Server, ServerSchema } from "../../rpc/servers/v1/servers_pb.ts";
 import { editServer } from "../../rpc/servers/v1/servers-ServersService_connectquery.ts";
+import { logErr } from "../../util/errors.ts";
 import { randomStringAlphaNum } from "../../util/strings.ts";
 import { Heading } from "../Heading";
-
-// const schema = z.object({
-// 	shortName: z
-// 		.string()
-// 		.min(3)
-// 		.regex(/\w{3,}/),
-// 	name: z.string().min(1),
-// 	address: z.string().min(1),
-// 	port: z.number().min(1024).max(65535),
-// 	password: z.string().length(20),
-// 	rcon: z.string().min(4),
-// 	region: z.string().min(1),
-// 	cc: z.string().length(2),
-// 	latitude: z.number().min(-90).max(99),
-// 	longitude: z.number().min(-180).max(180),
-//     isEnabled: z.boolean(),
-//     enableStats: z.boolean(),
-//     logSecret: z.number().min(100000).max(999999999),
-//     addressInternal: z.string(),
-//     sdrEnabled: z.boolean(),
-//     discordSeedRoleIds: z.string().array(),
-// });
 
 export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server }) => {
 	const modal = useModal();
@@ -53,46 +33,22 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 		discordSeedRoleIds: server?.discordSeedRoleIds.join(",") ?? "",
 	};
 
-	const mutation = useMutation(editServer, {});
-	// 	mutationKey: ["adminServer"],
-	// 	mutationFn: async (values: ServerEditValues) => {
-	// 		const opts: SaveServerOpts = {
-	// 			short_name: values.short_name,
-	// 			name: values.name,
-	// 			address: values.address,
-	// 			port: values.port,
-	// 			password: values.password,
-	// 			rcon: values.rcon,
-	// 			region: values.region,
-	// 			cc: values.cc,
-	// 			latitude: values.latitude,
-	// 			longitude: values.longitude,
-	// 			reserved_slots: values.reserved_slots,
-	// 			is_enabled: values.is_enabled,
-	// 			enable_stats: values.enabled_stats,
-	// 			log_secret: values.log_secret,
-	// 			address_internal: values.address_internal,
-	// 			sdr_enabled: values.sdr_enabled,
-	// 			discord_seed_role_ids: values.discord_seed_role_ids.split(","),
-	// 		};
-	// 		const ac = new AbortController();
-	// 		if (server?.server_id) {
-	// 			modal.resolve(await apiSaveServer(server.server_id, opts, ac.signal));
-	// 		} else {
-	// 			modal.resolve(await apiCreateServer(opts, ac.signal));
-	// 		}
-	// 		await modal.hide();
-	// 	},
-	// });
+	const mutation = useMutation(editServer, {
+		onSuccess: (response) => {
+			modal.resolve(response.server);
+		},
+		onError: logErr,
+	});
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutation.mutate({ server: { ...value, discordSeedRoleIds: value.discordSeedRoleIds.split(",") } });
+			mutation.mutate(
+				create(EditServerRequestSchema, {
+					server: create(ServerSchema, { ...value, discordSeedRoleIds: value.discordSeedRoleIds.split(",") }),
+				}),
+			);
 		},
 		defaultValues,
-		// validators: {
-		// 	onSubmit: schema,
-		// },
 	});
 
 	return (

@@ -50,7 +50,7 @@ func NewService(contests Contests, assets asset.Assets, authMiddleware *rpc.Midd
 }
 
 func (s Service) Contests(ctx context.Context, _ *emptypb.Empty) (*v1.ContestsResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	contests, errContests := s.contests.Contests(ctx, user)
 	if errContests != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -108,7 +108,7 @@ func (s Service) Upload(ctx context.Context, req *v1.UploadRequest) (*v1.UploadR
 		}
 	}
 
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	mediaAsset, errCreate := s.assets.Create(ctx, user.GetSteamID(), "media", req.GetName(), bytes.NewReader(body), false)
 	if errCreate != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -137,7 +137,7 @@ func (s Service) Vote(ctx context.Context, req *v1.VoteRequest) (*v1.VoteRespons
 	contestEntryID, _ := uuid.FromString(req.GetContestEntryId())
 	direction := req.GetDirection()
 
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	if errVote := s.contests.EntryVote(ctx, contestID, contestEntryID, user, direction == v1.Direction_DIRECTION_UP_UNSPECIFIED); errVote != nil {
 		if !errors.Is(errVote, ErrVoteDeleted) {
 			return &v1.VoteResponse{}, nil
@@ -150,7 +150,7 @@ func (s Service) Vote(ctx context.Context, req *v1.VoteRequest) (*v1.VoteRespons
 }
 
 func (s Service) EntryCreate(ctx context.Context, req *v1.EntryCreateRequest) (*v1.EntryCreateResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	contestID, _ := uuid.FromString(req.GetContestId())
 	assetID, _ := uuid.FromString(req.GetAssetId())
 	var contest Contest
@@ -200,7 +200,7 @@ func (s Service) EntryCreate(ctx context.Context, req *v1.EntryCreateRequest) (*
 }
 
 func (s Service) EntryDelete(ctx context.Context, req *v1.EntryDeleteRequest) (*emptypb.Empty, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	contestEntryID, _ := uuid.FromString(req.GetContestEntryId())
 	var entry Entry
 	if errContest := s.contests.Entry(ctx, contestEntryID, &entry); errContest != nil {

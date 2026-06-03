@@ -277,8 +277,6 @@ export const CreateGroupOverrideResponseSchema: GenMessage<CreateGroupOverrideRe
  */
 export type EditGroupOverrideRequest = Message<"sourcemod.v1.EditGroupOverrideRequest"> & {
   /**
-   * FIXME Are both ids needed??
-   *
    * @generated from field: int32 group_id = 1;
    */
   groupId: number;

@@ -47,6 +47,7 @@ type state struct {
 	LastUpdate    time.Time
 	ReservedSlots int
 	Protocol      uint8
+	Hostname      string
 	Map           string
 	// Name of the folder containing the game files.
 	Folder   string

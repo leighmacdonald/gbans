@@ -762,13 +762,12 @@ func (x *CreateGroupOverrideResponse) GetGroupOverride() *GroupOverrides {
 }
 
 type EditGroupOverrideRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// FIXME Are both ids needed??
-	GroupId         *int32          `protobuf:"varint,1,opt,name=group_id,json=groupId" json:"group_id,omitempty"`
-	GroupOverrideId *int32          `protobuf:"varint,2,opt,name=group_override_id,json=groupOverrideId" json:"group_override_id,omitempty"`
-	Name            *string         `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
-	OverrideType    *OverrideType   `protobuf:"varint,4,opt,name=override_type,json=overrideType,enum=sourcemod.v1.OverrideType" json:"override_type,omitempty"`
-	OverrideAccess  *OverrideAccess `protobuf:"varint,5,opt,name=override_access,json=overrideAccess,enum=sourcemod.v1.OverrideAccess" json:"override_access,omitempty"`
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	GroupId         *int32                 `protobuf:"varint,1,opt,name=group_id,json=groupId" json:"group_id,omitempty"`
+	GroupOverrideId *int32                 `protobuf:"varint,2,opt,name=group_override_id,json=groupOverrideId" json:"group_override_id,omitempty"`
+	Name            *string                `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
+	OverrideType    *OverrideType          `protobuf:"varint,4,opt,name=override_type,json=overrideType,enum=sourcemod.v1.OverrideType" json:"override_type,omitempty"`
+	OverrideAccess  *OverrideAccess        `protobuf:"varint,5,opt,name=override_access,json=overrideAccess,enum=sourcemod.v1.OverrideAccess" json:"override_access,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }

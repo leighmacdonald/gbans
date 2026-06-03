@@ -91,7 +91,7 @@ func (s Service) Delete(ctx context.Context, req *v1.DeleteRequest) (*emptypb.Em
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	changed, errSave := s.bans.Unban(ctx, bannedPerson.TargetID, ptr.From(req.Reason), user)
 	if errSave != nil {
 		return nil, connect.NewError(connect.CodeInternal, errSave)
@@ -105,7 +105,7 @@ func (s Service) Delete(ctx context.Context, req *v1.DeleteRequest) (*emptypb.Em
 }
 
 func (s Service) Get(ctx context.Context, req *v1.GetRequest) (*v1.GetResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 
 	bannedPerson, errGet := s.bans.QueryOne(ctx, QueryOpts{BanID: req.GetBanId(), Deleted: false, EvadeOk: true})
 	if errGet != nil {

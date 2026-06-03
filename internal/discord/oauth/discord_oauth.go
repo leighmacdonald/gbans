@@ -247,7 +247,7 @@ func (d DiscordOAuth) HandleOAuthCode(ctx context.Context, code string, state st
 	}
 
 	slog.Info("Discord account linked successfully",
-		slog.String("discord_id", discordUser.ID),
+		slog.String("discordId", discordUser.ID),
 		slog.String("sid64", steamID.String()))
 
 	return nil

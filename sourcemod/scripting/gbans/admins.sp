@@ -31,9 +31,8 @@ void RebuildGroups() {
 }
 
 void onRebuildGroups(HTTPResponse response, any value) {
-    printJSON(response.Data);
     if (response.Status != HTTPStatus_OK) {
-        gbLog("Invalid response code reading user groups: %d", response.Status);
+        LogError("Invalid response code reading user groups: %d", response.Status);
 		return;
     }
 
@@ -119,7 +118,7 @@ void onRebuildGroups(HTTPResponse response, any value) {
 
     delete groups;
 
-    gbLog("Loaded %d groups", numGroups);
+    LogMessage("Loaded %d groups", numGroups);
 
     RebuildUsers();
 }
@@ -129,9 +128,8 @@ void RebuildUsers() {
 }
 
 void onRebuildUsers(HTTPResponse response, any value) {
-    printJSON(response.Data);
     if(response.Status != HTTPStatus_OK) {
-        gbLog("Invalid response code reading users: %d", response.Status);
+        LogError("Invalid response code reading users: %d", response.Status);
         gQueuedAdminUpdate = false;
 		return;
     }
@@ -223,7 +221,7 @@ void onRebuildUsers(HTTPResponse response, any value) {
 			if ((grp = FindAdmGroup(group)) == INVALID_GROUP_ID)
 			{
 				/* Group wasn't found, don't bother with it.  */
-                gbLog("Failed to add group, it doesnt exist: %s", group);
+                LogError("Failed to add group, it doesnt exist: %s", group);
 				continue;
 			}
 
@@ -235,7 +233,7 @@ void onRebuildUsers(HTTPResponse response, any value) {
 
     delete htAdmins;
 
-    gbLog("Loaded %d users into %d groups", numUsers, numUserGroups);
+    LogMessage("Loaded %d users into %d groups", numUsers, numUserGroups);
 
     RebuildOverrides();
 }
@@ -245,9 +243,8 @@ void RebuildOverrides() {
 }
 
 void onRebuildOverrides(HTTPResponse response, any value) {
-    printJSON(response.Data);
     if(response.Status != HTTPStatus_OK) {
-        gbLog("Invalid response code reading overrides: %d", response.Status);
+        LogError("Invalid response code reading overrides: %d", response.Status);
         gQueuedAdminUpdate = false;
 		return;
     }
@@ -283,7 +280,7 @@ void onRebuildOverrides(HTTPResponse response, any value) {
         delete override;
     }
 
-    gbLog("Loaded %d overrides", numOverrides);
+    LogMessage("Loaded %d overrides", numOverrides);
 
     gQueuedAdminUpdate = false;
 

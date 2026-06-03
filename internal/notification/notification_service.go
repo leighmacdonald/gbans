@@ -33,7 +33,7 @@ func NewService(notifications *Notifications, authMiddleware *rpc.Middleware, op
 }
 
 func (s Service) Notifications(ctx context.Context, _ *emptypb.Empty) (*v1.NotificationsResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	notifications, err := s.notifications.GetPersonNotifications(ctx, user.GetSteamID())
 	if err != nil && !errors.Is(err, database.ErrNoResult) {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -58,7 +58,7 @@ func (s Service) Notifications(ctx context.Context, _ *emptypb.Empty) (*v1.Notif
 }
 
 func (s Service) MarkRead(ctx context.Context, req *v1.MarkReadRequest) (*emptypb.Empty, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	if err := s.notifications.MarkMessagesRead(ctx, user.GetSteamID(), req.GetMessageId()); err != nil && !errors.Is(err, database.ErrNoResult) {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -67,7 +67,7 @@ func (s Service) MarkRead(ctx context.Context, req *v1.MarkReadRequest) (*emptyp
 }
 
 func (s Service) MarkReadAll(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	if err := s.notifications.MarkAllRead(ctx, user.GetSteamID()); err != nil && !errors.Is(err, database.ErrNoResult) {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -76,7 +76,7 @@ func (s Service) MarkReadAll(ctx context.Context, _ *emptypb.Empty) (*emptypb.Em
 }
 
 func (s Service) DeleteAll(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	if err := s.notifications.DeleteAll(ctx, user.GetSteamID()); err != nil && !errors.Is(err, database.ErrNoResult) {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -85,7 +85,7 @@ func (s Service) DeleteAll(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empt
 }
 
 func (s Service) Delete(ctx context.Context, req *v1.DeleteRequest) (*emptypb.Empty, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	if err := s.notifications.DeleteMessages(ctx, user.GetSteamID(), req.GetMessageId()); err != nil && !errors.Is(err, database.ErrNoResult) {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}

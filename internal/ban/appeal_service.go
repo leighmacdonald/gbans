@@ -56,7 +56,7 @@ func (s AppealService) Appeals(ctx context.Context, req *v1.AppealsRequest) (*v1
 }
 
 func (s AppealService) Messages(ctx context.Context, req *v1.MessagesRequest) (*v1.MessagesResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 
 	banMessages, errGetBanMessages := s.appeals.Messages(ctx, user, req.GetBanId())
 	if errGetBanMessages != nil && !errors.Is(errGetBanMessages, httphelper.ErrNotFound) {
@@ -72,7 +72,7 @@ func (s AppealService) Messages(ctx context.Context, req *v1.MessagesRequest) (*
 }
 
 func (s AppealService) Reply(ctx context.Context, req *v1.ReplyRequest) (*v1.ReplyResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	msg, errSave := s.appeals.CreateBanMessage(ctx, user, req.GetBanId(), req.GetBodyMd())
 	if errSave != nil {
 		if errors.Is(errSave, permission.ErrDenied) {
@@ -86,7 +86,7 @@ func (s AppealService) Reply(ctx context.Context, req *v1.ReplyRequest) (*v1.Rep
 }
 
 func (s AppealService) EditAppealMessage(ctx context.Context, req *v1.EditAppealMessageRequest) (*v1.EditAppealMessageResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	msg, errSave := s.appeals.EditBanMessage(ctx, user, req.GetBanMessageId(), req.GetBodyMd())
 	if errSave != nil {
 		switch {
@@ -105,7 +105,7 @@ func (s AppealService) EditAppealMessage(ctx context.Context, req *v1.EditAppeal
 }
 
 func (s AppealService) DeleteAppealMessage(ctx context.Context, req *v1.DeleteAppealMessageRequest) (*emptypb.Empty, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	if err := s.appeals.DropMessage(ctx, user, req.GetBanMessageId()); err != nil {
 		switch {
 		case errors.Is(err, permission.ErrDenied):

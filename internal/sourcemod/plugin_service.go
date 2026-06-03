@@ -15,6 +15,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/rpc"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	v1 "github.com/leighmacdonald/gbans/internal/sourcemod/v1"
 	"github.com/leighmacdonald/gbans/internal/sourcemod/v1/sourcemodv1connect"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -25,11 +26,12 @@ var errTooOften = errors.New("you must wait before trying to mod ping again")
 
 type TokenGeneratorFn func(serverID int32, serverName string) (string, error)
 
+// PluginService is responsible for all communication with the game servers using the sourcemod plugin.
 type PluginService struct {
 	sourcemod               Sourcemod
 	notifier                notification.Notifier
 	persons                 *person.Persons
-	servers                 rpc.ServerAuthenticator
+	serverAuth              rpc.ServerAuthenticator
 	tokenGenerator          TokenGeneratorFn
 	evades                  EvadeChecker
 	logChannelID            string
@@ -38,7 +40,7 @@ type PluginService struct {
 	minPingModRetryInterval time.Duration
 }
 
-func NewPluginService(sourcemod Sourcemod, persons *person.Persons, servers rpc.ServerAuthenticator, evades EvadeChecker, tokenGenerator TokenGeneratorFn, notifier notification.Notifier, logChannelID string, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewPluginService(sourcemod Sourcemod, persons *person.Persons, serverAuthenticator rpc.ServerAuthenticator, evades EvadeChecker, tokenGenerator TokenGeneratorFn, notifier notification.Notifier, logChannelID string, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := sourcemodv1connect.NewPluginServiceHandler(PluginService{
 		sourcemod:               sourcemod,
 		persons:                 persons,
@@ -46,7 +48,7 @@ func NewPluginService(sourcemod Sourcemod, persons *person.Persons, servers rpc.
 		notifier:                notifier,
 		evades:                  evades,
 		logChannelID:            logChannelID,
-		servers:                 servers,
+		serverAuth:              serverAuthenticator,
 		pingHistory:             map[steamid.SteamID]time.Time{},
 		pingHistoryMu:           &sync.Mutex{},
 		minPingModRetryInterval: time.Minute * 5,
@@ -64,7 +66,7 @@ func NewPluginService(sourcemod Sourcemod, persons *person.Persons, servers rpc.
 }
 
 func (s PluginService) SMPingMod(ctx context.Context, req *v1.SMPingModRequest) (*emptypb.Empty, error) {
-	serverInfo, _ := rpc.ServerInfoFromCtx(ctx)
+	serverInfo := rpc.ServerInfoFromCtx(ctx)
 	steamID := steamid.New(req.GetSteamId())
 
 	if !steamID.Valid() {
@@ -92,7 +94,7 @@ func (s PluginService) SMAuthenticate(ctx context.Context, req *v1.SMAuthenticat
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 
-	serverID, name, err := s.servers.GetByPassword(ctx, password)
+	serverID, name, err := s.serverAuth.GetByPassword(ctx, password)
 	if err != nil {
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
@@ -118,14 +120,6 @@ func (s PluginService) SMCheck(ctx context.Context, req *v1.SMCheckRequest) (*v1
 		Msg:      new(""),
 	}
 	steamID := steamid.New(req.GetSteamId())
-	// steamID, valid := req.SteamIDB
-	// if !valid {
-	// 	ctx.JSON(http.StatusOK, defaultValue)
-	// 	slog.Error("Did not receive valid steamid for check response", log.ErrAttr(steamid.ErrDecodeSID))
-
-	// 	return
-	// }
-
 	ipAddr, errIP := netip.ParseAddr(req.GetIp())
 	if errIP != nil {
 		slog.Error("Failed to parse IP", slog.String("error", errIP.Error()))
@@ -142,6 +136,8 @@ func (s PluginService) SMCheck(ctx context.Context, req *v1.SMCheckRequest) (*v1
 	}
 
 	if banState.BanID == 0 {
+		slog.Debug("Player connect check", slog.String("steam_id", steamID.String()), slog.Bool("success", true))
+
 		return defaultResponse, nil
 	}
 
@@ -274,8 +270,7 @@ func (s PluginService) SMGroups(ctx context.Context, _ *emptypb.Empty) (*v1.SMGr
 }
 
 func (s PluginService) SMSeed(ctx context.Context, req *v1.SMSeedRequest) (*v1.SMSeedResponse, error) {
-	serverInfo, _ := rpc.ServerInfoFromCtx(ctx)
-	// FIXME
+	serverInfo := rpc.ServerInfoFromCtx(ctx)
 	steamID := steamid.New(req.GetSteamId())
 	if !steamID.Valid() {
 		return nil, connect.NewError(connect.CodeInvalidArgument, rpc.ErrBadRequest)
@@ -286,7 +281,20 @@ func (s PluginService) SMSeed(ctx context.Context, req *v1.SMSeedRequest) (*v1.S
 		return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
 	}
 
-	if !s.sourcemod.seedRequest(ctx, server, steamID.String()) {
+	var serverState servers.SafeServer
+	for _, srv := range s.sourcemod.servers.Current() {
+		if serverInfo.ServerID == server.ServerID {
+			serverState = srv
+
+			break
+		}
+	}
+
+	if serverState.ServerID == 0 {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	if !s.sourcemod.seedRequest(server.DiscordSeedRoleIDs, serverState, steamID.String()) {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 

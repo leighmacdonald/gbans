@@ -42,7 +42,7 @@ func NewReportService(reports Reports, authMiddleware *rpc.Middleware, option ..
 }
 
 func (s ReportService) ReportCreate(ctx context.Context, req *v1.ReportCreateRequest) (*v1.ReportCreateResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	report, errReportSave := s.reports.Save(ctx, user, RequestReportCreate{
 		SourceID:        user.GetSteamID(),
 		TargetID:        steamid.New(req.GetTargetId()),
@@ -65,7 +65,7 @@ func (s ReportService) ReportCreate(ctx context.Context, req *v1.ReportCreateReq
 }
 
 func (s ReportService) Report(ctx context.Context, req *v1.ReportRequest) (*v1.ReportResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	report, errReport := s.reports.Report(ctx, user, req.GetReportId())
 	if errReport != nil {
 		if errors.Is(errReport, database.ErrNoResult) {
@@ -79,7 +79,7 @@ func (s ReportService) Report(ctx context.Context, req *v1.ReportRequest) (*v1.R
 }
 
 func (s ReportService) ReportStatusEdit(ctx context.Context, req *v1.ReportStatusEditRequest) (*emptypb.Empty, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	_, err := s.reports.SetReportStatus(ctx, req.GetReportId(), user, ReportStatus(req.GetReportStatus()))
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -89,7 +89,7 @@ func (s ReportService) ReportStatusEdit(ctx context.Context, req *v1.ReportStatu
 }
 
 func (s ReportService) UserReports(ctx context.Context, _ *v1.UserReportsRequest) (*v1.UserReportsResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	reports, errReports := s.reports.BySteamID(ctx, user.GetSteamID())
 	if errReports != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -118,7 +118,7 @@ func (s ReportService) Reports(ctx context.Context, _ *emptypb.Empty) (*v1.Repor
 }
 
 func (s ReportService) ReportMessages(ctx context.Context, req *v1.ReportMessagesRequest) (*v1.ReportMessagesResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	report, errGetReport := s.reports.Report(ctx, user, req.GetReportId())
 	if errGetReport != nil {
 		if errors.Is(errGetReport, database.ErrNoResult) {
@@ -146,7 +146,7 @@ func (s ReportService) ReportMessages(ctx context.Context, req *v1.ReportMessage
 }
 
 func (s ReportService) ReportMessageCreate(ctx context.Context, req *v1.ReportMessageCreateRequest) (*v1.ReportMessageCreateResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	msg, errSave := s.reports.CreateMessage(ctx, req.GetReportId(), user, RequestMessageBodyMD{BodyMD: req.GetBodyMd()})
 	if errSave != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -156,7 +156,7 @@ func (s ReportService) ReportMessageCreate(ctx context.Context, req *v1.ReportMe
 }
 
 func (s ReportService) ReportMessageEdit(ctx context.Context, req *v1.ReportMessageEditRequest) (*v1.ReportMessageEditResponse, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	msg, errMsg := s.reports.EditMessage(ctx, req.GetReportMessageId(), user, RequestMessageBodyMD{BodyMD: req.GetBodyMd()})
 	if errMsg != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -166,7 +166,7 @@ func (s ReportService) ReportMessageEdit(ctx context.Context, req *v1.ReportMess
 }
 
 func (s ReportService) ReportMessageDelete(ctx context.Context, req *v1.ReportMessageDeleteRequest) (*emptypb.Empty, error) {
-	user, _ := rpc.UserInfoFromCtx(ctx)
+	user := rpc.UserInfoFromCtx(ctx)
 	if err := s.reports.DropMessage(ctx, user, req.GetReportMessageId()); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}

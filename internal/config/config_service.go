@@ -398,6 +398,7 @@ func toRunMode(mode RunMode) configv1.RunMode {
 		return configv1.RunMode_RUN_MODE_RELEASE_UNSPECIFIED
 	}
 }
+
 func fromServeMode(mode configv1.FileServeMode) FileServeMode {
 	switch mode {
 	case configv1.FileServeMode_FILE_SERVE_MODE_LOCAL_UNSPECIFIED:
@@ -437,6 +438,7 @@ func toDemoStrategy(strategy servers.DemoStrategy) configv1.DemoStrategy {
 		return configv1.DemoStrategy_DEMO_STRATEGY_PCTFREE_UNSPECIFIED
 	}
 }
+
 func fromLevel(level configv1.Level) log.Level {
 	switch level {
 	case configv1.Level_LEVEL_DEBUG:

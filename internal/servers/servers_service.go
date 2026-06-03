@@ -52,7 +52,7 @@ func getLatLong(ctx context.Context) (float64, float64) {
 	return lat, long
 }
 
-func (s Service) State(ctx context.Context, req *v1.StateRequest) (*v1.StateResponse, error) {
+func (s Service) State(ctx context.Context, _ *emptypb.Empty) (*v1.StateResponse, error) {
 	lat, lon := getLatLong(ctx)
 	servers := s.servers.Current()
 
