@@ -1,11 +1,9 @@
 import type { Theme } from "@mui/material";
 import { z } from "zod/v4";
-import { Detection } from "../rpc/anticheat/v1/anticheat_pb.ts";
 import type { Asset } from "../rpc/asset/v1/asset_pb.ts";
-import { AppealState, BanReason, BanType } from "../rpc/ban/v1/ban_pb.ts";
+import { BanType } from "../rpc/ban/v1/ban_pb.ts";
 import { ReportStatus } from "../rpc/ban/v1/report_pb.ts";
 import type { DiscordProfile } from "../rpc/discord/oauth/v1/discord_pb.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import type { Admin, Group, Override } from "../rpc/sourcemod/v1/sourcemod_pb";
 
 const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -170,87 +168,87 @@ export const reportStatusColour = (rs: ReportStatus, theme: Theme): string => {
 	}
 };
 
-export const privilegeString = (privilege: Privilege) => {
-	switch (privilege) {
-		case Privilege.ADMIN:
-			return "Admin";
-		case Privilege.MODERATOR:
-			return "Moderator";
-		case Privilege.EDITOR:
-			return "Editor";
-		case Privilege.RESERVED:
-			return "Reserved";
-		case Privilege.USER:
-			return "User";
-		case Privilege.GUEST:
-			return "Guest";
-		case Privilege.BANNED_UNSPECIFIED:
-			return "Banned";
-		default:
-			return "Unknown";
-	}
-};
+// export const privilegeString = (privilege: Privilege) => {
+// 	switch (privilege) {
+// 		case Privilege.ADMIN:
+// 			return "Admin";
+// 		case Privilege.MODERATOR:
+// 			return "Moderator";
+// 		case Privilege.EDITOR:
+// 			return "Editor";
+// 		case Privilege.RESERVED:
+// 			return "Reserved";
+// 		case Privilege.USER:
+// 			return "User";
+// 		case Privilege.GUEST:
+// 			return "Guest";
+// 		case Privilege.BANNED_UNSPECIFIED:
+// 			return "Banned";
+// 		default:
+// 			return "Unknown";
+// 	}
+// };
 
-export const appealStateString = (appealState: AppealState) => {
-	switch (appealState) {
-		case AppealState.DENIED:
-			return "Denied";
-		case AppealState.ACCEPTED:
-			return "Accepted";
-		case AppealState.REDUCED:
-			return "Reduced";
-		case AppealState.NO_APPEAL:
-			return "No Appeal";
-		case AppealState.OPEN_UNSPECIFIED:
-			return "Open";
-		default:
-			return "Open";
-	}
-};
+// export const appealStateString = (appealState: AppealState) => {
+// 	switch (appealState) {
+// 		case AppealState.DENIED:
+// 			return "Denied";
+// 		case AppealState.ACCEPTED:
+// 			return "Accepted";
+// 		case AppealState.REDUCED:
+// 			return "Reduced";
+// 		case AppealState.NO_APPEAL:
+// 			return "No Appeal";
+// 		case AppealState.OPEN_UNSPECIFIED:
+// 			return "Open";
+// 		default:
+// 			return "Open";
+// 	}
+// };
 
-export const reportStatusString = (reportStatus: ReportStatus) => {
-	switch (reportStatus) {
-		case ReportStatus.NEED_MORE_INFO:
-			return "Need Info";
-		case ReportStatus.CLOSED_WITHOUT_ACTION:
-			return "Closed (No Action)";
-		case ReportStatus.CLOSED_WITH_ACTION:
-			return "Closed (Action)";
-		case ReportStatus.OPENED_UNSPECIFIED:
-			return "Opened";
-		default:
-			return "Opened";
-	}
-};
+// export const reportStatusString = (reportStatus: ReportStatus) => {
+// 	switch (reportStatus) {
+// 		case ReportStatus.NEED_MORE_INFO:
+// 			return "Need Info";
+// 		case ReportStatus.CLOSED_WITHOUT_ACTION:
+// 			return "Closed (No Action)";
+// 		case ReportStatus.CLOSED_WITH_ACTION:
+// 			return "Closed (Action)";
+// 		case ReportStatus.OPENED_UNSPECIFIED:
+// 			return "Opened";
+// 		default:
+// 			return "Opened";
+// 	}
+// };
 
-export const detectionString = (detection: Detection) => {
-	switch (detection) {
-		case Detection.AIM_SNAP:
-			return "Aim Snap";
-		case Detection.BHOP:
-			return "BHop";
-		case Detection.CHEAT_CVAR:
-			return "Cheat CVar";
-		case Detection.CMD_NUM_SPIKE:
-			return "Cmd Num Spike";
-		case Detection.EYE_ANGLES:
-			return "Eye Angles";
-		case Detection.INTERP:
-			return "Interp";
-		case Detection.INVALID_USER_CMD:
-			return "Invalid User Cmd";
-		case Detection.OOB_CVAR:
-			return "OOB CVar";
-		case Detection.SILENT_AIM:
-			return "Silent Aim";
-		case Detection.TOO_MANY_CONNECTIONS:
-			return "Too Many Conn";
-		case Detection.UNSPECIFIED:
-			return "Unknown";
-		default:
-			return "Unknown";
-	}
-};
+// export const detectionString = (detection: Detection) => {
+// 	switch (detection) {
+// 		case Detection.AIM_SNAP:
+// 			return "Aim Snap";
+// 		case Detection.BHOP:
+// 			return "BHop";
+// 		case Detection.CHEAT_CVAR:
+// 			return "Cheat CVar";
+// 		case Detection.CMD_NUM_SPIKE:
+// 			return "Cmd Num Spike";
+// 		case Detection.EYE_ANGLES:
+// 			return "Eye Angles";
+// 		case Detection.INTERP:
+// 			return "Interp";
+// 		case Detection.INVALID_USER_CMD:
+// 			return "Invalid User Cmd";
+// 		case Detection.OOB_CVAR:
+// 			return "OOB CVar";
+// 		case Detection.SILENT_AIM:
+// 			return "Silent Aim";
+// 		case Detection.TOO_MANY_CONNECTIONS:
+// 			return "Too Many Conn";
+// 		case Detection.UNSPECIFIED:
+// 			return "Unknown";
+// 		default:
+// 			return "Unknown";
+// 	}
+// };
 
 export const banTypeString = (banType: BanType) => {
 	switch (banType) {
@@ -265,42 +263,42 @@ export const banTypeString = (banType: BanType) => {
 	}
 };
 
-export const banReasonString = (banReason: BanReason) => {
-	switch (banReason) {
-		case BanReason.BOT_HOST:
-			return "Bot Host";
-		case BanReason.CUSTOM:
-			return "Custom";
-		case BanReason.EXPLOITING:
-			return "Exploiting";
-		case BanReason.HARASSMENT:
-			return "Harassment";
-		case BanReason.EVADING:
-			return "Evading";
-		case BanReason.CHEATING:
-			return "Cheating";
-		case BanReason.EXTERNAL:
-			return "External";
-		case BanReason.ITEM_DESCRIPTIONS:
-			return "Item Name/Description";
-		case BanReason.LANGUAGE:
-			return "Language";
-		case BanReason.PROFILE:
-			return "Profile";
-		case BanReason.RACISM:
-			return "Racism";
-		case BanReason.SPAM:
-			return "Spam";
-		case BanReason.USERNAME:
-			return "Username";
-		case BanReason.WARNINGS_EXCEEDED:
-			return "Warnings Exceeded";
-		case BanReason.UNSPECIFIED:
-			return "Unspecified";
-		default:
-			return "Unspecified";
-	}
-};
+// export const banReasonString = (banReason: BanReason) => {
+// 	switch (banReason) {
+// 		case BanReason.BOT_HOST:
+// 			return "Bot Host";
+// 		case BanReason.CUSTOM:
+// 			return "Custom";
+// 		case BanReason.EXPLOITING:
+// 			return "Exploiting";
+// 		case BanReason.HARASSMENT:
+// 			return "Harassment";
+// 		case BanReason.EVADING:
+// 			return "Evading";
+// 		case BanReason.CHEATING:
+// 			return "Cheating";
+// 		case BanReason.EXTERNAL:
+// 			return "External";
+// 		case BanReason.ITEM_DESCRIPTIONS:
+// 			return "Item Name/Description";
+// 		case BanReason.LANGUAGE:
+// 			return "Language";
+// 		case BanReason.PROFILE:
+// 			return "Profile";
+// 		case BanReason.RACISM:
+// 			return "Racism";
+// 		case BanReason.SPAM:
+// 			return "Spam";
+// 		case BanReason.USERNAME:
+// 			return "Username";
+// 		case BanReason.WARNINGS_EXCEEDED:
+// 			return "Warnings Exceeded";
+// 		case BanReason.UNSPECIFIED:
+// 			return "Unspecified";
+// 		default:
+// 			return "Unspecified";
+// 	}
+// };
 
 type DeepNullifyStrings<T> = T extends string
 	? string | undefined

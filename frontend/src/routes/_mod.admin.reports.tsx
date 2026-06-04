@@ -30,7 +30,7 @@ import { BanReason } from "../rpc/ban/v1/ban_pb.ts";
 import { ReportStatus, type ReportWithAuthor } from "../rpc/ban/v1/report_pb.ts";
 import { reports } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
 import { enumValues } from "../util/lists.ts";
-import { reportStatusString } from "../util/strings.ts";
+import { toTitleCase } from "../util/strings.ts";
 import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<ReportWithAuthor>();
@@ -118,7 +118,7 @@ function AdminReports() {
 				grow: false,
 				filterVariant: "multi-select",
 				filterSelectOptions: enumValues(ReportStatus).map((status) => ({
-					label: reportStatusString(status),
+					label: toTitleCase(ReportStatus[status]),
 					value: status,
 				})),
 				filterFn: (row, _, filterValue) => {
@@ -126,7 +126,7 @@ function AdminReports() {
 				},
 				Cell: ({ cell }) => (
 					<TextLink to={Route.fullPath} search={setColumnFilter(search, "reportStatus", [cell.getValue()])}>
-						{reportStatusString(cell.getValue())}
+						{toTitleCase(ReportStatus[cell.getValue()])}
 					</TextLink>
 				),
 			}),
@@ -214,7 +214,7 @@ function AdminReports() {
 			}),
 			columnHelper.accessor("report.reason", {
 				filterSelectOptions: enumValues(BanReason).map((reason) => ({
-					label: BanReason[reason],
+					label: toTitleCase(BanReason[reason]),
 					value: reason,
 				})),
 				filterVariant: "multi-select",
@@ -229,7 +229,7 @@ function AdminReports() {
 				},
 				Cell: ({ cell }) => (
 					<TextLink to={Route.fullPath} search={setColumnFilter(search, "reason", [cell.getValue()])}>
-						{BanReason[cell.getValue()]}
+						{toTitleCase(BanReason[cell.getValue()])}
 					</TextLink>
 				),
 			}),

@@ -205,7 +205,9 @@ func (b *Discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
 }
 
 func (b *Discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
-	slog.Debug("Discord state changed", slog.String("state", "disconnected"))
+	if b.running.Load() {
+		slog.Debug("Discord state changed", slog.String("state", "disconnected"))
+	}
 }
 
 func (b *Discord) onAppCommand(ctx context.Context, session *discordgo.Session,

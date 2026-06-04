@@ -22,6 +22,7 @@ import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { AppealState, UpdateRequestSchema } from "../rpc/ban/v1/ban_pb.ts";
 import { get, update } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
 import { enumValues } from "../util/lists.ts";
+import { toTitleCase } from "../util/strings.ts";
 import { zeroStringUndefined } from "../util/types.ts";
 import { ButtonLink } from "./ButtonLink.tsx";
 import { ContainerWithHeader } from "./ContainerWithHeader";
@@ -120,7 +121,7 @@ export const BanModPanel = ({ banId }: { banId: number }) => {
 												renderItem={(i) => {
 													return (
 														<MenuItem value={i} key={AppealState[i]}>
-															{AppealState[i]}
+															{toTitleCase(AppealState[i])}
 														</MenuItem>
 													);
 												}}

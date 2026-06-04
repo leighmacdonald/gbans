@@ -41,7 +41,7 @@ import { humanFileSize } from "../util/strings.ts";
 const columnHelper = createMRTColumnHelper<Demo>();
 const defaultOptions = createDefaultTableOptions<Demo>();
 const defaultValues = makeSchemaDefaults({ defaultColumn: "createdOn" });
-const validateSearch = makeSchemaState("createdOn");
+const validateSearch = makeSchemaState("createdOn", true);
 
 export const Route = createFileRoute("/_guest/stv")({
 	component: STV,
@@ -149,7 +149,17 @@ function STV() {
 				header: "Created",
 				enableColumnFilter: false,
 				enableSorting: true,
-				filterVariant: "date",
+				filterVariant: "datetime",
+				sortingFn: (rowA, rowB, columnId) => {
+					const dateA = rowA.getValue(columnId) as Timestamp;
+					const dateB = rowB.getValue(columnId) as Timestamp;
+					if (!dateA) {
+						return 1;
+					} else if (!dateB) {
+						return -1;
+					}
+					return Number(dateA.seconds) - Number(dateB.seconds);
+				},
 				grow: false,
 				Cell: ({ cell }) => (
 					<TableCellRelativeDateField date={timestampDate(cell.getValue() as Timestamp)} suffix />

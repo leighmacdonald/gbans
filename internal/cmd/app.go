@@ -58,12 +58,7 @@ var (
 	BuildDate    = ""       //nolint:gochecknoglobals
 )
 
-type BuildInfo struct {
-	BuildVersion string
-	Commit       string
-	Date         string
-}
-
+// GBans is the main application container. It containers all the top level subsystem interfaces.
 type GBans struct {
 	anticheat      anticheat.AntiCheat
 	assets         asset.Assets
@@ -97,6 +92,8 @@ type GBans struct {
 	sentry         *sentry.Client
 	bot            discord.Service
 
+	// broadcaster is responsible for handling incoming log message events and routing them to
+	// the various subsystems that have registered receivers.
 	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 
 	logCloser func()
