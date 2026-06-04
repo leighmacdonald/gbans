@@ -45,7 +45,7 @@ import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { type Ban, BanReason } from "../rpc/ban/v1/ban_pb.ts";
 import { query } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
 import { enumValues } from "../util/lists.ts";
-import { banReasonString } from "../util/strings.ts";
+import { toTitleCase } from "../util/strings.ts";
 import { isPermanentBan } from "../util/table.ts";
 import { renderTimestamp } from "../util/time.ts";
 
@@ -267,7 +267,7 @@ function AdminBans() {
 				enableSorting: false,
 				grow: false,
 				filterSelectOptions: enumValues(BanReason).map((reason) => ({
-					label: banReasonString(reason),
+					label: toTitleCase(BanReason[reason]),
 					value: reason,
 				})),
 				filterVariant: "multi-select",
@@ -281,7 +281,7 @@ function AdminBans() {
 				},
 				Cell: ({ cell }) => (
 					<TextLink to={Route.fullPath} search={setColumnFilter(search, "reason", [cell.getValue()])}>
-						{banReasonString(cell.getValue() as BanReason)}
+						{toTitleCase(BanReason[cell.getValue()])}
 					</TextLink>
 				),
 			}),

@@ -35,7 +35,6 @@ func (s DemoService) GetDemos(ctx context.Context, _ *emptypb.Empty) (*v1.GetDem
 
 	resp := v1.GetDemosResponse{Demos: make([]*v1.Demo, len(demos))}
 	for idx, demo := range demos {
-		var stats map[string]string
 		resp.Demos[idx] = &v1.Demo{
 			DemoId:          &demo.DemoID,
 			ServerId:        &demo.ServerID,
@@ -47,7 +46,7 @@ func (s DemoService) GetDemos(ctx context.Context, _ *emptypb.Empty) (*v1.GetDem
 			Size:            &demo.Size,
 			MapName:         &demo.MapName,
 			Archive:         &demo.Archive,
-			Stats:           stats,
+			Stats:           make(map[string]string),
 			AssetId:         new(demo.AssetID.String()),
 		}
 		for k := range demo.Stats {

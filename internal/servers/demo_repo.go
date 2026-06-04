@@ -187,7 +187,7 @@ func (r *DemoRepository) insertDemo(ctx context.Context, demoFile *DemoFile) err
 		return database.Err(errQueryArgs)
 	}
 
-	errQuery := r.QueryRow(ctx, query, args...).Scan(&demoFile.ServerID)
+	errQuery := r.QueryRow(ctx, query, args...).Scan(&demoFile.DemoID)
 	if errQuery != nil {
 		return database.Err(errQuery)
 	}

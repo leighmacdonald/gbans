@@ -42,7 +42,7 @@ import { type Person, QueryRequestSchema, VisibilityState } from "../rpc/person/
 import { query } from "../rpc/person/v1/person-PersonService_connectquery.ts";
 import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { enumValues } from "../util/lists.ts";
-import { privilegeString } from "../util/strings.ts";
+import { toTitleCase } from "../util/strings.ts";
 
 const defaultValues = makeSchemaDefaults({ defaultColumn: "createdOn" });
 const validateSearch = makeSchemaState("createdOn");
@@ -249,12 +249,12 @@ function AdminPeople() {
 				grow: false,
 				filterVariant: "multi-select",
 				filterSelectOptions: enumValues(Privilege).map((perm) => ({
-					label: privilegeString(perm),
+					label: toTitleCase(Privilege[perm]),
 					value: perm,
 				})),
 				Cell: ({ row }) => (
 					<Typography>
-						{privilegeString(row.original ? row.original.permissionLevel : Privilege.GUEST)}
+						{toTitleCase(Privilege[row.original ? row.original.permissionLevel : Privilege.GUEST])}
 					</Typography>
 				),
 			}),

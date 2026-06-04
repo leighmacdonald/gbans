@@ -29,7 +29,7 @@ import type { AppealOverview } from "../rpc/ban/v1/appeal_pb.ts";
 import { appeals } from "../rpc/ban/v1/appeal-AppealService_connectquery.ts";
 import { AppealState, BanReason } from "../rpc/ban/v1/ban_pb.ts";
 import { enumValues } from "../util/lists.ts";
-import { appealStateString, banReasonString } from "../util/strings.ts";
+import { toTitleCase } from "../util/strings.ts";
 import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<AppealOverview>();
@@ -118,7 +118,7 @@ function AdminAppeals() {
 				grow: false,
 				filterVariant: "multi-select",
 				filterSelectOptions: enumValues(AppealState).map((reason) => ({
-					label: appealStateString(reason),
+					label: toTitleCase(AppealState[reason]),
 					value: reason,
 				})),
 				filterFn: (row, _, filterValue) => {
@@ -133,7 +133,7 @@ function AdminAppeals() {
 						to={Route.fullPath}
 						search={setColumnFilter(search, "ban.appealState", [cell.getValue()])}
 					>
-						{appealStateString(cell.getValue())}
+						{toTitleCase(AppealState[cell.getValue()])}
 					</TextLink>
 				),
 			}),
@@ -214,7 +214,7 @@ function AdminAppeals() {
 				header: "Reason",
 				size: 150,
 				filterSelectOptions: enumValues(BanReason).map((reason) => ({
-					label: banReasonString(reason),
+					label: toTitleCase(BanReason[reason]),
 					value: reason,
 				})),
 				filterFn: (row, _, filterValue) => {
@@ -226,7 +226,7 @@ function AdminAppeals() {
 				},
 				Cell: ({ cell }) => (
 					<TextLink to={Route.fullPath} search={setColumnFilter(search, "ban.reason", [cell.getValue()])}>
-						{banReasonString(cell.getValue())}
+						{toTitleCase(BanReason[cell.getValue()])}
 					</TextLink>
 				),
 			}),

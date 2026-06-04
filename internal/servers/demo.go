@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -150,6 +152,27 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 	}
 
 	return nil
+}
+
+func (d Demos) ImportFile(ctx context.Context, serverID int32, demoPath string) (*DemoFile, error) {
+	demoFile, err := os.Open(demoPath)
+	if err != nil {
+		return nil, errors.Join(err, ErrDemoLoad)
+	}
+	defer demoFile.Close()
+
+	demoFileName := filepath.Base(demoFile.Name())
+	demoAsset, errAsset := d.asset.Create(ctx, d.owner, asset.BucketDemo, demoFileName, demoFile, false)
+	if errAsset != nil {
+		return nil, errors.Join(errAsset, ErrDemoLoad)
+	}
+
+	demo, errDemo := d.CreateFromAsset(ctx, &demoAsset, serverID)
+	if errDemo != nil {
+		return nil, errors.Join(errDemo, ErrDemoLoad)
+	}
+
+	return demo, nil
 }
 
 func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, server scp.ServerInfo, config scp.Config) error {
@@ -414,7 +437,7 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID
 
 	newDemo := DemoFile{
 		ServerID:  serverID,
-		Title:     asset.Name,
+		Title:     demo.Server,
 		CreatedOn: createdTime,
 		MapName:   mapName,
 		Stats:     intStats,
@@ -425,7 +448,8 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID
 		return nil, errSave
 	}
 
-	slog.Debug("Created demo from asset successfully", slog.Int64("demo_id", int64(newDemo.DemoID)), slog.String("title", newDemo.Title))
+	slog.Debug("Created demo from asset successfully", slog.Int64("demo_id", int64(newDemo.DemoID)),
+		slog.String("title", newDemo.Title), slog.String("map", mapName))
 
 	return &newDemo, nil
 }
