@@ -197,7 +197,7 @@ func (h discordHandler) onBanResponse(ctx context.Context, session *discordgo.Se
 		ReasonText: "",
 		TargetID:   values.TargetID,
 		Reason:     values.Reason,
-		Duration:   values.Duration,
+		ValidUntil: time.Now().Add(values.Duration.ToTimeDuration()),
 		Note:       values.Note,
 	}
 

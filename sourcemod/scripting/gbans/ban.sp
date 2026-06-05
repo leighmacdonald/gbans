@@ -4,116 +4,107 @@
 
 #include "sourcetvmanager"
 
-any Native_GB_BanClient(Handle plugin, int numParams)
-{
-	int adminId = GetNativeCell(1);
-	if(adminId < 0) {
-		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid adminId index (%d)", adminId);
-	}
+any Native_GB_BanClient(Handle plugin, int numParams) {
+    int adminId = GetNativeCell(1);
+    if (adminId < 0) {
+        return ThrowNativeError(SP_ERROR_NATIVE, "Invalid adminId index (%d)", adminId);
+    }
 
-	int targetId = GetNativeCell(2);
-	if(targetId <= 0) {
-		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid targetId index (%d)", targetId);
-	}
+    int targetId = GetNativeCell(2);
+    if (targetId <= 0) {
+        return ThrowNativeError(SP_ERROR_NATIVE, "Invalid targetId index (%d)", targetId);
+    }
 
-	int reason = GetNativeCell(3);
-	if(reason <= 0) {
-		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid reason index (%d)", reason);
-	}
+    int reason = GetNativeCell(3);
+    if (reason <= 0) {
+        return ThrowNativeError(SP_ERROR_NATIVE, "Invalid reason index (%d)", reason);
+    }
 
-	GB_BanReason reasonValue = view_as<GB_BanReason>(reason);
+    GB_BanReason reasonValue = view_as<GB_BanReason>(reason);
 
-	int duration = GetNativeCell(4);
-	if(duration < 0) {
-		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid duration, but must be positive integer or 0 for permanent");
-	}
+    int duration = GetNativeCell(4);
+    if (duration < 0) {
+        return ThrowNativeError(SP_ERROR_NATIVE, "Invalid duration, but must be positive integer or 0 for permanent");
+    }
 
-	int banType = GetNativeCell(5);
-	if(banType != BSBanned && banType != BSNoComm) {
-		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid banType, but must be 1: mute/gag  or 2: ban");
-	}
+    int banType = GetNativeCell(5);
+    if (banType != BSBanned && banType != BSNoComm) {
+        return ThrowNativeError(SP_ERROR_NATIVE, "Invalid banType, but must be 1: mute/gag  or 2: ban");
+    }
 
-	char note[256];
-	if(GetNativeString(6, note, sizeof note) != SP_ERROR_NONE) {
-		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid note");
-	}
+    char note[256];
+    if (GetNativeString(6, note, sizeof note) != SP_ERROR_NONE) {
+        return ThrowNativeError(SP_ERROR_NATIVE, "Invalid note");
+    }
 
-	if(!ban(adminId, targetId, reasonValue, duration, banType, note))	{
-		return ThrowNativeError(SP_ERROR_NATIVE, "Ban error ");
-	}
+    if (!ban(adminId, targetId, reasonValue, duration, banType, note)) {
+        return ThrowNativeError(SP_ERROR_NATIVE, "Ban error ");
+    }
 
-	return true;
+    return true;
 }
-
 /**
  * ban performs the actual work of sending the ban request to the gbans server
  *
  * NOTE: There is currently no way to set a custom ban reason string
  */
-public bool ban(int sourceId, int targetId, GB_BanReason reason, int duration, int banType, const char[] note)
-{
-	char sourceSid[50];
-	if (sourceId > 0) {
-		if(!GetClientAuthId(sourceId, AuthId_Steam3, sourceSid, sizeof sourceSid, true))
-		{
-			ReplyToCommand(sourceId, "Failed to get sourceId of user: %d", sourceId);
-			return false;
-		}
-	}
+public
+bool ban(int sourceId, int targetId, GB_BanReason reason, int duration, int banType, const char[] note) {
+    char sourceSid[50];
+    if (sourceId > 0) {
+        if (!GetClientAuthId(sourceId, AuthId_Steam3, sourceSid, sizeof sourceSid, true)) {
+            ReplyToCommand(sourceId, "Failed to get sourceId of user: %d", sourceId);
+            return false;
+        }
+    }
 
-	char targetSid[50];
-	if(!GetClientAuthId(targetId, AuthId_Steam3, targetSid, sizeof targetSid, true))
-	{
-		ReplyToCommand(sourceId, "Failed to get targetId of user: %d", targetId);
-		return false;
-	}
+    char targetSid[50];
+    if (!GetClientAuthId(targetId, AuthId_Steam3, targetSid, sizeof targetSid, true)) {
+        ReplyToCommand(sourceId, "Failed to get targetId of user: %d", targetId);
+        return false;
+    }
 
-	char demoName[128];
-	int tick = 0;
+    char demoName[128];
+    int  tick = 0;
 
-	if (SourceTV_IsRecording()) {
-		if(!SourceTV_GetDemoFileName(demoName, sizeof demoName)) {
-			LogError("Could not read demo name");
-			return false;
-		}
+    if (SourceTV_IsRecording()) {
+        if (!SourceTV_GetDemoFileName(demoName, sizeof demoName)) {
+            LogError("Could not read demo name");
+            return false;
+        }
 
-		tick = SourceTV_GetRecordingTick();
-	}
+        tick = SourceTV_GetRecordingTick();
+    }
 
-	JSONObject obj = new JSONObject();
-	obj.SetString("sourceId", sourceSid);
-	obj.SetString("targetId", targetSid);
-	obj.SetString("note", note);
-	obj.SetString("reasonText", "");
-	obj.SetInt("banType", banType);
-	obj.SetInt("reason", view_as<int>(reason));
-	obj.SetInt("duration", duration);
-	obj.SetInt("reportId", 0);
-	obj.SetString("demoName", demoName);
-	obj.SetInt("demoTick", tick);
+    JSONObject obj = new JSONObject();
+    obj.SetString("sourceId", sourceSid);
+    obj.SetString("targetId", targetSid);
+    obj.SetString("note", note);
+    obj.SetString("reasonText", "");
+    obj.SetInt("banType", banType);
+    obj.SetInt("reason", view_as<int>(reason));
+    obj.SetInt("duration", duration);
+    obj.SetInt("reportId", 0);
+    obj.SetString("demoName", demoName);
+    obj.SetInt("demoTick", tick);
 
-	postHTTPRequest("/connect/ban.v1.BanService/Create", obj, onBanRespReceived);
+    postHTTPRequest("/connect/ban.v1.BanService/Create", obj, onBanRespReceived);
 
-	return true;
+    return true;
 }
 
+void onBanRespReceived(HTTPResponse response, any clientId) {
+    if (response.Status != HTTPStatus_OK) {
+        if (response.Status == HTTPStatus_Conflict) {
+            ReplyToCommand(clientId, "Duplicate ban");
+            return;
+        }
+        ReplyToCommand(clientId, "Unhandled error response");
+        return;
+    }
 
-void onBanRespReceived(HTTPResponse response, any clientId)
-{
-	if(response.Status != HTTPStatus_OK)
-	{
-		if(response.Status == HTTPStatus_Conflict)
-		{
-			ReplyToCommand(clientId, "Duplicate ban");
-			return ;
-		}
-		ReplyToCommand(clientId, "Unhandled error response");
-		return ;
-	}
-
-
-	JSONObject data = view_as<JSONObject>(response.Data);
-
-	int banId = data.GetInt("banId");
-	ReplyToCommand(clientId, "User banned (#%d)", banId);
+    JSONObject data  = view_as<JSONObject>(response.Data);
+    JSONObject banObj   = view_as<JSONObject>(data.Get("ban"));
+    int        banId = banObj.GetInt("banId");
+    ReplyToCommand(clientId, "User banned (#%d)", banId);
 }

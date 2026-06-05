@@ -19,10 +19,6 @@
 #define PERMISSION_MOD 50
 #define PERMISSION_ADMIN 100
 
-#define HTTP_STATUS_OK 200
-#define HTTP_STATUS_CREATED 201
-#define HTTP_STATUS_CONFLICT 409
-
 public
 SharedPlugin __pl_gbans = {name = "gbans", file = "gbans.smx",
 #if defined REQUIRE_PLUGIN

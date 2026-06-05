@@ -2,7 +2,7 @@
 #pragma tabsize 4
 #pragma newdecls required
 
-#define PLUGIN_NAME "gbans"
+#define PLUGIN_NAME    "gbans"
 #define PLUGIN_VERSION "0.7.47"
 
 #define MAX_SCORES 256
@@ -32,16 +32,16 @@ ConVar gbStvPath;
 ConVar gbStvPathComplete;
 
 // Reports command
-int gReportSourceId = -1;
-int gReportTargetId = -1;
-bool gReportWaitingForReason = false;
+int          gReportSourceId         = -1;
+int          gReportTargetId         = -1;
+bool         gReportWaitingForReason = false;
 GB_BanReason gReportTargetReason;
-int gReportStartedAtTime = -1;
+int          gReportStartedAtTime = -1;
 
 // Stv
 bool gIsRecording = false;
-bool gIsManual = false;
+bool gIsManual    = false;
 
 // jwt returned and used once authenticated
 char gToken[1024] = "";
-//int gLastAuthAttempt = 0;
+// int gLastAuthAttempt = 0;

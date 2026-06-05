@@ -17,7 +17,7 @@ import { logErr } from "../../util/errors";
 import { mdEditorRef } from "../form/field/MarkdownField.tsx";
 import { ConfirmationModal } from "./ConfirmationModal.tsx";
 
-export const ForumThreadCreatorModal = NiceModal.create(({ forum: _ }: { forum: Forum }) => {
+export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: Forum }) => {
 	const threadModal = useModal(ForumThreadCreatorModal);
 	const confirmModal = useModal(ConfirmationModal);
 	const { sendError } = useUserFlashCtx();
@@ -50,7 +50,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum: _ }: { forum: 
 
 	const mutation = useMutation(threadCreate, {
 		onSuccess: async (editedThread) => {
-			modal.resolve(editedThread);
+			modal.resolve(editedThread.thread);
 			mdEditorRef.current?.setMarkdown("");
 			await modal.hide();
 		},
@@ -59,7 +59,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum: _ }: { forum: 
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutation.mutate({ ...value });
+			mutation.mutate({ ...value, forumId: forum.forumId });
 		},
 		defaultValues: {
 			title: "",

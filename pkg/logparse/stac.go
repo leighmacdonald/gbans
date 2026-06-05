@@ -48,7 +48,7 @@ type StacEntry struct {
 	ServerName  string          `json:"serverName"`
 	DemoID      *int32          `json:"demoId"`
 	DemoName    string          `json:"demoName"`
-	DemoTick    uint32          `json:"demoTick"`
+	DemoTick    int32           `json:"demoTick"`
 	Name        string          `json:"name"`
 	Detection   Detection       `json:"detection"`
 	Summary     string          `json:"summary"`
@@ -165,7 +165,7 @@ func (p StacParser) Parse(logName string, reader io.Reader) ([]StacEntry, error)
 				if errTick != nil {
 					slog.Warn("Failed to parse demo tick", slog.String("line", line))
 				} else {
-					current.DemoTick = uint32(tick)
+					current.DemoTick = int32(tick)
 				}
 			}
 		}
