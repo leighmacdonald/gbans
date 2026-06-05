@@ -23,6 +23,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/datetime"
+	"github.com/leighmacdonald/gbans/internal/demo"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/json"
 	"github.com/leighmacdonald/gbans/internal/log"
@@ -30,7 +31,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network/ip2location"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/patreon"
-	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -81,7 +81,7 @@ type Config struct {
 	Debug   Debug
 
 	// Package configs.
-	Demo        servers.DemoConfig
+	Demo        demo.DemoConfig
 	Filters     chat.Config
 	Discord     discord.Config
 	Clientprefs sourcemod.Config

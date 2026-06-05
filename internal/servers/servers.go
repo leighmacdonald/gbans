@@ -28,6 +28,7 @@ var (
 	ErrStatusParse       = errors.New("failed to parse status response")
 	ErrMaxPlayerIntParse = errors.New("failed to cast max players value")
 	ErrMaxPlayerParse    = errors.New("failed to parse sv_visiblemaxplayers response")
+	ErrNotFound          = errors.New("server not found")
 )
 
 const (

@@ -10,6 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/demo"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
@@ -33,7 +34,7 @@ func TestBan(t *testing.T) {
 	t.Parallel()
 	var (
 		assets = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
-		demos  = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database),
+		demos  = demo.NewDemos(asset.BucketDemo, demo.NewDemoRepository(fixture.Database),
 			assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
 		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
 			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
@@ -62,7 +63,7 @@ func TestDuplicate(t *testing.T) {
 	t.Parallel()
 	var (
 		assets = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
-		demos  = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database),
+		demos  = demo.NewDemos(asset.BucketDemo, demo.NewDemoRepository(fixture.Database),
 			assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
 		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
 			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
@@ -100,7 +101,7 @@ func TestUnban(t *testing.T) {
 	t.Parallel()
 	var (
 		assets = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
-		demos  = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database),
+		demos  = demo.NewDemos(asset.BucketDemo, demo.NewDemoRepository(fixture.Database),
 			assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
 		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
 			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),

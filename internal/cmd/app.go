@@ -22,10 +22,12 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
+	"github.com/leighmacdonald/gbans/internal/blocklist"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/contest"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/demo"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	discordoauth "github.com/leighmacdonald/gbans/internal/discord/oauth"
 	"github.com/leighmacdonald/gbans/internal/forum"
@@ -43,6 +45,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
+	"github.com/leighmacdonald/gbans/internal/speedruns"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/wiki"
@@ -65,12 +68,12 @@ type GBans struct {
 	appeals        ban.Appeals
 	banExpirations *ban.ExpirationMonitor
 	bans           ban.Bans
-	blocklists     network.Blocklists
+	blocklists     blocklist.Blocklists
 	chat           *chat.Chat
 	config         *config.Configuration
 	contests       contest.Contests
 	database       database.Database
-	demos          servers.Demos
+	demos          demo.Demos
 	forums         forum.Forums
 	discordOAuth   discordoauth.DiscordOAuth
 	memberships    *ban.Memberships
@@ -82,7 +85,7 @@ type GBans struct {
 	persons        *person.Persons
 	reports        ban.Reports
 	servers        *servers.Servers
-	speedruns      servers.Speedruns
+	speedruns      speedruns.Speedruns
 	sourcemod      sourcemod.Sourcemod
 	staticConfig   config.Static
 	tfapiClient    thirdparty.APIProvider
@@ -175,12 +178,12 @@ func (g *GBans) Init(ctx context.Context) error {
 	if g.servers, errServer = servers.New(servers.NewRepository(g.database), g.broadcaster, conf.General.SrcdsLogAddr); errServer != nil {
 		return errServer
 	}
-	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, conf.Demo, steamid.New(conf.Owner))
+	g.demos = demo.NewDemos(asset.BucketDemo, demo.NewDemoRepository(g.database), g.assets, conf.Demo, steamid.New(conf.Owner))
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications,
 		conf.Discord.SafeAppealLogChannelID())
 	g.bans = ban.New(ban.NewRepository(g.database), g.persons, conf.Discord.SafeBanLogChannelID(),
 		conf.Discord.SafeKickLogChannelID(), steamid.New(conf.Owner), g.reports, g.notifications, g.servers, g.networks)
-	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database),
+	g.blocklists = blocklist.NewBlocklists(blocklist.NewRepository(g.database),
 		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database)))
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), conf.Discord)
 	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler, conf.Discord.SafeChatLogChannelID())
@@ -193,7 +196,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.votes = votes.New(votes.NewRepository(g.database), g.broadcaster, g.notifications,
 		conf.Discord.SafeVoteLogChannelID(), g.persons)
 
-	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(g.database, g.persons), maps.New(maps.NewRepository(g.database)))
+	g.speedruns = speedruns.NewSpeedruns(speedruns.NewSpeedrunRepository(g.database, g.persons), maps.New(maps.NewRepository(g.database)))
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications)
 	g.mge = mge.NewMGE(mge.NewRepository(g.database))
@@ -468,14 +471,14 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware) *http.ServeMux {
 		contest.NewService(g.contests, g.assets, authMiddleware, interceptors),
 		forum.NewService(g.forums, authMiddleware, interceptors),
 		mge.NewService(g.mge, authMiddleware, interceptors),
-		network.NewBlocklistService(g.blocklists, authMiddleware, interceptors),
+		blocklist.NewService(g.blocklists, authMiddleware, interceptors),
 		network.NewNetworkService(g.networks, authMiddleware, interceptors),
 		news.NewService(g.news, authMiddleware, interceptors),
 		notification.NewService(g.notifications, authMiddleware, interceptors),
 		person.NewPersonService(g.persons, authMiddleware, interceptors),
 		servers.NewServersService(g.servers, authMiddleware, interceptors),
-		servers.NewDemoService(g.demos, authMiddleware, interceptors),
-		servers.NewSpeedrunsService(g.speedruns, authMiddleware, interceptors),
+		demo.NewDemoService(g.demos, authMiddleware, interceptors),
+		speedruns.NewSpeedrunsService(g.speedruns, authMiddleware, interceptors),
 		sourcemod.NewPluginService(g.sourcemod, g.persons, g.servers, g.bans,
 			rpc.NewServerTokenGenerator(conf.General.SiteName, []byte(conf.HTTPCookieKey)), g.notifications, conf.Discord.LogChannelID, authMiddleware, interceptors),
 		sourcemod.NewSourcemodService(g.sourcemod, authMiddleware, interceptors),

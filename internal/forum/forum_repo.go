@@ -8,7 +8,6 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -135,11 +134,11 @@ func (f *Repository) Forums(ctx context.Context) ([]Forum, error) {
 		}
 
 		if lastID != nil {
-			frm.LastThreadID = ptr.From(lastID)
+			frm.LastThreadID = *lastID
 		}
 
 		if lastForumTheadID != nil && lastPersonaname != nil && lastAvatarhash != nil && lastCreatedOn != nil && lastTitle != nil {
-			frm.RecentForumThreadID = ptr.From(lastForumTheadID)
+			frm.RecentForumThreadID = *lastForumTheadID
 			frm.RecentSourceID = lastSourceID.String()
 			frm.RecentPersonaname = *lastPersonaname
 			frm.RecentAvatarhash = *lastAvatarhash
@@ -216,7 +215,7 @@ func (f *Repository) Forum(ctx context.Context, forumID int32, forum *Forum) err
 	}
 
 	if lastThreadID != nil {
-		forum.LastThreadID = ptr.From(lastThreadID)
+		forum.LastThreadID = *lastThreadID
 	}
 
 	return nil

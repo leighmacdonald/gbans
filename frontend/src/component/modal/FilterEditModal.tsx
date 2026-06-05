@@ -87,7 +87,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
 								name={"action"}
 								children={(field) => {
 									return (
-										<field.SelectField
+										<field.ActionField
 											label={"Action"}
 											items={enumValues(FilterAction)}
 											renderItem={(fa) => {
