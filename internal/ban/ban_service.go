@@ -162,11 +162,11 @@ func (s Service) Create(ctx context.Context, req *v1.CreateRequest) (*v1.CreateR
 		Origin:     Origin(req.GetOrigin()),
 		Reason:     reason.Reason(req.GetReason()),
 		BanType:    bantype.Type(req.GetBanType()),
-		ValidUntil: req.ValidUntil.AsTime(),
+		ValidUntil: req.GetValidUntil().AsTime(),
 		ReportID:   req.ReportId,
 		EvadeOk:    req.GetEvadeOk(),
 		Note:       req.GetNote(),
-		DemoId:     req.DemoId,
+		DemoID:     req.DemoId,
 		DemoTick:   req.DemoTick,
 	}
 
@@ -187,6 +187,7 @@ func (s Service) Create(ctx context.Context, req *v1.CreateRequest) (*v1.CreateR
 	createdBan, errBan := s.bans.Create(ctx, opts)
 	if errBan != nil {
 		slog.Error("Failed to create ban", slog.String("error", errBan.Error()))
+
 		return nil, connect.NewError(connect.CodeInternal, ErrSaveBan)
 	}
 

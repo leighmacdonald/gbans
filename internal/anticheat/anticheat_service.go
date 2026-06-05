@@ -59,7 +59,7 @@ func (s Service) Query(ctx context.Context, request *v1.QueryRequest) (*v1.Query
 			ServerName:  &entry.ServerName,
 			DemoId:      entry.DemoID,
 			DemoName:    &entry.DemoName,
-			DemoTick:    new(int32(entry.DemoTick)), //nolint:gosec
+			DemoTick:    new(entry.DemoTick), //nolint:gosec
 			Name:        &entry.Name,
 			Detection:   detectionToRPC(entry.Detection),
 			Summary:     &entry.Summary,
