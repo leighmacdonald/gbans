@@ -9,7 +9,6 @@ import (
 	banv1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	v1 "github.com/leighmacdonald/gbans/internal/chat/v1"
 	"github.com/leighmacdonald/gbans/internal/chat/v1/chatv1connect"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -160,7 +159,7 @@ func (s WordfilterService) FilterDelete(ctx context.Context, req *v1.FilterDelet
 }
 
 func (s WordfilterService) FilterMatch(_ context.Context, req *v1.FilterMatchRequest) (*v1.FilterMatchResponse, error) {
-	matches := s.filters.Check(ptr.From(req.Query))
+	matches := s.filters.Check(req.GetQuery())
 
 	resp := v1.FilterMatchResponse{Filters: make([]*v1.Filter, len(matches))}
 	for i, m := range matches {

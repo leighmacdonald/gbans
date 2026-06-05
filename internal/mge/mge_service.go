@@ -10,7 +10,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	v1 "github.com/leighmacdonald/gbans/internal/mge/v1"
 	"github.com/leighmacdonald/gbans/internal/mge/v1/mgev1connect"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -61,7 +60,7 @@ func (s Service) GetRatingsOverall(ctx context.Context, req *v1.GetRatingsOveral
 func (s Service) GetHistory(ctx context.Context, req *v1.GetHistoryRequest) (*v1.GetHistoryResponse, error) {
 	history, count, errChat := s.mge.History(ctx, HistoryOpts{
 		Filter:  rpc.FromRPC(req.GetFilter()),
-		Mode:    DuelMode(ptr.From(req.Mode)),
+		Mode:    DuelMode(req.GetMode()),
 		Winner:  steamid.New(req.GetWinner()),
 		Loser:   steamid.New(req.GetLoser()),
 		Winner2: steamid.New(req.GetWinner2()),

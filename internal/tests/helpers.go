@@ -13,6 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/demo"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/fs"
@@ -20,7 +21,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network/ip2location"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/patreon"
-	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -201,7 +201,7 @@ func TestConfig(dsn string) *config.Configuration {
 			ChatlogsEnabled: true,
 			DemosEnabled:    true,
 		},
-		Demo: servers.DemoConfig{
+		Demo: demo.DemoConfig{
 			DemoCleanupEnabled:  false,
 			DemoCleanupStrategy: "",
 			DemoCleanupMinPct:   0,

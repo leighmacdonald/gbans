@@ -12,6 +12,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/chat"
 	configv1 "github.com/leighmacdonald/gbans/internal/config/v1"
 	"github.com/leighmacdonald/gbans/internal/config/v1/configv1connect"
+	"github.com/leighmacdonald/gbans/internal/demo"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/network"
@@ -19,7 +20,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/patreon"
 	"github.com/leighmacdonald/gbans/internal/rpc"
-	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -126,7 +126,7 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 			SkipOpenIDValidation: inDebug.GetSkipOpenIdValidation(),
 			AddRCONLogAddress:    inDebug.GetAddRconLogAddress(),
 		},
-		Demo: servers.DemoConfig{
+		Demo: demo.DemoConfig{
 			DemoCleanupEnabled:  inDemo.GetCleanupEnabled(),
 			DemoCleanupStrategy: fromDemoStrategy(inDemo.GetStrategy()), // FIXME
 			DemoCleanupMinPct:   inDemo.GetCleanupMinPct(),
@@ -417,22 +417,22 @@ func toServeMode(mode FileServeMode) configv1.FileServeMode {
 	}
 }
 
-func fromDemoStrategy(strategy configv1.DemoStrategy) servers.DemoStrategy {
+func fromDemoStrategy(strategy configv1.DemoStrategy) demo.DemoStrategy {
 	switch strategy {
 	case configv1.DemoStrategy_DEMO_STRATEGY_COUNT:
-		return servers.DemoStrategyCount
+		return demo.DemoStrategyCount
 	case configv1.DemoStrategy_DEMO_STRATEGY_PCTFREE_UNSPECIFIED:
 		fallthrough
 	default:
-		return servers.DemoStrategyPctFree
+		return demo.DemoStrategyPctFree
 	}
 }
 
-func toDemoStrategy(strategy servers.DemoStrategy) configv1.DemoStrategy {
+func toDemoStrategy(strategy demo.DemoStrategy) configv1.DemoStrategy {
 	switch strategy {
-	case servers.DemoStrategyCount:
+	case demo.DemoStrategyCount:
 		return configv1.DemoStrategy_DEMO_STRATEGY_COUNT
-	case servers.DemoStrategyPctFree:
+	case demo.DemoStrategyPctFree:
 		fallthrough
 	default:
 		return configv1.DemoStrategy_DEMO_STRATEGY_PCTFREE_UNSPECIFIED

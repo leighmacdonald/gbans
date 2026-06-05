@@ -12,11 +12,11 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/demo"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/sliceutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -160,13 +160,13 @@ type ReportMeta struct {
 type Reports struct {
 	repository ReportRepository
 	persons    *person.Persons
-	demos      servers.Demos
+	demos      demo.Demos
 	tfAPI      thirdparty.APIProvider
 	notif      notification.Notifier
 	logChannel string
 }
 
-func NewReports(repo ReportRepository, persons *person.Persons, demos servers.Demos, tfAPI thirdparty.APIProvider,
+func NewReports(repo ReportRepository, persons *person.Persons, demos demo.Demos, tfAPI thirdparty.APIProvider,
 	notif notification.Notifier, logChannel string,
 ) Reports {
 	return Reports{
@@ -343,7 +343,7 @@ func (r Reports) Report(ctx context.Context, curUser personDomain.BaseUser, repo
 		return ReportWithAuthor{}, errTarget
 	}
 
-	var demo servers.DemoFile
+	var demo demo.DemoFile
 	if report.DemoID > 0 {
 		if errDemo := r.demos.GetDemoByID(ctx, report.DemoID, &demo); errDemo != nil {
 			slog.Error("Failed to load report demo", slog.Int64("report_id", int64(report.ReportID)))
@@ -442,7 +442,7 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.BaseUser, re
 		return ReportWithAuthor{}, ErrReportExists
 	}
 
-	var demo servers.DemoFile
+	var demo demo.DemoFile
 
 	if req.DemoID > 0 {
 		if errDemo := r.demos.GetDemoByID(ctx, req.DemoID, &demo); errDemo != nil {

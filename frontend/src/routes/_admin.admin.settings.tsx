@@ -46,8 +46,8 @@ import {
 	UpdateRequestSchema,
 } from "../rpc/config/v1/config_pb.ts";
 import { update } from "../rpc/config/v1/config-ConfigService_connectquery.ts";
+import { DemoService } from "../rpc/demo/v1/demo_pb.ts";
 import { NetworkService } from "../rpc/network/v1/network_pb.ts";
-import { DemoService } from "../rpc/servers/v1/demo_pb.ts";
 import { finalTransport } from "../transport.ts";
 import { logErr } from "../util/errors.ts";
 import { enumValues } from "../util/lists.ts";

@@ -7,8 +7,8 @@ import Grid from "@mui/material/Grid";
 import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { CIDRBlockWhitelist } from "../../rpc/network/v1/blocklist_pb.ts";
-import { whitelistAddressCreate } from "../../rpc/network/v1/blocklist-BlocklistService_connectquery.ts";
+import type { CIDRBlockWhitelist } from "../../rpc/blocklist/v1/blocklist_pb.ts";
+import { whitelistAddressCreate } from "../../rpc/blocklist/v1/blocklist-BlocklistService_connectquery.ts";
 import { Heading } from "../Heading";
 
 export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: CIDRBlockWhitelist }) => {

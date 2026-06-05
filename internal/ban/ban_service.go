@@ -13,7 +13,6 @@ import (
 	v1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	"github.com/leighmacdonald/gbans/internal/ban/v1/banv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -84,7 +83,7 @@ func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResp
 }
 
 func (s Service) Delete(ctx context.Context, req *v1.DeleteRequest) (*emptypb.Empty, error) {
-	bannedPerson, errBan := s.bans.QueryOne(ctx, QueryOpts{BanID: ptr.From(req.BanId), EvadeOk: true})
+	bannedPerson, errBan := s.bans.QueryOne(ctx, QueryOpts{BanID: req.GetBanId(), EvadeOk: true})
 	if errBan != nil {
 		if errors.Is(errBan, database.ErrNoResult) {
 			return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
@@ -94,7 +93,7 @@ func (s Service) Delete(ctx context.Context, req *v1.DeleteRequest) (*emptypb.Em
 	}
 
 	user := rpc.UserInfoFromCtx(ctx)
-	changed, errSave := s.bans.Unban(ctx, bannedPerson.TargetID, ptr.From(req.Reason), user)
+	changed, errSave := s.bans.Unban(ctx, bannedPerson.TargetID, req.GetReason(), user)
 	if errSave != nil {
 		return nil, connect.NewError(connect.CodeInternal, errSave)
 	}

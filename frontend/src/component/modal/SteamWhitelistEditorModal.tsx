@@ -7,7 +7,7 @@ import Grid from "@mui/material/Grid";
 import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import { whitelistSteamCreate } from "../../rpc/network/v1/blocklist-BlocklistService_connectquery.ts";
+import { whitelistSteamCreate } from "../../rpc/blocklist/v1/blocklist-BlocklistService_connectquery.ts";
 import { Heading } from "../Heading";
 
 const schema = z.object({

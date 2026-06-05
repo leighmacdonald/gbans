@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	ErrNetworkInvalidIP       = errors.New("invalid ip")
+	ErrNetworkInvalidIP       = errors.New("invalid ip/cidr")
 	ErrNetworkLocationUnknown = errors.New("unknown location record")
 	ErrNetworkASNUnknown      = errors.New("unknown asn record")
 	ErrNetworkProxyUnknown    = errors.New("no proxy record")
@@ -248,14 +248,14 @@ func (u Networks) QueryConnectionHistory(ctx context.Context, opts ConnectionHis
 
 	if opts.CIDR != "" {
 		if !strings.Contains(opts.CIDR, "/") {
-			opts.CIDR += maskSingleHost
+			opts.CIDR += "/32"
 		}
 
 		_, network, errNetwork := net.ParseCIDR(opts.CIDR)
 		if errNetwork != nil {
 			slog.Error("Received malformed CIDR", slog.String("error", errNetwork.Error()))
 
-			return nil, ErrInvalidCIDR
+			return nil, ErrNetworkInvalidIP
 		}
 
 		opts.CIDR = network.String()
@@ -266,7 +266,6 @@ func (u Networks) QueryConnectionHistory(ctx context.Context, opts ConnectionHis
 
 func (u Networks) QueryNetwork(ctx context.Context, address netip.Addr) (Details, error) {
 	var details Details
-
 	if !address.IsValid() {
 		return details, ErrNetworkInvalidIP
 	}

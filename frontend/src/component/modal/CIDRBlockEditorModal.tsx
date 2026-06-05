@@ -7,8 +7,8 @@ import Grid from "@mui/material/Grid";
 import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { CIDRBlockSource } from "../../rpc/network/v1/blocklist_pb.ts";
-import { blocklistSourcesEdit } from "../../rpc/network/v1/blocklist-BlocklistService_connectquery.ts";
+import type { CIDRBlockSource } from "../../rpc/blocklist/v1/blocklist_pb.ts";
+import { blocklistSourcesEdit } from "../../rpc/blocklist/v1/blocklist-BlocklistService_connectquery.ts";
 import { Heading } from "../Heading";
 
 const schema = z.object({

@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/demo"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/spf13/cobra"
 )
@@ -33,7 +34,7 @@ func importDemoCmd() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if serverName == "" {
-				return servers.ErrDemoLoad
+				return demo.ErrDemoLoad
 			}
 
 			ctx := cmd.Context()
@@ -58,10 +59,10 @@ func importDemoCmd() *cobra.Command {
 				if errID != nil {
 					server, errServer := app.servers.Servers(ctx, servers.Query{ShortName: serverName, IncludeDisabled: true})
 					if errServer != nil {
-						return errors.Join(errServer, servers.ErrDemoLoad)
+						return errors.Join(errServer, demo.ErrDemoLoad)
 					}
 					if len(server) != 1 {
-						return fmt.Errorf("%w: Invalid server %s", servers.ErrDemoLoad, serverName)
+						return fmt.Errorf("%w: Invalid server %s", demo.ErrDemoLoad, serverName)
 					}
 					serverID = server[0].ServerID
 				} else {
@@ -87,7 +88,7 @@ func importDemoCmd() *cobra.Command {
 
 					entries, err := os.ReadDir(arg)
 					if err != nil {
-						return errors.Join(err, servers.ErrDemoLoad)
+						return errors.Join(err, demo.ErrDemoLoad)
 					}
 					for _, entry := range entries {
 						if entry.IsDir() {
@@ -107,7 +108,7 @@ func importDemoCmd() *cobra.Command {
 					waitGroup.Wait()
 				} else {
 					if err := importFn(arg); err != nil {
-						return errors.Join(err, servers.ErrDemoLoad)
+						return errors.Join(err, demo.ErrDemoLoad)
 					}
 				}
 			}

@@ -123,7 +123,7 @@ export const ForumForumEditorModal = NiceModal.create(
 									}}
 									children={(field) => {
 										return (
-											<field.SelectField
+											<field.PrivilegeField
 												label={"Permissions Required"}
 												items={enumValues(Privilege)}
 												renderItem={(pl) => {
