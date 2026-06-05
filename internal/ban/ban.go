@@ -93,7 +93,7 @@ type Opts struct {
 	CIDR        *string
 	EvadeOk     bool
 	Name        string
-	DemoId      *int32
+	DemoID      *int32
 	DemoTick    *int32
 	Note        string
 }
@@ -350,7 +350,7 @@ func (s Bans) Create(ctx context.Context, opts Opts) (Ban, error) {
 		Origin:      opts.Origin,
 		Name:        opts.Name,
 		ValidUntil:  opts.ValidUntil,
-		DemoID:      opts.DemoId,
+		DemoID:      opts.DemoID,
 		AnticheatID: opts.AnticheatID,
 	}
 
@@ -490,7 +490,7 @@ func (s Bans) Expired(ctx context.Context) ([]Ban, error) {
 
 // CheckEvadeStatus checks if the address matches an existing user who is currently banned already. This
 // function will always fail-open and allow players in if an error occurs.
-// TODO make the behaviour configurable
+// TODO make the behaviour configurable.
 func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, address netip.Addr) (bool, error) {
 	existing, errMatch := s.QueryOne(ctx, QueryOpts{CIDR: address.String()})
 	if errMatch != nil {
