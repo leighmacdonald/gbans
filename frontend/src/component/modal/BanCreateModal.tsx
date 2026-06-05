@@ -1,5 +1,5 @@
 import { create } from "@bufbuild/protobuf";
-import { durationFromMs } from "@bufbuild/protobuf/wkt";
+import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import DirectionsRunIcon from "@mui/icons-material/DirectionsRun";
@@ -7,33 +7,41 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
-import { differenceInSeconds } from "date-fns/fp/differenceInSeconds";
-import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import { BanReason, BanType, CreateRequestSchema, Origin } from "../../rpc/ban/v1/ban_pb.ts";
 import { create as createBan } from "../../rpc/ban/v1/ban-BanService_connectquery.ts";
 import { enumValues } from "../../util/lists.ts";
 import { banTypeString } from "../../util/strings.ts";
-import { zeroStringUndefined } from "../../util/types.ts";
+import { emptyOrNullString, zeroStringUndefined } from "../../util/types.ts";
 import { MarkdownField } from "../form/field/MarkdownField.tsx";
 import { Heading } from "../Heading.tsx";
 
-export const BanCreateModal = NiceModal.create(({ reportId, steamId }: { reportId?: number; steamId?: string }) => {
+type BanCreateProps = {
+	// Set when creating a ban from a user report
+	reportId?: number;
+	steamId?: string;
+	// Set when creating a user report from the stv page.
+	demoId?: number;
+	// An optional demotick to provide with the demoId
+	demoTick?: number;
+};
+
+export const BanCreateModal = NiceModal.create(({ reportId, steamId, demoId, demoTick }: BanCreateProps) => {
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const modal = useModal();
 
 	const mutation = useMutation(createBan, {
 		onSuccess: async (banRecord) => {
-			sendFlash("success", "Created ban successfully");
-			modal.resolve(banRecord);
+			sendFlash("success", `Created ban successfully #${banRecord.ban?.banId}`);
+			modal.resolve(banRecord.ban);
 			await modal.hide();
 		},
 		onError: sendError,
 	});
 
 	const defaultValues = {
-		reportId: reportId ?? 0,
+		reportId: reportId,
 		targetId: steamId ?? "",
 		banType: BanType.BANNED,
 		reason: BanReason.CHEATING,
@@ -41,30 +49,35 @@ export const BanCreateModal = NiceModal.create(({ reportId, steamId }: { reportI
 		note: "",
 		evadeOk: false,
 		cidr: "",
-		demoName: "",
-		demoTick: 0,
+		demoId: demoId,
+		demoTick: demoTick,
 		origin: Origin.REPORTED,
 		validUntil: new Date(),
 	};
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutation.mutate(
-				create(CreateRequestSchema, {
-					banType: value.banType,
-					reason: value.reason,
-					reasonText: zeroStringUndefined(value.note),
-					note: zeroStringUndefined(value.note),
-					evadeOk: value.evadeOk,
-					duration: durationFromMs(differenceInSeconds(value.validUntil, new Date()) * 1000),
-					cidr: zeroStringUndefined(value.cidr),
-					origin: Origin.WEB,
-					targetId: value.targetId,
-					demoTick: value.demoTick,
-					demoName: zeroStringUndefined(value.demoName),
-					reportId: reportId,
-				}),
-			);
+			const updateRequest = create(CreateRequestSchema, {
+				banType: value.banType,
+				reason: value.reason,
+				reasonText: zeroStringUndefined(value.note),
+				note: zeroStringUndefined(value.note),
+				evadeOk: value.evadeOk,
+				validUntil: timestampFromDate(value.validUntil),
+				cidr: zeroStringUndefined(value.cidr),
+				origin: Origin.WEB,
+				targetId: value.targetId,
+				demoTick: demoTick,
+				demoId: demoId,
+				reportId: reportId,
+			});
+			if (!emptyOrNullString(value.cidr)) {
+				if (!value.cidr.includes("/")) {
+					value.cidr += "/32";
+				}
+				updateRequest.cidr = value.cidr;
+			}
+			mutation.mutate(updateRequest);
 		},
 		defaultValues,
 	});
@@ -146,22 +159,6 @@ export const BanCreateModal = NiceModal.create(({ reportId, steamId }: { reportI
 						<Grid size={{ xs: 12 }}>
 							<form.AppField
 								name={"reasonText"}
-								validators={{
-									onSubmit: ({ value, fieldApi }) => {
-										if (fieldApi.form.getFieldValue("reason") !== BanReason.CUSTOM) {
-											if (value.length === 0) {
-												return undefined;
-											}
-											return "Must use custom ban reason";
-										}
-										const result = z.string().min(5).safeParse(value);
-										if (!result.success) {
-											return result.error.message;
-										}
-
-										return undefined;
-									},
-								}}
 								children={(field) => {
 									return <field.TextField label={"Custom Ban Reason"} />;
 								}}

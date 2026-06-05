@@ -85,6 +85,8 @@ type ServerInfo struct {
 	ServerName string
 }
 
+// ServerInfoFromCtx retreives the ServerInfo struct that is set with the ServerAuthenticator middleware. Returns nil
+// for a unauthenticated request.
 func ServerInfoFromCtx(ctx context.Context) *ServerInfo {
 	server, ok := authn.GetInfo(ctx).(ServerInfo)
 	if !ok {
@@ -94,6 +96,8 @@ func ServerInfoFromCtx(ctx context.Context) *ServerInfo {
 	return &server
 }
 
+// UserInfoFromCtx retreives the ServerInfo struct that is set with the UserAuthenticator middleware. Returns nil
+// for a unauthenticated request.
 func UserInfoFromCtx(ctx context.Context) *UserInfo {
 	user, ok := authn.GetInfo(ctx).(UserInfo)
 	if !ok {

@@ -55,8 +55,14 @@ message CreateRequest {
     (buf.validate.field).required = true,
     (buf.validate.field).int64 = {gte: 76561197960265729}
   ];
+  // This is only really used when making calls from sourcemod where we dont have the
+  // same auth mechanism, otherwise the user is automatically set from the
+  // authentication context so that it cannot be forged.
   int64 source_id = 2 [(buf.validate.field).int64 = {gte: 76561197960265729}];
-  google.protobuf.Duration duration = 3;
+  google.protobuf.Timestamp valid_until = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).timestamp.gt_now = true
+  ];
   BanType ban_type = 4 [
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
@@ -68,12 +74,16 @@ message CreateRequest {
   string reason_text = 6;
   Origin origin = 7 [(buf.validate.field).required = true];
   int32 report_id = 8 [(buf.validate.field).int32.gt = 0];
-  string cidr = 9 [(buf.validate.field).string.address = true];
-  bool evade_ok = 10 [(buf.validate.field).required = true];
+  string cidr = 9 [(buf.validate.field).string.ipv4_with_prefixlen = true];
+  bool evade_ok = 10;
   string name = 11 [(buf.validate.field).string.max_len = 32];
   int32 demo_tick = 12 [(buf.validate.field).int32.gte = 0];
-  string demo_name = 13;
-  string note = 14 [(buf.validate.field).required = true];
+  int32 demo_id = 13 [(buf.validate.field).int32.gte = 0];
+  string note = 14 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 10,
+    (buf.validate.field).string.max_len = 100000
+  ];
 }
 
 message CreateResponse {
@@ -92,7 +102,7 @@ message UpdateRequest {
   string reason_text = 3;
   string note = 4;
   bool evade_ok = 5;
-  google.protobuf.Timestamp valid_until = 6;
+  google.protobuf.Timestamp valid_until = 6 [(buf.validate.field).timestamp.gt_now = true];
   string cidr = 7 [(buf.validate.field).string.ip_with_prefixlen = true];
   int32 ban_id = 8 [
     (buf.validate.field).required = true,
@@ -229,9 +239,6 @@ message Ban {
   bool is_enabled = 21 [(buf.validate.field).required = true];
   google.protobuf.Timestamp created_on = 22 [(buf.validate.field).required = true];
   google.protobuf.Timestamp updated_on = 23 [(buf.validate.field).required = true];
-  google.protobuf.Duration duration = 24 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).duration.gt = {seconds: 60}
-  ];
-  google.protobuf.Timestamp valid_until = 25 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp valid_until = 24 [(buf.validate.field).required = true];
+  int32 demo_id = 25 [(buf.validate.field).int32.gte = 0];
 }

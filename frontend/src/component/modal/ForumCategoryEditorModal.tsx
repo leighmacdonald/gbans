@@ -6,7 +6,7 @@ import Grid from "@mui/material/Grid";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import type { Category } from "../../rpc/forum/v1/forum_pb.ts";
-import { categoryEdit } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
+import { categoryCreate, categoryEdit } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
 
 // interface ForumCategoryEditorProps {
 //     initial_forum_category_id?: number;
@@ -20,7 +20,15 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
 	const modal = useModal();
 	const { sendError } = useUserFlashCtx();
 
-	const mutation = useMutation(categoryEdit, {
+	const createMutation = useMutation(categoryCreate, {
+		onSuccess: async (resp) => {
+			modal.resolve(resp.category);
+			await modal.hide();
+		},
+		onError: sendError,
+	});
+
+	const editMutation = useMutation(categoryEdit, {
 		onSuccess: async (resp) => {
 			modal.resolve(resp.category);
 			await modal.hide();
@@ -30,7 +38,15 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutation.mutate({ ...value, ordering: Number(value.ordering) });
+			if (category) {
+				editMutation.mutate({
+					...value,
+					ordering: Number(value.ordering),
+					forumCategoryId: category.forumCategoryId,
+				});
+			} else {
+				createMutation.mutate({ ...value, ordering: Number(value.ordering) });
+			}
 		},
 		defaultValues: {
 			title: category?.title ?? "",

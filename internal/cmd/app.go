@@ -645,13 +645,13 @@ func (g *GBans) firstTimeSetup(ctx context.Context) error {
 }
 
 func (g *GBans) onChatBan(ctx context.Context, warning chat.NewUserWarning) error {
-	var dur *duration.Duration
+	var validUntil time.Time
 	if warning.MatchedFilter.Action == chat.FilterActionBan || warning.MatchedFilter.Action == chat.FilterActionMute {
 		parsedDur, errDur := duration.Parse(warning.MatchedFilter.Duration)
 		if errDur != nil {
 			return errors.Join(errDur, chat.ErrInvalidActionDuration)
 		}
-		dur = parsedDur
+		validUntil = time.Now().Add(parsedDur.ToTimeDuration())
 	}
 
 	var (
@@ -662,7 +662,7 @@ func (g *GBans) onChatBan(ctx context.Context, warning chat.NewUserWarning) erro
 			Reason:     warning.WarnReason,
 			ReasonText: "",
 			Note:       "Automatic warning ban",
-			Duration:   dur,
+			ValidUntil: validUntil,
 		}
 	)
 	switch warning.MatchedFilter.Action {
@@ -712,14 +712,15 @@ func (g *GBans) onAnticheatBan(ctx context.Context, entry logparse.StacEntry, du
 		Origin:     ban.System,
 		SourceID:   steamid.New(conf.Owner),
 		TargetID:   entry.SteamID,
-		Duration:   duration.FromTimeDuration(dur),
+		ValidUntil: time.Now().Add(dur),
 		BanType:    bantype.Banned,
 		Reason:     reason.Cheating,
 		ReasonText: "",
 		Note:       entry.Summary + "\n\nRaw log:\n" + entry.RawLog,
-		DemoName:   entry.DemoName,
-		DemoTick:   entry.DemoTick,
-		EvadeOk:    false,
+		// DemoId:      entry.DemoName, TODO get demoid somehow
+		DemoTick:    &entry.DemoTick,
+		AnticheatID: &entry.AnticheatID,
+		EvadeOk:     false,
 	})
 	if err != nil && !errors.Is(err, database.ErrDuplicate) {
 		slog.Error("Failed to ban cheater", slog.String("detection", string(entry.Detection)),

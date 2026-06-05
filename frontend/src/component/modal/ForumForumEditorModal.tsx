@@ -57,7 +57,7 @@ export const ForumForumEditorModal = NiceModal.create(
 						await form.handleSubmit();
 					}}
 				>
-					<DialogTitle>Category Editor</DialogTitle>
+					<DialogTitle>Forum Editor</DialogTitle>
 
 					<DialogContent>
 						<Grid container spacing={2}>

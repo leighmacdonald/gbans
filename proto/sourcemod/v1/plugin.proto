@@ -100,10 +100,7 @@ message SMCheckRequest {
 
 message SMCheckResponse {
   int32 client_id = 1 [(buf.validate.field).required = true];
-  ban.v1.BanType ban_type = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).enum.defined_only = true
-  ];
+  ban.v1.BanType ban_type = 2 [(buf.validate.field).required = true];
   string msg = 3 [(buf.validate.field).required = true];
 }
 

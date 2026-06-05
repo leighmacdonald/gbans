@@ -3,7 +3,7 @@ INCLUDE_DIR := shell('dirname $(which spcomp64)') + "/include"
 all: build
 
 fmt:
-    find scripting/ -not -path "./include/*" -iname gbans.inc -o -iname *.sp -type f -exec sp_format {} \;
+    find scripting/ -not -path "./include/*" -iname gbans.inc -o -iname *.sp -type f -exec clang-format -style=file -i {} \;
 
 build:
     spcomp64 scripting/gbans.sp -o plugins/gbans.smx -i{{ INCLUDE_DIR }} -i scripting/include -v2
@@ -12,5 +12,5 @@ copy:
     cp -rv scripting/* $(HOME)/projects/uncletopia/roles/sourcemod/files/addons/sourcemod/scripting/
 
 upload host="tst-1.internal.uncletopia.com" rootDir="~/srcds-tst-1/tf/addons/sourcemod" port="27015" password="testtest": build
-    scp -r plugins configs {{host}}:{{rootDir}}/
-    rcon-cli --host {{host}} --port {{port}} --password {{password}} sm plugins refresh
+    scp -r plugins configs {{ host }}:{{ rootDir }}/
+    rcon-cli --host {{ host }} --port {{ port }} --password {{ password }} sm plugins refresh

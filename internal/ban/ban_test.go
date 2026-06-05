@@ -16,7 +16,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/sosodev/duration"
 	"github.com/stretchr/testify/require"
 )
 
@@ -48,7 +47,7 @@ func TestBan(t *testing.T) {
 	)
 
 	newBan, err := bans.Create(t.Context(), ban.Opts{
-		SourceID: source, TargetID: target, Duration: duration.FromTimeDuration(time.Hour * 10),
+		SourceID: source, TargetID: target, ValidUntil: time.Now().Add(time.Hour * 10),
 		BanType: bantype.Banned, Reason: reason.Cheating, Origin: ban.System,
 	})
 	require.NoError(t, err)
@@ -76,11 +75,11 @@ func TestDuplicate(t *testing.T) {
 		target = steamid.RandSID64()
 		opts   = []ban.Opts{
 			{
-				SourceID: source, TargetID: target, Duration: duration.FromTimeDuration(time.Hour * 10),
+				SourceID: source, TargetID: target, ValidUntil: time.Now().Add(time.Hour * 10),
 				BanType: bantype.Banned, Reason: reason.Cheating, Origin: ban.System,
 			},
 			{
-				SourceID: source, TargetID: target, Duration: duration.FromTimeDuration(time.Hour * 10),
+				SourceID: source, TargetID: target, ValidUntil: time.Now().Add(time.Hour * 10),
 				BanType: bantype.Banned, Reason: reason.Cheating, Origin: ban.System,
 			},
 		}
@@ -115,7 +114,7 @@ func TestUnban(t *testing.T) {
 		author = fixture.CreateTestPerson(t.Context(), source, permission.Admin)
 	)
 	testBan, err := bans.Create(t.Context(), ban.Opts{
-		SourceID: source, TargetID: target, Duration: duration.FromTimeDuration(time.Hour * 10),
+		SourceID: source, TargetID: target, ValidUntil: time.Now().Add(time.Hour * 10),
 		BanType: bantype.Banned, Reason: reason.Cheating, Origin: ban.System,
 	})
 	require.NoError(t, err)

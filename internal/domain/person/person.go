@@ -43,7 +43,8 @@ type DiscordPersonProvider interface {
 }
 
 // BaseUser is the smallest profile data set. It's comprised of the most commonly used properties and is
-// small enough to be embedded into the JWT to avoid db calls.
+// small enough to be embedded into the JWT to avoid db calls as it only required 3 data fields internally
+// to implements all the methods.
 type BaseUser interface {
 	GetName() string
 	GetAvatar() Avatar

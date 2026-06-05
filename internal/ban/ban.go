@@ -23,7 +23,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/sosodev/duration"
 )
 
 var (
@@ -82,25 +81,25 @@ const Permanent = "Permanent"
 // It should not be instantiated directly, but instead use one of the composites that build
 // upon it.
 type Opts struct {
-	TargetID steamid.SteamID
-	SourceID steamid.SteamID
-	// ISO8601
-	Duration   *duration.Duration
-	BanType    bantype.Type
-	Reason     reason.Reason
-	ReasonText string
-	Origin     Origin
-	ReportID   int32
-	CIDR       *string
-	EvadeOk    bool
-	Name       string
-	DemoName   string
-	DemoTick   uint32
-	Note       string
+	TargetID    steamid.SteamID
+	SourceID    steamid.SteamID
+	ValidUntil  time.Time
+	BanType     bantype.Type
+	Reason      reason.Reason
+	ReasonText  string
+	Origin      Origin
+	ReportID    *int32
+	AnticheatID *int64
+	CIDR        *string
+	EvadeOk     bool
+	Name        string
+	DemoId      *int32
+	DemoTick    *int32
+	Note        string
 }
 
 func (opts *Opts) Validate() error {
-	if opts.Duration.ToTimeDuration() <= 0 {
+	if opts.ValidUntil.Before(time.Now()) {
 		return fmt.Errorf("%w: %w", ErrInvalidBanOpts, ErrInvalidBanDuration)
 	}
 
@@ -136,7 +135,7 @@ type Ban struct {
 	TargetID steamid.SteamID
 	SourceID steamid.SteamID
 	BanID    int32
-	ReportID int32
+	ReportID *int32
 	LastIP   *string
 	EvadeOk  bool
 
@@ -151,6 +150,8 @@ type Ban struct {
 	Note        string
 	Origin      Origin
 	CIDR        *string
+	DemoID      *int32
+	AnticheatID *int64
 	AppealState AppealState
 	// Name is the name at time of banning.
 	Name string
@@ -336,22 +337,21 @@ func (s Bans) Create(ctx context.Context, opts Opts) (Ban, error) {
 		lastIP = new(ipAddr.String())
 	}
 	newBan := Ban{
-		LastIP:     lastIP,
-		EvadeOk:    opts.EvadeOk,
-		BanType:    opts.BanType,
-		Reason:     opts.Reason,
-		TargetID:   opts.TargetID,
-		SourceID:   opts.SourceID,
-		ReportID:   opts.ReportID,
-		CIDR:       opts.CIDR,
-		ReasonText: opts.ReasonText,
-		Note:       opts.Note,
-		Origin:     opts.Origin,
-		Name:       opts.Name,
-	}
-
-	if opts.Duration.ToTimeDuration() > 0 {
-		newBan.ValidUntil = time.Now().Add(opts.Duration.ToTimeDuration())
+		LastIP:      lastIP,
+		EvadeOk:     opts.EvadeOk,
+		BanType:     opts.BanType,
+		Reason:      opts.Reason,
+		TargetID:    opts.TargetID,
+		SourceID:    opts.SourceID,
+		ReportID:    opts.ReportID,
+		CIDR:        opts.CIDR,
+		ReasonText:  opts.ReasonText,
+		Note:        opts.Note,
+		Origin:      opts.Origin,
+		Name:        opts.Name,
+		ValidUntil:  opts.ValidUntil,
+		DemoID:      opts.DemoId,
+		AnticheatID: opts.AnticheatID,
 	}
 
 	author, errAuthor := s.persons.GetOrCreatePersonBySteamID(ctx, opts.SourceID)
@@ -369,8 +369,8 @@ func (s Bans) Create(ctx context.Context, opts Opts) (Ban, error) {
 	}
 
 	// Close the report if the ban was attached to one
-	if newBan.ReportID > 0 {
-		if _, errSaveReport := s.reports.SetReportStatus(ctx, newBan.ReportID, author, ClosedWithAction); errSaveReport != nil {
+	if newBan.ReportID != nil {
+		if _, errSaveReport := s.reports.SetReportStatus(ctx, *newBan.ReportID, author, ClosedWithAction); errSaveReport != nil {
 			return newBan, errors.Join(errSaveReport, ErrReportStateUpdate)
 		}
 	}
@@ -490,6 +490,7 @@ func (s Bans) Expired(ctx context.Context) ([]Ban, error) {
 
 // CheckEvadeStatus checks if the address matches an existing user who is currently banned already. This
 // function will always fail-open and allow players in if an error occurs.
+// TODO make the behaviour configurable
 func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, address netip.Addr) (bool, error) {
 	existing, errMatch := s.QueryOne(ctx, QueryOpts{CIDR: address.String()})
 	if errMatch != nil {
@@ -506,13 +507,8 @@ func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, add
 		return false, errMatch
 	}
 
-	dur, errDuration := duration.Parse("P10Y")
-	if errDuration != nil {
-		return false, errors.Join(errDuration, ErrInvalidBanDuration)
-	}
-
 	existing.Note += " Previous expiry: " + existing.ValidUntil.Format(time.DateTime)
-	existing.ValidUntil = time.Now().Add(dur.ToTimeDuration())
+	existing.ValidUntil = time.Now().AddDate(10, 0, 0)
 
 	if errSave := s.Save(ctx, &existing); errSave != nil {
 		slog.Error("Could not update previous ban.", slog.String("error", errSave.Error()))
@@ -521,13 +517,13 @@ func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, add
 	}
 
 	req := Opts{
-		SourceID: s.owner,
-		TargetID: steamID,
-		Origin:   System,
-		Duration: dur,
-		BanType:  bantype.Banned,
-		Reason:   reason.Evading,
-		Note:     fmt.Sprintf("Connecting from same IP as banned player.\n\nEvasion of: [#%d](%s)", existing.BanID, link.Path(existing)),
+		SourceID:   s.owner,
+		TargetID:   steamID,
+		Origin:     System,
+		ValidUntil: time.Now().AddDate(10, 0, 0),
+		BanType:    bantype.Banned,
+		Reason:     reason.Evading,
+		Note:       fmt.Sprintf("Connecting from same IP as banned player.\n\nEvasion of: [#%d](%s)", existing.BanID, link.Path(existing)),
 	}
 
 	_, errSave := s.Create(ctx, req)

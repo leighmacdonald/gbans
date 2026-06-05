@@ -428,9 +428,12 @@ func (f Forums) MessageDelete(ctx context.Context, person person.BaseUser, messa
 		return errMessage
 	}
 
-	isThreadParent := messages[0].ForumMessageID == message.ForumMessageID
+	if errDelete := f.repo.ForumMessageDelete(ctx, message.ForumMessageID); errDelete != nil {
+		return errDelete
+	}
 
-	if isThreadParent { //nolint:nestif
+	// Delete the rest of the thread if its the parent message
+	if messages[0].ForumMessageID == message.ForumMessageID {
 		if err := f.ThreadDelete(ctx, message.ForumThreadID); err != nil {
 			return err
 		}
@@ -446,16 +449,6 @@ func (f Forums) MessageDelete(ctx context.Context, person person.BaseUser, messa
 		if errSave := f.ForumSave(ctx, &forum); errSave != nil {
 			return errSave
 		}
-
-		slog.Error("Thread deleted due to parent deletion", slog.Int("forum_thread_id", int(thread.ForumThreadID)))
-	} else {
-		if errDelete := f.MessageDelete(ctx, person, message.ForumMessageID); errDelete != nil {
-			return errDelete
-		}
-	}
-
-	if err := f.repo.ForumMessageDelete(ctx, messageID); err != nil {
-		return err
 	}
 
 	slog.Info("Forum message deleted", slog.Int64("message_id", messageID))

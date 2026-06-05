@@ -3,6 +3,7 @@ package ban
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"strconv"
 
 	"connectrpc.com/connect"
@@ -22,7 +23,7 @@ import (
 )
 
 type Service struct {
-	banv1connect.UnimplementedBanServiceHandler
+	// banv1connect.UnimplementedBanServiceHandler
 
 	client thirdparty.ClientWithResponsesInterface
 	bans   Bans
@@ -41,6 +42,7 @@ func NewBanService(bans Bans, authMiddleware *rpc.Middleware, option ...connect.
 	authMiddleware.UserRoute(banv1connect.BanServiceGetProcedure, rpc.WithMinPermissions(permission.User))
 	authMiddleware.UserRoute(banv1connect.BanServiceQuerySourceBansProcedure, rpc.WithMinPermissions(permission.Moderator))
 	authMiddleware.UserRoute(banv1connect.BanServiceUpdateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(banv1connect.BanServiceCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -152,6 +154,45 @@ func (s Service) QuerySourceBans(ctx context.Context, req *v1.QuerySourceBansReq
 	return &resp, nil
 }
 
+func (s Service) Create(ctx context.Context, req *v1.CreateRequest) (*v1.CreateResponse, error) {
+	user := rpc.UserInfoFromCtx(ctx)
+	opts := Opts{
+		SourceID:   user.SteamID,
+		TargetID:   steamid.New(req.GetTargetId()),
+		Origin:     Origin(req.GetOrigin()),
+		Reason:     reason.Reason(req.GetReason()),
+		BanType:    bantype.Type(req.GetBanType()),
+		ValidUntil: req.ValidUntil.AsTime(),
+		ReportID:   req.ReportId,
+		EvadeOk:    req.GetEvadeOk(),
+		Note:       req.GetNote(),
+		DemoId:     req.DemoId,
+		DemoTick:   req.DemoTick,
+	}
+
+	if reason.Reason(req.GetReason()) == reason.Custom {
+		if req.GetReasonText() == "" {
+			return nil, connect.NewError(connect.CodeInvalidArgument, rpc.ErrBadRequest)
+		}
+
+		opts.ReasonText = req.GetReasonText()
+	} else {
+		opts.ReasonText = ""
+	}
+
+	if cidr := req.GetCidr(); cidr != "" {
+		opts.CIDR = &cidr
+	}
+
+	createdBan, errBan := s.bans.Create(ctx, opts)
+	if errBan != nil {
+		slog.Error("Failed to create ban", slog.String("error", errBan.Error()))
+		return nil, connect.NewError(connect.CodeInternal, ErrSaveBan)
+	}
+
+	return &v1.CreateResponse{Ban: toBan(createdBan)}, nil
+}
+
 func (s Service) Update(ctx context.Context, req *v1.UpdateRequest) (*v1.UpdateResponse, error) {
 	bannedPerson, banErr := s.bans.QueryOne(ctx, QueryOpts{BanID: req.GetBanId(), Deleted: true, EvadeOk: true})
 	if banErr != nil {
@@ -194,7 +235,7 @@ func toBan(ban Ban) *v1.Ban {
 		TargetId:          new(ban.TargetID.Int64()),
 		SourceId:          new(ban.SourceID.Int64()),
 		BanId:             &ban.BanID,
-		ReportId:          &ban.ReportID,
+		ReportId:          ban.ReportID,
 		LastIp:            ban.LastIP,
 		EvadeOk:           &ban.EvadeOk,
 		BanType:           new(v1.BanType(ban.BanType)),  //nolint:gosec
