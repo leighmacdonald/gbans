@@ -11,6 +11,7 @@ import (
 	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	_ "google.golang.org/protobuf/types/known/anypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
@@ -277,6 +278,9 @@ type Message struct {
 	Team              *bool                  `protobuf:"varint,9,opt,name=team" json:"team,omitempty"`
 	CreatedOn         *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
 	AutoFilterFlagged *int32                 `protobuf:"varint,11,opt,name=auto_filter_flagged,json=autoFilterFlagged" json:"auto_filter_flagged,omitempty"`
+	DemoId            *int32                 `protobuf:"varint,12,opt,name=demo_id,json=demoId" json:"demo_id,omitempty"`
+	DemoTick          *int32                 `protobuf:"varint,13,opt,name=demo_tick,json=demoTick" json:"demo_tick,omitempty"`
+	AssestId          *string                `protobuf:"bytes,14,opt,name=assest_id,json=assestId" json:"assest_id,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -388,11 +392,32 @@ func (x *Message) GetAutoFilterFlagged() int32 {
 	return 0
 }
 
+func (x *Message) GetDemoId() int32 {
+	if x != nil && x.DemoId != nil {
+		return *x.DemoId
+	}
+	return 0
+}
+
+func (x *Message) GetDemoTick() int32 {
+	if x != nil && x.DemoTick != nil {
+		return *x.DemoTick
+	}
+	return 0
+}
+
+func (x *Message) GetAssestId() string {
+	if x != nil && x.AssestId != nil {
+		return *x.AssestId
+	}
+	return ""
+}
+
 var File_chat_v1_chat_proto protoreflect.FileDescriptor
 
 const file_chat_v1_chat_proto_rawDesc = "" +
 	"\n" +
-	"\x12chat/v1/chat.proto\x12\achat.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"x\n" +
+	"\x12chat/v1/chat.proto\x12\achat.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x19google/protobuf/any.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"x\n" +
 	"\x13QueryContextRequest\x128\n" +
 	"\x11person_message_id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\x0fpersonMessageId\x12'\n" +
 	"\apadding\x18\x02 \x01(\x05B\r\xbaH\n" +
@@ -411,7 +436,7 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\"e\n" +
 	"\rQueryResponse\x124\n" +
 	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\x12\x1e\n" +
-	"\x05count\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x05count\"\x84\x04\n" +
+	"\x05count\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x05count\"\xea\x04\n" +
 	"\aMessage\x128\n" +
 	"\x11person_message_id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\x0fpersonMessageId\x12#\n" +
 	"\bmatch_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\amatchId\x12/\n" +
@@ -430,7 +455,10 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"\n" +
 	"created_on\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x126\n" +
-	"\x13auto_filter_flagged\x18\v \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11autoFilterFlagged2\x96\x01\n" +
+	"\x13auto_filter_flagged\x18\v \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11autoFilterFlagged\x12 \n" +
+	"\ademo_id\x18\f \x01(\x05B\a\xbaH\x04\x1a\x02 \x00R\x06demoId\x12\x1b\n" +
+	"\tdemo_tick\x18\r \x01(\x05R\bdemoTick\x12%\n" +
+	"\tassest_id\x18\x0e \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\bassestId2\x96\x01\n" +
 	"\vChatService\x128\n" +
 	"\x05Query\x12\x15.chat.v1.QueryRequest\x1a\x16.chat.v1.QueryResponse\"\x00\x12M\n" +
 	"\fQueryContext\x12\x1c.chat.v1.QueryContextRequest\x1a\x1d.chat.v1.QueryContextResponse\"\x00B\x8e\x01\n" +

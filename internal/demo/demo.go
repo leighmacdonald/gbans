@@ -10,12 +10,14 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/asset"
+	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/fs"
@@ -108,18 +110,26 @@ type Demos struct {
 	repository  DemoRepository
 	asset       asset.Assets
 	bucket      asset.Bucket
+	person      PersonCreator
+	chat        *chat.Chat
 	cleanupChan chan any
 	owner       steamid.SteamID
 }
 
-func NewDemos(bucket asset.Bucket, repository DemoRepository, assets asset.Assets, config DemoConfig, owner steamid.SteamID) Demos {
+type PersonCreator interface {
+	EnsurePerson(context.Context, steamid.SteamID) error
+}
+
+func NewDemos(bucket asset.Bucket, repository DemoRepository, assets asset.Assets, chat *chat.Chat, person PersonCreator, config DemoConfig, owner steamid.SteamID) Demos {
 	return Demos{
 		DemoConfig:  config,
 		bucket:      bucket,
 		repository:  repository,
 		asset:       assets,
+		chat:        chat,
 		cleanupChan: make(chan any),
 		owner:       owner,
+		person:      person,
 	}
 }
 
@@ -396,10 +406,10 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID
 		return nil, errGetServer
 	}
 	var (
-		demo     *demoparse.Demo
-		err      error
-		filename = asset.Name
-		mapName  string
+		parsedDemo *demoparse.Demo
+		err        error
+		filename   = asset.Name
+		mapName    string
 	)
 
 	namePartsAll := strings.Split(filename, "-")
@@ -413,7 +423,7 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID
 		mapName = nameParts[0]
 	}
 
-	demo, err = demoparse.Submit(ctx, d.DemoParserURL, asset.String(), asset)
+	parsedDemo, err = demoparse.Submit(ctx, d.DemoParserURL, asset.String(), asset)
 	if err != nil {
 		return nil, err
 	}
@@ -421,9 +431,14 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID
 	// TODO change this data shape as we have not needed this in a long time. Only keys the are used.
 	intStats := map[string]map[string]any{}
 
-	for _, key := range demo.SteamIDs() {
-		if key.Valid() {
-			intStats[key.String()] = map[string]any{}
+	for _, playerSteamID := range parsedDemo.SteamIDs() {
+		if playerSteamID.Valid() {
+			intStats[playerSteamID.String()] = map[string]any{}
+			if err := d.person.EnsurePerson(ctx, playerSteamID); err != nil {
+				slog.Error("Failed to insert player", slog.String("error", err.Error()))
+
+				return nil, err
+			}
 		}
 	}
 
@@ -437,7 +452,7 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID
 
 	newDemo := DemoFile{
 		ServerID:  serverID,
-		Title:     demo.Server,
+		Title:     parsedDemo.Server,
 		CreatedOn: createdTime,
 		MapName:   mapName,
 		Stats:     intStats,
@@ -448,10 +463,45 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID
 		return nil, errSave
 	}
 
+	sort.Slice(parsedDemo.Chat, func(i, j int) bool {
+		return parsedDemo.Chat[i].Tick < parsedDemo.Chat[j].Tick
+	})
+
+	for _, msg := range parsedDemo.Chat {
+		if msg.User == "BOT" {
+			continue
+		}
+
+		sid := steamid.New(msg.User)
+		if !sid.Valid() {
+			slog.Warn("Got invalid steamid from demo chat", slog.String("name", msg.User))
+
+			continue
+		}
+
+		if err := d.chat.AddChatHistory(ctx, &chat.Message{
+			ServerID:  serverID,
+			DemoID:    &newDemo.DemoID,
+			DemoTick:  new(int32(msg.Tick)),
+			Body:      msg.Message,
+			CreatedOn: createdTime.Add(ticksToDuration(msg.Tick)),
+			SteamID:   sid,
+		}); err != nil {
+			return nil, err
+		}
+	}
+
 	slog.Debug("Created demo from asset successfully", slog.Int64("demo_id", int64(newDemo.DemoID)),
 		slog.String("title", newDemo.Title), slog.String("map", mapName))
 
 	return &newDemo, nil
+}
+
+// Were just going to assume the server is relatively consistent, it doesnt matter too much.
+const frameDuration = 16600 * time.Microsecond
+
+func ticksToDuration(ticks int64) time.Duration {
+	return (frameDuration / 1000) * time.Duration(ticks)
 }
 
 func (d Demos) RemoveOrphans(ctx context.Context) error {

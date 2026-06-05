@@ -53,12 +53,14 @@ type TopChatterResult struct {
 
 type Message struct {
 	PersonMessageID   int64
-	MatchID           uuid.UUID
 	SteamID           steamid.SteamID
 	AvatarHash        string
 	PersonaName       string
 	ServerName        string
 	ServerID          int32
+	DemoID            *int32
+	DemoTick          *int32
+	AssetID           uuid.UUID
 	Body              string
 	Team              bool
 	CreatedOn         time.Time

@@ -1,9 +1,10 @@
 import { create } from "@bufbuild/protobuf";
 import { useQuery } from "@connectrpc/connect-query";
+import CloudDownload from "@mui/icons-material/CloudDownload";
 import FlagIcon from "@mui/icons-material/Flag";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ReportIcon from "@mui/icons-material/Report";
-import { IconButton, Typography } from "@mui/material";
+import { IconButton, Link, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import { useTheme } from "@mui/system";
@@ -150,7 +151,16 @@ function ChatLogs() {
 				size: dateTimeColumnSize,
 				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
-
+			columnHelper.accessor("demoId", {
+				header: "Demo ID",
+				enableColumnFilter: false,
+				grow: false,
+			}),
+			columnHelper.accessor("demoTick", {
+				header: "Demo Tick",
+				enableColumnFilter: false,
+				grow: false,
+			}),
 			columnHelper.accessor("steamId", {
 				header: "SteamID",
 				grow: false,
@@ -234,6 +244,7 @@ function ChatLogs() {
 
 	const { data, isLoading, isError, isRefetching, refetch, error } = useQuery(query, opts, {
 		placeholderData: keepPreviousData,
+		retry: false,
 	});
 	// console.log(data, isLoading, isRefetching, error);
 
@@ -244,7 +255,7 @@ function ChatLogs() {
 		rowCount: Number(data ? data.count : 0),
 		enableFilters: true,
 		enableRowActions: true,
-		displayColumnDefOptions: makeRowActionsDefOptions(1),
+		displayColumnDefOptions: makeRowActionsDefOptions(2),
 		state: {
 			columnFilters: search.columnFilters,
 			isLoading: isLoading || isRefetching,
@@ -260,6 +271,8 @@ function ChatLogs() {
 				sourceId: true,
 				body: true,
 				createdOn: true,
+				demoTick: false,
+				demoId: false,
 			},
 		},
 		manualFiltering: true,
@@ -271,19 +284,34 @@ function ChatLogs() {
 		muiToolbarAlertBannerProps: renderTableError(error),
 		renderRowActions: ({ row }) => (
 			<RowActionContainer>
-				<Tooltip title={"Create Report"} key={row.original.personMessageId}>
+				<Tooltip title={"Create Report"} key={1}>
 					<IconButtonLink
 						color={"error"}
 						disabled={row.original.autoFilterFlagged > 0}
 						to={"/report"}
 						search={{
 							personMessageId: row.original.personMessageId,
+							demoId: row.original.demoId,
+							demoTick: row.original.demoTick,
 							steamId: row.original.steamId,
 						}}
 					>
 						<ReportIcon />
 					</IconButtonLink>
 				</Tooltip>
+				{row.original.assestId && (
+					<Tooltip title={"Download Demo"} key={2}>
+						<IconButton
+							component={Link}
+							key={"dl-link"}
+							color={"success"}
+							href={`/asset/${row.original.assestId}`}
+							disabled={row.original.autoFilterFlagged > 0}
+						>
+							<CloudDownload />
+						</IconButton>
+					</Tooltip>
+				)}
 			</RowActionContainer>
 		),
 	});

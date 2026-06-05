@@ -9,6 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
+	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/demo"
 	"github.com/leighmacdonald/gbans/internal/notification"
@@ -33,9 +34,11 @@ func TestMain(m *testing.M) {
 func TestBan(t *testing.T) {
 	t.Parallel()
 	var (
-		assets = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
-		demos  = demo.NewDemos(asset.BucketDemo, demo.NewDemoRepository(fixture.Database),
-			assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
+		assets  = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
+		filters = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database), notification.NewDiscard(), fixture.Config.Config().Filters)
+		chat    = chat.New(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters, filters, fixture.Persons, notification.NewDiscard(), nil, "")
+		demos   = demo.NewDemos(asset.BucketDemo, demo.NewDemoRepository(fixture.Database),
+			assets, chat, fixture.Persons, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
 		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
 			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
 			demos, fixture.TFApi, notification.NewDiscard(), "")
@@ -62,9 +65,11 @@ func TestBan(t *testing.T) {
 func TestDuplicate(t *testing.T) {
 	t.Parallel()
 	var (
-		assets = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
-		demos  = demo.NewDemos(asset.BucketDemo, demo.NewDemoRepository(fixture.Database),
-			assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
+		assets  = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
+		filters = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database), notification.NewDiscard(), fixture.Config.Config().Filters)
+		chat    = chat.New(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters, filters, fixture.Persons, notification.NewDiscard(), nil, "")
+		demos   = demo.NewDemos(asset.BucketDemo, demo.NewDemoRepository(fixture.Database),
+			assets, chat, fixture.Persons, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
 		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
 			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
 			demos, fixture.TFApi, notification.NewDiscard(), "")
@@ -100,9 +105,11 @@ func TestDuplicate(t *testing.T) {
 func TestUnban(t *testing.T) {
 	t.Parallel()
 	var (
-		assets = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
-		demos  = demo.NewDemos(asset.BucketDemo, demo.NewDemoRepository(fixture.Database),
-			assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
+		assets  = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
+		filters = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database), notification.NewDiscard(), fixture.Config.Config().Filters)
+		chat    = chat.New(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters, filters, fixture.Persons, notification.NewDiscard(), nil, "")
+		demos   = demo.NewDemos(asset.BucketDemo, demo.NewDemoRepository(fixture.Database),
+			assets, chat, fixture.Persons, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
 		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
 			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
 			demos, fixture.TFApi, notification.NewDiscard(), "")
