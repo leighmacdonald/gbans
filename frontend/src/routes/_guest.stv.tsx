@@ -31,8 +31,8 @@ import {
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
-import type { Demo } from "../rpc/servers/v1/demo_pb.ts";
-import { getDemos } from "../rpc/servers/v1/demo-DemoService_connectquery.ts";
+import type { Demo } from "../rpc/demo/v1/demo_pb.ts";
+import { getDemos } from "../rpc/demo/v1/demo-DemoService_connectquery.ts";
 import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";

@@ -4,6 +4,7 @@ package chat.v1;
 
 import "buf/validate/validate.proto";
 import "database/query/v1/filter.proto";
+import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
 
 service ChatService {
@@ -80,4 +81,7 @@ message Message {
   bool team = 9 [(buf.validate.field).required = true];
   google.protobuf.Timestamp created_on = 10 [(buf.validate.field).required = true];
   int32 auto_filter_flagged = 11 [(buf.validate.field).required = true];
+  int32 demo_id = 12 [(buf.validate.field).int32.gt = 0];
+  int32 demo_tick = 13;
+  string assest_id = 14 [(buf.validate.field).string.uuid = true];
 }

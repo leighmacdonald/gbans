@@ -101,13 +101,15 @@ func importDemoCmd() *cobra.Command {
 							defer func() { <-sem }()
 
 							if err := importFn(path.Join(filePath, entry.Name())); err != nil && !errors.Is(err, database.ErrDuplicate) {
-								slog.Error("Failed to import", slog.String("error", err.Error()))
+								slog.Error("Failed to import dir", slog.String("error", err.Error()))
 							}
 						}(arg)
 					}
 					waitGroup.Wait()
 				} else {
 					if err := importFn(arg); err != nil {
+						slog.Error("Failed to import", slog.String("error", err.Error()))
+
 						return errors.Join(err, demo.ErrDemoLoad)
 					}
 				}

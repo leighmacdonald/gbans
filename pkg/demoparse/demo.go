@@ -2,6 +2,8 @@
 package demoparse
 
 import (
+	"strings"
+
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -21,6 +23,18 @@ type Demo struct {
 	Signon   int            `json:"signon"`
 	Rounds   []RoundSummary `json:"rounds"`
 	Chat     []ChatMessage  `json:"chat"`
+}
+
+func (d Demo) UserSteamID(user string) steamid.SteamID {
+	for _, round := range d.Rounds {
+		for _, player := range round.Players {
+			if strings.EqualFold(player.Name, user) {
+				return steamid.New(player.SteamID)
+			}
+		}
+	}
+
+	return steamid.New(0)
 }
 
 func (d Demo) Winner() logparse.Team {

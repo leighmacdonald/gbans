@@ -42,6 +42,7 @@ const validateSearch = commonTableSearchSchema.extend({
 	sortColumn: z.enum(["reportStatus", "createdOn"]).optional(),
 	steamId: z.string().optional(),
 	demoId: z.number().optional(),
+	demoTick: z.number().optional(),
 	personMessageId: z.string().optional(),
 });
 
@@ -256,14 +257,14 @@ const UserReportHistory = () => {
 };
 
 const ReportCreateForm = (): JSX.Element => {
-	const { demoId, steamId, personMessageId } = Route.useSearch();
+	const { demoId, steamId, personMessageId, demoTick } = Route.useSearch();
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const [isCustom, setIsCustom] = useState(false);
 
 	const defaultValues = {
 		description: "",
 		demoId: demoId,
-		demoTick: 0,
+		demoTick: demoTick,
 		targetId: steamId,
 		reason: personMessageId ? BanReason.LANGUAGE : BanReason.CHEATING,
 		reasonText: "",
@@ -288,7 +289,7 @@ const ReportCreateForm = (): JSX.Element => {
 			mutation.mutate({
 				demoId: value.demoId,
 				targetId: value.targetId,
-				demoTick: value.demoTick > 0 ? value.demoTick : undefined,
+				demoTick: value.demoTick,
 				reason: value.reason,
 				reasonText: zeroStringUndefined(value.reasonText),
 				description: zeroStringUndefined(value.description),
@@ -363,7 +364,7 @@ const ReportCreateForm = (): JSX.Element => {
 								<form.AppField
 									name={"demoId"}
 									children={(field) => {
-										return <field.TextField disabled={Boolean(demoId)} label="Demo ID" />;
+										return <field.TextField disabled={true} label="Demo ID" />;
 									}}
 								/>
 							</Grid>
@@ -371,7 +372,7 @@ const ReportCreateForm = (): JSX.Element => {
 								<form.AppField
 									name={"demoTick"}
 									children={(field) => {
-										return <field.NumberField disabled={!demoId} label="Demo Tick" />;
+										return <field.TextField disabled={true} label="Demo Tick" />;
 									}}
 								/>
 							</Grid>

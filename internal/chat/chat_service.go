@@ -86,14 +86,21 @@ func (s Service) QueryContext(ctx context.Context, req *v1.QueryContextRequest) 
 }
 
 func toMessage(msg QueryChatHistoryResult) *v1.Message {
+	var assetID *string
+	if !msg.AssetID.IsNil() {
+		assetID = new(msg.AssetID.String())
+	}
+
 	return &v1.Message{
 		PersonMessageId:   &msg.PersonMessageID,
-		MatchId:           new(msg.MatchID.String()),
+		AssestId:          assetID,
 		SteamId:           new(msg.SteamID.Int64()),
 		AvatarHash:        &msg.AvatarHash,
 		PersonaName:       &msg.PersonaName,
 		ServerName:        &msg.ServerName,
 		ServerId:          &msg.ServerID,
+		DemoId:            msg.DemoID,
+		DemoTick:          msg.DemoTick,
 		Body:              &msg.Body,
 		Team:              &msg.Team,
 		CreatedOn:         timestamppb.New(msg.CreatedOn),
