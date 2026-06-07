@@ -226,7 +226,7 @@ type Player struct {
 
 type ChatMessage struct {
 	User    string `json:"user"`
-	Tick    int64  `json:"tick"`
+	Tick    int32  `json:"tick"`
 	Message string `json:"message"`
 }
 

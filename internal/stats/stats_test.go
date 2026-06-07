@@ -24,7 +24,7 @@ func TestImport(t *testing.T) {
 	require.NoError(t, errDemo)
 
 	st := stats.New(stats.NewRepository(testFixture.Database), maps.New(maps.NewRepository(testFixture.Database)))
-	demoStats, importErr := st.Import(t.Context(), server.ServerID, demo)
+	demoStats, importErr := st.Import(t.Context(), server.ServerID, &demo)
 	require.NoError(t, importErr)
 	require.Len(t, demoStats.Chat, 48)
 }

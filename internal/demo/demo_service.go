@@ -12,14 +12,14 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type DemoService struct {
-	demov1connect.UnimplementedDemoServiceHandler
+type Service struct {
+	// demov1connect.UnimplementedDemoServiceHandler
 
 	demos Demos
 }
 
-func NewDemoService(demos Demos, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := demov1connect.NewDemoServiceHandler(&DemoService{demos: demos}, option...)
+func NewService(demos Demos, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := demov1connect.NewDemoServiceHandler(&Service{demos: demos}, option...)
 
 	authMiddleware.UserRoute(demov1connect.DemoServiceGetDemosProcedure, rpc.WithMinPermissions(permission.User))
 	authMiddleware.UserRoute(demov1connect.DemoServiceRunCleanupProcedure, rpc.WithMinPermissions(permission.Admin))
@@ -27,7 +27,7 @@ func NewDemoService(demos Demos, authMiddleware *rpc.Middleware, option ...conne
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
-func (s DemoService) GetDemos(ctx context.Context, _ *emptypb.Empty) (*v1.GetDemosResponse, error) {
+func (s Service) GetDemos(ctx context.Context, _ *emptypb.Empty) (*v1.GetDemosResponse, error) {
 	demos, errDemos := s.demos.GetDemos(ctx)
 	if errDemos != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -57,7 +57,7 @@ func (s DemoService) GetDemos(ctx context.Context, _ *emptypb.Empty) (*v1.GetDem
 	return &resp, nil
 }
 
-func (s DemoService) RunCleanup(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
+func (s Service) RunCleanup(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
 	s.demos.Cleanup(ctx)
 
 	return &emptypb.Empty{}, nil

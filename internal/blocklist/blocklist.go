@@ -55,12 +55,12 @@ type CacheUpdater interface {
 }
 
 type Blocklists struct {
-	repository BlocklistRepository
+	repository Repository
 	updater    CacheUpdater
 	cidrRx     *regexp.Regexp
 }
 
-func NewBlocklists(br BlocklistRepository, updater CacheUpdater) Blocklists {
+func NewBlocklists(br Repository, updater CacheUpdater) Blocklists {
 	return Blocklists{
 		repository: br,
 		updater:    updater,

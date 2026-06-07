@@ -199,7 +199,7 @@ type PlayerMatchWeapon struct {
 	MatchPlayerID  int64
 }
 
-type Result struct {
+type Match struct {
 	MatchID    uuid.UUID
 	ServerID   int32
 	Title      string
@@ -211,6 +211,7 @@ type Result struct {
 	Players    []*Player
 	Chat       []PersonMessage
 }
+
 type PersonMessage struct {
 	PersonMessageID   int64
 	MatchID           uuid.UUID
@@ -220,13 +221,13 @@ type PersonMessage struct {
 	ServerName        string
 	ServerID          int32
 	Body              string
-	Tick              int64
+	Tick              int32
 	Team              bool
 	CreatedOn         time.Time
 	AutoFilterFlagged int64
 }
 
-func (match *Result) TopPlayers() []*Player {
+func (match *Match) TopPlayers() []*Player {
 	players := match.Players
 
 	sort.SliceStable(players, func(i, j int) bool {
@@ -236,7 +237,7 @@ func (match *Result) TopPlayers() []*Player {
 	return players
 }
 
-func (match *Result) TopKillstreaks(count int) []*Player {
+func (match *Match) TopKillstreaks(count int) []*Player {
 	var killStreakPlayers []*Player
 
 	for _, player := range match.Players {
@@ -256,7 +257,7 @@ func (match *Result) TopKillstreaks(count int) []*Player {
 	return killStreakPlayers
 }
 
-func (match *Result) Healers() []*Player {
+func (match *Match) Healers() []*Player {
 	var healers []*Player
 
 	for _, player := range match.Players {

@@ -16,14 +16,14 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type SpeedrunsService struct {
-	speedrunsv1connect.UnimplementedSpeedrunsServiceHandler
+type Service struct {
+	// speedrunsv1connect.UnimplementedSpeedrunsServiceHandler
 
 	speedruns Speedruns
 }
 
-func NewSpeedrunsService(speedruns Speedruns, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := speedrunsv1connect.NewSpeedrunsServiceHandler(&SpeedrunsService{speedruns: speedruns}, option...)
+func NewService(speedruns Speedruns, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := speedrunsv1connect.NewSpeedrunsServiceHandler(&Service{speedruns: speedruns}, option...)
 
 	authMiddleware.UserRoute(speedrunsv1connect.SpeedrunsServiceMapSpeedrunsProcedure, rpc.WithMinPermissions(permission.User))
 	authMiddleware.UserRoute(speedrunsv1connect.SpeedrunsServiceOverallTopNProcedure, rpc.WithMinPermissions(permission.User))
@@ -34,7 +34,7 @@ func NewSpeedrunsService(speedruns Speedruns, authMiddleware *rpc.Middleware, op
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
-func (s SpeedrunsService) MapSpeedruns(ctx context.Context, req *v1.MapSpeedrunsRequest) (*v1.MapSpeedrunsResponse, error) {
+func (s Service) MapSpeedruns(ctx context.Context, req *v1.MapSpeedrunsRequest) (*v1.MapSpeedrunsResponse, error) {
 	runs, errRuns := s.speedruns.ByMap(ctx, req.GetMapName())
 	if errRuns != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -48,7 +48,7 @@ func (s SpeedrunsService) MapSpeedruns(ctx context.Context, req *v1.MapSpeedruns
 	return &resp, nil
 }
 
-func (s SpeedrunsService) OverallTopN(ctx context.Context, req *v1.OverallTopNRequest) (*v1.OverallTopNResponse, error) {
+func (s Service) OverallTopN(ctx context.Context, req *v1.OverallTopNRequest) (*v1.OverallTopNResponse, error) {
 	top, errTop := s.speedruns.TopNOverall(ctx, req.GetCount())
 	if errTop != nil {
 		if errors.Is(errTop, ErrValueOutOfRange) {
@@ -69,7 +69,7 @@ func (s SpeedrunsService) OverallTopN(ctx context.Context, req *v1.OverallTopNRe
 	return &resp, nil
 }
 
-func (s SpeedrunsService) OverallRecent(ctx context.Context, req *v1.OverallRecentRequest) (*v1.OverallRecentResponse, error) {
+func (s Service) OverallRecent(ctx context.Context, req *v1.OverallRecentRequest) (*v1.OverallRecentResponse, error) {
 	top, errTop := s.speedruns.Recent(ctx, req.GetCount())
 	if errTop != nil {
 		if errors.Is(errTop, ErrValueOutOfRange) {
@@ -86,7 +86,7 @@ func (s SpeedrunsService) OverallRecent(ctx context.Context, req *v1.OverallRece
 	return &resp, nil
 }
 
-func (s SpeedrunsService) SpeedrunCreate(_ context.Context, _ *v1.SpeedrunCreateRequest) (*v1.SpeedrunCreateResponse, error) {
+func (s Service) SpeedrunCreate(_ context.Context, _ *v1.SpeedrunCreateRequest) (*v1.SpeedrunCreateResponse, error) {
 	// newSpeedrun := req.GetSpeedrun()
 	// speedrun, errSpeedrun := s.speedruns.Save(ctx, toSpeedrun())
 	// if errSpeedrun != nil {
@@ -96,7 +96,7 @@ func (s SpeedrunsService) SpeedrunCreate(_ context.Context, _ *v1.SpeedrunCreate
 	return &v1.SpeedrunCreateResponse{Speedrun: nil}, nil
 }
 
-func (s SpeedrunsService) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResponse, error) {
+func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResponse, error) {
 	speedrun, errSpeedrun := s.speedruns.ByID(ctx, req.GetSpeedrunId())
 	if errSpeedrun != nil {
 		if errors.Is(errSpeedrun, database.ErrNoResult) {

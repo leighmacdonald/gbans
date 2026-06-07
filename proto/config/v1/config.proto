@@ -215,7 +215,7 @@ message SSH {
   int32 update_interval = 7 [(buf.validate.field).required = true];
   int32 timeout = 8 [(buf.validate.field).required = true];
   string demo_path_fmt = 9 [(buf.validate.field).required = true];
-  string stac_path = 10 [(buf.validate.field).required = true];
+  string stac_path_fmt = 10 [(buf.validate.field).required = true];
 }
 
 message Network {

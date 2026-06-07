@@ -14,14 +14,14 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type BlocklistService struct {
+type Service struct {
 	// blocklistv1connect.UnimplementedBlocklistServiceHandler
 
 	blocklists Blocklists
 }
 
 func NewService(blocklists Blocklists, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := blocklistv1connect.NewBlocklistServiceHandler(BlocklistService{blocklists: blocklists}, option...)
+	pattern, handler := blocklistv1connect.NewBlocklistServiceHandler(Service{blocklists: blocklists}, option...)
 
 	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceBlocklistSourcesProcedure, rpc.WithMinPermissions(permission.Moderator))
 	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceBlocklistSourcesCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
@@ -39,7 +39,7 @@ func NewService(blocklists Blocklists, authMiddleware *rpc.Middleware, option ..
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
-func (s BlocklistService) BlocklistSources(ctx context.Context, _ *emptypb.Empty) (*v1.BlocklistSourcesResponse, error) {
+func (s Service) BlocklistSources(ctx context.Context, _ *emptypb.Empty) (*v1.BlocklistSourcesResponse, error) {
 	blockLists, err := s.blocklists.GetCIDRBlockSources(ctx)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -64,7 +64,7 @@ func toBlocklistSource(source CIDRBlockSource) *v1.CIDRBlockSource {
 	}
 }
 
-func (s BlocklistService) BlocklistSourcesCreate(ctx context.Context, req *v1.BlocklistSourcesCreateRequest) (*v1.BlocklistSourcesCreateResponse, error) {
+func (s Service) BlocklistSourcesCreate(ctx context.Context, req *v1.BlocklistSourcesCreateRequest) (*v1.BlocklistSourcesCreateResponse, error) {
 	blockList, errSave := s.blocklists.CreateCIDRBlockSources(ctx, req.GetName(), req.GetUrl(), req.GetEnabled())
 	if errSave != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -73,7 +73,7 @@ func (s BlocklistService) BlocklistSourcesCreate(ctx context.Context, req *v1.Bl
 	return &v1.BlocklistSourcesCreateResponse{BlockSource: toBlocklistSource(blockList)}, nil
 }
 
-func (s BlocklistService) BlocklistSourcesEdit(ctx context.Context, req *v1.BlocklistSourcesEditRequest) (*v1.BlocklistSourcesEditResponse, error) {
+func (s Service) BlocklistSourcesEdit(ctx context.Context, req *v1.BlocklistSourcesEditRequest) (*v1.BlocklistSourcesEditResponse, error) {
 	blockSource, errUpdate := s.blocklists.UpdateCIDRBlockSource(ctx, req.GetCidrBlockSourceId(), req.GetName(), req.GetUrl(), req.GetEnabled())
 	if errUpdate != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -82,7 +82,7 @@ func (s BlocklistService) BlocklistSourcesEdit(ctx context.Context, req *v1.Bloc
 	return &v1.BlocklistSourcesEditResponse{BlockSource: toBlocklistSource(blockSource)}, nil
 }
 
-func (s BlocklistService) BlocklistSourcesDelete(ctx context.Context, req *v1.BlocklistSourcesDeleteRequest) (*emptypb.Empty, error) {
+func (s Service) BlocklistSourcesDelete(ctx context.Context, req *v1.BlocklistSourcesDeleteRequest) (*emptypb.Empty, error) {
 	if err := s.blocklists.DeleteCIDRBlockSources(ctx, req.GetCidrBlockSourceId()); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -90,7 +90,7 @@ func (s BlocklistService) BlocklistSourcesDelete(ctx context.Context, req *v1.Bl
 	return &emptypb.Empty{}, nil
 }
 
-func (s BlocklistService) WhitelistAddress(ctx context.Context, _ *emptypb.Empty) (*v1.WhitelistAddressResponse, error) {
+func (s Service) WhitelistAddress(ctx context.Context, _ *emptypb.Empty) (*v1.WhitelistAddressResponse, error) {
 	whiteLists, errWl := s.blocklists.GetCIDRBlockWhitelists(ctx)
 	if errWl != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -104,7 +104,7 @@ func (s BlocklistService) WhitelistAddress(ctx context.Context, _ *emptypb.Empty
 	return &resp, nil
 }
 
-func (s BlocklistService) WhitelistAddressCreate(ctx context.Context, req *v1.WhitelistAddressCreateRequest) (*v1.WhitelistAddressCreateResponse, error) {
+func (s Service) WhitelistAddressCreate(ctx context.Context, req *v1.WhitelistAddressCreateRequest) (*v1.WhitelistAddressCreateResponse, error) {
 	whitelist, errSave := s.blocklists.CreateCIDRBlockWhitelist(ctx, req.GetAddress())
 	if errSave != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -113,7 +113,7 @@ func (s BlocklistService) WhitelistAddressCreate(ctx context.Context, req *v1.Wh
 	return &v1.WhitelistAddressCreateResponse{Whitelist: toCIDRBlockWhitelist(whitelist)}, nil
 }
 
-func (s BlocklistService) WhitelistAddressDelete(ctx context.Context, req *v1.WhitelistAddressDeleteRequest) (*emptypb.Empty, error) {
+func (s Service) WhitelistAddressDelete(ctx context.Context, req *v1.WhitelistAddressDeleteRequest) (*emptypb.Empty, error) {
 	errSave := s.blocklists.DeleteCIDRBlockWhitelist(ctx, req.GetCidrBlockWhitelistId())
 	if errSave != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -122,7 +122,7 @@ func (s BlocklistService) WhitelistAddressDelete(ctx context.Context, req *v1.Wh
 	return &emptypb.Empty{}, nil
 }
 
-func (s BlocklistService) WhitelistAddressEdit(ctx context.Context, req *v1.WhitelistAddressEditRequest) (*v1.WhitelistAddressEditResponse, error) {
+func (s Service) WhitelistAddressEdit(ctx context.Context, req *v1.WhitelistAddressEditRequest) (*v1.WhitelistAddressEditResponse, error) {
 	addr := req.GetAddress()
 	if !strings.Contains(addr, "/") {
 		addr += maskSingleHost
@@ -136,7 +136,7 @@ func (s BlocklistService) WhitelistAddressEdit(ctx context.Context, req *v1.Whit
 	return &v1.WhitelistAddressEditResponse{Whitelist: toWhitelistIP(whiteList)}, nil
 }
 
-func (s BlocklistService) WhitelistSteam(ctx context.Context, _ *emptypb.Empty) (*v1.WhitelistSteamResponse, error) {
+func (s Service) WhitelistSteam(ctx context.Context, _ *emptypb.Empty) (*v1.WhitelistSteamResponse, error) {
 	whiteLists, errWl := s.blocklists.GetSteamBlockWhitelists(ctx)
 	if errWl != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -150,7 +150,7 @@ func (s BlocklistService) WhitelistSteam(ctx context.Context, _ *emptypb.Empty) 
 	return &resp, nil
 }
 
-func (s BlocklistService) WhitelistSteamDelete(ctx context.Context, req *v1.WhitelistSteamDeleteRequest) (*emptypb.Empty, error) {
+func (s Service) WhitelistSteamDelete(ctx context.Context, req *v1.WhitelistSteamDeleteRequest) (*emptypb.Empty, error) {
 	errSave := s.blocklists.DeleteSteamBlockWhitelists(ctx, steamid.New(req.GetSteamId()))
 	if errSave != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -159,7 +159,7 @@ func (s BlocklistService) WhitelistSteamDelete(ctx context.Context, req *v1.Whit
 	return &emptypb.Empty{}, nil
 }
 
-func (s BlocklistService) WhitelistSteamCreate(ctx context.Context, req *v1.WhitelistSteamCreateRequest) (*v1.WhitelistSteamCreateResponse, error) {
+func (s Service) WhitelistSteamCreate(ctx context.Context, req *v1.WhitelistSteamCreateRequest) (*v1.WhitelistSteamCreateResponse, error) {
 	steamID := steamid.New(req.GetSteamId())
 	if !steamID.Valid() {
 		return nil, connect.NewError(connect.CodeInvalidArgument, rpc.ErrBadRequest)
@@ -173,7 +173,7 @@ func (s BlocklistService) WhitelistSteamCreate(ctx context.Context, req *v1.Whit
 	return &v1.WhitelistSteamCreateResponse{Whitelist: toWhitelistSteam(whitelist)}, nil
 }
 
-func (s BlocklistService) CheckBlock(_ context.Context, _ *v1.CheckBlockRequest) (*v1.CheckBlockResponse, error) {
+func (s Service) CheckBlock(_ context.Context, _ *v1.CheckBlockRequest) (*v1.CheckBlockResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, rpc.ErrInternal)
 }
 
