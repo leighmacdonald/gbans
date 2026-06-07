@@ -12,9 +12,11 @@ import (
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/demo"
+	"github.com/leighmacdonald/gbans/internal/maps"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/internal/stats"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -37,8 +39,9 @@ func TestBan(t *testing.T) {
 		assets  = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
 		filters = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database), notification.NewDiscard(), fixture.Config.Config().Filters)
 		chat    = chat.New(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters, filters, fixture.Persons, notification.NewDiscard(), nil, "")
-		demos   = demo.NewDemos(asset.BucketDemo, demo.NewDemoRepository(fixture.Database),
-			assets, chat, fixture.Persons, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
+		stats   = stats.New(stats.NewRepository(fixture.Database), maps.New(maps.NewRepository(fixture.Database)))
+		demos   = demo.NewDemos(asset.BucketDemo, demo.NewRepository(fixture.Database),
+			assets, stats, chat, fixture.Persons, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
 		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
 			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
 			demos, fixture.TFApi, notification.NewDiscard(), "")
@@ -68,8 +71,9 @@ func TestDuplicate(t *testing.T) {
 		assets  = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
 		filters = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database), notification.NewDiscard(), fixture.Config.Config().Filters)
 		chat    = chat.New(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters, filters, fixture.Persons, notification.NewDiscard(), nil, "")
-		demos   = demo.NewDemos(asset.BucketDemo, demo.NewDemoRepository(fixture.Database),
-			assets, chat, fixture.Persons, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
+		stats   = stats.New(stats.NewRepository(fixture.Database), maps.New(maps.NewRepository(fixture.Database)))
+		demos   = demo.NewDemos(asset.BucketDemo, demo.NewRepository(fixture.Database),
+			assets, stats, chat, fixture.Persons, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
 		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
 			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
 			demos, fixture.TFApi, notification.NewDiscard(), "")
@@ -108,8 +112,9 @@ func TestUnban(t *testing.T) {
 		assets  = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
 		filters = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database), notification.NewDiscard(), fixture.Config.Config().Filters)
 		chat    = chat.New(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters, filters, fixture.Persons, notification.NewDiscard(), nil, "")
-		demos   = demo.NewDemos(asset.BucketDemo, demo.NewDemoRepository(fixture.Database),
-			assets, chat, fixture.Persons, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
+		stats   = stats.New(stats.NewRepository(fixture.Database), maps.New(maps.NewRepository(fixture.Database)))
+		demos   = demo.NewDemos(asset.BucketDemo, demo.NewRepository(fixture.Database),
+			assets, stats, chat, fixture.Persons, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
 		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
 			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
 			demos, fixture.TFApi, notification.NewDiscard(), "")

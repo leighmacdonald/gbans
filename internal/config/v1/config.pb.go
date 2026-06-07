@@ -1628,7 +1628,7 @@ type SSH struct {
 	UpdateInterval  *int32                 `protobuf:"varint,7,opt,name=update_interval,json=updateInterval" json:"update_interval,omitempty"`
 	Timeout         *int32                 `protobuf:"varint,8,opt,name=timeout" json:"timeout,omitempty"`
 	DemoPathFmt     *string                `protobuf:"bytes,9,opt,name=demo_path_fmt,json=demoPathFmt" json:"demo_path_fmt,omitempty"`
-	StacPath        *string                `protobuf:"bytes,10,opt,name=stac_path,json=stacPath" json:"stac_path,omitempty"`
+	StacPathFmt     *string                `protobuf:"bytes,10,opt,name=stac_path_fmt,json=stacPathFmt" json:"stac_path_fmt,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -1726,9 +1726,9 @@ func (x *SSH) GetDemoPathFmt() string {
 	return ""
 }
 
-func (x *SSH) GetStacPath() string {
-	if x != nil && x.StacPath != nil {
-		return *x.StacPath
+func (x *SSH) GetStacPathFmt() string {
+	if x != nil && x.StacPathFmt != nil {
+		return *x.StacPathFmt
 	}
 	return ""
 }
@@ -2845,7 +2845,7 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\tclient_id\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bclientId\x12+\n" +
 	"\rclient_secret\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fclientSecret\x128\n" +
 	"\x14creator_access_token\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x12creatorAccessToken\x12:\n" +
-	"\x15creator_refresh_token\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x13creatorRefreshToken\"\xb6\x03\n" +
+	"\x15creator_refresh_token\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x13creatorRefreshToken\"\xbd\x03\n" +
 	"\x03SSH\x12 \n" +
 	"\aenabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aenabled\x12\"\n" +
 	"\busername\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\busername\x12\x1a\n" +
@@ -2855,9 +2855,9 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\bpassword\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bpassword\x12/\n" +
 	"\x0fupdate_interval\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x0eupdateInterval\x12 \n" +
 	"\atimeout\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\atimeout\x12*\n" +
-	"\rdemo_path_fmt\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdemoPathFmt\x12#\n" +
-	"\tstac_path\x18\n" +
-	" \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bstacPath\"\xca\x01\n" +
+	"\rdemo_path_fmt\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdemoPathFmt\x12*\n" +
+	"\rstac_path_fmt\x18\n" +
+	" \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vstacPathFmt\"\xca\x01\n" +
 	"\aNetwork\x12'\n" +
 	"\vsdr_enabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"sdrEnabled\x12.\n" +

@@ -81,7 +81,7 @@ type Config struct {
 	Debug   Debug
 
 	// Package configs.
-	Demo        demo.DemoConfig
+	Demo        demo.Config
 	Filters     chat.Config
 	Discord     discord.Config
 	Clientprefs sourcemod.Config

@@ -46,6 +46,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/internal/speedruns"
+	"github.com/leighmacdonald/gbans/internal/stats"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/wiki"
@@ -87,6 +88,7 @@ type GBans struct {
 	servers        *servers.Servers
 	speedruns      speedruns.Speedruns
 	sourcemod      sourcemod.Sourcemod
+	stats          stats.Stats
 	staticConfig   config.Static
 	tfapiClient    thirdparty.APIProvider
 	votes          votes.Votes
@@ -187,7 +189,7 @@ func (g *GBans) Init(ctx context.Context) error {
 		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database)))
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), conf.Discord)
 	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler, conf.Discord.SafeChatLogChannelID())
-	g.demos = demo.NewDemos(asset.BucketDemo, demo.NewDemoRepository(g.database), g.assets, g.chat, g.persons, conf.Demo, steamid.New(conf.Owner))
+	g.demos = demo.NewDemos(asset.BucketDemo, demo.NewRepository(g.database), g.assets, g.stats, g.chat, g.persons, conf.Demo, steamid.New(conf.Owner))
 	g.forums = forum.New(forum.NewRepository(g.database), g.notifications, g.persons, "")
 	g.metrics = metrics.New(g.broadcaster)
 	g.news = news.New(news.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID())
@@ -478,8 +480,8 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware) *http.ServeMux {
 		notification.NewService(g.notifications, authMiddleware, interceptors),
 		person.NewPersonService(g.persons, authMiddleware, interceptors),
 		servers.NewServersService(g.servers, authMiddleware, interceptors),
-		demo.NewDemoService(g.demos, authMiddleware, interceptors),
-		speedruns.NewSpeedrunsService(g.speedruns, authMiddleware, interceptors),
+		demo.NewService(g.demos, authMiddleware, interceptors),
+		speedruns.NewService(g.speedruns, authMiddleware, interceptors),
 		sourcemod.NewPluginService(g.sourcemod, g.persons, g.servers, g.bans,
 			rpc.NewServerTokenGenerator(conf.General.SiteName, []byte(conf.HTTPCookieKey)), g.notifications, conf.Discord.LogChannelID, authMiddleware, interceptors),
 		sourcemod.NewSourcemodService(g.sourcemod, authMiddleware, interceptors),
@@ -712,19 +714,24 @@ func (g *GBans) onChatBan(ctx context.Context, warning chat.NewUserWarning) erro
 
 func (g *GBans) onAnticheatBan(ctx context.Context, entry logparse.StacEntry, dur time.Duration, count int32) error {
 	conf := g.config.Config()
+	var demoFile demo.File
+	if errDemo := g.demos.GetDemoByName(ctx, entry.DemoName, &demoFile); errDemo != nil || entry.DemoID == nil || *entry.DemoID <= 0 {
+		return errDemo
+	}
 	newBan, err := g.bans.Create(ctx, ban.Opts{
-		Origin:     ban.System,
-		SourceID:   steamid.New(conf.Owner),
-		TargetID:   entry.SteamID,
-		ValidUntil: time.Now().Add(dur),
-		BanType:    bantype.Banned,
-		Reason:     reason.Cheating,
-		ReasonText: "",
-		Note:       entry.Summary + "\n\nRaw log:\n" + entry.RawLog,
-		// DemoId:      entry.DemoName, TODO get demoid somehow
+		Origin:      ban.System,
+		SourceID:    steamid.New(conf.Owner),
+		TargetID:    entry.SteamID,
+		ValidUntil:  time.Now().Add(dur),
+		BanType:     bantype.Banned,
+		Reason:      reason.Cheating,
+		ReasonText:  "",
+		Note:        "```\n" + entry.Summary + "\n\nRaw log:\n" + entry.RawLog + "\n```",
+		DemoID:      &demoFile.DemoID,
 		DemoTick:    &entry.DemoTick,
 		AnticheatID: &entry.AnticheatID,
 		EvadeOk:     false,
+		Name:        entry.Name,
 	})
 	if err != nil && !errors.Is(err, database.ErrDuplicate) {
 		slog.Error("Failed to ban cheater", slog.String("detection", string(entry.Detection)),

@@ -201,7 +201,7 @@ func TestConfig(dsn string) *config.Configuration {
 			ChatlogsEnabled: true,
 			DemosEnabled:    true,
 		},
-		Demo: demo.DemoConfig{
+		Demo: demo.Config{
 			DemoCleanupEnabled:  false,
 			DemoCleanupStrategy: "",
 			DemoCleanupMinPct:   0,

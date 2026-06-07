@@ -204,9 +204,10 @@ func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, pers
 			"Player": player,
 		}))))
 
-	if errChat := u.AddChatHistory(ctx, &userMsg); errChat != nil {
-		return errChat
-	}
+	// Stores from demos instead
+	// if errChat := u.AddChatHistory(ctx, &userMsg); errChat != nil {
+	// 	return errChat
+	// }
 
 	matchedFilter := u.wordFilters.Check(userMsg.Body)
 	if len(matchedFilter) == 0 {

@@ -28,7 +28,7 @@ func New(repo Repository, maps maps.Maps) Stats {
 	return Stats{repo: repo, maps: maps}
 }
 
-func (s Stats) Import(ctx context.Context, serverID int32, demo demoparse.Demo) (*Result, error) {
+func (s Stats) Import(ctx context.Context, serverID int32, demo *demoparse.Demo) (*Match, error) {
 	timeStart := time.Now().Add(-time.Duration(demo.Duration) * time.Second)
 	if demo.DemoType != demoparse.HL2Demo {
 		return nil, fmt.Errorf("%w: invalid demo type", ErrInvalidState)
@@ -74,8 +74,8 @@ func (s Stats) Import(ctx context.Context, serverID int32, demo demoparse.Demo) 
 
 	players := map[steamid.SteamID]*Player{}
 	for _, round := range demo.Rounds {
-		for _, player := range round.Players {
-			user := steamid.New(player.SteamID)
+		for _, playerRoundSummary := range round.Players {
+			user := steamid.New(playerRoundSummary.SteamID)
 			if !user.Valid() {
 				continue
 			}
@@ -84,7 +84,7 @@ func (s Stats) Import(ctx context.Context, serverID int32, demo demoparse.Demo) 
 				plr = &Player{MedicStats: &PlayerMedicStats{}}
 				players[user] = plr
 			}
-			plr.ApplySummary(&player)
+			plr.ApplySummary(&playerRoundSummary)
 		}
 	}
 
@@ -103,7 +103,7 @@ func (s Stats) Import(ctx context.Context, serverID int32, demo demoparse.Demo) 
 		})
 	}
 
-	result := Result{
+	result := Match{
 		MatchID:    newID,
 		ServerID:   serverID,
 		Title:      demo.Server,
@@ -118,6 +118,8 @@ func (s Stats) Import(ctx context.Context, serverID int32, demo demoparse.Demo) 
 	for _, player := range players {
 		result.Players = append(result.Players, player)
 	}
+
+	// s.repo.AddPlayerStatsAlltime()
 
 	return &result, nil
 }

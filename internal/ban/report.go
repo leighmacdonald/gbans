@@ -343,7 +343,7 @@ func (r Reports) Report(ctx context.Context, curUser personDomain.BaseUser, repo
 		return ReportWithAuthor{}, errTarget
 	}
 
-	var demo demo.DemoFile
+	var demo demo.File
 	if report.DemoID > 0 {
 		if errDemo := r.demos.GetDemoByID(ctx, report.DemoID, &demo); errDemo != nil {
 			slog.Error("Failed to load report demo", slog.Int64("report_id", int64(report.ReportID)))
@@ -442,7 +442,7 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.BaseUser, re
 		return ReportWithAuthor{}, ErrReportExists
 	}
 
-	var demo demo.DemoFile
+	var demo demo.File
 
 	if req.DemoID > 0 {
 		if errDemo := r.demos.GetDemoByID(ctx, req.DemoID, &demo); errDemo != nil {

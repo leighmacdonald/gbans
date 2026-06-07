@@ -126,7 +126,7 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 			SkipOpenIDValidation: inDebug.GetSkipOpenIdValidation(),
 			AddRCONLogAddress:    inDebug.GetAddRconLogAddress(),
 		},
-		Demo: demo.DemoConfig{
+		Demo: demo.Config{
 			DemoCleanupEnabled:  inDemo.GetCleanupEnabled(),
 			DemoCleanupStrategy: fromDemoStrategy(inDemo.GetStrategy()), // FIXME
 			DemoCleanupMinPct:   inDemo.GetCleanupMinPct(),
@@ -201,7 +201,7 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 			UpdateInterval:  inSSH.GetUpdateInterval(),
 			Timeout:         inSSH.GetTimeout(),
 			DemoPathFmt:     inSSH.GetDemoPathFmt(),
-			StacPathFmt:     inSSH.GetStacPath(),
+			StacPathFmt:     inSSH.GetStacPathFmt(),
 		},
 		Network: network.Config{
 			SDREnabled:    inNetwork.GetSdrEnabled(),
@@ -339,7 +339,7 @@ func toConfig(conf Config) *configv1.Config {
 			UpdateInterval:  new(conf.SSH.UpdateInterval),
 			Timeout:         new(conf.SSH.Timeout),
 			DemoPathFmt:     &conf.SSH.DemoPathFmt,
-			StacPath:        &conf.SSH.StacPathFmt,
+			StacPathFmt:     &conf.SSH.StacPathFmt,
 		},
 		Network: &configv1.Network{
 			SdrEnabled:    &conf.Network.SDREnabled,
@@ -417,7 +417,7 @@ func toServeMode(mode FileServeMode) configv1.FileServeMode {
 	}
 }
 
-func fromDemoStrategy(strategy configv1.DemoStrategy) demo.DemoStrategy {
+func fromDemoStrategy(strategy configv1.DemoStrategy) demo.Strategy {
 	switch strategy {
 	case configv1.DemoStrategy_DEMO_STRATEGY_COUNT:
 		return demo.DemoStrategyCount
@@ -428,7 +428,7 @@ func fromDemoStrategy(strategy configv1.DemoStrategy) demo.DemoStrategy {
 	}
 }
 
-func toDemoStrategy(strategy demo.DemoStrategy) configv1.DemoStrategy {
+func toDemoStrategy(strategy demo.Strategy) configv1.DemoStrategy {
 	switch strategy {
 	case demo.DemoStrategyCount:
 		return configv1.DemoStrategy_DEMO_STRATEGY_COUNT

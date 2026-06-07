@@ -22,6 +22,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/fs"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
+	"github.com/leighmacdonald/gbans/internal/stats"
 	"github.com/leighmacdonald/gbans/pkg/demoparse"
 	"github.com/leighmacdonald/gbans/pkg/zstd"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -36,23 +37,23 @@ var (
 	ErrParse          = errors.New("could not parse demo")
 )
 
-type DemoStrategy string
+type Strategy string
 
 const (
-	DemoStrategyPctFree DemoStrategy = "pctfree"
-	DemoStrategyCount   DemoStrategy = "count"
+	DemoStrategyPctFree Strategy = "pctfree"
+	DemoStrategyCount   Strategy = "count"
 )
 
-type DemoConfig struct {
+type Config struct {
 	DemoCleanupEnabled  bool
-	DemoCleanupStrategy DemoStrategy
+	DemoCleanupStrategy Strategy
 	DemoCleanupMinPct   float32
 	DemoCleanupMount    string
 	DemoCountLimit      uint64
 	DemoParserURL       string
 }
 
-type DemoFilter struct {
+type Filter struct {
 	query.Filter
 
 	SteamID   string
@@ -60,24 +61,24 @@ type DemoFilter struct {
 	MapName   string
 }
 
-func (f DemoFilter) SourceSteamID() (steamid.SteamID, bool) {
+func (f Filter) SourceSteamID() (steamid.SteamID, bool) {
 	sid := steamid.New(f.SteamID)
 
 	return sid, sid.Valid()
 }
 
-type DemoPlayerStats struct {
+type PlayerStats struct {
 	Score      int
 	ScoreTotal int
 	Deaths     int
 }
 
-type DemoMetaData struct {
+type MetaData struct {
 	MapName string
-	Scores  map[string]DemoPlayerStats
+	Scores  map[string]PlayerStats
 }
 
-type DemoFile struct {
+type File struct {
 	DemoID          int32
 	ServerID        int32
 	ServerNameShort string
@@ -92,7 +93,7 @@ type DemoFile struct {
 	AssetID         uuid.UUID
 }
 
-type DemoInfo struct {
+type Info struct {
 	DemoID  int32
 	Title   string
 	AssetID uuid.UUID
@@ -105,9 +106,10 @@ type UploadedDemo struct {
 }
 
 type Demos struct {
-	DemoConfig
+	Config
 
-	repository  DemoRepository
+	stats       stats.Stats
+	repository  Repository
 	asset       asset.Assets
 	bucket      asset.Bucket
 	person      PersonCreator
@@ -117,20 +119,133 @@ type Demos struct {
 }
 
 type PersonCreator interface {
-	EnsurePerson(context.Context, steamid.SteamID) error
+	EnsurePerson(ctx context.Context, steamID steamid.SteamID) error
 }
 
-func NewDemos(bucket asset.Bucket, repository DemoRepository, assets asset.Assets, chat *chat.Chat, person PersonCreator, config DemoConfig, owner steamid.SteamID) Demos {
+func NewDemos(bucket asset.Bucket, repository Repository, assets asset.Assets, stats stats.Stats, chat *chat.Chat, person PersonCreator, config Config, owner steamid.SteamID) Demos {
 	return Demos{
-		DemoConfig:  config,
+		Config:      config,
 		bucket:      bucket,
 		repository:  repository,
 		asset:       assets,
+		stats:       stats,
 		chat:        chat,
 		cleanupChan: make(chan any),
 		owner:       owner,
 		person:      person,
 	}
+}
+
+func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID int32, createStats bool) (*File, error) {
+	if errGetServer := d.repository.ValidateServer(ctx, serverID); errGetServer != nil {
+		return nil, errGetServer
+	}
+	var (
+		parsedDemo *demoparse.Demo
+		err        error
+		filename   = asset.Name
+		mapName    string
+	)
+
+	namePartsAll := strings.Split(filename, "-")
+
+	if strings.Contains(filename, "workshop-") {
+		// 20231221-042605-workshop-cp_overgrown_rc8-ugc503939302.dem
+		mapName = namePartsAll[3]
+	} else {
+		// 20231112-063943-koth_harvest_final.dem
+		nameParts := strings.Split(namePartsAll[2], ".")
+		mapName = nameParts[0]
+	}
+
+	parsedDemo, err = demoparse.Submit(ctx, d.DemoParserURL, asset.String(), asset)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO change this data shape as we have not needed this in a long time. Only keys the are used.
+	intStats := map[string]map[string]any{}
+
+	for _, playerSteamID := range parsedDemo.SteamIDs() {
+		if playerSteamID.Valid() {
+			intStats[playerSteamID.String()] = map[string]any{}
+			if err := d.person.EnsurePerson(ctx, playerSteamID); err != nil {
+				slog.Error("Failed to insert player", slog.String("error", err.Error()))
+
+				return nil, err
+			}
+		}
+	}
+
+	timeStr := fmt.Sprintf("%s-%s", namePartsAll[0], namePartsAll[1])
+	createdTime, errTime := time.Parse("20060102-150405", timeStr) // 20240511-211121
+	if errTime != nil {
+		slog.Warn("Failed to parse demo time, using current time", slog.String("time", timeStr))
+
+		createdTime = time.Now()
+	}
+
+	newDemo := File{
+		ServerID:  serverID,
+		Title:     parsedDemo.Server,
+		CreatedOn: createdTime,
+		MapName:   mapName,
+		Stats:     intStats,
+		AssetID:   asset.AssetID,
+	}
+
+	if errSave := d.repository.SaveDemo(ctx, &newDemo); errSave != nil {
+		return nil, errSave
+	}
+
+	sort.Slice(parsedDemo.Chat, func(i, j int) bool {
+		return parsedDemo.Chat[i].Tick < parsedDemo.Chat[j].Tick
+	})
+
+	if len(parsedDemo.Chat) > 0 {
+		if errChat := d.importChatMessages(ctx, serverID, newDemo.DemoID, parsedDemo, createdTime); errChat != nil {
+			return nil, errChat
+		}
+	}
+
+	if createStats {
+		if _, errStats := d.stats.Import(ctx, serverID, parsedDemo); errStats != nil {
+			return nil, errStats
+		}
+	}
+
+	slog.Debug("Created demo from asset successfully", slog.Int64("demo_id", int64(newDemo.DemoID)),
+		slog.String("title", newDemo.Title), slog.String("map", mapName))
+
+	return &newDemo, nil
+}
+
+func (d Demos) importChatMessages(ctx context.Context, serverID int32, demoID int32, parsedDemo *demoparse.Demo, startTime time.Time) error {
+	for _, msg := range parsedDemo.Chat {
+		if msg.User == "BOT" {
+			continue
+		}
+
+		sid := steamid.New(msg.User)
+		if !sid.Valid() {
+			slog.Warn("Got invalid steamid from demo chat", slog.String("name", msg.User))
+
+			continue
+		}
+
+		if err := d.chat.AddChatHistory(ctx, &chat.Message{
+			ServerID:  serverID,
+			DemoID:    &demoID,
+			DemoTick:  &msg.Tick,
+			Body:      msg.Message,
+			CreatedOn: startTime.Add(ticksToDuration(msg.Tick)),
+			SteamID:   sid,
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
@@ -152,7 +267,7 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 		return errNewAsset
 	}
 
-	if _, errDemo := d.CreateFromAsset(ctx, &demoAsset, demo.ServerID); errDemo != nil {
+	if _, errDemo := d.CreateFromAsset(ctx, &demoAsset, demo.ServerID, true); errDemo != nil {
 		// Cleanup the asset not attached to a valid demo
 		if _, errDelete := d.asset.Delete(ctx, demoAsset.AssetID); errDelete != nil {
 			return errors.Join(errDelete, errDelete)
@@ -164,7 +279,7 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 	return nil
 }
 
-func (d Demos) ImportFile(ctx context.Context, serverID int32, demoPath string) (*DemoFile, error) {
+func (d Demos) ImportFile(ctx context.Context, serverID int32, demoPath string, createStats bool) (*File, error) {
 	demoFile, err := os.Open(demoPath)
 	if err != nil {
 		return nil, errors.Join(err, ErrDemoLoad)
@@ -177,7 +292,7 @@ func (d Demos) ImportFile(ctx context.Context, serverID int32, demoPath string) 
 		return nil, errors.Join(errAsset, ErrDemoLoad)
 	}
 
-	demo, errDemo := d.CreateFromAsset(ctx, &demoAsset, serverID)
+	demo, errDemo := d.CreateFromAsset(ctx, &demoAsset, serverID, createStats)
 	if errDemo != nil {
 		return nil, errors.Join(errDemo, ErrDemoLoad)
 	}
@@ -242,20 +357,20 @@ func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, ser
 	return nil
 }
 
-func (d Demos) oldest(ctx context.Context) (DemoInfo, error) {
+func (d Demos) oldest(ctx context.Context) (Info, error) {
 	demos, errDemos := d.repository.ExpiredDemos(ctx, 1)
 	if errDemos != nil {
-		return DemoInfo{}, errDemos
+		return Info{}, errDemos
 	}
 
 	if len(demos) == 0 {
-		return DemoInfo{}, database.ErrNoResult
+		return Info{}, database.ErrNoResult
 	}
 
 	return demos[0], nil
 }
 
-func (d Demos) MarkArchived(ctx context.Context, demo *DemoFile) error {
+func (d Demos) MarkArchived(ctx context.Context, demo *File) error {
 	demo.Archive = true
 
 	if err := d.repository.SaveDemo(ctx, demo); err != nil {
@@ -385,122 +500,26 @@ func (d Demos) Cleanup(ctx context.Context) {
 	}
 }
 
-func (d Demos) ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error) {
+func (d Demos) ExpiredDemos(ctx context.Context, limit uint64) ([]Info, error) {
 	return d.repository.ExpiredDemos(ctx, limit)
 }
 
-func (d Demos) GetDemoByID(ctx context.Context, demoID int32, demoFile *DemoFile) error {
+func (d Demos) GetDemoByID(ctx context.Context, demoID int32, demoFile *File) error {
 	return d.repository.GetDemoByID(ctx, demoID, demoFile)
 }
 
-func (d Demos) GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error {
+func (d Demos) GetDemoByName(ctx context.Context, demoName string, demoFile *File) error {
 	return d.repository.GetDemoByName(ctx, demoName, demoFile)
 }
 
-func (d Demos) GetDemos(ctx context.Context) ([]DemoFile, error) {
+func (d Demos) GetDemos(ctx context.Context) ([]File, error) {
 	return d.repository.GetDemos(ctx)
-}
-
-func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID int32) (*DemoFile, error) {
-	if errGetServer := d.repository.ValidateServer(ctx, serverID); errGetServer != nil {
-		return nil, errGetServer
-	}
-	var (
-		parsedDemo *demoparse.Demo
-		err        error
-		filename   = asset.Name
-		mapName    string
-	)
-
-	namePartsAll := strings.Split(filename, "-")
-
-	if strings.Contains(filename, "workshop-") {
-		// 20231221-042605-workshop-cp_overgrown_rc8-ugc503939302.dem
-		mapName = namePartsAll[3]
-	} else {
-		// 20231112-063943-koth_harvest_final.dem
-		nameParts := strings.Split(namePartsAll[2], ".")
-		mapName = nameParts[0]
-	}
-
-	parsedDemo, err = demoparse.Submit(ctx, d.DemoParserURL, asset.String(), asset)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO change this data shape as we have not needed this in a long time. Only keys the are used.
-	intStats := map[string]map[string]any{}
-
-	for _, playerSteamID := range parsedDemo.SteamIDs() {
-		if playerSteamID.Valid() {
-			intStats[playerSteamID.String()] = map[string]any{}
-			if err := d.person.EnsurePerson(ctx, playerSteamID); err != nil {
-				slog.Error("Failed to insert player", slog.String("error", err.Error()))
-
-				return nil, err
-			}
-		}
-	}
-
-	timeStr := fmt.Sprintf("%s-%s", namePartsAll[0], namePartsAll[1])
-	createdTime, errTime := time.Parse("20060102-150405", timeStr) // 20240511-211121
-	if errTime != nil {
-		slog.Warn("Failed to parse demo time, using current time", slog.String("time", timeStr))
-
-		createdTime = time.Now()
-	}
-
-	newDemo := DemoFile{
-		ServerID:  serverID,
-		Title:     parsedDemo.Server,
-		CreatedOn: createdTime,
-		MapName:   mapName,
-		Stats:     intStats,
-		AssetID:   asset.AssetID,
-	}
-
-	if errSave := d.repository.SaveDemo(ctx, &newDemo); errSave != nil {
-		return nil, errSave
-	}
-
-	sort.Slice(parsedDemo.Chat, func(i, j int) bool {
-		return parsedDemo.Chat[i].Tick < parsedDemo.Chat[j].Tick
-	})
-
-	for _, msg := range parsedDemo.Chat {
-		if msg.User == "BOT" {
-			continue
-		}
-
-		sid := steamid.New(msg.User)
-		if !sid.Valid() {
-			slog.Warn("Got invalid steamid from demo chat", slog.String("name", msg.User))
-
-			continue
-		}
-
-		if err := d.chat.AddChatHistory(ctx, &chat.Message{
-			ServerID:  serverID,
-			DemoID:    &newDemo.DemoID,
-			DemoTick:  new(int32(msg.Tick)),
-			Body:      msg.Message,
-			CreatedOn: createdTime.Add(ticksToDuration(msg.Tick)),
-			SteamID:   sid,
-		}); err != nil {
-			return nil, err
-		}
-	}
-
-	slog.Debug("Created demo from asset successfully", slog.Int64("demo_id", int64(newDemo.DemoID)),
-		slog.String("title", newDemo.Title), slog.String("map", mapName))
-
-	return &newDemo, nil
 }
 
 // Were just going to assume the server is relatively consistent, it doesnt matter too much.
 const frameDuration = 16600 * time.Microsecond
 
-func ticksToDuration(ticks int64) time.Duration {
+func ticksToDuration(ticks int32) time.Duration {
 	return (frameDuration / 1000) * time.Duration(ticks)
 }
 

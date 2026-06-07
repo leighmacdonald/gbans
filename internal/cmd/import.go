@@ -69,7 +69,7 @@ func importDemoCmd() *cobra.Command {
 					serverID = int32(parsedID)
 				}
 
-				importedDemo, errImport := app.demos.ImportFile(ctx, serverID, arg)
+				importedDemo, errImport := app.demos.ImportFile(ctx, serverID, arg, true)
 				if errImport != nil {
 					return errImport
 				}
