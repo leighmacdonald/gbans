@@ -98,7 +98,7 @@ CREATE TABLE match_round_player (
   headshot_kills integer not null,
   backstabs integer not null,
   backstab_kills integer not null,
-  was_headshots integer not null,
+  was_headshot integer not null,
   was_backstabbed integer not null,
   shots integer not null,
   hits integer not null,
