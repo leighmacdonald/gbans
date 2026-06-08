@@ -52,6 +52,7 @@ type MatchRoundPlayer struct {
 	PostroundDeaths     uint
 	PostroundHealing    uint
 	Healing             uint
+	PreroundHealing     uint
 	Drops               uint
 	NearFullChargeDeath uint
 	ChargesUber         uint

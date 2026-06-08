@@ -17,8 +17,10 @@ const (
 	MinDuraion = 300
 )
 
-var ErrInvalidState = errors.New("invalid demo state")
-var ErrInvalidBucket = errors.New("invalid stat bucket")
+var (
+	ErrInvalidState  = errors.New("invalid demo state")
+	ErrInvalidBucket = errors.New("invalid stat bucket")
+)
 
 type Stats struct {
 	repo Repository
