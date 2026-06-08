@@ -1,0 +1,25 @@
+{
+  "$schema": "https://pg-language-server.com/latest/schema.json",
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "safety": {
+        "banDropTable": "off"
+      }
+    }
+  },
+  "typecheck": {
+    "enabled": true
+  },
+  "plpgsqlCheck": {
+    "enabled": false
+  },
+  "format": {
+    "enabled": true,
+    "keywordCase": "lower"
+  },
+  "db": {
+      "connectionString": "postgres://gbans:gbans@localhost:5432/gbans?sslmode=disable"
+  }
+}
