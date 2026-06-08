@@ -10,6 +10,23 @@ DROP TABLE IF EXISTS match_player;
 
 DROP TABLE IF EXISTS match;
 
+drop table if exists player_class;
+
+CREATE TYPE player_class AS ENUM(
+  'spectator',
+  'uassigned',
+  'scout',
+  'soldier',
+  'pyro',
+  'demo',
+  'heavy',
+  'engineer',
+  'medic',
+  'sniper',
+  'spy',
+  'saxton'
+);
+
 CREATE TYPE player_team AS ENUM('unassigned', 'spec', 'red', 'blu');
 
 create table stats_bucket (
@@ -32,7 +49,7 @@ CREATE TABLE match (
   score_blu integer not null,
   score_red integer not null,
   start_time timestamptz not null,
-  duration_ms integer not null,
+  duration_ms bigint not null,
   created_on timestamptz not null
 );
 
@@ -44,7 +61,7 @@ CREATE TABLE match_round (
   winner player_team not null,
   is_stalemate boolean not null,
   is_sudden_death boolean not null,
-  duration_ms integer not null
+  duration_ms bigint not null
 );
 
 CREATE TABLE match_round_player (
@@ -123,7 +140,8 @@ create table match_round_player_weapon (
   backstab_kills integer not null,
   headshots integer not null,
   backstabs integer not null,
-  was_eadshot integer not null,
+  was_headshot integer not null,
+  was_backstabbed integer not null,
   preround_healing integer not null,
   healing integer not null,
   postround_healing integer not null,
@@ -133,7 +151,6 @@ create table match_round_player_weapon (
   charges_kritz integer not null,
   charges_vacc integer not null,
   charges_quickfix integer not null,
-  was_backstabbed integer not null,
   primary key (weapon, round_id, steam_id)
 );
 
@@ -158,7 +175,7 @@ create table match_round_player_class (
   backstab_kills integer not null,
   headshots integer not null,
   backstabs integer not null,
-  was_eadshot integer not null,
+  was_headshot integer not null,
   preround_healing integer not null,
   healing integer not null,
   postround_healing integer not null,

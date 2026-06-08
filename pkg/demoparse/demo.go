@@ -112,6 +112,7 @@ type Stats struct {
 	NearFullChargeDeath int `json:"near_full_charge_death"`
 	ChargesUber         int `json:"charges_uber"`
 	ChargesKritz        int `json:"charges_kritz"`
+	ChargesVacc         int `json:"charges_vacc"`
 	ChargesQuickfix     int `json:"charges_quickfix"`
 	WasBackstabbed      int `json:"was_backstabbed"`
 }
@@ -172,7 +173,7 @@ type PlayerSummary struct {
 	ObjectBuilt         int `json:"object_built"`
 	ObjectDestroyed     int `json:"object_destroyed"`
 
-	Classes Classes          `json:"classes"`
+	Classes map[string]Stats `json:"classes"`
 	Weapons map[string]Stats `json:"weapons"`
 
 	ScoreboardKills   int `json:"scoreboard_kills"`
