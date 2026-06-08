@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -79,6 +80,12 @@ func (s Stats) Import(ctx context.Context, serverID int32, demoID int32, demo *d
 	if errMatch != nil {
 		return nil, errMatch
 	}
+
+	match, errMatch := s.repo.Match(ctx, matchID)
+	if errMatch != nil {
+		return nil, errMatch
+	}
+	slog.Info("Got match", slog.String("match", match.Hostname))
 
 	return &matchID, nil
 }

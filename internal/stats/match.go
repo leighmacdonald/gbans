@@ -16,12 +16,14 @@ type Match struct {
 	Hostname      string
 	ScoreBlu      uint
 	ScoreRed      uint
-	startTime     time.Time
-	durationMs    int64
-	createdOn     time.Time
+	StartTime     time.Time
+	DurationMs    int64
+	CreatedOn     time.Time
 
 	Rounds  []MatchRound
-	Players []MatchPlayer
+	Players []MatchRoundPlayer
+	Weapons []MatchRoundWeaponStats
+	Classes []MatchRoundClassStats
 }
 
 type MatchRound struct {
@@ -32,7 +34,8 @@ type MatchRound struct {
 	DurationMs    int64
 }
 
-type MatchPlayer struct {
+type MatchRoundPlayer struct {
+	RoundID             uint
 	SteamID             steamid.SteamID
 	Team                string
 	MVP                 bool
@@ -42,10 +45,12 @@ type MatchPlayer struct {
 	ConnectionCount     uint
 	BonusPoints         uint
 	Kills               uint
+	Assists             uint
 	Deaths              uint
 	PostroundKills      uint
 	PostroundAssists    uint
 	PostroundDeaths     uint
+	PostroundHealing    uint
 	Healing             uint
 	Drops               uint
 	NearFullChargeDeath uint
@@ -77,7 +82,7 @@ type MatchPlayer struct {
 	ScoreboardDamage    uint
 	Extinguishes        uint
 	Ignites             uint
-	ObjectsBUilt        uint
+	ObjectsBuilt        uint
 	ObjectsDestroyed    uint
 	BuildingsBuilt      uint
 	BUildingsDestroyed  uint
@@ -85,6 +90,7 @@ type MatchPlayer struct {
 
 type MatchBaseStats struct {
 	SteamID             steamid.SteamID
+	RoundID             uint
 	Kills               uint
 	Assists             uint
 	Deaths              uint
@@ -115,13 +121,13 @@ type MatchBaseStats struct {
 	ChargesQuickfix     uint
 }
 
-type MatchClassStats struct {
+type MatchRoundClassStats struct {
 	MatchBaseStats
 
 	Class string
 }
 
-type MatchWeaponStats struct {
+type MatchRoundWeaponStats struct {
 	MatchBaseStats
 
 	Weapon string
