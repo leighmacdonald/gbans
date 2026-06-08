@@ -117,15 +117,15 @@ type Stats struct {
 }
 
 type Classes struct {
-	Pyro     Stats `json:"pyro"`
-	Heavy    Stats `json:"heavy"`
-	Soldier  Stats `json:"soldier"`
-	Sniper   Stats `json:"sniper"`
-	Spy      Stats `json:"spy"`
-	Scout    Stats `json:"scout"`
-	Demoman  Stats `json:"demoman"`
-	Engineer Stats `json:"engineer"`
-	Medic    Stats `json:"medic"`
+	Pyro     *Stats `json:"pyro"`
+	Heavy    *Stats `json:"heavy"`
+	Soldier  *Stats `json:"soldier"`
+	Sniper   *Stats `json:"sniper"`
+	Spy      *Stats `json:"spy"`
+	Scout    *Stats `json:"scout"`
+	Demoman  *Stats `json:"demoman"`
+	Engineer *Stats `json:"engineer"`
+	Medic    *Stats `json:"medic"`
 }
 
 type PlayerSummary struct {

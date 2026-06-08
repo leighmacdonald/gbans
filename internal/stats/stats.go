@@ -18,6 +18,7 @@ const (
 )
 
 var ErrInvalidState = errors.New("invalid demo state")
+var ErrInvalidBucket = errors.New("invalid stat bucket")
 
 type Stats struct {
 	repo Repository
@@ -28,8 +29,20 @@ func New(repo Repository, maps maps.Maps) Stats {
 	return Stats{repo: repo, maps: maps}
 }
 
-func (s Stats) Import(ctx context.Context, serverID int32, demo *demoparse.Demo) (*Match, error) {
-	timeStart := time.Now().Add(-time.Duration(demo.Duration) * time.Second)
+type Bucket struct {
+	BucketID   int32
+	BucketName string
+}
+
+func (s Stats) Bucket(ctx context.Context, bucketID int32) (*Bucket, error) {
+	if bucketID <= 0 {
+		return nil, ErrInvalidBucket
+	}
+
+	return s.repo.GetBucket(ctx, bucketID)
+}
+
+func (s Stats) Import(ctx context.Context, serverID int32, demoID int32, demo *demoparse.Demo, timeStart time.Time) (*uuid.UUID, error) {
 	if demo.DemoType != demoparse.HL2Demo {
 		return nil, fmt.Errorf("%w: invalid demo type", ErrInvalidState)
 	}
@@ -46,25 +59,16 @@ func (s Stats) Import(ctx context.Context, serverID int32, demo *demoparse.Demo)
 		return nil, fmt.Errorf("%w: not enough players", ErrInvalidState)
 	}
 
-	if demo.Duration < MinDuraion {
-		return nil, fmt.Errorf("%w: demo too short in length", ErrInvalidState)
+	if len(demo.Rounds) == 0 {
+		return nil, fmt.Errorf("%w not enough rounds", ErrInvalidState)
 	}
 
 	if len(demo.SteamIDs()) < MinPlayers {
 		return nil, fmt.Errorf("%w: not enough players", ErrInvalidState)
 	}
 
-	if demo.Duration < MinDuraion {
-		return nil, fmt.Errorf("%w: demo too short in length", ErrInvalidState)
-	}
-
 	if demo.Map == "" {
 		return nil, fmt.Errorf("%w: empty map invalid", ErrInvalidState)
-	}
-
-	newID, errID := uuid.NewV4()
-	if errID != nil {
-		return nil, fmt.Errorf("%w: failed to generate UUID", ErrInvalidState)
 	}
 
 	mapInfo, errMap := s.maps.Get(ctx, demo.Map)
@@ -88,38 +92,10 @@ func (s Stats) Import(ctx context.Context, serverID int32, demo *demoparse.Demo)
 		}
 	}
 
-	var chat []PersonMessage //nolint:prealloc
-	for _, message := range demo.Chat {
-		user := steamid.New(message.User)
-		if message.Message == "" || message.Tick <= 0 {
-			continue
-		}
-
-		chat = append(chat, PersonMessage{
-			MatchID: newID,
-			SteamID: user,
-			Body:    message.Message,
-			Tick:    message.Tick,
-		})
+	matchID, errMatch := s.repo.CreateMatch(ctx, serverID, demoID, demo, timeStart, mapInfo, nil)
+	if errMatch != nil {
+		return nil, errMatch
 	}
 
-	result := Match{
-		MatchID:    newID,
-		ServerID:   serverID,
-		Title:      demo.Server,
-		TimeStart:  timeStart,
-		TimeEnd:    time.Now(),
-		Map:        mapInfo,
-		Winner:     demo.Winner(),
-		TeamScores: demo.Scores(),
-		Chat:       chat,
-	}
-
-	for _, player := range players {
-		result.Players = append(result.Players, player)
-	}
-
-	// s.repo.AddPlayerStatsAlltime()
-
-	return &result, nil
+	return &matchID, nil
 }
