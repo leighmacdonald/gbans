@@ -209,13 +209,13 @@ func (d Demos) createFromAsset(ctx context.Context, asset *asset.Asset, serverID
 	}
 
 	if createStats {
-		if _, errStats := d.stats.Import(ctx, serverID, newDemo.DemoID, parsedDemo, createdTime); errStats != nil {
+		matchID, errStats := d.stats.Import(ctx, serverID, newDemo.DemoID, parsedDemo, createdTime)
+		if errStats != nil {
 			return nil, errStats
 		}
-	}
 
-	slog.Debug("Created demo from asset successfully", slog.Int64("demo_id", int64(newDemo.DemoID)),
-		slog.String("title", newDemo.Title), slog.String("map", mapName))
+		slog.Info("Generated match results", slog.String("match_id", matchID.String()))
+	}
 
 	return &newDemo, nil
 }

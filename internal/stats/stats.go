@@ -9,7 +9,6 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/maps"
 	"github.com/leighmacdonald/gbans/pkg/demoparse"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 const (
@@ -74,22 +73,6 @@ func (s Stats) Import(ctx context.Context, serverID int32, demoID int32, demo *d
 	mapInfo, errMap := s.maps.Get(ctx, demo.Map)
 	if errMap != nil {
 		return nil, fmt.Errorf("%w: %w", ErrInvalidState, errMap)
-	}
-
-	players := map[steamid.SteamID]*Player{}
-	for _, round := range demo.Rounds {
-		for _, playerRoundSummary := range round.Players {
-			user := steamid.New(playerRoundSummary.SteamID)
-			if !user.Valid() {
-				continue
-			}
-			plr, ok := players[user]
-			if !ok {
-				plr = &Player{MedicStats: &PlayerMedicStats{}}
-				players[user] = plr
-			}
-			plr.ApplySummary(&playerRoundSummary)
-		}
 	}
 
 	matchID, errMatch := s.repo.CreateMatch(ctx, serverID, demoID, demo, timeStart, mapInfo, nil)
