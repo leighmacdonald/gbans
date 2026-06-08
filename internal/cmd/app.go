@@ -181,6 +181,8 @@ func (g *GBans) Init(ctx context.Context) error {
 		return errServer
 	}
 
+	mapsSvc := maps.New(maps.NewRepository(g.database))
+
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications,
 		conf.Discord.SafeAppealLogChannelID())
 	g.bans = ban.New(ban.NewRepository(g.database), g.persons, conf.Discord.SafeBanLogChannelID(),
@@ -188,6 +190,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.blocklists = blocklist.NewBlocklists(blocklist.NewRepository(g.database),
 		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database)))
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), conf.Discord)
+	g.stats = stats.New(stats.NewRepository(g.database), mapsSvc)
 	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler, conf.Discord.SafeChatLogChannelID())
 	g.demos = demo.NewDemos(asset.BucketDemo, demo.NewRepository(g.database), g.assets, g.stats, g.chat, g.persons, conf.Demo, steamid.New(conf.Owner))
 	g.forums = forum.New(forum.NewRepository(g.database), g.notifications, g.persons, "")
@@ -199,7 +202,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.votes = votes.New(votes.NewRepository(g.database), g.broadcaster, g.notifications,
 		conf.Discord.SafeVoteLogChannelID(), g.persons)
 
-	g.speedruns = speedruns.NewSpeedruns(speedruns.NewSpeedrunRepository(g.database, g.persons), maps.New(maps.NewRepository(g.database)))
+	g.speedruns = speedruns.NewSpeedruns(speedruns.NewSpeedrunRepository(g.database, g.persons), mapsSvc)
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications)
 	g.mge = mge.NewMGE(mge.NewRepository(g.database))

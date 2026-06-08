@@ -15,6 +15,8 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
+const MinMedicHealing = 500
+
 type TriggerType int
 
 const (
@@ -46,7 +48,19 @@ func (mqf QueryOpts) TargetSteamID() (steamid.SteamID, bool) {
 	return sid, sid.Valid()
 }
 
-const MinMedicHealing = 500
+type Match struct {
+	MatchID    uuid.UUID
+	ServerID   int32
+	Title      string
+	Map        maps.Map
+	TeamScores logparse.TeamScores
+	TimeStart  time.Time
+	Duration   time.Duration
+	Winner     logparse.Team
+	Round      demoparse.DemoRoundSummary
+	Players    []*Player
+	Chat       []PersonMessage
+}
 
 type PlayerKillstreak struct {
 	MatchKillstreakID int64
@@ -197,19 +211,6 @@ func (h Healer) HealingPerMin(matchDuration time.Duration) int {
 type PlayerMatchWeapon struct {
 	PlayerWeaponID int64
 	MatchPlayerID  int64
-}
-
-type Match struct {
-	MatchID    uuid.UUID
-	ServerID   int32
-	Title      string
-	Map        maps.Map
-	TeamScores logparse.TeamScores
-	TimeStart  time.Time
-	TimeEnd    time.Time
-	Winner     logparse.Team
-	Players    []*Player
-	Chat       []PersonMessage
 }
 
 type PersonMessage struct {

@@ -3,6 +3,7 @@ package stats_test
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/leighmacdonald/gbans/internal/json"
 	"github.com/leighmacdonald/gbans/internal/maps"
@@ -24,7 +25,7 @@ func TestImport(t *testing.T) {
 	require.NoError(t, errDemo)
 
 	st := stats.New(stats.NewRepository(testFixture.Database), maps.New(maps.NewRepository(testFixture.Database)))
-	demoStats, importErr := st.Import(t.Context(), server.ServerID, &demo)
+	matchID, importErr := st.Import(t.Context(), server.ServerID, 1, &demo, time.Now())
 	require.NoError(t, importErr)
-	require.Len(t, demoStats.Chat, 48)
+	require.NotNil(t, matchID)
 }

@@ -136,7 +136,7 @@ func NewDemos(bucket asset.Bucket, repository Repository, assets asset.Assets, s
 	}
 }
 
-func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID int32, createStats bool) (*File, error) {
+func (d Demos) createFromAsset(ctx context.Context, asset *asset.Asset, serverID int32, createStats bool) (*File, error) {
 	if errGetServer := d.repository.ValidateServer(ctx, serverID); errGetServer != nil {
 		return nil, errGetServer
 	}
@@ -209,7 +209,7 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID
 	}
 
 	if createStats {
-		if _, errStats := d.stats.Import(ctx, serverID, parsedDemo); errStats != nil {
+		if _, errStats := d.stats.Import(ctx, serverID, newDemo.DemoID, parsedDemo, createdTime); errStats != nil {
 			return nil, errStats
 		}
 	}
@@ -267,7 +267,7 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 		return errNewAsset
 	}
 
-	if _, errDemo := d.CreateFromAsset(ctx, &demoAsset, demo.ServerID, true); errDemo != nil {
+	if _, errDemo := d.createFromAsset(ctx, &demoAsset, demo.ServerID, true); errDemo != nil {
 		// Cleanup the asset not attached to a valid demo
 		if _, errDelete := d.asset.Delete(ctx, demoAsset.AssetID); errDelete != nil {
 			return errors.Join(errDelete, errDelete)
@@ -292,7 +292,7 @@ func (d Demos) ImportFile(ctx context.Context, serverID int32, demoPath string, 
 		return nil, errors.Join(errAsset, ErrDemoLoad)
 	}
 
-	demo, errDemo := d.CreateFromAsset(ctx, &demoAsset, serverID, createStats)
+	demo, errDemo := d.createFromAsset(ctx, &demoAsset, serverID, createStats)
 	if errDemo != nil {
 		return nil, errors.Join(errDemo, ErrDemoLoad)
 	}
