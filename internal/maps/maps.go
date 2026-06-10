@@ -33,3 +33,11 @@ func (m Maps) Get(ctx context.Context, name string) (Map, error) {
 
 	return m.repo.GetOrCreate(ctx, name)
 }
+
+func (m Maps) GetByID(ctx context.Context, mapID int32) (Map, error) {
+	if mapID == 0 {
+		return Map{}, fmt.Errorf("%w: zero map id", ErrInvalidMap)
+	}
+
+	return m.repo.GetByID(ctx, mapID)
+}

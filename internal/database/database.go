@@ -36,6 +36,7 @@ type Database interface {
 	Pool() *pgxpool.Pool
 	Connect(ctx context.Context) error
 	Close() error
+	RefreshMaterializedView(ctx context.Context, viewName string) error
 	Begin(ctx context.Context) (pgx.Tx, error)
 	BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error)
 	Query(ctx context.Context, query string, args ...any) (pgx.Rows, error)
@@ -131,6 +132,14 @@ func Err(rootError error) error {
 
 func (db *PgStore) Pool() *pgxpool.Pool {
 	return db.conn
+}
+
+func (db *PgStore) RefreshMaterializedView(ctx context.Context, viewName string) error {
+	if err := db.Exec(ctx, "refresh materialized view $1", viewName); err != nil {
+		return Err(err)
+	}
+
+	return nil
 }
 
 // Connect sets up underlying required services.

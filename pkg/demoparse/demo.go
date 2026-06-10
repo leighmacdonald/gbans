@@ -117,18 +117,6 @@ type Stats struct {
 	WasBackstabbed      int `json:"was_backstabbed"`
 }
 
-type Classes struct {
-	Pyro     *Stats `json:"pyro"`
-	Heavy    *Stats `json:"heavy"`
-	Soldier  *Stats `json:"soldier"`
-	Sniper   *Stats `json:"sniper"`
-	Spy      *Stats `json:"spy"`
-	Scout    *Stats `json:"scout"`
-	Demoman  *Stats `json:"demoman"`
-	Engineer *Stats `json:"engineer"`
-	Medic    *Stats `json:"medic"`
-}
-
 type PlayerSummary struct {
 	Name string `json:"name"`
 	// Not a steamid.SteamID, since this can be BOT

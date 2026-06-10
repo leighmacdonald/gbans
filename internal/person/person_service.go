@@ -18,7 +18,7 @@ import (
 )
 
 type Service struct {
-	personv1connect.UnimplementedPersonServiceHandler
+	// personv1connect.UnimplementedPersonServiceHandler
 
 	persons *Persons
 }

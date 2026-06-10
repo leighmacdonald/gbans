@@ -32,7 +32,7 @@ func (r Repository) Match(ctx context.Context, matchID uuid.UUID) (*Match, error
 		return nil, errRounds
 	}
 
-	if errPlayers := r.getPlayers(ctx, match); errPlayers != nil {
+	if errPlayers := r.getRoundPlayers(ctx, match); errPlayers != nil {
 		return nil, errPlayers
 	}
 
@@ -115,7 +115,7 @@ func (r Repository) getRoundPlayersWeapons(ctx context.Context, match *Match) er
 			&mrws.PostroundKills, &mrws.PostroundAssists, &mrws.PostroundDeaths, &mrws.Damage, &mrws.DamageTaken,
 			&mrws.Dominations, &mrws.Dominated, &mrws.Revenges, &mrws.Revenged, &mrws.Airshots, &mrws.HeadshotKills,
 			&mrws.BackstabKills, &mrws.Headshots, &mrws.BackstabKills, &mrws.WasHeadshot, &mrws.WasBackstabbed,
-			&mrws.PreroundHeadling, &mrws.Healing, &mrws.PostroundHealing, &mrws.Drops, &mrws.NearFullChargeDeath,
+			&mrws.PreroundHealing, &mrws.Healing, &mrws.PostroundHealing, &mrws.Drops, &mrws.NearFullChargeDeath,
 			&mrws.ChargesUber, &mrws.ChargesKritz, &mrws.ChargesVacc, &mrws.ChargesQuickfix,
 		); err != nil {
 			return database.Err(err)
@@ -151,57 +151,13 @@ func (r Repository) getRoundPlayersClasses(ctx context.Context, match *Match) er
 		if err := rows.Scan(&mrcs.Class, &mrcs.RoundID, &mrcs.SteamID, &mrcs.Kills, &mrcs.Assists, &mrcs.Deaths, &mrcs.PostroundKills,
 			&mrcs.PostroundAssists, &mrcs.PostroundDeaths, &mrcs.Damage, &mrcs.DamageTaken, &mrcs.Dominations, &mrcs.Dominated,
 			&mrcs.Revenges, &mrcs.Revenged, &mrcs.Airshots, &mrcs.HeadshotKills, &mrcs.BackstabKills, &mrcs.Headshots, &mrcs.BackstabKills,
-			&mrcs.WasHeadshot, &mrcs.WasBackstabbed, &mrcs.PreroundHeadling, &mrcs.Healing, &mrcs.PostroundHealing, &mrcs.Drops,
+			&mrcs.WasHeadshot, &mrcs.WasBackstabbed, &mrcs.PreroundHealing, &mrcs.Healing, &mrcs.PostroundHealing, &mrcs.Drops,
 			&mrcs.NearFullChargeDeath, &mrcs.ChargesUber, &mrcs.ChargesKritz, &mrcs.ChargesVacc, &mrcs.ChargesQuickfix,
 		); err != nil {
 			return database.Err(err)
 		}
 
 		match.Classes = append(match.Classes, mrcs)
-	}
-
-	return nil
-}
-
-func (r Repository) getPlayers(ctx context.Context, match *Match) error {
-	const query = `
-		SELECT
-			p.round_id, p.steam_id, p.team, p.mvp, p.tick_start, p.tick_end, p.points, p.connection_count,
-			p.bonus_points, p.kills, p.assists, p.deaths, p.postround_kills, p.postround_assists,
-			p.preround_healing, p.healing, p.drops, p.near_full_charge_death, p.charges_uber, p.charges_kritz,
-			p.charges_vacc, p.charges_quickfix, p.damage, p.damage_taken, p.dominations, p.dominated,
-			p.revenges, p.revenged, p.airshots, p.headshots, p.headshot_kills, p.backstabs, p.backstab_kills,
-		 	p.was_headshots, p.was_backstabbed, p.shots, p.hits, p.objects_built, p.objects_destroyed,
-			p.scoreboard_kills, p.scoreboard_assists, p.suicides, p.scoreboard_deaths, p.postround_deaths,
-			p.captures, p.captures_blocked, p.scoreboard_damage, p.extinguishes, p.ignites, p.buildings_built,
-			p.buildings_destroyed
-		FROM
-			match_round_player p
-		LEFT JOIN
-			match_round r ON r.round_id = p.round_id
-		WHERE
-			r.match_id = $1`
-
-	rows, errRows := r.Query(ctx, query, match.MatchID)
-	if errRows != nil {
-		return database.Err(errRows)
-	}
-
-	for rows.Next() {
-		var mrp MatchRoundPlayer
-		if err := rows.Scan(&mrp.RoundID, &mrp.SteamID, &mrp.Team, &mrp.MVP, &mrp.TickStart, &mrp.TickEnd, &mrp.Points,
-			&mrp.ConnectionCount, &mrp.BonusPoints, &mrp.Kills, &mrp.Assists, &mrp.Deaths, &mrp.PostroundKills,
-			&mrp.PostroundAssists, &mrp.PostroundHealing, &mrp.Healing, &mrp.Drops, &mrp.NearFullChargeDeath,
-			&mrp.ChargesUber, &mrp.ChargesKritz, &mrp.ChargesVacc, &mrp.ChargesQuickfix, &mrp.Damage, &mrp.DamageTaken,
-			&mrp.Dominations, &mrp.Dominated, &mrp.Revenges, &mrp.Revenged, &mrp.Airshots, &mrp.Headshots, &mrp.HeadshotKills,
-			&mrp.Backstabs, &mrp.BackstabKills, &mrp.WasHeadshot, &mrp.WasBackstabbed, &mrp.Shots, &mrp.Hits, &mrp.ObjectsBuilt,
-			&mrp.ObjectsDestroyed, &mrp.ScoreboardKills, &mrp.ScoreboardAssists, &mrp.Suicides, &mrp.ScoreboardDeaths,
-			&mrp.PostroundDeaths, &mrp.Captures, &mrp.CapturesBlocked, &mrp.ScoreboardDamage, &mrp.Extinguishes,
-			&mrp.Ignites, &mrp.BuildingsBuilt, &mrp.BUildingsDestroyed); err != nil {
-			return database.Err(err)
-		}
-
-		match.Players = append(match.Players, mrp)
 	}
 
 	return nil
@@ -360,7 +316,7 @@ func (r Repository) insertRoundPlayer(ctx context.Context, transaction pgx.Tx, r
 			kills, assists, deaths, postround_kills, postround_assists, preround_healing, healing, drops,
 			near_full_charge_death, charges_uber, charges_kritz, charges_vacc, charges_quickfix, damage,
 			damage_taken, dominations, dominated, revenges, revenged, airshots, headshots, headshot_kills,
-			backstabs, backstab_kills, was_headshots, was_backstabbed, shots, hits, objects_built, objects_destroyed,
+			backstabs, backstab_kills, was_headshot, was_backstabbed, shots, hits, objects_built, objects_destroyed,
 			scoreboard_kills, scoreboard_assists, suicides, scoreboard_deaths, postround_deaths, captures,
 			captures_blocked, scoreboard_damage, extinguishes, ignites, buildings_built, buildings_destroyed)
 		VALUES(

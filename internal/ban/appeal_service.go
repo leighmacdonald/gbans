@@ -17,7 +17,7 @@ import (
 )
 
 type AppealService struct {
-	banv1connect.UnimplementedAppealServiceHandler
+	// banv1connect.UnimplementedAppealServiceHandler
 
 	appeals Appeals
 }
@@ -33,6 +33,10 @@ func NewAppealService(appeals Appeals, authMiddleware *rpc.Middleware, options .
 	authMiddleware.UserRoute(banv1connect.AppealServiceDeleteAppealMessageProcedure, rpc.WithMinPermissions(permission.User))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
+}
+
+func (s AppealService) SetAppealState(context.Context, *v1.SetAppealStateRequest) (*v1.SetAppealStateResponse, error) {
+	return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 }
 
 func (s AppealService) Appeals(ctx context.Context, req *v1.AppealsRequest) (*v1.AppealsResponse, error) {

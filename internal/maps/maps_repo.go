@@ -38,3 +38,15 @@ func (r Repository) GetOrCreate(ctx context.Context, mapName string) (Map, error
 
 	return mapDetail, nil
 }
+
+func (r Repository) GetByID(ctx context.Context, mapID int32) (Map, error) {
+	const query = `SELECT map_id, map_name, updated_on, created_on FROM map WHERE map_id = $1`
+	var mapDetail Map
+	if errQuery := r.
+		QueryRow(ctx, query, mapID).
+		Scan(&mapDetail.MapID, &mapDetail.MapName, &mapDetail.UpdatedOn, &mapDetail.CreatedOn); errQuery != nil {
+		return Map{}, database.Err(errQuery)
+	}
+
+	return mapDetail, nil
+}

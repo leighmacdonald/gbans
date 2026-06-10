@@ -15,7 +15,7 @@ import (
 )
 
 type Service struct {
-	notificationv1connect.UnimplementedNotificationServiceHandler
+	// notificationv1connect.UnimplementedNotificationServiceHandler
 
 	notifications *Notifications
 }
