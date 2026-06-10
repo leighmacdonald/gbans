@@ -15,7 +15,7 @@ import (
 )
 
 type WordfilterService struct {
-	chatv1connect.UnimplementedWordfilterServiceHandler
+	// chatv1connect.UnimplementedWordfilterServiceHandler
 
 	chat    *Chat
 	config  Config

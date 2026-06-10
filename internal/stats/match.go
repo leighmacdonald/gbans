@@ -7,6 +7,11 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
+type Bucket struct {
+	BucketID   int32
+	BucketName string
+}
+
 type Match struct {
 	MatchID       uuid.UUID
 	ServerID      int32
@@ -14,10 +19,10 @@ type Match struct {
 	DemoID        int32
 	StatsBucketID int32
 	Hostname      string
-	ScoreBlu      uint
-	ScoreRed      uint
+	ScoreBlu      uint32
+	ScoreRed      uint32
 	StartTime     time.Time
-	DurationMs    int64
+	DurationMs    uint64
 	CreatedOn     time.Time
 
 	Rounds  []MatchRound
@@ -27,99 +32,99 @@ type Match struct {
 }
 
 type MatchRound struct {
-	RoundID       uint
+	RoundID       uint32
 	Winner        string
 	IsStalemate   bool
 	IsSuddenDeath bool
-	DurationMs    int64
+	DurationMs    uint64
 }
 
 type MatchRoundPlayer struct {
-	RoundID             uint
+	RoundID             uint32
 	SteamID             steamid.SteamID
 	Team                string
 	MVP                 bool
-	TickStart           uint
-	TickEnd             uint
-	Points              uint
-	ConnectionCount     uint
-	BonusPoints         uint
-	Kills               uint
-	Assists             uint
-	Deaths              uint
-	PostroundKills      uint
-	PostroundAssists    uint
-	PostroundDeaths     uint
-	PostroundHealing    uint
-	Healing             uint
-	PreroundHealing     uint
-	Drops               uint
-	NearFullChargeDeath uint
-	ChargesUber         uint
-	ChargesKritz        uint
-	ChargesVacc         uint
-	ChargesQuickfix     uint
-	Damage              uint
-	DamageTaken         uint
-	Dominations         uint
-	Dominated           uint
-	Revenges            uint
-	Revenged            uint
-	Airshots            uint
-	Headshots           uint
-	HeadshotKills       uint
-	Backstabs           uint
-	BackstabKills       uint
-	WasHeadshot         uint
-	WasBackstabbed      uint
-	Shots               uint
-	Hits                uint
-	ScoreboardKills     uint
-	ScoreboardAssists   uint
-	ScoreboardDeaths    uint
-	Suicides            uint
-	Captures            uint
-	CapturesBlocked     uint
-	ScoreboardDamage    uint
-	Extinguishes        uint
-	Ignites             uint
-	ObjectsBuilt        uint
-	ObjectsDestroyed    uint
-	BuildingsBuilt      uint
-	BUildingsDestroyed  uint
+	TickStart           uint64
+	TickEnd             uint64
+	Points              uint64
+	ConnectionCount     uint64
+	BonusPoints         uint64
+	Kills               uint64
+	Assists             uint64
+	Deaths              uint64
+	PostroundKills      uint64
+	PostroundAssists    uint64
+	PostroundDeaths     uint64
+	PostroundHealing    uint64
+	Healing             uint64
+	PreroundHealing     uint64
+	Drops               uint64
+	NearFullChargeDeath uint64
+	ChargesUber         uint64
+	ChargesKritz        uint64
+	ChargesVacc         uint64
+	ChargesQuickfix     uint64
+	Damage              uint64
+	DamageTaken         uint64
+	Dominations         uint64
+	Dominated           uint64
+	Revenges            uint64
+	Revenged            uint64
+	Airshots            uint64
+	Headshots           uint64
+	HeadshotKills       uint64
+	Backstabs           uint64
+	BackstabKills       uint64
+	WasHeadshot         uint64
+	WasBackstabbed      uint64
+	Shots               uint64
+	Hits                uint64
+	ScoreboardKills     uint64
+	ScoreboardAssists   uint64
+	ScoreboardDeaths    uint64
+	Suicides            uint64
+	Captures            uint64
+	CapturesBlocked     uint64
+	ScoreboardDamage    uint64
+	Extinguishes        uint64
+	Ignites             uint64
+	ObjectsBuilt        uint64
+	ObjectsDestroyed    uint64
+	BuildingsBuilt      uint64
+	BUildingsDestroyed  uint64
 }
 
 type MatchBaseStats struct {
 	SteamID             steamid.SteamID
-	RoundID             uint
-	Kills               uint
-	Assists             uint
-	Deaths              uint
-	PostroundKills      uint
-	PostroundAssists    uint
-	PostroundDeaths     uint
-	Damage              uint
-	DamageTaken         uint
-	Dominations         uint
-	Dominated           uint
-	Revenges            uint
-	Revenged            uint
-	Airshots            uint
-	HeadshotKills       uint
-	BackstabKills       uint
-	Headshots           uint
-	Backstabs           uint
-	WasHeadshot         uint
-	WasBackstabbed      uint
-	PreroundHeadling    uint
-	Healing             uint
-	PostroundHealing    uint
-	Drops               uint
-	NearFullChargeDeath uint
-	ChargesUber         uint
-	ChargesKritz        uint
-	ChargesVacc         uint
-	ChargesQuickfix     uint
+	RoundID             uint32
+	Kills               uint64
+	Assists             uint64
+	Deaths              uint64
+	PostroundKills      uint64
+	PostroundAssists    uint64
+	PostroundDeaths     uint64
+	Damage              uint64
+	DamageTaken         uint64
+	Dominations         uint64
+	Dominated           uint64
+	Revenges            uint64
+	Revenged            uint64
+	Airshots            uint64
+	HeadshotKills       uint64
+	BackstabKills       uint64
+	Headshots           uint64
+	Backstabs           uint64
+	WasHeadshot         uint64
+	WasBackstabbed      uint64
+	PreroundHealing     uint64
+	Healing             uint64
+	PostroundHealing    uint64
+	Drops               uint64
+	NearFullChargeDeath uint64
+	ChargesUber         uint64
+	ChargesKritz        uint64
+	ChargesVacc         uint64
+	ChargesQuickfix     uint64
 }
 
 type MatchRoundClassStats struct {

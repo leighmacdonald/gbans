@@ -15,7 +15,7 @@ import (
 )
 
 type Service struct {
-	assetv1connect.UnimplementedAssetServiceHandler
+	// assetv1connect.UnimplementedAssetServiceHandler
 
 	assets Assets
 }

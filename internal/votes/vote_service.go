@@ -16,7 +16,7 @@ import (
 )
 
 type Service struct {
-	votesv1connect.UnimplementedVotesServiceHandler
+	// votesv1connect.UnimplementedVotesServiceHandler
 
 	votes Votes
 }

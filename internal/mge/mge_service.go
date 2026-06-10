@@ -16,7 +16,7 @@ import (
 )
 
 type Service struct {
-	mgev1connect.UnimplementedMGEServiceHandler
+	// mgev1connect.UnimplementedMGEServiceHandler
 
 	mge MGE
 }

@@ -16,7 +16,7 @@ import (
 )
 
 type Service struct {
-	wikiv1connect.UnimplementedWikiServiceHandler
+	// wikiv1connect.UnimplementedWikiServiceHandler
 
 	wiki Wiki
 }

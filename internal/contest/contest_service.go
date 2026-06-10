@@ -26,7 +26,7 @@ import (
 )
 
 type Service struct {
-	contestv1connect.UnimplementedServiceHandler
+	// contestv1connect.UnimplementedServiceHandler
 
 	contests Contests
 	assets   asset.Assets

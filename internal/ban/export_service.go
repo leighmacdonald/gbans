@@ -15,7 +15,7 @@ import (
 )
 
 type ExportService struct {
-	banv1connect.UnimplementedExportServiceHandler
+	// banv1connect.UnimplementedExportServiceHandler
 
 	bans           Bans
 	authorizedKeys []string

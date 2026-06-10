@@ -25,7 +25,7 @@ import (
 )
 
 type Service struct {
-	configv1connect.UnimplementedConfigServiceHandler
+	// configv1connect.UnimplementedConfigServiceHandler
 
 	config  *Configuration
 	version string
@@ -47,7 +47,11 @@ func NewService(conf *Configuration, version string, authMiddleware *rpc.Middlew
 	}
 }
 
-func (r *Service) Info(context.Context, *emptypb.Empty) (*configv1.InfoResponse, error) {
+func (r *Service) Changelog(_ context.Context, _ *emptypb.Empty) (*configv1.ChangelogResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, rpc.ErrInternal)
+}
+
+func (r *Service) Info(_ context.Context, _ *emptypb.Empty) (*configv1.InfoResponse, error) {
 	conf := r.config.Config()
 
 	resp := configv1.InfoResponse{

@@ -20,7 +20,7 @@ import (
 )
 
 type ReportService struct {
-	banv1connect.UnimplementedReportServiceHandler
+	// banv1connect.UnimplementedReportServiceHandler
 
 	reports Reports
 }

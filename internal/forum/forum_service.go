@@ -19,7 +19,7 @@ import (
 )
 
 type Service struct {
-	forumv1connect.UnimplementedForumServiceHandler
+	// forumv1connect.UnimplementedForumServiceHandler
 
 	forums Forums
 }

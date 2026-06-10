@@ -1,0 +1,181 @@
+edition = "2023";
+
+package stats.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "maps/v1/maps.proto";
+
+enum Team {
+  TEAM_UNASSIGNED_UNSPECIFIED = 0;
+  TEAM_SPEC = 1;
+  TEAM_RED = 2;
+  TEAM_BLU = 3;
+}
+
+service StatsService {
+  rpc Match(MatchRequest) returns (MatchResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+}
+
+message MatchRequest {
+  string match_id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message MatchResponse {
+  Match match = 1;
+}
+
+message Match {
+  string match_id = 1;
+  int32 server_id = 2;
+  string server_name = 3;
+  string server_name_short = 4;
+  int32 demo_id = 5;
+  maps.v1.Map map = 6;
+  string stats_bucket_name = 7;
+  int32 stats_bucket_id = 8;
+  string hostname = 9;
+  uint32 score_red = 10;
+  uint32 score_blu = 12;
+  google.protobuf.Timestamp start_time = 13;
+  uint64 duration = 14;
+  google.protobuf.Timestamp created_on = 15;
+
+  repeated Round rounds = 16;
+}
+
+message Round {
+  uint32 round_id = 1;
+  Team winner = 2;
+  bool is_stalemate = 3;
+  bool is_sudden_death = 4;
+  uint64 duration_ms = 5;
+
+  repeated RoundPlayer players = 6;
+}
+
+message RoundPlayer {
+  uint32 round_id = 1;
+  int64 steam_id = 2 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+  Team team = 3;
+  bool mvp = 4;
+  uint64 tick_start = 5;
+  uint64 tick_end = 6;
+  uint64 points = 7;
+  uint64 connection_count = 8;
+  uint64 bonus_points = 9;
+  uint64 kills = 10;
+  uint64 assists = 11;
+  uint64 deaths = 12;
+  uint64 postround_kills = 13;
+  uint64 postround_assists = 14;
+  uint64 preround_healing = 15;
+  uint64 healing = 16;
+  uint64 drops = 17;
+  uint64 near_full_charge_death = 18;
+  uint64 charges_uber = 19;
+  uint64 charges_kritz = 20;
+  uint64 charges_vacc = 21;
+  uint64 charges_quickfix = 22;
+  uint64 damage = 23;
+  uint64 damage_taken = 24;
+  uint64 dominations = 25;
+  uint64 dominated = 26;
+  uint64 revenges = 27;
+  uint64 revenged = 28;
+  uint64 airshots = 29;
+  uint64 headshots = 30;
+  uint64 headshot_kills = 31;
+  uint64 backstabs = 32;
+  uint64 backstab_kills = 33;
+  uint64 was_headshot = 34;
+  uint64 was_backstabbed = 35;
+  uint64 shots = 36;
+  uint64 hits = 37;
+  uint64 objects_built = 38;
+  uint64 objects_destroyed = 39;
+  uint64 scoreboard_kills = 40;
+  uint64 scoreboard_assists = 41;
+  uint64 scoreboard_deaths = 42;
+  uint64 postround_deaths = 43;
+  uint64 captures = 44;
+  uint64 captures_blocked = 45;
+  uint64 scoreboard_damage = 46;
+  uint64 extinguishes = 47;
+  uint64 ignites = 48;
+  uint64 buildings_built = 49;
+  uint64 buildings_destroyed = 50;
+
+  repeated RoundPlayerWeapon weapons = 100;
+  repeated RoundPlayerClass classes = 101;
+}
+
+message RoundPlayerWeapon {
+  string weapon = 1;
+  uint32 round_id = 2;
+  int64 steam_id = 3;
+  uint64 kills = 4;
+  uint64 assists = 5;
+  uint64 deaths = 6;
+  uint64 postround_kills = 7;
+  uint64 postround_assists = 8;
+  uint64 postround_deaths = 9;
+  uint64 damage = 10;
+  uint64 damage_taken = 11;
+  uint64 dominations = 12;
+  uint64 dominated = 13;
+  uint64 revenges = 14;
+  uint64 revenged = 15;
+  uint64 airshots = 16;
+  uint64 headshot_kills = 17;
+  uint64 backstab_kills = 18;
+  uint64 headshots = 19;
+  uint64 backstabs = 20;
+  uint64 was_headshot = 21;
+  uint64 was_backstabbed = 22;
+  uint64 preround_healing = 23;
+  uint64 healing = 24;
+  uint64 postround_healing = 25;
+  uint64 drops = 26;
+  uint64 near_full_charge_death = 27;
+  uint64 charges_uber = 28;
+  uint64 charges_kritz = 29;
+  uint64 charges_vacc = 30;
+  uint64 charges_quickfix = 31;
+}
+
+message RoundPlayerClass {
+  string class = 1;
+  uint32 round_id = 2;
+  int64 steam_id = 3;
+  uint64 kills = 4;
+  uint64 assists = 5;
+  uint64 deaths = 6;
+  uint64 postround_kills = 7;
+  uint64 postround_assists = 8;
+  uint64 postround_deaths = 9;
+  uint64 damage = 10;
+  uint64 damage_taken = 11;
+  uint64 dominations = 12;
+  uint64 dominated = 13;
+  uint64 revenges = 14;
+  uint64 revenged = 15;
+  uint64 airshots = 16;
+  uint64 headshot_kills = 17;
+  uint64 backstab_kills = 18;
+  uint64 headshots = 19;
+  uint64 backstabs = 20;
+  uint64 was_headshot = 21;
+  uint64 was_backstabbed = 22;
+  uint64 preround_healing = 23;
+  uint64 healing = 24;
+  uint64 postround_healing = 25;
+  uint64 drops = 26;
+  uint64 near_full_charge_death = 27;
+  uint64 charges_uber = 28;
+  uint64 charges_kritz = 29;
+  uint64 charges_vacc = 30;
+  uint64 charges_quickfix = 31;
+}

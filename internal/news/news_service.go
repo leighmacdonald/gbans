@@ -13,7 +13,7 @@ import (
 )
 
 type Service struct {
-	newsv1connect.UnimplementedNewsServiceHandler
+	// newsv1connect.UnimplementedNewsServiceHandler
 
 	news News
 }

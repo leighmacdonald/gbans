@@ -16,7 +16,7 @@ import (
 )
 
 type Service struct {
-	chatv1connect.UnimplementedChatServiceHandler
+	// chatv1connect.UnimplementedChatServiceHandler
 
 	chat *Chat
 }

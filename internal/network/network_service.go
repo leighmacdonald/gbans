@@ -19,7 +19,7 @@ import (
 )
 
 type Service struct {
-	networkv1connect.UnimplementedNetworkServiceHandler
+	// networkv1connect.UnimplementedNetworkServiceHandler
 
 	updateInProgress atomic.Bool
 	networks         Networks
