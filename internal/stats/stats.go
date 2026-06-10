@@ -41,7 +41,7 @@ func (s Stats) StartRefreshHandler(ctx context.Context) error {
 	// 00:00
 	// scheduler.NewJob(gocron.CronJob("0 0 * * *", false), gocron.NewTask(s.updateAlltimeViews(ctx)))
 	// 00:05
-	if _, err := scheduler.NewJob(gocron.CronJob("5 0 * * *", false), gocron.NewTask(s.updateDailyViews(ctx))); err != nil {
+	if _, err := scheduler.NewJob(gocron.CronJob("5 0 * * *", false), gocron.NewTask(s.UpdateDailyViews(ctx))); err != nil {
 		return errors.Join(err, ErrJob)
 	}
 	// Sunday 00:00
@@ -60,7 +60,7 @@ func (s Stats) StartRefreshHandler(ctx context.Context) error {
 	return nil
 }
 
-func (s Stats) updateDailyViews(ctx context.Context) func() {
+func (s Stats) UpdateDailyViews(ctx context.Context) func() {
 	return func() {
 		slog.Debug("Refreshing daily stat views")
 		for _, viewName := range []string{"stats_summary_daily", "stats_summary_daily_weapons", "stats_summary_daily_classes"} {

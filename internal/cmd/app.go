@@ -191,6 +191,7 @@ func (g *GBans) Init(ctx context.Context) error {
 		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database)))
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), conf.Discord)
 	g.stats = stats.New(stats.NewRepository(g.database), mapsSvc)
+
 	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler, conf.Discord.SafeChatLogChannelID())
 	g.demos = demo.NewDemos(asset.BucketDemo, demo.NewRepository(g.database), g.assets, g.stats, g.chat, g.persons, conf.Demo, steamid.New(conf.Owner))
 	g.forums = forum.New(forum.NewRepository(g.database), g.notifications, g.persons, "")

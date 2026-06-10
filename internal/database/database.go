@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgerrcode"
@@ -116,9 +117,7 @@ func Err(rootError error) error {
 		return ErrNoResult
 	}
 
-	var pgErr *pgconn.PgError
-
-	if errors.As(rootError, &pgErr) {
+	if pgErr, ok := errors.AsType[*pgconn.PgError](rootError); ok {
 		switch pgErr.Code {
 		case pgerrcode.UniqueViolation:
 			return ErrDuplicate
@@ -135,9 +134,12 @@ func (db *PgStore) Pool() *pgxpool.Pool {
 }
 
 func (db *PgStore) RefreshMaterializedView(ctx context.Context, viewName string) error {
-	if err := db.Exec(ctx, "refresh materialized view $1", viewName); err != nil {
+	timeStart := time.Now()
+	if err := db.Exec(ctx, "refresh materialized view "+viewName); err != nil {
 		return Err(err)
 	}
+
+	slog.Debug("Refreshed view successfully", slog.String("view", viewName), slog.Duration("duration", time.Since(timeStart)))
 
 	return nil
 }
