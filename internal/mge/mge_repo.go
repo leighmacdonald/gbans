@@ -37,7 +37,7 @@ func NewRepository(db database.Database) Repository {
 	return Repository{Database: db}
 }
 
-func (r Repository) Query(ctx context.Context, opts QueryOpts) ([]PlayerStats, int64, error) {
+func (r Repository) Query(ctx context.Context, opts QueryOpts) ([]PlayerStats, uint64, error) {
 	builder := r.Builder().
 		Select("s.stats_id", "s.rating", "s.steamid", "s.name", "s.wins", "s.losses", "to_timestamp(s.lastplayed)", "s.hitblip",
 			"coalesce(p.personaname, s.name)", "coalesce(p.avatarhash, '')").
@@ -124,7 +124,7 @@ type HistoryOpts struct {
 	Loser2  steamid.SteamID `schema:"loser2"`
 }
 
-func (r Repository) History(ctx context.Context, opts HistoryOpts) ([]Duels, int64, error) {
+func (r Repository) History(ctx context.Context, opts HistoryOpts) ([]Duels, uint64, error) {
 	columns := []string{
 		"m.winner", "coalesce(w.avatarhash, '')", "coalesce(w.personaname, m.winner::text)",
 		"m.loser", "coalesce(l.avatarhash, '')", "coalesce(l.personaname, m.loser::text)",

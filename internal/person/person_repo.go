@@ -60,7 +60,7 @@ func normalizeStringLikeQuery(input string) string {
 	return fmt.Sprintf("%%%s%%", strings.ToLower(strings.Trim(space.ReplaceAllString(input, "%"), "%")))
 }
 
-func (r *Repository) Query(ctx context.Context, query Query) (People, int64, error) { //nolint:cyclop
+func (r *Repository) Query(ctx context.Context, query Query) (People, uint64, error) { //nolint:cyclop
 	builder := r.Builder().
 		Select("p.steam_id", "p.created_on", "p.updated_on",
 			"p.communityvisibilitystate", "p.profilestate", "p.personaname", "p.avatarhash", "p.personastate", "p.realname", "p.timecreated",

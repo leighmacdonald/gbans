@@ -42,3 +42,22 @@ message PersonCore {
   ];
   google.protobuf.Timestamp time_created = 10 [(buf.validate.field).required = true];
 }
+
+message PersonDisplay {
+  int64 steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int64 = {gte: 76561197960265729}
+  ];
+  string name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 2
+      max_len: 32
+    }
+  ];
+  string avatar_hash = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.len = 40
+  ];
+  person.v1.Privilege permission_level = 4 [(buf.validate.field).enum.defined_only = true];
+}

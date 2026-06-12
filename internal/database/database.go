@@ -51,7 +51,7 @@ type Database interface {
 	ExecInsertBuilderWithReturnValue(ctx context.Context, builder sq.InsertBuilder, outID any) error
 	Builder() sq.StatementBuilderType
 	SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults
-	GetCount(ctx context.Context, builder sq.SelectBuilder) (int64, error)
+	GetCount(ctx context.Context, builder sq.SelectBuilder) (uint64, error)
 	TruncateTable(ctx context.Context, table string) error
 	WrapTx(ctx context.Context, fn func(pgx.Tx) error) error
 	Migrate(ctx context.Context, action MigrationAction, dsn string) error
@@ -135,7 +135,7 @@ func (db *PgStore) Pool() *pgxpool.Pool {
 
 func (db *PgStore) RefreshMaterializedView(ctx context.Context, viewName string) error {
 	timeStart := time.Now()
-	if err := db.Exec(ctx, "refresh materialized view "+viewName); err != nil {
+	if err := db.Exec(ctx, "refresh materialized view concurrently "+viewName); err != nil {
 		return Err(err)
 	}
 
@@ -280,13 +280,13 @@ func (db *PgStore) Close() error {
 	return nil
 }
 
-func (db *PgStore) GetCount(ctx context.Context, builder sq.SelectBuilder) (int64, error) {
+func (db *PgStore) GetCount(ctx context.Context, builder sq.SelectBuilder) (uint64, error) {
 	countQuery, argsCount, errCountQuery := builder.ToSql()
 	if errCountQuery != nil {
 		return 0, errors.Join(errCountQuery, ErrCreateQuery)
 	}
 
-	var count int64
+	var count uint64
 	if errCount := db.
 		QueryRow(ctx, countQuery, argsCount...).
 		Scan(&count); errCount != nil {

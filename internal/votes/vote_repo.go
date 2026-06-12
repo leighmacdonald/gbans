@@ -16,7 +16,7 @@ func NewRepository(database database.Database) Repository {
 	return Repository{Database: database}
 }
 
-func (r Repository) Query(ctx context.Context, filter Query) ([]Result, int64, error) {
+func (r Repository) Query(ctx context.Context, filter Query) ([]Result, uint64, error) {
 	var constraints sq.And
 
 	if sid, ok := filter.SourceSteamID(ctx); ok {

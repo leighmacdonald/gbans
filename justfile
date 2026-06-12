@@ -130,5 +130,5 @@ demostats-serve:
 dev:
     @zellij --layout .zellij.kdl
 
-psql host=`sed -n 's/^database_dsn: //p' gbans.yml`:
-    @psql {{ host }}
+pgcli host=`sed -n 's/^database_dsn: //p' gbans.yml`:
+    @pgcli "{{ host }}"

@@ -15,11 +15,11 @@ func NewMGE(repo Repository) MGE {
 	return MGE{repo: repo}
 }
 
-func (m MGE) Query(ctx context.Context, opts QueryOpts) ([]PlayerStats, int64, error) {
+func (m MGE) Query(ctx context.Context, opts QueryOpts) ([]PlayerStats, uint64, error) {
 	return m.repo.Query(ctx, opts)
 }
 
-func (m MGE) History(ctx context.Context, opts HistoryOpts) ([]Duels, int64, error) {
+func (m MGE) History(ctx context.Context, opts HistoryOpts) ([]Duels, uint64, error) {
 	if opts.Mode != OneVsOne && opts.Mode != TwoVsTwo {
 		return nil, 0, ErrInvalidMode
 	}

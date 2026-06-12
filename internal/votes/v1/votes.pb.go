@@ -308,7 +308,7 @@ func (x *VoteResult) GetCreatedOn() *timestamppb.Timestamp {
 type QueryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Results       []*VoteResult          `protobuf:"bytes,1,rep,name=results" json:"results,omitempty"`
-	Count         *int64                 `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
+	Count         *uint64                `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -350,7 +350,7 @@ func (x *QueryResponse) GetResults() []*VoteResult {
 	return nil
 }
 
-func (x *QueryResponse) GetCount() int64 {
+func (x *QueryResponse) GetCount() uint64 {
 	if x != nil && x.Count != nil {
 		return *x.Count
 	}
@@ -398,7 +398,7 @@ const file_votes_v1_votes_proto_rawDesc = "" +
 	"created_on\x18\r \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\"g\n" +
 	"\rQueryResponse\x126\n" +
 	"\aresults\x18\x01 \x03(\v2\x14.votes.v1.VoteResultB\x06\xbaH\x03\xc8\x01\x01R\aresults\x12\x1e\n" +
-	"\x05count\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x05count*r\n" +
+	"\x05count\x18\x02 \x01(\x04B\b\xbaH\x03\xc8\x01\x010\x01R\x05count*r\n" +
 	"\bVoteCode\x12&\n" +
 	"\"VOTE_CODE_FAIL_GENERIC_UNSPECIFIED\x10\x00\x12#\n" +
 	"\x1fVOTE_CODE_FAIL_NO_OUTNUMBER_YES\x10\x01\x12\x19\n" +

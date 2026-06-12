@@ -3,8 +3,11 @@ edition = "2023";
 package stats.v1;
 
 import "buf/validate/validate.proto";
+import "database/query/v1/filter.proto";
+import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "maps/v1/maps.proto";
+import "person/v1/person_core.proto";
 
 enum Team {
   TEAM_UNASSIGNED_UNSPECIFIED = 0;
@@ -16,6 +19,130 @@ enum Team {
 service StatsService {
   rpc Match(MatchRequest) returns (MatchResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
+  }
+  // Query
+  // - Known buckets. Each leaf defines how the stats are grouped and queried.
+  //   (Bukets)
+  //   - Bucket (mvm)
+  //     - ...
+  //   - Bucket (casual)
+  //     (TimeBuckets)
+  //     - Yearly
+  //     - Monthly
+  //     - Alltime
+  //       (Overall buckets)
+  //       - Kills
+  //       - Healing
+  //       - Weapons
+  //         (Variant Buckets)
+  //         - Variant: scattergun
+  //       - Classes
+  //         (Variant Buckets)
+  //         - Variant: soldier
+  rpc Query(QueryRequest) returns (QueryResponse) {}
+  rpc WeaponList(google.protobuf.Empty) returns (WeaponListResponse) {}
+  rpc Buckets(google.protobuf.Empty) returns (BucketsResponse) {}
+}
+
+message WeaponListResponse {
+  repeated string weapons = 1;
+}
+
+// Bucket is the highest level grouping of stats. Non standard game modes should generally
+// want to have a bucket per game mode so that stat sums can be broken down into numbers
+// that are not skewed.
+message Bucket {
+  int32 stats_bucket_id = 1;
+  string bucket_name = 2;
+  bool is_enabled = 3;
+}
+
+message BucketsResponse {
+  repeated Bucket buckets = 1;
+}
+
+// The Variant picked specifies which set of stats structs are being shown.
+enum Variant {
+  VARIANT_OVERALL_UNSPECIFIED = 0;
+  VARIANT_KILLS = 1;
+  VARIANT_HEALING = 2;
+  VARIANT_WEAPONS = 3;
+  VARIANT_CLASSES = 4;
+}
+
+// The TimeBucket enum corresponds to the truncated date uses for grouping and indexing.
+enum TimeBucket {
+  TIME_BUCKET_UNSPECIFIED = 0;
+  TIME_BUCKET_DAILY = 1;
+  TIME_BUCKET_WEEKLY = 7;
+  TIME_BUCKET_MONTHLY = 31;
+  TIME_BUCKET_YEARLY = 365;
+  TIME_BUCKET_ALLTIME = 99999;
+}
+
+message QueryRequest {
+  database.query.v1.Filter filter = 1;
+  uint32 stats_bucket_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).uint32.gt = 0
+  ];
+  TimeBucket time_bucket = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  Variant variant = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  string variant_key = 5;
+  google.protobuf.Timestamp time = 6 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).timestamp.lt_now = true
+  ];
+}
+message VariantStats {
+  string variant = 1;
+  uint64 rank = 2;
+  person.v1.PersonDisplay player = 3;
+  uint64 kills = 4;
+  uint64 assists = 5;
+  uint64 deaths = 6;
+  uint64 postround_kills = 7;
+  uint64 postround_assists = 8;
+  uint64 postround_deaths = 9;
+  uint64 damage = 10;
+  uint64 damage_taken = 11;
+  uint64 dominations = 12;
+  uint64 dominated = 13;
+  uint64 revenges = 14;
+  uint64 revenged = 15;
+  uint64 airshots = 16;
+  uint64 headshot_kills = 17;
+  uint64 backstab_kills = 18;
+  uint64 headshots = 19;
+  uint64 backstabs = 20;
+  uint64 was_headshot = 21;
+  uint64 was_backstabbed = 22;
+  uint64 preround_healing = 23;
+  uint64 healing = 24;
+  uint64 postround_healing = 25;
+  uint64 drops = 26;
+  uint64 near_full_charge_death = 27;
+  uint64 charges_uber = 28;
+  uint64 charges_kritz = 29;
+  uint64 charges_vacc = 30;
+  uint64 charges_quickfix = 31;
+}
+
+message VariantStatsContainer {
+  repeated VariantStats stats = 1;
+}
+
+message QueryResponse {
+  Variant variant = 1;
+  uint64 count = 2;
+  oneof stat_container {
+    VariantStatsContainer stats_variant = 3;
   }
 }
 
@@ -108,48 +235,13 @@ message RoundPlayer {
   uint64 buildings_built = 49;
   uint64 buildings_destroyed = 50;
 
-  repeated RoundPlayerWeapon weapons = 100;
-  repeated RoundPlayerClass classes = 101;
+  repeated RoundPlayerVariant variants = 100;
 }
 
-message RoundPlayerWeapon {
-  string weapon = 1;
+message RoundPlayerVariant {
+  string variant = 1;
   uint32 round_id = 2;
-  int64 steam_id = 3;
-  uint64 kills = 4;
-  uint64 assists = 5;
-  uint64 deaths = 6;
-  uint64 postround_kills = 7;
-  uint64 postround_assists = 8;
-  uint64 postround_deaths = 9;
-  uint64 damage = 10;
-  uint64 damage_taken = 11;
-  uint64 dominations = 12;
-  uint64 dominated = 13;
-  uint64 revenges = 14;
-  uint64 revenged = 15;
-  uint64 airshots = 16;
-  uint64 headshot_kills = 17;
-  uint64 backstab_kills = 18;
-  uint64 headshots = 19;
-  uint64 backstabs = 20;
-  uint64 was_headshot = 21;
-  uint64 was_backstabbed = 22;
-  uint64 preround_healing = 23;
-  uint64 healing = 24;
-  uint64 postround_healing = 25;
-  uint64 drops = 26;
-  uint64 near_full_charge_death = 27;
-  uint64 charges_uber = 28;
-  uint64 charges_kritz = 29;
-  uint64 charges_vacc = 30;
-  uint64 charges_quickfix = 31;
-}
-
-message RoundPlayerClass {
-  string class = 1;
-  uint32 round_id = 2;
-  int64 steam_id = 3;
+  int64 steam_id = 3 [(buf.validate.field).int64 = {gte: 76561197960265729}];
   uint64 kills = 4;
   uint64 assists = 5;
   uint64 deaths = 6;

@@ -500,7 +500,7 @@ func (u *Persons) BySteamIDs(ctx context.Context, steamIDs steamid.Collection) (
 	return people, nil
 }
 
-func (u *Persons) GetPeople(ctx context.Context, filter Query) (People, int64, error) {
+func (u *Persons) GetPeople(ctx context.Context, filter Query) (People, uint64, error) {
 	if (filter.TimeCreatedAfter != nil && filter.TimeCreatedBefore != nil) &&
 		(filter.TimeCreatedAfter.Before(*filter.TimeCreatedBefore) || filter.TimeCreatedBefore.After(*filter.TimeCreatedAfter)) {
 		filter.TimeCreatedAfter, filter.TimeCreatedBefore = filter.TimeCreatedBefore, filter.TimeCreatedAfter
@@ -604,7 +604,7 @@ func (u *Persons) GetPersonByDiscordID(ctx context.Context, discordID string) (p
 	}, nil
 }
 
-func (u *Persons) GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, int64, error) {
+func (u *Persons) GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, uint64, error) {
 	return u.repo.Query(ctx, Query{
 		Filter: query.Filter{
 			Limit: limit,

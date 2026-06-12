@@ -1,19 +1,22 @@
-drop materialized view if exists stats_summary_daily_classes;
+drop materialized view if exists stats_weapons_view;
 
-drop materialized view if exists stats_summary_daily_weapons;
+drop materialized view if exists stats_summary_daily_variants_view;
 
-drop materialized view if exists stats_summary_daily;
+drop materialized view if exists stats_summary_daily_view;
 
-drop table if exists match_round_player_class cascade;
+drop table if exists match_round_player_variants;
 
-drop table if exists match_round_player_weapon cascade;
+drop table if exists match_round_player;
 
-drop table if exists match_round_player cascade;
+drop table if exists match_round;
 
-drop table if exists match_round cascade;
+drop table if exists match;
 
-drop table if exists match cascade;
-
-drop table if exists match_bucket;
+alter table server
+drop column if exists stats_bucket_id;
 
 drop table if exists stats_bucket;
+
+drop type if exists player_class;
+
+drop type if exists player_team;

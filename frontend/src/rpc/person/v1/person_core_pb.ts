@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file person/v1/person_core.proto.
  */
 export const file_person_v1_person_core: GenFile = /*@__PURE__*/
-  fileDesc("ChtwZXJzb24vdjEvcGVyc29uX2NvcmUucHJvdG8SCXBlcnNvbi52MSLqAgoKUGVyc29uQ29yZRImCghzdGVhbV9pZBgBIAEoA0IUMAG6SA/IAQEiCiiBgICAkICAiAESOwoQcGVybWlzc2lvbl9sZXZlbBgCIAEoDjIULnBlcnNvbi52MS5Qcml2aWxlZ2VCC7pICMgBAYIBAhABEhoKBG5hbWUYAyABKAlCDLpICcgBAXIEEAIYIBIgCgthdmF0YXJfaGFzaBgEIAEoCUILukgIyAEBcgOYASgSEgoKZGlzY29yZF9pZBgFIAEoCRISCgpwYXRyZW9uX2lkGAYgASgJEhwKCHZhY19iYW5zGAcgASgFQgq6SAfIAQEaAigAEh0KCWdhbWVfYmFucxgIIAEoBUIKukgHyAEBGgIoABIaCgZiYW5faWQYCSABKAVCCrpIB8gBARoCKAASOAoMdGltZV9jcmVhdGVkGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBQqIBCg1jb20ucGVyc29uLnYxQg9QZXJzb25Db3JlUHJvdG9QAVo7Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9wZXJzb24vdjE7cGVyc29udjGiAgNQWFiqAglQZXJzb24uVjHKAglQZXJzb25cVjHiAhVQZXJzb25cVjFcR1BCTWV0YWRhdGHqAgpQZXJzb246OlYxYghlZGl0aW9uc3DoBw", [file_buf_validate_validate, file_google_protobuf_timestamp, file_person_v1_privilege]);
+  fileDesc("ChtwZXJzb24vdjEvcGVyc29uX2NvcmUucHJvdG8SCXBlcnNvbi52MSLqAgoKUGVyc29uQ29yZRImCghzdGVhbV9pZBgBIAEoA0IUMAG6SA/IAQEiCiiBgICAkICAiAESOwoQcGVybWlzc2lvbl9sZXZlbBgCIAEoDjIULnBlcnNvbi52MS5Qcml2aWxlZ2VCC7pICMgBAYIBAhABEhoKBG5hbWUYAyABKAlCDLpICcgBAXIEEAIYIBIgCgthdmF0YXJfaGFzaBgEIAEoCUILukgIyAEBcgOYASgSEgoKZGlzY29yZF9pZBgFIAEoCRISCgpwYXRyZW9uX2lkGAYgASgJEhwKCHZhY19iYW5zGAcgASgFQgq6SAfIAQEaAigAEh0KCWdhbWVfYmFucxgIIAEoBUIKukgHyAEBGgIoABIaCgZiYW5faWQYCSABKAVCCrpIB8gBARoCKAASOAoMdGltZV9jcmVhdGVkGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBIq8BCg1QZXJzb25EaXNwbGF5EiYKCHN0ZWFtX2lkGAEgASgDQhQwAbpID8gBASIKKIGAgICQgICIARIaCgRuYW1lGAIgASgJQgy6SAnIAQFyBBACGCASIAoLYXZhdGFyX2hhc2gYAyABKAlCC7pICMgBAXIDmAEoEjgKEHBlcm1pc3Npb25fbGV2ZWwYBCABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlQgi6SAWCAQIQAUKiAQoNY29tLnBlcnNvbi52MUIPUGVyc29uQ29yZVByb3RvUAFaO2dpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvcGVyc29uL3YxO3BlcnNvbnYxogIDUFhYqgIJUGVyc29uLlYxygIJUGVyc29uXFYx4gIVUGVyc29uXFYxXEdQQk1ldGFkYXRh6gIKUGVyc29uOjpWMWIIZWRpdGlvbnNw6Ac", [file_buf_validate_validate, file_google_protobuf_timestamp, file_person_v1_privilege]);
 
 /**
  * @generated from message person.v1.PersonCore
@@ -78,4 +78,36 @@ export type PersonCore = Message<"person.v1.PersonCore"> & {
  */
 export const PersonCoreSchema: GenMessage<PersonCore> = /*@__PURE__*/
   messageDesc(file_person_v1_person_core, 0);
+
+/**
+ * @generated from message person.v1.PersonDisplay
+ */
+export type PersonDisplay = Message<"person.v1.PersonDisplay"> & {
+  /**
+   * @generated from field: int64 steam_id = 1 [jstype = JS_STRING];
+   */
+  steamId: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string avatar_hash = 3;
+   */
+  avatarHash: string;
+
+  /**
+   * @generated from field: person.v1.Privilege permission_level = 4;
+   */
+  permissionLevel: Privilege;
+};
+
+/**
+ * Describes the message person.v1.PersonDisplay.
+ * Use `create(PersonDisplaySchema)` to create a new message.
+ */
+export const PersonDisplaySchema: GenMessage<PersonDisplay> = /*@__PURE__*/
+  messageDesc(file_person_v1_person_core, 1);
 

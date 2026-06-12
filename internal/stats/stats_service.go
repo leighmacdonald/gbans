@@ -3,16 +3,19 @@ package stats
 import (
 	"context"
 	"errors"
+	"log/slog"
 
 	"connectrpc.com/connect"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	mapsv1 "github.com/leighmacdonald/gbans/internal/maps/v1"
+	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	v1 "github.com/leighmacdonald/gbans/internal/stats/v1"
 	"github.com/leighmacdonald/gbans/internal/stats/v1/statsv1connect"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -20,15 +23,137 @@ type Service struct {
 	// statsv1connect.UnimplementedStatsServiceHandler
 
 	stats   Stats
-	servers servers.Servers
+	servers *servers.Servers
 }
 
-func NewService(stats Stats, servers servers.Servers, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(stats Stats, servers *servers.Servers, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := statsv1connect.NewStatsServiceHandler(Service{stats: stats, servers: servers}, option...)
 
 	authMiddleware.UserRoute(statsv1connect.StatsServiceMatchProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(statsv1connect.StatsServiceBucketsProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(statsv1connect.StatsServiceQueryProcedure, rpc.WithMinPermissions(permission.User))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
+}
+
+func (s Service) WeaponList(ctx context.Context, _ *emptypb.Empty) (*v1.WeaponListResponse, error) {
+	weapons, errWeapons := s.stats.WeaponList(ctx)
+	if errWeapons != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	return &v1.WeaponListResponse{Weapons: weapons}, nil
+}
+
+func (s Service) Buckets(ctx context.Context, _ *emptypb.Empty) (*v1.BucketsResponse, error) {
+	buckets, errBuckets := s.stats.Buckets(ctx)
+	if errBuckets != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+	resp := &v1.BucketsResponse{Buckets: make([]*v1.Bucket, len(buckets))}
+	for idx := range buckets {
+		resp.Buckets[idx] = &v1.Bucket{
+			StatsBucketId: &buckets[idx].BucketID,
+			BucketName:    &buckets[idx].BucketName,
+		}
+	}
+	return resp, nil
+}
+
+func createResp(opts Opts, request *v1.QueryRequest, count uint64, size int) *v1.QueryResponse {
+	resp := &v1.QueryResponse{
+		Variant: request.Variant,
+		Count:   &count,
+	}
+	switch opts.Variant {
+	case VariantWeapons:
+		fallthrough
+	case VariantClasses:
+		resp.StatContainer = &v1.QueryResponse_StatsVariant{
+			StatsVariant: &v1.VariantStatsContainer{
+				Stats: make([]*v1.VariantStats, size),
+			},
+		}
+	}
+
+	return resp
+}
+
+func (s Service) Query(ctx context.Context, request *v1.QueryRequest) (*v1.QueryResponse, error) {
+	opts := Opts{
+		Variant:    Variant(request.GetVariant()),
+		VariantKey: request.GetVariantKey(),
+		Filter:     rpc.FromRPC(request.Filter),
+		TimeBucket: TimeBucket(request.GetTimeBucket()),
+		TimeStamp:  request.GetTime().AsTime(),
+	}
+	statsBucketID := request.GetStatsBucketId()
+
+	stats, count, errStats := s.stats.Query(ctx, statsBucketID, opts)
+	resp := createResp(opts, request, count, len(stats))
+	if errStats != nil {
+		if errors.Is(errStats, database.ErrNoResult) {
+			return resp, nil
+		}
+		slog.Error("Failed to load stats",
+			slog.String("variant", opts.Variant.String()),
+			slog.Time("timeStamp", opts.TimeStamp),
+			slog.String("timeBucket", opts.TimeBucket.String()),
+			slog.Uint64("statsBucketID", uint64(statsBucketID)),
+			slog.String("variantFilter", opts.VariantKey),
+			slog.String("error", errStats.Error()))
+
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	for idx, statRow := range stats {
+		switch opts.Variant {
+		case VariantClasses:
+			fallthrough
+		case VariantWeapons:
+			resp.GetStatContainer().(*v1.QueryResponse_StatsVariant).StatsVariant.Stats[idx] = toVariantStats(statRow.(VariantStats))
+		}
+	}
+	return resp, nil
+}
+
+func toVariantStats(s VariantStats) *v1.VariantStats {
+	return &v1.VariantStats{
+		Variant: &s.Variant,
+		Rank:    &s.Rank,
+		Player: &personv1.PersonDisplay{
+			SteamId: new(s.SteamID.Int64()),
+			Name:    new(s.SteamID.String()),
+		},
+		Kills:               &s.Kills,
+		Assists:             &s.Assists,
+		Deaths:              &s.Deaths,
+		PostroundKills:      &s.PostroundKills,
+		PostroundAssists:    &s.PostroundAssists,
+		PostroundDeaths:     &s.PostroundDeaths,
+		Damage:              &s.Damage,
+		DamageTaken:         &s.DamageTaken,
+		Dominations:         &s.Dominations,
+		Dominated:           &s.Dominated,
+		Revenges:            &s.Revenges,
+		Revenged:            &s.Revenged,
+		Airshots:            &s.Airshots,
+		HeadshotKills:       &s.HeadshotKills,
+		BackstabKills:       &s.BackstabKills,
+		Headshots:           &s.Headshots,
+		Backstabs:           &s.Backstabs,
+		WasHeadshot:         &s.WasHeadshot,
+		WasBackstabbed:      &s.WasBackstabbed,
+		PreroundHealing:     &s.PreroundHealing,
+		Healing:             &s.Healing,
+		PostroundHealing:    &s.PostroundHealing,
+		Drops:               &s.Drops,
+		NearFullChargeDeath: &s.NearFullChargeDeath,
+		ChargesUber:         &s.ChargesUber,
+		ChargesKritz:        &s.ChargesKritz,
+		ChargesVacc:         &s.ChargesVacc,
+		ChargesQuickfix:     &s.ChargesQuickfix,
+	}
 }
 
 func (s Service) Match(ctx context.Context, request *v1.MatchRequest) (*v1.MatchResponse, error) {
@@ -94,8 +219,7 @@ func (s Service) loadMatch(ctx context.Context, matchID uuid.UUID) (*v1.Match, e
 
 	assembleRounds(out, match)
 	assemblePlayers(out, match)
-	assembleClasses(out, match)
-	assembleWeapons(out, match)
+	assembleVariants(out, match)
 
 	return out, nil
 }
@@ -155,8 +279,7 @@ func assemblePlayers(out *v1.Match, match *Match) {
 					Ignites:             &player.Ignites,
 					BuildingsBuilt:      &player.BuildingsBuilt,
 					BuildingsDestroyed:  &player.BUildingsDestroyed,
-					Weapons:             []*v1.RoundPlayerWeapon{},
-					Classes:             []*v1.RoundPlayerClass{},
+					Variants:            []*v1.RoundPlayerVariant{},
 				})
 
 				break
@@ -165,8 +288,8 @@ func assemblePlayers(out *v1.Match, match *Match) {
 	}
 }
 
-func assembleWeapons(out *v1.Match, match *Match) {
-	for _, cls := range match.Weapons {
+func assembleVariants(out *v1.Match, match *Match) {
+	for _, cls := range match.Variants {
 		for _, round := range out.GetRounds() {
 			if cls.RoundID != round.GetRoundId() {
 				continue
@@ -177,58 +300,8 @@ func assembleWeapons(out *v1.Match, match *Match) {
 					continue
 				}
 
-				player.Weapons = append(player.Weapons, &v1.RoundPlayerWeapon{
-					Weapon:              &cls.Weapon,
-					RoundId:             &cls.RoundID,
-					SteamId:             new(cls.SteamID.Int64()),
-					Kills:               &cls.Kills,
-					Assists:             &cls.Assists,
-					Deaths:              &cls.Deaths,
-					PostroundKills:      &cls.PostroundKills,
-					PostroundAssists:    &cls.PostroundAssists,
-					PostroundDeaths:     &cls.PostroundDeaths,
-					Damage:              &cls.Damage,
-					DamageTaken:         &cls.DamageTaken,
-					Dominations:         &cls.Dominations,
-					Dominated:           &cls.Dominated,
-					Revenges:            &cls.Revenges,
-					Revenged:            &cls.Revenged,
-					Airshots:            &cls.Airshots,
-					HeadshotKills:       &cls.HeadshotKills,
-					BackstabKills:       &cls.BackstabKills,
-					Headshots:           &cls.Headshots,
-					Backstabs:           &cls.Backstabs,
-					WasHeadshot:         &cls.WasHeadshot,
-					WasBackstabbed:      &cls.WasBackstabbed,
-					PreroundHealing:     &cls.PreroundHealing,
-					Healing:             &cls.Healing,
-					PostroundHealing:    &cls.PostroundHealing,
-					Drops:               &cls.Drops,
-					NearFullChargeDeath: &cls.NearFullChargeDeath,
-					ChargesUber:         &cls.ChargesUber,
-					ChargesKritz:        &cls.ChargesKritz,
-					ChargesVacc:         &cls.ChargesVacc,
-					ChargesQuickfix:     &cls.ChargesQuickfix,
-				})
-
-				break
-			}
-		}
-	}
-}
-
-func assembleClasses(out *v1.Match, match *Match) {
-	for _, cls := range match.Classes {
-		for _, round := range out.GetRounds() {
-			if cls.RoundID != round.GetRoundId() {
-				continue
-			}
-			for _, player := range round.GetPlayers() {
-				if cls.SteamID.Int64() != player.GetSteamId() {
-					continue
-				}
-				player.Classes = append(player.Classes, &v1.RoundPlayerClass{
-					Class:               &cls.Class,
+				player.Variants = append(player.Variants, &v1.RoundPlayerVariant{
+					Variant:             &cls.Variant,
 					RoundId:             &cls.RoundID,
 					SteamId:             new(cls.SteamID.Int64()),
 					Kills:               &cls.Kills,
