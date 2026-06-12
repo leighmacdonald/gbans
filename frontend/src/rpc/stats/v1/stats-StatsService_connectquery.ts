@@ -8,3 +8,38 @@ import { StatsService } from "./stats_pb";
  * @generated from rpc stats.v1.StatsService.Match
  */
 export const match = StatsService.method.match;
+
+/**
+ * Query
+ * - Known buckets. Each leaf defines how the stats are grouped and queried.
+ *   (Bukets)
+ *   - Bucket (mvm)
+ *     - ...
+ *   - Bucket (casual)
+ *     (TimeBuckets)
+ *     - Yearly
+ *     - Monthly
+ *     - Alltime
+ *       (Overall buckets)
+ *       - Kills
+ *       - Healing
+ *       - Weapons
+ *         (Variant Buckets)
+ *         - Variant: scattergun
+ *       - Classes
+ *         (Variant Buckets)
+ *         - Variant: soldier
+ *
+ * @generated from rpc stats.v1.StatsService.Query
+ */
+export const query = StatsService.method.query;
+
+/**
+ * @generated from rpc stats.v1.StatsService.WeaponList
+ */
+export const weaponList = StatsService.method.weaponList;
+
+/**
+ * @generated from rpc stats.v1.StatsService.Buckets
+ */
+export const buckets = StatsService.method.buckets;

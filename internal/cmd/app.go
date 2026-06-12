@@ -489,6 +489,7 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware) *http.ServeMux {
 		sourcemod.NewPluginService(g.sourcemod, g.persons, g.servers, g.bans,
 			rpc.NewServerTokenGenerator(conf.General.SiteName, []byte(conf.HTTPCookieKey)), g.notifications, conf.Discord.LogChannelID, authMiddleware, interceptors),
 		sourcemod.NewSourcemodService(g.sourcemod, authMiddleware, interceptors),
+		stats.NewService(g.stats, g.servers, authMiddleware, interceptors),
 		votes.NewService(g.votes, authMiddleware, interceptors),
 		wiki.NewService(g.wiki, authMiddleware, interceptors),
 	}

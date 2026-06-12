@@ -21,6 +21,7 @@ import { Route as GuestPrivacyPolicyRouteImport } from './routes/_guest.privacy-
 import { Route as GuestPatreonRouteImport } from './routes/_guest.patreon'
 import { Route as GuestMgeRouteImport } from './routes/_guest.mge'
 import { Route as GuestChangelogRouteImport } from './routes/_guest.changelog'
+import { Route as AuthStatsRouteImport } from './routes/_auth.stats'
 import { Route as AuthSettingsRouteImport } from './routes/_auth.settings'
 import { Route as AuthReportRouteImport } from './routes/_auth.report'
 import { Route as AuthPermissionRouteImport } from './routes/_auth.permission'
@@ -116,6 +117,11 @@ const GuestChangelogRoute = GuestChangelogRouteImport.update({
   id: '/changelog',
   path: '/changelog',
   getParentRoute: () => GuestRoute,
+} as any)
+const AuthStatsRoute = AuthStatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthSettingsRoute = AuthSettingsRouteImport.update({
   id: '/settings',
@@ -326,6 +332,7 @@ export interface FileRoutesByFullPath {
   '/permission': typeof AuthPermissionRoute
   '/report': typeof AuthReportRouteWithChildren
   '/settings': typeof AuthSettingsRoute
+  '/stats': typeof AuthStatsRoute
   '/changelog': typeof GuestChangelogRoute
   '/mge': typeof GuestMgeRouteWithChildren
   '/patreon': typeof GuestPatreonRoute
@@ -373,6 +380,7 @@ export interface FileRoutesByTo {
   '/page-not-found': typeof AuthPageNotFoundRoute
   '/permission': typeof AuthPermissionRoute
   '/settings': typeof AuthSettingsRoute
+  '/stats': typeof AuthStatsRoute
   '/changelog': typeof GuestChangelogRoute
   '/patreon': typeof GuestPatreonRoute
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
@@ -424,6 +432,7 @@ export interface FileRoutesById {
   '/_auth/permission': typeof AuthPermissionRoute
   '/_auth/report': typeof AuthReportRouteWithChildren
   '/_auth/settings': typeof AuthSettingsRoute
+  '/_auth/stats': typeof AuthStatsRoute
   '/_guest/changelog': typeof GuestChangelogRoute
   '/_guest/mge': typeof GuestMgeRouteWithChildren
   '/_guest/patreon': typeof GuestPatreonRoute
@@ -476,6 +485,7 @@ export interface FileRouteTypes {
     | '/permission'
     | '/report'
     | '/settings'
+    | '/stats'
     | '/changelog'
     | '/mge'
     | '/patreon'
@@ -523,6 +533,7 @@ export interface FileRouteTypes {
     | '/page-not-found'
     | '/permission'
     | '/settings'
+    | '/stats'
     | '/changelog'
     | '/patreon'
     | '/privacy-policy'
@@ -573,6 +584,7 @@ export interface FileRouteTypes {
     | '/_auth/permission'
     | '/_auth/report'
     | '/_auth/settings'
+    | '/_auth/stats'
     | '/_guest/changelog'
     | '/_guest/mge'
     | '/_guest/patreon'
@@ -706,6 +718,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/changelog'
       preLoaderRoute: typeof GuestChangelogRouteImport
       parentRoute: typeof GuestRoute
+    }
+    '/_auth/stats': {
+      id: '/_auth/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof AuthStatsRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/_auth/settings': {
       id: '/_auth/settings'
@@ -1038,6 +1057,7 @@ interface AuthRouteChildren {
   AuthPermissionRoute: typeof AuthPermissionRoute
   AuthReportRoute: typeof AuthReportRouteWithChildren
   AuthSettingsRoute: typeof AuthSettingsRoute
+  AuthStatsRoute: typeof AuthStatsRoute
   AuthBanBanIdRoute: typeof AuthBanBanIdRoute
 }
 
@@ -1050,6 +1070,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthPermissionRoute: AuthPermissionRoute,
   AuthReportRoute: AuthReportRouteWithChildren,
   AuthSettingsRoute: AuthSettingsRoute,
+  AuthStatsRoute: AuthStatsRoute,
   AuthBanBanIdRoute: AuthBanBanIdRoute,
 }
 

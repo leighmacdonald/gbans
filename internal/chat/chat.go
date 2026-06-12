@@ -354,7 +354,7 @@ func (u *Chat) AddChatHistory(ctx context.Context, message *Message) error {
 	return u.repository.AddChatHistory(ctx, message)
 }
 
-func (u *Chat) QueryChatHistory(ctx context.Context, permissions permission.Privilege, req HistoryQueryFilter) ([]QueryChatHistoryResult, int64, error) {
+func (u *Chat) QueryChatHistory(ctx context.Context, permissions permission.Privilege, req HistoryQueryFilter) ([]QueryChatHistoryResult, uint64, error) {
 	if req.Limit <= 0 || (req.Limit > 100 && permissions < permission.Moderator) {
 		req.Limit = 100
 	}

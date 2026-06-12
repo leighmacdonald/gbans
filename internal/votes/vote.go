@@ -73,7 +73,7 @@ func (u Votes) Add(ctx context.Context, sourceID steamid.SteamID, targetID steam
 	})
 }
 
-func (u Votes) Query(ctx context.Context, filter Query) ([]Result, int64, error) {
+func (u Votes) Query(ctx context.Context, filter Query) ([]Result, uint64, error) {
 	return u.repository.Query(ctx, filter)
 }
 

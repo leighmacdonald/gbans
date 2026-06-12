@@ -5,7 +5,12 @@
     "rules": {
       "recommended": true,
       "safety": {
-        "banDropTable": "off"
+        "banDropTable": "off",
+        "banDropColumn": "off",
+        "addingForeignKeyConstraint": "off",
+        "lockTimeoutWarning": "off",
+        "runningStatementWhileHoldingAccessExclusive": "off",
+        "requireConcurrentRefreshMatview": "off"
       }
     }
   },

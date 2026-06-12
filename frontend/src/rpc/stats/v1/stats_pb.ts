@@ -5,17 +5,345 @@
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
-import type { Timestamp } from "@bufbuild/protobuf/wkt";
-import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import type { Filter } from "../../database/query/v1/filter_pb";
+import { file_database_query_v1_filter } from "../../database/query/v1/filter_pb";
+import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Map } from "../../maps/v1/maps_pb";
 import { file_maps_v1_maps } from "../../maps/v1/maps_pb";
+import type { PersonDisplay } from "../../person/v1/person_core_pb";
+import { file_person_v1_person_core } from "../../person/v1/person_core_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file stats/v1/stats.proto.
  */
 export const file_stats_v1_stats: GenFile = /*@__PURE__*/
-  fileDesc("ChRzdGF0cy92MS9zdGF0cy5wcm90bxIIc3RhdHMudjEiKgoMTWF0Y2hSZXF1ZXN0EhoKCG1hdGNoX2lkGAEgASgJQgi6SAVyA7ABASIvCg1NYXRjaFJlc3BvbnNlEh4KBW1hdGNoGAEgASgLMg8uc3RhdHMudjEuTWF0Y2giiwMKBU1hdGNoEhAKCG1hdGNoX2lkGAEgASgJEhEKCXNlcnZlcl9pZBgCIAEoBRITCgtzZXJ2ZXJfbmFtZRgDIAEoCRIZChFzZXJ2ZXJfbmFtZV9zaG9ydBgEIAEoCRIPCgdkZW1vX2lkGAUgASgFEhkKA21hcBgGIAEoCzIMLm1hcHMudjEuTWFwEhkKEXN0YXRzX2J1Y2tldF9uYW1lGAcgASgJEhcKD3N0YXRzX2J1Y2tldF9pZBgIIAEoBRIQCghob3N0bmFtZRgJIAEoCRIRCglzY29yZV9yZWQYCiABKA0SEQoJc2NvcmVfYmx1GAwgASgNEi4KCnN0YXJ0X3RpbWUYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhQKCGR1cmF0aW9uGA4gASgEQgIwARIuCgpjcmVhdGVkX29uGA8gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIfCgZyb3VuZHMYECADKAsyDy5zdGF0cy52MS5Sb3VuZCKpAQoFUm91bmQSEAoIcm91bmRfaWQYASABKA0SHgoGd2lubmVyGAIgASgOMg4uc3RhdHMudjEuVGVhbRIUCgxpc19zdGFsZW1hdGUYAyABKAgSFwoPaXNfc3VkZGVuX2RlYXRoGAQgASgIEhcKC2R1cmF0aW9uX21zGAUgASgEQgIwARImCgdwbGF5ZXJzGAYgAygLMhUuc3RhdHMudjEuUm91bmRQbGF5ZXIi6goKC1JvdW5kUGxheWVyEhAKCHJvdW5kX2lkGAEgASgNEiMKCHN0ZWFtX2lkGAIgASgDQhEwAbpIDCIKKIGAgICQgICIARIcCgR0ZWFtGAMgASgOMg4uc3RhdHMudjEuVGVhbRILCgNtdnAYBCABKAgSFgoKdGlja19zdGFydBgFIAEoBEICMAESFAoIdGlja19lbmQYBiABKARCAjABEhIKBnBvaW50cxgHIAEoBEICMAESHAoQY29ubmVjdGlvbl9jb3VudBgIIAEo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ZxgZIAEoBEICMAESEQoFZHJvcHMYGiABKARCAjABEiIKFm5lYXJfZnVsbF9jaGFyZ2VfZGVhdGgYGyABKARCAjABEhgKDGNoYXJnZXNfdWJlchgcIAEoBEICMAESGQoNY2hhcmdlc19rcml0ehgdIAEoBEICMAESGAoMY2hhcmdlc192YWNjGB4gASgEQgIwARIcChBjaGFyZ2VzX3F1aWNrZml4GB8gASgEQgIwASKSBgoQUm91bmRQbGF5ZXJDbGFzcxINCgVjbGFzcxgBIAEoCRIQCghyb3VuZF9pZBgCIAEoDRIUCghzdGVhbV9pZBgDIAEoA0ICMAESEQoFa2lsbHMYBCABKARCAjABEhMKB2Fzc2lzdHMYBSABKARCAjABEhIKBmRlYXRocxgGIAEoBEICMAESGwoPcG9zdHJvdW5kX2tpbGxzGAcgASgEQgIwARIdChFwb3N0cm91bmRfYXNzaXN0cxgIIAEoBEICMAESHAoQcG9zdHJvdW5kX2RlYXRocxgJIAEoBEICMAESEgoGZGFtYWdlGAogASgEQgIwARIYCgxkYW1hZ2VfdGFrZW4YCyABKARCAjABEhcKC2RvbWluYXRpb25zGAwgASgEQgIwARIVCglkb21pbmF0ZWQYDSABKARCAjABEhQKCHJldmVuZ2VzGA4gASgEQgIwARIUCghyZXZlbmdlZBgPIAEoBEICMAESFAoIYWlyc2hvdHMYECABKARCAjABEhoKDmhlYWRzaG90X2tpbGxzGBEgASgEQgIwARIaCg5iYWNrc3RhYl9raWxscxgSIAEoBEICMAESFQoJaGVhZHNob3RzGBMgASgEQgIwARIVCgliYWNrc3RhYnMYFCABKARCAjABEhgKDHdhc19oZWFkc2hvdBgVIAEoBEICMAESGwoPd2FzX2JhY2tzdGFiYmVkGBYgASgEQgIwARIcChBwcmVyb3VuZF9oZWFsaW5nGBcgASgEQgIwARITCgdoZWFsaW5nGBggASgEQgIwARIdChFwb3N0cm91bmRfaGVhbGluZxgZIAEoBEICMAESEQoFZHJvcHMYGiABKARCAjABEiIKFm5lYXJfZnVsbF9jaGFyZ2VfZGVhdGgYGyABKARCAjABEhgKDGNoYXJnZXNfdWJlchgcIAEoBEICMAESGQoNY2hhcmdlc19rcml0ehgdIAEoBEICMAESGAoMY2hhcmdlc192YWNjGB4gASgEQgIwARIcChBjaGFyZ2VzX3F1aWNrZml4GB8gASgEQgIwASpSCgRUZWFtEh8KG1RFQU1fVU5BU1NJR05FRF9VTlNQRUNJRklFRBAAEg0KCVRFQU1fU1BFQxABEgwKCFRFQU1fUkVEEAISDAoIVEVBTV9CTFUQAzJNCgxTdGF0c1NlcnZpY2USPQoFTWF0Y2gSFi5zdGF0cy52MS5NYXRjaFJlcXVlc3QaFy5zdGF0cy52MS5NYXRjaFJlc3BvbnNlIgOQAgFClgEKDGNvbS5zdGF0cy52MUIKU3RhdHNQcm90b1ABWjlnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3N0YXRzL3YxO3N0YXRzdjGiAgNTWFiqAghTdGF0cy5WMcoCCFN0YXRzXFYx4gIUU3RhdHNcVjFcR1BCTWV0YWRhdGHqAglTdGF0czo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate, file_google_protobuf_timestamp, file_maps_v1_maps]);
+  fileDesc("ChRzdGF0cy92MS9zdGF0cy5wcm90bxIIc3RhdHMudjEiJQoSV2VhcG9uTGlzdFJlc3BvbnNlEg8KB3dlYXBvbnMYASADKAkiSgoGQnVja2V0EhcKD3N0YXRzX2J1Y2tldF9pZBgBIAEoBRITCgtidWNrZXRfbmFtZRgCIAEoCRISCgppc19lbmFibGVkGAMgASgIIjQKD0J1Y2tldHNSZXNwb25zZRIhCgdidWNrZXRzGAEgAygLMhAuc3RhdHMudjEuQnVja2V0IpMCCgxRdWVyeVJlcXVlc3QSKQoGZmlsdGVyGAEgASgLMhkuZGF0YWJhc2UucXVlcnkudjEuRmlsdGVyEiMKD3N0YXRzX2J1Y2tldF9pZBgCIAEoDUIKukgHyAEBKgIgABI2Cgt0aW1lX2J1Y2tldBgDIAEoDjIULnN0YXRzLnYxLlRpbWVCdWNrZXRCC7pICMgBAYIBAhABEi8KB3ZhcmlhbnQYBCABKA4yES5zdGF0cy52MS5WYXJpYW50Qgu6SAjIAQGCAQIQARITCgt2YXJpYW50X2tleRgFIAEoCRI1CgR0aW1lGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEILukgIyAEBsgECOAEipAYKDFZhcmlhbnRTdGF0cxIPCgd2YXJpYW50GAEgASgJEhAKBHJhbmsYAiABKARCAjABEigKBnBsYXllchgDIAEoCzIYLnBlcnNvbi52MS5QZXJzb25EaXNwbGF5EhEKBWtpbGxzGAQgASgEQgIwARITCgdhc3Npc3RzGAUgASgEQgIwARISCgZkZWF0aHMYBiABKARCAjABEhsKD3Bvc3Ryb3VuZF9raWxscxgHIAEoBEICMAESHQoRcG9zdHJvdW5kX2Fzc2lzdHMYCCABKARCAjABEhwKEHBvc3Ryb3VuZF9kZWF0aHMYCSABKARCAjABEhIKBmRhbWFnZRgKIAEoBEICMAESGAoMZGFtYWdlX3Rha2VuGAsgASgEQgIwARIXCgtkb21pbmF0aW9ucxgMIAEoBEICMAESFQoJZG9taW5hdGVkGA0gASgEQgIwARIUCghyZXZlbmdlcxgOIAEoBEICMAESFAoIcmV2ZW5nZWQYDyABKARCAjABEhQKCGFpcnNob3RzGBAgASgEQgIwARIaCg5oZWFkc2hvdF9raWxscxgRIAEoBEICMAESGgoOYmFja3N0YWJfa2lsbHMYEiABKARCAjABEhUKCWhlYWRzaG90cxgTIAEoBEICMAESFQoJYmFja3N0YWJzGBQgASgEQgIwARIYCgx3YXNfaGVhZHNob3QYFSABKARCAjABEhsKD3dhc19iYWNrc3RhYmJlZBgWIAEoBEICMAESHAoQcHJlcm91bmRfaGVhbGluZxgXIAEoBEICMAESEwoHaGVhbGluZxgYIAEoBEICMAESHQoRcG9zdHJvdW5kX2hlYWxpbmcYGSABKARCAjABEhEKBWRyb3BzGBogASgEQgIwARIiChZuZWFyX2Z1bGxfY2hhcmdlX2RlYXRoGBsgASgEQgIwARIYCgxjaGFyZ2VzX3ViZXIYHCABKARCAjABEhkKDWNoYXJnZXNfa3JpdHoYHSABKARCAjABEhgKDGNoYXJnZXNfdmFjYxgeIAEoBEICMAESHAoQY2hhcmdlc19xdWlja2ZpeBgfIAEoBEICMAEiPgoVVmFyaWFudFN0YXRzQ29udGFpbmVyEiUKBXN0YXRzGAEgAygLMhYuc3RhdHMudjEuVmFyaWFudFN0YXRzIpIBCg1RdWVyeVJlc3BvbnNlEiIKB3ZhcmlhbnQYASABKA4yES5zdGF0cy52MS5WYXJpYW50EhEKBWNvdW50GAIgASgEQgIwARI4Cg1zdGF0c192YXJpYW50GAMgASgLMh8uc3RhdHMudjEuVmFyaWFudFN0YXRzQ29udGFpbmVySABCEAoOc3RhdF9jb250YWluZXIiKgoMTWF0Y2hSZXF1ZXN0EhoKCG1hdGNoX2lkGAEgASgJQgi6SAVyA7ABASIvCg1NYXRjaFJlc3BvbnNlEh4KBW1hdGNoGAEgASgLMg8uc3RhdHMudjEuTWF0Y2giiwMKBU1hdGNoEhAKCG1hdGNoX2lkGAEgASgJEhEKCXNlcnZlcl9pZBgCIAEoBRITCgtzZXJ2ZXJfbmFtZRgDIAEoCRIZChFzZXJ2ZXJfbmFtZV9zaG9ydBgEIAEoCRIPCgdkZW1vX2lkGAUgASgFEhkKA21hcBgGIAEoCzIMLm1hcHMudjEuTWFwEhkKEXN0YXRzX2J1Y2tldF9uYW1lGAcgASgJEhcKD3N0YXRzX2J1Y2tldF9pZBgIIAEoBRIQCghob3N0bmFtZRgJIAEo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gIgBEhEKBWtpbGxzGAQgASgEQgIwARITCgdhc3Npc3RzGAUgASgEQgIwARISCgZkZWF0aHMYBiABKARCAjABEhsKD3Bvc3Ryb3VuZF9raWxscxgHIAEoBEICMAESHQoRcG9zdHJvdW5kX2Fzc2lzdHMYCCABKARCAjABEhwKEHBvc3Ryb3VuZF9kZWF0aHMYCSABKARCAjABEhIKBmRhbWFnZRgKIAEoBEICMAESGAoMZGFtYWdlX3Rha2VuGAsgASgEQgIwARIXCgtkb21pbmF0aW9ucxgMIAEoBEICMAESFQoJZG9taW5hdGVkGA0gASgEQgIwARIUCghyZXZlbmdlcxgOIAEoBEICMAESFAoIcmV2ZW5nZWQYDyABKARCAjABEhQKCGFpcnNob3RzGBAgASgEQgIwARIaCg5oZWFkc2hvdF9raWxscxgRIAEoBEICMAESGgoOYmFja3N0YWJfa2lsbHMYEiABKARCAjABEhUKCWhlYWRzaG90cxgTIAEoBEICMAESFQoJYmFja3N0YWJzGBQgASgEQgIwARIYCgx3YXNfaGVhZHNob3QYFSABKARCAjABEhsKD3dhc19iYWNrc3RhYmJlZBgWIAEoBEICMAESHAoQcHJlcm91bmRfaGVhbGluZxgXIAEoBEICMAESEwoHaGVhbGluZxgYIAEoBEICMAESHQoRcG9zdHJvdW5kX2hlYWxpbmcYGSABKARCAjABEhEKBWRyb3BzGBogASgEQgIwARIiChZuZWFyX2Z1bGxfY2hhcmdlX2RlYXRoGBsgASgEQgIwARIYCgxjaGFyZ2VzX3ViZXIYHCABKARCAjABEhkKDWNoYXJnZXNfa3JpdHoYHSABKARCAjABEhgKDGNoYXJnZXNfdmFjYxgeIAEoBEICMAESHAoQY2hhcmdlc19xdWlja2ZpeBgfIAEoBEICMAEqUgoEVGVhbRIfChtURUFNX1VOQVNTSUdORURfVU5TUEVDSUZJRUQQABINCglURUFNX1NQRUMQARIMCghURUFNX1JFRBACEgwKCFRFQU1fQkxVEAMqfAoHVmFyaWFudBIfChtWQVJJQU5UX09WRVJBTExfVU5TUEVDSUZJRUQQABIRCg1WQVJJQU5UX0tJTExTEAESEwoPVkFSSUFOVF9IRUFMSU5HEAISEwoPVkFSSUFOVF9XRUFQT05TEAMSEwoPVkFSSUFOVF9DTEFTU0VTEAQqpQEKClRpbWVCdWNrZXQSGwoXVElNRV9CVUNLRVRfVU5TUEVDSUZJRUQQABIVChFUSU1FX0JVQ0tFVF9EQUlMWRABEhYKElRJTUVfQlVDS0VUX1dFRUtMWRAHEhcKE1RJTUVfQlVDS0VUX01PTlRITFkQHxIXChJUSU1FX0JVQ0tFVF9ZRUFSTFkQ7QISGQoTVElNRV9CVUNLRVRfQUxMVElNRRCfjQYyjwIKDFN0YXRzU2VydmljZRI9CgVNYXRjaBIWLnN0YXRzLnYxLk1hdGNoUmVxdWVzdBoXLnN0YXRzLnYxLk1hdGNoUmVzcG9uc2UiA5ACARI6CgVRdWVyeRIWLnN0YXRzLnYxLlF1ZXJ5UmVxdWVzdBoXLnN0YXRzLnYxLlF1ZXJ5UmVzcG9uc2UiABJECgpXZWFwb25MaXN0EhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Ghwuc3RhdHMudjEuV2VhcG9uTGlzdFJlc3BvbnNlIgASPgoHQnVja2V0cxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoZLnN0YXRzLnYxLkJ1Y2tldHNSZXNwb25zZSIAQpYBCgxjb20uc3RhdHMudjFCClN0YXRzUHJvdG9QAVo5Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9zdGF0cy92MTtzdGF0c3YxogIDU1hYqgIIU3RhdHMuVjHKAghTdGF0c1xWMeICFFN0YXRzXFYxXEdQQk1ldGFkYXRh6gIJU3RhdHM6OlYxYghlZGl0aW9uc3DoBw", [file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_empty, file_google_protobuf_timestamp, file_maps_v1_maps, file_person_v1_person_core]);
+
+/**
+ * @generated from message stats.v1.WeaponListResponse
+ */
+export type WeaponListResponse = Message<"stats.v1.WeaponListResponse"> & {
+  /**
+   * @generated from field: repeated string weapons = 1;
+   */
+  weapons: string[];
+};
+
+/**
+ * Describes the message stats.v1.WeaponListResponse.
+ * Use `create(WeaponListResponseSchema)` to create a new message.
+ */
+export const WeaponListResponseSchema: GenMessage<WeaponListResponse> = /*@__PURE__*/
+  messageDesc(file_stats_v1_stats, 0);
+
+/**
+ * Bucket is the highest level grouping of stats. Non standard game modes should generally
+ * want to have a bucket per game mode so that stat sums can be broken down into numbers
+ * that are not skewed.
+ *
+ * @generated from message stats.v1.Bucket
+ */
+export type Bucket = Message<"stats.v1.Bucket"> & {
+  /**
+   * @generated from field: int32 stats_bucket_id = 1;
+   */
+  statsBucketId: number;
+
+  /**
+   * @generated from field: string bucket_name = 2;
+   */
+  bucketName: string;
+
+  /**
+   * @generated from field: bool is_enabled = 3;
+   */
+  isEnabled: boolean;
+};
+
+/**
+ * Describes the message stats.v1.Bucket.
+ * Use `create(BucketSchema)` to create a new message.
+ */
+export const BucketSchema: GenMessage<Bucket> = /*@__PURE__*/
+  messageDesc(file_stats_v1_stats, 1);
+
+/**
+ * @generated from message stats.v1.BucketsResponse
+ */
+export type BucketsResponse = Message<"stats.v1.BucketsResponse"> & {
+  /**
+   * @generated from field: repeated stats.v1.Bucket buckets = 1;
+   */
+  buckets: Bucket[];
+};
+
+/**
+ * Describes the message stats.v1.BucketsResponse.
+ * Use `create(BucketsResponseSchema)` to create a new message.
+ */
+export const BucketsResponseSchema: GenMessage<BucketsResponse> = /*@__PURE__*/
+  messageDesc(file_stats_v1_stats, 2);
+
+/**
+ * @generated from message stats.v1.QueryRequest
+ */
+export type QueryRequest = Message<"stats.v1.QueryRequest"> & {
+  /**
+   * @generated from field: database.query.v1.Filter filter = 1;
+   */
+  filter?: Filter | undefined;
+
+  /**
+   * @generated from field: uint32 stats_bucket_id = 2;
+   */
+  statsBucketId: number;
+
+  /**
+   * @generated from field: stats.v1.TimeBucket time_bucket = 3;
+   */
+  timeBucket: TimeBucket;
+
+  /**
+   * @generated from field: stats.v1.Variant variant = 4;
+   */
+  variant: Variant;
+
+  /**
+   * @generated from field: string variant_key = 5;
+   */
+  variantKey: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp time = 6;
+   */
+  time?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message stats.v1.QueryRequest.
+ * Use `create(QueryRequestSchema)` to create a new message.
+ */
+export const QueryRequestSchema: GenMessage<QueryRequest> = /*@__PURE__*/
+  messageDesc(file_stats_v1_stats, 3);
+
+/**
+ * @generated from message stats.v1.VariantStats
+ */
+export type VariantStats = Message<"stats.v1.VariantStats"> & {
+  /**
+   * @generated from field: string variant = 1;
+   */
+  variant: string;
+
+  /**
+   * @generated from field: uint64 rank = 2 [jstype = JS_STRING];
+   */
+  rank: string;
+
+  /**
+   * @generated from field: person.v1.PersonDisplay player = 3;
+   */
+  player?: PersonDisplay | undefined;
+
+  /**
+   * @generated from field: uint64 kills = 4 [jstype = JS_STRING];
+   */
+  kills: string;
+
+  /**
+   * @generated from field: uint64 assists = 5 [jstype = JS_STRING];
+   */
+  assists: string;
+
+  /**
+   * @generated from field: uint64 deaths = 6 [jstype = JS_STRING];
+   */
+  deaths: string;
+
+  /**
+   * @generated from field: uint64 postround_kills = 7 [jstype = JS_STRING];
+   */
+  postroundKills: string;
+
+  /**
+   * @generated from field: uint64 postround_assists = 8 [jstype = JS_STRING];
+   */
+  postroundAssists: string;
+
+  /**
+   * @generated from field: uint64 postround_deaths = 9 [jstype = JS_STRING];
+   */
+  postroundDeaths: string;
+
+  /**
+   * @generated from field: uint64 damage = 10 [jstype = JS_STRING];
+   */
+  damage: string;
+
+  /**
+   * @generated from field: uint64 damage_taken = 11 [jstype = JS_STRING];
+   */
+  damageTaken: string;
+
+  /**
+   * @generated from field: uint64 dominations = 12 [jstype = JS_STRING];
+   */
+  dominations: string;
+
+  /**
+   * @generated from field: uint64 dominated = 13 [jstype = JS_STRING];
+   */
+  dominated: string;
+
+  /**
+   * @generated from field: uint64 revenges = 14 [jstype = JS_STRING];
+   */
+  revenges: string;
+
+  /**
+   * @generated from field: uint64 revenged = 15 [jstype = JS_STRING];
+   */
+  revenged: string;
+
+  /**
+   * @generated from field: uint64 airshots = 16 [jstype = JS_STRING];
+   */
+  airshots: string;
+
+  /**
+   * @generated from field: uint64 headshot_kills = 17 [jstype = JS_STRING];
+   */
+  headshotKills: string;
+
+  /**
+   * @generated from field: uint64 backstab_kills = 18 [jstype = JS_STRING];
+   */
+  backstabKills: string;
+
+  /**
+   * @generated from field: uint64 headshots = 19 [jstype = JS_STRING];
+   */
+  headshots: string;
+
+  /**
+   * @generated from field: uint64 backstabs = 20 [jstype = JS_STRING];
+   */
+  backstabs: string;
+
+  /**
+   * @generated from field: uint64 was_headshot = 21 [jstype = JS_STRING];
+   */
+  wasHeadshot: string;
+
+  /**
+   * @generated from field: uint64 was_backstabbed = 22 [jstype = JS_STRING];
+   */
+  wasBackstabbed: string;
+
+  /**
+   * @generated from field: uint64 preround_healing = 23 [jstype = JS_STRING];
+   */
+  preroundHealing: string;
+
+  /**
+   * @generated from field: uint64 healing = 24 [jstype = JS_STRING];
+   */
+  healing: string;
+
+  /**
+   * @generated from field: uint64 postround_healing = 25 [jstype = JS_STRING];
+   */
+  postroundHealing: string;
+
+  /**
+   * @generated from field: uint64 drops = 26 [jstype = JS_STRING];
+   */
+  drops: string;
+
+  /**
+   * @generated from field: uint64 near_full_charge_death = 27 [jstype = JS_STRING];
+   */
+  nearFullChargeDeath: string;
+
+  /**
+   * @generated from field: uint64 charges_uber = 28 [jstype = JS_STRING];
+   */
+  chargesUber: string;
+
+  /**
+   * @generated from field: uint64 charges_kritz = 29 [jstype = JS_STRING];
+   */
+  chargesKritz: string;
+
+  /**
+   * @generated from field: uint64 charges_vacc = 30 [jstype = JS_STRING];
+   */
+  chargesVacc: string;
+
+  /**
+   * @generated from field: uint64 charges_quickfix = 31 [jstype = JS_STRING];
+   */
+  chargesQuickfix: string;
+};
+
+/**
+ * Describes the message stats.v1.VariantStats.
+ * Use `create(VariantStatsSchema)` to create a new message.
+ */
+export const VariantStatsSchema: GenMessage<VariantStats> = /*@__PURE__*/
+  messageDesc(file_stats_v1_stats, 4);
+
+/**
+ * @generated from message stats.v1.VariantStatsContainer
+ */
+export type VariantStatsContainer = Message<"stats.v1.VariantStatsContainer"> & {
+  /**
+   * @generated from field: repeated stats.v1.VariantStats stats = 1;
+   */
+  stats: VariantStats[];
+};
+
+/**
+ * Describes the message stats.v1.VariantStatsContainer.
+ * Use `create(VariantStatsContainerSchema)` to create a new message.
+ */
+export const VariantStatsContainerSchema: GenMessage<VariantStatsContainer> = /*@__PURE__*/
+  messageDesc(file_stats_v1_stats, 5);
+
+/**
+ * @generated from message stats.v1.QueryResponse
+ */
+export type QueryResponse = Message<"stats.v1.QueryResponse"> & {
+  /**
+   * @generated from field: stats.v1.Variant variant = 1;
+   */
+  variant: Variant;
+
+  /**
+   * @generated from field: uint64 count = 2 [jstype = JS_STRING];
+   */
+  count: string;
+
+  /**
+   * @generated from oneof stats.v1.QueryResponse.stat_container
+   */
+  statContainer: {
+    /**
+     * @generated from field: stats.v1.VariantStatsContainer stats_variant = 3;
+     */
+    value: VariantStatsContainer;
+    case: "statsVariant";
+  } | { case: undefined; value?: undefined };
+};
+
+/**
+ * Describes the message stats.v1.QueryResponse.
+ * Use `create(QueryResponseSchema)` to create a new message.
+ */
+export const QueryResponseSchema: GenMessage<QueryResponse> = /*@__PURE__*/
+  messageDesc(file_stats_v1_stats, 6);
 
 /**
  * @generated from message stats.v1.MatchRequest
@@ -32,7 +360,7 @@ export type MatchRequest = Message<"stats.v1.MatchRequest"> & {
  * Use `create(MatchRequestSchema)` to create a new message.
  */
 export const MatchRequestSchema: GenMessage<MatchRequest> = /*@__PURE__*/
-  messageDesc(file_stats_v1_stats, 0);
+  messageDesc(file_stats_v1_stats, 7);
 
 /**
  * @generated from message stats.v1.MatchResponse
@@ -49,7 +377,7 @@ export type MatchResponse = Message<"stats.v1.MatchResponse"> & {
  * Use `create(MatchResponseSchema)` to create a new message.
  */
 export const MatchResponseSchema: GenMessage<MatchResponse> = /*@__PURE__*/
-  messageDesc(file_stats_v1_stats, 1);
+  messageDesc(file_stats_v1_stats, 8);
 
 /**
  * @generated from message stats.v1.Match
@@ -136,7 +464,7 @@ export type Match = Message<"stats.v1.Match"> & {
  * Use `create(MatchSchema)` to create a new message.
  */
 export const MatchSchema: GenMessage<Match> = /*@__PURE__*/
-  messageDesc(file_stats_v1_stats, 2);
+  messageDesc(file_stats_v1_stats, 9);
 
 /**
  * @generated from message stats.v1.Round
@@ -178,7 +506,7 @@ export type Round = Message<"stats.v1.Round"> & {
  * Use `create(RoundSchema)` to create a new message.
  */
 export const RoundSchema: GenMessage<Round> = /*@__PURE__*/
-  messageDesc(file_stats_v1_stats, 3);
+  messageDesc(file_stats_v1_stats, 10);
 
 /**
  * @generated from message stats.v1.RoundPlayer
@@ -435,14 +763,9 @@ export type RoundPlayer = Message<"stats.v1.RoundPlayer"> & {
   buildingsDestroyed: string;
 
   /**
-   * @generated from field: repeated stats.v1.RoundPlayerWeapon weapons = 100;
+   * @generated from field: repeated stats.v1.RoundPlayerVariant variants = 100;
    */
-  weapons: RoundPlayerWeapon[];
-
-  /**
-   * @generated from field: repeated stats.v1.RoundPlayerClass classes = 101;
-   */
-  classes: RoundPlayerClass[];
+  variants: RoundPlayerVariant[];
 };
 
 /**
@@ -450,16 +773,16 @@ export type RoundPlayer = Message<"stats.v1.RoundPlayer"> & {
  * Use `create(RoundPlayerSchema)` to create a new message.
  */
 export const RoundPlayerSchema: GenMessage<RoundPlayer> = /*@__PURE__*/
-  messageDesc(file_stats_v1_stats, 4);
+  messageDesc(file_stats_v1_stats, 11);
 
 /**
- * @generated from message stats.v1.RoundPlayerWeapon
+ * @generated from message stats.v1.RoundPlayerVariant
  */
-export type RoundPlayerWeapon = Message<"stats.v1.RoundPlayerWeapon"> & {
+export type RoundPlayerVariant = Message<"stats.v1.RoundPlayerVariant"> & {
   /**
-   * @generated from field: string weapon = 1;
+   * @generated from field: string variant = 1;
    */
-  weapon: string;
+  variant: string;
 
   /**
    * @generated from field: uint32 round_id = 2;
@@ -613,178 +936,11 @@ export type RoundPlayerWeapon = Message<"stats.v1.RoundPlayerWeapon"> & {
 };
 
 /**
- * Describes the message stats.v1.RoundPlayerWeapon.
- * Use `create(RoundPlayerWeaponSchema)` to create a new message.
+ * Describes the message stats.v1.RoundPlayerVariant.
+ * Use `create(RoundPlayerVariantSchema)` to create a new message.
  */
-export const RoundPlayerWeaponSchema: GenMessage<RoundPlayerWeapon> = /*@__PURE__*/
-  messageDesc(file_stats_v1_stats, 5);
-
-/**
- * @generated from message stats.v1.RoundPlayerClass
- */
-export type RoundPlayerClass = Message<"stats.v1.RoundPlayerClass"> & {
-  /**
-   * @generated from field: string class = 1;
-   */
-  class: string;
-
-  /**
-   * @generated from field: uint32 round_id = 2;
-   */
-  roundId: number;
-
-  /**
-   * @generated from field: int64 steam_id = 3 [jstype = JS_STRING];
-   */
-  steamId: string;
-
-  /**
-   * @generated from field: uint64 kills = 4 [jstype = JS_STRING];
-   */
-  kills: string;
-
-  /**
-   * @generated from field: uint64 assists = 5 [jstype = JS_STRING];
-   */
-  assists: string;
-
-  /**
-   * @generated from field: uint64 deaths = 6 [jstype = JS_STRING];
-   */
-  deaths: string;
-
-  /**
-   * @generated from field: uint64 postround_kills = 7 [jstype = JS_STRING];
-   */
-  postroundKills: string;
-
-  /**
-   * @generated from field: uint64 postround_assists = 8 [jstype = JS_STRING];
-   */
-  postroundAssists: string;
-
-  /**
-   * @generated from field: uint64 postround_deaths = 9 [jstype = JS_STRING];
-   */
-  postroundDeaths: string;
-
-  /**
-   * @generated from field: uint64 damage = 10 [jstype = JS_STRING];
-   */
-  damage: string;
-
-  /**
-   * @generated from field: uint64 damage_taken = 11 [jstype = JS_STRING];
-   */
-  damageTaken: string;
-
-  /**
-   * @generated from field: uint64 dominations = 12 [jstype = JS_STRING];
-   */
-  dominations: string;
-
-  /**
-   * @generated from field: uint64 dominated = 13 [jstype = JS_STRING];
-   */
-  dominated: string;
-
-  /**
-   * @generated from field: uint64 revenges = 14 [jstype = JS_STRING];
-   */
-  revenges: string;
-
-  /**
-   * @generated from field: uint64 revenged = 15 [jstype = JS_STRING];
-   */
-  revenged: string;
-
-  /**
-   * @generated from field: uint64 airshots = 16 [jstype = JS_STRING];
-   */
-  airshots: string;
-
-  /**
-   * @generated from field: uint64 headshot_kills = 17 [jstype = JS_STRING];
-   */
-  headshotKills: string;
-
-  /**
-   * @generated from field: uint64 backstab_kills = 18 [jstype = JS_STRING];
-   */
-  backstabKills: string;
-
-  /**
-   * @generated from field: uint64 headshots = 19 [jstype = JS_STRING];
-   */
-  headshots: string;
-
-  /**
-   * @generated from field: uint64 backstabs = 20 [jstype = JS_STRING];
-   */
-  backstabs: string;
-
-  /**
-   * @generated from field: uint64 was_headshot = 21 [jstype = JS_STRING];
-   */
-  wasHeadshot: string;
-
-  /**
-   * @generated from field: uint64 was_backstabbed = 22 [jstype = JS_STRING];
-   */
-  wasBackstabbed: string;
-
-  /**
-   * @generated from field: uint64 preround_healing = 23 [jstype = JS_STRING];
-   */
-  preroundHealing: string;
-
-  /**
-   * @generated from field: uint64 healing = 24 [jstype = JS_STRING];
-   */
-  healing: string;
-
-  /**
-   * @generated from field: uint64 postround_healing = 25 [jstype = JS_STRING];
-   */
-  postroundHealing: string;
-
-  /**
-   * @generated from field: uint64 drops = 26 [jstype = JS_STRING];
-   */
-  drops: string;
-
-  /**
-   * @generated from field: uint64 near_full_charge_death = 27 [jstype = JS_STRING];
-   */
-  nearFullChargeDeath: string;
-
-  /**
-   * @generated from field: uint64 charges_uber = 28 [jstype = JS_STRING];
-   */
-  chargesUber: string;
-
-  /**
-   * @generated from field: uint64 charges_kritz = 29 [jstype = JS_STRING];
-   */
-  chargesKritz: string;
-
-  /**
-   * @generated from field: uint64 charges_vacc = 30 [jstype = JS_STRING];
-   */
-  chargesVacc: string;
-
-  /**
-   * @generated from field: uint64 charges_quickfix = 31 [jstype = JS_STRING];
-   */
-  chargesQuickfix: string;
-};
-
-/**
- * Describes the message stats.v1.RoundPlayerClass.
- * Use `create(RoundPlayerClassSchema)` to create a new message.
- */
-export const RoundPlayerClassSchema: GenMessage<RoundPlayerClass> = /*@__PURE__*/
-  messageDesc(file_stats_v1_stats, 6);
+export const RoundPlayerVariantSchema: GenMessage<RoundPlayerVariant> = /*@__PURE__*/
+  messageDesc(file_stats_v1_stats, 12);
 
 /**
  * @generated from enum stats.v1.Team
@@ -818,6 +974,87 @@ export const TeamSchema: GenEnum<Team> = /*@__PURE__*/
   enumDesc(file_stats_v1_stats, 0);
 
 /**
+ * The Variant picked specifies which set of stats structs are being shown.
+ *
+ * @generated from enum stats.v1.Variant
+ */
+export enum Variant {
+  /**
+   * @generated from enum value: VARIANT_OVERALL_UNSPECIFIED = 0;
+   */
+  OVERALL_UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: VARIANT_KILLS = 1;
+   */
+  KILLS = 1,
+
+  /**
+   * @generated from enum value: VARIANT_HEALING = 2;
+   */
+  HEALING = 2,
+
+  /**
+   * @generated from enum value: VARIANT_WEAPONS = 3;
+   */
+  WEAPONS = 3,
+
+  /**
+   * @generated from enum value: VARIANT_CLASSES = 4;
+   */
+  CLASSES = 4,
+}
+
+/**
+ * Describes the enum stats.v1.Variant.
+ */
+export const VariantSchema: GenEnum<Variant> = /*@__PURE__*/
+  enumDesc(file_stats_v1_stats, 1);
+
+/**
+ * The TimeBucket enum corresponds to the truncated date uses for grouping and indexing.
+ *
+ * @generated from enum stats.v1.TimeBucket
+ */
+export enum TimeBucket {
+  /**
+   * @generated from enum value: TIME_BUCKET_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: TIME_BUCKET_DAILY = 1;
+   */
+  DAILY = 1,
+
+  /**
+   * @generated from enum value: TIME_BUCKET_WEEKLY = 7;
+   */
+  WEEKLY = 7,
+
+  /**
+   * @generated from enum value: TIME_BUCKET_MONTHLY = 31;
+   */
+  MONTHLY = 31,
+
+  /**
+   * @generated from enum value: TIME_BUCKET_YEARLY = 365;
+   */
+  YEARLY = 365,
+
+  /**
+   * @generated from enum value: TIME_BUCKET_ALLTIME = 99999;
+   */
+  ALLTIME = 99999,
+}
+
+/**
+ * Describes the enum stats.v1.TimeBucket.
+ */
+export const TimeBucketSchema: GenEnum<TimeBucket> = /*@__PURE__*/
+  enumDesc(file_stats_v1_stats, 2);
+
+/**
  * @generated from service stats.v1.StatsService
  */
 export const StatsService: GenService<{
@@ -828,6 +1065,50 @@ export const StatsService: GenService<{
     methodKind: "unary";
     input: typeof MatchRequestSchema;
     output: typeof MatchResponseSchema;
+  },
+  /**
+   * Query
+   * - Known buckets. Each leaf defines how the stats are grouped and queried.
+   *   (Bukets)
+   *   - Bucket (mvm)
+   *     - ...
+   *   - Bucket (casual)
+   *     (TimeBuckets)
+   *     - Yearly
+   *     - Monthly
+   *     - Alltime
+   *       (Overall buckets)
+   *       - Kills
+   *       - Healing
+   *       - Weapons
+   *         (Variant Buckets)
+   *         - Variant: scattergun
+   *       - Classes
+   *         (Variant Buckets)
+   *         - Variant: soldier
+   *
+   * @generated from rpc stats.v1.StatsService.Query
+   */
+  query: {
+    methodKind: "unary";
+    input: typeof QueryRequestSchema;
+    output: typeof QueryResponseSchema;
+  },
+  /**
+   * @generated from rpc stats.v1.StatsService.WeaponList
+   */
+  weaponList: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof WeaponListResponseSchema;
+  },
+  /**
+   * @generated from rpc stats.v1.StatsService.Buckets
+   */
+  buckets: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof BucketsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_stats_v1_stats, 0);

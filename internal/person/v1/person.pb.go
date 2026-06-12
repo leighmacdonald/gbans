@@ -1301,7 +1301,7 @@ func (x *Person) GetBanId() int32 {
 type QueryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	People        []*Person              `protobuf:"bytes,1,rep,name=people" json:"people,omitempty"`
-	Count         *int64                 `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
+	Count         *uint64                `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1343,7 +1343,7 @@ func (x *QueryResponse) GetPeople() []*Person {
 	return nil
 }
 
-func (x *QueryResponse) GetCount() int64 {
+func (x *QueryResponse) GetCount() uint64 {
 	if x != nil && x.Count != nil {
 		return *x.Count
 	}
@@ -1479,7 +1479,7 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"\x06ban_id\x18  \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05banId\"b\n" +
 	"\rQueryResponse\x121\n" +
 	"\x06people\x18\x01 \x03(\v2\x11.person.v1.PersonB\x06\xbaH\x03\xc8\x01\x01R\x06people\x12\x1e\n" +
-	"\x05count\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x05count*n\n" +
+	"\x05count\x18\x02 \x01(\x04B\b\xbaH\x03\xc8\x01\x010\x01R\x05count*n\n" +
 	"\x0fVisibilityState\x12 \n" +
 	"\x1cVISIBILITY_STATE_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18VISIBILITY_STATE_PRIVATE\x10\x01\x12\x1b\n" +

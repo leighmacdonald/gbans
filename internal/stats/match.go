@@ -10,8 +10,10 @@ import (
 type Bucket struct {
 	BucketID   int32
 	BucketName string
+	IsEnabled  bool
 }
 
+// Match is the top level container for all of the matches data.
 type Match struct {
 	MatchID       uuid.UUID
 	ServerID      int32
@@ -25,10 +27,11 @@ type Match struct {
 	DurationMs    uint64
 	CreatedOn     time.Time
 
-	Rounds  []MatchRound
-	Players []MatchRoundPlayer
-	Weapons []MatchRoundWeaponStats
-	Classes []MatchRoundClassStats
+	// Data sums are split into rounds for a bit more fine grained info.
+	// They are stored in a enturely flat structure here just for ease of processing
+	Rounds   []MatchRound
+	Players  []MatchRoundPlayer
+	Variants []VariantStats
 }
 
 type MatchRound struct {
@@ -39,10 +42,7 @@ type MatchRound struct {
 	DurationMs    uint64
 }
 
-type MatchRoundPlayer struct {
-	RoundID             uint32
-	SteamID             steamid.SteamID
-	Team                string
+type BasePlayerStats struct {
 	MVP                 bool
 	TickStart           uint64
 	TickEnd             uint64
@@ -93,10 +93,15 @@ type MatchRoundPlayer struct {
 	BuildingsBuilt      uint64
 	BUildingsDestroyed  uint64
 }
+type MatchRoundPlayer struct {
+	BasePlayerStats
 
-type MatchBaseStats struct {
-	SteamID             steamid.SteamID
-	RoundID             uint32
+	RoundID uint32
+	SteamID steamid.SteamID
+	Team    string
+}
+
+type BaseVariantStats struct {
 	Kills               uint64
 	Assists             uint64
 	Deaths              uint64
@@ -127,14 +132,11 @@ type MatchBaseStats struct {
 	ChargesQuickfix     uint64
 }
 
-type MatchRoundClassStats struct {
-	MatchBaseStats
+type VariantStats struct {
+	BaseVariantStats
 
-	Class string
-}
-
-type MatchRoundWeaponStats struct {
-	MatchBaseStats
-
-	Weapon string
+	Rank    uint64
+	SteamID steamid.SteamID
+	RoundID uint32
+	Variant string
 }

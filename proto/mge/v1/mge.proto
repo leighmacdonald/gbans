@@ -36,7 +36,7 @@ message PlayerStats {
 
 message GetRatingsOverallResponse {
   repeated PlayerStats stats = 1 [(buf.validate.field).required = true];
-  int64 count = 2 [(buf.validate.field).required = true];
+  uint64 count = 2 [(buf.validate.field).required = true];
 }
 
 enum DuelMode {
@@ -95,5 +95,5 @@ message Duel {
 }
 message GetHistoryResponse {
   repeated Duel history = 1 [(buf.validate.field).required = true];
-  int64 count = 2 [(buf.validate.field).required = true];
+  uint64 count = 2 [(buf.validate.field).required = true];
 }

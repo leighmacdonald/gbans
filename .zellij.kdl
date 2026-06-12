@@ -1,13 +1,16 @@
+session_name "gbans"
 layout {
-    pane split_direction="horizontal" {
-        pane command="just" size="16%" {
-            args "db"
+    default_tab_template {
+        // pane size=1 borderless=true {
+        //     plugin location="tab-bar"
+        // }
+        children
+        pane size=1 borderless=true {
+            plugin location="zellij:compact-bar"
         }
+    }
 
-        pane command="just" size="16%" {
-            args "demostats-serve"
-        }
-
+    tab name="build" {
         pane command="just" {
             args "serve"
         }
@@ -16,7 +19,18 @@ layout {
             args "air"
         }
     }
-    // pane size=1 borderless=true {
-    //     plugin location="zellij:compact-bar"
-    // }
+    tab name="postgres" {
+        pane command="just" size="15%" {
+            args "db"
+        }
+        pane command="bash" {
+            args "-c" "sleep 10 && just pgcli"
+        }
+    }
+
+    tab name="demostats" {
+        pane command="just" {
+            args "demostats-serve"
+        }
+    }
 }

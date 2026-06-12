@@ -43,5 +43,6 @@ pkgs.mkShell {
     rcon-cli
     clang-tools
     govulncheck
+    pgcli
   ];
 }

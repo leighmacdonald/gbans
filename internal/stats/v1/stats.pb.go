@@ -8,9 +8,12 @@ package statsv1
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
-	v1 "github.com/leighmacdonald/gbans/internal/maps/v1"
+	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
+	v12 "github.com/leighmacdonald/gbans/internal/maps/v1"
+	v11 "github.com/leighmacdonald/gbans/internal/person/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
@@ -76,6 +79,766 @@ func (Team) EnumDescriptor() ([]byte, []int) {
 	return file_stats_v1_stats_proto_rawDescGZIP(), []int{0}
 }
 
+// The Variant picked specifies which set of stats structs are being shown.
+type Variant int32
+
+const (
+	Variant_VARIANT_OVERALL_UNSPECIFIED Variant = 0
+	Variant_VARIANT_KILLS               Variant = 1
+	Variant_VARIANT_HEALING             Variant = 2
+	Variant_VARIANT_WEAPONS             Variant = 3
+	Variant_VARIANT_CLASSES             Variant = 4
+)
+
+// Enum value maps for Variant.
+var (
+	Variant_name = map[int32]string{
+		0: "VARIANT_OVERALL_UNSPECIFIED",
+		1: "VARIANT_KILLS",
+		2: "VARIANT_HEALING",
+		3: "VARIANT_WEAPONS",
+		4: "VARIANT_CLASSES",
+	}
+	Variant_value = map[string]int32{
+		"VARIANT_OVERALL_UNSPECIFIED": 0,
+		"VARIANT_KILLS":               1,
+		"VARIANT_HEALING":             2,
+		"VARIANT_WEAPONS":             3,
+		"VARIANT_CLASSES":             4,
+	}
+)
+
+func (x Variant) Enum() *Variant {
+	p := new(Variant)
+	*p = x
+	return p
+}
+
+func (x Variant) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Variant) Descriptor() protoreflect.EnumDescriptor {
+	return file_stats_v1_stats_proto_enumTypes[1].Descriptor()
+}
+
+func (Variant) Type() protoreflect.EnumType {
+	return &file_stats_v1_stats_proto_enumTypes[1]
+}
+
+func (x Variant) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Variant.Descriptor instead.
+func (Variant) EnumDescriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{1}
+}
+
+// The TimeBucket enum corresponds to the truncated date uses for grouping and indexing.
+type TimeBucket int32
+
+const (
+	TimeBucket_TIME_BUCKET_UNSPECIFIED TimeBucket = 0
+	TimeBucket_TIME_BUCKET_DAILY       TimeBucket = 1
+	TimeBucket_TIME_BUCKET_WEEKLY      TimeBucket = 7
+	TimeBucket_TIME_BUCKET_MONTHLY     TimeBucket = 31
+	TimeBucket_TIME_BUCKET_YEARLY      TimeBucket = 365
+	TimeBucket_TIME_BUCKET_ALLTIME     TimeBucket = 99999
+)
+
+// Enum value maps for TimeBucket.
+var (
+	TimeBucket_name = map[int32]string{
+		0:     "TIME_BUCKET_UNSPECIFIED",
+		1:     "TIME_BUCKET_DAILY",
+		7:     "TIME_BUCKET_WEEKLY",
+		31:    "TIME_BUCKET_MONTHLY",
+		365:   "TIME_BUCKET_YEARLY",
+		99999: "TIME_BUCKET_ALLTIME",
+	}
+	TimeBucket_value = map[string]int32{
+		"TIME_BUCKET_UNSPECIFIED": 0,
+		"TIME_BUCKET_DAILY":       1,
+		"TIME_BUCKET_WEEKLY":      7,
+		"TIME_BUCKET_MONTHLY":     31,
+		"TIME_BUCKET_YEARLY":      365,
+		"TIME_BUCKET_ALLTIME":     99999,
+	}
+)
+
+func (x TimeBucket) Enum() *TimeBucket {
+	p := new(TimeBucket)
+	*p = x
+	return p
+}
+
+func (x TimeBucket) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (TimeBucket) Descriptor() protoreflect.EnumDescriptor {
+	return file_stats_v1_stats_proto_enumTypes[2].Descriptor()
+}
+
+func (TimeBucket) Type() protoreflect.EnumType {
+	return &file_stats_v1_stats_proto_enumTypes[2]
+}
+
+func (x TimeBucket) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use TimeBucket.Descriptor instead.
+func (TimeBucket) EnumDescriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{2}
+}
+
+type WeaponListResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Weapons       []string               `protobuf:"bytes,1,rep,name=weapons" json:"weapons,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WeaponListResponse) Reset() {
+	*x = WeaponListResponse{}
+	mi := &file_stats_v1_stats_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WeaponListResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WeaponListResponse) ProtoMessage() {}
+
+func (x *WeaponListResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WeaponListResponse.ProtoReflect.Descriptor instead.
+func (*WeaponListResponse) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *WeaponListResponse) GetWeapons() []string {
+	if x != nil {
+		return x.Weapons
+	}
+	return nil
+}
+
+// Bucket is the highest level grouping of stats. Non standard game modes should generally
+// want to have a bucket per game mode so that stat sums can be broken down into numbers
+// that are not skewed.
+type Bucket struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StatsBucketId *int32                 `protobuf:"varint,1,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
+	BucketName    *string                `protobuf:"bytes,2,opt,name=bucket_name,json=bucketName" json:"bucket_name,omitempty"`
+	IsEnabled     *bool                  `protobuf:"varint,3,opt,name=is_enabled,json=isEnabled" json:"is_enabled,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Bucket) Reset() {
+	*x = Bucket{}
+	mi := &file_stats_v1_stats_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Bucket) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Bucket) ProtoMessage() {}
+
+func (x *Bucket) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Bucket.ProtoReflect.Descriptor instead.
+func (*Bucket) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Bucket) GetStatsBucketId() int32 {
+	if x != nil && x.StatsBucketId != nil {
+		return *x.StatsBucketId
+	}
+	return 0
+}
+
+func (x *Bucket) GetBucketName() string {
+	if x != nil && x.BucketName != nil {
+		return *x.BucketName
+	}
+	return ""
+}
+
+func (x *Bucket) GetIsEnabled() bool {
+	if x != nil && x.IsEnabled != nil {
+		return *x.IsEnabled
+	}
+	return false
+}
+
+type BucketsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Buckets       []*Bucket              `protobuf:"bytes,1,rep,name=buckets" json:"buckets,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BucketsResponse) Reset() {
+	*x = BucketsResponse{}
+	mi := &file_stats_v1_stats_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BucketsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BucketsResponse) ProtoMessage() {}
+
+func (x *BucketsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BucketsResponse.ProtoReflect.Descriptor instead.
+func (*BucketsResponse) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *BucketsResponse) GetBuckets() []*Bucket {
+	if x != nil {
+		return x.Buckets
+	}
+	return nil
+}
+
+type QueryRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Filter        *v1.Filter             `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
+	StatsBucketId *uint32                `protobuf:"varint,2,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
+	TimeBucket    *TimeBucket            `protobuf:"varint,3,opt,name=time_bucket,json=timeBucket,enum=stats.v1.TimeBucket" json:"time_bucket,omitempty"`
+	Variant       *Variant               `protobuf:"varint,4,opt,name=variant,enum=stats.v1.Variant" json:"variant,omitempty"`
+	VariantKey    *string                `protobuf:"bytes,5,opt,name=variant_key,json=variantKey" json:"variant_key,omitempty"`
+	Time          *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=time" json:"time,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QueryRequest) Reset() {
+	*x = QueryRequest{}
+	mi := &file_stats_v1_stats_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QueryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryRequest) ProtoMessage() {}
+
+func (x *QueryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueryRequest.ProtoReflect.Descriptor instead.
+func (*QueryRequest) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *QueryRequest) GetFilter() *v1.Filter {
+	if x != nil {
+		return x.Filter
+	}
+	return nil
+}
+
+func (x *QueryRequest) GetStatsBucketId() uint32 {
+	if x != nil && x.StatsBucketId != nil {
+		return *x.StatsBucketId
+	}
+	return 0
+}
+
+func (x *QueryRequest) GetTimeBucket() TimeBucket {
+	if x != nil && x.TimeBucket != nil {
+		return *x.TimeBucket
+	}
+	return TimeBucket_TIME_BUCKET_UNSPECIFIED
+}
+
+func (x *QueryRequest) GetVariant() Variant {
+	if x != nil && x.Variant != nil {
+		return *x.Variant
+	}
+	return Variant_VARIANT_OVERALL_UNSPECIFIED
+}
+
+func (x *QueryRequest) GetVariantKey() string {
+	if x != nil && x.VariantKey != nil {
+		return *x.VariantKey
+	}
+	return ""
+}
+
+func (x *QueryRequest) GetTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Time
+	}
+	return nil
+}
+
+type VariantStats struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Variant             *string                `protobuf:"bytes,1,opt,name=variant" json:"variant,omitempty"`
+	Rank                *uint64                `protobuf:"varint,2,opt,name=rank" json:"rank,omitempty"`
+	Player              *v11.PersonDisplay     `protobuf:"bytes,3,opt,name=player" json:"player,omitempty"`
+	Kills               *uint64                `protobuf:"varint,4,opt,name=kills" json:"kills,omitempty"`
+	Assists             *uint64                `protobuf:"varint,5,opt,name=assists" json:"assists,omitempty"`
+	Deaths              *uint64                `protobuf:"varint,6,opt,name=deaths" json:"deaths,omitempty"`
+	PostroundKills      *uint64                `protobuf:"varint,7,opt,name=postround_kills,json=postroundKills" json:"postround_kills,omitempty"`
+	PostroundAssists    *uint64                `protobuf:"varint,8,opt,name=postround_assists,json=postroundAssists" json:"postround_assists,omitempty"`
+	PostroundDeaths     *uint64                `protobuf:"varint,9,opt,name=postround_deaths,json=postroundDeaths" json:"postround_deaths,omitempty"`
+	Damage              *uint64                `protobuf:"varint,10,opt,name=damage" json:"damage,omitempty"`
+	DamageTaken         *uint64                `protobuf:"varint,11,opt,name=damage_taken,json=damageTaken" json:"damage_taken,omitempty"`
+	Dominations         *uint64                `protobuf:"varint,12,opt,name=dominations" json:"dominations,omitempty"`
+	Dominated           *uint64                `protobuf:"varint,13,opt,name=dominated" json:"dominated,omitempty"`
+	Revenges            *uint64                `protobuf:"varint,14,opt,name=revenges" json:"revenges,omitempty"`
+	Revenged            *uint64                `protobuf:"varint,15,opt,name=revenged" json:"revenged,omitempty"`
+	Airshots            *uint64                `protobuf:"varint,16,opt,name=airshots" json:"airshots,omitempty"`
+	HeadshotKills       *uint64                `protobuf:"varint,17,opt,name=headshot_kills,json=headshotKills" json:"headshot_kills,omitempty"`
+	BackstabKills       *uint64                `protobuf:"varint,18,opt,name=backstab_kills,json=backstabKills" json:"backstab_kills,omitempty"`
+	Headshots           *uint64                `protobuf:"varint,19,opt,name=headshots" json:"headshots,omitempty"`
+	Backstabs           *uint64                `protobuf:"varint,20,opt,name=backstabs" json:"backstabs,omitempty"`
+	WasHeadshot         *uint64                `protobuf:"varint,21,opt,name=was_headshot,json=wasHeadshot" json:"was_headshot,omitempty"`
+	WasBackstabbed      *uint64                `protobuf:"varint,22,opt,name=was_backstabbed,json=wasBackstabbed" json:"was_backstabbed,omitempty"`
+	PreroundHealing     *uint64                `protobuf:"varint,23,opt,name=preround_healing,json=preroundHealing" json:"preround_healing,omitempty"`
+	Healing             *uint64                `protobuf:"varint,24,opt,name=healing" json:"healing,omitempty"`
+	PostroundHealing    *uint64                `protobuf:"varint,25,opt,name=postround_healing,json=postroundHealing" json:"postround_healing,omitempty"`
+	Drops               *uint64                `protobuf:"varint,26,opt,name=drops" json:"drops,omitempty"`
+	NearFullChargeDeath *uint64                `protobuf:"varint,27,opt,name=near_full_charge_death,json=nearFullChargeDeath" json:"near_full_charge_death,omitempty"`
+	ChargesUber         *uint64                `protobuf:"varint,28,opt,name=charges_uber,json=chargesUber" json:"charges_uber,omitempty"`
+	ChargesKritz        *uint64                `protobuf:"varint,29,opt,name=charges_kritz,json=chargesKritz" json:"charges_kritz,omitempty"`
+	ChargesVacc         *uint64                `protobuf:"varint,30,opt,name=charges_vacc,json=chargesVacc" json:"charges_vacc,omitempty"`
+	ChargesQuickfix     *uint64                `protobuf:"varint,31,opt,name=charges_quickfix,json=chargesQuickfix" json:"charges_quickfix,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *VariantStats) Reset() {
+	*x = VariantStats{}
+	mi := &file_stats_v1_stats_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VariantStats) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VariantStats) ProtoMessage() {}
+
+func (x *VariantStats) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VariantStats.ProtoReflect.Descriptor instead.
+func (*VariantStats) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *VariantStats) GetVariant() string {
+	if x != nil && x.Variant != nil {
+		return *x.Variant
+	}
+	return ""
+}
+
+func (x *VariantStats) GetRank() uint64 {
+	if x != nil && x.Rank != nil {
+		return *x.Rank
+	}
+	return 0
+}
+
+func (x *VariantStats) GetPlayer() *v11.PersonDisplay {
+	if x != nil {
+		return x.Player
+	}
+	return nil
+}
+
+func (x *VariantStats) GetKills() uint64 {
+	if x != nil && x.Kills != nil {
+		return *x.Kills
+	}
+	return 0
+}
+
+func (x *VariantStats) GetAssists() uint64 {
+	if x != nil && x.Assists != nil {
+		return *x.Assists
+	}
+	return 0
+}
+
+func (x *VariantStats) GetDeaths() uint64 {
+	if x != nil && x.Deaths != nil {
+		return *x.Deaths
+	}
+	return 0
+}
+
+func (x *VariantStats) GetPostroundKills() uint64 {
+	if x != nil && x.PostroundKills != nil {
+		return *x.PostroundKills
+	}
+	return 0
+}
+
+func (x *VariantStats) GetPostroundAssists() uint64 {
+	if x != nil && x.PostroundAssists != nil {
+		return *x.PostroundAssists
+	}
+	return 0
+}
+
+func (x *VariantStats) GetPostroundDeaths() uint64 {
+	if x != nil && x.PostroundDeaths != nil {
+		return *x.PostroundDeaths
+	}
+	return 0
+}
+
+func (x *VariantStats) GetDamage() uint64 {
+	if x != nil && x.Damage != nil {
+		return *x.Damage
+	}
+	return 0
+}
+
+func (x *VariantStats) GetDamageTaken() uint64 {
+	if x != nil && x.DamageTaken != nil {
+		return *x.DamageTaken
+	}
+	return 0
+}
+
+func (x *VariantStats) GetDominations() uint64 {
+	if x != nil && x.Dominations != nil {
+		return *x.Dominations
+	}
+	return 0
+}
+
+func (x *VariantStats) GetDominated() uint64 {
+	if x != nil && x.Dominated != nil {
+		return *x.Dominated
+	}
+	return 0
+}
+
+func (x *VariantStats) GetRevenges() uint64 {
+	if x != nil && x.Revenges != nil {
+		return *x.Revenges
+	}
+	return 0
+}
+
+func (x *VariantStats) GetRevenged() uint64 {
+	if x != nil && x.Revenged != nil {
+		return *x.Revenged
+	}
+	return 0
+}
+
+func (x *VariantStats) GetAirshots() uint64 {
+	if x != nil && x.Airshots != nil {
+		return *x.Airshots
+	}
+	return 0
+}
+
+func (x *VariantStats) GetHeadshotKills() uint64 {
+	if x != nil && x.HeadshotKills != nil {
+		return *x.HeadshotKills
+	}
+	return 0
+}
+
+func (x *VariantStats) GetBackstabKills() uint64 {
+	if x != nil && x.BackstabKills != nil {
+		return *x.BackstabKills
+	}
+	return 0
+}
+
+func (x *VariantStats) GetHeadshots() uint64 {
+	if x != nil && x.Headshots != nil {
+		return *x.Headshots
+	}
+	return 0
+}
+
+func (x *VariantStats) GetBackstabs() uint64 {
+	if x != nil && x.Backstabs != nil {
+		return *x.Backstabs
+	}
+	return 0
+}
+
+func (x *VariantStats) GetWasHeadshot() uint64 {
+	if x != nil && x.WasHeadshot != nil {
+		return *x.WasHeadshot
+	}
+	return 0
+}
+
+func (x *VariantStats) GetWasBackstabbed() uint64 {
+	if x != nil && x.WasBackstabbed != nil {
+		return *x.WasBackstabbed
+	}
+	return 0
+}
+
+func (x *VariantStats) GetPreroundHealing() uint64 {
+	if x != nil && x.PreroundHealing != nil {
+		return *x.PreroundHealing
+	}
+	return 0
+}
+
+func (x *VariantStats) GetHealing() uint64 {
+	if x != nil && x.Healing != nil {
+		return *x.Healing
+	}
+	return 0
+}
+
+func (x *VariantStats) GetPostroundHealing() uint64 {
+	if x != nil && x.PostroundHealing != nil {
+		return *x.PostroundHealing
+	}
+	return 0
+}
+
+func (x *VariantStats) GetDrops() uint64 {
+	if x != nil && x.Drops != nil {
+		return *x.Drops
+	}
+	return 0
+}
+
+func (x *VariantStats) GetNearFullChargeDeath() uint64 {
+	if x != nil && x.NearFullChargeDeath != nil {
+		return *x.NearFullChargeDeath
+	}
+	return 0
+}
+
+func (x *VariantStats) GetChargesUber() uint64 {
+	if x != nil && x.ChargesUber != nil {
+		return *x.ChargesUber
+	}
+	return 0
+}
+
+func (x *VariantStats) GetChargesKritz() uint64 {
+	if x != nil && x.ChargesKritz != nil {
+		return *x.ChargesKritz
+	}
+	return 0
+}
+
+func (x *VariantStats) GetChargesVacc() uint64 {
+	if x != nil && x.ChargesVacc != nil {
+		return *x.ChargesVacc
+	}
+	return 0
+}
+
+func (x *VariantStats) GetChargesQuickfix() uint64 {
+	if x != nil && x.ChargesQuickfix != nil {
+		return *x.ChargesQuickfix
+	}
+	return 0
+}
+
+type VariantStatsContainer struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Stats         []*VariantStats        `protobuf:"bytes,1,rep,name=stats" json:"stats,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VariantStatsContainer) Reset() {
+	*x = VariantStatsContainer{}
+	mi := &file_stats_v1_stats_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VariantStatsContainer) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VariantStatsContainer) ProtoMessage() {}
+
+func (x *VariantStatsContainer) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VariantStatsContainer.ProtoReflect.Descriptor instead.
+func (*VariantStatsContainer) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *VariantStatsContainer) GetStats() []*VariantStats {
+	if x != nil {
+		return x.Stats
+	}
+	return nil
+}
+
+type QueryResponse struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Variant *Variant               `protobuf:"varint,1,opt,name=variant,enum=stats.v1.Variant" json:"variant,omitempty"`
+	Count   *uint64                `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
+	// Types that are valid to be assigned to StatContainer:
+	//
+	//	*QueryResponse_StatsVariant
+	StatContainer isQueryResponse_StatContainer `protobuf_oneof:"stat_container"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QueryResponse) Reset() {
+	*x = QueryResponse{}
+	mi := &file_stats_v1_stats_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QueryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryResponse) ProtoMessage() {}
+
+func (x *QueryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueryResponse.ProtoReflect.Descriptor instead.
+func (*QueryResponse) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *QueryResponse) GetVariant() Variant {
+	if x != nil && x.Variant != nil {
+		return *x.Variant
+	}
+	return Variant_VARIANT_OVERALL_UNSPECIFIED
+}
+
+func (x *QueryResponse) GetCount() uint64 {
+	if x != nil && x.Count != nil {
+		return *x.Count
+	}
+	return 0
+}
+
+func (x *QueryResponse) GetStatContainer() isQueryResponse_StatContainer {
+	if x != nil {
+		return x.StatContainer
+	}
+	return nil
+}
+
+func (x *QueryResponse) GetStatsVariant() *VariantStatsContainer {
+	if x != nil {
+		if x, ok := x.StatContainer.(*QueryResponse_StatsVariant); ok {
+			return x.StatsVariant
+		}
+	}
+	return nil
+}
+
+type isQueryResponse_StatContainer interface {
+	isQueryResponse_StatContainer()
+}
+
+type QueryResponse_StatsVariant struct {
+	StatsVariant *VariantStatsContainer `protobuf:"bytes,3,opt,name=stats_variant,json=statsVariant,oneof"`
+}
+
+func (*QueryResponse_StatsVariant) isQueryResponse_StatContainer() {}
+
 type MatchRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MatchId       *string                `protobuf:"bytes,1,opt,name=match_id,json=matchId" json:"match_id,omitempty"`
@@ -85,7 +848,7 @@ type MatchRequest struct {
 
 func (x *MatchRequest) Reset() {
 	*x = MatchRequest{}
-	mi := &file_stats_v1_stats_proto_msgTypes[0]
+	mi := &file_stats_v1_stats_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -97,7 +860,7 @@ func (x *MatchRequest) String() string {
 func (*MatchRequest) ProtoMessage() {}
 
 func (x *MatchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[0]
+	mi := &file_stats_v1_stats_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -110,7 +873,7 @@ func (x *MatchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchRequest.ProtoReflect.Descriptor instead.
 func (*MatchRequest) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{0}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *MatchRequest) GetMatchId() string {
@@ -129,7 +892,7 @@ type MatchResponse struct {
 
 func (x *MatchResponse) Reset() {
 	*x = MatchResponse{}
-	mi := &file_stats_v1_stats_proto_msgTypes[1]
+	mi := &file_stats_v1_stats_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -141,7 +904,7 @@ func (x *MatchResponse) String() string {
 func (*MatchResponse) ProtoMessage() {}
 
 func (x *MatchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[1]
+	mi := &file_stats_v1_stats_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -154,7 +917,7 @@ func (x *MatchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchResponse.ProtoReflect.Descriptor instead.
 func (*MatchResponse) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{1}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *MatchResponse) GetMatch() *Match {
@@ -171,7 +934,7 @@ type Match struct {
 	ServerName      *string                `protobuf:"bytes,3,opt,name=server_name,json=serverName" json:"server_name,omitempty"`
 	ServerNameShort *string                `protobuf:"bytes,4,opt,name=server_name_short,json=serverNameShort" json:"server_name_short,omitempty"`
 	DemoId          *int32                 `protobuf:"varint,5,opt,name=demo_id,json=demoId" json:"demo_id,omitempty"`
-	Map             *v1.Map                `protobuf:"bytes,6,opt,name=map" json:"map,omitempty"`
+	Map             *v12.Map               `protobuf:"bytes,6,opt,name=map" json:"map,omitempty"`
 	StatsBucketName *string                `protobuf:"bytes,7,opt,name=stats_bucket_name,json=statsBucketName" json:"stats_bucket_name,omitempty"`
 	StatsBucketId   *int32                 `protobuf:"varint,8,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
 	Hostname        *string                `protobuf:"bytes,9,opt,name=hostname" json:"hostname,omitempty"`
@@ -187,7 +950,7 @@ type Match struct {
 
 func (x *Match) Reset() {
 	*x = Match{}
-	mi := &file_stats_v1_stats_proto_msgTypes[2]
+	mi := &file_stats_v1_stats_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -199,7 +962,7 @@ func (x *Match) String() string {
 func (*Match) ProtoMessage() {}
 
 func (x *Match) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[2]
+	mi := &file_stats_v1_stats_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -212,7 +975,7 @@ func (x *Match) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Match.ProtoReflect.Descriptor instead.
 func (*Match) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{2}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *Match) GetMatchId() string {
@@ -250,7 +1013,7 @@ func (x *Match) GetDemoId() int32 {
 	return 0
 }
 
-func (x *Match) GetMap() *v1.Map {
+func (x *Match) GetMap() *v12.Map {
 	if x != nil {
 		return x.Map
 	}
@@ -334,7 +1097,7 @@ type Round struct {
 
 func (x *Round) Reset() {
 	*x = Round{}
-	mi := &file_stats_v1_stats_proto_msgTypes[3]
+	mi := &file_stats_v1_stats_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -346,7 +1109,7 @@ func (x *Round) String() string {
 func (*Round) ProtoMessage() {}
 
 func (x *Round) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[3]
+	mi := &file_stats_v1_stats_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -359,7 +1122,7 @@ func (x *Round) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Round.ProtoReflect.Descriptor instead.
 func (*Round) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{3}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Round) GetRoundId() uint32 {
@@ -456,15 +1219,14 @@ type RoundPlayer struct {
 	Ignites             *uint64                `protobuf:"varint,48,opt,name=ignites" json:"ignites,omitempty"`
 	BuildingsBuilt      *uint64                `protobuf:"varint,49,opt,name=buildings_built,json=buildingsBuilt" json:"buildings_built,omitempty"`
 	BuildingsDestroyed  *uint64                `protobuf:"varint,50,opt,name=buildings_destroyed,json=buildingsDestroyed" json:"buildings_destroyed,omitempty"`
-	Weapons             []*RoundPlayerWeapon   `protobuf:"bytes,100,rep,name=weapons" json:"weapons,omitempty"`
-	Classes             []*RoundPlayerClass    `protobuf:"bytes,101,rep,name=classes" json:"classes,omitempty"`
+	Variants            []*RoundPlayerVariant  `protobuf:"bytes,100,rep,name=variants" json:"variants,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
 
 func (x *RoundPlayer) Reset() {
 	*x = RoundPlayer{}
-	mi := &file_stats_v1_stats_proto_msgTypes[4]
+	mi := &file_stats_v1_stats_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -476,7 +1238,7 @@ func (x *RoundPlayer) String() string {
 func (*RoundPlayer) ProtoMessage() {}
 
 func (x *RoundPlayer) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[4]
+	mi := &file_stats_v1_stats_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -489,7 +1251,7 @@ func (x *RoundPlayer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoundPlayer.ProtoReflect.Descriptor instead.
 func (*RoundPlayer) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{4}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *RoundPlayer) GetRoundId() uint32 {
@@ -842,23 +1604,16 @@ func (x *RoundPlayer) GetBuildingsDestroyed() uint64 {
 	return 0
 }
 
-func (x *RoundPlayer) GetWeapons() []*RoundPlayerWeapon {
+func (x *RoundPlayer) GetVariants() []*RoundPlayerVariant {
 	if x != nil {
-		return x.Weapons
+		return x.Variants
 	}
 	return nil
 }
 
-func (x *RoundPlayer) GetClasses() []*RoundPlayerClass {
-	if x != nil {
-		return x.Classes
-	}
-	return nil
-}
-
-type RoundPlayerWeapon struct {
+type RoundPlayerVariant struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
-	Weapon              *string                `protobuf:"bytes,1,opt,name=weapon" json:"weapon,omitempty"`
+	Variant             *string                `protobuf:"bytes,1,opt,name=variant" json:"variant,omitempty"`
 	RoundId             *uint32                `protobuf:"varint,2,opt,name=round_id,json=roundId" json:"round_id,omitempty"`
 	SteamId             *int64                 `protobuf:"varint,3,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	Kills               *uint64                `protobuf:"varint,4,opt,name=kills" json:"kills,omitempty"`
@@ -893,21 +1648,21 @@ type RoundPlayerWeapon struct {
 	sizeCache           protoimpl.SizeCache
 }
 
-func (x *RoundPlayerWeapon) Reset() {
-	*x = RoundPlayerWeapon{}
-	mi := &file_stats_v1_stats_proto_msgTypes[5]
+func (x *RoundPlayerVariant) Reset() {
+	*x = RoundPlayerVariant{}
+	mi := &file_stats_v1_stats_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RoundPlayerWeapon) String() string {
+func (x *RoundPlayerVariant) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RoundPlayerWeapon) ProtoMessage() {}
+func (*RoundPlayerVariant) ProtoMessage() {}
 
-func (x *RoundPlayerWeapon) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[5]
+func (x *RoundPlayerVariant) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -918,506 +1673,222 @@ func (x *RoundPlayerWeapon) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RoundPlayerWeapon.ProtoReflect.Descriptor instead.
-func (*RoundPlayerWeapon) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{5}
+// Deprecated: Use RoundPlayerVariant.ProtoReflect.Descriptor instead.
+func (*RoundPlayerVariant) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *RoundPlayerWeapon) GetWeapon() string {
-	if x != nil && x.Weapon != nil {
-		return *x.Weapon
+func (x *RoundPlayerVariant) GetVariant() string {
+	if x != nil && x.Variant != nil {
+		return *x.Variant
 	}
 	return ""
 }
 
-func (x *RoundPlayerWeapon) GetRoundId() uint32 {
+func (x *RoundPlayerVariant) GetRoundId() uint32 {
 	if x != nil && x.RoundId != nil {
 		return *x.RoundId
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetSteamId() int64 {
+func (x *RoundPlayerVariant) GetSteamId() int64 {
 	if x != nil && x.SteamId != nil {
 		return *x.SteamId
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetKills() uint64 {
+func (x *RoundPlayerVariant) GetKills() uint64 {
 	if x != nil && x.Kills != nil {
 		return *x.Kills
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetAssists() uint64 {
+func (x *RoundPlayerVariant) GetAssists() uint64 {
 	if x != nil && x.Assists != nil {
 		return *x.Assists
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetDeaths() uint64 {
+func (x *RoundPlayerVariant) GetDeaths() uint64 {
 	if x != nil && x.Deaths != nil {
 		return *x.Deaths
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetPostroundKills() uint64 {
+func (x *RoundPlayerVariant) GetPostroundKills() uint64 {
 	if x != nil && x.PostroundKills != nil {
 		return *x.PostroundKills
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetPostroundAssists() uint64 {
+func (x *RoundPlayerVariant) GetPostroundAssists() uint64 {
 	if x != nil && x.PostroundAssists != nil {
 		return *x.PostroundAssists
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetPostroundDeaths() uint64 {
+func (x *RoundPlayerVariant) GetPostroundDeaths() uint64 {
 	if x != nil && x.PostroundDeaths != nil {
 		return *x.PostroundDeaths
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetDamage() uint64 {
+func (x *RoundPlayerVariant) GetDamage() uint64 {
 	if x != nil && x.Damage != nil {
 		return *x.Damage
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetDamageTaken() uint64 {
+func (x *RoundPlayerVariant) GetDamageTaken() uint64 {
 	if x != nil && x.DamageTaken != nil {
 		return *x.DamageTaken
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetDominations() uint64 {
+func (x *RoundPlayerVariant) GetDominations() uint64 {
 	if x != nil && x.Dominations != nil {
 		return *x.Dominations
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetDominated() uint64 {
+func (x *RoundPlayerVariant) GetDominated() uint64 {
 	if x != nil && x.Dominated != nil {
 		return *x.Dominated
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetRevenges() uint64 {
+func (x *RoundPlayerVariant) GetRevenges() uint64 {
 	if x != nil && x.Revenges != nil {
 		return *x.Revenges
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetRevenged() uint64 {
+func (x *RoundPlayerVariant) GetRevenged() uint64 {
 	if x != nil && x.Revenged != nil {
 		return *x.Revenged
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetAirshots() uint64 {
+func (x *RoundPlayerVariant) GetAirshots() uint64 {
 	if x != nil && x.Airshots != nil {
 		return *x.Airshots
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetHeadshotKills() uint64 {
+func (x *RoundPlayerVariant) GetHeadshotKills() uint64 {
 	if x != nil && x.HeadshotKills != nil {
 		return *x.HeadshotKills
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetBackstabKills() uint64 {
+func (x *RoundPlayerVariant) GetBackstabKills() uint64 {
 	if x != nil && x.BackstabKills != nil {
 		return *x.BackstabKills
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetHeadshots() uint64 {
+func (x *RoundPlayerVariant) GetHeadshots() uint64 {
 	if x != nil && x.Headshots != nil {
 		return *x.Headshots
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetBackstabs() uint64 {
+func (x *RoundPlayerVariant) GetBackstabs() uint64 {
 	if x != nil && x.Backstabs != nil {
 		return *x.Backstabs
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetWasHeadshot() uint64 {
+func (x *RoundPlayerVariant) GetWasHeadshot() uint64 {
 	if x != nil && x.WasHeadshot != nil {
 		return *x.WasHeadshot
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetWasBackstabbed() uint64 {
+func (x *RoundPlayerVariant) GetWasBackstabbed() uint64 {
 	if x != nil && x.WasBackstabbed != nil {
 		return *x.WasBackstabbed
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetPreroundHealing() uint64 {
+func (x *RoundPlayerVariant) GetPreroundHealing() uint64 {
 	if x != nil && x.PreroundHealing != nil {
 		return *x.PreroundHealing
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetHealing() uint64 {
+func (x *RoundPlayerVariant) GetHealing() uint64 {
 	if x != nil && x.Healing != nil {
 		return *x.Healing
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetPostroundHealing() uint64 {
+func (x *RoundPlayerVariant) GetPostroundHealing() uint64 {
 	if x != nil && x.PostroundHealing != nil {
 		return *x.PostroundHealing
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetDrops() uint64 {
+func (x *RoundPlayerVariant) GetDrops() uint64 {
 	if x != nil && x.Drops != nil {
 		return *x.Drops
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetNearFullChargeDeath() uint64 {
+func (x *RoundPlayerVariant) GetNearFullChargeDeath() uint64 {
 	if x != nil && x.NearFullChargeDeath != nil {
 		return *x.NearFullChargeDeath
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetChargesUber() uint64 {
+func (x *RoundPlayerVariant) GetChargesUber() uint64 {
 	if x != nil && x.ChargesUber != nil {
 		return *x.ChargesUber
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetChargesKritz() uint64 {
+func (x *RoundPlayerVariant) GetChargesKritz() uint64 {
 	if x != nil && x.ChargesKritz != nil {
 		return *x.ChargesKritz
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetChargesVacc() uint64 {
+func (x *RoundPlayerVariant) GetChargesVacc() uint64 {
 	if x != nil && x.ChargesVacc != nil {
 		return *x.ChargesVacc
 	}
 	return 0
 }
 
-func (x *RoundPlayerWeapon) GetChargesQuickfix() uint64 {
-	if x != nil && x.ChargesQuickfix != nil {
-		return *x.ChargesQuickfix
-	}
-	return 0
-}
-
-type RoundPlayerClass struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	Class               *string                `protobuf:"bytes,1,opt,name=class" json:"class,omitempty"`
-	RoundId             *uint32                `protobuf:"varint,2,opt,name=round_id,json=roundId" json:"round_id,omitempty"`
-	SteamId             *int64                 `protobuf:"varint,3,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
-	Kills               *uint64                `protobuf:"varint,4,opt,name=kills" json:"kills,omitempty"`
-	Assists             *uint64                `protobuf:"varint,5,opt,name=assists" json:"assists,omitempty"`
-	Deaths              *uint64                `protobuf:"varint,6,opt,name=deaths" json:"deaths,omitempty"`
-	PostroundKills      *uint64                `protobuf:"varint,7,opt,name=postround_kills,json=postroundKills" json:"postround_kills,omitempty"`
-	PostroundAssists    *uint64                `protobuf:"varint,8,opt,name=postround_assists,json=postroundAssists" json:"postround_assists,omitempty"`
-	PostroundDeaths     *uint64                `protobuf:"varint,9,opt,name=postround_deaths,json=postroundDeaths" json:"postround_deaths,omitempty"`
-	Damage              *uint64                `protobuf:"varint,10,opt,name=damage" json:"damage,omitempty"`
-	DamageTaken         *uint64                `protobuf:"varint,11,opt,name=damage_taken,json=damageTaken" json:"damage_taken,omitempty"`
-	Dominations         *uint64                `protobuf:"varint,12,opt,name=dominations" json:"dominations,omitempty"`
-	Dominated           *uint64                `protobuf:"varint,13,opt,name=dominated" json:"dominated,omitempty"`
-	Revenges            *uint64                `protobuf:"varint,14,opt,name=revenges" json:"revenges,omitempty"`
-	Revenged            *uint64                `protobuf:"varint,15,opt,name=revenged" json:"revenged,omitempty"`
-	Airshots            *uint64                `protobuf:"varint,16,opt,name=airshots" json:"airshots,omitempty"`
-	HeadshotKills       *uint64                `protobuf:"varint,17,opt,name=headshot_kills,json=headshotKills" json:"headshot_kills,omitempty"`
-	BackstabKills       *uint64                `protobuf:"varint,18,opt,name=backstab_kills,json=backstabKills" json:"backstab_kills,omitempty"`
-	Headshots           *uint64                `protobuf:"varint,19,opt,name=headshots" json:"headshots,omitempty"`
-	Backstabs           *uint64                `protobuf:"varint,20,opt,name=backstabs" json:"backstabs,omitempty"`
-	WasHeadshot         *uint64                `protobuf:"varint,21,opt,name=was_headshot,json=wasHeadshot" json:"was_headshot,omitempty"`
-	WasBackstabbed      *uint64                `protobuf:"varint,22,opt,name=was_backstabbed,json=wasBackstabbed" json:"was_backstabbed,omitempty"`
-	PreroundHealing     *uint64                `protobuf:"varint,23,opt,name=preround_healing,json=preroundHealing" json:"preround_healing,omitempty"`
-	Healing             *uint64                `protobuf:"varint,24,opt,name=healing" json:"healing,omitempty"`
-	PostroundHealing    *uint64                `protobuf:"varint,25,opt,name=postround_healing,json=postroundHealing" json:"postround_healing,omitempty"`
-	Drops               *uint64                `protobuf:"varint,26,opt,name=drops" json:"drops,omitempty"`
-	NearFullChargeDeath *uint64                `protobuf:"varint,27,opt,name=near_full_charge_death,json=nearFullChargeDeath" json:"near_full_charge_death,omitempty"`
-	ChargesUber         *uint64                `protobuf:"varint,28,opt,name=charges_uber,json=chargesUber" json:"charges_uber,omitempty"`
-	ChargesKritz        *uint64                `protobuf:"varint,29,opt,name=charges_kritz,json=chargesKritz" json:"charges_kritz,omitempty"`
-	ChargesVacc         *uint64                `protobuf:"varint,30,opt,name=charges_vacc,json=chargesVacc" json:"charges_vacc,omitempty"`
-	ChargesQuickfix     *uint64                `protobuf:"varint,31,opt,name=charges_quickfix,json=chargesQuickfix" json:"charges_quickfix,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
-}
-
-func (x *RoundPlayerClass) Reset() {
-	*x = RoundPlayerClass{}
-	mi := &file_stats_v1_stats_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RoundPlayerClass) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RoundPlayerClass) ProtoMessage() {}
-
-func (x *RoundPlayerClass) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RoundPlayerClass.ProtoReflect.Descriptor instead.
-func (*RoundPlayerClass) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *RoundPlayerClass) GetClass() string {
-	if x != nil && x.Class != nil {
-		return *x.Class
-	}
-	return ""
-}
-
-func (x *RoundPlayerClass) GetRoundId() uint32 {
-	if x != nil && x.RoundId != nil {
-		return *x.RoundId
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetSteamId() int64 {
-	if x != nil && x.SteamId != nil {
-		return *x.SteamId
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetKills() uint64 {
-	if x != nil && x.Kills != nil {
-		return *x.Kills
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetAssists() uint64 {
-	if x != nil && x.Assists != nil {
-		return *x.Assists
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetDeaths() uint64 {
-	if x != nil && x.Deaths != nil {
-		return *x.Deaths
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetPostroundKills() uint64 {
-	if x != nil && x.PostroundKills != nil {
-		return *x.PostroundKills
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetPostroundAssists() uint64 {
-	if x != nil && x.PostroundAssists != nil {
-		return *x.PostroundAssists
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetPostroundDeaths() uint64 {
-	if x != nil && x.PostroundDeaths != nil {
-		return *x.PostroundDeaths
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetDamage() uint64 {
-	if x != nil && x.Damage != nil {
-		return *x.Damage
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetDamageTaken() uint64 {
-	if x != nil && x.DamageTaken != nil {
-		return *x.DamageTaken
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetDominations() uint64 {
-	if x != nil && x.Dominations != nil {
-		return *x.Dominations
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetDominated() uint64 {
-	if x != nil && x.Dominated != nil {
-		return *x.Dominated
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetRevenges() uint64 {
-	if x != nil && x.Revenges != nil {
-		return *x.Revenges
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetRevenged() uint64 {
-	if x != nil && x.Revenged != nil {
-		return *x.Revenged
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetAirshots() uint64 {
-	if x != nil && x.Airshots != nil {
-		return *x.Airshots
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetHeadshotKills() uint64 {
-	if x != nil && x.HeadshotKills != nil {
-		return *x.HeadshotKills
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetBackstabKills() uint64 {
-	if x != nil && x.BackstabKills != nil {
-		return *x.BackstabKills
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetHeadshots() uint64 {
-	if x != nil && x.Headshots != nil {
-		return *x.Headshots
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetBackstabs() uint64 {
-	if x != nil && x.Backstabs != nil {
-		return *x.Backstabs
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetWasHeadshot() uint64 {
-	if x != nil && x.WasHeadshot != nil {
-		return *x.WasHeadshot
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetWasBackstabbed() uint64 {
-	if x != nil && x.WasBackstabbed != nil {
-		return *x.WasBackstabbed
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetPreroundHealing() uint64 {
-	if x != nil && x.PreroundHealing != nil {
-		return *x.PreroundHealing
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetHealing() uint64 {
-	if x != nil && x.Healing != nil {
-		return *x.Healing
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetPostroundHealing() uint64 {
-	if x != nil && x.PostroundHealing != nil {
-		return *x.PostroundHealing
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetDrops() uint64 {
-	if x != nil && x.Drops != nil {
-		return *x.Drops
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetNearFullChargeDeath() uint64 {
-	if x != nil && x.NearFullChargeDeath != nil {
-		return *x.NearFullChargeDeath
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetChargesUber() uint64 {
-	if x != nil && x.ChargesUber != nil {
-		return *x.ChargesUber
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetChargesKritz() uint64 {
-	if x != nil && x.ChargesKritz != nil {
-		return *x.ChargesKritz
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetChargesVacc() uint64 {
-	if x != nil && x.ChargesVacc != nil {
-		return *x.ChargesVacc
-	}
-	return 0
-}
-
-func (x *RoundPlayerClass) GetChargesQuickfix() uint64 {
+func (x *RoundPlayerVariant) GetChargesQuickfix() uint64 {
 	if x != nil && x.ChargesQuickfix != nil {
 		return *x.ChargesQuickfix
 	}
@@ -1428,7 +1899,67 @@ var File_stats_v1_stats_proto protoreflect.FileDescriptor
 
 const file_stats_v1_stats_proto_rawDesc = "" +
 	"\n" +
-	"\x14stats/v1/stats.proto\x12\bstats.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12maps/v1/maps.proto\"3\n" +
+	"\x14stats/v1/stats.proto\x12\bstats.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12maps/v1/maps.proto\x1a\x1bperson/v1/person_core.proto\".\n" +
+	"\x12WeaponListResponse\x12\x18\n" +
+	"\aweapons\x18\x01 \x03(\tR\aweapons\"p\n" +
+	"\x06Bucket\x12&\n" +
+	"\x0fstats_bucket_id\x18\x01 \x01(\x05R\rstatsBucketId\x12\x1f\n" +
+	"\vbucket_name\x18\x02 \x01(\tR\n" +
+	"bucketName\x12\x1d\n" +
+	"\n" +
+	"is_enabled\x18\x03 \x01(\bR\tisEnabled\"=\n" +
+	"\x0fBucketsResponse\x12*\n" +
+	"\abuckets\x18\x01 \x03(\v2\x10.stats.v1.BucketR\abuckets\"\xd1\x02\n" +
+	"\fQueryRequest\x121\n" +
+	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x122\n" +
+	"\x0fstats_bucket_id\x18\x02 \x01(\rB\n" +
+	"\xbaH\a\xc8\x01\x01*\x02 \x00R\rstatsBucketId\x12B\n" +
+	"\vtime_bucket\x18\x03 \x01(\x0e2\x14.stats.v1.TimeBucketB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\n" +
+	"timeBucket\x128\n" +
+	"\avariant\x18\x04 \x01(\x0e2\x11.stats.v1.VariantB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\avariant\x12\x1f\n" +
+	"\vvariant_key\x18\x05 \x01(\tR\n" +
+	"variantKey\x12;\n" +
+	"\x04time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\v\xbaH\b\xc8\x01\x01\xb2\x01\x028\x01R\x04time\"\xa3\t\n" +
+	"\fVariantStats\x12\x18\n" +
+	"\avariant\x18\x01 \x01(\tR\avariant\x12\x16\n" +
+	"\x04rank\x18\x02 \x01(\x04B\x020\x01R\x04rank\x120\n" +
+	"\x06player\x18\x03 \x01(\v2\x18.person.v1.PersonDisplayR\x06player\x12\x18\n" +
+	"\x05kills\x18\x04 \x01(\x04B\x020\x01R\x05kills\x12\x1c\n" +
+	"\aassists\x18\x05 \x01(\x04B\x020\x01R\aassists\x12\x1a\n" +
+	"\x06deaths\x18\x06 \x01(\x04B\x020\x01R\x06deaths\x12+\n" +
+	"\x0fpostround_kills\x18\a \x01(\x04B\x020\x01R\x0epostroundKills\x12/\n" +
+	"\x11postround_assists\x18\b \x01(\x04B\x020\x01R\x10postroundAssists\x12-\n" +
+	"\x10postround_deaths\x18\t \x01(\x04B\x020\x01R\x0fpostroundDeaths\x12\x1a\n" +
+	"\x06damage\x18\n" +
+	" \x01(\x04B\x020\x01R\x06damage\x12%\n" +
+	"\fdamage_taken\x18\v \x01(\x04B\x020\x01R\vdamageTaken\x12$\n" +
+	"\vdominations\x18\f \x01(\x04B\x020\x01R\vdominations\x12 \n" +
+	"\tdominated\x18\r \x01(\x04B\x020\x01R\tdominated\x12\x1e\n" +
+	"\brevenges\x18\x0e \x01(\x04B\x020\x01R\brevenges\x12\x1e\n" +
+	"\brevenged\x18\x0f \x01(\x04B\x020\x01R\brevenged\x12\x1e\n" +
+	"\bairshots\x18\x10 \x01(\x04B\x020\x01R\bairshots\x12)\n" +
+	"\x0eheadshot_kills\x18\x11 \x01(\x04B\x020\x01R\rheadshotKills\x12)\n" +
+	"\x0ebackstab_kills\x18\x12 \x01(\x04B\x020\x01R\rbackstabKills\x12 \n" +
+	"\theadshots\x18\x13 \x01(\x04B\x020\x01R\theadshots\x12 \n" +
+	"\tbackstabs\x18\x14 \x01(\x04B\x020\x01R\tbackstabs\x12%\n" +
+	"\fwas_headshot\x18\x15 \x01(\x04B\x020\x01R\vwasHeadshot\x12+\n" +
+	"\x0fwas_backstabbed\x18\x16 \x01(\x04B\x020\x01R\x0ewasBackstabbed\x12-\n" +
+	"\x10preround_healing\x18\x17 \x01(\x04B\x020\x01R\x0fpreroundHealing\x12\x1c\n" +
+	"\ahealing\x18\x18 \x01(\x04B\x020\x01R\ahealing\x12/\n" +
+	"\x11postround_healing\x18\x19 \x01(\x04B\x020\x01R\x10postroundHealing\x12\x18\n" +
+	"\x05drops\x18\x1a \x01(\x04B\x020\x01R\x05drops\x127\n" +
+	"\x16near_full_charge_death\x18\x1b \x01(\x04B\x020\x01R\x13nearFullChargeDeath\x12%\n" +
+	"\fcharges_uber\x18\x1c \x01(\x04B\x020\x01R\vchargesUber\x12'\n" +
+	"\rcharges_kritz\x18\x1d \x01(\x04B\x020\x01R\fchargesKritz\x12%\n" +
+	"\fcharges_vacc\x18\x1e \x01(\x04B\x020\x01R\vchargesVacc\x12-\n" +
+	"\x10charges_quickfix\x18\x1f \x01(\x04B\x020\x01R\x0fchargesQuickfix\"E\n" +
+	"\x15VariantStatsContainer\x12,\n" +
+	"\x05stats\x18\x01 \x03(\v2\x16.stats.v1.VariantStatsR\x05stats\"\xb0\x01\n" +
+	"\rQueryResponse\x12+\n" +
+	"\avariant\x18\x01 \x01(\x0e2\x11.stats.v1.VariantR\avariant\x12\x18\n" +
+	"\x05count\x18\x02 \x01(\x04B\x020\x01R\x05count\x12F\n" +
+	"\rstats_variant\x18\x03 \x01(\v2\x1f.stats.v1.VariantStatsContainerH\x00R\fstatsVariantB\x10\n" +
+	"\x0estat_container\"3\n" +
 	"\fMatchRequest\x12#\n" +
 	"\bmatch_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\amatchId\"6\n" +
 	"\rMatchResponse\x12%\n" +
@@ -1460,7 +1991,7 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\x0fis_sudden_death\x18\x04 \x01(\bR\risSuddenDeath\x12#\n" +
 	"\vduration_ms\x18\x05 \x01(\x04B\x020\x01R\n" +
 	"durationMs\x12/\n" +
-	"\aplayers\x18\x06 \x03(\v2\x15.stats.v1.RoundPlayerR\aplayers\"\xf4\x0f\n" +
+	"\aplayers\x18\x06 \x03(\v2\x15.stats.v1.RoundPlayerR\aplayers\"\xc1\x0f\n" +
 	"\vRoundPlayer\x12\x19\n" +
 	"\bround_id\x18\x01 \x01(\rR\aroundId\x12,\n" +
 	"\bsteam_id\x18\x02 \x01(\x03B\x11\xbaH\f\"\n" +
@@ -1514,46 +2045,13 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\fextinguishes\x18/ \x01(\x04B\x020\x01R\fextinguishes\x12\x1c\n" +
 	"\aignites\x180 \x01(\x04B\x020\x01R\aignites\x12+\n" +
 	"\x0fbuildings_built\x181 \x01(\x04B\x020\x01R\x0ebuildingsBuilt\x123\n" +
-	"\x13buildings_destroyed\x182 \x01(\x04B\x020\x01R\x12buildingsDestroyed\x125\n" +
-	"\aweapons\x18d \x03(\v2\x1b.stats.v1.RoundPlayerWeaponR\aweapons\x124\n" +
-	"\aclasses\x18e \x03(\v2\x1a.stats.v1.RoundPlayerClassR\aclasses\"\x96\t\n" +
-	"\x11RoundPlayerWeapon\x12\x16\n" +
-	"\x06weapon\x18\x01 \x01(\tR\x06weapon\x12\x19\n" +
-	"\bround_id\x18\x02 \x01(\rR\aroundId\x12\x1d\n" +
-	"\bsteam_id\x18\x03 \x01(\x03B\x020\x01R\asteamId\x12\x18\n" +
-	"\x05kills\x18\x04 \x01(\x04B\x020\x01R\x05kills\x12\x1c\n" +
-	"\aassists\x18\x05 \x01(\x04B\x020\x01R\aassists\x12\x1a\n" +
-	"\x06deaths\x18\x06 \x01(\x04B\x020\x01R\x06deaths\x12+\n" +
-	"\x0fpostround_kills\x18\a \x01(\x04B\x020\x01R\x0epostroundKills\x12/\n" +
-	"\x11postround_assists\x18\b \x01(\x04B\x020\x01R\x10postroundAssists\x12-\n" +
-	"\x10postround_deaths\x18\t \x01(\x04B\x020\x01R\x0fpostroundDeaths\x12\x1a\n" +
-	"\x06damage\x18\n" +
-	" \x01(\x04B\x020\x01R\x06damage\x12%\n" +
-	"\fdamage_taken\x18\v \x01(\x04B\x020\x01R\vdamageTaken\x12$\n" +
-	"\vdominations\x18\f \x01(\x04B\x020\x01R\vdominations\x12 \n" +
-	"\tdominated\x18\r \x01(\x04B\x020\x01R\tdominated\x12\x1e\n" +
-	"\brevenges\x18\x0e \x01(\x04B\x020\x01R\brevenges\x12\x1e\n" +
-	"\brevenged\x18\x0f \x01(\x04B\x020\x01R\brevenged\x12\x1e\n" +
-	"\bairshots\x18\x10 \x01(\x04B\x020\x01R\bairshots\x12)\n" +
-	"\x0eheadshot_kills\x18\x11 \x01(\x04B\x020\x01R\rheadshotKills\x12)\n" +
-	"\x0ebackstab_kills\x18\x12 \x01(\x04B\x020\x01R\rbackstabKills\x12 \n" +
-	"\theadshots\x18\x13 \x01(\x04B\x020\x01R\theadshots\x12 \n" +
-	"\tbackstabs\x18\x14 \x01(\x04B\x020\x01R\tbackstabs\x12%\n" +
-	"\fwas_headshot\x18\x15 \x01(\x04B\x020\x01R\vwasHeadshot\x12+\n" +
-	"\x0fwas_backstabbed\x18\x16 \x01(\x04B\x020\x01R\x0ewasBackstabbed\x12-\n" +
-	"\x10preround_healing\x18\x17 \x01(\x04B\x020\x01R\x0fpreroundHealing\x12\x1c\n" +
-	"\ahealing\x18\x18 \x01(\x04B\x020\x01R\ahealing\x12/\n" +
-	"\x11postround_healing\x18\x19 \x01(\x04B\x020\x01R\x10postroundHealing\x12\x18\n" +
-	"\x05drops\x18\x1a \x01(\x04B\x020\x01R\x05drops\x127\n" +
-	"\x16near_full_charge_death\x18\x1b \x01(\x04B\x020\x01R\x13nearFullChargeDeath\x12%\n" +
-	"\fcharges_uber\x18\x1c \x01(\x04B\x020\x01R\vchargesUber\x12'\n" +
-	"\rcharges_kritz\x18\x1d \x01(\x04B\x020\x01R\fchargesKritz\x12%\n" +
-	"\fcharges_vacc\x18\x1e \x01(\x04B\x020\x01R\vchargesVacc\x12-\n" +
-	"\x10charges_quickfix\x18\x1f \x01(\x04B\x020\x01R\x0fchargesQuickfix\"\x93\t\n" +
-	"\x10RoundPlayerClass\x12\x14\n" +
-	"\x05class\x18\x01 \x01(\tR\x05class\x12\x19\n" +
-	"\bround_id\x18\x02 \x01(\rR\aroundId\x12\x1d\n" +
-	"\bsteam_id\x18\x03 \x01(\x03B\x020\x01R\asteamId\x12\x18\n" +
+	"\x13buildings_destroyed\x182 \x01(\x04B\x020\x01R\x12buildingsDestroyed\x128\n" +
+	"\bvariants\x18d \x03(\v2\x1c.stats.v1.RoundPlayerVariantR\bvariants\"\xa8\t\n" +
+	"\x12RoundPlayerVariant\x12\x18\n" +
+	"\avariant\x18\x01 \x01(\tR\avariant\x12\x19\n" +
+	"\bround_id\x18\x02 \x01(\rR\aroundId\x12,\n" +
+	"\bsteam_id\x18\x03 \x01(\x03B\x11\xbaH\f\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\x12\x18\n" +
 	"\x05kills\x18\x04 \x01(\x04B\x020\x01R\x05kills\x12\x1c\n" +
 	"\aassists\x18\x05 \x01(\x04B\x020\x01R\aassists\x12\x1a\n" +
 	"\x06deaths\x18\x06 \x01(\x04B\x020\x01R\x06deaths\x12+\n" +
@@ -1587,9 +2085,27 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\x1bTEAM_UNASSIGNED_UNSPECIFIED\x10\x00\x12\r\n" +
 	"\tTEAM_SPEC\x10\x01\x12\f\n" +
 	"\bTEAM_RED\x10\x02\x12\f\n" +
-	"\bTEAM_BLU\x10\x032M\n" +
+	"\bTEAM_BLU\x10\x03*|\n" +
+	"\aVariant\x12\x1f\n" +
+	"\x1bVARIANT_OVERALL_UNSPECIFIED\x10\x00\x12\x11\n" +
+	"\rVARIANT_KILLS\x10\x01\x12\x13\n" +
+	"\x0fVARIANT_HEALING\x10\x02\x12\x13\n" +
+	"\x0fVARIANT_WEAPONS\x10\x03\x12\x13\n" +
+	"\x0fVARIANT_CLASSES\x10\x04*\xa5\x01\n" +
+	"\n" +
+	"TimeBucket\x12\x1b\n" +
+	"\x17TIME_BUCKET_UNSPECIFIED\x10\x00\x12\x15\n" +
+	"\x11TIME_BUCKET_DAILY\x10\x01\x12\x16\n" +
+	"\x12TIME_BUCKET_WEEKLY\x10\a\x12\x17\n" +
+	"\x13TIME_BUCKET_MONTHLY\x10\x1f\x12\x17\n" +
+	"\x12TIME_BUCKET_YEARLY\x10\xed\x02\x12\x19\n" +
+	"\x13TIME_BUCKET_ALLTIME\x10\x9f\x8d\x062\x8f\x02\n" +
 	"\fStatsService\x12=\n" +
-	"\x05Match\x12\x16.stats.v1.MatchRequest\x1a\x17.stats.v1.MatchResponse\"\x03\x90\x02\x01B\x96\x01\n" +
+	"\x05Match\x12\x16.stats.v1.MatchRequest\x1a\x17.stats.v1.MatchResponse\"\x03\x90\x02\x01\x12:\n" +
+	"\x05Query\x12\x16.stats.v1.QueryRequest\x1a\x17.stats.v1.QueryResponse\"\x00\x12D\n" +
+	"\n" +
+	"WeaponList\x12\x16.google.protobuf.Empty\x1a\x1c.stats.v1.WeaponListResponse\"\x00\x12>\n" +
+	"\aBuckets\x12\x16.google.protobuf.Empty\x1a\x19.stats.v1.BucketsResponse\"\x00B\x96\x01\n" +
 	"\fcom.stats.v1B\n" +
 	"StatsProtoP\x01Z9github.com/leighmacdonald/gbans/internal/stats/v1;statsv1\xa2\x02\x03SXX\xaa\x02\bStats.V1\xca\x02\bStats\\V1\xe2\x02\x14Stats\\V1\\GPBMetadata\xea\x02\tStats::V1b\beditionsp\xe8\a"
 
@@ -1605,38 +2121,63 @@ func file_stats_v1_stats_proto_rawDescGZIP() []byte {
 	return file_stats_v1_stats_proto_rawDescData
 }
 
-var file_stats_v1_stats_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_stats_v1_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_stats_v1_stats_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_stats_v1_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_stats_v1_stats_proto_goTypes = []any{
 	(Team)(0),                     // 0: stats.v1.Team
-	(*MatchRequest)(nil),          // 1: stats.v1.MatchRequest
-	(*MatchResponse)(nil),         // 2: stats.v1.MatchResponse
-	(*Match)(nil),                 // 3: stats.v1.Match
-	(*Round)(nil),                 // 4: stats.v1.Round
-	(*RoundPlayer)(nil),           // 5: stats.v1.RoundPlayer
-	(*RoundPlayerWeapon)(nil),     // 6: stats.v1.RoundPlayerWeapon
-	(*RoundPlayerClass)(nil),      // 7: stats.v1.RoundPlayerClass
-	(*v1.Map)(nil),                // 8: maps.v1.Map
-	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
+	(Variant)(0),                  // 1: stats.v1.Variant
+	(TimeBucket)(0),               // 2: stats.v1.TimeBucket
+	(*WeaponListResponse)(nil),    // 3: stats.v1.WeaponListResponse
+	(*Bucket)(nil),                // 4: stats.v1.Bucket
+	(*BucketsResponse)(nil),       // 5: stats.v1.BucketsResponse
+	(*QueryRequest)(nil),          // 6: stats.v1.QueryRequest
+	(*VariantStats)(nil),          // 7: stats.v1.VariantStats
+	(*VariantStatsContainer)(nil), // 8: stats.v1.VariantStatsContainer
+	(*QueryResponse)(nil),         // 9: stats.v1.QueryResponse
+	(*MatchRequest)(nil),          // 10: stats.v1.MatchRequest
+	(*MatchResponse)(nil),         // 11: stats.v1.MatchResponse
+	(*Match)(nil),                 // 12: stats.v1.Match
+	(*Round)(nil),                 // 13: stats.v1.Round
+	(*RoundPlayer)(nil),           // 14: stats.v1.RoundPlayer
+	(*RoundPlayerVariant)(nil),    // 15: stats.v1.RoundPlayerVariant
+	(*v1.Filter)(nil),             // 16: database.query.v1.Filter
+	(*timestamppb.Timestamp)(nil), // 17: google.protobuf.Timestamp
+	(*v11.PersonDisplay)(nil),     // 18: person.v1.PersonDisplay
+	(*v12.Map)(nil),               // 19: maps.v1.Map
+	(*emptypb.Empty)(nil),         // 20: google.protobuf.Empty
 }
 var file_stats_v1_stats_proto_depIdxs = []int32{
-	3,  // 0: stats.v1.MatchResponse.match:type_name -> stats.v1.Match
-	8,  // 1: stats.v1.Match.map:type_name -> maps.v1.Map
-	9,  // 2: stats.v1.Match.start_time:type_name -> google.protobuf.Timestamp
-	9,  // 3: stats.v1.Match.created_on:type_name -> google.protobuf.Timestamp
-	4,  // 4: stats.v1.Match.rounds:type_name -> stats.v1.Round
-	0,  // 5: stats.v1.Round.winner:type_name -> stats.v1.Team
-	5,  // 6: stats.v1.Round.players:type_name -> stats.v1.RoundPlayer
-	0,  // 7: stats.v1.RoundPlayer.team:type_name -> stats.v1.Team
-	6,  // 8: stats.v1.RoundPlayer.weapons:type_name -> stats.v1.RoundPlayerWeapon
-	7,  // 9: stats.v1.RoundPlayer.classes:type_name -> stats.v1.RoundPlayerClass
-	1,  // 10: stats.v1.StatsService.Match:input_type -> stats.v1.MatchRequest
-	2,  // 11: stats.v1.StatsService.Match:output_type -> stats.v1.MatchResponse
-	11, // [11:12] is the sub-list for method output_type
-	10, // [10:11] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	4,  // 0: stats.v1.BucketsResponse.buckets:type_name -> stats.v1.Bucket
+	16, // 1: stats.v1.QueryRequest.filter:type_name -> database.query.v1.Filter
+	2,  // 2: stats.v1.QueryRequest.time_bucket:type_name -> stats.v1.TimeBucket
+	1,  // 3: stats.v1.QueryRequest.variant:type_name -> stats.v1.Variant
+	17, // 4: stats.v1.QueryRequest.time:type_name -> google.protobuf.Timestamp
+	18, // 5: stats.v1.VariantStats.player:type_name -> person.v1.PersonDisplay
+	7,  // 6: stats.v1.VariantStatsContainer.stats:type_name -> stats.v1.VariantStats
+	1,  // 7: stats.v1.QueryResponse.variant:type_name -> stats.v1.Variant
+	8,  // 8: stats.v1.QueryResponse.stats_variant:type_name -> stats.v1.VariantStatsContainer
+	12, // 9: stats.v1.MatchResponse.match:type_name -> stats.v1.Match
+	19, // 10: stats.v1.Match.map:type_name -> maps.v1.Map
+	17, // 11: stats.v1.Match.start_time:type_name -> google.protobuf.Timestamp
+	17, // 12: stats.v1.Match.created_on:type_name -> google.protobuf.Timestamp
+	13, // 13: stats.v1.Match.rounds:type_name -> stats.v1.Round
+	0,  // 14: stats.v1.Round.winner:type_name -> stats.v1.Team
+	14, // 15: stats.v1.Round.players:type_name -> stats.v1.RoundPlayer
+	0,  // 16: stats.v1.RoundPlayer.team:type_name -> stats.v1.Team
+	15, // 17: stats.v1.RoundPlayer.variants:type_name -> stats.v1.RoundPlayerVariant
+	10, // 18: stats.v1.StatsService.Match:input_type -> stats.v1.MatchRequest
+	6,  // 19: stats.v1.StatsService.Query:input_type -> stats.v1.QueryRequest
+	20, // 20: stats.v1.StatsService.WeaponList:input_type -> google.protobuf.Empty
+	20, // 21: stats.v1.StatsService.Buckets:input_type -> google.protobuf.Empty
+	11, // 22: stats.v1.StatsService.Match:output_type -> stats.v1.MatchResponse
+	9,  // 23: stats.v1.StatsService.Query:output_type -> stats.v1.QueryResponse
+	3,  // 24: stats.v1.StatsService.WeaponList:output_type -> stats.v1.WeaponListResponse
+	5,  // 25: stats.v1.StatsService.Buckets:output_type -> stats.v1.BucketsResponse
+	22, // [22:26] is the sub-list for method output_type
+	18, // [18:22] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_stats_v1_stats_proto_init() }
@@ -1644,13 +2185,16 @@ func file_stats_v1_stats_proto_init() {
 	if File_stats_v1_stats_proto != nil {
 		return
 	}
+	file_stats_v1_stats_proto_msgTypes[6].OneofWrappers = []any{
+		(*QueryResponse_StatsVariant)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stats_v1_stats_proto_rawDesc), len(file_stats_v1_stats_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   7,
+			NumEnums:      3,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

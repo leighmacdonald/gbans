@@ -216,7 +216,7 @@ func (x *QueryRequest) GetSteamId() int64 {
 type QueryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Messages      []*Message             `protobuf:"bytes,1,rep,name=messages" json:"messages,omitempty"`
-	Count         *int64                 `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
+	Count         *uint64                `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -258,7 +258,7 @@ func (x *QueryResponse) GetMessages() []*Message {
 	return nil
 }
 
-func (x *QueryResponse) GetCount() int64 {
+func (x *QueryResponse) GetCount() uint64 {
 	if x != nil && x.Count != nil {
 		return *x.Count
 	}
@@ -436,7 +436,7 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\"e\n" +
 	"\rQueryResponse\x124\n" +
 	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\x12\x1e\n" +
-	"\x05count\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x05count\"\xea\x04\n" +
+	"\x05count\x18\x02 \x01(\x04B\b\xbaH\x03\xc8\x01\x010\x01R\x05count\"\xea\x04\n" +
 	"\aMessage\x128\n" +
 	"\x11person_message_id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\x0fpersonMessageId\x12#\n" +
 	"\bmatch_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\amatchId\x12/\n" +

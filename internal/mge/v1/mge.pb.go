@@ -233,7 +233,7 @@ func (x *PlayerStats) GetLastPlayed() *timestamppb.Timestamp {
 type GetRatingsOverallResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Stats         []*PlayerStats         `protobuf:"bytes,1,rep,name=stats" json:"stats,omitempty"`
-	Count         *int64                 `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
+	Count         *uint64                `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -275,7 +275,7 @@ func (x *GetRatingsOverallResponse) GetStats() []*PlayerStats {
 	return nil
 }
 
-func (x *GetRatingsOverallResponse) GetCount() int64 {
+func (x *GetRatingsOverallResponse) GetCount() uint64 {
 	if x != nil && x.Count != nil {
 		return *x.Count
 	}
@@ -565,7 +565,7 @@ func (x *Duel) GetDuelMode() DuelMode {
 type GetHistoryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	History       []*Duel                `protobuf:"bytes,1,rep,name=history" json:"history,omitempty"`
-	Count         *int64                 `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
+	Count         *uint64                `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -607,7 +607,7 @@ func (x *GetHistoryResponse) GetHistory() []*Duel {
 	return nil
 }
 
-func (x *GetHistoryResponse) GetCount() int64 {
+func (x *GetHistoryResponse) GetCount() uint64 {
 	if x != nil && x.Count != nil {
 		return *x.Count
 	}
@@ -639,7 +639,7 @@ const file_mge_v1_mge_proto_rawDesc = "" +
 	"lastPlayed\"n\n" +
 	"\x19GetRatingsOverallResponse\x121\n" +
 	"\x05stats\x18\x01 \x03(\v2\x13.mge.v1.PlayerStatsB\x06\xbaH\x03\xc8\x01\x01R\x05stats\x12\x1e\n" +
-	"\x05count\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x05count\"\xa2\x02\n" +
+	"\x05count\x18\x02 \x01(\x04B\b\xbaH\x03\xc8\x01\x010\x01R\x05count\"\xa2\x02\n" +
 	"\x11GetHistoryRequest\x121\n" +
 	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12.\n" +
 	"\x04mode\x18\x02 \x01(\x0e2\x10.mge.v1.DuelModeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04mode\x12)\n" +
@@ -682,7 +682,7 @@ const file_mge_v1_mge_proto_rawDesc = "" +
 	"\tduel_mode\x18\x14 \x01(\x0e2\x10.mge.v1.DuelModeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\bduelMode\"d\n" +
 	"\x12GetHistoryResponse\x12.\n" +
 	"\ahistory\x18\x01 \x03(\v2\f.mge.v1.DuelB\x06\xbaH\x03\xc8\x01\x01R\ahistory\x12\x1e\n" +
-	"\x05count\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x05count*J\n" +
+	"\x05count\x18\x02 \x01(\x04B\b\xbaH\x03\xc8\x01\x010\x01R\x05count*J\n" +
 	"\bDuelMode\x12$\n" +
 	" DUEL_MODE_ONE_VS_ONE_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14DUEL_MODE_TWO_VS_TWO\x10\x012\xab\x01\n" +

@@ -29,6 +29,14 @@ type Stats struct {
 	maps maps.Maps
 }
 
+func (s Stats) WeaponList(ctx context.Context) ([]string, error) {
+	return s.repo.WeaponList(ctx)
+}
+
+func (s Stats) Buckets(ctx context.Context) ([]Bucket, error) {
+	return s.repo.Buckets(ctx)
+}
+
 func New(repo Repository, maps maps.Maps) Stats {
 	return Stats{repo: repo, maps: maps}
 }
@@ -53,7 +61,7 @@ func (s Stats) StartRefreshHandler(ctx context.Context) error {
 
 	<-ctx.Done()
 
-	if errShutdown := scheduler.Shutdown(); err != nil {
+	if errShutdown := scheduler.Shutdown(); errShutdown != nil {
 		return errors.Join(errShutdown, ErrJob)
 	}
 
@@ -131,4 +139,8 @@ func (s Stats) Import(ctx context.Context, serverID int32, demoID int32, demo *d
 	slog.Info("Got match", slog.String("match", match.Hostname))
 
 	return &matchID, nil
+}
+
+func (s Stats) Query(ctx context.Context, statsBucketID uint32, opts Opts) ([]any, uint64, error) {
+	return s.repo.Query(ctx, statsBucketID, opts)
 }

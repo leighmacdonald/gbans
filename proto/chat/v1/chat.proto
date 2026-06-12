@@ -42,7 +42,7 @@ message QueryRequest {
 
 message QueryResponse {
   repeated Message messages = 1 [(buf.validate.field).required = true];
-  int64 count = 2 [(buf.validate.field).required = true];
+  uint64 count = 2 [(buf.validate.field).required = true];
 }
 
 message Message {

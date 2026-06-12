@@ -9,6 +9,7 @@ import (
 	context "context"
 	errors "errors"
 	v1 "github.com/leighmacdonald/gbans/internal/stats/v1"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	http "net/http"
 	strings "strings"
 )
@@ -35,11 +36,39 @@ const (
 const (
 	// StatsServiceMatchProcedure is the fully-qualified name of the StatsService's Match RPC.
 	StatsServiceMatchProcedure = "/stats.v1.StatsService/Match"
+	// StatsServiceQueryProcedure is the fully-qualified name of the StatsService's Query RPC.
+	StatsServiceQueryProcedure = "/stats.v1.StatsService/Query"
+	// StatsServiceWeaponListProcedure is the fully-qualified name of the StatsService's WeaponList RPC.
+	StatsServiceWeaponListProcedure = "/stats.v1.StatsService/WeaponList"
+	// StatsServiceBucketsProcedure is the fully-qualified name of the StatsService's Buckets RPC.
+	StatsServiceBucketsProcedure = "/stats.v1.StatsService/Buckets"
 )
 
 // StatsServiceClient is a client for the stats.v1.StatsService service.
 type StatsServiceClient interface {
 	Match(context.Context, *v1.MatchRequest) (*v1.MatchResponse, error)
+	// Query
+	//   - Known buckets. Each leaf defines how the stats are grouped and queried.
+	//     (Bukets)
+	//   - Bucket (mvm)
+	//   - ...
+	//   - Bucket (casual)
+	//     (TimeBuckets)
+	//   - Yearly
+	//   - Monthly
+	//   - Alltime
+	//     (Overall buckets)
+	//   - Kills
+	//   - Healing
+	//   - Weapons
+	//     (Variant Buckets)
+	//   - Variant: scattergun
+	//   - Classes
+	//     (Variant Buckets)
+	//   - Variant: soldier
+	Query(context.Context, *v1.QueryRequest) (*v1.QueryResponse, error)
+	WeaponList(context.Context, *emptypb.Empty) (*v1.WeaponListResponse, error)
+	Buckets(context.Context, *emptypb.Empty) (*v1.BucketsResponse, error)
 }
 
 // NewStatsServiceClient constructs a client for the stats.v1.StatsService service. By default, it
@@ -60,12 +89,33 @@ func NewStatsServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
+		query: connect.NewClient[v1.QueryRequest, v1.QueryResponse](
+			httpClient,
+			baseURL+StatsServiceQueryProcedure,
+			connect.WithSchema(statsServiceMethods.ByName("Query")),
+			connect.WithClientOptions(opts...),
+		),
+		weaponList: connect.NewClient[emptypb.Empty, v1.WeaponListResponse](
+			httpClient,
+			baseURL+StatsServiceWeaponListProcedure,
+			connect.WithSchema(statsServiceMethods.ByName("WeaponList")),
+			connect.WithClientOptions(opts...),
+		),
+		buckets: connect.NewClient[emptypb.Empty, v1.BucketsResponse](
+			httpClient,
+			baseURL+StatsServiceBucketsProcedure,
+			connect.WithSchema(statsServiceMethods.ByName("Buckets")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // statsServiceClient implements StatsServiceClient.
 type statsServiceClient struct {
-	match *connect.Client[v1.MatchRequest, v1.MatchResponse]
+	match      *connect.Client[v1.MatchRequest, v1.MatchResponse]
+	query      *connect.Client[v1.QueryRequest, v1.QueryResponse]
+	weaponList *connect.Client[emptypb.Empty, v1.WeaponListResponse]
+	buckets    *connect.Client[emptypb.Empty, v1.BucketsResponse]
 }
 
 // Match calls stats.v1.StatsService.Match.
@@ -77,9 +127,58 @@ func (c *statsServiceClient) Match(ctx context.Context, req *v1.MatchRequest) (*
 	return nil, err
 }
 
+// Query calls stats.v1.StatsService.Query.
+func (c *statsServiceClient) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResponse, error) {
+	response, err := c.query.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// WeaponList calls stats.v1.StatsService.WeaponList.
+func (c *statsServiceClient) WeaponList(ctx context.Context, req *emptypb.Empty) (*v1.WeaponListResponse, error) {
+	response, err := c.weaponList.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// Buckets calls stats.v1.StatsService.Buckets.
+func (c *statsServiceClient) Buckets(ctx context.Context, req *emptypb.Empty) (*v1.BucketsResponse, error) {
+	response, err := c.buckets.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // StatsServiceHandler is an implementation of the stats.v1.StatsService service.
 type StatsServiceHandler interface {
 	Match(context.Context, *v1.MatchRequest) (*v1.MatchResponse, error)
+	// Query
+	//   - Known buckets. Each leaf defines how the stats are grouped and queried.
+	//     (Bukets)
+	//   - Bucket (mvm)
+	//   - ...
+	//   - Bucket (casual)
+	//     (TimeBuckets)
+	//   - Yearly
+	//   - Monthly
+	//   - Alltime
+	//     (Overall buckets)
+	//   - Kills
+	//   - Healing
+	//   - Weapons
+	//     (Variant Buckets)
+	//   - Variant: scattergun
+	//   - Classes
+	//     (Variant Buckets)
+	//   - Variant: soldier
+	Query(context.Context, *v1.QueryRequest) (*v1.QueryResponse, error)
+	WeaponList(context.Context, *emptypb.Empty) (*v1.WeaponListResponse, error)
+	Buckets(context.Context, *emptypb.Empty) (*v1.BucketsResponse, error)
 }
 
 // NewStatsServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -96,10 +195,34 @@ func NewStatsServiceHandler(svc StatsServiceHandler, opts ...connect.HandlerOpti
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
+	statsServiceQueryHandler := connect.NewUnaryHandlerSimple(
+		StatsServiceQueryProcedure,
+		svc.Query,
+		connect.WithSchema(statsServiceMethods.ByName("Query")),
+		connect.WithHandlerOptions(opts...),
+	)
+	statsServiceWeaponListHandler := connect.NewUnaryHandlerSimple(
+		StatsServiceWeaponListProcedure,
+		svc.WeaponList,
+		connect.WithSchema(statsServiceMethods.ByName("WeaponList")),
+		connect.WithHandlerOptions(opts...),
+	)
+	statsServiceBucketsHandler := connect.NewUnaryHandlerSimple(
+		StatsServiceBucketsProcedure,
+		svc.Buckets,
+		connect.WithSchema(statsServiceMethods.ByName("Buckets")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/stats.v1.StatsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case StatsServiceMatchProcedure:
 			statsServiceMatchHandler.ServeHTTP(w, r)
+		case StatsServiceQueryProcedure:
+			statsServiceQueryHandler.ServeHTTP(w, r)
+		case StatsServiceWeaponListProcedure:
+			statsServiceWeaponListHandler.ServeHTTP(w, r)
+		case StatsServiceBucketsProcedure:
+			statsServiceBucketsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -111,4 +234,16 @@ type UnimplementedStatsServiceHandler struct{}
 
 func (UnimplementedStatsServiceHandler) Match(context.Context, *v1.MatchRequest) (*v1.MatchResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.Match is not implemented"))
+}
+
+func (UnimplementedStatsServiceHandler) Query(context.Context, *v1.QueryRequest) (*v1.QueryResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.Query is not implemented"))
+}
+
+func (UnimplementedStatsServiceHandler) WeaponList(context.Context, *emptypb.Empty) (*v1.WeaponListResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.WeaponList is not implemented"))
+}
+
+func (UnimplementedStatsServiceHandler) Buckets(context.Context, *emptypb.Empty) (*v1.BucketsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.Buckets is not implemented"))
 }

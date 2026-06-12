@@ -19,13 +19,14 @@ import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { avatarHashToURL } from "../util/strings.ts";
+import { emptyOrNullString } from "../util/types.ts";
 import { MenuItemLink } from "./MenuItemLink.tsx";
 import { TextLink } from "./TextLink.tsx";
 
 export type PersonCellProps = {
 	steamId: string;
-	personaName: string;
-	avatarHash: string;
+	personaName?: string;
+	avatarHash?: string;
 	onClick?: MouseEventHandler | undefined;
 } & PropsWithChildren;
 
@@ -177,7 +178,7 @@ export const PersonCell = ({ steamId, avatarHash, personaName, onClick, children
 						params={{ steamId: String(steamId) }}
 						onClick={onClick ?? undefined}
 					>
-						{personaName !== "" ? personaName : String(steamId)}
+						{emptyOrNullString(personaName) ? personaName : String(steamId)}
 					</TextLink>
 				)}
 			</Box>

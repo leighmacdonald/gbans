@@ -8,6 +8,8 @@ DROP TABLE IF EXISTS match_medic;
 
 DROP TABLE IF EXISTS match_player;
 
+DROP TABLE IF EXISTS match_round;
+
 DROP TABLE IF EXISTS match;
 
 drop table if exists stats_player_alltime;
@@ -20,32 +22,38 @@ drop table if exists stats_maps;
 
 drop table if exists player_class;
 
-CREATE TYPE player_class AS ENUM(
-  'spectator',
-  'uassigned',
-  'scout',
-  'soldier',
-  'pyro',
-  'demo',
-  'heavy',
-  'engineer',
-  'medic',
-  'sniper',
-  'spy',
-  'saxton'
-);
-
+-- CREATE TYPE player_class AS ENUM(
+--   'spectator',
+--   'uassigned',
+--   'scout',
+--   'soldier',
+--   'pyro',
+--   'demo',
+--   'heavy',
+--   'engineer',
+--   'medic',
+--   'sniper',
+--   'spy',
+--   'saxton'
+-- );
 CREATE TYPE player_team AS ENUM('unassigned', 'spec', 'red', 'blu');
 
 create table if not exists stats_bucket (
   stats_bucket_id serial not null primary key,
-  bucket_name text not null unique check (LENGTH(bucket_name) > 0)
+  bucket_name text not null unique check (LENGTH(bucket_name) > 0),
+  is_enabled bool not null default true
 );
 
 insert into
   stats_bucket (bucket_name)
 values
-  ('default');
+  ('casual'),
+  ('1ku'),
+  ('mge'),
+  ('dodgeball');
+
+alter table server
+add column if not exists stats_bucket_id integer references stats_bucket (stats_bucket_id);
 
 CREATE TABLE match (
   match_id uuid not null primary key,
@@ -127,8 +135,8 @@ CREATE TABLE match_round_player (
   primary key (round_id, steam_id)
 );
 
-create table match_round_player_weapon (
-  weapon text not null check (length(weapon) > 0),
+create table match_round_player_variants (
+  variant text not null check (length(variant) > 0),
   round_id integer not null references match_round (round_id) on delete cascade,
   steam_id bigint not null references person (steam_id),
   kills integer not null,
@@ -159,94 +167,84 @@ create table match_round_player_weapon (
   charges_kritz integer not null,
   charges_vacc integer not null,
   charges_quickfix integer not null,
-  primary key (weapon, round_id, steam_id)
+  primary key (variant, round_id, steam_id)
 );
 
-create table match_round_player_class (
-  class player_class not null,
-  round_id int not null references match_round (round_id) on delete cascade,
-  steam_id bigint not null references person (steam_id),
-  kills integer not null,
-  assists integer not null,
-  deaths integer not null,
-  postround_kills integer not null,
-  postround_assists integer not null,
-  postround_deaths integer not null,
-  damage bigint not null,
-  damage_taken bigint not null,
-  dominations integer not null,
-  dominated integer not null,
-  revenges integer not null,
-  revenged integer not null,
-  airshots integer not null,
-  headshot_kills integer not null,
-  backstab_kills integer not null,
-  headshots integer not null,
-  backstabs integer not null,
-  was_headshot integer not null,
-  preround_healing integer not null,
-  healing bigint not null,
-  postround_healing bigint not null,
-  drops integer not null,
-  near_full_charge_death integer not null,
-  charges_uber integer not null,
-  charges_kritz integer not null,
-  charges_vacc integer not null,
-  charges_quickfix integer not null,
-  was_backstabbed integer not null,
-  primary key (class, round_id, steam_id)
-);
+create materialized view if not exists stats_weapons_view as
+select distinct
+  variant
+from
+  match_round_player_variants
+where
+  variant NOT IN (
+    'spectator',
+    'uassigned',
+    'scout',
+    'soldier',
+    'pyro',
+    'demo',
+    'heavy',
+    'engineer',
+    'medic',
+    'sniper',
+    'spy',
+    'saxton'
+  );
 
-create materialized view stats_summary_daily as
+create materialized view if not exists stats_summary_daily_overall_view as
 select
   date_trunc('day', m.created_on) as date_bucket,
   m.stats_bucket_id,
+  rank() over (
+    order by
+      sum(p.points) desc
+  ) as rank,
   p.steam_id,
-  SUM(p.points) as point,
-  SUM(p.connection_count) as connection_count,
-  SUM(p.bonus_points) as bonus_points,
-  SUM(p.kills) as kills,
-  SUM(p.assists) as assists,
-  SUM(p.deaths) as deaths,
-  SUM(p.postround_kills) as postround_kills,
-  SUM(p.postround_assists) as postround_assists,
-  SUM(p.preround_healing) as preround_healing,
-  SUM(p.healing) as healing,
-  SUM(p.drops) as drops,
-  SUM(p.near_full_charge_death) as near_full_charge_death,
-  SUM(p.charges_uber) as charges_uber,
-  SUM(p.charges_kritz) as charges_kritz,
-  SUM(p.charges_vacc) as charges_vacc,
-  SUM(p.charges_quickfix) as charges_quickfix,
-  SUM(p.damage) as damage,
-  SUM(p.damage_taken) as damage_taken,
-  SUM(p.dominations) as dominations,
-  SUM(p.dominated) as dominated,
-  SUM(p.revenges) as revenges,
-  SUM(p.revenged) as revenged,
-  SUM(p.airshots) as airshots,
-  SUM(p.headshots) as headshots,
-  SUM(p.headshot_kills) as headshot_kills,
-  SUM(p.backstabs) as backstabs,
-  SUM(p.backstab_kills) as backstab_kills,
-  SUM(p.was_headshot) as was_headshot,
-  SUM(p.was_backstabbed) as was_backstabbed,
-  SUM(p.shots) as shots,
-  SUM(p.hits) as hits,
-  SUM(p.objects_built) as objects_built,
-  SUM(p.objects_destroyed) as objects_destroyed,
-  SUM(p.scoreboard_kills) as scoreboard_kills,
-  SUM(p.scoreboard_assists) as scoreboard_assists,
-  SUM(p.scoreboard_deaths) as scoreboard_deaths,
-  SUM(p.suicides) as suicides,
-  SUM(p.postround_deaths) as postround_deaths,
-  SUM(p.captures) as captures,
-  SUM(p.captures_blocked) as captures_blocked,
-  SUM(p.scoreboard_damage) as scoreboard_damage,
-  SUM(p.extinguishes) as extinguishes,
-  SUM(p.ignites),
-  SUM(p.buildings_built) as ignites,
-  SUM(p.buildings_destroyed) as buildings_destroyed
+  sum(p.points) as points,
+  sum(p.connection_count) as connection_count,
+  sum(p.bonus_points) as bonus_points,
+  sum(p.kills) as kills,
+  sum(p.assists) as assists,
+  sum(p.deaths) as deaths,
+  sum(p.postround_kills) as postround_kills,
+  sum(p.postround_assists) as postround_assists,
+  sum(p.preround_healing) as preround_healing,
+  sum(p.healing) as healing,
+  sum(p.drops) as drops,
+  sum(p.near_full_charge_death) as near_full_charge_death,
+  sum(p.charges_uber) as charges_uber,
+  sum(p.charges_kritz) as charges_kritz,
+  sum(p.charges_vacc) as charges_vacc,
+  sum(p.charges_quickfix) as charges_quickfix,
+  sum(p.damage) as damage,
+  sum(p.damage_taken) as damage_taken,
+  sum(p.dominations) as dominations,
+  sum(p.dominated) as dominated,
+  sum(p.revenges) as revenges,
+  sum(p.revenged) as revenged,
+  sum(p.airshots) as airshots,
+  sum(p.headshots) as headshots,
+  sum(p.headshot_kills) as headshot_kills,
+  sum(p.backstabs) as backstabs,
+  sum(p.backstab_kills) as backstab_kills,
+  sum(p.was_headshot) as was_headshot,
+  sum(p.was_backstabbed) as was_backstabbed,
+  sum(p.shots) as shots,
+  sum(p.hits) as hits,
+  sum(p.objects_built) as objects_built,
+  sum(p.objects_destroyed) as objects_destroyed,
+  sum(p.scoreboard_kills) as scoreboard_kills,
+  sum(p.scoreboard_assists) as scoreboard_assists,
+  sum(p.scoreboard_deaths) as scoreboard_deaths,
+  sum(p.suicides) as suicides,
+  sum(p.postround_deaths) as postround_deaths,
+  sum(p.captures) as captures,
+  sum(p.captures_blocked) as captures_blocked,
+  sum(p.scoreboard_damage) as scoreboard_damage,
+  sum(p.extinguishes) as extinguishes,
+  sum(p.ignites) as ignites,
+  sum(p.buildings_built) as buildings_built,
+  sum(p.buildings_destroyed) as buildings_destroyed
 from
   match m
   left join match_round r USING (match_id)
@@ -254,103 +252,71 @@ from
 group by
   date_bucket,
   m.stats_bucket_id,
-  r.match_id,
   p.steam_id;
 
-create materialized view stats_summary_daily_weapons as
+create materialized view if not exists stats_summary_daily_variants_view as
 select
   date_trunc('day', m.created_on) as date_bucket,
   m.stats_bucket_id,
-  p.steam_id,
-  w.weapon,
-  SUM(w.kills) as kills,
-  SUM(w.assists) as assists,
-  SUM(w.deaths) as deaths,
-  SUM(w.postround_kills) as postround_kills,
-  SUM(w.postround_assists) as postround_assists,
-  SUM(w.postround_deaths) as postround_deaths,
-  SUM(w.damage) as damage,
-  SUM(w.damage_taken) as damage_taken,
-  SUM(w.dominations) as dominations,
-  SUM(w.dominated) as dominated,
-  SUM(w.revenges) as revenges,
-  SUM(w.revenged) as revenged,
-  SUM(w.airshots) as airshots,
-  SUM(w.headshot_kills) as headshot_kills,
-  SUM(w.backstab_kills) as backstab_kills,
-  SUM(w.headshots) as headshots,
-  SUM(w.backstabs) as backstabs,
-  SUM(w.was_headshot) as was_headshot,
-  SUM(w.was_backstabbed) as was_backstabbed,
-  SUM(w.preround_healing) as preround_healing,
-  SUM(w.healing) as healing,
-  SUM(w.postround_healing) as postround_healing,
-  SUM(w.drops) as drops,
-  SUM(w.near_full_charge_death) as near_full_charge_death,
-  SUM(w.charges_uber) as charges_uber,
-  SUM(w.charges_kritz) as charges_kritz,
-  SUM(w.charges_vacc) as charges_vacc,
-  SUM(w.charges_quickfix) as charges_quickfix
+  v.steam_id,
+  v.variant,
+  rank() over (
+    partition by
+      v.variant
+    order by
+      sum(v.kills) desc
+  ) as rank,
+  sum(v.kills) as kills,
+  sum(v.assists) as assists,
+  sum(v.deaths) as deaths,
+  sum(v.postround_kills) as postround_kills,
+  sum(v.postround_assists) as postround_assists,
+  sum(v.postround_deaths) as postround_deaths,
+  sum(v.damage) as damage,
+  sum(v.damage_taken) as damage_taken,
+  sum(v.dominations) as dominations,
+  sum(v.dominated) as dominated,
+  sum(v.revenges) as revenges,
+  sum(v.revenged) as revenged,
+  sum(v.airshots) as airshots,
+  sum(v.headshot_kills) as headshot_kills,
+  sum(v.backstab_kills) as backstab_kills,
+  sum(v.headshots) as headshots,
+  sum(v.backstabs) as backstabs,
+  sum(v.was_headshot) as was_headshot,
+  sum(v.was_backstabbed) as was_backstabbed,
+  sum(v.preround_healing) as preround_healing,
+  sum(v.healing) as healing,
+  sum(v.postround_healing) as postround_healing,
+  sum(v.drops) as drops,
+  sum(v.near_full_charge_death) as near_full_charge_death,
+  sum(v.charges_uber) as charges_uber,
+  sum(v.charges_kritz) as charges_kritz,
+  sum(v.charges_vacc) as charges_vacc,
+  sum(v.charges_quickfix) as charges_quickfix
 from
   match m
-  left join match_round r USING (match_id)
-  left join match_round_player p USING (round_id)
-  left join match_round_player_weapon w USING (round_id)
+  left join match_round r using (match_id)
+  left join match_round_player_variants v using (round_id)
 group by
   date_bucket,
   m.stats_bucket_id,
-  r.match_id,
-  p.steam_id,
-  w.weapon;
+  v.steam_id,
+  v.variant;
 
-create materialized view stats_summary_daily_classes as
-select
-  date_trunc('day', m.created_on) as date_bucket,
-  m.stats_bucket_id,
-  p.steam_id,
-  c.class,
-  SUM(c.kills) as kills,
-  SUM(c.assists) as assists,
-  SUM(c.deaths) as deaths,
-  SUM(c.postround_kills) as postround_kills,
-  SUM(c.postround_assists) as postround_assists,
-  SUM(c.postround_deaths) as postround_deaths,
-  SUM(c.damage) as damage,
-  SUM(c.damage_taken) as damage_taken,
-  SUM(c.dominations) as dominations,
-  SUM(c.dominated) as dominated,
-  SUM(c.revenges) as revenges,
-  SUM(c.revenged) as revenged,
-  SUM(c.airshots) as airshots,
-  SUM(c.headshot_kills) as headshot_kills,
-  SUM(c.backstab_kills) as backstab_kills,
-  SUM(c.headshots) as headshots,
-  SUM(c.backstabs) as backstabs,
-  SUM(c.was_headshot) as was_headshot,
-  SUM(c.was_backstabbed) as was_backstabbed,
-  SUM(c.preround_healing) as preround_healing,
-  SUM(c.healing) as healing,
-  SUM(c.postround_healing) as postround_healing,
-  SUM(c.drops) as drops,
-  SUM(c.near_full_charge_death) as near_full_charge_death,
-  SUM(c.charges_uber) as charges_uber,
-  SUM(c.charges_kritz) as charges_kritz,
-  SUM(c.charges_vacc) as charges_vacc,
-  SUM(c.charges_quickfix) as charges_quickfix
-from
-  match m
-  left join match_round r USING (match_id)
-  left join match_round_player p USING (round_id)
-  left join match_round_player_class c USING (round_id)
-group by
-  date_bucket,
-  m.stats_bucket_id,
-  r.match_id,
-  p.steam_id,
-  c.class;
+create index if not exists stats_summary_daily_variant_idx on stats_summary_daily_variants_view (variant);
 
-refresh materialized view stats_summary_daily;
+create index if not exists stats_summary_daily_variant_steamid_idx on stats_summary_daily_variants_view (steam_id);
 
-refresh materialized view stats_summary_daily_weapons;
+create index if not exists stats_summary_daily_overall_steamid_idx on stats_summary_daily_overall_view (steam_id);
 
-refresh materialized view stats_summary_daily_classes;
+-- create index if not exists stats_summary_daily_variant_idx on stats_summary_alltime_variants_view (variant);
+-- create index if not exists stats_summary_daily_variant_steamid_idx on stats_summary_alltime_variants_view (steam_id);
+refresh materialized view stats_weapons_view;
+
+refresh materialized view stats_summary_daily_overall_view;
+
+refresh materialized view stats_summary_daily_variants_view;
+
+-- refresh materialized view stats_summary_alltime_overall_view;
+-- refresh materialized view stats_summary_alltime_variants_view;
