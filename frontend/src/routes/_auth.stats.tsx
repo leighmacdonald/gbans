@@ -1,3 +1,4 @@
+import { create } from "@bufbuild/protobuf";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { useQuery } from "@connectrpc/connect-query";
 import MenuItem from "@mui/material/MenuItem";
@@ -6,7 +7,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/system/Grid";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import {
 	createMRTColumnHelper,
 	type MRT_ColumnFiltersState,
@@ -14,7 +15,7 @@ import {
 	type MRT_SortingState,
 	useMaterialReactTable,
 } from "material-react-table";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import z from "zod/v4";
 import { ErrorDetails } from "../component/ErrorDetails.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
@@ -27,18 +28,21 @@ import {
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { renderTableError } from "../error.tsx";
-import { type Bucket, TimeBucket, Variant, type VariantStats } from "../rpc/stats/v1/stats_pb.ts";
-import { buckets, query } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
+import { FilterSchema } from "../rpc/database/query/v1/filter_pb.ts";
+import { type Bucket, QueryRequestSchema, TimeBucket, Variant, type VariantStats } from "../rpc/stats/v1/stats_pb.ts";
+import { buckets, query, weaponList } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
+import { enumValues } from "../util/lists.ts";
+import { toTitleCase } from "../util/strings.ts";
 
 const defaultValues = { ...makeSchemaDefaults({ defaultColumn: "rank" }) };
 const validateSearch = z
 	.object({
-		timeBucket: z.enum(TimeBucket),
-		statsBucketId: z.number(),
-		time: z.coerce.date(),
-		variant: z.enum(Variant),
-		variantKey: z.string(),
+		timeBucket: z.enum(TimeBucket).optional().default(TimeBucket.DAILY),
+		statsBucketId: z.number().optional().default(1),
+		time: z.coerce.date().optional().default(subDays(new Date(), 1)),
+		variant: z.enum(Variant).optional().default(Variant.OVERALL_UNSPECIFIED),
+		variantKey: z.string().optional(),
 	})
 	.extend(makeSchemaState("rank").shape);
 
@@ -59,28 +63,68 @@ export const Route = createFileRoute("/_auth/stats")({
 const columnHelper = createMRTColumnHelper<VariantStats>();
 const defaultOptions = createDefaultTableOptions<VariantStats>();
 
+const classList = [
+	"scout",
+	"soldier",
+	"pyro",
+	"demo",
+	"heavy",
+	"engineer",
+	"medic",
+	"sniper",
+	"spy",
+	// 'saxton'
+];
+
 function StatsComponent() {
 	const search = Route.useSearch();
 	const navigate = useNavigate();
-	const sort = search.sorting?.find((sort) => sort);
+	const [selectedVariant, setSelectedVariant] = useState(Variant.OVERALL_UNSPECIFIED);
+
+	const {
+		data: variantKeys,
+		isLoading: isLoadingVariantKeys,
+		isError: isErrorVariantKeys,
+	} = useQuery(weaponList, {});
+
 	const { data: statBuckets, isLoading: isLoadingStatBuckets, isError: isErrorStatBuckets } = useQuery(buckets, {});
-	const { data, isLoading, isError, error, isRefetching } = useQuery(
-		query,
-		{
-			statsBucketId: search.statsBucketId,
+
+	const qOpts = useMemo(() => {
+		const sort = search.sorting?.find((sort) => sort);
+		return create(QueryRequestSchema, {
+			statsBucketId: search.statsBucketId ?? 1,
 			timeBucket: search.timeBucket ?? TimeBucket.DAILY,
-			time: timestampFromDate(search.time ?? new Date()),
-			variant: search.variant ?? Variant.WEAPONS,
-			variantKey: search.variantKey,
-			filter: {
+			time: timestampFromDate(search.time ?? subDays(new Date(), 1)),
+			variant: search.variant ?? Variant.OVERALL_UNSPECIFIED,
+			variantKey: search.variantKey ?? "",
+			filter: create(FilterSchema, {
 				limit: String(search.pagination?.pageSize ?? 25),
 				desc: sort ? sort.desc : false,
 				offset: String(search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : 0),
 				orderBy: sort ? sort.id : "rank",
-			},
-		},
-		{ enabled: !isLoadingStatBuckets && !isErrorStatBuckets },
-	);
+			}),
+		});
+	}, [search]);
+
+	const { data, isLoading, isError, error, isRefetching } = useQuery(query, qOpts, {
+		enabled: !isLoadingStatBuckets && !isErrorStatBuckets && !isLoadingVariantKeys && !isErrorVariantKeys,
+		retry: false,
+	});
+
+	const sortedVariantKeys = useMemo(() => {
+		if (!variantKeys?.weapons) {
+			return classList;
+		}
+
+		switch (selectedVariant) {
+			case Variant.WEAPONS:
+				return variantKeys.weapons.toSorted();
+			case Variant.CLASSES:
+				return classList;
+			default:
+				return [];
+		}
+	}, [variantKeys, selectedVariant]);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		async (updater) => {
@@ -133,7 +177,7 @@ function StatsComponent() {
 				break;
 		}
 
-		return `${period}	${bucket} Stats (${format(search.time, "PPP")}) [${search.variantKey}]`;
+		return `${period}	${bucket} Stats (${format(search.time ?? new Date(), "PPP")}) [${search.variantKey}]`;
 	}, [search, statBuckets]);
 
 	const columns = useMemo(() => {
@@ -355,8 +399,11 @@ function StatsComponent() {
 			variant: search.variant,
 			timeBucket: search.timeBucket,
 			time: search.time,
+			variantKey: search.variantKey,
 		},
 	});
+
+	// const activeVariants = useMemo(() => 	{}, [search.]);
 
 	if (isError) {
 		return <ErrorDetails error={error} />;
@@ -372,20 +419,39 @@ function StatsComponent() {
 							await form.handleSubmit();
 						}}
 					>
-						<Stack direction={"row"} padding={1}>
+						<Stack direction={"row"} padding={1} spacing={2}>
 							<form.AppField
 								name={"statsBucketID"}
 								children={(field) => {
 									return (
 										<field.SelectField
 											items={statBuckets?.buckets ?? []}
-											label="Stats Bucket"
+											label="Stats Group"
 											variant={"standard"}
 											renderItem={(item) => {
 												const b = item as Bucket;
 												return (
 													<MenuItem key={b.bucketName} value={b.statsBucketId}>
-														{b.bucketName}
+														{toTitleCase(b.bucketName)}
+													</MenuItem>
+												);
+											}}
+										/>
+									);
+								}}
+							/>
+							<form.AppField
+								name={"timeBucket"}
+								children={(field) => {
+									return (
+										<field.StatsTimeBucketField
+											items={enumValues(TimeBucket)}
+											label="Time Range"
+											variant={"standard"}
+											renderItem={(item) => {
+												return (
+													<MenuItem key={item} value={item}>
+														{toTitleCase(TimeBucket[item])}
 													</MenuItem>
 												);
 											}}
@@ -397,15 +463,16 @@ function StatsComponent() {
 								name={"variant"}
 								children={(field) => {
 									return (
-										<field.SelectField
-											items={[{ label: "Overall", value: 0 }]}
-											label="Variant"
+										<field.StatsVariantField
+											items={enumValues(Variant)}
+											label="Stat Type"
 											variant={"standard"}
+											handleChange={(e) => setSelectedVariant(e)}
 											renderItem={(item) => {
-												const b = item as Bucket;
+												const v = item as Variant;
 												return (
-													<MenuItem key={b.bucketName} value={b.statsBucketId}>
-														{b.bucketName}
+													<MenuItem key={v} value={v}>
+														{toTitleCase(Variant[v])}
 													</MenuItem>
 												);
 											}}
@@ -413,6 +480,34 @@ function StatsComponent() {
 									);
 								}}
 							/>
+
+							<form.AppField
+								name={"variantKey"}
+								children={(field) => {
+									return (
+										<field.SelectField
+											items={sortedVariantKeys}
+											label="Filter By"
+											variant={"standard"}
+											disabled={
+												selectedVariant !== Variant.CLASSES &&
+												selectedVariant !== Variant.WEAPONS
+											}
+											renderItem={(item) => {
+												return (
+													<MenuItem key={item as string} value={item as string}>
+														{toTitleCase(item as string)}
+													</MenuItem>
+												);
+											}}
+										/>
+									);
+								}}
+							/>
+
+							<form.AppForm>
+								<form.SubmitButton fullWidth label="Show Me" />
+							</form.AppForm>
 						</Stack>
 					</form>
 				</Paper>

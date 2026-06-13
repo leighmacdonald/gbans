@@ -115,6 +115,12 @@ type Stats struct {
 	ChargesVacc         int `json:"charges_vacc"`
 	ChargesQuickfix     int `json:"charges_quickfix"`
 	WasBackstabbed      int `json:"was_backstabbed"`
+	Captures            int `json:"captures"`
+	CapturesBlocked     int `json:"captures_blocked"`
+	Shots               int `json:"shots"`
+	Hits                int `json:"hits"`
+	ObjectBuilt         int `json:"object_built"`
+	ObjectDestroyed     int `json:"object_destroyed"`
 }
 
 type PlayerSummary struct {
@@ -166,6 +172,7 @@ type PlayerSummary struct {
 
 	ScoreboardKills   int `json:"scoreboard_kills"`
 	ScoreboardAssists int `json:"scoreboard_assists"`
+	ScoreboardHealing int `json:"scoreboard_healing"`
 	Suicides          int `json:"suicides"`
 	ScoreboardDeaths  int `json:"scoreboard_deaths"`
 	PostroundDeaths   int `json:"postround_deaths"`

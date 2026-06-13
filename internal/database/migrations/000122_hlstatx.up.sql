@@ -87,16 +87,15 @@ CREATE TABLE match_round_player (
   mvp bool not null default false,
   tick_start integer not null,
   tick_end integer not null,
-  points integer not null,
-  connection_count integer not null,
-  bonus_points integer not null,
   kills integer not null,
   assists integer not null,
   deaths integer not null,
   postround_kills integer not null,
   postround_assists integer not null,
+  postround_deaths integer not null,
   preround_healing bigint not null,
   healing bigint not null,
+  postround_healing bigint not null,
   drops integer not null,
   near_full_charge_death integer not null,
   charges_uber integer not null,
@@ -114,24 +113,26 @@ CREATE TABLE match_round_player (
   headshot_kills integer not null,
   backstabs integer not null,
   backstab_kills integer not null,
+  captures integer not null,
+  captures_blocked integer not null,
   was_headshot integer not null,
   was_backstabbed integer not null,
   shots bigint not null,
   hits bigint not null,
   objects_built integer not null,
   objects_destroyed integer not null,
+  -- Extra player only stuff
+  points integer not null,
+  connection_count integer not null,
+  bonus_points integer not null,
   scoreboard_kills integer not null,
   scoreboard_assists integer not null,
-  suicides integer not null,
+  scoreboard_healing bigint not null,
   scoreboard_deaths integer not null,
-  postround_deaths integer not null,
-  captures integer not null,
-  captures_blocked integer not null,
   scoreboard_damage bigint not null,
+  suicides integer not null,
   extinguishes integer not null,
   ignites integer not null,
-  buildings_built integer not null,
-  buildings_destroyed integer not null,
   primary key (round_id, steam_id)
 );
 
@@ -145,19 +146,6 @@ create table match_round_player_variants (
   postround_kills integer not null,
   postround_assists integer not null,
   postround_deaths integer not null,
-  damage bigint not null,
-  damage_taken bigint not null,
-  dominations integer not null,
-  dominated integer not null,
-  revenges integer not null,
-  revenged integer not null,
-  airshots integer not null,
-  headshot_kills integer not null,
-  backstab_kills integer not null,
-  headshots integer not null,
-  backstabs integer not null,
-  was_headshot integer not null,
-  was_backstabbed integer not null,
   preround_healing integer not null,
   healing bigint not null,
   postround_healing bigint not null,
@@ -167,6 +155,25 @@ create table match_round_player_variants (
   charges_kritz integer not null,
   charges_vacc integer not null,
   charges_quickfix integer not null,
+  damage bigint not null,
+  damage_taken bigint not null,
+  dominations integer not null,
+  dominated integer not null,
+  revenges integer not null,
+  revenged integer not null,
+  airshots integer not null,
+  headshots integer not null,
+  headshot_kills integer not null,
+  backstabs integer not null,
+  backstab_kills integer not null,
+  captures integer not null,
+  captures_blocked integer not null,
+  was_headshot integer not null,
+  was_backstabbed integer not null,
+  shots bigint not null,
+  hits bigint not null,
+  objects_built integer not null,
+  objects_destroyed integer not null,
   primary key (variant, round_id, steam_id)
 );
 
@@ -242,9 +249,7 @@ select
   sum(p.captures_blocked) as captures_blocked,
   sum(p.scoreboard_damage) as scoreboard_damage,
   sum(p.extinguishes) as extinguishes,
-  sum(p.ignites) as ignites,
-  sum(p.buildings_built) as buildings_built,
-  sum(p.buildings_destroyed) as buildings_destroyed
+  sum(p.ignites) as ignites
 from
   match m
   left join match_round r USING (match_id)
@@ -262,6 +267,7 @@ select
   v.variant,
   rank() over (
     partition by
+      date_trunc('day', m.created_on),
       v.variant
     order by
       sum(v.kills) desc

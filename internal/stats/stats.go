@@ -10,7 +10,9 @@ import (
 	"github.com/go-co-op/gocron/v2"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/maps"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/pkg/demoparse"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 const (
@@ -27,6 +29,104 @@ var (
 type Stats struct {
 	repo Repository
 	maps maps.Maps
+}
+
+type VariantStats struct {
+	Rank    uint64
+	SteamID steamid.SteamID
+	Variant string
+
+	Kills               uint64
+	Assists             uint64
+	Deaths              uint64
+	PostroundKills      uint64
+	PostroundAssists    uint64
+	PostroundDeaths     uint64
+	Damage              uint64
+	DamageTaken         uint64
+	Dominations         uint64
+	Dominated           uint64
+	Revenges            uint64
+	Revenged            uint64
+	Airshots            uint64
+	HeadshotKills       uint64
+	BackstabKills       uint64
+	Headshots           uint64
+	Backstabs           uint64
+	WasHeadshot         uint64
+	WasBackstabbed      uint64
+	PreroundHealing     uint64
+	Healing             uint64
+	PostroundHealing    uint64
+	Drops               uint64
+	NearFullChargeDeath uint64
+	ChargesUber         uint64
+	ChargesKritz        uint64
+	ChargesVacc         uint64
+	ChargesQuickfix     uint64
+	Shots               uint64
+	Hits                uint64
+	ObjectsBuilt        uint64
+	ObjectsDestroyed    uint64
+	Captures            uint64
+	CapturesBlocked     uint64
+}
+
+type OverallStats struct {
+	Rank    uint64
+	SteamID steamid.SteamID
+	Variant string
+
+	MVP                 bool
+	TickStart           uint64
+	TickEnd             uint64
+	Points              uint64
+	ConnectionCount     uint64
+	BonusPoints         uint64
+	Kills               uint64
+	Assists             uint64
+	Deaths              uint64
+	PostroundKills      uint64
+	PostroundAssists    uint64
+	PostroundDeaths     uint64
+	PostroundHealing    uint64
+	Healing             uint64
+	PreroundHealing     uint64
+	Drops               uint64
+	NearFullChargeDeath uint64
+	ChargesUber         uint64
+	ChargesKritz        uint64
+	ChargesVacc         uint64
+	ChargesQuickfix     uint64
+	Damage              uint64
+	DamageTaken         uint64
+	Dominations         uint64
+	Dominated           uint64
+	Revenges            uint64
+	Revenged            uint64
+	Airshots            uint64
+	Headshots           uint64
+	HeadshotKills       uint64
+	Backstabs           uint64
+	BackstabKills       uint64
+	WasHeadshot         uint64
+	WasBackstabbed      uint64
+	Shots               uint64
+	Hits                uint64
+	ScoreboardKills     uint64
+	ScoreboardAssists   uint64
+	ScoreboardDeaths    uint64
+	ScoreboardHealing   uint64
+	Suicides            uint64
+	Captures            uint64
+	CapturesBlocked     uint64
+	ScoreboardDamage    uint64
+	Extinguishes        uint64
+	Ignites             uint64
+	ObjectsBuilt        uint64
+	ObjectsDestroyed    uint64
+	BuildingsBuilt      uint64
+	BUildingsDestroyed  uint64
 }
 
 func (s Stats) WeaponList(ctx context.Context) ([]string, error) {
@@ -93,6 +193,10 @@ func (s Stats) Match(ctx context.Context, matchID uuid.UUID) (*Match, error) {
 	return s.repo.Match(ctx, matchID)
 }
 
+func (s Stats) MatchesWithPlayer(ctx context.Context, steamID steamid.SteamID) ([]PlayerMatchHistory, error) {
+	return s.repo.MatchesWithPlayer(ctx, steamID)
+}
+
 func (s Stats) Import(ctx context.Context, serverID int32, demoID int32, demo *demoparse.Demo, timeStart time.Time) (*uuid.UUID, error) {
 	if demo.DemoType != demoparse.HL2Demo {
 		return nil, fmt.Errorf("%w: invalid demo type", ErrInvalidState)
@@ -142,5 +246,9 @@ func (s Stats) Import(ctx context.Context, serverID int32, demoID int32, demo *d
 }
 
 func (s Stats) Query(ctx context.Context, statsBucketID uint32, opts Opts) ([]any, uint64, error) {
+	if (opts.Variant == VariantWeapons || opts.Variant == VariantClasses) && opts.VariantKey == "" {
+		return nil, 0, fmt.Errorf("%w: variantKey must be set ", rpc.ErrBadRequest)
+	}
+
 	return s.repo.Query(ctx, statsBucketID, opts)
 }

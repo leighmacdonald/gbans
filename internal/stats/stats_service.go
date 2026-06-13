@@ -15,6 +15,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/servers"
 	v1 "github.com/leighmacdonald/gbans/internal/stats/v1"
 	"github.com/leighmacdonald/gbans/internal/stats/v1/statsv1connect"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -34,6 +35,34 @@ func NewService(stats Stats, servers *servers.Servers, authMiddleware *rpc.Middl
 	authMiddleware.UserRoute(statsv1connect.StatsServiceQueryProcedure, rpc.WithMinPermissions(permission.User))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
+}
+
+func (s Service) MatchesWithPlayer(ctx context.Context, request *v1.MatchesWithPlayerRequest) (*v1.MatchesWithPlayerResponse, error) {
+	matches, errMatches := s.stats.MatchesWithPlayer(ctx, steamid.New(request.GetSteamId()))
+	if errMatches != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	resp := &v1.MatchesWithPlayerResponse{Matches: make([]*v1.PlayerMatchHistory, len(matches))}
+	for idx, match := range matches {
+		resp.Matches[idx] = &v1.PlayerMatchHistory{
+			MatchId:         new(match.MatchID.String()),
+			ServerId:        &match.ServerID,
+			ServerName:      &match.ServerName,
+			ServerNameShort: &match.ServerNameShort,
+			DemoId:          &match.DemoID,
+			MapId:           &match.MapID,
+			MapName:         &match.MapName,
+			BucketId:        &match.BucketID,
+			BucketName:      &match.BucketName,
+			Hostname:        &match.Hostname,
+			ScoreRed:        &match.ScoreRed,
+			ScoreBlu:        &match.ScoreBlu,
+			Duration:        &match.DurationMs,
+			CreatedOn:       timestamppb.New(match.CreatedOn),
+		}
+	}
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.MatchesWithPlayer is not implemented"))
 }
 
 func (s Service) WeaponList(ctx context.Context, _ *emptypb.Empty) (*v1.WeaponListResponse, error) {
@@ -195,26 +224,28 @@ func (s Service) loadMatch(ctx context.Context, matchID uuid.UUID) (*v1.Match, e
 	}
 
 	out := &v1.Match{
-		MatchId:         new(matchID.String()),
-		ServerId:        &match.ServerID,
-		ServerName:      &server.Name,
-		ServerNameShort: &server.ShortName,
-		DemoId:          &match.DemoID,
-		Map: &mapsv1.Map{
-			MapId:     &mapInfo.MapID,
-			Name:      &mapInfo.MapName,
-			CreatedOn: timestamppb.New(mapInfo.CreatedOn),
-			UpdatedOn: timestamppb.New(mapInfo.UpdatedOn),
+		Overview: &v1.MatchOverview{
+			MatchId:         new(matchID.String()),
+			ServerId:        &match.ServerID,
+			ServerName:      &server.Name,
+			ServerNameShort: &server.ShortName,
+			DemoId:          &match.DemoID,
+			Map: &mapsv1.Map{
+				MapId:     &mapInfo.MapID,
+				Name:      &mapInfo.MapName,
+				CreatedOn: timestamppb.New(mapInfo.CreatedOn),
+				UpdatedOn: timestamppb.New(mapInfo.UpdatedOn),
+			},
+			StatsBucketId:   &bucket.BucketID,
+			StatsBucketName: &bucket.BucketName,
+			Hostname:        &match.Hostname,
+			ScoreRed:        &match.ScoreRed,
+			ScoreBlu:        &match.ScoreBlu,
+			Duration:        &match.DurationMs,
+			StartTime:       timestamppb.New(match.StartTime),
+			CreatedOn:       timestamppb.New(match.CreatedOn),
 		},
-		StatsBucketId:   &bucket.BucketID,
-		StatsBucketName: &bucket.BucketName,
-		Hostname:        &match.Hostname,
-		ScoreRed:        &match.ScoreRed,
-		ScoreBlu:        &match.ScoreBlu,
-		Duration:        &match.DurationMs,
-		StartTime:       timestamppb.New(match.StartTime),
-		CreatedOn:       timestamppb.New(match.CreatedOn),
-		Rounds:          []*v1.Round{},
+		Rounds: []*v1.Round{},
 	}
 
 	assembleRounds(out, match)

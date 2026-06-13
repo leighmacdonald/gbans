@@ -43,3 +43,8 @@ export const weaponList = StatsService.method.weaponList;
  * @generated from rpc stats.v1.StatsService.Buckets
  */
 export const buckets = StatsService.method.buckets;
+
+/**
+ * @generated from rpc stats.v1.StatsService.MatchesWithPlayer
+ */
+export const matchesWithPlayer = StatsService.method.matchesWithPlayer;
