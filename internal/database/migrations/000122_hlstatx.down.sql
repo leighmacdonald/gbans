@@ -1,8 +1,8 @@
 drop materialized view if exists stats_weapons_view;
 
-drop materialized view if exists stats_summary_daily_variants_view;
+drop materialized view if exists stats_summary_daily_overall_view;
 
-drop materialized view if exists stats_summary_daily_view;
+drop materialized view if exists stats_summary_daily_variants_view;
 
 drop table if exists match_round_player_variants;
 

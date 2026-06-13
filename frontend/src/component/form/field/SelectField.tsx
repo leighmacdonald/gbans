@@ -31,10 +31,9 @@ export const SelectField = <TData,>(props: Props<TData>) => {
 				id={`select-${props.name}`}
 				fullWidth
 				onChange={(event) => {
+					field.handleChange(event.target.value as TData);
 					if (props.handleChange) {
 						props.handleChange(event.target.value as TData);
-					} else {
-						field.handleChange(event.target.value as TData);
 					}
 				}}
 			>

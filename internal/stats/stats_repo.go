@@ -31,17 +31,17 @@ const (
 func (v Variant) String() string {
 	switch v {
 	case VariantKills:
-		return "kills"
+		return "overall"
 	case VariantHealing:
-		return "healing"
+		return "overall"
 	case VariantWeapons:
-		return "weapons"
+		return "variants"
 	case VariantClasses:
-		return "classes"
+		return "variants"
 	case VariantOverallUnspecified:
 		fallthrough
 	default:
-		return "kills"
+		return "overall"
 
 	}
 }
@@ -88,7 +88,7 @@ func (o Opts) view() string {
 type Repository struct{ database.Database }
 
 func (r Repository) WeaponList(ctx context.Context) ([]string, error) {
-	const query = `SELECT weapon FROM stats_weapons_view`
+	const query = `SELECT variant FROM stats_weapons_view`
 
 	rows, errRows := r.Database.Query(ctx, query)
 	if errRows != nil {
@@ -136,27 +136,21 @@ func NewRepository(database database.Database) Repository {
 	return Repository{Database: database}
 }
 
-func (r Repository) Query(ctx context.Context, statsBucketID uint32, opts Opts) ([]any, uint64, error) {
+func (r Repository) loadOverallView(ctx context.Context, statsBucketID uint32, opts Opts) ([]any, uint64, error) {
 	constraints := sq.And{
 		sq.Eq{"stats_bucket_id": statsBucketID},
 		// sq.Expr("date_trunc('day', ?::date) = date_bucket", opts.TimeStamp),
 	}
 
-	if opts.Variant == VariantWeapons || opts.Variant == VariantClasses {
-		if opts.VariantKey == "" {
-			return nil, 0, database.ErrCreateQuery
-		}
-		constraints = append(constraints, sq.Eq{"variant": opts.VariantKey})
-	}
-
 	builder := r.Builder().
-		Select("rank", "steam_id", "kills", "assists", "deaths", "postround_kills",
-			"postround_assists", "postround_deaths", "damage", "damage_taken",
-			"dominations", "dominated", "revenges", "revenged", "airshots",
-			"headshot_kills", "backstab_kills", "headshots", "backstabs",
-			"was_headshot", "was_backstabbed", "preround_healing", "healing", "postround_healing",
-			"drops", "near_full_charge_death",
-			"charges_uber", "charges_kritz", "charges_vacc", "charges_quickfix").
+		Select("rank", "steam_id", "points", "connection_count", "bonus_points", "kills", "assists", "deaths",
+			"postround_kills", "postround_assists", "preround_healing", "healing", "drops", "near_full_charge_death",
+			"charges_uber", "charges_kritz", "charges_vacc", "charges_quickfix",
+			"damage", "damage_taken", "dominations", "dominated", "revenges", "revenged",
+			"airshots", "headshots", "headshot_kills", "backstabs", "backstab_kills",
+			"was_headshot", "was_backstabbed", "shots", "hits", "objects_built", "objects_destroyed",
+			"scoreboard_kills", "scoreboard_assists", "scoreboard_deaths", "suicides", "postround_deaths",
+			"captures", "captures_blocked", "scoreboard_damage", "extinguishes", "ignites").
 		From(opts.view()).
 		Where(constraints)
 	builder = builder.OrderBy("rank ASC")
@@ -167,20 +161,22 @@ func (r Repository) Query(ctx context.Context, statsBucketID uint32, opts Opts) 
 		return nil, 0, database.Err(errRows)
 	}
 
-	var weaponStats []any
+	var variantStats []any
 	for rows.Next() {
-		var w VariantStats
-		if err := rows.Scan(&w.Rank, &w.SteamID, &w.Kills, &w.Assists, &w.Deaths,
-			&w.PostroundKills, &w.PostroundAssists, &w.PostroundDeaths,
-			&w.Damage, &w.DamageTaken, &w.Dominations, &w.Dominated, &w.Revenges, &w.Revenged,
-			&w.Airshots, &w.HeadshotKills, &w.BackstabKills, &w.Headshots, &w.Backstabs,
-			&w.WasHeadshot, &w.WasBackstabbed, &w.PreroundHealing, &w.Healing,
-			&w.PostroundHealing, &w.Drops, &w.NearFullChargeDeath, &w.ChargesUber,
-			&w.ChargesKritz, &w.ChargesVacc, &w.ChargesQuickfix); err != nil {
+		var s OverallStats
+		if err := rows.Scan(
+			&s.Rank, &s.SteamID, &s.Points, &s.ConnectionCount, &s.BonusPoints, &s.Kills, &s.Assists, &s.Deaths,
+			&s.PostroundKills, &s.PostroundAssists, &s.PreroundHealing, &s.Healing, &s.Drops, &s.NearFullChargeDeath,
+			&s.ChargesUber, &s.ChargesKritz, &s.ChargesVacc, &s.ChargesQuickfix,
+			&s.Damage, &s.DamageTaken, &s.Dominations, &s.Dominated, &s.Revenges, &s.Revenged,
+			&s.Airshots, &s.Headshots, &s.HeadshotKills, &s.Backstabs, &s.BackstabKills,
+			&s.WasHeadshot, &s.WasBackstabbed, &s.Shots, &s.Hits, &s.ObjectsBuilt, &s.ObjectsDestroyed,
+			&s.ScoreboardKills, &s.ScoreboardAssists, &s.ScoreboardDeaths, &s.Suicides, &s.PostroundDeaths,
+			&s.Captures, &s.CapturesBlocked, &s.ScoreboardDamage, &s.Extinguishes, &s.Ignites); err != nil {
 			return nil, 0, database.Err(err)
 		}
 
-		weaponStats = append(weaponStats, w)
+		variantStats = append(variantStats, s)
 	}
 
 	if rows.Err() != nil {
@@ -195,7 +191,76 @@ func (r Repository) Query(ctx context.Context, statsBucketID uint32, opts Opts) 
 		return nil, 0, database.Err(errCount)
 	}
 
-	return weaponStats, count, nil
+	return variantStats, count, nil
+}
+
+func (r Repository) loadVariantView(ctx context.Context, statsBucketID uint32, opts Opts) ([]any, uint64, error) {
+	constraints := sq.And{
+		sq.Eq{"stats_bucket_id": statsBucketID},
+		sq.Eq{"variant": opts.VariantKey},
+		// sq.Expr("date_trunc('day', ?::date) = date_bucket", opts.TimeStamp),
+	}
+
+	builder := r.Builder().
+		Select("rank", "steam_id", "kills", "assists", "deaths", "postround_kills",
+			"postround_assists", "preround_healing", "healing", "drops", "near_full_charge_death",
+			"charges_uber", "charges_kritz", "charges_vacc", "charges_quickfix",
+			"damage", "damage_taken", "dominations", "dominated", "revenges", "revenged",
+			"airshots", "headshots", "headshot_kills", "backstabs", "backstab_kills",
+			"was_headshot", "was_backstabbed", "shots", "hits", "objects_built", "objects_destroyed",
+			"postround_deaths", "preround_healing", "postround_healing",
+		).
+		From(opts.view()).
+		Where(constraints)
+	builder = builder.OrderBy("rank ASC")
+	builder = opts.ApplyLimitOffset(builder, 10000)
+
+	rows, errRows := r.QueryBuilder(ctx, builder)
+	if errRows != nil {
+		return nil, 0, database.Err(errRows)
+	}
+
+	var variantStats []any
+	for rows.Next() {
+		var s VariantStats
+		if err := rows.Scan(
+			&s.Rank, &s.SteamID, &s.Kills, &s.Assists, &s.Deaths, &s.PostroundKills,
+			&s.PostroundAssists, &s.PreroundHealing, &s.Healing, &s.Drops, &s.NearFullChargeDeath,
+			&s.ChargesUber, &s.ChargesKritz, &s.ChargesVacc, &s.ChargesQuickfix,
+			&s.Damage, &s.DamageTaken, &s.Dominations, &s.Dominated, &s.Revenges, &s.Revenged,
+			&s.Airshots, &s.Headshots, &s.HeadshotKills, &s.Backstabs, &s.BackstabKills,
+			&s.WasHeadshot, &s.WasBackstabbed, &s.Shots, &s.Hits, &s.ObjectsBuilt, &s.ObjectsDestroyed,
+			&s.PostroundDeaths, &s.PreroundHealing, &s.PostroundHealing); err != nil {
+			return nil, 0, database.Err(err)
+		}
+
+		variantStats = append(variantStats, s)
+	}
+
+	if rows.Err() != nil {
+		return nil, 0, database.Err(rows.Err())
+	}
+
+	count, errCount := r.GetCount(ctx, r.Builder().
+		Select("count(*) as count").
+		From(opts.view()).
+		Where(constraints))
+	if errCount != nil {
+		return nil, 0, database.Err(errCount)
+	}
+
+	return variantStats, count, nil
+}
+
+func (r Repository) Query(ctx context.Context, statsBucketID uint32, opts Opts) ([]any, uint64, error) {
+	switch opts.Variant {
+	case VariantClasses:
+		fallthrough
+	case VariantWeapons:
+		return r.loadVariantView(ctx, statsBucketID, opts)
+	default:
+		return r.loadOverallView(ctx, statsBucketID, opts)
+	}
 }
 
 func (r Repository) Match(ctx context.Context, matchID uuid.UUID) (*Match, error) {
@@ -222,14 +287,15 @@ func (r Repository) Match(ctx context.Context, matchID uuid.UUID) (*Match, error
 func (r Repository) getRoundPlayers(ctx context.Context, match *Match) error {
 	const query = `
 		SELECT
-			p.round_id, p.steam_id, p.team, p.mvp, p.tick_start, p.tick_end, p.points, p.connection_count,
-			p.bonus_points, p.kills, p.assists, p.deaths, p.postround_kills, p.postround_assists,
-			p.preround_healing, p.healing, p.drops, p.near_full_charge_death,
-			p.charges_uber, p.charges_kritz, p.charges_vacc, p.charges_quickfix, p.damage, p.damage_taken,
-			p.dominations, p.dominated, p.revenges, p.revenged, p.airshots, p.headshots, p.headshot_kills,
-			p.backstabs, p.backstab_kills, p.was_headshot, p.was_backstabbed, p.shots, p.hits, p.objects_built, p.objects_destroyed,
-			p.scoreboard_kills, p.scoreboard_assists, p.suicides, p.scoreboard_deaths, p.postround_deaths, p.captures, p.captures_blocked,
-			p.scoreboard_damage, p.extinguishes, p.ignites, p.buildings_built, p.buildings_destroyed
+			p.round_id, p.steam_id, p.team, p.mvp, p.tick_start, p.tick_end, p.kills, p.assists,
+			p.postround_kills, p.postround_assists, p.postround_deaths, p.preround_healing, p.healing,
+			p.postround_healing, p.drops, p.near_full_charge_death, p.charges_uber, p.charges_kritz, p.charges_vacc, p.charges_quickfix,
+			p.damage, p.damage_taken, p.dominations, p.dominated, p.revenges, p.revenged,
+			p.airshots, p.headshots, p.headshot_kills,
+			p.backstabs, p.backstab_kills, p.captures, p.captures_blocked, p.was_headshot, p.was_backstabbed, p.shots, p.hits,
+			p.objects_built, p.objects_destroyed, p.points, p.connection_count, p.bonus_points,
+			p.scoreboard_kills, p.scoreboard_assists, p.scoreboard_healing, p.scoreboard_deaths, p.scoreboard_damage,
+			p.suicides, p.extinguishes, p.ignites
 		FROM
 			match_round_player p
 		LEFT JOIN
@@ -242,16 +308,16 @@ func (r Repository) getRoundPlayers(ctx context.Context, match *Match) error {
 	}
 
 	for rows.Next() {
-		var mrp MatchRoundPlayer
-		if err := rows.Scan(&mrp.RoundID, &mrp.SteamID, &mrp.Team, &mrp.MVP, &mrp.TickStart, &mrp.TickEnd, &mrp.Points,
-			&mrp.ConnectionCount, &mrp.BonusPoints, &mrp.Kills, &mrp.Assists, &mrp.Deaths, &mrp.PostroundKills,
-			&mrp.PostroundAssists, &mrp.PreroundHealing, &mrp.Healing, &mrp.Drops, &mrp.NearFullChargeDeath,
-			&mrp.ChargesUber, &mrp.ChargesKritz, &mrp.ChargesVacc, &mrp.ChargesQuickfix, &mrp.Damage, &mrp.DamageTaken,
-			&mrp.Dominations, &mrp.Dominated, &mrp.Revenges, &mrp.Revenged, &mrp.Airshots, &mrp.Headshots, &mrp.HeadshotKills,
-			&mrp.Backstabs, &mrp.BackstabKills, &mrp.WasHeadshot, &mrp.WasBackstabbed, &mrp.Shots, &mrp.Hits, &mrp.ObjectsBuilt,
-			&mrp.ObjectsDestroyed, &mrp.ScoreboardKills, &mrp.ScoreboardAssists, &mrp.Suicides, &mrp.ScoreboardDeaths,
-			&mrp.PostroundDeaths, &mrp.Captures, &mrp.CapturesBlocked, &mrp.ScoreboardDamage, &mrp.Extinguishes,
-			&mrp.Ignites, &mrp.BuildingsBuilt, &mrp.BUildingsDestroyed,
+		var mrp OverallStatsRound
+		if err := rows.Scan(&mrp.RoundID, &mrp.SteamID, &mrp.Team, &mrp.MVP, &mrp.TickStart, &mrp.TickEnd, &mrp.Kills, &mrp.Assists,
+			&mrp.PostroundKills, &mrp.PostroundAssists, &mrp.PostroundDeaths, &mrp.PreroundHealing, &mrp.Healing,
+			&mrp.PostroundHealing, &mrp.Drops, &mrp.NearFullChargeDeath, &mrp.ChargesUber, &mrp.ChargesKritz, &mrp.ChargesVacc, &mrp.ChargesQuickfix,
+			&mrp.Damage, &mrp.DamageTaken, &mrp.Dominations, &mrp.Dominated, &mrp.Revenges, &mrp.Revenged,
+			&mrp.Airshots, &mrp.Headshots, &mrp.HeadshotKills,
+			&mrp.Backstabs, &mrp.BackstabKills, &mrp.Captures, &mrp.CapturesBlocked, &mrp.WasHeadshot, &mrp.WasBackstabbed, &mrp.Shots, &mrp.Hits,
+			&mrp.ObjectsBuilt, &mrp.ObjectsDestroyed, &mrp.Points, &mrp.ConnectionCount, &mrp.BonusPoints,
+			&mrp.ScoreboardKills, &mrp.ScoreboardAssists, &mrp.ScoreboardHealing, &mrp.ScoreboardDeaths, &mrp.ScoreboardDamage,
+			&mrp.Suicides, &mrp.Extinguishes, &mrp.Ignites,
 		); err != nil {
 			return database.Err(err)
 		}
@@ -266,10 +332,11 @@ func (r Repository) getRoundPlayersVariants(ctx context.Context, match *Match) e
 	const query = `
 		SELECT
 			w.variant, w.round_id, w.steam_id, w.kills, w.assists, w.deaths, w.postround_kills, w.postround_assists,
-			w.postround_deaths, w.damage, w.damage_taken, w.dominations, w.dominated, w.revenges,w.revenged, w.airshots,
-			w.headshot_kills, w.backstab_kills, w.headshots, w.backstabs, w.was_headshot, w.was_backstabbed,
-			w.preround_healing, w.healing, w.postround_healing, w.drops, w.near_full_charge_death, w.charges_uber,
-			w.charges_kritz, w.charges_vacc, w.charges_quickfix
+			w.postround_deaths, w.preround_healing, w.healing, w.postround_healing, w.drops, w.near_full_charge_death, w.charges_uber,
+			w.charges_kritz, w.charges_vacc, w.charges_quickfix,
+			w.damage, w.damage_taken, w.dominations, w.dominated, w.revenges, w.revenged,
+			w.airshots, w.headshots, w.headshot_kills, w.backstabs, w.backstab_kills, w.captures, w.captures_blocked, w.was_headshot, w.was_backstabbed,
+			w.shots, w.hits, w.objects_built, w.objects_destroyed
 		FROM
 			match_round_player_variants w
 		LEFT JOIN
@@ -282,13 +349,15 @@ func (r Repository) getRoundPlayersVariants(ctx context.Context, match *Match) e
 	}
 
 	for rows.Next() {
-		var mrws VariantStats
-		if err := rows.Scan(&mrws.Variant, &mrws.RoundID, &mrws.SteamID, &mrws.Kills, &mrws.Assists, &mrws.Deaths,
-			&mrws.PostroundKills, &mrws.PostroundAssists, &mrws.PostroundDeaths, &mrws.Damage, &mrws.DamageTaken,
-			&mrws.Dominations, &mrws.Dominated, &mrws.Revenges, &mrws.Revenged, &mrws.Airshots, &mrws.HeadshotKills,
-			&mrws.BackstabKills, &mrws.Headshots, &mrws.BackstabKills, &mrws.WasHeadshot, &mrws.WasBackstabbed,
-			&mrws.PreroundHealing, &mrws.Healing, &mrws.PostroundHealing, &mrws.Drops, &mrws.NearFullChargeDeath,
+		var mrws VariantStatsRound
+		if err := rows.Scan(
+			&mrws.Variant, &mrws.RoundID, &mrws.SteamID, &mrws.Kills, &mrws.Assists, &mrws.Deaths, &mrws.PostroundKills, &mrws.PostroundAssists,
+			&mrws.PostroundDeaths, &mrws.PreroundHealing, &mrws.Healing, &mrws.PostroundHealing, &mrws.Drops, &mrws.NearFullChargeDeath,
 			&mrws.ChargesUber, &mrws.ChargesKritz, &mrws.ChargesVacc, &mrws.ChargesQuickfix,
+			&mrws.Damage, &mrws.DamageTaken, &mrws.Dominations, &mrws.Dominated, &mrws.Revenges, &mrws.Revenged,
+			&mrws.Airshots, &mrws.Headshots, &mrws.HeadshotKills, &mrws.Backstabs, &mrws.BackstabKills,
+			&mrws.Captures, &mrws.CapturesBlocked,
+			&mrws.WasHeadshot, &mrws.WasBackstabbed, &mrws.Shots, &mrws.Hits, &mrws.ObjectsBuilt, &mrws.ObjectsDestroyed,
 		); err != nil {
 			return database.Err(err)
 		}
@@ -299,41 +368,38 @@ func (r Repository) getRoundPlayersVariants(ctx context.Context, match *Match) e
 	return nil
 }
 
-// func (r Repository) getRoundPlayersClasses(ctx context.Context, match *Match) error {
-// 	const query = `
-// 		SELECT
-// 			c.player_class, c.round_id, c.steam_id, c.kills, c.assists, c.deaths, c.postround_kills, c.postround_assists,
-// 			c.postround_deaths, c.damage, c.damage_taken, c.dominations, c.dominated, c.revenges, c.revenged,
-// 			c.airshots, c.headshot_kills, c.backstab_kills, c.headshots, c.backstabs, c.was_headshot, c.was_backstabbed,
-// 			c.preround_healing, c.healing, c.postround_healing, c.drops, c.near_full_charge_death, c.charges_uber,
-// 			c.charges_kritz, c.charges_vacc, c.charges_quickfix
-// 		FROM
-// 			match_round_player_class c
-// 		LEFT JOIN
-// 			match_round r ON r.round_id = c.round_id
-// 		WHERE
-// 			r.match_id = $1`
-// 	rows, errRows := r.Database.Query(ctx, query, match.MatchID)
-// 	if errRows != nil {
-// 		return database.Err(errRows)
-// 	}
+func (r Repository) MatchesWithPlayer(ctx context.Context, steamID steamid.SteamID) ([]PlayerMatchHistory, error) {
+	const query = `
+		SELECT DISTINCT
+			m.match_id, m.server_id, m.map_id, mp.map_name, m.demo_id, m.stats_bucket_id,
+			m.bucket_name, m.hostname, m.score_red, m.score_blu,
+		m.duration_ms, m.created_on
+		FROM match m
+		LEFT JOIN match_round r ON m.match_id = r.match_id
+		LEFT JOIN match_round_player p ON r.round_id = p.round_id
+		LEFT JOIN map mp USING(map_id)
+		LEFT JOIN stats_bucket s USING(stats_bucket_id)
+		WHERE p.steam_id = $1`
+	var matches []PlayerMatchHistory
 
-// 	for rows.Next() {
-// 		var mrcs MatchRoundClassStats
-// 		if err := rows.Scan(&mrcs.Class, &mrcs.RoundID, &mrcs.SteamID, &mrcs.Kills, &mrcs.Assists, &mrcs.Deaths, &mrcs.PostroundKills,
-// 			&mrcs.PostroundAssists, &mrcs.PostroundDeaths, &mrcs.Damage, &mrcs.DamageTaken, &mrcs.Dominations, &mrcs.Dominated,
-// 			&mrcs.Revenges, &mrcs.Revenged, &mrcs.Airshots, &mrcs.HeadshotKills, &mrcs.BackstabKills, &mrcs.Headshots, &mrcs.BackstabKills,
-// 			&mrcs.WasHeadshot, &mrcs.WasBackstabbed, &mrcs.PreroundHealing, &mrcs.Healing, &mrcs.PostroundHealing, &mrcs.Drops,
-// 			&mrcs.NearFullChargeDeath, &mrcs.ChargesUber, &mrcs.ChargesKritz, &mrcs.ChargesVacc, &mrcs.ChargesQuickfix,
-// 		); err != nil {
-// 			return database.Err(err)
-// 		}
+	rows, errRows := r.Database.Query(ctx, query, steamID.Int64())
+	if errRows != nil {
+		return nil, database.Err(errRows)
+	}
 
-// 		match.Classes = append(match.Classes, mrcs)
-// 	}
+	for rows.Next() {
+		var match PlayerMatchHistory
+		if err := rows.Scan(&match.MatchID, &match.ServerID, &match.MapID, &match.MapName, &match.DemoID,
+			&match.BucketID, &match.BucketName, &match.Hostname, &match.ScoreRed, &match.ScoreBlu,
+			&match.DurationMs, &match.CreatedOn); err != nil {
+			return nil, database.Err(err)
+		}
 
-// 	return nil
-// }
+		matches = append(matches, match)
+	}
+
+	return matches, nil
+}
 
 func (r Repository) getMatch(ctx context.Context, matchID uuid.UUID) (*Match, error) {
 	const query = `
@@ -484,13 +550,14 @@ func (r Repository) insertRound(ctx context.Context, transaction pgx.Tx, matchID
 func (r Repository) insertRoundPlayer(ctx context.Context, transaction pgx.Tx, roundID int64, steamID steamid.SteamID, round demoparse.RoundSummary, player demoparse.PlayerSummary) error {
 	const query = `
 		INSERT INTO match_round_player (
-			round_id, steam_id, team, mvp, tick_start, tick_end, points, connection_count, bonus_points,
-			kills, assists, deaths, postround_kills, postround_assists, preround_healing, healing, drops,
+			round_id, steam_id, team, mvp, tick_start, tick_end, kills, assists, deaths, postround_kills,
+			postround_assists, postround_deaths, preround_healing, healing, postround_healing, drops,
 			near_full_charge_death, charges_uber, charges_kritz, charges_vacc, charges_quickfix, damage,
 			damage_taken, dominations, dominated, revenges, revenged, airshots, headshots, headshot_kills,
-			backstabs, backstab_kills, was_headshot, was_backstabbed, shots, hits, objects_built, objects_destroyed,
-			scoreboard_kills, scoreboard_assists, suicides, scoreboard_deaths, postround_deaths, captures,
-			captures_blocked, scoreboard_damage, extinguishes, ignites, buildings_built, buildings_destroyed)
+			backstabs, backstab_kills, captures, captures_blocked, was_headshot, was_backstabbed,
+			shots, hits, objects_built, objects_destroyed,
+			points, connection_count, bonus_points, scoreboard_kills, scoreboard_assists, scoreboard_healing, scoreboard_deaths,
+			scoreboard_damage, suicides, extinguishes, ignites)
 		VALUES(
 			$1,  $2,  $3,  $4,  $5,  $6,  $7,  $8,  $9,  $10,
 			$11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
@@ -504,27 +571,27 @@ func (r Repository) insertRoundPlayer(ctx context.Context, transaction pgx.Tx, r
 
 	if _, err := transaction.Exec(ctx, query,
 		roundID, steamID.Int64(), toTfTeam(player.Team), isMvp, player.TickStart, player.TickEnd,
-		player.Points, player.ConnectionCount, player.BonusPoints, player.Kills, player.Assists,
-		player.Deaths, player.PostroundKills, player.PostroundAssists, player.PreroundHealing,
-		player.Healing, player.Drops, player.NearFullChargeDeath, player.ChargesUber, player.ChargesKritz,
-		player.ChargesVacc, player.ChargesQuickfix, player.Damage, player.DamageTaken, player.Dominations,
-		player.Dominated, player.Revenges, player.Revenged, player.Airshots, player.Headshots,
-		player.HeadshotKills, player.Backstabs, player.BackstabKills, player.WasHeadshot, player.WasBackstabbed,
-		player.Shots, player.Hits, player.ObjectBuilt, player.ObjectDestroyed, player.ScoreboardKills,
-		player.ScoreboardAssists, player.Suicides, player.ScoreboardDeaths, player.PostroundDeaths,
-		player.Captures, player.CapturesBlocked, player.ScoreboardDamage, player.Extinguishes,
-		player.Ignites, player.BuildingBuilt, player.BuildingDestroyed); err != nil {
+		player.Kills, player.Assists, player.Deaths, player.PostroundKills, player.PostroundAssists, player.PostroundDeaths,
+		player.PreroundHealing, player.Healing, player.PostroundHealing, player.Drops, player.NearFullChargeDeath,
+		player.ChargesUber, player.ChargesKritz, player.ChargesVacc, player.ChargesQuickfix, player.Damage,
+		player.DamageTaken, player.Dominations, player.Dominated, player.Revenges, player.Revenged,
+		player.Airshots, player.Headshots, player.HeadshotKills, player.Backstabs, player.BackstabKills,
+		player.Captures, player.CapturesBlocked, player.WasHeadshot, player.WasBackstabbed, player.Shots,
+		player.Hits, player.ObjectBuilt, player.ObjectDestroyed, player.Points, player.ConnectionCount,
+		player.BonusPoints, player.ScoreboardKills, player.ScoreboardAssists, player.ScoreboardHealing,
+		player.ScoreboardDeaths, player.ScoreboardDamage, player.Suicides, player.Extinguishes,
+		player.Ignites); err != nil {
 		return database.Err(err)
 	}
 
 	for weapon, weaponStats := range player.Weapons {
-		if err := r.insertRoundPlayerVariant(ctx, transaction, steamID, roundID, weaponStats, weapon); err != nil {
+		if err := r.insertRoundPlayerVariants(ctx, transaction, steamID, roundID, weaponStats, weapon); err != nil {
 			return database.Err(err)
 		}
 	}
 
 	for class, weaponStats := range player.Classes {
-		if err := r.insertRoundPlayerVariant(ctx, transaction, steamID, roundID, weaponStats, class); err != nil {
+		if err := r.insertRoundPlayerVariants(ctx, transaction, steamID, roundID, weaponStats, class); err != nil {
 			return database.Err(err)
 		}
 	}
@@ -532,56 +599,34 @@ func (r Repository) insertRoundPlayer(ctx context.Context, transaction pgx.Tx, r
 	return nil
 }
 
-func (r Repository) insertRoundPlayerVariant(ctx context.Context, transaction pgx.Tx, steamID steamid.SteamID, roundID int64, stats demoparse.Stats, variantKey string) error {
+func (r Repository) insertRoundPlayerVariants(ctx context.Context, transaction pgx.Tx, steamID steamid.SteamID, roundID int64, stats demoparse.Stats, variantKey string) error {
 	const query = `
 		INSERT INTO match_round_player_variants (
-			variant, round_id, steam_id, kills, assists, deaths, postround_kills, postround_assists,  postround_deaths, damage,
-			damage_taken, dominations, dominated, revenges, revenged, airshots, headshot_kills, backstabs, backstab_kills,
-			headshots, was_headshot, was_backstabbed, preround_healing, healing, postround_healing, drops, near_full_charge_death,
-			charges_uber, charges_kritz, charges_vacc, charges_quickfix
+			variant, round_id, steam_id, kills, assists, deaths, postround_kills,
+			postround_assists, postround_deaths, preround_healing, healing, postround_healing, drops,
+			near_full_charge_death, charges_uber, charges_kritz, charges_vacc, charges_quickfix, damage,
+			damage_taken, dominations, dominated, revenges, revenged, airshots, headshots, headshot_kills,
+			backstabs, backstab_kills, captures, captures_blocked, was_headshot, was_backstabbed,
+			shots, hits, objects_built, objects_destroyed
 		) VALUES (
 			LOWER($1),$2,  $3,  $4,  $5,  $6,  $7,  $8,  $9,  $10,
 			$11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
-			$21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31
+			$21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31,
+			$32, $33, $34, $35, $36, $37
 		)`
 
-	if _, err := transaction.Exec(ctx, query, variantKey, roundID, steamID.Int64(),
-		stats.Kills, stats.Assists, stats.Deaths, stats.PostroundKills, stats.PostroundAssists, stats.PostroundDeaths, stats.Damage,
-		stats.DamageTaken, stats.Dominations, stats.Dominated, stats.Revenges, stats.Revenged, stats.Airshots, stats.HeadshotKills,
-		stats.Backstabs, stats.BackstabKills, stats.Headshots, stats.WasHeadshot, stats.WasBackstabbed, stats.PreroundHealing, stats.Healing,
-		stats.PostroundHealing, stats.Drops, stats.NearFullChargeDeath, stats.ChargesUber, stats.ChargesKritz,
-		stats.ChargesVacc, stats.ChargesQuickfix); err != nil {
+	if _, err := transaction.Exec(ctx, query,
+		variantKey, roundID, steamID.Int64(), stats.Kills, stats.Assists, stats.Deaths, stats.PostroundKills,
+		stats.PostroundAssists, stats.PostroundDeaths, stats.PreroundHealing, stats.Healing, stats.PostroundHealing, stats.Drops,
+		stats.NearFullChargeDeath, stats.ChargesUber, stats.ChargesKritz, stats.ChargesVacc, stats.ChargesQuickfix, stats.Damage,
+		stats.DamageTaken, stats.Dominations, stats.Dominated, stats.Revenges, stats.Revenged, stats.Airshots, stats.Headshots, stats.HeadshotKills,
+		stats.Backstabs, stats.BackstabKills, stats.Captures, stats.CapturesBlocked, stats.WasHeadshot, stats.WasBackstabbed,
+		stats.Shots, stats.Hits, stats.ObjectBuilt, stats.ObjectDestroyed); err != nil {
 		return database.Err(err)
 	}
 
 	return nil
 }
-
-// func (r Repository) insertRoundPlayerClass(ctx context.Context, transaction pgx.Tx, steamID steamid.SteamID, roundID int64, stats demoparse.Stats, class string) error {
-// 	const query = `
-// 		INSERT INTO match_round_player_class (
-// 			player_class, round_id, steam_id, kills, assists, deaths, postround_kills, postround_assists,  postround_deaths, damage,
-// 			damage_taken, dominations, dominated, revenges, revenged, airshots, headshot_kills, backstabs, backstab_kills, headshots,
-// 			was_headshot, was_backstabbed, preround_healing, healing, postround_healing, drops, near_full_charge_death, charges_uber,
-// 			charges_kritz, charges_vacc, charges_quickfix
-// 		) VALUES (
-// 			LOWER($1)::player_class, $2,  $3,  $4,  $5,  $6,  $7,  $8,  $9,  $10,
-// 			$11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
-// 			$21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31
-// 		)`
-
-// 	if _, err := transaction.Exec(ctx, query, toTFClass(class), roundID, steamID.Int64(),
-// 		stats.Kills, stats.Assists, stats.Deaths, stats.PostroundKills, stats.PostroundAssists, stats.PostroundDeaths, stats.Damage,
-// 		stats.DamageTaken, stats.Dominations, stats.Dominated, stats.Revenges, stats.Revenged, stats.Airshots, stats.HeadshotKills,
-// 		stats.Backstabs, stats.BackstabKills, stats.Headshots, stats.WasHeadshot, stats.WasBackstabbed, stats.PreroundHealing, stats.Healing,
-// 		stats.PostroundHealing, stats.Drops, stats.NearFullChargeDeath, stats.ChargesUber, stats.ChargesKritz, stats.ChargesVacc,
-
-// 		stats.ChargesQuickfix); err != nil {
-// 		return database.Err(err)
-// 	}
-
-// 	return nil
-// }
 
 func (r Repository) GetBucket(ctx context.Context, statsBucketID int32) (*Bucket, error) {
 	const query = "SELECT stats_bucket_id, bucket_name FROM stats_bucket WHERE stats_bucket_id = $1"

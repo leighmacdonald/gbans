@@ -42,6 +42,33 @@ service StatsService {
   rpc Query(QueryRequest) returns (QueryResponse) {}
   rpc WeaponList(google.protobuf.Empty) returns (WeaponListResponse) {}
   rpc Buckets(google.protobuf.Empty) returns (BucketsResponse) {}
+  rpc MatchesWithPlayer(MatchesWithPlayerRequest) returns (MatchesWithPlayerResponse) {}
+}
+
+message MatchesWithPlayerRequest {
+  int64 steam_id = 1 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+}
+
+message PlayerMatchHistory {
+  string match_id = 1;
+  int32 server_id = 2;
+  string server_name = 3;
+  string server_name_short = 4;
+  int32 map_id = 5;
+  string map_name = 6;
+  int32 demo_id = 7;
+  string bucket_name = 8;
+  int32 bucket_id = 9;
+  string hostname = 10;
+  uint32 score_red = 11;
+  uint32 score_blu = 12;
+  uint64 duration = 13;
+  bool is_winnder = 14;
+  google.protobuf.Timestamp created_on = 15;
+}
+
+message MatchesWithPlayerResponse {
+  repeated PlayerMatchHistory matches = 1;
 }
 
 message WeaponListResponse {
@@ -95,10 +122,7 @@ message QueryRequest {
     (buf.validate.field).enum.defined_only = true
   ];
   string variant_key = 5;
-  google.protobuf.Timestamp time = 6 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).timestamp.lt_now = true
-  ];
+  google.protobuf.Timestamp time = 6 [(buf.validate.field).required = true /* (buf.validate.field).timestamp.lt_now = true */];
 }
 message VariantStats {
   string variant = 1;
@@ -154,7 +178,7 @@ message MatchResponse {
   Match match = 1;
 }
 
-message Match {
+message MatchOverview {
   string match_id = 1;
   int32 server_id = 2;
   string server_name = 3;
@@ -169,8 +193,11 @@ message Match {
   google.protobuf.Timestamp start_time = 13;
   uint64 duration = 14;
   google.protobuf.Timestamp created_on = 15;
+}
 
-  repeated Round rounds = 16;
+message Match {
+  MatchOverview overview = 1;
+  repeated Round rounds = 2;
 }
 
 message Round {
