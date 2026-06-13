@@ -42,7 +42,6 @@ func (v Variant) String() string {
 		fallthrough
 	default:
 		return "overall"
-
 	}
 }
 
@@ -163,20 +162,20 @@ func (r Repository) loadOverallView(ctx context.Context, statsBucketID uint32, o
 
 	var variantStats []any
 	for rows.Next() {
-		var s OverallStats
+		var overallStat OverallStats
 		if err := rows.Scan(
-			&s.Rank, &s.SteamID, &s.Points, &s.ConnectionCount, &s.BonusPoints, &s.Kills, &s.Assists, &s.Deaths,
-			&s.PostroundKills, &s.PostroundAssists, &s.PreroundHealing, &s.Healing, &s.Drops, &s.NearFullChargeDeath,
-			&s.ChargesUber, &s.ChargesKritz, &s.ChargesVacc, &s.ChargesQuickfix,
-			&s.Damage, &s.DamageTaken, &s.Dominations, &s.Dominated, &s.Revenges, &s.Revenged,
-			&s.Airshots, &s.Headshots, &s.HeadshotKills, &s.Backstabs, &s.BackstabKills,
-			&s.WasHeadshot, &s.WasBackstabbed, &s.Shots, &s.Hits, &s.ObjectsBuilt, &s.ObjectsDestroyed,
-			&s.ScoreboardKills, &s.ScoreboardAssists, &s.ScoreboardDeaths, &s.Suicides, &s.PostroundDeaths,
-			&s.Captures, &s.CapturesBlocked, &s.ScoreboardDamage, &s.Extinguishes, &s.Ignites); err != nil {
+			&overallStat.Rank, &overallStat.SteamID, &overallStat.Points, &overallStat.ConnectionCount, &overallStat.BonusPoints, &overallStat.Kills, &overallStat.Assists, &overallStat.Deaths,
+			&overallStat.PostroundKills, &overallStat.PostroundAssists, &overallStat.PreroundHealing, &overallStat.Healing, &overallStat.Drops, &overallStat.NearFullChargeDeath,
+			&overallStat.ChargesUber, &overallStat.ChargesKritz, &overallStat.ChargesVacc, &overallStat.ChargesQuickfix,
+			&overallStat.Damage, &overallStat.DamageTaken, &overallStat.Dominations, &overallStat.Dominated, &overallStat.Revenges, &overallStat.Revenged,
+			&overallStat.Airshots, &overallStat.Headshots, &overallStat.HeadshotKills, &overallStat.Backstabs, &overallStat.BackstabKills,
+			&overallStat.WasHeadshot, &overallStat.WasBackstabbed, &overallStat.Shots, &overallStat.Hits, &overallStat.ObjectsBuilt, &overallStat.ObjectsDestroyed,
+			&overallStat.ScoreboardKills, &overallStat.ScoreboardAssists, &overallStat.ScoreboardDeaths, &overallStat.Suicides, &overallStat.PostroundDeaths,
+			&overallStat.Captures, &overallStat.CapturesBlocked, &overallStat.ScoreboardDamage, &overallStat.Extinguishes, &overallStat.Ignites); err != nil {
 			return nil, 0, database.Err(err)
 		}
 
-		variantStats = append(variantStats, s)
+		variantStats = append(variantStats, overallStat)
 	}
 
 	if rows.Err() != nil {
@@ -222,19 +221,19 @@ func (r Repository) loadVariantView(ctx context.Context, statsBucketID uint32, o
 
 	var variantStats []any
 	for rows.Next() {
-		var s VariantStats
+		var variantStat VariantStats
 		if err := rows.Scan(
-			&s.Rank, &s.SteamID, &s.Kills, &s.Assists, &s.Deaths, &s.PostroundKills,
-			&s.PostroundAssists, &s.PreroundHealing, &s.Healing, &s.Drops, &s.NearFullChargeDeath,
-			&s.ChargesUber, &s.ChargesKritz, &s.ChargesVacc, &s.ChargesQuickfix,
-			&s.Damage, &s.DamageTaken, &s.Dominations, &s.Dominated, &s.Revenges, &s.Revenged,
-			&s.Airshots, &s.Headshots, &s.HeadshotKills, &s.Backstabs, &s.BackstabKills,
-			&s.WasHeadshot, &s.WasBackstabbed, &s.Shots, &s.Hits, &s.ObjectsBuilt, &s.ObjectsDestroyed,
-			&s.PostroundDeaths, &s.PreroundHealing, &s.PostroundHealing); err != nil {
+			&variantStat.Rank, &variantStat.SteamID, &variantStat.Kills, &variantStat.Assists, &variantStat.Deaths, &variantStat.PostroundKills,
+			&variantStat.PostroundAssists, &variantStat.PreroundHealing, &variantStat.Healing, &variantStat.Drops, &variantStat.NearFullChargeDeath,
+			&variantStat.ChargesUber, &variantStat.ChargesKritz, &variantStat.ChargesVacc, &variantStat.ChargesQuickfix,
+			&variantStat.Damage, &variantStat.DamageTaken, &variantStat.Dominations, &variantStat.Dominated, &variantStat.Revenges, &variantStat.Revenged,
+			&variantStat.Airshots, &variantStat.Headshots, &variantStat.HeadshotKills, &variantStat.Backstabs, &variantStat.BackstabKills,
+			&variantStat.WasHeadshot, &variantStat.WasBackstabbed, &variantStat.Shots, &variantStat.Hits, &variantStat.ObjectsBuilt, &variantStat.ObjectsDestroyed,
+			&variantStat.PostroundDeaths, &variantStat.PreroundHealing, &variantStat.PostroundHealing); err != nil {
 			return nil, 0, database.Err(err)
 		}
 
-		variantStats = append(variantStats, s)
+		variantStats = append(variantStats, variantStat)
 	}
 
 	if rows.Err() != nil {

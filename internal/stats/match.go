@@ -59,7 +59,7 @@ type MatchRound struct {
 	DurationMs    uint64
 }
 
-// Used in the match queries
+// Used in the match queries.
 type OverallStatsRound struct {
 	OverallStats
 
