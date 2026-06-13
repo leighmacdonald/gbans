@@ -20,6 +20,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+var errMatchesWithPlayerNotImplemented = errors.New("stats.v1.StatsService.MatchesWithPlayer is not implemented")
+
 type Service struct {
 	// statsv1connect.UnimplementedStatsServiceHandler
 
@@ -62,7 +64,8 @@ func (s Service) MatchesWithPlayer(ctx context.Context, request *v1.MatchesWithP
 			CreatedOn:       timestamppb.New(match.CreatedOn),
 		}
 	}
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.MatchesWithPlayer is not implemented"))
+
+	return nil, connect.NewError(connect.CodeUnimplemented, errMatchesWithPlayerNotImplemented)
 }
 
 func (s Service) WeaponList(ctx context.Context, _ *emptypb.Empty) (*v1.WeaponListResponse, error) {
@@ -86,6 +89,7 @@ func (s Service) Buckets(ctx context.Context, _ *emptypb.Empty) (*v1.BucketsResp
 			BucketName:    &buckets[idx].BucketName,
 		}
 	}
+
 	return resp, nil
 }
 
@@ -112,7 +116,7 @@ func (s Service) Query(ctx context.Context, request *v1.QueryRequest) (*v1.Query
 	opts := Opts{
 		Variant:    Variant(request.GetVariant()),
 		VariantKey: request.GetVariantKey(),
-		Filter:     rpc.FromRPC(request.Filter),
+		Filter:     rpc.FromRPC(request.GetFilter()),
 		TimeBucket: TimeBucket(request.GetTimeBucket()),
 		TimeStamp:  request.GetTime().AsTime(),
 	}
@@ -140,48 +144,57 @@ func (s Service) Query(ctx context.Context, request *v1.QueryRequest) (*v1.Query
 		case VariantClasses:
 			fallthrough
 		case VariantWeapons:
-			resp.GetStatContainer().(*v1.QueryResponse_StatsVariant).StatsVariant.Stats[idx] = toVariantStats(statRow.(VariantStats))
+			variantStats, ok := statRow.(VariantStats)
+			if !ok {
+				return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+			}
+			container, ok := resp.GetStatContainer().(*v1.QueryResponse_StatsVariant)
+			if !ok {
+				return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+			}
+			container.StatsVariant.Stats[idx] = toVariantStats(variantStats)
 		}
 	}
+
 	return resp, nil
 }
 
-func toVariantStats(s VariantStats) *v1.VariantStats {
+func toVariantStats(stats VariantStats) *v1.VariantStats {
 	return &v1.VariantStats{
-		Variant: &s.Variant,
-		Rank:    &s.Rank,
+		Variant: &stats.Variant,
+		Rank:    &stats.Rank,
 		Player: &personv1.PersonDisplay{
-			SteamId: new(s.SteamID.Int64()),
-			Name:    new(s.SteamID.String()),
+			SteamId: new(stats.SteamID.Int64()),
+			Name:    new(stats.SteamID.String()),
 		},
-		Kills:               &s.Kills,
-		Assists:             &s.Assists,
-		Deaths:              &s.Deaths,
-		PostroundKills:      &s.PostroundKills,
-		PostroundAssists:    &s.PostroundAssists,
-		PostroundDeaths:     &s.PostroundDeaths,
-		Damage:              &s.Damage,
-		DamageTaken:         &s.DamageTaken,
-		Dominations:         &s.Dominations,
-		Dominated:           &s.Dominated,
-		Revenges:            &s.Revenges,
-		Revenged:            &s.Revenged,
-		Airshots:            &s.Airshots,
-		HeadshotKills:       &s.HeadshotKills,
-		BackstabKills:       &s.BackstabKills,
-		Headshots:           &s.Headshots,
-		Backstabs:           &s.Backstabs,
-		WasHeadshot:         &s.WasHeadshot,
-		WasBackstabbed:      &s.WasBackstabbed,
-		PreroundHealing:     &s.PreroundHealing,
-		Healing:             &s.Healing,
-		PostroundHealing:    &s.PostroundHealing,
-		Drops:               &s.Drops,
-		NearFullChargeDeath: &s.NearFullChargeDeath,
-		ChargesUber:         &s.ChargesUber,
-		ChargesKritz:        &s.ChargesKritz,
-		ChargesVacc:         &s.ChargesVacc,
-		ChargesQuickfix:     &s.ChargesQuickfix,
+		Kills:               &stats.Kills,
+		Assists:             &stats.Assists,
+		Deaths:              &stats.Deaths,
+		PostroundKills:      &stats.PostroundKills,
+		PostroundAssists:    &stats.PostroundAssists,
+		PostroundDeaths:     &stats.PostroundDeaths,
+		Damage:              &stats.Damage,
+		DamageTaken:         &stats.DamageTaken,
+		Dominations:         &stats.Dominations,
+		Dominated:           &stats.Dominated,
+		Revenges:            &stats.Revenges,
+		Revenged:            &stats.Revenged,
+		Airshots:            &stats.Airshots,
+		HeadshotKills:       &stats.HeadshotKills,
+		BackstabKills:       &stats.BackstabKills,
+		Headshots:           &stats.Headshots,
+		Backstabs:           &stats.Backstabs,
+		WasHeadshot:         &stats.WasHeadshot,
+		WasBackstabbed:      &stats.WasBackstabbed,
+		PreroundHealing:     &stats.PreroundHealing,
+		Healing:             &stats.Healing,
+		PostroundHealing:    &stats.PostroundHealing,
+		Drops:               &stats.Drops,
+		NearFullChargeDeath: &stats.NearFullChargeDeath,
+		ChargesUber:         &stats.ChargesUber,
+		ChargesKritz:        &stats.ChargesKritz,
+		ChargesVacc:         &stats.ChargesVacc,
+		ChargesQuickfix:     &stats.ChargesQuickfix,
 	}
 }
 
