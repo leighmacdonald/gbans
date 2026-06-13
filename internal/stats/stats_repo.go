@@ -370,14 +370,15 @@ func (r Repository) getRoundPlayersVariants(ctx context.Context, match *Match) e
 func (r Repository) MatchesWithPlayer(ctx context.Context, steamID steamid.SteamID) ([]PlayerMatchHistory, error) {
 	const query = `
 		SELECT DISTINCT
-			m.match_id, m.server_id, m.map_id, mp.map_name, m.demo_id, m.stats_bucket_id,
-			m.bucket_name, m.hostname, m.score_red, m.score_blu,
-		m.duration_ms, m.created_on
+			m.match_id, m.server_id, m.map_id, mp.map_name, m.demo_id, s.stats_bucket_id,
+			s.bucket_name, m.hostname, m.score_red, m.score_blu,
+		m.duration_ms, m.created_on, srv.name, srv.short_name
 		FROM match m
 		LEFT JOIN match_round r ON m.match_id = r.match_id
 		LEFT JOIN match_round_player p ON r.round_id = p.round_id
 		LEFT JOIN map mp USING(map_id)
 		LEFT JOIN stats_bucket s USING(stats_bucket_id)
+		LEFT JOIN server srv ON m.server_id = srv.server_id
 		WHERE p.steam_id = $1`
 	var matches []PlayerMatchHistory
 
@@ -390,7 +391,7 @@ func (r Repository) MatchesWithPlayer(ctx context.Context, steamID steamid.Steam
 		var match PlayerMatchHistory
 		if err := rows.Scan(&match.MatchID, &match.ServerID, &match.MapID, &match.MapName, &match.DemoID,
 			&match.BucketID, &match.BucketName, &match.Hostname, &match.ScoreRed, &match.ScoreBlu,
-			&match.DurationMs, &match.CreatedOn); err != nil {
+			&match.DurationMs, &match.CreatedOn, &match.ServerName, &match.ServerNameShort); err != nil {
 			return nil, database.Err(err)
 		}
 
