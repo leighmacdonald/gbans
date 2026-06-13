@@ -65,7 +65,7 @@ func (s Service) MatchesWithPlayer(ctx context.Context, request *v1.MatchesWithP
 		}
 	}
 
-	return nil, connect.NewError(connect.CodeUnimplemented, errMatchesWithPlayerNotImplemented)
+	return resp, nil
 }
 
 func (s Service) WeaponList(ctx context.Context, _ *emptypb.Empty) (*v1.WeaponListResponse, error) {

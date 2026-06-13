@@ -50,6 +50,7 @@ import { Route as GuestMge2v2RouteImport } from './routes/_guest.mge.2v2'
 import { Route as GuestMge1v1RouteImport } from './routes/_guest.mge.1v1'
 import { Route as GuestLoginSuccessRouteImport } from './routes/_guest.login.success'
 import { Route as AuthReportReportIdRouteImport } from './routes/_auth.report.$reportId'
+import { Route as AuthMatchesSteamIdRouteImport } from './routes/_auth.matches.$steamId'
 import { Route as AuthForumsForumIdRouteImport } from './routes/_auth.forums.$forumId'
 import { Route as AuthBanBanIdRouteImport } from './routes/_auth.ban.$banId'
 import { Route as AdminAdminSettingsRouteImport } from './routes/_admin.admin.settings'
@@ -263,6 +264,11 @@ const AuthReportReportIdRoute = AuthReportReportIdRouteImport.update({
   path: '/$reportId',
   getParentRoute: () => AuthReportRoute,
 } as any)
+const AuthMatchesSteamIdRoute = AuthMatchesSteamIdRouteImport.update({
+  id: '/matches/$steamId',
+  path: '/matches/$steamId',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthForumsForumIdRoute = AuthForumsForumIdRouteImport.update({
   id: '/$forumId',
   path: '/$forumId',
@@ -346,6 +352,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminAdminSettingsRoute
   '/ban/$banId': typeof AuthBanBanIdRoute
   '/forums/$forumId': typeof AuthForumsForumIdRoute
+  '/matches/$steamId': typeof AuthMatchesSteamIdRoute
   '/report/$reportId': typeof AuthReportReportIdRoute
   '/login/success': typeof GuestLoginSuccessRoute
   '/mge/1v1': typeof GuestMge1v1Route
@@ -392,6 +399,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminAdminSettingsRoute
   '/ban/$banId': typeof AuthBanBanIdRoute
   '/forums/$forumId': typeof AuthForumsForumIdRoute
+  '/matches/$steamId': typeof AuthMatchesSteamIdRoute
   '/report/$reportId': typeof AuthReportReportIdRoute
   '/login/success': typeof GuestLoginSuccessRoute
   '/mge/1v1': typeof GuestMge1v1Route
@@ -447,6 +455,7 @@ export interface FileRoutesById {
   '/_admin/admin/settings': typeof AdminAdminSettingsRoute
   '/_auth/ban/$banId': typeof AuthBanBanIdRoute
   '/_auth/forums/$forumId': typeof AuthForumsForumIdRoute
+  '/_auth/matches/$steamId': typeof AuthMatchesSteamIdRoute
   '/_auth/report/$reportId': typeof AuthReportReportIdRoute
   '/_guest/login/success': typeof GuestLoginSuccessRoute
   '/_guest/mge/1v1': typeof GuestMge1v1Route
@@ -499,6 +508,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/ban/$banId'
     | '/forums/$forumId'
+    | '/matches/$steamId'
     | '/report/$reportId'
     | '/login/success'
     | '/mge/1v1'
@@ -545,6 +555,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/ban/$banId'
     | '/forums/$forumId'
+    | '/matches/$steamId'
     | '/report/$reportId'
     | '/login/success'
     | '/mge/1v1'
@@ -599,6 +610,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/settings'
     | '/_auth/ban/$banId'
     | '/_auth/forums/$forumId'
+    | '/_auth/matches/$steamId'
     | '/_auth/report/$reportId'
     | '/_guest/login/success'
     | '/_guest/mge/1v1'
@@ -922,6 +934,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthReportReportIdRouteImport
       parentRoute: typeof AuthReportRoute
     }
+    '/_auth/matches/$steamId': {
+      id: '/_auth/matches/$steamId'
+      path: '/matches/$steamId'
+      fullPath: '/matches/$steamId'
+      preLoaderRoute: typeof AuthMatchesSteamIdRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/forums/$forumId': {
       id: '/_auth/forums/$forumId'
       path: '/$forumId'
@@ -1059,6 +1078,7 @@ interface AuthRouteChildren {
   AuthSettingsRoute: typeof AuthSettingsRoute
   AuthStatsRoute: typeof AuthStatsRoute
   AuthBanBanIdRoute: typeof AuthBanBanIdRoute
+  AuthMatchesSteamIdRoute: typeof AuthMatchesSteamIdRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
@@ -1072,6 +1092,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthSettingsRoute: AuthSettingsRoute,
   AuthStatsRoute: AuthStatsRoute,
   AuthBanBanIdRoute: AuthBanBanIdRoute,
+  AuthMatchesSteamIdRoute: AuthMatchesSteamIdRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
