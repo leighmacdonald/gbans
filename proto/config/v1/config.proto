@@ -220,10 +220,6 @@ message SSH {
 
 message Network {
   bool sdr_enabled = 1 [(buf.validate.field).required = true];
-  bool sdr_dns_enabled = 2 [(buf.validate.field).required = true];
-  string cf_key = 3 [(buf.validate.field).required = true];
-  string cf_email = 4 [(buf.validate.field).required = true];
-  string cf_zone_id = 5 [(buf.validate.field).required = true];
 }
 
 message LocalStore {

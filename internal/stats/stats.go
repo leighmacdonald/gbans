@@ -127,6 +127,9 @@ type OverallStats struct {
 	ObjectsDestroyed    uint64
 	BuildingsBuilt      uint64
 	BUildingsDestroyed  uint64
+
+	Personaname string
+	AvatarHash  string
 }
 
 func (s Stats) WeaponList(ctx context.Context) ([]string, error) {

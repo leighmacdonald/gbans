@@ -10,7 +10,9 @@
         "addingForeignKeyConstraint": "off",
         "lockTimeoutWarning": "off",
         "runningStatementWhileHoldingAccessExclusive": "off",
-        "requireConcurrentRefreshMatview": "off"
+        "requireConcurrentRefreshMatview": "off",
+        "avoidWideLockWindow": "off",
+        "multipleAlterTable": "off"
       }
     }
   },

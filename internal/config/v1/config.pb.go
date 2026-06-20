@@ -1736,10 +1736,6 @@ func (x *SSH) GetStacPathFmt() string {
 type Network struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SdrEnabled    *bool                  `protobuf:"varint,1,opt,name=sdr_enabled,json=sdrEnabled" json:"sdr_enabled,omitempty"`
-	SdrDnsEnabled *bool                  `protobuf:"varint,2,opt,name=sdr_dns_enabled,json=sdrDnsEnabled" json:"sdr_dns_enabled,omitempty"`
-	CfKey         *string                `protobuf:"bytes,3,opt,name=cf_key,json=cfKey" json:"cf_key,omitempty"`
-	CfEmail       *string                `protobuf:"bytes,4,opt,name=cf_email,json=cfEmail" json:"cf_email,omitempty"`
-	CfZoneId      *string                `protobuf:"bytes,5,opt,name=cf_zone_id,json=cfZoneId" json:"cf_zone_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1779,34 +1775,6 @@ func (x *Network) GetSdrEnabled() bool {
 		return *x.SdrEnabled
 	}
 	return false
-}
-
-func (x *Network) GetSdrDnsEnabled() bool {
-	if x != nil && x.SdrDnsEnabled != nil {
-		return *x.SdrDnsEnabled
-	}
-	return false
-}
-
-func (x *Network) GetCfKey() string {
-	if x != nil && x.CfKey != nil {
-		return *x.CfKey
-	}
-	return ""
-}
-
-func (x *Network) GetCfEmail() string {
-	if x != nil && x.CfEmail != nil {
-		return *x.CfEmail
-	}
-	return ""
-}
-
-func (x *Network) GetCfZoneId() string {
-	if x != nil && x.CfZoneId != nil {
-		return *x.CfZoneId
-	}
-	return ""
 }
 
 type LocalStore struct {
@@ -2857,15 +2825,10 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\atimeout\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\atimeout\x12*\n" +
 	"\rdemo_path_fmt\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdemoPathFmt\x12*\n" +
 	"\rstac_path_fmt\x18\n" +
-	" \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vstacPathFmt\"\xca\x01\n" +
+	" \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vstacPathFmt\"2\n" +
 	"\aNetwork\x12'\n" +
 	"\vsdr_enabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"sdrEnabled\x12.\n" +
-	"\x0fsdr_dns_enabled\x18\x02 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\rsdrDnsEnabled\x12\x1d\n" +
-	"\x06cf_key\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05cfKey\x12!\n" +
-	"\bcf_email\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\acfEmail\x12$\n" +
-	"\n" +
-	"cf_zone_id\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bcfZoneId\"1\n" +
+	"sdrEnabled\"1\n" +
 	"\n" +
 	"LocalStore\x12#\n" +
 	"\tpath_root\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bpathRoot\"\x8e\x01\n" +

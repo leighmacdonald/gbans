@@ -195,9 +195,19 @@ message MatchOverview {
   google.protobuf.Timestamp created_on = 15;
 }
 
+message MatchChatLog {
+  int64 person_message_id = 1 [(buf.validate.field).required = true];
+  int64 steam_id = 2 [(buf.validate.field).required = true];
+  string body = 3 [(buf.validate.field).required = true];
+  int32 demo_tick = 4 [(buf.validate.field).required = true];
+  string name = 5 [(buf.validate.field).required = true];
+}
+
 message Match {
-  MatchOverview overview = 1;
-  repeated Round rounds = 2;
+  MatchOverview overview = 1 [(buf.validate.field).required = true];
+  repeated Round rounds = 2 [(buf.validate.field).required = true];
+  repeated MatchChatLog chat_logs = 3 [(buf.validate.field).required = true];
+  map<string, person.v1.PersonDisplay> players = 4 [(buf.validate.field).required = true];
 }
 
 message Round {
@@ -212,7 +222,7 @@ message Round {
 
 message RoundPlayer {
   uint32 round_id = 1;
-  int64 steam_id = 2 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+  person.v1.PersonDisplay person = 2 [(buf.validate.field).required = true];
   Team team = 3;
   bool mvp = 4;
   uint64 tick_start = 5;

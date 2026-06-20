@@ -27,11 +27,7 @@ var (
 )
 
 type Config struct {
-	SDREnabled    bool
-	SDRDNSEnabled bool // nolint:tagliatelle
-	CFKey         string
-	CFEmail       string
-	CFZoneID      string
+	SDREnabled bool
 }
 
 // PersonIPRecord holds a composite result of the more relevant ip2location results.

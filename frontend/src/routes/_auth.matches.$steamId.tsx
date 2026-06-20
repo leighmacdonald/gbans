@@ -1,5 +1,6 @@
 import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQuery } from "@connectrpc/connect-query";
+import PageviewIcon from "@mui/icons-material/Pageview";
 import { Tooltip, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
@@ -11,7 +12,10 @@ import {
 	type MRT_SortingState,
 	useMaterialReactTable,
 } from "material-react-table";
+import prettyMilliseconds from "pretty-ms";
 import { useCallback, useMemo } from "react";
+import { IconButtonLink } from "../component/IconButtonLink.tsx";
+import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import {
 	createDefaultTableOptions,
@@ -47,7 +51,9 @@ export const Route = createFileRoute("/_auth/matches/$steamId")({
 
 function ProfileMatchesPage() {
 	const { steamId } = Route.useParams();
+
 	const { data: serverList, isLoading: isLoadingServers } = useQuery(servers);
+
 	const { data, isLoading, isError, error } = useQuery(
 		matchesWithPlayer,
 		{ steamId },
@@ -171,6 +177,16 @@ function ProfileMatchesPage() {
 				grow: true,
 				header: "Map",
 			}),
+
+			columnHelper.accessor("duration", {
+				enableColumnFilter: false,
+				enableSorting: false,
+				grow: true,
+				header: "Duration",
+				Cell: ({ cell }) => {
+					return <Typography>{prettyMilliseconds(Number(cell.getValue()))}</Typography>;
+				},
+			}),
 		],
 		[search, steamId, serverList],
 	);
@@ -184,7 +200,7 @@ function ProfileMatchesPage() {
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
-		displayColumnDefOptions: makeRowActionsDefOptions(2),
+		displayColumnDefOptions: makeRowActionsDefOptions(1),
 		state: {
 			isLoading,
 			showAlertBanner: isError,
@@ -209,6 +225,15 @@ function ProfileMatchesPage() {
 		},
 		muiToolbarAlertBannerProps: renderTableError(error),
 		enableRowActions: true,
+		renderRowActions: ({ row }) => (
+			<RowActionContainer>
+				<Tooltip title={"View Match"} key={1}>
+					<IconButtonLink color={"error"} to={"/match/$matchId"} params={{ matchId: row.original.matchId }}>
+						<PageviewIcon />
+					</IconButtonLink>
+				</Tooltip>
+			</RowActionContainer>
+		),
 	});
 	return (
 		<Grid container spacing={2}>

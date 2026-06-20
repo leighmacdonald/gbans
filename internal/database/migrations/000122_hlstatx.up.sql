@@ -22,6 +22,18 @@ drop table if exists stats_maps;
 
 drop table if exists player_class;
 
+ALTER TABLE config
+DROP COLUMN IF EXISTS network_sdr_dns_enabled;
+
+ALTER TABLE config
+DROP COLUMN IF EXISTS network_cf_key;
+
+ALTER TABLE config
+DROP COLUMN IF EXISTS network_cf_email;
+
+ALTER TABLE config
+DROP COLUMN IF EXISTS network_cf_zone_id;
+
 -- CREATE TYPE player_class AS ENUM(
 --   'spectator',
 --   'uassigned',

@@ -71,7 +71,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 		       anticheat_max_fake_ang, anticheat_max_cmd_num, anticheat_max_too_many_connections, anticheat_max_cheat_cvar,
 		       anticheat_max_oob_var, anticheat_max_invalid_user_cmd, discord_anticheat_channel_id,
 
-		       network_sdr_enabled, network_sdr_dns_enabled, network_cf_key, network_cf_email, network_cf_zone_id
+		       network_sdr_enabled
 		 FROM config`
 
 	var (
@@ -103,7 +103,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 			&cfg.Anticheat.Enabled, &cfg.Anticheat.Action, &cfg.Anticheat.Duration, &cfg.Anticheat.MaxAimSnap, &cfg.Anticheat.MaxPsilent,
 			&cfg.Anticheat.MaxBhop, &cfg.Anticheat.MaxFakeAng, &cfg.Anticheat.MaxCmdNum, &cfg.Anticheat.MaxTooManyConnections,
 			&cfg.Anticheat.MaxCheatCvar, &cfg.Anticheat.MaxOOBVar, &cfg.Anticheat.MaxInvalidUserCmd, &cfg.Discord.AnticheatChannelID,
-			&cfg.Network.SDREnabled, &cfg.Network.SDRDNSEnabled, &cfg.Network.CFKey, &cfg.Network.CFEmail, &cfg.Network.CFZoneID,
+			&cfg.Network.SDREnabled,
 		)
 	if err != nil {
 		return cfg, database.Err(err)
@@ -239,9 +239,5 @@ func (c *Repository) Write(ctx context.Context, config Config) error {
 			"anticheat_max_oob_var":               config.Anticheat.MaxOOBVar,
 			"anticheat_max_invalid_user_cmd":      config.Anticheat.MaxInvalidUserCmd,
 			"network_sdr_enabled":                 config.Network.SDREnabled,
-			"network_sdr_dns_enabled":             config.Network.SDRDNSEnabled,
-			"network_cf_key":                      config.Network.CFKey,
-			"network_cf_email":                    config.Network.CFEmail,
-			"network_cf_zone_id":                  config.Network.CFZoneID,
 		})))
 }

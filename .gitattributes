@@ -1,19 +1,24 @@
 * text=auto eol=lf
 docs/*              linguist-documentation eol=lf
-go.sum              linguist-generated merge=ours eol=lf
+go.sum              linguist-generated merge=ours eol=lf -diff
 go.mod              linguist-generated eol=lf
-
+pnpm-lock.yaml      -diff
 /.github            export-ignore eol=lf
 .gitattributes      export-ignore eol=lf
 .gitignore          export-ignore eol=lf
+
+/frontend/src/routeTree.gen.ts -diff
 
 /frontend/src/icons/* binary
 /frontend/src/fonts/* binary
 *.js text eol=lf
 *.json text eol=lf
 *.ts text eol=lf
-*.md text eol=lf
+*.md text eol=lf diff=markdown
 *.yml text eol=lf
+
+internal/**/*.pb.go  linguist-generated=true
+internal/**/*.connect.go  linguist-generated=true
 
 *.dem binary
 *.png binary

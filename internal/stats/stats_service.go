@@ -20,8 +20,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-var errMatchesWithPlayerNotImplemented = errors.New("stats.v1.StatsService.MatchesWithPlayer is not implemented")
-
 type Service struct {
 	// statsv1connect.UnimplementedStatsServiceHandler
 
@@ -93,25 +91,6 @@ func (s Service) Buckets(ctx context.Context, _ *emptypb.Empty) (*v1.BucketsResp
 	return resp, nil
 }
 
-func createResp(opts Opts, request *v1.QueryRequest, count uint64, size int) *v1.QueryResponse {
-	resp := &v1.QueryResponse{
-		Variant: request.Variant,
-		Count:   &count,
-	}
-	switch opts.Variant {
-	case VariantWeapons:
-		fallthrough
-	case VariantClasses:
-		resp.StatContainer = &v1.QueryResponse_StatsVariant{
-			StatsVariant: &v1.VariantStatsContainer{
-				Stats: make([]*v1.VariantStats, size),
-			},
-		}
-	}
-
-	return resp
-}
-
 func (s Service) Query(ctx context.Context, request *v1.QueryRequest) (*v1.QueryResponse, error) {
 	opts := Opts{
 		Variant:    Variant(request.GetVariant()),
@@ -157,45 +136,6 @@ func (s Service) Query(ctx context.Context, request *v1.QueryRequest) (*v1.Query
 	}
 
 	return resp, nil
-}
-
-func toVariantStats(stats VariantStats) *v1.VariantStats {
-	return &v1.VariantStats{
-		Variant: &stats.Variant,
-		Rank:    &stats.Rank,
-		Player: &personv1.PersonDisplay{
-			SteamId: new(stats.SteamID.Int64()),
-			Name:    new(stats.SteamID.String()),
-		},
-		Kills:               &stats.Kills,
-		Assists:             &stats.Assists,
-		Deaths:              &stats.Deaths,
-		PostroundKills:      &stats.PostroundKills,
-		PostroundAssists:    &stats.PostroundAssists,
-		PostroundDeaths:     &stats.PostroundDeaths,
-		Damage:              &stats.Damage,
-		DamageTaken:         &stats.DamageTaken,
-		Dominations:         &stats.Dominations,
-		Dominated:           &stats.Dominated,
-		Revenges:            &stats.Revenges,
-		Revenged:            &stats.Revenged,
-		Airshots:            &stats.Airshots,
-		HeadshotKills:       &stats.HeadshotKills,
-		BackstabKills:       &stats.BackstabKills,
-		Headshots:           &stats.Headshots,
-		Backstabs:           &stats.Backstabs,
-		WasHeadshot:         &stats.WasHeadshot,
-		WasBackstabbed:      &stats.WasBackstabbed,
-		PreroundHealing:     &stats.PreroundHealing,
-		Healing:             &stats.Healing,
-		PostroundHealing:    &stats.PostroundHealing,
-		Drops:               &stats.Drops,
-		NearFullChargeDeath: &stats.NearFullChargeDeath,
-		ChargesUber:         &stats.ChargesUber,
-		ChargesKritz:        &stats.ChargesKritz,
-		ChargesVacc:         &stats.ChargesVacc,
-		ChargesQuickfix:     &stats.ChargesQuickfix,
-	}
 }
 
 func (s Service) Match(ctx context.Context, request *v1.MatchRequest) (*v1.MatchResponse, error) {
@@ -258,14 +198,86 @@ func (s Service) loadMatch(ctx context.Context, matchID uuid.UUID) (*v1.Match, e
 			StartTime:       timestamppb.New(match.StartTime),
 			CreatedOn:       timestamppb.New(match.CreatedOn),
 		},
-		Rounds: []*v1.Round{},
+		Rounds:   []*v1.Round{},
+		ChatLogs: make([]*v1.MatchChatLog, len(match.ChatLogs)),
 	}
 
 	assembleRounds(out, match)
 	assemblePlayers(out, match)
 	assembleVariants(out, match)
+	assembleChat(out, match)
 
 	return out, nil
+}
+
+func assembleChat(out *v1.Match, match *Match) {
+	for idx, chat := range match.ChatLogs {
+		out.ChatLogs[idx] = &v1.MatchChatLog{
+			PersonMessageId: &chat.PersonMessageID,
+			SteamId:         new(chat.SteamID.Int64()),
+			Body:            &chat.Body,
+			DemoTick:        &chat.DemoTick,
+			Name:            &chat.Name,
+		}
+	}
+}
+
+func createResp(opts Opts, request *v1.QueryRequest, count uint64, size int) *v1.QueryResponse {
+	resp := &v1.QueryResponse{
+		Variant: request.Variant,
+		Count:   &count,
+	}
+	switch opts.Variant {
+	case VariantWeapons:
+		fallthrough
+	case VariantClasses:
+		resp.StatContainer = &v1.QueryResponse_StatsVariant{
+			StatsVariant: &v1.VariantStatsContainer{
+				Stats: make([]*v1.VariantStats, size),
+			},
+		}
+	}
+
+	return resp
+}
+
+func toVariantStats(stats VariantStats) *v1.VariantStats {
+	return &v1.VariantStats{
+		Variant: &stats.Variant,
+		Rank:    &stats.Rank,
+		Player: &personv1.PersonDisplay{
+			SteamId: new(stats.SteamID.Int64()),
+			Name:    new(stats.SteamID.String()),
+		},
+		Kills:               &stats.Kills,
+		Assists:             &stats.Assists,
+		Deaths:              &stats.Deaths,
+		PostroundKills:      &stats.PostroundKills,
+		PostroundAssists:    &stats.PostroundAssists,
+		PostroundDeaths:     &stats.PostroundDeaths,
+		Damage:              &stats.Damage,
+		DamageTaken:         &stats.DamageTaken,
+		Dominations:         &stats.Dominations,
+		Dominated:           &stats.Dominated,
+		Revenges:            &stats.Revenges,
+		Revenged:            &stats.Revenged,
+		Airshots:            &stats.Airshots,
+		HeadshotKills:       &stats.HeadshotKills,
+		BackstabKills:       &stats.BackstabKills,
+		Headshots:           &stats.Headshots,
+		Backstabs:           &stats.Backstabs,
+		WasHeadshot:         &stats.WasHeadshot,
+		WasBackstabbed:      &stats.WasBackstabbed,
+		PreroundHealing:     &stats.PreroundHealing,
+		Healing:             &stats.Healing,
+		PostroundHealing:    &stats.PostroundHealing,
+		Drops:               &stats.Drops,
+		NearFullChargeDeath: &stats.NearFullChargeDeath,
+		ChargesUber:         &stats.ChargesUber,
+		ChargesKritz:        &stats.ChargesKritz,
+		ChargesVacc:         &stats.ChargesVacc,
+		ChargesQuickfix:     &stats.ChargesQuickfix,
+	}
 }
 
 func assemblePlayers(out *v1.Match, match *Match) {
@@ -274,7 +286,7 @@ func assemblePlayers(out *v1.Match, match *Match) {
 			if round.GetRoundId() == player.RoundID {
 				round.Players = append(round.Players, &v1.RoundPlayer{
 					RoundId:             &player.RoundID,
-					SteamId:             new(player.SteamID.Int64()),
+					Person:              &personv1.PersonDisplay{SteamId: new(player.SteamID.Int64()), Name: &player.Personaname, AvatarHash: &player.AvatarHash},
 					Team:                toTeam(player.Team),
 					Mvp:                 &player.MVP,
 					TickStart:           &player.TickStart,
@@ -340,7 +352,8 @@ func assembleVariants(out *v1.Match, match *Match) {
 			}
 
 			for _, player := range round.GetPlayers() {
-				if cls.SteamID.Int64() != player.GetSteamId() {
+				personDisplay := player.GetPerson()
+				if cls.SteamID.Int64() != personDisplay.GetSteamId() {
 					continue
 				}
 

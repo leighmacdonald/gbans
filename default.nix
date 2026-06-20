@@ -22,7 +22,7 @@ pkgs.mkShell {
     goreleaser
     nilaway
     nodejs
-    pnpm_10
+    pnpm_11
     just
     just-lsp
     nil
