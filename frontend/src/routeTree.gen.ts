@@ -51,6 +51,7 @@ import { Route as GuestMge1v1RouteImport } from './routes/_guest.mge.1v1'
 import { Route as GuestLoginSuccessRouteImport } from './routes/_guest.login.success'
 import { Route as AuthReportReportIdRouteImport } from './routes/_auth.report.$reportId'
 import { Route as AuthMatchesSteamIdRouteImport } from './routes/_auth.matches.$steamId'
+import { Route as AuthMatchMatchIdRouteImport } from './routes/_auth.match.$matchId'
 import { Route as AuthForumsForumIdRouteImport } from './routes/_auth.forums.$forumId'
 import { Route as AuthBanBanIdRouteImport } from './routes/_auth.ban.$banId'
 import { Route as AdminAdminSettingsRouteImport } from './routes/_admin.admin.settings'
@@ -269,6 +270,11 @@ const AuthMatchesSteamIdRoute = AuthMatchesSteamIdRouteImport.update({
   path: '/matches/$steamId',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthMatchMatchIdRoute = AuthMatchMatchIdRouteImport.update({
+  id: '/match/$matchId',
+  path: '/match/$matchId',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthForumsForumIdRoute = AuthForumsForumIdRouteImport.update({
   id: '/$forumId',
   path: '/$forumId',
@@ -352,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminAdminSettingsRoute
   '/ban/$banId': typeof AuthBanBanIdRoute
   '/forums/$forumId': typeof AuthForumsForumIdRoute
+  '/match/$matchId': typeof AuthMatchMatchIdRoute
   '/matches/$steamId': typeof AuthMatchesSteamIdRoute
   '/report/$reportId': typeof AuthReportReportIdRoute
   '/login/success': typeof GuestLoginSuccessRoute
@@ -399,6 +406,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminAdminSettingsRoute
   '/ban/$banId': typeof AuthBanBanIdRoute
   '/forums/$forumId': typeof AuthForumsForumIdRoute
+  '/match/$matchId': typeof AuthMatchMatchIdRoute
   '/matches/$steamId': typeof AuthMatchesSteamIdRoute
   '/report/$reportId': typeof AuthReportReportIdRoute
   '/login/success': typeof GuestLoginSuccessRoute
@@ -455,6 +463,7 @@ export interface FileRoutesById {
   '/_admin/admin/settings': typeof AdminAdminSettingsRoute
   '/_auth/ban/$banId': typeof AuthBanBanIdRoute
   '/_auth/forums/$forumId': typeof AuthForumsForumIdRoute
+  '/_auth/match/$matchId': typeof AuthMatchMatchIdRoute
   '/_auth/matches/$steamId': typeof AuthMatchesSteamIdRoute
   '/_auth/report/$reportId': typeof AuthReportReportIdRoute
   '/_guest/login/success': typeof GuestLoginSuccessRoute
@@ -508,6 +517,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/ban/$banId'
     | '/forums/$forumId'
+    | '/match/$matchId'
     | '/matches/$steamId'
     | '/report/$reportId'
     | '/login/success'
@@ -555,6 +565,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/ban/$banId'
     | '/forums/$forumId'
+    | '/match/$matchId'
     | '/matches/$steamId'
     | '/report/$reportId'
     | '/login/success'
@@ -610,6 +621,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/settings'
     | '/_auth/ban/$banId'
     | '/_auth/forums/$forumId'
+    | '/_auth/match/$matchId'
     | '/_auth/matches/$steamId'
     | '/_auth/report/$reportId'
     | '/_guest/login/success'
@@ -941,6 +953,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthMatchesSteamIdRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/match/$matchId': {
+      id: '/_auth/match/$matchId'
+      path: '/match/$matchId'
+      fullPath: '/match/$matchId'
+      preLoaderRoute: typeof AuthMatchMatchIdRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/forums/$forumId': {
       id: '/_auth/forums/$forumId'
       path: '/$forumId'
@@ -1078,6 +1097,7 @@ interface AuthRouteChildren {
   AuthSettingsRoute: typeof AuthSettingsRoute
   AuthStatsRoute: typeof AuthStatsRoute
   AuthBanBanIdRoute: typeof AuthBanBanIdRoute
+  AuthMatchMatchIdRoute: typeof AuthMatchMatchIdRoute
   AuthMatchesSteamIdRoute: typeof AuthMatchesSteamIdRoute
 }
 
@@ -1092,6 +1112,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthSettingsRoute: AuthSettingsRoute,
   AuthStatsRoute: AuthStatsRoute,
   AuthBanBanIdRoute: AuthBanBanIdRoute,
+  AuthMatchMatchIdRoute: AuthMatchMatchIdRoute,
   AuthMatchesSteamIdRoute: AuthMatchesSteamIdRoute,
 }
 

@@ -208,11 +208,7 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 			StacPathFmt:     inSSH.GetStacPathFmt(),
 		},
 		Network: network.Config{
-			SDREnabled:    inNetwork.GetSdrEnabled(),
-			SDRDNSEnabled: inNetwork.GetSdrDnsEnabled(),
-			CFKey:         inNetwork.GetCfKey(),
-			CFEmail:       inNetwork.GetCfEmail(),
-			CFZoneID:      inNetwork.GetCfZoneId(),
+			SDREnabled: inNetwork.GetSdrEnabled(),
 		},
 		LocalStore: asset.Config{
 			PathRoot: inLocalStore.GetPathRoot(),
@@ -346,11 +342,7 @@ func toConfig(conf Config) *configv1.Config {
 			StacPathFmt:     &conf.SSH.StacPathFmt,
 		},
 		Network: &configv1.Network{
-			SdrEnabled:    &conf.Network.SDREnabled,
-			SdrDnsEnabled: &conf.Network.SDRDNSEnabled,
-			CfKey:         &conf.Network.CFKey,
-			CfEmail:       &conf.Network.CFEmail,
-			CfZoneId:      &conf.Network.CFZoneID,
+			SdrEnabled: &conf.Network.SDREnabled,
 		},
 		LocalStore: &configv1.LocalStore{
 			PathRoot: &conf.LocalStore.PathRoot,

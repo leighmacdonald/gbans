@@ -23,6 +23,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import StorageIcon from "@mui/icons-material/Storage";
 import SubjectIcon from "@mui/icons-material/Subject";
 import SupportIcon from "@mui/icons-material/Support";
+import TimelineIcon from "@mui/icons-material/Timeline";
 import WifiFindIcon from "@mui/icons-material/WifiFind";
 import WifiOffIcon from "@mui/icons-material/WifiOff";
 import AppBar from "@mui/material/AppBar";
@@ -177,20 +178,20 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 				icon: <SettingsIcon sx={colourOpts} />,
 			},
 		];
-		// if (appInfo.stats_enabled) {
-		// 	items.push({
-		// 		to: `/logs/${profile.steam_id}`,
-		// 		text: "Match History",
-		// 		icon: <TimelineIcon sx={colourOpts} />,
-		// 	});
-		// }
+		if (appInfo.statsEnabled) {
+			items.push({
+				to: `/matches/${profile.steamId}`,
+				text: "Match History",
+				icon: <TimelineIcon sx={colourOpts} />,
+			});
+		}
 		items.push({
 			to: "/logout",
 			text: "Logout",
 			icon: <ExitToAppIcon sx={colourOpts} />,
 		});
 		return items;
-	}, [colourOpts, profile.steamId]);
+	}, [colourOpts, profile.steamId, appInfo]);
 
 	// @ts-expect-error label defined as string
 	const adminItems: MenuItemData = useMemo(() => {

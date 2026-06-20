@@ -280,7 +280,35 @@ func (r Repository) Match(ctx context.Context, matchID uuid.UUID) (*Match, error
 		return nil, errVariants
 	}
 
+	if errChat := r.getChat(ctx, match); errChat != nil {
+		return nil, errChat
+	}
+
 	return match, nil
+}
+
+func (r Repository) getChat(ctx context.Context, match *Match) error {
+	const query = `
+		SELECT
+			person_message_id, steam_id, body, demo_tick, persona_name
+		FROM person_messages
+		WHERE match_id = $1`
+
+	rows, errRows := r.Database.Query(ctx, query, match.MatchID)
+	if errRows != nil {
+		return database.Err(errRows)
+	}
+
+	for rows.Next() {
+		var chatLog MatchChatLog
+		if err := rows.Scan(&chatLog.PersonMessageID, &chatLog.SteamID, &chatLog.Body, &chatLog.DemoTick, &chatLog.Name); err != nil {
+			return database.Err(err)
+		}
+
+		match.ChatLogs = append(match.ChatLogs, chatLog)
+	}
+
+	return nil
 }
 
 func (r Repository) getRoundPlayers(ctx context.Context, match *Match) error {
@@ -294,11 +322,13 @@ func (r Repository) getRoundPlayers(ctx context.Context, match *Match) error {
 			p.backstabs, p.backstab_kills, p.captures, p.captures_blocked, p.was_headshot, p.was_backstabbed, p.shots, p.hits,
 			p.objects_built, p.objects_destroyed, p.points, p.connection_count, p.bonus_points,
 			p.scoreboard_kills, p.scoreboard_assists, p.scoreboard_healing, p.scoreboard_deaths, p.scoreboard_damage,
-			p.suicides, p.extinguishes, p.ignites
+			p.suicides, p.extinguishes, p.ignites, pe.personaname, pe.avatar_hash
 		FROM
 			match_round_player p
 		LEFT JOIN
 			match_round r ON r.round_id = p.round_id
+		LEFT JOIN
+			person pe ON p.steam_id = pe.steam_id
 		WHERE
 			r.match_id = $1`
 	rows, errRows := r.Database.Query(ctx, query, match.MatchID)
@@ -307,7 +337,7 @@ func (r Repository) getRoundPlayers(ctx context.Context, match *Match) error {
 	}
 
 	for rows.Next() {
-		var mrp OverallStatsRound
+		var mrp MatchOverallStatsRound
 		if err := rows.Scan(&mrp.RoundID, &mrp.SteamID, &mrp.Team, &mrp.MVP, &mrp.TickStart, &mrp.TickEnd, &mrp.Kills, &mrp.Assists,
 			&mrp.PostroundKills, &mrp.PostroundAssists, &mrp.PostroundDeaths, &mrp.PreroundHealing, &mrp.Healing,
 			&mrp.PostroundHealing, &mrp.Drops, &mrp.NearFullChargeDeath, &mrp.ChargesUber, &mrp.ChargesKritz, &mrp.ChargesVacc, &mrp.ChargesQuickfix,
@@ -316,7 +346,7 @@ func (r Repository) getRoundPlayers(ctx context.Context, match *Match) error {
 			&mrp.Backstabs, &mrp.BackstabKills, &mrp.Captures, &mrp.CapturesBlocked, &mrp.WasHeadshot, &mrp.WasBackstabbed, &mrp.Shots, &mrp.Hits,
 			&mrp.ObjectsBuilt, &mrp.ObjectsDestroyed, &mrp.Points, &mrp.ConnectionCount, &mrp.BonusPoints,
 			&mrp.ScoreboardKills, &mrp.ScoreboardAssists, &mrp.ScoreboardHealing, &mrp.ScoreboardDeaths, &mrp.ScoreboardDamage,
-			&mrp.Suicides, &mrp.Extinguishes, &mrp.Ignites,
+			&mrp.Suicides, &mrp.Extinguishes, &mrp.Ignites, &mrp.Personaname, &mrp.AvatarHash,
 		); err != nil {
 			return database.Err(err)
 		}
@@ -348,7 +378,7 @@ func (r Repository) getRoundPlayersVariants(ctx context.Context, match *Match) e
 	}
 
 	for rows.Next() {
-		var mrws VariantStatsRound
+		var mrws MatchVariantStatsRound
 		if err := rows.Scan(
 			&mrws.Variant, &mrws.RoundID, &mrws.SteamID, &mrws.Kills, &mrws.Assists, &mrws.Deaths, &mrws.PostroundKills, &mrws.PostroundAssists,
 			&mrws.PostroundDeaths, &mrws.PreroundHealing, &mrws.Healing, &mrws.PostroundHealing, &mrws.Drops, &mrws.NearFullChargeDeath,

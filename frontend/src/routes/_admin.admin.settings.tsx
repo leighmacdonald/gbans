@@ -1377,60 +1377,6 @@ function AdminSettings() {
 									}}
 								/>
 							</Grid>
-							<Grid size={{ xs: 12 }}>
-								<form.AppField
-									name={"network.sdrDnsEnabled"}
-									children={() => {
-										return <CheckboxField label={"Enable SDR DNS updates"} />;
-									}}
-								/>
-							</Grid>
-
-							<Grid size={{ xs: 12 }}>
-								<Typography variant={"h3"}>Cloudflare</Typography>
-								<Typography variant={"body1"}>
-									Current cloudflare is the only supported DNS provider. If you want to see others
-									added, feel free to open a GitHub issue.
-								</Typography>
-							</Grid>
-
-							<Grid size={{ xs: 12 }}>
-								<SubHeading></SubHeading>
-								<form.AppField
-									name={"network.cfKey"}
-									children={(field) => {
-										return (
-											<field.TextField
-												label={"API Key"}
-												type={"password"}
-												helperText={
-													"Your API key created on cloudflare. This key must have DNS editing privileges."
-												}
-											/>
-										);
-									}}
-								/>
-							</Grid>
-
-							<Grid size={{ xs: 12 }}>
-								<SubHeading>Account Email Address</SubHeading>
-								<form.AppField
-									name={"network.cfEmail"}
-									children={(field) => {
-										return <field.TextField label={"Email"} />;
-									}}
-								/>
-							</Grid>
-
-							<Grid size={{ xs: 12 }}>
-								<SubHeading>Zone ID for the domain.</SubHeading>
-								<form.AppField
-									name={"network.cfZoneId"}
-									children={(field) => {
-										return <field.TextField label={"Zone ID"} />;
-									}}
-								/>
-							</Grid>
 
 							<Grid size={{ xs: 12 }}>
 								<form.AppForm>

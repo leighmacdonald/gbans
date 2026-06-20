@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type Bucket struct {
@@ -47,8 +48,17 @@ type Match struct {
 	// Data sums are split into rounds for a bit more fine grained info.
 	// They are stored in a enturely flat structure here just for ease of processing
 	Rounds   []MatchRound
-	Players  []OverallStatsRound
-	Variants []VariantStatsRound
+	Players  []MatchOverallStatsRound
+	Variants []MatchVariantStatsRound
+	ChatLogs []MatchChatLog
+}
+
+type MatchChatLog struct {
+	PersonMessageID int64
+	SteamID         steamid.SteamID
+	Name            string
+	Body            string
+	DemoTick        int32
 }
 
 type MatchRound struct {
@@ -60,14 +70,14 @@ type MatchRound struct {
 }
 
 // Used in the match queries.
-type OverallStatsRound struct {
+type MatchOverallStatsRound struct {
 	OverallStats
 
 	Team    string
 	RoundID uint32
 }
 
-type VariantStatsRound struct {
+type MatchVariantStatsRound struct {
 	VariantStats
 
 	RoundID uint32

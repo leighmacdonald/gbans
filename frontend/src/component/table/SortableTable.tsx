@@ -18,6 +18,7 @@ type Props<TData extends MRT_RowData> = {
 	buttons?: ReactNode[];
 	hideToolbarButtons?: boolean;
 	hideHeader?: boolean;
+	hidePagination?: boolean;
 };
 
 export const SortableTable = <TData extends MRT_RowData>({
@@ -26,6 +27,7 @@ export const SortableTable = <TData extends MRT_RowData>({
 	buttons,
 	hideHeader = false,
 	hideToolbarButtons = false,
+	hidePagination = false,
 }: Props<TData>) => {
 	return (
 		<Paper>
@@ -74,11 +76,13 @@ export const SortableTable = <TData extends MRT_RowData>({
 			</Box>
 			<MRT_TableContainer table={table} />
 
-			<Box>
-				<Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-					<MRT_TablePagination table={table} />
+			{!hidePagination && (
+				<Box>
+					<Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+						<MRT_TablePagination table={table} />
+					</Box>
 				</Box>
-			</Box>
+			)}
 		</Paper>
 	);
 };

@@ -156,10 +156,10 @@ func (s *Server) resolveAll() error {
 
 func (s *Server) resolveIP() error {
 	// Future: Make sure this is able to keep up with SDR changes.
-	s.RLock()
-	if s.IP != nil {
-		s.RUnlock()
+	s.Lock()
+	defer s.Unlock()
 
+	if s.IP != nil {
 		return nil
 	}
 
@@ -172,15 +172,10 @@ func (s *Server) resolveIP() error {
 	}
 
 	if ipAddr == nil {
-		s.RUnlock()
-
 		return ErrResolveIP
 	}
-	s.RUnlock()
 
-	s.Lock()
 	s.IP = ipAddr
-	s.Unlock()
 
 	return nil
 }
@@ -221,7 +216,7 @@ func (s *Server) LogAddressAdd(ctx context.Context, logAddress string) error {
 }
 
 func (s *Server) LogAddressDel(ctx context.Context, logAddress string) error {
-	return s.ExecDiscardF(ctx, "logaddress_add %s", logAddress)
+	return s.ExecDiscardF(ctx, "logaddress_del %s", logAddress)
 }
 
 type SayOpts struct {
@@ -244,7 +239,9 @@ func (s *Server) Say(ctx context.Context, opts SayOpts) error {
 			return fmt.Errorf("%w: invalid steamid count for psay", ErrExecRCON)
 		}
 		for _, target := range opts.Targets {
-			return s.ExecDiscardF(ctx, `sm_psay "#%s" "%s"`, target.Steam(false), opts.Message)
+			if err := s.ExecDiscardF(ctx, `sm_psay "#%s" "%s"`, target.Steam(false), opts.Message); err != nil {
+				return err
+			}
 		}
 	default:
 		return fmt.Errorf("%w: invalid say type", ErrExecRCON)
@@ -544,7 +541,7 @@ func (s *Server) updateState(ctx context.Context) {
 
 	waitGroup.Go(func() {
 		if err := s.updateStatus(ctx); err != nil {
-			slog.Error("Failed to parse status", slog.String("error", err.Error()),
+			slog.Debug("Failed to parse status", slog.String("error", err.Error()),
 				slog.String("server", s.ShortName))
 		}
 	})

@@ -352,6 +352,7 @@ function AdminBans() {
 		],
 		[search, theme],
 	);
+
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,

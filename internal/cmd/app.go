@@ -37,7 +37,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/metrics"
 	"github.com/leighmacdonald/gbans/internal/mge"
 	"github.com/leighmacdonald/gbans/internal/network"
-	"github.com/leighmacdonald/gbans/internal/network/asn"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/news"
 	"github.com/leighmacdonald/gbans/internal/notification"
@@ -236,11 +235,6 @@ func (g *GBans) Init(ctx context.Context) error {
 
 	if errRoles := g.createDiscordRoles(ctx); errRoles != nil {
 		slog.Error("Failed to register discord roles", slog.String("error", errRoles.Error()))
-	}
-
-	asnBlocker := asn.NewBlocker(asn.NewRepository(g.database))
-	if err := asnBlocker.Save(ctx, asn.NewBlock(13335, "idk")); err != nil {
-		panic(err)
 	}
 
 	return nil

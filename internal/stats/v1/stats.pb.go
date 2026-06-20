@@ -1319,17 +1319,95 @@ func (x *MatchOverview) GetCreatedOn() *timestamppb.Timestamp {
 	return nil
 }
 
+type MatchChatLog struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	PersonMessageId *int64                 `protobuf:"varint,1,opt,name=person_message_id,json=personMessageId" json:"person_message_id,omitempty"`
+	SteamId         *int64                 `protobuf:"varint,2,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	Body            *string                `protobuf:"bytes,3,opt,name=body" json:"body,omitempty"`
+	DemoTick        *int32                 `protobuf:"varint,4,opt,name=demo_tick,json=demoTick" json:"demo_tick,omitempty"`
+	Name            *string                `protobuf:"bytes,5,opt,name=name" json:"name,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *MatchChatLog) Reset() {
+	*x = MatchChatLog{}
+	mi := &file_stats_v1_stats_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MatchChatLog) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MatchChatLog) ProtoMessage() {}
+
+func (x *MatchChatLog) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MatchChatLog.ProtoReflect.Descriptor instead.
+func (*MatchChatLog) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *MatchChatLog) GetPersonMessageId() int64 {
+	if x != nil && x.PersonMessageId != nil {
+		return *x.PersonMessageId
+	}
+	return 0
+}
+
+func (x *MatchChatLog) GetSteamId() int64 {
+	if x != nil && x.SteamId != nil {
+		return *x.SteamId
+	}
+	return 0
+}
+
+func (x *MatchChatLog) GetBody() string {
+	if x != nil && x.Body != nil {
+		return *x.Body
+	}
+	return ""
+}
+
+func (x *MatchChatLog) GetDemoTick() int32 {
+	if x != nil && x.DemoTick != nil {
+		return *x.DemoTick
+	}
+	return 0
+}
+
+func (x *MatchChatLog) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
+}
+
 type Match struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Overview      *MatchOverview         `protobuf:"bytes,1,opt,name=overview" json:"overview,omitempty"`
-	Rounds        []*Round               `protobuf:"bytes,2,rep,name=rounds" json:"rounds,omitempty"`
+	state         protoimpl.MessageState        `protogen:"open.v1"`
+	Overview      *MatchOverview                `protobuf:"bytes,1,opt,name=overview" json:"overview,omitempty"`
+	Rounds        []*Round                      `protobuf:"bytes,2,rep,name=rounds" json:"rounds,omitempty"`
+	ChatLogs      []*MatchChatLog               `protobuf:"bytes,3,rep,name=chat_logs,json=chatLogs" json:"chat_logs,omitempty"`
+	Players       map[string]*v11.PersonDisplay `protobuf:"bytes,4,rep,name=players" json:"players,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Match) Reset() {
 	*x = Match{}
-	mi := &file_stats_v1_stats_proto_msgTypes[13]
+	mi := &file_stats_v1_stats_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1341,7 +1419,7 @@ func (x *Match) String() string {
 func (*Match) ProtoMessage() {}
 
 func (x *Match) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[13]
+	mi := &file_stats_v1_stats_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1354,7 +1432,7 @@ func (x *Match) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Match.ProtoReflect.Descriptor instead.
 func (*Match) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{13}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *Match) GetOverview() *MatchOverview {
@@ -1367,6 +1445,20 @@ func (x *Match) GetOverview() *MatchOverview {
 func (x *Match) GetRounds() []*Round {
 	if x != nil {
 		return x.Rounds
+	}
+	return nil
+}
+
+func (x *Match) GetChatLogs() []*MatchChatLog {
+	if x != nil {
+		return x.ChatLogs
+	}
+	return nil
+}
+
+func (x *Match) GetPlayers() map[string]*v11.PersonDisplay {
+	if x != nil {
+		return x.Players
 	}
 	return nil
 }
@@ -1385,7 +1477,7 @@ type Round struct {
 
 func (x *Round) Reset() {
 	*x = Round{}
-	mi := &file_stats_v1_stats_proto_msgTypes[14]
+	mi := &file_stats_v1_stats_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1397,7 +1489,7 @@ func (x *Round) String() string {
 func (*Round) ProtoMessage() {}
 
 func (x *Round) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[14]
+	mi := &file_stats_v1_stats_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1410,7 +1502,7 @@ func (x *Round) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Round.ProtoReflect.Descriptor instead.
 func (*Round) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{14}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *Round) GetRoundId() uint32 {
@@ -1458,7 +1550,7 @@ func (x *Round) GetPlayers() []*RoundPlayer {
 type RoundPlayer struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	RoundId             *uint32                `protobuf:"varint,1,opt,name=round_id,json=roundId" json:"round_id,omitempty"`
-	SteamId             *int64                 `protobuf:"varint,2,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	Person              *v11.PersonDisplay     `protobuf:"bytes,2,opt,name=person" json:"person,omitempty"`
 	Team                *Team                  `protobuf:"varint,3,opt,name=team,enum=stats.v1.Team" json:"team,omitempty"`
 	Mvp                 *bool                  `protobuf:"varint,4,opt,name=mvp" json:"mvp,omitempty"`
 	TickStart           *uint64                `protobuf:"varint,5,opt,name=tick_start,json=tickStart" json:"tick_start,omitempty"`
@@ -1514,7 +1606,7 @@ type RoundPlayer struct {
 
 func (x *RoundPlayer) Reset() {
 	*x = RoundPlayer{}
-	mi := &file_stats_v1_stats_proto_msgTypes[15]
+	mi := &file_stats_v1_stats_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1526,7 +1618,7 @@ func (x *RoundPlayer) String() string {
 func (*RoundPlayer) ProtoMessage() {}
 
 func (x *RoundPlayer) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[15]
+	mi := &file_stats_v1_stats_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1539,7 +1631,7 @@ func (x *RoundPlayer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoundPlayer.ProtoReflect.Descriptor instead.
 func (*RoundPlayer) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{15}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *RoundPlayer) GetRoundId() uint32 {
@@ -1549,11 +1641,11 @@ func (x *RoundPlayer) GetRoundId() uint32 {
 	return 0
 }
 
-func (x *RoundPlayer) GetSteamId() int64 {
-	if x != nil && x.SteamId != nil {
-		return *x.SteamId
+func (x *RoundPlayer) GetPerson() *v11.PersonDisplay {
+	if x != nil {
+		return x.Person
 	}
-	return 0
+	return nil
 }
 
 func (x *RoundPlayer) GetTeam() Team {
@@ -1938,7 +2030,7 @@ type RoundPlayerVariant struct {
 
 func (x *RoundPlayerVariant) Reset() {
 	*x = RoundPlayerVariant{}
-	mi := &file_stats_v1_stats_proto_msgTypes[16]
+	mi := &file_stats_v1_stats_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1950,7 +2042,7 @@ func (x *RoundPlayerVariant) String() string {
 func (*RoundPlayerVariant) ProtoMessage() {}
 
 func (x *RoundPlayerVariant) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[16]
+	mi := &file_stats_v1_stats_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1963,7 +2055,7 @@ func (x *RoundPlayerVariant) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoundPlayerVariant.ProtoReflect.Descriptor instead.
 func (*RoundPlayerVariant) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{16}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *RoundPlayerVariant) GetVariant() string {
@@ -2296,10 +2388,21 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"start_time\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x12\x1e\n" +
 	"\bduration\x18\x0e \x01(\x04B\x020\x01R\bduration\x129\n" +
 	"\n" +
-	"created_on\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\"e\n" +
-	"\x05Match\x123\n" +
-	"\boverview\x18\x01 \x01(\v2\x17.stats.v1.MatchOverviewR\boverview\x12'\n" +
-	"\x06rounds\x18\x02 \x03(\v2\x0f.stats.v1.RoundR\x06rounds\"\xeb\x01\n" +
+	"created_on\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\"\xc6\x01\n" +
+	"\fMatchChatLog\x124\n" +
+	"\x11person_message_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x0fpersonMessageId\x12#\n" +
+	"\bsteam_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12\x1a\n" +
+	"\x04body\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04body\x12#\n" +
+	"\tdemo_tick\x18\x04 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bdemoTick\x12\x1a\n" +
+	"\x04name\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\"\xc8\x02\n" +
+	"\x05Match\x12;\n" +
+	"\boverview\x18\x01 \x01(\v2\x17.stats.v1.MatchOverviewB\x06\xbaH\x03\xc8\x01\x01R\boverview\x12/\n" +
+	"\x06rounds\x18\x02 \x03(\v2\x0f.stats.v1.RoundB\x06\xbaH\x03\xc8\x01\x01R\x06rounds\x12;\n" +
+	"\tchat_logs\x18\x03 \x03(\v2\x16.stats.v1.MatchChatLogB\x06\xbaH\x03\xc8\x01\x01R\bchatLogs\x12>\n" +
+	"\aplayers\x18\x04 \x03(\v2\x1c.stats.v1.Match.PlayersEntryB\x06\xbaH\x03\xc8\x01\x01R\aplayers\x1aT\n" +
+	"\fPlayersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12.\n" +
+	"\x05value\x18\x02 \x01(\v2\x18.person.v1.PersonDisplayR\x05value:\x028\x01\"\xeb\x01\n" +
 	"\x05Round\x12\x19\n" +
 	"\bround_id\x18\x01 \x01(\rR\aroundId\x12&\n" +
 	"\x06winner\x18\x02 \x01(\x0e2\x0e.stats.v1.TeamR\x06winner\x12!\n" +
@@ -2307,11 +2410,10 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\x0fis_sudden_death\x18\x04 \x01(\bR\risSuddenDeath\x12#\n" +
 	"\vduration_ms\x18\x05 \x01(\x04B\x020\x01R\n" +
 	"durationMs\x12/\n" +
-	"\aplayers\x18\x06 \x03(\v2\x15.stats.v1.RoundPlayerR\aplayers\"\xc1\x0f\n" +
+	"\aplayers\x18\x06 \x03(\v2\x15.stats.v1.RoundPlayerR\aplayers\"\xcd\x0f\n" +
 	"\vRoundPlayer\x12\x19\n" +
-	"\bround_id\x18\x01 \x01(\rR\aroundId\x12,\n" +
-	"\bsteam_id\x18\x02 \x01(\x03B\x11\xbaH\f\"\n" +
-	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\x12\"\n" +
+	"\bround_id\x18\x01 \x01(\rR\aroundId\x128\n" +
+	"\x06person\x18\x02 \x01(\v2\x18.person.v1.PersonDisplayB\x06\xbaH\x03\xc8\x01\x01R\x06person\x12\"\n" +
 	"\x04team\x18\x03 \x01(\x0e2\x0e.stats.v1.TeamR\x04team\x12\x10\n" +
 	"\x03mvp\x18\x04 \x01(\bR\x03mvp\x12!\n" +
 	"\n" +
@@ -2439,7 +2541,7 @@ func file_stats_v1_stats_proto_rawDescGZIP() []byte {
 }
 
 var file_stats_v1_stats_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_stats_v1_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_stats_v1_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_stats_v1_stats_proto_goTypes = []any{
 	(Team)(0),                         // 0: stats.v1.Team
 	(Variant)(0),                      // 1: stats.v1.Variant
@@ -2457,53 +2559,59 @@ var file_stats_v1_stats_proto_goTypes = []any{
 	(*MatchRequest)(nil),              // 13: stats.v1.MatchRequest
 	(*MatchResponse)(nil),             // 14: stats.v1.MatchResponse
 	(*MatchOverview)(nil),             // 15: stats.v1.MatchOverview
-	(*Match)(nil),                     // 16: stats.v1.Match
-	(*Round)(nil),                     // 17: stats.v1.Round
-	(*RoundPlayer)(nil),               // 18: stats.v1.RoundPlayer
-	(*RoundPlayerVariant)(nil),        // 19: stats.v1.RoundPlayerVariant
-	(*timestamppb.Timestamp)(nil),     // 20: google.protobuf.Timestamp
-	(*v1.Filter)(nil),                 // 21: database.query.v1.Filter
-	(*v11.PersonDisplay)(nil),         // 22: person.v1.PersonDisplay
-	(*v12.Map)(nil),                   // 23: maps.v1.Map
-	(*emptypb.Empty)(nil),             // 24: google.protobuf.Empty
+	(*MatchChatLog)(nil),              // 16: stats.v1.MatchChatLog
+	(*Match)(nil),                     // 17: stats.v1.Match
+	(*Round)(nil),                     // 18: stats.v1.Round
+	(*RoundPlayer)(nil),               // 19: stats.v1.RoundPlayer
+	(*RoundPlayerVariant)(nil),        // 20: stats.v1.RoundPlayerVariant
+	nil,                               // 21: stats.v1.Match.PlayersEntry
+	(*timestamppb.Timestamp)(nil),     // 22: google.protobuf.Timestamp
+	(*v1.Filter)(nil),                 // 23: database.query.v1.Filter
+	(*v11.PersonDisplay)(nil),         // 24: person.v1.PersonDisplay
+	(*v12.Map)(nil),                   // 25: maps.v1.Map
+	(*emptypb.Empty)(nil),             // 26: google.protobuf.Empty
 }
 var file_stats_v1_stats_proto_depIdxs = []int32{
-	20, // 0: stats.v1.PlayerMatchHistory.created_on:type_name -> google.protobuf.Timestamp
+	22, // 0: stats.v1.PlayerMatchHistory.created_on:type_name -> google.protobuf.Timestamp
 	4,  // 1: stats.v1.MatchesWithPlayerResponse.matches:type_name -> stats.v1.PlayerMatchHistory
 	7,  // 2: stats.v1.BucketsResponse.buckets:type_name -> stats.v1.Bucket
-	21, // 3: stats.v1.QueryRequest.filter:type_name -> database.query.v1.Filter
+	23, // 3: stats.v1.QueryRequest.filter:type_name -> database.query.v1.Filter
 	2,  // 4: stats.v1.QueryRequest.time_bucket:type_name -> stats.v1.TimeBucket
 	1,  // 5: stats.v1.QueryRequest.variant:type_name -> stats.v1.Variant
-	20, // 6: stats.v1.QueryRequest.time:type_name -> google.protobuf.Timestamp
-	22, // 7: stats.v1.VariantStats.player:type_name -> person.v1.PersonDisplay
+	22, // 6: stats.v1.QueryRequest.time:type_name -> google.protobuf.Timestamp
+	24, // 7: stats.v1.VariantStats.player:type_name -> person.v1.PersonDisplay
 	10, // 8: stats.v1.VariantStatsContainer.stats:type_name -> stats.v1.VariantStats
 	1,  // 9: stats.v1.QueryResponse.variant:type_name -> stats.v1.Variant
 	11, // 10: stats.v1.QueryResponse.stats_variant:type_name -> stats.v1.VariantStatsContainer
-	16, // 11: stats.v1.MatchResponse.match:type_name -> stats.v1.Match
-	23, // 12: stats.v1.MatchOverview.map:type_name -> maps.v1.Map
-	20, // 13: stats.v1.MatchOverview.start_time:type_name -> google.protobuf.Timestamp
-	20, // 14: stats.v1.MatchOverview.created_on:type_name -> google.protobuf.Timestamp
+	17, // 11: stats.v1.MatchResponse.match:type_name -> stats.v1.Match
+	25, // 12: stats.v1.MatchOverview.map:type_name -> maps.v1.Map
+	22, // 13: stats.v1.MatchOverview.start_time:type_name -> google.protobuf.Timestamp
+	22, // 14: stats.v1.MatchOverview.created_on:type_name -> google.protobuf.Timestamp
 	15, // 15: stats.v1.Match.overview:type_name -> stats.v1.MatchOverview
-	17, // 16: stats.v1.Match.rounds:type_name -> stats.v1.Round
-	0,  // 17: stats.v1.Round.winner:type_name -> stats.v1.Team
-	18, // 18: stats.v1.Round.players:type_name -> stats.v1.RoundPlayer
-	0,  // 19: stats.v1.RoundPlayer.team:type_name -> stats.v1.Team
-	19, // 20: stats.v1.RoundPlayer.variants:type_name -> stats.v1.RoundPlayerVariant
-	13, // 21: stats.v1.StatsService.Match:input_type -> stats.v1.MatchRequest
-	9,  // 22: stats.v1.StatsService.Query:input_type -> stats.v1.QueryRequest
-	24, // 23: stats.v1.StatsService.WeaponList:input_type -> google.protobuf.Empty
-	24, // 24: stats.v1.StatsService.Buckets:input_type -> google.protobuf.Empty
-	3,  // 25: stats.v1.StatsService.MatchesWithPlayer:input_type -> stats.v1.MatchesWithPlayerRequest
-	14, // 26: stats.v1.StatsService.Match:output_type -> stats.v1.MatchResponse
-	12, // 27: stats.v1.StatsService.Query:output_type -> stats.v1.QueryResponse
-	6,  // 28: stats.v1.StatsService.WeaponList:output_type -> stats.v1.WeaponListResponse
-	8,  // 29: stats.v1.StatsService.Buckets:output_type -> stats.v1.BucketsResponse
-	5,  // 30: stats.v1.StatsService.MatchesWithPlayer:output_type -> stats.v1.MatchesWithPlayerResponse
-	26, // [26:31] is the sub-list for method output_type
-	21, // [21:26] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	18, // 16: stats.v1.Match.rounds:type_name -> stats.v1.Round
+	16, // 17: stats.v1.Match.chat_logs:type_name -> stats.v1.MatchChatLog
+	21, // 18: stats.v1.Match.players:type_name -> stats.v1.Match.PlayersEntry
+	0,  // 19: stats.v1.Round.winner:type_name -> stats.v1.Team
+	19, // 20: stats.v1.Round.players:type_name -> stats.v1.RoundPlayer
+	24, // 21: stats.v1.RoundPlayer.person:type_name -> person.v1.PersonDisplay
+	0,  // 22: stats.v1.RoundPlayer.team:type_name -> stats.v1.Team
+	20, // 23: stats.v1.RoundPlayer.variants:type_name -> stats.v1.RoundPlayerVariant
+	24, // 24: stats.v1.Match.PlayersEntry.value:type_name -> person.v1.PersonDisplay
+	13, // 25: stats.v1.StatsService.Match:input_type -> stats.v1.MatchRequest
+	9,  // 26: stats.v1.StatsService.Query:input_type -> stats.v1.QueryRequest
+	26, // 27: stats.v1.StatsService.WeaponList:input_type -> google.protobuf.Empty
+	26, // 28: stats.v1.StatsService.Buckets:input_type -> google.protobuf.Empty
+	3,  // 29: stats.v1.StatsService.MatchesWithPlayer:input_type -> stats.v1.MatchesWithPlayerRequest
+	14, // 30: stats.v1.StatsService.Match:output_type -> stats.v1.MatchResponse
+	12, // 31: stats.v1.StatsService.Query:output_type -> stats.v1.QueryResponse
+	6,  // 32: stats.v1.StatsService.WeaponList:output_type -> stats.v1.WeaponListResponse
+	8,  // 33: stats.v1.StatsService.Buckets:output_type -> stats.v1.BucketsResponse
+	5,  // 34: stats.v1.StatsService.MatchesWithPlayer:output_type -> stats.v1.MatchesWithPlayerResponse
+	30, // [30:35] is the sub-list for method output_type
+	25, // [25:30] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_stats_v1_stats_proto_init() }
@@ -2520,7 +2628,7 @@ func file_stats_v1_stats_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stats_v1_stats_proto_rawDesc), len(file_stats_v1_stats_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   17,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
