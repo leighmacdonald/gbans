@@ -174,8 +174,8 @@ func (s Service) EditPermissions(ctx context.Context, req *v1.EditPermissionsReq
 	return &v1.EditPermissionsResponse{Person: toPersonCore(&player)}, nil
 }
 
-func toUserSettings(settings Settings) *v1.UserSettings {
-	return &v1.UserSettings{
+func toUserSettings(settings Settings) *v1.Settings {
+	return &v1.Settings{
 		PersonSettingsId:     &settings.PersonSettingsID,
 		SteamId:              new(settings.SteamID.Int64()),
 		ForumSignature:       &settings.ForumSignature,

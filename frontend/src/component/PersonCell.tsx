@@ -178,7 +178,7 @@ export const PersonCell = ({ steamId, avatarHash, personaName, onClick, children
 						params={{ steamId: String(steamId) }}
 						onClick={onClick ?? undefined}
 					>
-						{emptyOrNullString(personaName) ? personaName : String(steamId)}
+						{!emptyOrNullString(personaName) ? personaName : String(steamId)}
 					</TextLink>
 				)}
 			</Box>

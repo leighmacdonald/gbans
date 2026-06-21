@@ -41,3 +41,7 @@ func (m Maps) GetByID(ctx context.Context, mapID int32) (Map, error) {
 
 	return m.repo.GetByID(ctx, mapID)
 }
+
+func (m Maps) All(ctx context.Context) ([]Map, error) {
+	return m.repo.All(ctx)
+}

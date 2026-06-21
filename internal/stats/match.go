@@ -33,17 +33,22 @@ type PlayerMatchHistory struct {
 
 // Match is the top level container for all of the matches data.
 type Match struct {
-	MatchID       uuid.UUID
-	ServerID      int32
-	MapID         int32
-	DemoID        int32
-	StatsBucketID int32
-	Hostname      string
-	ScoreBlu      uint32
-	ScoreRed      uint32
-	StartTime     time.Time
-	DurationMs    uint64
-	CreatedOn     time.Time
+	MatchID         uuid.UUID
+	AssetID         uuid.UUID
+	ServerID        int32
+	ServerName      string
+	ServerNameShort string
+	MapID           int32
+	MapName         string
+	DemoID          int32
+	StatsBucketID   int32
+	StatsBucketName string
+	Hostname        string
+	ScoreBlu        uint32
+	ScoreRed        uint32
+	StartTime       time.Time
+	DurationMs      uint64
+	CreatedOn       time.Time
 
 	// Data sums are split into rounds for a bit more fine grained info.
 	// They are stored in a enturely flat structure here just for ease of processing

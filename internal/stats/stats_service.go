@@ -32,9 +32,72 @@ func NewService(stats Stats, servers *servers.Servers, authMiddleware *rpc.Middl
 
 	authMiddleware.UserRoute(statsv1connect.StatsServiceMatchProcedure, rpc.WithMinPermissions(permission.User))
 	authMiddleware.UserRoute(statsv1connect.StatsServiceBucketsProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(statsv1connect.StatsServiceQueryProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(statsv1connect.StatsServiceQueryStatsProcedure, rpc.WithMinPermissions(permission.User))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
+}
+
+func (s Service) MapList(ctx context.Context, _ *emptypb.Empty) (*v1.MapListResponse, error) {
+	maps, errMaps := s.stats.maps.All(ctx)
+	if errMaps != nil {
+		slog.Error("Failed to fetch maps", slog.String("error", errMaps.Error()))
+
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	resp := &v1.MapListResponse{Maps: make([]*mapsv1.Map, len(maps))}
+	for idx := range maps {
+		resp.Maps[idx] = &mapsv1.Map{
+			MapId:     &maps[idx].MapID,
+			Name:      &maps[idx].MapName,
+			CreatedOn: timestamppb.New(maps[idx].CreatedOn),
+			UpdatedOn: timestamppb.New(maps[idx].UpdatedOn),
+		}
+	}
+
+	return resp, nil
+}
+
+func (s Service) QueryMatches(ctx context.Context, request *v1.QueryMatchesRequest) (*v1.QueryMatchesResponse, error) {
+	opts := MatchesOpts{
+		Filter:        rpc.FromRPC(request.GetFilter()),
+		serverID:      request.GetStatsBucketId(),
+		statsBucketID: request.GetStatsBucketId(),
+		mapID:         request.GetMapId(),
+	}
+
+	matches, count, errMatches := s.stats.Matches(ctx, opts)
+	if errMatches != nil {
+		slog.Error("Failed query", slog.String("error", errMatches.Error()))
+
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	resp := &v1.QueryMatchesResponse{Count: &count, Matches: make([]*v1.MatchOverview, len(matches))}
+	for idx := range matches {
+		resp.Matches[idx] = &v1.MatchOverview{
+			MatchId:         new(matches[idx].MatchID.String()),
+			AssetId:         new(matches[idx].AssetID.String()),
+			ServerId:        &matches[idx].ServerID,
+			ServerName:      &matches[idx].ServerName,
+			ServerNameShort: &matches[idx].ServerNameShort,
+			DemoId:          &matches[idx].DemoID,
+			Map: &mapsv1.Map{
+				MapId: &matches[idx].MapID,
+				Name:  &matches[idx].MapName,
+			},
+			StatsBucketId:   &matches[idx].StatsBucketID,
+			StatsBucketName: &matches[idx].StatsBucketName,
+			Hostname:        &matches[idx].Hostname,
+			ScoreRed:        &matches[idx].ScoreRed,
+			ScoreBlu:        &matches[idx].ScoreBlu,
+			Duration:        &matches[idx].DurationMs,
+			StartTime:       timestamppb.New(matches[idx].StartTime),
+			CreatedOn:       timestamppb.New(matches[idx].CreatedOn),
+		}
+	}
+
+	return resp, nil
 }
 
 func (s Service) MatchesWithPlayer(ctx context.Context, request *v1.MatchesWithPlayerRequest) (*v1.MatchesWithPlayerResponse, error) {
@@ -91,17 +154,17 @@ func (s Service) Buckets(ctx context.Context, _ *emptypb.Empty) (*v1.BucketsResp
 	return resp, nil
 }
 
-func (s Service) Query(ctx context.Context, request *v1.QueryRequest) (*v1.QueryResponse, error) {
+func (s Service) QueryStats(ctx context.Context, request *v1.QueryStatsRequest) (*v1.QueryStatsResponse, error) {
 	opts := Opts{
-		Variant:    Variant(request.GetVariant()),
-		VariantKey: request.GetVariantKey(),
-		Filter:     rpc.FromRPC(request.GetFilter()),
-		TimeBucket: TimeBucket(request.GetTimeBucket()),
-		TimeStamp:  request.GetTime().AsTime(),
+		Variant:       Variant(request.GetVariant()),
+		VariantKey:    request.GetVariantKey(),
+		Filter:        rpc.FromRPC(request.GetFilter()),
+		TimeBucket:    TimeBucket(request.GetTimeBucket()),
+		TimeStamp:     request.GetTime().AsTime(),
+		StatsBucketID: request.GetStatsBucketId(),
 	}
 	statsBucketID := request.GetStatsBucketId()
-
-	stats, count, errStats := s.stats.Query(ctx, statsBucketID, opts)
+	stats, count, errStats := s.stats.Query(ctx, opts)
 	resp := createResp(opts, request, count, len(stats))
 	if errStats != nil {
 		if errors.Is(errStats, database.ErrNoResult) {
@@ -127,7 +190,7 @@ func (s Service) Query(ctx context.Context, request *v1.QueryRequest) (*v1.Query
 			if !ok {
 				return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 			}
-			container, ok := resp.GetStatContainer().(*v1.QueryResponse_StatsVariant)
+			container, ok := resp.GetStatContainer().(*v1.QueryStatsResponse_StatsVariant)
 			if !ok {
 				return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 			}
@@ -179,6 +242,7 @@ func (s Service) loadMatch(ctx context.Context, matchID uuid.UUID) (*v1.Match, e
 	out := &v1.Match{
 		Overview: &v1.MatchOverview{
 			MatchId:         new(matchID.String()),
+			AssetId:         new(match.AssetID.String()),
 			ServerId:        &match.ServerID,
 			ServerName:      &server.Name,
 			ServerNameShort: &server.ShortName,
@@ -198,6 +262,7 @@ func (s Service) loadMatch(ctx context.Context, matchID uuid.UUID) (*v1.Match, e
 			StartTime:       timestamppb.New(match.StartTime),
 			CreatedOn:       timestamppb.New(match.CreatedOn),
 		},
+		Players:  map[string]*personv1.PersonDisplay{},
 		Rounds:   []*v1.Round{},
 		ChatLogs: make([]*v1.MatchChatLog, len(match.ChatLogs)),
 	}
@@ -222,8 +287,8 @@ func assembleChat(out *v1.Match, match *Match) {
 	}
 }
 
-func createResp(opts Opts, request *v1.QueryRequest, count uint64, size int) *v1.QueryResponse {
-	resp := &v1.QueryResponse{
+func createResp(opts Opts, request *v1.QueryStatsRequest, count uint64, size int) *v1.QueryStatsResponse {
+	resp := &v1.QueryStatsResponse{
 		Variant: request.Variant,
 		Count:   &count,
 	}
@@ -231,7 +296,7 @@ func createResp(opts Opts, request *v1.QueryRequest, count uint64, size int) *v1
 	case VariantWeapons:
 		fallthrough
 	case VariantClasses:
-		resp.StatContainer = &v1.QueryResponse_StatsVariant{
+		resp.StatContainer = &v1.QueryStatsResponse_StatsVariant{
 			StatsVariant: &v1.VariantStatsContainer{
 				Stats: make([]*v1.VariantStats, size),
 			},
@@ -356,6 +421,8 @@ func assembleVariants(out *v1.Match, match *Match) {
 				if cls.SteamID.Int64() != personDisplay.GetSteamId() {
 					continue
 				}
+
+				out.Players[cls.SteamID.String()] = player.GetPerson()
 
 				player.Variants = append(player.Variants, &v1.RoundPlayerVariant{
 					Variant:             &cls.Variant,

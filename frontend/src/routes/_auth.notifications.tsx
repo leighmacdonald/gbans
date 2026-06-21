@@ -264,7 +264,7 @@ function NotificationsPage() {
 
 			columnHelper.accessor("steamId", {
 				Cell: (info) =>
-					info.row.original.steamId != null && info.row.original.steamId > 0n ? (
+					info.row.original.steamId != null && info.row.original.steamId !== "" ? (
 						<PersonCell
 							steamId={info.row.original.steamId}
 							personaName={info.row.original.name}

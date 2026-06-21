@@ -91,25 +91,12 @@ message SteamFriend {
   int64 steam_id = 4 [(buf.validate.field).int64 = {gte: 76561197960265729}];
 }
 
-message UserSettings {
-  int64 person_settings_id = 1 [(buf.validate.field).required = true];
-  int64 steam_id = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).int64 = {gte: 76561197960265729}
-  ];
-  string forum_signature = 3 [(buf.validate.field).required = true];
-  bool forum_profile_messages = 4 [(buf.validate.field).required = true];
-  bool stats_hidden = 5 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp created_on = 6 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp updated_on = 7 [(buf.validate.field).required = true];
-}
-
 message ProfileSettingsResponse {
-  UserSettings settings = 1 [(buf.validate.field).required = true];
+  Settings settings = 1 [(buf.validate.field).required = true];
 }
 
 message EditProfileSettingsResponse {
-  UserSettings settings = 1 [(buf.validate.field).required = true];
+  Settings settings = 1 [(buf.validate.field).required = true];
 }
 
 message EditPermissionsRequest {

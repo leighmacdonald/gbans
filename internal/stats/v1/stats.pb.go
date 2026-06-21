@@ -8,9 +8,9 @@ package statsv1
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
-	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
-	v12 "github.com/leighmacdonald/gbans/internal/maps/v1"
-	v11 "github.com/leighmacdonald/gbans/internal/person/v1"
+	v11 "github.com/leighmacdonald/gbans/internal/database/query/v1"
+	v1 "github.com/leighmacdonald/gbans/internal/maps/v1"
+	v12 "github.com/leighmacdonald/gbans/internal/person/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -238,6 +238,50 @@ func (x *MatchesWithPlayerRequest) GetSteamId() int64 {
 	return 0
 }
 
+type MapListResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Maps          []*v1.Map              `protobuf:"bytes,1,rep,name=maps" json:"maps,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MapListResponse) Reset() {
+	*x = MapListResponse{}
+	mi := &file_stats_v1_stats_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MapListResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MapListResponse) ProtoMessage() {}
+
+func (x *MapListResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MapListResponse.ProtoReflect.Descriptor instead.
+func (*MapListResponse) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *MapListResponse) GetMaps() []*v1.Map {
+	if x != nil {
+		return x.Maps
+	}
+	return nil
+}
+
 type PlayerMatchHistory struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	MatchId         *string                `protobuf:"bytes,1,opt,name=match_id,json=matchId" json:"match_id,omitempty"`
@@ -261,7 +305,7 @@ type PlayerMatchHistory struct {
 
 func (x *PlayerMatchHistory) Reset() {
 	*x = PlayerMatchHistory{}
-	mi := &file_stats_v1_stats_proto_msgTypes[1]
+	mi := &file_stats_v1_stats_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -273,7 +317,7 @@ func (x *PlayerMatchHistory) String() string {
 func (*PlayerMatchHistory) ProtoMessage() {}
 
 func (x *PlayerMatchHistory) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[1]
+	mi := &file_stats_v1_stats_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -286,7 +330,7 @@ func (x *PlayerMatchHistory) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerMatchHistory.ProtoReflect.Descriptor instead.
 func (*PlayerMatchHistory) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{1}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *PlayerMatchHistory) GetMatchId() string {
@@ -403,7 +447,7 @@ type MatchesWithPlayerResponse struct {
 
 func (x *MatchesWithPlayerResponse) Reset() {
 	*x = MatchesWithPlayerResponse{}
-	mi := &file_stats_v1_stats_proto_msgTypes[2]
+	mi := &file_stats_v1_stats_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -415,7 +459,7 @@ func (x *MatchesWithPlayerResponse) String() string {
 func (*MatchesWithPlayerResponse) ProtoMessage() {}
 
 func (x *MatchesWithPlayerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[2]
+	mi := &file_stats_v1_stats_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -428,7 +472,7 @@ func (x *MatchesWithPlayerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchesWithPlayerResponse.ProtoReflect.Descriptor instead.
 func (*MatchesWithPlayerResponse) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{2}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *MatchesWithPlayerResponse) GetMatches() []*PlayerMatchHistory {
@@ -447,7 +491,7 @@ type WeaponListResponse struct {
 
 func (x *WeaponListResponse) Reset() {
 	*x = WeaponListResponse{}
-	mi := &file_stats_v1_stats_proto_msgTypes[3]
+	mi := &file_stats_v1_stats_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -459,7 +503,7 @@ func (x *WeaponListResponse) String() string {
 func (*WeaponListResponse) ProtoMessage() {}
 
 func (x *WeaponListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[3]
+	mi := &file_stats_v1_stats_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -472,7 +516,7 @@ func (x *WeaponListResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WeaponListResponse.ProtoReflect.Descriptor instead.
 func (*WeaponListResponse) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{3}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *WeaponListResponse) GetWeapons() []string {
@@ -496,7 +540,7 @@ type Bucket struct {
 
 func (x *Bucket) Reset() {
 	*x = Bucket{}
-	mi := &file_stats_v1_stats_proto_msgTypes[4]
+	mi := &file_stats_v1_stats_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -508,7 +552,7 @@ func (x *Bucket) String() string {
 func (*Bucket) ProtoMessage() {}
 
 func (x *Bucket) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[4]
+	mi := &file_stats_v1_stats_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -521,7 +565,7 @@ func (x *Bucket) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Bucket.ProtoReflect.Descriptor instead.
 func (*Bucket) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{4}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Bucket) GetStatsBucketId() int32 {
@@ -554,7 +598,7 @@ type BucketsResponse struct {
 
 func (x *BucketsResponse) Reset() {
 	*x = BucketsResponse{}
-	mi := &file_stats_v1_stats_proto_msgTypes[5]
+	mi := &file_stats_v1_stats_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -566,7 +610,7 @@ func (x *BucketsResponse) String() string {
 func (*BucketsResponse) ProtoMessage() {}
 
 func (x *BucketsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[5]
+	mi := &file_stats_v1_stats_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -579,7 +623,7 @@ func (x *BucketsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BucketsResponse.ProtoReflect.Descriptor instead.
 func (*BucketsResponse) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{5}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *BucketsResponse) GetBuckets() []*Bucket {
@@ -589,33 +633,31 @@ func (x *BucketsResponse) GetBuckets() []*Bucket {
 	return nil
 }
 
-type QueryRequest struct {
+type QueryMatchesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filter        *v1.Filter             `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
+	Filter        *v11.Filter            `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
 	StatsBucketId *uint32                `protobuf:"varint,2,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
-	TimeBucket    *TimeBucket            `protobuf:"varint,3,opt,name=time_bucket,json=timeBucket,enum=stats.v1.TimeBucket" json:"time_bucket,omitempty"`
-	Variant       *Variant               `protobuf:"varint,4,opt,name=variant,enum=stats.v1.Variant" json:"variant,omitempty"`
-	VariantKey    *string                `protobuf:"bytes,5,opt,name=variant_key,json=variantKey" json:"variant_key,omitempty"`
-	Time          *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=time" json:"time,omitempty"`
+	ServerId      *int32                 `protobuf:"varint,3,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
+	MapId         *int32                 `protobuf:"varint,4,opt,name=map_id,json=mapId" json:"map_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *QueryRequest) Reset() {
-	*x = QueryRequest{}
-	mi := &file_stats_v1_stats_proto_msgTypes[6]
+func (x *QueryMatchesRequest) Reset() {
+	*x = QueryMatchesRequest{}
+	mi := &file_stats_v1_stats_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *QueryRequest) String() string {
+func (x *QueryMatchesRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*QueryRequest) ProtoMessage() {}
+func (*QueryMatchesRequest) ProtoMessage() {}
 
-func (x *QueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[6]
+func (x *QueryMatchesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -626,58 +668,262 @@ func (x *QueryRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use QueryRequest.ProtoReflect.Descriptor instead.
-func (*QueryRequest) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{6}
+// Deprecated: Use QueryMatchesRequest.ProtoReflect.Descriptor instead.
+func (*QueryMatchesRequest) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *QueryRequest) GetFilter() *v1.Filter {
+func (x *QueryMatchesRequest) GetFilter() *v11.Filter {
 	if x != nil {
 		return x.Filter
 	}
 	return nil
 }
 
-func (x *QueryRequest) GetStatsBucketId() uint32 {
+func (x *QueryMatchesRequest) GetStatsBucketId() uint32 {
 	if x != nil && x.StatsBucketId != nil {
 		return *x.StatsBucketId
 	}
 	return 0
 }
 
-func (x *QueryRequest) GetTimeBucket() TimeBucket {
+func (x *QueryMatchesRequest) GetServerId() int32 {
+	if x != nil && x.ServerId != nil {
+		return *x.ServerId
+	}
+	return 0
+}
+
+func (x *QueryMatchesRequest) GetMapId() int32 {
+	if x != nil && x.MapId != nil {
+		return *x.MapId
+	}
+	return 0
+}
+
+type QueryMatchesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Count         *uint64                `protobuf:"varint,1,opt,name=count" json:"count,omitempty"`
+	Matches       []*MatchOverview       `protobuf:"bytes,2,rep,name=matches" json:"matches,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QueryMatchesResponse) Reset() {
+	*x = QueryMatchesResponse{}
+	mi := &file_stats_v1_stats_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QueryMatchesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryMatchesResponse) ProtoMessage() {}
+
+func (x *QueryMatchesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueryMatchesResponse.ProtoReflect.Descriptor instead.
+func (*QueryMatchesResponse) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *QueryMatchesResponse) GetCount() uint64 {
+	if x != nil && x.Count != nil {
+		return *x.Count
+	}
+	return 0
+}
+
+func (x *QueryMatchesResponse) GetMatches() []*MatchOverview {
+	if x != nil {
+		return x.Matches
+	}
+	return nil
+}
+
+type QueryStatsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Filter        *v11.Filter            `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
+	StatsBucketId *uint32                `protobuf:"varint,2,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
+	TimeBucket    *TimeBucket            `protobuf:"varint,3,opt,name=time_bucket,json=timeBucket,enum=stats.v1.TimeBucket" json:"time_bucket,omitempty"`
+	Variant       *Variant               `protobuf:"varint,4,opt,name=variant,enum=stats.v1.Variant" json:"variant,omitempty"`
+	VariantKey    *string                `protobuf:"bytes,5,opt,name=variant_key,json=variantKey" json:"variant_key,omitempty"`
+	Time          *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=time" json:"time,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QueryStatsRequest) Reset() {
+	*x = QueryStatsRequest{}
+	mi := &file_stats_v1_stats_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QueryStatsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryStatsRequest) ProtoMessage() {}
+
+func (x *QueryStatsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueryStatsRequest.ProtoReflect.Descriptor instead.
+func (*QueryStatsRequest) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *QueryStatsRequest) GetFilter() *v11.Filter {
+	if x != nil {
+		return x.Filter
+	}
+	return nil
+}
+
+func (x *QueryStatsRequest) GetStatsBucketId() uint32 {
+	if x != nil && x.StatsBucketId != nil {
+		return *x.StatsBucketId
+	}
+	return 0
+}
+
+func (x *QueryStatsRequest) GetTimeBucket() TimeBucket {
 	if x != nil && x.TimeBucket != nil {
 		return *x.TimeBucket
 	}
 	return TimeBucket_TIME_BUCKET_UNSPECIFIED
 }
 
-func (x *QueryRequest) GetVariant() Variant {
+func (x *QueryStatsRequest) GetVariant() Variant {
 	if x != nil && x.Variant != nil {
 		return *x.Variant
 	}
 	return Variant_VARIANT_OVERALL_UNSPECIFIED
 }
 
-func (x *QueryRequest) GetVariantKey() string {
+func (x *QueryStatsRequest) GetVariantKey() string {
 	if x != nil && x.VariantKey != nil {
 		return *x.VariantKey
 	}
 	return ""
 }
 
-func (x *QueryRequest) GetTime() *timestamppb.Timestamp {
+func (x *QueryStatsRequest) GetTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.Time
 	}
 	return nil
 }
 
+type QueryStatsResponse struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Variant *Variant               `protobuf:"varint,1,opt,name=variant,enum=stats.v1.Variant" json:"variant,omitempty"`
+	Count   *uint64                `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
+	// Types that are valid to be assigned to StatContainer:
+	//
+	//	*QueryStatsResponse_StatsVariant
+	StatContainer isQueryStatsResponse_StatContainer `protobuf_oneof:"stat_container"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QueryStatsResponse) Reset() {
+	*x = QueryStatsResponse{}
+	mi := &file_stats_v1_stats_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QueryStatsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryStatsResponse) ProtoMessage() {}
+
+func (x *QueryStatsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueryStatsResponse.ProtoReflect.Descriptor instead.
+func (*QueryStatsResponse) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *QueryStatsResponse) GetVariant() Variant {
+	if x != nil && x.Variant != nil {
+		return *x.Variant
+	}
+	return Variant_VARIANT_OVERALL_UNSPECIFIED
+}
+
+func (x *QueryStatsResponse) GetCount() uint64 {
+	if x != nil && x.Count != nil {
+		return *x.Count
+	}
+	return 0
+}
+
+func (x *QueryStatsResponse) GetStatContainer() isQueryStatsResponse_StatContainer {
+	if x != nil {
+		return x.StatContainer
+	}
+	return nil
+}
+
+func (x *QueryStatsResponse) GetStatsVariant() *VariantStatsContainer {
+	if x != nil {
+		if x, ok := x.StatContainer.(*QueryStatsResponse_StatsVariant); ok {
+			return x.StatsVariant
+		}
+	}
+	return nil
+}
+
+type isQueryStatsResponse_StatContainer interface {
+	isQueryStatsResponse_StatContainer()
+}
+
+type QueryStatsResponse_StatsVariant struct {
+	StatsVariant *VariantStatsContainer `protobuf:"bytes,3,opt,name=stats_variant,json=statsVariant,oneof"`
+}
+
+func (*QueryStatsResponse_StatsVariant) isQueryStatsResponse_StatContainer() {}
+
 type VariantStats struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	Variant             *string                `protobuf:"bytes,1,opt,name=variant" json:"variant,omitempty"`
 	Rank                *uint64                `protobuf:"varint,2,opt,name=rank" json:"rank,omitempty"`
-	Player              *v11.PersonDisplay     `protobuf:"bytes,3,opt,name=player" json:"player,omitempty"`
+	Player              *v12.PersonDisplay     `protobuf:"bytes,3,opt,name=player" json:"player,omitempty"`
 	Kills               *uint64                `protobuf:"varint,4,opt,name=kills" json:"kills,omitempty"`
 	Assists             *uint64                `protobuf:"varint,5,opt,name=assists" json:"assists,omitempty"`
 	Deaths              *uint64                `protobuf:"varint,6,opt,name=deaths" json:"deaths,omitempty"`
@@ -712,7 +958,7 @@ type VariantStats struct {
 
 func (x *VariantStats) Reset() {
 	*x = VariantStats{}
-	mi := &file_stats_v1_stats_proto_msgTypes[7]
+	mi := &file_stats_v1_stats_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -724,7 +970,7 @@ func (x *VariantStats) String() string {
 func (*VariantStats) ProtoMessage() {}
 
 func (x *VariantStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[7]
+	mi := &file_stats_v1_stats_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -737,7 +983,7 @@ func (x *VariantStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VariantStats.ProtoReflect.Descriptor instead.
 func (*VariantStats) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{7}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *VariantStats) GetVariant() string {
@@ -754,7 +1000,7 @@ func (x *VariantStats) GetRank() uint64 {
 	return 0
 }
 
-func (x *VariantStats) GetPlayer() *v11.PersonDisplay {
+func (x *VariantStats) GetPlayer() *v12.PersonDisplay {
 	if x != nil {
 		return x.Player
 	}
@@ -966,7 +1212,7 @@ type VariantStatsContainer struct {
 
 func (x *VariantStatsContainer) Reset() {
 	*x = VariantStatsContainer{}
-	mi := &file_stats_v1_stats_proto_msgTypes[8]
+	mi := &file_stats_v1_stats_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -978,7 +1224,7 @@ func (x *VariantStatsContainer) String() string {
 func (*VariantStatsContainer) ProtoMessage() {}
 
 func (x *VariantStatsContainer) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[8]
+	mi := &file_stats_v1_stats_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -991,7 +1237,7 @@ func (x *VariantStatsContainer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VariantStatsContainer.ProtoReflect.Descriptor instead.
 func (*VariantStatsContainer) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{8}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *VariantStatsContainer) GetStats() []*VariantStats {
@@ -1000,88 +1246,6 @@ func (x *VariantStatsContainer) GetStats() []*VariantStats {
 	}
 	return nil
 }
-
-type QueryResponse struct {
-	state   protoimpl.MessageState `protogen:"open.v1"`
-	Variant *Variant               `protobuf:"varint,1,opt,name=variant,enum=stats.v1.Variant" json:"variant,omitempty"`
-	Count   *uint64                `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
-	// Types that are valid to be assigned to StatContainer:
-	//
-	//	*QueryResponse_StatsVariant
-	StatContainer isQueryResponse_StatContainer `protobuf_oneof:"stat_container"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *QueryResponse) Reset() {
-	*x = QueryResponse{}
-	mi := &file_stats_v1_stats_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *QueryResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*QueryResponse) ProtoMessage() {}
-
-func (x *QueryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use QueryResponse.ProtoReflect.Descriptor instead.
-func (*QueryResponse) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *QueryResponse) GetVariant() Variant {
-	if x != nil && x.Variant != nil {
-		return *x.Variant
-	}
-	return Variant_VARIANT_OVERALL_UNSPECIFIED
-}
-
-func (x *QueryResponse) GetCount() uint64 {
-	if x != nil && x.Count != nil {
-		return *x.Count
-	}
-	return 0
-}
-
-func (x *QueryResponse) GetStatContainer() isQueryResponse_StatContainer {
-	if x != nil {
-		return x.StatContainer
-	}
-	return nil
-}
-
-func (x *QueryResponse) GetStatsVariant() *VariantStatsContainer {
-	if x != nil {
-		if x, ok := x.StatContainer.(*QueryResponse_StatsVariant); ok {
-			return x.StatsVariant
-		}
-	}
-	return nil
-}
-
-type isQueryResponse_StatContainer interface {
-	isQueryResponse_StatContainer()
-}
-
-type QueryResponse_StatsVariant struct {
-	StatsVariant *VariantStatsContainer `protobuf:"bytes,3,opt,name=stats_variant,json=statsVariant,oneof"`
-}
-
-func (*QueryResponse_StatsVariant) isQueryResponse_StatContainer() {}
 
 type MatchRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1092,7 +1256,7 @@ type MatchRequest struct {
 
 func (x *MatchRequest) Reset() {
 	*x = MatchRequest{}
-	mi := &file_stats_v1_stats_proto_msgTypes[10]
+	mi := &file_stats_v1_stats_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1104,7 +1268,7 @@ func (x *MatchRequest) String() string {
 func (*MatchRequest) ProtoMessage() {}
 
 func (x *MatchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[10]
+	mi := &file_stats_v1_stats_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1117,7 +1281,7 @@ func (x *MatchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchRequest.ProtoReflect.Descriptor instead.
 func (*MatchRequest) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{10}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *MatchRequest) GetMatchId() string {
@@ -1136,7 +1300,7 @@ type MatchResponse struct {
 
 func (x *MatchResponse) Reset() {
 	*x = MatchResponse{}
-	mi := &file_stats_v1_stats_proto_msgTypes[11]
+	mi := &file_stats_v1_stats_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1148,7 +1312,7 @@ func (x *MatchResponse) String() string {
 func (*MatchResponse) ProtoMessage() {}
 
 func (x *MatchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[11]
+	mi := &file_stats_v1_stats_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1161,7 +1325,7 @@ func (x *MatchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchResponse.ProtoReflect.Descriptor instead.
 func (*MatchResponse) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{11}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *MatchResponse) GetMatch() *Match {
@@ -1178,7 +1342,7 @@ type MatchOverview struct {
 	ServerName      *string                `protobuf:"bytes,3,opt,name=server_name,json=serverName" json:"server_name,omitempty"`
 	ServerNameShort *string                `protobuf:"bytes,4,opt,name=server_name_short,json=serverNameShort" json:"server_name_short,omitempty"`
 	DemoId          *int32                 `protobuf:"varint,5,opt,name=demo_id,json=demoId" json:"demo_id,omitempty"`
-	Map             *v12.Map               `protobuf:"bytes,6,opt,name=map" json:"map,omitempty"`
+	Map             *v1.Map                `protobuf:"bytes,6,opt,name=map" json:"map,omitempty"`
 	StatsBucketName *string                `protobuf:"bytes,7,opt,name=stats_bucket_name,json=statsBucketName" json:"stats_bucket_name,omitempty"`
 	StatsBucketId   *int32                 `protobuf:"varint,8,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
 	Hostname        *string                `protobuf:"bytes,9,opt,name=hostname" json:"hostname,omitempty"`
@@ -1187,13 +1351,14 @@ type MatchOverview struct {
 	StartTime       *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=start_time,json=startTime" json:"start_time,omitempty"`
 	Duration        *uint64                `protobuf:"varint,14,opt,name=duration" json:"duration,omitempty"`
 	CreatedOn       *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	AssetId         *string                `protobuf:"bytes,16,opt,name=asset_id,json=assetId" json:"asset_id,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
 func (x *MatchOverview) Reset() {
 	*x = MatchOverview{}
-	mi := &file_stats_v1_stats_proto_msgTypes[12]
+	mi := &file_stats_v1_stats_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1205,7 +1370,7 @@ func (x *MatchOverview) String() string {
 func (*MatchOverview) ProtoMessage() {}
 
 func (x *MatchOverview) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[12]
+	mi := &file_stats_v1_stats_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1218,7 +1383,7 @@ func (x *MatchOverview) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchOverview.ProtoReflect.Descriptor instead.
 func (*MatchOverview) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{12}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *MatchOverview) GetMatchId() string {
@@ -1256,7 +1421,7 @@ func (x *MatchOverview) GetDemoId() int32 {
 	return 0
 }
 
-func (x *MatchOverview) GetMap() *v12.Map {
+func (x *MatchOverview) GetMap() *v1.Map {
 	if x != nil {
 		return x.Map
 	}
@@ -1319,6 +1484,13 @@ func (x *MatchOverview) GetCreatedOn() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *MatchOverview) GetAssetId() string {
+	if x != nil && x.AssetId != nil {
+		return *x.AssetId
+	}
+	return ""
+}
+
 type MatchChatLog struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	PersonMessageId *int64                 `protobuf:"varint,1,opt,name=person_message_id,json=personMessageId" json:"person_message_id,omitempty"`
@@ -1332,7 +1504,7 @@ type MatchChatLog struct {
 
 func (x *MatchChatLog) Reset() {
 	*x = MatchChatLog{}
-	mi := &file_stats_v1_stats_proto_msgTypes[13]
+	mi := &file_stats_v1_stats_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1344,7 +1516,7 @@ func (x *MatchChatLog) String() string {
 func (*MatchChatLog) ProtoMessage() {}
 
 func (x *MatchChatLog) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[13]
+	mi := &file_stats_v1_stats_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1357,7 +1529,7 @@ func (x *MatchChatLog) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchChatLog.ProtoReflect.Descriptor instead.
 func (*MatchChatLog) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{13}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *MatchChatLog) GetPersonMessageId() int64 {
@@ -1400,14 +1572,14 @@ type Match struct {
 	Overview      *MatchOverview                `protobuf:"bytes,1,opt,name=overview" json:"overview,omitempty"`
 	Rounds        []*Round                      `protobuf:"bytes,2,rep,name=rounds" json:"rounds,omitempty"`
 	ChatLogs      []*MatchChatLog               `protobuf:"bytes,3,rep,name=chat_logs,json=chatLogs" json:"chat_logs,omitempty"`
-	Players       map[string]*v11.PersonDisplay `protobuf:"bytes,4,rep,name=players" json:"players,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Players       map[string]*v12.PersonDisplay `protobuf:"bytes,4,rep,name=players" json:"players,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Match) Reset() {
 	*x = Match{}
-	mi := &file_stats_v1_stats_proto_msgTypes[14]
+	mi := &file_stats_v1_stats_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1419,7 +1591,7 @@ func (x *Match) String() string {
 func (*Match) ProtoMessage() {}
 
 func (x *Match) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[14]
+	mi := &file_stats_v1_stats_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1432,7 +1604,7 @@ func (x *Match) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Match.ProtoReflect.Descriptor instead.
 func (*Match) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{14}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *Match) GetOverview() *MatchOverview {
@@ -1456,7 +1628,7 @@ func (x *Match) GetChatLogs() []*MatchChatLog {
 	return nil
 }
 
-func (x *Match) GetPlayers() map[string]*v11.PersonDisplay {
+func (x *Match) GetPlayers() map[string]*v12.PersonDisplay {
 	if x != nil {
 		return x.Players
 	}
@@ -1477,7 +1649,7 @@ type Round struct {
 
 func (x *Round) Reset() {
 	*x = Round{}
-	mi := &file_stats_v1_stats_proto_msgTypes[15]
+	mi := &file_stats_v1_stats_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1489,7 +1661,7 @@ func (x *Round) String() string {
 func (*Round) ProtoMessage() {}
 
 func (x *Round) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[15]
+	mi := &file_stats_v1_stats_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1502,7 +1674,7 @@ func (x *Round) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Round.ProtoReflect.Descriptor instead.
 func (*Round) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{15}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *Round) GetRoundId() uint32 {
@@ -1550,7 +1722,7 @@ func (x *Round) GetPlayers() []*RoundPlayer {
 type RoundPlayer struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	RoundId             *uint32                `protobuf:"varint,1,opt,name=round_id,json=roundId" json:"round_id,omitempty"`
-	Person              *v11.PersonDisplay     `protobuf:"bytes,2,opt,name=person" json:"person,omitempty"`
+	Person              *v12.PersonDisplay     `protobuf:"bytes,2,opt,name=person" json:"person,omitempty"`
 	Team                *Team                  `protobuf:"varint,3,opt,name=team,enum=stats.v1.Team" json:"team,omitempty"`
 	Mvp                 *bool                  `protobuf:"varint,4,opt,name=mvp" json:"mvp,omitempty"`
 	TickStart           *uint64                `protobuf:"varint,5,opt,name=tick_start,json=tickStart" json:"tick_start,omitempty"`
@@ -1606,7 +1778,7 @@ type RoundPlayer struct {
 
 func (x *RoundPlayer) Reset() {
 	*x = RoundPlayer{}
-	mi := &file_stats_v1_stats_proto_msgTypes[16]
+	mi := &file_stats_v1_stats_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1618,7 +1790,7 @@ func (x *RoundPlayer) String() string {
 func (*RoundPlayer) ProtoMessage() {}
 
 func (x *RoundPlayer) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[16]
+	mi := &file_stats_v1_stats_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1631,7 +1803,7 @@ func (x *RoundPlayer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoundPlayer.ProtoReflect.Descriptor instead.
 func (*RoundPlayer) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{16}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *RoundPlayer) GetRoundId() uint32 {
@@ -1641,7 +1813,7 @@ func (x *RoundPlayer) GetRoundId() uint32 {
 	return 0
 }
 
-func (x *RoundPlayer) GetPerson() *v11.PersonDisplay {
+func (x *RoundPlayer) GetPerson() *v12.PersonDisplay {
 	if x != nil {
 		return x.Person
 	}
@@ -2030,7 +2202,7 @@ type RoundPlayerVariant struct {
 
 func (x *RoundPlayerVariant) Reset() {
 	*x = RoundPlayerVariant{}
-	mi := &file_stats_v1_stats_proto_msgTypes[17]
+	mi := &file_stats_v1_stats_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2042,7 +2214,7 @@ func (x *RoundPlayerVariant) String() string {
 func (*RoundPlayerVariant) ProtoMessage() {}
 
 func (x *RoundPlayerVariant) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[17]
+	mi := &file_stats_v1_stats_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2055,7 +2227,7 @@ func (x *RoundPlayerVariant) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoundPlayerVariant.ProtoReflect.Descriptor instead.
 func (*RoundPlayerVariant) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{17}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *RoundPlayerVariant) GetVariant() string {
@@ -2282,7 +2454,9 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\x14stats/v1/stats.proto\x12\bstats.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12maps/v1/maps.proto\x1a\x1bperson/v1/person_core.proto\"H\n" +
 	"\x18MatchesWithPlayerRequest\x12,\n" +
 	"\bsteam_id\x18\x01 \x01(\x03B\x11\xbaH\f\"\n" +
-	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\"\xf2\x03\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\"3\n" +
+	"\x0fMapListResponse\x12 \n" +
+	"\x04maps\x18\x01 \x03(\v2\f.maps.v1.MapR\x04maps\"\xf2\x03\n" +
 	"\x12PlayerMatchHistory\x12\x19\n" +
 	"\bmatch_id\x18\x01 \x01(\tR\amatchId\x12\x1b\n" +
 	"\tserver_id\x18\x02 \x01(\x05R\bserverId\x12\x1f\n" +
@@ -2315,8 +2489,16 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\n" +
 	"is_enabled\x18\x03 \x01(\bR\tisEnabled\"=\n" +
 	"\x0fBucketsResponse\x12*\n" +
-	"\abuckets\x18\x01 \x03(\v2\x10.stats.v1.BucketR\abuckets\"\xcc\x02\n" +
-	"\fQueryRequest\x121\n" +
+	"\abuckets\x18\x01 \x03(\v2\x10.stats.v1.BucketR\abuckets\"\xad\x01\n" +
+	"\x13QueryMatchesRequest\x121\n" +
+	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12/\n" +
+	"\x0fstats_bucket_id\x18\x02 \x01(\rB\a\xbaH\x04*\x02 \x00R\rstatsBucketId\x12\x1b\n" +
+	"\tserver_id\x18\x03 \x01(\x05R\bserverId\x12\x15\n" +
+	"\x06map_id\x18\x04 \x01(\x05R\x05mapId\"c\n" +
+	"\x14QueryMatchesResponse\x12\x18\n" +
+	"\x05count\x18\x01 \x01(\x04B\x020\x01R\x05count\x121\n" +
+	"\amatches\x18\x02 \x03(\v2\x17.stats.v1.MatchOverviewR\amatches\"\xd1\x02\n" +
+	"\x11QueryStatsRequest\x121\n" +
 	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x122\n" +
 	"\x0fstats_bucket_id\x18\x02 \x01(\rB\n" +
 	"\xbaH\a\xc8\x01\x01*\x02 \x00R\rstatsBucketId\x12B\n" +
@@ -2325,7 +2507,12 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\avariant\x18\x04 \x01(\x0e2\x11.stats.v1.VariantB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\avariant\x12\x1f\n" +
 	"\vvariant_key\x18\x05 \x01(\tR\n" +
 	"variantKey\x126\n" +
-	"\x04time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\x04time\"\xa3\t\n" +
+	"\x04time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\x04time\"\xb5\x01\n" +
+	"\x12QueryStatsResponse\x12+\n" +
+	"\avariant\x18\x01 \x01(\x0e2\x11.stats.v1.VariantR\avariant\x12\x18\n" +
+	"\x05count\x18\x02 \x01(\x04B\x020\x01R\x05count\x12F\n" +
+	"\rstats_variant\x18\x03 \x01(\v2\x1f.stats.v1.VariantStatsContainerH\x00R\fstatsVariantB\x10\n" +
+	"\x0estat_container\"\xa3\t\n" +
 	"\fVariantStats\x12\x18\n" +
 	"\avariant\x18\x01 \x01(\tR\avariant\x12\x16\n" +
 	"\x04rank\x18\x02 \x01(\x04B\x020\x01R\x04rank\x120\n" +
@@ -2360,16 +2547,11 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\fcharges_vacc\x18\x1e \x01(\x04B\x020\x01R\vchargesVacc\x12-\n" +
 	"\x10charges_quickfix\x18\x1f \x01(\x04B\x020\x01R\x0fchargesQuickfix\"E\n" +
 	"\x15VariantStatsContainer\x12,\n" +
-	"\x05stats\x18\x01 \x03(\v2\x16.stats.v1.VariantStatsR\x05stats\"\xb0\x01\n" +
-	"\rQueryResponse\x12+\n" +
-	"\avariant\x18\x01 \x01(\x0e2\x11.stats.v1.VariantR\avariant\x12\x18\n" +
-	"\x05count\x18\x02 \x01(\x04B\x020\x01R\x05count\x12F\n" +
-	"\rstats_variant\x18\x03 \x01(\v2\x1f.stats.v1.VariantStatsContainerH\x00R\fstatsVariantB\x10\n" +
-	"\x0estat_container\"3\n" +
+	"\x05stats\x18\x01 \x03(\v2\x16.stats.v1.VariantStatsR\x05stats\"3\n" +
 	"\fMatchRequest\x12#\n" +
 	"\bmatch_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\amatchId\"6\n" +
 	"\rMatchResponse\x12%\n" +
-	"\x05match\x18\x01 \x01(\v2\x0f.stats.v1.MatchR\x05match\"\x8d\x04\n" +
+	"\x05match\x18\x01 \x01(\v2\x0f.stats.v1.MatchR\x05match\"\xb2\x04\n" +
 	"\rMatchOverview\x12\x19\n" +
 	"\bmatch_id\x18\x01 \x01(\tR\amatchId\x12\x1b\n" +
 	"\tserver_id\x18\x02 \x01(\x05R\bserverId\x12\x1f\n" +
@@ -2388,7 +2570,8 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"start_time\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x12\x1e\n" +
 	"\bduration\x18\x0e \x01(\x04B\x020\x01R\bduration\x129\n" +
 	"\n" +
-	"created_on\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\"\xc6\x01\n" +
+	"created_on\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x12#\n" +
+	"\basset_id\x18\x10 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\aassetId\"\xc6\x01\n" +
 	"\fMatchChatLog\x124\n" +
 	"\x11person_message_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x0fpersonMessageId\x12#\n" +
 	"\bsteam_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12\x1a\n" +
@@ -2517,14 +2700,17 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\x12TIME_BUCKET_WEEKLY\x10\a\x12\x17\n" +
 	"\x13TIME_BUCKET_MONTHLY\x10\x1f\x12\x17\n" +
 	"\x12TIME_BUCKET_YEARLY\x10\xed\x02\x12\x19\n" +
-	"\x13TIME_BUCKET_ALLTIME\x10\x9f\x8d\x062\xef\x02\n" +
-	"\fStatsService\x12=\n" +
-	"\x05Match\x12\x16.stats.v1.MatchRequest\x1a\x17.stats.v1.MatchResponse\"\x03\x90\x02\x01\x12:\n" +
-	"\x05Query\x12\x16.stats.v1.QueryRequest\x1a\x17.stats.v1.QueryResponse\"\x00\x12D\n" +
+	"\x13TIME_BUCKET_ALLTIME\x10\x9f\x8d\x062\x8c\x04\n" +
+	"\fStatsService\x12:\n" +
+	"\x05Match\x12\x16.stats.v1.MatchRequest\x1a\x17.stats.v1.MatchResponse\"\x00\x12O\n" +
+	"\fQueryMatches\x12\x1d.stats.v1.QueryMatchesRequest\x1a\x1e.stats.v1.QueryMatchesResponse\"\x00\x12^\n" +
+	"\x11MatchesWithPlayer\x12\".stats.v1.MatchesWithPlayerRequest\x1a#.stats.v1.MatchesWithPlayerResponse\"\x00\x12I\n" +
+	"\n" +
+	"QueryStats\x12\x1b.stats.v1.QueryStatsRequest\x1a\x1c.stats.v1.QueryStatsResponse\"\x00\x12D\n" +
 	"\n" +
 	"WeaponList\x12\x16.google.protobuf.Empty\x1a\x1c.stats.v1.WeaponListResponse\"\x00\x12>\n" +
-	"\aBuckets\x12\x16.google.protobuf.Empty\x1a\x19.stats.v1.BucketsResponse\"\x00\x12^\n" +
-	"\x11MatchesWithPlayer\x12\".stats.v1.MatchesWithPlayerRequest\x1a#.stats.v1.MatchesWithPlayerResponse\"\x00B\x96\x01\n" +
+	"\aMapList\x12\x16.google.protobuf.Empty\x1a\x19.stats.v1.MapListResponse\"\x00\x12>\n" +
+	"\aBuckets\x12\x16.google.protobuf.Empty\x1a\x19.stats.v1.BucketsResponse\"\x00B\x96\x01\n" +
 	"\fcom.stats.v1B\n" +
 	"StatsProtoP\x01Z9github.com/leighmacdonald/gbans/internal/stats/v1;statsv1\xa2\x02\x03SXX\xaa\x02\bStats.V1\xca\x02\bStats\\V1\xe2\x02\x14Stats\\V1\\GPBMetadata\xea\x02\tStats::V1b\beditionsp\xe8\a"
 
@@ -2541,77 +2727,87 @@ func file_stats_v1_stats_proto_rawDescGZIP() []byte {
 }
 
 var file_stats_v1_stats_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_stats_v1_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_stats_v1_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_stats_v1_stats_proto_goTypes = []any{
 	(Team)(0),                         // 0: stats.v1.Team
 	(Variant)(0),                      // 1: stats.v1.Variant
 	(TimeBucket)(0),                   // 2: stats.v1.TimeBucket
 	(*MatchesWithPlayerRequest)(nil),  // 3: stats.v1.MatchesWithPlayerRequest
-	(*PlayerMatchHistory)(nil),        // 4: stats.v1.PlayerMatchHistory
-	(*MatchesWithPlayerResponse)(nil), // 5: stats.v1.MatchesWithPlayerResponse
-	(*WeaponListResponse)(nil),        // 6: stats.v1.WeaponListResponse
-	(*Bucket)(nil),                    // 7: stats.v1.Bucket
-	(*BucketsResponse)(nil),           // 8: stats.v1.BucketsResponse
-	(*QueryRequest)(nil),              // 9: stats.v1.QueryRequest
-	(*VariantStats)(nil),              // 10: stats.v1.VariantStats
-	(*VariantStatsContainer)(nil),     // 11: stats.v1.VariantStatsContainer
-	(*QueryResponse)(nil),             // 12: stats.v1.QueryResponse
-	(*MatchRequest)(nil),              // 13: stats.v1.MatchRequest
-	(*MatchResponse)(nil),             // 14: stats.v1.MatchResponse
-	(*MatchOverview)(nil),             // 15: stats.v1.MatchOverview
-	(*MatchChatLog)(nil),              // 16: stats.v1.MatchChatLog
-	(*Match)(nil),                     // 17: stats.v1.Match
-	(*Round)(nil),                     // 18: stats.v1.Round
-	(*RoundPlayer)(nil),               // 19: stats.v1.RoundPlayer
-	(*RoundPlayerVariant)(nil),        // 20: stats.v1.RoundPlayerVariant
-	nil,                               // 21: stats.v1.Match.PlayersEntry
-	(*timestamppb.Timestamp)(nil),     // 22: google.protobuf.Timestamp
-	(*v1.Filter)(nil),                 // 23: database.query.v1.Filter
-	(*v11.PersonDisplay)(nil),         // 24: person.v1.PersonDisplay
-	(*v12.Map)(nil),                   // 25: maps.v1.Map
-	(*emptypb.Empty)(nil),             // 26: google.protobuf.Empty
+	(*MapListResponse)(nil),           // 4: stats.v1.MapListResponse
+	(*PlayerMatchHistory)(nil),        // 5: stats.v1.PlayerMatchHistory
+	(*MatchesWithPlayerResponse)(nil), // 6: stats.v1.MatchesWithPlayerResponse
+	(*WeaponListResponse)(nil),        // 7: stats.v1.WeaponListResponse
+	(*Bucket)(nil),                    // 8: stats.v1.Bucket
+	(*BucketsResponse)(nil),           // 9: stats.v1.BucketsResponse
+	(*QueryMatchesRequest)(nil),       // 10: stats.v1.QueryMatchesRequest
+	(*QueryMatchesResponse)(nil),      // 11: stats.v1.QueryMatchesResponse
+	(*QueryStatsRequest)(nil),         // 12: stats.v1.QueryStatsRequest
+	(*QueryStatsResponse)(nil),        // 13: stats.v1.QueryStatsResponse
+	(*VariantStats)(nil),              // 14: stats.v1.VariantStats
+	(*VariantStatsContainer)(nil),     // 15: stats.v1.VariantStatsContainer
+	(*MatchRequest)(nil),              // 16: stats.v1.MatchRequest
+	(*MatchResponse)(nil),             // 17: stats.v1.MatchResponse
+	(*MatchOverview)(nil),             // 18: stats.v1.MatchOverview
+	(*MatchChatLog)(nil),              // 19: stats.v1.MatchChatLog
+	(*Match)(nil),                     // 20: stats.v1.Match
+	(*Round)(nil),                     // 21: stats.v1.Round
+	(*RoundPlayer)(nil),               // 22: stats.v1.RoundPlayer
+	(*RoundPlayerVariant)(nil),        // 23: stats.v1.RoundPlayerVariant
+	nil,                               // 24: stats.v1.Match.PlayersEntry
+	(*v1.Map)(nil),                    // 25: maps.v1.Map
+	(*timestamppb.Timestamp)(nil),     // 26: google.protobuf.Timestamp
+	(*v11.Filter)(nil),                // 27: database.query.v1.Filter
+	(*v12.PersonDisplay)(nil),         // 28: person.v1.PersonDisplay
+	(*emptypb.Empty)(nil),             // 29: google.protobuf.Empty
 }
 var file_stats_v1_stats_proto_depIdxs = []int32{
-	22, // 0: stats.v1.PlayerMatchHistory.created_on:type_name -> google.protobuf.Timestamp
-	4,  // 1: stats.v1.MatchesWithPlayerResponse.matches:type_name -> stats.v1.PlayerMatchHistory
-	7,  // 2: stats.v1.BucketsResponse.buckets:type_name -> stats.v1.Bucket
-	23, // 3: stats.v1.QueryRequest.filter:type_name -> database.query.v1.Filter
-	2,  // 4: stats.v1.QueryRequest.time_bucket:type_name -> stats.v1.TimeBucket
-	1,  // 5: stats.v1.QueryRequest.variant:type_name -> stats.v1.Variant
-	22, // 6: stats.v1.QueryRequest.time:type_name -> google.protobuf.Timestamp
-	24, // 7: stats.v1.VariantStats.player:type_name -> person.v1.PersonDisplay
-	10, // 8: stats.v1.VariantStatsContainer.stats:type_name -> stats.v1.VariantStats
-	1,  // 9: stats.v1.QueryResponse.variant:type_name -> stats.v1.Variant
-	11, // 10: stats.v1.QueryResponse.stats_variant:type_name -> stats.v1.VariantStatsContainer
-	17, // 11: stats.v1.MatchResponse.match:type_name -> stats.v1.Match
-	25, // 12: stats.v1.MatchOverview.map:type_name -> maps.v1.Map
-	22, // 13: stats.v1.MatchOverview.start_time:type_name -> google.protobuf.Timestamp
-	22, // 14: stats.v1.MatchOverview.created_on:type_name -> google.protobuf.Timestamp
-	15, // 15: stats.v1.Match.overview:type_name -> stats.v1.MatchOverview
-	18, // 16: stats.v1.Match.rounds:type_name -> stats.v1.Round
-	16, // 17: stats.v1.Match.chat_logs:type_name -> stats.v1.MatchChatLog
-	21, // 18: stats.v1.Match.players:type_name -> stats.v1.Match.PlayersEntry
-	0,  // 19: stats.v1.Round.winner:type_name -> stats.v1.Team
-	19, // 20: stats.v1.Round.players:type_name -> stats.v1.RoundPlayer
-	24, // 21: stats.v1.RoundPlayer.person:type_name -> person.v1.PersonDisplay
-	0,  // 22: stats.v1.RoundPlayer.team:type_name -> stats.v1.Team
-	20, // 23: stats.v1.RoundPlayer.variants:type_name -> stats.v1.RoundPlayerVariant
-	24, // 24: stats.v1.Match.PlayersEntry.value:type_name -> person.v1.PersonDisplay
-	13, // 25: stats.v1.StatsService.Match:input_type -> stats.v1.MatchRequest
-	9,  // 26: stats.v1.StatsService.Query:input_type -> stats.v1.QueryRequest
-	26, // 27: stats.v1.StatsService.WeaponList:input_type -> google.protobuf.Empty
-	26, // 28: stats.v1.StatsService.Buckets:input_type -> google.protobuf.Empty
-	3,  // 29: stats.v1.StatsService.MatchesWithPlayer:input_type -> stats.v1.MatchesWithPlayerRequest
-	14, // 30: stats.v1.StatsService.Match:output_type -> stats.v1.MatchResponse
-	12, // 31: stats.v1.StatsService.Query:output_type -> stats.v1.QueryResponse
-	6,  // 32: stats.v1.StatsService.WeaponList:output_type -> stats.v1.WeaponListResponse
-	8,  // 33: stats.v1.StatsService.Buckets:output_type -> stats.v1.BucketsResponse
-	5,  // 34: stats.v1.StatsService.MatchesWithPlayer:output_type -> stats.v1.MatchesWithPlayerResponse
-	30, // [30:35] is the sub-list for method output_type
-	25, // [25:30] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	25, // 0: stats.v1.MapListResponse.maps:type_name -> maps.v1.Map
+	26, // 1: stats.v1.PlayerMatchHistory.created_on:type_name -> google.protobuf.Timestamp
+	5,  // 2: stats.v1.MatchesWithPlayerResponse.matches:type_name -> stats.v1.PlayerMatchHistory
+	8,  // 3: stats.v1.BucketsResponse.buckets:type_name -> stats.v1.Bucket
+	27, // 4: stats.v1.QueryMatchesRequest.filter:type_name -> database.query.v1.Filter
+	18, // 5: stats.v1.QueryMatchesResponse.matches:type_name -> stats.v1.MatchOverview
+	27, // 6: stats.v1.QueryStatsRequest.filter:type_name -> database.query.v1.Filter
+	2,  // 7: stats.v1.QueryStatsRequest.time_bucket:type_name -> stats.v1.TimeBucket
+	1,  // 8: stats.v1.QueryStatsRequest.variant:type_name -> stats.v1.Variant
+	26, // 9: stats.v1.QueryStatsRequest.time:type_name -> google.protobuf.Timestamp
+	1,  // 10: stats.v1.QueryStatsResponse.variant:type_name -> stats.v1.Variant
+	15, // 11: stats.v1.QueryStatsResponse.stats_variant:type_name -> stats.v1.VariantStatsContainer
+	28, // 12: stats.v1.VariantStats.player:type_name -> person.v1.PersonDisplay
+	14, // 13: stats.v1.VariantStatsContainer.stats:type_name -> stats.v1.VariantStats
+	20, // 14: stats.v1.MatchResponse.match:type_name -> stats.v1.Match
+	25, // 15: stats.v1.MatchOverview.map:type_name -> maps.v1.Map
+	26, // 16: stats.v1.MatchOverview.start_time:type_name -> google.protobuf.Timestamp
+	26, // 17: stats.v1.MatchOverview.created_on:type_name -> google.protobuf.Timestamp
+	18, // 18: stats.v1.Match.overview:type_name -> stats.v1.MatchOverview
+	21, // 19: stats.v1.Match.rounds:type_name -> stats.v1.Round
+	19, // 20: stats.v1.Match.chat_logs:type_name -> stats.v1.MatchChatLog
+	24, // 21: stats.v1.Match.players:type_name -> stats.v1.Match.PlayersEntry
+	0,  // 22: stats.v1.Round.winner:type_name -> stats.v1.Team
+	22, // 23: stats.v1.Round.players:type_name -> stats.v1.RoundPlayer
+	28, // 24: stats.v1.RoundPlayer.person:type_name -> person.v1.PersonDisplay
+	0,  // 25: stats.v1.RoundPlayer.team:type_name -> stats.v1.Team
+	23, // 26: stats.v1.RoundPlayer.variants:type_name -> stats.v1.RoundPlayerVariant
+	28, // 27: stats.v1.Match.PlayersEntry.value:type_name -> person.v1.PersonDisplay
+	16, // 28: stats.v1.StatsService.Match:input_type -> stats.v1.MatchRequest
+	10, // 29: stats.v1.StatsService.QueryMatches:input_type -> stats.v1.QueryMatchesRequest
+	3,  // 30: stats.v1.StatsService.MatchesWithPlayer:input_type -> stats.v1.MatchesWithPlayerRequest
+	12, // 31: stats.v1.StatsService.QueryStats:input_type -> stats.v1.QueryStatsRequest
+	29, // 32: stats.v1.StatsService.WeaponList:input_type -> google.protobuf.Empty
+	29, // 33: stats.v1.StatsService.MapList:input_type -> google.protobuf.Empty
+	29, // 34: stats.v1.StatsService.Buckets:input_type -> google.protobuf.Empty
+	17, // 35: stats.v1.StatsService.Match:output_type -> stats.v1.MatchResponse
+	11, // 36: stats.v1.StatsService.QueryMatches:output_type -> stats.v1.QueryMatchesResponse
+	6,  // 37: stats.v1.StatsService.MatchesWithPlayer:output_type -> stats.v1.MatchesWithPlayerResponse
+	13, // 38: stats.v1.StatsService.QueryStats:output_type -> stats.v1.QueryStatsResponse
+	7,  // 39: stats.v1.StatsService.WeaponList:output_type -> stats.v1.WeaponListResponse
+	4,  // 40: stats.v1.StatsService.MapList:output_type -> stats.v1.MapListResponse
+	9,  // 41: stats.v1.StatsService.Buckets:output_type -> stats.v1.BucketsResponse
+	35, // [35:42] is the sub-list for method output_type
+	28, // [28:35] is the sub-list for method input_type
+	28, // [28:28] is the sub-list for extension type_name
+	28, // [28:28] is the sub-list for extension extendee
+	0,  // [0:28] is the sub-list for field type_name
 }
 
 func init() { file_stats_v1_stats_proto_init() }
@@ -2619,8 +2815,8 @@ func file_stats_v1_stats_proto_init() {
 	if File_stats_v1_stats_proto != nil {
 		return
 	}
-	file_stats_v1_stats_proto_msgTypes[9].OneofWrappers = []any{
-		(*QueryResponse_StatsVariant)(nil),
+	file_stats_v1_stats_proto_msgTypes[10].OneofWrappers = []any{
+		(*QueryStatsResponse_StatsVariant)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -2628,7 +2824,7 @@ func file_stats_v1_stats_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stats_v1_stats_proto_rawDesc), len(file_stats_v1_stats_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   19,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -17,9 +17,14 @@ enum Team {
 }
 
 service StatsService {
+  // Query a single match
   rpc Match(MatchRequest) returns (MatchResponse) {
-    option idempotency_level = NO_SIDE_EFFECTS;
+    // option idempotency_level = NO_SIDE_EFFECTS;
   }
+  // Query all matches
+  rpc QueryMatches(QueryMatchesRequest) returns (QueryMatchesResponse) {}
+  // Query all matches belonging to a player
+  rpc MatchesWithPlayer(MatchesWithPlayerRequest) returns (MatchesWithPlayerResponse) {}
   // Query
   // - Known buckets. Each leaf defines how the stats are grouped and queried.
   //   (Bukets)
@@ -39,14 +44,18 @@ service StatsService {
   //       - Classes
   //         (Variant Buckets)
   //         - Variant: soldier
-  rpc Query(QueryRequest) returns (QueryResponse) {}
+  rpc QueryStats(QueryStatsRequest) returns (QueryStatsResponse) {}
   rpc WeaponList(google.protobuf.Empty) returns (WeaponListResponse) {}
+  rpc MapList(google.protobuf.Empty) returns (MapListResponse) {}
   rpc Buckets(google.protobuf.Empty) returns (BucketsResponse) {}
-  rpc MatchesWithPlayer(MatchesWithPlayerRequest) returns (MatchesWithPlayerResponse) {}
 }
 
 message MatchesWithPlayerRequest {
   int64 steam_id = 1 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+}
+
+message MapListResponse {
+  repeated maps.v1.Map maps = 1;
 }
 
 message PlayerMatchHistory {
@@ -107,7 +116,19 @@ enum TimeBucket {
   TIME_BUCKET_ALLTIME = 99999;
 }
 
-message QueryRequest {
+message QueryMatchesRequest {
+  database.query.v1.Filter filter = 1;
+  uint32 stats_bucket_id = 2 [(buf.validate.field).uint32.gt = 0];
+  int32 server_id = 3;
+  int32 map_id = 4;
+}
+
+message QueryMatchesResponse {
+  uint64 count = 1;
+  repeated MatchOverview matches = 2;
+}
+
+message QueryStatsRequest {
   database.query.v1.Filter filter = 1;
   uint32 stats_bucket_id = 2 [
     (buf.validate.field).required = true,
@@ -124,6 +145,15 @@ message QueryRequest {
   string variant_key = 5;
   google.protobuf.Timestamp time = 6 [(buf.validate.field).required = true /* (buf.validate.field).timestamp.lt_now = true */];
 }
+
+message QueryStatsResponse {
+  Variant variant = 1;
+  uint64 count = 2;
+  oneof stat_container {
+    VariantStatsContainer stats_variant = 3;
+  }
+}
+
 message VariantStats {
   string variant = 1;
   uint64 rank = 2;
@@ -162,14 +192,6 @@ message VariantStatsContainer {
   repeated VariantStats stats = 1;
 }
 
-message QueryResponse {
-  Variant variant = 1;
-  uint64 count = 2;
-  oneof stat_container {
-    VariantStatsContainer stats_variant = 3;
-  }
-}
-
 message MatchRequest {
   string match_id = 1 [(buf.validate.field).string.uuid = true];
 }
@@ -193,6 +215,7 @@ message MatchOverview {
   google.protobuf.Timestamp start_time = 13;
   uint64 duration = 14;
   google.protobuf.Timestamp created_on = 15;
+  string asset_id = 16 [(buf.validate.field).string.uuid = true];
 }
 
 message MatchChatLog {

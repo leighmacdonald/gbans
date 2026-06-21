@@ -67,17 +67,18 @@ func (t TimeBucket) String() string {
 	case TimeBucketYearly:
 		return "yearly"
 	default:
-		return "alltime"
+		return "alltime" //nolint:misspell
 	}
 }
 
 type Opts struct {
 	query.Filter
 
-	Variant    Variant
-	VariantKey string
-	TimeBucket TimeBucket
-	TimeStamp  time.Time
+	StatsBucketID uint32
+	Variant       Variant
+	VariantKey    string
+	TimeBucket    TimeBucket
+	TimeStamp     time.Time
 }
 
 func (o Opts) view() string {
@@ -85,6 +86,63 @@ func (o Opts) view() string {
 }
 
 type Repository struct{ database.Database }
+
+func (r Repository) Matches(ctx context.Context, opts MatchesOpts) ([]Match, uint64, error) {
+	builder := r.Builder().Select("m.match_id", "m.server_id", "m.map_id", "mp.map_name",
+		"m.demo_id", "s.stats_bucket_id", "s.bucket_name", "m.hostname",
+		"m.score_red", "m.score_blu", "m.duration_ms", "m.created_on",
+		"srv.name", "srv.short_name").
+		From("match m").
+		LeftJoin("map mp USING(map_id)").
+		LeftJoin("stats_bucket s USING(stats_bucket_id)").
+		LeftJoin("server srv ON m.server_id = srv.server_id")
+	var constraints sq.And
+	if opts.mapID > 0 {
+		constraints = append(constraints, sq.Eq{"m.map_id": opts.mapID})
+	}
+	if opts.serverID > 0 {
+		constraints = append(constraints, sq.Eq{"m.server_id": opts.serverID})
+	}
+	if opts.statsBucketID > 0 {
+		constraints = append(constraints, sq.Eq{"s.stats_bucket_id": opts.statsBucketID})
+	}
+
+	rows, errRows := r.QueryBuilder(ctx, opts.ApplyLimitOffset(builder, 100).Where(constraints))
+	if errRows != nil {
+		return nil, 0, database.Err(errRows)
+	}
+
+	var matches []Match
+	for rows.Next() {
+		var match Match
+		if err := rows.Scan(&match.MatchID, &match.ServerID, &match.MapID, &match.MapName,
+			&match.DemoID, &match.StatsBucketID, &match.StatsBucketName, &match.Hostname,
+			&match.ScoreRed, &match.ScoreBlu, &match.DurationMs, &match.CreatedOn,
+			&match.ServerName, &match.ServerNameShort); err != nil {
+			return nil, 0, database.Err(err)
+		}
+
+		matches = append(matches, match)
+	}
+
+	if rows.Err() != nil {
+		return nil, 0, database.Err(rows.Err())
+	}
+
+	countQuery := r.Builder().
+		Select("count(m.match_id)").
+		From("match m").
+		LeftJoin("map mp USING(map_id)").
+		LeftJoin("stats_bucket s USING(stats_bucket_id)").
+		LeftJoin("server srv ON m.server_id = srv.server_id").
+		Where(constraints)
+	count, errCount := r.GetCount(ctx, countQuery)
+	if errCount != nil {
+		return nil, 0, database.Err(errCount)
+	}
+
+	return matches, count, nil
+}
 
 func (r Repository) WeaponList(ctx context.Context) ([]string, error) {
 	const query = `SELECT variant FROM stats_weapons_view`
@@ -251,14 +309,14 @@ func (r Repository) loadVariantView(ctx context.Context, statsBucketID uint32, o
 	return variantStats, count, nil
 }
 
-func (r Repository) Query(ctx context.Context, statsBucketID uint32, opts Opts) ([]any, uint64, error) {
+func (r Repository) Query(ctx context.Context, opts Opts) ([]any, uint64, error) {
 	switch opts.Variant {
 	case VariantClasses:
 		fallthrough
 	case VariantWeapons:
-		return r.loadVariantView(ctx, statsBucketID, opts)
+		return r.loadVariantView(ctx, opts.StatsBucketID, opts)
 	default:
-		return r.loadOverallView(ctx, statsBucketID, opts)
+		return r.loadOverallView(ctx, opts.StatsBucketID, opts)
 	}
 }
 
@@ -322,7 +380,7 @@ func (r Repository) getRoundPlayers(ctx context.Context, match *Match) error {
 			p.backstabs, p.backstab_kills, p.captures, p.captures_blocked, p.was_headshot, p.was_backstabbed, p.shots, p.hits,
 			p.objects_built, p.objects_destroyed, p.points, p.connection_count, p.bonus_points,
 			p.scoreboard_kills, p.scoreboard_assists, p.scoreboard_healing, p.scoreboard_deaths, p.scoreboard_damage,
-			p.suicides, p.extinguishes, p.ignites, pe.personaname, pe.avatar_hash
+			p.suicides, p.extinguishes, p.ignites, pe.personaname, pe.avatarhash
 		FROM
 			match_round_player p
 		LEFT JOIN
@@ -434,17 +492,17 @@ func (r Repository) MatchesWithPlayer(ctx context.Context, steamID steamid.Steam
 func (r Repository) getMatch(ctx context.Context, matchID uuid.UUID) (*Match, error) {
 	const query = `
 		SELECT
-			match_id, server_id, map_id, demo_id, stats_bucket_id, hostname, score_red, score_blu,
-			start_time, duration_ms, created_on
-		FROM
-			match
-		WHERE
-			match_id = $1`
+			m.match_id, m.server_id, m.map_id, m.demo_id, m.stats_bucket_id, m.hostname, m.score_red, m.score_blu,
+			m.start_time, m.duration_ms, m.created_on, a.asset_id
+		FROM match m
+		LEFT JOIN demo d USING (demo_id)
+		LEFT JOIN asset a USING (asset_id)
+		WHERE match_id = $1`
 
 	var match Match
 	if err := r.QueryRow(ctx, query, matchID).Scan(&match.MatchID, &match.ServerID, &match.MapID, &match.DemoID,
 		&match.StatsBucketID, &match.Hostname, &match.ScoreRed, &match.ScoreBlu, &match.StartTime, &match.DurationMs,
-		&match.CreatedOn); err != nil {
+		&match.CreatedOn, &match.AssetID); err != nil {
 		return nil, database.Err(err)
 	}
 
