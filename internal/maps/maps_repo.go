@@ -10,6 +10,28 @@ type Repository struct {
 	database.Database
 }
 
+func (r Repository) All(ctx context.Context) ([]Map, error) {
+	var maps []Map
+	rows, errRows := r.Query(ctx, `SELECT map_id, map_name, updated_on, created_on FROM map`)
+	if errRows != nil {
+		return nil, database.Err(errRows)
+	}
+
+	for rows.Next() {
+		var m Map
+		if err := rows.Scan(&m.MapID, &m.MapName, &m.UpdatedOn, &m.CreatedOn); err != nil {
+			return nil, database.Err(err)
+		}
+		maps = append(maps, m)
+	}
+
+	if rows.Err() != nil {
+		return nil, database.Err(rows.Err())
+	}
+
+	return maps, nil
+}
+
 func NewRepository(db database.Database) Repository {
 	return Repository{
 		Database: db,

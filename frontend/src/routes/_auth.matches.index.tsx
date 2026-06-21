@@ -28,18 +28,19 @@ import {
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { renderTableError } from "../error.tsx";
 import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
-import type { PlayerMatchHistory } from "../rpc/stats/v1/stats_pb.ts";
-import { matchesWithPlayer } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
+import type { MatchOverview } from "../rpc/stats/v1/stats_pb.ts";
+import { buckets, mapList, queryMatches } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
+import { toTitleCase } from "../util/strings.ts";
 import { renderTimestamp } from "../util/time.ts";
 
 const validateSearch = makeSchemaState("createdOn");
-const columnHelper = createMRTColumnHelper<PlayerMatchHistory>();
-const defaultOptions = createDefaultTableOptions<PlayerMatchHistory>();
+const columnHelper = createMRTColumnHelper<MatchOverview>();
+const defaultOptions = createDefaultTableOptions<MatchOverview>();
 const defaultValues = makeSchemaDefaults({ defaultColumn: "createdOn" });
 
-export const Route = createFileRoute("/_auth/matches/$steamId")({
-	component: ProfileMatchesPage,
+export const Route = createFileRoute("/_auth/matches/")({
+	component: MatchesIndexPage,
 	validateSearch,
 	search: {
 		middlewares: [stripSearchParams(defaultValues)],
@@ -49,20 +50,35 @@ export const Route = createFileRoute("/_auth/matches/$steamId")({
 	}),
 });
 
-function ProfileMatchesPage() {
-	const { steamId } = Route.useParams();
+function MatchesIndexPage() {
 	const search = Route.useSearch();
+
 	const navigate = useNavigate();
-
+	const { data: mapResp, isLoading: isLoadingMaps } = useQuery(mapList);
+	const { data: bucketList, isLoading: isLoadingBuckets } = useQuery(buckets);
 	const { data: serverList, isLoading: isLoadingServers } = useQuery(servers);
-
 	const { data, isLoading, isError, error } = useQuery(
-		matchesWithPlayer,
-		{ steamId },
-		{ enabled: !isLoadingServers },
+		queryMatches,
+		{
+			filter: {
+				limit: String(search.pagination?.pageSize ?? 25),
+				desc: search.sorting?.find((sort) => sort)?.desc ?? true,
+				offset: String(search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : 0),
+				orderBy: search.sorting?.find((sort) => sort)?.id ?? "createdOn",
+			},
+		},
+		{ enabled: !isLoadingServers && !isLoadingBuckets && !isLoadingMaps },
 	);
 
-	const matches = useMemo(() => {
+	const mapSet = useMemo(() => {
+		if (!mapResp?.maps) {
+			return [];
+		}
+
+		return mapResp.maps.toSorted((a, b) => (a.name > b.name ? 1 : -1));
+	}, [mapResp]);
+
+	const realMatches = useMemo(() => {
 		const matchList = data?.matches ?? [];
 		console.log(matchList);
 		return matchList;
@@ -72,41 +88,32 @@ function ProfileMatchesPage() {
 		(updater) => {
 			navigate({
 				to: Route.fullPath,
-				params: {
-					steamId,
-				},
 				search: {
 					...search,
 					sorting: typeof updater === "function" ? updater(search.sorting ?? []) : updater,
 				},
 			});
 		},
-		[search, navigate, steamId],
+		[search, navigate],
 	);
 
 	const setColumnFilters: OnChangeFn<MRT_ColumnFiltersState> = useCallback(
 		(updater) => {
 			navigate({
 				to: Route.fullPath,
-				params: {
-					steamId,
-				},
 				search: {
 					...search,
 					columnFilters: typeof updater === "function" ? updater(search.columnFilters ?? []) : updater,
 				},
 			});
 		},
-		[search, navigate, steamId],
+		[search, navigate],
 	);
 
 	const setPagination: OnChangeFn<MRT_PaginationState> = useCallback(
 		(updater) => {
 			navigate({
 				to: Route.fullPath,
-				params: {
-					steamId,
-				},
 				search: {
 					...search,
 					pagination: search.pagination
@@ -117,12 +124,23 @@ function ProfileMatchesPage() {
 				},
 			});
 		},
-		[search, navigate, steamId],
+		[search, navigate],
 	);
-
 	const columns = useMemo(
 		() => [
-			columnHelper.accessor("bucketName", {
+			columnHelper.accessor("statsBucketName", {
+				filterVariant: "select",
+				filterSelectOptions: bucketList?.buckets.map((bucket) => ({
+					label: toTitleCase(bucket.bucketName),
+					value: bucket.statsBucketId,
+				})),
+				filterFn: (row, _, filterValue) => {
+					return (
+						filterValue.length === 0 ||
+						bucketList?.buckets.find((f) => f.statsBucketId === row.original.statsBucketId)
+							?.statsBucketId === row.original.statsBucketId
+					);
+				},
 				grow: false,
 				header: "Bucket",
 				// Cell: ({ cell }) => (
@@ -149,19 +167,19 @@ function ProfileMatchesPage() {
 				header: "Server",
 				grow: true,
 				enableSorting: false,
+				size: 250,
 				filterVariant: "multi-select",
 				filterSelectOptions: serverList?.servers.map((server) => ({
-					label: server.serverName,
+					label: server.serverNameLong,
 					value: server.serverId,
 				})),
 				filterFn: (row, _, filterValue) => {
 					return filterValue.length === 0 || filterValue.includes(row.original.serverId);
 				},
 				Cell: ({ row, cell }) => (
-					<Tooltip title={row.original.serverName}>
+					<Tooltip title={row.original.serverNameShort}>
 						<TextLink
-							to={"/matches/$steamId"}
-							params={{ steamId }}
+							to={"/matches"}
 							search={setColumnFilter(search, "serverId", [cell.getValue()])}
 							sx={{ color: stringToColour(row.original.serverName ?? "") }}
 						>
@@ -171,30 +189,42 @@ function ProfileMatchesPage() {
 				),
 			}),
 
-			columnHelper.accessor("mapName", {
+			columnHelper.accessor("map.name", {
 				enableColumnFilter: true,
 				enableSorting: false,
 				grow: true,
 				header: "Map",
+				filterVariant: "select",
+				filterSelectOptions: mapSet.map((map) => ({
+					label: map.name,
+					value: map.mapId,
+				})),
+				filterFn: (row, _, filterValue) => {
+					return (
+						filterValue.length === 0 ||
+						Boolean(mapResp?.maps.find((f) => f.mapId === row.original.map?.mapId))
+					);
+				},
 			}),
 
 			columnHelper.accessor("duration", {
 				enableColumnFilter: false,
 				enableSorting: false,
-				grow: true,
+				grow: false,
 				header: "Duration",
 				Cell: ({ cell }) => {
 					return <Typography>{prettyMilliseconds(Number(cell.getValue()))}</Typography>;
 				},
 			}),
 		],
-		[search, steamId, serverList],
+		[search, serverList, bucketList, mapResp],
 	);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: matches,
+		data: realMatches,
+		rowCount: Number(data?.count ?? 0),
 		enableFilters: true,
 		enableFacetedValues: true,
 		onColumnFiltersChange: setColumnFilters,

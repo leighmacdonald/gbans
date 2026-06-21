@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-co-op/gocron/v2"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/maps"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/pkg/demoparse"
@@ -200,6 +201,18 @@ func (s Stats) MatchesWithPlayer(ctx context.Context, steamID steamid.SteamID) (
 	return s.repo.MatchesWithPlayer(ctx, steamID)
 }
 
+type MatchesOpts struct {
+	query.Filter
+
+	serverID      uint32
+	statsBucketID uint32
+	mapID         int32
+}
+
+func (s Stats) Matches(ctx context.Context, opts MatchesOpts) ([]Match, uint64, error) {
+	return s.repo.Matches(ctx, opts)
+}
+
 func (s Stats) Import(ctx context.Context, serverID int32, demoID int32, demo *demoparse.Demo, timeStart time.Time) (*uuid.UUID, error) {
 	if demo.DemoType != demoparse.HL2Demo {
 		return nil, fmt.Errorf("%w: invalid demo type", ErrInvalidState)
@@ -248,10 +261,10 @@ func (s Stats) Import(ctx context.Context, serverID int32, demoID int32, demo *d
 	return &matchID, nil
 }
 
-func (s Stats) Query(ctx context.Context, statsBucketID uint32, opts Opts) ([]any, uint64, error) {
+func (s Stats) Query(ctx context.Context, opts Opts) ([]any, uint64, error) {
 	if (opts.Variant == VariantWeapons || opts.Variant == VariantClasses) && opts.VariantKey == "" {
 		return nil, 0, fmt.Errorf("%w: variantKey must be set ", rpc.ErrBadRequest)
 	}
 
-	return s.repo.Query(ctx, statsBucketID, opts)
+	return s.repo.Query(ctx, opts)
 }

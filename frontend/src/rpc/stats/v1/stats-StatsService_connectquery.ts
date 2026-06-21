@@ -5,9 +5,27 @@
 import { StatsService } from "./stats_pb";
 
 /**
+ * Query a single match
+ *
+ * option idempotency_level = NO_SIDE_EFFECTS;
+ *
  * @generated from rpc stats.v1.StatsService.Match
  */
 export const match = StatsService.method.match;
+
+/**
+ * Query all matches
+ *
+ * @generated from rpc stats.v1.StatsService.QueryMatches
+ */
+export const queryMatches = StatsService.method.queryMatches;
+
+/**
+ * Query all matches belonging to a player
+ *
+ * @generated from rpc stats.v1.StatsService.MatchesWithPlayer
+ */
+export const matchesWithPlayer = StatsService.method.matchesWithPlayer;
 
 /**
  * Query
@@ -30,9 +48,9 @@ export const match = StatsService.method.match;
  *         (Variant Buckets)
  *         - Variant: soldier
  *
- * @generated from rpc stats.v1.StatsService.Query
+ * @generated from rpc stats.v1.StatsService.QueryStats
  */
-export const query = StatsService.method.query;
+export const queryStats = StatsService.method.queryStats;
 
 /**
  * @generated from rpc stats.v1.StatsService.WeaponList
@@ -40,11 +58,11 @@ export const query = StatsService.method.query;
 export const weaponList = StatsService.method.weaponList;
 
 /**
+ * @generated from rpc stats.v1.StatsService.MapList
+ */
+export const mapList = StatsService.method.mapList;
+
+/**
  * @generated from rpc stats.v1.StatsService.Buckets
  */
 export const buckets = StatsService.method.buckets;
-
-/**
- * @generated from rpc stats.v1.StatsService.MatchesWithPlayer
- */
-export const matchesWithPlayer = StatsService.method.matchesWithPlayer;

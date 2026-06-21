@@ -5,6 +5,7 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import EventIcon from "@mui/icons-material/Event";
 import GavelIcon from "@mui/icons-material/Gavel";
 import MarkUnreadChatAltIcon from "@mui/icons-material/MarkUnreadChatAlt";
+import PieChartIcon from "@mui/icons-material/PieChart";
 import StorageIcon from "@mui/icons-material/Storage";
 import SupportIcon from "@mui/icons-material/Support";
 import VideocamIcon from "@mui/icons-material/Videocam";
@@ -13,6 +14,7 @@ import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { ButtonLink } from "../component/ButtonLink.tsx";
 import { NewsView } from "../component/NewsView";
 import RouterLink from "../component/RouterLink.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
@@ -153,18 +155,17 @@ function Index() {
 							SourceTV
 						</Button>
 					)}
-					{/*{appInfo.stats_enabled && (
-						<Button
-							component={RouterLink}
+					{appInfo.statsEnabled && (
+						<ButtonLink
 							startIcon={<PieChartIcon />}
 							fullWidth
 							color={"primary"}
 							variant={"contained"}
-							to={`/stats`}
+							to={`/matches`}
 						>
-							Stats (Beta)
-						</Button>
-					)}*/}
+							Recent Matches
+						</ButtonLink>
+					)}
 					{appInfo.discordEnabled && appInfo.linkId !== "" && (
 						<Button
 							component={Link}

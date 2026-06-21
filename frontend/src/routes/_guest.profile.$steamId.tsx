@@ -1,4 +1,4 @@
-import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
+import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQuery } from "@connectrpc/connect-query";
 import LinkIcon from "@mui/icons-material/Link";
 import LocalLibraryIcon from "@mui/icons-material/LocalLibrary";
@@ -12,11 +12,12 @@ import Typography from "@mui/material/Typography";
 import { createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
+import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { SteamIDList } from "../component/SteamIDList.tsx";
 import { profile } from "../rpc/person/v1/person-PersonService_connectquery.ts";
 import { createExternalLinks } from "../util/history.ts";
 import { avatarHashToURL } from "../util/strings.ts";
-import { isValidSteamDate, renderTimestamp } from "../util/time.ts";
+import { isValidSteamDate } from "../util/time.ts";
 
 export const Route = createFileRoute("/_guest/profile/$steamId")({
 	component: ProfilePage,
@@ -26,7 +27,12 @@ export const Route = createFileRoute("/_guest/profile/$steamId")({
 });
 
 function ProfilePage() {
-	const { data } = useQuery(profile);
+	const { steamId } = Route.useParams();
+	const { data } = useQuery(profile, { steamId });
+
+	if (!data) {
+		return <LoadingPlaceholder />;
+	}
 
 	return (
 		<Grid container spacing={2}>
@@ -50,9 +56,11 @@ function ProfilePage() {
 								>
 									{data?.profile?.player?.name}
 								</Typography>
-								<Typography variant={"body1"}>
-									Created: {renderTimestamp(data?.profile?.player?.timeCreated)}
-								</Typography>
+								{/*{data?.profile?.player?.timeCreated && (
+									<Typography variant={"body1"}>
+										Created: {renderTimestamp(data?.profile?.player?.timeCreated)}
+									</Typography>
+								)}*/}
 								{/*{!emptyOrNullString(data?.profile?.player?.loc_state_code) ||*/}
 								{/*	(!emptyOrNullString(profile.player.loc_country_code) && (*/}
 								{/*		<Typography variant={"body1"}>*/}
@@ -61,15 +69,13 @@ function ProfilePage() {
 								{/*				.join(",")}*/}
 								{/*		</Typography>*/}
 								{/*	))}*/}
-								{isValidSteamDate(timestampDate(data?.profile?.player?.timeCreated as Timestamp)) && (
-									<Typography variant={"body1"}>
-										Created:{" "}
-										{format(
-											timestampDate(data?.profile?.player?.timeCreated as Timestamp),
-											"yyyy-MM-dd",
-										)}
-									</Typography>
-								)}
+								{data?.profile?.player?.timeCreated &&
+									isValidSteamDate(timestampDate(data?.profile?.player?.timeCreated)) && (
+										<Typography variant={"body1"}>
+											Created:{" "}
+											{format(timestampDate(data?.profile?.player?.timeCreated), "yyyy-MM-dd")}
+										</Typography>
+									)}
 							</Stack>
 						</Grid>
 					</Grid>
@@ -95,7 +101,7 @@ function ProfilePage() {
 				</ContainerWithHeader>
 			</Grid>
 			<Grid size={{ xs: 6, md: 2 }}>
-				<SteamIDList steamId={data?.profile?.player?.steamId.toString() ?? ""} />
+				<SteamIDList steamId={data?.profile?.player?.steamId ?? ""} />
 			</Grid>
 			{/*{isAuthenticated() &&
 				(userProfile.steam_id === profile.player.steam_id || !profile.settings.stats_hidden) && (

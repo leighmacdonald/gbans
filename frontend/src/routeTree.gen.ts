@@ -27,6 +27,7 @@ import { Route as AuthReportRouteImport } from './routes/_auth.report'
 import { Route as AuthPermissionRouteImport } from './routes/_auth.permission'
 import { Route as AuthPageNotFoundRouteImport } from './routes/_auth.page-not-found'
 import { Route as AuthNotificationsRouteImport } from './routes/_auth.notifications'
+import { Route as AuthMatchesRouteImport } from './routes/_auth.matches'
 import { Route as AuthLogoutRouteImport } from './routes/_auth.logout'
 import { Route as AuthForumsRouteImport } from './routes/_auth.forums'
 import { Route as AuthChatlogsRouteImport } from './routes/_auth.chatlogs'
@@ -34,6 +35,7 @@ import { Route as GuestWikiIndexRouteImport } from './routes/_guest.wiki.index'
 import { Route as GuestMgeIndexRouteImport } from './routes/_guest.mge.index'
 import { Route as GuestLoginIndexRouteImport } from './routes/_guest.login.index'
 import { Route as AuthReportIndexRouteImport } from './routes/_auth.report.index'
+import { Route as AuthMatchesIndexRouteImport } from './routes/_auth.matches.index'
 import { Route as AuthForumsIndexRouteImport } from './routes/_auth.forums.index'
 import { Route as ModAdminVotesRouteImport } from './routes/_mod.admin.votes'
 import { Route as ModAdminReportsRouteImport } from './routes/_mod.admin.reports'
@@ -150,6 +152,11 @@ const AuthNotificationsRoute = AuthNotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthMatchesRoute = AuthMatchesRouteImport.update({
+  id: '/matches',
+  path: '/matches',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthLogoutRoute = AuthLogoutRouteImport.update({
   id: '/logout',
   path: '/logout',
@@ -184,6 +191,11 @@ const AuthReportIndexRoute = AuthReportIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthReportRoute,
+} as any)
+const AuthMatchesIndexRoute = AuthMatchesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthMatchesRoute,
 } as any)
 const AuthForumsIndexRoute = AuthForumsIndexRouteImport.update({
   id: '/',
@@ -266,9 +278,9 @@ const AuthReportReportIdRoute = AuthReportReportIdRouteImport.update({
   getParentRoute: () => AuthReportRoute,
 } as any)
 const AuthMatchesSteamIdRoute = AuthMatchesSteamIdRouteImport.update({
-  id: '/matches/$steamId',
-  path: '/matches/$steamId',
-  getParentRoute: () => AuthRoute,
+  id: '/$steamId',
+  path: '/$steamId',
+  getParentRoute: () => AuthMatchesRoute,
 } as any)
 const AuthMatchMatchIdRoute = AuthMatchMatchIdRouteImport.update({
   id: '/match/$matchId',
@@ -339,6 +351,7 @@ export interface FileRoutesByFullPath {
   '/chatlogs': typeof AuthChatlogsRoute
   '/forums': typeof AuthForumsRouteWithChildren
   '/logout': typeof AuthLogoutRoute
+  '/matches': typeof AuthMatchesRouteWithChildren
   '/notifications': typeof AuthNotificationsRoute
   '/page-not-found': typeof AuthPageNotFoundRoute
   '/permission': typeof AuthPermissionRoute
@@ -376,6 +389,7 @@ export interface FileRoutesByFullPath {
   '/admin/reports': typeof ModAdminReportsRoute
   '/admin/votes': typeof ModAdminVotesRoute
   '/forums/': typeof AuthForumsIndexRoute
+  '/matches/': typeof AuthMatchesIndexRoute
   '/report/': typeof AuthReportIndexRoute
   '/login/': typeof GuestLoginIndexRoute
   '/mge/': typeof GuestMgeIndexRoute
@@ -424,6 +438,7 @@ export interface FileRoutesByTo {
   '/admin/reports': typeof ModAdminReportsRoute
   '/admin/votes': typeof ModAdminVotesRoute
   '/forums': typeof AuthForumsIndexRoute
+  '/matches': typeof AuthMatchesIndexRoute
   '/report': typeof AuthReportIndexRoute
   '/login': typeof GuestLoginIndexRoute
   '/mge': typeof GuestMgeIndexRoute
@@ -443,6 +458,7 @@ export interface FileRoutesById {
   '/_auth/chatlogs': typeof AuthChatlogsRoute
   '/_auth/forums': typeof AuthForumsRouteWithChildren
   '/_auth/logout': typeof AuthLogoutRoute
+  '/_auth/matches': typeof AuthMatchesRouteWithChildren
   '/_auth/notifications': typeof AuthNotificationsRoute
   '/_auth/page-not-found': typeof AuthPageNotFoundRoute
   '/_auth/permission': typeof AuthPermissionRoute
@@ -481,6 +497,7 @@ export interface FileRoutesById {
   '/_mod/admin/reports': typeof ModAdminReportsRoute
   '/_mod/admin/votes': typeof ModAdminVotesRoute
   '/_auth/forums/': typeof AuthForumsIndexRoute
+  '/_auth/matches/': typeof AuthMatchesIndexRoute
   '/_auth/report/': typeof AuthReportIndexRoute
   '/_guest/login/': typeof GuestLoginIndexRoute
   '/_guest/mge/': typeof GuestMgeIndexRoute
@@ -498,6 +515,7 @@ export interface FileRouteTypes {
     | '/chatlogs'
     | '/forums'
     | '/logout'
+    | '/matches'
     | '/notifications'
     | '/page-not-found'
     | '/permission'
@@ -535,6 +553,7 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/votes'
     | '/forums/'
+    | '/matches/'
     | '/report/'
     | '/login/'
     | '/mge/'
@@ -583,6 +602,7 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/votes'
     | '/forums'
+    | '/matches'
     | '/report'
     | '/login'
     | '/mge'
@@ -601,6 +621,7 @@ export interface FileRouteTypes {
     | '/_auth/chatlogs'
     | '/_auth/forums'
     | '/_auth/logout'
+    | '/_auth/matches'
     | '/_auth/notifications'
     | '/_auth/page-not-found'
     | '/_auth/permission'
@@ -639,6 +660,7 @@ export interface FileRouteTypes {
     | '/_mod/admin/reports'
     | '/_mod/admin/votes'
     | '/_auth/forums/'
+    | '/_auth/matches/'
     | '/_auth/report/'
     | '/_guest/login/'
     | '/_guest/mge/'
@@ -785,6 +807,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthNotificationsRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/matches': {
+      id: '/_auth/matches'
+      path: '/matches'
+      fullPath: '/matches'
+      preLoaderRoute: typeof AuthMatchesRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/logout': {
       id: '/_auth/logout'
       path: '/logout'
@@ -833,6 +862,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/report/'
       preLoaderRoute: typeof AuthReportIndexRouteImport
       parentRoute: typeof AuthReportRoute
+    }
+    '/_auth/matches/': {
+      id: '/_auth/matches/'
+      path: '/'
+      fullPath: '/matches/'
+      preLoaderRoute: typeof AuthMatchesIndexRouteImport
+      parentRoute: typeof AuthMatchesRoute
     }
     '/_auth/forums/': {
       id: '/_auth/forums/'
@@ -948,10 +984,10 @@ declare module '@tanstack/react-router' {
     }
     '/_auth/matches/$steamId': {
       id: '/_auth/matches/$steamId'
-      path: '/matches/$steamId'
+      path: '/$steamId'
       fullPath: '/matches/$steamId'
       preLoaderRoute: typeof AuthMatchesSteamIdRouteImport
-      parentRoute: typeof AuthRoute
+      parentRoute: typeof AuthMatchesRoute
     }
     '/_auth/match/$matchId': {
       id: '/_auth/match/$matchId'
@@ -1072,6 +1108,20 @@ const AuthForumsRouteWithChildren = AuthForumsRoute._addFileChildren(
   AuthForumsRouteChildren,
 )
 
+interface AuthMatchesRouteChildren {
+  AuthMatchesSteamIdRoute: typeof AuthMatchesSteamIdRoute
+  AuthMatchesIndexRoute: typeof AuthMatchesIndexRoute
+}
+
+const AuthMatchesRouteChildren: AuthMatchesRouteChildren = {
+  AuthMatchesSteamIdRoute: AuthMatchesSteamIdRoute,
+  AuthMatchesIndexRoute: AuthMatchesIndexRoute,
+}
+
+const AuthMatchesRouteWithChildren = AuthMatchesRoute._addFileChildren(
+  AuthMatchesRouteChildren,
+)
+
 interface AuthReportRouteChildren {
   AuthReportReportIdRoute: typeof AuthReportReportIdRoute
   AuthReportIndexRoute: typeof AuthReportIndexRoute
@@ -1090,6 +1140,7 @@ interface AuthRouteChildren {
   AuthChatlogsRoute: typeof AuthChatlogsRoute
   AuthForumsRoute: typeof AuthForumsRouteWithChildren
   AuthLogoutRoute: typeof AuthLogoutRoute
+  AuthMatchesRoute: typeof AuthMatchesRouteWithChildren
   AuthNotificationsRoute: typeof AuthNotificationsRoute
   AuthPageNotFoundRoute: typeof AuthPageNotFoundRoute
   AuthPermissionRoute: typeof AuthPermissionRoute
@@ -1098,13 +1149,13 @@ interface AuthRouteChildren {
   AuthStatsRoute: typeof AuthStatsRoute
   AuthBanBanIdRoute: typeof AuthBanBanIdRoute
   AuthMatchMatchIdRoute: typeof AuthMatchMatchIdRoute
-  AuthMatchesSteamIdRoute: typeof AuthMatchesSteamIdRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthChatlogsRoute: AuthChatlogsRoute,
   AuthForumsRoute: AuthForumsRouteWithChildren,
   AuthLogoutRoute: AuthLogoutRoute,
+  AuthMatchesRoute: AuthMatchesRouteWithChildren,
   AuthNotificationsRoute: AuthNotificationsRoute,
   AuthPageNotFoundRoute: AuthPageNotFoundRoute,
   AuthPermissionRoute: AuthPermissionRoute,
@@ -1113,7 +1164,6 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthStatsRoute: AuthStatsRoute,
   AuthBanBanIdRoute: AuthBanBanIdRoute,
   AuthMatchMatchIdRoute: AuthMatchMatchIdRoute,
-  AuthMatchesSteamIdRoute: AuthMatchesSteamIdRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
