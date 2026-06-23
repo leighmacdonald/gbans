@@ -1,48 +1,7 @@
 import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
-import { formatDistance, formatDuration, interval, intervalToDuration, parseISO, parseJSON } from "date-fns";
+import { formatDistance, parseISO, parseJSON } from "date-fns";
 import { format } from "date-fns/format";
 import { isAfter } from "date-fns/fp";
-import { end, parse } from "iso8601-duration";
-import { logErr } from "./errors.ts";
-
-export const Duration = {
-	dur15m: "PT15M",
-	dur6h: "PT6H",
-	dur12h: "PT12H",
-	dur24h: "P1D",
-	dur48h: "P2D",
-	dur72h: "P3D",
-	dur1w: "P1W",
-	dur2w: "P2W",
-	dur1M: "P1M",
-	dur6M: "P6M",
-	dur1y: "P1Y",
-	durInf: "P10Y",
-	durCustom: "",
-} as const;
-
-export const Duration8601ToString = (bt: string) => {
-	switch (bt) {
-		case Duration.durInf:
-			return "Permanent";
-		case Duration.durCustom:
-			return "Custom";
-		default: {
-			try {
-				const endDate = end(parse(bt));
-				if (!endDate) {
-					break;
-				}
-				const inter = interval(new Date(), endDate);
-				const duration = intervalToDuration(inter);
-				return formatDuration(duration);
-			} catch (e) {
-				logErr(e);
-			}
-			return `Invalid duration`;
-		}
-	}
-};
 
 export const durationToMs = (d: number) => d / 1000;
 

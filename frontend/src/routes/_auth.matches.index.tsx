@@ -143,11 +143,11 @@ function MatchesIndexPage() {
 				},
 				grow: false,
 				header: "Bucket",
-				// Cell: ({ cell }) => (
-				// 	<TextLink to={`/ban/$banId`} params={{ banId: String(cell.getValue()) }}>
-				// 		{`#${cell.getValue()}`}
-				// 	</TextLink>
-				// ),
+				Cell: ({ cell }) => (
+					<Typography sx={{ color: stringToColour(cell.getValue() ?? "") }}>
+						{toTitleCase(cell.getValue())}
+					</Typography>
+				),
 			}),
 			columnHelper.accessor("createdOn", {
 				header: "Created On",
@@ -199,12 +199,9 @@ function MatchesIndexPage() {
 					label: map.name,
 					value: map.mapId,
 				})),
-				filterFn: (row, _, filterValue) => {
-					return (
-						filterValue.length === 0 ||
-						Boolean(mapResp?.maps.find((f) => f.mapId === row.original.map?.mapId))
-					);
-				},
+				// filterFn: (row, _, filterValue) => {
+				// 	return filterValue.length === 0 || Boolean(mapSet.find((f) => f.mapId === row.original.map?.mapId));
+				// },
 			}),
 
 			columnHelper.accessor("duration", {
@@ -217,7 +214,7 @@ function MatchesIndexPage() {
 				},
 			}),
 		],
-		[search, serverList, bucketList, mapResp],
+		[search, serverList, bucketList, mapSet],
 	);
 
 	const table = useMaterialReactTable({
