@@ -46,13 +46,12 @@ export const Route = createFileRoute("/_auth/matches/")({
 		middlewares: [stripSearchParams(defaultValues)],
 	},
 	head: () => ({
-		meta: [{ name: "description", content: "Player Match History" }],
+		meta: [{ name: "description", content: "Match History" }],
 	}),
 });
 
 function MatchesIndexPage() {
 	const search = Route.useSearch();
-
 	const navigate = useNavigate();
 	const { data: mapResp, isLoading: isLoadingMaps } = useQuery(mapList);
 	const { data: bucketList, isLoading: isLoadingBuckets } = useQuery(buckets);
@@ -80,14 +79,13 @@ function MatchesIndexPage() {
 
 	const realMatches = useMemo(() => {
 		const matchList = data?.matches ?? [];
-		console.log(matchList);
 		return matchList;
 	}, [data]);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		(updater) => {
 			navigate({
-				to: Route.fullPath,
+				to: "/matches",
 				search: {
 					...search,
 					sorting: typeof updater === "function" ? updater(search.sorting ?? []) : updater,
@@ -100,7 +98,7 @@ function MatchesIndexPage() {
 	const setColumnFilters: OnChangeFn<MRT_ColumnFiltersState> = useCallback(
 		(updater) => {
 			navigate({
-				to: Route.fullPath,
+				to: "/matches",
 				search: {
 					...search,
 					columnFilters: typeof updater === "function" ? updater(search.columnFilters ?? []) : updater,
@@ -113,7 +111,7 @@ function MatchesIndexPage() {
 	const setPagination: OnChangeFn<MRT_PaginationState> = useCallback(
 		(updater) => {
 			navigate({
-				to: Route.fullPath,
+				to: "/matches",
 				search: {
 					...search,
 					pagination: search.pagination
