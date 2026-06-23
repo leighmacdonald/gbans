@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import Box from "@mui/material/Box";
 import ReactPlayer from "react-player";
 import type { Asset } from "../rpc/asset/v1/asset_pb.ts";
 import { assetURL } from "../util/strings.ts";

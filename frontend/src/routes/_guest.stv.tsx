@@ -2,10 +2,11 @@
 
 import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQuery } from "@connectrpc/connect-query";
-import { CloudDownload } from "@mui/icons-material";
+import CloudDownload from "@mui/icons-material/CloudDownload";
 import FlagIcon from "@mui/icons-material/Flag";
-import { IconButton, Link } from "@mui/material";
 import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
+import Link from "@mui/material/Link";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";

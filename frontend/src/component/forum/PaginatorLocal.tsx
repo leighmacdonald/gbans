@@ -1,4 +1,4 @@
-import { TablePagination } from "@mui/material";
+import TablePagination from "@mui/material/TablePagination";
 import type { RowsPerPage } from "../../util/table.ts";
 
 /**

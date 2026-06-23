@@ -1,8 +1,9 @@
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { GlobalStyles, Stack } from "@mui/material";
+import GlobalStyles from "@mui/material/GlobalStyles";
 import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import { useEffect, useState } from "react";
 

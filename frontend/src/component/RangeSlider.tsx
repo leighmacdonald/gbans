@@ -1,4 +1,4 @@
-import { Slider } from "@mui/material";
+import Slider from "@mui/material/Slider";
 import { styled } from "@mui/material/styles";
 
 export const RangeSlider = styled(Slider)(({ theme }) => ({

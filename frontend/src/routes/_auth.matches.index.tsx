@@ -1,8 +1,9 @@
 import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQuery } from "@connectrpc/connect-query";
 import PageviewIcon from "@mui/icons-material/Pageview";
-import { Tooltip, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import { formatDistanceToNowStrict } from "date-fns/formatDistanceToNowStrict";
 import {

@@ -1,7 +1,7 @@
 import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQuery } from "@connectrpc/connect-query";
-import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
+import { useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";

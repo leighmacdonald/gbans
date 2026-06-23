@@ -12,13 +12,8 @@ export default defineConfig({
 	build: {
 		copyPublicDir: true,
 		sourcemap: false,
-		target: "es2020",
+		target: "esnext",
 		chunkSizeWarningLimit: 1000,
-		rollupOptions: {
-			output: {
-				maxParallelFileOps: 32,
-			},
-		},
 		rolldownOptions: {
 			checks: {
 				circularDependency: true,

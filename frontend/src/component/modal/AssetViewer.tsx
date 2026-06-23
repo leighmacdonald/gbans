@@ -1,6 +1,9 @@
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import PermMediaIcon from "@mui/icons-material/PermMedia";
-import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import { useMemo } from "react";
 import type { Asset } from "../../rpc/asset/v1/asset_pb.ts";
 import { Heading } from "../Heading";
