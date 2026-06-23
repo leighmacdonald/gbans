@@ -2,6 +2,7 @@ import type { Theme } from "@mui/material";
 import { z } from "zod/v4";
 import type { Asset } from "../rpc/asset/v1/asset_pb.ts";
 import { BanType } from "../rpc/ban/v1/ban_pb.ts";
+import { Detection } from "../rpc/anticheat/v1/anticheat_pb.ts";
 import { ReportStatus } from "../rpc/ban/v1/report_pb.ts";
 import type { DiscordProfile } from "../rpc/discord/oauth/v1/discord_pb.ts";
 import type { Admin, Group, Override } from "../rpc/sourcemod/v1/sourcemod_pb";
@@ -206,49 +207,49 @@ export const reportStatusColour = (rs: ReportStatus, theme: Theme): string => {
 // 	}
 // };
 
-// export const reportStatusString = (reportStatus: ReportStatus) => {
-// 	switch (reportStatus) {
-// 		case ReportStatus.NEED_MORE_INFO:
-// 			return "Need Info";
-// 		case ReportStatus.CLOSED_WITHOUT_ACTION:
-// 			return "Closed (No Action)";
-// 		case ReportStatus.CLOSED_WITH_ACTION:
-// 			return "Closed (Action)";
-// 		case ReportStatus.OPENED_UNSPECIFIED:
-// 			return "Opened";
-// 		default:
-// 			return "Opened";
-// 	}
-// };
+export const reportStatusString = (reportStatus: ReportStatus) => {
+	switch (reportStatus) {
+		case ReportStatus.NEED_MORE_INFO:
+			return "Need Info";
+		case ReportStatus.CLOSED_WITHOUT_ACTION:
+			return "Closed (No Action)";
+		case ReportStatus.CLOSED_WITH_ACTION:
+			return "Closed (Action)";
+		case ReportStatus.OPENED_UNSPECIFIED:
+			return "Opened";
+		default:
+			return "Opened";
+	}
+};
 
-// export const detectionString = (detection: Detection) => {
-// 	switch (detection) {
-// 		case Detection.AIM_SNAP:
-// 			return "Aim Snap";
-// 		case Detection.BHOP:
-// 			return "BHop";
-// 		case Detection.CHEAT_CVAR:
-// 			return "Cheat CVar";
-// 		case Detection.CMD_NUM_SPIKE:
-// 			return "Cmd Num Spike";
-// 		case Detection.EYE_ANGLES:
-// 			return "Eye Angles";
-// 		case Detection.INTERP:
-// 			return "Interp";
-// 		case Detection.INVALID_USER_CMD:
-// 			return "Invalid User Cmd";
-// 		case Detection.OOB_CVAR:
-// 			return "OOB CVar";
-// 		case Detection.SILENT_AIM:
-// 			return "Silent Aim";
-// 		case Detection.TOO_MANY_CONNECTIONS:
-// 			return "Too Many Conn";
-// 		case Detection.UNSPECIFIED:
-// 			return "Unknown";
-// 		default:
-// 			return "Unknown";
-// 	}
-// };
+export const detectionString = (detection: Detection) => {
+	switch (detection) {
+		case Detection.AIM_SNAP:
+			return "Aim Snap";
+		case Detection.BHOP:
+			return "BHop";
+		case Detection.CHEAT_CVAR:
+			return "Cheat CVar";
+		case Detection.CMD_NUM_SPIKE:
+			return "Cmd Num Spike";
+		case Detection.EYE_ANGLES:
+			return "Eye Angles";
+		case Detection.INTERP:
+			return "Interp";
+		case Detection.INVALID_USER_CMD:
+			return "Invalid User Cmd";
+		case Detection.OOB_CVAR:
+			return "OOB CVar";
+		case Detection.SILENT_AIM:
+			return "Silent Aim";
+		case Detection.TOO_MANY_CONNECTIONS:
+			return "Too Many Conn";
+		case Detection.UNSPECIFIED:
+			return "Unknown";
+		default:
+			return "Unknown";
+	}
+};
 
 export const banTypeString = (banType: BanType) => {
 	switch (banType) {

@@ -80,27 +80,28 @@ function Root() {
 
 	const sendFlash = useCallback(
 		(level: AlertColor, message: string, heading = "", closable = true) => {
-			if (flashes.length && flashes[flashes.length - 1]?.message === message) {
-				// Skip duplicates
-				return;
-			}
-			if (emptyOrNullString(heading)) {
-				heading = level;
-			}
-			setFlashes([
-				...flashes,
-				{
-					closable: closable ?? false,
-					heading: heading,
-					level: level,
-					message: message,
-				},
-			]);
+			setFlashes((prev) => {
+				if (prev.length && prev[prev.length - 1]?.message === message) {
+					// Skip duplicates
+					return prev;
+				}
+				const h = emptyOrNullString(heading) ? level : heading;
+				return [
+					...prev,
+					{
+						closable: closable ?? false,
+						heading: h,
+						level: level,
+						message: message,
+					},
+				];
+			});
 		},
 
-		[flashes],
+		[],
 	);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: sendFlash is stable (empty deps)
 	const sendError = useCallback(
 		(error: unknown) => {
 			if (!error) {
@@ -115,7 +116,7 @@ function Root() {
 			Sentry.captureException(error);
 		},
 
-		[sendFlash],
+		[],
 	);
 
 	return (

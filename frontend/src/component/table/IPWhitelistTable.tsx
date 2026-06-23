@@ -10,11 +10,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx";
-import type { CIDRBlockWhitelist } from "../../rpc/network/v1/blocklist_pb.ts";
+import type { CIDRBlockWhitelist } from "../../rpc/blocklist/v1/blocklist_pb";
 import {
 	whitelistAddress,
 	whitelistAddressDelete,
-} from "../../rpc/network/v1/blocklist-BlocklistService_connectquery.ts";
+} from "../../rpc/blocklist/v1/blocklist-BlocklistService_connectquery";
 import { logErr } from "../../util/errors";
 import { cidrHostCount } from "../../util/strings";
 import { renderTimestamp } from "../../util/time";

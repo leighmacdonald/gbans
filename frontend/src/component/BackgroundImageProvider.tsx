@@ -11,7 +11,8 @@ function getImageUrl(name: string | number) {
 	if (import.meta.env.MODE === "development") {
 		return `/public/bg/${name}.png`;
 	} else {
-		return `/bg/${name}.png`;
+		// Prefer WebP with PNG fallback via srcset-like approach in CSS
+		return `/bg/${name}.webp`;
 	}
 }
 

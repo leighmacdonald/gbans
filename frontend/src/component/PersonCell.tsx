@@ -30,7 +30,7 @@ export type PersonCellProps = {
 	onClick?: MouseEventHandler | undefined;
 } & PropsWithChildren;
 
-export const PersonCell = ({ steamId, avatarHash, personaName, onClick, children }: PersonCellProps) => {
+const PersonCellInner = ({ steamId, avatarHash, personaName, onClick, children }: PersonCellProps) => {
 	const { hasPermission } = useAuth();
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const open = Boolean(anchorEl);
@@ -234,3 +234,13 @@ export const PersonCell = ({ steamId, avatarHash, personaName, onClick, children
 		</>
 	);
 };
+
+export const PersonCell = React.memo(
+	PersonCellInner,
+	(prev, next) =>
+		prev.steamId === next.steamId &&
+		prev.personaName === next.personaName &&
+		prev.avatarHash === next.avatarHash &&
+		prev.onClick === next.onClick &&
+		prev.children === next.children,
+);

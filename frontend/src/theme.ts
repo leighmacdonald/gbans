@@ -1,4 +1,4 @@
-import { createTheme, type PaletteMode, type PaletteOptions, responsiveFontSizes } from "@mui/material";
+import { createTheme, type PaletteMode, type PaletteOptions, responsiveFontSizes, type Theme } from "@mui/material";
 import darkScrollbar from "@mui/material/darkScrollbar";
 
 export const blu = "#547d8c";
@@ -24,7 +24,12 @@ declare module "@mui/material/styles" {
 	}
 }
 
-export const createThemeByMode = (mode: PaletteMode) => {
+const themeCache = new Map<PaletteMode, Theme>();
+
+export const createThemeByMode = (mode: PaletteMode): Theme => {
+	const cached = themeCache.get(mode);
+	if (cached) return cached;
+
 	const opts: PaletteOptions =
 		mode === "light"
 			? {
@@ -66,7 +71,7 @@ export const createThemeByMode = (mode: PaletteMode) => {
 					divider: "#452c22",
 				};
 
-	return responsiveFontSizes(
+	const theme = responsiveFontSizes(
 		createTheme({
 			components: {
 				MuiTableCell: {
@@ -172,4 +177,6 @@ export const createThemeByMode = (mode: PaletteMode) => {
 			mode: mode,
 		}),
 	);
+	themeCache.set(mode, theme);
+	return theme;
 };
