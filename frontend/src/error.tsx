@@ -1,6 +1,6 @@
 import { ConnectError } from "@connectrpc/connect";
-import { Typography } from "@mui/material";
 import type { AlertProps } from "@mui/material/Alert";
+import Typography from "@mui/material/Typography";
 import Box from "@mui/system/Box";
 import { emptyOrNullString } from "./util/types.ts";
 

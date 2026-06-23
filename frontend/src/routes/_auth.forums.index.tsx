@@ -1,10 +1,10 @@
 import { useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
-import { Person2 } from "@mui/icons-material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import CategoryIcon from "@mui/icons-material/Category";
 import ChatIcon from "@mui/icons-material/Chat";
 import ConstructionIcon from "@mui/icons-material/Construction";
+import Person2Icon from "@mui/icons-material/Person2";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
@@ -152,7 +152,7 @@ const CategoryBlock = ({ category }: { category: Category }) => {
 														{renderTimestamp(f.recentCreatedOn)}
 													</Typography>
 												</VCenterBox>
-												<Person2 />
+												<Person2Icon fontSize="inherit" />
 												<VCenterBox>
 													<Typography
 														sx={{

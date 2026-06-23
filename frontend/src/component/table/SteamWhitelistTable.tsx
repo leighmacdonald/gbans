@@ -8,8 +8,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx";
-import type { WhitelistSteam } from "../../rpc/network/v1/blocklist_pb.ts";
-import { whitelistSteam, whitelistSteamDelete } from "../../rpc/blocklist/v1/blocklist-BlocklistService_connectquery.ts";
+import type { WhitelistSteam } from "../../rpc/blocklist/v1/blocklist_pb.ts";
+import {
+	whitelistSteam,
+	whitelistSteamDelete,
+} from "../../rpc/blocklist/v1/blocklist-BlocklistService_connectquery.ts";
 import { logErr } from "../../util/errors";
 import { renderTimestamp } from "../../util/time";
 import { ConfirmationModal } from "../modal/ConfirmationModal";

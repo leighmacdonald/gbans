@@ -1,7 +1,10 @@
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQuery } from "@connectrpc/connect-query";
-import { Link, Paper, Stack, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid";
+import Link from "@mui/material/Link";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/system";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { useMemo } from "react";

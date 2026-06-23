@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: form needs it */
 import { useQuery } from "@connectrpc/connect-query";
-import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
+import { useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {

@@ -3,9 +3,9 @@ import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import VpnKeyIcon from "@mui/icons-material/VpnKey";
-import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
+import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import {

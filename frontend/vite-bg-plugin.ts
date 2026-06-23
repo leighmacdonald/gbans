@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
 import sharp from "sharp";
 import type { PluginOption } from "vite";

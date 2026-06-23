@@ -1,8 +1,12 @@
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import { type Breakpoint, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import type { Breakpoint } from "@mui/material";
 import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import type { PropsWithChildren } from "react";
 
 export interface ConfirmationModalProps {

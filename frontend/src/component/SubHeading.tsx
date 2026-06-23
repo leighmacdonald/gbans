@@ -1,4 +1,4 @@
-import { Typography } from "@mui/material";
+import Typography from "@mui/material/Typography";
 import type { PropsWithChildren } from "react";
 
 export const SubHeading = ({ children }: PropsWithChildren) => (

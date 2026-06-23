@@ -1,4 +1,4 @@
-import { useTheme } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/system/Stack";
 import type { ReactNode } from "react";

@@ -1,8 +1,8 @@
 import type { Theme } from "@mui/material";
 import { z } from "zod/v4";
+import { Detection } from "../rpc/anticheat/v1/anticheat_pb.ts";
 import type { Asset } from "../rpc/asset/v1/asset_pb.ts";
 import { BanType } from "../rpc/ban/v1/ban_pb.ts";
-import { Detection } from "../rpc/anticheat/v1/anticheat_pb.ts";
 import { ReportStatus } from "../rpc/ban/v1/report_pb.ts";
 import type { DiscordProfile } from "../rpc/discord/oauth/v1/discord_pb.ts";
 import type { Admin, Group, Override } from "../rpc/sourcemod/v1/sourcemod_pb";

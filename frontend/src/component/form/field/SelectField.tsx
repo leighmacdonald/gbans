@@ -1,5 +1,5 @@
-import { FormHelperText } from "@mui/material";
 import FormControl from "@mui/material/FormControl";
+import FormHelperText from "@mui/material/FormHelperText";
 import InputLabel from "@mui/material/InputLabel";
 import Select, { type SelectProps } from "@mui/material/Select";
 import { useStore } from "@tanstack/react-form";
