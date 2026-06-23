@@ -72,7 +72,7 @@ message PlayerMatchHistory {
   uint32 score_red = 11;
   uint32 score_blu = 12;
   uint64 duration = 13;
-  bool is_winnder = 14;
+  bool is_winner = 14;
   google.protobuf.Timestamp created_on = 15;
 }
 

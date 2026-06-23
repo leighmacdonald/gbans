@@ -297,7 +297,7 @@ type PlayerMatchHistory struct {
 	ScoreRed        *uint32                `protobuf:"varint,11,opt,name=score_red,json=scoreRed" json:"score_red,omitempty"`
 	ScoreBlu        *uint32                `protobuf:"varint,12,opt,name=score_blu,json=scoreBlu" json:"score_blu,omitempty"`
 	Duration        *uint64                `protobuf:"varint,13,opt,name=duration" json:"duration,omitempty"`
-	IsWinnder       *bool                  `protobuf:"varint,14,opt,name=is_winnder,json=isWinnder" json:"is_winnder,omitempty"`
+	IsWinner        *bool                  `protobuf:"varint,14,opt,name=is_winner,json=isWinner" json:"is_winner,omitempty"`
 	CreatedOn       *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
@@ -424,9 +424,9 @@ func (x *PlayerMatchHistory) GetDuration() uint64 {
 	return 0
 }
 
-func (x *PlayerMatchHistory) GetIsWinnder() bool {
-	if x != nil && x.IsWinnder != nil {
-		return *x.IsWinnder
+func (x *PlayerMatchHistory) GetIsWinner() bool {
+	if x != nil && x.IsWinner != nil {
+		return *x.IsWinner
 	}
 	return false
 }
@@ -2456,7 +2456,7 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\bsteam_id\x18\x01 \x01(\x03B\x11\xbaH\f\"\n" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\"3\n" +
 	"\x0fMapListResponse\x12 \n" +
-	"\x04maps\x18\x01 \x03(\v2\f.maps.v1.MapR\x04maps\"\xf2\x03\n" +
+	"\x04maps\x18\x01 \x03(\v2\f.maps.v1.MapR\x04maps\"\xf0\x03\n" +
 	"\x12PlayerMatchHistory\x12\x19\n" +
 	"\bmatch_id\x18\x01 \x01(\tR\amatchId\x12\x1b\n" +
 	"\tserver_id\x18\x02 \x01(\x05R\bserverId\x12\x1f\n" +
@@ -2473,9 +2473,8 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	" \x01(\tR\bhostname\x12\x1b\n" +
 	"\tscore_red\x18\v \x01(\rR\bscoreRed\x12\x1b\n" +
 	"\tscore_blu\x18\f \x01(\rR\bscoreBlu\x12\x1e\n" +
-	"\bduration\x18\r \x01(\x04B\x020\x01R\bduration\x12\x1d\n" +
-	"\n" +
-	"is_winnder\x18\x0e \x01(\bR\tisWinnder\x129\n" +
+	"\bduration\x18\r \x01(\x04B\x020\x01R\bduration\x12\x1b\n" +
+	"\tis_winner\x18\x0e \x01(\bR\bisWinner\x129\n" +
 	"\n" +
 	"created_on\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\"S\n" +
 	"\x19MatchesWithPlayerResponse\x126\n" +

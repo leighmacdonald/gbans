@@ -29,8 +29,15 @@ import { SortableTable } from "../component/table/SortableTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { renderTableError } from "../error.tsx";
 import { FilterSchema } from "../rpc/database/query/v1/filter_pb.ts";
-import { type Bucket, QueryRequestSchema, TimeBucket, Variant, type VariantStats } from "../rpc/stats/v1/stats_pb.ts";
-import { buckets, query, weaponList } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
+import {
+	type Bucket,
+	QueryStatsRequestSchema,
+	TimeBucket,
+	Variant,
+	type VariantStats,
+} from "../rpc/stats/v1/stats_pb.ts";
+import { buckets, queryStats, weaponList } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
+import { classList } from "../tf2.tsx";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { enumValues } from "../util/lists.ts";
 import { toTitleCase } from "../util/strings.ts";
@@ -63,19 +70,6 @@ export const Route = createFileRoute("/_auth/stats")({
 const columnHelper = createMRTColumnHelper<VariantStats>();
 const defaultOptions = createDefaultTableOptions<VariantStats>();
 
-const classList = [
-	"scout",
-	"soldier",
-	"pyro",
-	"demo",
-	"heavy",
-	"engineer",
-	"medic",
-	"sniper",
-	"spy",
-	// 'saxton'
-];
-
 function StatsComponent() {
 	const search = Route.useSearch();
 	const navigate = useNavigate();
@@ -91,7 +85,7 @@ function StatsComponent() {
 
 	const qOpts = useMemo(() => {
 		const sort = search.sorting?.find((sort) => sort);
-		return create(QueryRequestSchema, {
+		return create(QueryStatsRequestSchema, {
 			statsBucketId: search.statsBucketId ?? 1,
 			timeBucket: search.timeBucket ?? TimeBucket.DAILY,
 			time: timestampFromDate(search.time ?? subDays(new Date(), 1)),
@@ -106,7 +100,7 @@ function StatsComponent() {
 		});
 	}, [search]);
 
-	const { data, isLoading, isError, error, isRefetching } = useQuery(query, qOpts, {
+	const { data, isLoading, isError, error, isRefetching } = useQuery(queryStats, qOpts, {
 		enabled: !isLoadingStatBuckets && !isErrorStatBuckets && !isLoadingVariantKeys && !isErrorVariantKeys,
 		retry: false,
 	});
