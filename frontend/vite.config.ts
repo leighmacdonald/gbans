@@ -3,6 +3,7 @@ import { tanstackRouter } from "@tanstack/router-vite-plugin";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { createHtmlPlugin } from "vite-plugin-html";
+import { bgWebPPlugin } from "./vite-bg-plugin.ts";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -10,10 +11,27 @@ export default defineConfig({
 	publicDir: "public",
 	build: {
 		copyPublicDir: true,
-		sourcemap: "hidden",
+		sourcemap: false,
+		target: "es2020",
+		chunkSizeWarningLimit: 1000,
+		rollupOptions: {
+			output: {
+				maxParallelFileOps: 32,
+			},
+		},
 		rolldownOptions: {
 			checks: {
 				circularDependency: true,
+			},
+			output: {
+				manualChunks(id) {
+					if (id.includes("@mui/x-charts")) return "mui-charts";
+					if (id.includes("leaflet") || id.includes("react-leaflet")) return "leaflet";
+					if (id.includes("@mdxeditor/editor")) return "mdx-editor";
+					if (id.includes("react-player")) return "react-player";
+					if (id.includes("@tanstack/react-form")) return "react-form";
+					if (id.includes("zod/")) return "zod";
+				},
 			},
 		},
 	},
@@ -73,5 +91,6 @@ export default defineConfig({
 			autoCodeSplitting: true,
 		}),
 		react(), // Must come *after* tanstackRouter
+		bgWebPPlugin(),
 	],
 });
