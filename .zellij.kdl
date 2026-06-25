@@ -1,4 +1,3 @@
-session_name "gbans"
 layout {
     default_tab_template {
         // pane size=1 borderless=true {
@@ -12,24 +11,30 @@ layout {
 
     tab name="build" {
         pane command="just" {
+            start_suspended false
             args "serve"
         }
 
         pane command="just" {
+            start_suspended false
             args "air"
         }
     }
+
     tab name="postgres" {
         pane command="just" size="15%" {
+            start_suspended false
             args "db"
         }
         pane command="bash" {
+            start_suspended false
             args "-c" "sleep 10 && just pgcli"
         }
     }
 
     tab name="demostats" {
         pane command="just" {
+            start_suspended false
             args "demostats-serve"
         }
     }
