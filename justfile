@@ -76,7 +76,7 @@ test: test-go test-ts
 test-ts:
     just -f frontend/justfile test
 
-check: lint-proto lint-go vulncheck lint-ts typecheck-ts lint-md
+check: lint-proto lint-go vulncheck lint-frontend typecheck-frontend lint-md
 
 vulncheck:
     govulncheck -show verbose ./...
@@ -86,12 +86,6 @@ lint-proto:
 
 fix: fmt
     @golangci-lint run --fix
-
-lint-ts:
-    @just -f frontend/justfile lint
-
-typecheck-ts:
-    @just -f frontend/justfile typecheck
 
 clean:
     go clean -i
@@ -108,27 +102,97 @@ docker-restore:
 run-docker-snapshot: builds
     docker run -it -v ./gbans.yml:/app/gbans.yml -v ./.cache:/app/.cache -p 6006:6006 ghcr.io/leighmacdonald/gbans:latest-amd64
 
-docs-install:
-    @just -f docs/justfile install
-
-docs-start:
-    @just -f docs/justfile start
-
-docs-deploy:
-    @just -f docs/justfile deploy
-
-docs-build:
-    @just -f docs/justfile build
-
+[working-directory('docker')]
 db:
-    pushd docker && ./dev_db.sh
+    ./dev_db.sh
 
 demostats-serve:
     $DEMOSTATS_BIN update --api-key $STEAM_KEY
     $DEMOSTATS_BIN serve
 
 dev:
-    @zellij --layout .zellij.kdl
+    @zellij --layout .zellij.kdl attach --create gbans
 
 pgcli host=`sed -n 's/^database_dsn: //p' gbans.yml`:
     @pgcli "{{ host }}"
+
+[working-directory('frontend')]
+install-frontend:
+    pnpm install --frozen-lockfile
+
+[working-directory('frontend')]
+build-frontend:
+    pnpm run build
+
+[working-directory('frontend')]
+watch-frontend:
+    pnpm run watch
+
+[working-directory('frontend')]
+fmt-frontend:
+    @pnpm run fmt
+
+[working-directory('frontend')]
+serve-frontend:
+    pnpm run serve
+
+[working-directory('frontend')]
+update:
+    pnpm update -i
+
+[working-directory('frontend')]
+test-frontend:
+    pnpm run test
+
+[working-directory('frontend')]
+typecheck-frontend:
+    pnpm run typecheck
+
+[working-directory('frontend')]
+lint-frontend:
+    pnpm run check
+
+[working-directory('frontend')]
+clean-frontend:
+    rm -rf dist
+    rm -rf node_modules
+
+[working-directory('docs')]
+install-docs:
+    pnpm install
+
+[working-directory('docs')]
+start-docs:
+    pnpm start
+
+[working-directory('docs')]
+deploy-docs:
+    pnpm deploy
+
+[working-directory('docs')]
+build-docs:
+    pnpm build
+
+[working-directory('docs')]
+clean-docs:
+    rm -rf build
+    rm -rf node_modules
+
+SOURCEMOD_INCLUDE_DIR := shell('dirname $(which spcomp64)') + "/include"
+
+[working-directory('sourcemod')]
+fmt-sourcemod:
+    find scripting/ -not -path "./include/*" -iname gbans.inc -o -iname *.sp -type f -exec clang-format -style=file -i {} \;
+
+[working-directory('sourcemod')]
+build-sourcemod:
+    spcomp64 scripting/gbans.sp -o plugins/gbans.smx -i{{ SOURCEMOD_INCLUDE_DIR }} -i scripting/include -v2
+
+[working-directory('sourcemod')]
+copy-sourcemod:
+    cp -rv scripting/* $(HOME)/projects/uncletopia/roles/sourcemod/files/addons/sourcemod/scripting/
+
+[working-directory('sourcemod')]
+upload-sourcemod host="tst-1.internal.uncletopia.com" rootDir="~/srcds-tst-1/tf/addons/sourcemod" port="27015" password="testtest": build-sourcemod
+    scp -r plugins configs {{ host }}:{{ rootDir }}/
+    rcon-cli --host {{ host }} --port {{ port }} --password {{ password }} sm plugins refresh

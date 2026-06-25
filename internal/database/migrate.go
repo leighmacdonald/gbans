@@ -7,8 +7,9 @@ import (
 	"net/http"
 
 	"github.com/golang-migrate/migrate/v4"
-	pgxMigrate "github.com/golang-migrate/migrate/v4/database/pgx"
+	pgxMigrate "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	"github.com/golang-migrate/migrate/v4/source/httpfs"
+	_ "github.com/jackc/pgx/v5/stdlib" // required for sql.Open("pgx", ...) used by golang-migrate
 	"github.com/leighmacdonald/gbans/internal/log"
 )
 
@@ -66,7 +67,7 @@ func (db *PgStore) Migrate(ctx context.Context, action MigrationAction, dsn stri
 		return errors.Join(errHTTPFS, ErrMigrateFS)
 	}
 
-	migrator, errMigrateInstance := migrate.NewWithInstance("iofs", source, "pgx", driver)
+	migrator, errMigrateInstance := migrate.NewWithInstance("iofs", source, "pgx5", driver)
 	if errMigrateInstance != nil {
 		return errors.Join(errMigrateInstance, ErrMigrateCreate)
 	}
