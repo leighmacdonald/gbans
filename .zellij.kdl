@@ -12,7 +12,7 @@ layout {
     tab name="build" {
         pane command="just" {
             start_suspended false
-            args "serve"
+            args "serve-frontend"
         }
 
         pane command="just" {
