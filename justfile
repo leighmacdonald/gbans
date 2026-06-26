@@ -4,16 +4,17 @@ alias c := check
 alias f := fmt
 alias d := dev
 
-all: frontend sourcemod buildp
+SOURCEMOD_INCLUDE_DIR := shell('dirname $(which spcomp64)') + "/include"
 
-fmt: fmt-proto fmt-go fmt-md
+all: build-backend build-frontend build-sourcemod build-docs
 
-fmt-go:
-    @golangci-lint fmt
-    @just -f frontend/justfile fmt
+test: test-backend test-frontend
 
-test-go:
-    @go test -race ./...
+fmt: fmt-proto fmt-backend fmt-md fmt-frontend fmt-sourcemod
+
+check: lint-proto lint-go vulncheck lint-frontend typecheck-frontend lint-md
+
+update: update-backend update-frontend
 
 lint-nil:
     @nilaway -include-pkgs="github.com/leighmacdonald/gbans" -exclude-pkgs="github.com/jackc/pgx/v5" -test=false ./...
@@ -37,18 +38,17 @@ fmt-md:
 lint-md:
     @markdownlint-cli2
 
-bump-deps:
-    @go get -u ./...
-    @just -f frontend/justfile update
+fmt-backend:
+    @golangci-lint fmt
 
-buildp:
+test-backend:
+    @go test -race ./...
+
+build-backend:
     @goreleaser release --clean
 
-builds:
+build-backend-snapshot:
     @goreleaser release --clean --snapshot
-
-serve:
-    @just -f frontend/justfile serve
 
 frontend:
     @just -f frontend/justfile
@@ -59,24 +59,13 @@ run-forever:
 air:
     while true; do air -c .air.toml -- serve; sleep 1; done
 
-sourcemod:
-    just -f sourcemod/justfile
+update-backend:
+    go get -u ./...
 
 upload-plugin:
     @just sourcemod
     @scp sourcemod/plugins/gbans.smx $SOURCEMOD_SCP_URI
     @rcon-cli --host $SOURCEMOD_HOST --port $SOURCEMOD_PORT --password $SOURCEMOD_RCON "$SOURCEMOD_RELOAD_COMMAND"
-
-sourcemod-devel: sourcemod
-    docker cp sourcemod/plugins/gbans.smx srcds-localhost-1:/home/tf2server/tf-dedicated/tf/addons/sourcemod/plugins/
-    docker restart srcds-localhost-1
-
-test: test-go test-ts
-
-test-ts:
-    just -f frontend/justfile test
-
-check: lint-proto lint-go vulncheck lint-frontend typecheck-frontend lint-md
 
 vulncheck:
     govulncheck -show verbose ./...
@@ -87,11 +76,11 @@ lint-proto:
 fix: fmt
     @golangci-lint run --fix
 
-clean:
+clean: clean-backend clean-frontend clean-docs clean-sourcemod
+
+clean-backend:
     go clean -i
     rm -rf ./dist/
-    just -f frontend/justfile clean
-    rm -rf ./sourcemod/plugins/gbans.smx
 
 docker-dump:
     docker exec gbans-postgres pg_dump -U gbans > gbans.sql
@@ -99,7 +88,7 @@ docker-dump:
 docker-restore:
     cat gbans.sql | docker exec -i docker-postgres-1 psql -U gbans
 
-run-docker-snapshot: builds
+run-docker-snapshot: build-backend-snapshot
     docker run -it -v ./gbans.yml:/app/gbans.yml -v ./.cache:/app/.cache -p 6006:6006 ghcr.io/leighmacdonald/gbans:latest-amd64
 
 [working-directory('docker')]
@@ -137,7 +126,7 @@ serve-frontend:
     pnpm run serve
 
 [working-directory('frontend')]
-update:
+update-frontend:
     pnpm update -i
 
 [working-directory('frontend')]
@@ -167,7 +156,7 @@ start-docs:
 
 [working-directory('docs')]
 deploy-docs:
-    pnpm deploy
+    pnpm deploywhat i
 
 [working-directory('docs')]
 build-docs:
@@ -178,7 +167,14 @@ clean-docs:
     rm -rf build
     rm -rf node_modules
 
-SOURCEMOD_INCLUDE_DIR := shell('dirname $(which spcomp64)') + "/include"
+[working-directory('sourcemod')]
+clean-sourcemod:
+    rm -rf ./plugins/gbans.smx
+
+[working-directory('sourcemod')]
+sourcemod-devel: build-sourcemod
+    docker cp plugins/gbans.smx srcds-localhost-1:/home/tf2server/tf-dedicated/tf/addons/sourcemod/plugins/
+    docker restart srcds-localhost-1
 
 [working-directory('sourcemod')]
 fmt-sourcemod:
