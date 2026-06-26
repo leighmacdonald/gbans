@@ -18,6 +18,7 @@ import { ButtonLink } from "../component/ButtonLink.tsx";
 import { NewsView } from "../component/NewsView";
 import RouterLink from "../component/RouterLink.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
+import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 
 export const Route = createFileRoute("/_guest/")({
 	component: Index,
@@ -33,7 +34,7 @@ export const Route = createFileRoute("/_guest/")({
 function Index() {
 	const navigate = useNavigate();
 	const { appInfo } = Route.useRouteContext();
-	const { profile } = useAuth();
+	const { profile, hasPermission } = useAuth();
 
 	return (
 		<Grid container spacing={2}>
@@ -155,7 +156,7 @@ function Index() {
 							SourceTV
 						</Button>
 					)}
-					{appInfo.statsEnabled && (
+					{appInfo.statsEnabled && hasPermission(Privilege.MODERATOR) && (
 						<ButtonLink
 							startIcon={<PieChartIcon />}
 							fullWidth

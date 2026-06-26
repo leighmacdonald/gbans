@@ -1,8 +1,7 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: form needs it */
-
 import { create } from "@bufbuild/protobuf";
 import { createClient } from "@connectrpc/connect";
-import { createConnectQueryKey, useMutation } from "@connectrpc/connect-query";
+import { createConnectQueryKey, useMutation, useQuery } from "@connectrpc/connect-query";
 import AddModeratorIcon from "@mui/icons-material/AddModerator";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import CleaningServicesIcon from "@mui/icons-material/CleaningServices";
@@ -29,23 +28,18 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { z } from "zod/v4";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
+import { ErrorDetails } from "../component/ErrorDetails.tsx";
 import { UploadButton } from "../component/form/button/UploadButton.tsx";
 import { CheckboxField } from "../component/form/field/CheckboxField.tsx";
+import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { SubHeading } from "../component/SubHeading.tsx";
 import { TabButton } from "../component/TabButton.tsx";
 import { TabSection } from "../component/TabSection.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { type Asset, AssetService } from "../rpc/asset/v1/asset_pb.ts";
-import {
-	Action,
-	type Config,
-	ConfigService,
-	DemoStrategy,
-	Level,
-	UpdateRequestSchema,
-} from "../rpc/config/v1/config_pb.ts";
-import { update } from "../rpc/config/v1/config-ConfigService_connectquery.ts";
+import { Action, ConfigService, DemoStrategy, Level, UpdateRequestSchema } from "../rpc/config/v1/config_pb.ts";
+import { get, update } from "../rpc/config/v1/config-ConfigService_connectquery.ts";
 import { DemoService } from "../rpc/demo/v1/demo_pb.ts";
 import { NetworkService } from "../rpc/network/v1/network_pb.ts";
 import { finalTransport } from "../transport.ts";
@@ -80,18 +74,18 @@ export const Route = createFileRoute("/_admin/admin/settings")({
 	validateSearch: (search) => settingsSchema.parse(search),
 	loader: async ({ context }) => {
 		const configClient = createClient(ConfigService, finalTransport);
-		return (
-			await context.queryClient.fetchQuery({
-				queryKey: createConnectQueryKey({
-					schema: ConfigService,
-					transport: finalTransport,
-					cardinality: "finite",
-				}),
-				queryFn: async () => {
-					return await configClient.get({});
-				},
-			})
-		).config;
+		const conf = await context.queryClient.fetchQuery({
+			queryKey: createConnectQueryKey({
+				schema: ConfigService,
+				transport: finalTransport,
+				cardinality: "finite",
+			}),
+			queryFn: async () => {
+				return await configClient.get({});
+			},
+		});
+		console.log(conf);
+		return conf.config;
 	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Edit Core System Settings" }, match.context.title("System Settings")],
@@ -128,8 +122,7 @@ function AdminSettings() {
 	const navigate = useNavigate();
 	const [tab, setTab] = useState<tabs>(section);
 
-	const config = Route.useLoaderData();
-	const defaultValues: z.input<Config> = config;
+	const { data, isLoading, isError, error } = useQuery(get);
 
 	const mutation = useMutation(update, {
 		onSuccess: () => {
@@ -140,14 +133,14 @@ function AdminSettings() {
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutation.mutate(create(UpdateRequestSchema, { config: { ...config, ...(value as object) } }));
+			mutation.mutate(create(UpdateRequestSchema, { config: { ...data?.config, ...(value as object) } }));
 		},
-		defaultValues,
+		defaultValues: data?.config,
 	});
 
 	const onSuccess = useCallback(
 		async (asset: Asset) => {
-			form.setFieldValue("favicon", asset.assetId);
+			form.setFieldValue("general.favicon", asset.assetId);
 		},
 		[form],
 	);
@@ -194,7 +187,7 @@ function AdminSettings() {
 	}, [queryClient.fetchQuery, sendFlash]);
 
 	const faviconURL = useMemo(() => {
-		const value = form.getFieldValue("favicon") as string;
+		const value = form.getFieldValue("general.favicon") as string;
 		if (emptyOrNullString(value)) {
 			return "";
 		}
@@ -215,6 +208,12 @@ function AdminSettings() {
 		},
 		[navigate],
 	);
+	if (isError) {
+		return <ErrorDetails error={error} />;
+	}
+	if (isLoading) {
+		return <LoadingPlaceholder />;
+	}
 
 	return (
 		<ContainerWithHeaderAndButtons title={"System Settings"} iconLeft={<DeveloperBoardIcon />}>
@@ -382,7 +381,7 @@ function AdminSettings() {
 									will listen on all available hosts.
 								</SubHeading>
 								<form.AppField
-									name={"general.srcds_log_addr"}
+									name={"general.srcdsLogAddr"}
 									children={(field) => {
 										return <field.TextField label={"UDP Log Listen Address"} />;
 									}}
@@ -392,7 +391,7 @@ function AdminSettings() {
 							<Grid size={{ xs: 12 }}>
 								<SubHeading> Sentry support (frontend)</SubHeading>
 								<form.AppField
-									name={"general.sentry_dsn_web"}
+									name={"general.sentryDsnWeb"}
 									children={(field) => {
 										return <field.TextField label={"Sentry DSN Address"} />;
 									}}
@@ -402,7 +401,7 @@ function AdminSettings() {
 							<Grid size={{ xs: 12 }}>
 								<SubHeading> Sentry support (backend)</SubHeading>
 								<form.AppField
-									name={"sentry_dsn"}
+									name={"general.sentryDsn"}
 									children={(field) => {
 										return <field.TextField label={"Sentry DSN Address"} />;
 									}}
@@ -417,7 +416,7 @@ function AdminSettings() {
 									.
 								</SubHeading>
 								<form.AppField
-									name={"general.default_route"}
+									name={"general.defaultRoute"}
 									children={(field) => {
 										return <field.TextField label={"Default Index Route"} />;
 									}}
@@ -427,7 +426,7 @@ function AdminSettings() {
 							<Grid size={{ xs: 12 }}>
 								<SubHeading>Enable the news/blog functionality.</SubHeading>
 								<form.AppField
-									name={"general.news_enabled"}
+									name={"general.newsEnabled"}
 									children={(field) => {
 										return <field.CheckboxField label={"Enable news features."} />;
 									}}
@@ -437,7 +436,7 @@ function AdminSettings() {
 							<Grid size={{ xs: 12 }}>
 								<SubHeading>Enabled/disable the forums functionality.</SubHeading>
 								<form.AppField
-									name={"general.forums_enabled"}
+									name={"general.forumsEnabled"}
 									children={(field) => {
 										return <field.CheckboxField label={"Enable forums"} />;
 									}}
@@ -450,7 +449,7 @@ function AdminSettings() {
 									can vote on them.
 								</SubHeading>
 								<form.AppField
-									name={"general.contests_enabled"}
+									name={"general.contestsEnabled"}
 									children={(field) => {
 										return <field.CheckboxField label={"Enable contests"} />;
 									}}
@@ -462,7 +461,7 @@ function AdminSettings() {
 									Enables a wiki section which is editable by moderators, and viewable by the public.
 								</SubHeading>
 								<form.AppField
-									name={"general.wiki_enabled"}
+									name={"general.wikiEnabled"}
 									children={(field) => {
 										return <field.CheckboxField label={"Enable Wiki"} />;
 									}}
@@ -530,24 +529,14 @@ function AdminSettings() {
 							</Grid>
 
 							<Grid size={{ xs: 12 }}>
-								<SubHeading>Enable showing the mge rankings.</SubHeading>
+								<SubHeading>Compile and show stats accumulated from demos.</SubHeading>
 								<form.AppField
-									name={"general.mgeEnabled"}
+									name={"general.statsEnabled"}
 									children={(field) => {
-										return <field.CheckboxField label={"Enable mge rankings"} />;
+										return <field.CheckboxField label={"Enable stat tracking"} />;
 									}}
 								/>
 							</Grid>
-
-							{/*<Grid size={{ xs: 12 }}>
-										<SubHeading>Enable showing the mge rankings.</SubHeading>
-										<form.AppField
-											name={"general.mgeEnabled"}
-											children={(field) => {
-												return <field.CheckboxField label={"Enable mge rankings"} />;
-											}}
-										/>
-									</Grid>*/}
 
 							<Grid size={{ xs: 12 }}>
 								<SubHeading>Enables the 1000 uncles speedruns tracking support.</SubHeading>
@@ -1031,7 +1020,7 @@ function AdminSettings() {
 							<Grid size={{ xs: 12 }}>
 								<SubHeading>Public log channel ID.</SubHeading>
 								<form.AppField
-									name={"discord.publicLogChannelId"}
+									name={"discord.logChannelId"}
 									children={(field) => {
 										return <field.TextField label={"Public log channel ID"} />;
 									}}
@@ -1127,17 +1116,7 @@ function AdminSettings() {
 									}}
 								/>
 							</Grid>
-							<Grid size={{ xs: 12 }}>
-								<SubHeading>
-									A channel which relays the chat messages from the website chat lobby.
-								</SubHeading>
-								<form.AppField
-									name={"discord.playerqueueChannelId"}
-									children={(field) => {
-										return <field.TextField label={"Playerqueue log channel ID"} />;
-									}}
-								/>
-							</Grid>
+
 							<Grid size={{ xs: 12 }}>
 								<SubHeading>A channel which shows player server seeding requests.</SubHeading>
 								<form.AppField
@@ -1404,7 +1383,7 @@ function AdminSettings() {
 									<a href="https://github.com/sapphonie/StAC-tf2">StAC</a> logs.
 								</SubHeading>
 								<form.AppField
-									name={"enabled"}
+									name={"anticheat.enabled"}
 									children={(field) => {
 										return (
 											<field.CheckboxField
@@ -1450,7 +1429,7 @@ function AdminSettings() {
 							<Grid size={{ xs: 12 }}>
 								<SubHeading>Maximum number of silent aim detections</SubHeading>
 								<form.AppField
-									name={"anticheat.maxAimSnap"}
+									name={"anticheat.maxAimSnaps"}
 									children={(field) => {
 										return <field.NumberField label={"max_aim_snap"} />;
 									}}

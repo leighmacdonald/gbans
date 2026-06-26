@@ -103,8 +103,8 @@ void onBanRespReceived(HTTPResponse response, any clientId) {
         return;
     }
 
-    JSONObject data  = view_as<JSONObject>(response.Data);
-    JSONObject banObj   = view_as<JSONObject>(data.Get("ban"));
-    int        banId = banObj.GetInt("banId");
+    JSONObject data   = view_as<JSONObject>(response.Data);
+    JSONObject banObj = view_as<JSONObject>(data.Get("ban"));
+    int        banId  = banObj.GetInt("banId");
     ReplyToCommand(clientId, "User banned (#%d)", banId);
 }

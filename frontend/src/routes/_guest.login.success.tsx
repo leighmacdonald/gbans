@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_guest/login/success")({
 			})
 			.parse({
 				...search,
-				nextUrl: (search as Record<string, string>).next_url ?? (search as Record<string, string>).nextUrl,
+				nextUrl: search.next_url ?? "/",
 			});
 	},
 	component: LoginSteamSuccess,
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_guest/login/success")({
 		token: search.token,
 	}),
 
-	loader: async ({ deps }) => {
+	loader: ({ deps }) => {
 		const savedToken = { token: deps.token };
 		localStorage.setItem(StorageKey.Token, JSON.stringify(savedToken));
 	},

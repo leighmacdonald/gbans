@@ -47,7 +47,11 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 		onSubmit: async ({ value }) => {
 			mutation.mutate(
 				create(EditServerRequestSchema, {
-					server: create(ServerSchema, { ...value, discordSeedRoleIds: value.discordSeedRoleIds.split(",") }),
+					server: create(ServerSchema, {
+						...value,
+						serverId: server?.serverId,
+						discordSeedRoleIds: value.discordSeedRoleIds.split(","),
+					}),
 				}),
 			);
 		},

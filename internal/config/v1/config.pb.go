@@ -737,8 +737,9 @@ type General struct {
 	ChatlogsEnabled  *bool                  `protobuf:"varint,16,opt,name=chatlogs_enabled,json=chatlogsEnabled" json:"chatlogs_enabled,omitempty"`
 	DemosEnabled     *bool                  `protobuf:"varint,17,opt,name=demos_enabled,json=demosEnabled" json:"demos_enabled,omitempty"`
 	SpeedrunsEnabled *bool                  `protobuf:"varint,18,opt,name=speedruns_enabled,json=speedrunsEnabled" json:"speedruns_enabled,omitempty"`
-	SentryDsn        *string                `protobuf:"bytes,19,opt,name=sentry_dsn,json=sentryDsn" json:"sentry_dsn,omitempty"`
-	SentryDsnWeb     *string                `protobuf:"bytes,20,opt,name=sentry_dsn_web,json=sentryDsnWeb" json:"sentry_dsn_web,omitempty"`
+	MgeEnabled       *bool                  `protobuf:"varint,19,opt,name=mge_enabled,json=mgeEnabled" json:"mge_enabled,omitempty"`
+	SentryDsn        *string                `protobuf:"bytes,20,opt,name=sentry_dsn,json=sentryDsn" json:"sentry_dsn,omitempty"`
+	SentryDsnWeb     *string                `protobuf:"bytes,21,opt,name=sentry_dsn_web,json=sentryDsnWeb" json:"sentry_dsn_web,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -895,6 +896,13 @@ func (x *General) GetDemosEnabled() bool {
 func (x *General) GetSpeedrunsEnabled() bool {
 	if x != nil && x.SpeedrunsEnabled != nil {
 		return *x.SpeedrunsEnabled
+	}
+	return false
+}
+
+func (x *General) GetMgeEnabled() bool {
+	if x != nil && x.MgeEnabled != nil {
+		return *x.MgeEnabled
 	}
 	return false
 }
@@ -2722,7 +2730,7 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\rUpdateRequest\x121\n" +
 	"\x06config\x18\x01 \x01(\v2\x11.config.v1.ConfigB\x06\xbaH\x03\xc8\x01\x01R\x06config\"C\n" +
 	"\x0eUpdateResponse\x121\n" +
-	"\x06config\x18\x01 \x01(\v2\x11.config.v1.ConfigB\x06\xbaH\x03\xc8\x01\x01R\x06config\"\xb8\a\n" +
+	"\x06config\x18\x01 \x01(\v2\x11.config.v1.ConfigB\x06\xbaH\x03\xc8\x01\x01R\x06config\"\xe1\a\n" +
 	"\aGeneral\x12#\n" +
 	"\tsite_name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bsiteName\x121\n" +
 	"\x10site_description\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0fsiteDescription\x123\n" +
@@ -2742,10 +2750,12 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x0freports_enabled\x18\x0f \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0ereportsEnabled\x121\n" +
 	"\x10chatlogs_enabled\x18\x10 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0fchatlogsEnabled\x12+\n" +
 	"\rdemos_enabled\x18\x11 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\fdemosEnabled\x123\n" +
-	"\x11speedruns_enabled\x18\x12 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x10speedrunsEnabled\x12%\n" +
+	"\x11speedruns_enabled\x18\x12 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x10speedrunsEnabled\x12'\n" +
+	"\vmge_enabled\x18\x13 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"mgeEnabled\x12%\n" +
 	"\n" +
-	"sentry_dsn\x18\x13 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tsentryDsn\x12,\n" +
-	"\x0esentry_dsn_web\x18\x14 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fsentryDsnWeb\"\x7f\n" +
+	"sentry_dsn\x18\x14 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tsentryDsn\x12,\n" +
+	"\x0esentry_dsn_web\x18\x15 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fsentryDsnWeb\"\x7f\n" +
 	"\x05Debug\x12=\n" +
 	"\x17skip_open_id_validation\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x14skipOpenIdValidation\x127\n" +
 	"\x14add_rcon_log_address\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11addRconLogAddress\"\xa8\x02\n" +
