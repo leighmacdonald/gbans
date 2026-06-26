@@ -9,11 +9,10 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgerrcode"
+	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -153,7 +152,7 @@ func (db *PgStore) Connect(ctx context.Context) error {
 	}
 
 	cfg.AfterConnect = func(_ context.Context, conn *pgx.Conn) error {
-		registerUUIDCodec(conn.TypeMap())
+		pgxuuid.Register(conn.TypeMap())
 
 		return nil
 	}
@@ -311,168 +310,4 @@ func (db *PgStore) TruncateTable(ctx context.Context, table string) error {
 	rows.Close()
 
 	return nil
-}
-
-// errUUIDPlanScan is returned when pgx cannot find a scan plan for UUID.
-var errUUIDPlanScan = errors.New("uuid: PlanScan did not find a plan")
-
-// errUUIDNullScan is returned when scanning NULL into a non-null UUID pointer.
-var errUUIDNullScan = errors.New("cannot scan NULL into *uuid.UUID")
-
-// registerUUIDCodec registers gofrs/uuid/v5 types with the pgx type map.
-// Replaces github.com/jackc/pgx-gofrs-uuid to reduce dependencies.
-func registerUUIDCodec(tm *pgtype.Map) {
-	tm.TryWrapEncodePlanFuncs = append([]pgtype.TryWrapEncodePlanFunc{tryWrapUUIDEncodePlan}, tm.TryWrapEncodePlanFuncs...)
-	tm.TryWrapScanPlanFuncs = append([]pgtype.TryWrapScanPlanFunc{tryWrapUUIDScanPlan}, tm.TryWrapScanPlanFuncs...)
-
-	tm.RegisterType(&pgtype.Type{
-		Name:  "uuid",
-		OID:   pgtype.UUIDOID,
-		Codec: uuidCodec{},
-	})
-}
-
-// uuidCodec wraps pgtype.UUIDCodec to decode directly to uuid.UUID.
-type uuidCodec struct{ pgtype.UUIDCodec }
-
-func (c uuidCodec) DecodeValue(typeMap *pgtype.Map, oid uint32, format int16, src []byte) (any, error) {
-	if src == nil {
-		return nil, nil //nolint:nilnil // null database value returns nil
-	}
-
-	var target uuid.UUID
-	plan := typeMap.PlanScan(oid, format, &target)
-	if plan == nil {
-		return nil, errUUIDPlanScan //nolint:err113
-	}
-
-	if err := plan.Scan(src, &target); err != nil {
-		return nil, err //nolint:wrapcheck // passthrough pgx scan error
-	}
-
-	return target, nil
-}
-
-// uuidPG is an alias for pgtype.UUID encoding compatibility.
-// nolint:recvcheck // matches pgx-gofrs-uuid pattern (pointer ScanUUID, value UUIDValue)
-type uuidPG struct {
-	data [16]byte
-}
-
-//nolint:recvcheck // matches pgx-gofrs-uuid pattern (pointer ScanUUID, value UUIDValue)
-func (u *uuidPG) ScanUUID(v pgtype.UUID) error {
-	if !v.Valid {
-		return errUUIDNullScan //nolint:err113
-	}
-
-	copy(u.data[:], v.Bytes[:])
-
-	return nil
-}
-
-func (u uuidPG) UUIDValue() (pgtype.UUID, error) {
-	return pgtype.UUID{Bytes: u.data, Valid: true}, nil
-}
-
-// nullUUIDPG handles nullable UUIDs.
-// nolint:recvcheck // matches pgx-gofrs-uuid pattern (pointer ScanUUID, value UUIDValue)
-type nullUUIDPG struct{ uuid.NullUUID }
-
-//nolint:recvcheck // matches pgx-gofrs-uuid pattern (pointer ScanUUID, value UUIDValue)
-func (u *nullUUIDPG) ScanUUID(v pgtype.UUID) error {
-	*u = nullUUIDPG{NullUUID: uuid.NullUUID{UUID: uuid.UUID(v.Bytes), Valid: v.Valid}}
-
-	return nil
-}
-
-func (u nullUUIDPG) UUIDValue() (pgtype.UUID, error) {
-	return pgtype.UUID{Bytes: [16]byte(u.UUID), Valid: u.Valid}, nil
-}
-
-// wrap plans for encoding.
-type wrapUUIDEncodePlan struct {
-	plan pgtype.EncodePlan
-}
-
-func (p *wrapUUIDEncodePlan) SetNext(next pgtype.EncodePlan) { p.plan = next }
-
-func (p *wrapUUIDEncodePlan) Encode(value any, buf []byte) ([]byte, error) {
-	//nolint:forcetypeassert // type guaranteed by tryWrapUUIDEncodePlan
-	buf, err := p.plan.Encode(uuidPG{data: [16]byte(value.(uuid.UUID))}, buf)
-
-	return buf, err //nolint:wrapcheck // passthrough pgx encode error
-}
-
-type wrapNullUUIDEncodePlan struct {
-	plan pgtype.EncodePlan
-}
-
-func (p *wrapNullUUIDEncodePlan) SetNext(next pgtype.EncodePlan) { p.plan = next }
-
-func (p *wrapNullUUIDEncodePlan) Encode(value any, buf []byte) ([]byte, error) {
-	//nolint:forcetypeassert // type guaranteed by tryWrapUUIDEncodePlan
-	buf, err := p.plan.Encode(nullUUIDPG{NullUUID: value.(uuid.NullUUID)}, buf)
-
-	return buf, err //nolint:wrapcheck // passthrough pgx encode error
-}
-
-// wrap plans for scanning.
-type wrapUUIDScanPlan struct {
-	plan pgtype.ScanPlan
-}
-
-func (p *wrapUUIDScanPlan) SetNext(next pgtype.ScanPlan) { p.plan = next }
-
-func (p *wrapUUIDScanPlan) Scan(src []byte, dst any) error {
-	//nolint:forcetypeassert // type guaranteed by tryWrapUUIDScanPlan
-	target := dst.(*uuid.UUID) //nolint:varnamelen // local temporary
-	var pg uuidPG
-	if err := p.plan.Scan(src, &pg); err != nil {
-		return err //nolint:wrapcheck // passthrough pgx scan error
-	}
-
-	copy((*target)[:], pg.data[:])
-
-	return nil
-}
-
-type wrapNullUUIDScanPlan struct {
-	plan pgtype.ScanPlan
-}
-
-func (p *wrapNullUUIDScanPlan) SetNext(next pgtype.ScanPlan) { p.plan = next }
-
-func (p *wrapNullUUIDScanPlan) Scan(src []byte, dst any) error {
-	//nolint:forcetypeassert // type guaranteed by tryWrapUUIDScanPlan
-	target := dst.(*uuid.NullUUID) //nolint:varnamelen // local temporary
-	var pg nullUUIDPG
-	if err := p.plan.Scan(src, &pg); err != nil {
-		return err //nolint:wrapcheck // passthrough pgx scan error
-	}
-
-	*target = pg.NullUUID
-
-	return nil
-}
-
-func tryWrapUUIDEncodePlan(value any) (pgtype.WrappedEncodePlanNextSetter, any, bool) {
-	switch value := value.(type) {
-	case uuid.UUID:
-		return &wrapUUIDEncodePlan{}, value, true
-	case uuid.NullUUID:
-		return &wrapNullUUIDEncodePlan{}, value, true
-	}
-
-	return nil, nil, false
-}
-
-func tryWrapUUIDScanPlan(target any) (pgtype.WrappedScanPlanNextSetter, any, bool) {
-	switch target := target.(type) {
-	case *uuid.UUID:
-		return &wrapUUIDScanPlan{}, target, true
-	case *uuid.NullUUID:
-		return &wrapNullUUIDScanPlan{}, target, true
-	}
-
-	return nil, nil, false
 }

@@ -5,8 +5,8 @@
 #pragma tabsize 4
 #pragma newdecls required
 
-#include "ripext"
 #include "globals.sp"
+#include "ripext"
 
 // Are we already running admin update
 bool gQueuedAdminUpdate = false;
