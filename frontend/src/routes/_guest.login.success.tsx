@@ -6,10 +6,18 @@ import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 
 export const Route = createFileRoute("/_guest/login/success")({
-	validateSearch: z.object({
-		nextUrl: z.string().optional().catch("/"),
-		token: z.string(),
-	}),
+	validateSearch: (search) => {
+		// Backend sends snake_case query params, map to camelCase
+		return z
+			.object({
+				nextUrl: z.string().optional().catch("/"),
+				token: z.string().optional(),
+			})
+			.parse({
+				...search,
+				nextUrl: (search as Record<string, string>).next_url ?? (search as Record<string, string>).nextUrl,
+			});
+	},
 	component: LoginSteamSuccess,
 	loaderDeps: ({ search }) => ({
 		token: search.token,
@@ -31,6 +39,11 @@ function LoginSteamSuccess() {
 	const navigate = useNavigate();
 
 	useEffect(() => {
+		if (!token) {
+			navigate({ to: "/login", search: { redirect: "/" } });
+			return;
+		}
+
 		try {
 			login(token, {
 				onSuccess: async () => {
