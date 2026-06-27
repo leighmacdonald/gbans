@@ -35,10 +35,10 @@ import { stringToColour } from "../util/colours.ts";
 import { toTitleCase } from "../util/strings.ts";
 import { renderTimestamp } from "../util/time.ts";
 
-const validateSearch = makeSchemaState("createdOn");
+const validateSearch = makeSchemaState("startTime");
 const columnHelper = createMRTColumnHelper<MatchOverview>();
 const defaultOptions = createDefaultTableOptions<MatchOverview>();
-const defaultValues = makeSchemaDefaults({ defaultColumn: "createdOn" });
+const defaultValues = makeSchemaDefaults({ defaultColumn: "startTime" });
 
 export const Route = createFileRoute("/_auth/matches/")({
 	component: MatchesIndexPage,
@@ -64,7 +64,7 @@ function MatchesIndexPage() {
 				limit: String(search.pagination?.pageSize ?? 25),
 				desc: search.sorting?.find((sort) => sort)?.desc ?? true,
 				offset: String(search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : 0),
-				orderBy: search.sorting?.find((sort) => sort)?.id ?? "createdOn",
+				orderBy: search.sorting?.find((sort) => sort)?.id ?? "startTime",
 			},
 		},
 		{ enabled: !isLoadingServers && !isLoadingBuckets && !isLoadingMaps },
@@ -148,8 +148,9 @@ function MatchesIndexPage() {
 					</Typography>
 				),
 			}),
-			columnHelper.accessor("createdOn", {
-				header: "Created On",
+			columnHelper.accessor("startTime", {
+				header: "Start Time",
+				filterVariant: "datetime",
 				grow: false,
 				Cell: ({ cell }) => (
 					<Tooltip
@@ -227,6 +228,9 @@ function MatchesIndexPage() {
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
 		displayColumnDefOptions: makeRowActionsDefOptions(1),
+		manualFiltering: true,
+		manualPagination: true,
+		manualSorting: true,
 		state: {
 			isLoading,
 			showAlertBanner: isError,
@@ -237,6 +241,7 @@ function MatchesIndexPage() {
 		initialState: {
 			...defaultOptions.initialState,
 			columnVisibility: {
+				startTime: true,
 				sourceId: false,
 				targetId: true,
 				reason: true,

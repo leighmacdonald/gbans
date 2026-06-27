@@ -58,12 +58,12 @@ export const OverallTable = ({
 					return <PersonCell steamId={v.steamId} avatarHash={v.avatarHash} personaName={v.name} />;
 				},
 			}),
-			overallColumnHelper.accessor("points", {
-				grow: false,
-				header: "Pnt",
-				sortDescFirst: true,
-				size: colSize,
-			}),
+			// overallColumnHelper.accessor("points", {
+			// 	grow: false,
+			// 	header: "Pnt",
+			// 	sortDescFirst: true,
+			// 	size: colSize,
+			// }),
 			overallColumnHelper.accessor("kills", {
 				grow: false,
 				header: "K",
