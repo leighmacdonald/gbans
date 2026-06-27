@@ -47,12 +47,12 @@ import { ensureFeatureEnabled } from "../util/features.ts";
 import { renderTimestamp } from "../util/time.ts";
 import { emptyOrNullString } from "../util/types.ts";
 
-const defaultValues = { ...makeSchemaDefaults({ defaultColumn: "personMessageId" }), flaggedOnly: false };
+const defaultValues = { ...makeSchemaDefaults({ defaultColumn: "createdOn", defaultDesc: true }), flaggedOnly: false };
 const validateSearch = z
 	.object({
 		flaggedOnly: z.boolean().optional().default(false),
 	})
-	.extend(makeSchemaState("personMessageId").shape);
+	.extend(makeSchemaState("createdOn").shape);
 
 export const Route = createFileRoute("/_auth/chatlogs")({
 	component: ChatLogs,
@@ -153,16 +153,19 @@ function ChatLogs() {
 				size: dateTimeColumnSize,
 				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
 			}),
+
 			columnHelper.accessor("demoId", {
 				header: "Demo ID",
 				enableColumnFilter: false,
 				grow: false,
 			}),
+
 			columnHelper.accessor("demoTick", {
 				header: "Demo Tick",
 				enableColumnFilter: false,
 				grow: false,
 			}),
+
 			columnHelper.accessor("steamId", {
 				header: "SteamID",
 				grow: false,
@@ -223,7 +226,7 @@ function ChatLogs() {
 				limit: String(search.pagination?.pageSize ?? 25),
 				desc: sort ? sort.desc : true,
 				offset: String(search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : 0),
-				orderBy: sort ? sort.id : "personMessageId",
+				orderBy: sort ? sort.id : "createdOn",
 			},
 		});
 

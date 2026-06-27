@@ -79,13 +79,13 @@ func (s Service) QueryContext(ctx context.Context, req *v1.QueryContextRequest) 
 
 	resp := v1.QueryContextResponse{Messages: make([]*v1.Message, len(messages))}
 	for idx, msg := range messages {
-		resp.Messages[idx] = toMessage(msg)
+		resp.Messages[idx] = toMessage(&msg)
 	}
 
 	return &resp, nil
 }
 
-func toMessage(msg QueryChatHistoryResult) *v1.Message {
+func toMessage(msg *QueryChatHistoryResult) *v1.Message {
 	var assetID *string
 	if !msg.AssetID.IsNil() {
 		assetID = new(msg.AssetID.String())

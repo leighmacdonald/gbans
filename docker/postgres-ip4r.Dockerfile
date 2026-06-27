@@ -1,4 +1,4 @@
-FROM postgis/postgis:16-3.5
+FROM postgis/postgis:18-3.6
 
 RUN apt-get update \
     && apt-cache showpkg postgresql-$PG_MAJOR-ip4r \

@@ -79,3 +79,6 @@ id_stv*
 !.env-example
 *.vdf
 dist
+import.sh
+importer
+*.sql.gz

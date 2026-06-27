@@ -346,7 +346,7 @@ func (u *Chat) WarningState() map[string][]UserWarning {
 	return u.State()
 }
 
-func (u *Chat) GetPersonMessage(ctx context.Context, messageID int64) (QueryChatHistoryResult, error) {
+func (u *Chat) GetPersonMessage(ctx context.Context, messageID int64) (*QueryChatHistoryResult, error) {
 	return u.repository.GetPersonMessage(ctx, messageID)
 }
 
@@ -354,7 +354,7 @@ func (u *Chat) AddChatHistory(ctx context.Context, message *Message) error {
 	return u.repository.AddChatHistory(ctx, message)
 }
 
-func (u *Chat) QueryChatHistory(ctx context.Context, permissions permission.Privilege, req HistoryQueryFilter) ([]QueryChatHistoryResult, uint64, error) {
+func (u *Chat) QueryChatHistory(ctx context.Context, permissions permission.Privilege, req HistoryQueryFilter) ([]*QueryChatHistoryResult, uint64, error) {
 	if req.Limit <= 0 || (req.Limit > 100 && permissions < permission.Moderator) {
 		req.Limit = 100
 	}

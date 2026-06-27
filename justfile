@@ -5,6 +5,7 @@ alias f := fmt
 alias d := dev
 
 SOURCEMOD_INCLUDE_DIR := shell('dirname $(which spcomp64)') + "/include"
+DOCKER_DB_CONTAINER := "gbans-db"
 
 all: build-backend build-frontend build-sourcemod build-docs
 
@@ -83,10 +84,22 @@ clean-backend:
     rm -rf ./dist/
 
 docker-dump:
-    docker exec gbans-postgres pg_dump -U gbans > gbans.sql
+    docker exec {{ DOCKER_DB_CONTAINER }} pg_dump -U gbans --clean --if-exists -d gbans | gzip > gbans.sql.gz
 
-docker-restore:
-    cat gbans.sql | docker exec -i docker-postgres-1 psql -U gbans
+docker-dump-plain:
+    docker exec {{ DOCKER_DB_CONTAINER }} pg_dump -U gbans --clean --if-exists -d gbans > gbans.sql
+
+docker-restore filename="gbans.sql.gz":
+    @if [[ "{{ filename }}" == *.gz ]]; then \
+      gzip -dc "{{ filename }}" | docker exec -i {{ DOCKER_DB_CONTAINER }} psql -U gbans -d gbans; \
+    else \
+      cat "{{ filename }}" | docker exec -i {{ DOCKER_DB_CONTAINER }} psql -U gbans -d gbans; \
+    fi
+
+docker-restore-force:
+    docker exec {{ DOCKER_DB_CONTAINER }} psql -U gbans -c "DROP DATABASE gbans;"
+    docker exec {{ DOCKER_DB_CONTAINER }} psql -U gbans -c "CREATE DATABASE gbans OWNER gbans;"
+    @just docker-restore
 
 run-docker-snapshot: build-backend-snapshot
     docker run -it -v ./gbans.yml:/app/gbans.yml -v ./.cache:/app/.cache -p 6006:6006 ghcr.io/leighmacdonald/gbans:latest-amd64

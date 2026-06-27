@@ -6,7 +6,7 @@ docker run -t \
     --name=gbans-db \
     --restart unless-stopped \
     -p 0.0.0.0:5432:5432 \
-    -v gbans-db-data:/var/lib/postgresql/data \
+    -v gbans-db-data:/var/lib/postgresql \
     -e POSTGRES_USER=gbans \
     -e POSTGRES_PASSWORD=gbans \
     -e POSTGRES_DB=gbans \

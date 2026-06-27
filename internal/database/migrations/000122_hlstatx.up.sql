@@ -338,3 +338,24 @@ refresh materialized view stats_summary_daily_variants_view;
 
 -- refresh materialized view stats_summary_alltime_overall_view;
 -- refresh materialized view stats_summary_alltime_variants_view;
+--
+CREATE INDEX person_messages_server_covering_idx ON person_messages (server_id, person_message_id DESC) INCLUDE (
+  steam_id,
+  body,
+  team,
+  created_on,
+  persona_name,
+  demo_id,
+  demo_tick
+);
+
+-- This can be used instead of the covering index as well for less disk space, not sure which is better yet.
+-- CREATE INDEX person_messages_server_order_idx
+-- ON person_messages (server_id, person_message_id DESC);
+CREATE INDEX person_messages_steam_order_idx ON person_messages (steam_id, person_message_id DESC);
+
+CREATE INDEX person_messages_filter_message_idx ON person_messages_filter (person_message_id);
+
+CREATE INDEX person_messages_filter_flagged_idx ON person_messages_filter (person_message_id)
+WHERE
+  person_message_filter_id > 0
