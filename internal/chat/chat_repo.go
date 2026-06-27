@@ -168,7 +168,43 @@ func (r Repository) GetPersonMessageByID(ctx context.Context, personMessageID in
 	return msg, nil
 }
 
-func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFilter) ([]QueryChatHistoryResult, uint64, error) { //nolint:maintidx
+func (r Repository) loadDemoInfo(ctx context.Context, results []*QueryChatHistoryResult) error {
+	var ids []int32
+	for _, res := range results {
+		if res.DemoID == nil {
+			continue
+		}
+		ids = append(ids, *res.DemoID)
+	}
+
+	rows, errRows := r.QueryBuilder(ctx, r.Builder().
+		Select("d.demo_id", "COALESCE(a.asset_id, '00000000-0000-0000-0000-000000000000') as asset_id").
+		From("demo d").
+		LeftJoin("asset a ON d.asset_id = a.asset_id").
+		Where(sq.Eq{"d.demo_id": ids}))
+	if errRows != nil {
+		return errRows
+	}
+
+	for rows.Next() {
+		var assetID uuid.UUID
+		var demoID *int32
+		if err := rows.Scan(&demoID, &assetID); err != nil {
+			return err
+		}
+		for _, res := range results {
+			if res.DemoID == demoID {
+				res.AssetID = assetID
+
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFilter) ([]*QueryChatHistoryResult, uint64, error) { //nolint:maintidx
 	if filters.Query != "" && len(filters.Query) < minQueryLen {
 		return nil, 0, fmt.Errorf("%w: query", httphelper.ErrTooShort)
 	}
@@ -177,7 +213,8 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 		return nil, 0, fmt.Errorf("%w: name", httphelper.ErrTooShort)
 	}
 
-	countBuilder := r.Builder().Select("count(m.person_message_id)").
+	countBuilder := r.Builder().
+		Select("count(m.person_message_id)").
 		From("person_messages m").
 		LeftJoin("server s ON (NOT s.deleted AND s.is_enabled AND s.server_id = m.server_id)").
 		LeftJoin("person_messages_filter mf USING(person_message_id)").
@@ -194,7 +231,6 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 			"m.persona_name",
 			"m.demo_id",
 			"m.demo_tick",
-			"COALESCE(a.asset_id, '00000000-0000-0000-0000-000000000000') as asset_id",
 			"s.short_name",
 			"mf.person_message_filter_id",
 			"p.avatarhash",
@@ -203,14 +239,12 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 		LeftJoin("server s USING(server_id)").
 		LeftJoin("person_messages_filter mf USING(person_message_id)").
 		LeftJoin("filtered_word f USING(filter_id)").
-		LeftJoin("person p USING(steam_id)").
-		LeftJoin("demo d ON m.demo_id = d.demo_id").
-		LeftJoin("asset a ON d.asset_id = a.asset_id")
+		LeftJoin("person p USING(steam_id)")
 
 	// builder = filters.ApplySafeOrder(builder, map[string][]string{
 	// 	"m.": {"persona_name", "person_message_id"},
 	// }, "person_message_id")
-	builder = builder.OrderBy("m.person_message_id DESC")
+	builder = builder.OrderBy("m.created_on DESC")
 	builder = filters.ApplyLimitOffset(builder, 10000)
 
 	var constraints sq.And
@@ -253,7 +287,7 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 		constraints = append(constraints, sq.Gt{"mf.person_message_filter_id": 0})
 	}
 
-	var messages []QueryChatHistoryResult
+	var messages []*QueryChatHistoryResult
 
 	rows, errQuery := r.QueryBuilder(ctx, builder.Where(constraints))
 	if errQuery != nil {
@@ -264,10 +298,9 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 
 	for rows.Next() {
 		var (
-			message QueryChatHistoryResult
+			message = &QueryChatHistoryResult{}
 			steamID int64
 			flagged *int32
-			assetID uuid.UUID
 		)
 
 		if errScan := rows.Scan(&message.PersonMessageID,
@@ -279,15 +312,11 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 			&message.PersonaName,
 			&message.DemoID,
 			&message.DemoTick,
-			&assetID,
 			&message.ServerName,
 			&flagged,
 			&message.AvatarHash,
 			&message.Pattern); errScan != nil {
 			return nil, 0, database.Err(errScan)
-		}
-		if !assetID.IsNil() || assetID.IsZero() {
-			message.AssetID = assetID
 		}
 		if flagged != nil {
 			message.AutoFilterFlagged = *flagged
@@ -305,13 +334,17 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 
 	if messages == nil {
 		// Return empty list instead of null
-		messages = []QueryChatHistoryResult{}
+		messages = []*QueryChatHistoryResult{}
+	}
+
+	if err := r.loadDemoInfo(ctx, messages); err != nil {
+		return nil, 0, err
 	}
 
 	return messages, count, nil
 }
 
-func (r Repository) GetPersonMessage(ctx context.Context, messageID int64) (QueryChatHistoryResult, error) {
+func (r Repository) GetPersonMessage(ctx context.Context, messageID int64) (*QueryChatHistoryResult, error) {
 	const query = `
 		SELECT
 			x.person_message_id, x.steam_id, x.server_id, x.body, x.team, x.created_on, x.persona_name,
@@ -335,8 +368,7 @@ func (r Repository) GetPersonMessage(ctx context.Context, messageID int64) (Quer
 		LEFT JOIN asset a ON d.asset_id = a.asset_id
 		`
 
-	var msg QueryChatHistoryResult
-
+	msg := &QueryChatHistoryResult{}
 	if err := database.Err(r.QueryRow(ctx, query, messageID).Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
 		&msg.PersonaName, &msg.AssetID, &msg.DemoID, &msg.DemoTick, &msg.ServerName, &msg.AutoFilterFlagged)); err != nil {
 		return msg, err

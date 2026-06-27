@@ -41,20 +41,20 @@ type Database interface {
 	Begin(ctx context.Context) (pgx.Tx, error)
 	BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error)
 	Query(ctx context.Context, query string, args ...any) (pgx.Rows, error)
-	QueryBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Rows, error)
 	QueryRow(ctx context.Context, query string, args ...any) pgx.Row
-	QueryRowBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Row, error)
 	Exec(ctx context.Context, query string, args ...any) error
-	ExecInsertBuilder(ctx context.Context, builder sq.InsertBuilder) error
-	ExecDeleteBuilder(ctx context.Context, builder sq.DeleteBuilder) error
-	ExecUpdateBuilder(ctx context.Context, builder sq.UpdateBuilder) error
-	ExecInsertBuilderWithReturnValue(ctx context.Context, builder sq.InsertBuilder, outID any) error
-	Builder() sq.StatementBuilderType
 	SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults
 	GetCount(ctx context.Context, builder sq.SelectBuilder) (uint64, error)
 	TruncateTable(ctx context.Context, table string) error
 	WrapTx(ctx context.Context, fn func(pgx.Tx) error) error
-	Migrate(ctx context.Context, action MigrationAction, dsn string) error
+
+	Builder() sq.StatementBuilderType
+	QueryBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Rows, error)
+	QueryRowBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Row, error)
+	ExecInsertBuilder(ctx context.Context, builder sq.InsertBuilder) error
+	ExecDeleteBuilder(ctx context.Context, builder sq.DeleteBuilder) error
+	ExecUpdateBuilder(ctx context.Context, builder sq.UpdateBuilder) error
+	ExecInsertBuilderWithReturnValue(ctx context.Context, builder sq.InsertBuilder, outID any) error
 }
 
 type dbQueryTracer struct{}
