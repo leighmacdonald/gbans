@@ -91,7 +91,7 @@ func (r Repository) Matches(ctx context.Context, opts MatchesOpts) ([]Match, uin
 	builder := r.Builder().Select("m.match_id", "m.server_id", "m.map_id", "mp.map_name",
 		"m.demo_id", "s.stats_bucket_id", "s.bucket_name", "m.hostname",
 		"m.score_red", "m.score_blu", "m.duration_ms", "m.created_on",
-		"srv.name", "srv.short_name").
+		"srv.name", "srv.short_name", "m.start_time").
 		From("match m").
 		LeftJoin("map mp USING(map_id)").
 		LeftJoin("stats_bucket s USING(stats_bucket_id)").
@@ -106,7 +106,9 @@ func (r Repository) Matches(ctx context.Context, opts MatchesOpts) ([]Match, uin
 	if opts.statsBucketID > 0 {
 		constraints = append(constraints, sq.Eq{"s.stats_bucket_id": opts.statsBucketID})
 	}
-
+	builder = opts.ApplySafeOrder(opts.ApplyLimitOffsetDefault(builder), map[string][]string{
+		"m.": {"map_id", "stats_bucket_id", "duration_ms", "start_time"},
+	}, "m.start_time")
 	rows, errRows := r.QueryBuilder(ctx, opts.ApplyLimitOffset(builder, 100).Where(constraints))
 	if errRows != nil {
 		return nil, 0, database.Err(errRows)
@@ -118,7 +120,7 @@ func (r Repository) Matches(ctx context.Context, opts MatchesOpts) ([]Match, uin
 		if err := rows.Scan(&match.MatchID, &match.ServerID, &match.MapID, &match.MapName,
 			&match.DemoID, &match.StatsBucketID, &match.StatsBucketName, &match.Hostname,
 			&match.ScoreRed, &match.ScoreBlu, &match.DurationMs, &match.CreatedOn,
-			&match.ServerName, &match.ServerNameShort); err != nil {
+			&match.ServerName, &match.ServerNameShort, &match.StartTime); err != nil {
 			return nil, 0, database.Err(err)
 		}
 
