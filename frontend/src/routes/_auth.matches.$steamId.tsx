@@ -65,7 +65,6 @@ function ProfileMatchesPage() {
 
 	const matches = useMemo(() => {
 		const matchList = data?.matches ?? [];
-		console.log(matchList);
 		return matchList;
 	}, [data]);
 
@@ -132,7 +131,7 @@ function ProfileMatchesPage() {
 				// 	</TextLink>
 				// ),
 			}),
-			columnHelper.accessor("createdOn", {
+			columnHelper.accessor("startTime", {
 				header: "Created On",
 				grow: false,
 				Cell: ({ cell }) => (

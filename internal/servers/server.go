@@ -48,6 +48,7 @@ type SafeServer struct {
 	Distance          float32
 	Humans            int32
 	Tags              []string
+	StatsBucketID     int32
 }
 
 func (s SafeServer) Addr() string {
@@ -100,8 +101,9 @@ type Server struct {
 	// Physical Longitude location
 	Longitude float32
 	// LogSecret is a unique integer used to "authenticate" UDP log packets.
-	LogSecret   uint32
-	EnableStats bool
+	LogSecret     uint32
+	EnableStats   bool
+	StatsBucketID *int32
 	// TokenCreatedOn is set when changing the token
 	TokenCreatedOn time.Time
 	CreatedOn      time.Time

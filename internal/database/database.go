@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
+	"sync"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -26,6 +28,7 @@ var (
 	ErrSaveChanges = errors.New("cannot save changes")
 	ErrCloseBatch  = errors.New("failed to close batch request")
 	ErrScanResult  = errors.New("failed to scan result")
+	ErrInvalidView = errors.New("invalid view name")
 )
 
 //go:embed migrations
@@ -70,11 +73,12 @@ func (tracer *dbQueryTracer) TraceQueryEnd(_ context.Context, _ *pgx.Conn, _ pgx
 type PgStore struct {
 	conn *pgxpool.Pool
 	// Use $ for pg based queries.
-	sb          sq.StatementBuilderType
-	dsn         string
-	autoMigrate bool
-	migrated    bool
-	logQueries  bool
+	sb             sq.StatementBuilderType
+	dsn            string
+	autoMigrate    bool
+	migrateOnce    sync.Once
+	logQueries     bool
+	validViewNames []string
 }
 
 func (db *PgStore) WrapTx(ctx context.Context, txFunc func(pgx.Tx) error) error {
@@ -135,6 +139,10 @@ func (db *PgStore) Pool() *pgxpool.Pool {
 
 func (db *PgStore) RefreshMaterializedView(ctx context.Context, viewName string) error {
 	timeStart := time.Now()
+	if !slices.Contains(db.validViewNames, viewName) {
+		return ErrInvalidView
+	}
+
 	if err := db.Exec(ctx, "refresh materialized view concurrently "+viewName); err != nil {
 		return Err(err)
 	}
@@ -161,9 +169,15 @@ func (db *PgStore) Connect(ctx context.Context) error {
 		cfg.ConnConfig.Tracer = &dbQueryTracer{}
 	}
 
-	if db.autoMigrate && !db.migrated {
-		if errMigrate := db.Migrate(ctx, MigrateUp, db.dsn); errMigrate != nil {
-			return fmt.Errorf("could not migrate schema: %w", errMigrate)
+	if db.autoMigrate {
+		var err error
+		db.migrateOnce.Do(func() {
+			if errMigrate := Migrate(MigrateUp, db.dsn); errMigrate != nil {
+				err = fmt.Errorf("could not migrate schema: %w", errMigrate)
+			}
+		})
+		if err != nil {
+			return err
 		}
 	}
 

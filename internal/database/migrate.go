@@ -1,7 +1,6 @@
 package database
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"net/http"
@@ -37,18 +36,10 @@ var (
 )
 
 // Migrate database schema.
-func (db *PgStore) Migrate(ctx context.Context, action MigrationAction, dsn string) error {
-	defer func() {
-		db.migrated = true
-	}()
-
+func Migrate(action MigrationAction, dsn string) error {
 	instance, errOpen := sql.Open("pgx", dsn)
 	if errOpen != nil {
 		return errors.Join(errOpen, ErrOpenDB)
-	}
-
-	if errPing := instance.PingContext(ctx); errPing != nil {
-		return errors.Join(errPing, ErrPing)
 	}
 
 	driver, errMigrate := pgxMigrate.WithInstance(instance, &pgxMigrate.Config{

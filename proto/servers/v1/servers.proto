@@ -92,6 +92,7 @@ message SafeServer {
     (buf.validate.field).int32.gte = 0
   ];
   repeated string tags = 17 [(buf.validate.field).required = true];
+  int32 stats_bucket_id = 18;
 }
 
 message Server {
@@ -137,6 +138,7 @@ message Server {
   google.protobuf.Timestamp updated_on = 19;
   repeated string discord_seed_role_ids = 20;
   string ip = 21 [(buf.validate.field).string.ipv4 = true];
+  int32 stats_bucket_id = 22;
 }
 
 message StateResponse {

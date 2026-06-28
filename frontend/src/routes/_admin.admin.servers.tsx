@@ -33,6 +33,7 @@ import { TableCellStringHidden } from "../component/table/TableCellStringHidden.
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import type { Server } from "../rpc/servers/v1/servers_pb.ts";
 import { serversAdmin } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
+import { buckets } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
 import { renderTimestamp } from "../util/time.ts";
 
@@ -67,6 +68,7 @@ function AdminServers() {
 	const queryClient = useQueryClient();
 	const search = Route.useSearch();
 	const navigate = useNavigate();
+	const { data: dataBuckets, isLoading: isLoadingBuckets } = useQuery(buckets);
 
 	const { data, isLoading, isError } = useQuery(serversAdmin);
 
@@ -109,6 +111,7 @@ function AdminServers() {
 
 			columnHelper.accessor("shortName", {
 				grow: false,
+				size: 60,
 				meta: {
 					tooltip: "Short unique server identifier",
 				},
@@ -121,6 +124,7 @@ function AdminServers() {
 			columnHelper.accessor("name", {
 				header: "Name Long",
 				grow: true,
+				size: 400,
 				meta: {
 					tooltip: "Full name of the server, AKA srcds hostname",
 				},
@@ -148,6 +152,7 @@ function AdminServers() {
 			columnHelper.accessor("port", {
 				header: "Port",
 				grow: false,
+				size: 60,
 			}),
 
 			columnHelper.accessor("rcon", {
@@ -188,8 +193,26 @@ function AdminServers() {
 				},
 				filterVariant: "checkbox",
 				header: "Stats",
+				size: 50,
 				grow: false,
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue() as boolean} />,
+			}),
+			columnHelper.accessor("statsBucketId", {
+				meta: {
+					tooltip: "Stat Bucket",
+				},
+				header: "Stat Bucket",
+				grow: false,
+				Cell: ({ cell }) => {
+					const bucketName =
+						dataBuckets?.buckets.find((bucket) => bucket.statsBucketId === cell.getValue())?.bucketName ??
+						"";
+					return (
+						<Typography variant="body2" color={stringToColour(bucketName)}>
+							{bucketName}
+						</Typography>
+					);
+				},
 			}),
 
 			columnHelper.accessor("isEnabled", {
@@ -202,7 +225,7 @@ function AdminServers() {
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue() as boolean} />,
 			}),
 		];
-	}, []);
+	}, [dataBuckets]);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		async (updater) => {
@@ -255,7 +278,7 @@ function AdminServers() {
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
 		state: {
-			isLoading,
+			isLoading: isLoading || isLoadingBuckets,
 			showAlertBanner: isError,
 			columnFilters: search.columnFilters,
 			sorting: search.sorting,
@@ -270,10 +293,13 @@ function AdminServers() {
 				shortName: true,
 				password: false,
 				region: false,
+				addressInternal: false,
 				rcon: false,
 				tokeCreatedOn: false,
 				enableStats: false,
+				statsBucketId: true,
 				isEnabled: true,
+				tokenCreatedOn: false,
 			},
 		},
 		enableRowActions: true,

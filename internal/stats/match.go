@@ -29,6 +29,7 @@ type PlayerMatchHistory struct {
 	DurationMs      uint64
 	IsWinnder       bool
 	CreatedOn       time.Time
+	StartTime       time.Time
 }
 
 // Match is the top level container for all of the matches data.

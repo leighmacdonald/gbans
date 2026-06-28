@@ -66,19 +66,20 @@ func (s Service) State(ctx context.Context, _ *emptypb.Empty) (*v1.StateResponse
 	resp := v1.StateResponse{}
 	for _, current := range servers {
 		resp.Servers = append(resp.Servers, &v1.SafeServer{
-			ServerId:   &current.ServerID,
-			Host:       &current.Host,
-			Port:       new(uint32(current.Port)),
-			Ip:         &current.IP,
-			Name:       &current.Name,
-			NameShort:  &current.NameShort,
-			Region:     &current.Region,
-			Cc:         &current.CC,
-			Players:    &current.Players,
-			MaxPlayers: new(current.MaxPlayerDisplay()),
-			Bot:        &current.Bots,
-			Map:        &current.Map,
-			GameTypes:  current.GameTypes,
+			ServerId:      &current.ServerID,
+			Host:          &current.Host,
+			Port:          new(uint32(current.Port)),
+			Ip:            &current.IP,
+			Name:          &current.Name,
+			NameShort:     &current.NameShort,
+			Region:        &current.Region,
+			Cc:            &current.CC,
+			Players:       &current.Players,
+			MaxPlayers:    new(current.MaxPlayerDisplay()),
+			Bot:           &current.Bots,
+			Map:           &current.Map,
+			GameTypes:     current.GameTypes,
+			StatsBucketId: &current.StatsBucketID,
 			LatLong: &networkv1.LatLong{
 				Latitude:  &current.Latitude,
 				Longitude: &current.Longitude,
@@ -161,6 +162,7 @@ func fromRPCServer(server *v1.Server) Server {
 		UpdatedOn:          server.GetUpdatedOn().AsTime(),
 		DiscordSeedRoleIDs: server.GetDiscordSeedRoleIds(),
 		IP:                 net.ParseIP(server.GetIp()),
+		StatsBucketID:      server.StatsBucketId,
 	}
 }
 
@@ -190,6 +192,7 @@ func toRPCServer(server Server) *v1.Server {
 		UpdatedOn:          timestamppb.New(server.UpdatedOn),
 		DiscordSeedRoleIds: server.DiscordSeedRoleIDs,
 		Ip:                 new(server.IP.String()),
+		StatsBucketId:      server.StatsBucketID,
 	}
 }
 
