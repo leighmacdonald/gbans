@@ -123,6 +123,7 @@ func (s Service) MatchesWithPlayer(ctx context.Context, request *v1.MatchesWithP
 			ScoreBlu:        &match.ScoreBlu,
 			Duration:        &match.DurationMs,
 			CreatedOn:       timestamppb.New(match.CreatedOn),
+			StartTime:       timestamppb.New(match.StartTime),
 		}
 	}
 

@@ -97,7 +97,7 @@ $do$;`
 		panic(err)
 	}
 
-	if err := f.Database.Migrate(ctx, database.MigrateUp, f.DSN); err != nil {
+	if err := database.Migrate(database.MigrateUp, f.DSN); err != nil {
 		panic(err)
 	}
 }

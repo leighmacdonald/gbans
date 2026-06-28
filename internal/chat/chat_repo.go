@@ -190,7 +190,7 @@ func (r Repository) loadDemoInfo(ctx context.Context, results []*QueryChatHistor
 		var assetID uuid.UUID
 		var demoID *int32
 		if err := rows.Scan(&demoID, &assetID); err != nil {
-			return err
+			return database.Err(err)
 		}
 		for _, res := range results {
 			if res.DemoID == demoID {
@@ -213,12 +213,13 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 		return nil, 0, fmt.Errorf("%w: name", httphelper.ErrTooShort)
 	}
 
+	// LeftJoin("person_messages_filter mf USING(person_message_id)").
+	// LeftJoin("filtered_word f USING(filter_id)").
+
 	countBuilder := r.Builder().
 		Select("count(m.person_message_id)").
 		From("person_messages m").
 		LeftJoin("server s ON (NOT s.deleted AND s.is_enabled AND s.server_id = m.server_id)").
-		LeftJoin("person_messages_filter mf USING(person_message_id)").
-		LeftJoin("filtered_word f USING(filter_id)").
 		LeftJoin("person p USING(steam_id)")
 
 	builder := r.Builder().
@@ -232,13 +233,9 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 			"m.demo_id",
 			"m.demo_tick",
 			"s.short_name",
-			"mf.person_message_filter_id",
-			"p.avatarhash",
-			"CASE WHEN f.pattern IS NULL THEN '' ELSE f.pattern END").
+			"p.avatarhash").
 		From("person_messages m").
 		LeftJoin("server s USING(server_id)").
-		LeftJoin("person_messages_filter mf USING(person_message_id)").
-		LeftJoin("filtered_word f USING(filter_id)").
 		LeftJoin("person p USING(steam_id)")
 
 	// builder = filters.ApplySafeOrder(builder, map[string][]string{
@@ -300,7 +297,6 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 		var (
 			message = &QueryChatHistoryResult{}
 			steamID int64
-			flagged *int32
 		)
 
 		if errScan := rows.Scan(&message.PersonMessageID,
@@ -313,13 +309,8 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 			&message.DemoID,
 			&message.DemoTick,
 			&message.ServerName,
-			&flagged,
-			&message.AvatarHash,
-			&message.Pattern); errScan != nil {
+			&message.AvatarHash); errScan != nil {
 			return nil, 0, database.Err(errScan)
-		}
-		if flagged != nil {
-			message.AutoFilterFlagged = *flagged
 		}
 
 		message.SteamID = steamid.New(steamID)

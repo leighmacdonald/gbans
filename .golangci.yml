@@ -28,6 +28,8 @@ linters:
     - unused
     - goconst
     - gomoddirectives
+  enable:
+    - gomodguard_v2
   settings:
     cyclop:
       # The maximal code complexity to report.

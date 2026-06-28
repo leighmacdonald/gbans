@@ -349,6 +349,10 @@ CREATE INDEX person_messages_server_covering_idx ON person_messages (server_id, 
   demo_tick
 );
 
+DROP INDEX IF EXISTS idx_created;
+
+CREATE INDEX IF NOT EXISTS idx_created ON person_messages (created_on);
+
 -- This can be used instead of the covering index as well for less disk space, not sure which is better yet.
 -- CREATE INDEX person_messages_server_order_idx
 -- ON person_messages (server_id, person_message_id DESC);

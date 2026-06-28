@@ -74,6 +74,7 @@ message PlayerMatchHistory {
   uint64 duration = 13;
   bool is_winner = 14;
   google.protobuf.Timestamp created_on = 15;
+  google.protobuf.Timestamp start_time = 16;
 }
 
 message MatchesWithPlayerResponse {

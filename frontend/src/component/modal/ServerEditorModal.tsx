@@ -1,5 +1,5 @@
 import { create } from "@bufbuild/protobuf";
-import { useMutation } from "@connectrpc/connect-query";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import RouterIcon from "@mui/icons-material/Router";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -8,14 +8,19 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
+import MenuItem from "@mui/material/MenuItem";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { EditServerRequestSchema, type Server, ServerSchema } from "../../rpc/servers/v1/servers_pb.ts";
 import { editServer } from "../../rpc/servers/v1/servers-ServersService_connectquery.ts";
+import type { Bucket } from "../../rpc/stats/v1/stats_pb.ts";
+import { buckets } from "../../rpc/stats/v1/stats-StatsService_connectquery.ts";
 import { logErr } from "../../util/errors.ts";
 import { randomStringAlphaNum } from "../../util/strings.ts";
 import { Heading } from "../Heading";
+import { LoadingPlaceholder } from "../LoadingPlaceholder.tsx";
 
 export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server }) => {
+	const { data, isLoading } = useQuery(buckets);
 	const modal = useModal();
 	const defaultValues = {
 		shortName: server?.shortName ?? "",
@@ -34,6 +39,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 		addressInternal: server?.addressInternal ?? "",
 		sdrEnabled: server?.sdrEnabled ?? false,
 		discordSeedRoleIds: server?.discordSeedRoleIds.join(",") ?? "",
+		statsBucketId: server?.statsBucketId,
 	};
 
 	const mutation = useMutation(editServer, {
@@ -72,149 +78,172 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 				</DialogTitle>
 
 				<DialogContent>
-					<Grid container spacing={2}>
-						<Grid size={{ xs: 4 }}>
-							<form.AppField
-								name={"shortName"}
-								children={(field) => {
-									return (
-										<field.TextField
-											label={"Short Name/Tag"}
-											helperText={"A short, unique, identifier."}
-										/>
-									);
-								}}
-							/>
+					{isLoading ? (
+						<LoadingPlaceholder />
+					) : (
+						<Grid container spacing={2}>
+							<Grid size={{ xs: 4 }}>
+								<form.AppField
+									name={"shortName"}
+									children={(field) => {
+										return (
+											<field.TextField
+												label={"Short Name/Tag"}
+												helperText={"A short, unique, identifier."}
+											/>
+										);
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 4 }}>
+								<form.AppField
+									name={"name"}
+									children={(field) => {
+										return <field.TextField label={"Long Name"} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 4 }}>
+								<form.AppField
+									name={"address"}
+									children={(field) => {
+										return <field.TextField label={"Address"} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 4 }}>
+								<form.AppField
+									name={"port"}
+									children={(field) => {
+										return <field.NumberField label={"Port"} min={1024} max={65535} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 8 }}>
+								<form.AppField
+									name={"addressInternal"}
+									children={(field) => {
+										return (
+											<field.TextField
+												label={"Address Internal"}
+												helperText={
+													"A private network/VPN to access the host. Used for SSH. If empty the normal address is used."
+												}
+											/>
+										);
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 8 }}>
+								<form.AppField
+									name={"sdrEnabled"}
+									children={(field) => {
+										return <field.CheckboxField label={"Enable SDR Support"} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 4 }}>
+								<form.AppField
+									name={"password"}
+									children={(field) => {
+										return <field.TextField label={"Server Auth Key"} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 6 }}>
+								<form.AppField
+									name={"rcon"}
+									children={(field) => {
+										return <field.TextField label={"RCON Password"} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 6 }}>
+								<form.AppField
+									name={"logSecret"}
+									children={(field) => {
+										return <field.NumberField label={"Log Secret"} min={0} max={999999999} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 6 }}>
+								<form.AppField
+									name={"region"}
+									children={(field) => {
+										return <field.TextField label={"Region"} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 6 }}>
+								<form.AppField
+									name={"cc"}
+									children={(field) => {
+										return <field.TextField label={"Country Code"} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 6 }}>
+								<form.AppField
+									name={"latitude"}
+									children={(field) => {
+										return <field.NumberField label={"Latitude"} min={-90} max={90} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 6 }}>
+								<form.AppField
+									name={"longitude"}
+									children={(field) => {
+										return <field.NumberField label={"Longitude"} min={-180} max={180} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 4 }}>
+								<form.AppField
+									name={"isEnabled"}
+									children={(field) => {
+										return <field.CheckboxField label={"Is Enabled"} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 4 }}>
+								<form.AppField
+									name={"enableStats"}
+									children={(field) => {
+										return <field.CheckboxField label={"Stats Enabled"} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 4 }}>
+								<form.AppField
+									name={"statsBucketId"}
+									children={(field) => {
+										return (
+											<field.SelectField
+												label={"Stat Bucket"}
+												items={data?.buckets ?? []}
+												renderItem={(i) => {
+													return (
+														<MenuItem value={(i as Bucket).statsBucketId}>
+															{(i as Bucket).bucketName}
+														</MenuItem>
+													);
+												}}
+											/>
+										);
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 12 }}>
+								<form.AppField
+									name={"discordSeedRoleIds"}
+									children={(field) => {
+										return <field.TextField label={"Discord Seed Channel(s) (comma seperated)"} />;
+									}}
+								/>
+							</Grid>
 						</Grid>
-						<Grid size={{ xs: 4 }}>
-							<form.AppField
-								name={"name"}
-								children={(field) => {
-									return <field.TextField label={"Long Name"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 4 }}>
-							<form.AppField
-								name={"address"}
-								children={(field) => {
-									return <field.TextField label={"Address"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 4 }}>
-							<form.AppField
-								name={"port"}
-								children={(field) => {
-									return <field.NumberField label={"Port"} min={1024} max={65535} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 8 }}>
-							<form.AppField
-								name={"addressInternal"}
-								children={(field) => {
-									return (
-										<field.TextField
-											label={"Address Internal"}
-											helperText={
-												"A private network/VPN to access the host. Used for SSH. If empty the normal address is used."
-											}
-										/>
-									);
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 8 }}>
-							<form.AppField
-								name={"sdrEnabled"}
-								children={(field) => {
-									return <field.CheckboxField label={"Enable SDR Support"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 4 }}>
-							<form.AppField
-								name={"password"}
-								children={(field) => {
-									return <field.TextField label={"Server Auth Key"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"rcon"}
-								children={(field) => {
-									return <field.TextField label={"RCON Password"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"logSecret"}
-								children={(field) => {
-									return <field.NumberField label={"Log Secret"} min={0} max={999999999} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"region"}
-								children={(field) => {
-									return <field.TextField label={"Region"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"cc"}
-								children={(field) => {
-									return <field.TextField label={"Country Code"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"latitude"}
-								children={(field) => {
-									return <field.NumberField label={"Latitude"} min={-90} max={90} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"longitude"}
-								children={(field) => {
-									return <field.NumberField label={"Longitude"} min={-180} max={180} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 4 }}>
-							<form.AppField
-								name={"isEnabled"}
-								children={(field) => {
-									return <field.CheckboxField label={"Is Enabled"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 4 }}>
-							<form.AppField
-								name={"enableStats"}
-								children={(field) => {
-									return <field.CheckboxField label={"Stats Enabled"} />;
-								}}
-							/>
-						</Grid>
-
-						<Grid size={{ xs: 12 }}>
-							<form.AppField
-								name={"discordSeedRoleIds"}
-								children={(field) => {
-									return <field.TextField label={"Discord Seed Channel(s) (comma seperated)"} />;
-								}}
-							/>
-						</Grid>
-					</Grid>
+					)}
 				</DialogContent>
 				<DialogActions>
 					<Grid container>

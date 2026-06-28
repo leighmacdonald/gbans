@@ -208,6 +208,7 @@ type SafeServer struct {
 	Distance      *float32               `protobuf:"fixed32,15,opt,name=distance" json:"distance,omitempty"`
 	Humans        *int32                 `protobuf:"varint,16,opt,name=humans" json:"humans,omitempty"`
 	Tags          []string               `protobuf:"bytes,17,rep,name=tags" json:"tags,omitempty"`
+	StatsBucketId *int32                 `protobuf:"varint,18,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -361,6 +362,13 @@ func (x *SafeServer) GetTags() []string {
 	return nil
 }
 
+func (x *SafeServer) GetStatsBucketId() int32 {
+	if x != nil && x.StatsBucketId != nil {
+		return *x.StatsBucketId
+	}
+	return 0
+}
+
 type Server struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
 	ServerId           *int32                 `protobuf:"varint,1,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
@@ -384,6 +392,7 @@ type Server struct {
 	UpdatedOn          *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
 	DiscordSeedRoleIds []string               `protobuf:"bytes,20,rep,name=discord_seed_role_ids,json=discordSeedRoleIds" json:"discord_seed_role_ids,omitempty"`
 	Ip                 *string                `protobuf:"bytes,21,opt,name=ip" json:"ip,omitempty"`
+	StatsBucketId      *int32                 `protobuf:"varint,22,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -563,6 +572,13 @@ func (x *Server) GetIp() string {
 		return *x.Ip
 	}
 	return ""
+}
+
+func (x *Server) GetStatsBucketId() int32 {
+	if x != nil && x.StatsBucketId != nil {
+		return *x.StatsBucketId
+	}
+	return 0
 }
 
 type StateResponse struct {
@@ -925,7 +941,7 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\"T\n" +
 	"\x11QueryLogsResponse\x12)\n" +
 	"\x04logs\x18\x01 \x03(\v2\x15.servers.v1.ServerLogR\x04logs\x12\x14\n" +
-	"\x05count\x18\x02 \x01(\x05R\x05count\"\xe7\x04\n" +
+	"\x05count\x18\x02 \x01(\x05R\x05count\"\x8f\x05\n" +
 	"\n" +
 	"SafeServer\x12'\n" +
 	"\tserver_id\x18\x01 \x01(\x05B\n" +
@@ -956,7 +972,8 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"\bdistance\x18\x0f \x01(\x02B\x06\xbaH\x03\xc8\x01\x01R\bdistance\x12\"\n" +
 	"\x06humans\x18\x10 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\x06humans\x12\x1a\n" +
-	"\x04tags\x18\x11 \x03(\tB\x06\xbaH\x03\xc8\x01\x01R\x04tags\"\xe3\x06\n" +
+	"\x04tags\x18\x11 \x03(\tB\x06\xbaH\x03\xc8\x01\x01R\x04tags\x12&\n" +
+	"\x0fstats_bucket_id\x18\x12 \x01(\x05R\rstatsBucketId\"\x8b\a\n" +
 	"\x06Server\x12'\n" +
 	"\tserver_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\bserverId\x12)\n" +
@@ -989,7 +1006,8 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"\n" +
 	"updated_on\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x121\n" +
 	"\x15discord_seed_role_ids\x18\x14 \x03(\tR\x12discordSeedRoleIds\x12\x17\n" +
-	"\x02ip\x18\x15 \x01(\tB\a\xbaH\x04r\x02x\x01R\x02ip\"\x81\x01\n" +
+	"\x02ip\x18\x15 \x01(\tB\a\xbaH\x04r\x02x\x01R\x02ip\x12&\n" +
+	"\x0fstats_bucket_id\x18\x16 \x01(\x05R\rstatsBucketId\"\x81\x01\n" +
 	"\rStateResponse\x128\n" +
 	"\aservers\x18\x01 \x03(\v2\x16.servers.v1.SafeServerB\x06\xbaH\x03\xc8\x01\x01R\aservers\x126\n" +
 	"\blat_long\x18\x02 \x01(\v2\x13.network.v1.LatLongB\x06\xbaH\x03\xc8\x01\x01R\alatLong\"\xb4\x01\n" +
