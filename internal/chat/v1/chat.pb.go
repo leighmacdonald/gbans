@@ -125,7 +125,7 @@ type QueryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Filter        *v1.Filter             `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
 	Query         *string                `protobuf:"bytes,2,opt,name=query" json:"query,omitempty"`
-	ServerId      *int32                 `protobuf:"varint,3,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
+	ServerIds     []int32                `protobuf:"varint,3,rep,packed,name=server_ids,json=serverIds" json:"server_ids,omitempty"`
 	DateStart     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=date_start,json=dateStart" json:"date_start,omitempty"`
 	DateEnd       *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=date_end,json=dateEnd" json:"date_end,omitempty"`
 	FlaggedOnly   *bool                  `protobuf:"varint,6,opt,name=flagged_only,json=flaggedOnly" json:"flagged_only,omitempty"`
@@ -178,11 +178,11 @@ func (x *QueryRequest) GetQuery() string {
 	return ""
 }
 
-func (x *QueryRequest) GetServerId() int32 {
-	if x != nil && x.ServerId != nil {
-		return *x.ServerId
+func (x *QueryRequest) GetServerIds() []int32 {
+	if x != nil {
+		return x.ServerIds
 	}
-	return 0
+	return nil
 }
 
 func (x *QueryRequest) GetDateStart() *timestamppb.Timestamp {
@@ -216,7 +216,6 @@ func (x *QueryRequest) GetSteamId() int64 {
 type QueryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Messages      []*Message             `protobuf:"bytes,1,rep,name=messages" json:"messages,omitempty"`
-	Count         *uint64                `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -256,13 +255,6 @@ func (x *QueryResponse) GetMessages() []*Message {
 		return x.Messages
 	}
 	return nil
-}
-
-func (x *QueryResponse) GetCount() uint64 {
-	if x != nil && x.Count != nil {
-		return *x.Count
-	}
-	return 0
 }
 
 type Message struct {
@@ -423,20 +415,20 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"\apadding\x18\x02 \x01(\x05B\r\xbaH\n" +
 	"\xc8\x01\x01\x1a\x05\x10\xfa\x01 \x00R\apadding\"L\n" +
 	"\x14QueryContextResponse\x124\n" +
-	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\"\xc0\x02\n" +
+	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\"\xc3\x02\n" +
 	"\fQueryRequest\x121\n" +
 	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12\x14\n" +
-	"\x05query\x18\x02 \x01(\tR\x05query\x12$\n" +
-	"\tserver_id\x18\x03 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\bserverId\x129\n" +
+	"\x05query\x18\x02 \x01(\tR\x05query\x12'\n" +
+	"\n" +
+	"server_ids\x18\x03 \x03(\x05B\b\xbaH\x05\x92\x01\x02\x18\x01R\tserverIds\x129\n" +
 	"\n" +
 	"date_start\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tdateStart\x125\n" +
 	"\bdate_end\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\adateEnd\x12!\n" +
 	"\fflagged_only\x18\x06 \x01(\bR\vflaggedOnly\x12,\n" +
 	"\bsteam_id\x18\a \x01(\x03B\x11\xbaH\f\"\n" +
-	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\"e\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\"E\n" +
 	"\rQueryResponse\x124\n" +
-	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\x12\x1e\n" +
-	"\x05count\x18\x02 \x01(\x04B\b\xbaH\x03\xc8\x01\x010\x01R\x05count\"\xea\x04\n" +
+	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\"\xea\x04\n" +
 	"\aMessage\x128\n" +
 	"\x11person_message_id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\x0fpersonMessageId\x12#\n" +
 	"\bmatch_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\amatchId\x12/\n" +

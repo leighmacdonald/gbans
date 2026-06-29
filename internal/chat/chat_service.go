@@ -42,9 +42,7 @@ func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResp
 		FlaggedOnly:   req.GetFlaggedOnly(),
 	}
 
-	if serverID := req.GetServerId(); serverID > 0 {
-		chatQuery.ServerID = req.GetServerId()
-	}
+	chatQuery.ServerIDs = req.GetServerIds()
 
 	if dateStart := req.GetDateStart(); dateStart.IsValid() {
 		chatQuery.DateStart = new(req.GetDateStart().AsTime())
@@ -58,12 +56,12 @@ func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResp
 		chatQuery.SourceIDField = httphelper.SourceIDField{SourceID: strconv.FormatInt(steamID, 10)}
 	}
 
-	messages, count, errChat := s.chat.QueryChatHistory(ctx, ctxUser.Privilege, chatQuery)
+	messages, errChat := s.chat.QueryChatHistory(ctx, ctxUser.Privilege, chatQuery)
 	if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 		return nil, connect.NewError(connect.CodeInternal, errChat)
 	}
 
-	resp := v1.QueryResponse{Messages: make([]*v1.Message, len(messages)), Count: &count}
+	resp := v1.QueryResponse{Messages: make([]*v1.Message, len(messages))}
 	for idx, msg := range messages {
 		resp.Messages[idx] = toMessage(msg)
 	}

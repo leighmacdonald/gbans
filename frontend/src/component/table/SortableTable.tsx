@@ -19,6 +19,7 @@ type Props<TData extends MRT_RowData> = {
 	hideToolbarButtons?: boolean;
 	hideHeader?: boolean;
 	hidePagination?: boolean;
+	unknownRowCount?: boolean;
 };
 
 export const SortableTable = <TData extends MRT_RowData>({
@@ -28,6 +29,7 @@ export const SortableTable = <TData extends MRT_RowData>({
 	hideHeader = false,
 	hideToolbarButtons = false,
 	hidePagination = false,
+	unknownRowCount = false,
 }: Props<TData>) => {
 	return (
 		<Paper>
@@ -79,7 +81,11 @@ export const SortableTable = <TData extends MRT_RowData>({
 			{!hidePagination && (
 				<Box>
 					<Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-						<MRT_TablePagination table={table} />
+						{unknownRowCount ? (
+							<MRT_TablePagination table={table} />
+						) : (
+							<MRT_TablePagination table={table} />
+						)}
 					</Box>
 				</Box>
 			)}

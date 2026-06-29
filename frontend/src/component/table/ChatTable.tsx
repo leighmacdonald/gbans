@@ -18,7 +18,7 @@ const defaultOptions = createDefaultTableOptions<Message>();
 export const ChatTable = ({ steamId }: { steamId: string }) => {
 	const { data, isLoading, isError } = useQuery(query, {
 		steamId: steamId,
-		filter: { limit: 2500n, orderBy: "person_message_id", desc: true },
+		filter: { limit: "2500", orderBy: "person_message_id", desc: true },
 	});
 
 	const columns = useMemo(
@@ -73,7 +73,6 @@ export const ChatTable = ({ steamId }: { steamId: string }) => {
 		...defaultOptions,
 		columns,
 		data: data?.messages ?? [],
-		rowCount: Number(data?.count ?? 0),
 		enableFilters: true,
 		enableRowActions: false,
 		state: {
