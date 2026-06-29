@@ -40,7 +40,7 @@ type patreonHandler struct {
 //	}
 // }
 
-func (h patreonHandler) onLogout() gin.HandlerFunc {
+func (h *patreonHandler) onLogout() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser, _ := session.CurrentUserProfile(ctx)
 
@@ -56,7 +56,7 @@ func (h patreonHandler) onLogout() gin.HandlerFunc {
 	}
 }
 
-func (h patreonHandler) onLogin() gin.HandlerFunc {
+func (h *patreonHandler) onLogin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser, _ := session.CurrentUserProfile(ctx)
 
@@ -66,7 +66,7 @@ func (h patreonHandler) onLogin() gin.HandlerFunc {
 	}
 }
 
-func (h patreonHandler) onOAuth() gin.HandlerFunc {
+func (h *patreonHandler) onOAuth() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		grantCode, codeOK := ctx.GetQuery("code")
 		if !codeOK {
@@ -92,13 +92,13 @@ func (h patreonHandler) onOAuth() gin.HandlerFunc {
 	}
 }
 
-func (h patreonHandler) onAPIGetPatreonCampaigns() gin.HandlerFunc {
+func (h *patreonHandler) onAPIGetPatreonCampaigns() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, h.Campaign())
 	}
 }
 
-func (h patreonHandler) onAPIGetPatreonPledges() gin.HandlerFunc {
+func (h *patreonHandler) onAPIGetPatreonPledges() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{})
 	}

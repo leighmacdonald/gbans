@@ -27,6 +27,7 @@ const (
 var ErrQueryPatreon = errors.New("failed to query patreon")
 
 type Config struct {
+	sync.RWMutex
 	Enabled             bool
 	IntegrationsEnabled bool
 	ClientID            string
@@ -49,14 +50,14 @@ type Credential struct {
 }
 
 type Manager struct {
-	Config
+	*Config
 
 	// patreonClient    *patreon.Client
 	patreonMu        *sync.RWMutex
 	patreonCampaigns patreon.Campaign
 }
 
-func NewPatreonManager(config Config) Manager {
+func NewPatreonManager(config *Config) Manager {
 	return Manager{
 		Config:    config,
 		patreonMu: &sync.RWMutex{},
@@ -150,14 +151,14 @@ func (p *Manager) Campaigns() patreon.Campaign {
 }
 
 type Patreon struct {
-	Config
+	*Config
 
 	repository   Repository
 	manager      Manager
 	stateTracker *oauth.LoginStateTracker
 }
 
-func NewPatreon(repository Repository, config Config) Patreon {
+func NewPatreon(repository Repository, config *Config) Patreon {
 	return Patreon{
 		Config:       config,
 		repository:   repository,
@@ -166,11 +167,11 @@ func NewPatreon(repository Repository, config Config) Patreon {
 	}
 }
 
-func (p Patreon) Forget(ctx context.Context, steamID steamid.SteamID) error {
+func (p *Patreon) Forget(ctx context.Context, steamID steamid.SteamID) error {
 	return p.repository.DeleteTokens(ctx, steamID)
 }
 
-func (p Patreon) Sync(ctx context.Context) {
+func (p *Patreon) Sync(ctx context.Context) {
 	p.manager.sync(ctx)
 	p.checkAuths(ctx)
 }

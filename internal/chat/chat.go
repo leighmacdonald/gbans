@@ -76,7 +76,7 @@ type QueryChatHistoryResult struct {
 }
 
 type Chat struct {
-	Config
+	*Config
 
 	repository    Repository
 	wordFilters   WordFilters
@@ -95,7 +95,7 @@ type Chat struct {
 	logChannelID  string
 }
 
-func New(repo Repository, config Config, filters WordFilters,
+func New(repo Repository, config *Config, filters WordFilters,
 	persons person.Provider, notifications notification.Notifier, actionHandler ExceedHandler, logChannelID string,
 ) *Chat {
 	return &Chat{

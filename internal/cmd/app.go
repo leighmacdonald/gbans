@@ -323,16 +323,8 @@ func (g *GBans) chatHandler(ctx context.Context, exceeded bool, newWarning chat.
 }
 
 func (g *GBans) createConfig(ctx context.Context) (*config.Configuration, error) {
-	conf := config.NewConfiguration(g.staticConfig, config.NewRepository(g.database))
-	if err := conf.Init(ctx); err != nil {
-		slog.Error("Failed to init config", slog.String("error", err.Error()))
-
-		return nil, err
-	}
-
-	if errConfig := conf.Reload(ctx); errConfig != nil {
-		slog.Error("Failed to read config", slog.String("error", errConfig.Error()))
-
+	conf, errConfig := config.NewConfiguration(ctx, g.staticConfig, config.NewRepository(g.database))
+	if errConfig != nil {
 		return nil, errConfig
 	}
 
@@ -353,7 +345,7 @@ func (g *GBans) createAPIClient() (thirdparty.APIProvider, error) { //nolint:ire
 	return tfapiClient, nil
 }
 
-func (g *GBans) mustCreateBot(conf discord.Config) discord.Service { //nolint:ireturn
+func (g *GBans) mustCreateBot(conf *discord.Config) discord.Service { //nolint:ireturn
 	if conf.BotEnabled {
 		discordBot, errDiscord := discord.New(discord.Opts{
 			Token:   conf.Token,
@@ -765,7 +757,7 @@ func (g *GBans) healthCheck(ctx *gin.Context) {
 
 // downloadManager is responsible for connecting to the remote servers via ssh/scp and executing instructions.
 // Multiple handlers can be registered that will be run for every update call.
-func downloadManager(ctx context.Context, store database.Database, conf scp.Config, handlers ...scp.ConnectionHandler) {
+func downloadManager(ctx context.Context, store database.Database, conf *scp.Config, handlers ...scp.ConnectionHandler) {
 	var (
 		connections []scp.Connection
 		repo        = scp.NewRepository(store)

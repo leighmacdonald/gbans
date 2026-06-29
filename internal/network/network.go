@@ -8,6 +8,7 @@ import (
 	"net/netip"
 	"path"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/database"
@@ -27,6 +28,7 @@ var (
 )
 
 type Config struct {
+	sync.RWMutex
 	SDREnabled bool
 }
 
@@ -121,15 +123,15 @@ type Proxy struct {
 }
 
 type Networks struct {
-	Config
+	*Config
 
-	geoConf    ip2location.Config
+	geoConf    *ip2location.Config
 	repository Repository
 	eb         *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
 func NewNetworks(broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	repository Repository, config Config, geoConf ip2location.Config,
+	repository Repository, config *Config, geoConf *ip2location.Config,
 ) Networks {
 	return Networks{
 		Config:     config,

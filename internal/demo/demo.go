@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -45,6 +46,8 @@ const (
 )
 
 type Config struct {
+	sync.RWMutex
+
 	DemoCleanupEnabled  bool
 	DemoCleanupStrategy Strategy
 	DemoCleanupMinPct   float32
@@ -106,7 +109,7 @@ type UploadedDemo struct {
 }
 
 type Demos struct {
-	Config
+	*Config
 
 	stats       stats.Stats
 	repository  Repository
@@ -122,7 +125,7 @@ type PersonCreator interface {
 	EnsurePerson(ctx context.Context, steamID steamid.SteamID) error
 }
 
-func NewDemos(bucket asset.Bucket, repository Repository, assets asset.Assets, stats stats.Stats, chat *chat.Chat, person PersonCreator, config Config, owner steamid.SteamID) Demos {
+func NewDemos(bucket asset.Bucket, repository Repository, assets asset.Assets, stats stats.Stats, chat *chat.Chat, person PersonCreator, config *Config, owner steamid.SteamID) Demos {
 	return Demos{
 		Config:      config,
 		bucket:      bucket,
@@ -300,7 +303,7 @@ func (d Demos) ImportFile(ctx context.Context, serverID int32, demoPath string, 
 	return demo, nil
 }
 
-func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, server scp.ServerInfo, config scp.Config) error {
+func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, server scp.ServerInfo, config *scp.Config) error {
 	for _, instance := range server.ServerIDs {
 		demoDir := server.GamePath(config.DemoPathFmt, instance)
 		filelist, errFilelist := client.List(ctx, demoDir)
@@ -351,6 +354,8 @@ func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, ser
 			}
 
 			slog.Debug("Deleted demo on remote host", slog.String("path", demoPath))
+
+			break // only download one demo per tick
 		}
 	}
 

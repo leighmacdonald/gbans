@@ -12,6 +12,7 @@ import (
 	"mime/multipart"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -54,6 +55,7 @@ type UserUploadedFile struct {
 }
 
 type Config struct {
+	sync.RWMutex
 	PathRoot string
 }
 

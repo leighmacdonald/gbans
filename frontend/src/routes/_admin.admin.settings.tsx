@@ -725,7 +725,7 @@ function AdminSettings() {
 												renderItem={(item) => {
 													return (
 														<MenuItem key={item} value={item}>
-															{item}
+															{DemoStrategy[item]}
 														</MenuItem>
 													);
 												}}

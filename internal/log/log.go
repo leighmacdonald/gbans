@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/dotse/slug"
@@ -15,6 +16,7 @@ import (
 )
 
 type Config struct {
+	sync.RWMutex
 	Level Level
 	// If set to a non-empty path, logs will also be written to the log file.
 	File string

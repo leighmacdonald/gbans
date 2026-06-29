@@ -12,9 +12,8 @@ func TestConfig(t *testing.T) {
 	fixture := tests.NewFixture()
 	defer fixture.Close()
 
-	configuration := config.NewConfiguration(fixture.Config.Config().Static, config.NewRepository(fixture.Database))
-	require.NoError(t, configuration.Init(t.Context()))
-	require.NoError(t, configuration.Reload(t.Context()))
+	configuration, errConfig := config.NewConfiguration(t.Context(), fixture.Config.Config().Static, config.NewRepository(fixture.Database))
+	require.NoError(t, errConfig)
 	conf := configuration.Config()
 	conf.General.SiteName += "x"
 	require.NoError(t, configuration.Write(t.Context(), conf))
