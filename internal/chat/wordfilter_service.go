@@ -18,11 +18,11 @@ type WordfilterService struct {
 	// chatv1connect.UnimplementedWordfilterServiceHandler
 
 	chat    *Chat
-	config  Config
+	config  *Config
 	filters WordFilters
 }
 
-func NewWordfilterService(filters WordFilters, chat *Chat, config Config, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
+func NewWordfilterService(filters WordFilters, chat *Chat, config *Config, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
 	pattern, handler := chatv1connect.NewWordfilterServiceHandler(WordfilterService{filters: filters, chat: chat, config: config}, options...)
 
 	authMiddleware.UserRoute(chatv1connect.WordfilterServiceFiltersProcedure, rpc.WithMinPermissions(permission.Moderator))

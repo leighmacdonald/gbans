@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/database"
@@ -38,6 +39,7 @@ const (
 )
 
 type Config struct {
+	sync.RWMutex
 	Enabled         bool
 	Username        string
 	Port            uint16
@@ -57,7 +59,7 @@ type KeyStore interface {
 }
 
 type ConnectionHandler interface {
-	DownloadHandler(ctx context.Context, client storage.Storager, server ServerInfo, config Config) error
+	DownloadHandler(ctx context.Context, client storage.Storager, server ServerInfo, config *Config) error
 }
 
 // Connection can be used to execute scp (ssh) operations on a remote host. It connects to all configured active
@@ -69,10 +71,10 @@ type Connection struct {
 	handlers []ConnectionHandler
 	repo     KeyStore
 	conn     storage.Storager
-	config   Config
+	config   *Config
 }
 
-func NewConnection(database KeyStore, config Config, details ServerInfo) Connection {
+func NewConnection(database KeyStore, config *Config, details ServerInfo) Connection {
 	return Connection{repo: database, config: config, details: details}
 }
 
@@ -134,7 +136,7 @@ func (f *Connection) connect() error {
 }
 
 // configAndDialClient connects to the remote server with the config. client.Close must be called.
-func configAndDialClient(repo KeyStore, sshConfig Config, address string) (storage.Storager, error) { //nolint:ireturn
+func configAndDialClient(repo KeyStore, sshConfig *Config, address string) (storage.Storager, error) { //nolint:ireturn
 	clientConfig, errConfig := createConfig(repo, sshConfig)
 	if errConfig != nil {
 		return nil, errConfig
@@ -148,7 +150,7 @@ func configAndDialClient(repo KeyStore, sshConfig Config, address string) (stora
 	return client, nil
 }
 
-func createConfig(repo KeyStore, config Config) (*ssh.ClientConfig, error) {
+func createConfig(repo KeyStore, config *Config) (*ssh.ClientConfig, error) {
 	if config.Username == "" {
 		return nil, errUsername
 	}
@@ -177,7 +179,7 @@ func createConfig(repo KeyStore, config Config) (*ssh.ClientConfig, error) {
 	}, nil
 }
 
-func createSignerFromKey(config Config) (ssh.Signer, error) { //nolint:ireturn
+func createSignerFromKey(config *Config) (ssh.Signer, error) { //nolint:ireturn
 	fullPath, errPath := homedir.Expand(config.PrivateKeyPath)
 	if errPath != nil {
 		return nil, errors.Join(errPath, errHomeDir)

@@ -55,12 +55,12 @@ type UserDetail struct {
 }
 
 type DiscordOAuth struct {
-	config     discord.Config
+	config     *discord.Config
 	state      *oauth.LoginStateTracker
 	repository Repository
 }
 
-func NewOAuth(repository Repository, config discord.Config) DiscordOAuth {
+func NewOAuth(repository Repository, config *discord.Config) DiscordOAuth {
 	return DiscordOAuth{
 		repository: repository,
 		config:     config,

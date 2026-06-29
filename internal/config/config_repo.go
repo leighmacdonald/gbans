@@ -6,7 +6,19 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/leighmacdonald/gbans/internal/anticheat"
+	"github.com/leighmacdonald/gbans/internal/asset"
+	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/demo"
+	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/log"
+	"github.com/leighmacdonald/gbans/internal/network"
+	"github.com/leighmacdonald/gbans/internal/network/ip2location"
+	"github.com/leighmacdonald/gbans/internal/network/scp"
+	"github.com/leighmacdonald/gbans/internal/patreon"
+	"github.com/leighmacdonald/gbans/internal/sourcemod"
 )
 
 type Repo interface {
@@ -75,7 +87,22 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 		 FROM config`
 
 	var (
-		cfg            Config
+		cfg = Config{
+			General:     &General{},
+			Debug:       &Debug{},
+			Filters:     &chat.Config{},
+			Discord:     &discord.Config{},
+			Clientprefs: &sourcemod.Config{},
+			Demo:        &demo.Config{},
+			Log:         &log.Config{},
+			GeoLocation: &ip2location.Config{},
+			Patreon:     &patreon.Config{},
+			SSH:         &scp.Config{},
+			Network:     &network.Config{},
+			LocalStore:  &asset.Config{},
+			Exports:     &ban.Config{},
+			Anticheat:   &anticheat.Config{},
+		}
 		authorizedKeys []string
 	)
 

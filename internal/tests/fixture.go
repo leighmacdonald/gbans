@@ -47,7 +47,10 @@ func NewFixture() *Fixture {
 		panic(err)
 	}
 
-	conf := TestConfig(testDB.dsn)
+	conf, err := TestConfig(testCtx, testDB.dsn)
+	if err != nil {
+		panic(err)
+	}
 	api := FakeTFAPI{}
 
 	return &Fixture{

@@ -122,6 +122,8 @@ type Warnings interface {
 }
 
 type Config struct {
+	sync.RWMutex
+
 	Enabled        bool
 	WarningTimeout int32
 	WarningLimit   int32
@@ -138,10 +140,10 @@ type WordFilters struct {
 	repository  WordFilterRepository
 	wordFilters []Filter
 	notif       notification.Notifier
-	config      Config
+	config      *Config
 }
 
-func NewWordFilters(repository WordFilterRepository, notif notification.Notifier, config Config) WordFilters {
+func NewWordFilters(repository WordFilterRepository, notif notification.Notifier, config *Config) WordFilters {
 	return WordFilters{repository: repository, RWMutex: &sync.RWMutex{}, notif: notif, config: config}
 }
 

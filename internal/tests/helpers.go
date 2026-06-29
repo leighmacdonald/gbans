@@ -165,8 +165,8 @@ func (c *TestConfigRepo) Init(_ context.Context) error {
 	return nil
 }
 
-func TestConfig(dsn string) *config.Configuration {
-	return config.NewConfiguration(config.Static{}, config.NewMemConfigRepository(config.Config{
+func TestConfig(ctx context.Context, dsn string) (*config.Configuration, error) {
+	return config.NewConfiguration(ctx, config.Static{}, config.NewMemConfigRepository(config.Config{
 		Static: config.Static{
 			Owner: OwnerSID.String(),
 			//	SteamKey:            steamKey,
@@ -184,31 +184,33 @@ func TestConfig(dsn string) *config.Configuration {
 			PrometheusEnabled:   false,
 			PProfEnabled:        false,
 		},
-		General: config.General{
-			SiteName:        "gbans",
-			Mode:            config.TestMode,
-			FileServeMode:   "local",
-			SrcdsLogAddr:    "",
-			AssetURL:        "",
-			DefaultRoute:    "",
-			NewsEnabled:     true,
-			ForumsEnabled:   true,
-			ContestsEnabled: true,
-			WikiEnabled:     true,
-			StatsEnabled:    true,
-			ServersEnabled:  true,
-			ReportsEnabled:  true,
-			ChatlogsEnabled: true,
-			DemosEnabled:    true,
+		General: &config.General{
+			SiteName:           "gbans",
+			Mode:               config.TestMode,
+			FileServeMode:      "local",
+			SrcdsLogAddr:       "",
+			AssetURL:           "",
+			DefaultRoute:       "",
+			NewsEnabled:        true,
+			ForumsEnabled:      true,
+			ContestsEnabled:    true,
+			WikiEnabled:        true,
+			StatsEnabled:       true,
+			ServersEnabled:     true,
+			ReportsEnabled:     true,
+			ChatlogsEnabled:    true,
+			DemosEnabled:       true,
+			PlayerqueueEnabled: true,
+			SpeedrunsEnabled:   true,
 		},
-		Demo: demo.Config{
+		Demo: &demo.Config{
 			DemoCleanupEnabled:  false,
 			DemoCleanupStrategy: "",
 			DemoCleanupMinPct:   0,
 			DemoCleanupMount:    "",
 			DemoCountLimit:      2,
 		},
-		Filters: chat.Config{
+		Filters: &chat.Config{
 			Enabled:        true,
 			WarningTimeout: 10,
 			WarningLimit:   1,
@@ -218,25 +220,25 @@ func TestConfig(dsn string) *config.Configuration {
 			CheckTimeout:   10,
 			MatchTimeout:   10,
 		},
-		Discord: discord.Config{
+		Discord: &discord.Config{
 			Enabled: false,
 		},
-		Clientprefs: sourcemod.Config{},
-		Log: log.Config{
+		Clientprefs: &sourcemod.Config{},
+		Log: &log.Config{
 			HTTPEnabled: false,
 			Level:       "error",
 		},
-		GeoLocation: ip2location.Config{
+		GeoLocation: &ip2location.Config{
 			Enabled: false,
 		},
-		Debug: config.Debug{},
-		Patreon: patreon.Config{
+		Debug: &config.Debug{},
+		Patreon: &patreon.Config{
 			Enabled: false,
 		},
-		SSH: scp.Config{
+		SSH: &scp.Config{
 			Enabled: false,
 		},
-		LocalStore: asset.Config{},
-		Exports:    ban.Config{},
+		LocalStore: &asset.Config{},
+		Exports:    &ban.Config{},
 	}))
 }

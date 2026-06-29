@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"sync"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -38,6 +39,7 @@ var (
 const maxCIDRHosts = 256 * 256
 
 type Config struct {
+	sync.RWMutex
 	BDEnabled      bool
 	ValveEnabled   bool
 	AuthorizedKeys string

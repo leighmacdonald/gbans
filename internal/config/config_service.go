@@ -104,7 +104,7 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 	inFilters := inCfg.GetFilters()
 
 	conf := Config{
-		General: General{
+		General: &General{
 			SiteName:         inGeneral.GetSiteName(),
 			SiteDescription:  inGeneral.GetSiteDescription(),
 			Mode:             fromRunMode(inGeneral.GetMode()),
@@ -127,11 +127,11 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 			SentryDSN:        inGeneral.GetSentryDsn(),
 			SentryDSNWeb:     inGeneral.GetSentryDsnWeb(),
 		},
-		Debug: Debug{
+		Debug: &Debug{
 			SkipOpenIDValidation: inDebug.GetSkipOpenIdValidation(),
 			AddRCONLogAddress:    inDebug.GetAddRconLogAddress(),
 		},
-		Demo: demo.Config{
+		Demo: &demo.Config{
 			DemoCleanupEnabled:  inDemo.GetCleanupEnabled(),
 			DemoCleanupStrategy: fromDemoStrategy(inDemo.GetStrategy()), // FIXME
 			DemoCleanupMinPct:   inDemo.GetCleanupMinPct(),
@@ -139,7 +139,7 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 			DemoCountLimit:      uint64(inDemo.GetCountLimit()), //nolint:gosec
 			DemoParserURL:       inDemo.GetParserUrl(),
 		},
-		Filters: chat.Config{
+		Filters: &chat.Config{
 			Enabled:        inFilters.GetEnabled(),
 			WarningTimeout: inFilters.GetWarningTimeout(),
 			WarningLimit:   inFilters.GetWarningLimit(),
@@ -149,7 +149,7 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 			CheckTimeout:   inFilters.GetCheckTimeout(),
 			MatchTimeout:   inFilters.GetMatchTimeout(),
 		},
-		Discord: discord.Config{
+		Discord: &discord.Config{
 			Enabled:                 inDiscord.GetEnabled(),
 			BotEnabled:              inDiscord.GetBotEnabled(),
 			IntegrationsEnabled:     inDiscord.GetIntegrationsEnabled(),
@@ -173,22 +173,22 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 			WordFilterLogChannelID:  inDiscord.GetWordFilterLogChannelId(),
 			ChatLogChannelID:        inDiscord.GetChatLogChannelId(),
 		},
-		Clientprefs: sourcemod.Config{
+		Clientprefs: &sourcemod.Config{
 			CenterProjectiles: false,
 		},
-		Log: log.Config{
+		Log: &log.Config{
 			Level:           fromLevel(inLog.GetLevel()), // FIXME
 			File:            inLog.GetFile(),
 			HTTPEnabled:     inLog.GetHttpEnabled(),
 			HTTPOtelEnabled: inLog.GetHttpOtelEnabled(),
 			HTTPLevel:       fromLevel(inLog.GetHttpLevel()), // FIXME
 		},
-		GeoLocation: ip2location.Config{
+		GeoLocation: &ip2location.Config{
 			Enabled:   inGeo.GetEnabled(),
 			CachePath: inGeo.GetCachePath(),
 			Token:     inGeo.GetToken(),
 		},
-		Patreon: patreon.Config{
+		Patreon: &patreon.Config{
 			Enabled:             inPatreon.GetEnabled(),
 			IntegrationsEnabled: inPatreon.GetIntegrationsEnabled(),
 			ClientID:            inPatreon.GetClientId(),
@@ -196,7 +196,7 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 			CreatorAccessToken:  inPatreon.GetCreatorAccessToken(),
 			CreatorRefreshToken: inPatreon.GetCreatorRefreshToken(),
 		},
-		SSH: scp.Config{
+		SSH: &scp.Config{
 			Enabled:         inSSH.GetEnabled(),
 			Username:        inSSH.GetUsername(),
 			Port:            uint16(inSSH.GetPort()), //nolint:gosec
@@ -208,18 +208,18 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 			DemoPathFmt:     inSSH.GetDemoPathFmt(),
 			StacPathFmt:     inSSH.GetStacPathFmt(),
 		},
-		Network: network.Config{
+		Network: &network.Config{
 			SDREnabled: inNetwork.GetSdrEnabled(),
 		},
-		LocalStore: asset.Config{
+		LocalStore: &asset.Config{
 			PathRoot: inLocalStore.GetPathRoot(),
 		},
-		Exports: ban.Config{
+		Exports: &ban.Config{
 			BDEnabled:      inExports.GetBdEnabled(),
 			ValveEnabled:   inExports.GetValveEnabled(),
 			AuthorizedKeys: strings.Join(inExports.GetAuthorizedKeys(), ","),
 		},
-		Anticheat: anticheat.Config{
+		Anticheat: &anticheat.Config{
 			Enabled:               inAC.GetEnabled(),
 			Action:                fromAction(inAC.GetAction()), // FIXME
 			Duration:              inAC.GetDuration(),

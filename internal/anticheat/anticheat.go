@@ -8,6 +8,7 @@ import (
 	"path"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/database"
@@ -34,6 +35,7 @@ type OnEntry func(ctx context.Context, entry logparse.StacEntry, duration time.D
 var ErrOpenClient = errors.New("failed to open client")
 
 type Config struct {
+	sync.RWMutex
 	Enabled               bool   `mapstructure:"enabled"`
 	Action                Action `mapstructure:"action"`
 	Duration              int32  `mapstructure:"duration"`
@@ -73,7 +75,7 @@ type Query struct {
 
 // AntiCheat handles parsing and processing of stac anti-cheat logs.
 type AntiCheat struct {
-	Config
+	*Config
 
 	parser  logparse.StacParser
 	repo    Repository
@@ -82,7 +84,7 @@ type AntiCheat struct {
 	handler OnEntry
 }
 
-func New(repo Repository, config Config, notif notification.Notifier, handler OnEntry, persons person.Provider) AntiCheat {
+func New(repo Repository, config *Config, notif notification.Notifier, handler OnEntry, persons person.Provider) AntiCheat {
 	return AntiCheat{
 		Config:  config,
 		parser:  logparse.NewStacParser(),
@@ -93,7 +95,7 @@ func New(repo Repository, config Config, notif notification.Notifier, handler On
 	}
 }
 
-func (a AntiCheat) DownloadHandler(ctx context.Context, client storage.Storager, server scp.ServerInfo, config scp.Config) error {
+func (a AntiCheat) DownloadHandler(ctx context.Context, client storage.Storager, server scp.ServerInfo, config *scp.Config) error {
 	for _, instance := range server.ServerIDs {
 		logDir := server.GamePath(config.StacPathFmt, instance)
 		fileList, errFileList := client.List(ctx, logDir, option.NewPage(0, 5))

@@ -40,6 +40,7 @@ var (
 )
 
 type Config struct {
+	sync.RWMutex
 	CenterProjectiles bool `mapstructure:"center_projectiles"`
 }
 

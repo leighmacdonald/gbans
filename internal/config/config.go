@@ -77,22 +77,22 @@ type Config struct {
 	Static
 
 	// General config opts.
-	General General
-	Debug   Debug
+	General *General
+	Debug   *Debug
 
 	// Package configs.
-	Demo        demo.Config
-	Filters     chat.Config
-	Discord     discord.Config
-	Clientprefs sourcemod.Config
-	Log         log.Config
-	GeoLocation ip2location.Config
-	Patreon     patreon.Config
-	SSH         scp.Config
-	Network     network.Config
-	LocalStore  asset.Config
-	Exports     ban.Config
-	Anticheat   anticheat.Config
+	Demo        *demo.Config
+	Filters     *chat.Config
+	Discord     *discord.Config
+	Clientprefs *sourcemod.Config
+	Log         *log.Config
+	GeoLocation *ip2location.Config
+	Patreon     *patreon.Config
+	SSH         *scp.Config
+	Network     *network.Config
+	LocalStore  *asset.Config
+	Exports     *ban.Config
+	Anticheat   *anticheat.Config
 }
 
 func (c Config) ExtURLRaw(path string, args ...any) string {
@@ -122,6 +122,8 @@ const (
 )
 
 type General struct {
+	sync.RWMutex
+
 	SiteName           string
 	SiteDescription    string
 	Mode               RunMode
@@ -139,14 +141,17 @@ type General struct {
 	ReportsEnabled     bool
 	ChatlogsEnabled    bool
 	DemosEnabled       bool
-	SpeedrunsEnabled   bool
 	PlayerqueueEnabled bool
+	SpeedrunsEnabled   bool
 	SentryDSN          string
 	SentryDSNWeb       string
 	MGEEnabled         bool
 }
 
-func (c General) FaviconURL() string {
+func (c *General) FaviconURL() string {
+	c.RLock()
+	defer c.RUnlock()
+
 	if c.Favicon == "" {
 		return ""
 	}
@@ -155,6 +160,8 @@ func (c General) FaviconURL() string {
 }
 
 type Debug struct {
+	sync.RWMutex
+
 	SkipOpenIDValidation bool
 	// Will send the `logaddress_add <ip>:<port>` rcon command to all enabled servers so that
 	// you can forward them to yourself for testing. This does not remove any existing entries.
@@ -162,18 +169,45 @@ type Debug struct {
 }
 
 type Configuration struct {
+	sync.RWMutex
 	repository    Repo
 	static        Static
-	configMu      sync.RWMutex
 	currentConfig Config
 }
 
-func NewConfiguration(static Static, repository Repo) *Configuration {
-	return &Configuration{static: static, repository: repository}
-}
+func NewConfiguration(ctx context.Context, static Static, repository Repo) (*Configuration, error) {
+	conf := &Configuration{
+		static:     static,
+		repository: repository,
+		currentConfig: Config{
+			Static:      static,
+			General:     &General{},
+			Debug:       &Debug{},
+			Filters:     &chat.Config{},
+			Discord:     &discord.Config{},
+			Clientprefs: &sourcemod.Config{},
+			Demo:        &demo.Config{},
+			Log:         &log.Config{},
+			GeoLocation: &ip2location.Config{},
+			Patreon:     &patreon.Config{},
+			SSH:         &scp.Config{},
+			Network:     &network.Config{},
+			LocalStore:  &asset.Config{},
+			Exports:     &ban.Config{},
+			Anticheat:   &anticheat.Config{},
+		}}
 
-func (c *Configuration) Init(ctx context.Context) error {
-	return c.repository.Init(ctx)
+	if err := repository.Init(ctx); err != nil {
+		return nil, err
+	}
+
+	if errReload := conf.reload(ctx); errReload != nil {
+		slog.Error("Failed to reload config", slog.String("error", errReload.Error()))
+
+		return nil, errReload
+	}
+
+	return conf, nil
 }
 
 func (c *Configuration) Write(ctx context.Context, config Config) error {
@@ -187,23 +221,17 @@ func (c *Configuration) Write(ctx context.Context, config Config) error {
 		return err
 	}
 
-	if errReload := c.Reload(ctx); errReload != nil {
-		slog.Error("Failed to reload config", slog.String("error", errReload.Error()))
-
-		return errReload
-	}
-
 	return nil
 }
 
 func (c *Configuration) Config() Config {
-	c.configMu.RLock()
-	defer c.configMu.RUnlock()
+	c.RLock()
+	defer c.RUnlock()
 
 	return c.currentConfig
 }
 
-func (c *Configuration) Reload(ctx context.Context) error {
+func (c *Configuration) reload(ctx context.Context) error {
 	config, errConfig := c.repository.Read(ctx)
 	if errConfig != nil {
 		return errConfig
@@ -214,14 +242,15 @@ func (c *Configuration) Reload(ctx context.Context) error {
 	// Update the global base url.
 	link.BaseURL = config.ExternalURL
 
-	c.configMu.Lock()
+	c.Lock()
 	c.currentConfig = config
-	c.configMu.Unlock()
+	c.Unlock()
 
-	if err := applyGlobalConfig(config); err != nil {
-		return err
+	gin.SetMode(config.General.Mode.String())
+
+	if errSteam := steamid.SetKey(config.SteamKey); errSteam != nil {
+		return errors.Join(errSteam, ErrSteamAPIKey)
 	}
-
 	return nil
 }
 
@@ -271,16 +300,6 @@ func ReadStaticConfig() (Static, error) {
 	}
 
 	return config, nil
-}
-
-func applyGlobalConfig(config Config) error {
-	gin.SetMode(config.General.Mode.String())
-
-	if errSteam := steamid.SetKey(config.SteamKey); errSteam != nil {
-		return errors.Join(errSteam, ErrSteamAPIKey)
-	}
-
-	return nil
 }
 
 //nolint:tagliatelle

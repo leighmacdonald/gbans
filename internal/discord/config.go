@@ -1,6 +1,9 @@
 package discord
 
+import "sync"
+
 type Config struct {
+	sync.RWMutex
 	Enabled                 bool
 	BotEnabled              bool
 	IntegrationsEnabled     bool
@@ -25,7 +28,7 @@ type Config struct {
 	ChatLogChannelID        string
 }
 
-func (c Config) SafePublicLogChannelID() string {
+func (c *Config) SafePublicLogChannelID() string {
 	if c.PublicLogChannelID != "" {
 		return c.PublicLogChannelID
 	}
@@ -33,7 +36,7 @@ func (c Config) SafePublicLogChannelID() string {
 	return c.LogChannelID
 }
 
-func (c Config) SafeSeedChannelID() string {
+func (c *Config) SafeSeedChannelID() string {
 	if c.SeedChannelID != "" {
 		return c.SeedChannelID
 	}
@@ -41,7 +44,7 @@ func (c Config) SafeSeedChannelID() string {
 	return c.LogChannelID
 }
 
-func (c Config) SafePublicMatchLogChannelID() string {
+func (c *Config) SafePublicMatchLogChannelID() string {
 	if c.PublicMatchLogChannelID != "" {
 		return c.PublicMatchLogChannelID
 	}
@@ -49,7 +52,7 @@ func (c Config) SafePublicMatchLogChannelID() string {
 	return c.LogChannelID
 }
 
-func (c Config) SafeVoteLogChannelID() string {
+func (c *Config) SafeVoteLogChannelID() string {
 	if c.VoteLogChannelID != "" {
 		return c.VoteLogChannelID
 	}
@@ -57,7 +60,7 @@ func (c Config) SafeVoteLogChannelID() string {
 	return c.LogChannelID
 }
 
-func (c Config) SafeAppealLogChannelID() string {
+func (c *Config) SafeAppealLogChannelID() string {
 	if c.AppealLogChannelID != "" {
 		return c.AppealLogChannelID
 	}
@@ -65,7 +68,7 @@ func (c Config) SafeAppealLogChannelID() string {
 	return c.LogChannelID
 }
 
-func (c Config) SafeBanLogChannelID() string {
+func (c *Config) SafeBanLogChannelID() string {
 	if c.BanLogChannelID != "" {
 		return c.BanLogChannelID
 	}
@@ -73,7 +76,7 @@ func (c Config) SafeBanLogChannelID() string {
 	return c.LogChannelID
 }
 
-func (c Config) SafeForumLogChannelID() string {
+func (c *Config) SafeForumLogChannelID() string {
 	if c.ForumLogChannelID != "" {
 		return c.ForumLogChannelID
 	}
@@ -81,7 +84,7 @@ func (c Config) SafeForumLogChannelID() string {
 	return c.LogChannelID
 }
 
-func (c Config) SafeKickLogChannelID() string {
+func (c *Config) SafeKickLogChannelID() string {
 	if c.KickLogChannelID != "" {
 		return c.KickLogChannelID
 	}
@@ -89,7 +92,7 @@ func (c Config) SafeKickLogChannelID() string {
 	return c.LogChannelID
 }
 
-func (c Config) SafeModPingRoleID() string {
+func (c *Config) SafeModPingRoleID() string {
 	if c.ModPingRoleID != "" {
 		return c.ModPingRoleID
 	}
@@ -97,7 +100,7 @@ func (c Config) SafeModPingRoleID() string {
 	return c.LogChannelID
 }
 
-func (c Config) SafeAnticheatChannelID() string {
+func (c *Config) SafeAnticheatChannelID() string {
 	if c.AnticheatChannelID != "" {
 		return c.AnticheatChannelID
 	}
@@ -105,7 +108,7 @@ func (c Config) SafeAnticheatChannelID() string {
 	return c.LogChannelID
 }
 
-func (c Config) SafeWordFilterLogChannelID() string {
+func (c *Config) SafeWordFilterLogChannelID() string {
 	if c.WordFilterLogChannelID != "" {
 		return c.WordFilterLogChannelID
 	}
@@ -113,7 +116,7 @@ func (c Config) SafeWordFilterLogChannelID() string {
 	return c.LogChannelID
 }
 
-func (c Config) SafeChatLogChannelID() string {
+func (c *Config) SafeChatLogChannelID() string {
 	if c.ChatLogChannelID != "" {
 		return c.ChatLogChannelID
 	}
