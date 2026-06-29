@@ -77,6 +77,10 @@ function ChatLogs() {
 	const navigate = useNavigate();
 	const theme = useTheme();
 
+	const serversSorted = useMemo(() => {
+		return serverList?.servers.toSorted((a, b) => a.serverId - b.serverId) ?? [];
+	}, [serverList]);
+
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		async (updater) => {
 			await navigate({
@@ -124,15 +128,13 @@ function ChatLogs() {
 			columnHelper.accessor("serverId", {
 				header: "Server",
 				grow: false,
+				size: 100,
 				enableSorting: false,
 				filterVariant: "multi-select",
-				filterSelectOptions: serverList?.servers.map((server) => ({
+				filterSelectOptions: serversSorted.map((server) => ({
 					label: server.serverName,
 					value: server.serverId,
 				})),
-				filterFn: (row, _, filterValue) => {
-					return filterValue.length === 0 || filterValue.includes(row.original.serverId);
-				},
 				Cell: ({ row, cell }) => (
 					<Tooltip title={row.original.serverName}>
 						<TextLink
@@ -140,7 +142,7 @@ function ChatLogs() {
 							search={setColumnFilter(search, "serverId", [cell.getValue()])}
 							sx={{ color: stringToColour(row.original.serverName ?? "") }}
 						>
-							{row.original.serverName}
+							{serversSorted.find((s) => s.serverId === cell.getValue())?.serverName ?? ""}
 						</TextLink>
 					</Tooltip>
 				),
@@ -168,7 +170,8 @@ function ChatLogs() {
 
 			columnHelper.accessor("steamId", {
 				header: "SteamID",
-				grow: false,
+				grow: true,
+				size: 120,
 				enableSorting: false,
 				enableColumnFilter: true,
 				filterFn: (row, _, filterValue) => {
@@ -203,6 +206,7 @@ function ChatLogs() {
 				header: "Message",
 				grow: true,
 				enableSorting: false,
+				enableColumnFilter: true,
 				Cell: ({ row, renderedCellValue }) => {
 					return (
 						<Typography
@@ -216,7 +220,7 @@ function ChatLogs() {
 				},
 			}),
 		];
-	}, [search, theme, serverList?.servers]);
+	}, [search, theme, serversSorted]);
 
 	const opts = useMemo(() => {
 		const sort = search.sorting?.find((sort) => sort);
@@ -232,7 +236,7 @@ function ChatLogs() {
 
 		const serverId = filterValueNumber("serverId", search.columnFilters);
 		if (serverId) {
-			o.serverId = serverId;
+			o.serverIds = [serverId];
 		}
 		try {
 			const steamId = filterValueString("steamId", search.columnFilters);
@@ -243,6 +247,10 @@ function ChatLogs() {
 			console.log(e);
 		}
 		o.flaggedOnly = search.flaggedOnly ?? undefined;
+		const query = filterValueString("body", search.columnFilters);
+		if (query) {
+			o.query = query;
+		}
 
 		return o;
 	}, [search]);
@@ -251,15 +259,21 @@ function ChatLogs() {
 		placeholderData: keepPreviousData,
 		retry: false,
 	});
-	// console.log(data, isLoading, isRefetching, error);
+
+	const rowCount = useMemo(() => {
+		const offset = (search.pagination?.pageIndex ?? 0) + 1;
+		const rows = search.pagination?.pageSize ?? 25;
+		return offset * rows + 1;
+	}, [search]);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
 		data: data ? data.messages : [],
-		rowCount: Number(data ? data.count : 0),
+		rowCount,
 		enableFilters: true,
 		enableRowActions: true,
+		autoResetPageIndex: true,
 		displayColumnDefOptions: makeRowActionsDefOptions(2),
 		state: {
 			columnFilters: search.columnFilters,
@@ -287,6 +301,9 @@ function ChatLogs() {
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
 		muiToolbarAlertBannerProps: renderTableError(error),
+		muiPaginationProps: {
+			showLastButton: false,
+		},
 		renderRowActions: ({ row }) => (
 			<RowActionContainer>
 				<Tooltip title={"Create Report"} key={1}>
@@ -329,6 +346,7 @@ function ChatLogs() {
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
 				<SortableTable
+					unknownRowCount={true}
 					table={table}
 					title={"Chat Logs"}
 					buttons={[

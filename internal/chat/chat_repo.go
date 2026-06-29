@@ -204,38 +204,28 @@ func (r Repository) loadDemoInfo(ctx context.Context, results []*QueryChatHistor
 	return nil
 }
 
-func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFilter) ([]*QueryChatHistoryResult, uint64, error) { //nolint:maintidx
+func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFilter) ([]*QueryChatHistoryResult, error) { //nolint:maintidx
 	if filters.Query != "" && len(filters.Query) < minQueryLen {
-		return nil, 0, fmt.Errorf("%w: query", httphelper.ErrTooShort)
+		return nil, fmt.Errorf("%w: query", httphelper.ErrTooShort)
 	}
 
 	if filters.Personaname != "" && len(filters.Personaname) < minQueryLen {
-		return nil, 0, fmt.Errorf("%w: name", httphelper.ErrTooShort)
+		return nil, fmt.Errorf("%w: name", httphelper.ErrTooShort)
 	}
 
-	// LeftJoin("person_messages_filter mf USING(person_message_id)").
-	// LeftJoin("filtered_word f USING(filter_id)").
-
-	countBuilder := r.Builder().
-		Select("count(m.person_message_id)").
-		From("person_messages m").
-		LeftJoin("server s ON (NOT s.deleted AND s.is_enabled AND s.server_id = m.server_id)").
-		LeftJoin("person p USING(steam_id)")
-
 	builder := r.Builder().
-		Select("m.person_message_id",
+		Select(
+			"m.person_message_id",
 			"m.steam_id",
 			"m.server_id",
 			"m.body",
 			"m.team ",
 			"m.created_on",
-			"m.persona_name",
+			"p.personaname",
 			"m.demo_id",
 			"m.demo_tick",
-			"s.short_name",
 			"p.avatarhash").
 		From("person_messages m").
-		LeftJoin("server s USING(server_id)").
 		LeftJoin("person p USING(steam_id)")
 
 	// builder = filters.ApplySafeOrder(builder, map[string][]string{
@@ -251,7 +241,7 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 	if !filters.Unrestricted {
 		unrTime := now.AddDate(0, 0, -30)
 		if filters.DateStart != nil && filters.DateStart.Before(unrTime) {
-			return nil, 0, datetime.ErrInvalidDuration
+			return nil, datetime.ErrInvalidDuration
 		}
 	}
 
@@ -264,8 +254,8 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 		constraints = append(constraints, sq.Expr("? < m.created_on", filters.DateEnd))
 	}
 
-	if filters.ServerID > 0 {
-		constraints = append(constraints, sq.Eq{"m.server_id": filters.ServerID})
+	if len(filters.ServerIDs) > 0 {
+		constraints = append(constraints, sq.Eq{"m.server_id": filters.ServerIDs})
 	}
 
 	if sid, ok := filters.SourceSteamID(); ok {
@@ -280,15 +270,10 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 		constraints = append(constraints, sq.Expr(`message_search @@ websearch_to_tsquery('simple', ?)`, filters.Query))
 	}
 
-	if filters.FlaggedOnly {
-		constraints = append(constraints, sq.Gt{"mf.person_message_filter_id": 0})
-	}
-
 	var messages []*QueryChatHistoryResult
-
 	rows, errQuery := r.QueryBuilder(ctx, builder.Where(constraints))
 	if errQuery != nil {
-		return nil, 0, database.Err(errQuery)
+		return nil, database.Err(errQuery)
 	}
 
 	defer rows.Close()
@@ -308,19 +293,13 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 			&message.PersonaName,
 			&message.DemoID,
 			&message.DemoTick,
-			&message.ServerName,
 			&message.AvatarHash); errScan != nil {
-			return nil, 0, database.Err(errScan)
+			return nil, database.Err(errScan)
 		}
 
 		message.SteamID = steamid.New(steamID)
 
 		messages = append(messages, message)
-	}
-
-	count, errQuery := r.GetCount(ctx, countBuilder.Where(constraints))
-	if errQuery != nil {
-		return nil, 0, database.Err(errQuery)
 	}
 
 	if messages == nil {
@@ -329,10 +308,10 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 	}
 
 	if err := r.loadDemoInfo(ctx, messages); err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	return messages, count, nil
+	return messages, nil
 }
 
 func (r Repository) GetPersonMessage(ctx context.Context, messageID int64) (*QueryChatHistoryResult, error) {
@@ -353,7 +332,6 @@ func (r Repository) GetPersonMessage(ctx context.Context, messageID int64) (*Que
 			   m.demo_tick
 		FROM person_messages m
 		WHERE m.person_message_id = $1) x
-		LEFT JOIN server s ON x.server_id = s.server_id
 		LEFT JOIN person_messages_filter f on x.person_message_id = f.person_message_id
 		LEFT JOIN demo d ON m.demo_id = d.demo_id
 		LEFT JOIN asset a ON d.asset_id = a.asset_id
@@ -361,7 +339,7 @@ func (r Repository) GetPersonMessage(ctx context.Context, messageID int64) (*Que
 
 	msg := &QueryChatHistoryResult{}
 	if err := database.Err(r.QueryRow(ctx, query, messageID).Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
-		&msg.PersonaName, &msg.AssetID, &msg.DemoID, &msg.DemoTick, &msg.ServerName, &msg.AutoFilterFlagged)); err != nil {
+		&msg.PersonaName, &msg.AssetID, &msg.DemoID, &msg.DemoTick, &msg.AutoFilterFlagged)); err != nil {
 		return msg, err
 	}
 
@@ -436,7 +414,7 @@ func (r Repository) GetPersonMessageContext(ctx context.Context, serverID int32,
 		var msg QueryChatHistoryResult
 
 		if errScan := rows.Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
-			&msg.PersonaName, &msg.AssetID, &msg.DemoID, &msg.DemoTick, &msg.ServerName, &msg.AutoFilterFlagged); errScan != nil {
+			&msg.PersonaName, &msg.AssetID, &msg.DemoID, &msg.DemoTick, &msg.AutoFilterFlagged); errScan != nil {
 			return nil, database.Err(errScan)
 		}
 

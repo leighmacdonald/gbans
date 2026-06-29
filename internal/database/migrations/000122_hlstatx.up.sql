@@ -362,4 +362,23 @@ CREATE INDEX person_messages_filter_message_idx ON person_messages_filter (perso
 
 CREATE INDEX person_messages_filter_flagged_idx ON person_messages_filter (person_message_id)
 WHERE
-  person_message_filter_id > 0
+  person_message_filter_id > 0;
+
+-- Switch to english since we are 99% english content anyways
+-- TODO add a note about changing the language as appropriate for others
+ALTER TABLE person_messages
+DROP COLUMN message_search;
+
+ALTER TABLE person_messages
+ADD message_search tsvector GENERATED ALWAYS AS (to_tsvector('english', body)) STORED;
+
+CREATE INDEX idx_message_search ON person_messages USING GIN (message_search);
+
+-- Rebuild name_search with english config
+ALTER TABLE person_messages
+DROP COLUMN name_search;
+
+ALTER TABLE person_messages
+ADD name_search tsvector GENERATED ALWAYS AS (to_tsvector('english', persona_name)) STORED;
+
+CREATE INDEX idx_name_search ON person_messages USING GIN (name_search);

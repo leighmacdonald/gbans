@@ -29,14 +29,14 @@ type HistoryQueryFilter struct {
 	query.Filter
 	httphelper.SourceIDField
 
-	Query         string     `schema:"query"`
-	Personaname   string     `schema:"personaname,omitempty"`
-	ServerID      int32      `schema:"server_id,omitempty"`
-	DateStart     *time.Time `schema:"date_start,omitempty"`
-	DateEnd       *time.Time `schema:"date_end,omitempty"`
-	Unrestricted  bool       `schema:"-"`
-	DontCalcTotal bool       `schema:"-"`
-	FlaggedOnly   bool       `schema:"flagged_only,omitempty"`
+	Query         string
+	Personaname   string
+	ServerIDs     []int32
+	DateStart     *time.Time
+	DateEnd       *time.Time
+	Unrestricted  bool
+	DontCalcTotal bool
+	FlaggedOnly   bool
 }
 
 func (f HistoryQueryFilter) SourceSteamID() (steamid.SteamID, bool) {
@@ -56,8 +56,8 @@ type Message struct {
 	SteamID           steamid.SteamID
 	AvatarHash        string
 	PersonaName       string
-	ServerName        string
 	ServerID          int32
+	ServerName        string
 	DemoID            *int32
 	DemoTick          *int32
 	AssetID           uuid.UUID
@@ -192,10 +192,10 @@ func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, pers
 		SteamID:     person.SID,
 		PersonaName: strings.ToValidUTF8(person.Name, "_"),
 		ServerID:    evt.ServerID,
-		ServerName:  evt.ServerName,
 		Body:        strings.ToValidUTF8(msg, "_"),
 		Team:        team,
 		CreatedOn:   created,
+		AvatarHash:  player.Avatarhash,
 	}
 
 	u.notifications.Send(notification.NewDiscord(u.logChannelID, discord.NewMessage(
@@ -232,7 +232,7 @@ func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, pers
 			CreatedOn:     time.Now(),
 			Personaname:   userMsg.PersonaName,
 			Avatar:        userMsg.AvatarHash,
-			ServerName:    userMsg.ServerName,
+			ServerName:    evt.ServerName,
 			ServerID:      userMsg.ServerID,
 			SteamID:       userMsg.SteamID.Int64(),
 		},
@@ -354,7 +354,7 @@ func (u *Chat) AddChatHistory(ctx context.Context, message *Message) error {
 	return u.repository.AddChatHistory(ctx, message)
 }
 
-func (u *Chat) QueryChatHistory(ctx context.Context, permissions permission.Privilege, req HistoryQueryFilter) ([]*QueryChatHistoryResult, uint64, error) {
+func (u *Chat) QueryChatHistory(ctx context.Context, permissions permission.Privilege, req HistoryQueryFilter) ([]*QueryChatHistoryResult, error) {
 	if req.Limit <= 0 || (req.Limit > 100 && permissions < permission.Moderator) {
 		req.Limit = 100
 	}
