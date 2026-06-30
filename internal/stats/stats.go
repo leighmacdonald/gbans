@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	MinPlayers = 4
+	MinPlayers = 1
 	MinDuraion = 300
 )
 

@@ -45,6 +45,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 	const mutation = useMutation(editServer, {
 		onSuccess: (response) => {
 			modal.resolve(response.server);
+			modal.hide();
 		},
 		onError: logErr,
 	});

@@ -205,25 +205,26 @@ func (d Demos) createFromAsset(ctx context.Context, asset *asset.Asset, serverID
 		return parsedDemo.Chat[i].Tick < parsedDemo.Chat[j].Tick
 	})
 
-	if len(parsedDemo.Chat) > 0 {
-		if errChat := d.importChatMessages(ctx, serverID, newDemo.DemoID, parsedDemo, createdTime); errChat != nil {
-			return nil, errChat
-		}
-	}
-
+	var matchID *uuid.UUID
 	if createStats {
-		matchID, errStats := d.stats.Import(ctx, serverID, newDemo.DemoID, parsedDemo, createdTime)
+		newMatchID, errStats := d.stats.Import(ctx, serverID, newDemo.DemoID, parsedDemo, createdTime)
 		if errStats != nil {
 			return nil, errStats
 		}
-
+		matchID = newMatchID
 		slog.Info("Generated match results", slog.String("match_id", matchID.String()))
+	}
+
+	if len(parsedDemo.Chat) > 0 {
+		if errChat := d.importChatMessages(ctx, serverID, newDemo.DemoID, parsedDemo, createdTime, matchID); errChat != nil {
+			return nil, errChat
+		}
 	}
 
 	return &newDemo, nil
 }
 
-func (d Demos) importChatMessages(ctx context.Context, serverID int32, demoID int32, parsedDemo *demoparse.Demo, startTime time.Time) error {
+func (d Demos) importChatMessages(ctx context.Context, serverID int32, demoID int32, parsedDemo *demoparse.Demo, startTime time.Time, matchID *uuid.UUID) error {
 	for _, msg := range parsedDemo.Chat {
 		if msg.User == "BOT" {
 			continue
@@ -243,6 +244,7 @@ func (d Demos) importChatMessages(ctx context.Context, serverID int32, demoID in
 			Body:      msg.Message,
 			CreatedOn: startTime.Add(ticksToDuration(msg.Tick)),
 			SteamID:   sid,
+			MatchID:   matchID,
 		}); err != nil {
 			return err
 		}
@@ -354,8 +356,6 @@ func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, ser
 			}
 
 			slog.Debug("Deleted demo on remote host", slog.String("path", demoPath))
-
-			break // only download one demo per tick
 		}
 	}
 
@@ -525,7 +525,7 @@ func (d Demos) GetDemos(ctx context.Context) ([]File, error) {
 const frameDuration = 16600 * time.Microsecond
 
 func ticksToDuration(ticks int32) time.Duration {
-	return (frameDuration / 1000) * time.Duration(ticks)
+	return (frameDuration / 1000) * (time.Duration(ticks) * time.Millisecond)
 }
 
 func (d Demos) RemoveOrphans(ctx context.Context) error {

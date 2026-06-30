@@ -30,7 +30,6 @@ func NewServersService(servers *Servers, authMiddleware *rpc.Middleware, option 
 	pattern, handler := serversv1connect.NewServersServiceHandler(&Service{servers: servers}, option...)
 
 	authMiddleware.UserRoute(serversv1connect.ServersServiceStateProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.UserRoute(serversv1connect.ServersServiceServersProcedure, rpc.WithMinPermissions(permission.Admin))
 	authMiddleware.UserRoute(serversv1connect.ServersServiceEditServerProcedure, rpc.WithMinPermissions(permission.Admin))
 	authMiddleware.UserRoute(serversv1connect.ServersServiceDeleteServerProcedure, rpc.WithMinPermissions(permission.Admin))
 	authMiddleware.UserRoute(serversv1connect.ServersServiceServersAdminProcedure, rpc.WithMinPermissions(permission.Admin))

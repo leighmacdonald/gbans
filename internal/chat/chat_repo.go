@@ -111,13 +111,13 @@ const minQueryLen = 2
 
 func (r Repository) AddChatHistory(ctx context.Context, message *Message) error {
 	const query = `INSERT INTO person_messages
-    		(steam_id, server_id, body, team, created_on, persona_name, demo_id, demo_tick)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    		(steam_id, server_id, body, team, created_on, persona_name, demo_id, demo_tick, match_id)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 			RETURNING person_message_id`
 
 	if errScan := r.
 		QueryRow(ctx, query, message.SteamID.Int64(), message.ServerID, message.Body, message.Team,
-			message.CreatedOn, message.PersonaName, message.DemoID, message.DemoTick).
+			message.CreatedOn, message.PersonaName, message.DemoID, message.DemoTick, message.MatchID).
 		Scan(&message.PersonMessageID); errScan != nil {
 		return database.Err(errScan)
 	}
@@ -224,6 +224,7 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 			"p.personaname",
 			"m.demo_id",
 			"m.demo_tick",
+			"m.match_id",
 			"p.avatarhash").
 		From("person_messages m").
 		LeftJoin("person p USING(steam_id)")
@@ -293,6 +294,7 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 			&message.PersonaName,
 			&message.DemoID,
 			&message.DemoTick,
+			&message.MatchID,
 			&message.AvatarHash); errScan != nil {
 			return nil, database.Err(errScan)
 		}

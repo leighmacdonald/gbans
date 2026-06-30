@@ -65,6 +65,7 @@ type Message struct {
 	Team              bool
 	CreatedOn         time.Time
 	AutoFilterFlagged int32
+	MatchID           *uuid.UUID
 }
 
 type PersonMessages []Message
