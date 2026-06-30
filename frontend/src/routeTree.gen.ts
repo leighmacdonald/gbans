@@ -15,12 +15,12 @@ import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as GuestIndexRouteImport } from './routes/_guest.index'
 import { Route as GuestWikiRouteImport } from './routes/_guest.wiki'
-import { Route as GuestStvRouteImport } from './routes/_guest.stv'
 import { Route as GuestServersRouteImport } from './routes/_guest.servers'
 import { Route as GuestPrivacyPolicyRouteImport } from './routes/_guest.privacy-policy'
 import { Route as GuestPatreonRouteImport } from './routes/_guest.patreon'
 import { Route as GuestMgeRouteImport } from './routes/_guest.mge'
 import { Route as GuestChangelogRouteImport } from './routes/_guest.changelog'
+import { Route as AuthStvRouteImport } from './routes/_auth.stv'
 import { Route as AuthStatsRouteImport } from './routes/_auth.stats'
 import { Route as AuthSettingsRouteImport } from './routes/_auth.settings'
 import { Route as AuthReportRouteImport } from './routes/_auth.report'
@@ -92,11 +92,6 @@ const GuestWikiRoute = GuestWikiRouteImport.update({
   path: '/wiki',
   getParentRoute: () => GuestRoute,
 } as any)
-const GuestStvRoute = GuestStvRouteImport.update({
-  id: '/stv',
-  path: '/stv',
-  getParentRoute: () => GuestRoute,
-} as any)
 const GuestServersRoute = GuestServersRouteImport.update({
   id: '/servers',
   path: '/servers',
@@ -121,6 +116,11 @@ const GuestChangelogRoute = GuestChangelogRouteImport.update({
   id: '/changelog',
   path: '/changelog',
   getParentRoute: () => GuestRoute,
+} as any)
+const AuthStvRoute = AuthStvRouteImport.update({
+  id: '/stv',
+  path: '/stv',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthStatsRoute = AuthStatsRouteImport.update({
   id: '/stats',
@@ -358,12 +358,12 @@ export interface FileRoutesByFullPath {
   '/report': typeof AuthReportRouteWithChildren
   '/settings': typeof AuthSettingsRoute
   '/stats': typeof AuthStatsRoute
+  '/stv': typeof AuthStvRoute
   '/changelog': typeof GuestChangelogRoute
   '/mge': typeof GuestMgeRouteWithChildren
   '/patreon': typeof GuestPatreonRoute
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/servers': typeof GuestServersRoute
-  '/stv': typeof GuestStvRoute
   '/wiki': typeof GuestWikiRouteWithChildren
   '/admin/game-admins': typeof AdminAdminGameAdminsRoute
   '/admin/serverlogs': typeof AdminAdminServerlogsRoute
@@ -409,11 +409,11 @@ export interface FileRoutesByTo {
   '/permission': typeof AuthPermissionRoute
   '/settings': typeof AuthSettingsRoute
   '/stats': typeof AuthStatsRoute
+  '/stv': typeof AuthStvRoute
   '/changelog': typeof GuestChangelogRoute
   '/patreon': typeof GuestPatreonRoute
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/servers': typeof GuestServersRoute
-  '/stv': typeof GuestStvRoute
   '/admin/game-admins': typeof AdminAdminGameAdminsRoute
   '/admin/serverlogs': typeof AdminAdminServerlogsRoute
   '/admin/servers': typeof AdminAdminServersRoute
@@ -465,12 +465,12 @@ export interface FileRoutesById {
   '/_auth/report': typeof AuthReportRouteWithChildren
   '/_auth/settings': typeof AuthSettingsRoute
   '/_auth/stats': typeof AuthStatsRoute
+  '/_auth/stv': typeof AuthStvRoute
   '/_guest/changelog': typeof GuestChangelogRoute
   '/_guest/mge': typeof GuestMgeRouteWithChildren
   '/_guest/patreon': typeof GuestPatreonRoute
   '/_guest/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/_guest/servers': typeof GuestServersRoute
-  '/_guest/stv': typeof GuestStvRoute
   '/_guest/wiki': typeof GuestWikiRouteWithChildren
   '/_guest/': typeof GuestIndexRoute
   '/_admin/admin/game-admins': typeof AdminAdminGameAdminsRoute
@@ -522,12 +522,12 @@ export interface FileRouteTypes {
     | '/report'
     | '/settings'
     | '/stats'
+    | '/stv'
     | '/changelog'
     | '/mge'
     | '/patreon'
     | '/privacy-policy'
     | '/servers'
-    | '/stv'
     | '/wiki'
     | '/admin/game-admins'
     | '/admin/serverlogs'
@@ -573,11 +573,11 @@ export interface FileRouteTypes {
     | '/permission'
     | '/settings'
     | '/stats'
+    | '/stv'
     | '/changelog'
     | '/patreon'
     | '/privacy-policy'
     | '/servers'
-    | '/stv'
     | '/admin/game-admins'
     | '/admin/serverlogs'
     | '/admin/servers'
@@ -628,12 +628,12 @@ export interface FileRouteTypes {
     | '/_auth/report'
     | '/_auth/settings'
     | '/_auth/stats'
+    | '/_auth/stv'
     | '/_guest/changelog'
     | '/_guest/mge'
     | '/_guest/patreon'
     | '/_guest/privacy-policy'
     | '/_guest/servers'
-    | '/_guest/stv'
     | '/_guest/wiki'
     | '/_guest/'
     | '/_admin/admin/game-admins'
@@ -723,13 +723,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestWikiRouteImport
       parentRoute: typeof GuestRoute
     }
-    '/_guest/stv': {
-      id: '/_guest/stv'
-      path: '/stv'
-      fullPath: '/stv'
-      preLoaderRoute: typeof GuestStvRouteImport
-      parentRoute: typeof GuestRoute
-    }
     '/_guest/servers': {
       id: '/_guest/servers'
       path: '/servers'
@@ -764,6 +757,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/changelog'
       preLoaderRoute: typeof GuestChangelogRouteImport
       parentRoute: typeof GuestRoute
+    }
+    '/_auth/stv': {
+      id: '/_auth/stv'
+      path: '/stv'
+      fullPath: '/stv'
+      preLoaderRoute: typeof AuthStvRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/_auth/stats': {
       id: '/_auth/stats'
@@ -1147,6 +1147,7 @@ interface AuthRouteChildren {
   AuthReportRoute: typeof AuthReportRouteWithChildren
   AuthSettingsRoute: typeof AuthSettingsRoute
   AuthStatsRoute: typeof AuthStatsRoute
+  AuthStvRoute: typeof AuthStvRoute
   AuthBanBanIdRoute: typeof AuthBanBanIdRoute
   AuthMatchMatchIdRoute: typeof AuthMatchMatchIdRoute
 }
@@ -1162,6 +1163,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthReportRoute: AuthReportRouteWithChildren,
   AuthSettingsRoute: AuthSettingsRoute,
   AuthStatsRoute: AuthStatsRoute,
+  AuthStvRoute: AuthStvRoute,
   AuthBanBanIdRoute: AuthBanBanIdRoute,
   AuthMatchMatchIdRoute: AuthMatchMatchIdRoute,
 }
@@ -1204,7 +1206,6 @@ interface GuestRouteChildren {
   GuestPatreonRoute: typeof GuestPatreonRoute
   GuestPrivacyPolicyRoute: typeof GuestPrivacyPolicyRoute
   GuestServersRoute: typeof GuestServersRoute
-  GuestStvRoute: typeof GuestStvRoute
   GuestWikiRoute: typeof GuestWikiRouteWithChildren
   GuestIndexRoute: typeof GuestIndexRoute
   GuestLoginSuccessRoute: typeof GuestLoginSuccessRoute
@@ -1218,7 +1219,6 @@ const GuestRouteChildren: GuestRouteChildren = {
   GuestPatreonRoute: GuestPatreonRoute,
   GuestPrivacyPolicyRoute: GuestPrivacyPolicyRoute,
   GuestServersRoute: GuestServersRoute,
-  GuestStvRoute: GuestStvRoute,
   GuestWikiRoute: GuestWikiRouteWithChildren,
   GuestIndexRoute: GuestIndexRoute,
   GuestLoginSuccessRoute: GuestLoginSuccessRoute,

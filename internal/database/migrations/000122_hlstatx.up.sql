@@ -382,3 +382,24 @@ ALTER TABLE person_messages
 ADD name_search tsvector GENERATED ALWAYS AS (to_tsvector('english', persona_name)) STORED;
 
 CREATE INDEX idx_name_search ON person_messages USING GIN (name_search);
+
+-- Faster to drop and recreate the column than to alter it
+alter table person_messages
+drop column if exists match_id;
+
+alter table person_messages
+add column if not exists match_id uuid REFERENCES match (match_id) ON DELETE CASCADE;
+
+CREATE INDEX IF NOT EXISTS idx_ban_deleted_created ON ban (deleted, created_on DESC);
+
+CREATE INDEX IF NOT EXISTS idx_person_discord ON person (discord_id)
+WHERE
+  discord_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_person_permission ON person (permission_level);
+
+CREATE INDEX IF NOT EXISTS idx_person_updated_steam ON person (updated_on_steam)
+WHERE
+  updated_on_steam > '2000-01-01';
+
+CREATE INDEX IF NOT EXISTS idx_msg_thread_created ON forum_message (forum_thread_id, created_on ASC);

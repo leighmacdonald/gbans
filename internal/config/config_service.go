@@ -53,6 +53,12 @@ func (r *Service) Changelog(_ context.Context, _ *emptypb.Empty) (*configv1.Chan
 
 func (r *Service) Info(_ context.Context, _ *emptypb.Empty) (*configv1.InfoResponse, error) {
 	conf := r.config.Config()
+	conf.General.RLock()
+	conf.Discord.RLock()
+	conf.Patreon.RLock()
+	defer conf.General.RUnlock()
+	defer conf.Discord.RUnlock()
+	defer conf.Patreon.RUnlock()
 
 	resp := configv1.InfoResponse{
 		SiteName:         &conf.General.SiteName,

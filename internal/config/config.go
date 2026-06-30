@@ -149,9 +149,6 @@ type General struct {
 }
 
 func (c *General) FaviconURL() string {
-	c.RLock()
-	defer c.RUnlock()
-
 	if c.Favicon == "" {
 		return ""
 	}

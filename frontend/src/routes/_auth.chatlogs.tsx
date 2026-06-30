@@ -274,7 +274,7 @@ function ChatLogs() {
 		enableFilters: true,
 		enableRowActions: true,
 		autoResetPageIndex: true,
-		displayColumnDefOptions: makeRowActionsDefOptions(2),
+		displayColumnDefOptions: makeRowActionsDefOptions(3),
 		state: {
 			columnFilters: search.columnFilters,
 			isLoading: isLoading || isRefetching,
@@ -321,6 +321,20 @@ function ChatLogs() {
 						<ReportIcon />
 					</IconButtonLink>
 				</Tooltip>
+				{!emptyOrNullString(row.original.matchId) && (
+					<Tooltip title={"Match Results"} key={1}>
+						<IconButtonLink
+							color={"error"}
+							disabled={row.original.autoFilterFlagged > 0}
+							to={"/match/$matchId"}
+							params={{
+								matchId: row.original.matchId,
+							}}
+						>
+							<ReportIcon />
+						</IconButtonLink>
+					</Tooltip>
+				)}
 				{row.original.assestId && (
 					<Tooltip title={"Download Demo"} key={2}>
 						<IconButton

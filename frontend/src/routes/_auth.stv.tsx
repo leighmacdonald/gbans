@@ -44,7 +44,7 @@ const defaultOptions = createDefaultTableOptions<Demo>();
 const defaultValues = makeSchemaDefaults({ defaultColumn: "createdOn" });
 const validateSearch = makeSchemaState("createdOn", true);
 
-export const Route = createFileRoute("/_guest/stv")({
+export const Route = createFileRoute("/_auth/stv")({
 	component: STV,
 	validateSearch,
 	search: {
