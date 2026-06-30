@@ -28,6 +28,7 @@ import (
 
 type Config struct {
 	sync.RWMutex
+
 	Enabled   bool
 	CachePath string
 	Token     string

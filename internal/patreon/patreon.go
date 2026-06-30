@@ -28,6 +28,7 @@ var ErrQueryPatreon = errors.New("failed to query patreon")
 
 type Config struct {
 	sync.RWMutex
+
 	Enabled             bool
 	IntegrationsEnabled bool
 	ClientID            string
@@ -176,7 +177,7 @@ func (p *Patreon) Sync(ctx context.Context) {
 	p.checkAuths(ctx)
 }
 
-func (p Patreon) checkAuths(ctx context.Context) {
+func (p *Patreon) checkAuths(ctx context.Context) {
 	oldAuths, errOldAuths := p.repository.OldAuths(ctx)
 	if errOldAuths != nil {
 		slog.Error("Failed to load old auths", slog.String("error", errOldAuths.Error()))
@@ -191,7 +192,7 @@ func (p Patreon) checkAuths(ctx context.Context) {
 	}
 }
 
-func (p Patreon) refreshToken(ctx context.Context, auth Credential) error {
+func (p *Patreon) refreshToken(ctx context.Context, auth Credential) error {
 	form := url.Values{}
 	form.Add("grant_type", "refresh_token")
 	form.Add("client_id", p.ClientID)
@@ -248,7 +249,7 @@ func (p Patreon) refreshToken(ctx context.Context, auth Credential) error {
 	return nil
 }
 
-func (p Patreon) CreateOAuthRedirect(steamID steamid.SteamID) string {
+func (p *Patreon) CreateOAuthRedirect(steamID steamid.SteamID) string {
 	state := p.stateTracker.Create(steamID)
 
 	authenticationURL, _ := url.Parse(authURL)
@@ -265,11 +266,11 @@ func (p Patreon) CreateOAuthRedirect(steamID steamid.SteamID) string {
 	return authenticationURL.String()
 }
 
-func (p Patreon) Campaign() patreon.Campaign {
+func (p *Patreon) Campaign() patreon.Campaign {
 	return p.manager.Campaigns()
 }
 
-func (p Patreon) OnOauthLogin(ctx context.Context, state string, code string) error {
+func (p *Patreon) OnOauthLogin(ctx context.Context, state string, code string) error {
 	steamID, valid := p.stateTracker.Get(state)
 	if !valid {
 		return steamid.ErrInvalidSID

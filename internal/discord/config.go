@@ -4,6 +4,7 @@ import "sync"
 
 type Config struct {
 	sync.RWMutex
+
 	Enabled                 bool
 	BotEnabled              bool
 	IntegrationsEnabled     bool

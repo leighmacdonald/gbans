@@ -29,6 +29,7 @@ var (
 
 type Config struct {
 	sync.RWMutex
+
 	SDREnabled bool
 }
 
