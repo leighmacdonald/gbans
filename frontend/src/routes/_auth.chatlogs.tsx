@@ -47,7 +47,10 @@ import { ensureFeatureEnabled } from "../util/features.ts";
 import { renderTimestamp } from "../util/time.ts";
 import { emptyOrNullString } from "../util/types.ts";
 
-const defaultValues = { ...makeSchemaDefaults({ defaultColumn: "createdOn", defaultDesc: true }), flaggedOnly: false };
+const defaultValues = {
+	...makeSchemaDefaults({ defaultColumn: "createdOn", defaultDesc: true, pageSize: 50 }),
+	flaggedOnly: false,
+};
 const validateSearch = z
 	.object({
 		flaggedOnly: z.boolean().optional().default(false),
@@ -273,7 +276,7 @@ function ChatLogs() {
 		rowCount,
 		enableFilters: true,
 		enableRowActions: true,
-		autoResetPageIndex: true,
+		autoResetPageIndex: false,
 		displayColumnDefOptions: makeRowActionsDefOptions(3),
 		state: {
 			columnFilters: search.columnFilters,

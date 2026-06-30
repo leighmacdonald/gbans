@@ -69,8 +69,8 @@ export const makeSchemaState = (defaultSortColumn: string = "", defaultDesc: boo
 	return z.object({
 		pagination: z
 			.object({
-				pageIndex: z.number().positive().catch(0),
-				pageSize: z.number().positive().catch(25),
+				pageIndex: z.number().int().min(0).catch(0),
+				pageSize: z.number().int().positive().catch(25),
 			})
 			.default({ pageIndex: 0, pageSize: 25 })
 			.optional(),
