@@ -36,6 +36,7 @@ var ErrOpenClient = errors.New("failed to open client")
 
 type Config struct {
 	sync.RWMutex
+
 	Enabled               bool   `mapstructure:"enabled"`
 	Action                Action `mapstructure:"action"`
 	Duration              int32  `mapstructure:"duration"`

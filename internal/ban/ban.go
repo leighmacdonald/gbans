@@ -40,6 +40,7 @@ const maxCIDRHosts = 256 * 256
 
 type Config struct {
 	sync.RWMutex
+
 	BDEnabled      bool
 	ValveEnabled   bool
 	AuthorizedKeys string

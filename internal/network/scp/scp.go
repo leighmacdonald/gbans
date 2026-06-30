@@ -40,6 +40,7 @@ const (
 
 type Config struct {
 	sync.RWMutex
+
 	Enabled         bool
 	Username        string
 	Port            uint16

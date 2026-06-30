@@ -167,6 +167,7 @@ type Debug struct {
 
 type Configuration struct {
 	sync.RWMutex
+
 	repository    Repo
 	static        Static
 	currentConfig Config
@@ -192,7 +193,8 @@ func NewConfiguration(ctx context.Context, static Static, repository Repo) (*Con
 			LocalStore:  &asset.Config{},
 			Exports:     &ban.Config{},
 			Anticheat:   &anticheat.Config{},
-		}}
+		},
+	}
 
 	if err := repository.Init(ctx); err != nil {
 		return nil, err
@@ -248,6 +250,7 @@ func (c *Configuration) reload(ctx context.Context) error {
 	if errSteam := steamid.SetKey(config.SteamKey); errSteam != nil {
 		return errors.Join(errSteam, ErrSteamAPIKey)
 	}
+
 	return nil
 }
 

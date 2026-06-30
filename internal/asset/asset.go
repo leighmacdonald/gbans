@@ -56,6 +56,7 @@ type UserUploadedFile struct {
 
 type Config struct {
 	sync.RWMutex
+
 	PathRoot string
 }
 
