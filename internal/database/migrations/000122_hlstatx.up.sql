@@ -412,13 +412,3 @@ add constraint report_message_report_id_fk foreign key (report_id) references re
 
 alter table person_messages
 drop column if exists team;
-
-select
-  d.demo_id,
-  a.asset_id
-from
-  asset a
-  left join demo d ON d.asset_id = a.asset_id
-  left join match m ON m.demo_id = d.demo_id
-where
-  m.match_id in ('f381ed73-84df-454e-8a9a-50f484f25fa3')
