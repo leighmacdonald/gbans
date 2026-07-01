@@ -2,6 +2,7 @@ import { create } from "@bufbuild/protobuf";
 import { useQuery } from "@connectrpc/connect-query";
 import CloudDownload from "@mui/icons-material/CloudDownload";
 import FlagIcon from "@mui/icons-material/Flag";
+import MilitaryTechIcon from "@mui/icons-material/MilitaryTech";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ReportIcon from "@mui/icons-material/Report";
 import Grid from "@mui/material/Grid";
@@ -75,6 +76,7 @@ const columnHelper = createMRTColumnHelper<Message>();
 const defaultOptions = createDefaultTableOptions<Message>();
 
 function ChatLogs() {
+	const { appInfo } = Route.useRouteContext();
 	const search = Route.useSearch();
 	const { data: serverList, isLoading: isLoadingServers } = useQuery(servers);
 	const navigate = useNavigate();
@@ -154,6 +156,7 @@ function ChatLogs() {
 			columnHelper.accessor("createdOn", {
 				header: "Created",
 				enableColumnFilter: false,
+				enableSorting: false,
 				grow: false,
 				size: dateTimeColumnSize,
 				Cell: ({ cell }) => renderTimestamp(cell.getValue()),
@@ -277,7 +280,9 @@ function ChatLogs() {
 		enableFilters: true,
 		enableRowActions: true,
 		autoResetPageIndex: false,
-		displayColumnDefOptions: makeRowActionsDefOptions(3),
+		displayColumnDefOptions: makeRowActionsDefOptions(
+			[appInfo.statsEnabled, appInfo.demosEnabled, appInfo.reportsEnabled].filter((e) => e).length,
+		),
 		state: {
 			columnFilters: search.columnFilters,
 			isLoading: isLoading || isRefetching,
@@ -327,14 +332,14 @@ function ChatLogs() {
 				{!emptyOrNullString(row.original.matchId) && (
 					<Tooltip title={"Match Results"} key={1}>
 						<IconButtonLink
-							color={"error"}
+							color={"success"}
 							disabled={row.original.autoFilterFlagged > 0}
 							to={"/match/$matchId"}
 							params={{
 								matchId: row.original.matchId,
 							}}
 						>
-							<ReportIcon />
+							<MilitaryTechIcon />
 						</IconButtonLink>
 					</Tooltip>
 				)}
@@ -343,7 +348,7 @@ function ChatLogs() {
 						<IconButton
 							component={Link}
 							key={"dl-link"}
-							color={"success"}
+							color={"warning"}
 							href={`/asset/${row.original.assestId}`}
 							disabled={row.original.autoFilterFlagged > 0}
 						>

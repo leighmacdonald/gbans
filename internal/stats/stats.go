@@ -32,6 +32,10 @@ type Stats struct {
 	maps maps.Maps
 }
 
+func (s Stats) Delete(ctx context.Context, demoID int32) error {
+	return s.repo.Delete(ctx, demoID)
+}
+
 type VariantStats struct {
 	Rank    uint64
 	SteamID steamid.SteamID

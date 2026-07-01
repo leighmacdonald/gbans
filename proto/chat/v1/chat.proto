@@ -77,10 +77,9 @@ message Message {
       max_len: 128
     }
   ];
-  bool team = 9 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp created_on = 10 [(buf.validate.field).required = true];
-  int32 auto_filter_flagged = 11 [(buf.validate.field).required = true];
-  int32 demo_id = 12 [(buf.validate.field).int32.gt = 0];
-  int32 demo_tick = 13;
-  string assest_id = 14 [(buf.validate.field).string.uuid = true];
+  google.protobuf.Timestamp created_on = 9 [(buf.validate.field).required = true];
+  int32 auto_filter_flagged = 10 [(buf.validate.field).required = true];
+  int32 demo_id = 11 [(buf.validate.field).int32.gt = 0];
+  int32 demo_tick = 12;
+  string assest_id = 13 [(buf.validate.field).string.uuid = true];
 }

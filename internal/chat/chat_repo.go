@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -111,12 +112,12 @@ const minQueryLen = 2
 
 func (r Repository) AddChatHistory(ctx context.Context, message *Message) error {
 	const query = `INSERT INTO person_messages
-    		(steam_id, server_id, body, team, created_on, persona_name, demo_id, demo_tick, match_id)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    		(steam_id, server_id, body, created_on, persona_name, demo_id, demo_tick, match_id)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 			RETURNING person_message_id`
 
 	if errScan := r.
-		QueryRow(ctx, query, message.SteamID.Int64(), message.ServerID, message.Body, message.Team,
+		QueryRow(ctx, query, message.SteamID.Int64(), message.ServerID, message.Body,
 			message.CreatedOn, message.PersonaName, message.DemoID, message.DemoTick, message.MatchID).
 		Scan(&message.PersonMessageID); errScan != nil {
 		return database.Err(errScan)
@@ -134,7 +135,6 @@ func (r Repository) GetPersonMessageByID(ctx context.Context, personMessageID in
 			"m.steam_id",
 			"m.server_id",
 			"m.body",
-			"m.team",
 			"m.created_on",
 			"m.persona_name",
 			"m.demo_id",
@@ -154,7 +154,6 @@ func (r Repository) GetPersonMessageByID(ctx context.Context, personMessageID in
 		&steamID,
 		&msg.ServerID,
 		&msg.Body,
-		&msg.Team,
 		&msg.CreatedOn,
 		&msg.PersonaName,
 		&msg.DemoID,
@@ -169,19 +168,22 @@ func (r Repository) GetPersonMessageByID(ctx context.Context, personMessageID in
 }
 
 func (r Repository) loadDemoInfo(ctx context.Context, results []*QueryChatHistoryResult) error {
-	var ids []int32
+	var ids []uuid.UUID
 	for _, res := range results {
-		if res.DemoID == nil {
+		if res.MatchID == nil {
 			continue
 		}
-		ids = append(ids, *res.DemoID)
+		if !slices.Contains(ids, *res.MatchID) {
+			ids = append(ids, *res.MatchID)
+		}
 	}
 
 	rows, errRows := r.QueryBuilder(ctx, r.Builder().
 		Select("d.demo_id", "COALESCE(a.asset_id, '00000000-0000-0000-0000-000000000000') as asset_id").
-		From("demo d").
-		LeftJoin("asset a ON d.asset_id = a.asset_id").
-		Where(sq.Eq{"d.demo_id": ids}))
+		From("asset a").
+		LeftJoin("demo d ON d.asset_id = a.asset_id").
+		LeftJoin("match m ON m.demo_id = d.demo_id").
+		Where(sq.Eq{"m.match_id": ids}))
 	if errRows != nil {
 		return errRows
 	}
@@ -193,10 +195,8 @@ func (r Repository) loadDemoInfo(ctx context.Context, results []*QueryChatHistor
 			return database.Err(err)
 		}
 		for _, res := range results {
-			if res.DemoID == demoID {
+			if *res.DemoID == *demoID {
 				res.AssetID = assetID
-
-				break
 			}
 		}
 	}
@@ -219,7 +219,6 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 			"m.steam_id",
 			"m.server_id",
 			"m.body",
-			"m.team ",
 			"m.created_on",
 			"p.personaname",
 			"m.demo_id",
@@ -289,7 +288,6 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 			&steamID,
 			&message.ServerID,
 			&message.Body,
-			&message.Team,
 			&message.CreatedOn,
 			&message.PersonaName,
 			&message.DemoID,
@@ -326,7 +324,6 @@ func (r Repository) GetPersonMessage(ctx context.Context, messageID int64) (*Que
 			   m.steam_id,
 			   m.server_id,
 			   m.body,
-			   m.team,
 			   m.created_on,
 			   m.persona_name,
 			   a.asset_id,
@@ -340,7 +337,7 @@ func (r Repository) GetPersonMessage(ctx context.Context, messageID int64) (*Que
 		`
 
 	msg := &QueryChatHistoryResult{}
-	if err := database.Err(r.QueryRow(ctx, query, messageID).Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
+	if err := database.Err(r.QueryRow(ctx, query, messageID).Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.CreatedOn,
 		&msg.PersonaName, &msg.AssetID, &msg.DemoID, &msg.DemoTick, &msg.AutoFilterFlagged)); err != nil {
 		return msg, err
 	}
@@ -357,7 +354,6 @@ func (r Repository) GetPersonMessageContext(ctx context.Context, serverID int32,
 					  m.steam_id,
 					  m.server_id,
 					  m.body,
-					  m.team,
 					  m.created_on,
 					  m.persona_name,
 					  m.asset_id,
@@ -377,7 +373,6 @@ func (r Repository) GetPersonMessageContext(ctx context.Context, serverID int32,
 					  m.steam_id,
 					  m.server_id,
 					  m.body,
-					  m.team,
 					  m.created_on,
 					  m.persona_name,
 					  m.asset_id,
@@ -415,7 +410,7 @@ func (r Repository) GetPersonMessageContext(ctx context.Context, serverID int32,
 	for rows.Next() {
 		var msg QueryChatHistoryResult
 
-		if errScan := rows.Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
+		if errScan := rows.Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.CreatedOn,
 			&msg.PersonaName, &msg.AssetID, &msg.DemoID, &msg.DemoTick, &msg.AutoFilterFlagged); errScan != nil {
 			return nil, database.Err(errScan)
 		}

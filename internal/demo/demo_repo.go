@@ -60,16 +60,17 @@ func (r *Repository) ExpiredDemos(ctx context.Context, limit uint64) ([]Info, er
 	return demos, nil
 }
 
-func (r *Repository) GetDemoByID(ctx context.Context, demoID int32, demoFile *File) error {
+func (r *Repository) GetDemoByColumn(ctx context.Context, key string, value any) (*File, error) {
+	var demoFile File
 	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
 			"d.map_name", "d.archive", "d.stats", "d.asset_id", "a.size", "s.short_name", "s.name").
 		From("demo d").
 		LeftJoin("server s ON s.server_id = d.server_id").
 		LeftJoin("asset a ON a.asset_id = d.asset_id").
-		Where(sq.Eq{"demo_id": demoID}))
+		Where(sq.Eq{key: value}))
 	if errRow != nil {
-		return database.Err(errRow)
+		return nil, database.Err(errRow)
 	}
 
 	var uuidScan *uuid.UUID
@@ -78,42 +79,26 @@ func (r *Repository) GetDemoByID(ctx context.Context, demoID int32, demoFile *Fi
 		&demoFile.CreatedOn, &demoFile.Downloads, &demoFile.MapName,
 		&demoFile.Archive, &demoFile.Stats, &uuidScan, &demoFile.Size, &demoFile.ServerNameShort,
 		&demoFile.ServerNameLong); errQuery != nil {
-		return database.Err(errQuery)
+		return nil, database.Err(errQuery)
 	}
 
 	if uuidScan != nil {
 		demoFile.AssetID = *uuidScan
 	}
 
-	return nil
+	return &demoFile, nil
 }
 
-func (r *Repository) GetDemoByName(ctx context.Context, demoName string, demoFile *File) error {
-	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
-		Select("r.demo_id", "r.server_id", "r.title", "r.created_on", "r.downloads",
-			"r.map_name", "r.archive", "r.stats", "r.asset_id", "a.size", "s.short_name", "s.name").
-		From("demo r").
-		LeftJoin("server s ON s.server_id = r.server_id").
-		LeftJoin("asset a ON a.asset_id = r.asset_id").
-		Where(sq.Eq{"title": demoName}))
-	if errRow != nil {
-		return database.Err(errRow)
-	}
+func (r *Repository) GetDemoByAssetID(ctx context.Context, assetID uuid.UUID) (*File, error) {
+	return r.GetDemoByColumn(ctx, "a.asset_id", assetID)
+}
 
-	var uuidScan *uuid.UUID
+func (r *Repository) GetDemoByID(ctx context.Context, demoID int32) (*File, error) {
+	return r.GetDemoByColumn(ctx, "d.demo_id", demoID)
+}
 
-	if errQuery := row.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title,
-		&demoFile.CreatedOn, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
-		&demoFile.Stats, &uuidScan, &demoFile.Size, &demoFile.ServerNameShort,
-		&demoFile.ServerNameLong); errQuery != nil {
-		return database.Err(errQuery)
-	}
-
-	if uuidScan != nil {
-		demoFile.AssetID = *uuidScan
-	}
-
-	return nil
+func (r *Repository) GetDemoByName(ctx context.Context, demoName string) (*File, error) {
+	return r.GetDemoByColumn(ctx, "d.title", demoName)
 }
 
 func (r *Repository) GetDemos(ctx context.Context) ([]File, error) {

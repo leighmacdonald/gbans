@@ -87,6 +87,14 @@ func (o Opts) view() string {
 
 type Repository struct{ database.Database }
 
+func (r Repository) Delete(ctx context.Context, demoID int32) error {
+	if err := r.Exec(ctx, `DELETE FROM match WHERE demo_id = $1`, demoID); err != nil {
+		return database.Err(err)
+	}
+
+	return nil
+}
+
 func (r Repository) Matches(ctx context.Context, opts MatchesOpts) ([]Match, uint64, error) {
 	builder := r.Builder().Select("m.match_id", "m.server_id", "m.map_id", "mp.map_name",
 		"m.demo_id", "s.stats_bucket_id", "s.bucket_name", "m.hostname",
