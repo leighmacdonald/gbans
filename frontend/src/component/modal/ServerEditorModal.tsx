@@ -13,7 +13,6 @@ import { useAppForm } from "../../contexts/formContext.tsx";
 import { seedRoleIDs } from "../../rpc/discord/v1/discord-DiscordService_connectquery.ts";
 import { EditServerRequestSchema, type Server, ServerSchema } from "../../rpc/servers/v1/servers_pb.ts";
 import { editServer } from "../../rpc/servers/v1/servers-ServersService_connectquery.ts";
-import type { Bucket } from "../../rpc/stats/v1/stats_pb.ts";
 import { buckets } from "../../rpc/stats/v1/stats-StatsService_connectquery.ts";
 import { logErr } from "../../util/errors.ts";
 import { randomStringAlphaNum } from "../../util/strings.ts";
@@ -222,15 +221,11 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 									name={"statsBucketId"}
 									children={(field) => {
 										return (
-											<field.SelectField
+											<field.BucketField
 												label={"Stat Bucket"}
 												items={data?.buckets ?? []}
 												renderItem={(i) => {
-													return (
-														<MenuItem value={(i as Bucket).statsBucketId}>
-															{(i as Bucket).bucketName}
-														</MenuItem>
-													);
+													return <MenuItem value={i.statsBucketId}>{i.bucketName}</MenuItem>;
 												}}
 											/>
 										);
