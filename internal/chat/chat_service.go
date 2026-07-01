@@ -97,10 +97,10 @@ func toMessage(msg *QueryChatHistoryResult) *v1.Message {
 		PersonaName:       &msg.PersonaName,
 		ServerName:        &msg.ServerName,
 		ServerId:          &msg.ServerID,
+		MatchId:           new(msg.MatchID.String()),
 		DemoId:            msg.DemoID,
 		DemoTick:          msg.DemoTick,
 		Body:              &msg.Body,
-		Team:              &msg.Team,
 		CreatedOn:         timestamppb.New(msg.CreatedOn),
 		AutoFilterFlagged: &msg.AutoFilterFlagged,
 	}

@@ -33,6 +33,7 @@ import (
 
 var (
 	ErrDemoLoad       = errors.New("could not load demo file")
+	ErrDemoExists     = errors.New("demo already exists")
 	ErrFailedOpenFile = errors.New("failed to open file")
 	ErrFailedReadFile = errors.New("failed to read file")
 	ErrParse          = errors.New("could not parse demo")
@@ -139,7 +140,7 @@ func NewDemos(bucket asset.Bucket, repository Repository, assets asset.Assets, s
 	}
 }
 
-func (d Demos) createFromAsset(ctx context.Context, asset *asset.Asset, serverID int32, createStats bool) (*File, error) {
+func (d Demos) createFromAsset(ctx context.Context, asset *asset.Asset, serverID int32, createStats bool, overwrite bool) (*File, error) {
 	if errGetServer := d.repository.ValidateServer(ctx, serverID); errGetServer != nil {
 		return nil, errGetServer
 	}
@@ -151,6 +152,17 @@ func (d Demos) createFromAsset(ctx context.Context, asset *asset.Asset, serverID
 	)
 
 	namePartsAll := strings.Split(filename, "-")
+
+	existing, errExisting := d.repository.GetDemoByAssetID(ctx, asset.AssetID)
+	if errExisting == nil {
+		if !overwrite {
+			return nil, ErrDemoExists
+		}
+
+		if err := d.stats.Delete(ctx, existing.DemoID); err != nil {
+			return nil, err
+		}
+	}
 
 	if strings.Contains(filename, "workshop-") {
 		// 20231221-042605-workshop-cp_overgrown_rc8-ugc503939302.dem
@@ -236,15 +248,17 @@ func (d Demos) importChatMessages(ctx context.Context, serverID int32, demoID in
 
 			continue
 		}
+		userName := parsedDemo.UserName(sid)
 
 		if err := d.chat.AddChatHistory(ctx, &chat.Message{
-			ServerID:  serverID,
-			DemoID:    &demoID,
-			DemoTick:  &msg.Tick,
-			Body:      msg.Message,
-			CreatedOn: startTime.Add(ticksToDuration(msg.Tick)),
-			SteamID:   sid,
-			MatchID:   matchID,
+			ServerID:    serverID,
+			DemoID:      &demoID,
+			DemoTick:    &msg.Tick,
+			Body:        msg.Message,
+			PersonaName: userName,
+			CreatedOn:   startTime.Add(ticksToDuration(msg.Tick)),
+			SteamID:     sid,
+			MatchID:     matchID,
 		}); err != nil {
 			return err
 		}
@@ -272,7 +286,7 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 		return errNewAsset
 	}
 
-	if _, errDemo := d.createFromAsset(ctx, &demoAsset, demo.ServerID, true); errDemo != nil {
+	if _, errDemo := d.createFromAsset(ctx, &demoAsset, demo.ServerID, true, true); errDemo != nil {
 		// Cleanup the asset not attached to a valid demo
 		if _, errDelete := d.asset.Delete(ctx, demoAsset.AssetID); errDelete != nil {
 			return errors.Join(errDelete, errDelete)
@@ -297,7 +311,7 @@ func (d Demos) ImportFile(ctx context.Context, serverID int32, demoPath string, 
 		return nil, errors.Join(errAsset, ErrDemoLoad)
 	}
 
-	demo, errDemo := d.createFromAsset(ctx, &demoAsset, serverID, createStats)
+	demo, errDemo := d.createFromAsset(ctx, &demoAsset, serverID, createStats, true)
 	if errDemo != nil {
 		return nil, errors.Join(errDemo, ErrDemoLoad)
 	}
@@ -509,12 +523,12 @@ func (d Demos) ExpiredDemos(ctx context.Context, limit uint64) ([]Info, error) {
 	return d.repository.ExpiredDemos(ctx, limit)
 }
 
-func (d Demos) GetDemoByID(ctx context.Context, demoID int32, demoFile *File) error {
-	return d.repository.GetDemoByID(ctx, demoID, demoFile)
+func (d Demos) GetDemoByID(ctx context.Context, demoID int32) (*File, error) {
+	return d.repository.GetDemoByID(ctx, demoID)
 }
 
-func (d Demos) GetDemoByName(ctx context.Context, demoName string, demoFile *File) error {
-	return d.repository.GetDemoByName(ctx, demoName, demoFile)
+func (d Demos) GetDemoByName(ctx context.Context, demoName string) (*File, error) {
+	return d.repository.GetDemoByName(ctx, demoName)
 }
 
 func (d Demos) GetDemos(ctx context.Context) ([]File, error) {
@@ -525,7 +539,7 @@ func (d Demos) GetDemos(ctx context.Context) ([]File, error) {
 const frameDuration = 16600 * time.Microsecond
 
 func ticksToDuration(ticks int32) time.Duration {
-	return (frameDuration / 1000) * (time.Duration(ticks) * time.Millisecond)
+	return (frameDuration) * time.Duration(ticks)
 }
 
 func (d Demos) RemoveOrphans(ctx context.Context) error {

@@ -705,8 +705,8 @@ func (g *GBans) onChatBan(ctx context.Context, warning chat.NewUserWarning) erro
 
 func (g *GBans) onAnticheatBan(ctx context.Context, entry logparse.StacEntry, dur time.Duration, count int32) error {
 	conf := g.config.Config()
-	var demoFile demo.File
-	if errDemo := g.demos.GetDemoByName(ctx, entry.DemoName, &demoFile); errDemo != nil || entry.DemoID == nil || *entry.DemoID <= 0 {
+	demoFile, errDemo := g.demos.GetDemoByName(ctx, entry.DemoName)
+	if errDemo != nil || entry.DemoID == nil || *entry.DemoID <= 0 {
 		return errDemo
 	}
 	newBan, err := g.bans.Create(ctx, ban.Opts{

@@ -25,6 +25,18 @@ type Demo struct {
 	Chat     []ChatMessage  `json:"chat"`
 }
 
+func (d Demo) UserName(steamID steamid.SteamID) string {
+	for _, round := range d.Rounds {
+		for _, player := range round.Players {
+			if steamID.Equal(steamid.New(player.SteamID)) {
+				return player.Name
+			}
+		}
+	}
+
+	return steamID.String()
+}
+
 func (d Demo) UserSteamID(user string) steamid.SteamID {
 	for _, round := range d.Rounds {
 		for _, player := range round.Players {

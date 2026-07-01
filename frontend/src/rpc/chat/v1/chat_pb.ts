@@ -15,7 +15,7 @@ import type { Message as Message$1 } from "@bufbuild/protobuf";
  * Describes the file chat/v1/chat.proto.
  */
 export const file_chat_v1_chat: GenFile = /*@__PURE__*/
-  fileDesc("ChJjaGF0L3YxL2NoYXQucHJvdG8SB2NoYXQudjEiXgoTUXVlcnlDb250ZXh0UmVxdWVzdBInChFwZXJzb25fbWVzc2FnZV9pZBgBIAEoA0IMMAG6SAfIAQEiAiAAEh4KB3BhZGRpbmcYAiABKAVCDbpICsgBARoFEPoBIAAiQgoUUXVlcnlDb250ZXh0UmVzcG9uc2USKgoIbWVzc2FnZXMYASADKAsyEC5jaGF0LnYxLk1lc3NhZ2VCBrpIA8gBASL/AQoMUXVlcnlSZXF1ZXN0EikKBmZpbHRlchgBIAEoCzIZLmRhdGFiYXNlLnF1ZXJ5LnYxLkZpbHRlchINCgVxdWVyeRgCIAEoCRIcCgpzZXJ2ZXJfaWRzGAMgAygFQgi6SAWSAQIYARIuCgpkYXRlX3N0YXJ0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIsCghkYXRlX2VuZBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFAoMZmxhZ2dlZF9vbmx5GAYgASgIEiMKCHN0ZWFtX2lkGAcgASgDQhEwAbpIDCIKKIGAgICQgICIASI7Cg1RdWVyeVJlc3BvbnNlEioKCG1lc3NhZ2VzGAEgAygLMhAuY2hhdC52MS5NZXNzYWdlQga6SAPIAQEi0gMKB01lc3NhZ2USJwoRcGVyc29uX21lc3NhZ2VfaWQYASABKANCDDABukgHyAEBIgIgABIaCghtYXRjaF9pZBgCIAEoCUIIukgFcgOwAQESJgoIc3RlYW1faWQYAyABKANCFDABukgPyAEBIgoogYCAgJCAgIgBEiAKC2F2YXRhcl9oYXNoGAQgASgJQgu6SAjIAQFyA5gBKBIiCgxwZXJzb25hX25hbWUYBSABKAlCDLpICcgBAXIEEAIYIBIbCgtzZXJ2ZXJfbmFtZRgGIAEoCUIGukgDyAEBEh0KCXNlcnZlcl9pZBgHIAEoBUIKukgHyAEBGgIgABIbCgRib2R5GAggASgJQg26SArIAQFyBRABGIABEhQKBHRlYW0YCSABKAhCBrpIA8gBARI2CgpjcmVhdGVkX29uGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEiMKE2F1dG9fZmlsdGVyX2ZsYWdnZWQYCyABKAVCBrpIA8gBARIYCgdkZW1vX2lkGAwgASgFQge6SAQaAiAAEhEKCWRlbW9fdGljaxgNIAEoBRIbCglhc3Nlc3RfaWQYDiABKAlCCLpIBXIDsAEBMpYBCgtDaGF0U2VydmljZRI4CgVRdWVyeRIVLmNoYXQudjEuUXVlcnlSZXF1ZXN0GhYuY2hhdC52MS5RdWVyeVJlc3BvbnNlIgASTQoMUXVlcnlDb250ZXh0EhwuY2hhdC52MS5RdWVyeUNvbnRleHRSZXF1ZXN0Gh0uY2hhdC52MS5RdWVyeUNvbnRleHRSZXNwb25zZSIAQo4BCgtjb20uY2hhdC52MUIJQ2hhdFByb3RvUAFaN2dpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvY2hhdC92MTtjaGF0djGiAgNDWFiqAgdDaGF0LlYxygIHQ2hhdFxWMeICE0NoYXRcVjFcR1BCTWV0YWRhdGHqAghDaGF0OjpWMWIIZWRpdGlvbnNw6Ac", [file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_any, file_google_protobuf_timestamp]);
+  fileDesc("ChJjaGF0L3YxL2NoYXQucHJvdG8SB2NoYXQudjEiXgoTUXVlcnlDb250ZXh0UmVxdWVzdBInChFwZXJzb25fbWVzc2FnZV9pZBgBIAEoA0IMMAG6SAfIAQEiAiAAEh4KB3BhZGRpbmcYAiABKAVCDbpICsgBARoFEPoBIAAiQgoUUXVlcnlDb250ZXh0UmVzcG9uc2USKgoIbWVzc2FnZXMYASADKAsyEC5jaGF0LnYxLk1lc3NhZ2VCBrpIA8gBASL/AQoMUXVlcnlSZXF1ZXN0EikKBmZpbHRlchgBIAEoCzIZLmRhdGFiYXNlLnF1ZXJ5LnYxLkZpbHRlchINCgVxdWVyeRgCIAEoCRIcCgpzZXJ2ZXJfaWRzGAMgAygFQgi6SAWSAQIYARIuCgpkYXRlX3N0YXJ0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIsCghkYXRlX2VuZBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFAoMZmxhZ2dlZF9vbmx5GAYgASgIEiMKCHN0ZWFtX2lkGAcgASgDQhEwAbpIDCIKKIGAgICQgICIASI7Cg1RdWVyeVJlc3BvbnNlEioKCG1lc3NhZ2VzGAEgAygLMhAuY2hhdC52MS5NZXNzYWdlQga6SAPIAQEivAMKB01lc3NhZ2USJwoRcGVyc29uX21lc3NhZ2VfaWQYASABKANCDDABukgHyAEBIgIgABIaCghtYXRjaF9pZBgCIAEoCUIIukgFcgOwAQESJgoIc3RlYW1faWQYAyABKANCFDABukgPyAEBIgoogYCAgJCAgIgBEiAKC2F2YXRhcl9oYXNoGAQgASgJQgu6SAjIAQFyA5gBKBIiCgxwZXJzb25hX25hbWUYBSABKAlCDLpICcgBAXIEEAIYIBIbCgtzZXJ2ZXJfbmFtZRgGIAEoCUIGukgDyAEBEh0KCXNlcnZlcl9pZBgHIAEoBUIKukgHyAEBGgIgABIbCgRib2R5GAggASgJQg26SArIAQFyBRABGIABEjYKCmNyZWF0ZWRfb24YCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESIwoTYXV0b19maWx0ZXJfZmxhZ2dlZBgKIAEoBUIGukgDyAEBEhgKB2RlbW9faWQYCyABKAVCB7pIBBoCIAASEQoJZGVtb190aWNrGAwgASgFEhsKCWFzc2VzdF9pZBgNIAEoCUIIukgFcgOwAQEylgEKC0NoYXRTZXJ2aWNlEjgKBVF1ZXJ5EhUuY2hhdC52MS5RdWVyeVJlcXVlc3QaFi5jaGF0LnYxLlF1ZXJ5UmVzcG9uc2UiABJNCgxRdWVyeUNvbnRleHQSHC5jaGF0LnYxLlF1ZXJ5Q29udGV4dFJlcXVlc3QaHS5jaGF0LnYxLlF1ZXJ5Q29udGV4dFJlc3BvbnNlIgBCjgEKC2NvbS5jaGF0LnYxQglDaGF0UHJvdG9QAVo3Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9jaGF0L3YxO2NoYXR2MaICA0NYWKoCB0NoYXQuVjHKAgdDaGF0XFYx4gITQ2hhdFxWMVxHUEJNZXRhZGF0YeoCCENoYXQ6OlYxYghlZGl0aW9uc3DoBw", [file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_any, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message chat.v1.QueryContextRequest
@@ -165,32 +165,27 @@ export type Message = Message$1<"chat.v1.Message"> & {
   body: string;
 
   /**
-   * @generated from field: bool team = 9;
-   */
-  team: boolean;
-
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 10;
+   * @generated from field: google.protobuf.Timestamp created_on = 9;
    */
   createdOn?: Timestamp | undefined;
 
   /**
-   * @generated from field: int32 auto_filter_flagged = 11;
+   * @generated from field: int32 auto_filter_flagged = 10;
    */
   autoFilterFlagged: number;
 
   /**
-   * @generated from field: int32 demo_id = 12;
+   * @generated from field: int32 demo_id = 11;
    */
   demoId: number;
 
   /**
-   * @generated from field: int32 demo_tick = 13;
+   * @generated from field: int32 demo_tick = 12;
    */
   demoTick: number;
 
   /**
-   * @generated from field: string assest_id = 14;
+   * @generated from field: string assest_id = 13;
    */
   assestId: string;
 };

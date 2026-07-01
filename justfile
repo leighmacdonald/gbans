@@ -118,6 +118,9 @@ dev:
 pgcli host=`sed -n 's/^database_dsn: //p' gbans.yml`:
     @pgcli "{{ host }}"
 
+pgtop dsn=`sed -n 's/^database_dsn: //p' gbans.yml`:
+    @pg_top "{{ dsn }}"
+
 [working-directory('frontend')]
 install-frontend:
     pnpm install --frozen-lockfile

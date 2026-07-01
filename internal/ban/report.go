@@ -343,9 +343,9 @@ func (r Reports) Report(ctx context.Context, curUser personDomain.BaseUser, repo
 		return ReportWithAuthor{}, errTarget
 	}
 
-	var demo demo.File
 	if report.DemoID > 0 {
-		if errDemo := r.demos.GetDemoByID(ctx, report.DemoID, &demo); errDemo != nil {
+		_, errDemo := r.demos.GetDemoByID(ctx, report.DemoID)
+		if errDemo != nil {
 			slog.Error("Failed to load report demo", slog.Int64("report_id", int64(report.ReportID)))
 		}
 	}
@@ -441,13 +441,13 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.BaseUser, re
 	if existing.ReportID > 0 {
 		return ReportWithAuthor{}, ErrReportExists
 	}
-
-	var demo demo.File
-
+	var demo *demo.File
 	if req.DemoID > 0 {
-		if errDemo := r.demos.GetDemoByID(ctx, req.DemoID, &demo); errDemo != nil {
+		foundDemo, errDemo := r.demos.GetDemoByID(ctx, req.DemoID)
+		if errDemo != nil {
 			return ReportWithAuthor{}, errDemo
 		}
+		demo = foundDemo
 	}
 
 	// TODO encapsulate all operations in single tx
@@ -469,7 +469,7 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.BaseUser, re
 	slog.Info("New report created", slog.Int64("report_id", int64(report.ReportID)))
 
 	if demo.DemoID > 0 && !demo.Archive {
-		if errMark := r.demos.MarkArchived(ctx, &demo); errMark != nil {
+		if errMark := r.demos.MarkArchived(ctx, demo); errMark != nil {
 			slog.Error("Failed to mark demo as archived", slog.String("error", errMark.Error()))
 		}
 	}
