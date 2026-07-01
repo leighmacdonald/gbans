@@ -1,6 +1,6 @@
 import type { ReportStatus } from "../../../rpc/ban/v1/report_pb";
 import SelectField from "./SelectField";
 
-export const ReportStatusField = SelectField<ReportStatus>;
+export const SelectReportStatusField = SelectField<ReportStatus>;
 
-export default ReportStatusField;
+export default SelectReportStatusField;

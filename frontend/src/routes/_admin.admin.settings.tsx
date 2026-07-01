@@ -719,7 +719,7 @@ function AdminSettings() {
 									name={"demo.strategy"}
 									children={(field) => {
 										return (
-											<field.DemoStrategyField
+											<field.SelectDemoStrategyField
 												label={"Cleanup Strategy"}
 												items={enumValues(DemoStrategy)}
 												renderItem={(item) => {
@@ -1152,7 +1152,7 @@ function AdminSettings() {
 									name={"log.level"}
 									children={(field) => {
 										return (
-											<field.LevelField
+											<field.SelectLevelField
 												label={"Log Level"}
 												items={enumValues(Level)}
 												renderItem={(item) => {
@@ -1202,7 +1202,7 @@ function AdminSettings() {
 									name={"log.httpLevel"}
 									children={(field) => {
 										return (
-											<field.LevelField
+											<field.SelectLevelField
 												label={"HTTP Log Level"}
 												items={enumValues(Level)}
 												renderItem={(item) => {
@@ -1400,7 +1400,7 @@ function AdminSettings() {
 									name={"anticheat.action"}
 									children={(field) => {
 										return (
-											<field.ActionField
+											<field.SelectActionField
 												label={"Punishment Strategy"}
 												items={enumValues(Action)}
 												renderItem={(item) => {

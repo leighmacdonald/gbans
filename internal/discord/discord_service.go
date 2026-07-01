@@ -40,12 +40,12 @@ func (s Service) SeedRoleIDs(ctx context.Context, req *emptypb.Empty) (*discordv
 			Managed:      &roles[idx].Managed,
 			Mentionable:  &roles[idx].Mentionable,
 			Hoist:        &roles[idx].Hoist,
-			Color:        new(int32(roles[idx].Color)),
-			Position:     new(int32(roles[idx].Position)),
+			Color:        new(int32(roles[idx].Color)),    //nolint:gosec
+			Position:     new(int32(roles[idx].Position)), //nolint:gosec
 			Permissions:  &roles[idx].Permissions,
 			Icon:         &roles[idx].Icon,
 			UnicodeEmoji: &roles[idx].UnicodeEmoji,
-			Flags:        new(int32(roles[idx].Flags)),
+			Flags:        new(int32(roles[idx].Flags)), //nolint:gosec
 		}
 	}
 
