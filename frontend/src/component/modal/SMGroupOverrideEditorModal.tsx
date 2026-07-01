@@ -81,7 +81,7 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
 									name={"type"}
 									children={(field) => {
 										return (
-											<field.OverrideTypeField
+											<field.SelectOverrideTypeField
 												label={"Override Type"}
 												items={enumValues(OverrideType)}
 												renderItem={(i) => {
@@ -102,7 +102,7 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
 									name={"access"}
 									children={(field) => {
 										return (
-											<field.OverrideAccessField
+											<field.SelectOverrideAccessField
 												label={"Access Type"}
 												items={enumValues(OverrideAccess)}
 												renderItem={(i) => {

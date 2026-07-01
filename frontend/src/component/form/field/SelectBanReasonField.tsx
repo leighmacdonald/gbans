@@ -1,6 +1,6 @@
 import type { BanReason } from "../../../rpc/ban/v1/ban_pb";
 import SelectField from "./SelectField";
 
-export const BanReasonField = SelectField<BanReason>;
+export const SelectBanReasonField = SelectField<BanReason>;
 
-export default BanReasonField;
+export default SelectBanReasonField;
