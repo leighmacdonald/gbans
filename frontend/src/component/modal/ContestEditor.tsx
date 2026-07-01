@@ -126,7 +126,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 								name={"minPermissionLevel"}
 								children={(field) => {
 									return (
-										<field.SelectField
+										<field.PrivilegeField
 											label={"Min Permissions"}
 											items={enumValues(Privilege)}
 											renderItem={(pl) => {

@@ -50,7 +50,7 @@ export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: Group[
 								name={"group"}
 								children={(field) => {
 									return (
-										<field.SelectField
+										<field.GroupField
 											label={"Group"}
 											items={groups}
 											renderItem={(i) => {

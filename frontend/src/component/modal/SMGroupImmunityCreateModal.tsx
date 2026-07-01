@@ -56,7 +56,7 @@ export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups
 								name={"group"}
 								children={(field) => {
 									return (
-										<field.SelectField
+										<field.GroupField
 											label={"Group"}
 											items={groups}
 											renderItem={(i) => {
@@ -79,7 +79,7 @@ export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups
 								name={"other"}
 								children={(field) => {
 									return (
-										<field.SelectField
+										<field.GroupField
 											label={"Immunity From"}
 											items={groups}
 											renderItem={(i) => {

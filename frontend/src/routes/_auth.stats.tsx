@@ -29,13 +29,7 @@ import { SortableTable } from "../component/table/SortableTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { renderTableError } from "../error.tsx";
 import { FilterSchema } from "../rpc/database/query/v1/filter_pb.ts";
-import {
-	type Bucket,
-	QueryStatsRequestSchema,
-	TimeBucket,
-	Variant,
-	type VariantStats,
-} from "../rpc/stats/v1/stats_pb.ts";
+import { QueryStatsRequestSchema, TimeBucket, Variant, type VariantStats } from "../rpc/stats/v1/stats_pb.ts";
 import { buckets, queryStats, weaponList } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
 import { classList } from "../tf2.tsx";
 import { ensureFeatureEnabled } from "../util/features.ts";
@@ -418,15 +412,14 @@ function StatsComponent() {
 								name={"statsBucketID"}
 								children={(field) => {
 									return (
-										<field.SelectField
+										<field.BucketField
 											items={statBuckets?.buckets ?? []}
 											label="Stats Group"
 											variant={"standard"}
 											renderItem={(item) => {
-												const b = item as Bucket;
 												return (
-													<MenuItem key={b.bucketName} value={b.statsBucketId}>
-														{toTitleCase(b.bucketName)}
+													<MenuItem key={item.bucketName} value={item.statsBucketId}>
+														{toTitleCase(item.bucketName)}
 													</MenuItem>
 												);
 											}}
@@ -479,7 +472,7 @@ function StatsComponent() {
 								name={"variantKey"}
 								children={(field) => {
 									return (
-										<field.SelectField
+										<field.SelectStringField
 											items={sortedVariantKeys}
 											label="Filter By"
 											variant={"standard"}
@@ -489,8 +482,8 @@ function StatsComponent() {
 											}
 											renderItem={(item) => {
 												return (
-													<MenuItem key={item as string} value={item as string}>
-														{toTitleCase(item as string)}
+													<MenuItem key={item} value={item}>
+														{toTitleCase(item)}
 													</MenuItem>
 												);
 											}}

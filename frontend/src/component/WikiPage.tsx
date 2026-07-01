@@ -98,7 +98,7 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 								name={"permissionLevel"}
 								children={(field) => {
 									return (
-										<field.SelectField
+										<field.PrivilegeField
 											label={"Permissions"}
 											items={enumValues(Privilege)}
 											renderItem={(pl) => {
