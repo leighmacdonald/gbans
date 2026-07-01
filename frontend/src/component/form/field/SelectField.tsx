@@ -28,6 +28,7 @@ export const SelectField = <TData,>(props: Props<TData>) => {
 				color={field.state.meta.isValid ? "success" : props.color}
 				onClick={props.onClick}
 				value={field.state.value}
+				multiple={props.multiple}
 				id={`select-${props.name}`}
 				fullWidth
 				onChange={(event) => {

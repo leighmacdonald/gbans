@@ -30,7 +30,7 @@ type DiscordHandler struct {
 	kickChannelID string
 }
 
-func RegisterDiscordCommands(service discord.Service, persons person.Provider, servers *Servers,
+func RegisterDiscordCommands(service discord.Connection, persons person.Provider, servers *Servers,
 	network network.Networks, notifier notification.Notifier, kickChannelID string,
 ) {
 	discord.MustRegisterTemplate(templateBody)

@@ -21,8 +21,8 @@ const (
 	providerName = "gbans"
 )
 
-// Service provides a interface for controlling the discord backend.
-type Service interface {
+// Connection provides a interface for controlling the discord backend.
+type Connection interface {
 	// Send handles sending messages to a channel.
 	Send(channelID string, message *discordgo.MessageSend) error
 

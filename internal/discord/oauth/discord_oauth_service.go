@@ -7,15 +7,13 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/database"
-	v1 "github.com/leighmacdonald/gbans/internal/discord/v1"
+	v1 "github.com/leighmacdonald/gbans/internal/discord/oauth/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type DiscordService struct {
-	// oauthv1connect.UnimplementedDiscordOAuthServiceHandler
-
 	discord DiscordOAuth
 }
 

@@ -4,14 +4,12 @@
 // 	protoc        (unknown)
 // source: discord/v1/discord.proto
 
-package oauthv1
+package discordv1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	anypb "google.golang.org/protobuf/types/known/anypb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -24,71 +22,81 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type ProfileResponse struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	DiscordProfile *DiscordProfile        `protobuf:"bytes,1,opt,name=discord_profile,json=discordProfile" json:"discord_profile,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
-}
-
-func (x *ProfileResponse) Reset() {
-	*x = ProfileResponse{}
-	mi := &file_discord_v1_discord_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ProfileResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ProfileResponse) ProtoMessage() {}
-
-func (x *ProfileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_discord_v1_discord_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ProfileResponse.ProtoReflect.Descriptor instead.
-func (*ProfileResponse) Descriptor() ([]byte, []int) {
-	return file_discord_v1_discord_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *ProfileResponse) GetDiscordProfile() *DiscordProfile {
-	if x != nil {
-		return x.DiscordProfile
-	}
-	return nil
-}
-
-type LoginResponse struct {
+type SeedRoleIDsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	LoginUrl      *string                `protobuf:"bytes,1,opt,name=login_url,json=loginUrl" json:"login_url,omitempty"`
+	Roles         []*Role                `protobuf:"bytes,1,rep,name=roles" json:"roles,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *LoginResponse) Reset() {
-	*x = LoginResponse{}
+func (x *SeedRoleIDsResponse) Reset() {
+	*x = SeedRoleIDsResponse{}
+	mi := &file_discord_v1_discord_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SeedRoleIDsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SeedRoleIDsResponse) ProtoMessage() {}
+
+func (x *SeedRoleIDsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_discord_v1_discord_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SeedRoleIDsResponse.ProtoReflect.Descriptor instead.
+func (*SeedRoleIDsResponse) Descriptor() ([]byte, []int) {
+	return file_discord_v1_discord_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *SeedRoleIDsResponse) GetRoles() []*Role {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+type Role struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            *string                `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	Name          *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	Managed       *bool                  `protobuf:"varint,3,opt,name=managed" json:"managed,omitempty"`
+	Mentionable   *bool                  `protobuf:"varint,4,opt,name=mentionable" json:"mentionable,omitempty"`
+	Hoist         *bool                  `protobuf:"varint,5,opt,name=hoist" json:"hoist,omitempty"`
+	Color         *int32                 `protobuf:"varint,6,opt,name=color" json:"color,omitempty"`
+	Position      *int32                 `protobuf:"varint,7,opt,name=position" json:"position,omitempty"`
+	Permissions   *int64                 `protobuf:"varint,8,opt,name=permissions" json:"permissions,omitempty"`
+	Icon          *string                `protobuf:"bytes,9,opt,name=icon" json:"icon,omitempty"`
+	UnicodeEmoji  *string                `protobuf:"bytes,10,opt,name=unicode_emoji,json=unicodeEmoji" json:"unicode_emoji,omitempty"`
+	Flags         *int32                 `protobuf:"varint,11,opt,name=flags" json:"flags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Role) Reset() {
+	*x = Role{}
 	mi := &file_discord_v1_discord_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *LoginResponse) String() string {
+func (x *Role) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*LoginResponse) ProtoMessage() {}
+func (*Role) ProtoMessage() {}
 
-func (x *LoginResponse) ProtoReflect() protoreflect.Message {
+func (x *Role) ProtoReflect() protoreflect.Message {
 	mi := &file_discord_v1_discord_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -100,199 +108,114 @@ func (x *LoginResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use LoginResponse.ProtoReflect.Descriptor instead.
-func (*LoginResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use Role.ProtoReflect.Descriptor instead.
+func (*Role) Descriptor() ([]byte, []int) {
 	return file_discord_v1_discord_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *LoginResponse) GetLoginUrl() string {
-	if x != nil && x.LoginUrl != nil {
-		return *x.LoginUrl
-	}
-	return ""
-}
-
-type DiscordProfile struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	SteamId          *int64                 `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
-	Id               *string                `protobuf:"bytes,2,opt,name=id" json:"id,omitempty"`
-	Avatar           *string                `protobuf:"bytes,3,opt,name=avatar" json:"avatar,omitempty"`
-	AvatarDecoration *anypb.Any             `protobuf:"bytes,4,opt,name=avatar_decoration,json=avatarDecoration" json:"avatar_decoration,omitempty"`
-	Discriminator    *string                `protobuf:"bytes,5,opt,name=discriminator" json:"discriminator,omitempty"`
-	Flags            *int32                 `protobuf:"varint,6,opt,name=flags" json:"flags,omitempty"`
-	Banner           *anypb.Any             `protobuf:"bytes,7,opt,name=banner" json:"banner,omitempty"`
-	BannerColour     *anypb.Any             `protobuf:"bytes,8,opt,name=banner_colour,json=bannerColour" json:"banner_colour,omitempty"`
-	AccentColour     *anypb.Any             `protobuf:"bytes,9,opt,name=accent_colour,json=accentColour" json:"accent_colour,omitempty"`
-	Locale           *string                `protobuf:"bytes,10,opt,name=locale" json:"locale,omitempty"`
-	MfaEnabled       *bool                  `protobuf:"varint,11,opt,name=mfa_enabled,json=mfaEnabled" json:"mfa_enabled,omitempty"`
-	PremiumType      *int32                 `protobuf:"varint,12,opt,name=premium_type,json=premiumType" json:"premium_type,omitempty"`
-	CreatedOn        *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
-	UpdatedOn        *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *DiscordProfile) Reset() {
-	*x = DiscordProfile{}
-	mi := &file_discord_v1_discord_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DiscordProfile) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DiscordProfile) ProtoMessage() {}
-
-func (x *DiscordProfile) ProtoReflect() protoreflect.Message {
-	mi := &file_discord_v1_discord_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DiscordProfile.ProtoReflect.Descriptor instead.
-func (*DiscordProfile) Descriptor() ([]byte, []int) {
-	return file_discord_v1_discord_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *DiscordProfile) GetSteamId() int64 {
-	if x != nil && x.SteamId != nil {
-		return *x.SteamId
-	}
-	return 0
-}
-
-func (x *DiscordProfile) GetId() string {
+func (x *Role) GetId() string {
 	if x != nil && x.Id != nil {
 		return *x.Id
 	}
 	return ""
 }
 
-func (x *DiscordProfile) GetAvatar() string {
-	if x != nil && x.Avatar != nil {
-		return *x.Avatar
+func (x *Role) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
 	}
 	return ""
 }
 
-func (x *DiscordProfile) GetAvatarDecoration() *anypb.Any {
-	if x != nil {
-		return x.AvatarDecoration
+func (x *Role) GetManaged() bool {
+	if x != nil && x.Managed != nil {
+		return *x.Managed
 	}
-	return nil
+	return false
 }
 
-func (x *DiscordProfile) GetDiscriminator() string {
-	if x != nil && x.Discriminator != nil {
-		return *x.Discriminator
+func (x *Role) GetMentionable() bool {
+	if x != nil && x.Mentionable != nil {
+		return *x.Mentionable
+	}
+	return false
+}
+
+func (x *Role) GetHoist() bool {
+	if x != nil && x.Hoist != nil {
+		return *x.Hoist
+	}
+	return false
+}
+
+func (x *Role) GetColor() int32 {
+	if x != nil && x.Color != nil {
+		return *x.Color
+	}
+	return 0
+}
+
+func (x *Role) GetPosition() int32 {
+	if x != nil && x.Position != nil {
+		return *x.Position
+	}
+	return 0
+}
+
+func (x *Role) GetPermissions() int64 {
+	if x != nil && x.Permissions != nil {
+		return *x.Permissions
+	}
+	return 0
+}
+
+func (x *Role) GetIcon() string {
+	if x != nil && x.Icon != nil {
+		return *x.Icon
 	}
 	return ""
 }
 
-func (x *DiscordProfile) GetFlags() int32 {
+func (x *Role) GetUnicodeEmoji() string {
+	if x != nil && x.UnicodeEmoji != nil {
+		return *x.UnicodeEmoji
+	}
+	return ""
+}
+
+func (x *Role) GetFlags() int32 {
 	if x != nil && x.Flags != nil {
 		return *x.Flags
 	}
 	return 0
 }
 
-func (x *DiscordProfile) GetBanner() *anypb.Any {
-	if x != nil {
-		return x.Banner
-	}
-	return nil
-}
-
-func (x *DiscordProfile) GetBannerColour() *anypb.Any {
-	if x != nil {
-		return x.BannerColour
-	}
-	return nil
-}
-
-func (x *DiscordProfile) GetAccentColour() *anypb.Any {
-	if x != nil {
-		return x.AccentColour
-	}
-	return nil
-}
-
-func (x *DiscordProfile) GetLocale() string {
-	if x != nil && x.Locale != nil {
-		return *x.Locale
-	}
-	return ""
-}
-
-func (x *DiscordProfile) GetMfaEnabled() bool {
-	if x != nil && x.MfaEnabled != nil {
-		return *x.MfaEnabled
-	}
-	return false
-}
-
-func (x *DiscordProfile) GetPremiumType() int32 {
-	if x != nil && x.PremiumType != nil {
-		return *x.PremiumType
-	}
-	return 0
-}
-
-func (x *DiscordProfile) GetCreatedOn() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CreatedOn
-	}
-	return nil
-}
-
-func (x *DiscordProfile) GetUpdatedOn() *timestamppb.Timestamp {
-	if x != nil {
-		return x.UpdatedOn
-	}
-	return nil
-}
-
 var File_discord_v1_discord_proto protoreflect.FileDescriptor
 
 const file_discord_v1_discord_proto_rawDesc = "" +
 	"\n" +
-	"\x18discord/v1/discord.proto\x12\x10discord.oauth.v1\x1a\x19google/protobuf/any.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\\\n" +
-	"\x0fProfileResponse\x12I\n" +
-	"\x0fdiscord_profile\x18\x01 \x01(\v2 .discord.oauth.v1.DiscordProfileR\x0ediscordProfile\",\n" +
-	"\rLoginResponse\x12\x1b\n" +
-	"\tlogin_url\x18\x01 \x01(\tR\bloginUrl\"\xcc\x04\n" +
-	"\x0eDiscordProfile\x12\x1d\n" +
-	"\bsteam_id\x18\x01 \x01(\x03B\x020\x01R\asteamId\x12\x0e\n" +
-	"\x02id\x18\x02 \x01(\tR\x02id\x12\x16\n" +
-	"\x06avatar\x18\x03 \x01(\tR\x06avatar\x12A\n" +
-	"\x11avatar_decoration\x18\x04 \x01(\v2\x14.google.protobuf.AnyR\x10avatarDecoration\x12$\n" +
-	"\rdiscriminator\x18\x05 \x01(\tR\rdiscriminator\x12\x14\n" +
-	"\x05flags\x18\x06 \x01(\x05R\x05flags\x12,\n" +
-	"\x06banner\x18\a \x01(\v2\x14.google.protobuf.AnyR\x06banner\x129\n" +
-	"\rbanner_colour\x18\b \x01(\v2\x14.google.protobuf.AnyR\fbannerColour\x129\n" +
-	"\raccent_colour\x18\t \x01(\v2\x14.google.protobuf.AnyR\faccentColour\x12\x16\n" +
-	"\x06locale\x18\n" +
-	" \x01(\tR\x06locale\x12\x1f\n" +
-	"\vmfa_enabled\x18\v \x01(\bR\n" +
-	"mfaEnabled\x12!\n" +
-	"\fpremium_type\x18\f \x01(\x05R\vpremiumType\x129\n" +
-	"\n" +
-	"created_on\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
-	"\n" +
-	"updated_on\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn2\xdd\x01\n" +
-	"\x13DiscordOAuthService\x12B\n" +
-	"\x05Login\x12\x16.google.protobuf.Empty\x1a\x1f.discord.oauth.v1.LoginResponse\"\x00\x12:\n" +
-	"\x06Logout\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\"\x00\x12F\n" +
-	"\aProfile\x12\x16.google.protobuf.Empty\x1a!.discord.oauth.v1.ProfileResponse\"\x00B\xc3\x01\n" +
-	"\x14com.discord.oauth.v1B\fDiscordProtoP\x01Z;github.com/leighmacdonald/gbans/internal/discord/v1;oauthv1\xa2\x02\x03DOX\xaa\x02\x10Discord.Oauth.V1\xca\x02\x10Discord\\Oauth\\V1\xe2\x02\x1cDiscord\\Oauth\\V1\\GPBMetadata\xea\x02\x12Discord::Oauth::V1b\beditionsp\xe8\a"
+	"\x18discord/v1/discord.proto\x12\n" +
+	"discord.v1\x1a\x1bgoogle/protobuf/empty.proto\"=\n" +
+	"\x13SeedRoleIDsResponse\x12&\n" +
+	"\x05roles\x18\x01 \x03(\v2\x10.discord.v1.RoleR\x05roles\"\xa3\x02\n" +
+	"\x04Role\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
+	"\amanaged\x18\x03 \x01(\bR\amanaged\x12 \n" +
+	"\vmentionable\x18\x04 \x01(\bR\vmentionable\x12\x14\n" +
+	"\x05hoist\x18\x05 \x01(\bR\x05hoist\x12\x14\n" +
+	"\x05color\x18\x06 \x01(\x05R\x05color\x12\x1a\n" +
+	"\bposition\x18\a \x01(\x05R\bposition\x12$\n" +
+	"\vpermissions\x18\b \x01(\x03B\x020\x01R\vpermissions\x12\x12\n" +
+	"\x04icon\x18\t \x01(\tR\x04icon\x12#\n" +
+	"\runicode_emoji\x18\n" +
+	" \x01(\tR\funicodeEmoji\x12\x14\n" +
+	"\x05flags\x18\v \x01(\x05R\x05flags2X\n" +
+	"\x0eDiscordService\x12F\n" +
+	"\vSeedRoleIDs\x12\x16.google.protobuf.Empty\x1a\x1f.discord.v1.SeedRoleIDsResponseB\xa6\x01\n" +
+	"\x0ecom.discord.v1B\fDiscordProtoP\x01Z=github.com/leighmacdonald/gbans/internal/discord/v1;discordv1\xa2\x02\x03DXX\xaa\x02\n" +
+	"Discord.V1\xca\x02\n" +
+	"Discord\\V1\xe2\x02\x16Discord\\V1\\GPBMetadata\xea\x02\vDiscord::V1b\beditionsp\xe8\a"
 
 var (
 	file_discord_v1_discord_proto_rawDescOnce sync.Once
@@ -306,34 +229,21 @@ func file_discord_v1_discord_proto_rawDescGZIP() []byte {
 	return file_discord_v1_discord_proto_rawDescData
 }
 
-var file_discord_v1_discord_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_discord_v1_discord_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_discord_v1_discord_proto_goTypes = []any{
-	(*ProfileResponse)(nil),       // 0: discord.oauth.v1.ProfileResponse
-	(*LoginResponse)(nil),         // 1: discord.oauth.v1.LoginResponse
-	(*DiscordProfile)(nil),        // 2: discord.oauth.v1.DiscordProfile
-	(*anypb.Any)(nil),             // 3: google.protobuf.Any
-	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),         // 5: google.protobuf.Empty
+	(*SeedRoleIDsResponse)(nil), // 0: discord.v1.SeedRoleIDsResponse
+	(*Role)(nil),                // 1: discord.v1.Role
+	(*emptypb.Empty)(nil),       // 2: google.protobuf.Empty
 }
 var file_discord_v1_discord_proto_depIdxs = []int32{
-	2,  // 0: discord.oauth.v1.ProfileResponse.discord_profile:type_name -> discord.oauth.v1.DiscordProfile
-	3,  // 1: discord.oauth.v1.DiscordProfile.avatar_decoration:type_name -> google.protobuf.Any
-	3,  // 2: discord.oauth.v1.DiscordProfile.banner:type_name -> google.protobuf.Any
-	3,  // 3: discord.oauth.v1.DiscordProfile.banner_colour:type_name -> google.protobuf.Any
-	3,  // 4: discord.oauth.v1.DiscordProfile.accent_colour:type_name -> google.protobuf.Any
-	4,  // 5: discord.oauth.v1.DiscordProfile.created_on:type_name -> google.protobuf.Timestamp
-	4,  // 6: discord.oauth.v1.DiscordProfile.updated_on:type_name -> google.protobuf.Timestamp
-	5,  // 7: discord.oauth.v1.DiscordOAuthService.Login:input_type -> google.protobuf.Empty
-	5,  // 8: discord.oauth.v1.DiscordOAuthService.Logout:input_type -> google.protobuf.Empty
-	5,  // 9: discord.oauth.v1.DiscordOAuthService.Profile:input_type -> google.protobuf.Empty
-	1,  // 10: discord.oauth.v1.DiscordOAuthService.Login:output_type -> discord.oauth.v1.LoginResponse
-	5,  // 11: discord.oauth.v1.DiscordOAuthService.Logout:output_type -> google.protobuf.Empty
-	0,  // 12: discord.oauth.v1.DiscordOAuthService.Profile:output_type -> discord.oauth.v1.ProfileResponse
-	10, // [10:13] is the sub-list for method output_type
-	7,  // [7:10] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	1, // 0: discord.v1.SeedRoleIDsResponse.roles:type_name -> discord.v1.Role
+	2, // 1: discord.v1.DiscordService.SeedRoleIDs:input_type -> google.protobuf.Empty
+	0, // 2: discord.v1.DiscordService.SeedRoleIDs:output_type -> discord.v1.SeedRoleIDsResponse
+	2, // [2:3] is the sub-list for method output_type
+	1, // [1:2] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_discord_v1_discord_proto_init() }
@@ -347,7 +257,7 @@ func file_discord_v1_discord_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_discord_v1_discord_proto_rawDesc), len(file_discord_v1_discord_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

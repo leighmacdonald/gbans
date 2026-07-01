@@ -10,6 +10,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
 import { useAppForm } from "../../contexts/formContext.tsx";
+import { seedRoleIDs } from "../../rpc/discord/v1/discord-DiscordService_connectquery.ts";
 import { EditServerRequestSchema, type Server, ServerSchema } from "../../rpc/servers/v1/servers_pb.ts";
 import { editServer } from "../../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import type { Bucket } from "../../rpc/stats/v1/stats_pb.ts";
@@ -20,7 +21,9 @@ import { Heading } from "../Heading";
 import { LoadingPlaceholder } from "../LoadingPlaceholder.tsx";
 
 export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server }) => {
-	const { data, isLoading } = useQuery(buckets);
+	const { data: roles, isLoading: isLoadingRoles } = useQuery(seedRoleIDs);
+	const { data, isLoading: isLoadingBuckets } = useQuery(buckets);
+
 	const modal = useModal();
 	const defaultValues = {
 		shortName: server?.shortName ?? "",
@@ -38,7 +41,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 		logSecret: server?.logSecret ?? Math.floor(Math.random() * 89999999 + 10000000),
 		addressInternal: server?.addressInternal ?? "",
 		sdrEnabled: server?.sdrEnabled ?? false,
-		discordSeedRoleIds: server?.discordSeedRoleIds.join(",") ?? "",
+		discordSeedRoleIds: server?.discordSeedRoleIds ?? [],
 		statsBucketId: server?.statsBucketId,
 	};
 
@@ -57,7 +60,6 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 					server: create(ServerSchema, {
 						...value,
 						serverId: server?.serverId,
-						discordSeedRoleIds: value.discordSeedRoleIds.split(","),
 					}),
 				}),
 			);
@@ -79,7 +81,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 				</DialogTitle>
 
 				<DialogContent>
-					{isLoading ? (
+					{isLoadingRoles || isLoadingBuckets ? (
 						<LoadingPlaceholder />
 					) : (
 						<Grid container spacing={2}>
@@ -239,7 +241,20 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 								<form.AppField
 									name={"discordSeedRoleIds"}
 									children={(field) => {
-										return <field.TextField label={"Discord Seed Channel(s) (comma seperated)"} />;
+										return (
+											<field.DiscordRolesField
+												items={roles?.roles ?? []}
+												multiple={true}
+												label={"Discord Seed Channel(s)"}
+												renderItem={(i) => {
+													return (
+														<MenuItem value={i.id} key={i.id}>
+															{i.name}
+														</MenuItem>
+													);
+												}}
+											/>
+										);
 									}}
 								/>
 							</Grid>

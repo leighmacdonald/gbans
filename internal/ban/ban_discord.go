@@ -33,7 +33,7 @@ type discordHandler struct {
 	discord person.DiscordPersonProvider
 }
 
-func RegisterDiscordCommands(bot discord.Service, bans Bans, persons person.Provider, discordProv person.DiscordPersonProvider) {
+func RegisterDiscordCommands(bot discord.Connection, bans Bans, persons person.Provider, discordProv person.DiscordPersonProvider) {
 	discord.MustRegisterTemplate(templateBody)
 
 	handler := &discordHandler{Bans: bans, persons: persons, discord: discordProv}
