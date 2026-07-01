@@ -1,0 +1,27 @@
+edition = "2023";
+
+package discord.v1;
+
+import "google/protobuf/empty.proto";
+
+service DiscordService {
+  rpc SeedRoleIDs(google.protobuf.Empty) returns (SeedRoleIDsResponse);
+}
+
+message SeedRoleIDsResponse {
+  repeated Role roles = 1;
+}
+
+message Role {
+  string id = 1;
+  string name = 2;
+  bool managed = 3;
+  bool mentionable = 4;
+  bool hoist = 5;
+  int32 color = 6;
+  int32 position = 7;
+  int64 permissions = 8;
+  string icon = 9;
+  string unicode_emoji = 10;
+  int32 flags = 11;
+}

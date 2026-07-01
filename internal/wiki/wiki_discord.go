@@ -11,7 +11,7 @@ import (
 //go:embed wiki_discord.gotmpl
 var templateBody []byte
 
-func RegisterDiscordCommands(_ discord.Service) {
+func RegisterDiscordCommands(_ discord.Connection) {
 	discord.MustRegisterTemplate(templateBody)
 }
 

@@ -14,7 +14,7 @@ import (
 //go:embed chat_discord.gotmpl
 var templateBody []byte
 
-func RegisterDiscordCommands(bot discord.Service, wordFilters WordFilters) {
+func RegisterDiscordCommands(bot discord.Connection, wordFilters WordFilters) {
 	discord.MustRegisterTemplate(templateBody)
 
 	handler := &discordHandler{wordFilters: wordFilters}

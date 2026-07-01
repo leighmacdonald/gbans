@@ -26,7 +26,7 @@ type discordHandler struct {
 	servers   *servers.Servers
 }
 
-func RegisterDiscordCommands(service discord.Service, sourcemod Sourcemod, servers *servers.Servers) {
+func RegisterDiscordCommands(service discord.Connection, sourcemod Sourcemod, servers *servers.Servers) {
 	discord.MustRegisterTemplate(templateBody)
 
 	handler := discordHandler{sourcemod: sourcemod, servers: servers}

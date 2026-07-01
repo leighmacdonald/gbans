@@ -94,7 +94,7 @@ type GBans struct {
 	wiki           wiki.Wiki
 	wordFilters    chat.WordFilters
 	sentry         *sentry.Client
-	bot            discord.Service
+	bot            discord.Connection
 
 	// broadcaster is responsible for handling incoming log message events and routing them to
 	// the various subsystems that have registered receivers.
@@ -345,7 +345,7 @@ func (g *GBans) createAPIClient() (thirdparty.APIProvider, error) { //nolint:ire
 	return tfapiClient, nil
 }
 
-func (g *GBans) mustCreateBot(conf *discord.Config) discord.Service { //nolint:ireturn
+func (g *GBans) mustCreateBot(conf *discord.Config) discord.Connection { //nolint:ireturn
 	if conf.BotEnabled {
 		discordBot, errDiscord := discord.New(discord.Opts{
 			Token:   conf.Token,
@@ -462,6 +462,7 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware) *http.ServeMux {
 		chat.NewWordfilterService(g.wordFilters, g.chat, g.config.Config().Filters, authMiddleware, interceptors),
 		config.NewService(g.config, BuildVersion, authMiddleware, interceptors),
 		contest.NewService(g.contests, g.assets, authMiddleware, interceptors),
+		discord.NewService(g.bot, authMiddleware, interceptors),
 		forum.NewService(g.forums, authMiddleware, interceptors),
 		mge.NewService(g.mge, authMiddleware, interceptors),
 		blocklist.NewService(g.blocklists, authMiddleware, interceptors),

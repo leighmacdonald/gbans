@@ -20,7 +20,7 @@ type catSaveView struct {
 	Description string
 }
 
-func RegisterDiscordCommands(_ discord.Service) {
+func RegisterDiscordCommands(_ discord.Connection) {
 	discord.MustRegisterTemplate(templateBody)
 }
 

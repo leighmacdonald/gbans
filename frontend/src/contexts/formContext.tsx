@@ -20,8 +20,10 @@ const StatsVariantField = lazy(() => import("../component/form/field/StatsVarian
 const LevelField = lazy(() => import("../component/form/field/LevelField.tsx"));
 const ActionField = lazy(() => import("../component/form/field/ActionField.tsx"));
 const PrivilegeField = lazy(() => import("../component/form/field/PrivilegeField.tsx"));
+const DiscordRolesField = lazy(() => import("../component/form/field/DiscordRolesField.tsx"));
 const SteamIDField = lazy(() => import("../component/form/field/SteamIDField.tsx"));
 const TextField = lazy(() => import("../component/form/field/TextField.tsx"));
+const BucketField = lazy(() => import("../component/form/field/BucketField.tsx"));
 
 export const { fieldContext, formContext, useFieldContext, useFormContext } = createFormHookContexts();
 
@@ -46,6 +48,8 @@ export const { useAppForm, withForm } = createFormHook({
 		ActionField,
 		StatsTimeBucketField,
 		StatsVariantField,
+		DiscordRolesField,
+		BucketField,
 	},
 	formComponents: {
 		SubmitButton,

@@ -10,7 +10,7 @@ import (
 //go:embed news_discord.tmpl
 var templateBody []byte
 
-func RegisterDiscordCommands(_ discord.Service) {
+func RegisterDiscordCommands(_ discord.Connection) {
 	discord.MustRegisterTemplate(templateBody)
 }
 
