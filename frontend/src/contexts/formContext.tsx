@@ -18,12 +18,18 @@ const DemoStrategyField = lazy(() => import("../component/form/field/DemoStrateg
 const StatsTimeBucketField = lazy(() => import("../component/form/field/StatsTimeBucketField.tsx"));
 const StatsVariantField = lazy(() => import("../component/form/field/StatsVariantField.tsx"));
 const LevelField = lazy(() => import("../component/form/field/LevelField.tsx"));
+const AuthTypeField = lazy(() => import("../component/form/field/AuthTypeField.tsx"));
 const ActionField = lazy(() => import("../component/form/field/ActionField.tsx"));
 const PrivilegeField = lazy(() => import("../component/form/field/PrivilegeField.tsx"));
 const DiscordRolesField = lazy(() => import("../component/form/field/DiscordRolesField.tsx"));
 const SteamIDField = lazy(() => import("../component/form/field/SteamIDField.tsx"));
 const TextField = lazy(() => import("../component/form/field/TextField.tsx"));
 const BucketField = lazy(() => import("../component/form/field/BucketField.tsx"));
+const SelectStringField = lazy(() => import("../component/form/field/SelectStringField.tsx"));
+const OverrideTypeField = lazy(() => import("../component/form/field/OverrideTypeField.tsx"));
+const GroupField = lazy(() => import("../component/form/field/GroupField.tsx"));
+const ForumCategoryField = lazy(() => import("../component/form/field/ForumCategoryField.tsx"));
+const OverrideAccessField = lazy(() => import("../component/form/field/OverrideAccessField.tsx"));
 
 export const { fieldContext, formContext, useFieldContext, useFormContext } = createFormHookContexts();
 
@@ -50,6 +56,12 @@ export const { useAppForm, withForm } = createFormHook({
 		StatsVariantField,
 		DiscordRolesField,
 		BucketField,
+		AuthTypeField,
+		SelectStringField,
+		OverrideTypeField,
+		GroupField,
+		ForumCategoryField,
+		OverrideAccessField,
 	},
 	formComponents: {
 		SubmitButton,

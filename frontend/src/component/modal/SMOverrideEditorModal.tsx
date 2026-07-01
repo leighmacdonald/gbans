@@ -13,6 +13,7 @@ import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import { type Override, OverrideType } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
 import { createOverrides, editOverrides } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
+import { enumValues } from "../../util/lists.ts";
 import { hasSMFlag, schemaFlags } from "../../util/strings.ts";
 import { Heading } from "../Heading";
 
@@ -127,9 +128,9 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
 								name={"type"}
 								children={(field) => {
 									return (
-										<field.SelectField
+										<field.OverrideTypeField
 											label={"Override Type"}
-											items={["command", "group"]}
+											items={enumValues(OverrideType)}
 											renderItem={(i) => {
 												return (
 													<MenuItem value={i} key={i}>

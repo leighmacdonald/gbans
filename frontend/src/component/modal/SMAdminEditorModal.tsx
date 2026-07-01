@@ -30,7 +30,14 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: Admin; 
 	const modal = useModal();
 	const { sendError, sendFlash } = useUserFlashCtx();
 	const defaultValues: z.input<typeof schema> = {
-		authType: admin?.authType ?? AuthType.STEAM_UNSPECIFIED,
+		authType:
+			admin?.authType === "steam"
+				? AuthType.STEAM_UNSPECIFIED
+				: admin?.authType === "name"
+					? AuthType.NAME
+					: admin?.authType === "ip"
+						? AuthType.IP
+						: AuthType.STEAM_UNSPECIFIED,
 		identity: admin?.identity ?? "",
 		password: admin?.password ?? "",
 		name: admin?.name ?? "",
@@ -144,7 +151,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: Admin; 
 								name={"authType"}
 								children={(field) => {
 									return (
-										<field.SelectField
+										<field.AuthTypeField
 											label={"Auth Type"}
 											items={enumValues(AuthType)}
 											renderItem={(i) => {

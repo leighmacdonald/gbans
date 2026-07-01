@@ -15,6 +15,7 @@ import {
 	createGroupOverride,
 	editGroupOverride,
 } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
+import { enumValues } from "../../util/lists.ts";
 import { Heading } from "../Heading";
 
 export const SMGroupOverrideEditorModal = NiceModal.create(
@@ -80,9 +81,9 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
 									name={"type"}
 									children={(field) => {
 										return (
-											<field.SelectField
+											<field.OverrideTypeField
 												label={"Override Type"}
-												items={["command", "group"]}
+												items={enumValues(OverrideType)}
 												renderItem={(i) => {
 													return (
 														<MenuItem value={i} key={i}>
@@ -101,9 +102,9 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
 									name={"access"}
 									children={(field) => {
 										return (
-											<field.SelectField
+											<field.OverrideAccessField
 												label={"Access Type"}
-												items={["allow", "deny"]}
+												items={enumValues(OverrideAccess)}
 												renderItem={(i) => {
 													return (
 														<MenuItem value={i} key={i}>

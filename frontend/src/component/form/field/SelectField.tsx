@@ -9,7 +9,6 @@ import { renderHelpText } from "./renderHelpText.ts";
 
 type Props<TData> = {
 	label?: string;
-	labelLoading?: string;
 	items: TData[];
 	renderItem: (item: TData) => ReactNode;
 	helperText?: ReactNode | string;

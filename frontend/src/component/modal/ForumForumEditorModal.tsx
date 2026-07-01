@@ -7,7 +7,6 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
-import { useMemo } from "react";
 import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
@@ -47,10 +46,6 @@ export const ForumForumEditorModal = NiceModal.create(
 			},
 		});
 
-		const catIds = useMemo(() => {
-			return categories.map((c) => c.forumCategoryId);
-		}, [categories]);
-
 		return (
 			<Dialog {...muiDialogV5(modal)} fullWidth maxWidth={"lg"}>
 				<form
@@ -69,14 +64,16 @@ export const ForumForumEditorModal = NiceModal.create(
 									name={"forumCategoryId"}
 									children={(field) => {
 										return (
-											<field.SelectField
+											<field.ForumCategoryField
 												label={"Category"}
-												items={catIds}
-												renderItem={(catId) => {
+												items={categories}
+												renderItem={(category) => {
 													return (
-														<MenuItem value={catId} key={`cat-${catId}`}>
-															{categories.find((c) => c.forumCategoryId === catId)
-																?.title ?? ""}
+														<MenuItem
+															value={category.forumCategoryId}
+															key={`cat-${category.forumCategoryId}`}
+														>
+															{category.title}
 														</MenuItem>
 													);
 												}}
