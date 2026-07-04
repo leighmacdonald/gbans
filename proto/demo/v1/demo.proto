@@ -7,8 +7,20 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 service DemoService {
+  rpc GetDemo(GetDemoRequest) returns (GetDemoResponse);
   rpc GetDemos(google.protobuf.Empty) returns (GetDemosResponse);
   rpc RunCleanup(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+message GetDemoRequest {
+  int32 demo_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+}
+
+message GetDemoResponse {
+  Demo demo = 1 [(buf.validate.field).required = true];
 }
 
 message GetDemosResponse {

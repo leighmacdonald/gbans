@@ -114,7 +114,7 @@ export const BanModPanel = ({ banId }: { banId: number }) => {
 									name={"appealState"}
 									children={(field) => {
 										return (
-											<field.AppealStateField
+											<field.SelectAppealStateField
 												label={"Appeal State"}
 												value={field.state.value}
 												items={enumValues(AppealState)}

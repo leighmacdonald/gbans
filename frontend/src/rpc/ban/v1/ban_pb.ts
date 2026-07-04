@@ -13,7 +13,41 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file ban/v1/ban.proto.
  */
 export const file_ban_v1_ban: GenFile = /*@__PURE__*/
-  fileDesc("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SAPIAQESNwoLdmFsaWRfdW50aWwYGCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESGAoHZGVtb19pZBgZIAEoBUIHukgEGgIoADqyAbpIrgEaqwEKFHN0cmluZy5jdXN0b21fcmVhc29uEkByZWFzb25fdGV4dCBtdXN0IGJlIGF0IGxlYXN0IDEwIGNoYXJhY3RlcnMgd2hlbiByZWFzb24gaXMgQ1VTVE9NGlF0aGlzLnJlYXNvbiAhPSBiYW4udjEuQmFuUmVhc29uLkJBTl9SRUFTT05fQ1VTVE9NIHx8IHNpemUodGhpcy5yZWFzb25fdGV4dCkgPj0gMTAqZwoHQmFuVHlwZRIbChdCQU5fVFlQRV9PS19VTlNQRUNJRklFRBAAEhQKEEJBTl9UWVBFX05PX0NPTU0QARITCg9CQU5fVFlQRV9CQU5ORUQQAhIUChBCQU5fVFlQRV9ORVRXT1JLEAMqmgEKC0FwcGVhbFN0YXRlEiEKHUFQUEVBTF9TVEFURV9PUEVOX1VOU1BFQ0lGSUVEEAASFwoTQVBQRUFMX1NUQVRFX0RFTklFRBABEhkKFUFQUEVBTF9TVEFURV9BQ0NFUFRFRBACEhgKFEFQUEVBTF9TVEFURV9SRURVQ0VEEAMSGgoWQVBQRUFMX1NUQVRFX05PX0FQUEVBTBAEKpEDCglCYW5SZWFzb24SGgoWQkFOX1JFQVNPTl9VTlNQRUNJRklFRBAAEhUKEUJBTl9SRUFTT05fQ1VTVE9NEAESFwoTQkFOX1JFQVNPTl9FWFRFUk5BTBACEhcKE0JBTl9SRUFTT05fQ0hFQVRJTkcQAxIVChFCQU5fUkVBU09OX1JBQ0lTTRAEEhkKFUJBTl9SRUFTT05fSEFSQVNTTUVOVBAFEhkKFUJBTl9SRUFTT05fRVhQTE9JVElORxAGEiAKHEJBTl9SRUFTT05fV0FSTklOR1NfRVhDRUVERUQQBxITCg9CQU5fUkVBU09OX1NQQU0QCBIXChNCQU5fUkVBU09OX0xBTkdVQUdFEAkSFgoSQkFOX1JFQVNPTl9QUk9GSUxFEAoSIAocQkFOX1JFQVNPTl9JVEVNX0RFU0NSSVBUSU9OUxALEhcKE0JBTl9SRUFTT05fQk9UX0hPU1QQDBIWChJCQU5fUkVBU09OX0VWQURJTkcQDRIXChNCQU5fUkVBU09OX1VTRVJOQU1FEA4qcAoGT3JpZ2luEh0KGU9SSUdJTl9TWVNURU1fVU5TUEVDSUZJRUQQABIOCgpPUklHSU5fQk9UEAESDgoKT1JJR0lOX1dFQhACEhIKDk9SSUdJTl9JTl9HQU1FEAMSEwoPT1JJR0lOX1JFUE9SVEVEEAQy/QIKCkJhblNlcnZpY2USNgoFUXVlcnkSFC5iYW4udjEuUXVlcnlSZXF1ZXN0GhUuYmFuLnYxLlF1ZXJ5UmVzcG9uc2UiABI5CgZEZWxldGUSFS5iYW4udjEuRGVsZXRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEjAKA0dldBISLmJhbi52MS5HZXRSZXF1ZXN0GhMuYmFuLnYxLkdldFJlc3BvbnNlIgASVAoPUXVlcnlTb3VyY2VCYW5zEh4uYmFuLnYxLlF1ZXJ5U291cmNlQmFuc1JlcXVlc3QaHy5iYW4udjEuUXVlcnlTb3VyY2VCYW5zUmVzcG9uc2UiABI5CgZVcGRhdGUSFS5iYW4udjEuVXBkYXRlUmVxdWVzdBoWLmJhbi52MS5VcGRhdGVSZXNwb25zZSIAEjkKBkNyZWF0ZRIVLmJhbi52MS5DcmVhdGVSZXF1ZXN0GhYuYmFuLnYxLkNyZWF0ZVJlc3BvbnNlIgBChgEKCmNvbS5iYW4udjFCCEJhblByb3RvUAFaNWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvYmFuL3YxO2JhbnYxogIDQlhYqgIGQmFuLlYxygIGQmFuXFYx4gISQmFuXFYxXEdQQk1ldGFkYXRh6gIHQmFuOjpWMWIIZWRpdGlvbnNw6Ac", [file_buf_validate_validate, file_google_protobuf_duration, file_google_protobuf_empty, file_google_protobuf_timestamp]);
+  fileDesc("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CEIGukgDyAEBEjYKCmNyZWF0ZWRfb24YFiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKdXBkYXRlZF9vbhgXIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARI3Cgt2YWxpZF91bnRpbBgYIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARIYCgdkZW1vX2lkGBkgASgFQge6SAQaAigAOrIBukiuARqrAQoUc3RyaW5nLmN1c3RvbV9yZWFzb24SQHJlYXNvbl90ZXh0IG11c3QgYmUgYXQgbGVhc3QgMTAgY2hhcmFjdGVycyB3aGVuIHJlYXNvbiBpcyBDVVNUT00aUXRoaXMucmVhc29uICE9IGJhbi52MS5CYW5SZWFzb24uQkFOX1JFQVNPTl9DVVNUT00gfHwgc2l6ZSh0aGlzLnJlYXNvbl90ZXh0KSA+PSAxMCpnCgdCYW5UeXBlEhsKF0JBTl9UWVBFX09LX1VOU1BFQ0lGSUVEEAASFAoQQkFOX1RZUEVfTk9fQ09NTRABEhMKD0JBTl9UWVBFX0JBTk5FRBACEhQKEEJBTl9UWVBFX05FVFdPUksQAyqaAQoLQXBwZWFsU3RhdGUSIQodQVBQRUFMX1NUQVRFX09QRU5fVU5TUEVDSUZJRUQQABIXChNBUFBFQUxfU1RBVEVfREVOSUVEEAESGQoVQVBQRUFMX1NUQVRFX0FDQ0VQVEVEEAISGAoUQVBQRUFMX1NUQVRFX1JFRFVDRUQQAxIaChZBUFBFQUxfU1RBVEVfTk9fQVBQRUFMEAQqkQMKCUJhblJlYXNvbhIaChZCQU5fUkVBU09OX1VOU1BFQ0lGSUVEEAASFQoRQkFOX1JFQVNPTl9DVVNUT00QARIXChNCQU5fUkVBU09OX0VYVEVSTkFMEAISFwoTQkFOX1JFQVNPTl9DSEVBVElORxADEhUKEUJBTl9SRUFTT05fUkFDSVNNEAQSGQoVQkFOX1JFQVNPTl9IQVJBU1NNRU5UEAUSGQoVQkFOX1JFQVNPTl9FWFBMT0lUSU5HEAYSIAocQkFOX1JFQVNPTl9XQVJOSU5HU19FWENFRURFRBAHEhMKD0JBTl9SRUFTT05fU1BBTRAIEhcKE0JBTl9SRUFTT05fTEFOR1VBR0UQCRIWChJCQU5fUkVBU09OX1BST0ZJTEUQChIgChxCQU5fUkVBU09OX0lURU1fREVTQ1JJUFRJT05TEAsSFwoTQkFOX1JFQVNPTl9CT1RfSE9TVBAMEhYKEkJBTl9SRUFTT05fRVZBRElORxANEhcKE0JBTl9SRUFTT05fVVNFUk5BTUUQDipwCgZPcmlnaW4SHQoZT1JJR0lOX1NZU1RFTV9VTlNQRUNJRklFRBAAEg4KCk9SSUdJTl9CT1QQARIOCgpPUklHSU5fV0VCEAISEgoOT1JJR0lOX0lOX0dBTUUQAxITCg9PUklHSU5fUkVQT1JURUQQBDLWAwoKQmFuU2VydmljZRI2CgVRdWVyeRIULmJhbi52MS5RdWVyeVJlcXVlc3QaFS5iYW4udjEuUXVlcnlSZXNwb25zZSIAEjkKBkRlbGV0ZRIVLmJhbi52MS5EZWxldGVSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASMAoDR2V0EhIuYmFuLnYxLkdldFJlcXVlc3QaEy5iYW4udjEuR2V0UmVzcG9uc2UiABJXChBHZXRCYW5CeVJlcG9ydElEEh8uYmFuLnYxLkdldEJhbkJ5UmVwb3J0SURSZXF1ZXN0GiAuYmFuLnYxLkdldEJhbkJ5UmVwb3J0SURSZXNwb25zZSIAElQKD1F1ZXJ5U291cmNlQmFucxIeLmJhbi52MS5RdWVyeVNvdXJjZUJhbnNSZXF1ZXN0Gh8uYmFuLnYxLlF1ZXJ5U291cmNlQmFuc1Jlc3BvbnNlIgASOQoGVXBkYXRlEhUuYmFuLnYxLlVwZGF0ZVJlcXVlc3QaFi5iYW4udjEuVXBkYXRlUmVzcG9uc2UiABI5CgZDcmVhdGUSFS5iYW4udjEuQ3JlYXRlUmVxdWVzdBoWLmJhbi52MS5DcmVhdGVSZXNwb25zZSIAQoYBCgpjb20uYmFuLnYxQghCYW5Qcm90b1ABWjVnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL2Jhbi92MTtiYW52MaICA0JYWKoCBkJhbi5WMcoCBkJhblxWMeICEkJhblxWMVxHUEJNZXRhZGF0YeoCB0Jhbjo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate, file_google_protobuf_duration, file_google_protobuf_empty, file_google_protobuf_timestamp]);
+
+/**
+ * @generated from message ban.v1.GetBanByReportIDRequest
+ */
+export type GetBanByReportIDRequest = Message<"ban.v1.GetBanByReportIDRequest"> & {
+  /**
+   * @generated from field: int32 report_id = 1;
+   */
+  reportId: number;
+};
+
+/**
+ * Describes the message ban.v1.GetBanByReportIDRequest.
+ * Use `create(GetBanByReportIDRequestSchema)` to create a new message.
+ */
+export const GetBanByReportIDRequestSchema: GenMessage<GetBanByReportIDRequest> = /*@__PURE__*/
+  messageDesc(file_ban_v1_ban, 0);
+
+/**
+ * @generated from message ban.v1.GetBanByReportIDResponse
+ */
+export type GetBanByReportIDResponse = Message<"ban.v1.GetBanByReportIDResponse"> & {
+  /**
+   * @generated from field: ban.v1.Ban ban = 1;
+   */
+  ban?: Ban | undefined;
+};
+
+/**
+ * Describes the message ban.v1.GetBanByReportIDResponse.
+ * Use `create(GetBanByReportIDResponseSchema)` to create a new message.
+ */
+export const GetBanByReportIDResponseSchema: GenMessage<GetBanByReportIDResponse> = /*@__PURE__*/
+  messageDesc(file_ban_v1_ban, 1);
 
 /**
  * @generated from message ban.v1.CreateRequest
@@ -99,7 +133,7 @@ export type CreateRequest = Message<"ban.v1.CreateRequest"> & {
  * Use `create(CreateRequestSchema)` to create a new message.
  */
 export const CreateRequestSchema: GenMessage<CreateRequest> = /*@__PURE__*/
-  messageDesc(file_ban_v1_ban, 0);
+  messageDesc(file_ban_v1_ban, 2);
 
 /**
  * @generated from message ban.v1.CreateResponse
@@ -116,7 +150,7 @@ export type CreateResponse = Message<"ban.v1.CreateResponse"> & {
  * Use `create(CreateResponseSchema)` to create a new message.
  */
 export const CreateResponseSchema: GenMessage<CreateResponse> = /*@__PURE__*/
-  messageDesc(file_ban_v1_ban, 1);
+  messageDesc(file_ban_v1_ban, 3);
 
 /**
  * @generated from message ban.v1.UpdateRequest
@@ -173,7 +207,7 @@ export type UpdateRequest = Message<"ban.v1.UpdateRequest"> & {
  * Use `create(UpdateRequestSchema)` to create a new message.
  */
 export const UpdateRequestSchema: GenMessage<UpdateRequest> = /*@__PURE__*/
-  messageDesc(file_ban_v1_ban, 2);
+  messageDesc(file_ban_v1_ban, 4);
 
 /**
  * @generated from message ban.v1.UpdateResponse
@@ -190,7 +224,7 @@ export type UpdateResponse = Message<"ban.v1.UpdateResponse"> & {
  * Use `create(UpdateResponseSchema)` to create a new message.
  */
 export const UpdateResponseSchema: GenMessage<UpdateResponse> = /*@__PURE__*/
-  messageDesc(file_ban_v1_ban, 3);
+  messageDesc(file_ban_v1_ban, 5);
 
 /**
  * @generated from message ban.v1.QuerySourceBansRequest
@@ -207,7 +241,7 @@ export type QuerySourceBansRequest = Message<"ban.v1.QuerySourceBansRequest"> & 
  * Use `create(QuerySourceBansRequestSchema)` to create a new message.
  */
 export const QuerySourceBansRequestSchema: GenMessage<QuerySourceBansRequest> = /*@__PURE__*/
-  messageDesc(file_ban_v1_ban, 4);
+  messageDesc(file_ban_v1_ban, 6);
 
 /**
  * @generated from message ban.v1.SourceBanRecord
@@ -264,7 +298,7 @@ export type SourceBanRecord = Message<"ban.v1.SourceBanRecord"> & {
  * Use `create(SourceBanRecordSchema)` to create a new message.
  */
 export const SourceBanRecordSchema: GenMessage<SourceBanRecord> = /*@__PURE__*/
-  messageDesc(file_ban_v1_ban, 5);
+  messageDesc(file_ban_v1_ban, 7);
 
 /**
  * @generated from message ban.v1.QuerySourceBansResponse
@@ -281,7 +315,7 @@ export type QuerySourceBansResponse = Message<"ban.v1.QuerySourceBansResponse"> 
  * Use `create(QuerySourceBansResponseSchema)` to create a new message.
  */
 export const QuerySourceBansResponseSchema: GenMessage<QuerySourceBansResponse> = /*@__PURE__*/
-  messageDesc(file_ban_v1_ban, 6);
+  messageDesc(file_ban_v1_ban, 8);
 
 /**
  * @generated from message ban.v1.GetRequest
@@ -298,7 +332,7 @@ export type GetRequest = Message<"ban.v1.GetRequest"> & {
  * Use `create(GetRequestSchema)` to create a new message.
  */
 export const GetRequestSchema: GenMessage<GetRequest> = /*@__PURE__*/
-  messageDesc(file_ban_v1_ban, 7);
+  messageDesc(file_ban_v1_ban, 9);
 
 /**
  * @generated from message ban.v1.GetResponse
@@ -315,7 +349,7 @@ export type GetResponse = Message<"ban.v1.GetResponse"> & {
  * Use `create(GetResponseSchema)` to create a new message.
  */
 export const GetResponseSchema: GenMessage<GetResponse> = /*@__PURE__*/
-  messageDesc(file_ban_v1_ban, 8);
+  messageDesc(file_ban_v1_ban, 10);
 
 /**
  * @generated from message ban.v1.DeleteRequest
@@ -337,7 +371,7 @@ export type DeleteRequest = Message<"ban.v1.DeleteRequest"> & {
  * Use `create(DeleteRequestSchema)` to create a new message.
  */
 export const DeleteRequestSchema: GenMessage<DeleteRequest> = /*@__PURE__*/
-  messageDesc(file_ban_v1_ban, 9);
+  messageDesc(file_ban_v1_ban, 11);
 
 /**
  * @generated from message ban.v1.QueryRequest
@@ -389,7 +423,7 @@ export type QueryRequest = Message<"ban.v1.QueryRequest"> & {
  * Use `create(QueryRequestSchema)` to create a new message.
  */
 export const QueryRequestSchema: GenMessage<QueryRequest> = /*@__PURE__*/
-  messageDesc(file_ban_v1_ban, 10);
+  messageDesc(file_ban_v1_ban, 12);
 
 /**
  * @generated from message ban.v1.QueryResponse
@@ -406,7 +440,7 @@ export type QueryResponse = Message<"ban.v1.QueryResponse"> & {
  * Use `create(QueryResponseSchema)` to create a new message.
  */
 export const QueryResponseSchema: GenMessage<QueryResponse> = /*@__PURE__*/
-  messageDesc(file_ban_v1_ban, 11);
+  messageDesc(file_ban_v1_ban, 13);
 
 /**
  * @generated from message ban.v1.Ban
@@ -543,7 +577,7 @@ export type Ban = Message<"ban.v1.Ban"> & {
  * Use `create(BanSchema)` to create a new message.
  */
 export const BanSchema: GenMessage<Ban> = /*@__PURE__*/
-  messageDesc(file_ban_v1_ban, 12);
+  messageDesc(file_ban_v1_ban, 14);
 
 /**
  * @generated from enum ban.v1.BanType
@@ -763,6 +797,14 @@ export const BanService: GenService<{
     methodKind: "unary";
     input: typeof GetRequestSchema;
     output: typeof GetResponseSchema;
+  },
+  /**
+   * @generated from rpc ban.v1.BanService.GetBanByReportID
+   */
+  getBanByReportID: {
+    methodKind: "unary";
+    input: typeof GetBanByReportIDRequestSchema;
+    output: typeof GetBanByReportIDResponseSchema;
   },
   /**
    * @generated from rpc ban.v1.BanService.QuerySourceBans

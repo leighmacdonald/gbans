@@ -113,7 +113,6 @@ type ReportWithAuthor struct {
 
 	Author  personDomain.Core
 	Subject personDomain.Core
-	// TODO FIX Demo    demo.DemoFile `json:"demo"`
 }
 
 type ReportMessage struct {
@@ -343,18 +342,10 @@ func (r Reports) Report(ctx context.Context, curUser personDomain.BaseUser, repo
 		return ReportWithAuthor{}, errTarget
 	}
 
-	if report.DemoID > 0 {
-		_, errDemo := r.demos.GetDemoByID(ctx, report.DemoID)
-		if errDemo != nil {
-			slog.Error("Failed to load report demo", slog.Int64("report_id", int64(report.ReportID)))
-		}
-	}
-
 	return ReportWithAuthor{
 		Author:  author.Core(),
 		Subject: target.Core(),
 		Report:  report,
-		// TODO FIX Demo:    demo,
 	}, nil
 }
 

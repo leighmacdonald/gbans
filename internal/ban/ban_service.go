@@ -105,6 +105,24 @@ func (s Service) Delete(ctx context.Context, req *v1.DeleteRequest) (*emptypb.Em
 	return &emptypb.Empty{}, nil
 }
 
+func (s Service) GetBanByReportID(ctx context.Context, req *v1.GetBanByReportIDRequest) (*v1.GetBanByReportIDResponse, error) {
+	user := rpc.UserInfoFromCtx(ctx)
+	bannedPerson, errGet := s.bans.QueryOne(ctx, QueryOpts{ReportID: req.GetReportId(), Deleted: false, EvadeOk: true})
+	if errGet != nil {
+		if errors.Is(errGet, database.ErrNoResult) || errors.Is(errGet, ErrBanDoesNotExist) {
+			return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
+		}
+
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	if !user.HasPermission(permission.Moderator) && !bannedPerson.TargetID.Equal(user.GetSteamID()) {
+		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
+	}
+
+	return &v1.GetBanByReportIDResponse{Ban: toBan(bannedPerson)}, nil
+}
+
 func (s Service) Get(ctx context.Context, req *v1.GetRequest) (*v1.GetResponse, error) {
 	user := rpc.UserInfoFromCtx(ctx)
 

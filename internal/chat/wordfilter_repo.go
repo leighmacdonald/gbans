@@ -16,7 +16,7 @@ func NewWordFilterRepository(database database.Database) WordFilterRepository {
 	return WordFilterRepository{Database: database}
 }
 
-func (r *WordFilterRepository) SaveFilter(ctx context.Context, filter *Filter) error {
+func (r WordFilterRepository) SaveFilter(ctx context.Context, filter *Filter) error {
 	if filter.FilterID > 0 {
 		return r.updateFilter(ctx, filter)
 	}
@@ -24,7 +24,7 @@ func (r *WordFilterRepository) SaveFilter(ctx context.Context, filter *Filter) e
 	return r.insertFilter(ctx, filter)
 }
 
-func (r *WordFilterRepository) insertFilter(ctx context.Context, filter *Filter) error {
+func (r WordFilterRepository) insertFilter(ctx context.Context, filter *Filter) error {
 	const query = `
 		INSERT INTO filtered_word (author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on, action, duration, weight)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -39,7 +39,7 @@ func (r *WordFilterRepository) insertFilter(ctx context.Context, filter *Filter)
 	return nil
 }
 
-func (r *WordFilterRepository) updateFilter(ctx context.Context, filter *Filter) error {
+func (r WordFilterRepository) updateFilter(ctx context.Context, filter *Filter) error {
 	query := r.Builder().
 		Update("filtered_word").
 		Set("author_id", filter.AuthorID.Int64()).
@@ -61,7 +61,7 @@ func (r *WordFilterRepository) updateFilter(ctx context.Context, filter *Filter)
 	return nil
 }
 
-func (r *WordFilterRepository) DropFilter(ctx context.Context, filter Filter) error {
+func (r WordFilterRepository) DropFilter(ctx context.Context, filter Filter) error {
 	query := r.Builder().
 		Delete("filtered_word").
 		Where(sq.Eq{"filter_id": filter.FilterID})
@@ -72,7 +72,7 @@ func (r *WordFilterRepository) DropFilter(ctx context.Context, filter Filter) er
 	return nil
 }
 
-func (r *WordFilterRepository) GetFilterByID(ctx context.Context, filterID int64) (Filter, error) {
+func (r WordFilterRepository) GetFilterByID(ctx context.Context, filterID int64) (Filter, error) {
 	var filter Filter
 
 	query := r.Builder().
@@ -101,7 +101,7 @@ func (r *WordFilterRepository) GetFilterByID(ctx context.Context, filterID int64
 	return filter, nil
 }
 
-func (r *WordFilterRepository) GetFilters(ctx context.Context) ([]Filter, error) {
+func (r WordFilterRepository) GetFilters(ctx context.Context) ([]Filter, error) {
 	builder := r.Builder().
 		Select("r.filter_id", "r.author_id", "r.pattern", "r.is_regex",
 			"r.is_enabled", "r.trigger_count", "r.created_on", "r.updated_on", "r.action", "r.duration", "r.weight").
@@ -138,7 +138,7 @@ func (r *WordFilterRepository) GetFilters(ctx context.Context) ([]Filter, error)
 	return filters, nil
 }
 
-func (r *WordFilterRepository) AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error {
+func (r WordFilterRepository) AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error {
 	return database.Err(r.ExecInsertBuilder(ctx, r.Builder().
 		Insert("person_messages_filter").
 		Columns("person_message_id", "filter_id").

@@ -22,6 +22,11 @@ export const delete$ = BanService.method.delete;
 export const get = BanService.method.get;
 
 /**
+ * @generated from rpc ban.v1.BanService.GetBanByReportID
+ */
+export const getBanByReportID = BanService.method.getBanByReportID;
+
+/**
  * @generated from rpc ban.v1.BanService.QuerySourceBans
  */
 export const querySourceBans = BanService.method.querySourceBans;

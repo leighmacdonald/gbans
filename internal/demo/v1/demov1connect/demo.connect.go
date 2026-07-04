@@ -34,6 +34,8 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// DemoServiceGetDemoProcedure is the fully-qualified name of the DemoService's GetDemo RPC.
+	DemoServiceGetDemoProcedure = "/demo.v1.DemoService/GetDemo"
 	// DemoServiceGetDemosProcedure is the fully-qualified name of the DemoService's GetDemos RPC.
 	DemoServiceGetDemosProcedure = "/demo.v1.DemoService/GetDemos"
 	// DemoServiceRunCleanupProcedure is the fully-qualified name of the DemoService's RunCleanup RPC.
@@ -42,6 +44,7 @@ const (
 
 // DemoServiceClient is a client for the demo.v1.DemoService service.
 type DemoServiceClient interface {
+	GetDemo(context.Context, *v1.GetDemoRequest) (*v1.GetDemoResponse, error)
 	GetDemos(context.Context, *emptypb.Empty) (*v1.GetDemosResponse, error)
 	RunCleanup(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 }
@@ -57,6 +60,12 @@ func NewDemoServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 	baseURL = strings.TrimRight(baseURL, "/")
 	demoServiceMethods := v1.File_demo_v1_demo_proto.Services().ByName("DemoService").Methods()
 	return &demoServiceClient{
+		getDemo: connect.NewClient[v1.GetDemoRequest, v1.GetDemoResponse](
+			httpClient,
+			baseURL+DemoServiceGetDemoProcedure,
+			connect.WithSchema(demoServiceMethods.ByName("GetDemo")),
+			connect.WithClientOptions(opts...),
+		),
 		getDemos: connect.NewClient[emptypb.Empty, v1.GetDemosResponse](
 			httpClient,
 			baseURL+DemoServiceGetDemosProcedure,
@@ -74,8 +83,18 @@ func NewDemoServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // demoServiceClient implements DemoServiceClient.
 type demoServiceClient struct {
+	getDemo    *connect.Client[v1.GetDemoRequest, v1.GetDemoResponse]
 	getDemos   *connect.Client[emptypb.Empty, v1.GetDemosResponse]
 	runCleanup *connect.Client[emptypb.Empty, emptypb.Empty]
+}
+
+// GetDemo calls demo.v1.DemoService.GetDemo.
+func (c *demoServiceClient) GetDemo(ctx context.Context, req *v1.GetDemoRequest) (*v1.GetDemoResponse, error) {
+	response, err := c.getDemo.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // GetDemos calls demo.v1.DemoService.GetDemos.
@@ -98,6 +117,7 @@ func (c *demoServiceClient) RunCleanup(ctx context.Context, req *emptypb.Empty) 
 
 // DemoServiceHandler is an implementation of the demo.v1.DemoService service.
 type DemoServiceHandler interface {
+	GetDemo(context.Context, *v1.GetDemoRequest) (*v1.GetDemoResponse, error)
 	GetDemos(context.Context, *emptypb.Empty) (*v1.GetDemosResponse, error)
 	RunCleanup(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 }
@@ -109,6 +129,12 @@ type DemoServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewDemoServiceHandler(svc DemoServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	demoServiceMethods := v1.File_demo_v1_demo_proto.Services().ByName("DemoService").Methods()
+	demoServiceGetDemoHandler := connect.NewUnaryHandlerSimple(
+		DemoServiceGetDemoProcedure,
+		svc.GetDemo,
+		connect.WithSchema(demoServiceMethods.ByName("GetDemo")),
+		connect.WithHandlerOptions(opts...),
+	)
 	demoServiceGetDemosHandler := connect.NewUnaryHandlerSimple(
 		DemoServiceGetDemosProcedure,
 		svc.GetDemos,
@@ -123,6 +149,8 @@ func NewDemoServiceHandler(svc DemoServiceHandler, opts ...connect.HandlerOption
 	)
 	return "/demo.v1.DemoService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case DemoServiceGetDemoProcedure:
+			demoServiceGetDemoHandler.ServeHTTP(w, r)
 		case DemoServiceGetDemosProcedure:
 			demoServiceGetDemosHandler.ServeHTTP(w, r)
 		case DemoServiceRunCleanupProcedure:
@@ -135,6 +163,10 @@ func NewDemoServiceHandler(svc DemoServiceHandler, opts ...connect.HandlerOption
 
 // UnimplementedDemoServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedDemoServiceHandler struct{}
+
+func (UnimplementedDemoServiceHandler) GetDemo(context.Context, *v1.GetDemoRequest) (*v1.GetDemoResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("demo.v1.DemoService.GetDemo is not implemented"))
+}
 
 func (UnimplementedDemoServiceHandler) GetDemos(context.Context, *emptypb.Empty) (*v1.GetDemosResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("demo.v1.DemoService.GetDemos is not implemented"))

@@ -5,6 +5,11 @@
 import { DemoService } from "./demo_pb";
 
 /**
+ * @generated from rpc demo.v1.DemoService.GetDemo
+ */
+export const getDemo = DemoService.method.getDemo;
+
+/**
  * @generated from rpc demo.v1.DemoService.GetDemos
  */
 export const getDemos = DemoService.method.getDemos;

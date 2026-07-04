@@ -64,7 +64,7 @@ export const ForumForumEditorModal = NiceModal.create(
 									name={"forumCategoryId"}
 									children={(field) => {
 										return (
-											<field.ForumCategoryField
+											<field.SelectForumCategoryField
 												label={"Category"}
 												items={categories}
 												renderItem={(category) => {
@@ -123,7 +123,7 @@ export const ForumForumEditorModal = NiceModal.create(
 									}}
 									children={(field) => {
 										return (
-											<field.PrivilegeField
+											<field.SelectPrivilegeField
 												label={"Permissions Required"}
 												items={enumValues(Privilege)}
 												renderItem={(pl) => {

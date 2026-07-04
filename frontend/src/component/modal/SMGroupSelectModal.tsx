@@ -16,8 +16,7 @@ export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: Group[
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			// TODO fix typing for select field and objects
-			const group = groups.find((v) => v.groupId === (value.group as unknown as number));
+			const group = groups.find((v) => v.groupId === value.group.groupId);
 			if (group) {
 				modal.resolve(group);
 			} else {

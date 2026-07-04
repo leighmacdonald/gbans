@@ -131,13 +131,7 @@ function Servers() {
 			// Sort by position if we have a non-default position.
 			// otherwise, sort by server name
 			if (pos.lat !== 0) {
-				if (a.distance > b.distance) {
-					return 1;
-				}
-				if (a.distance < b.distance) {
-					return -1;
-				}
-				return 0;
+				return a.distance > b.distance ? 1 : a.distance < b.distance ? -1 : 0;
 			}
 			return `${a.nameShort}`.localeCompare(b.nameShort);
 		});
@@ -173,33 +167,6 @@ function Servers() {
 		},
 	];
 
-	// const { restart } = useTimer({
-	// 	autoStart: true,
-	// 	expiryTimestamp: new Date(),
-	// 	onExpire: () => {
-	// 		// TODO replace this with tan query
-	// 		const ac = new AbortController();
-	// 		apiGetServerStates(ac.signal)
-	// 			.then((response) => {
-	// 				if (!response) {
-	// 					restart(nextExpiry());
-	// 					return;
-	// 				}
-	// 				setServers(response.servers || []);
-	// 				if (pos.lat === 0) {
-	// 					setPos({
-	// 						lat: response.lat_long.latitude,
-	// 						lng: response.lat_long.longitude,
-	// 					});
-	// 				}
-	//
-	// 				restart(nextExpiry());
-	// 			})
-	// 			.catch(() => {
-	// 				restart(nextExpiry());
-	// 			});
-	// 	},
-	// });
 	const metaServers = useMemo(() => {
 		return selectedServers.map((s) => ({ ...s, copy: "", connect: "" }));
 	}, [selectedServers]);

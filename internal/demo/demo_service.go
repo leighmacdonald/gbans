@@ -27,6 +27,34 @@ func NewService(demos Demos, authMiddleware *rpc.Middleware, option ...connect.H
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
+func (s Service) GetDemo(ctx context.Context, req *v1.GetDemoRequest) (*v1.GetDemoResponse, error) {
+	demo, errDemos := s.demos.GetDemoByID(ctx, req.GetDemoId())
+	if errDemos != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	resp := &v1.GetDemoResponse{Demo: &v1.Demo{
+		DemoId:          &demo.DemoID,
+		ServerId:        &demo.ServerID,
+		ServerNameShort: &demo.ServerNameShort,
+		ServerNameLong:  &demo.ServerNameLong,
+		Title:           &demo.Title,
+		CreatedOn:       timestamppb.New(demo.CreatedOn),
+		Downloads:       &demo.Downloads,
+		Size:            &demo.Size,
+		MapName:         &demo.MapName,
+		Archive:         &demo.Archive,
+		Stats:           make(map[string]string),
+		AssetId:         new(demo.AssetID.String()),
+	}}
+
+	for k := range demo.Stats {
+		resp.Demo.Stats[k] = k
+	}
+
+	return resp, nil
+}
+
 func (s Service) GetDemos(ctx context.Context, _ *emptypb.Empty) (*v1.GetDemosResponse, error) {
 	demos, errDemos := s.demos.GetDemos(ctx)
 	if errDemos != nil {

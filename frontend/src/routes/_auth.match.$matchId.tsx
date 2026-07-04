@@ -50,7 +50,7 @@ function MatchPage() {
 			return undefined;
 		}
 		const m = assembleMatch(data.match);
-		// console.log(m);
+		console.log(m);
 		return m;
 	}, [data]);
 

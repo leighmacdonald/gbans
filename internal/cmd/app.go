@@ -182,8 +182,6 @@ func (g *GBans) Init(ctx context.Context) error {
 
 	mapsSvc := maps.New(maps.NewRepository(g.database))
 
-	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications,
-		conf.Discord.SafeAppealLogChannelID())
 	g.bans = ban.New(ban.NewRepository(g.database), g.persons, conf.Discord.SafeBanLogChannelID(),
 		conf.Discord.SafeKickLogChannelID(), steamid.New(conf.Owner), g.reports, g.notifications, g.servers, g.networks)
 	g.blocklists = blocklist.NewBlocklists(blocklist.NewRepository(g.database),
@@ -193,6 +191,8 @@ func (g *GBans) Init(ctx context.Context) error {
 
 	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler, conf.Discord.SafeChatLogChannelID())
 	g.demos = demo.NewDemos(asset.BucketDemo, demo.NewRepository(g.database), g.assets, g.stats, g.chat, g.persons, conf.Demo, steamid.New(conf.Owner))
+	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications,
+		conf.Discord.SafeAppealLogChannelID())
 	g.forums = forum.New(forum.NewRepository(g.database), g.notifications, g.persons, "")
 	g.metrics = metrics.New(g.broadcaster)
 	g.news = news.New(news.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID())

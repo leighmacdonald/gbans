@@ -16,7 +16,7 @@ func NewRepository(database database.Database) Repository {
 	return Repository{database}
 }
 
-func (r *Repository) Page(ctx context.Context, slug string) (Page, error) {
+func (r Repository) Page(ctx context.Context, slug string) (Page, error) {
 	var page Page
 
 	row, errQuery := r.QueryRowBuilder(ctx, r.Builder().
@@ -36,7 +36,7 @@ func (r *Repository) Page(ctx context.Context, slug string) (Page, error) {
 	return page, nil
 }
 
-func (r *Repository) Delete(ctx context.Context, slug string) error {
+func (r Repository) Delete(ctx context.Context, slug string) error {
 	if errExec := r.ExecDeleteBuilder(ctx, r.Builder().
 		Delete("wiki").
 		Where(sq.Eq{"lower(slug)": strings.ToLower(slug)})); errExec != nil {
@@ -46,7 +46,7 @@ func (r *Repository) Delete(ctx context.Context, slug string) error {
 	return nil
 }
 
-func (r *Repository) Save(ctx context.Context, page Page) error {
+func (r Repository) Save(ctx context.Context, page Page) error {
 	const query = `
 		INSERT INTO wiki (slug, body_md, revision, created_on, updated_on, permission_level)
 		VALUES ($1, $2, $3, $4, $5, $6)`

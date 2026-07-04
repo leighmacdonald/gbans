@@ -1,7 +1,6 @@
 let
-  nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/tarball/nixos-26.05";
-  #nixpkgs = fetchTarball "https://github.com/nixos/nixpkgs/archive/nixos-unstable.tar.gz";
-  #nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/archive/ce657ac8a02003528e4ea4bb59d58e1c634b790c.tar.gz";
+  # July 2
+  nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/archive/b5aa0fbd538984f6e3d201be0005b4463d8b09f8.tar.gz";
 
   pkgs = import nixpkgs {
     config = {
