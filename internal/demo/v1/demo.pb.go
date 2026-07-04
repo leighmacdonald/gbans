@@ -24,6 +24,94 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type GetDemoRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DemoId        *int32                 `protobuf:"varint,1,opt,name=demo_id,json=demoId" json:"demo_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDemoRequest) Reset() {
+	*x = GetDemoRequest{}
+	mi := &file_demo_v1_demo_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDemoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDemoRequest) ProtoMessage() {}
+
+func (x *GetDemoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_demo_v1_demo_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDemoRequest.ProtoReflect.Descriptor instead.
+func (*GetDemoRequest) Descriptor() ([]byte, []int) {
+	return file_demo_v1_demo_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *GetDemoRequest) GetDemoId() int32 {
+	if x != nil && x.DemoId != nil {
+		return *x.DemoId
+	}
+	return 0
+}
+
+type GetDemoResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Demo          *Demo                  `protobuf:"bytes,1,opt,name=demo" json:"demo,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDemoResponse) Reset() {
+	*x = GetDemoResponse{}
+	mi := &file_demo_v1_demo_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDemoResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDemoResponse) ProtoMessage() {}
+
+func (x *GetDemoResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_demo_v1_demo_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDemoResponse.ProtoReflect.Descriptor instead.
+func (*GetDemoResponse) Descriptor() ([]byte, []int) {
+	return file_demo_v1_demo_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *GetDemoResponse) GetDemo() *Demo {
+	if x != nil {
+		return x.Demo
+	}
+	return nil
+}
+
 type GetDemosResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Demos         []*Demo                `protobuf:"bytes,1,rep,name=demos" json:"demos,omitempty"`
@@ -33,7 +121,7 @@ type GetDemosResponse struct {
 
 func (x *GetDemosResponse) Reset() {
 	*x = GetDemosResponse{}
-	mi := &file_demo_v1_demo_proto_msgTypes[0]
+	mi := &file_demo_v1_demo_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -45,7 +133,7 @@ func (x *GetDemosResponse) String() string {
 func (*GetDemosResponse) ProtoMessage() {}
 
 func (x *GetDemosResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_demo_v1_demo_proto_msgTypes[0]
+	mi := &file_demo_v1_demo_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +146,7 @@ func (x *GetDemosResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDemosResponse.ProtoReflect.Descriptor instead.
 func (*GetDemosResponse) Descriptor() ([]byte, []int) {
-	return file_demo_v1_demo_proto_rawDescGZIP(), []int{0}
+	return file_demo_v1_demo_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetDemosResponse) GetDemos() []*Demo {
@@ -88,7 +176,7 @@ type Demo struct {
 
 func (x *Demo) Reset() {
 	*x = Demo{}
-	mi := &file_demo_v1_demo_proto_msgTypes[1]
+	mi := &file_demo_v1_demo_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -100,7 +188,7 @@ func (x *Demo) String() string {
 func (*Demo) ProtoMessage() {}
 
 func (x *Demo) ProtoReflect() protoreflect.Message {
-	mi := &file_demo_v1_demo_proto_msgTypes[1]
+	mi := &file_demo_v1_demo_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -113,7 +201,7 @@ func (x *Demo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Demo.ProtoReflect.Descriptor instead.
 func (*Demo) Descriptor() ([]byte, []int) {
-	return file_demo_v1_demo_proto_rawDescGZIP(), []int{1}
+	return file_demo_v1_demo_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Demo) GetDemoId() int32 {
@@ -204,7 +292,12 @@ var File_demo_v1_demo_proto protoreflect.FileDescriptor
 
 const file_demo_v1_demo_proto_rawDesc = "" +
 	"\n" +
-	"\x12demo/v1/demo.proto\x12\ademo.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"?\n" +
+	"\x12demo/v1/demo.proto\x12\ademo.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"5\n" +
+	"\x0eGetDemoRequest\x12#\n" +
+	"\ademo_id\x18\x01 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x06demoId\"<\n" +
+	"\x0fGetDemoResponse\x12)\n" +
+	"\x04demo\x18\x01 \x01(\v2\r.demo.v1.DemoB\x06\xbaH\x03\xc8\x01\x01R\x04demo\"?\n" +
 	"\x10GetDemosResponse\x12+\n" +
 	"\x05demos\x18\x01 \x03(\v2\r.demo.v1.DemoB\x06\xbaH\x03\xc8\x01\x01R\x05demos\"\xb8\x04\n" +
 	"\x04Demo\x12#\n" +
@@ -227,8 +320,9 @@ const file_demo_v1_demo_proto_rawDesc = "" +
 	"\n" +
 	"StatsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012\x8a\x01\n" +
-	"\vDemoService\x12=\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012\xc8\x01\n" +
+	"\vDemoService\x12<\n" +
+	"\aGetDemo\x12\x17.demo.v1.GetDemoRequest\x1a\x18.demo.v1.GetDemoResponse\x12=\n" +
 	"\bGetDemos\x12\x16.google.protobuf.Empty\x1a\x19.demo.v1.GetDemosResponse\x12<\n" +
 	"\n" +
 	"RunCleanup\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.EmptyB\x8e\x01\n" +
@@ -246,27 +340,32 @@ func file_demo_v1_demo_proto_rawDescGZIP() []byte {
 	return file_demo_v1_demo_proto_rawDescData
 }
 
-var file_demo_v1_demo_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_demo_v1_demo_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_demo_v1_demo_proto_goTypes = []any{
-	(*GetDemosResponse)(nil),      // 0: demo.v1.GetDemosResponse
-	(*Demo)(nil),                  // 1: demo.v1.Demo
-	nil,                           // 2: demo.v1.Demo.StatsEntry
-	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),         // 4: google.protobuf.Empty
+	(*GetDemoRequest)(nil),        // 0: demo.v1.GetDemoRequest
+	(*GetDemoResponse)(nil),       // 1: demo.v1.GetDemoResponse
+	(*GetDemosResponse)(nil),      // 2: demo.v1.GetDemosResponse
+	(*Demo)(nil),                  // 3: demo.v1.Demo
+	nil,                           // 4: demo.v1.Demo.StatsEntry
+	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),         // 6: google.protobuf.Empty
 }
 var file_demo_v1_demo_proto_depIdxs = []int32{
-	1, // 0: demo.v1.GetDemosResponse.demos:type_name -> demo.v1.Demo
-	3, // 1: demo.v1.Demo.created_on:type_name -> google.protobuf.Timestamp
-	2, // 2: demo.v1.Demo.stats:type_name -> demo.v1.Demo.StatsEntry
-	4, // 3: demo.v1.DemoService.GetDemos:input_type -> google.protobuf.Empty
-	4, // 4: demo.v1.DemoService.RunCleanup:input_type -> google.protobuf.Empty
-	0, // 5: demo.v1.DemoService.GetDemos:output_type -> demo.v1.GetDemosResponse
-	4, // 6: demo.v1.DemoService.RunCleanup:output_type -> google.protobuf.Empty
-	5, // [5:7] is the sub-list for method output_type
-	3, // [3:5] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	3, // 0: demo.v1.GetDemoResponse.demo:type_name -> demo.v1.Demo
+	3, // 1: demo.v1.GetDemosResponse.demos:type_name -> demo.v1.Demo
+	5, // 2: demo.v1.Demo.created_on:type_name -> google.protobuf.Timestamp
+	4, // 3: demo.v1.Demo.stats:type_name -> demo.v1.Demo.StatsEntry
+	0, // 4: demo.v1.DemoService.GetDemo:input_type -> demo.v1.GetDemoRequest
+	6, // 5: demo.v1.DemoService.GetDemos:input_type -> google.protobuf.Empty
+	6, // 6: demo.v1.DemoService.RunCleanup:input_type -> google.protobuf.Empty
+	1, // 7: demo.v1.DemoService.GetDemo:output_type -> demo.v1.GetDemoResponse
+	2, // 8: demo.v1.DemoService.GetDemos:output_type -> demo.v1.GetDemosResponse
+	6, // 9: demo.v1.DemoService.RunCleanup:output_type -> google.protobuf.Empty
+	7, // [7:10] is the sub-list for method output_type
+	4, // [4:7] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_demo_v1_demo_proto_init() }
@@ -280,7 +379,7 @@ func file_demo_v1_demo_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_demo_v1_demo_proto_rawDesc), len(file_demo_v1_demo_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

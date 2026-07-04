@@ -19,21 +19,22 @@ func NewRepository(database database.Database) Repository {
 	return Repository{Database: database}
 }
 
-func (r *Repository) ValidateServer(ctx context.Context, serverID int32) error {
+func (r Repository) ValidateServer(ctx context.Context, serverID int32) error {
 	if serverID == 0 {
 		return ErrServerValidate
 	}
 
-	row := r.QueryRow(ctx, `SELECT server_id FROM server WHERE server_id = $1`, serverID)
 	var serverIDScan int32
-	if errQuery := row.Scan(&serverIDScan); errQuery != nil {
+	if errQuery := r.
+		QueryRow(ctx, `SELECT server_id FROM server WHERE server_id = $1`, serverID).
+		Scan(&serverIDScan); errQuery != nil {
 		return errors.Join(errQuery, ErrServerValidate)
 	}
 
 	return nil
 }
 
-func (r *Repository) ExpiredDemos(ctx context.Context, limit uint64) ([]Info, error) {
+func (r Repository) ExpiredDemos(ctx context.Context, limit uint64) ([]Info, error) {
 	rows, errRow := r.QueryBuilder(ctx, r.Builder().
 		Select("d.demo_id", "d.title", "d.asset_id").
 		From("demo d").
@@ -60,9 +61,9 @@ func (r *Repository) ExpiredDemos(ctx context.Context, limit uint64) ([]Info, er
 	return demos, nil
 }
 
-func (r *Repository) GetDemoByColumn(ctx context.Context, key string, value any) (*File, error) {
+func (r Repository) GetDemoByColumn(ctx context.Context, key string, value any) (*File, error) {
 	var demoFile File
-	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
+	row, errRow := r.Database.QueryRowBuilder(ctx, r.Builder().
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
 			"d.map_name", "d.archive", "d.stats", "d.asset_id", "a.size", "s.short_name", "s.name").
 		From("demo d").
@@ -89,19 +90,19 @@ func (r *Repository) GetDemoByColumn(ctx context.Context, key string, value any)
 	return &demoFile, nil
 }
 
-func (r *Repository) GetDemoByAssetID(ctx context.Context, assetID uuid.UUID) (*File, error) {
+func (r Repository) GetDemoByAssetID(ctx context.Context, assetID uuid.UUID) (*File, error) {
 	return r.GetDemoByColumn(ctx, "a.asset_id", assetID)
 }
 
-func (r *Repository) GetDemoByID(ctx context.Context, demoID int32) (*File, error) {
+func (r Repository) GetDemoByID(ctx context.Context, demoID int32) (*File, error) {
 	return r.GetDemoByColumn(ctx, "d.demo_id", demoID)
 }
 
-func (r *Repository) GetDemoByName(ctx context.Context, demoName string) (*File, error) {
+func (r Repository) GetDemoByName(ctx context.Context, demoName string) (*File, error) {
 	return r.GetDemoByColumn(ctx, "d.title", demoName)
 }
 
-func (r *Repository) GetDemos(ctx context.Context) ([]File, error) {
+func (r Repository) GetDemos(ctx context.Context) ([]File, error) {
 	var demos []File
 
 	builder := r.Builder().
@@ -149,7 +150,7 @@ func (r *Repository) GetDemos(ctx context.Context) ([]File, error) {
 	return demos, nil
 }
 
-func (r *Repository) SaveDemo(ctx context.Context, demoFile *File) error {
+func (r Repository) SaveDemo(ctx context.Context, demoFile *File) error {
 	var err error
 	if demoFile.DemoID > 0 {
 		err = r.updateDemo(ctx, demoFile)
@@ -160,7 +161,7 @@ func (r *Repository) SaveDemo(ctx context.Context, demoFile *File) error {
 	return database.Err(err)
 }
 
-func (r *Repository) insertDemo(ctx context.Context, demoFile *File) error {
+func (r Repository) insertDemo(ctx context.Context, demoFile *File) error {
 	query, args, errQueryArgs := r.Builder().
 		Insert("demo").
 		Columns("server_id", "title", "created_on", "downloads", "map_name", "archive", "stats", "asset_id").
@@ -180,7 +181,7 @@ func (r *Repository) insertDemo(ctx context.Context, demoFile *File) error {
 	return nil
 }
 
-func (r *Repository) updateDemo(ctx context.Context, demoFile *File) error {
+func (r Repository) updateDemo(ctx context.Context, demoFile *File) error {
 	query := r.Builder().
 		Update("demo").
 		Set("title", demoFile.Title).
@@ -198,7 +199,7 @@ func (r *Repository) updateDemo(ctx context.Context, demoFile *File) error {
 	return nil
 }
 
-func (r *Repository) Delete(ctx context.Context, demoID int32) error {
+func (r Repository) Delete(ctx context.Context, demoID int32) error {
 	const query = `DELETE FROM demo WHERE demo_id = $1`
 	if err := r.Exec(ctx, query, demoID); err != nil {
 		return database.Err(err)

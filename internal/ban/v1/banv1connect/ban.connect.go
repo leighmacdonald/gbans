@@ -40,6 +40,9 @@ const (
 	BanServiceDeleteProcedure = "/ban.v1.BanService/Delete"
 	// BanServiceGetProcedure is the fully-qualified name of the BanService's Get RPC.
 	BanServiceGetProcedure = "/ban.v1.BanService/Get"
+	// BanServiceGetBanByReportIDProcedure is the fully-qualified name of the BanService's
+	// GetBanByReportID RPC.
+	BanServiceGetBanByReportIDProcedure = "/ban.v1.BanService/GetBanByReportID"
 	// BanServiceQuerySourceBansProcedure is the fully-qualified name of the BanService's
 	// QuerySourceBans RPC.
 	BanServiceQuerySourceBansProcedure = "/ban.v1.BanService/QuerySourceBans"
@@ -55,6 +58,7 @@ type BanServiceClient interface {
 	// rpc ExportValve(google.protobuf.Empty) returns (ExportValveResponse) {}
 	Delete(context.Context, *v1.DeleteRequest) (*emptypb.Empty, error)
 	Get(context.Context, *v1.GetRequest) (*v1.GetResponse, error)
+	GetBanByReportID(context.Context, *v1.GetBanByReportIDRequest) (*v1.GetBanByReportIDResponse, error)
 	QuerySourceBans(context.Context, *v1.QuerySourceBansRequest) (*v1.QuerySourceBansResponse, error)
 	Update(context.Context, *v1.UpdateRequest) (*v1.UpdateResponse, error)
 	Create(context.Context, *v1.CreateRequest) (*v1.CreateResponse, error)
@@ -89,6 +93,12 @@ func NewBanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(banServiceMethods.ByName("Get")),
 			connect.WithClientOptions(opts...),
 		),
+		getBanByReportID: connect.NewClient[v1.GetBanByReportIDRequest, v1.GetBanByReportIDResponse](
+			httpClient,
+			baseURL+BanServiceGetBanByReportIDProcedure,
+			connect.WithSchema(banServiceMethods.ByName("GetBanByReportID")),
+			connect.WithClientOptions(opts...),
+		),
 		querySourceBans: connect.NewClient[v1.QuerySourceBansRequest, v1.QuerySourceBansResponse](
 			httpClient,
 			baseURL+BanServiceQuerySourceBansProcedure,
@@ -112,12 +122,13 @@ func NewBanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 
 // banServiceClient implements BanServiceClient.
 type banServiceClient struct {
-	query           *connect.Client[v1.QueryRequest, v1.QueryResponse]
-	delete          *connect.Client[v1.DeleteRequest, emptypb.Empty]
-	get             *connect.Client[v1.GetRequest, v1.GetResponse]
-	querySourceBans *connect.Client[v1.QuerySourceBansRequest, v1.QuerySourceBansResponse]
-	update          *connect.Client[v1.UpdateRequest, v1.UpdateResponse]
-	create          *connect.Client[v1.CreateRequest, v1.CreateResponse]
+	query            *connect.Client[v1.QueryRequest, v1.QueryResponse]
+	delete           *connect.Client[v1.DeleteRequest, emptypb.Empty]
+	get              *connect.Client[v1.GetRequest, v1.GetResponse]
+	getBanByReportID *connect.Client[v1.GetBanByReportIDRequest, v1.GetBanByReportIDResponse]
+	querySourceBans  *connect.Client[v1.QuerySourceBansRequest, v1.QuerySourceBansResponse]
+	update           *connect.Client[v1.UpdateRequest, v1.UpdateResponse]
+	create           *connect.Client[v1.CreateRequest, v1.CreateResponse]
 }
 
 // Query calls ban.v1.BanService.Query.
@@ -141,6 +152,15 @@ func (c *banServiceClient) Delete(ctx context.Context, req *v1.DeleteRequest) (*
 // Get calls ban.v1.BanService.Get.
 func (c *banServiceClient) Get(ctx context.Context, req *v1.GetRequest) (*v1.GetResponse, error) {
 	response, err := c.get.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// GetBanByReportID calls ban.v1.BanService.GetBanByReportID.
+func (c *banServiceClient) GetBanByReportID(ctx context.Context, req *v1.GetBanByReportIDRequest) (*v1.GetBanByReportIDResponse, error) {
+	response, err := c.getBanByReportID.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -180,6 +200,7 @@ type BanServiceHandler interface {
 	// rpc ExportValve(google.protobuf.Empty) returns (ExportValveResponse) {}
 	Delete(context.Context, *v1.DeleteRequest) (*emptypb.Empty, error)
 	Get(context.Context, *v1.GetRequest) (*v1.GetResponse, error)
+	GetBanByReportID(context.Context, *v1.GetBanByReportIDRequest) (*v1.GetBanByReportIDResponse, error)
 	QuerySourceBans(context.Context, *v1.QuerySourceBansRequest) (*v1.QuerySourceBansResponse, error)
 	Update(context.Context, *v1.UpdateRequest) (*v1.UpdateResponse, error)
 	Create(context.Context, *v1.CreateRequest) (*v1.CreateResponse, error)
@@ -210,6 +231,12 @@ func NewBanServiceHandler(svc BanServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(banServiceMethods.ByName("Get")),
 		connect.WithHandlerOptions(opts...),
 	)
+	banServiceGetBanByReportIDHandler := connect.NewUnaryHandlerSimple(
+		BanServiceGetBanByReportIDProcedure,
+		svc.GetBanByReportID,
+		connect.WithSchema(banServiceMethods.ByName("GetBanByReportID")),
+		connect.WithHandlerOptions(opts...),
+	)
 	banServiceQuerySourceBansHandler := connect.NewUnaryHandlerSimple(
 		BanServiceQuerySourceBansProcedure,
 		svc.QuerySourceBans,
@@ -236,6 +263,8 @@ func NewBanServiceHandler(svc BanServiceHandler, opts ...connect.HandlerOption) 
 			banServiceDeleteHandler.ServeHTTP(w, r)
 		case BanServiceGetProcedure:
 			banServiceGetHandler.ServeHTTP(w, r)
+		case BanServiceGetBanByReportIDProcedure:
+			banServiceGetBanByReportIDHandler.ServeHTTP(w, r)
 		case BanServiceQuerySourceBansProcedure:
 			banServiceQuerySourceBansHandler.ServeHTTP(w, r)
 		case BanServiceUpdateProcedure:
@@ -261,6 +290,10 @@ func (UnimplementedBanServiceHandler) Delete(context.Context, *v1.DeleteRequest)
 
 func (UnimplementedBanServiceHandler) Get(context.Context, *v1.GetRequest) (*v1.GetResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.BanService.Get is not implemented"))
+}
+
+func (UnimplementedBanServiceHandler) GetBanByReportID(context.Context, *v1.GetBanByReportIDRequest) (*v1.GetBanByReportIDResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.BanService.GetBanByReportID is not implemented"))
 }
 
 func (UnimplementedBanServiceHandler) QuerySourceBans(context.Context, *v1.QuerySourceBansRequest) (*v1.QuerySourceBansResponse, error) {

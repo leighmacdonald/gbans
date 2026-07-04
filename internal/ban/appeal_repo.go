@@ -18,7 +18,7 @@ func NewAppealRepository(database database.Database) AppealRepository {
 	return AppealRepository{Database: database}
 }
 
-func (r *AppealRepository) ByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, error) {
+func (r AppealRepository) ByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, error) {
 	constraints := sq.And{sq.Gt{"m.count": 0}}
 
 	if !opts.Deleted {
@@ -87,7 +87,7 @@ func (r *AppealRepository) ByActivity(ctx context.Context, opts AppealQueryFilte
 	return overviews, nil
 }
 
-func (r *AppealRepository) SaveMessage(ctx context.Context, message *AppealMessage) error {
+func (r AppealRepository) SaveMessage(ctx context.Context, message *AppealMessage) error {
 	var err error
 	if message.BanMessageID > 0 {
 		err = r.updateBanMessage(ctx, message)
@@ -98,7 +98,7 @@ func (r *AppealRepository) SaveMessage(ctx context.Context, message *AppealMessa
 	return err
 }
 
-func (r *AppealRepository) updateBanMessage(ctx context.Context, message *AppealMessage) error {
+func (r AppealRepository) updateBanMessage(ctx context.Context, message *AppealMessage) error {
 	message.UpdatedOn = time.Now()
 
 	query := r.Builder().
@@ -116,7 +116,7 @@ func (r *AppealRepository) updateBanMessage(ctx context.Context, message *Appeal
 	return nil
 }
 
-func (r *AppealRepository) insertBanMessage(ctx context.Context, message *AppealMessage) error {
+func (r AppealRepository) insertBanMessage(ctx context.Context, message *AppealMessage) error {
 	const query = `
 	INSERT INTO ban_appeal (
 		ban_id, author_id, message_md, deleted, created_on, updated_on
@@ -139,7 +139,7 @@ func (r *AppealRepository) insertBanMessage(ctx context.Context, message *Appeal
 	return nil
 }
 
-func (r *AppealRepository) Messages(ctx context.Context, banID int32) ([]AppealMessage, error) {
+func (r AppealRepository) Messages(ctx context.Context, banID int32) ([]AppealMessage, error) {
 	query := r.Builder().
 		Select("a.ban_message_id", "a.ban_id", "a.author_id", "a.message_md", "a.deleted",
 			"a.created_on", "a.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").
@@ -192,7 +192,7 @@ func (r *AppealRepository) Messages(ctx context.Context, banID int32) ([]AppealM
 	return messages, nil
 }
 
-func (r *AppealRepository) MessageByID(ctx context.Context, banMessageID int64) (AppealMessage, error) {
+func (r AppealRepository) MessageByID(ctx context.Context, banMessageID int64) (AppealMessage, error) {
 	query := r.Builder().
 		Select("a.ban_message_id", "a.ban_id", "a.author_id", "a.message_md", "a.deleted", "a.created_on",
 			"a.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").
@@ -230,7 +230,7 @@ func (r *AppealRepository) MessageByID(ctx context.Context, banMessageID int64) 
 	return message, nil
 }
 
-func (r *AppealRepository) DropMessage(ctx context.Context, message *AppealMessage) error {
+func (r AppealRepository) DropMessage(ctx context.Context, message *AppealMessage) error {
 	query := r.Builder().
 		Update("ban_appeal").
 		Set("deleted", true).

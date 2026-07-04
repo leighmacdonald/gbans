@@ -83,7 +83,7 @@ function ChatLogs() {
 	const theme = useTheme();
 
 	const serversSorted = useMemo(() => {
-		return serverList?.servers.toSorted((a, b) => a.serverId - b.serverId) ?? [];
+		return serverList?.servers.toSorted((a, b) => a.serverName.localeCompare(b.serverName)) ?? [];
 	}, [serverList]);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
@@ -314,7 +314,7 @@ function ChatLogs() {
 		},
 		renderRowActions: ({ row }) => (
 			<RowActionContainer>
-				<Tooltip title={"Create Report"} key={1}>
+				<Tooltip title={"Create Report"} key={`report-${row.original.personMessageId}`}>
 					<IconButtonLink
 						color={"error"}
 						disabled={row.original.autoFilterFlagged > 0}

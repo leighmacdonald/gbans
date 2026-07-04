@@ -30,12 +30,12 @@ import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<ServerLog>();
 const defaultOptions = createDefaultTableOptions<ServerLog>();
-const defaultValues = { ...makeSchemaDefaults({ defaultColumn: "personMessageId" }), serverIds: [] };
+const defaultValues = { ...makeSchemaDefaults({ defaultColumn: "createdOn" }), serverIds: [] };
 const validateSearch = z
 	.object({
 		serverIds: z.number().array().optional().default([]),
 	})
-	.extend(makeSchemaState("personMessageId").shape);
+	.extend(makeSchemaState("createdOn").shape);
 
 export const Route = createFileRoute("/_admin/admin/serverlogs")({
 	validateSearch,

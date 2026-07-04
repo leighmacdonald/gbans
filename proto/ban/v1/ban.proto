@@ -45,9 +45,18 @@ service BanService {
   // rpc ExportValve(google.protobuf.Empty) returns (ExportValveResponse) {}
   rpc Delete(DeleteRequest) returns (google.protobuf.Empty) {}
   rpc Get(GetRequest) returns (GetResponse) {}
+  rpc GetBanByReportID(GetBanByReportIDRequest) returns (GetBanByReportIDResponse) {}
   rpc QuerySourceBans(QuerySourceBansRequest) returns (QuerySourceBansResponse) {}
   rpc Update(UpdateRequest) returns (UpdateResponse) {}
   rpc Create(CreateRequest) returns (CreateResponse) {}
+}
+
+message GetBanByReportIDRequest {
+  int32 report_id = 1 [(buf.validate.field).required = true];
+}
+
+message GetBanByReportIDResponse {
+  Ban ban = 1 [(buf.validate.field).required = true];
 }
 
 message CreateRequest {

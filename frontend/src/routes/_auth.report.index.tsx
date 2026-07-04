@@ -323,7 +323,7 @@ const ReportCreateForm = (): JSX.Element => {
 							name={"reason"}
 							children={(field) => {
 								return (
-									<field.BanReasonField
+									<field.SelectBanReasonField
 										label={"Ban Reason"}
 										items={enumValues(BanReason)}
 										handleChange={(value) => {

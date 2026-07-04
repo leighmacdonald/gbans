@@ -15,6 +15,7 @@ import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { ReportStatus } from "../rpc/ban/v1/report_pb.ts";
 import { report, reportStatusEdit } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
 import { enumValues } from "../util/lists.ts";
+import { toTitleCase } from "../util/strings.ts";
 import { ContainerWithHeader } from "./ContainerWithHeader";
 import { ErrorDetails } from "./ErrorDetails.tsx";
 import { LoadingPlaceholder } from "./LoadingPlaceholder.tsx";
@@ -94,13 +95,13 @@ export const ReportModPanel = ({ reportId }: { reportId: number }) => {
 								name={"reportStatus"}
 								children={(field) => {
 									return (
-										<field.ReportStatusField
+										<field.SelectReportStatusField
 											label={"Report State"}
 											items={enumValues(ReportStatus)}
 											renderItem={(i) => {
 												return (
 													<MenuItem key={i} value={i}>
-														{ReportStatus[i]}
+														{toTitleCase(ReportStatus[i])}
 													</MenuItem>
 												);
 											}}

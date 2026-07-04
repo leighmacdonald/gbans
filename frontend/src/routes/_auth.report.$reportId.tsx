@@ -17,6 +17,7 @@ import Typography from "@mui/material/Typography";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
+import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { ProfileInfoBox } from "../component/ProfileInfoBox.tsx";
 import { ReportModPanel } from "../component/ReportModPanel.tsx";
 import { ReportViewComponent } from "../component/ReportViewComponent.tsx";
@@ -24,9 +25,10 @@ import RouterLink from "../component/RouterLink.tsx";
 import { SteamIDList } from "../component/SteamIDList.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { AppealState, BanReason, BanType } from "../rpc/ban/v1/ban_pb.ts";
-import { get } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
+import { getBanByReportID } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
 import { ReportStatus } from "../rpc/ban/v1/report_pb.ts";
 import { report } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
+import { getDemo } from "../rpc/demo/v1/demo-DemoService_connectquery.ts";
 import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { avatarHashToURL, reportStatusColour, reportStatusString } from "../util/strings.ts";
 import { renderTimeDistance, renderTimestamp } from "../util/time.ts";
@@ -48,71 +50,17 @@ function ReportView() {
 	const theme = useTheme();
 	const navigate = useNavigate();
 
-	const { data: reportResp, isLoading } = useQuery(report, { reportId: Number(reportId) });
+	const { data: reportResp, isLoading: isLoadingReport } = useQuery(report, { reportId: Number(reportId) });
 
-	const { data: ban, isLoading: isLoadingBan } = useQuery(
-		get,
-		{},
-		{ enabled: Boolean(reportResp?.report?.subject?.steamId) },
+	const { data: demoResp, isLoading: isLoadingDemo } = useQuery(
+		getDemo,
+		{
+			demoId: Number(reportResp?.report?.report?.demoId),
+		},
+		{ enabled: Boolean(reportResp?.report?.report?.demoId) },
 	);
 
-	const renderBan = useMemo(() => {
-		if (isLoading || isLoadingBan || !ban?.ban || ban.ban?.banId === 0) {
-			return;
-		}
-
-		return (
-			<ContainerWithHeader
-				title={ban.ban.banType === BanType.BANNED ? "Banned" : "Muted"}
-				iconLeft={ban.ban.banType === BanType.BANNED ? <GavelIcon /> : <VolumeOffIcon />}
-			>
-				<List dense={true}>
-					<ListItem>
-						<ListItemText primary={"Reason"} secondary={BanReason[ban.ban.reason]} />
-					</ListItem>
-					{ban.ban.reasonText !== "" && (
-						<ListItem>
-							<ListItemText primary={"Custom Reason"} secondary={ban.ban.note} />
-						</ListItem>
-					)}
-					<ListItem>
-						<ListItemText primary={"Ban ID"} secondary={ban.ban.banId} />
-					</ListItem>
-					<ListItem>
-						<ListItemText primary={"Note"} secondary={ban.ban.note} />
-					</ListItem>
-					<ListItem>
-						<ListItemText primary={"Evasion OK"} secondary={ban.ban.evadeOk ? "Yes" : "No"} />
-					</ListItem>
-					<ListItem>
-						<ListItemText primary={"Appeal State"} secondary={AppealState[ban.ban.appealState]} />
-					</ListItem>
-					<ListItem>
-						<ListItemText primary={"Creation Date"} secondary={renderTimestamp(ban.ban.createdOn)} />
-					</ListItem>
-					<ListItem>
-						<ListItemText primary={"Valid Until Date"} secondary={renderTimestamp(ban.ban.validUntil)} />
-					</ListItem>
-					<ListItem>
-						<ListItemText
-							primary={"Expires"}
-							secondary={renderTimeDistance(timestampDate(ban.ban.validUntil as Timestamp), new Date())}
-						/>
-					</ListItem>
-					<ListItem>
-						<ListItemText
-							primary={"Author"}
-							secondary={
-								<Link component={RouterLink} to={`/profile/${ban.ban.sourceId}`}>
-									{ban.ban.sourcePersonaName}
-								</Link>
-							}
-						/>
-					</ListItem>
-				</List>
-			</ContainerWithHeader>
-		);
-	}, [ban, isLoadingBan, isLoading]);
+	const { data: banResp, isLoading: isLoadingBan } = useQuery(getBanByReportID, { reportId: Number(reportId) });
 
 	const reportStatusView = useMemo(() => {
 		return (
@@ -135,6 +83,12 @@ function ReportView() {
 		);
 	}, [reportResp?.report?.report?.reportStatus, theme]);
 
+	if (isLoadingReport || isLoadingBan) {
+		return <LoadingPlaceholder />;
+	}
+	if (!reportResp) {
+		return null;
+	}
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12, md: 8 }}>
@@ -148,7 +102,87 @@ function ReportView() {
 								<ProfileInfoBox steamId={reportResp?.report?.report?.targetId} />
 							)}
 						</Grid>
-						{renderBan && <Grid size={{ xs: 6, md: 12 }}>{renderBan}</Grid>}
+						{banResp?.ban && (
+							<Grid size={{ xs: 6, md: 12 }}>
+								<ContainerWithHeader
+									title={banResp.ban.banType === BanType.BANNED ? "Banned" : "Muted"}
+									iconLeft={
+										banResp.ban.banType === BanType.BANNED ? <GavelIcon /> : <VolumeOffIcon />
+									}
+								>
+									<List dense={true}>
+										<ListItem>
+											<ListItemText
+												primary={"Reason"}
+												secondary={BanReason[banResp.ban.reason]}
+											/>
+										</ListItem>
+										{banResp.ban.reasonText !== "" && (
+											<ListItem>
+												<ListItemText primary={"Custom Reason"} secondary={banResp.ban.note} />
+											</ListItem>
+										)}
+										<ListItem>
+											<ListItemText primary={"Ban ID"} secondary={banResp.ban.banId} />
+										</ListItem>
+										{banResp.ban.demoId && !isLoadingDemo && (
+											<ListItem>
+												<ListItemText primary={"Demo"} secondary={demoResp?.demo?.title} />
+											</ListItem>
+										)}
+										<ListItem>
+											<ListItemText primary={"Note"} secondary={banResp.ban.note} />
+										</ListItem>
+										<ListItem>
+											<ListItemText
+												primary={"Evasion OK"}
+												secondary={banResp.ban.evadeOk ? "Yes" : "No"}
+											/>
+										</ListItem>
+										<ListItem>
+											<ListItemText
+												primary={"Appeal State"}
+												secondary={AppealState[banResp.ban.appealState]}
+											/>
+										</ListItem>
+										<ListItem>
+											<ListItemText
+												primary={"Creation Date"}
+												secondary={renderTimestamp(banResp.ban.createdOn)}
+											/>
+										</ListItem>
+										<ListItem>
+											<ListItemText
+												primary={"Valid Until Date"}
+												secondary={renderTimestamp(banResp.ban.validUntil)}
+											/>
+										</ListItem>
+										<ListItem>
+											<ListItemText
+												primary={"Expires"}
+												secondary={renderTimeDistance(
+													timestampDate(banResp.ban.validUntil as Timestamp),
+													new Date(),
+												)}
+											/>
+										</ListItem>
+										<ListItem>
+											<ListItemText
+												primary={"Author"}
+												secondary={
+													<Link
+														component={RouterLink}
+														to={`/profile/${banResp.ban.sourceId}`}
+													>
+														{banResp.ban.sourcePersonaName}
+													</Link>
+												}
+											/>
+										</ListItem>
+									</List>
+								</ContainerWithHeader>
+							</Grid>
+						)}
 						<Grid size={{ xs: 6, md: 12 }}>
 							<SteamIDList steamId={reportResp?.report?.report?.sourceId ?? ""} />
 						</Grid>
@@ -174,7 +208,10 @@ function ReportView() {
 												<SendIcon />
 											</Avatar>
 										</ListItemAvatar>
-										<ListItemText primary={reportResp?.report?.author?.name} secondary={"Author"} />
+										<ListItemText
+											primary={reportResp?.report?.author?.name ?? ""}
+											secondary={"Author"}
+										/>
 									</ListItem>
 									{reportResp?.report?.report?.reason && (
 										<ListItem
@@ -187,7 +224,7 @@ function ReportView() {
 										>
 											<ListItemText
 												primary={"Reason"}
-												secondary={BanReason[reportResp?.report?.report?.reason]}
+												secondary={BanReason[reportResp?.report?.report?.reason ?? 0]}
 											/>
 										</ListItem>
 									)}
@@ -203,7 +240,7 @@ function ReportView() {
 											>
 												<ListItemText
 													primary={"Custom Reason"}
-													secondary={reportResp?.report?.report?.reasonText}
+													secondary={reportResp?.report?.report?.reasonText ?? ""}
 												/>
 											</ListItem>
 										)}

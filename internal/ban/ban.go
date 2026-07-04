@@ -211,6 +211,7 @@ type QueryOpts struct {
 	BanID         int32
 	Deleted       bool
 	EvadeOk       bool
+	ReportID      int32
 	Reasons       []reason.Reason
 	Personaname   string
 	CIDR          string

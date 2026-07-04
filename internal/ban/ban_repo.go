@@ -20,7 +20,7 @@ func NewRepository(database database.Database) Repository {
 	return Repository{Database: database}
 }
 
-func (r *Repository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
+func (r Repository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
 	builder := r.Builder().
 		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
 			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.evade_ok",
@@ -65,11 +65,12 @@ func (r *Repository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
 	if len(opts.Reasons) > 0 {
 		ands = append(ands, sq.Eq{"b.reason": opts.Reasons})
 	}
-
+	if opts.ReportID > 0 {
+		ands = append(ands, sq.Eq{"b.report_id": opts.ReportID})
+	}
 	if opts.GroupsOnly {
 		ands = append(ands, sq.GtOrEq{"b.target_id": steamid.BaseGID})
 	}
-
 	if !opts.IncludeGroups {
 		ands = append(ands, sq.Lt{"b.target_id": steamid.BaseGID})
 	}
@@ -117,12 +118,12 @@ func (r *Repository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
 	return bans, nil
 }
 
-func (r *Repository) TruncateCache(ctx context.Context) error {
+func (r Repository) TruncateCache(ctx context.Context) error {
 	// return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.Builder().Delete("steam_friends")))
 	return database.Err(r.ExecDeleteBuilder(ctx, r.Builder().Delete("steam_group_members")))
 }
 
-func (r *Repository) GetMembersList(ctx context.Context, parentID int64, list *MembersList) error {
+func (r Repository) GetMembersList(ctx context.Context, parentID int64, list *MembersList) error {
 	row, err := r.QueryRowBuilder(ctx, r.Builder().
 		Select("members_id", "parent_id", "members", "created_on", "updated_on").
 		From("members").
@@ -134,7 +135,7 @@ func (r *Repository) GetMembersList(ctx context.Context, parentID int64, list *M
 	return database.Err(row.Scan(&list.MembersID, &list.ParentID, &list.Members, &list.CreatedOn, &list.UpdatedOn))
 }
 
-func (r *Repository) SaveMembersList(ctx context.Context, list *MembersList) error {
+func (r Repository) SaveMembersList(ctx context.Context, list *MembersList) error {
 	if list.MembersID > 0 {
 		list.UpdatedOn = time.Now()
 
@@ -149,7 +150,7 @@ func (r *Repository) SaveMembersList(ctx context.Context, list *MembersList) err
 	return database.Err(r.QueryRow(ctx, insert, list.ParentID, list.Members, list.CreatedOn, list.UpdatedOn).Scan(&list.MembersID))
 }
 
-func (r *Repository) InsertCache(ctx context.Context, groupID steamid.SteamID, entries []int64) error {
+func (r Repository) InsertCache(ctx context.Context, groupID steamid.SteamID, entries []int64) error {
 	const sqlQuery = "INSERT INTO steam_group_members (steam_id, group_id, created_on) VALUES ($1, $2, $3)"
 
 	batch := pgx.Batch{}
@@ -167,7 +168,7 @@ func (r *Repository) InsertCache(ctx context.Context, groupID steamid.SteamID, e
 	return nil
 }
 
-func (r *Repository) Stats(ctx context.Context, stats *Stats) error {
+func (r Repository) Stats(ctx context.Context, stats *Stats) error {
 	const sqlQuery = `SELECT
 		(SELECT COUNT(ban_id) FROM ban) as bans_total,
 		(SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 DAY')) as bans_day,
@@ -188,7 +189,7 @@ func (r *Repository) Stats(ctx context.Context, stats *Stats) error {
 	return nil
 }
 
-func (r *Repository) Delete(ctx context.Context, ban *Ban, hardDelete bool) error {
+func (r Repository) Delete(ctx context.Context, ban *Ban, hardDelete bool) error {
 	if hardDelete {
 		if errExec := r.Exec(ctx, `DELETE FROM ban WHERE ban_id = $1`, ban.BanID); errExec != nil {
 			return database.Err(errExec)
@@ -206,7 +207,7 @@ func (r *Repository) Delete(ctx context.Context, ban *Ban, hardDelete bool) erro
 
 // Save will insert or update the ban record
 // New records will have the Ban.BanID set automatically.
-func (r *Repository) Save(ctx context.Context, ban *Ban) error {
+func (r Repository) Save(ctx context.Context, ban *Ban) error {
 	ban.UpdatedOn = time.Now()
 	if ban.BanID > 0 {
 		return r.updateBan(ctx, ban)
@@ -226,7 +227,7 @@ func (r *Repository) Save(ctx context.Context, ban *Ban) error {
 	return r.insertBan(ctx, ban)
 }
 
-func (r *Repository) insertBan(ctx context.Context, ban *Ban) error {
+func (r Repository) insertBan(ctx context.Context, ban *Ban) error {
 	const sqlQuery = `
 		INSERT INTO ban (target_id, source_id, ban_type, reason, reason_text, note, valid_until,
 		                 created_on, updated_on, origin, report_id, appeal_state, evade_ok, last_ip, cidr, demo_id, anticheat_id)
@@ -250,7 +251,7 @@ func (r *Repository) insertBan(ctx context.Context, ban *Ban) error {
 	return nil
 }
 
-func (r *Repository) updateBan(ctx context.Context, ban *Ban) error {
+func (r Repository) updateBan(ctx context.Context, ban *Ban) error {
 	if ban.CIDR != nil && *ban.CIDR == "" {
 		ban.CIDR = nil
 	}
@@ -278,7 +279,7 @@ func (r *Repository) updateBan(ctx context.Context, ban *Ban) error {
 		Where(sq.Eq{"ban_id": ban.BanID})))
 }
 
-func (r *Repository) GetOlderThan(ctx context.Context, filter query.Filter, since time.Time) ([]Ban, error) {
+func (r Repository) GetOlderThan(ctx context.Context, filter query.Filter, since time.Time) ([]Ban, error) {
 	builder := r.Builder().
 		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
 			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.deleted",

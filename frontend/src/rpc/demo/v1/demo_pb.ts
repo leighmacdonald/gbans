@@ -13,7 +13,41 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file demo/v1/demo.proto.
  */
 export const file_demo_v1_demo: GenFile = /*@__PURE__*/
-  fileDesc("ChJkZW1vL3YxL2RlbW8ucHJvdG8SB2RlbW8udjEiOAoQR2V0RGVtb3NSZXNwb25zZRIkCgVkZW1vcxgBIAMoCzINLmRlbW8udjEuRGVtb0IGukgDyAEBIrQDCgREZW1vEhsKB2RlbW9faWQYASABKAVCCrpIB8gBARoCIAASHQoJc2VydmVyX2lkGAIgASgFQgq6SAfIAQEaAiAAEiEKEXNlcnZlcl9uYW1lX3Nob3J0GAMgASgJQga6SAPIAQESIAoQc2VydmVyX25hbWVfbG9uZxgEIAEoCUIGukgDyAEBEhUKBXRpdGxlGAUgASgJQga6SAPIAQESNgoKY3JlYXRlZF9vbhgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARIbCglkb3dubG9hZHMYByABKANCCDABukgDyAEBEhYKBHNpemUYCCABKANCCDABukgDyAEBEhgKCG1hcF9uYW1lGAkgASgJQga6SAPIAQESFwoHYXJjaGl2ZRgKIAEoCEIGukgDyAEBEicKBXN0YXRzGAsgAygLMhguZGVtby52MS5EZW1vLlN0YXRzRW50cnkSHQoIYXNzZXRfaWQYDCABKAlCC7pICMgBAXIDsAEBGiwKClN0YXRzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ATKKAQoLRGVtb1NlcnZpY2USPQoIR2V0RGVtb3MSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaGS5kZW1vLnYxLkdldERlbW9zUmVzcG9uc2USPAoKUnVuQ2xlYW51cBIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eUKOAQoLY29tLmRlbW8udjFCCURlbW9Qcm90b1ABWjdnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL2RlbW8vdjE7ZGVtb3YxogIDRFhYqgIHRGVtby5WMcoCB0RlbW9cVjHiAhNEZW1vXFYxXEdQQk1ldGFkYXRh6gIIRGVtbzo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp]);
+  fileDesc("ChJkZW1vL3YxL2RlbW8ucHJvdG8SB2RlbW8udjEiLQoOR2V0RGVtb1JlcXVlc3QSGwoHZGVtb19pZBgBIAEoBUIKukgHyAEBGgIgACI2Cg9HZXREZW1vUmVzcG9uc2USIwoEZGVtbxgBIAEoCzINLmRlbW8udjEuRGVtb0IGukgDyAEBIjgKEEdldERlbW9zUmVzcG9uc2USJAoFZGVtb3MYASADKAsyDS5kZW1vLnYxLkRlbW9CBrpIA8gBASK0AwoERGVtbxIbCgdkZW1vX2lkGAEgASgFQgq6SAfIAQEaAiAAEh0KCXNlcnZlcl9pZBgCIAEoBUIKukgHyAEBGgIgABIhChFzZXJ2ZXJfbmFtZV9zaG9ydBgDIAEoCUIGukgDyAEBEiAKEHNlcnZlcl9uYW1lX2xvbmcYBCABKAlCBrpIA8gBARIVCgV0aXRsZRgFIAEoCUIGukgDyAEBEjYKCmNyZWF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESGwoJZG93bmxvYWRzGAcgASgDQggwAbpIA8gBARIWCgRzaXplGAggASgDQggwAbpIA8gBARIYCghtYXBfbmFtZRgJIAEoCUIGukgDyAEBEhcKB2FyY2hpdmUYCiABKAhCBrpIA8gBARInCgVzdGF0cxgLIAMoCzIYLmRlbW8udjEuRGVtby5TdGF0c0VudHJ5Eh0KCGFzc2V0X2lkGAwgASgJQgu6SAjIAQFyA7ABARosCgpTdGF0c0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEyyAEKC0RlbW9TZXJ2aWNlEjwKB0dldERlbW8SFy5kZW1vLnYxLkdldERlbW9SZXF1ZXN0GhguZGVtby52MS5HZXREZW1vUmVzcG9uc2USPQoIR2V0RGVtb3MSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaGS5kZW1vLnYxLkdldERlbW9zUmVzcG9uc2USPAoKUnVuQ2xlYW51cBIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eUKOAQoLY29tLmRlbW8udjFCCURlbW9Qcm90b1ABWjdnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL2RlbW8vdjE7ZGVtb3YxogIDRFhYqgIHRGVtby5WMcoCB0RlbW9cVjHiAhNEZW1vXFYxXEdQQk1ldGFkYXRh6gIIRGVtbzo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp]);
+
+/**
+ * @generated from message demo.v1.GetDemoRequest
+ */
+export type GetDemoRequest = Message<"demo.v1.GetDemoRequest"> & {
+  /**
+   * @generated from field: int32 demo_id = 1;
+   */
+  demoId: number;
+};
+
+/**
+ * Describes the message demo.v1.GetDemoRequest.
+ * Use `create(GetDemoRequestSchema)` to create a new message.
+ */
+export const GetDemoRequestSchema: GenMessage<GetDemoRequest> = /*@__PURE__*/
+  messageDesc(file_demo_v1_demo, 0);
+
+/**
+ * @generated from message demo.v1.GetDemoResponse
+ */
+export type GetDemoResponse = Message<"demo.v1.GetDemoResponse"> & {
+  /**
+   * @generated from field: demo.v1.Demo demo = 1;
+   */
+  demo?: Demo | undefined;
+};
+
+/**
+ * Describes the message demo.v1.GetDemoResponse.
+ * Use `create(GetDemoResponseSchema)` to create a new message.
+ */
+export const GetDemoResponseSchema: GenMessage<GetDemoResponse> = /*@__PURE__*/
+  messageDesc(file_demo_v1_demo, 1);
 
 /**
  * @generated from message demo.v1.GetDemosResponse
@@ -30,7 +64,7 @@ export type GetDemosResponse = Message<"demo.v1.GetDemosResponse"> & {
  * Use `create(GetDemosResponseSchema)` to create a new message.
  */
 export const GetDemosResponseSchema: GenMessage<GetDemosResponse> = /*@__PURE__*/
-  messageDesc(file_demo_v1_demo, 0);
+  messageDesc(file_demo_v1_demo, 2);
 
 /**
  * @generated from message demo.v1.Demo
@@ -102,12 +136,20 @@ export type Demo = Message<"demo.v1.Demo"> & {
  * Use `create(DemoSchema)` to create a new message.
  */
 export const DemoSchema: GenMessage<Demo> = /*@__PURE__*/
-  messageDesc(file_demo_v1_demo, 1);
+  messageDesc(file_demo_v1_demo, 3);
 
 /**
  * @generated from service demo.v1.DemoService
  */
 export const DemoService: GenService<{
+  /**
+   * @generated from rpc demo.v1.DemoService.GetDemo
+   */
+  getDemo: {
+    methodKind: "unary";
+    input: typeof GetDemoRequestSchema;
+    output: typeof GetDemoResponseSchema;
+  },
   /**
    * @generated from rpc demo.v1.DemoService.GetDemos
    */

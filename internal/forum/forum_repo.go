@@ -19,7 +19,7 @@ func NewRepository(database database.Database) Repository {
 	return Repository{Database: database}
 }
 
-func (f *Repository) ForumCategories(ctx context.Context) ([]Category, error) {
+func (f Repository) ForumCategories(ctx context.Context) ([]Category, error) {
 	rows, errRows := f.QueryBuilder(ctx, f.Builder().
 		Select("forum_category_id", "title", "description", "ordering", "updated_on", "created_on").
 		From("forum_category").
@@ -44,7 +44,7 @@ func (f *Repository) ForumCategories(ctx context.Context) ([]Category, error) {
 	return categories, nil
 }
 
-func (f *Repository) ForumCategorySave(ctx context.Context, category *Category) error {
+func (f Repository) ForumCategorySave(ctx context.Context, category *Category) error {
 	category.UpdatedOn = time.Now()
 	if category.ForumCategoryID > 0 {
 		return database.Err(f.ExecUpdateBuilder(ctx, f.Builder().
@@ -72,7 +72,7 @@ func (f *Repository) ForumCategorySave(ctx context.Context, category *Category) 
 		Suffix("RETURNING forum_category_id"), &category.ForumCategoryID))
 }
 
-func (f *Repository) ForumCategory(ctx context.Context, categoryID int32, category *Category) error {
+func (f Repository) ForumCategory(ctx context.Context, categoryID int32, category *Category) error {
 	row, errRow := f.QueryRowBuilder(ctx, f.Builder().
 		Select("forum_category_id", "title", "description", "ordering", "created_on", "created_on").
 		From("forum_category").
@@ -85,13 +85,13 @@ func (f *Repository) ForumCategory(ctx context.Context, categoryID int32, catego
 		&category.CreatedOn, &category.UpdatedOn))
 }
 
-func (f *Repository) ForumCategoryDelete(ctx context.Context, categoryID int32) error {
+func (f Repository) ForumCategoryDelete(ctx context.Context, categoryID int32) error {
 	return database.Err(f.ExecDeleteBuilder(ctx, f.Builder().
 		Delete("forum_category").
 		Where(sq.Eq{"forum_category_id": categoryID})))
 }
 
-func (f *Repository) Forums(ctx context.Context) ([]Forum, error) {
+func (f Repository) Forums(ctx context.Context) ([]Forum, error) {
 	fromSelect := f.Builder().
 		Select("DISTINCT ON (s.forum_id) s.forum_id", "s.forum_category_id", "s.title", "s.description", "s.last_thread_id",
 			"s.count_threads", "s.count_messages", "s.ordering", "s.created_on", "s.updated_on", "s.permission_level",
@@ -152,7 +152,7 @@ func (f *Repository) Forums(ctx context.Context) ([]Forum, error) {
 	return forums, nil
 }
 
-func (f *Repository) ForumSave(ctx context.Context, forum *Forum) error {
+func (f Repository) ForumSave(ctx context.Context, forum *Forum) error {
 	forum.UpdatedOn = time.Now()
 
 	var lastThreadID *int32
@@ -197,7 +197,7 @@ func (f *Repository) ForumSave(ctx context.Context, forum *Forum) error {
 		Suffix("RETURNING forum_id"), &forum.ForumID))
 }
 
-func (f *Repository) Forum(ctx context.Context, forumID int32, forum *Forum) error {
+func (f Repository) Forum(ctx context.Context, forumID int32, forum *Forum) error {
 	row, errRow := f.QueryRowBuilder(ctx, f.Builder().
 		Select("forum_id", "forum_category_id", "title", "description", "last_thread_id",
 			"count_threads", "count_messages", "ordering", "created_on", "updated_on", "permission_level").
@@ -221,13 +221,13 @@ func (f *Repository) Forum(ctx context.Context, forumID int32, forum *Forum) err
 	return nil
 }
 
-func (f *Repository) ForumDelete(ctx context.Context, forumID int32) error {
+func (f Repository) ForumDelete(ctx context.Context, forumID int32) error {
 	return database.Err(f.ExecDeleteBuilder(ctx, f.Builder().
 		Delete("forum").
 		Where(sq.Eq{"forum_id": forumID})))
 }
 
-func (f *Repository) ForumThreadSave(ctx context.Context, thread *Thread) error {
+func (f Repository) ForumThreadSave(ctx context.Context, thread *Thread) error {
 	thread.UpdatedOn = time.Now()
 	if thread.ForumThreadID > 0 {
 		return database.Err(f.ExecUpdateBuilder(ctx, f.Builder().
@@ -269,7 +269,7 @@ func (f *Repository) ForumThreadSave(ctx context.Context, thread *Thread) error 
 		Where(sq.Eq{"forum_id": thread.ForumID})))
 }
 
-func (f *Repository) ForumThread(ctx context.Context, forumThreadID int32, thread *Thread) error {
+func (f Repository) ForumThread(ctx context.Context, forumThreadID int32, thread *Thread) error {
 	row, errRow := f.QueryRowBuilder(ctx, f.Builder().
 		Select("t.forum_thread_id", "t.forum_id", "t.source_id", "t.title", "t.sticky",
 			"t.locked", "t.views", "t.created_on", "t.updated_on", "p.personaname", "p.avatarhash",
@@ -286,20 +286,20 @@ func (f *Repository) ForumThread(ctx context.Context, forumThreadID int32, threa
 		&thread.UpdatedOn, &thread.Personaname, &thread.Avatarhash, &thread.PermissionLevel))
 }
 
-func (f *Repository) ForumThreadIncrView(ctx context.Context, forumThreadID int32) error {
+func (f Repository) ForumThreadIncrView(ctx context.Context, forumThreadID int32) error {
 	return database.Err(f.ExecUpdateBuilder(ctx, f.Builder().
 		Update("forum_thread").
 		Set("views", sq.Expr("views+1")).
 		Where(sq.Eq{"forum_thread_id": forumThreadID})))
 }
 
-func (f *Repository) ForumThreadDelete(ctx context.Context, forumThreadID int32) error {
+func (f Repository) ForumThreadDelete(ctx context.Context, forumThreadID int32) error {
 	return database.Err(f.ExecDeleteBuilder(ctx, f.Builder().
 		Delete("forum_thread").
 		Where(sq.Eq{"forum_thread_id": forumThreadID})))
 }
 
-func (f *Repository) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]ThreadWithSource, error) {
+func (f Repository) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]ThreadWithSource, error) {
 	if filter.ForumID <= 0 {
 		return nil, ErrInvalidThread
 	}
@@ -368,7 +368,7 @@ func (f *Repository) ForumThreads(ctx context.Context, filter ThreadQueryFilter)
 	return threads, nil
 }
 
-func (f *Repository) ForumIncrMessageCount(ctx context.Context, forumID int32, incr bool) error {
+func (f Repository) ForumIncrMessageCount(ctx context.Context, forumID int32, incr bool) error {
 	builder := f.Builder().
 		Update("forum").
 		Where(sq.Eq{"forum_id": forumID})
@@ -382,7 +382,7 @@ func (f *Repository) ForumIncrMessageCount(ctx context.Context, forumID int32, i
 	return database.Err(f.ExecUpdateBuilder(ctx, builder))
 }
 
-func (f *Repository) ForumMessageSave(ctx context.Context, message *Message) error {
+func (f Repository) ForumMessageSave(ctx context.Context, message *Message) error {
 	message.UpdatedOn = time.Now()
 	if message.ForumMessageID > 0 {
 		return database.Err(f.ExecUpdateBuilder(ctx, f.Builder().
@@ -417,7 +417,7 @@ func (f *Repository) ForumMessageSave(ctx context.Context, message *Message) err
 		Where(sq.Eq{"forum_thread_id": message.ForumThreadID})))
 }
 
-func (f *Repository) ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel permission.Privilege) ([]Message, error) {
+func (f Repository) ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel permission.Privilege) ([]Message, error) {
 	expr, _, errExpr := sq.Expr(`
 			LATERAL (
 				SELECT m.forum_message_id,
@@ -472,7 +472,7 @@ func (f *Repository) ForumRecentActivity(ctx context.Context, limit uint64, perm
 	return messages, nil
 }
 
-func (f *Repository) ForumMessage(ctx context.Context, messageID int64, forumMessage *Message) error {
+func (f Repository) ForumMessage(ctx context.Context, messageID int64, forumMessage *Message) error {
 	row, errRow := f.QueryRowBuilder(ctx, f.Builder().
 		Select("m.forum_message_id", "m.forum_thread_id", "m.source_id", "m.body_md", "m.created_on", "m.updated_on",
 			"p.personaname", "p.avatarhash", "p.permission_level", "coalesce(s.forum_signature, '')").
@@ -489,7 +489,7 @@ func (f *Repository) ForumMessage(ctx context.Context, messageID int64, forumMes
 		&forumMessage.Avatarhash, &forumMessage.PermissionLevel, &forumMessage.Signature))
 }
 
-func (f *Repository) ForumMessages(ctx context.Context, filters ThreadMessagesQuery) ([]Message, error) {
+func (f Repository) ForumMessages(ctx context.Context, filters ThreadMessagesQuery) ([]Message, error) {
 	constraints := sq.And{sq.Eq{"forum_thread_id": filters.ForumThreadID}}
 
 	builder := f.Builder().
@@ -522,13 +522,13 @@ func (f *Repository) ForumMessages(ctx context.Context, filters ThreadMessagesQu
 	return messages, nil
 }
 
-func (f *Repository) ForumMessageDelete(ctx context.Context, messageID int64) error {
+func (f Repository) ForumMessageDelete(ctx context.Context, messageID int64) error {
 	return database.Err(f.ExecDeleteBuilder(ctx, f.Builder().
 		Delete("forum_message").
 		Where(sq.Eq{"forum_message_id": messageID})))
 }
 
-func (f *Repository) ForumMessageVoteApply(ctx context.Context, messageVote *MessageVote) error {
+func (f Repository) ForumMessageVoteApply(ctx context.Context, messageVote *MessageVote) error {
 	var existingVote MessageVote
 
 	row, errRow := f.QueryRowBuilder(ctx, f.Builder().
@@ -576,7 +576,7 @@ func (f *Repository) ForumMessageVoteApply(ctx context.Context, messageVote *Mes
 		Suffix("RETURNING forum_message_vote_id"), &messageVote.ForumMessageVoteID))
 }
 
-func (f *Repository) ForumMessageVoteByID(ctx context.Context, messageVoteID int64, messageVote *MessageVote) error {
+func (f Repository) ForumMessageVoteByID(ctx context.Context, messageVoteID int64, messageVote *MessageVote) error {
 	row, errRow := f.QueryRowBuilder(ctx, f.Builder().
 		Select("forum_message_vote_id", "forum_message_id", "source_id", "vote", "created_on", "updated_on").
 		From("forum_message_vote").Where(sq.Eq{"forum_message_vote_id": messageVoteID}))

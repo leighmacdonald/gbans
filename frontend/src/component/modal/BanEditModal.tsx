@@ -121,7 +121,7 @@ export const BanEditModal = NiceModal.create(({ banId }: { banId: number }) => {
 								name={"banType"}
 								children={(field) => {
 									return (
-										<field.BanTypeField
+										<field.SelectBanTypeField
 											label={"Ban Action Type"}
 											items={enumValues(BanType)}
 											renderItem={(bt) => {
@@ -142,7 +142,7 @@ export const BanEditModal = NiceModal.create(({ banId }: { banId: number }) => {
 								name={"reason"}
 								children={(field) => {
 									return (
-										<field.BanReasonField
+										<field.SelectBanReasonField
 											label={"Reason"}
 											items={enumValues(BanReason)}
 											renderItem={(br) => {
