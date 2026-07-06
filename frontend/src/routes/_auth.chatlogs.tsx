@@ -343,13 +343,13 @@ function ChatLogs() {
 						</IconButtonLink>
 					</Tooltip>
 				)}
-				{row.original.assestId && (
+				{row.original.assetId && (
 					<Tooltip title={"Download Demo"} key={2}>
 						<IconButton
 							component={Link}
 							key={"dl-link"}
 							color={"warning"}
-							href={`/asset/${row.original.assestId}`}
+							href={`/asset/${row.original.assetId}`}
 							disabled={row.original.autoFilterFlagged > 0}
 						>
 							<CloudDownload />

@@ -91,7 +91,7 @@ func toMessage(msg *QueryChatHistoryResult) *v1.Message {
 
 	return &v1.Message{
 		PersonMessageId:   &msg.PersonMessageID,
-		AssestId:          assetID,
+		AssetId:           assetID,
 		SteamId:           new(msg.SteamID.Int64()),
 		AvatarHash:        &msg.AvatarHash,
 		PersonaName:       &msg.PersonaName,

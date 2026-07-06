@@ -131,7 +131,7 @@ function ForumPage() {
 				startIcon={<PostAddIcon />}
 				key={"btn-new-post"}
 			>
-				New Post
+				New Thread
 			</Button>,
 		);
 		return [<ButtonGroup key={"forum-header-buttons"}>{buttons}</ButtonGroup>];

@@ -1,4 +1,4 @@
-import { useMutation } from "@connectrpc/connect-query";
+import { createConnectQueryKey, useMutation, useTransport } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Dialog from "@mui/material/Dialog";
@@ -6,10 +6,11 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import type { Thread } from "../../rpc/forum/v1/forum_pb.ts";
+import { ForumService, type Thread } from "../../rpc/forum/v1/forum_pb.ts";
 import { threadDelete, threadEdit } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
 import { logErr } from "../../util/errors";
 import { ConfirmationModal } from "./ConfirmationModal.tsx";
@@ -18,6 +19,8 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Th
 	const modal = useModal();
 	const confirmModal = useModal(ConfirmationModal);
 	const { sendFlash, sendError } = useUserFlashCtx();
+	const queryClient = useQueryClient();
+	const transport = useTransport();
 
 	const deleteMutation = useMutation(threadDelete, {
 		onSuccess: () => {
@@ -51,6 +54,14 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Th
 	const mutation = useMutation(threadEdit, {
 		onSuccess: async (resp) => {
 			modal.resolve(resp.thread);
+			queryClient.invalidateQueries({
+				queryKey: createConnectQueryKey({
+					schema: ForumService.method.thread,
+					cardinality: "finite",
+					transport,
+					input: { forumThreadId: thread.forumThreadId },
+				}),
+			});
 			await modal.hide();
 		},
 		onError: sendError,
