@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@connectrpc/connect-query";
+import { createConnectQueryKey, useMutation, useQuery, useTransport } from "@connectrpc/connect-query";
 import DescriptionIcon from "@mui/icons-material/Description";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import LanIcon from "@mui/icons-material/Lan";
@@ -18,12 +18,13 @@ import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import Tab from "@mui/material/Tab";
 import Typography from "@mui/material/Typography";
+import { useQueryClient } from "@tanstack/react-query";
 import { type JSX, type SyntheticEvent, useState } from "react";
 import { z } from "zod/v4";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import type { ReportWithAuthor } from "../rpc/ban/v1/report_pb.ts";
+import { ReportService, type ReportWithAuthor } from "../rpc/ban/v1/report_pb.ts";
 import { reportMessageCreate, reportMessages } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
 import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { ContainerWithHeader } from "./ContainerWithHeader";
@@ -46,10 +47,11 @@ export const ReportViewComponent = ({
 	assetURL: string;
 }): JSX.Element => {
 	const theme = useTheme();
-	const { sendFlash, sendError } = useUserFlashCtx();
+	const { sendError } = useUserFlashCtx();
 	const [value, setValue] = useState<number>(0);
 	const { hasPermission } = useAuth();
-
+	const queryClient = useQueryClient();
+	const transport = useTransport();
 	const { data: messageData, isLoading: isLoadingMessages } = useQuery(
 		reportMessages,
 		{
@@ -63,15 +65,22 @@ export const ReportViewComponent = ({
 	};
 
 	const createMessageMutation = useMutation(reportMessageCreate, {
-		onSuccess: () => {
-			// FIXME
-			// queryClient.setQueryData(reportMessagesQueryOptions(report.report_id).queryKey, [
-			// 	...(messageData?.messages ?? []),
-			// 	message,
-			// ]);
+		onSuccess: (message) => {
+			if (!message.reportMessage || !messageData) {
+				return;
+			}
+			messageData.messages.push(message.reportMessage);
+			queryClient.setQueryData(
+				createConnectQueryKey({
+					schema: ReportService.method.reportMessages,
+					transport,
+					input: { reportId: report?.report?.reportId },
+					cardinality: "finite",
+				}),
+				messageData,
+			);
 			mdEditorRef.current?.setMarkdown("");
 			form.reset();
-			sendFlash("success", "Created message successfully");
 		},
 		onError: sendError,
 	});

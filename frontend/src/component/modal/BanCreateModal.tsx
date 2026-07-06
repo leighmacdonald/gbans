@@ -1,6 +1,6 @@
 import { create } from "@bufbuild/protobuf";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
-import { useMutation } from "@connectrpc/connect-query";
+import { createConnectQueryKey, useMutation, useTransport } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import DirectionsRunIcon from "@mui/icons-material/DirectionsRun";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -10,9 +10,10 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import { BanReason, BanType, CreateRequestSchema, Origin } from "../../rpc/ban/v1/ban_pb.ts";
+import { BanReason, BanService, BanType, CreateRequestSchema, Origin } from "../../rpc/ban/v1/ban_pb.ts";
 import { create as createBan } from "../../rpc/ban/v1/ban-BanService_connectquery.ts";
 import { enumValues } from "../../util/lists.ts";
 import { banTypeString } from "../../util/strings.ts";
@@ -33,10 +34,20 @@ type BanCreateProps = {
 export const BanCreateModal = NiceModal.create(({ reportId, steamId, demoId, demoTick }: BanCreateProps) => {
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const modal = useModal();
-
+	const queryClient = useQueryClient();
+	const transport = useTransport();
 	const mutation = useMutation(createBan, {
 		onSuccess: async (banRecord) => {
 			sendFlash("success", `Created ban successfully #${banRecord.ban?.banId}`);
+			queryClient.invalidateQueries({
+				queryKey: createConnectQueryKey({
+					schema: BanService.method.query,
+					cardinality: "finite",
+					transport,
+					input: {},
+				}),
+			});
+
 			modal.resolve(banRecord.ban);
 			await modal.hide();
 		},

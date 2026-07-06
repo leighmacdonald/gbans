@@ -8,6 +8,7 @@ import { App } from "./App.tsx";
 import "./fonts/tf2build.css";
 import { createClient } from "@connectrpc/connect";
 import { createConnectQueryKey } from "@connectrpc/connect-query";
+import { StorageKey } from "./auth.tsx";
 import { newRouter } from "./router.tsx";
 import { ConfigService } from "./rpc/config/v1/config_pb.ts";
 import { finalTransport, queryClient } from "./transport.ts";
@@ -59,4 +60,13 @@ if (appInfo.sentryDsnWeb !== "") {
 } else {
 	root = createRoot(container);
 }
+
+// Listen for storage events with the logout key and logout from all browser sessions/tabs when fired.
+window.addEventListener("storage", async (event) => {
+	if (event.key === StorageKey.Logout) {
+		localStorage.removeItem(StorageKey.Logout);
+		document.location.reload();
+	}
+});
+
 root.render(<App queryClient={queryClient} router={router} />);

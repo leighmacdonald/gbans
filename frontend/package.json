@@ -42,16 +42,14 @@
 	},
 	"browserslist": {
 		"production": [
-			">0.2%",
+			">0.4%",
 			"not dead",
-			"not op_mini all",
-			"ie >= 9"
+			"not op_mini all"
 		],
 		"development": [
 			"last 1 chrome version",
 			"last 1 firefox version",
-			"last 1 safari version",
-			"ie 11"
+			"last 1 safari version"
 		]
 	},
 	"packageManager": "pnpm@10.21.0",

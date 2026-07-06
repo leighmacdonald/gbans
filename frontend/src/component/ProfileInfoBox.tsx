@@ -24,7 +24,7 @@ export const ProfileInfoBox = ({ steamId }: { steamId: string }) => {
 	}
 
 	return (
-		<ContainerWithHeader title={"Profile"} iconLeft={<PregnantWomanIcon />} marginTop={0}>
+		<ContainerWithHeader title={"Profile"} iconLeft={<PregnantWomanIcon />} marginTop={0} padding={2}>
 			<Grid container spacing={1}>
 				<Grid size={{ xs: 12 }}>
 					<Avatar
