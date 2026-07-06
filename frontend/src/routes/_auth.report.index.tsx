@@ -33,6 +33,7 @@ import { BanReason } from "../rpc/ban/v1/ban_pb.ts";
 import { ReportStatus, type ReportWithAuthor } from "../rpc/ban/v1/report_pb.ts";
 import { reportCreate, userReports } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
 import { enumValues } from "../util/lists.ts";
+import { toTitleCase } from "../util/strings.ts";
 import { commonTableSearchSchema } from "../util/table.ts";
 import { renderTimestamp } from "../util/time.ts";
 import { emptyOrNullString, zeroStringUndefined } from "../util/types.ts";
@@ -165,7 +166,7 @@ const UserReportHistory = () => {
 					return (
 						<Stack direction={"row"} spacing={1}>
 							<ReportStatusIcon reportStatus={cell.getValue()} />
-							<Typography variant={"body1"}>{ReportStatus[cell.getValue()]}</Typography>
+							<Typography variant={"body1"}>{toTitleCase(ReportStatus[cell.getValue()])}</Typography>
 						</Stack>
 					);
 				},
@@ -333,7 +334,7 @@ const ReportCreateForm = (): JSX.Element => {
 										renderItem={(r) => {
 											return (
 												<MenuItem value={r} key={`reason-${r}`}>
-													{BanReason[r]}
+													{toTitleCase(BanReason[r])}
 												</MenuItem>
 											);
 										}}

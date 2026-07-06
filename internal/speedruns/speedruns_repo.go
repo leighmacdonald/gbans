@@ -281,7 +281,7 @@ func (r *SpeedrunRepository) TopNOverall(ctx context.Context, count int32) (map[
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
-	defer rows.Next()
+	defer rows.Close()
 
 	runs := map[string][]Speedrun{}
 	for rows.Next() {

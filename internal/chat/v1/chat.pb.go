@@ -271,7 +271,7 @@ type Message struct {
 	AutoFilterFlagged *int32                 `protobuf:"varint,10,opt,name=auto_filter_flagged,json=autoFilterFlagged" json:"auto_filter_flagged,omitempty"`
 	DemoId            *int32                 `protobuf:"varint,11,opt,name=demo_id,json=demoId" json:"demo_id,omitempty"`
 	DemoTick          *int32                 `protobuf:"varint,12,opt,name=demo_tick,json=demoTick" json:"demo_tick,omitempty"`
-	AssestId          *string                `protobuf:"bytes,13,opt,name=assest_id,json=assestId" json:"assest_id,omitempty"`
+	AssetId           *string                `protobuf:"bytes,13,opt,name=asset_id,json=assetId" json:"asset_id,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -390,9 +390,9 @@ func (x *Message) GetDemoTick() int32 {
 	return 0
 }
 
-func (x *Message) GetAssestId() string {
-	if x != nil && x.AssestId != nil {
-		return *x.AssestId
+func (x *Message) GetAssetId() string {
+	if x != nil && x.AssetId != nil {
+		return *x.AssetId
 	}
 	return ""
 }
@@ -420,7 +420,7 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"\bsteam_id\x18\a \x01(\x03B\x11\xbaH\f\"\n" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\"E\n" +
 	"\rQueryResponse\x124\n" +
-	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\"\xce\x04\n" +
+	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\bmessages\"\xcc\x04\n" +
 	"\aMessage\x128\n" +
 	"\x11person_message_id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\x0fpersonMessageId\x12#\n" +
 	"\bmatch_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\amatchId\x12/\n" +
@@ -440,8 +440,8 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"\x13auto_filter_flagged\x18\n" +
 	" \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11autoFilterFlagged\x12 \n" +
 	"\ademo_id\x18\v \x01(\x05B\a\xbaH\x04\x1a\x02 \x00R\x06demoId\x12\x1b\n" +
-	"\tdemo_tick\x18\f \x01(\x05R\bdemoTick\x12%\n" +
-	"\tassest_id\x18\r \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\bassestId2\x96\x01\n" +
+	"\tdemo_tick\x18\f \x01(\x05R\bdemoTick\x12#\n" +
+	"\basset_id\x18\r \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\aassetId2\x96\x01\n" +
 	"\vChatService\x128\n" +
 	"\x05Query\x12\x15.chat.v1.QueryRequest\x1a\x16.chat.v1.QueryResponse\"\x00\x12M\n" +
 	"\fQueryContext\x12\x1c.chat.v1.QueryContextRequest\x1a\x1d.chat.v1.QueryContextResponse\"\x00B\x8e\x01\n" +

@@ -36,6 +36,7 @@ export const BanCreateModal = NiceModal.create(({ reportId, steamId, demoId, dem
 	const modal = useModal();
 	const queryClient = useQueryClient();
 	const transport = useTransport();
+
 	const mutation = useMutation(createBan, {
 		onSuccess: async (banRecord) => {
 			sendFlash("success", `Created ban successfully #${banRecord.ban?.banId}`);

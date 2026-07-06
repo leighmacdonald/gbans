@@ -81,5 +81,5 @@ message Message {
   int32 auto_filter_flagged = 10 [(buf.validate.field).required = true];
   int32 demo_id = 11 [(buf.validate.field).int32.gt = 0];
   int32 demo_tick = 12;
-  string assest_id = 13 [(buf.validate.field).string.uuid = true];
+  string asset_id = 13 [(buf.validate.field).string.uuid = true];
 }

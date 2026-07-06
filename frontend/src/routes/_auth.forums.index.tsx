@@ -180,7 +180,6 @@ const CategoryBlock = ({ category }: { category: Category }) => {
 
 function ForumOverview() {
 	const { sendFlash } = useUserFlashCtx();
-	const { appInfo } = Route.useRouteContext();
 	const { hasPermission } = useAuth();
 	const { data, isLoading } = useQuery(overview);
 
@@ -206,9 +205,6 @@ function ForumOverview() {
 
 	return (
 		<Grid container spacing={2}>
-			<Grid size={{ xs: 12 }}>
-				<Typography variant={"h2"}>{appInfo.siteName} community</Typography>
-			</Grid>
 			<Grid size={{ xs: 12, md: 9 }}>
 				<Stack spacing={2}>
 					{isLoading ? (

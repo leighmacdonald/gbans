@@ -347,9 +347,7 @@ func (r Repository) GetPersonMessage(ctx context.Context, messageID int64) (*Que
 func (r Repository) GetPersonMessageContext(ctx context.Context, serverID int32, messageID int64, paddedMessageCount int32) ([]QueryChatHistoryResult, error) {
 	if paddedMessageCount > 1000 {
 		paddedMessageCount = 1000
-	}
-
-	if paddedMessageCount <= 0 {
+	} else if paddedMessageCount <= 0 {
 		paddedMessageCount = 5
 	}
 
