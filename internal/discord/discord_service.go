@@ -24,7 +24,7 @@ type Service struct {
 	connection Connection
 }
 
-func (s Service) SeedRoleIDs(ctx context.Context, req *emptypb.Empty) (*discordv1.SeedRoleIDsResponse, error) {
+func (s Service) SeedRoleIDs(_ context.Context, _ *emptypb.Empty) (*discordv1.SeedRoleIDsResponse, error) {
 	roles, err := s.connection.Roles()
 	if err != nil {
 		return nil, err

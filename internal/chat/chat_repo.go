@@ -338,7 +338,7 @@ func (r Repository) GetPersonMessage(ctx context.Context, messageID int64) (*Que
 	}
 	if errRow := row.Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.CreatedOn,
 		&msg.PersonaName, &msg.DemoID, &msg.DemoTick, &msg.MatchID, &msg.AvatarHash); errRow != nil {
-		return msg, errRow
+		return msg, database.Err(errRow)
 	}
 
 	return msg, nil

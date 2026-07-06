@@ -172,7 +172,7 @@ start-docs:
 
 [working-directory('docs')]
 deploy-docs:
-    pnpm deploywhat i
+    pnpm deploy
 
 [working-directory('docs')]
 build-docs:
