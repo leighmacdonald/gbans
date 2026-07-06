@@ -76,12 +76,11 @@ function AdminBans() {
 
 	const onNewBanSteam = useCallback(async () => {
 		try {
-			const ban = (await NiceModal.show(BanCreateModal, {})) as Ban;
-			queryClient.setQueryData(["bans"], [...(data?.bans ?? []), ban]);
+			await NiceModal.show(BanCreateModal, {});
 		} catch (e) {
 			sendFlash("error", `Error trying to set up ban: ${e}`);
 		}
-	}, [queryClient, sendFlash, data]);
+	}, [sendFlash]);
 
 	const onUnban = useCallback(
 		async (ban: Ban) => {

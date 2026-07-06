@@ -9,7 +9,10 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
+import { useMemo } from "react";
 import { queryContext } from "../rpc/chat/v1/chat-ChatService_connectquery.ts";
+import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
+import { emptyOrNullString } from "../util/types.ts";
 import { TextLink } from "./TextLink.tsx";
 
 interface PlayerMessageContextProps {
@@ -18,7 +21,15 @@ interface PlayerMessageContextProps {
 }
 
 export const PlayerMessageContext = ({ playerMessageId, padding = 3 }: PlayerMessageContextProps) => {
+	const { data: serversResp, isLoading: isLoadingServers } = useQuery(servers);
 	const { data, isLoading } = useQuery(queryContext, { personMessageId: playerMessageId, padding });
+
+	const serverName = useMemo(() => {
+		if (!data?.messages) {
+			return "";
+		}
+		return serversResp?.servers.find((s) => s.serverId === data?.messages[0].serverId)?.serverName ?? "";
+	}, [serversResp, data?.messages]);
 
 	return (
 		<Grid container>
@@ -29,7 +40,7 @@ export const PlayerMessageContext = ({ playerMessageId, padding = 3 }: PlayerMes
 					</Box>
 				</Grid>
 			)}
-			{!isLoading && (
+			{!isLoading && !isLoadingServers && (
 				<Grid size={{ xs: 12 }}>
 					<TableContainer>
 						<Table size={"small"}>
@@ -48,14 +59,14 @@ export const PlayerMessageContext = ({ playerMessageId, padding = 3 }: PlayerMes
 											selected={playerMessageId === m.personMessageId}
 										>
 											<TableCell>
-												<Typography variant={"body2"}>{m.serverName}</Typography>
+												<Typography variant={"body2"}>{serverName}</Typography>
 											</TableCell>
 											<TableCell>
 												<TextLink
 													to={`/profile/$steamId`}
 													params={{ steamId: String(m.steamId) }}
 												>
-													{m.personaName}
+													{emptyOrNullString(m.personaName) ? m.steamId : m.personaName}
 												</TextLink>
 											</TableCell>
 											<TableCell>

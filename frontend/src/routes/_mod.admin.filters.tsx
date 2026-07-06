@@ -227,7 +227,7 @@ function AdminFilters() {
 				<WarningStateTable />
 			</Grid>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader title={"How it works"} iconLeft={<InfoIcon />}>
+				<ContainerWithHeader title={"How it works"} iconLeft={<InfoIcon />} padding={2}>
 					<Typography variant={"body1"}>
 						The way the warning tracking works is that each time a user triggers a match, it gets an entry
 						in the table based on the weight of the match. The individual match weight is determined by the

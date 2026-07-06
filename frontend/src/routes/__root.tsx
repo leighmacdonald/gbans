@@ -15,7 +15,6 @@ import type { AuthContextProps } from "../auth.tsx";
 import { BackgroundImageProvider } from "../component/BackgroundImageProvider.tsx";
 import { type Flash, Flashes } from "../component/Flashes.tsx";
 import { Footer } from "../component/Footer.tsx";
-import { LogoutHandler } from "../component/LogoutHandler.tsx";
 import { NotificationsProvider } from "../component/NotificationsProvider.tsx";
 import { TopBar } from "../component/TopBar.tsx";
 import { ColourModeContext } from "../contexts/ColourModeContext.tsx";
@@ -128,7 +127,6 @@ function Root() {
 						<BackgroundImageProvider />
 						<NotificationsProvider>
 							<NiceModal.Provider>
-								<LogoutHandler />
 								<CssBaseline />
 								<HeadContent />
 								<Container maxWidth={"lg"}>

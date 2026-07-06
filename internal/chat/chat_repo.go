@@ -315,82 +315,36 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 }
 
 func (r Repository) GetPersonMessage(ctx context.Context, messageID int64) (*QueryChatHistoryResult, error) {
-	const query = `
-		SELECT
-			x.person_message_id, x.steam_id, x.server_id, x.body, x.team, x.created_on, x.persona_name,
-			x.asset_id, s.short_name, COALESCE(f.person_message_filter_id, 0) as flagged
-		FROM (
-		SELECT m.person_message_id,
-			   m.steam_id,
-			   m.server_id,
-			   m.body,
-			   m.created_on,
-			   m.persona_name,
-			   a.asset_id,
-			   m.demo_id,
-			   m.demo_tick
-		FROM person_messages m
-		WHERE m.person_message_id = $1) x
-		LEFT JOIN person_messages_filter f on x.person_message_id = f.person_message_id
-		LEFT JOIN demo d ON m.demo_id = d.demo_id
-		LEFT JOIN asset a ON d.asset_id = a.asset_id
-		`
+	builder := r.Builder().
+		Select(
+			"m.person_message_id",
+			"m.steam_id",
+			"m.server_id",
+			"m.body",
+			"m.created_on",
+			"p.personaname",
+			"m.demo_id",
+			"m.demo_tick",
+			"m.match_id",
+			"p.avatarhash").
+		From("person_messages m").
+		LeftJoin("person p USING(steam_id)").
+		Where(sq.Eq{"m.person_message_id": messageID})
 
 	msg := &QueryChatHistoryResult{}
-	if err := database.Err(r.QueryRow(ctx, query, messageID).Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.CreatedOn,
-		&msg.PersonaName, &msg.AssetID, &msg.DemoID, &msg.DemoTick, &msg.AutoFilterFlagged)); err != nil {
-		return msg, err
+	row, errRow := r.QueryRowBuilder(ctx, builder)
+	if errRow != nil {
+		return nil, errRow
+	}
+	if errRow := row.Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.CreatedOn,
+		&msg.PersonaName, &msg.DemoID, &msg.DemoTick, &msg.MatchID, &msg.AvatarHash); errRow != nil {
+		return msg, errRow
 	}
 
 	return msg, nil
 }
 
 func (r Repository) GetPersonMessageContext(ctx context.Context, serverID int32, messageID int64, paddedMessageCount int32) ([]QueryChatHistoryResult, error) {
-	const query = `
-		SELECT
-			x.person_message_id, x.steam_id, x.server_id, x.body, x.team, x.created_on, x.persona_name,
-			x.asset_id, x.demo_id, x.demo_tick, s.short_name, COALESCE(f.person_message_filter_id, 0) as flagged
-		FROM ((SELECT m.person_message_id,
-					  m.steam_id,
-					  m.server_id,
-					  m.body,
-					  m.created_on,
-					  m.persona_name,
-					  m.asset_id,
-					  m.demo_id,
-					  m.demo_tick
-			   FROM person_messages m
-			   LEFT JOIN server s on m.server_id = s.server_id
-			   LEFT JOIN demo d ON m.demo_id = d.demo_id
-			   LEFT JOIN asset a ON d.asset_id = a.asset_id
-			   WHERE m.server_id = $3
-				 AND m.person_message_id >= $1
-			   GROUP BY m.person_message_id
-			   ORDER BY person_message_id ASC
-			   LIMIT $2+1)
-			  UNION
-			  (SELECT m.person_message_id,
-					  m.steam_id,
-					  m.server_id,
-					  m.body,
-					  m.created_on,
-					  m.persona_name,
-					  m.asset_id,
-					  m.demo_id,
-					  m.demo_tick
-			   FROM person_messages m
-			   LEFT JOIN server s on m.server_id = s.server_id
-	   		   LEFT JOIN demo d ON m.demo_id = d.demo_id
-			   LEFT JOIN asset a ON d.asset_id = a.asset_id
-			   WHERE m.server_id = $3
-				 AND m.person_message_id < $1
-			   GROUP BY m.person_message_id
-			   ORDER BY person_message_id DESC
-			   LIMIT $2)
-			  ORDER BY person_message_id ASC) x
-				 LEFT JOIN server s ON x.server_id = s.server_id
-				 LEFT JOIN person_messages_filter f on x.person_message_id = f.person_message_id`
-
 	if paddedMessageCount > 1000 {
 		paddedMessageCount = 1000
 	}
@@ -399,7 +353,33 @@ func (r Repository) GetPersonMessageContext(ctx context.Context, serverID int32,
 		paddedMessageCount = 5
 	}
 
-	rows, errRows := r.Query(ctx, query, messageID, paddedMessageCount, serverID)
+	query := fmt.Sprintf(`
+		SELECT person_message_id, steam_id, server_id, body, created_on,
+		       persona_name, demo_id, demo_tick, match_id, avatarhash
+		FROM (
+		    (SELECT m.person_message_id, m.steam_id, m.server_id, m.body, m.created_on,
+		            p.personaname AS persona_name, m.demo_id, m.demo_tick,
+		            m.match_id, p.avatarhash
+		     FROM person_messages m
+		     JOIN person p ON m.steam_id = p.steam_id
+		     WHERE m.server_id = $1 AND m.person_message_id >= $2
+		     ORDER BY m.person_message_id ASC
+		     LIMIT %d + 1)
+
+		    UNION ALL
+
+		    (SELECT m.person_message_id, m.steam_id, m.server_id, m.body, m.created_on,
+		            p.personaname AS persona_name, m.demo_id, m.demo_tick,
+		            m.match_id, p.avatarhash
+		     FROM person_messages m
+		     JOIN person p ON m.steam_id = p.steam_id
+		     WHERE m.server_id = $1 AND m.person_message_id < $2
+		     ORDER BY m.person_message_id DESC
+		     LIMIT %d)
+		) sub
+		ORDER BY person_message_id ASC`, paddedMessageCount, paddedMessageCount)
+
+	rows, errRows := r.Query(ctx, query, serverID, messageID)
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
@@ -411,7 +391,7 @@ func (r Repository) GetPersonMessageContext(ctx context.Context, serverID int32,
 		var msg QueryChatHistoryResult
 
 		if errScan := rows.Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.CreatedOn,
-			&msg.PersonaName, &msg.AssetID, &msg.DemoID, &msg.DemoTick, &msg.AutoFilterFlagged); errScan != nil {
+			&msg.PersonaName, &msg.DemoID, &msg.DemoTick, &msg.MatchID, &msg.AvatarHash); errScan != nil {
 			return nil, database.Err(errScan)
 		}
 
