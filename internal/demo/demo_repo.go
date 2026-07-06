@@ -63,7 +63,7 @@ func (r Repository) ExpiredDemos(ctx context.Context, limit uint64) ([]Info, err
 
 func (r Repository) GetDemoByColumn(ctx context.Context, key string, value any) (*File, error) {
 	var demoFile File
-	row, errRow := r.Database.QueryRowBuilder(ctx, r.Builder().
+	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
 			"d.map_name", "d.archive", "d.stats", "d.asset_id", "a.size", "s.short_name", "s.name").
 		From("demo d").
