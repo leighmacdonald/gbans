@@ -12,8 +12,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.head_ref }}
           fetch-depth: 0
 
       - uses: extractions/setup-just@v3
@@ -24,7 +22,6 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
           run_install: false
 
       - name: Setup nodejs

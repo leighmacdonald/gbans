@@ -4,7 +4,7 @@ on:
   push:
   pull_request:
 
-permissions: write-all
+permissions: {}
 
 jobs:
   sourcemod-plugin:
@@ -30,7 +30,6 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
           run_install: false
 
       - name: Setup nodejs
@@ -54,7 +53,7 @@ jobs:
         run: pnpm install --frozen-lockfile --strict-peer-dependencies
 
       - name: TypeScript
-        run: just typecheck_ts
+        run: just typecheck-frontend
 
   lint-golangci:
     runs-on: ubuntu-latest
@@ -79,8 +78,20 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
       - name: Backend tests
-        run: just test-go
+        run: just test-backend
 
   frontend-test:
     needs: [lint-ts]
@@ -92,7 +103,6 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
           run_install: false
 
       - name: Setup nodejs
@@ -107,4 +117,4 @@ jobs:
         run: pnpm install --frozen-lockfile --strict-peer-dependencies
 
       - name: Frontend tests
-        run: just test-ts
+        run: just test-frontend
