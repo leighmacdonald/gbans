@@ -349,6 +349,10 @@ func (u *Chat) GetPersonMessage(ctx context.Context, messageID int64) (*QueryCha
 	return u.repository.GetPersonMessage(ctx, messageID)
 }
 
+func (u *Chat) DeleteByDemoID(ctx context.Context, demoID int32) error {
+	return u.repository.DeleteByDemoID(ctx, demoID)
+}
+
 func (u *Chat) AddChatHistory(ctx context.Context, message *Message) error {
 	return u.repository.AddChatHistory(ctx, message)
 }

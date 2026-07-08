@@ -33,7 +33,6 @@ import (
 
 var (
 	ErrDemoLoad       = errors.New("could not load demo file")
-	ErrDemoExists     = errors.New("demo already exists")
 	ErrFailedOpenFile = errors.New("failed to open file")
 	ErrFailedReadFile = errors.New("failed to read file")
 	ErrParse          = errors.New("could not parse demo")
@@ -140,7 +139,7 @@ func NewDemos(bucket asset.Bucket, repository Repository, assets asset.Assets, s
 	}
 }
 
-func (d Demos) createFromAsset(ctx context.Context, asset *asset.Asset, serverID int32, createStats bool, overwrite bool) (*File, error) {
+func (d Demos) createFromAsset(ctx context.Context, asset *asset.Asset, serverID int32, createStats bool) (*File, error) {
 	if errGetServer := d.repository.ValidateServer(ctx, serverID); errGetServer != nil {
 		return nil, errGetServer
 	}
@@ -155,11 +154,10 @@ func (d Demos) createFromAsset(ctx context.Context, asset *asset.Asset, serverID
 
 	existing, errExisting := d.repository.GetDemoByAssetID(ctx, asset.AssetID)
 	if errExisting == nil {
-		if !overwrite {
-			return nil, ErrDemoExists
-		}
-
 		if err := d.stats.Delete(ctx, existing.DemoID); err != nil {
+			return nil, err
+		}
+		if err := d.chat.DeleteByDemoID(ctx, existing.DemoID); err != nil {
 			return nil, err
 		}
 	}
@@ -286,7 +284,7 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 		return errNewAsset
 	}
 
-	if _, errDemo := d.createFromAsset(ctx, &demoAsset, demo.ServerID, true, true); errDemo != nil {
+	if _, errDemo := d.createFromAsset(ctx, &demoAsset, demo.ServerID, true); errDemo != nil {
 		// Cleanup the asset not attached to a valid demo
 		if _, errDelete := d.asset.Delete(ctx, demoAsset.AssetID); errDelete != nil {
 			return errors.Join(errDelete, errDelete)
@@ -311,7 +309,7 @@ func (d Demos) ImportFile(ctx context.Context, serverID int32, demoPath string, 
 		return nil, errors.Join(errAsset, ErrDemoLoad)
 	}
 
-	demo, errDemo := d.createFromAsset(ctx, &demoAsset, serverID, createStats, true)
+	demo, errDemo := d.createFromAsset(ctx, &demoAsset, serverID, createStats)
 	if errDemo != nil {
 		return nil, errors.Join(errDemo, ErrDemoLoad)
 	}

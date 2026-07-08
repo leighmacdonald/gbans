@@ -412,3 +412,9 @@ add constraint report_message_report_id_fk foreign key (report_id) references re
 
 alter table person_messages
 drop column if exists team;
+
+alter table person_messages
+drop constraint if exists person_messages_demo_id_fkey;
+
+alter table person_messages
+add constraint person_messages_demo_id_fkey foreign key (demo_id) references demo on delete cascade on update cascade;

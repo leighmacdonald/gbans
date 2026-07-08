@@ -109,6 +109,11 @@ func (r Repository) TopChatters(ctx context.Context, count uint64) ([]TopChatter
 
 const minQueryLen = 2
 
+func (r Repository) DeleteByDemoID(ctx context.Context, demoID int32) error {
+	return database.Err(r.ExecDeleteBuilder(ctx, r.Builder().
+		Delete("person_messages").Where(sq.Eq{"demo_id": demoID})))
+}
+
 func (r Repository) AddChatHistory(ctx context.Context, message *Message) error {
 	const query = `INSERT INTO person_messages
     		(steam_id, server_id, body, created_on, persona_name, demo_id, demo_tick, match_id)
