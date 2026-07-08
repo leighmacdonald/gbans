@@ -59,7 +59,7 @@ func (m *MessageProvider) Next(ctx context.Context, count uint64) ([]slur.Messag
 			return nil, database.Err(err)
 		}
 
-		res = append(res, sm)
+		res = append(res, &sm)
 	}
 
 	m.offset += int(count) //nolint:gosec
@@ -90,7 +90,6 @@ func (r Repository) TopChatters(ctx context.Context, count uint64) ([]TopChatter
 	defer rows.Close()
 
 	var results []TopChatterResult
-
 	for rows.Next() {
 		var (
 			tcr     TopChatterResult
@@ -199,6 +198,10 @@ func (r Repository) loadDemoInfo(ctx context.Context, results []*QueryChatHistor
 				res.AssetID = assetID
 			}
 		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return database.Err(err)
 	}
 
 	return nil
