@@ -370,7 +370,7 @@ Previous buttons - use https://sapphonie.github.io/flags.html to convert to read
 	require.Equal(t, logparse.CheatCVar, entries[8].Detection)
 
 	require.Equal(t, "20240512-052232-pl_badwater.dem", entries[5].DemoName)
-	require.Equal(t, 23861, entries[5].DemoTick)
+	require.Equal(t, int32(23861), entries[5].DemoTick)
 
 	for _, entry := range entries {
 		require.True(t, entry.SteamID.Valid())
