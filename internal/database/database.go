@@ -311,17 +311,9 @@ func (db *PgStore) GetCount(ctx context.Context, builder sq.SelectBuilder) (uint
 }
 
 func (db *PgStore) TruncateTable(ctx context.Context, table string) error {
-	query, args, errQueryArgs := sq.Delete(table).ToSql()
-	if errQueryArgs != nil {
-		return Err(errQueryArgs)
+	if err := db.Exec(ctx, "TRUNCATE TABLE "+pgx.Identifier([]string{table}).Sanitize()); err != nil {
+		return Err(err)
 	}
-
-	rows, errExec := db.Query(ctx, query, args...)
-	if errExec != nil {
-		return Err(errExec)
-	}
-
-	rows.Close()
 
 	return nil
 }
