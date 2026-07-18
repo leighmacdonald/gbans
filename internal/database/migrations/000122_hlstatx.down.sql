@@ -20,3 +20,7 @@ drop table if exists stats_bucket;
 drop type if exists player_class;
 
 drop type if exists player_team;
+
+ALTER TABLE demo ADD COLUMN deleted boolean NOT NULL DEFAULT false;
+
+ALTER TABLE asset DROP COLUMN deleted;

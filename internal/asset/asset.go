@@ -71,6 +71,7 @@ type Asset struct {
 	IsPrivate bool
 	CreatedOn time.Time
 	UpdatedOn time.Time
+	Deleted   bool
 	LocalPath string
 	wasRead   bool
 	file      *os.File
@@ -216,6 +217,21 @@ func (s Assets) Delete(ctx context.Context, assetID uuid.UUID) (int64, error) {
 	}
 
 	slog.Debug("Removed demo asset", slog.String("asset_id", assetID.String()), slog.String("size", humanize.Bytes(uint64(size)))) //nolint:gosec
+
+	return size, nil
+}
+
+func (s Assets) SoftDelete(ctx context.Context, assetID uuid.UUID) (int64, error) {
+	if assetID.IsNil() {
+		return 0, ErrUUIDInvalid
+	}
+
+	size, err := s.repository.SoftDelete(ctx, assetID)
+	if err != nil {
+		return 0, err
+	}
+
+	slog.Debug("Soft-deleted asset", slog.String("asset_id", assetID.String()), slog.String("size", humanize.Bytes(uint64(size)))) //nolint:gosec
 
 	return size, nil
 }

@@ -38,7 +38,8 @@ func (r Repository) ExpiredDemos(ctx context.Context, limit uint64) ([]Info, err
 	rows, errRow := r.QueryBuilder(ctx, r.Builder().
 		Select("d.demo_id", "d.title", "d.asset_id").
 		From("demo d").
-		Where(sq.Eq{"d.archive": false}).
+		InnerJoin("asset a ON a.asset_id = d.asset_id").
+		Where(sq.Eq{"d.archive": false, "a.deleted": false}).
 		OrderBy("d.demo_id DESC").
 		Offset(limit))
 	if errRow != nil {
@@ -68,8 +69,8 @@ func (r Repository) GetDemoByColumn(ctx context.Context, key string, value any) 
 			"d.map_name", "d.archive", "d.stats", "d.asset_id", "a.size", "s.short_name", "s.name").
 		From("demo d").
 		LeftJoin("server s ON s.server_id = d.server_id").
-		LeftJoin("asset a ON a.asset_id = d.asset_id").
-		Where(sq.Eq{key: value}))
+		InnerJoin("asset a ON a.asset_id = d.asset_id").
+		Where(sq.And{sq.Eq{key: value}, sq.Eq{"a.deleted": false}}))
 	if errRow != nil {
 		return nil, database.Err(errRow)
 	}
@@ -110,7 +111,8 @@ func (r Repository) GetDemos(ctx context.Context) ([]File, error) {
 			"d.map_name", "d.archive", "d.stats", "s.short_name", "s.name", "d.asset_id", "a.size").
 		From("demo d").
 		LeftJoin("server s ON s.server_id = d.server_id").
-		LeftJoin("asset a ON a.asset_id = d.asset_id").
+		InnerJoin("asset a ON a.asset_id = d.asset_id").
+		Where(sq.Eq{"a.deleted": false}).
 		OrderBy("d.demo_id DESC")
 
 	rows, errQuery := r.QueryBuilder(ctx, builder)

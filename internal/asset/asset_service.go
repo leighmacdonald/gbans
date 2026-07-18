@@ -59,7 +59,7 @@ func (s Service) Delete(ctx context.Context, req *v1.DeleteRequest) (*v1.DeleteR
 		return nil, connect.NewError(connect.CodeInvalidArgument, errID)
 	}
 
-	size, errDelete := s.assets.Delete(ctx, id)
+	size, errDelete := s.assets.SoftDelete(ctx, id)
 	if errDelete != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errDelete)
 	}
