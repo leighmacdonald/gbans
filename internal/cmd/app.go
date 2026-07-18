@@ -417,10 +417,15 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	go g.demos.Cleanup(ctx)
 
 	membershipsTicker := time.NewTicker(12 * time.Hour)
+	defer membershipsTicker.Stop()
 	expirationsTicker := time.NewTicker(60 * time.Second)
+	defer expirationsTicker.Stop()
 	reportIntoTicker := time.NewTicker(24 * time.Hour)
+	defer reportIntoTicker.Stop()
 	blocklistTicker := time.NewTicker(6 * time.Hour)
+	defer blocklistTicker.Stop()
 	demoTicker := time.NewTicker(15 * time.Minute)
+	defer demoTicker.Stop()
 
 	for {
 		select {
