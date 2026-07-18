@@ -35,6 +35,21 @@ func (l Repository) Put(ctx context.Context, asset Asset, body io.ReadSeeker) (A
 		return Asset{}, errExisting
 	}
 
+	deletedMatch, errDeleted := l.getDeletedAssetByHash(ctx, asset.Hash)
+	if errDeleted == nil {
+		_, _ = body.Seek(0, 0)
+		restored, errRestore := l.Restore(ctx, deletedMatch.AssetID, body)
+		if errRestore != nil {
+			return Asset{}, errRestore
+		}
+
+		return restored, nil
+	}
+
+	if !errors.Is(errDeleted, database.ErrNoResult) {
+		return Asset{}, errDeleted
+	}
+
 	outPath, errOutPath := l.GenAssetPath(asset.HashString())
 	if errOutPath != nil {
 		return Asset{}, errOutPath
@@ -72,7 +87,7 @@ func (l Repository) Put(ctx context.Context, asset Asset, body io.ReadSeeker) (A
 }
 
 func (l Repository) Delete(ctx context.Context, assetID uuid.UUID) (int64, error) {
-	asset, errAsset := l.getAssetByUUID(ctx, assetID)
+	asset, errAsset := l.getAssetByUUIDOrDeleted(ctx, assetID)
 	if errAsset != nil {
 		return 0, errAsset
 	}
@@ -98,6 +113,78 @@ func (l Repository) Delete(ctx context.Context, assetID uuid.UUID) (int64, error
 	}
 
 	return asset.Size, nil
+}
+
+func (l Repository) SoftDelete(ctx context.Context, assetID uuid.UUID) (int64, error) {
+	asset, errAsset := l.getAssetByUUID(ctx, assetID)
+	if errAsset != nil {
+		return 0, errAsset
+	}
+
+	query := l.db.Builder().Update("asset").Set("deleted", true).Where(sq.Eq{"asset_id": assetID})
+	if errExec := l.db.ExecUpdateBuilder(ctx, query); errExec != nil {
+		return 0, database.Err(errExec)
+	}
+
+	assetPath, errAssetPath := l.GenAssetPath(asset.HashString())
+	if errAssetPath != nil {
+		return 0, errAssetPath
+	}
+
+	if errRemove := os.Remove(assetPath); errRemove != nil {
+		var e *os.PathError
+		if errors.As(errRemove, &e) && errors.Is(e.Err, os.ErrNotExist) {
+			return asset.Size, nil
+		}
+
+		return 0, errors.Join(errRemove, ErrDeleteAssetFile)
+	}
+
+	return asset.Size, nil
+}
+
+func (l Repository) Restore(ctx context.Context, assetID uuid.UUID, body io.ReadSeeker) (Asset, error) {
+	asset, errAsset := l.getDeletedAssetByUUID(ctx, assetID)
+	if errAsset != nil {
+		return Asset{}, errAsset
+	}
+
+	outPath, errOutPath := l.GenAssetPath(asset.HashString())
+	if errOutPath != nil {
+		return Asset{}, errOutPath
+	}
+
+	file, errFile := os.Create(outPath)
+	if errFile != nil {
+		return Asset{}, errors.Join(errFile, ErrCreateAddFile)
+	}
+
+	defer func() {
+		if errClose := file.Close(); errClose != nil {
+			slog.Error("failed to close asset file", slog.String("error", errClose.Error()))
+		}
+	}()
+
+	_, _ = body.Seek(0, 0)
+
+	_, errWrite := io.Copy(file, body)
+	if errWrite != nil {
+		return Asset{}, errors.Join(errWrite, ErrCopyFileContent)
+	}
+
+	query := l.db.Builder().Update("asset").Set("deleted", false).Where(sq.Eq{"asset_id": assetID})
+	if errExec := l.db.ExecUpdateBuilder(ctx, query); errExec != nil {
+		if errRemove := os.Remove(outPath); errRemove != nil {
+			slog.Error("failed to remove restored asset file", slog.String("error", errRemove.Error()))
+		}
+
+		return Asset{}, database.Err(errExec)
+	}
+
+	asset.Deleted = false
+	asset.LocalPath = outPath
+
+	return asset, nil
 }
 
 func (l Repository) Init(_ context.Context) error {
@@ -146,7 +233,7 @@ func (l Repository) getAssetByUUID(ctx context.Context, assetID uuid.UUID) (Asse
 	query, args, errSQL := l.db.Builder().
 		Select("asset_id", "bucket", "author_id", "mime_type", "name", "size", "hash", "created_on", "updated_on", "is_private").
 		From("asset").
-		Where(sq.Eq{"asset_id": assetID}).
+		Where(sq.Eq{"asset_id": assetID, "deleted": false}).
 		ToSql()
 	if errSQL != nil {
 		return Asset{}, database.Err(errSQL)
@@ -175,11 +262,78 @@ func (l Repository) getAssetByUUID(ctx context.Context, assetID uuid.UUID) (Asse
 	return asset, nil
 }
 
+func (l Repository) getAssetByUUIDOrDeleted(ctx context.Context, assetID uuid.UUID) (Asset, error) {
+	query, args, errSQL := l.db.Builder().
+		Select("asset_id", "bucket", "author_id", "mime_type", "name", "size", "hash", "created_on", "updated_on", "is_private", "deleted").
+		From("asset").
+		Where(sq.Eq{"asset_id": assetID}).
+		ToSql()
+	if errSQL != nil {
+		return Asset{}, database.Err(errSQL)
+	}
+
+	var (
+		asset    Asset
+		authorID int64
+	)
+
+	if errScan := l.db.QueryRow(ctx, query, args...).
+		Scan(&asset.AssetID, &asset.Bucket, &authorID, &asset.MimeType, &asset.Name,
+			&asset.Size, &asset.Hash, &asset.CreatedOn, &asset.UpdatedOn, &asset.IsPrivate, &asset.Deleted); errScan != nil {
+		return Asset{}, database.Err(errScan)
+	}
+
+	asset.AuthorID = steamid.New(authorID)
+
+	assetPath, errAssetPath := l.GenAssetPath(asset.HashString())
+	if errAssetPath != nil {
+		return Asset{}, errAssetPath
+	}
+
+	asset.LocalPath = assetPath
+
+	return asset, nil
+}
+
+func (l Repository) getDeletedAssetByUUID(ctx context.Context, assetID uuid.UUID) (Asset, error) {
+	query, args, errSQL := l.db.Builder().
+		Select("asset_id", "bucket", "author_id", "mime_type", "name", "size", "hash", "created_on", "updated_on", "is_private").
+		From("asset").
+		Where(sq.Eq{"asset_id": assetID, "deleted": true}).
+		ToSql()
+	if errSQL != nil {
+		return Asset{}, database.Err(errSQL)
+	}
+
+	var (
+		asset    Asset
+		authorID int64
+	)
+
+	if errScan := l.db.QueryRow(ctx, query, args...).
+		Scan(&asset.AssetID, &asset.Bucket, &authorID, &asset.MimeType, &asset.Name,
+			&asset.Size, &asset.Hash, &asset.CreatedOn, &asset.UpdatedOn, &asset.IsPrivate); errScan != nil {
+		return Asset{}, database.Err(errScan)
+	}
+
+	asset.AuthorID = steamid.New(authorID)
+	asset.Deleted = true
+
+	assetPath, errAssetPath := l.GenAssetPath(asset.HashString())
+	if errAssetPath != nil {
+		return Asset{}, errAssetPath
+	}
+
+	asset.LocalPath = assetPath
+
+	return asset, nil
+}
+
 func (l Repository) getAssetByHash(ctx context.Context, hash []byte) (Asset, error) {
 	query, args, errSQL := l.db.Builder().
 		Select("asset_id", "bucket", "author_id", "mime_type", "name", "size", "hash", "is_private", "created_on", "updated_on").
 		From("asset").
-		Where(sq.Eq{"hash": hash}).
+		Where(sq.Eq{"hash": hash, "deleted": false}).
 		ToSql()
 	if errSQL != nil {
 		return Asset{}, database.Err(errSQL)
@@ -197,6 +351,40 @@ func (l Repository) getAssetByHash(ctx context.Context, hash []byte) (Asset, err
 	}
 
 	asset.AuthorID = steamid.New(authorID)
+
+	assetPath, errAssetPath := l.GenAssetPath(asset.HashString())
+	if errAssetPath != nil {
+		return Asset{}, errAssetPath
+	}
+
+	asset.LocalPath = assetPath
+
+	return asset, nil
+}
+
+func (l Repository) getDeletedAssetByHash(ctx context.Context, hash []byte) (Asset, error) {
+	query, args, errSQL := l.db.Builder().
+		Select("asset_id", "bucket", "author_id", "mime_type", "name", "size", "hash", "is_private", "created_on", "updated_on").
+		From("asset").
+		Where(sq.Eq{"hash": hash, "deleted": true}).
+		ToSql()
+	if errSQL != nil {
+		return Asset{}, database.Err(errSQL)
+	}
+
+	var (
+		asset    Asset
+		authorID int64
+	)
+
+	if errScan := l.db.QueryRow(ctx, query, args...).
+		Scan(&asset.AssetID, &asset.Bucket, &authorID, &asset.MimeType, &asset.Name,
+			&asset.Size, &asset.Hash, &asset.IsPrivate, &asset.CreatedOn, &asset.UpdatedOn); errScan != nil {
+		return Asset{}, database.Err(errScan)
+	}
+
+	asset.AuthorID = steamid.New(authorID)
+	asset.Deleted = true
 
 	assetPath, errAssetPath := l.GenAssetPath(asset.HashString())
 	if errAssetPath != nil {

@@ -418,3 +418,7 @@ drop constraint if exists person_messages_demo_id_fkey;
 
 alter table person_messages
 add constraint person_messages_demo_id_fkey foreign key (demo_id) references demo on delete cascade on update cascade;
+
+ALTER TABLE asset ADD COLUMN deleted boolean NOT NULL DEFAULT false;
+
+ALTER TABLE demo DROP COLUMN deleted;

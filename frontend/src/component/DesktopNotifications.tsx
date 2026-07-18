@@ -22,7 +22,7 @@ export const DesktopNotifications = ({
 			return;
 		}
 
-		notifications
+		const opened = notifications
 			.filter((n) => n.personNotificationId > newest)
 			.map((n) => {
 				setNewest(n.personNotificationId);
@@ -34,6 +34,9 @@ export const DesktopNotifications = ({
 					icon: engineer.default,
 				});
 			});
+        return () => {
+            opened.map((n) => n.close())
+        }
 	}, [isLoading, newest, notifications]);
 
 	return null;

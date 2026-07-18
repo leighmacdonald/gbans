@@ -431,7 +431,7 @@ func (d Demos) TruncateBySpace(ctx context.Context, root string, maxAllowedPctUs
 			return count, size, errOldest
 		}
 
-		demoSize, err := d.asset.Delete(ctx, oldestDemo.AssetID)
+		demoSize, err := d.asset.SoftDelete(ctx, oldestDemo.AssetID)
 		if err != nil {
 			return count, size, err
 		}
@@ -461,20 +461,12 @@ func (d Demos) TruncateByCount(ctx context.Context, maxCount uint64) (int, int64
 	}
 
 	for _, demo := range expired {
-		// FIXME cascade delete does not work????
-		demoSize, errDrop := d.asset.Delete(ctx, demo.AssetID)
+		demoSize, errDrop := d.asset.SoftDelete(ctx, demo.AssetID)
 		if errDrop != nil && !errors.Is(errDrop, asset.ErrDeleteAssetFile) {
-			slog.Error("Failed to remove demo asset", slog.String("error", errDrop.Error()),
+			slog.Error("Failed to soft-delete demo asset", slog.String("error", errDrop.Error()),
 				slog.String("bucket", string(d.bucket)), slog.String("name", demo.Title))
 
 			continue
-		}
-
-		if err := d.repository.Delete(ctx, demo.DemoID); err != nil {
-			slog.Error("Failed to remove demo entry",
-				slog.Int64("demo_id", int64(demo.DemoID)),
-				slog.String("asset_id", demo.AssetID.String()),
-				slog.String("error", err.Error()))
 		}
 
 		size += demoSize
@@ -571,14 +563,8 @@ func (d Demos) RemoveOrphans(ctx context.Context) error {
 
 		slog.Debug("Removing orphan demo", slog.Int64("demo_id", int64(demo.DemoID)),
 			slog.String("title", demo.Title), slog.String("asset_id", demo.AssetID.String()))
-		if _, err := d.asset.Delete(ctx, demo.AssetID); err != nil {
-			slog.Error("Failed to remove orphan demo asset", slog.String("error", err.Error()))
-
-			continue
-		}
-
-		if err := d.repository.Delete(ctx, demo.DemoID); err != nil {
-			slog.Error("Failed to remove orphan demo entry", slog.String("error", err.Error()))
+		if _, err := d.asset.SoftDelete(ctx, demo.AssetID); err != nil {
+			slog.Error("Failed to soft-delete orphan demo asset", slog.String("error", err.Error()))
 
 			continue
 		}

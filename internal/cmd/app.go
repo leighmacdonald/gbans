@@ -422,25 +422,27 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	blocklistTicker := time.NewTicker(6 * time.Hour)
 	demoTicker := time.NewTicker(15 * time.Minute)
 
-	select {
-	case <-ctx.Done():
-		return
-	case <-membershipsTicker.C:
-		go g.memberships.Update(ctx)
-	case <-expirationsTicker.C:
-		go g.banExpirations.Update(ctx)
-	case <-reportIntoTicker.C:
-		go func() {
-			if errMeta := g.reports.MetaStats(ctx); errMeta != nil {
-				slog.Error("Failed to generate meta stats", slog.String("error", errMeta.Error()))
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-membershipsTicker.C:
+			go g.memberships.Update(ctx)
+		case <-expirationsTicker.C:
+			go g.banExpirations.Update(ctx)
+		case <-reportIntoTicker.C:
+			go func() {
+				if errMeta := g.reports.MetaStats(ctx); errMeta != nil {
+					slog.Error("Failed to generate meta stats", slog.String("error", errMeta.Error()))
+				}
+			}()
+		case <-blocklistTicker.C:
+			go g.blocklists.Sync(ctx)
+		case <-demoTicker.C:
+			go g.demos.Cleanup(ctx)
+			if errSync := g.anticheat.SyncDemoIDs(ctx, 100); errSync != nil {
+				slog.Error("failed to sync anticheat demos")
 			}
-		}()
-	case <-blocklistTicker.C:
-		go g.blocklists.Sync(ctx)
-	case <-demoTicker.C:
-		go g.demos.Cleanup(ctx)
-		if errSync := g.anticheat.SyncDemoIDs(ctx, 100); errSync != nil {
-			slog.Error("failed to sync anticheat demos")
 		}
 	}
 }
