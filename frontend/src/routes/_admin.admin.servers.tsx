@@ -40,15 +40,9 @@ import { renderTimestamp } from "../util/time.ts";
 const columnHelper = createMRTColumnHelper<Server>();
 const defaultOptions = createDefaultTableOptions<Server>();
 const defaultValues = {
-	...makeSchemaDefaults({ defaultColumn: "name" }),
-	columnFilters: [{ id: "isEnabled", value: "true" }],
-	sorting: [{ id: "name", desc: false }],
-	pagination: {
-		pageIndex: 0,
-		pageSize: 25,
-	},
+	...makeSchemaDefaults({ defaultColumn: "shortName", pageSize: 50 }),
 };
-const validateSearch = makeSchemaState("name", false);
+const validateSearch = makeSchemaState("shortName", false);
 
 export const Route = createFileRoute("/_admin/admin/servers")({
 	validateSearch,
