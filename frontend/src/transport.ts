@@ -20,18 +20,18 @@ const validateInterceptor = createValidateInterceptor();
 
 const authInterceptor: Interceptor = (next) => async (req) => {
 	const value = localStorage.getItem(StorageKey.Token);
-		if (emptyOrNullString(value)) {
-			return await next(req);
-		}
+	if (emptyOrNullString(value)) {
+		return await next(req);
+	}
 	try {
 		const token: { token: string } = JSON.parse(value);
 		if (token) {
 			const auth = `Bearer ${token.token}`;
 			req.header.set("Authorization", auth);
 		}
-	} catch (e){
-	logErr(	"Failed to parse stored token ${e}")
-	  localStorage.removeItem(StorageKey.Token);
+	} catch (e) {
+		logErr("Failed to parse stored token ${e}");
+		localStorage.removeItem(StorageKey.Token);
 	}
 
 	return await next(req);
