@@ -1,10 +1,10 @@
 CREATE TABLE IF NOT EXISTS stats_maps(
-    map_id int NOT NULL references maps(map_id),
+    map_id int NOT NULL references map(map_id),
     games int NOT NULL,
     time_played interval NOT NULL
 );
 CREATE TABLE IF NOT EXISTS stats_player_alltime(
-    steam_id bigint NOT NULL references players(steamid),
+    steam_id bigint NOT NULL references person(steam_id),
     kills int NOT NULL,
     deaths int NOT NULL,
     assists int NOT NULL,
@@ -56,8 +56,8 @@ CREATE TABLE IF NOT EXISTS stats_player_alltime(
 
 CREATE TABLE IF NOT EXISTS stats_demo(
     stats_id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    demo_id uuid NOT NULL references demos(demo_id),
-    map_id int NOT NULL references maps(map_id),
+    demo_id integer NOT NULL references demo(demo_id),
+    map_id int NOT NULL references map(map_id),
     filename text NOT NULL,
     version integer NOT NULL,
     protocol integer NOT NULL,
@@ -72,8 +72,8 @@ CREATE TABLE IF NOT EXISTS stats_demo(
 );
 
 CREATE TABLE IF NOT EXISTS stats_demo_player(
-    stats_id uuid NOT NULL references stats(stats_id),
-    steamid bigint NOT NULL references players(steamid),
+    stats_id uuid NOT NULL references stats_demo(stats_id),
+    steamid bigint NOT NULL references person(steam_id),
     name text NOT NULL,
     wins integer NOT NULL,
     losses integer NOT NULL,
