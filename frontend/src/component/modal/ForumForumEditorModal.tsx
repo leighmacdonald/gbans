@@ -14,6 +14,7 @@ import type { Category, Forum } from "../../rpc/forum/v1/forum_pb.ts";
 import { forumCreate } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
 import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
 import { enumValues } from "../../util/lists.ts";
+import { toTitleCase } from "../../util/strings.ts";
 
 export const ForumForumEditorModal = NiceModal.create(
 	({ forum, categories }: { forum?: Forum; categories: Category[] }) => {
@@ -129,7 +130,7 @@ export const ForumForumEditorModal = NiceModal.create(
 												renderItem={(pl) => {
 													return (
 														<MenuItem value={pl} key={`pl-${pl}`}>
-															{Privilege[pl]}
+															{toTitleCase(Privilege[pl])}
 														</MenuItem>
 													);
 												}}

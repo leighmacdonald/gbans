@@ -34,9 +34,9 @@ export const DesktopNotifications = ({
 					icon: engineer.default,
 				});
 			});
-        return () => {
-            opened.map((n) => n.close())
-        }
+		return () => {
+			opened.map((n) => n.close());
+		};
 	}, [isLoading, newest, notifications]);
 
 	return null;

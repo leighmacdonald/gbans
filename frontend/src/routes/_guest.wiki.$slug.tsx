@@ -3,7 +3,7 @@ import { useQuery } from "@connectrpc/connect-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { ErrorDetails } from "../component/ErrorDetails.tsx";
-import {  LoadingPlaceholder} from "../component/LoadingPlaceholder.tsx"
+import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { WikiPage } from "../component/WikiPage.tsx";
 import { AppError } from "../error.tsx";
 import { get } from "../rpc/wiki/v1/wiki-WikiService_connectquery.ts";

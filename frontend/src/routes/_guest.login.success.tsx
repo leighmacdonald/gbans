@@ -44,19 +44,32 @@ function LoginSteamSuccess() {
 			return;
 		}
 
-		try {
-			login(token, {
-				onSuccess: async () => {
-					console.log(`Logging Success, redirecting to ${search.nextUrl ?? "/"}`);
-					await navigate({ to: search.nextUrl });
-				},
-				onError: () => {
-					navigate({ to: "/" });
-				},
-			});
-		} catch {
-			navigate({ to: "/" });
-		}
+		let cancelled = false;
+
+		const runLogin = async () => {
+			try {
+				await login(token, {
+					onSuccess: async () => {
+						if (cancelled) return;
+						console.log(`Logging Success, redirecting to ${search.nextUrl ?? "/"}`);
+						await navigate({ to: search.nextUrl });
+					},
+					onError: () => {
+						if (cancelled) return;
+						navigate({ to: "/" });
+					},
+				});
+			} catch {
+				if (cancelled) return;
+				navigate({ to: "/" });
+			}
+		};
+
+		runLogin();
+
+		return () => {
+			cancelled = true;
+		};
 	}, [login, search.nextUrl, token, navigate]);
 
 	return <LoadingPlaceholder />;

@@ -53,9 +53,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			try {
 				localStorage.setItem(StorageKey.Token, JSON.stringify({ token }));
 				const personClient = createClient(PersonService, finalTransport);
-				setTokenValue({ token: token });
+				setTokenValue({ token });
 
-				queryClient
+				return queryClient
 					.fetchQuery({
 						queryKey: createConnectQueryKey({
 							schema: PersonService,
@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					})
 					.then((data: CurrentProfileResponse) => {
 						if (!data?.profile) {
-							throw "No profile";
+							throw new Error("No profile");
 						}
 
 						setProfileValue({
@@ -83,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					.catch(opts.onError);
 			} catch (e) {
 				opts.onError(e as Error);
+				return Promise.reject(e);
 			}
 		},
 		[setProfileValue, profile, setTokenValue],
