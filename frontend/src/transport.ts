@@ -30,7 +30,7 @@ const authInterceptor: Interceptor = (next) => async (req) => {
 			req.header.set("Authorization", auth);
 		}
 	} catch (e) {
-		logErr("Failed to parse stored token ${e}");
+		logErr(`Failed to parse stored token ${e}`);
 		localStorage.removeItem(StorageKey.Token);
 	}
 
