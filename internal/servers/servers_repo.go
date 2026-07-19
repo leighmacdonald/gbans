@@ -107,7 +107,7 @@ func (r *Repository) ServerByLogSecret(ctx context.Context, secret int64) (Serve
 		Select("s.server_id", "s.short_name", "s.name", "s.address", "s.port", "s.rcon", "s.password",
 			"s.token_created_on", "s.created_on", "s.updated_on", "s.reserved_slots", "s.is_enabled", "s.region", "s.cc",
 			"s.latitude", "s.longitude", "s.deleted", "s.log_secret", "s.enable_stats", "s.address_internal", "s.sdr_enabled",
-			"s.discord_seed_role_ids", "coalesce(s.stats_bucket_id, 0)").
+			"s.discord_seed_role_ids", "s.stats_bucket_id").
 		From("server s").Where(sq.Eq{"s.log_secret": secret})
 	var server Server
 	var tokenDate time.Time
@@ -133,7 +133,7 @@ func (r *Repository) Query(ctx context.Context, filter Query) ([]Server, error) 
 		Select("s.server_id", "s.short_name", "s.name", "s.address", "s.port", "s.rcon", "s.password",
 			"s.token_created_on", "s.created_on", "s.updated_on", "s.reserved_slots", "s.is_enabled", "s.region", "s.cc",
 			"s.latitude", "s.longitude", "s.deleted", "s.log_secret", "s.enable_stats", "s.address_internal", "s.sdr_enabled",
-			"s.discord_seed_role_ids", "coalesce(s.stats_bucket_id, 0)").
+			"s.discord_seed_role_ids", "s.stats_bucket_id").
 		From("server s")
 
 	var constraints sq.And
