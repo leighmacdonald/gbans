@@ -38,10 +38,15 @@ func MustRegisterTemplate(body []byte) {
 
 func RenderTemplate(template string, args any, textProcessor ...TextProcessor) (string, error) {
 	templatedMutex.RLock()
-	defer templatedMutex.RUnlock()
+
+	if templates == nil {
+		templatedMutex.RUnlock()
+		return "", errors.New("templates not initialized")
+	}
 
 	var outBuff bytes.Buffer
 	if errExec := templates.ExecuteTemplate(&outBuff, template, args); errExec != nil {
+		templatedMutex.RUnlock()
 		return "Failed to render :(", errors.Join(errExec, ErrCommandFailed)
 	}
 
@@ -49,6 +54,8 @@ func RenderTemplate(template string, args any, textProcessor ...TextProcessor) (
 	for _, processor := range textProcessor {
 		body = processor(body)
 	}
+
+	templatedMutex.RUnlock()
 
 	return body, nil
 }
