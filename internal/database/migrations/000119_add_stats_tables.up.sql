@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS stats_player_alltime(
 );
 
 CREATE TABLE IF NOT EXISTS stats_demo(
-    stats_id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    stats_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     demo_id integer NOT NULL references demo(demo_id),
     map_id int NOT NULL references map(map_id),
     filename text NOT NULL,

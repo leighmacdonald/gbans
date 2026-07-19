@@ -475,7 +475,7 @@ func setDefaultConfigValues() {
 }
 
 func NewMemConfigRepository(conf Config) *MemConfigRepository {
-	return &MemConfigRepository{config: conf}
+	return &MemConfigRepository{config: conf, mutex: &sync.RWMutex{}}
 }
 
 type MemConfigRepository struct {
