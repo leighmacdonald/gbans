@@ -421,4 +421,4 @@ add constraint person_messages_demo_id_fkey foreign key (demo_id) references dem
 
 ALTER TABLE asset ADD COLUMN deleted boolean NOT NULL DEFAULT false;
 
-ALTER TABLE demo DROP COLUMN deleted;
+ALTER TABLE demo DROP COLUMN IF EXISTS deleted;
