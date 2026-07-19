@@ -503,7 +503,7 @@ func (r Repository) getMatch(ctx context.Context, matchID uuid.UUID) (*Match, er
 	const query = `
 		SELECT
 			m.match_id, m.server_id, m.map_id, m.demo_id, m.stats_bucket_id, m.hostname, m.score_red, m.score_blu,
-			m.start_time, m.duration_ms, m.created_on, a.asset_id
+			m.start_time, m.duration_ms, m.created_on, COALESCE(a.asset_id, '00000000-0000-0000-0000-000000000000')
 		FROM match m
 		LEFT JOIN demo d USING (demo_id)
 		LEFT JOIN asset a USING (asset_id)
