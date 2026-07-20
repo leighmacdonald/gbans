@@ -203,6 +203,10 @@ func (s Service) Create(ctx context.Context, req *v1.CreateRequest) (*v1.CreateR
 
 	createdBan, errBan := s.bans.Create(ctx, opts)
 	if errBan != nil {
+		if errors.Is(errBan, database.ErrDuplicate) {
+			return nil, connect.NewError(connect.CodeAlreadyExists, rpc.ErrExists)
+		}
+
 		slog.Error("Failed to create ban", slog.String("error", errBan.Error()))
 
 		return nil, connect.NewError(connect.CodeInternal, ErrSaveBan)
