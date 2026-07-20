@@ -278,7 +278,7 @@ func (r ReportRepository) GetReport(ctx context.Context, reportID int32) (Report
 			"coalesce(d.demo_id, 0)", "coalesce(s.person_message_id, 0)").
 		From("report s").
 		LeftJoin("demo d on s.demo_id = d.demo_id").
-		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"report_id": reportID}}))
+		Where(sq.And{sq.Eq{"s.deleted": false}, sq.Eq{"s.report_id": reportID}}))
 
 	if errRow != nil {
 		return report, database.Err(errRow)

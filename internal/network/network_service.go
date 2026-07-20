@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/netip"
+	"strconv"
 	"sync/atomic"
 
 	"connectrpc.com/connect"
@@ -38,7 +39,7 @@ func NewNetworkService(networks Networks, authMiddleware *rpc.Middleware, option
 func (s *Service) QueryConnections(ctx context.Context, req *v1.QueryConnectionsRequest) (*v1.QueryConnectionsResponse, error) {
 	ipHist, errIPHist := s.networks.QueryConnectionHistory(ctx, ConnectionHistoryQuery{
 		Filter:        rpc.FromRPC(req.GetFilter()),
-		SourceIDField: httphelper.SourceIDField{},
+		SourceIDField: httphelper.SourceIDField{SourceID: strconv.FormatInt(req.GetSteamId(), 10)},
 		CIDR:          req.GetCidr(),
 		CountryCode:   req.GetCountryCode(),
 		CountryName:   req.GetCountryName(),
