@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -15,17 +16,17 @@ import (
 )
 
 func recoveryHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		defer func() {
 			if rec := recover(); rec != nil {
 				slog.Error("Recovery error:", slog.String("err", fmt.Sprintf("%v", rec)))
-				RespondProblemJSON(w, http.StatusInternalServerError, APIError{
+				RespondProblemJSON(res, http.StatusInternalServerError, APIError{
 					Title: "Something went wrong",
 				})
 			}
 		}()
 
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(res, req)
 	})
 }
 
@@ -55,12 +56,12 @@ func useSecure(devMode bool, cspOrigin string) func(http.Handler) http.Handler {
 	})
 
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if err := secureMiddleware.Process(w, r); err != nil {
+		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			if err := secureMiddleware.Process(res, req); err != nil {
 				return
 			}
 
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(res, req)
 		})
 	}
 }
@@ -69,46 +70,43 @@ func useSentry(version string) func(http.Handler) http.Handler {
 	sentryHandler := sentryhttp.New(sentryhttp.Options{Repanic: true})
 
 	return func(next http.Handler) http.Handler {
-		return sentryHandler.Handle(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if hub := sentry.GetHubFromContext(r.Context()); hub != nil {
+		return sentryHandler.Handle(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			if hub := sentry.GetHubFromContext(req.Context()); hub != nil {
 				hub.Scope().SetTag("version", version)
 			}
 
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(res, req)
 		}))
 	}
 }
 
 func useCors(origins []string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			origin := r.Header.Get("Origin")
-			for _, allowed := range origins {
-				if origin == allowed {
-					w.Header().Set("Access-Control-Allow-Origin", origin)
-					break
-				}
+		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			origin := req.Header.Get("Origin")
+			if slices.Contains(origins, origin) {
+				res.Header().Set("Access-Control-Allow-Origin", origin)
 			}
 
-			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-			w.Header().Set("Access-Control-Expose-Headers", "GBANS-AppVersion")
-			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			res.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+			res.Header().Set("Access-Control-Expose-Headers", "GBANS-AppVersion")
+			res.Header().Set("Access-Control-Allow-Credentials", "true")
 
-			if r.Method == http.MethodOptions {
-				w.WriteHeader(http.StatusNoContent)
+			if req.Method == http.MethodOptions {
+				res.WriteHeader(http.StatusNoContent)
 
 				return
 			}
 
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(res, req)
 		})
 	}
 }
 
 func usePrometheus(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		start := time.Now()
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(res, req)
 		_ = time.Since(start).Seconds()
 	})
 }
@@ -127,20 +125,22 @@ func useLogging(level log.Level, _ bool) func(http.Handler) http.Handler {
 	}
 
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			start := time.Now()
-			next.ServeHTTP(w, r)
-			slog.Log(r.Context(), logLevel, "http request",
-				slog.String("method", r.Method),
-				slog.String("path", r.URL.Path),
+			next.ServeHTTP(res, req)
+			slog.Log(req.Context(), logLevel, "http request",
+				slog.String("method", req.Method),
+				slog.String("path", req.URL.Path),
 				slog.Duration("duration", time.Since(start)),
 			)
 		})
 	}
 }
 
-func encodeJSON(w http.ResponseWriter, status int, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(v)
+func encodeJSON(res http.ResponseWriter, status int, v any) {
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(status)
+	if err := json.NewEncoder(res).Encode(v); err != nil {
+		slog.Error("Failed to encode JSON response", slog.String("error", err.Error()))
+	}
 }

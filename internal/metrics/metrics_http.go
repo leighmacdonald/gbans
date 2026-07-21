@@ -4,6 +4,6 @@ import "net/http"
 
 type metricsHandler struct{}
 
-func NewMetricsHandler(mux *http.ServeMux) {
+func NewMetricsHandler(_ *http.ServeMux) {
 	_ = metricsHandler{}
 }

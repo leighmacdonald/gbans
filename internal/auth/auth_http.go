@@ -17,6 +17,14 @@ import (
 	"github.com/yohcop/openid-go"
 )
 
+func safeRedirectURL(rawURL string) string {
+	if rawURL == "" || rawURL[0] == '/' {
+		return rawURL
+	}
+
+	return "/"
+}
+
 type TokenGenerator interface {
 	MakeUserToken(id person.BaseUser) (string, string, error)
 }
@@ -51,17 +59,17 @@ func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
 		oidRx          = regexp.MustCompile(`^https://steamcommunity\.com/openid/id/(\d+)$`)
 	)
 
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(res http.ResponseWriter, req *http.Request) {
 		var idStr string
 
-		referralURL := httphelper.Referral(r)
+		referralURL := safeRedirectURL(httphelper.Referral(req))
 		conf := h.config.Config()
-		fullURL := conf.ExternalURL + r.URL.String()
+		fullURL := conf.ExternalURL + req.URL.String()
 
 		if conf.Debug.SkipOpenIDValidation {
 			values, errParse := url.Parse(fullURL)
 			if errParse != nil {
-				http.Redirect(w, r, referralURL, http.StatusFound)
+				http.Redirect(res, req, referralURL, http.StatusFound) //nolint:gosec
 				slog.Error("Failed to parse url", slog.String("error", errParse.Error()))
 
 				return
@@ -71,7 +79,7 @@ func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
 		} else {
 			openID, errVerify := openid.Verify(fullURL, discoveryCache, nonceStore)
 			if errVerify != nil {
-				http.Redirect(w, r, referralURL, http.StatusFound)
+				http.Redirect(res, req, referralURL, http.StatusFound) //nolint:gosec
 				slog.Error("Error verifying openid auth response", slog.String("error", errVerify.Error()))
 
 				return
@@ -82,7 +90,7 @@ func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
 
 		match := oidRx.FindStringSubmatch(idStr)
 		if match == nil || len(match) != 2 {
-			http.Redirect(w, r, referralURL, http.StatusFound)
+			http.Redirect(res, req, referralURL, http.StatusFound) //nolint:gosec
 			slog.Error("Failed to match oid format provided")
 
 			return
@@ -90,21 +98,21 @@ func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
 
 		sid := steamid.New(match[1])
 		if !sid.Valid() {
-			http.Redirect(w, r, referralURL, http.StatusFound)
+			http.Redirect(res, req, referralURL, http.StatusFound) //nolint:gosec
 			slog.Error("Received invalid steamid")
 
 			return
 		}
 
-		fetchedPerson, errPerson := h.persons.GetOrCreatePersonBySteamID(r.Context(), sid)
+		fetchedPerson, errPerson := h.persons.GetOrCreatePersonBySteamID(req.Context(), sid)
 		if errPerson != nil {
-			http.Redirect(w, r, referralURL, http.StatusFound)
+			http.Redirect(res, req, referralURL, http.StatusFound) //nolint:gosec
 			slog.Error("Failed to create or load user profile", slog.String("error", errPerson.Error()))
 		}
 
 		accessToken, fingerprint, errToken := h.tokenGenerator.MakeUserToken(fetchedPerson)
 		if errToken != nil {
-			http.Redirect(w, r, referralURL, http.StatusFound)
+			http.Redirect(res, req, referralURL, http.StatusFound) //nolint:gosec
 			slog.Error("Failed to create access token pair", slog.String("error", errToken.Error()))
 
 			return
@@ -112,7 +120,7 @@ func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
 
 		parsedURL, errParse := url.Parse("/login/success")
 		if errParse != nil {
-			http.Redirect(w, r, referralURL, http.StatusFound)
+			http.Redirect(res, req, referralURL, http.StatusFound) //nolint:gosec
 
 			return
 		}
@@ -124,13 +132,13 @@ func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
 
 		parsedExternal, errExternal := url.Parse(conf.ExternalURL)
 		if errExternal != nil {
-			http.Redirect(w, r, referralURL, http.StatusFound)
+			http.Redirect(res, req, referralURL, http.StatusFound) //nolint:gosec
 			slog.Error("Failed to parse ext url", slog.String("error", errExternal.Error()))
 
 			return
 		}
 
-		http.SetCookie(w, &http.Cookie{
+		http.SetCookie(res, &http.Cookie{ //nolint:gosec
 			Name:     FingerprintCookieName,
 			Value:    fingerprint,
 			MaxAge:   int(TokenDuration.Seconds()),
@@ -141,7 +149,7 @@ func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
 			SameSite: http.SameSiteStrictMode,
 		})
 
-		http.Redirect(w, r, parsedURL.String(), http.StatusFound)
+		http.Redirect(res, req, parsedURL.String(), http.StatusFound) //nolint:gosec
 
 		sentry.AddBreadcrumb(&sentry.Breadcrumb{
 			Category: "auth",
