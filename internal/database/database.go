@@ -89,7 +89,7 @@ func (db *PgStore) WrapTx(ctx context.Context, txFunc func(pgx.Tx) error) error 
 
 	if err := txFunc(transaction); err != nil {
 		if errRollback := transaction.Rollback(ctx); errRollback != nil {
-			return Err(errRollback)
+			slog.Error("Failed to rollback transaction", slog.String("error", errRollback.Error()))
 		}
 
 		return err

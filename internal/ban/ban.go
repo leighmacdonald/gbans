@@ -287,10 +287,6 @@ func (s Bans) QueryOne(ctx context.Context, opts QueryOpts) (Ban, error) {
 	return results[0], nil
 }
 
-func (s Bans) Stats(ctx context.Context, stats *Stats) error {
-	return s.repo.Stats(ctx, stats)
-}
-
 func (s Bans) Save(ctx context.Context, ban *Ban) error {
 	oldState := Open
 	if ban.BanID > 0 {

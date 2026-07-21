@@ -18,14 +18,8 @@ type assetHandler struct {
 }
 
 func NewAssetHandler(engine *gin.Engine, assets Assets) {
-	// FIXME add auth
 	handler := assetHandler{Assets: assets}
 	engine.GET("/asset/:asset_id", handler.getAsset())
-	// optGrp := engine.Group("/")
-	// {
-	//   opt := optGrp.Use(authenticator.Middleware(permission.Guest))
-	//	 opt.GET("/asset/:asset_id", handler.getAsset())
-	// }
 }
 
 func (h assetHandler) getAsset() gin.HandlerFunc {
@@ -54,7 +48,11 @@ func (h assetHandler) getAsset() gin.HandlerFunc {
 		}(&asset)
 
 		if asset.IsPrivate {
-			user, _ := session.CurrentUserProfile(ctx)
+			user, errProfile := session.CurrentUserProfile(ctx)
+			if errProfile != nil {
+				slog.Error("Failed to get user session for private asset", slog.String("error", errProfile.Error()))
+			}
+
 			sid := user.GetSteamID()
 			if !sid.Valid() || sid != asset.AuthorID && !user.HasPermission(permission.Moderator) {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, permission.ErrDenied,

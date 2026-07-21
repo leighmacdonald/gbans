@@ -151,7 +151,9 @@ func (m *Middleware) Authenticate(ctx context.Context, req *http.Request) (any, 
 func (m *Middleware) authServer(ctx context.Context, req *http.Request, procedure string) (ServerInfo, error) {
 	var info ServerInfo
 
+	m.RLock()
 	authFn, found := m.serverAllowList[procedure]
+	m.RUnlock()
 	if !found {
 		return info, nil
 	}

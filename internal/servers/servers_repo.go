@@ -17,7 +17,7 @@ type Repository struct {
 }
 
 func NewRepository(database database.Database) Repository {
-	return Repository{Database:   database}
+	return Repository{Database: database}
 }
 
 func (r *Repository) InsertLogs(ctx context.Context, events []logparse.ServerEvent) error {
@@ -237,7 +237,7 @@ func (r *Repository) Save(ctx context.Context, server *Server) error {
 		server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.CreatedOn, server.UpdatedOn,
 		server.Password, server.IsEnabled, server.Region, server.CC,
 		server.Latitude, server.Longitude, server.Deleted, &server.LogSecret, &server.EnableStats, &server.AddressInternal,
-		&server.SDREnabled, &server.DiscordSeedRoleIDs,  &server.DiscordSeedChannelID, &server.StatsBucketID).
+		&server.SDREnabled, &server.DiscordSeedRoleIDs, &server.DiscordSeedChannelID, &server.StatsBucketID).
 		Scan(&server.ServerID)
 	if err != nil {
 		return database.Err(err)
