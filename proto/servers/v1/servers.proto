@@ -105,7 +105,7 @@ message Server {
     (buf.validate.field).string.min_len = 1
   ];
   string name = 3 [
-    (buf.validate.field).required = true,
+    (buf.validate.field).required   = true,
     (buf.validate.field).string.min_len = 1
   ];
   string address = 4 [
@@ -136,9 +136,10 @@ message Server {
   google.protobuf.Timestamp token_created_on = 17;
   google.protobuf.Timestamp created_on = 18;
   google.protobuf.Timestamp updated_on = 19;
-  repeated string discord_seed_role_ids = 20;
-  string ip = 21 [(buf.validate.field).string.ipv4 = true];
-  int32 stats_bucket_id = 22;
+  string discord_seed_channel_id = 20;
+  repeated string discord_seed_role_ids = 21;
+  string ip = 22 [(buf.validate.field).string.ipv4 = true];
+  int32 stats_bucket_id = 23;
 }
 
 message StateResponse {

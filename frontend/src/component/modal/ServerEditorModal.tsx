@@ -15,7 +15,7 @@ import { EditServerRequestSchema, type Server, ServerSchema } from "../../rpc/se
 import { editServer } from "../../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { buckets } from "../../rpc/stats/v1/stats-StatsService_connectquery.ts";
 import { logErr } from "../../util/errors.ts";
-import { randomStringAlphaNum } from "../../util/strings.ts";
+import { randomNum, randomStringAlphaNum } from "../../util/strings.ts";
 import { Heading } from "../Heading";
 import { LoadingPlaceholder } from "../LoadingPlaceholder.tsx";
 
@@ -37,9 +37,10 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 		longitude: server?.latLong?.longitude ?? 0,
 		isEnabled: server?.isEnabled ?? true,
 		enableStats: server?.enableStats ?? true,
-		logSecret: server?.logSecret ?? Math.floor(Math.random() * 89999999 + 10000000),
+		logSecret: server?.logSecret ?? randomNum(),
 		addressInternal: server?.addressInternal ?? "",
 		sdrEnabled: server?.sdrEnabled ?? false,
+		discordSeedChannelID: server?.discordSeedChannelId ?? "",
 		discordSeedRoleIds: server?.discordSeedRoleIds ?? [],
 		statsBucketId: server?.statsBucketId,
 	};
@@ -221,7 +222,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 									name={"statsBucketId"}
 									children={(field) => {
 										return (
-											<field.BucketField
+											<field.SelectBucketField
 												label={"Stat Bucket"}
 												items={data?.buckets ?? []}
 												renderItem={(i) => {
@@ -232,15 +233,25 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 									}}
 								/>
 							</Grid>
+
+							<Grid size={{ xs: 12 }}>
+								<form.AppField
+									name={"discordSeedChannelID"}
+									children={(field) => {
+										return <field.TextField label={"Discord Seed Channel ID"} />;
+									}}
+								/>
+							</Grid>
+
 							<Grid size={{ xs: 12 }}>
 								<form.AppField
 									name={"discordSeedRoleIds"}
 									children={(field) => {
 										return (
-											<field.DiscordRolesField
+											<field.SelectDiscordRolesField
 												items={roles?.roles ?? []}
 												multiple={true}
-												label={"Discord Seed Channel(s)"}
+												label={"Discord Seed Roles(s)"}
 												renderItem={(i) => {
 													return (
 														<MenuItem value={i.id} key={i.id}>

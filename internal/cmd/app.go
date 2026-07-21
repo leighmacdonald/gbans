@@ -182,17 +182,18 @@ func (g *GBans) Init(ctx context.Context) error {
 
 	mapsSvc := maps.New(maps.NewRepository(g.database))
 
-	g.bans = ban.New(ban.NewRepository(g.database), g.persons, conf.Discord.SafeBanLogChannelID(),
-		conf.Discord.SafeKickLogChannelID(), steamid.New(conf.Owner), g.reports, g.notifications, g.servers, g.networks)
-	g.blocklists = blocklist.NewBlocklists(blocklist.NewRepository(g.database),
-		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database)))
-	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), conf.Discord)
 	g.stats = stats.New(stats.NewRepository(g.database), mapsSvc)
 
 	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler, conf.Discord.SafeChatLogChannelID())
 	g.demos = demo.NewDemos(asset.BucketDemo, demo.NewRepository(g.database), g.assets, g.stats, g.chat, g.persons, conf.Demo, steamid.New(conf.Owner))
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications,
 		conf.Discord.SafeAppealLogChannelID())
+
+	g.bans = ban.New(ban.NewRepository(g.database), g.persons, conf.Discord.SafeBanLogChannelID(),
+		conf.Discord.SafeKickLogChannelID(), steamid.New(conf.Owner), g.reports, g.notifications, g.servers, g.networks)
+	g.blocklists = blocklist.NewBlocklists(blocklist.NewRepository(g.database),
+		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database)))
+	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), conf.Discord)
 	g.forums = forum.New(forum.NewRepository(g.database), g.notifications, g.persons, "")
 	g.metrics = metrics.New(g.broadcaster)
 	g.news = news.New(news.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID())
@@ -445,9 +446,11 @@ func (g *GBans) StartBackground(ctx context.Context) {
 			go g.blocklists.Sync(ctx)
 		case <-demoTicker.C:
 			go g.demos.Cleanup(ctx)
-			if errSync := g.anticheat.SyncDemoIDs(ctx, 100); errSync != nil {
-				slog.Error("failed to sync anticheat demos")
-			}
+			go func() {
+				if errSync := g.anticheat.SyncDemoIDs(ctx, 100); errSync != nil {
+					slog.Error("failed to sync anticheat demos")
+				}
+			}()
 		}
 	}
 }

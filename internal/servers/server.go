@@ -8,6 +8,7 @@ import (
 	"net"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -25,6 +26,13 @@ var (
 	maxPlayersRx = regexp.MustCompile(`^"sv_visiblemaxplayers" = "(\d{1,2})"\s`)
 	playersRx    = regexp.MustCompile(`players\s: (\d+)\s+humans,\s+(\d+)\s+bots\s\((\d+)\s+max`)
 )
+
+func sanitizeRCONArg(arg string) string {
+	arg = strings.ReplaceAll(arg, `\`, `\\`)
+	arg = strings.ReplaceAll(arg, `"`, `\"`)
+
+	return arg
+}
 
 // SafeServer provides a server struct stripped of any sensitive info suitable for public-facing
 // services.
@@ -109,7 +117,8 @@ type Server struct {
 	CreatedOn      time.Time
 	UpdatedOn      time.Time
 	// DiscordSeedRoleIDs stores the discord role IDs for those who which to be notified of seed requests.
-	DiscordSeedRoleIDs []string //nolint:tagliatelle
+	DiscordSeedRoleIDs   []string //nolint:tagliatelle
+	DiscordSeedChannelID string
 	// IP is distinct from Address as it can only contain a real IP and not DNS name like Address.
 	IP net.IP
 	// IPInternal works identical to IP except it uses the internal/VPN address from AddressInternal.
@@ -302,12 +311,12 @@ func (s *Server) Kick(ctx context.Context, target steamid.SteamID, reason string
 		return steamid.ErrInvalidSID
 	}
 
-	return s.ExecDiscardF(ctx, `sm_kick "#%s" %s`, target.Steam(false), reason)
+	return s.ExecDiscardF(ctx, `sm_kick "#%s" "%s"`, target.Steam(false), sanitizeRCONArg(reason))
 }
 
 // KickPlayerID will kick the steam id from whatever server it is connected to.
 func (s *Server) KickPlayerID(ctx context.Context, targetPlayerID int, reason string) error {
-	return s.ExecDiscard(ctx, fmt.Sprintf("sm_kick #%d %s", targetPlayerID, reason))
+	return s.ExecDiscardF(ctx, `sm_kick #%d "%s"`, targetPlayerID, sanitizeRCONArg(reason))
 }
 
 // Silence will gag & mute a player.
@@ -316,7 +325,7 @@ func (s *Server) Silence(ctx context.Context, target steamid.SteamID, reason str
 		return steamid.ErrInvalidSID
 	}
 
-	return s.ExecDiscardF(ctx, `sm_silence "#%s" %s`, target.Steam(false), reason)
+	return s.ExecDiscardF(ctx, `sm_silence "#%s" "%s"`, target.Steam(false), sanitizeRCONArg(reason))
 }
 
 func (s *Server) Addr() string {

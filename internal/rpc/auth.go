@@ -380,16 +380,3 @@ func (m *Middleware) MakeUserToken(user person.BaseUser) (string, string, error)
 
 	return accessToken, fingerprint, nil
 }
-
-// MakeServerToken generates a new JWT access token and fingerprint cookie value for the given user.
-// The returned fingerprint should be set as an HTTP-only cookie to help prevent token sidejacking.
-// Returns (accessToken, fingerprint, error).
-func (m *Middleware) MakeServerToken(user person.BaseUser) (string, string, error) {
-	fingerprint := stringutil.SecureRandomString(40)
-	accessToken, errAccess := m.newUserToken(user, fingerprint, TokenDuration)
-	if errAccess != nil {
-		return "", "", errors.Join(errAccess, ErrCreateToken)
-	}
-
-	return accessToken, fingerprint, nil
-}

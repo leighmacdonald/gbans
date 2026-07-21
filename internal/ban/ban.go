@@ -393,21 +393,23 @@ func (s Bans) sendBanNotification(ctx context.Context, newBan Ban, author person
 		expAt = datetime.FmtTimeShort(newBan.ValidUntil)
 	}
 
-	go s.notif.Send(notification.NewDiscord(s.logChannelID, createBanResponse(newBan, author, target)))
-	go s.notif.Send(notification.NewSiteUserWithAuthor(
-		[]permission.Privilege{permission.Moderator, permission.Admin},
-		notification.Info,
-		fmt.Sprintf("User banned (steam): %s Duration: %s Author: %s",
-			newBan.Name, expIn, author.GetName()),
-		link.Path(newBan),
-		author,
-	))
-	go s.notif.Send(notification.NewSiteUser(
-		[]steamid.SteamID{newBan.TargetID},
-		notification.Warn,
-		fmt.Sprintf("You have been %s, Reason: %s, Duration: %s, Ends: %s", newBan.BanType, newBan.Reason.String(), expIn, expAt),
-		link.Path(newBan),
-	))
+	go func() {
+		s.notif.Send(notification.NewDiscord(s.logChannelID, createBanResponse(newBan, author, target)))
+		s.notif.Send(notification.NewSiteUserWithAuthor(
+			[]permission.Privilege{permission.Moderator, permission.Admin},
+			notification.Info,
+			fmt.Sprintf("User banned (steam): %s Duration: %s Author: %s",
+				newBan.Name, expIn, author.GetName()),
+			link.Path(newBan),
+			author,
+		))
+		s.notif.Send(notification.NewSiteUser(
+			[]steamid.SteamID{newBan.TargetID},
+			notification.Warn,
+			fmt.Sprintf("You have been %s, Reason: %s, Duration: %s, Ends: %s", newBan.BanType, newBan.Reason.String(), expIn, expAt),
+			link.Path(newBan),
+		))
+	}()
 
 	if s.servers == nil {
 		return

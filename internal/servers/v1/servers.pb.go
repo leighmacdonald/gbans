@@ -370,31 +370,32 @@ func (x *SafeServer) GetStatsBucketId() int32 {
 }
 
 type Server struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	ServerId           *int32                 `protobuf:"varint,1,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
-	ShortName          *string                `protobuf:"bytes,2,opt,name=short_name,json=shortName" json:"short_name,omitempty"`
-	Name               *string                `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
-	Address            *string                `protobuf:"bytes,4,opt,name=address" json:"address,omitempty"`
-	AddressInternal    *string                `protobuf:"bytes,5,opt,name=address_internal,json=addressInternal" json:"address_internal,omitempty"`
-	SdrEnabled         *bool                  `protobuf:"varint,6,opt,name=sdr_enabled,json=sdrEnabled" json:"sdr_enabled,omitempty"`
-	Port               *uint32                `protobuf:"varint,7,opt,name=port" json:"port,omitempty"`
-	Rcon               *string                `protobuf:"bytes,8,opt,name=rcon" json:"rcon,omitempty"`
-	Password           *string                `protobuf:"bytes,9,opt,name=password" json:"password,omitempty"`
-	IsEnabled          *bool                  `protobuf:"varint,10,opt,name=is_enabled,json=isEnabled" json:"is_enabled,omitempty"`
-	Deleted            *bool                  `protobuf:"varint,11,opt,name=deleted" json:"deleted,omitempty"`
-	Region             *string                `protobuf:"bytes,12,opt,name=region" json:"region,omitempty"`
-	Cc                 *string                `protobuf:"bytes,13,opt,name=cc" json:"cc,omitempty"`
-	LatLong            *v1.LatLong            `protobuf:"bytes,14,opt,name=lat_long,json=latLong" json:"lat_long,omitempty"`
-	LogSecret          *uint32                `protobuf:"varint,15,opt,name=log_secret,json=logSecret" json:"log_secret,omitempty"`
-	EnableStats        *bool                  `protobuf:"varint,16,opt,name=enable_stats,json=enableStats" json:"enable_stats,omitempty"`
-	TokenCreatedOn     *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=token_created_on,json=tokenCreatedOn" json:"token_created_on,omitempty"`
-	CreatedOn          *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
-	UpdatedOn          *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
-	DiscordSeedRoleIds []string               `protobuf:"bytes,20,rep,name=discord_seed_role_ids,json=discordSeedRoleIds" json:"discord_seed_role_ids,omitempty"`
-	Ip                 *string                `protobuf:"bytes,21,opt,name=ip" json:"ip,omitempty"`
-	StatsBucketId      *int32                 `protobuf:"varint,22,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	ServerId             *int32                 `protobuf:"varint,1,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
+	ShortName            *string                `protobuf:"bytes,2,opt,name=short_name,json=shortName" json:"short_name,omitempty"`
+	Name                 *string                `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
+	Address              *string                `protobuf:"bytes,4,opt,name=address" json:"address,omitempty"`
+	AddressInternal      *string                `protobuf:"bytes,5,opt,name=address_internal,json=addressInternal" json:"address_internal,omitempty"`
+	SdrEnabled           *bool                  `protobuf:"varint,6,opt,name=sdr_enabled,json=sdrEnabled" json:"sdr_enabled,omitempty"`
+	Port                 *uint32                `protobuf:"varint,7,opt,name=port" json:"port,omitempty"`
+	Rcon                 *string                `protobuf:"bytes,8,opt,name=rcon" json:"rcon,omitempty"`
+	Password             *string                `protobuf:"bytes,9,opt,name=password" json:"password,omitempty"`
+	IsEnabled            *bool                  `protobuf:"varint,10,opt,name=is_enabled,json=isEnabled" json:"is_enabled,omitempty"`
+	Deleted              *bool                  `protobuf:"varint,11,opt,name=deleted" json:"deleted,omitempty"`
+	Region               *string                `protobuf:"bytes,12,opt,name=region" json:"region,omitempty"`
+	Cc                   *string                `protobuf:"bytes,13,opt,name=cc" json:"cc,omitempty"`
+	LatLong              *v1.LatLong            `protobuf:"bytes,14,opt,name=lat_long,json=latLong" json:"lat_long,omitempty"`
+	LogSecret            *uint32                `protobuf:"varint,15,opt,name=log_secret,json=logSecret" json:"log_secret,omitempty"`
+	EnableStats          *bool                  `protobuf:"varint,16,opt,name=enable_stats,json=enableStats" json:"enable_stats,omitempty"`
+	TokenCreatedOn       *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=token_created_on,json=tokenCreatedOn" json:"token_created_on,omitempty"`
+	CreatedOn            *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	UpdatedOn            *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
+	DiscordSeedChannelId *string                `protobuf:"bytes,20,opt,name=discord_seed_channel_id,json=discordSeedChannelId" json:"discord_seed_channel_id,omitempty"`
+	DiscordSeedRoleIds   []string               `protobuf:"bytes,21,rep,name=discord_seed_role_ids,json=discordSeedRoleIds" json:"discord_seed_role_ids,omitempty"`
+	Ip                   *string                `protobuf:"bytes,22,opt,name=ip" json:"ip,omitempty"`
+	StatsBucketId        *int32                 `protobuf:"varint,23,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *Server) Reset() {
@@ -558,6 +559,13 @@ func (x *Server) GetUpdatedOn() *timestamppb.Timestamp {
 		return x.UpdatedOn
 	}
 	return nil
+}
+
+func (x *Server) GetDiscordSeedChannelId() string {
+	if x != nil && x.DiscordSeedChannelId != nil {
+		return *x.DiscordSeedChannelId
+	}
+	return ""
 }
 
 func (x *Server) GetDiscordSeedRoleIds() []string {
@@ -973,7 +981,7 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"\x06humans\x18\x10 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\x06humans\x12\x1a\n" +
 	"\x04tags\x18\x11 \x03(\tB\x06\xbaH\x03\xc8\x01\x01R\x04tags\x12&\n" +
-	"\x0fstats_bucket_id\x18\x12 \x01(\x05R\rstatsBucketId\"\x8b\a\n" +
+	"\x0fstats_bucket_id\x18\x12 \x01(\x05R\rstatsBucketId\"\xc2\a\n" +
 	"\x06Server\x12'\n" +
 	"\tserver_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\bserverId\x12)\n" +
@@ -1004,10 +1012,11 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"\n" +
 	"created_on\x18\x12 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
 	"\n" +
-	"updated_on\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x121\n" +
-	"\x15discord_seed_role_ids\x18\x14 \x03(\tR\x12discordSeedRoleIds\x12\x17\n" +
-	"\x02ip\x18\x15 \x01(\tB\a\xbaH\x04r\x02x\x01R\x02ip\x12&\n" +
-	"\x0fstats_bucket_id\x18\x16 \x01(\x05R\rstatsBucketId\"\x81\x01\n" +
+	"updated_on\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x125\n" +
+	"\x17discord_seed_channel_id\x18\x14 \x01(\tR\x14discordSeedChannelId\x121\n" +
+	"\x15discord_seed_role_ids\x18\x15 \x03(\tR\x12discordSeedRoleIds\x12\x17\n" +
+	"\x02ip\x18\x16 \x01(\tB\a\xbaH\x04r\x02x\x01R\x02ip\x12&\n" +
+	"\x0fstats_bucket_id\x18\x17 \x01(\x05R\rstatsBucketId\"\x81\x01\n" +
 	"\rStateResponse\x128\n" +
 	"\aservers\x18\x01 \x03(\v2\x16.servers.v1.SafeServerB\x06\xbaH\x03\xc8\x01\x01R\aservers\x126\n" +
 	"\blat_long\x18\x02 \x01(\v2\x13.network.v1.LatLongB\x06\xbaH\x03\xc8\x01\x01R\alatLong\"\xb4\x01\n" +
