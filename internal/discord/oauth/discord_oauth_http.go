@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/person"
@@ -17,8 +16,7 @@ type discordOAuthHandler struct {
 	persons *person.Persons
 }
 
-// NewDiscordOAuthHandler provides handlers for authentication with discord connect.
-func NewDiscordOAuthHandler(engine *gin.Engine, config *config.Configuration,
+func NewDiscordOAuthHandler(mux *http.ServeMux, config *config.Configuration,
 	persons *person.Persons, discord DiscordOAuth,
 ) {
 	handler := discordOAuthHandler{
@@ -27,31 +25,31 @@ func NewDiscordOAuthHandler(engine *gin.Engine, config *config.Configuration,
 		persons:      persons,
 	}
 
-	engine.GET("/discord/oauth", handler.onOAuthDiscordCallback())
+	mux.HandleFunc("GET /discord/oauth", handler.onOAuthDiscordCallback())
 }
 
-func (h discordOAuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		code := ctx.Query("code")
+func (h discordOAuthHandler) onOAuthDiscordCallback() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		code := r.URL.Query().Get("code")
 		if code == "" {
 			slog.Error("Failed to get code from query")
-			ctx.Redirect(http.StatusTemporaryRedirect, link.Raw("/settings?section=connections"))
+			http.Redirect(w, r, link.Raw("/settings?section=connections"), http.StatusTemporaryRedirect)
 
 			return
 		}
 
-		state := ctx.Query("state")
+		state := r.URL.Query().Get("state")
 		if state == "" {
 			slog.Error("Failed to get state from query")
-			ctx.Redirect(http.StatusTemporaryRedirect, link.Raw("/settings?section=connections"))
+			http.Redirect(w, r, link.Raw("/settings?section=connections"), http.StatusTemporaryRedirect)
 
 			return
 		}
 
-		if err := h.HandleOAuthCode(ctx, code, state); err != nil {
+		if err := h.HandleOAuthCode(r.Context(), code, state); err != nil {
 			slog.Error("Failed to get access token", slog.String("error", err.Error()))
 		}
 
-		ctx.Redirect(http.StatusTemporaryRedirect, link.Raw("/settings?section=connections"))
+		http.Redirect(w, r, link.Raw("/settings?section=connections"), http.StatusTemporaryRedirect)
 	}
 }

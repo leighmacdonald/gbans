@@ -3,19 +3,13 @@ package httphelper
 import (
 	"errors"
 	"log/slog"
+	"net/http"
+	"net/http/pprof"
 	"path/filepath"
 
-	"github.com/Depado/ginprom"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/pprof"
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
 	"github.com/leighmacdonald/gbans/frontend"
 	"github.com/leighmacdonald/gbans/internal/log"
-	"github.com/leighmacdonald/steamid/v4/steamid"
-	sloggin "github.com/samber/slog-gin"
-	"github.com/sosodev/duration"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
@@ -27,7 +21,6 @@ var (
 type RouterOpts struct {
 	HTTPLogEnabled    bool
 	LogLevel          log.Level
-	Mode              string
 	HTTPOtelEnabled   bool
 	SentryDSN         string
 	Version           string
@@ -39,175 +32,65 @@ type RouterOpts struct {
 	CORSOrigins       []string
 }
 
-// CreateRouter constructs a new router using gin.Engine with the provided RouterOpts.
-func CreateRouter(opts RouterOpts) (*gin.Engine, error) {
-	if opts.Mode != "" {
-		gin.SetMode(opts.Mode)
-	} else {
-		gin.SetMode(gin.ReleaseMode)
-	}
+func CreateRouter(opts RouterOpts) (*http.ServeMux, http.Handler, error) {
+	var middleware []func(http.Handler) http.Handler
 
-	engine := gin.New()
-	engine.MaxMultipartMemory = 8 << 24
-	engine.Use(recoveryHandler())
-	engine.Use(errorHandler())
-
-	if errReg := registerCustomValidators(); errReg != nil {
-		return nil, errReg
-	}
+	middleware = append(middleware, recoveryHandler)
 
 	if opts.HTTPLogEnabled {
-		useSloggin(engine, opts.LogLevel, opts.HTTPOtelEnabled)
+		middleware = append(middleware, useLogging(opts.LogLevel, opts.HTTPOtelEnabled))
 	}
 
 	if opts.SentryDSN != "" {
-		useSentry(engine, opts.Version)
+		middleware = append(middleware, useSentry(opts.Version))
 	}
+
+	mux := http.NewServeMux()
 
 	if opts.PProfEnabled {
-		pprof.Register(engine)
-	}
-
-	if opts.HTTPCORSEnabled {
-		useCors(engine, opts.CORSOrigins, false)
+		mux.HandleFunc("GET /debug/pprof/", pprof.Index)
+		mux.HandleFunc("GET /debug/pprof/cmdline", pprof.Cmdline)
+		mux.HandleFunc("GET /debug/pprof/profile", pprof.Profile)
+		mux.HandleFunc("GET /debug/pprof/symbol", pprof.Symbol)
+		mux.HandleFunc("GET /debug/pprof/trace", pprof.Trace)
 	}
 
 	if opts.PrometheusEnabled {
-		usePrometheus(engine)
+		mux.Handle("GET /metrics", promhttp.Handler())
+	}
+
+	if opts.HTTPCORSEnabled {
+		if len(opts.CORSOrigins) > 0 {
+			middleware = append(middleware, useSecure(false, ""))
+			middleware = append(middleware, useCors(opts.CORSOrigins))
+		} else {
+			slog.Warn("No cors origins defined, disabling")
+		}
+	}
+
+	if opts.PrometheusEnabled {
+		middleware = append(middleware, usePrometheus)
 	}
 
 	if opts.FrontendEnable {
-		if err := useFrontend(engine, opts.StaticPath); err != nil {
-			return nil, err
+		if opts.StaticPath == "" {
+			opts.StaticPath = "./frontend/dist"
+		}
+
+		absStaticPath, errStaticPath := filepath.Abs(opts.StaticPath)
+		if errStaticPath != nil {
+			return nil, nil, errors.Join(errStaticPath, ErrStaticPathError)
+		}
+
+		if err := frontend.AddRoutes(mux, absStaticPath); err != nil {
+			return nil, nil, errors.Join(err, ErrFrontendRoutes)
 		}
 	}
 
-	return engine, nil
-}
-
-// registerCustomValidators handles registering our custom request field type validators within the
-// validation engin that gin uses.
-func registerCustomValidators() error {
-	if instance, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		if err := instance.RegisterValidation("steamid", steamIDValidator); err != nil {
-			return errors.Join(err, ErrValidator)
-		}
-		if err := instance.RegisterValidation("asnum", asNumValidator); err != nil {
-			return errors.Join(err, ErrValidator)
-		}
-		if err := instance.RegisterValidation("duration", durationValidator); err != nil {
-			return errors.Join(err, ErrValidator)
-		}
+	var handler http.Handler = mux
+	for i := len(middleware) - 1; i >= 0; i-- {
+		handler = middleware[i](handler)
 	}
 
-	return nil
-}
-
-func durationValidator(fl validator.FieldLevel) bool {
-	dur, ok := fl.Field().Interface().(duration.Duration)
-	if ok {
-		return dur.ToTimeDuration().Seconds() > 0
-	}
-
-	return false
-}
-
-func steamIDValidator(fl validator.FieldLevel) bool {
-	sid, ok := fl.Field().Interface().(steamid.SteamID)
-	if ok {
-		return sid.Valid()
-	}
-
-	return false
-}
-
-func asNumValidator(fl validator.FieldLevel) bool {
-	asNum, ok := fl.Field().Interface().(int64)
-	if ok {
-		ranges := []struct {
-			start int64
-			end   int64
-		}{
-			{1, 23455},
-			{23457, 64495},
-			{131072, 4199999999},
-		}
-
-		for _, r := range ranges {
-			if asNum >= r.start && asNum <= r.end {
-				return true
-			}
-		}
-
-		return false
-	}
-
-	return false
-}
-
-func useCors(engine *gin.Engine, origins []string, devMode bool) {
-	engine.Use(useSecure(devMode, ""))
-
-	if len(origins) > 0 {
-		corsConfig := cors.DefaultConfig()
-		corsConfig.AllowOrigins = origins
-		corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
-		corsConfig.ExposeHeaders = append(corsConfig.ExposeHeaders, "GBANS-AppVersion")
-		corsConfig.AllowWildcard = true
-		corsConfig.AllowCredentials = true
-
-		engine.Use(cors.New(corsConfig))
-	} else {
-		slog.Warn("No cors origins defined, disabling")
-	}
-}
-
-func usePrometheus(engine *gin.Engine) {
-	prom := ginprom.New(func(prom *ginprom.Prometheus) {
-		prom.Namespace = "gbans"
-		prom.Subsystem = "http"
-	})
-	engine.Use(prom.Instrument())
-}
-
-func useFrontend(engine *gin.Engine, staticPath string) error {
-	if staticPath == "" {
-		staticPath = "./frontend/dist"
-	}
-
-	absStaticPath, errStaticPath := filepath.Abs(staticPath)
-	if errStaticPath != nil {
-		return errors.Join(errStaticPath, ErrStaticPathError)
-	}
-
-	if errRoute := frontend.AddRoutes(engine, absStaticPath); errRoute != nil {
-		return errors.Join(errRoute, ErrFrontendRoutes)
-	}
-
-	return nil
-}
-
-func useSloggin(engine *gin.Engine, level log.Level, otelEnabled bool) {
-	logLevel := slog.LevelError
-	switch level {
-	case "error":
-		logLevel = slog.LevelError
-	case "debug":
-		logLevel = slog.LevelDebug
-	case "warn":
-		logLevel = slog.LevelWarn
-	case "info":
-		logLevel = slog.LevelInfo
-	}
-
-	logConfig := sloggin.Config{
-		DefaultLevel: logLevel,
-	}
-
-	if otelEnabled {
-		logConfig.WithSpanID = true
-		logConfig.WithTraceID = true
-	}
-
-	engine.Use(sloggin.NewWithConfig(slog.Default(), logConfig))
+	return mux, handler, nil
 }

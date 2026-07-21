@@ -1,19 +1,18 @@
 package session
 
 import (
+	"context"
 	"errors"
 
-	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
-
-const ctxKeyUserProfile = "user_profile"
 
 var ErrNotLoggedIn = errors.New("not logged in")
 
-func CurrentUserProfile(ctx *gin.Context) (person.Core, error) {
-	maybePerson, found := ctx.Get(ctxKeyUserProfile)
-	if !found {
+func CurrentUserProfile(ctx context.Context) (person.Core, error) {
+	maybePerson := ctx.Value(httphelper.CtxKeyUserProfile)
+	if maybePerson == nil {
 		return person.Core{}, ErrNotLoggedIn
 	}
 

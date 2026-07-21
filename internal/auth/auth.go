@@ -9,12 +9,11 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
-	sentrygin "github.com/getsentry/sentry-go/gin"
-	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -39,7 +38,7 @@ type ServerAuthClaims struct {
 	ServerID int
 }
 
-const CtxKeyUserProfile = "user_profile"
+const CtxKeyUserProfile = httphelper.CtxKeyUserProfile
 
 type Authentication struct {
 	auth      Repository
@@ -73,11 +72,11 @@ func (u *Authentication) GetPersonAuthByRefreshToken(ctx context.Context, token 
 	return u.auth.GetPersonAuthByFingerprint(ctx, token, auth)
 }
 
-func (u *Authentication) loginSID(ctx *gin.Context, level permission.Privilege, steamID steamid.SteamID) {
+func (u *Authentication) loginSID(ctx context.Context, w http.ResponseWriter, r *http.Request, level permission.Privilege, steamID steamid.SteamID) {
 	loggedInPerson, errGetPerson := u.persons.BySteamID(ctx, steamID)
 	if errGetPerson != nil {
 		slog.Error("Failed to load person during auth", slog.String("error", errGetPerson.Error()))
-		ctx.AbortWithStatus(http.StatusForbidden)
+		w.WriteHeader(http.StatusForbidden)
 
 		return
 	}
@@ -85,13 +84,13 @@ func (u *Authentication) loginSID(ctx *gin.Context, level permission.Privilege, 
 		sentry.ConfigureScope(func(scope *sentry.Scope) {
 			scope.SetUser(sentry.User{
 				ID:        loggedInPerson.SteamID.String(),
-				IPAddress: ctx.ClientIP(),
+				IPAddress: r.RemoteAddr,
 				Username:  loggedInPerson.PersonaName,
 			})
 		})
 	}
 	if level > loggedInPerson.PermissionLevel {
-		ctx.AbortWithStatus(http.StatusForbidden)
+		w.WriteHeader(http.StatusForbidden)
 
 		return
 	}
@@ -111,14 +110,14 @@ func (u *Authentication) loginSID(ctx *gin.Context, level permission.Privilege, 
 		BanID:           bannedPerson.BanID,
 	}
 
-	ctx.Set(CtxKeyUserProfile, profile)
+	*r = *r.WithContext(context.WithValue(r.Context(), CtxKeyUserProfile, profile))
 
 	if u.sentryDSN != "" {
-		if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
+		if hub := sentry.GetHubFromContext(ctx); hub != nil {
 			hub.WithScope(func(scope *sentry.Scope) {
 				scope.SetUser(sentry.User{
 					ID:        steamID.String(),
-					IPAddress: ctx.ClientIP(),
+					IPAddress: r.RemoteAddr,
 					Username:  loggedInPerson.PersonaName,
 				})
 			})

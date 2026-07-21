@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -41,38 +40,45 @@ type ServerAuth struct {
 	ServerID int
 }
 
-func (s *ServerAuth) Middleware(ctx *gin.Context) {
-	ctx.Set("server_id", s.ServerID)
+func (s *ServerAuth) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		*r = *r.WithContext(context.WithValue(r.Context(), "server_id", s.ServerID))
+		next.ServeHTTP(w, r)
+	})
 }
 
 type UserAuth struct {
 	Profile personDomain.Core
 }
 
-func (s *UserAuth) Middleware(level permission.Privilege) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		if level > s.Profile.PermissionLevel {
-			ctx.AbortWithStatus(http.StatusForbidden)
+func (s *UserAuth) Middleware(level permission.Privilege) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if level > s.Profile.PermissionLevel {
+				w.WriteHeader(http.StatusForbidden)
 
-			return
-		}
-		ctx.Set(auth.CtxKeyUserProfile, s.Profile)
+				return
+			}
+			*r = *r.WithContext(context.WithValue(r.Context(), auth.CtxKeyUserProfile, s.Profile))
+			next.ServeHTTP(w, r)
+		})
 	}
 }
 
-func (s *UserAuth) MiddlewareWS(level permission.Privilege) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		if level > s.Profile.PermissionLevel {
-			ctx.AbortWithStatus(http.StatusForbidden)
+func (s *UserAuth) MiddlewareWS(level permission.Privilege) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if level > s.Profile.PermissionLevel {
+				w.WriteHeader(http.StatusForbidden)
 
-			return
-		}
-		ctx.Set(auth.CtxKeyUserProfile, s.Profile)
+				return
+			}
+			*r = *r.WithContext(context.WithValue(r.Context(), auth.CtxKeyUserProfile, s.Profile))
+			next.ServeHTTP(w, r)
+		})
 	}
 }
 
-// postgresContainer is used instead of the postgres.PostgresContainer one since
-// we need to build our custom image with extra extensions.
 type postgresContainer struct {
 	testcontainers.Container
 
@@ -86,7 +92,6 @@ func newDB(ctx context.Context) (*postgresContainer, error) {
 	const testInfo = "gbans-test"
 	username, password, dbName := testInfo, testInfo, testInfo
 
-	// Naively look for the docker directory. Assumes the project root directory is named "gbans"
 	dockerRoot := fs.FindFile("docker", "gbans")
 
 	fromDockerfile := testcontainers.FromDockerfile{
@@ -99,9 +104,6 @@ func newDB(ctx context.Context) (*postgresContainer, error) {
 	cont, errContainer := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			FromDockerfile: fromDockerfile,
-			// HostConfigModifier: func(config *container.HostConfig) {
-			//	config.AutoRemove = false
-			// },
 
 			Env: map[string]string{
 				"POSTGRES_DB":       dbName,
@@ -134,23 +136,14 @@ func newDB(ctx context.Context) (*postgresContainer, error) {
 	return &pgContainer, nil
 }
 
-// type permTestValues struct {
-// 	method string
-// 	code   int
-// 	path   string
-// 	levels []permission.Privilege
-// }
-
 type TestConfigRepo struct {
 	config config.Config
 }
 
-// Read implements config.ConfigRepo.
 func (c *TestConfigRepo) Read(_ context.Context) (config.Config, error) {
 	return c.config, nil
 }
 
-// Write implements config.ConfigRepo.
 func (c *TestConfigRepo) Write(_ context.Context, config config.Config) error {
 	c.config = config
 
@@ -168,8 +161,7 @@ func (c *TestConfigRepo) Init(_ context.Context) error {
 func TestConfig(ctx context.Context, dsn string) (*config.Configuration, error) {
 	return config.NewConfiguration(ctx, config.Static{}, config.NewMemConfigRepository(config.Config{
 		Static: config.Static{
-			Owner: OwnerSID.String(),
-			//	SteamKey:            steamKey,
+			Owner:               OwnerSID.String(),
 			ExternalURL:         "http://example.com",
 			HTTPHost:            "localhost",
 			HTTPPort:            6006,

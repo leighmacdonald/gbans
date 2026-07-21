@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -16,90 +15,79 @@ type patreonHandler struct {
 	config Config
 }
 
-// func NewPatreonHandler(engine *gin.Engine, auth httphelper.Authenticator, patreon Patreon, config Config) {
+// func NewPatreonHandler(mux *http.ServeMux, patreon Patreon, config Config) {
 //	handler := patreonHandler{
 //		Patreon: patreon,
 //		config:  config,
 //	}
 //
-//	engine.GET("/api/patreon/campaigns", handler.onAPIGetPatreonCampaigns())
-//	engine.GET("/patreon/oauth", handler.onOAuth())
-//
-//	authGrp := engine.Group("/")
-//	{
-//		authed := authGrp.Use(auth.Middleware(permission.User))
-//		authed.GET("/api/patreon/login", handler.onLogin())
-//		authed.GET("/api/patreon/logout", handler.onLogout())
-//	}
-//
-//	// mod
-//	modGrp := engine.Group("/")
-//	{
-//		mod := modGrp.Use(auth.Middleware(permission.Moderator))
-//		mod.GET("/api/patreon/pledges", handler.onAPIGetPatreonPledges())
-//	}
+//	mux.HandleFunc("GET /api/patreon/campaigns", handler.onAPIGetPatreonCampaigns())
+//	mux.HandleFunc("GET /patreon/oauth", handler.onOAuth())
+//	mux.HandleFunc("GET /api/patreon/login", handler.onLogin())
+//	mux.HandleFunc("GET /api/patreon/logout", handler.onLogout())
+//	mux.HandleFunc("GET /api/patreon/pledges", handler.onAPIGetPatreonPledges())
 // }
 
-func (h *patreonHandler) onLogout() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		currentUser, _ := session.CurrentUserProfile(ctx)
+func (h *patreonHandler) onLogout() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		currentUser, _ := session.CurrentUserProfile(r.Context())
 
-		if err := h.Forget(ctx, currentUser.GetSteamID()); err != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, err))
+		if err := h.Forget(r.Context(), currentUser.GetSteamID()); err != nil {
+			httphelper.SetError(w, r, httphelper.NewAPIError(http.StatusBadRequest, err))
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{"url": h.CreateOAuthRedirect(currentUser.GetSteamID())})
+		httphelper.RespondJSON(w, http.StatusOK, map[string]string{"url": h.CreateOAuthRedirect(currentUser.GetSteamID())})
 		sid := currentUser.GetSteamID()
 		slog.Debug("User removed their patreon credentials", slog.String("sid", sid.String()))
 	}
 }
 
-func (h *patreonHandler) onLogin() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		currentUser, _ := session.CurrentUserProfile(ctx)
+func (h *patreonHandler) onLogin() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		currentUser, _ := session.CurrentUserProfile(r.Context())
 
-		ctx.JSON(http.StatusOK, gin.H{"url": h.CreateOAuthRedirect(currentUser.GetSteamID())})
+		httphelper.RespondJSON(w, http.StatusOK, map[string]string{"url": h.CreateOAuthRedirect(currentUser.GetSteamID())})
 		sid := currentUser.GetSteamID()
 		slog.Debug("User tried to connect patreon", slog.String("sid", sid.String()))
 	}
 }
 
-func (h *patreonHandler) onOAuth() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		grantCode, codeOK := ctx.GetQuery("code")
-		if !codeOK {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrInvalidParameter, "code invalid."))
+func (h *patreonHandler) onOAuth() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		grantCode := r.URL.Query().Get("code")
+		if grantCode == "" {
+			httphelper.SetError(w, r, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrInvalidParameter, "code invalid."))
 
 			return
 		}
 
-		state, stateOK := ctx.GetQuery("state")
-		if !stateOK {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrInvalidParameter, "state invalid."))
+		state := r.URL.Query().Get("state")
+		if state == "" {
+			httphelper.SetError(w, r, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrInvalidParameter, "state invalid."))
 
 			return
 		}
 
-		if err := h.OnOauthLogin(ctx, state, grantCode); err != nil {
+		if err := h.OnOauthLogin(r.Context(), state, grantCode); err != nil {
 			slog.Error("Failed to handle oauth login", slog.String("error", err.Error()))
 		} else {
 			slog.Debug("Successfully authenticated user over patreon")
 		}
 
-		ctx.Redirect(http.StatusPermanentRedirect, link.Raw("/patreon"))
+		http.Redirect(w, r, link.Raw("/patreon"), http.StatusPermanentRedirect)
 	}
 }
 
-func (h *patreonHandler) onAPIGetPatreonCampaigns() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, h.Campaign())
+func (h *patreonHandler) onAPIGetPatreonCampaigns() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		httphelper.RespondJSON(w, http.StatusOK, h.Campaign())
 	}
 }
 
-func (h *patreonHandler) onAPIGetPatreonPledges() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, gin.H{})
+func (h *patreonHandler) onAPIGetPatreonPledges() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		httphelper.RespondJSON(w, http.StatusOK, map[string]any{})
 	}
 }
