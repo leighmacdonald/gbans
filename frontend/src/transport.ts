@@ -19,18 +19,18 @@ export const queryClient = new QueryClient({
 const validateInterceptor = createValidateInterceptor();
 
 const authInterceptor: Interceptor = (next) => async (req) => {
-	const value = localStorage.getItem(StorageKey.Token);
-	if (emptyOrNullString(value)) {
-		return await next(req);
-	}
 	try {
-		const token: { token: string } = JSON.parse(value);
-		if (token) {
-			const auth = `Bearer ${token.token}`;
-			req.header.set("Authorization", auth);
+		const value = localStorage.getItem(StorageKey.Token);
+		if (emptyOrNullString(value)) {
+			return await next(req);
 		}
-	} catch (e) {
-		logErr(`Failed to parse stored token ${e}`);
+		const parsed = JSON.parse(value);
+		if (typeof parsed?.token !== "string" || parsed.token.length === 0) {
+			localStorage.removeItem(StorageKey.Token);
+			return await next(req);
+		}
+		req.header.set("Authorization", `Bearer ${parsed.token}`);
+	} catch {
 		localStorage.removeItem(StorageKey.Token);
 	}
 

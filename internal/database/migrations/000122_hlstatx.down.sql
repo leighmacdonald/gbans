@@ -24,3 +24,5 @@ drop type if exists player_team;
 ALTER TABLE demo ADD COLUMN deleted boolean NOT NULL DEFAULT false;
 
 ALTER TABLE asset DROP COLUMN deleted;
+
+ALTER TABLE server DROP COLUMN IF EXISTS discord_seed_channel_id;

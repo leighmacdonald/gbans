@@ -188,7 +188,7 @@ func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 					slog.String("server_name", logPayload.serverName))
 			}
 
-			go remoteSrc.onEvent(event.EventType, event)
+			remoteSrc.onEvent(event.EventType, event)
 		}
 	}
 }

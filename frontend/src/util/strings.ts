@@ -19,6 +19,13 @@ export const randomStringAlphaNum = (length: number) => {
 	return result;
 };
 
+export const randomNum = (len: number = 8): number => {
+  const array = new Uint32Array(1);
+  crypto.getRandomValues(array);
+  const randomNumber = array[0] % 100_000_000;
+  return Number(randomNumber.toString().padStart(len, '0'));
+}
+
 export const cidrHostCount = (cidr: string): number => {
 	if (!cidr.includes("/")) {
 		return 0;

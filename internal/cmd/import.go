@@ -93,15 +93,15 @@ func importDemoCmd() *cobra.Command {
 							continue
 						}
 						waitGroup.Add(1)
-						go func(filePath string) {
+						go func(filePath string, entryName string) {
 							defer waitGroup.Done()
 							sem <- struct{}{}
 							defer func() { <-sem }()
 
-							if err := importFn(path.Join(filePath, entry.Name())); err != nil && !errors.Is(err, database.ErrDuplicate) {
+							if err := importFn(path.Join(filePath, entryName)); err != nil && !errors.Is(err, database.ErrDuplicate) {
 								slog.Error("Failed to import dir", slog.String("error", err.Error()))
 							}
-						}(arg)
+						}(arg, entry.Name())
 					}
 					waitGroup.Wait()
 				} else {
