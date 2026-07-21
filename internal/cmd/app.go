@@ -534,12 +534,12 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 
 	httpServer := httphelper.NewServer(conf.Addr(), topMux)
 
-	go func() {
+	go func() { //nolint:gosec
 		<-ctx.Done()
 
 		slog.Debug("Shutting down HTTP service")
 
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10) //nolint:contextcheck
 		defer cancel()
 
 		if errShutdown := httpServer.Shutdown(shutdownCtx); errShutdown != nil {
@@ -727,22 +727,22 @@ func (g *GBans) onAnticheatBan(ctx context.Context, entry logparse.StacEntry, du
 	return nil
 }
 
-func (g *GBans) healthCheck(w http.ResponseWriter, r *http.Request) {
+func (g *GBans) healthCheck(res http.ResponseWriter, _ *http.Request) {
 	serverStates := g.servers.Current()
 	if len(serverStates) > 0 {
 		for _, server := range serverStates {
 			if server.MaxPlayers > 0 {
-				w.WriteHeader(http.StatusOK)
-				_, _ = w.Write([]byte("😎"))
+				res.WriteHeader(http.StatusOK)
+				_, _ = res.Write([]byte("😎"))
 
 				return
 			}
 		}
-		w.WriteHeader(http.StatusServiceUnavailable)
-		_, _ = w.Write([]byte("🙅🏻‍♀️"))
+		res.WriteHeader(http.StatusServiceUnavailable)
+		_, _ = res.Write([]byte("🙅🏻‍♀️"))
 	} else {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("😎"))
+		res.WriteHeader(http.StatusOK)
+		_, _ = res.Write([]byte("😎"))
 	}
 }
 

@@ -72,11 +72,11 @@ func (u *Authentication) GetPersonAuthByRefreshToken(ctx context.Context, token 
 	return u.auth.GetPersonAuthByFingerprint(ctx, token, auth)
 }
 
-func (u *Authentication) loginSID(ctx context.Context, w http.ResponseWriter, r *http.Request, level permission.Privilege, steamID steamid.SteamID) {
+func (u *Authentication) loginSID(ctx context.Context, res http.ResponseWriter, req *http.Request, level permission.Privilege, steamID steamid.SteamID) {
 	loggedInPerson, errGetPerson := u.persons.BySteamID(ctx, steamID)
 	if errGetPerson != nil {
 		slog.Error("Failed to load person during auth", slog.String("error", errGetPerson.Error()))
-		w.WriteHeader(http.StatusForbidden)
+		res.WriteHeader(http.StatusForbidden)
 
 		return
 	}
@@ -84,13 +84,13 @@ func (u *Authentication) loginSID(ctx context.Context, w http.ResponseWriter, r 
 		sentry.ConfigureScope(func(scope *sentry.Scope) {
 			scope.SetUser(sentry.User{
 				ID:        loggedInPerson.SteamID.String(),
-				IPAddress: r.RemoteAddr,
+				IPAddress: req.RemoteAddr,
 				Username:  loggedInPerson.PersonaName,
 			})
 		})
 	}
 	if level > loggedInPerson.PermissionLevel {
-		w.WriteHeader(http.StatusForbidden)
+		res.WriteHeader(http.StatusForbidden)
 
 		return
 	}
@@ -110,14 +110,14 @@ func (u *Authentication) loginSID(ctx context.Context, w http.ResponseWriter, r 
 		BanID:           bannedPerson.BanID,
 	}
 
-	*r = *r.WithContext(context.WithValue(r.Context(), CtxKeyUserProfile, profile))
+	*req = *req.WithContext(context.WithValue(req.Context(), CtxKeyUserProfile, profile))
 
 	if u.sentryDSN != "" {
 		if hub := sentry.GetHubFromContext(ctx); hub != nil {
 			hub.WithScope(func(scope *sentry.Scope) {
 				scope.SetUser(sentry.User{
 					ID:        steamID.String(),
-					IPAddress: r.RemoteAddr,
+					IPAddress: req.RemoteAddr,
 					Username:  loggedInPerson.PersonaName,
 				})
 			})

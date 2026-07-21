@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"path/filepath"
+	"slices"
 
 	"github.com/leighmacdonald/gbans/frontend"
 	"github.com/leighmacdonald/gbans/internal/log"
@@ -88,8 +89,8 @@ func CreateRouter(opts RouterOpts) (*http.ServeMux, http.Handler, error) {
 	}
 
 	var handler http.Handler = mux
-	for i := len(middleware) - 1; i >= 0; i-- {
-		handler = middleware[i](handler)
+	for _, mw := range slices.Backward(middleware) {
+		handler = mw(handler)
 	}
 
 	return mux, handler, nil

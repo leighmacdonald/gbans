@@ -36,14 +36,15 @@ var (
 	ErrContainer = errors.New("failed to bring up test container")
 )
 
+type ctxKeyServerID struct{}
+
 type ServerAuth struct {
 	ServerID int
 }
 
 func (s *ServerAuth) Middleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		*r = *r.WithContext(context.WithValue(r.Context(), "server_id", s.ServerID))
-		next.ServeHTTP(w, r)
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		next.ServeHTTP(res, req.WithContext(context.WithValue(req.Context(), ctxKeyServerID{}, s.ServerID)))
 	})
 }
 
@@ -53,28 +54,27 @@ type UserAuth struct {
 
 func (s *UserAuth) Middleware(level permission.Privilege) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			if level > s.Profile.PermissionLevel {
-				w.WriteHeader(http.StatusForbidden)
+				res.WriteHeader(http.StatusForbidden)
 
 				return
 			}
-			*r = *r.WithContext(context.WithValue(r.Context(), auth.CtxKeyUserProfile, s.Profile))
-			next.ServeHTTP(w, r)
+
+			next.ServeHTTP(req.WithContext(context.WithValue(req.Context(), auth.CtxKeyUserProfile, s.Profile)))
 		})
 	}
 }
 
 func (s *UserAuth) MiddlewareWS(level permission.Privilege) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			if level > s.Profile.PermissionLevel {
-				w.WriteHeader(http.StatusForbidden)
+				res.WriteHeader(http.StatusForbidden)
 
 				return
 			}
-			*r = *r.WithContext(context.WithValue(r.Context(), auth.CtxKeyUserProfile, s.Profile))
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(req.WithContext(context.WithValue(req.Context(), auth.CtxKeyUserProfile, s.Profile)))
 		})
 	}
 }
@@ -144,8 +144,8 @@ func (c *TestConfigRepo) Read(_ context.Context) (config.Config, error) {
 	return c.config, nil
 }
 
-func (c *TestConfigRepo) Write(_ context.Context, config config.Config) error {
-	c.config = config
+func (c *TestConfigRepo) Write(_ context.Context, cfg config.Config) error {
+	c.config = cfg
 
 	return nil
 }

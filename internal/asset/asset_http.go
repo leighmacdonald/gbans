@@ -22,55 +22,55 @@ func NewAssetHandler(mux *http.ServeMux, assets Assets) {
 }
 
 func (h assetHandler) getAsset() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		mediaID, idFound := httphelper.GetUUIDParam(r, "asset_id")
+	return func(res http.ResponseWriter, req *http.Request) {
+		mediaID, idFound := httphelper.GetUUIDParam(req, "asset_id")
 		if !idFound {
 			return
 		}
 
-		asset, errGet := h.Get(r.Context(), mediaID)
+		assetValue, errGet := h.Get(req.Context(), mediaID)
 		if errGet != nil {
 			if errors.Is(errGet, ErrOpenFile) {
-				httphelper.SetError(w, r, httphelper.NewAPIErrorf(http.StatusNotFound, httphelper.ErrNotFound, "Asset with this asset_id does not exist: %s", mediaID))
+				httphelper.SetError(res, req, httphelper.NewAPIErrorf(http.StatusNotFound, httphelper.ErrNotFound, "Asset with this asset_id does not exist: %s", mediaID))
 
 				return
 			}
 
-			httphelper.SetError(w, r, httphelper.NewAPIError(http.StatusBadRequest, errGet))
+			httphelper.SetError(res, req, httphelper.NewAPIError(http.StatusBadRequest, errGet))
 
 			return
 		}
-		defer func(asset *Asset) {
-			if err := asset.Close(); err != nil {
+		defer func(a *Asset) {
+			if err := a.Close(); err != nil {
 				slog.Error("Fauled to close asset")
 			}
-		}(&asset)
+		}(&assetValue)
 
-		if asset.IsPrivate {
-			user, errProfile := session.CurrentUserProfile(r.Context())
+		if assetValue.IsPrivate {
+			user, errProfile := session.CurrentUserProfile(req.Context())
 			if errProfile != nil {
 				slog.Error("Failed to get user session for private asset", slog.String("error", errProfile.Error()))
 			}
 
 			sid := user.GetSteamID()
-			if !sid.Valid() || sid != asset.AuthorID && !user.HasPermission(permission.Moderator) {
-				httphelper.SetError(w, r, httphelper.NewAPIErrorf(http.StatusForbidden, permission.ErrDenied,
+			if !sid.Valid() || sid != assetValue.AuthorID && !user.HasPermission(permission.Moderator) {
+				httphelper.SetError(res, req, httphelper.NewAPIErrorf(http.StatusForbidden, permission.ErrDenied,
 					"You do not have permission to access this asset."))
 
 				return
 			}
 		}
 
-		decodedBody, errDecode := io.ReadAll(&asset)
+		decodedBody, errDecode := io.ReadAll(&assetValue)
 		if errDecode != nil {
-			httphelper.SetError(w, r, httphelper.NewAPIError(http.StatusInternalServerError, errDecode))
+			httphelper.SetError(res, req, httphelper.NewAPIError(http.StatusInternalServerError, errDecode))
 
 			return
 		}
 
-		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, asset.String()))
-		w.Header().Set("Content-Type", asset.MimeType)
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(decodedBody)
+		res.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, assetValue.String()))
+		res.Header().Set("Content-Type", assetValue.MimeType)
+		res.WriteHeader(http.StatusOK)
+		_, _ = res.Write(decodedBody) //nolint:gosec
 	}
 }
