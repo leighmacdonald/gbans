@@ -150,7 +150,7 @@ type Discard struct{}
 func (n *Discard) Send(_ Payload) {}
 
 func NewNotifications(repository Repository, discord BotNotifier) *Notifications {
-	return &Notifications{Repository: repository, discord: discord, send: make(chan Payload)}
+	return &Notifications{Repository: repository, discord: discord, send: make(chan Payload, 64)}
 }
 
 type Notifications struct {

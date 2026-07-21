@@ -168,27 +168,6 @@ func (r Repository) InsertCache(ctx context.Context, groupID steamid.SteamID, en
 	return nil
 }
 
-func (r Repository) Stats(ctx context.Context, stats *Stats) error {
-	const sqlQuery = `SELECT
-		(SELECT COUNT(ban_id) FROM ban) as bans_total,
-		(SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 DAY')) as bans_day,
-	    (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 DAY')) as bans_week,
-		(SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 MONTH')) as bans_month,
-	    (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '3 MONTH')) as bans_3month,
-	    (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '6 MONTH')) as bans_6month,
-	    (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 YEAR')) as bans_year,
-		(SELECT COUNT(ban_id) FROM ban WHERE cidr IS NOT NULL) as bans_cidr,
-		(SELECT COUNT(filter_id) FROM filtered_word) as filtered_words,
-		(SELECT COUNT(server_id) FROM server) as servers_total`
-
-	if errQuery := r.QueryRow(ctx, sqlQuery).
-		Scan(&stats.BansTotal, &stats.BansDay, &stats.BansWeek, &stats.BansMonth, &stats.Bans3Month, &stats.Bans6Month, &stats.BansYear, &stats.BansCIDRTotal, &stats.FilteredWords, &stats.ServersTotal); errQuery != nil {
-		return database.Err(errQuery)
-	}
-
-	return nil
-}
-
 func (r Repository) Delete(ctx context.Context, ban *Ban, hardDelete bool) error {
 	if hardDelete {
 		if errExec := r.Exec(ctx, `DELETE FROM ban WHERE ban_id = $1`, ban.BanID); errExec != nil {

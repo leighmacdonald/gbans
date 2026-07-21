@@ -16,6 +16,8 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
+var ErrTemplatesNotInitialized = errors.New("templates not initialized")
+
 //nolint:gochecknoglobals
 var (
 	templatedMutex sync.RWMutex
@@ -41,12 +43,14 @@ func RenderTemplate(template string, args any, textProcessor ...TextProcessor) (
 
 	if templates == nil {
 		templatedMutex.RUnlock()
-		return "", errors.New("templates not initialized")
+
+		return "", ErrTemplatesNotInitialized
 	}
 
 	var outBuff bytes.Buffer
 	if errExec := templates.ExecuteTemplate(&outBuff, template, args); errExec != nil {
 		templatedMutex.RUnlock()
+
 		return "Failed to render :(", errors.Join(errExec, ErrCommandFailed)
 	}
 

@@ -48,14 +48,14 @@ func TestImport(t *testing.T) {
 		}
 	}
 
-	var demoID int
+	var demoID int32
 	errDemo = testFixture.Database.QueryRow(ctx,
 		`INSERT INTO demo (server_id, title, map_name, created_on) VALUES ($1, $2, $3, $4) RETURNING demo_id`,
 		server.ServerID, demo.Filename, demo.Map, time.Now()).Scan(&demoID)
 	require.NoError(t, errDemo)
 
 	st := stats.New(stats.NewRepository(testFixture.Database), maps.New(maps.NewRepository(testFixture.Database)))
-	matchID, importErr := st.Import(ctx, server.ServerID, int32(demoID), &demo, time.Now())
+	matchID, importErr := st.Import(ctx, server.ServerID, demoID, &demo, time.Now())
 	require.NoError(t, importErr)
 	require.NotNil(t, matchID)
 }

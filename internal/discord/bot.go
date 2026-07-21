@@ -151,30 +151,37 @@ func (b *Discord) Close() {
 // MustRegisterPrefixHandler takes a prefix and handler to execute when the prefix is matched. The prefix
 // is defined ban_unban_button_resp_.
 func (b *Discord) MustRegisterPrefixHandler(prefix string, handler Handler) {
+	b.mutex.Lock()
 	_, found := b.prefixHandlers[prefix]
 	if found {
+		b.mutex.Unlock()
 		panic(ErrCommandDuplicate)
 	}
 
 	b.prefixHandlers[prefix] = handler
+	b.mutex.Unlock()
 }
 
 // MustRegisterCommandHandler handles registering a slash command, and associated handler.
 // Calling this does not immediately register the command, but instead adds it to the list of
 // commands that will be bulk registered upon connection.
 func (b *Discord) MustRegisterCommandHandler(appCommand *discordgo.ApplicationCommand, handler Handler) {
+	b.mutex.Lock()
 	_, found := b.commandHandlers[appCommand.Name]
 	if found {
+		b.mutex.Unlock()
 		panic(ErrCommandDuplicate)
 	}
 	for _, cmd := range b.commands {
 		if cmd.Name == appCommand.Name {
+			b.mutex.Unlock()
 			panic(ErrCommandDuplicate)
 		}
 	}
 
 	b.commandHandlers[appCommand.Name] = handler
 	b.commands = append(b.commands, appCommand)
+	b.mutex.Unlock()
 }
 
 func (b *Discord) Roles() ([]*discordgo.Role, error) {
@@ -214,7 +221,9 @@ func (b *Discord) onAppCommand(ctx context.Context, session *discordgo.Session,
 	interaction *discordgo.InteractionCreate,
 ) {
 	command := interaction.ApplicationCommandData().Name
+	b.mutex.RLock()
 	handler, handlerFound := b.commandHandlers[command]
+	b.mutex.RUnlock()
 	if !handlerFound {
 		return
 	}
@@ -228,17 +237,20 @@ func (b *Discord) onAppCommand(ctx context.Context, session *discordgo.Session,
 func (b *Discord) findAndExecPrefixHandler(ctx context.Context, handlerName string, session *discordgo.Session,
 	interaction *discordgo.InteractionCreate,
 ) {
+	b.mutex.RLock()
 	for prefix, handler := range b.prefixHandlers {
 		if !strings.HasPrefix(handlerName, prefix) {
 			continue
 		}
 
+		b.mutex.RUnlock()
 		if err := handler(ctx, session, interaction); err != nil {
 			Error(session, interaction, err)
 		}
 
 		return
 	}
+	b.mutex.RUnlock()
 
 	slog.Error("Got unknown discord command", slog.String("command", handlerName))
 }
