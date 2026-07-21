@@ -61,7 +61,8 @@ func (s *UserAuth) Middleware(level permission.Privilege) func(http.Handler) htt
 				return
 			}
 
-			next.ServeHTTP(req.WithContext(context.WithValue(req.Context(), auth.CtxKeyUserProfile, s.Profile)))
+			*req = *req.WithContext(context.WithValue(req.Context(), auth.CtxKeyUserProfile, s.Profile))
+			next.ServeHTTP(res, req)
 		})
 	}
 }
@@ -74,7 +75,8 @@ func (s *UserAuth) MiddlewareWS(level permission.Privilege) func(http.Handler) h
 
 				return
 			}
-			next.ServeHTTP(req.WithContext(context.WithValue(req.Context(), auth.CtxKeyUserProfile, s.Profile)))
+			*req = *req.WithContext(context.WithValue(req.Context(), auth.CtxKeyUserProfile, s.Profile))
+			next.ServeHTTP(res, req)
 		})
 	}
 }
