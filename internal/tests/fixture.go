@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
@@ -34,7 +34,6 @@ func NewFixture() *Fixture {
 	testCtx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
 	defer cancel()
 
-	// slog.SetDefault(slog.New(slog.DiscardHandler))
 	testDB, errStore := newDB(testCtx)
 	if errStore != nil {
 		panic(errStore)
@@ -74,13 +73,13 @@ func NewFixture() *Fixture {
 	}
 }
 
-func (f Fixture) CreateRouter() *gin.Engine {
-	router, err := httphelper.CreateRouter(httphelper.RouterOpts{LogLevel: log.Error, Mode: gin.TestMode})
+func (f Fixture) CreateRouter() *http.ServeMux {
+	mux, _, err := httphelper.CreateRouter(httphelper.RouterOpts{LogLevel: log.Error})
 	if err != nil {
 		panic(err)
 	}
 
-	return router
+	return mux
 }
 
 func (f Fixture) Reset(ctx context.Context) {

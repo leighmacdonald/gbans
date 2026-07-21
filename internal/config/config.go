@@ -15,7 +15,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/asset"
@@ -244,8 +243,6 @@ func (c *Configuration) reload(ctx context.Context) error {
 	c.Lock()
 	c.currentConfig = config
 	c.Unlock()
-
-	gin.SetMode(config.General.Mode.String())
 
 	if errSteam := steamid.SetKey(config.SteamKey); errSteam != nil {
 		return errors.Join(errSteam, ErrSteamAPIKey)

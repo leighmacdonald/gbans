@@ -14,7 +14,6 @@ import (
 
 	"connectrpc.com/authn"
 	"github.com/getsentry/sentry-go"
-	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
@@ -61,7 +60,6 @@ var (
 	BuildDate    = ""       //nolint:gochecknoglobals
 )
 
-// GBans is the main application container. It containers all the top level subsystem interfaces.
 type GBans struct {
 	anticheat      anticheat.AntiCheat
 	assets         asset.Assets
@@ -96,14 +94,11 @@ type GBans struct {
 	sentry         *sentry.Client
 	bot            discord.Connection
 
-	// broadcaster is responsible for handling incoming log message events and routing them to
-	// the various subsystems that have registered receivers.
 	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 
 	logCloser func()
 }
 
-// New creates a new application instance.
 func New() (*GBans, error) {
 	staticConfig, errStatic := config.ReadStaticConfig()
 	if errStatic != nil {
@@ -228,12 +223,6 @@ func (g *GBans) Init(ctx context.Context) error {
 		return err
 	}
 
-	// If we are using Valve SDR network, optionally enable the dynamic DNS update support to automatically
-	// update the A record when a change is detected with the new public SDR IP.
-	// if conf.Network.SDREnabled && conf.Network.SDRDNSEnabled {
-	// 	// go dns.MonitorChanges(ctx, conf, stateUsecase, serversUC)
-	// }
-
 	if errRoles := g.createDiscordRoles(ctx); errRoles != nil {
 		slog.Error("Failed to register discord roles", slog.String("error", errRoles.Error()))
 	}
@@ -241,10 +230,6 @@ func (g *GBans) Init(ctx context.Context) error {
 	return nil
 }
 
-// createDiscordRoles handles creating discord roles used for seeding requests from servers.
-// Names are normalized, removing the trailing digit, so that a single region shares the same single role.
-// Given a list of short server names, eg: xyz-1, zyz-2, abc-1, abc-2, tuv-1
-// It will create the following, normalized set of roles: zyz, abc, tuv.
 func (g *GBans) createDiscordRoles(ctx context.Context) error {
 	conf := g.config.Config().Discord
 	if !conf.BotEnabled {
@@ -332,7 +317,7 @@ func (g *GBans) createConfig(ctx context.Context) (*config.Configuration, error)
 	return conf, nil
 }
 
-func (g *GBans) createAPIClient() (thirdparty.APIProvider, error) { //nolint:ireturn
+func (g *GBans) createAPIClient() (thirdparty.APIProvider, error) {
 	apiURL := os.Getenv("TFAPI_URL")
 	if apiURL == "" {
 		apiURL = "https://tf-api.roto.lol"
@@ -346,7 +331,7 @@ func (g *GBans) createAPIClient() (thirdparty.APIProvider, error) { //nolint:ire
 	return tfapiClient, nil
 }
 
-func (g *GBans) mustCreateBot(conf *discord.Config) discord.Connection { //nolint:ireturn
+func (g *GBans) mustCreateBot(conf *discord.Config) discord.Connection {
 	if conf.BotEnabled {
 		discordBot, errDiscord := discord.New(discord.Opts{
 			Token:   conf.Token,
@@ -508,7 +493,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 		go g.startBot()
 	}
 
-	router, err := httphelper.CreateRouter(httphelper.RouterOpts{
+	mux, router, err := httphelper.CreateRouter(httphelper.RouterOpts{
 		HTTPLogEnabled:    conf.Log.HTTPEnabled,
 		LogLevel:          conf.Log.Level,
 		HTTPOtelEnabled:   conf.Log.HTTPOtelEnabled,
@@ -527,41 +512,37 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 		return err
 	}
 
-	// Create authentication middlewares
 	userAuth := auth.NewAuthentication(auth.NewRepository(g.database), conf.General.SiteName, conf.HTTPCookieKey, g.persons, g.bans, g.servers, g.config.Config().General.SentryDSN)
-	// serverAuth := servers.NewServerAuth(g.servers, g.config.Config().General.SentryDSN)
 
 	authMiddleware := rpc.NewMiddleware(conf.General.SiteName, conf.HTTPCookieKey)
 
-	// Register all our handlers with router
-	asset.NewAssetHandler(router, g.assets)
-	auth.NewAuthHandler(router, userAuth, g.config, g.tfapiClient, g.notifications, authMiddleware)
-	discordoauth.NewDiscordOAuthHandler(router, g.config, g.persons, g.discordOAuth)
-	metrics.NewMetricsHandler(router)
+	asset.NewAssetHandler(mux, g.assets)
+	auth.NewAuthHandler(mux, userAuth, g.config, g.tfapiClient, g.notifications, authMiddleware)
+	discordoauth.NewDiscordOAuthHandler(mux, g.config, g.persons, g.discordOAuth)
+	metrics.NewMetricsHandler(mux)
 
-	router.GET("/health", g.healthCheck)
+	mux.HandleFunc("GET /health", g.healthCheck)
 
 	apiHandler := g.createAPI(authMiddleware)
 
-	mux := http.NewServeMux()
+	topMux := http.NewServeMux()
 
 	mw := authn.NewMiddleware(authMiddleware.Authenticate)
 
-	mux.Handle("/connect/", http.StripPrefix("/connect", mw.Wrap(apiHandler)))
-	mux.Handle("/", router)
+	topMux.Handle("/connect/", http.StripPrefix("/connect", mw.Wrap(apiHandler)))
+	topMux.Handle("/", router)
 
-	httpServer := httphelper.NewServer(conf.Addr(), mux)
+	httpServer := httphelper.NewServer(conf.Addr(), topMux)
 
-	//nolint:gosec
 	go func() {
 		<-ctx.Done()
 
 		slog.Debug("Shutting down HTTP service")
 
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10) //nolint:gosec
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
 
-		if errShutdown := httpServer.Shutdown(shutdownCtx); errShutdown != nil { //nolint:contextcheck
+		if errShutdown := httpServer.Shutdown(shutdownCtx); errShutdown != nil {
 			slog.Error("Error shutting down http service", slog.String("error", errShutdown.Error()))
 		}
 	}()
@@ -681,10 +662,6 @@ func (g *GBans) onChatBan(ctx context.Context, warning chat.NewUserWarning) erro
 		req.BanType = bantype.Banned
 		newBan, errBan = g.bans.Create(ctx, req)
 	case chat.FilterActionKick:
-		// Kicks are temporary, so should be done by Player ID to avoid
-		// missing players who weren't in the latest state update
-		// (otherwise, kicking players very shortly after they connect
-		// will usually fail).
 		if result, found := g.servers.FindPlayer(servers.FindOpts{SteamID: warning.UserMessage.SteamID}); found {
 			errBan = result.Server.Kick(ctx, result.Player.SID, warning.WarnReason.String())
 		}
@@ -750,24 +727,25 @@ func (g *GBans) onAnticheatBan(ctx context.Context, entry logparse.StacEntry, du
 	return nil
 }
 
-func (g *GBans) healthCheck(ctx *gin.Context) {
+func (g *GBans) healthCheck(w http.ResponseWriter, r *http.Request) {
 	serverStates := g.servers.Current()
 	if len(serverStates) > 0 {
 		for _, server := range serverStates {
 			if server.MaxPlayers > 0 {
-				ctx.String(http.StatusOK, "😎")
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte("😎"))
 
 				return
 			}
 		}
-		ctx.String(http.StatusServiceUnavailable, "🙅🏻‍♀️")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		_, _ = w.Write([]byte("🙅🏻‍♀️"))
 	} else {
-		ctx.String(http.StatusOK, "😎")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("😎"))
 	}
 }
 
-// downloadManager is responsible for connecting to the remote servers via ssh/scp and executing instructions.
-// Multiple handlers can be registered that will be run for every update call.
 func downloadManager(ctx context.Context, store database.Database, conf *scp.Config, handlers ...scp.ConnectionHandler) {
 	var (
 		connections []scp.Connection
@@ -820,7 +798,6 @@ func downloadManager(ctx context.Context, store database.Database, conf *scp.Con
 
 			start := time.Now()
 
-			// No err group since we want to continue on errors.
 			waitGroup := &sync.WaitGroup{}
 
 			for _, handler := range connections {

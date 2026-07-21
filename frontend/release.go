@@ -5,25 +5,21 @@ package frontend
 import (
 	"embed"
 	"errors"
+	"io/fs"
 	"net/http"
-
-	"github.com/gin-contrib/static"
-	"github.com/gin-gonic/gin"
 )
 
 //go:embed dist/*
 var embedFS embed.FS
 
-func AddRoutes(engine *gin.Engine, _ string) error {
-	embedFolder, errFolder := static.EmbedFolder(embedFS, "dist")
-	if errFolder != nil {
-		return errors.Join(errFolder, ErrContentRoot)
+func AddRoutes(mux *http.ServeMux, _ string) error {
+	distFS, errFS := fs.Sub(embedFS, "dist")
+	if errFS != nil {
+		return errors.Join(errFS, ErrContentRoot)
 	}
-	engine.Use(static.Serve("/", embedFolder))
 
-	engine.NoRoute(func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "/")
-	})
+	fsHandler := http.FileServer(http.FS(distFS))
+	mux.Handle("GET /", fsHandler)
 
 	indexData, errIndex := embedFS.ReadFile("dist/index.html")
 	if errIndex != nil {
@@ -31,8 +27,11 @@ func AddRoutes(engine *gin.Engine, _ string) error {
 	}
 
 	for _, rt := range jsRoutes {
-		engine.GET(rt, func(ctx *gin.Context) {
-			ctx.Data(http.StatusOK, "text/html", indexData)
+		rtCopy := rt
+		mux.HandleFunc("GET "+rtCopy, func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "text/html")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write(indexData)
 		})
 	}
 

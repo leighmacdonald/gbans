@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -19,7 +18,6 @@ import (
 )
 
 type TokenGenerator interface {
-	// MakeToken returns accesstoken, fingerprint, err
 	MakeUserToken(id person.BaseUser) (string, string, error)
 }
 
@@ -32,7 +30,7 @@ type authHandler struct {
 	tokenGenerator TokenGenerator
 }
 
-func NewAuthHandler(engine *gin.Engine, auth *Authentication, config *config.Configuration,
+func NewAuthHandler(mux *http.ServeMux, auth *Authentication, config *config.Configuration,
 	tfAPI thirdparty.APIProvider, notif notification.Notifier, tokenGenerator TokenGenerator,
 ) {
 	handler := &authHandler{
@@ -43,28 +41,27 @@ func NewAuthHandler(engine *gin.Engine, auth *Authentication, config *config.Con
 		tokenGenerator: tokenGenerator,
 	}
 
-	engine.GET("/auth/callback", handler.onSteamOIDCCallback())
+	mux.HandleFunc("GET /auth/callback", handler.onSteamOIDCCallback())
 }
 
-func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
+func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
 	var (
 		nonceStore     = openid.NewSimpleNonceStore()
 		discoveryCache = &noOpDiscoveryCache{}
 		oidRx          = regexp.MustCompile(`^https://steamcommunity\.com/openid/id/(\d+)$`)
 	)
 
-	return func(ctx *gin.Context) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var idStr string
 
-		referralURL := httphelper.Referral(ctx)
+		referralURL := httphelper.Referral(r)
 		conf := h.config.Config()
-		fullURL := conf.ExternalURL + ctx.Request.URL.String()
+		fullURL := conf.ExternalURL + r.URL.String()
 
 		if conf.Debug.SkipOpenIDValidation {
-			// Pull the sid out of the query without doing a signature check
 			values, errParse := url.Parse(fullURL)
 			if errParse != nil {
-				ctx.Redirect(302, referralURL)
+				http.Redirect(w, r, referralURL, http.StatusFound)
 				slog.Error("Failed to parse url", slog.String("error", errParse.Error()))
 
 				return
@@ -74,7 +71,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		} else {
 			openID, errVerify := openid.Verify(fullURL, discoveryCache, nonceStore)
 			if errVerify != nil {
-				ctx.Redirect(302, referralURL)
+				http.Redirect(w, r, referralURL, http.StatusFound)
 				slog.Error("Error verifying openid auth response", slog.String("error", errVerify.Error()))
 
 				return
@@ -85,7 +82,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 
 		match := oidRx.FindStringSubmatch(idStr)
 		if match == nil || len(match) != 2 {
-			ctx.Redirect(302, referralURL)
+			http.Redirect(w, r, referralURL, http.StatusFound)
 			slog.Error("Failed to match oid format provided")
 
 			return
@@ -93,21 +90,21 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 
 		sid := steamid.New(match[1])
 		if !sid.Valid() {
-			ctx.Redirect(302, referralURL)
+			http.Redirect(w, r, referralURL, http.StatusFound)
 			slog.Error("Received invalid steamid")
 
 			return
 		}
 
-		fetchedPerson, errPerson := h.persons.GetOrCreatePersonBySteamID(ctx, sid)
+		fetchedPerson, errPerson := h.persons.GetOrCreatePersonBySteamID(r.Context(), sid)
 		if errPerson != nil {
-			ctx.Redirect(302, referralURL)
+			http.Redirect(w, r, referralURL, http.StatusFound)
 			slog.Error("Failed to create or load user profile", slog.String("error", errPerson.Error()))
 		}
 
 		accessToken, fingerprint, errToken := h.tokenGenerator.MakeUserToken(fetchedPerson)
 		if errToken != nil {
-			ctx.Redirect(302, referralURL)
+			http.Redirect(w, r, referralURL, http.StatusFound)
 			slog.Error("Failed to create access token pair", slog.String("error", errToken.Error()))
 
 			return
@@ -115,7 +112,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 
 		parsedURL, errParse := url.Parse("/login/success")
 		if errParse != nil {
-			ctx.Redirect(302, referralURL)
+			http.Redirect(w, r, referralURL, http.StatusFound)
 
 			return
 		}
@@ -127,23 +124,24 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 
 		parsedExternal, errExternal := url.Parse(conf.ExternalURL)
 		if errExternal != nil {
-			ctx.Redirect(302, referralURL)
+			http.Redirect(w, r, referralURL, http.StatusFound)
 			slog.Error("Failed to parse ext url", slog.String("error", errExternal.Error()))
 
 			return
 		}
 
-		ctx.SetSameSite(http.SameSiteStrictMode)
-		ctx.SetCookie(
-			FingerprintCookieName,
-			fingerprint,
-			int(TokenDuration.Seconds()),
-			"/connect",
-			parsedExternal.Hostname(),
-			strings.HasPrefix(strings.ToLower(conf.ExternalURL), "https://"),
-			true)
+		http.SetCookie(w, &http.Cookie{
+			Name:     FingerprintCookieName,
+			Value:    fingerprint,
+			MaxAge:   int(TokenDuration.Seconds()),
+			Path:     "/connect",
+			Domain:   parsedExternal.Hostname(),
+			Secure:   strings.HasPrefix(strings.ToLower(conf.ExternalURL), "https://"),
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+		})
 
-		ctx.Redirect(302, parsedURL.String())
+		http.Redirect(w, r, parsedURL.String(), http.StatusFound)
 
 		sentry.AddBreadcrumb(&sentry.Breadcrumb{
 			Category: "auth",
@@ -160,82 +158,10 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 	}
 }
 
-// func (h *authHandler) onAPILogout() gin.HandlerFunc {
-//	conf := h.config.Config()
-//
-//	return func(ctx *gin.Context) {
-//		fingerprint, errCookie := ctx.Cookie(FingerprintCookieName)
-//		if errCookie != nil {
-//			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errCookie, httphelper.ErrBadRequest),
-//				"Failed to find fingerprint cookie: %s", FingerprintCookieName))
-//
-//			return
-//		}
-//
-//		parsedExternal, errExternal := url.Parse(conf.ExternalURL)
-//		if errExternal != nil {
-//			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errExternal, httphelper.ErrInternal),
-//				"Invalid external url: %s", conf.ExternalURL))
-//
-//			return
-//		}
-//
-//		ctx.SetCookie(FingerprintCookieName, "", -1, "/api",
-//			parsedExternal.Hostname(), conf.General.Mode == config.ReleaseMode, true)
-//
-//		token, errToken := h.TokenFromHeader(ctx, false)
-//		if errToken != nil {
-//			ctx.AbortWithStatus(http.StatusUnauthorized)
-//
-//			return
-//		}
-//
-//		sid, errFromToken := h.Sid64FromJWTToken(token, h.cookieKey, fingerprint)
-//		if errFromToken != nil {
-//			if errors.Is(errFromToken, ErrExpired) {
-//				ctx.AbortWithStatus(http.StatusUnauthorized)
-//
-//				return
-//			}
-//
-//			slog.Error("Failed to load sid from access token", slog.String("error", errFromToken.Error()))
-//			ctx.AbortWithStatus(http.StatusForbidden)
-//
-//			return
-//		}
-//
-//		ctx.JSON(http.StatusOK, gin.H{})
-//
-//		go func(steamID steamid.SteamID) {
-//			sentry.AddBreadcrumb(&sentry.Breadcrumb{
-//				Category: "auth",
-//				Message:  "User logged out " + steamID.String(),
-//				Level:    sentry.LevelWarning,
-//			})
-//
-//			sentry.ConfigureScope(func(scope *sentry.Scope) {
-//				scope.SetUser(sentry.User{})
-//			})
-//			player, errPerson := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)
-//			if errPerson != nil {
-//				slog.Error("Failed to create or load user profile", slog.String("error", errPerson.Error()))
-//
-//				return
-//			}
-//			h.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, logoutMessage(player)))
-//		}(sid)
-//	}
-// }
-
-// noOpDiscoveryCache implements the DiscoveryCache interface and doesn't cache anything.
 type noOpDiscoveryCache struct{}
 
-// Put is a no op.
 func (n *noOpDiscoveryCache) Put(_ string, _ openid.DiscoveredInfo) {}
 
-// Get always returns nil.
-//
-//nolint:ireturn
 func (n *noOpDiscoveryCache) Get(_ string) openid.DiscoveredInfo {
 	return nil
 }

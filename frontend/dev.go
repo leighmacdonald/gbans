@@ -9,12 +9,10 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/gin-contrib/static"
-	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/fs"
 )
 
-func AddRoutes(engine *gin.Engine, root string) error {
+func AddRoutes(mux *http.ServeMux, root string) error {
 	if root == "" {
 		root = "frontend/dist"
 	}
@@ -23,16 +21,20 @@ func AddRoutes(engine *gin.Engine, root string) error {
 		return ErrContentRoot
 	}
 
-	engine.Use(static.Serve("/", static.LocalFile(root, false)))
+	fsHandler := http.FileServer(http.Dir(root))
+	mux.Handle("GET /", fsHandler)
 
 	for _, rt := range jsRoutes {
-		engine.GET(rt, func(ctx *gin.Context) {
+		rtCopy := rt
+		mux.HandleFunc("GET "+rtCopy, func(w http.ResponseWriter, r *http.Request) {
 			indexData, errIndex := os.ReadFile(path.Join(root, "index.html"))
 			if errIndex != nil {
 				slog.Error("failed to open index.html", slog.String("error", errIndex.Error()))
 			}
 
-			ctx.Data(http.StatusOK, "text/html", indexData)
+			w.Header().Set("Content-Type", "text/html")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write(indexData)
 		})
 	}
 
