@@ -8,6 +8,8 @@ import (
 )
 
 var (
+	ErrBadRequest         = errors.New("bad request")
+	ErrInternal           = errors.New("internal error")
 	ErrNotFound           = errors.New("entity not found")
 	ErrRequestPerform     = errors.New("could not perform http request")
 	ErrRequestInvalidCode = errors.New("invalid response code returned from request")
