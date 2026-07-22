@@ -1,7 +1,5 @@
-import { ConnectError } from "@connectrpc/connect";
 import { useQuery } from "@connectrpc/connect-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { ErrorDetails } from "../component/ErrorDetails.tsx";
 import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { WikiPage } from "../component/WikiPage.tsx";
