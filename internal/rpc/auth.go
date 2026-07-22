@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -28,8 +29,10 @@ const (
 )
 
 var (
-	ErrCreateToken = errors.New("failed to create new Access token")
-	ErrSignToken   = errors.New("failed create signed string")
+	ErrCreateToken           = errors.New("failed to create new Access token")
+	ErrSignToken             = errors.New("failed create signed string")
+	ErrFingerprintMismatch   = errors.New("fingerprint mismatch")
+	ErrInvalidSteamIDInToken = errors.New("invalid steamid in token")
 )
 
 // UserClaimProvider defines the required fields to extract user claims for JWT creation.
@@ -240,7 +243,7 @@ func (m *Middleware) serverClaimsFromRequest(req *http.Request) (*serverClaims, 
 }
 
 func (m *Middleware) userClaimsFromRequest(req *http.Request) (*userClaims, error) {
-	_, errFP := m.fingerprintFromRequest(req)
+	fingerprint, errFP := m.fingerprintFromRequest(req)
 	if errFP != nil {
 		return nil, errFP
 	}
@@ -269,19 +272,19 @@ func (m *Middleware) userClaimsFromRequest(req *http.Request) (*userClaims, erro
 		return nil, authn.Errorf("invalid token")
 	}
 
-	// if claims.Fingerprint != m.fingerprintHash(fingerprint) {
-	// 	slog.Error("Invalid cookie fingerprint, token rejected")
+	if claims.Fingerprint != fingerprintHash(fingerprint) {
+		slog.Error("Invalid cookie fingerprint, token rejected")
 
-	// 	return nil, authn.Errorf("invalid token")
-	// }
+		return nil, authn.Errorf("invalid token")
+	}
 
 	return &claims, nil
 }
 
-func (m *Middleware) fingerprintHash(fingerprint string) string {
-	hasher := sha256.New()
+func fingerprintHash(fingerprint string) string {
+	sum := sha256.Sum256([]byte(fingerprint))
 
-	return hex.EncodeToString(hasher.Sum([]byte(fingerprint)))
+	return hex.EncodeToString(sum[:])
 }
 
 func (m *Middleware) fingerprintFromRequest(req *http.Request) (string, error) {
@@ -335,7 +338,7 @@ func (m *Middleware) newUserToken(user UserClaimProvider, fingerPrint string, va
 	nowTime := time.Now()
 	sid := user.GetSteamID()
 	claims := userClaims{
-		Fingerprint: m.fingerprintHash(fingerPrint),
+		Fingerprint: fingerprintHash(fingerPrint),
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    m.siteName,
 			Subject:   sid.String(),
@@ -381,4 +384,33 @@ func (m *Middleware) MakeUserToken(user person.BaseUser) (string, string, error)
 	// }
 
 	return accessToken, fingerprint, nil
+}
+
+// ValidateUserToken parses a JWT access token and validates it against the provided fingerprint.
+// Returns the SteamID from the token claims on success.
+func (m *Middleware) ValidateUserToken(tokenStr string, fingerprint string) (steamid.SteamID, error) {
+	claims := userClaims{}
+	tkn, err := jwt.ParseWithClaims(tokenStr, &claims, m.makeGetTokenKey())
+	if err != nil {
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return steamid.SteamID{}, errors.Join(err, ErrSignToken)
+		}
+
+		return steamid.SteamID{}, errors.Join(err, ErrSignToken)
+	}
+
+	if !tkn.Valid {
+		return steamid.SteamID{}, ErrSignToken
+	}
+
+	if claims.Fingerprint != fingerprintHash(fingerprint) {
+		return steamid.SteamID{}, ErrFingerprintMismatch
+	}
+
+	sid := steamid.New(claims.Subject)
+	if !sid.Valid() {
+		return steamid.SteamID{}, ErrInvalidSteamIDInToken
+	}
+
+	return sid, nil
 }

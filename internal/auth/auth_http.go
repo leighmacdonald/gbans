@@ -27,6 +27,7 @@ func safeRedirectURL(rawURL string) string {
 
 type TokenGenerator interface {
 	MakeUserToken(id person.BaseUser) (string, string, error)
+	ValidateUserToken(tokenStr string, fingerprint string) (steamid.SteamID, error)
 }
 
 type authHandler struct {
@@ -50,6 +51,7 @@ func NewAuthHandler(mux *http.ServeMux, auth *Authentication, config *config.Con
 	}
 
 	mux.HandleFunc("GET /auth/callback", handler.onSteamOIDCCallback())
+	mux.HandleFunc("GET /api/auth/logout", handler.onAPILogout())
 }
 
 func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
@@ -163,6 +165,66 @@ func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
 			slog.String("sid64", sid.String()),
 			slog.String("name", fetchedPerson.GetName()),
 			slog.Int("permission_level", int(fetchedPerson.PermissionLevel)))
+	}
+}
+
+func (h *authHandler) onAPILogout() http.HandlerFunc {
+	conf := h.config.Config()
+
+	return func(res http.ResponseWriter, req *http.Request) {
+		var sid steamid.SteamID
+
+		fingerprint, errCookie := req.Cookie(FingerprintCookieName)
+		if errCookie == nil {
+			parsedExternal, errExternal := url.Parse(conf.ExternalURL)
+			if errExternal == nil {
+				http.SetCookie(res, &http.Cookie{ //nolint:gosec
+					Name:     FingerprintCookieName,
+					Value:    "",
+					MaxAge:   -1,
+					Path:     "/connect",
+					Domain:   parsedExternal.Hostname(),
+					Secure:   strings.HasPrefix(strings.ToLower(conf.ExternalURL), "https://"),
+					HttpOnly: true,
+					SameSite: http.SameSiteStrictMode,
+				})
+			}
+		}
+
+		authHeader := req.Header.Get("Authorization")
+		if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") && errCookie == nil {
+			token := strings.TrimPrefix(authHeader, "Bearer ")
+
+			validatedSID, errValidation := h.tokenGenerator.ValidateUserToken(token, fingerprint.Value)
+			if errValidation == nil {
+				sid = validatedSID
+			}
+		}
+
+		httphelper.RespondJSON(res, http.StatusOK, map[string]string{})
+
+		if sid.Valid() {
+			go func(steamID steamid.SteamID) {
+				sentry.AddBreadcrumb(&sentry.Breadcrumb{
+					Category: "auth",
+					Message:  "User logged out " + steamID.String(),
+					Level:    sentry.LevelWarning,
+				})
+
+				sentry.ConfigureScope(func(scope *sentry.Scope) {
+					scope.SetUser(sentry.User{})
+				})
+
+				player, errPerson := h.persons.GetOrCreatePersonBySteamID(req.Context(), steamID)
+				if errPerson != nil {
+					slog.Error("Failed to load user for logout notification", slog.String("error", errPerson.Error()))
+
+					return
+				}
+
+				h.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, logoutMessage(player)))
+			}(sid)
+		}
 	}
 }
 
