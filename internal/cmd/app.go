@@ -519,7 +519,6 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	asset.NewAssetHandler(mux, g.assets)
 	auth.NewAuthHandler(mux, userAuth, g.config, g.tfapiClient, g.notifications, authMiddleware)
 	discordoauth.NewDiscordOAuthHandler(mux, g.config, g.persons, g.discordOAuth)
-	metrics.NewMetricsHandler(mux)
 
 	mux.HandleFunc("GET /health", g.healthCheck)
 
