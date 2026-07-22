@@ -40,10 +40,10 @@ type MessageProvider struct {
 }
 
 func (m *MessageProvider) Next(ctx context.Context, count uint64) ([]slur.Message, error) {
-	query := fmt.Sprintf(`SELECT steam_id, person_message_id, body
-					FROM person_messages
-				   ORDER BY person_message_id OFFSET %d LIMIT %d`, m.offset, count)
-	rows, errRows := m.Db.Query(ctx, query)
+	rows, errRows := m.Db.Query(ctx,
+		`SELECT steam_id, person_message_id, body
+		   FROM person_messages
+		  ORDER BY person_message_id OFFSET $1 LIMIT $2`, m.offset, count)
 	if errRows != nil {
 		if errors.Is(errRows, database.ErrNoResult) {
 			return nil, nil

@@ -96,8 +96,6 @@ type GameState struct {
 	Chat    []ChatMessage         `json:"chat"`
 }
 
-type HealingSummary struct{}
-
 type Stats struct {
 	Kills               int `json:"kills"`
 	Assists             int `json:"assists"`
