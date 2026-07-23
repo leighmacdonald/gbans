@@ -44,11 +44,11 @@ func (r Repository) PrunePersonAuth(ctx context.Context) error {
 		Where(sq.Gt{"created_on + interval '1 month'": time.Now()})))
 }
 
-func (r Repository) GetPersonAuthByFingerprint(ctx context.Context, fingerprint string, auth *PersonAuth) error {
+func (r Repository) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *PersonAuth) error {
 	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
 		Select("person_auth_id", "steam_id", "ip_addr", "refresh_token", "created_on").
 		From("person_auth").
-		Where(sq.And{sq.Eq{"fingerprint": fingerprint}}))
+		Where(sq.And{sq.Eq{"refresh_token": token}}))
 	if errRow != nil {
 		return database.Err(errRow)
 	}

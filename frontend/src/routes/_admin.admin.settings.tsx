@@ -84,7 +84,6 @@ export const Route = createFileRoute("/_admin/admin/settings")({
 				return await configClient.get({});
 			},
 		});
-		console.log(conf);
 		return conf.config;
 	},
 	head: ({ match }) => ({

@@ -10,6 +10,7 @@ import { type PersonCore, PersonCoreSchema } from "./rpc/person/v1/person_core_p
 import { type CurrentProfileResponse, PersonService } from "./rpc/person/v1/person_pb.ts";
 import { Privilege } from "./rpc/person/v1/privilege_pb.ts";
 import { finalTransport, queryClient } from "./transport.ts";
+import { logErr } from "./util/errors.ts";
 import { defaultAvatarHash } from "./util/strings.ts";
 import { parseDateTime } from "./util/time.ts";
 import type { Nullable } from "./util/types.ts";
@@ -63,7 +64,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 							cardinality: "finite",
 						}),
 						queryFn: async () => {
-							console.log("fetching 1");
 							return await personClient.currentProfile({});
 						},
 					})
@@ -166,7 +166,7 @@ const loadProfile = (): PersonCore => {
 			timeCreated: timestampFromDate(parseDateTime(raw.timeCreated)),
 		});
 	} catch (e) {
-		console.log(e);
+		logErr(e);
 		return defaultProfile;
 	}
 };

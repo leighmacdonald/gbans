@@ -270,7 +270,17 @@ func (s Service) ContestDelete(ctx context.Context, req *v1.ContestDeleteRequest
 }
 
 func (s Service) ContestEdit(ctx context.Context, req *v1.ContestEditRequest) (*v1.ContestEditResponse, error) {
-	// FIXME check for contest.
+	contestID, _ := uuid.FromString(req.GetContest().GetContestId())
+	var existing Contest
+
+	if errContest := s.contests.ByID(ctx, contestID, &existing); errContest != nil {
+		if errors.Is(errContest, database.ErrNoResult) {
+			return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
+		}
+
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
 	contest, errSave := s.contests.Save(ctx, fromContest(req.GetContest()))
 	if errSave != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)

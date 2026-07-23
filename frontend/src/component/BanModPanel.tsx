@@ -82,7 +82,6 @@ export const BanModPanel = ({ banId }: { banId: number }) => {
 				reason: data?.ban?.reason,
 				reasonText: zeroStringUndefined(data?.ban?.reasonText),
 			};
-			console.log(opts);
 			appealStateMutation.mutate(create(UpdateRequestSchema, opts));
 		},
 		validators: { onSubmit },
