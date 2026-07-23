@@ -4,7 +4,7 @@ import { z } from "zod/v4";
 export const runModeNames = z.enum(["development", "production"]);
 export type runModeNames = z.infer<typeof runModeNames>;
 
-export const runMode: runModeNames = (process.env.NODE_ENV as runModeNames) || "development";
+export const runMode: runModeNames = (import.meta.env.MODE as runModeNames) || "development";
 
 export enum Level {
 	info = 0,
