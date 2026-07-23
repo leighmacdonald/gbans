@@ -64,12 +64,25 @@ func NewAuthentication(repository Repository, siteName string, cookieKey string,
 	}
 }
 
+func NewPersonAuth(steamID steamid.SteamID, ipAddr net.IP, refreshToken string) PersonAuth {
+	return PersonAuth{
+		SteamID:     steamID,
+		IPAddr:      ipAddr,
+		AccessToken: refreshToken,
+		CreatedOn:   time.Now(),
+	}
+}
+
+func (u *Authentication) SavePersonAuth(ctx context.Context, auth PersonAuth) error {
+	return u.auth.SavePersonAuth(ctx, &auth)
+}
+
 func (u *Authentication) DeletePersonAuth(ctx context.Context, authID int64) error {
 	return u.auth.DeletePersonAuth(ctx, authID)
 }
 
 func (u *Authentication) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *PersonAuth) error {
-	return u.auth.GetPersonAuthByFingerprint(ctx, token, auth)
+	return u.auth.GetPersonAuthByRefreshToken(ctx, token, auth)
 }
 
 func (u *Authentication) loginSID(ctx context.Context, res http.ResponseWriter, req *http.Request, level permission.Privilege, steamID steamid.SteamID) {

@@ -51,7 +51,6 @@ function LoginSteamSuccess() {
 				await login(token, {
 					onSuccess: async () => {
 						if (cancelled) return;
-						console.log(`Logging Success, redirecting to ${search.nextUrl ?? "/"}`);
 						await navigate({ to: search.nextUrl });
 					},
 					onError: () => {

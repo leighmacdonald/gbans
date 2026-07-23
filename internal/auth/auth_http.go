@@ -2,6 +2,7 @@ package auth
 
 import (
 	"log/slog"
+	"net"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -120,6 +121,12 @@ func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
 			return
 		}
 
+		if ip := parseIP(req.RemoteAddr); ip != nil {
+			if errSave := h.SavePersonAuth(req.Context(), NewPersonAuth(fetchedPerson.SteamID, ip, fingerprint)); errSave != nil {
+				slog.Error("Failed to save auth record for revocation", slog.String("error", errSave.Error()))
+			}
+		}
+
 		parsedURL, errParse := url.Parse("/login/success")
 		if errParse != nil {
 			http.Redirect(res, req, referralURL, http.StatusFound) //nolint:gosec
@@ -234,4 +241,13 @@ func (n *noOpDiscoveryCache) Put(_ string, _ openid.DiscoveredInfo) {}
 
 func (n *noOpDiscoveryCache) Get(_ string) openid.DiscoveredInfo {
 	return nil
+}
+
+func parseIP(remoteAddr string) net.IP {
+	host, _, errSplit := net.SplitHostPort(remoteAddr)
+	if errSplit != nil {
+		return net.ParseIP(remoteAddr)
+	}
+
+	return net.ParseIP(host)
 }

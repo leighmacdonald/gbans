@@ -101,6 +101,14 @@ type Opts struct {
 	Note        string
 }
 
+func cidrStr(s *string) string {
+	if s == nil {
+		return ""
+	}
+
+	return *s
+}
+
 func (opts *Opts) Validate() error {
 	if opts.ValidUntil.Before(time.Now()) {
 		return fmt.Errorf("%w: %w", ErrInvalidBanOpts, ErrInvalidBanDuration)
@@ -110,9 +118,8 @@ func (opts *Opts) Validate() error {
 		return fmt.Errorf("%w: Custom reason must be at least 3 characters", ErrInvalidBanOpts)
 	}
 
-	// FIXME opt field handling is pretty clunky
-	if opts.CIDR != nil && *opts.CIDR != "" {
-		_, ipnet, errCIDR := net.ParseCIDR(*opts.CIDR)
+	if cidrVal := cidrStr(opts.CIDR); cidrVal != "" {
+		_, ipnet, errCIDR := net.ParseCIDR(cidrVal)
 		if errCIDR != nil {
 			return fmt.Errorf("%w: Invalid CIDR", ErrInvalidBanOpts)
 		}

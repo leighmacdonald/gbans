@@ -371,18 +371,6 @@ func (m *Middleware) MakeUserToken(user person.BaseUser) (string, string, error)
 		return "", "", errors.Join(errAccess, ErrCreateToken)
 	}
 
-	// FIXME save auth for revocation
-	// ipAddr := net.ParseIP(ctx.ClientIP())
-	// if ipAddr == nil {
-	// 	return UserTokens{}, ErrClientIP
-	// }
-	//
-	// personAuth := NewPersonAuth(sid, ipAddr, accessToken)
-	//
-	// if saveErr := u.auth.SavePersonAuth(ctx, &personAuth); saveErr != nil {
-	// 	return UserTokens{}, errors.Join(saveErr, ErrSaveToken)
-	// }
-
 	return accessToken, fingerprint, nil
 }
 
