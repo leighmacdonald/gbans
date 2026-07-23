@@ -2,7 +2,9 @@ import { create } from "@bufbuild/protobuf";
 import { EmptySchema, timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { createClient } from "@connectrpc/connect";
 import { createConnectQueryKey } from "@connectrpc/connect-query";
-import { type ReactNode, useCallback } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { AuthContext } from "./contexts/AuthContext.tsx";
+import { StorageType, useStorage } from "./hooks/useSessionStorage.tsx";
 import { AuthService } from "./rpc/auth/v1/auth_pb.ts";
 import { type PersonCore, PersonCoreSchema } from "./rpc/person/v1/person_core_pb.ts";
 import { PersonService } from "./rpc/person/v1/person_pb.ts";
@@ -53,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		if (profile.steamId === "") {
 			tryAuth();
 		}
-	}, [setProfileValue, setProfile]);
+	}, [setProfileValue, profile.steamId]);
 
 	const login = useCallback(
 		async (_token: string, opts: { onSuccess: () => void; onError: (error: Error) => void }) => {
@@ -90,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				return Promise.reject(e);
 			}
 		},
-		[setProfileValue, setProfile, profile],
+		[setProfileValue, profile],
 	);
 
 	const logout = useCallback(async () => {
@@ -110,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		localStorage.setItem(StorageKey.Logout, Date.now().toString());
 
 		deleteProfileValue();
-	}, [deleteProfileValue, setProfile, authClient.logout]);
+	}, [deleteProfileValue, authClient.logout]);
 
 	const isAuthenticated = () => {
 		return profile.steamId !== "";
