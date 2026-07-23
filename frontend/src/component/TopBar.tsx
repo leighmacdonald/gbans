@@ -57,6 +57,7 @@ import { tf2Fonts } from "../theme";
 import { generateOIDCLink } from "../util/auth/generateOIDCLink.ts";
 import RouterLink from "./RouterLink.tsx";
 import { VCenterBox } from "./VCenterBox.tsx";
+import { avatarHashToURL } from "../util/strings.ts";
 
 interface menuRoute {
 	to: string;
@@ -447,7 +448,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 									<>
 										<Tooltip title="User Settings">
 											<IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-												<Avatar alt={profile.name} src={profile.avatarHash} />
+												<Avatar alt={profile.name} src={avatarHashToURL(profile.avatarHash)} />
 											</IconButton>
 										</Tooltip>
 										<Menu

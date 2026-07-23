@@ -101,7 +101,8 @@ func (a Repository) DetectionsBySteamID(ctx context.Context, steamID steamid.Ste
 
 	for rows.Next() {
 		var entry logparse.StacEntry
-		if err := rows.Scan(&entry.AnticheatID); err != nil {
+		if err := rows.Scan(&entry.AnticheatID, &entry.SteamID, &entry.Name, &entry.Detection,
+			&entry.Summary, &entry.DemoID, &entry.ServerID, &entry.RawLog, &entry.ServerName); err != nil {
 			return nil, database.Err(err)
 		}
 
@@ -128,7 +129,8 @@ func (a Repository) DetectionsByType(ctx context.Context, detectionType logparse
 
 	for rows.Next() {
 		var entry logparse.StacEntry
-		if err := rows.Scan(&entry.AnticheatID); err != nil {
+		if err := rows.Scan(&entry.AnticheatID, &entry.SteamID, &entry.Name, &entry.Detection,
+			&entry.Summary, &entry.DemoID, &entry.ServerID, &entry.RawLog, &entry.ServerName); err != nil {
 			return nil, database.Err(err)
 		}
 

@@ -3,6 +3,7 @@ package stringutil
 
 import (
 	"crypto/rand"
+	"log/slog"
 	"math/big"
 	"strings"
 
@@ -59,6 +60,7 @@ func SecureRandomString(n int) string {
 	for currentChar := range n {
 		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
 		if err != nil {
+			slog.Warn("failed to generate secure random string", "error", err)
 			return ""
 		}
 
