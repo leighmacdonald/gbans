@@ -57,17 +57,12 @@ export default defineConfig({
 				changeOrigin: true,
 				secure: false,
 			},
-		"/api": {
-			target: "http://gbans.localhost:6006",
-			changeOrigin: true,
-			secure: false,
-		},
-		"/auth/callback": {
-			target: "http://gbans.localhost:6006",
-			changeOrigin: true,
-			secure: false,
-		},
-			"/rpc": {
+			"/api": {
+				target: "http://gbans.localhost:6006",
+				changeOrigin: true,
+				secure: false,
+			},
+			"/auth/callback": {
 				target: "http://gbans.localhost:6006",
 				changeOrigin: true,
 				secure: false,

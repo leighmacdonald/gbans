@@ -38,6 +38,12 @@ func (r Repository) DeletePersonAuth(ctx context.Context, authID int64) error {
 		Where(sq.Eq{"person_auth_id": authID})))
 }
 
+func (r Repository) DeletePersonAuthBySteamID(ctx context.Context, steamID steamid.SteamID) error {
+	return database.Err(r.ExecDeleteBuilder(ctx, r.Builder().
+		Delete("person_auth").
+		Where(sq.Eq{"steam_id": steamID.Int64()})))
+}
+
 func (r Repository) PrunePersonAuth(ctx context.Context) error {
 	return database.Err(r.ExecDeleteBuilder(ctx, r.Builder().
 		Delete("person_auth").

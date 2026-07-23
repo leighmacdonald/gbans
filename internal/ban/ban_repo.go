@@ -47,7 +47,7 @@ func (r Repository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
 	}
 
 	if opts.CIDR != "" {
-		ands = append(ands, sq.Expr("?::inet @> ip_range", opts.CIDR))
+		ands = append(ands, sq.Expr("?::inet <<= ip_range", opts.CIDR))
 	}
 
 	if !opts.ValidUntil.IsZero() {

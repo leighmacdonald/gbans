@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"runtime/debug"
 	"slices"
 	"time"
 
@@ -19,7 +20,7 @@ func recoveryHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		defer func() {
 			if rec := recover(); rec != nil {
-				slog.Error("Recovery error:", slog.String("err", fmt.Sprintf("%v", rec)))
+				slog.Error("Recovery error:", slog.String("err", fmt.Sprintf("%v", rec)), slog.String("stack", string(debug.Stack())))
 				RespondProblemJSON(res, http.StatusInternalServerError, APIError{
 					Title: "Something went wrong",
 				})

@@ -61,6 +61,7 @@ func SecureRandomString(n int) string {
 		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
 		if err != nil {
 			slog.Warn("failed to generate secure random string", "error", err)
+
 			return ""
 		}
 

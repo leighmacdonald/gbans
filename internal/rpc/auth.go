@@ -26,6 +26,7 @@ import (
 const (
 	TokenDuration         = time.Hour * 24 * 31
 	FingerprintCookieName = "fingerprint"
+	JWTCookieName         = "token"
 )
 
 var (
@@ -250,7 +251,9 @@ func (m *Middleware) userClaimsFromRequest(req *http.Request) (*userClaims, erro
 
 	token, ok := authn.BearerToken(req)
 	if !ok {
-		// TODO Make sure procedure is allowed
+		token = m.jwtTokenFromCookie(req)
+	}
+	if token == "" {
 		return nil, authn.Errorf("invalid authorization")
 	}
 
@@ -279,6 +282,15 @@ func (m *Middleware) userClaimsFromRequest(req *http.Request) (*userClaims, erro
 	}
 
 	return &claims, nil
+}
+
+func (m *Middleware) jwtTokenFromCookie(req *http.Request) string {
+	cookie, err := req.Cookie(JWTCookieName)
+	if err != nil {
+		return ""
+	}
+
+	return cookie.Value
 }
 
 func fingerprintHash(fingerprint string) string {
