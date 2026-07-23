@@ -139,7 +139,7 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 		},
 		Demo: &demo.Config{
 			DemoCleanupEnabled:  inDemo.GetCleanupEnabled(),
-			DemoCleanupStrategy: fromDemoStrategy(inDemo.GetStrategy()), // FIXME
+			DemoCleanupStrategy: fromDemoStrategy(inDemo.GetStrategy()),
 			DemoCleanupMinPct:   inDemo.GetCleanupMinPct(),
 			DemoCleanupMount:    inDemo.GetCleanupMount(),
 			DemoCountLimit:      uint64(inDemo.GetCountLimit()), //nolint:gosec
@@ -183,11 +183,11 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 			CenterProjectiles: false,
 		},
 		Log: &log.Config{
-			Level:           fromLevel(inLog.GetLevel()), // FIXME
+			Level:           fromLevel(inLog.GetLevel()),
 			File:            inLog.GetFile(),
 			HTTPEnabled:     inLog.GetHttpEnabled(),
 			HTTPOtelEnabled: inLog.GetHttpOtelEnabled(),
-			HTTPLevel:       fromLevel(inLog.GetHttpLevel()), // FIXME
+			HTTPLevel:       fromLevel(inLog.GetHttpLevel()),
 		},
 		GeoLocation: &ip2location.Config{
 			Enabled:   inGeo.GetEnabled(),
@@ -227,7 +227,7 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 		},
 		Anticheat: &anticheat.Config{
 			Enabled:               inAC.GetEnabled(),
-			Action:                fromAction(inAC.GetAction()), // FIXME
+			Action:                fromAction(inAC.GetAction()),
 			Duration:              inAC.GetDuration(),
 			MaxAimSnap:            inAC.GetMaxAimSnaps(),
 			MaxPsilent:            inAC.GetMaxPsilent(),

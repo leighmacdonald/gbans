@@ -245,7 +245,7 @@ function ForumThreadPage() {
 							sx={{ color: (theme) => theme.palette.text.primary }}
 							to={`/profile/${threadData?.thread?.sourceId}`}
 						>
-							{"FIXME"}
+							{threadData?.personaName}
 						</Typography>
 					</VCenterBox>
 					<AccessTimeIcon />
