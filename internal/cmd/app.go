@@ -458,6 +458,7 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware) *http.ServeMux {
 		config.NewService(g.config, BuildVersion, authMiddleware, interceptors),
 		contest.NewService(g.contests, g.assets, authMiddleware, interceptors),
 		discord.NewService(g.bot, authMiddleware, interceptors),
+		discordoauth.NewService(g.discordOAuth, authMiddleware, interceptors),
 		forum.NewService(g.forums, authMiddleware, interceptors),
 		mge.NewService(g.mge, authMiddleware, interceptors),
 		blocklist.NewService(g.blocklists, authMiddleware, interceptors),
