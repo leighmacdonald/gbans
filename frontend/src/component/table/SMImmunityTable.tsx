@@ -46,7 +46,6 @@ export const SMImmunityTable = () => {
 		}
 	}, [immunities, queryClient, sendFlash, groupList?.groups]);
 
-	// FIXME should this be a separate group immunity?
 	const delImmunityMutation = useMutation(deleteImmunity, {
 		onSuccess: (_, deleted) => {
 			queryClient.setQueryData(

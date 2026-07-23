@@ -74,14 +74,9 @@ export const SMAdminsTable = () => {
 	});
 
 	const delGroupMutation = useMutation(deleteAdminGroup, {
-		onSuccess: (_, req) => {
-			// FIXME
-			queryClient.setQueryData(
-				["serverAdmins"],
-				(adminsList?.admins ?? []).filter((a) => {
-					return a.adminId !== req.adminId;
-				}),
-			);
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["serverAdmins"] });
+			sendFlash("success", "Admin group removed successfully");
 		},
 		onError: sendError,
 	});
