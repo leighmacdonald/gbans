@@ -1,6 +1,6 @@
 let
-  # July 2
-  nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/archive/ce2757f18783459b0b79c44584e2904939d065a3.tar.gz";
+  # July 23
+  nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/archive/4c4fc8beef2dbd5813acf699dbded4d7a9c2e4c0.tar.gz";
 
   pkgs = import nixpkgs {
     config = {
