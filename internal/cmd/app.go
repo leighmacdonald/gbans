@@ -514,6 +514,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	}
 
 	userAuth := auth.NewAuthentication(auth.NewRepository(g.database), conf.General.SiteName, conf.HTTPCookieKey, g.persons, g.bans, g.servers, g.config.Config().General.SentryDSN)
+	userAuth.StartExchange(ctx)
 
 	authMiddleware := rpc.NewMiddleware(conf.General.SiteName, conf.HTTPCookieKey)
 
@@ -531,6 +532,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 
 	topMux.Handle("/connect/", http.StripPrefix("/connect", mw.Wrap(apiHandler)))
 	topMux.Handle("/", router)
+	auth.RegisterExchangeHandler(topMux, userAuth)
 
 	httpServer := httphelper.NewServer(conf.Addr(), topMux)
 

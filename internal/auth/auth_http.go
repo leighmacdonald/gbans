@@ -134,8 +134,16 @@ func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
 			return
 		}
 
+		exchangeCode := h.CreateExchangeCode(accessToken)
+		if exchangeCode == "" {
+			http.Redirect(res, req, referralURL, http.StatusFound) //nolint:gosec
+			slog.Error("Failed to create exchange code")
+
+			return
+		}
+
 		query := parsedURL.Query()
-		query.Set("token", accessToken)
+		query.Set("code", exchangeCode)
 		query.Set("next_url", referralURL)
 		parsedURL.RawQuery = query.Encode()
 
