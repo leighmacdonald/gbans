@@ -12,7 +12,7 @@ import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import { type Filter, FilterAction } from "../../rpc/chat/v1/wordfilter_pb.ts";
-import { filterCreate } from "../../rpc/chat/v1/wordfilter-WordfilterService_connectquery.ts";
+import { filterCreate, filterEdit } from "../../rpc/chat/v1/wordfilter-WordfilterService_connectquery.ts";
 import { enumValues } from "../../util/lists.ts";
 import { Heading } from "../Heading";
 
@@ -36,7 +36,15 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
 		duration: filter?.duration ?? "1w",
 		weight: filter ? filter.weight : 1,
 	};
-	const mutation = useMutation(filterCreate, {
+	const createMutation = useMutation(filterCreate, {
+		onSuccess: async (result) => {
+			modal.resolve(result);
+			await modal.hide();
+		},
+		onError: sendError,
+	});
+
+	const editMutation = useMutation(filterEdit, {
 		onSuccess: async (result) => {
 			modal.resolve(result);
 			await modal.hide();
@@ -46,8 +54,11 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
 
 	const form = useAppForm({
 		onSubmit: async (value) => {
-			// FIXME add edit mutation
-			mutation.mutate({ filter: value.value });
+			if (filter) {
+				editMutation.mutate({ filter: { ...value.value, filterId: filter.filterId } });
+			} else {
+				createMutation.mutate({ filter: value.value });
+			}
 		},
 		defaultValues,
 		validators: {
