@@ -48,7 +48,7 @@ func NewAPIError(code int, err error) APIError {
 		return apiErr
 	}
 
-	apiErr.Title = err.Error()
+	apiErr.Title = ErrInternal.Error()
 
 	return apiErr
 }

@@ -1,9 +1,6 @@
-import type { Interceptor } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { createValidateInterceptor } from "@connectrpc/validate";
 import { QueryClient } from "@tanstack/react-query";
-import { StorageKey } from "./auth.tsx";
-import { emptyOrNullString } from "./util/types.ts";
 
 export const queryClient = new QueryClient({
 	defaultOptions: {
@@ -18,29 +15,10 @@ export const queryClient = new QueryClient({
 
 const validateInterceptor = createValidateInterceptor();
 
-const authInterceptor: Interceptor = (next) => async (req) => {
-	try {
-		const value = localStorage.getItem(StorageKey.Token);
-		if (emptyOrNullString(value)) {
-			return await next(req);
-		}
-		const parsed = JSON.parse(value);
-		if (typeof parsed?.token !== "string" || parsed.token.length === 0) {
-			localStorage.removeItem(StorageKey.Token);
-			return await next(req);
-		}
-		req.header.set("Authorization", `Bearer ${parsed.token}`);
-	} catch {
-		localStorage.removeItem(StorageKey.Token);
-	}
-
-	return await next(req);
-};
-
 export const finalTransport = createConnectTransport({
 	baseUrl: `${window.location.protocol}//${window.location.hostname}:${window.location.port}/connect/`,
 	useHttpGet: true,
-	interceptors: [validateInterceptor, authInterceptor],
+	interceptors: [validateInterceptor],
 });
 
 export function removeUndefinedDeep<T>(obj: T): T {

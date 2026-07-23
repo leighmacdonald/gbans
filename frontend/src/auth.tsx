@@ -2,12 +2,10 @@ import { create } from "@bufbuild/protobuf";
 import { EmptySchema, timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { createClient } from "@connectrpc/connect";
 import { createConnectQueryKey } from "@connectrpc/connect-query";
-import { type ReactNode, useCallback, useState } from "react";
-import { AuthContext } from "./contexts/AuthContext.tsx";
-import { StorageType, useStorage } from "./hooks/useSessionStorage.tsx";
+import { type ReactNode, useCallback } from "react";
 import { AuthService } from "./rpc/auth/v1/auth_pb.ts";
 import { type PersonCore, PersonCoreSchema } from "./rpc/person/v1/person_core_pb.ts";
-import { type CurrentProfileResponse, PersonService } from "./rpc/person/v1/person_pb.ts";
+import { PersonService } from "./rpc/person/v1/person_pb.ts";
 import { Privilege } from "./rpc/person/v1/privilege_pb.ts";
 import { finalTransport, queryClient } from "./transport.ts";
 import { logErr } from "./util/errors.ts";
@@ -16,7 +14,6 @@ import { parseDateTime } from "./util/time.ts";
 import type { Nullable } from "./util/types.ts";
 
 export enum StorageKey {
-	Token = "token",
 	Profile = "profile",
 	Logout = "logout",
 }
@@ -25,36 +22,43 @@ type LocalStorageProfile = Nullable<
 	Omit<Omit<PersonCore, "steamId">, "timeCreated"> & { steamId: string; timeCreated: Date }
 >;
 
-const loadToken = () => {
-	try {
-		const value = localStorage.getItem(StorageKey.Token);
-		return { token: value ? value : "" };
-	} catch {
-		return { token: undefined };
-	}
-};
-
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const authClient = createClient(AuthService, finalTransport);
 	const [profile, setProfile] = useState<PersonCore>(loadProfile());
 
-	const {
-		value: tokenValue,
-		setValue: setTokenValue,
-		deleteValue: deleteTokenValue,
-	} = useStorage<{ token?: string }>(StorageKey.Token, loadToken(), StorageType.Local);
 	const { setValue: setProfileValue, deleteValue: deleteProfileValue } = useStorage<LocalStorageProfile>(
 		StorageKey.Profile,
 		undefined,
 		StorageType.Local,
 	);
 
-	const login = useCallback(
-		async (token: string, opts: { onSuccess: () => void; onError: (error: Error) => void }) => {
+	useEffect(() => {
+		const tryAuth = async () => {
 			try {
-				localStorage.setItem(StorageKey.Token, JSON.stringify({ token }));
 				const personClient = createClient(PersonService, finalTransport);
-				setTokenValue({ token });
+				const data = await personClient.currentProfile({});
+				if (data?.profile) {
+					setProfileValue({
+						...data.profile,
+						steamId: data.profile.steamId.toString(),
+						timeCreated: data.profile.timeCreated ? timestampDate(data.profile.timeCreated) : new Date(),
+					});
+					setProfile(data.profile);
+				}
+			} catch {
+				// No valid cookie session
+			}
+		};
+
+		if (profile.steamId === "") {
+			tryAuth();
+		}
+	}, [setProfileValue, setProfile]);
+
+	const login = useCallback(
+		async (_token: string, opts: { onSuccess: () => void; onError: (error: Error) => void }) => {
+			try {
+				const personClient = createClient(PersonService, finalTransport);
 
 				return queryClient
 					.fetchQuery({
@@ -86,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				return Promise.reject(e);
 			}
 		},
-		[setProfileValue, profile, setTokenValue],
+		[setProfileValue, setProfile, profile],
 	);
 
 	const logout = useCallback(async () => {
@@ -106,11 +110,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		localStorage.setItem(StorageKey.Logout, Date.now().toString());
 
 		deleteProfileValue();
-		deleteTokenValue();
-	}, [deleteProfileValue, deleteTokenValue, authClient.logout]);
+	}, [deleteProfileValue, setProfile, authClient.logout]);
 
 	const isAuthenticated = () => {
-		return (tokenValue?.token ? Boolean(tokenValue.token?.length > 0) : false) && profile.steamId !== "";
+		return profile.steamId !== "";
 	};
 
 	const permissionLevel = () => {

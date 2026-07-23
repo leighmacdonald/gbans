@@ -273,12 +273,10 @@ func toConfig(conf Config) *configv1.Config {
 			SentryDsnWeb:     &conf.General.SentryDSNWeb,
 		},
 		Discord: &configv1.Discord{
-			Token:                   &conf.Discord.Token,
 			Enabled:                 &conf.Discord.Enabled,
 			BotEnabled:              &conf.Discord.BotEnabled,
 			IntegrationsEnabled:     &conf.Discord.IntegrationsEnabled,
 			AppId:                   &conf.Discord.AppID,
-			AppSecret:               &conf.Discord.AppSecret,
 			LinkId:                  &conf.Discord.LinkID,
 			GuildId:                 &conf.Discord.GuildID,
 			PublicLogChannelEnable:  &conf.Discord.PublicLogChannelEnable,
@@ -299,9 +297,6 @@ func toConfig(conf Config) *configv1.Config {
 			Enabled:             &conf.Patreon.Enabled,
 			IntegrationsEnabled: &conf.Patreon.IntegrationsEnabled,
 			ClientId:            &conf.Patreon.ClientID,
-			ClientSecret:        &conf.Patreon.ClientSecret,
-			CreatorAccessToken:  &conf.Patreon.CreatorAccessToken,
-			CreatorRefreshToken: &conf.Patreon.CreatorRefreshToken,
 		},
 		Debug: &configv1.Debug{
 			SkipOpenIdValidation: &conf.Debug.SkipOpenIDValidation,
@@ -335,15 +330,12 @@ func toConfig(conf Config) *configv1.Config {
 		GeoLocation: &configv1.GeoLocation{
 			Enabled:   &conf.GeoLocation.Enabled,
 			CachePath: &conf.GeoLocation.CachePath,
-			Token:     &conf.GeoLocation.Token,
 		},
 		Ssh: &configv1.SSH{
 			Enabled:         &conf.SSH.Enabled,
 			Username:        &conf.SSH.Username,
 			Port:            new(int32(conf.SSH.Port)),
-			PrivateKeyPath:  &conf.SSH.PrivateKeyPath,
 			HostKeyStrategy: new(configv1.HostKeyStrategy(conf.SSH.HostKeyStrategy)), //nolint:gosec
-			Password:        &conf.SSH.Password,
 			UpdateInterval:  new(conf.SSH.UpdateInterval),
 			Timeout:         new(conf.SSH.Timeout),
 			DemoPathFmt:     &conf.SSH.DemoPathFmt,

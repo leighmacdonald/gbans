@@ -55,9 +55,9 @@ import { notifications } from "../rpc/notification/v1/notification-NotificationS
 import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { tf2Fonts } from "../theme";
 import { generateOIDCLink } from "../util/auth/generateOIDCLink.ts";
+import { avatarHashToURL } from "../util/strings.ts";
 import RouterLink from "./RouterLink.tsx";
 import { VCenterBox } from "./VCenterBox.tsx";
-import { avatarHashToURL } from "../util/strings.ts";
 
 interface menuRoute {
 	to: string;

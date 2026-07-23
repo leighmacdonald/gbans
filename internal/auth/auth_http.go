@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"log/slog"
 	"net"
 	"net/http"
@@ -17,14 +18,6 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/yohcop/openid-go"
 )
-
-func safeRedirectURL(rawURL string) string {
-	if rawURL == "" || rawURL[0] == '/' {
-		return rawURL
-	}
-
-	return "/"
-}
 
 type TokenGenerator interface {
 	MakeUserToken(id person.BaseUser) (string, string, error)
@@ -65,7 +58,7 @@ func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		var idStr string
 
-		referralURL := safeRedirectURL(httphelper.Referral(req))
+		referralURL := httphelper.Referral(req)
 		conf := h.config.Config()
 		fullURL := conf.ExternalURL + req.URL.String()
 
@@ -159,7 +152,18 @@ func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
 			Name:     FingerprintCookieName,
 			Value:    fingerprint,
 			MaxAge:   int(TokenDuration.Seconds()),
-			Path:     "/connect",
+			Path:     "/",
+			Domain:   parsedExternal.Hostname(),
+			Secure:   strings.HasPrefix(strings.ToLower(conf.ExternalURL), "https://"),
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+		})
+
+		http.SetCookie(res, &http.Cookie{ //nolint:gosec
+			Name:     JWTCookieName,
+			Value:    accessToken,
+			MaxAge:   int(TokenDuration.Seconds()),
+			Path:     "/",
 			Domain:   parsedExternal.Hostname(),
 			Secure:   strings.HasPrefix(strings.ToLower(conf.ExternalURL), "https://"),
 			HttpOnly: true,
@@ -197,7 +201,17 @@ func (h *authHandler) onAPILogout() http.HandlerFunc {
 					Name:     FingerprintCookieName,
 					Value:    "",
 					MaxAge:   -1,
-					Path:     "/connect",
+					Path:     "/",
+					Domain:   parsedExternal.Hostname(),
+					Secure:   strings.HasPrefix(strings.ToLower(conf.ExternalURL), "https://"),
+					HttpOnly: true,
+					SameSite: http.SameSiteStrictMode,
+				})
+				http.SetCookie(res, &http.Cookie{ //nolint:gosec
+					Name:     JWTCookieName,
+					Value:    "",
+					MaxAge:   -1,
+					Path:     "/",
 					Domain:   parsedExternal.Hostname(),
 					Secure:   strings.HasPrefix(strings.ToLower(conf.ExternalURL), "https://"),
 					HttpOnly: true,
@@ -216,10 +230,16 @@ func (h *authHandler) onAPILogout() http.HandlerFunc {
 			}
 		}
 
+		if sid.Valid() {
+			if errDelete := h.DeletePersonAuthBySteamID(req.Context(), sid); errDelete != nil {
+				slog.Error("Failed to delete person auth on logout", slog.String("error", errDelete.Error()))
+			}
+		}
+
 		httphelper.RespondJSON(res, http.StatusOK, map[string]string{})
 
 		if sid.Valid() {
-			go func(steamID steamid.SteamID) {
+			go func(steamID steamid.SteamID) { //nolint:gosec
 				sentry.AddBreadcrumb(&sentry.Breadcrumb{
 					Category: "auth",
 					Message:  "User logged out " + steamID.String(),
@@ -230,7 +250,8 @@ func (h *authHandler) onAPILogout() http.HandlerFunc {
 					scope.SetUser(sentry.User{})
 				})
 
-				player, errPerson := h.persons.GetOrCreatePersonBySteamID(req.Context(), steamID)
+				logoutCtx := context.Background()
+				player, errPerson := h.persons.GetOrCreatePersonBySteamID(logoutCtx, steamID)
 				if errPerson != nil {
 					slog.Error("Failed to load user for logout notification", slog.String("error", errPerson.Error()))
 

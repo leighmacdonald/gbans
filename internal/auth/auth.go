@@ -9,6 +9,8 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -26,6 +28,7 @@ import (
 const (
 	TokenDuration         = time.Hour * 24 * 31
 	FingerprintCookieName = "fingerprint"
+	JWTCookieName         = "token"
 )
 
 type PersonAuth struct {
@@ -159,7 +162,7 @@ func (u *Authentication) ExchangeCode(code string) (string, bool) {
 	return u.exchange.Exchange(code)
 }
 
-func RegisterExchangeHandler(mux *http.ServeMux, auth *Authentication) {
+func RegisterExchangeHandler(mux *http.ServeMux, auth *Authentication, externalURL string) {
 	mux.HandleFunc("POST /api/auth/exchange", func(res http.ResponseWriter, req *http.Request) {
 		var body struct {
 			Code string `json:"code"`
@@ -175,6 +178,20 @@ func RegisterExchangeHandler(mux *http.ServeMux, auth *Authentication) {
 			httphelper.RespondJSON(res, http.StatusNotFound, map[string]string{"error": "code not found or expired"})
 
 			return
+		}
+
+		parsedExternal, errExternal := url.Parse(externalURL)
+		if errExternal == nil {
+			http.SetCookie(res, &http.Cookie{ //nolint:gosec
+				Name:     JWTCookieName,
+				Value:    token,
+				MaxAge:   int(TokenDuration.Seconds()),
+				Path:     "/",
+				Domain:   parsedExternal.Hostname(),
+				Secure:   strings.HasPrefix(strings.ToLower(externalURL), "https://"),
+				HttpOnly: true,
+				SameSite: http.SameSiteStrictMode,
+			})
 		}
 
 		httphelper.RespondJSON(res, http.StatusOK, map[string]string{"token": token})
@@ -196,6 +213,10 @@ func (u *Authentication) SavePersonAuth(ctx context.Context, auth PersonAuth) er
 
 func (u *Authentication) DeletePersonAuth(ctx context.Context, authID int64) error {
 	return u.auth.DeletePersonAuth(ctx, authID)
+}
+
+func (u *Authentication) DeletePersonAuthBySteamID(ctx context.Context, steamID steamid.SteamID) error {
+	return u.auth.DeletePersonAuthBySteamID(ctx, steamID)
 }
 
 func (u *Authentication) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *PersonAuth) error {

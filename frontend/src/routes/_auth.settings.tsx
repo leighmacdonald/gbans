@@ -61,7 +61,7 @@ type userSettingTabs = "general" | "connections" | "forums" | "game";
 
 function ProfileSettings() {
 	const { sendFlash, sendError } = useUserFlashCtx();
-	const { profile, hasPermission, login } = useAuth();
+	const { profile, hasPermission } = useAuth();
 	const { appInfo } = Route.useRouteContext();
 	const { section } = Route.useSearch();
 	const [tab, setTab] = useState<userSettingTabs>(section);

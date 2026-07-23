@@ -2,7 +2,9 @@ package httphelper
 
 import (
 	"net/http"
+	"net/url"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -64,5 +66,18 @@ func Referral(r *http.Request) string {
 		referralURL = "/"
 	}
 
-	return referralURL
+	return safeRedirectURL(referralURL)
+}
+
+func safeRedirectURL(rawURL string) string {
+	if rawURL == "" {
+		return "/"
+	}
+
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Host != "" || !strings.HasPrefix(rawURL, "/") {
+		return "/"
+	}
+
+	return rawURL
 }
