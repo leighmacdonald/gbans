@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@connectrpc/connect-query";
+import { createConnectQueryKey, useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -42,7 +42,9 @@ export const SMAdminsTable = () => {
 			const admin = (await NiceModal.show(SMAdminEditorModal, {
 				groups: groupsList?.groups,
 			})) as Admin;
-			queryClient.setQueryData(["serverAdmins"], [...(adminsList?.admins ?? []), admin]);
+			queryClient.invalidateQueries({
+				queryKey: createConnectQueryKey({ schema: admins }),
+			});
 			sendFlash("success", `Admin created successfully: ${admin.name}`);
 		} catch (e) {
 			sendError(e);
@@ -50,11 +52,10 @@ export const SMAdminsTable = () => {
 	};
 
 	const deleteAdminFn = useMutation(deleteAdmin, {
-		onSuccess: (_, req) => {
-			queryClient.setQueryData(
-				["serverAdmins"],
-				(adminsList?.admins ?? []).filter((a) => a.adminId !== req.adminId),
-			);
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: createConnectQueryKey({ schema: admins }),
+			});
 			sendFlash("success", "Admin deleted successfully");
 		},
 		onError: sendError,
@@ -62,12 +63,9 @@ export const SMAdminsTable = () => {
 
 	const addGroupMutation = useMutation(addAdminGroup, {
 		onSuccess: (edited) => {
-			queryClient.setQueryData(
-				["serverAdmins"],
-				(adminsList?.admins ?? []).map((a) => {
-					return a.adminId === edited.admin?.adminId ? edited : a;
-				}),
-			);
+			queryClient.invalidateQueries({
+				queryKey: createConnectQueryKey({ schema: admins }),
+			});
 			sendFlash("success", `Admin updated successfully: ${edited.admin?.name}`);
 		},
 		onError: sendError,
@@ -75,7 +73,9 @@ export const SMAdminsTable = () => {
 
 	const delGroupMutation = useMutation(deleteAdminGroup, {
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["serverAdmins"] });
+			queryClient.invalidateQueries({
+				queryKey: createConnectQueryKey({ schema: admins }),
+			});
 			sendFlash("success", "Admin group removed successfully");
 		},
 		onError: sendError,
@@ -84,22 +84,19 @@ export const SMAdminsTable = () => {
 	const onEdit = useCallback(
 		async (admin: Admin) => {
 			try {
-				const edited = (await NiceModal.show(SMAdminEditorModal, {
+				await NiceModal.show(SMAdminEditorModal, {
 					admin: admin,
 					groups: groupsList?.groups,
-				})) as Admin;
-				queryClient.setQueryData(
-					["serverAdmins"],
-					(adminsList?.admins ?? []).map((a) => {
-						return a.adminId === edited.adminId ? edited : a;
-					}),
-				);
+				});
+				queryClient.invalidateQueries({
+					queryKey: createConnectQueryKey({ schema: admins }),
+				});
 				sendFlash("success", `Admin updated successfully: ${admin.name}`);
 			} catch (e) {
 				sendError(e);
 			}
 		},
-		[queryClient, sendError, sendFlash, adminsList?.admins, groupsList?.groups],
+		[queryClient, sendError, sendFlash, groupsList?.groups],
 	);
 
 	const onDelete = useCallback(

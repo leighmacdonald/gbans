@@ -249,9 +249,7 @@ function ChatLogs() {
 			if (!emptyOrNullString(steamId)) {
 				o.steamId = steamId;
 			}
-		} catch (e) {
-			console.log(e);
-		}
+		} catch {}
 		o.flaggedOnly = search.flaggedOnly ?? undefined;
 		const query = filterValueString("body", search.columnFilters);
 		if (query) {

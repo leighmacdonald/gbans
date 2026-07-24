@@ -216,8 +216,12 @@ func createSignerFromKey(config *Config) (ssh.Signer, error) { //nolint:ireturn
 func trustedHostKeyCallback(repo KeyStore, strategy HostKeyStrategy) func(hostname string, addr net.Addr, pubKey ssh.PublicKey) error {
 	return func(hostname string, addr net.Addr, pubKey ssh.PublicKey) error {
 		slog.Debug("SSH Connect", slog.String("hostname", hostname), slog.String("addr", addr.String()))
+
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
 		pubKeyString := keyString(pubKey)
-		trustedPubKeyString, errKey := repo.GetHostKey(context.Background(), addr.String())
+		trustedPubKeyString, errKey := repo.GetHostKey(ctx, addr.String())
 		if errKey != nil && !errors.Is(errKey, database.ErrNoResult) {
 			return errKey
 		}
@@ -225,13 +229,13 @@ func trustedHostKeyCallback(repo KeyStore, strategy HostKeyStrategy) func(hostna
 		switch strategy {
 		case KeyAutoAccept:
 			if trustedPubKeyString != pubKeyString {
-				return repo.SetHostKey(context.Background(), addr.String(), pubKeyString)
+				return repo.SetHostKey(ctx, addr.String(), pubKeyString)
 			}
 
 			return nil
 		case KeyAutoAcceptFirst:
 			if trustedPubKeyString == "" {
-				return repo.SetHostKey(context.Background(), addr.String(), pubKeyString)
+				return repo.SetHostKey(ctx, addr.String(), pubKeyString)
 			}
 			if trustedPubKeyString != pubKeyString {
 				slog.Error("Host key validation failed", slog.String("hostname", hostname))

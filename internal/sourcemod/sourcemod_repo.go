@@ -522,7 +522,7 @@ func (r Repository) GetGroupByName(ctx context.Context, groupName string) (Group
 
 	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
 		Select("id", "flags", "name", "immunity_level", "created_on", "updated_on").
-		From("sm_admins").
+		From("sm_groups").
 		Where(sq.Eq{"name": groupName}))
 	if errRow != nil {
 		return group, database.Err(errRow)
