@@ -108,13 +108,13 @@ export const createThemeByMode = (mode: PaletteMode): Theme => {
 						},
 					},
 				},
-			...(mode === "dark" && {
-				MuiCssBaseline: {
-					styleOverrides: {
-						body: darkScrollbar(),
+				...(mode === "dark" && {
+					MuiCssBaseline: {
+						styleOverrides: {
+							body: darkScrollbar(),
+						},
 					},
-				},
-			}),
+				}),
 				MuiTextField: {
 					defaultProps: {
 						variant: "filled",

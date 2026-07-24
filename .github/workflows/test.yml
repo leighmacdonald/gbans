@@ -39,6 +39,10 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: "frontend/pnpm-lock.yaml"
 
+      - name: Install modules
+        working-directory: ./frontend
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies
+
       - name: Setup Biome
         uses: biomejs/setup-biome@v2
         with:
@@ -47,10 +51,6 @@ jobs:
       - name: Run Biome
         working-directory: ./frontend
         run: biome ci .
-
-      - name: Install modules
-        working-directory: ./frontend
-        run: pnpm install --frozen-lockfile --strict-peer-dependencies
 
       - name: TypeScript
         run: just typecheck-frontend
@@ -89,6 +89,9 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+
+      - name: Build test database image
+        run: just build-test-db
 
       - name: Backend tests
         run: just test-backend

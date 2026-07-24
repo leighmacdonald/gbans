@@ -83,6 +83,10 @@ clean-backend:
     go clean -i
     rm -rf ./dist/
 
+# Pre-build the postgres-ip4r image used by integration tests
+build-test-db:
+    docker build -f docker/postgres-ip4r.Dockerfile -t gbans/postgres-ip4r:latest docker/
+
 docker-dump:
     docker exec {{ DOCKER_DB_CONTAINER }} pg_dump -U gbans --clean --if-exists -d gbans | gzip > gbans.sql.gz
 

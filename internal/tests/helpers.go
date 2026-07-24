@@ -15,7 +15,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/demo"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/gbans/internal/fs"
 	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/network/ip2location"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
@@ -27,11 +26,18 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
+const (
+	ownerID uint64 = 76561198084134025
+	modID   uint64 = 76561198084134026
+	userID  uint64 = 76561198084134027
+	guestID uint64 = 76561198084134028
+)
+
 var (
-	OwnerSID = steamid.New(76561198084134025) //nolint:gochecknoglobals
-	ModSID   = steamid.New(76561198084134026) //nolint:gochecknoglobals
-	UserSID  = steamid.New(76561198084134027) //nolint:gochecknoglobals
-	GuestSID = steamid.New(76561198084134028) //nolint:gochecknoglobals
+	OwnerSID = steamid.New(ownerID) //nolint:gochecknoglobals
+	ModSID   = steamid.New(modID)   //nolint:gochecknoglobals
+	UserSID  = steamid.New(userID)  //nolint:gochecknoglobals
+	GuestSID = steamid.New(guestID) //nolint:gochecknoglobals
 
 	ErrContainer = errors.New("failed to bring up test container")
 )
@@ -94,18 +100,9 @@ func newDB(ctx context.Context) (*postgresContainer, error) {
 	const testInfo = "gbans-test"
 	username, password, dbName := testInfo, testInfo, testInfo
 
-	dockerRoot := fs.FindFile("docker", "gbans")
-
-	fromDockerfile := testcontainers.FromDockerfile{
-		Dockerfile:    "postgres-ip4r.Dockerfile",
-		Context:       dockerRoot,
-		KeepImage:     true,
-		PrintBuildLog: true,
-	}
-
 	cont, errContainer := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
-			FromDockerfile: fromDockerfile,
+			Image: "gbans/postgres-ip4r:latest",
 
 			Env: map[string]string{
 				"POSTGRES_DB":       dbName,
