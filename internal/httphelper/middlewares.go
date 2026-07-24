@@ -49,11 +49,13 @@ func useSecure(devMode bool, cspOrigin string) func(http.Handler) http.Handler {
 		},
 	}
 
+	// HSTS should be configured via the reverse proxy.
 	secureMiddleware := secure.New(secure.Options{
 		FrameDeny:             false,
 		ContentTypeNosniff:    true,
 		ContentSecurityPolicy: cspBuilder.MustBuild(),
 		IsDevelopment:         devMode,
+		SSLRedirect:           false,
 	})
 
 	return func(next http.Handler) http.Handler {

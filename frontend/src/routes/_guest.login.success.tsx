@@ -60,20 +60,15 @@ function LoginSteamSuccess() {
 
 		const runLogin = async () => {
 			try {
-				const token = await exchangeToken(code);
-
-				await login(token, {
-					onSuccess: async () => {
-						await navigate({ to: search.nextUrl });
-					},
-					onError: () => {
-						if (cancelled) return;
-						navigate({ to: "/" });
-					},
-				});
+				await exchangeToken(code);
+				await login();
+				if (!cancelled) {
+					await navigate({ to: search.nextUrl });
+				}
 			} catch {
-				if (cancelled) return;
-				navigate({ to: "/" });
+				if (!cancelled) {
+					navigate({ to: "/" });
+				}
 			}
 		};
 

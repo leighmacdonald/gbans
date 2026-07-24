@@ -30,6 +30,7 @@ type RouterOpts struct {
 	FrontendEnable    bool
 	StaticPath        string
 	HTTPCORSEnabled   bool
+	DevMode bool
 	CORSOrigins       []string
 }
 
@@ -60,9 +61,10 @@ func CreateRouter(opts RouterOpts) (*http.ServeMux, http.Handler, error) {
 		mux.Handle("GET /metrics", promhttp.Handler())
 	}
 
+	middleware = append(middleware, useSecure(opts.DevMode, ""))
+
 	if opts.HTTPCORSEnabled {
 		if len(opts.CORSOrigins) > 0 {
-			middleware = append(middleware, useSecure(false, ""))
 			middleware = append(middleware, useCors(opts.CORSOrigins))
 		} else {
 			slog.Warn("No cors origins defined, disabling")

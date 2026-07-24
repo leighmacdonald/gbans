@@ -1,15 +1,13 @@
 import { create } from "@bufbuild/protobuf";
-import { EmptySchema, timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
+import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { createClient } from "@connectrpc/connect";
-import { createConnectQueryKey } from "@connectrpc/connect-query";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { AuthContext } from "./contexts/AuthContext.tsx";
 import { StorageType, useStorage } from "./hooks/useSessionStorage.tsx";
-import { AuthService } from "./rpc/auth/v1/auth_pb.ts";
 import { type PersonCore, PersonCoreSchema } from "./rpc/person/v1/person_core_pb.ts";
 import { PersonService } from "./rpc/person/v1/person_pb.ts";
 import { Privilege } from "./rpc/person/v1/privilege_pb.ts";
-import { finalTransport, queryClient } from "./transport.ts";
+import { finalTransport } from "./transport.ts";
 import { logErr } from "./util/errors.ts";
 import { defaultAvatarHash } from "./util/strings.ts";
 import { parseDateTime } from "./util/time.ts";
@@ -25,7 +23,6 @@ type LocalStorageProfile = Nullable<
 >;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-	const authClient = createClient(AuthService, finalTransport);
 	const [profile, setProfile] = useState<PersonCore>(loadProfile());
 
 	const { setValue: setProfileValue, deleteValue: deleteProfileValue } = useStorage<LocalStorageProfile>(
@@ -58,61 +55,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, [setProfileValue, profile.steamId]);
 
 	const login = useCallback(
-		async (_token: string, opts: { onSuccess: () => void; onError: (error: Error) => void }) => {
-			try {
-				const personClient = createClient(PersonService, finalTransport);
-
-				return queryClient
-					.fetchQuery({
-						queryKey: createConnectQueryKey({
-							schema: PersonService,
-							transport: finalTransport,
-							cardinality: "finite",
-						}),
-						queryFn: async () => {
-							return await personClient.currentProfile({});
-						},
-					})
-					.then((data: CurrentProfileResponse) => {
-						if (!data?.profile) {
-							throw new Error("No profile");
-						}
-
-						setProfileValue({
-							...data.profile,
-							steamId: data.profile.steamId.toString(),
-							timeCreated: profile.timeCreated ? timestampDate(profile.timeCreated) : new Date(),
-						});
-						setProfile(data.profile);
-					})
-					.then(opts.onSuccess)
-					.catch(opts.onError);
-			} catch (e) {
-				opts.onError(e as Error);
-				return Promise.reject(e);
+		async (_token: string) => {
+			const personClient = createClient(PersonService, finalTransport);
+			const data = await personClient.currentProfile({});
+			if (!data?.profile) {
+				throw new Error("No profile");
 			}
+			setProfileValue({
+				...data.profile,
+				steamId: data.profile.steamId.toString(),
+				timeCreated: data.profile.timeCreated ? timestampDate(data.profile.timeCreated) : new Date(),
+			});
+			setProfile(data.profile);
 		},
-		[setProfileValue, profile],
+		[setProfileValue],
 	);
 
 	const logout = useCallback(async () => {
-		await queryClient.fetchQuery({
-			queryKey: createConnectQueryKey({
-				schema: AuthService,
-				transport: finalTransport,
-				cardinality: "finite",
-			}),
-			queryFn: async () => {
-				await authClient.logout(create(EmptySchema, {}));
-				setProfile(defaultProfile);
-			},
-		});
+		await fetch("/api/auth/logout", { credentials: "same-origin" });
+		setProfile(defaultProfile);
 
 		// Trigger logout on other tabs.
 		localStorage.setItem(StorageKey.Logout, Date.now().toString());
 
 		deleteProfileValue();
-	}, [deleteProfileValue, authClient.logout]);
+	}, [deleteProfileValue]);
 
 	const isAuthenticated = () => {
 		return profile.steamId !== "";
@@ -178,7 +145,7 @@ const loadProfile = (): PersonCore => {
 
 export type AuthContextProps = {
 	profile: PersonCore;
-	login: (token: string, opts: { onSuccess: () => void; onError: (error: Error) => void }) => void;
+	login: () => Promise<void>;
 	logout: () => Promise<void>;
 	isAuthenticated: () => boolean;
 	permissionLevel: () => Privilege;
