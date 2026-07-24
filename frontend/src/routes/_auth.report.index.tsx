@@ -63,14 +63,16 @@ function ReportCreate() {
 	}, [profile]);
 
 	return (
-		<Grid container spacing={2}>
-			<Grid size={{ xs: 12, md: 8 }}>
+        <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 8 }}>
 				<Stack spacing={2}>
 					{canReport ? (
 						<ReportCreateForm />
 					) : (
 						<ContainerWithHeader title={"Permission Denied"}>
-							<Typography variant={"body1"} padding={2}>
+							<Typography variant={"body1"} sx={{
+                                padding: 2
+                            }}>
 								You are unable to report players while you are currently banned/muted.
 							</Typography>
 							<ButtonGroup sx={{ padding: 2 }}>
@@ -89,7 +91,7 @@ function ReportCreate() {
 					<UserReportHistory />
 				</Stack>
 			</Grid>
-			<Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
 				<ContainerWithHeader title={"Reporting Guide"} iconLeft={<InfoIcon />}>
 					<List>
 						<ListItem>
@@ -127,8 +129,8 @@ function ReportCreate() {
 					</List>
 				</ContainerWithHeader>
 			</Grid>
-		</Grid>
-	);
+        </Grid>
+    );
 }
 
 const columnHelper = createMRTColumnHelper<ReportWithAuthor>();

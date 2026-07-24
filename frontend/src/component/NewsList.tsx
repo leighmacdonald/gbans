@@ -19,8 +19,10 @@ export const NewsList = ({ setSelectedNewsEntry }: NewsListProps) => {
 
 	const { data, isLoading } = useQuery(all);
 	return (
-		<Stack spacing={2} padding={2}>
-			<List dense={true}>
+        <Stack spacing={2} sx={{
+            padding: 2
+        }}>
+            <List dense={true}>
 				{isLoading ? (
 					<LoadingPlaceholder />
 				) : (
@@ -49,6 +51,6 @@ export const NewsList = ({ setSelectedNewsEntry }: NewsListProps) => {
 					})
 				)}
 			</List>
-		</Stack>
-	);
+        </Stack>
+    );
 };

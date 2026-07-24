@@ -506,7 +506,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 		StaticPath:        conf.HTTPStaticPath,
 		HTTPCORSEnabled:   conf.HTTPCORSEnabled,
 		CORSOrigins:       conf.HTTPCorsOrigins,
-		DevMode: conf.General.Mode == config.DebugMode,
+		DevMode:           conf.General.Mode == config.DebugMode,
 	})
 	if err != nil {
 		slog.Error("Could not setup router", slog.String("error", err.Error()))

@@ -13,7 +13,13 @@ export const CheckboxField = ({ label, disabled = false }: Props) => {
 	const field = useFieldContext<boolean>();
 
 	return (
-		<Box display="flex" justifyContent="flex-start" alignItems="center" marginTop={1}>
+		<Box
+			sx={{
+				justifyContent: "flex-start",
+				alignItems: "center",
+				marginTop: 1,
+			}}
+		>
 			<FormGroup>
 				<FormControlLabel
 					control={

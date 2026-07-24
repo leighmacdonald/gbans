@@ -59,8 +59,8 @@ function Patreon() {
 	}
 
 	return (
-		<Grid container spacing={2}>
-			<Grid size={{ xs: 12 }}>
+        <Grid container spacing={2}>
+            <Grid size={{ xs: 12 }}>
 				<ContainerWithHeaderAndButtons
 					title={`Patreon Campaign: ${data?.campaigns[0].attributes?.creationName}`}
 					iconLeft={<PaymentIcon />}
@@ -105,7 +105,13 @@ function Patreon() {
 							</Stack>
 						</Grid>
 						<Grid size={{ xs: 12 }}>
-							<Box display="flex" justifyContent="center" alignItems="center" padding={2}>
+							<Box
+                                sx={{
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    padding: 2
+                                }}>
 								<Paper
 									elevation={1}
 									sx={{
@@ -115,26 +121,30 @@ function Patreon() {
 									}}
 								>
 									<Typography
-										variant={"subtitle1"}
-										textAlign={"center"}
-										padding={2}
-										textTransform={"uppercase"}
-									>
+                                        variant={"subtitle1"}
+                                        sx={{
+                                            textAlign: "center",
+                                            padding: 2,
+                                            textTransform: "uppercase"
+                                        }}>
 										Patrons
 									</Typography>
 									<Typography
-										variant={"h1"}
-										textAlign={"center"}
-										padding={2}
-										sx={{ backgroundColor: theme.palette.primary.light }}
-									>
+                                        variant={"h1"}
+                                        sx={{
+                                            textAlign: "center",
+                                            padding: 2,
+                                            backgroundColor: theme.palette.primary.light
+                                        }}>
 										{String(data?.campaigns[0].attributes?.patronCount)}
 									</Typography>
 								</Paper>
 							</Box>
 						</Grid>
 						<Grid size={{ xs: 12 }}>
-							<Box textAlign={"center"}>
+							<Box sx={{
+                                textAlign: "center"
+                            }}>
 								<Button
 									component={Link}
 									variant={"contained"}
@@ -149,6 +159,6 @@ function Patreon() {
 					</Grid>
 				</ContainerWithHeaderAndButtons>
 			</Grid>
-		</Grid>
-	);
+        </Grid>
+    );
 }

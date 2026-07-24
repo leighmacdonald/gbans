@@ -32,7 +32,7 @@ export const ContainerWithHeaderAndButtons = ({
 			<HeadingWithButtons iconLeft={iconLeft} buttons={buttons}>
 				{title}
 			</HeadingWithButtons>
-			<Stack spacing={spacing} sx={{ marginTop }} padding={padding}>
+			<Stack spacing={spacing} sx={{ marginTop, padding }}>
 				{children}
 			</Stack>
 		</Paper>
@@ -57,9 +57,9 @@ export const HeadingWithButtons: FC<HeadingWithButtonsProps> = ({
 		<Grid
 			container
 			direction="row"
-			alignItems="center"
+			// alignItems="center"
 			//justifyContent={align ?? 'flex-start'}
-			padding={1}
+
 			sx={{
 				backgroundColor: bgColor ?? theme.palette.primary.main,
 				color: theme.palette.common.white,
@@ -67,7 +67,7 @@ export const HeadingWithButtons: FC<HeadingWithButtonsProps> = ({
 			}}
 		>
 			{iconLeft && (
-				<Grid size="auto" paddingRight={1}>
+				<Grid size="auto">
 					<VCenteredElement icon={iconLeft} />
 				</Grid>
 			)}

@@ -76,8 +76,18 @@ export const ThreadMessageContainer = ({
 	return (
 		<Paper elevation={1} id={`${message.forumMessageId}`}>
 			<Grid container>
-				<Grid size={{ xs: 2 }} padding={2} sx={{ backgroundColor: theme.palette.background.paper }}>
-					<Stack alignItems={"center"}>
+				<Grid
+					size={{ xs: 2 }}
+					sx={{
+						padding: 2,
+						backgroundColor: theme.palette.background.paper,
+					}}
+				>
+					<Stack
+						sx={{
+							alignItems: "center",
+						}}
+					>
 						<ForumAvatar
 							alt={message.personaName}
 							online={message.online}
@@ -103,7 +113,11 @@ export const ThreadMessageContainer = ({
 								await form.handleSubmit();
 							}}
 						>
-							<Stack padding={1}>
+							<Stack
+								sx={{
+									padding: 1,
+								}}
+							>
 								<form.AppField
 									name={"bodyMd"}
 									validators={{
@@ -123,26 +137,29 @@ export const ThreadMessageContainer = ({
 						</form>
 					) : (
 						<Box>
-							<Grid container direction="row" borderBottom={(theme) => theme.palette.divider}>
+							<Grid container direction="row">
 								<Grid size={{ xs: 6 }}>
 									<Stack direction={"row"}>
-										<Typography variant={"body2"} padding={1}>
-											{renderTimestamp(message.createdOn)}
-										</Typography>
+										<Typography variant={"body2"}>{renderTimestamp(message.createdOn)}</Typography>
 										{message.updatedOn &&
 											message.createdOn &&
 											isAfter(
 												timestampDate(message.createdOn),
 												timestampDate(message.updatedOn),
 											) && (
-												<Typography variant={"body2"} padding={1}>
+												<Typography variant={"body2"}>
 													{`Edited: ${renderTimestamp(message.updatedOn)}`}
 												</Typography>
 											)}
 									</Stack>
 								</Grid>
 								<Grid size={{ xs: 6 }}>
-									<Stack direction="row" justifyContent="end">
+									<Stack
+										direction="row"
+										sx={{
+											justifyContent: "end",
+										}}
+									>
 										<IconButton
 											color={"error"}
 											onClick={async () => {
@@ -164,19 +181,21 @@ export const ThreadMessageContainer = ({
 											</IconButton>
 										)}
 										<Typography
-											padding={1}
 											component={RouterLink}
 											variant={"body2"}
 											to={`#${message.forumMessageId}`}
-											textAlign={"right"}
-											sx={{ color: (theme) => theme.palette.text.primary }}
+											sx={{
+												padding: 1,
+												textAlign: "right",
+												color: (theme) => theme.palette.text.primary,
+											}}
 										>
 											{`#${message.forumMessageId}`}
 										</Typography>
 									</Stack>
 								</Grid>
 							</Grid>
-							<Grid size={{ xs: 12 }} padding={1}>
+							<Grid size={{ xs: 12 }}>
 								<MarkDownRenderer bodyMd={message.bodyMd} assetURL={assetURL} />
 
 								{message.signature !== "" && (

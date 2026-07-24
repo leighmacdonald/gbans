@@ -10,21 +10,20 @@ interface ForumRowLinkProps {
 
 export const ForumRowLink = ({ to, label, align, variant = "h6" }: ForumRowLinkProps) => {
 	return (
-		<Typography
-			noWrap
-			sx={{
-				color: (theme) => theme.palette.text.primary,
-				textDecoration: "none",
-			}}
-			fontWeight={700}
-			width={"100%"}
-			component={RouterLink}
-			textOverflow={"ellipsis"}
-			variant={variant}
-			to={to}
-			align={align}
-		>
-			{label}
-		</Typography>
-	);
+        <Typography
+            noWrap
+            component={RouterLink}
+            variant={variant}
+            to={to}
+            align={align}
+            sx={{
+                fontWeight: 700,
+                width: "100%",
+                textOverflow: "ellipsis",
+                color: (theme) => theme.palette.text.primary,
+                textDecoration: "none"
+            }}>
+            {label}
+        </Typography>
+    );
 };

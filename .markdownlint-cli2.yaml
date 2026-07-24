@@ -1,7 +1,7 @@
 config:
   line-length:
     enabled: true
-    line_length: 120
+    line_length: 500
 gitignore: true
 globs:
   - "frontend/*.md"

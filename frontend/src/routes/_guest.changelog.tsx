@@ -28,23 +28,24 @@ function Changelogs() {
 	}
 
 	return (
-		<Grid container spacing={2}>
-			{(data?.changelog ?? []).map((changelog) => (
+        <Grid container spacing={2}>
+            {(data?.changelog ?? []).map((changelog) => (
 				<Grid size={{ xs: 12 }} key={changelog.id}>
 					<ContainerWithHeader
 						title={
 							<Stack direction={"row"}>
 								<Typography
-									padding={1}
-									sx={{
-										backgroundColor: theme.palette.primary.main,
-										color: theme.palette.common.white,
-										...tf2Fonts,
-									}}
-								>
+                                    sx={{
+                                        padding: 1,
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        ...tf2Fonts
+                                    }}>
 									{changelog.name}
 								</Typography>{" "}
-								<Typography padding={1}>{renderTimestamp(changelog.createdAt)}</Typography>
+								<Typography sx={{
+                                    padding: 1
+                                }}>{renderTimestamp(changelog.createdAt)}</Typography>
 							</Stack>
 						}
 						iconLeft={<NewReleasesIcon />}
@@ -53,6 +54,6 @@ function Changelogs() {
 					</ContainerWithHeader>
 				</Grid>
 			))}
-		</Grid>
-	);
+        </Grid>
+    );
 }

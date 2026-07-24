@@ -108,24 +108,24 @@ export const ContestEntryModal = NiceModal.create(({ contestId }: { contestId: s
 	// const formId = 'contestSubmitForm';
 
 	return (
-		// <Formik
-		//     onSubmit={onSubmit}
-		//     id={formId}
-		//     initialValues={{
-		//         contest_id: contest?.contest_id ?? EmptyUUID,
-		//         body_md: ''
-		//     }}
-		//     validateOnBlur={false}
-		//     validateOnChange={false}
-		//     validationSchema={validationSchema}
-		//     enableReinitialize={true}
-		// >
-		<Dialog fullWidth {...muiDialogV5(modal)}>
-			<DialogTitle component={Heading} iconLeft={isLoading ? <LoadingSpinner /> : <EmojiEventsIcon />}>
+        // <Formik
+        //     onSubmit={onSubmit}
+        //     id={formId}
+        //     initialValues={{
+        //         contest_id: contest?.contest_id ?? EmptyUUID,
+        //         body_md: ''
+        //     }}
+        //     validateOnBlur={false}
+        //     validateOnChange={false}
+        //     validationSchema={validationSchema}
+        //     enableReinitialize={true}
+        // >
+        // </Formik>
+        <Dialog fullWidth {...muiDialogV5(modal)}>
+            <DialogTitle component={Heading} iconLeft={isLoading ? <LoadingSpinner /> : <EmojiEventsIcon />}>
 				{`Submit Entry For: ${data?.contest?.title}`}
 			</DialogTitle>
-
-			<DialogContent>
+            <DialogContent>
 				{isLoading ? (
 					<LoadingSpinner />
 				) : (
@@ -166,7 +166,11 @@ export const ContestEntryModal = NiceModal.create(({ contestId }: { contestId: s
 							{uploadInProgress ? (
 								<LinearProgressWithLabel value={(progress / progressTotal) * 100} />
 							) : (
-								<Box display="flex" alignItems="center">
+								<Box
+                                    sx={{
+                                        display: "flex",
+                                        alignItems: "center"
+                                    }}>
 									<Typography variant={"button"}>{userUpload?.name}</Typography>
 								</Box>
 							)}
@@ -180,8 +184,14 @@ export const ContestEntryModal = NiceModal.create(({ contestId }: { contestId: s
 						)}
 						{submittedOnce && assetID === "" && (
 							<Grid size={{ xs: 12 }}>
-								<Box display="flex" alignItems="center">
-									<Typography variant={"body1"} color={"error"} fontSize={"smaller"}>
+								<Box
+                                    sx={{
+                                        display: "flex",
+                                        alignItems: "center"
+                                    }}>
+									<Typography variant={"body1"} color={"error"} sx={{
+                                        fontSize: "smaller"
+                                    }}>
 										Must upload file
 									</Typography>
 								</Box>
@@ -190,12 +200,11 @@ export const ContestEntryModal = NiceModal.create(({ contestId }: { contestId: s
 					</Grid>
 				)}
 			</DialogContent>
-			<DialogActions>
+            <DialogActions>
 				{/*<CancelButton />*/}
 				{/*<ResetButton />*/}
 				{/*<SubmitButton disabled={uploadInProgress} />*/}
 			</DialogActions>
-		</Dialog>
-		// </Formik>
-	);
+        </Dialog>
+    );
 });

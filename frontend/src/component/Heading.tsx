@@ -16,11 +16,7 @@ interface VCenteredImageProps {
 }
 
 export const VCenteredElement = ({ icon }: VCenteredImageProps) => {
-	return (
-		<Box display="flex" justifyContent="right" alignItems="center">
-			{icon}
-		</Box>
-	);
+	return <Box sx={{ display: "flex", justifyContent: "right", alignItems: "center" }}>{icon}</Box>;
 };
 
 export const Heading = ({ children, bgColor, iconLeft, iconRight, align }: PropsWithChildren<HeadingProps>) => {
@@ -29,23 +25,27 @@ export const Heading = ({ children, bgColor, iconLeft, iconRight, align }: Props
 		<Grid
 			container
 			direction="row"
-			alignItems="center"
-			justifyContent={align ?? "flex-start"}
-			padding={1}
 			sx={{
 				backgroundColor: bgColor ?? theme.palette.primary.main,
 				color: theme.palette.common.white,
+				alignItems: "center",
+				justifyContent: align ?? "flex-start",
+				padding: 1,
 				...tf2Fonts,
 			}}
 		>
 			{iconLeft && (
-				<Grid paddingRight={1}>
+				<Grid
+					sx={{
+						paddingRight: 1,
+					}}
+				>
 					<VCenteredElement icon={iconLeft} />
 				</Grid>
 			)}
 			<Grid>{children}</Grid>
 			{iconRight && (
-				<Grid paddingLeft={1}>
+				<Grid>
 					<VCenteredElement icon={iconRight} />
 				</Grid>
 			)}

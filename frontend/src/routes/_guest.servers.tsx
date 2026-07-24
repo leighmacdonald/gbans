@@ -183,7 +183,7 @@ function Servers() {
 					header: "Server",
 					size: 450,
 					Cell: ({ cell }) => (
-						<Typography variant={"button"} fontFamily={tf2Fonts}>
+						<Typography variant={"button"} sx={{ fontFamily: tf2Fonts }}>
 							{cell.getValue()}
 						</Typography>
 					),

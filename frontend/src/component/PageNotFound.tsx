@@ -6,8 +6,12 @@ export function PageNotFound() {
 	// const error = null;
 
 	return (
-		<Grid container size={{ xs: 12 }} padding={2}>
-			<Grid size={{ xs: 12 }} alignContent={"center"}>
+        <Grid container size={{ xs: 12 }} sx={{
+            padding: 2
+        }}>
+            <Grid size={{ xs: 12 }} sx={{
+                alignContent: "center"
+            }}>
 				<Typography align={"center"} variant={"h1"}>
 					{heading}
 				</Typography>
@@ -17,6 +21,6 @@ export function PageNotFound() {
 				{/*    </Typography>*/}
 				{/*)}*/}
 			</Grid>
-		</Grid>
-	);
+        </Grid>
+    );
 }

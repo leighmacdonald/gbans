@@ -22,14 +22,14 @@ export const ForumRecentMessageActivity = () => {
 	const { data, isLoading } = useQuery(recentMessages);
 
 	return (
-		<ContainerWithHeader title={"Latest Activity"} iconLeft={<TodayIcon />}>
-			<Stack spacing={1}>
+        <ContainerWithHeader title={"Latest Activity"} iconLeft={<TodayIcon />}>
+            <Stack spacing={1}>
 				{isLoading ? (
 					<LoadingPlaceholder />
 				) : (
 					(data?.messages ?? []).map((m) => {
 						return (
-							<Stack
+                            <Stack
 								direction={"row"}
 								key={`message-${m.forumMessageId}`}
 								spacing={1}
@@ -40,10 +40,10 @@ export const ForumRecentMessageActivity = () => {
 									width: "100%",
 								}}
 							>
-								<VCenteredElement
+                                <VCenteredElement
 									icon={<Avatar alt={m.personaName} src={avatarHashToURL(m.avatarHash, "medium")} />}
 								/>
-								<Stack>
+                                <Stack>
 									<Box
 										sx={{
 											overflow: "hidden",
@@ -70,28 +70,28 @@ export const ForumRecentMessageActivity = () => {
 										<Person2 scale={0.5} />
 										<VCenterBox>
 											<Typography
-												overflow={"hidden"}
-												component={RouterLink}
-												to={`/profile/${m.sourceId}`}
-												variant={"body2"}
-												sx={{
-													color: (theme) => theme.palette.text.secondary,
-													textDecoration: "none",
-													"&:hover": {
+                                                component={RouterLink}
+                                                to={`/profile/${m.sourceId}`}
+                                                variant={"body2"}
+                                                sx={{
+                                                    overflow: "hidden",
+                                                    color: (theme) => theme.palette.text.secondary,
+                                                    textDecoration: "none",
+
+                                                    "&:hover": {
 														textDecoration: "underline",
-													},
-												}}
-											>
+													}
+                                                }}>
 												{m.personaName}
 											</Typography>
 										</VCenterBox>
 									</Stack>
 								</Stack>
-							</Stack>
-						);
+                            </Stack>
+                        );
 					})
 				)}
 			</Stack>
-		</ContainerWithHeader>
-	);
+        </ContainerWithHeader>
+    );
 };

@@ -11,11 +11,7 @@ import { logErr } from "../util/errors.ts";
 import { ContainerWithHeader } from "./ContainerWithHeader.tsx";
 
 const ErrorBox = ({ error }: { error: string }) => {
-	return (
-		<Typography variant={"body1"} padding={2} textAlign={"center"}>
-			{error}
-		</Typography>
-	);
+	return <Typography variant={"body1"}>{error}</Typography>;
 };
 
 export const ErrorDetails = ({ error }: { error: AppError | unknown }) => {
@@ -26,14 +22,7 @@ export const ErrorDetails = ({ error }: { error: AppError | unknown }) => {
 				{error.code === Code.PermissionDenied ? (
 					<>
 						<ErrorBox error={error.message} />
-						<Stack
-							justifyContent="center"
-							gap={2}
-							flexDirection="row"
-							width={1.0}
-							flexWrap="wrap"
-							padding={2}
-						>
+						<Stack>
 							<Button sx={{ alignSelf: "center" }} component={Link} href={generateOIDCLink()}>
 								<img src={steamLogo} alt={"Steam Login"} />
 							</Button>

@@ -387,10 +387,25 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 							sx={{
 								flexGrow: 1,
 								display: { xs: "none", md: "flex" },
+								alignItems: "center",
 							}}
 						>
 							{menuItems.map((value) => {
-								return renderLinkedMenuItem(value.text, value.to, value.icon);
+								return (
+									<Button
+										component={RouterLink}
+										to={value.to}
+										key={value.to + value.text}
+										startIcon={value.icon}
+										onClick={() => {
+											setAnchorElNav(null);
+											setAnchorElUser(null);
+										}}
+										sx={{ color: "inherit", textTransform: "none", mx: 0.5 }}
+									>
+										{value.text}
+									</Button>
+								);
 							})}
 						</Box>
 

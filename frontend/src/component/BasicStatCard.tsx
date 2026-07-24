@@ -21,10 +21,10 @@ export const BasicStatCard = ({ title, value, desc, actionLabel, onAction, icon 
 			<Stack direction={"row"} spacing={1}>
 				{icon}
 				<Typography
-					sx={{ fontSize: 14 }}
-					color="text.secondary"
-					//gutterBottom={true}
-				>
+                    sx={{
+                        color: "text.secondary",
+                        fontSize: 14
+                    }}>
 					{title}
 				</Typography>
 			</Stack>

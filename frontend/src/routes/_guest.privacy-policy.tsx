@@ -15,13 +15,21 @@ export const Route = createFileRoute("/_guest/privacy-policy")({
 
 const PPBox = ({ heading, children }: { heading: string } & PropsWithChildren) => {
 	return (
-		<Grid size={{ xs: 12, md: 6 }} padding={2}>
-			<Typography variant={"h3"} paddingBottom={3} paddingTop={2} sx={{ textTransform: "capitalize" }}>
+        <Grid size={{ xs: 12, md: 6 }} sx={{
+            padding: 2
+        }}>
+            <Typography
+                variant={"h3"}
+                sx={{
+                    paddingBottom: 3,
+                    paddingTop: 2,
+                    textTransform: "capitalize"
+                }}>
 				{heading}
 			</Typography>
-			{children}
-		</Grid>
-	);
+            {children}
+        </Grid>
+    );
 };
 
 function PrivacyPolicy() {

@@ -215,10 +215,14 @@ function AdminSettings() {
 	}
 
 	return (
-		<ContainerWithHeaderAndButtons title={"System Settings"} iconLeft={<DeveloperBoardIcon />}>
-			<Grid container spacing={2}>
-				<Grid size={{ xs: 4, sm: 3, md: 2 }} padding={0}>
-					<Stack spacing={1} padding={2}>
+        <ContainerWithHeaderAndButtons title={"System Settings"} iconLeft={<DeveloperBoardIcon />}>
+            <Grid container spacing={2}>
+				<Grid size={{ xs: 4, sm: 3, md: 2 }} sx={{
+                    padding: 0
+                }}>
+					<Stack spacing={1} sx={{
+                        padding: 2
+                    }}>
 						<TabButton
 							tab={"general"}
 							onClick={onTabClick}
@@ -305,7 +309,9 @@ function AdminSettings() {
 							label={"Exports"}
 						/>
 
-						<Typography padding={1}>
+						<Typography sx={{
+                            padding: 1
+                        }}>
 							Note that many settings will not take effect until app restart.
 						</Typography>
 					</Stack>
@@ -1768,6 +1774,6 @@ function AdminSettings() {
 					</form>
 				</TabSection>
 			</Grid>
-		</ContainerWithHeaderAndButtons>
-	);
+        </ContainerWithHeaderAndButtons>
+    );
 }

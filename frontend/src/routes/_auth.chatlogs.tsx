@@ -215,11 +215,7 @@ function ChatLogs() {
 				enableColumnFilter: true,
 				Cell: ({ row, renderedCellValue }) => {
 					return (
-						<Typography
-							padding={0}
-							variant={"body1"}
-							color={row.original.autoFilterFlagged > 0 ? "error" : "inherit"}
-						>
+						<Typography variant={"body1"} color={row.original.autoFilterFlagged > 0 ? "error" : "inherit"}>
 							{renderedCellValue}
 						</Typography>
 					);

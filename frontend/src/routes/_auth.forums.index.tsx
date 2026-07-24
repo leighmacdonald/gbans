@@ -70,8 +70,8 @@ const CategoryBlock = ({ category }: { category: Category }) => {
 	}, [category.forumCategoryId, hasPermission, onEdit]);
 
 	return (
-		<ContainerWithHeaderAndButtons title={category.title} iconLeft={<CategoryIcon />} buttons={buttons}>
-			<Stack
+        <ContainerWithHeaderAndButtons title={category.title} iconLeft={<CategoryIcon />} buttons={buttons}>
+            <Stack
 				spacing={1}
 				sx={{
 					overflow: "hidden",
@@ -83,7 +83,7 @@ const CategoryBlock = ({ category }: { category: Category }) => {
 				{category.description !== "" && <Typography>{category.description}</Typography>}
 				{category.forums.map((f) => {
 					return (
-						<Grid
+                        <Grid
 							container
 							key={`forum-${f.forumId}`}
 							spacing={1}
@@ -93,7 +93,9 @@ const CategoryBlock = ({ category }: { category: Category }) => {
 								},
 							}}
 						>
-							<Grid size={{ xs: 5 }} margin={0}>
+                            <Grid size={{ xs: 5 }} sx={{
+                                margin: 0
+                            }}>
 								<VCenterBox justify={"left"}>
 									<Stack direction={"row"} spacing={1}>
 										<VCenteredElement icon={<ChatIcon />} />
@@ -109,7 +111,7 @@ const CategoryBlock = ({ category }: { category: Category }) => {
 									</Stack>
 								</VCenterBox>
 							</Grid>
-							<Grid size={{ xs: 2 }}>
+                            <Grid size={{ xs: 2 }}>
 								<Stack direction={"row"} spacing={1}>
 									<Stack>
 										<Typography variant={"body2"} align={"left"}>
@@ -127,7 +129,7 @@ const CategoryBlock = ({ category }: { category: Category }) => {
 									</Stack>
 								</Stack>
 							</Grid>
-							<Grid size={{ xs: 5 }}>
+                            <Grid size={{ xs: 5 }}>
 								{f.recentForumThreadId && f.recentForumThreadId > 0 ? (
 									<Stack direction={"row"} spacing={2}>
 										<VCenteredElement
@@ -170,12 +172,12 @@ const CategoryBlock = ({ category }: { category: Category }) => {
 									</Stack>
 								) : null}
 							</Grid>
-						</Grid>
-					);
+                        </Grid>
+                    );
 				})}
 			</Stack>
-		</ContainerWithHeaderAndButtons>
-	);
+        </ContainerWithHeaderAndButtons>
+    );
 };
 
 function ForumOverview() {

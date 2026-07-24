@@ -145,7 +145,7 @@ const loadProfile = (): PersonCore => {
 
 export type AuthContextProps = {
 	profile: PersonCore;
-	login: () => Promise<void>;
+	login: (token: string) => Promise<void>;
 	logout: () => Promise<void>;
 	isAuthenticated: () => boolean;
 	permissionLevel: () => Privilege;

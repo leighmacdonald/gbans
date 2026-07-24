@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.4.9/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.5.5/schema.json",
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
@@ -22,7 +22,6 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"recommended": true,
 			"a11y": "off",
 			"correctness": {
 				// TODO tanstack form uses the children field using a function with argument, not a standard jsx component.

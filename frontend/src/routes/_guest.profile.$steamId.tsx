@@ -35,8 +35,8 @@ function ProfilePage() {
 	}
 
 	return (
-		<Grid container spacing={2}>
-			<Grid size={{ xs: 12, md: 8 }}>
+        <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 8 }}>
 				<ContainerWithHeader title={"Profile"}>
 					<Grid container spacing={2}>
 						<Grid size={{ xs: 4 }}>
@@ -51,8 +51,10 @@ function ProfilePage() {
 							<Stack spacing={2}>
 								<Typography
 									variant={"h3"}
-									display="inline"
 									style={{ wordBreak: "break-word", whiteSpace: "pre-line" }}
+									sx={{
+                                        display: "inline"
+                                    }}
 								>
 									{data?.profile?.player?.name}
 								</Typography>
@@ -81,9 +83,14 @@ function ProfilePage() {
 					</Grid>
 				</ContainerWithHeader>
 			</Grid>
-			<Grid size={{ xs: 6, md: 2 }}>
+            <Grid size={{ xs: 6, md: 2 }}>
 				<ContainerWithHeader title={"Status"} iconLeft={<LocalLibraryIcon />} marginTop={0}>
-					<Stack spacing={1} padding={1} justifyContent={"space-evenly"}>
+					<Stack
+                        spacing={1}
+                        sx={{
+                            padding: 1,
+                            justifyContent: "space-evenly"
+                        }}>
 						<Chip color={Number(data?.profile?.player?.vacBans) > 0 ? "error" : "success"} label={"VAC"} />
 						<Chip
 							color={Number(data?.profile?.player?.gameBans) > 0 ? "error" : "success"}
@@ -100,10 +107,10 @@ function ProfilePage() {
 					</Stack>
 				</ContainerWithHeader>
 			</Grid>
-			<Grid size={{ xs: 6, md: 2 }}>
+            <Grid size={{ xs: 6, md: 2 }}>
 				<SteamIDList steamId={data?.profile?.player?.steamId ?? ""} />
 			</Grid>
-			{/*{isAuthenticated() &&
+            {/*{isAuthenticated() &&
 				(userProfile.steam_id === profile.player.steam_id || !profile.settings.stats_hidden) && (
 					<>
 						<Grid size={{ xs: 12 }}>
@@ -121,12 +128,12 @@ function ProfilePage() {
 						</Grid>
 					</>
 				)}*/}
-			<Grid size={{ xs: 128 }}>
+            <Grid size={{ xs: 128 }}>
 				<ContainerWithHeader title={"External Links"} iconLeft={<LinkIcon />}>
-					<Grid container spacing={1} paddingLeft={1}>
+					<Grid container spacing={1}>
 						{createExternalLinks(String(data?.profile?.player?.steamId)).map((l) => {
 							return (
-								<Grid size={{ xs: 4 }} key={`btn-${l.url}`} padding={1}>
+								<Grid size={{ xs: 4 }} key={`btn-${l.url}`}>
 									<Button
 										fullWidth
 										color={"secondary"}
@@ -143,6 +150,6 @@ function ProfilePage() {
 					</Grid>
 				</ContainerWithHeader>
 			</Grid>
-		</Grid>
-	);
+        </Grid>
+    );
 }

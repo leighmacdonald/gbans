@@ -34,26 +34,45 @@ function LoginPage() {
 	const { redirect } = Route.useSearch();
 
 	return (
-		<Grid container justifyContent={"center"} alignItems={"center"}>
+		<Grid
+			container
+			// sx={{
+			//     justifyContent: "center",
+			//     alignItems: "center"
+			// }}
+		>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeader title={title} iconLeft={<DoDisturbIcon />}>
 					{isAuthenticated() && (
-						<Typography variant={"body1"} padding={2}>
+						<Typography
+							variant={"body1"}
+							sx={{
+								padding: 2,
+							}}
+						>
 							Insufficient permission to access this page.
 						</Typography>
 					)}
 					{!isAuthenticated() && (
 						<>
-							<Typography variant={"body1"} padding={2} paddingBottom={0}>
+							<Typography
+								variant={"body1"}
+								sx={{
+									padding: 2,
+									paddingBottom: 0,
+								}}
+							>
 								{message}
 							</Typography>
 							<Stack
-								justifyContent="center"
-								gap={2}
-								flexDirection="row"
-								width={1.0}
-								flexWrap="wrap"
-								padding={2}
+								sx={{
+									justifyContent: "center",
+									gap: 2,
+									flexDirection: "row",
+									width: 1.0,
+									flexWrap: "wrap",
+									padding: 2,
+								}}
 							>
 								<Button sx={{ alignSelf: "center" }} component={Link} href={generateOIDCLink(redirect)}>
 									<img src={steamLogo} alt={"Steam Login"} />

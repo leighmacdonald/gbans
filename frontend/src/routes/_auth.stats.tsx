@@ -397,8 +397,8 @@ function StatsComponent() {
 		return <ErrorDetails error={error} />;
 	}
 	return (
-		<Grid container spacing={2}>
-			<Grid size={{ xs: 12 }}>
+        <Grid container spacing={2}>
+            <Grid size={{ xs: 12 }}>
 				<Paper>
 					<form
 						onSubmit={async (e) => {
@@ -407,7 +407,9 @@ function StatsComponent() {
 							await form.handleSubmit();
 						}}
 					>
-						<Stack direction={"row"} padding={1} spacing={2}>
+						<Stack direction={"row"} spacing={2} sx={{
+                            padding: 1
+                        }}>
 							<form.AppField
 								name={"statsBucketID"}
 								children={(field) => {
@@ -499,9 +501,9 @@ function StatsComponent() {
 					</form>
 				</Paper>
 			</Grid>
-			<Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12 }}>
 				<SortableTable table={table} title={title} />
 			</Grid>
-		</Grid>
-	);
+        </Grid>
+    );
 }

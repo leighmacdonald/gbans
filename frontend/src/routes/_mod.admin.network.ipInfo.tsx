@@ -44,7 +44,7 @@ const InfoRow = ({ label, children }: { label: string; children: ReactNode }) =>
 	return (
 		<TableRow hover>
 			<TableCell>
-				<Typography fontWeight={700}> {label}</Typography>
+				<Typography sx={{ fontWeight: 700 }}> {label}</Typography>
 			</TableCell>
 			<TableCell>{children}</TableCell>
 		</TableRow>
@@ -128,7 +128,7 @@ function AdminNetworkInfo() {
 					<Grid container spacing={2}>
 						<Grid size={{ xs: 12 }}>
 							{/*<Formik onSubmit={onSubmit} initialValues={{ ip: '' }}>*/}
-							<Grid container direction="row" alignItems="top" justifyContent="center" spacing={2}>
+							<Grid container spacing={2}>
 								{/*<Grid xs>*/}
 								{/*    <IPField />*/}
 								{/*</Grid>*/}
@@ -152,9 +152,7 @@ function AdminNetworkInfo() {
 								<div>
 									<Grid container spacing={2}>
 										<Grid size={{ xs: 12, md: 6 }}>
-											<Typography variant={"h4"} padding={2}>
-												Location
-											</Typography>
+											<Typography variant={"h4"}>Location</Typography>
 											<TableContainer>
 												<Table>
 													<TableBody>
@@ -186,7 +184,7 @@ function AdminNetworkInfo() {
 												</Table>
 											</TableContainer>
 										</Grid>
-										<Grid size={{ xs: 12, md: 6 }} padding={2}>
+										<Grid size={{ xs: 12, md: 6 }}>
 											<MapContainer
 												zoom={3}
 												scrollWheelZoom={true}
@@ -210,9 +208,7 @@ function AdminNetworkInfo() {
 											</MapContainer>
 										</Grid>
 										<Grid size={{ xs: 12, md: 6 }}>
-											<Typography variant={"h4"} padding={2}>
-												ASN
-											</Typography>
+											<Typography variant={"h4"}>ASN</Typography>
 											<TableContainer>
 												<Table>
 													<TableBody>
@@ -234,9 +230,7 @@ function AdminNetworkInfo() {
 											</TableContainer>
 										</Grid>
 										<Grid size={{ xs: 12, md: 6 }}>
-											<Typography variant={"h4"} padding={2}>
-												Proxy Info
-											</Typography>
+											<Typography variant={"h4"}>Proxy Info</Typography>
 											<TableContainer>
 												<Table>
 													<TableBody>

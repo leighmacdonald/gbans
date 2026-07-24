@@ -69,13 +69,13 @@ function MatchPage() {
 
 	return (
 		<Grid container spacing={2}>
-			<Grid size={{ xs: 12, md: 12 }} component={Paper} padding={1}>
-				<Grid container component={Paper} sx={{ backgroundColor: theme.palette.primary.main }} padding={1}>
+			<Grid size={{ xs: 12, md: 12 }} component={Paper}>
+				<Grid container component={Paper} sx={{ backgroundColor: theme.palette.primary.main }}>
 					<Grid size={{ md: 6, xs: 12 }}>
 						<Typography variant={"subtitle1"}> {data?.match?.overview?.serverName}</Typography>
 					</Grid>
 					<Grid size={{ md: 6, xs: 12 }}>
-						<Typography variant={"subtitle1"} textAlign={"right"}>
+						<Typography variant={"subtitle1"} sx={{ textAlign: "right" }}>
 							{data?.match?.overview?.hostname}
 						</Typography>
 					</Grid>
@@ -84,7 +84,7 @@ function MatchPage() {
 					</Grid>
 					{data?.match?.overview?.createdOn && (
 						<Grid size={{ md: 6, xs: 12 }}>
-							<Typography textAlign={"right"} variant={"subtitle1"}>
+							<Typography sx={{ textAlign: "right" }} variant={"subtitle1"}>
 								{renderDateTime(timestampDate(data.match.overview.createdOn))}
 							</Typography>
 						</Grid>
@@ -96,7 +96,7 @@ function MatchPage() {
 					</Grid>
 
 					<Grid size={{ md: 6, xs: 12 }}>
-						<Typography textAlign={"right"}>
+						<Typography sx={{ textAlign: "right" }}>
 							<Link color="textPrimary" href={`/asset/${data?.match?.overview?.assetId}`}>
 								Download STV
 							</Link>
@@ -104,7 +104,7 @@ function MatchPage() {
 					</Grid>
 				</Grid>
 
-				<Stack direction="row" padding={4}>
+				<Stack direction="row">
 					<REDCard score={data?.match?.overview?.scoreRed ?? 0} winner={winner === Team.RED} />
 					<BLUCard score={data?.match?.overview?.scoreBlu ?? 0} winner={winner === Team.BLU} />
 				</Stack>

@@ -37,7 +37,7 @@ import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { DiscordOAuthService } from "../rpc/discord/oauth/v1/discord_pb.ts";
 import { profile as profileQuery } from "../rpc/discord/oauth/v1/discord-DiscordOAuthService_connectquery.ts";
 import { PatreonService } from "../rpc/patreon/v1/patreon_pb.ts";
-import type { UserSettings } from "../rpc/person/v1/person_pb.ts";
+import type { Settings } from "../rpc/person/v1/person_pb.ts";
 import { editProfileSettings, profileSettings } from "../rpc/person/v1/person-PersonService_connectquery.ts";
 import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
 import { finalTransport } from "../transport.ts";
@@ -82,7 +82,7 @@ function ProfileSettings() {
 	};
 
 	const onSave = useCallback(
-		async (settings: UserSettings) => {
+		async (settings: Settings) => {
 			return await mutation.mutateAsync({
 				forumProfileMessages: settings.forumProfileMessages,
 				forumSignature: settings.forumSignature,
@@ -99,8 +99,8 @@ function ProfileSettings() {
 	return (
 		<ContainerWithHeader title={"User Settings"} iconLeft={<ConstructionIcon />}>
 			<Grid container spacing={2}>
-				<Grid size={{ xs: 4, sm: 3, md: 2 }} padding={0}>
-					<Stack spacing={1} padding={2}>
+				<Grid size={{ xs: 4, sm: 3, md: 2 }}>
+					<Stack spacing={1}>
 						<TabButton
 							tab={"general"}
 							onClick={onTabClick}
@@ -156,8 +156,8 @@ const GeneralSection = ({
 	onSave,
 }: {
 	tab: userSettingTabs;
-	settings: UserSettings;
-	onSave: (s: UserSettings) => void;
+	settings: Settings;
+	onSave: (s: Settings) => void;
 }) => {
 	const [notifPerms, setNotifPerms] = useState(Notification.permission);
 
@@ -291,8 +291,8 @@ const GameplaySection = ({
 	onSave,
 }: {
 	tab: userSettingTabs;
-	settings: UserSettings;
-	onSave: (s: UserSettings) => void;
+	settings: Settings;
+	onSave: (s: Settings) => void;
 }) => {
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
@@ -343,8 +343,8 @@ const ForumSection = ({
 	onSave,
 }: {
 	tab: userSettingTabs;
-	settings: UserSettings;
-	onSave: (s: UserSettings) => void;
+	settings: Settings;
+	onSave: (s: Settings) => void;
 }) => {
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
@@ -418,8 +418,8 @@ const ConnectionsSection = ({
 	patreonId,
 }: {
 	tab: userSettingTabs;
-	settings: UserSettings;
-	onSave: (s: UserSettings) => void;
+	settings: Settings;
+	onSave: (s: Settings) => void;
 	patreonId: string;
 }) => {
 	const queryClient = useQueryClient();
@@ -527,7 +527,7 @@ const ConnectionsSection = ({
 			label={"Connections"}
 			description={"Configure your 3rd party connections to us."}
 		>
-			<Grid container spacing={2} padding={0}>
+			<Grid container spacing={2}>
 				{appInfo.patreonEnabled ? (
 					patreonId ? (
 						<Grid size={{ xs: 12 }}>

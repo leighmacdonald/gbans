@@ -30,7 +30,7 @@ type RouterOpts struct {
 	FrontendEnable    bool
 	StaticPath        string
 	HTTPCORSEnabled   bool
-	DevMode bool
+	DevMode           bool
 	CORSOrigins       []string
 }
 

@@ -30,16 +30,12 @@ export const Footer = ({ appInfo }: { appInfo: InfoResponse }): JSX.Element => {
 				height: "100%",
 			}}
 		>
-			<Grid container spacing={0} direction="column" alignItems="center" justifyContent="center">
+			<Grid container spacing={0} direction="row">
 				<Grid size={{ xs: 3 }}>
 					<Typography variant={"subtitle2"} color={"text"}>
 						Copyright &copy; {appInfo.siteName} {new Date().getFullYear()}{" "}
 					</Typography>
-					<Stack
-						// direction={'row'}
-						alignItems="center"
-						justifyContent="center"
-					>
+					<Stack>
 						<Stack direction={"row"} spacing={1}>
 							<Link
 								component={RouterLink}

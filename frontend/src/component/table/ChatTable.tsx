@@ -39,7 +39,9 @@ const NameCell = ({ row }: { row: { original: Message } }) => (
 );
 
 const BodyCell = ({ cell }: { cell: { getValue: () => unknown } }) => (
-	<Typography padding={0} variant={"body1"}>
+	<Typography variant={"body1"} sx={{
+        padding: 0
+    }}>
 		{cell.getValue() as string}
 	</Typography>
 );

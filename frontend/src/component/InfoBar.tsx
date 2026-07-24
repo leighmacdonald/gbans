@@ -9,13 +9,17 @@ interface InfoBarProps {
 
 export const InfoBar = ({ title, value, align = "left" }: InfoBarProps) => {
 	return (
-		<Box>
-			<Typography variant={"subtitle1"} fontWeight={500} align={align}>
+        <Box>
+            <Typography variant={"subtitle1"} align={align} sx={{
+                fontWeight: 500
+            }}>
 				{title}
 			</Typography>
-			<Typography variant={"h3"} fontWeight={700} align={align}>
+            <Typography variant={"h3"} align={align} sx={{
+                fontWeight: 700
+            }}>
 				{value}
 			</Typography>
-		</Box>
-	);
+        </Box>
+    );
 };

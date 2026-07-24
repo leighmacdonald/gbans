@@ -36,11 +36,7 @@ export const ProfileInfoBox = ({ steamId }: { steamId: string }) => {
 				</Grid>
 				<Grid size={{ xs: 12 }}>
 					<Box>
-						<Typography
-							variant={"h3"}
-							display="inline"
-							style={{ wordBreak: "break-word", whiteSpace: "pre-line" }}
-						>
+						<Typography variant={"h3"} style={{ wordBreak: "break-word", whiteSpace: "pre-line" }}>
 							{data?.profile?.player?.name}
 						</Typography>
 					</Box>

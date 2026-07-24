@@ -133,19 +133,19 @@ export const ReportViewComponent = ({
 
 							<TabPanel value={value} index={0}>
 								{report && (
-									<Box minHeight={300}>
+									<Box sx={{ minHeight: 300 }}>
 										<MarkDownRenderer bodyMd={report.report.description} assetURL={assetURL} />
 									</Box>
 								)}
 							</TabPanel>
 
 							<TabPanel value={value} index={1}>
-								<Box minHeight={300}>
+								<Box sx={{ minHeight: 300 }}>
 									<ChatTable steamId={report.report.targetId} />
 								</Box>
 							</TabPanel>
 							<TabPanel value={value} index={2}>
-								<Box minHeight={300}>
+								<Box sx={{ minHeight: 300 }}>
 									<IPHistoryTable steamId={report.report.targetId} />
 								</Box>
 							</TabPanel>
@@ -168,7 +168,7 @@ export const ReportViewComponent = ({
 									</Button>,
 								]}
 							>
-								<Grid container padding={2}>
+								<Grid container>
 									{/*<Grid size={{ xs: 4 }}>*/}
 									{/*    <Typography>Map:&nbsp;{report.demo.map_name}</Typography>*/}
 									{/*</Grid>*/}
@@ -216,7 +216,7 @@ export const ReportViewComponent = ({
 									await form.handleSubmit();
 								}}
 							>
-								<Grid container spacing={2} padding={1}>
+								<Grid container spacing={2}>
 									<Grid size={{ xs: 12 }}>
 										<form.AppField
 											name={"bodyMd"}
