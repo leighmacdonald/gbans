@@ -210,7 +210,7 @@ func (r Repository) insertBan(ctx context.Context, ban *Ban) error {
 	const sqlQuery = `
 		INSERT INTO ban (target_id, source_id, ban_type, reason, reason_text, note, valid_until,
 		                 created_on, updated_on, origin, report_id, appeal_state, evade_ok, last_ip, cidr, demo_id, anticheat_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, case WHEN $11 = 0 THEN null ELSE $11 END, $12, $13, $14, $15, $16, $17)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 		RETURNING ban_id`
 
 	if ban.CIDR != nil && *ban.CIDR == "" {

@@ -49,9 +49,7 @@ function MatchPage() {
 		if (!data?.match) {
 			return undefined;
 		}
-		const m = assembleMatch(data.match);
-		console.log(m);
-		return m;
+		return assembleMatch(data.match);
 	}, [data]);
 
 	const winner = useMemo(() => {

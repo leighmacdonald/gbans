@@ -25,7 +25,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import { z } from "zod/v4";
-import { StorageKey } from "../auth.tsx";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { mdEditorRef } from "../component/form/field/MarkdownField.tsx";
 import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
@@ -513,14 +512,6 @@ const ConnectionsSection = ({
 					return await client.patronLogout({});
 				},
 			});
-
-			const stored = localStorage.getItem(StorageKey.Token);
-			if (stored) {
-				const { token: savedToken } = JSON.parse(stored);
-				if (savedToken) {
-					login(savedToken, { onSuccess: () => {}, onError: sendError });
-				}
-			}
 
 			sendFlash("success", "Logged out successfully");
 		} catch (e) {

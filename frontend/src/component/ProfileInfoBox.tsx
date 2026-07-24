@@ -19,7 +19,7 @@ export const ProfileInfoBox = ({ steamId }: { steamId: string }) => {
 		return <LoadingPlaceholder />;
 	}
 
-	if (!profile) {
+	if (!data?.profile?.player) {
 		return <ErrorDetails error={ErrorCode.Unknown} />;
 	}
 

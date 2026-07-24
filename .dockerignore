@@ -1,5 +1,11 @@
 .cache
+.git/
+.gitattributes
+.gitignore
+node_modules/
 frontend/node_modules
 frontend/dist
+docs/
+proto/
 .idea
 *.dump

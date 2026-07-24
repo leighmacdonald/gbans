@@ -44,7 +44,7 @@ export const SortableTable = <TData extends MRT_RowData>({
 						gap: "16px",
 						justifyContent: "space-between",
 						padding: "16px 8px",
-						"@media max-width: 768px": {
+						"@media (max-width: 768px)": {
 							flexDirection: "column",
 						},
 					})}

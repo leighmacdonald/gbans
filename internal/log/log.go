@@ -7,12 +7,9 @@ import (
 	"log/slog"
 	"os"
 	"sync"
-	"time"
 
-	"github.com/dotse/slug"
 	sentryslog "github.com/getsentry/sentry-go/slog"
 	slogmulti "github.com/samber/slog-multi"
-	"golang.org/x/text/language"
 )
 
 type Config struct {
@@ -61,12 +58,8 @@ func (level Level) slog() slog.Level {
 func MustCreateLogger(ctx context.Context, debugLogPath string, level Level, useSentry bool, version string) func() {
 	var (
 		closer = func() {}
-		opts   = slug.HandlerOptions{
-			HandlerOptions: slog.HandlerOptions{
-				Level: level.slog(),
-			},
-			Language:   language.English,
-			TimeFormat: time.DateTime,
+		opts   = slog.HandlerOptions{
+			Level: level.slog(),
 		}
 		handlers []slog.Handler
 	)
@@ -89,9 +82,9 @@ func MustCreateLogger(ctx context.Context, debugLogPath string, level Level, use
 			}
 		}
 
-		handlers = append(handlers, slug.NewHandler(opts, logFile))
+		handlers = append(handlers, slog.NewTextHandler(logFile, &opts))
 	} else {
-		handlers = append(handlers, slug.NewHandler(opts, os.Stdout))
+		handlers = append(handlers, slog.NewTextHandler(os.Stdout, &opts))
 	}
 
 	defaultLogger := slog.New(slogmulti.Fanout(handlers...))

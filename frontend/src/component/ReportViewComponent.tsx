@@ -69,7 +69,6 @@ export const ReportViewComponent = ({
 			if (!message.reportMessage || !messageData) {
 				return;
 			}
-			messageData.messages.push(message.reportMessage);
 			queryClient.setQueryData(
 				createConnectQueryKey({
 					schema: ReportService.method.reportMessages,
@@ -77,7 +76,10 @@ export const ReportViewComponent = ({
 					input: { reportId: report?.report?.reportId },
 					cardinality: "finite",
 				}),
-				messageData,
+				{
+					...messageData,
+					messages: [...messageData.messages, message.reportMessage],
+				},
 			);
 			mdEditorRef.current?.setMarkdown("");
 			form.reset();

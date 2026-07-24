@@ -15,6 +15,35 @@ import { TableCellRelativeDateField } from "./TableCellRelativeDateField.tsx";
 const columnHelper = createMRTColumnHelper<Message>();
 const defaultOptions = createDefaultTableOptions<Message>();
 
+const ServerCell = ({ row }: { row: { original: Message } }) => (
+	<Button
+		variant="text"
+		sx={{
+			color: stringToColour(row.original.serverName),
+		}}
+	>
+		{row.original.serverName}
+	</Button>
+);
+
+const CreatedOnCell = ({ cell }: { cell: { getValue: () => unknown } }) => (
+	<TableCellRelativeDateField date={timestampDate(cell.getValue() as Timestamp)} />
+);
+
+const NameCell = ({ row }: { row: { original: Message } }) => (
+	<PersonCell
+		steamId={row.original.steamId}
+		avatarHash={row.original.avatarHash}
+		personaName={row.original.personaName}
+	/>
+);
+
+const BodyCell = ({ cell }: { cell: { getValue: () => unknown } }) => (
+	<Typography padding={0} variant={"body1"}>
+		{cell.getValue() as string}
+	</Typography>
+);
+
 export const ChatTable = ({ steamId }: { steamId: string }) => {
 	const { data, isLoading, isError } = useQuery(query, {
 		steamId: steamId,
@@ -26,44 +55,25 @@ export const ChatTable = ({ steamId }: { steamId: string }) => {
 			columnHelper.accessor("serverId", {
 				header: "Server",
 				grow: false,
-				Cell: ({ row }) => (
-					<Button
-						variant="text"
-						sx={{
-							color: stringToColour(row.original.serverName),
-						}}
-					>
-						{row.original.serverName}
-					</Button>
-				),
+				Cell: ServerCell,
 			}),
 
 			columnHelper.accessor("createdOn", {
 				header: "Created",
 				grow: false,
-				Cell: ({ cell }) => <TableCellRelativeDateField date={timestampDate(cell.getValue() as Timestamp)} />,
+				Cell: CreatedOnCell,
 			}),
 
 			columnHelper.accessor("personaName", {
 				header: "Name",
 				grow: false,
-				Cell: ({ row }) => (
-					<PersonCell
-						steamId={row.original.steamId}
-						avatarHash={row.original.avatarHash}
-						personaName={row.original.personaName}
-					/>
-				),
+				Cell: NameCell,
 			}),
 
 			columnHelper.accessor("body", {
 				header: "Message",
 				grow: true,
-				Cell: ({ cell }) => (
-					<Typography padding={0} variant={"body1"}>
-						{cell.getValue() as string}
-					</Typography>
-				),
+				Cell: BodyCell,
 			}),
 		],
 		[],
