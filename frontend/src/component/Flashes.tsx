@@ -36,8 +36,8 @@ export const PositionedSnackbar = ({ notification }: { notification: Flash }) =>
 	};
 
 	return (
-        <Snackbar open={state.open} autoHideDuration={10000} onClose={handleClose}>
-            <Alert
+		<Snackbar open={state.open} autoHideDuration={10000} onClose={handleClose}>
+			<Alert
 				severity={notification.level}
 				sx={{ width: "100%" }}
 				onClose={() => {
@@ -48,17 +48,18 @@ export const PositionedSnackbar = ({ notification }: { notification: Flash }) =>
 			>
 				{notification.heading && (
 					<Typography
-                        sx={{
-                            fontWeight: 700,
-                            textTransform: "capitalize"
-                        }}>
+						sx={{
+							fontWeight: 700,
+							textTransform: "capitalize",
+						}}
+					>
 						{notification.heading}
 					</Typography>
 				)}
 				<Typography>{notification.message}</Typography>
 			</Alert>
-        </Snackbar>
-    );
+		</Snackbar>
+	);
 };
 
 export const Flashes = (): JSX.Element => {

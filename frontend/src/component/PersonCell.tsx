@@ -144,14 +144,15 @@ const PersonCellInner = ({ steamId, avatarHash, personaName, onClick, children }
 	}, [copySteamID, hasPermission, steamId, navigate]);
 
 	return (
-        <>
-            <Box
-                sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.2rem",
-                    minWidth: 200
-                }}>
+		<>
+			<Box
+				sx={{
+					display: "flex",
+					alignItems: "center",
+					gap: "0.2rem",
+					minWidth: 200,
+				}}
+			>
 				<Tooltip title="Player Links">
 					<IconButton
 						onClick={handleClick}
@@ -191,7 +192,7 @@ const PersonCellInner = ({ steamId, avatarHash, personaName, onClick, children }
 					</TextLink>
 				)}
 			</Box>
-            <Menu
+			<Menu
 				anchorEl={anchorEl}
 				id="player-menu"
 				open={open}
@@ -229,23 +230,28 @@ const PersonCellInner = ({ steamId, avatarHash, personaName, onClick, children }
 				anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
 			>
 				<Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        padding: 2,
-                        gap: 1,
-                        backgroundColor: "primary.main",
-                        color: "primary.contrastText"
-                    }}>
+					sx={{
+						display: "flex",
+						alignItems: "center",
+						padding: 2,
+						gap: 1,
+						backgroundColor: "primary.main",
+						color: "primary.contrastText",
+					}}
+				>
 					<Avatar src={avatarHashToURL(avatarHash)} />
-					<Typography sx={{
-                        fontWeight: 700
-                    }}>{String(personaName ?? steamId)}</Typography>
+					<Typography
+						sx={{
+							fontWeight: 700,
+						}}
+					>
+						{String(personaName ?? steamId)}
+					</Typography>
 				</Box>
 				{menu}
 			</Menu>
-        </>
-    );
+		</>
+	);
 };
 
 export const PersonCell = React.memo(

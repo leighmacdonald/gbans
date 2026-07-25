@@ -9,14 +9,15 @@ export const TableCellStringHidden = ({ children }: PropsWithChildren) => {
 	}, []);
 
 	return (
-        <Typography
-            onClick={onClick}
-            sx={{
-                padding: "none",
-                "&": { textDecoration: "underline" },
-                "&:hover": { cursor: "pointer" }
-            }}>
-            {hidden ? "Hidden" : children}
-        </Typography>
-    );
+		<Typography
+			onClick={onClick}
+			sx={{
+				padding: "none",
+				"&": { textDecoration: "underline" },
+				"&:hover": { cursor: "pointer" },
+			}}
+		>
+			{hidden ? "Hidden" : children}
+		</Typography>
+	);
 };

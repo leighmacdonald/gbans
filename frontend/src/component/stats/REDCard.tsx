@@ -11,15 +11,15 @@ export const REDCard = ({ score, winner }: { score: number; winner: boolean }) =
 				backgroundRepeat: "no-repeat",
 				// backgroundSize: "cover",
 				backgroundPosition: "left",
+				flex: 1,
+				height: 65,
+				textAlign: "right",
+				paddingRight: 2,
+				paddingTo: 1,
 			}}
-			flex={1}
-			height={65}
-			textAlign={"right"}
-			paddingRight={2}
-			paddingTop={1}
 		>
 			{/*<BoxImg src={red_logo} />*/}
-			<Typography variant="h1" fontFamily={"TF2 Build"} color={winner ? "success" : "error"}>
+			<Typography variant="h1" sx={{ fontFamily: "TF2 Build", color: winner ? "success" : "error" }}>
 				{score}
 			</Typography>
 		</Box>

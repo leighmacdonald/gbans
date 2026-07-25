@@ -19,6 +19,7 @@ import {
 	deleteAdminGroup,
 	groups,
 } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
+import { finalTransport } from "../../transport.ts";
 import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
 import { SMAdminEditorModal } from "../modal/SMAdminEditorModal.tsx";
 import { SMGroupSelectModal } from "../modal/SMGroupSelectModal.tsx";
@@ -43,7 +44,7 @@ export const SMAdminsTable = () => {
 				groups: groupsList?.groups,
 			})) as Admin;
 			queryClient.invalidateQueries({
-				queryKey: createConnectQueryKey({ schema: admins }),
+				queryKey: createConnectQueryKey({ schema: admins, transport: finalTransport, cardinality: "finite" }),
 			});
 			sendFlash("success", `Admin created successfully: ${admin.name}`);
 		} catch (e) {
@@ -54,7 +55,7 @@ export const SMAdminsTable = () => {
 	const deleteAdminFn = useMutation(deleteAdmin, {
 		onSuccess: () => {
 			queryClient.invalidateQueries({
-				queryKey: createConnectQueryKey({ schema: admins }),
+				queryKey: createConnectQueryKey({ schema: admins, transport: finalTransport, cardinality: "finite" }),
 			});
 			sendFlash("success", "Admin deleted successfully");
 		},
@@ -64,7 +65,7 @@ export const SMAdminsTable = () => {
 	const addGroupMutation = useMutation(addAdminGroup, {
 		onSuccess: (edited) => {
 			queryClient.invalidateQueries({
-				queryKey: createConnectQueryKey({ schema: admins }),
+				queryKey: createConnectQueryKey({ schema: groups, transport: finalTransport, cardinality: "finite" }),
 			});
 			sendFlash("success", `Admin updated successfully: ${edited.admin?.name}`);
 		},
@@ -74,7 +75,7 @@ export const SMAdminsTable = () => {
 	const delGroupMutation = useMutation(deleteAdminGroup, {
 		onSuccess: () => {
 			queryClient.invalidateQueries({
-				queryKey: createConnectQueryKey({ schema: admins }),
+				queryKey: createConnectQueryKey({ schema: groups, transport: finalTransport, cardinality: "finite" }),
 			});
 			sendFlash("success", "Admin group removed successfully");
 		},
@@ -89,7 +90,11 @@ export const SMAdminsTable = () => {
 					groups: groupsList?.groups,
 				});
 				queryClient.invalidateQueries({
-					queryKey: createConnectQueryKey({ schema: admins }),
+					queryKey: createConnectQueryKey({
+						schema: admins,
+						transport: finalTransport,
+						cardinality: "finite",
+					}),
 				});
 				sendFlash("success", `Admin updated successfully: ${admin.name}`);
 			} catch (e) {
@@ -120,7 +125,7 @@ export const SMAdminsTable = () => {
 	const onAddGroup = useCallback(
 		async (admin: Admin) => {
 			try {
-				const existingGroupIds = groupsList?.groups.map((g) => g.groupId) ?? [];
+				const existingGroupIds = admin.groups.map((g) => g.groupId);
 				const group = (await NiceModal.show(SMGroupSelectModal, {
 					groups: groupsList?.groups?.filter((g) => !existingGroupIds.includes(g.groupId)),
 				})) as Group;
@@ -135,7 +140,7 @@ export const SMAdminsTable = () => {
 	const onDelGroup = useCallback(
 		async (admin: Admin) => {
 			try {
-				const existingGroupIds = groupsList?.groups.map((g) => g.groupId) ?? [];
+				const existingGroupIds = admin.groups.map((g) => g.groupId);
 				const group = (await NiceModal.show(SMGroupSelectModal, {
 					groups: groupsList?.groups?.filter((g) => existingGroupIds.includes(g.groupId)),
 				})) as Group;
@@ -144,7 +149,7 @@ export const SMAdminsTable = () => {
 				sendError(e);
 			}
 		},
-		[delGroupMutation, sendError, groupsList?.groups.map, groupsList?.groups?.filter],
+		[delGroupMutation, sendError, groupsList?.groups],
 	);
 
 	const columns = useMemo(() => {

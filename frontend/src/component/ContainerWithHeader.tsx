@@ -22,16 +22,17 @@ export const ContainerWithHeader = ({
 	padding = 1,
 }: PropsWithChildren<ContainerWithHeaderProps>) => {
 	return (
-        <Paper elevation={elevation}>
-            <Heading iconLeft={iconLeft}>{title}</Heading>
-            <Stack
-                spacing={spacing}
-                sx={{
-                    padding: padding,
-                    marginTop
-                }}>
+		<Paper elevation={elevation}>
+			<Heading iconLeft={iconLeft}>{title}</Heading>
+			<Stack
+				spacing={spacing}
+				sx={{
+					padding,
+					marginTop,
+				}}
+			>
 				{children}
 			</Stack>
-        </Paper>
-    );
+		</Paper>
+	);
 };

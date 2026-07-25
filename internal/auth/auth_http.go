@@ -45,7 +45,7 @@ func NewAuthHandler(mux *http.ServeMux, auth *Authentication, config *config.Con
 	}
 
 	mux.HandleFunc("GET /auth/callback", handler.onSteamOIDCCallback())
-	mux.HandleFunc("GET /api/auth/logout", handler.onAPILogout())
+	mux.HandleFunc("POST /api/auth/logout", handler.onAPILogout())
 }
 
 func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {

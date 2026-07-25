@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	);
 
 	const logout = useCallback(async () => {
-		await fetch("/api/auth/logout", { credentials: "same-origin" });
+		await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
 		setProfile(defaultProfile);
 
 		// Trigger logout on other tabs.

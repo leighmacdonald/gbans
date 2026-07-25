@@ -11,7 +11,6 @@ import (
 	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/anypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
@@ -401,7 +400,7 @@ var File_chat_v1_chat_proto protoreflect.FileDescriptor
 
 const file_chat_v1_chat_proto_rawDesc = "" +
 	"\n" +
-	"\x12chat/v1/chat.proto\x12\achat.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x19google/protobuf/any.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"x\n" +
+	"\x12chat/v1/chat.proto\x12\achat.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"x\n" +
 	"\x13QueryContextRequest\x128\n" +
 	"\x11person_message_id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\x0fpersonMessageId\x12'\n" +
 	"\apadding\x18\x02 \x01(\x05B\r\xbaH\n" +

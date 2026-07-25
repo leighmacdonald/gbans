@@ -31,20 +31,21 @@ interface MDLnkProps {
 
 const MDLink = ({ children, href, title }: MDLnkProps) => {
 	return (
-        <Typography
-            variant={"body1"}
-            component={RouterLink}
-            to={href}
-            title={title}
-            sx={{
-                fontWeight: 700,
-                color: (theme) => theme.palette.text.primary,
-                textDecoration: "none",
-                "&:hover": { textDecoration: "underline" }
-            }}>
-            {children}
-        </Typography>
-    );
+		<Typography
+			variant={"body1"}
+			component={RouterLink}
+			to={href}
+			title={title}
+			sx={{
+				fontWeight: 700,
+				color: (theme) => theme.palette.text.primary,
+				textDecoration: "none",
+				"&:hover": { textDecoration: "underline" },
+			}}
+		>
+			{children}
+		</Typography>
+	);
 };
 
 const mdRenderOpts: Options = {
@@ -97,15 +98,16 @@ export const MarkDownRenderer = ({
 	}, [assetURL, bodyMd]);
 
 	return (
-        <Box
-            sx={{
-                paddingLeft: 2,
-                paddingRight: 2,
-                paddingBottom: 2,
-                maxWidth: "100%",
-                minHeight: minHeight
-            }}>
-            <MuiMarkdown options={mdRenderOpts}>{links}</MuiMarkdown>
-        </Box>
-    );
+		<Box
+			sx={{
+				paddingLeft: 2,
+				paddingRight: 2,
+				paddingBottom: 2,
+				maxWidth: "100%",
+				minHeight: minHeight,
+			}}
+		>
+			<MuiMarkdown options={mdRenderOpts}>{links}</MuiMarkdown>
+		</Box>
+	);
 };

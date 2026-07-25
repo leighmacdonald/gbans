@@ -64,23 +64,24 @@ function ReportView() {
 
 	const reportStatusView = useMemo(() => {
 		return (
-            <ContainerWithHeader title={"Report Status"} iconLeft={<AccountBalanceIcon />}>
-                <Typography
-                    variant={"h4"}
-                    align={"center"}
-                    sx={{
-                        padding: 2,
-                        color: "#111111",
+			<ContainerWithHeader title={"Report Status"} iconLeft={<AccountBalanceIcon />}>
+				<Typography
+					variant={"h4"}
+					align={"center"}
+					sx={{
+						padding: 2,
+						color: "#111111",
 
-                        backgroundColor: reportStatusColour(
+						backgroundColor: reportStatusColour(
 							reportResp?.report?.report?.reportStatus ?? ReportStatus.OPENED_UNSPECIFIED,
 							theme,
-						)
-                    }}>
+						),
+					}}
+				>
 					{reportStatusString(reportResp?.report?.report?.reportStatus ?? ReportStatus.OPENED_UNSPECIFIED)}
 				</Typography>
-            </ContainerWithHeader>
-        );
+			</ContainerWithHeader>
+		);
 	}, [reportResp?.report?.report?.reportStatus, theme]);
 
 	if (isLoadingReport || isLoadingBan) {

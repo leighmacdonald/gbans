@@ -10,7 +10,6 @@ import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/descriptorpb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
@@ -2694,7 +2693,7 @@ var File_config_v1_config_proto protoreflect.FileDescriptor
 
 const file_config_v1_config_proto_rawDesc = "" +
 	"\n" +
-	"\x16config/v1/config.proto\x12\tconfig.v1\x1a\x1bbuf/validate/validate.proto\x1a google/protobuf/descriptor.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"S\n" +
+	"\x16config/v1/config.proto\x12\tconfig.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"S\n" +
 	"\x11ChangelogResponse\x12>\n" +
 	"\tchangelog\x18\x01 \x03(\v2\x18.config.v1.GithubReleaseB\x06\xbaH\x03\xc8\x01\x01R\tchangelog\"\xd2\b\n" +
 	"\fInfoResponse\x12#\n" +

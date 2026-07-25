@@ -1,12 +1,10 @@
 // Package sliceutil provides basic generic functions for operating over slices
 package sliceutil
 
-import (
-	"golang.org/x/exp/constraints"
-)
-
 type Number interface {
-	constraints.Integer | constraints.Float
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
+		~float32 | ~float64
 }
 
 // Uniq will return a unique list of value from the input list.

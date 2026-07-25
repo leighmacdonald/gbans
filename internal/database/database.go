@@ -159,6 +159,10 @@ func (db *PgStore) Connect(ctx context.Context) error {
 		return fmt.Errorf("unable to parse db config/dsn: %w", errConfig)
 	}
 
+	if cfg.MaxConns == 0 {
+		cfg.MaxConns = 8
+	}
+
 	cfg.AfterConnect = func(_ context.Context, conn *pgx.Conn) error {
 		pgxuuid.Register(conn.TypeMap())
 

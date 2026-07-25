@@ -5,21 +5,23 @@ export const FmtWhenGt = (value: number, fmt?: (value: number) => string, gt: nu
 	return value > 1000 ? (
 		<Tooltip title={`${value}`}>
 			<Typography
-                variant={"body1"}
-                sx={{
-                    padding: 0,
-                    fontFamily: "Monospace"
-                }}>
+				variant={"body1"}
+				sx={{
+					padding: 0,
+					fontFamily: "Monospace",
+				}}
+			>
 				{value > gt ? (fmt ? fmt(value) : `${value}`) : fallback}
 			</Typography>
 		</Tooltip>
 	) : (
 		<Typography
-            variant={"body1"}
-            sx={{
-                padding: 0,
-                fontFamily: "Monospace"
-            }}>
+			variant={"body1"}
+			sx={{
+				padding: 0,
+				fontFamily: "Monospace",
+			}}
+		>
 			{value > gt ? (fmt ? fmt(value) : `${value}`) : fallback}
 		</Typography>
 	);

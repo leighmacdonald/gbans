@@ -97,17 +97,20 @@ export const BanModPanel = ({ banId }: { banId: number }) => {
 	}
 
 	return (
-        <ContainerWithHeader title={"Moderation Tools"} iconLeft={<AddModeratorIcon />}>
-            <form
+		<ContainerWithHeader title={"Moderation Tools"} iconLeft={<AddModeratorIcon />}>
+			<form
 				onSubmit={async (e) => {
 					e.preventDefault();
 					e.stopPropagation();
 					await form.handleSubmit();
 				}}
 			>
-				<Stack spacing={2} sx={{
-                    padding: 2
-                }}>
+				<Stack
+					spacing={2}
+					sx={{
+						padding: 2,
+					}}
+				>
 					<Stack direction={"row"} spacing={2}>
 						{!enabled ? (
 							<>
@@ -135,9 +138,12 @@ export const BanModPanel = ({ banId }: { banId: number }) => {
 								</form.AppForm>
 							</>
 						) : (
-							<Typography variant={"h6"} sx={{
-                                textAlign: "center"
-                            }}>
+							<Typography
+								variant={"h6"}
+								sx={{
+									textAlign: "center",
+								}}
+							>
 								Ban Expired
 							</Typography>
 						)}
@@ -217,6 +223,6 @@ export const BanModPanel = ({ banId }: { banId: number }) => {
 					</ButtonGroup>
 				</Stack>
 			</form>
-        </ContainerWithHeader>
-    );
+		</ContainerWithHeader>
+	);
 };

@@ -4,7 +4,6 @@ package chat.v1;
 
 import "buf/validate/validate.proto";
 import "database/query/v1/filter.proto";
-import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
 
 service ChatService {

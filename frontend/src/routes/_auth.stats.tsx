@@ -397,8 +397,8 @@ function StatsComponent() {
 		return <ErrorDetails error={error} />;
 	}
 	return (
-        <Grid container spacing={2}>
-            <Grid size={{ xs: 12 }}>
+		<Grid container spacing={2}>
+			<Grid size={{ xs: 12 }}>
 				<Paper>
 					<form
 						onSubmit={async (e) => {
@@ -407,14 +407,18 @@ function StatsComponent() {
 							await form.handleSubmit();
 						}}
 					>
-						<Stack direction={"row"} spacing={2} sx={{
-                            padding: 1
-                        }}>
+						<Stack
+							direction={"row"}
+							spacing={2}
+							sx={{
+								padding: 1,
+							}}
+						>
 							<form.AppField
 								name={"statsBucketID"}
 								children={(field) => {
 									return (
-										<field.BucketField
+										<field.SelectBucketField
 											items={statBuckets?.buckets ?? []}
 											label="Stats Group"
 											variant={"standard"}
@@ -433,7 +437,7 @@ function StatsComponent() {
 								name={"timeBucket"}
 								children={(field) => {
 									return (
-										<field.StatsTimeBucketField
+										<field.SelectStatsTimeBucketField
 											items={enumValues(TimeBucket)}
 											label="Time Range"
 											variant={"standard"}
@@ -452,7 +456,7 @@ function StatsComponent() {
 								name={"variant"}
 								children={(field) => {
 									return (
-										<field.StatsVariantField
+										<field.SelectStatsVariantField
 											items={enumValues(Variant)}
 											label="Stat Type"
 											variant={"standard"}
@@ -474,7 +478,7 @@ function StatsComponent() {
 								name={"variantKey"}
 								children={(field) => {
 									return (
-										<field.SelectStringField
+										<field.SelectSelectStringField
 											items={sortedVariantKeys}
 											label="Filter By"
 											variant={"standard"}
@@ -501,9 +505,9 @@ function StatsComponent() {
 					</form>
 				</Paper>
 			</Grid>
-            <Grid size={{ xs: 12 }}>
+			<Grid size={{ xs: 12 }}>
 				<SortableTable table={table} title={title} />
 			</Grid>
-        </Grid>
-    );
+		</Grid>
+	);
 }

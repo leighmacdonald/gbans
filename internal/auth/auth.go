@@ -164,6 +164,33 @@ func (u *Authentication) ExchangeCode(code string) (string, bool) {
 
 func RegisterExchangeHandler(mux *http.ServeMux, auth *Authentication, externalURL string) {
 	mux.HandleFunc("POST /api/auth/exchange", func(res http.ResponseWriter, req *http.Request) {
+		origin := req.Header.Get("Origin")
+		if origin == "" {
+			httphelper.RespondJSON(res, http.StatusForbidden, map[string]string{"error": "missing origin header"})
+
+			return
+		}
+
+		parsedOrigin, errParse := url.Parse(origin)
+		if errParse != nil {
+			httphelper.RespondJSON(res, http.StatusForbidden, map[string]string{"error": "invalid origin header"})
+
+			return
+		}
+
+		parsedExternal, errExternal := url.Parse(externalURL)
+		if errExternal != nil {
+			httphelper.RespondJSON(res, http.StatusInternalServerError, map[string]string{"error": "server configuration error"})
+
+			return
+		}
+
+		if parsedOrigin.Hostname() != parsedExternal.Hostname() {
+			httphelper.RespondJSON(res, http.StatusForbidden, map[string]string{"error": "origin mismatch"})
+
+			return
+		}
+
 		var body struct {
 			Code string `json:"code"`
 		}
@@ -180,19 +207,16 @@ func RegisterExchangeHandler(mux *http.ServeMux, auth *Authentication, externalU
 			return
 		}
 
-		parsedExternal, errExternal := url.Parse(externalURL)
-		if errExternal == nil {
-			http.SetCookie(res, &http.Cookie{ //nolint:gosec
-				Name:     JWTCookieName,
-				Value:    token,
-				MaxAge:   int(TokenDuration.Seconds()),
-				Path:     "/",
-				Domain:   parsedExternal.Hostname(),
-				Secure:   strings.HasPrefix(strings.ToLower(externalURL), "https://"),
-				HttpOnly: true,
-				SameSite: http.SameSiteStrictMode,
-			})
-		}
+		http.SetCookie(res, &http.Cookie{ //nolint:gosec
+			Name:     JWTCookieName,
+			Value:    token,
+			MaxAge:   int(TokenDuration.Seconds()),
+			Path:     "/",
+			Domain:   parsedExternal.Hostname(),
+			Secure:   strings.HasPrefix(strings.ToLower(externalURL), "https://"),
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+		})
 
 		httphelper.RespondJSON(res, http.StatusOK, map[string]string{"token": token})
 	})

@@ -169,7 +169,7 @@ function ForumPage() {
 
 const ForumThreadRow = ({ thread }: { thread: ThreadWithSource }) => {
 	return (
-        <Grid
+		<Grid
 			container
 			spacing={1}
 			sx={{
@@ -178,15 +178,18 @@ const ForumThreadRow = ({ thread }: { thread: ThreadWithSource }) => {
 				},
 			}}
 		>
-            <Grid size={{ xs: 12, md: 8 }}>
+			<Grid size={{ xs: 12, md: 8 }}>
 				<Stack direction={"row"} spacing={2}>
 					<VCenteredElement
 						icon={<Avatar alt={thread.personaName} src={avatarHashToURL(thread.avatarHash, "medium")} />}
 					/>
 					<Stack>
-						<Stack direction={"row"} sx={{
-                            justifyContent: "space-between"
-                        }}>
+						<Stack
+							direction={"row"}
+							sx={{
+								justifyContent: "space-between",
+							}}
+						>
 							<ForumRowLink
 								label={String(thread.thread?.title)}
 								to={`/forums/thread/${thread.thread?.forumThreadId}`}
@@ -219,18 +222,24 @@ const ForumThreadRow = ({ thread }: { thread: ThreadWithSource }) => {
 					</Stack>
 				</Stack>
 			</Grid>
-            <Grid size={{ xs: 6, md: 1 }}>
-				<Grid container sx={{
-                    justifyContent: "space-between"
-                }}>
+			<Grid size={{ xs: 6, md: 1 }}>
+				<Grid
+					container
+					sx={{
+						justifyContent: "space-between",
+					}}
+				>
 					<Grid size={{ xs: 6 }}>
 						<Typography variant={"body1"} align={"left"}>
 							Replies:
 						</Typography>
 					</Grid>
-					<Grid size={{ xs: 6 }} sx={{
-                        alignContent: "flex-end"
-                    }}>
+					<Grid
+						size={{ xs: 6 }}
+						sx={{
+							alignContent: "flex-end",
+						}}
+					>
 						<Typography variant={"body1"} align={"right"}>
 							{thread.thread?.replies}
 						</Typography>
@@ -238,31 +247,39 @@ const ForumThreadRow = ({ thread }: { thread: ThreadWithSource }) => {
 					<Grid size={{ xs: 6 }}>
 						<Typography variant={"body2"}>Views:</Typography>
 					</Grid>
-					<Grid size={{ xs: 6 }} sx={{
-                        alignContent: "flex-end"
-                    }}>
+					<Grid
+						size={{ xs: 6 }}
+						sx={{
+							alignContent: "flex-end",
+						}}
+					>
 						<Typography variant={"body2"} align={"right"}>
 							{thread.thread?.views}
 						</Typography>
 					</Grid>
 				</Grid>
 			</Grid>
-            <Grid size={{ xs: 6, md: 3 }}>
+			<Grid size={{ xs: 6, md: 3 }}>
 				{thread.recentForumMessageId && Number(thread.recentForumMessageId) > 0 ? (
-					<Stack direction={"row"} spacing={1} sx={{
-                        justifyContent: "end"
-                    }}>
+					<Stack
+						direction={"row"}
+						spacing={1}
+						sx={{
+							justifyContent: "end",
+						}}
+					>
 						<Stack>
 							<Typography
-                                variant={"body2"}
-                                align={"right"}
-                                component={RouterLink}
-                                to={`/forums/thread/${thread.thread?.forumThreadId}#${thread.recentForumMessageId}`}
-                                sx={{
-                                    fontWeight: 700,
-                                    color: (theme) => theme.palette.text.primary,
-                                    textDecoration: "none"
-                                }}>
+								variant={"body2"}
+								align={"right"}
+								component={RouterLink}
+								to={`/forums/thread/${thread.thread?.forumThreadId}#${thread.recentForumMessageId}`}
+								sx={{
+									fontWeight: 700,
+									color: (theme) => theme.palette.text.primary,
+									textDecoration: "none",
+								}}
+							>
 								{renderTimestamp(thread.recentCreatedOn)}
 							</Typography>
 							<Typography
@@ -287,6 +304,6 @@ const ForumThreadRow = ({ thread }: { thread: ThreadWithSource }) => {
 					</Stack>
 				) : null}
 			</Grid>
-        </Grid>
-    );
+		</Grid>
+	);
 };

@@ -15,19 +15,23 @@ export const TabSection = <Tabs,>({
 	description: string;
 }) => {
 	return (
-        <Grid
-            size={{ xs: 8, sm: 9, md: 10 }}
-            sx={{
-                display: tab === currentTab ? undefined : "none",
-                marginTop: 1
-            }}>
-            <Typography variant={"h1"}>{label}</Typography>
-            <Typography variant={"subtitle1"} sx={{
-                marginBottom: 2
-            }}>
+		<Grid
+			size={{ xs: 8, sm: 9, md: 10 }}
+			sx={{
+				display: tab === currentTab ? undefined : "none",
+				marginTop: 1,
+			}}
+		>
+			<Typography variant={"h1"}>{label}</Typography>
+			<Typography
+				variant={"subtitle1"}
+				sx={{
+					marginBottom: 2,
+				}}
+			>
 				{description}
 			</Typography>
-            {children}
-        </Grid>
-    );
+			{children}
+		</Grid>
+	);
 };

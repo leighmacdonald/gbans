@@ -107,17 +107,18 @@ function BanPage() {
 	}
 
 	return (
-        <Grid container spacing={2}>
-            <Grid size={{ xs: 8 }}>
+		<Grid container spacing={2}>
+			<Grid size={{ xs: 8 }}>
 				<Stack spacing={2}>
 					{canPost && (banMessages?.messages ?? []).length === 0 && (
 						<ContainerWithHeader title={`Ban Appeal #${banData.ban.banId}`}>
 							<Typography
-                                variant={"body2"}
-                                sx={{
-                                    padding: 2,
-                                    textAlign: "center"
-                                }}>
+								variant={"body2"}
+								sx={{
+									padding: 2,
+									textAlign: "center",
+								}}
+							>
 								You can start the appeal process by replying on this form.
 							</Typography>
 						</ContainerWithHeader>
@@ -148,9 +149,13 @@ function BanPage() {
 									await form.handleSubmit();
 								}}
 							>
-								<Grid container spacing={2} sx={{
-                                    padding: 1
-                                }}>
+								<Grid
+									container
+									spacing={2}
+									sx={{
+										padding: 1,
+									}}
+								>
 									<Grid size={{ xs: 12 }}>
 										<form.AppField
 											name={"bodyMd"}
@@ -183,18 +188,19 @@ function BanPage() {
 					{!canPost && (
 						<Paper elevation={1}>
 							<Typography
-                                variant={"body2"}
-                                sx={{
-                                    padding: 2,
-                                    textAlign: "center"
-                                }}>
+								variant={"body2"}
+								sx={{
+									padding: 2,
+									textAlign: "center",
+								}}
+							>
 								The ban appeal is closed: {AppealState[banData.ban?.appealState]}
 							</Typography>
 						</Paper>
 					)}
 				</Stack>
 			</Grid>
-            <Grid size={{ xs: 4 }}>
+			<Grid size={{ xs: 4 }}>
 				<Stack spacing={2}>
 					<ProfileInfoBox steamId={banData.ban.targetId} />
 
@@ -251,6 +257,6 @@ function BanPage() {
 					{permissionLevel() >= Privilege.MODERATOR && <BanModPanel banId={banData.ban.banId} />}
 				</Stack>
 			</Grid>
-        </Grid>
-    );
+		</Grid>
+	);
 }

@@ -24,16 +24,17 @@ export const RoundTable = ({ data }: { data: MatchRound[] }) => {
 					const colour =
 						row.original.winner === Team.RED ? red : row.original.winner === Team.BLU ? blu : undefined;
 					return (
-                        <Typography
-                            sx={{
-                                bgcolor: colour,
-                                width: "100%",
-                                textAlign: "center",
-                                fontFamily: "TF2 Build"
-                            }}>
-                            {row.original.winner === Team.RED ? "RED" : row.original.winner === Team.BLU ? "BLU" : ""}
-                        </Typography>
-                    );
+						<Typography
+							sx={{
+								bgcolor: colour,
+								width: "100%",
+								textAlign: "center",
+								fontFamily: "TF2 Build",
+							}}
+						>
+							{row.original.winner === Team.RED ? "RED" : row.original.winner === Team.BLU ? "BLU" : ""}
+						</Typography>
+					);
 				},
 			}),
 			roundColumnHelper.accessor("durationMs", {

@@ -93,17 +93,21 @@ export const ReportMessageView = ({ message, assetURL }: ReportMessageViewProps)
 
 	if (editing) {
 		return (
-            <form
+			<form
 				onSubmit={async (e) => {
 					e.preventDefault();
 					e.stopPropagation();
 					await form.handleSubmit();
 				}}
 			>
-                <Paper>
-					<Grid container spacing={2} sx={{
-                        padding: 1
-                    }}>
+				<Paper>
+					<Grid
+						container
+						spacing={2}
+						sx={{
+							padding: 1,
+						}}
+					>
 						<Grid size={{ xs: 12 }}>
 							<form.AppField
 								name={"bodyMd"}
@@ -125,8 +129,8 @@ export const ReportMessageView = ({ message, assetURL }: ReportMessageViewProps)
 						</Grid>
 					</Grid>
 				</Paper>
-            </form>
-        );
+			</form>
+		);
 	} else {
 		const d1 = formatDistance(message.createdOn ? timestampDate(message.createdOn) : new Date(), new Date(), {
 			addSuffix: true,

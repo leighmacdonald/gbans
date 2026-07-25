@@ -32,8 +32,8 @@ export const SortableTable = <TData extends MRT_RowData>({
 	unknownRowCount = false,
 }: Props<TData>) => {
 	return (
-        <Paper>
-            {!hideHeader && (
+		<Paper>
+			{!hideHeader && (
 				<Box
 					sx={() => ({
 						display: "flex",
@@ -51,13 +51,14 @@ export const SortableTable = <TData extends MRT_RowData>({
 				>
 					<Box>
 						<Typography
-                            variant="h6"
-                            sx={{
-                                padding: 1,
-                                display: "inline-block",
-                                fontWeight: 900,
-                                color: "white"
-                            }}>
+							variant="h6"
+							sx={{
+								padding: 1,
+								display: "inline-block",
+								fontWeight: 900,
+								color: "white",
+							}}
+						>
 							{title}
 						</Typography>
 						{buttons}
@@ -74,11 +75,11 @@ export const SortableTable = <TData extends MRT_RowData>({
 					</Box>
 				</Box>
 			)}
-            <Box sx={{ display: "grid", width: "100%" }}>
+			<Box sx={{ display: "grid", width: "100%" }}>
 				<MRT_ToolbarAlertBanner stackAlertBanner table={table} />
 			</Box>
-            <MRT_TableContainer table={table} />
-            {!hidePagination && (
+			<MRT_TableContainer table={table} />
+			{!hidePagination && (
 				<Box>
 					<Box sx={{ display: "flex", justifyContent: "flex-end" }}>
 						{unknownRowCount ? (
@@ -89,6 +90,6 @@ export const SortableTable = <TData extends MRT_RowData>({
 					</Box>
 				</Box>
 			)}
-        </Paper>
-    );
+		</Paper>
+	);
 };

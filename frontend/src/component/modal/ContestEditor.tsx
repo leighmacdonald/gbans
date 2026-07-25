@@ -55,8 +55,8 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 	});
 
 	return (
-        <Dialog fullWidth {...muiDialogV5(modal)}>
-            <form
+		<Dialog fullWidth {...muiDialogV5(modal)}>
+			<form
 				onSubmit={async (e) => {
 					e.preventDefault();
 					e.stopPropagation();
@@ -213,6 +213,6 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 					</Grid>
 				</DialogActions>
 			</form>
-        </Dialog>
-    );
+		</Dialog>
+	);
 });

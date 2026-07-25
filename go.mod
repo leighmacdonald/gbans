@@ -44,7 +44,6 @@ require (
 	github.com/viant/afs v1.30.0
 	github.com/yohcop/openid-go v1.0.1
 	golang.org/x/crypto v0.54.0
-	golang.org/x/exp v0.0.0-20260718201538-764159d718ef
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/sync v0.22.0
 )
@@ -53,6 +52,7 @@ require (
 	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/mmcdole/goxpp/v2 v2.0.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
+	golang.org/x/exp v0.0.0-20260718201538-764159d718ef // indirect
 )
 
 require (

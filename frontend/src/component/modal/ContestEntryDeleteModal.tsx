@@ -21,21 +21,21 @@ export const ContestEntryDeleteModal = NiceModal.create(({ contestEntryId }: { c
 	// }, [contest_entry_id, modal]);
 
 	return (
-        // <Formik initialValues={{}} onSubmit={onSubmit}>
-        // </Formik>
-        <Dialog {...muiDialogV5(modal)}>
-            <DialogTitle>Are you sure you want to delete contest entry? ({contestEntryId})</DialogTitle>
-            <DialogContent>
+		// <Formik initialValues={{}} onSubmit={onSubmit}>
+		// </Formik>
+		<Dialog {...muiDialogV5(modal)}>
+			<DialogTitle>Are you sure you want to delete contest entry? ({contestEntryId})</DialogTitle>
+			<DialogContent>
 				<Stack spacing={2}>
 					<Typography variant={"body1"}>
 						This is irreversible and will also remove user vote history for the entry
 					</Typography>
 				</Stack>
 			</DialogContent>
-            <DialogActions>
+			<DialogActions>
 				{/*<CancelButton />*/}
 				{/*<SubmitButton />*/}
 			</DialogActions>
-        </Dialog>
-    );
+		</Dialog>
+	);
 });

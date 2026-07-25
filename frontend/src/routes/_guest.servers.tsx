@@ -303,6 +303,7 @@ function Servers() {
 			<Stack spacing={3}>
 				<Paper elevation={3}>
 					<MapContainer
+						center={pos}
 						zoom={3}
 						scrollWheelZoom={true}
 						id={"map"}
