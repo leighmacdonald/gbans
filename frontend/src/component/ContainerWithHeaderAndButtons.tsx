@@ -57,23 +57,29 @@ export const HeadingWithButtons: FC<HeadingWithButtonsProps> = ({
 		<Grid
 			container
 			direction="row"
-			// alignItems="center"
-			//justifyContent={align ?? 'flex-start'}
+			//
 
 			sx={{
+				alignItems: "center",
+				justifyContent: "flex-start",
 				backgroundColor: bgColor ?? theme.palette.primary.main,
 				color: theme.palette.common.white,
+				padding: 1,
 				...tf2Fonts,
 			}}
 		>
 			{iconLeft && (
-				<Grid size="auto">
+				<Grid size="auto" sx={{ paddingRight: 1 }}>
 					<VCenteredElement icon={iconLeft} />
 				</Grid>
 			)}
 
 			<Grid size="grow">{children}</Grid>
-			{buttons && <Grid size="auto">{buttons}</Grid>}
+			{buttons && (
+				<Grid size="auto" sx={{ paddingRight: 1 }}>
+					{buttons}
+				</Grid>
+			)}
 		</Grid>
 	);
 };

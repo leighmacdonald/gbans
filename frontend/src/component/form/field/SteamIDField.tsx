@@ -1,6 +1,6 @@
 import { useQuery } from "@connectrpc/connect-query";
 import { QuestionMark } from "@mui/icons-material";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import HourglassBottomIcon from "@mui/icons-material/HourglassBottom";
 import Avatar from "@mui/material/Avatar";
 import InputAdornment from "@mui/material/InputAdornment";

@@ -459,7 +459,7 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.BaseUser, re
 
 	slog.Info("New report created", slog.Int64("report_id", int64(report.ReportID)))
 
-	if demo.DemoID > 0 && !demo.Archive {
+	if demo != nil && demo.DemoID > 0 && !demo.Archive {
 		if errMark := r.demos.MarkArchived(ctx, demo); errMark != nil {
 			slog.Error("Failed to mark demo as archived", slog.String("error", errMark.Error()))
 		}
