@@ -3,7 +3,7 @@ import FormControl from "@mui/material/FormControl";
 import FormHelperText from "@mui/material/FormHelperText";
 import InputLabel from "@mui/material/InputLabel";
 import OutlinedInput from "@mui/material/OutlinedInput";
-import { useStore } from "@tanstack/react-form";
+import { useSelector } from "@tanstack/react-form";
 import { useId, useMemo } from "react";
 import { useFieldContext } from "../../../contexts/formContext";
 
@@ -13,7 +13,7 @@ type Props = {
 
 export const NumberField = ({ label, id: idProp, min, max }: Props) => {
 	const field = useFieldContext<number>();
-	const errors = useStore(field.store, (state) => state.meta.errors);
+	const errors = useSelector(field.store, (state) => state.meta.errors);
 
 	let id = useId();
 	if (idProp) {

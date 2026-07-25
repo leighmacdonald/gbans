@@ -209,35 +209,37 @@ export const ReportViewComponent = ({
 								/>
 							))}
 						<Paper elevation={1}>
-							<form
-								onSubmit={async (e) => {
-									e.preventDefault();
-									e.stopPropagation();
-									await form.handleSubmit();
-								}}
-							>
-								<Grid container spacing={2}>
-									<Grid size={{ xs: 12 }}>
-										<form.AppField
-											name={"bodyMd"}
-											validators={{
-												onChange: z.string().min(2),
-											}}
-											children={(field) => {
-												return <field.MarkdownField label={"Message"} />;
-											}}
-										/>
+							<Box sx={{ padding: 2 }}>
+								<form
+									onSubmit={async (e) => {
+										e.preventDefault();
+										e.stopPropagation();
+										await form.handleSubmit();
+									}}
+								>
+									<Grid container spacing={2}>
+										<Grid size={{ xs: 12 }}>
+											<form.AppField
+												name={"bodyMd"}
+												validators={{
+													onChange: z.string().min(2),
+												}}
+												children={(field) => {
+													return <field.MarkdownField label={"Message"} />;
+												}}
+											/>
+										</Grid>
+										<Grid size={{ xs: 12 }}>
+											<form.AppForm>
+												<ButtonGroup>
+													<form.ResetButton />
+													<form.SubmitButton />
+												</ButtonGroup>
+											</form.AppForm>
+										</Grid>
 									</Grid>
-									<Grid size={{ xs: 12 }}>
-										<form.AppForm>
-											<ButtonGroup>
-												<form.ResetButton />
-												<form.SubmitButton />
-											</ButtonGroup>
-										</form.AppForm>
-									</Grid>
-								</Grid>
-							</form>
+								</form>
+							</Box>
 						</Paper>
 					</Stack>
 				</TabContext>

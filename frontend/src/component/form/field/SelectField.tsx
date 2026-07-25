@@ -2,7 +2,7 @@ import FormControl from "@mui/material/FormControl";
 import FormHelperText from "@mui/material/FormHelperText";
 import InputLabel from "@mui/material/InputLabel";
 import Select, { type SelectProps } from "@mui/material/Select";
-import { useStore } from "@tanstack/react-form";
+import { useSelector } from "@tanstack/react-form";
 import type { ReactNode } from "react";
 import { useFieldContext } from "../../../contexts/formContext.tsx";
 import { renderHelpText } from "./renderHelpText.ts";
@@ -17,7 +17,7 @@ type Props<TData> = {
 
 export const SelectField = <TData,>(props: Props<TData>) => {
 	const field = useFieldContext<TData>();
-	const errors = useStore(field.store, (state) => state.meta.errors);
+	const errors = useSelector(field.store, (state) => state.meta.errors);
 
 	return (
 		<FormControl fullWidth error={errors.length > 0}>

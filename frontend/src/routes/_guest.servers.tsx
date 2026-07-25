@@ -394,7 +394,7 @@ function Servers() {
 						</Grid>
 					</Grid>
 				</ContainerWithHeader>
-				<SortableTable table={table} title={"Servers"} hideToolbarButtons />
+				<SortableTable table={table} hideToolbarButtons />
 			</Stack>
 		</MapStateCtx.Provider>
 	);

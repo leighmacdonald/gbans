@@ -73,7 +73,7 @@
 	}
 }
 .mdxeditor-toolbar {
-	/* biome-ignore lint/complexity/noImportantStyles: todo */
+	/* biome-ignore lint/complexity/noImportantStyles: mdxeditor sets border-radius via css modules */
 	border-radius: 0 !important;
 }
 

@@ -2,6 +2,7 @@ import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { useMutation } from "@connectrpc/connect-query";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Card from "@mui/material/Card";
 import CardHeader from "@mui/material/CardHeader";
@@ -100,14 +101,8 @@ export const ReportMessageView = ({ message, assetURL }: ReportMessageViewProps)
 					await form.handleSubmit();
 				}}
 			>
-				<Paper>
-					<Grid
-						container
-						spacing={2}
-						sx={{
-							padding: 1,
-						}}
-					>
+				<Paper component={Box} sx={{ padding: 2 }}>
+					<Grid container spacing={2}>
 						<Grid size={{ xs: 12 }}>
 							<form.AppField
 								name={"bodyMd"}

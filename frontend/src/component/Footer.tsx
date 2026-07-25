@@ -30,40 +30,39 @@ export const Footer = ({ appInfo }: { appInfo: InfoResponse }): JSX.Element => {
 				height: "100%",
 			}}
 		>
-			<Grid container spacing={0} direction="row">
-				<Grid size={{ xs: 3 }}>
+			<Grid container direction="row" sx={{ justifyContent: "center" }}>
+				<Grid size={{ xs: 4 }}>
 					<Typography variant={"subtitle2"} color={"text"}>
 						Copyright &copy; {appInfo.siteName} {new Date().getFullYear()}{" "}
 					</Typography>
-					<Stack>
-						<Stack direction={"row"} spacing={1}>
-							<Link
-								component={RouterLink}
-								variant={"subtitle2"}
-								to={gbansUrl}
-								sx={{ color: theme.palette.text.primary }}
-							>
-								{appInfo.appVersion}
-							</Link>
-							<Link
-								component={RouterLink}
-								variant={"subtitle2"}
-								to={"/changelog"}
-								sx={{ color: theme.palette.text.primary }}
-							>
-								Changelog
-							</Link>
-						</Stack>
 
+					<Stack direction={"row"} spacing={1} sx={{ justifyContent: "center" }}>
 						<Link
 							component={RouterLink}
 							variant={"subtitle2"}
-							to={"/privacy-policy"}
+							to={gbansUrl}
 							sx={{ color: theme.palette.text.primary }}
 						>
-							Privacy Policy
+							{appInfo.appVersion}
+						</Link>
+						<Link
+							component={RouterLink}
+							variant={"subtitle2"}
+							to={"/changelog"}
+							sx={{ color: theme.palette.text.primary }}
+						>
+							Changelog
 						</Link>
 					</Stack>
+
+					<Link
+						component={RouterLink}
+						variant={"subtitle2"}
+						to={"/privacy-policy"}
+						sx={{ color: theme.palette.text.primary }}
+					>
+						Privacy Policy
+					</Link>
 				</Grid>
 			</Grid>
 		</Box>

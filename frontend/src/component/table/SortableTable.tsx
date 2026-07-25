@@ -11,10 +11,11 @@ import {
 	MRT_ToolbarAlertBanner,
 } from "material-react-table";
 import type { ReactNode } from "react";
+import { emptyOrNullString } from "../../util/types";
 
 type Props<TData extends MRT_RowData> = {
 	table: MRT_TableInstance<TData>;
-	title: string;
+	title?: string;
 	buttons?: ReactNode[];
 	hideToolbarButtons?: boolean;
 	hideHeader?: boolean;
@@ -41,29 +42,31 @@ export const SortableTable = <TData extends MRT_RowData>({
 						borderRadius: "4px 4px 0 0",
 						borderRadiusBottom: 0,
 						flexDirection: "row",
-						gap: "16px",
+						gap: 2,
 						justifyContent: "space-between",
-						padding: "16px 8px",
+						padding: 1,
 						"@media (max-width: 768px)": {
 							flexDirection: "column",
 						},
 					})}
 				>
-					<Box>
-						<Typography
-							variant="h6"
-							sx={{
-								padding: 1,
-								display: "inline-block",
-								fontWeight: 900,
-								color: "white",
-							}}
-						>
-							{title}
-						</Typography>
-						{buttons}
-					</Box>
-					<Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+					{!emptyOrNullString(title) && (
+						<Box>
+							<Typography
+								variant="h6"
+								sx={{
+									padding: 1,
+									display: "inline-block",
+									fontWeight: 900,
+									color: "white",
+								}}
+							>
+								{title}
+							</Typography>
+							{buttons}
+						</Box>
+					)}
+					<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
 						{!hideToolbarButtons && (
 							<>
 								<MRT_ShowHideColumnsButton table={table} sx={{ color: "primary.contrastText" }} />

@@ -306,7 +306,13 @@ const ReportCreateForm = (): JSX.Element => {
 	});
 
 	return (
-		<ContainerWithHeader title={"Create New Report"} iconLeft={<EditNotificationsIcon />} spacing={2} marginTop={3}>
+		<ContainerWithHeader
+			title={"Create New Report"}
+			iconLeft={<EditNotificationsIcon />}
+			spacing={2}
+			marginTop={3}
+			padding={2}
+		>
 			<form
 				id={"reportForm"}
 				onSubmit={async (e) => {

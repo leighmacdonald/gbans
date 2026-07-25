@@ -133,7 +133,7 @@ function ForumThreadPage() {
 				children: (
 					<Box>
 						{isFirstMessage && (
-							<Typography variant={"body1"} fontWeight={700} color={theme.palette.error.dark}>
+							<Typography variant={"body1"} sx={{ fontWeight: 700, color: theme.palette.error.dark }}>
 								Please be aware that by deleting the first post in the thread, this will result in the
 								deletion of the <i>entire thread</i>.
 							</Typography>
@@ -184,7 +184,7 @@ function ForumThreadPage() {
 		} else if (threadData?.thread?.forumThreadId && !threadData.thread.locked) {
 			return (
 				<Paper>
-					<Box padding={2}>
+					<Box sx={{ padding: 2 }}>
 						<form
 							onSubmit={async (e) => {
 								e.preventDefault();
@@ -192,7 +192,7 @@ function ForumThreadPage() {
 								await form.handleSubmit();
 							}}
 						>
-							<Grid container spacing={2} justifyItems={"flex-end"}>
+							<Grid container sx={{ spacing: 2, justifyItems: "flex-end" }}>
 								<Grid size={{ xs: 12 }}>
 									<form.AppField
 										name={"bodyMd"}
@@ -285,7 +285,7 @@ function ForumThreadPage() {
 			</ContainerWithHeaderAndButtons>
 			{threadData?.thread?.locked && (
 				<Paper>
-					<Typography variant={"h4"} textAlign={"center"} padding={1}>
+					<Typography variant={"h4"} sx={{ textAlign: "center", padding: 1 }}>
 						<LockIcon /> Thread Locked
 					</Typography>
 				</Paper>

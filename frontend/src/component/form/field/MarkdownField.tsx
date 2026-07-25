@@ -29,7 +29,7 @@ import FormHelperText from "@mui/material/FormHelperText";
 import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import type { TextFieldProps } from "@mui/material/TextField";
-import { useStore } from "@tanstack/react-form";
+import { useSelector } from "@tanstack/react-form";
 import { createRef, useCallback, useMemo } from "react";
 import { useFieldContext } from "../../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../../hooks/useUserFlashCtx.ts";
@@ -83,7 +83,7 @@ export const mdEditorRef = createRef<MDXEditorMethods>();
  */
 export const MarkdownField = (props: MDBodyFieldProps) => {
 	const field = useFieldContext<string>();
-	const errors = useStore(field.store, (state) => state.meta.errors);
+	const errors = useSelector(field.store, (state) => state.meta.errors);
 
 	const { sendFlash } = useUserFlashCtx();
 	const theme = useTheme();
@@ -110,9 +110,24 @@ export const MarkdownField = (props: MDBodyFieldProps) => {
 		);
 	}, [errors]);
 
+	const toolbarStyle = useMemo(() => {
+		const rules = [`.mdxeditor-toolbar { background-color: ${theme.palette.primary.main} !important; }`];
+		if (theme.mode === "light") {
+			const tc = theme.palette.primary.contrastText;
+			rules.push(
+				`.mdxeditor-toolbar button:not([data-disabled]) { color: ${tc} !important; }`,
+				`.mdxeditor-toolbar button:not([data-disabled]) svg { color: ${tc} !important; }`,
+				`.mdxeditor-toolbar button:hover:not([data-disabled]) { background-color: ${theme.palette.primary.dark} !important; }`,
+			);
+		}
+
+		return rules.join("\n");
+	}, [theme]);
+
 	// 	TODO  <Sentry.ErrorBoundary showDialog={true} fallback={errorDialog}>
 	return (
 		<>
+			<style>{toolbarStyle}</style>
 			<MDXEditor
 				contentEditableClassName={"md-content-editable"}
 				className={classes}
@@ -121,7 +136,6 @@ export const MarkdownField = (props: MDBodyFieldProps) => {
 				placeholder={props.placeholder ?? "Message (Min length: 10 characters)"}
 				plugins={[
 					toolbarPlugin({
-						// toolbarClassName: "md-toolbar",
 						toolbarContents: () => (
 							<Stack direction={"row"}>
 								<UndoRedo />

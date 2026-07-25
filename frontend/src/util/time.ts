@@ -40,6 +40,12 @@ export const parseDateTime = (t: string | Date): Date => {
 	return parseISO(t);
 };
 
+export const renderTimestampDateTime = (ts?: Timestamp): string => {
+	if (!ts) return "";
+
+	return renderDate(timestampDate(ts));
+};
+
 export const renderTimestamp = (ts?: Timestamp): string => {
 	if (!ts) return "";
 

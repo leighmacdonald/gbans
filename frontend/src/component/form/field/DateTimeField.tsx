@@ -1,5 +1,5 @@
 import { DesktopDateTimePicker, type DesktopDateTimePickerProps } from "@mui/x-date-pickers/DesktopDateTimePicker";
-import { useStore } from "@tanstack/react-form";
+import { useSelector } from "@tanstack/react-form";
 import { useFieldContext } from "../../../contexts/formContext.tsx";
 import { renderHelpText } from "./renderHelpText.ts";
 
@@ -7,7 +7,7 @@ type Props = { helpText?: string } & DesktopDateTimePickerProps;
 
 export const DateTimeField = (props: Props) => {
 	const field = useFieldContext<Date>();
-	const errors = useStore(field.store, (state) => state.meta.errors);
+	const errors = useSelector(field.store, (state) => state.meta.errors);
 
 	return (
 		<DesktopDateTimePicker

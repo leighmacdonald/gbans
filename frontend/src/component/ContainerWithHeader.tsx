@@ -19,7 +19,7 @@ export const ContainerWithHeader = ({
 	spacing = 2,
 	elevation = 1,
 	marginTop = 0,
-	padding = 1,
+	padding = 0,
 }: PropsWithChildren<ContainerWithHeaderProps>) => {
 	return (
 		<Paper elevation={elevation}>

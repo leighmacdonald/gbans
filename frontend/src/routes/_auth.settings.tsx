@@ -97,7 +97,7 @@ function ProfileSettings() {
 	}
 
 	return (
-		<ContainerWithHeader title={"User Settings"} iconLeft={<ConstructionIcon />}>
+		<ContainerWithHeader title={"User Settings"} iconLeft={<ConstructionIcon />} padding={2}>
 			<Grid container spacing={2}>
 				<Grid size={{ xs: 4, sm: 3, md: 2 }}>
 					<Stack spacing={1}>

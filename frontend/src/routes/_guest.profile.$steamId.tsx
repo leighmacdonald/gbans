@@ -37,7 +37,7 @@ function ProfilePage() {
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12, md: 8 }}>
-				<ContainerWithHeader title={"Profile"}>
+				<ContainerWithHeader title={"Profile"} padding={2}>
 					<Grid container spacing={2}>
 						<Grid size={{ xs: 4 }}>
 							<Avatar
@@ -130,7 +130,7 @@ function ProfilePage() {
 					</>
 				)}*/}
 			<Grid size={{ xs: 128 }}>
-				<ContainerWithHeader title={"External Links"} iconLeft={<LinkIcon />}>
+				<ContainerWithHeader title={"External Links"} iconLeft={<LinkIcon />} padding={2}>
 					<Grid container spacing={1}>
 						{createExternalLinks(String(data?.profile?.player?.steamId)).map((l) => {
 							return (
