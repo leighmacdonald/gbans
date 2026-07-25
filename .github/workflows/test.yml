@@ -62,7 +62,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "stable"
+          go-version: "1.26.x"
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v8
@@ -73,14 +73,12 @@ jobs:
   backend-test:
     needs: [lint-golangci]
     runs-on: ubuntu-latest
-    env:
-      GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
     steps:
       - uses: actions/checkout@v6
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "stable"
+          go-version: "1.26.x"
 
       - name: Cache Go modules
         uses: actions/cache@v4
