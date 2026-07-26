@@ -1,0 +1,103 @@
+edition = "2023";
+
+package roles.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+
+service RolesService {
+  rpc RoleList(google.protobuf.Empty) returns (RoleListResponse) {}
+  rpc RoleCreate(RoleCreateRequest) returns (RoleCreateResponse) {}
+  rpc RoleEdit(RoleEditRequest) returns (RoleEditResponse) {}
+  rpc RoleDelete(RoleDeleteRequest) returns (google.protobuf.Empty) {}
+  rpc RoleAssign(RoleAssignRequest) returns (google.protobuf.Empty) {}
+  rpc RoleBySteamID(RoleBySteamIDRequest) returns (RoleBySteamIDResponse) {}
+}
+
+message RoleBySteamIDRequest {
+  uint64 steam_id = 1;
+}
+
+message RoleBySteamIDResponse {
+  repeated Role roles = 1;
+}
+
+message RoleAssignRequest {
+  uint64 steam_id = 1;
+  uint32 role_id = 2;
+}
+
+message RoleDeleteRequest {
+  uint32 role_id = 1;
+}
+
+message RoleEditRequest {
+  uint32 role_id = 1;
+  string role_name = 2;
+  repeated Permission permissions = 3 [(buf.validate.field).repeated.unique = true];
+}
+
+message RoleEditResponse {}
+
+message RoleListResponse {
+  repeated Role roles = 1;
+}
+
+message RoleCreateResponse {
+  Role role = 1;
+}
+
+message RoleCreateRequest {
+  string role_name = 1;
+  repeated Permission permissions = 2 [(buf.validate.field).repeated.unique = true];
+}
+
+message Role {
+  uint32 role_id = 1;
+  string role_name = 2;
+  repeated Permission permissions = 3 [(buf.validate.field).repeated.unique = true];
+}
+
+enum Permission {
+  PERMISSION_UNSPECIFIED = 0;
+  PERMISSION_ANTICHEAT_READ = 10;
+  PERMISSION_APPEAL_READ = 20;
+  PERMISSION_APPEAL_WRITE = 21;
+  PERMISSION_ASSET_WRITE = 30;
+  PERMISSION_ASSET_DELETE = 31;
+  PERMISSION_BAN_READ = 40;
+  PERMISSION_BAN_WRITE = 41;
+  PERMISSION_BLOCKLIST_READ = 50;
+  PERMISSION_BLOCKLIST_WRITE = 51;
+  PERMISSION_BLOCKLIST_DELETE = 52;
+  PERMISSION_CONFIG_READ = 60;
+  PERMISSION_CONFIG_WRITE = 61;
+  PERMISSION_CONTEST_READ = 70;
+  PERMISSION_CONTEST_WRITE = 71;
+  PERMISSION_CONTEST_DELETE = 72;
+  PERMISSION_FORUM_READ = 80;
+  PERMISSION_FORUM_WRITE = 81;
+  PERMISSION_FORUM_EDIT = 82;
+  PERMISSION_GAMEADMIN_READ = 90;
+  PERMISSION_GAMEADMIN_WRITE = 91;
+  PERMISSION_NETWORK_READ = 100;
+  PERMISSION_NETWORK_ADMIN = 101;
+  PERMISSION_NEWS_READ = 110;
+  PERMISSION_NEWS_WRITE = 111;
+  PERMISSION_NEWS_DELETE = 112;
+  PERMISSION_PERSON_READ = 120;
+  PERMISSION_PERSON_WRITE = 121;
+  PERMISSION_REPORT_READ = 130;
+  PERMISSION_REPORT_WRITE = 131;
+  PERMISSION_SERVER_READ = 140;
+  PERMISSION_SERVER_WRITE = 141;
+  PERMISSION_SPEEDRUN_READ = 150;
+  PERMISSION_SPEEDRUN_WRITE = 151;
+  PERMISSION_STATS_READ = 152;
+  PERMISSION_WIKI_READ = 160;
+  PERMISSION_WIKI_EDIT = 161;
+  PERMISSION_VOTE_READ = 170;
+  PERMISSION_WORDFILTER_READ = 180;
+  PERMISSION_WORDFILTER_WRITE = 181;
+  PERMISSION_WORDFILTER_DELETE = 182;
+}
