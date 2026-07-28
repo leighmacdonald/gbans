@@ -15,7 +15,7 @@ service RolesService {
 }
 
 message RoleBySteamIDRequest {
-  uint64 steam_id = 1;
+  uint64 steam_id = 1 [(buf.validate.field).uint64 = {gte: 76561197960265729}];
 }
 
 message RoleBySteamIDResponse {
@@ -23,18 +23,26 @@ message RoleBySteamIDResponse {
 }
 
 message RoleAssignRequest {
-  uint64 steam_id = 1;
-  uint32 role_id = 2;
+  uint64 steam_id = 1 [(buf.validate.field).uint64 = {gte: 76561197960265729}];
+  int32 role_id = 2 [(buf.validate.field).int32 = {gt: 0}];
 }
 
 message RoleDeleteRequest {
-  uint32 role_id = 1;
+  uint32 role_id = 1 [(buf.validate.field).uint32 = {gt: 0}];
 }
 
 message RoleEditRequest {
-  uint32 role_id = 1;
-  string role_name = 2;
-  repeated Permission permissions = 3 [(buf.validate.field).repeated.unique = true];
+  int32 role_id = 1 [(buf.validate.field).int32 = {gt: 0}];
+  string role_name = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+  }];
+  repeated Permission permissions = 3 [(buf.validate.field).repeated = {
+    unique: true
+    items: {
+      enum: {defined_only: true}
+    }
+  }];
 }
 
 message RoleEditResponse {}
@@ -48,14 +56,30 @@ message RoleCreateResponse {
 }
 
 message RoleCreateRequest {
-  string role_name = 1;
-  repeated Permission permissions = 2 [(buf.validate.field).repeated.unique = true];
+  string role_name = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+  }];
+  repeated Permission permissions = 2 [(buf.validate.field).repeated = {
+    unique: true
+    items: {
+      enum: {defined_only: true}
+    }
+  }];
 }
 
 message Role {
-  uint32 role_id = 1;
-  string role_name = 2;
-  repeated Permission permissions = 3 [(buf.validate.field).repeated.unique = true];
+  int32 role_id = 1;
+  string role_name = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+  }];
+  repeated Permission permissions = 3 [(buf.validate.field).repeated = {
+    unique: true
+    items: {
+      enum: {defined_only: true}
+    }
+  }];
 }
 
 enum Permission {
@@ -67,6 +91,7 @@ enum Permission {
   PERMISSION_ASSET_DELETE = 31;
   PERMISSION_BAN_READ = 40;
   PERMISSION_BAN_WRITE = 41;
+  PERMISSION_BAN_CREATE = 42;
   PERMISSION_BLOCKLIST_READ = 50;
   PERMISSION_BLOCKLIST_WRITE = 51;
   PERMISSION_BLOCKLIST_DELETE = 52;
@@ -89,6 +114,7 @@ enum Permission {
   PERMISSION_PERSON_WRITE = 121;
   PERMISSION_REPORT_READ = 130;
   PERMISSION_REPORT_WRITE = 131;
+  PERMISSION_REPORT_CREATE = 132;
   PERMISSION_SERVER_READ = 140;
   PERMISSION_SERVER_WRITE = 141;
   PERMISSION_SPEEDRUN_READ = 150;
