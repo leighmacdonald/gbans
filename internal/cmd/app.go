@@ -40,6 +40,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/news"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/roles"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
@@ -82,6 +83,7 @@ type GBans struct {
 	notifications  *notification.Notifications
 	persons        *person.Persons
 	reports        ban.Reports
+	roles          roles.Roles
 	servers        *servers.Servers
 	speedruns      speedruns.Speedruns
 	sourcemod      sourcemod.Sourcemod
@@ -188,6 +190,7 @@ func (g *GBans) Init(ctx context.Context) error {
 		conf.Discord.SafeKickLogChannelID(), steamid.New(conf.Owner), g.reports, g.notifications, g.servers, g.networks)
 	g.blocklists = blocklist.NewBlocklists(blocklist.NewRepository(g.database),
 		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database)))
+	g.roles = roles.NewRoles(roles.NewRepository(g.database))
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), conf.Discord)
 	g.forums = forum.New(forum.NewRepository(g.database), g.notifications, g.persons, "")
 	g.metrics = metrics.New(g.broadcaster)
@@ -465,6 +468,7 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware) *http.ServeMux {
 		network.NewNetworkService(g.networks, authMiddleware, interceptors),
 		news.NewService(g.news, authMiddleware, interceptors),
 		notification.NewService(g.notifications, authMiddleware, interceptors),
+		roles.NewService(g.roles, authMiddleware, interceptors),
 		person.NewPersonService(g.persons, authMiddleware, interceptors),
 		servers.NewServersService(g.servers, authMiddleware, interceptors),
 		demo.NewService(g.demos, authMiddleware, interceptors),
