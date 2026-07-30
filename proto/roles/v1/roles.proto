@@ -4,6 +4,7 @@ package roles.v1;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 service RolesService {
   rpc RoleList(google.protobuf.Empty) returns (RoleListResponse) {}
@@ -80,6 +81,9 @@ message Role {
       enum: {defined_only: true}
     }
   }];
+  google.protobuf.Timestamp created_on = 4;
+  google.protobuf.Timestamp updated_on = 5;
+  uint64 user_count = 6;
 }
 
 enum Permission {

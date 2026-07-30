@@ -54,9 +54,13 @@ CREATE TABLE IF NOT EXISTS roles (
     updated_on TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS roles_role_name_uidx ON roles(role_name);
+
 CREATE TABLE IF NOT EXISTS role_permissions (
     role_id INTEGER NOT NULL REFERENCES roles(role_id) ON DELETE CASCADE,
     permission permission NOT NULL,
+    created_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (role_id, permission)
 );
 
@@ -73,8 +77,8 @@ INSERT INTO roles (role_name) VALUES ('steamer') ON CONFLICT DO NOTHING;
 INSERT INTO roles (role_name) VALUES ('banned') ON CONFLICT DO NOTHING;
 INSERT INTO roles (role_name) VALUES ('user') ON CONFLICT DO NOTHING;
 
-INSERT INTO role_permissions (role_id, permission)
-SELECT r.role_id, v.permission
+INSERT INTO role_permissions (role_id, permission, created_on, updated_on)
+SELECT r.role_id, v.permission, NOW(), NOW()
 FROM (SELECT role_id FROM roles WHERE role_name = 'admin') r
 CROSS JOIN (VALUES
     ('PERMISSION_ANTICHEAT_READ'::permission),
@@ -121,8 +125,8 @@ CROSS JOIN (VALUES
     ('PERMISSION_WORDFILTER_DELETE'::permission)
 ) v(permission);
 
-INSERT INTO role_permissions (role_id, permission)
-SELECT r.role_id, v.permission
+INSERT INTO role_permissions (role_id, permission, created_on, updated_on)
+SELECT r.role_id, v.permission, NOW(), NOW()
 FROM (SELECT role_id FROM roles WHERE role_name = 'moderator') r
 CROSS JOIN (VALUES
     ('PERMISSION_ANTICHEAT_READ'::permission),
@@ -151,15 +155,15 @@ CROSS JOIN (VALUES
     ('PERMISSION_WORDFILTER_DELETE'::permission)
 ) v(permission);
 
-INSERT INTO role_permissions (role_id, permission)
-SELECT r.role_id, v.permission
+INSERT INTO role_permissions (role_id, permission, created_on, updated_on)
+SELECT r.role_id, v.permission, NOW(), NOW()
 FROM (SELECT role_id FROM roles WHERE role_name = 'streamer') r
 CROSS JOIN (VALUES
     ('PERMISSION_BAN_WRITE'::permission)
 ) v(permission);
 
-INSERT INTO role_permissions (role_id, permission)
-SELECT r.role_id, v.permission
+INSERT INTO role_permissions (role_id, permission, created_on, updated_on)
+SELECT r.role_id, v.permission, NOW(), NOW()
 FROM (SELECT role_id FROM roles WHERE role_name = 'user') r
 CROSS JOIN (VALUES
     ('PERMISSION_ASSET_WRITE'::permission),

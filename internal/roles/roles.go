@@ -20,6 +20,7 @@ type Role struct {
 	Permissions []string
 	CreatedOn   time.Time
 	UpdatedOn   time.Time
+	UserCount   uint64
 }
 
 type Roles struct {

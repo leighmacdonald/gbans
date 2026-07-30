@@ -36,7 +36,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 			mutation.mutate({ contest: value });
 		},
 		defaultValues: {
-			dateStart: contest?.dateStart ? timestampDate(contest?.dateStart).toISOString() : "",
+			dateStart: contest?.dateStart ? timestampDate(contest?.dateStart) : new Date(),
 			dateEnd: contest?.dateEnd ? timestampDate(contest.dateEnd).toISOString() : "",
 			description: contest ? contest.description : "",
 			hideSubmissions: contest ? contest.hideSubmissions : false,

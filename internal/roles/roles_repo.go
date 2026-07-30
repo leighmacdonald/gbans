@@ -6,7 +6,6 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -67,13 +66,15 @@ func (r Repository) savePermissions(ctx context.Context, roleID int32, perms []s
 		return nil
 	}
 
-	batch := pgx.Batch{}
-	for _, perm := range perms {
-		batch.Queue("INSERT INTO role_permissions (role_id, permission) VALUES ($1, $2::permission)", roleID, perm)
-	}
+	now := time.Now()
 
-	if err := r.SendBatch(ctx, &batch).Close(); err != nil {
-		return errors.Join(err, database.ErrCloseBatch)
+	for _, perm := range perms {
+		if err := database.Err(r.ExecInsertBuilder(ctx, r.Builder().
+			Insert("role_permissions").
+			Columns("role_id", "permission", "created_on", "updated_on").
+			Values(roleID, perm, now, now))); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -107,8 +108,10 @@ func (r Repository) GetAll(ctx context.Context) ([]Role, error) {
 	roles := make([]Role, 0)
 
 	rows, errRows := r.QueryBuilder(ctx, r.Builder().
-		Select("role_id", "role_name", "created_on", "updated_on").
-		From("roles"))
+		Select("r.role_id", "r.role_name", "r.created_on", "r.updated_on", "COUNT(ra.steam_id)").
+		From("roles r").
+		LeftJoin("role_assignments ra USING(role_id)").
+		GroupBy("r.role_id", "r.role_name", "r.created_on", "r.updated_on"))
 	if errRows != nil {
 		if errors.Is(errRows, database.ErrNoResult) {
 			return roles, nil
@@ -121,7 +124,7 @@ func (r Repository) GetAll(ctx context.Context) ([]Role, error) {
 
 	for rows.Next() {
 		var role Role
-		if errScan := rows.Scan(&role.RoleID, &role.RoleName, &role.CreatedOn, &role.UpdatedOn); errScan != nil {
+		if errScan := rows.Scan(&role.RoleID, &role.RoleName, &role.CreatedOn, &role.UpdatedOn, &role.UserCount); errScan != nil {
 			return nil, database.Err(errScan)
 		}
 

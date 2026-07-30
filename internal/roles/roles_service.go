@@ -11,6 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Service struct {
@@ -105,6 +106,9 @@ func toProtoRole(role Role) *rolesv1.Role {
 		RoleId:      &role.RoleID,
 		RoleName:    &role.RoleName,
 		Permissions: stringsToPermissions(role.Permissions),
+		CreatedOn:   timestamppb.New(role.CreatedOn),
+		UpdatedOn:   timestamppb.New(role.UpdatedOn),
+		UserCount:   &role.UserCount,
 	}
 }
 

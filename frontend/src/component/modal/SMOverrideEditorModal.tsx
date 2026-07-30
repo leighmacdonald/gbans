@@ -128,7 +128,7 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
 								name={"type"}
 								children={(field) => {
 									return (
-										<field.OverrideTypeField
+										<field.SelectOverrideTypeField
 											label={"Override Type"}
 											items={enumValues(OverrideType)}
 											renderItem={(i) => {

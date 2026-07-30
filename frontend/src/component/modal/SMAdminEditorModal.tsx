@@ -151,7 +151,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: Admin; 
 								name={"authType"}
 								children={(field) => {
 									return (
-										<field.AuthTypeField
+										<field.SelectAuthTypeField
 											label={"Auth Type"}
 											items={enumValues(AuthType)}
 											renderItem={(i) => {
