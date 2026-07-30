@@ -11,6 +11,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -34,6 +35,7 @@ const (
 	Permission_PERMISSION_ASSET_DELETE      Permission = 31
 	Permission_PERMISSION_BAN_READ          Permission = 40
 	Permission_PERMISSION_BAN_WRITE         Permission = 41
+	Permission_PERMISSION_BAN_CREATE        Permission = 42
 	Permission_PERMISSION_BLOCKLIST_READ    Permission = 50
 	Permission_PERMISSION_BLOCKLIST_WRITE   Permission = 51
 	Permission_PERMISSION_BLOCKLIST_DELETE  Permission = 52
@@ -56,6 +58,7 @@ const (
 	Permission_PERMISSION_PERSON_WRITE      Permission = 121
 	Permission_PERMISSION_REPORT_READ       Permission = 130
 	Permission_PERMISSION_REPORT_WRITE      Permission = 131
+	Permission_PERMISSION_REPORT_CREATE     Permission = 132
 	Permission_PERMISSION_SERVER_READ       Permission = 140
 	Permission_PERMISSION_SERVER_WRITE      Permission = 141
 	Permission_PERMISSION_SPEEDRUN_READ     Permission = 150
@@ -80,6 +83,7 @@ var (
 		31:  "PERMISSION_ASSET_DELETE",
 		40:  "PERMISSION_BAN_READ",
 		41:  "PERMISSION_BAN_WRITE",
+		42:  "PERMISSION_BAN_CREATE",
 		50:  "PERMISSION_BLOCKLIST_READ",
 		51:  "PERMISSION_BLOCKLIST_WRITE",
 		52:  "PERMISSION_BLOCKLIST_DELETE",
@@ -102,6 +106,7 @@ var (
 		121: "PERMISSION_PERSON_WRITE",
 		130: "PERMISSION_REPORT_READ",
 		131: "PERMISSION_REPORT_WRITE",
+		132: "PERMISSION_REPORT_CREATE",
 		140: "PERMISSION_SERVER_READ",
 		141: "PERMISSION_SERVER_WRITE",
 		150: "PERMISSION_SPEEDRUN_READ",
@@ -123,6 +128,7 @@ var (
 		"PERMISSION_ASSET_DELETE":      31,
 		"PERMISSION_BAN_READ":          40,
 		"PERMISSION_BAN_WRITE":         41,
+		"PERMISSION_BAN_CREATE":        42,
 		"PERMISSION_BLOCKLIST_READ":    50,
 		"PERMISSION_BLOCKLIST_WRITE":   51,
 		"PERMISSION_BLOCKLIST_DELETE":  52,
@@ -145,6 +151,7 @@ var (
 		"PERMISSION_PERSON_WRITE":      121,
 		"PERMISSION_REPORT_READ":       130,
 		"PERMISSION_REPORT_WRITE":      131,
+		"PERMISSION_REPORT_CREATE":     132,
 		"PERMISSION_SERVER_READ":       140,
 		"PERMISSION_SERVER_WRITE":      141,
 		"PERMISSION_SPEEDRUN_READ":     150,
@@ -611,6 +618,9 @@ type Role struct {
 	RoleId        *int32                 `protobuf:"varint,1,opt,name=role_id,json=roleId" json:"role_id,omitempty"`
 	RoleName      *string                `protobuf:"bytes,2,opt,name=role_name,json=roleName" json:"role_name,omitempty"`
 	Permissions   []Permission           `protobuf:"varint,3,rep,packed,name=permissions,enum=roles.v1.Permission" json:"permissions,omitempty"`
+	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	UpdatedOn     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
+	UserCount     *uint64                `protobuf:"varint,6,opt,name=user_count,json=userCount" json:"user_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -666,11 +676,32 @@ func (x *Role) GetPermissions() []Permission {
 	return nil
 }
 
+func (x *Role) GetCreatedOn() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedOn
+	}
+	return nil
+}
+
+func (x *Role) GetUpdatedOn() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedOn
+	}
+	return nil
+}
+
+func (x *Role) GetUserCount() uint64 {
+	if x != nil && x.UserCount != nil {
+		return *x.UserCount
+	}
+	return 0
+}
+
 var File_roles_v1_roles_proto protoreflect.FileDescriptor
 
 const file_roles_v1_roles_proto_rawDesc = "" +
 	"\n" +
-	"\x14roles/v1/roles.proto\x12\broles.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\"D\n" +
+	"\x14roles/v1/roles.proto\x12\broles.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"D\n" +
 	"\x14RoleBySteamIDRequest\x12,\n" +
 	"\bsteam_id\x18\x01 \x01(\x04B\x11\xbaH\f2\n" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\"=\n" +
@@ -693,11 +724,17 @@ const file_roles_v1_roles_proto_rawDesc = "" +
 	"\x04role\x18\x01 \x01(\v2\x0e.roles.v1.RoleR\x04role\"\x84\x01\n" +
 	"\x11RoleCreateRequest\x12&\n" +
 	"\trole_name\x18\x01 \x01(\tB\t\xbaH\x06r\x04\x10\x01\x18@R\broleName\x12G\n" +
-	"\vpermissions\x18\x02 \x03(\x0e2\x14.roles.v1.PermissionB\x0f\xbaH\f\x92\x01\t\x18\x01\"\x05\x82\x01\x02\x10\x01R\vpermissions\"\x90\x01\n" +
+	"\vpermissions\x18\x02 \x03(\x0e2\x14.roles.v1.PermissionB\x0f\xbaH\f\x92\x01\t\x18\x01\"\x05\x82\x01\x02\x10\x01R\vpermissions\"\xa9\x02\n" +
 	"\x04Role\x12\x17\n" +
 	"\arole_id\x18\x01 \x01(\x05R\x06roleId\x12&\n" +
 	"\trole_name\x18\x02 \x01(\tB\t\xbaH\x06r\x04\x10\x01\x18@R\broleName\x12G\n" +
-	"\vpermissions\x18\x03 \x03(\x0e2\x14.roles.v1.PermissionB\x0f\xbaH\f\x92\x01\t\x18\x01\"\x05\x82\x01\x02\x10\x01R\vpermissions*\xbd\t\n" +
+	"\vpermissions\x18\x03 \x03(\x0e2\x14.roles.v1.PermissionB\x0f\xbaH\f\x92\x01\t\x18\x01\"\x05\x82\x01\x02\x10\x01R\vpermissions\x129\n" +
+	"\n" +
+	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"\n" +
+	"updated_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x12!\n" +
+	"\n" +
+	"user_count\x18\x06 \x01(\x04B\x020\x01R\tuserCount*\xf7\t\n" +
 	"\n" +
 	"Permission\x12\x1a\n" +
 	"\x16PERMISSION_UNSPECIFIED\x10\x00\x12\x1d\n" +
@@ -708,7 +745,8 @@ const file_roles_v1_roles_proto_rawDesc = "" +
 	"\x16PERMISSION_ASSET_WRITE\x10\x1e\x12\x1b\n" +
 	"\x17PERMISSION_ASSET_DELETE\x10\x1f\x12\x17\n" +
 	"\x13PERMISSION_BAN_READ\x10(\x12\x18\n" +
-	"\x14PERMISSION_BAN_WRITE\x10)\x12\x1d\n" +
+	"\x14PERMISSION_BAN_WRITE\x10)\x12\x19\n" +
+	"\x15PERMISSION_BAN_CREATE\x10*\x12\x1d\n" +
 	"\x19PERMISSION_BLOCKLIST_READ\x102\x12\x1e\n" +
 	"\x1aPERMISSION_BLOCKLIST_WRITE\x103\x12\x1f\n" +
 	"\x1bPERMISSION_BLOCKLIST_DELETE\x104\x12\x1a\n" +
@@ -730,7 +768,8 @@ const file_roles_v1_roles_proto_rawDesc = "" +
 	"\x16PERMISSION_PERSON_READ\x10x\x12\x1b\n" +
 	"\x17PERMISSION_PERSON_WRITE\x10y\x12\x1b\n" +
 	"\x16PERMISSION_REPORT_READ\x10\x82\x01\x12\x1c\n" +
-	"\x17PERMISSION_REPORT_WRITE\x10\x83\x01\x12\x1b\n" +
+	"\x17PERMISSION_REPORT_WRITE\x10\x83\x01\x12\x1d\n" +
+	"\x18PERMISSION_REPORT_CREATE\x10\x84\x01\x12\x1b\n" +
 	"\x16PERMISSION_SERVER_READ\x10\x8c\x01\x12\x1c\n" +
 	"\x17PERMISSION_SERVER_WRITE\x10\x8d\x01\x12\x1d\n" +
 	"\x18PERMISSION_SPEEDRUN_READ\x10\x96\x01\x12\x1e\n" +
@@ -781,7 +820,8 @@ var file_roles_v1_roles_proto_goTypes = []any{
 	(*RoleCreateResponse)(nil),    // 8: roles.v1.RoleCreateResponse
 	(*RoleCreateRequest)(nil),     // 9: roles.v1.RoleCreateRequest
 	(*Role)(nil),                  // 10: roles.v1.Role
-	(*emptypb.Empty)(nil),         // 11: google.protobuf.Empty
+	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),         // 12: google.protobuf.Empty
 }
 var file_roles_v1_roles_proto_depIdxs = []int32{
 	10, // 0: roles.v1.RoleBySteamIDResponse.roles:type_name -> roles.v1.Role
@@ -790,23 +830,25 @@ var file_roles_v1_roles_proto_depIdxs = []int32{
 	10, // 3: roles.v1.RoleCreateResponse.role:type_name -> roles.v1.Role
 	0,  // 4: roles.v1.RoleCreateRequest.permissions:type_name -> roles.v1.Permission
 	0,  // 5: roles.v1.Role.permissions:type_name -> roles.v1.Permission
-	11, // 6: roles.v1.RolesService.RoleList:input_type -> google.protobuf.Empty
-	9,  // 7: roles.v1.RolesService.RoleCreate:input_type -> roles.v1.RoleCreateRequest
-	5,  // 8: roles.v1.RolesService.RoleEdit:input_type -> roles.v1.RoleEditRequest
-	4,  // 9: roles.v1.RolesService.RoleDelete:input_type -> roles.v1.RoleDeleteRequest
-	3,  // 10: roles.v1.RolesService.RoleAssign:input_type -> roles.v1.RoleAssignRequest
-	1,  // 11: roles.v1.RolesService.RoleBySteamID:input_type -> roles.v1.RoleBySteamIDRequest
-	7,  // 12: roles.v1.RolesService.RoleList:output_type -> roles.v1.RoleListResponse
-	8,  // 13: roles.v1.RolesService.RoleCreate:output_type -> roles.v1.RoleCreateResponse
-	6,  // 14: roles.v1.RolesService.RoleEdit:output_type -> roles.v1.RoleEditResponse
-	11, // 15: roles.v1.RolesService.RoleDelete:output_type -> google.protobuf.Empty
-	11, // 16: roles.v1.RolesService.RoleAssign:output_type -> google.protobuf.Empty
-	2,  // 17: roles.v1.RolesService.RoleBySteamID:output_type -> roles.v1.RoleBySteamIDResponse
-	12, // [12:18] is the sub-list for method output_type
-	6,  // [6:12] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	11, // 6: roles.v1.Role.created_on:type_name -> google.protobuf.Timestamp
+	11, // 7: roles.v1.Role.updated_on:type_name -> google.protobuf.Timestamp
+	12, // 8: roles.v1.RolesService.RoleList:input_type -> google.protobuf.Empty
+	9,  // 9: roles.v1.RolesService.RoleCreate:input_type -> roles.v1.RoleCreateRequest
+	5,  // 10: roles.v1.RolesService.RoleEdit:input_type -> roles.v1.RoleEditRequest
+	4,  // 11: roles.v1.RolesService.RoleDelete:input_type -> roles.v1.RoleDeleteRequest
+	3,  // 12: roles.v1.RolesService.RoleAssign:input_type -> roles.v1.RoleAssignRequest
+	1,  // 13: roles.v1.RolesService.RoleBySteamID:input_type -> roles.v1.RoleBySteamIDRequest
+	7,  // 14: roles.v1.RolesService.RoleList:output_type -> roles.v1.RoleListResponse
+	8,  // 15: roles.v1.RolesService.RoleCreate:output_type -> roles.v1.RoleCreateResponse
+	6,  // 16: roles.v1.RolesService.RoleEdit:output_type -> roles.v1.RoleEditResponse
+	12, // 17: roles.v1.RolesService.RoleDelete:output_type -> google.protobuf.Empty
+	12, // 18: roles.v1.RolesService.RoleAssign:output_type -> google.protobuf.Empty
+	2,  // 19: roles.v1.RolesService.RoleBySteamID:output_type -> roles.v1.RoleBySteamIDResponse
+	14, // [14:20] is the sub-list for method output_type
+	8,  // [8:14] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_roles_v1_roles_proto_init() }

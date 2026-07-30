@@ -1,6 +1,7 @@
+import { create } from "@bufbuild/protobuf";
 import { useMutation } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
-import PersonIcon from "@mui/icons-material/Person";
+import DirectionsRunIcon from "@mui/icons-material/DirectionsRun";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -9,37 +10,38 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
 import { useAppForm } from "../../contexts/formContext.tsx";
-import type { Person } from "../../rpc/person/v1/person_pb.ts";
-import { editPermissions } from "../../rpc/person/v1/person-PersonService_connectquery.ts";
-import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
+import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
+import { Permission, type RoleCreateRequest, RoleCreateRequestSchema } from "../../rpc/roles/v1/roles_pb.ts";
+import { roleCreate } from "../../rpc/roles/v1/roles-RolesService_connectquery.ts";
 import { enumValues } from "../../util/lists.ts";
-import { Heading } from "../Heading";
+import { Heading } from "../Heading.tsx";
 
-export const PersonEditModal = NiceModal.create(({ person }: { person: Person }) => {
+export const RoleCreateModal = NiceModal.create(() => {
+	const { sendError } = useUserFlashCtx();
 	const modal = useModal();
 
-	const mutation = useMutation(editPermissions, {
-		onSuccess: async (response) => {
-			modal.resolve(response.person);
+	const mutation = useMutation(roleCreate, {
+		onSuccess: async (role) => {
+			modal.resolve(role);
 			await modal.hide();
 		},
-		onError: async (err) => {
-			modal.reject(err);
-			await modal.hide();
-		},
+		onError: sendError,
 	});
+
+	const defaultValues: Omit<RoleCreateRequest, "$typeName"> = {
+		roleName: "",
+		permissions: [],
+	};
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutation.mutate(value);
+			mutation.mutate(create(RoleCreateRequestSchema, value));
 		},
-		defaultValues: {
-			permissionLevel: person.permissionLevel,
-		},
+		defaultValues,
 	});
 
 	return (
-		<Dialog {...muiDialogV5(modal)} fullWidth maxWidth={"sm"}>
+		<Dialog fullWidth {...muiDialogV5(modal)}>
 			<form
 				onSubmit={async (e) => {
 					e.preventDefault();
@@ -47,23 +49,34 @@ export const PersonEditModal = NiceModal.create(({ person }: { person: Person })
 					await form.handleSubmit();
 				}}
 			>
-				<DialogTitle component={Heading} iconLeft={<PersonIcon />}>
-					Person Editor: {person.personaName}
+				<DialogTitle component={Heading} iconLeft={<DirectionsRunIcon />}>
+					Create Role
 				</DialogTitle>
+
 				<DialogContent>
 					<Grid container spacing={2}>
 						<Grid size={{ xs: 12 }}>
 							<form.AppField
-								name={"permissionLevel"}
+								name={"roleName"}
+								children={(field) => {
+									return <field.TextField label={"Role Name"} />;
+								}}
+							/>
+						</Grid>
+
+						<Grid size={{ xs: 12 }}>
+							<form.AppField
+								name={"permissions"}
 								children={(field) => {
 									return (
-										<field.SelectPrivilegeField
-											label={"Permissions"}
-											items={enumValues(Privilege)}
-											renderItem={(pl) => {
+										<field.SelectpermissionsField
+											multiple={true}
+											label={"Assigned Permissions"}
+											items={enumValues(Permission)}
+											renderItem={(bt) => {
 												return (
-													<MenuItem value={pl} key={`pl-${pl}`}>
-														{Privilege[pl]}
+													<MenuItem value={bt} key={`bt-${bt}`}>
+														{Permission[bt]}
 													</MenuItem>
 												);
 											}}

@@ -30,6 +30,7 @@ const SelectOverrideTypeField = lazy(() => import("../component/form/field/Selec
 const SelectGroupField = lazy(() => import("../component/form/field/SelectGroupField.tsx"));
 const SelectForumCategoryField = lazy(() => import("../component/form/field/SelectForumCategoryField.tsx"));
 const SelectOverrideAccessField = lazy(() => import("../component/form/field/SelectOverrideAccessField.tsx"));
+const SelectpermissionsField = lazy(() => import("../component/form/field/SelectPermissionsField.tsx"));
 
 export const { fieldContext, formContext, useFieldContext, useFormContext } = createFormHookContexts();
 
@@ -61,6 +62,7 @@ export const { useAppForm, withForm } = createFormHook({
 		SelectGroupField,
 		SelectForumCategoryField,
 		SelectOverrideAccessField,
+		SelectpermissionsField,
 		TextField,
 	},
 	formComponents: {

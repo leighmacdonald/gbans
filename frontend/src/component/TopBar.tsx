@@ -9,6 +9,7 @@ import DeveloperBoardIcon from "@mui/icons-material/DeveloperBoard";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import ForumIcon from "@mui/icons-material/Forum";
+import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import HowToVoteIcon from "@mui/icons-material/HowToVote";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import ListIcon from "@mui/icons-material/List";
@@ -255,6 +256,11 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 					leftIcon: <PersonSearchIcon sx={colourOpts} />,
 					label: "People",
 					callback: onClickHandler("/admin/people"),
+				},
+				{
+					leftIcon: <GroupAddIcon sx={colourOpts} />,
+					label: "Roles",
+					callback: onClickHandler("/admin/roles"),
 				},
 				{
 					leftIcon: <HowToVoteIcon sx={colourOpts} />,
