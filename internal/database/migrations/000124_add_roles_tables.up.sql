@@ -1,4 +1,6 @@
-DO $$ BEGIN
+do
+$do$
+BEGIN
     CREATE TYPE permission AS ENUM (
         'PERMISSION_ANTICHEAT_READ',
         'PERMISSION_APPEAL_READ',
@@ -45,7 +47,8 @@ DO $$ BEGIN
     );
 EXCEPTION
     WHEN duplicate_object THEN NULL;
-END $$;
+END
+$do$;
 
 CREATE TABLE IF NOT EXISTS roles (
     role_id SERIAL PRIMARY KEY,
@@ -54,7 +57,7 @@ CREATE TABLE IF NOT EXISTS roles (
     updated_on TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS roles_role_name_uidx ON roles(role_name);
+create unique index if not exists "roles_role_name_uidx" on roles using btree (role_name);
 
 CREATE TABLE IF NOT EXISTS role_permissions (
     role_id INTEGER NOT NULL REFERENCES roles(role_id) ON DELETE CASCADE,
@@ -71,11 +74,12 @@ CREATE TABLE IF NOT EXISTS role_assignments (
     PRIMARY KEY (steam_id, role_id)
 );
 
-INSERT INTO roles (role_name) VALUES ('admin') ON CONFLICT DO NOTHING;
-INSERT INTO roles (role_name) VALUES ('moderator') ON CONFLICT DO NOTHING;
-INSERT INTO roles (role_name) VALUES ('steamer') ON CONFLICT DO NOTHING;
-INSERT INTO roles (role_name) VALUES ('banned') ON CONFLICT DO NOTHING;
-INSERT INTO roles (role_name) VALUES ('user') ON CONFLICT DO NOTHING;
+insert into roles (role_name) values ('admin') on conflict do nothing;
+insert into roles (role_name) values ('moderator') on conflict do nothing;
+insert into roles (role_name) values ('steamer') on conflict do nothing;
+insert into roles (role_name) values ('banned') on conflict do nothing;
+insert into roles (role_name) values ('user') on conflict do nothing;
+
 
 INSERT INTO role_permissions (role_id, permission, created_on, updated_on)
 SELECT r.role_id, v.permission, NOW(), NOW()

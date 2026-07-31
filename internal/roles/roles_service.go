@@ -2,10 +2,12 @@ package roles
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/database"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/roles/v1/rolesv1connect"
 	"github.com/leighmacdonald/gbans/internal/rpc"
@@ -48,6 +50,10 @@ func (s Service) RoleList(ctx context.Context, _ *emptypb.Empty) (*rolesv1.RoleL
 func (s Service) RoleCreate(ctx context.Context, req *rolesv1.RoleCreateRequest) (*rolesv1.RoleCreateResponse, error) {
 	role, errSave := s.roles.Create(ctx, req.GetRoleName(), permissionsToStrings(req.GetPermissions()))
 	if errSave != nil {
+		if errors.Is(errSave, database.ErrDuplicate) {
+			return nil, connect.NewError(connect.CodeAlreadyExists, rpc.ErrExists)
+		}
+
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
@@ -59,6 +65,10 @@ func (s Service) RoleCreate(ctx context.Context, req *rolesv1.RoleCreateRequest)
 func (s Service) RoleEdit(ctx context.Context, req *rolesv1.RoleEditRequest) (*rolesv1.RoleEditResponse, error) {
 	role, errUpdate := s.roles.Edit(ctx, req.GetRoleId(), req.GetRoleName(), permissionsToStrings(req.GetPermissions()))
 	if errUpdate != nil {
+		if errors.Is(errUpdate, database.ErrDuplicate) {
+			return nil, connect.NewError(connect.CodeAlreadyExists, rpc.ErrExists)
+		}
+
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
@@ -69,7 +79,12 @@ func (s Service) RoleEdit(ctx context.Context, req *rolesv1.RoleEditRequest) (*r
 
 func (s Service) RoleDelete(ctx context.Context, req *rolesv1.RoleDeleteRequest) (*emptypb.Empty, error) {
 	if err := s.roles.Delete(ctx, int32(req.GetRoleId())); err != nil { //nolint:gosec
-		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+		switch {
+		case errors.Is(err, ErrAdminRoleProtected):
+			return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
+		default:
+			return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+		}
 	}
 
 	slog.Info("Role deleted", slog.Int("role_id", int(req.GetRoleId())))

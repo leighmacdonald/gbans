@@ -10,9 +10,12 @@ import (
 )
 
 var (
-	ErrRoleNotFound = errors.New("role not found")
-	ErrRoleExists   = errors.New("role already exists")
+	ErrRoleNotFound       = errors.New("role not found")
+	ErrRoleExists         = errors.New("role already exists")
+	ErrAdminRoleProtected = errors.New("admin role cannot be deleted")
 )
+
+const adminRoleID = 1
 
 type Role struct {
 	RoleID      int32
@@ -81,6 +84,10 @@ func (r Roles) Edit(ctx context.Context, roleID int32, roleName string, permissi
 }
 
 func (r Roles) Delete(ctx context.Context, roleID int32) error {
+	if roleID == adminRoleID {
+		return ErrAdminRoleProtected
+	}
+
 	if err := r.repo.Delete(ctx, roleID); err != nil {
 		return err
 	}

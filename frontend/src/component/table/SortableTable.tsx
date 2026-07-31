@@ -1,4 +1,5 @@
 import Box from "@mui/material/Box";
+import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import {
@@ -12,6 +13,7 @@ import {
 } from "material-react-table";
 import type { ReactNode } from "react";
 import { emptyOrNullString } from "../../util/types";
+import { VCenteredElement } from "../Heading";
 
 type Props<TData extends MRT_RowData> = {
 	table: MRT_TableInstance<TData>;
@@ -21,12 +23,14 @@ type Props<TData extends MRT_RowData> = {
 	hideHeader?: boolean;
 	hidePagination?: boolean;
 	unknownRowCount?: boolean;
+	iconLeft?: ReactNode;
 };
 
 export const SortableTable = <TData extends MRT_RowData>({
 	table,
 	title,
 	buttons,
+	iconLeft,
 	hideHeader = false,
 	hideToolbarButtons = false,
 	hidePagination = false,
@@ -35,23 +39,25 @@ export const SortableTable = <TData extends MRT_RowData>({
 	return (
 		<Paper>
 			{!hideHeader && (
-				<Box
+				<Grid
+					container
+					direction={"row"}
+					spacing={1}
 					sx={() => ({
-						display: "flex",
 						backgroundColor: "primary.main",
 						borderRadius: "4px 4px 0 0",
 						borderRadiusBottom: 0,
-						flexDirection: "row",
-						gap: 2,
-						justifyContent: "space-between",
 						padding: 1,
 						"@media (max-width: 768px)": {
 							flexDirection: "column",
 						},
 					})}
 				>
+					<Grid sx={{ padding: 1, paddingRight: 0 }}>
+						<VCenteredElement icon={iconLeft} />
+					</Grid>
 					{!emptyOrNullString(title) && (
-						<Box>
+						<Grid>
 							<Typography
 								variant="h6"
 								sx={{
@@ -63,24 +69,28 @@ export const SortableTable = <TData extends MRT_RowData>({
 							>
 								{title}
 							</Typography>
-							{buttons}
-						</Box>
+						</Grid>
 					)}
-					<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-						{!hideToolbarButtons && (
-							<>
-								<MRT_ShowHideColumnsButton table={table} sx={{ color: "primary.contrastText" }} />
-								<MRT_ToggleFiltersButton table={table} sx={{ color: "primary.contrastText" }} />
-								{/*<MRT_ToggleDensePaddingButton table={table} sx={{ color: "primary.contrastText" }} />*/}
-								{/*<MRT_ToggleFullScreenButton table={table} sx={{ color: "primary.contrastText" }} />*/}
-							</>
-						)}
-					</Box>
-				</Box>
+					{buttons && <Grid>{buttons}</Grid>}
+					<Grid sx={{ marginLeft: "auto" }}>
+						<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+							{!hideToolbarButtons && (
+								<>
+									<MRT_ShowHideColumnsButton table={table} sx={{ color: "primary.contrastText" }} />
+									<MRT_ToggleFiltersButton table={table} sx={{ color: "primary.contrastText" }} />
+									{/*<MRT_ToggleDensePaddingButton table={table} sx={{ color: "primary.contrastText" }} />*/}
+									{/*<MRT_ToggleFullScreenButton table={table} sx={{ color: "primary.contrastText" }} />*/}
+								</>
+							)}
+						</Box>
+					</Grid>
+				</Grid>
 			)}
+
 			<Box sx={{ display: "grid", width: "100%" }}>
 				<MRT_ToolbarAlertBanner stackAlertBanner table={table} />
 			</Box>
+
 			<MRT_TableContainer table={table} />
 			{!hidePagination && (
 				<Box>

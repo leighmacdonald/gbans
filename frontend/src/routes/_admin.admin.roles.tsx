@@ -2,6 +2,7 @@ import { createConnectQueryKey, useMutation, useQuery, useTransport } from "@con
 import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
+import GroupsIcon from "@mui/icons-material/Groups";
 import RemoveIcon from "@mui/icons-material/Remove";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
@@ -81,26 +82,31 @@ function AdminRoles() {
 		];
 	}, []);
 
+	const resetRoles = useCallback(() => {
+		queryClient.invalidateQueries({
+			queryKey: createConnectQueryKey({
+				schema: RolesService.method.roleList,
+				cardinality: "finite",
+				transport,
+				input: {},
+			}),
+		});
+	}, [queryClient, transport]);
+
 	const onCreate = useCallback(async () => {
 		try {
 			const role = (await NiceModal.show(RoleCreateModal, {})) as Role;
 			sendFlash("success", `Role created successfully: ${role.roleName}`);
+			resetRoles();
 		} catch (e) {
 			sendFlash("error", `Failed to create new role: ${e}`);
 		}
-	}, [sendFlash]);
+	}, [sendFlash, resetRoles]);
 
 	const deleteMutation = useMutation(roleDelete, {
 		onSuccess: () => {
 			sendFlash("success", "Deleted role successfully");
-			queryClient.invalidateQueries({
-				queryKey: createConnectQueryKey({
-					schema: RolesService.method.roleList,
-					cardinality: "finite",
-					transport,
-					input: {},
-				}),
-			});
+			resetRoles();
 		},
 		onError: logErr,
 	});
@@ -110,11 +116,12 @@ function AdminRoles() {
 			try {
 				await NiceModal.show(RoleEditModal, { role });
 				sendFlash("success", `Role edited successfully: ${role.roleName}`);
+				resetRoles();
 			} catch (e) {
 				sendFlash("error", `Failed to edit role: ${e}`);
 			}
 		},
-		[sendFlash],
+		[sendFlash, resetRoles],
 	);
 
 	const onDelete = useCallback(
@@ -143,6 +150,7 @@ function AdminRoles() {
 		data: rolesResponse?.roles ?? [],
 		rowCount: rolesResponse?.roles.length ?? 0,
 		enableFilters: true,
+		enableColumnFilters: true,
 		state: {
 			isLoading: isLoading,
 			showAlertBanner: isError,
@@ -192,7 +200,8 @@ function AdminRoles() {
 			<Grid size={{ xs: 12 }}>
 				<SortableTable
 					table={table}
-					title={"Servers"}
+					iconLeft={<GroupsIcon />}
+					title={"Roles & Permissions"}
 					buttons={[
 						<Button key="add" color="success" startIcon={<AddIcon />} onClick={onCreate}>
 							Create Role
