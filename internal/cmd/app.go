@@ -443,7 +443,7 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	}
 }
 
-func (g *GBans) createAPI(authMiddleware *rpc.Middleware) *http.ServeMux {
+func (g *GBans) createAPI(authMiddleware *rpc.Middleware, roleAuth *rpc.RoleAuth) *http.ServeMux {
 	interceptors := rpc.CreateInterceptors()
 	api := http.NewServeMux()
 	conf := g.config.Config()
@@ -468,7 +468,7 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware) *http.ServeMux {
 		network.NewNetworkService(g.networks, authMiddleware, interceptors),
 		news.NewService(g.news, authMiddleware, interceptors),
 		notification.NewService(g.notifications, authMiddleware, interceptors),
-		roles.NewService(g.roles, authMiddleware, interceptors),
+		roles.NewService(g.roles, roleAuth, authMiddleware, interceptors),
 		person.NewPersonService(g.persons, authMiddleware, interceptors),
 		servers.NewServersService(g.servers, authMiddleware, interceptors),
 		demo.NewService(g.demos, authMiddleware, interceptors),
@@ -522,6 +522,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	userAuth.StartExchange(ctx)
 
 	authMiddleware := rpc.NewMiddleware(conf.General.SiteName, conf.HTTPCookieKey)
+	roleAuth := rpc.NewRoleAuth(g.roles)
 
 	asset.NewAssetHandler(mux, g.assets)
 	auth.NewAuthHandler(mux, userAuth, g.config, g.tfapiClient, g.notifications, authMiddleware)
@@ -529,7 +530,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 
 	mux.HandleFunc("GET /health", g.healthCheck)
 
-	apiHandler := g.createAPI(authMiddleware)
+	apiHandler := g.createAPI(authMiddleware, roleAuth)
 
 	topMux := http.NewServeMux()
 

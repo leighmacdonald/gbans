@@ -6,7 +6,6 @@ import (
 	"log/slog"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/roles/v1/rolesv1connect"
@@ -20,15 +19,15 @@ type Service struct {
 	roles Roles
 }
 
-func NewService(roles Roles, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(roles Roles, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := rolesv1connect.NewRolesServiceHandler(Service{roles: roles}, option...)
 
-	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleListProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleCreateProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleEditProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleDeleteProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleAssignProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleBySteamIDProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleListProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_READ))
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleBySteamIDProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_READ))
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleAssignProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

@@ -102,3 +102,27 @@ func (r Roles) Assign(ctx context.Context, steamID steamid.SteamID, roleID int32
 func (r Roles) GetRolesBySteamID(ctx context.Context, steamID steamid.SteamID) ([]Role, error) {
 	return r.repo.GetRolesBySteamID(ctx, steamID)
 }
+
+// PermissionsBySteamID returns the union of all granular permissions granted to
+// the user via their assigned roles. Duplicate permissions are de-duplicated.
+func (r Roles) PermissionsBySteamID(ctx context.Context, steamID steamid.SteamID) ([]string, error) {
+	userRoles, err := r.GetRolesBySteamID(ctx, steamID)
+	if err != nil {
+		return nil, err
+	}
+
+	seen := make(map[string]struct{}, len(userRoles))
+	perms := make([]string, 0, len(userRoles))
+	for _, role := range userRoles {
+		for _, perm := range role.Permissions {
+			if _, ok := seen[perm]; ok {
+				continue
+			}
+
+			seen[perm] = struct{}{}
+			perms = append(perms, perm)
+		}
+	}
+
+	return perms, nil
+}
