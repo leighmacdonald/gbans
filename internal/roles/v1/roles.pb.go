@@ -70,6 +70,8 @@ const (
 	Permission_PERMISSION_WORDFILTER_READ   Permission = 180
 	Permission_PERMISSION_WORDFILTER_WRITE  Permission = 181
 	Permission_PERMISSION_WORDFILTER_DELETE Permission = 182
+	Permission_PERMISSION_ROLE_READ         Permission = 190
+	Permission_PERMISSION_ROLE_WRITE        Permission = 191
 )
 
 // Enum value maps for Permission.
@@ -118,6 +120,8 @@ var (
 		180: "PERMISSION_WORDFILTER_READ",
 		181: "PERMISSION_WORDFILTER_WRITE",
 		182: "PERMISSION_WORDFILTER_DELETE",
+		190: "PERMISSION_ROLE_READ",
+		191: "PERMISSION_ROLE_WRITE",
 	}
 	Permission_value = map[string]int32{
 		"PERMISSION_UNSPECIFIED":       0,
@@ -163,6 +167,8 @@ var (
 		"PERMISSION_WORDFILTER_READ":   180,
 		"PERMISSION_WORDFILTER_WRITE":  181,
 		"PERMISSION_WORDFILTER_DELETE": 182,
+		"PERMISSION_ROLE_READ":         190,
+		"PERMISSION_ROLE_WRITE":        191,
 	}
 )
 
@@ -734,7 +740,8 @@ const file_roles_v1_roles_proto_rawDesc = "" +
 	"\n" +
 	"updated_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x12!\n" +
 	"\n" +
-	"user_count\x18\x06 \x01(\x04B\x020\x01R\tuserCount*\xf7\t\n" +
+	"user_count\x18\x06 \x01(\x04B\x020\x01R\tuserCount*\xae\n" +
+	"\n" +
 	"\n" +
 	"Permission\x12\x1a\n" +
 	"\x16PERMISSION_UNSPECIFIED\x10\x00\x12\x1d\n" +
@@ -780,7 +787,9 @@ const file_roles_v1_roles_proto_rawDesc = "" +
 	"\x14PERMISSION_VOTE_READ\x10\xaa\x01\x12\x1f\n" +
 	"\x1aPERMISSION_WORDFILTER_READ\x10\xb4\x01\x12 \n" +
 	"\x1bPERMISSION_WORDFILTER_WRITE\x10\xb5\x01\x12!\n" +
-	"\x1cPERMISSION_WORDFILTER_DELETE\x10\xb6\x012\xbe\x03\n" +
+	"\x1cPERMISSION_WORDFILTER_DELETE\x10\xb6\x01\x12\x19\n" +
+	"\x14PERMISSION_ROLE_READ\x10\xbe\x01\x12\x1a\n" +
+	"\x15PERMISSION_ROLE_WRITE\x10\xbf\x012\xbe\x03\n" +
 	"\fRolesService\x12@\n" +
 	"\bRoleList\x12\x16.google.protobuf.Empty\x1a\x1a.roles.v1.RoleListResponse\"\x00\x12I\n" +
 	"\n" +
