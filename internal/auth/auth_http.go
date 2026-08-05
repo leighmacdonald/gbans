@@ -24,6 +24,12 @@ type TokenGenerator interface {
 	ValidateUserToken(tokenStr string, fingerprint string) (steamid.SteamID, error)
 }
 
+// RoleAssigner assigns the default user role to steam IDs without role
+// assignments. Implemented by roles.Roles.
+type RoleAssigner interface {
+	AssignUserRole(ctx context.Context, steamID steamid.SteamID) error
+}
+
 type authHandler struct {
 	*Authentication
 
@@ -31,10 +37,11 @@ type authHandler struct {
 	tfAPI          thirdparty.APIProvider
 	notif          notification.Notifier
 	tokenGenerator TokenGenerator
+	roleAssigner   RoleAssigner
 }
 
 func NewAuthHandler(mux *http.ServeMux, auth *Authentication, config *config.Configuration,
-	tfAPI thirdparty.APIProvider, notif notification.Notifier, tokenGenerator TokenGenerator,
+	tfAPI thirdparty.APIProvider, notif notification.Notifier, tokenGenerator TokenGenerator, roleAssigner RoleAssigner,
 ) {
 	handler := &authHandler{
 		Authentication: auth,
@@ -42,6 +49,7 @@ func NewAuthHandler(mux *http.ServeMux, auth *Authentication, config *config.Con
 		tfAPI:          tfAPI,
 		notif:          notif,
 		tokenGenerator: tokenGenerator,
+		roleAssigner:   roleAssigner,
 	}
 
 	mux.HandleFunc("GET /auth/callback", handler.onSteamOIDCCallback())
@@ -104,6 +112,10 @@ func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
 		if errPerson != nil {
 			http.Redirect(res, req, referralURL, http.StatusFound) //nolint:gosec
 			slog.Error("Failed to create or load user profile", slog.String("error", errPerson.Error()))
+		}
+
+		if errAssign := h.roleAssigner.AssignUserRole(req.Context(), sid); errAssign != nil {
+			slog.Error("Failed to assign default user role", slog.String("error", errAssign.Error()))
 		}
 
 		accessToken, fingerprint, errToken := h.tokenGenerator.MakeUserToken(fetchedPerson)

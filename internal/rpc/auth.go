@@ -93,6 +93,7 @@ type Middleware struct {
 	cookie          string
 	userAllowList   map[string]UserRouteAuthFn
 	serverAllowList map[string]ServerRouteAuthFn
+	publicAllowList map[string]struct{}
 }
 
 // NewMiddleware creates a new authentication middleware for the given site name and cookie secret.
@@ -104,6 +105,7 @@ func NewMiddleware(siteName string, cookie string) *Middleware {
 		cookie:          cookie,
 		userAllowList:   map[string]UserRouteAuthFn{},
 		serverAllowList: map[string]ServerRouteAuthFn{},
+		publicAllowList: map[string]struct{}{},
 	}
 }
 
@@ -113,6 +115,15 @@ func NewMiddleware(siteName string, cookie string) *Middleware {
 func (m *Middleware) UserRoute(procedure string, authFunc UserRouteAuthFn) {
 	m.Lock()
 	m.userAllowList[procedure] = authFunc
+	m.Unlock()
+}
+
+// PublicRoute registers a user-facing RPC procedure that is accessible without
+// authentication. If a valid token is present in the request it is still used to
+// populate the UserInfo for personalization. Thread-safe.
+func (m *Middleware) PublicRoute(procedure string) {
+	m.Lock()
+	m.publicAllowList[procedure] = struct{}{}
 	m.Unlock()
 }
 
@@ -187,6 +198,24 @@ func (m *Middleware) authUser(ctx context.Context, req *http.Request, procedure 
 	defer m.RUnlock()
 
 	var info UserInfo
+
+	if _, isPublic := m.publicAllowList[procedure]; isPublic {
+		// Public routes do not require authentication. If a valid token is
+		// present, use it for personalization; otherwise treat as a guest.
+		if claims, errToken := m.userClaimsFromRequest(req); errToken == nil {
+			sid := steamid.New(claims.Subject)
+			if sid.Valid() {
+				info.SteamID = sid
+				info.Privilege = claims.Privilege
+				info.AvatarHash = claims.AvatarHash
+				info.Name = claims.Name
+			}
+		} else {
+			info.Privilege = permission.Guest
+		}
+
+		return info, nil
+	}
 
 	authFn, found := m.userAllowList[procedure]
 	if !found {

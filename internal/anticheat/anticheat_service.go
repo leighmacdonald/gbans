@@ -7,16 +7,16 @@ import (
 	"connectrpc.com/connect"
 	v1 "github.com/leighmacdonald/gbans/internal/anticheat/v1"
 	"github.com/leighmacdonald/gbans/internal/anticheat/v1/anticheatv1connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func NewService(anticheat AntiCheat, authMiddleware *rpc.Middleware, interceptor ...connect.HandlerOption) rpc.Service {
+func NewService(anticheat AntiCheat, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, interceptor ...connect.HandlerOption) rpc.Service {
 	pattern, handler := anticheatv1connect.NewAnticheatServiceHandler(Service{anticheat: anticheat}, interceptor...)
 
-	authMiddleware.UserRoute(anticheatv1connect.AnticheatServiceQueryProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(anticheatv1connect.AnticheatServiceQueryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ANTICHEAT_READ))
 
 	return rpc.Service{
 		Pattern: pattern,

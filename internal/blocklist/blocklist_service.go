@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	v1 "github.com/leighmacdonald/gbans/internal/blocklist/v1"
 	"github.com/leighmacdonald/gbans/internal/blocklist/v1/blocklistv1connect"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -20,21 +20,21 @@ type Service struct {
 	blocklists Blocklists
 }
 
-func NewService(blocklists Blocklists, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(blocklists Blocklists, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := blocklistv1connect.NewBlocklistServiceHandler(Service{blocklists: blocklists}, option...)
 
-	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceBlocklistSourcesProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceBlocklistSourcesCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceBlocklistSourcesEditProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceBlocklistSourcesDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceWhitelistAddressProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceWhitelistAddressCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceWhitelistAddressDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceWhitelistAddressEditProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceWhitelistSteamProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceWhitelistSteamDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceWhitelistSteamCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceCheckBlockProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceBlocklistSourcesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BLOCKLIST_READ))
+	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceBlocklistSourcesCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BLOCKLIST_WRITE))
+	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceBlocklistSourcesEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BLOCKLIST_WRITE))
+	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceBlocklistSourcesDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BLOCKLIST_DELETE))
+	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceWhitelistAddressProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BLOCKLIST_READ))
+	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceWhitelistAddressCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BLOCKLIST_WRITE))
+	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceWhitelistAddressDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BLOCKLIST_DELETE))
+	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceWhitelistAddressEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BLOCKLIST_WRITE))
+	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceWhitelistSteamProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BLOCKLIST_READ))
+	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceWhitelistSteamDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BLOCKLIST_DELETE))
+	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceWhitelistSteamCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BLOCKLIST_WRITE))
+	authMiddleware.UserRoute(blocklistv1connect.BlocklistServiceCheckBlockProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BLOCKLIST_READ))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	v1 "github.com/leighmacdonald/gbans/internal/mge/v1"
 	"github.com/leighmacdonald/gbans/internal/mge/v1/mgev1connect"
@@ -21,11 +20,11 @@ type Service struct {
 	mge MGE
 }
 
-func NewService(mge MGE, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
+func NewService(mge MGE, _ *rpc.RoleAuth, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
 	pattern, handler := mgev1connect.NewMGEServiceHandler(Service{mge: mge}, options...)
 
-	authMiddleware.UserRoute(mgev1connect.MGEServiceGetRatingsOverallProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.UserRoute(mgev1connect.MGEServiceGetHistoryProcedure, rpc.WithMinPermissions(permission.Guest))
+	authMiddleware.PublicRoute(mgev1connect.MGEServiceGetRatingsOverallProcedure)
+	authMiddleware.PublicRoute(mgev1connect.MGEServiceGetHistoryProcedure)
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

@@ -449,36 +449,36 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware, roleAuth *rpc.RoleAuth
 	conf := g.config.Config()
 
 	services := []rpc.Service{
-		anticheat.NewService(g.anticheat, authMiddleware, interceptors),
-		asset.NewService(g.assets, authMiddleware, interceptors),
-		auth.NewService(authMiddleware, interceptors),
-		ban.NewAppealService(g.appeals, authMiddleware, interceptors),
-		ban.NewBanService(g.bans, authMiddleware, interceptors),
+		anticheat.NewService(g.anticheat, roleAuth, authMiddleware, interceptors),
+		asset.NewService(g.assets, roleAuth, authMiddleware, interceptors),
+		auth.NewService(roleAuth, authMiddleware, interceptors),
+		ban.NewAppealService(g.appeals, roleAuth, authMiddleware, interceptors),
+		ban.NewBanService(g.bans, roleAuth, authMiddleware, interceptors),
 		ban.NewExportService(g.bans, strings.Split(conf.Exports.AuthorizedKeys, ","), conf.General.SiteName),
-		ban.NewReportService(g.reports, authMiddleware, interceptors),
-		chat.NewService(g.chat, authMiddleware, interceptors),
-		chat.NewWordfilterService(g.wordFilters, g.chat, g.config.Config().Filters, authMiddleware, interceptors),
-		config.NewService(g.config, BuildVersion, authMiddleware, interceptors),
-		contest.NewService(g.contests, g.assets, authMiddleware, interceptors),
-		discord.NewService(g.bot, authMiddleware, interceptors),
-		discordoauth.NewService(g.discordOAuth, authMiddleware, interceptors),
-		forum.NewService(g.forums, authMiddleware, interceptors),
-		mge.NewService(g.mge, authMiddleware, interceptors),
-		blocklist.NewService(g.blocklists, authMiddleware, interceptors),
-		network.NewNetworkService(g.networks, authMiddleware, interceptors),
-		news.NewService(g.news, authMiddleware, interceptors),
-		notification.NewService(g.notifications, authMiddleware, interceptors),
+		ban.NewReportService(g.reports, roleAuth, authMiddleware, interceptors),
+		chat.NewService(g.chat, roleAuth, authMiddleware, interceptors),
+		chat.NewWordfilterService(g.wordFilters, g.chat, g.config.Config().Filters, roleAuth, authMiddleware, interceptors),
+		config.NewService(g.config, BuildVersion, roleAuth, authMiddleware, interceptors),
+		contest.NewService(g.contests, g.assets, roleAuth, authMiddleware, interceptors),
+		discord.NewService(g.bot, roleAuth, authMiddleware, interceptors),
+		discordoauth.NewService(g.discordOAuth, roleAuth, authMiddleware, interceptors),
+		forum.NewService(g.forums, roleAuth, authMiddleware, interceptors),
+		mge.NewService(g.mge, roleAuth, authMiddleware, interceptors),
+		blocklist.NewService(g.blocklists, roleAuth, authMiddleware, interceptors),
+		network.NewNetworkService(g.networks, roleAuth, authMiddleware, interceptors),
+		news.NewService(g.news, roleAuth, authMiddleware, interceptors),
+		notification.NewService(g.notifications, roleAuth, authMiddleware, interceptors),
 		roles.NewService(g.roles, roleAuth, authMiddleware, interceptors),
-		person.NewPersonService(g.persons, authMiddleware, interceptors),
-		servers.NewServersService(g.servers, authMiddleware, interceptors),
-		demo.NewService(g.demos, authMiddleware, interceptors),
-		speedruns.NewService(g.speedruns, authMiddleware, interceptors),
+		person.NewPersonService(g.persons, roleAuth, authMiddleware, interceptors),
+		servers.NewServersService(g.servers, roleAuth, authMiddleware, interceptors),
+		demo.NewService(g.demos, roleAuth, authMiddleware, interceptors),
+		speedruns.NewService(g.speedruns, roleAuth, authMiddleware, interceptors),
 		sourcemod.NewPluginService(g.sourcemod, g.persons, g.servers, g.bans,
 			rpc.NewServerTokenGenerator(conf.General.SiteName, []byte(conf.HTTPCookieKey)), g.notifications, conf.Discord.LogChannelID, authMiddleware, interceptors),
-		sourcemod.NewSourcemodService(g.sourcemod, authMiddleware, interceptors),
-		stats.NewService(g.stats, g.servers, authMiddleware, interceptors),
-		votes.NewService(g.votes, authMiddleware, interceptors),
-		wiki.NewService(g.wiki, authMiddleware, interceptors),
+		sourcemod.NewSourcemodService(g.sourcemod, roleAuth, authMiddleware, interceptors),
+		stats.NewService(g.stats, g.servers, roleAuth, authMiddleware, interceptors),
+		votes.NewService(g.votes, roleAuth, authMiddleware, interceptors),
+		wiki.NewService(g.wiki, roleAuth, authMiddleware, interceptors),
 	}
 
 	for _, service := range services {
@@ -525,7 +525,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	roleAuth := rpc.NewRoleAuth(g.roles)
 
 	asset.NewAssetHandler(mux, g.assets)
-	auth.NewAuthHandler(mux, userAuth, g.config, g.tfapiClient, g.notifications, authMiddleware)
+	auth.NewAuthHandler(mux, userAuth, g.config, g.tfapiClient, g.notifications, authMiddleware, g.roles)
 	discordoauth.NewDiscordOAuthHandler(mux, g.config, g.persons, g.discordOAuth)
 
 	mux.HandleFunc("GET /health", g.healthCheck)

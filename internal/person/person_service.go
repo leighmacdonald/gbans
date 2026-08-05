@@ -10,6 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	v1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	"github.com/leighmacdonald/gbans/internal/person/v1/personv1connect"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -23,16 +24,16 @@ type Service struct {
 	persons *Persons
 }
 
-func NewPersonService(persons *Persons, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewPersonService(persons *Persons, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := personv1connect.NewPersonServiceHandler(Service{persons: persons}, option...)
 
-	authMiddleware.UserRoute(personv1connect.PersonServiceProfileProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(personv1connect.PersonServiceResolveSteamIDProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(personv1connect.PersonServiceCurrentProfileProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(personv1connect.PersonServiceProfileSettingsProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(personv1connect.PersonServiceEditProfileSettingsProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(personv1connect.PersonServiceQueryProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(personv1connect.PersonServiceEditPermissionsProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.UserRoute(personv1connect.PersonServiceProfileProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_PERSON_READ))
+	authMiddleware.UserRoute(personv1connect.PersonServiceResolveSteamIDProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STEAMID_RESOLVE))
+	authMiddleware.UserRoute(personv1connect.PersonServiceCurrentProfileProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_LOGIN))
+	authMiddleware.UserRoute(personv1connect.PersonServiceProfileSettingsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CURRENT_SETTINGS))
+	authMiddleware.UserRoute(personv1connect.PersonServiceEditProfileSettingsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CURRENT_SETTINGS))
+	authMiddleware.UserRoute(personv1connect.PersonServiceQueryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_PERSON_READ))
+	authMiddleware.UserRoute(personv1connect.PersonServiceEditPermissionsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_PERSON_WRITE))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

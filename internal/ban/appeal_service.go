@@ -11,6 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -22,15 +23,15 @@ type AppealService struct {
 	appeals Appeals
 }
 
-func NewAppealService(appeals Appeals, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
+func NewAppealService(appeals Appeals, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
 	pattern, handler := banv1connect.NewAppealServiceHandler(AppealService{appeals: appeals}, options...)
 
-	authMiddleware.UserRoute(banv1connect.AppealServiceAppealsProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(banv1connect.AppealServiceSetAppealStateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(banv1connect.AppealServiceMessagesProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(banv1connect.AppealServiceReplyProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(banv1connect.AppealServiceEditAppealMessageProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(banv1connect.AppealServiceDeleteAppealMessageProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(banv1connect.AppealServiceAppealsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_APPEAL_READ))
+	authMiddleware.UserRoute(banv1connect.AppealServiceSetAppealStateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_APPEAL_ADMIN))
+	authMiddleware.UserRoute(banv1connect.AppealServiceMessagesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_APPEAL_READ))
+	authMiddleware.UserRoute(banv1connect.AppealServiceReplyProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_APPEAL_WRITE))
+	authMiddleware.UserRoute(banv1connect.AppealServiceEditAppealMessageProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_APPEAL_WRITE))
+	authMiddleware.UserRoute(banv1connect.AppealServiceDeleteAppealMessageProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_APPEAL_WRITE))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

@@ -7,6 +7,6 @@ export const sum = (list: number[]) =>
 
 export const uniqCI = (values: string[]): string[] => [...new Map(values.map((s) => [s.toLowerCase(), s])).values()];
 
-export const enumValues = (e: object): number[] => {
-	return Object.values(e).filter((v) => typeof v === "number");
+export const enumValues = (e: object, filterZero: boolean = false): number[] => {
+	return Object.values(e).filter((v) => typeof v === "number" && (!filterZero || v !== 0));
 };

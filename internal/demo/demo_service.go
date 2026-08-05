@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	v1 "github.com/leighmacdonald/gbans/internal/demo/v1"
 	"github.com/leighmacdonald/gbans/internal/demo/v1/demov1connect"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -18,11 +18,11 @@ type Service struct {
 	demos Demos
 }
 
-func NewService(demos Demos, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(demos Demos, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := demov1connect.NewDemoServiceHandler(&Service{demos: demos}, option...)
 
-	authMiddleware.UserRoute(demov1connect.DemoServiceGetDemosProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(demov1connect.DemoServiceRunCleanupProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.UserRoute(demov1connect.DemoServiceGetDemosProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_DEMO_READ))
+	authMiddleware.UserRoute(demov1connect.DemoServiceRunCleanupProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_DEMO_ADMIN))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

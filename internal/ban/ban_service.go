@@ -13,6 +13,7 @@ import (
 	v1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	"github.com/leighmacdonald/gbans/internal/ban/v1/banv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -28,7 +29,7 @@ type Service struct {
 	bans   Bans
 }
 
-func NewBanService(bans Bans, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewBanService(bans Bans, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	client, errClient := thirdparty.NewClientWithResponses("https://tf-api.roto.lol")
 	if errClient != nil {
 		panic(errClient)
@@ -36,12 +37,12 @@ func NewBanService(bans Bans, authMiddleware *rpc.Middleware, option ...connect.
 
 	pattern, handler := banv1connect.NewBanServiceHandler(Service{bans: bans, client: client}, option...)
 
-	authMiddleware.UserRoute(banv1connect.BanServiceQueryProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(banv1connect.BanServiceDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(banv1connect.BanServiceGetProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(banv1connect.BanServiceQuerySourceBansProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(banv1connect.BanServiceUpdateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(banv1connect.BanServiceCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(banv1connect.BanServiceQueryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_READ))
+	authMiddleware.UserRoute(banv1connect.BanServiceDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_WRITE))
+	authMiddleware.UserRoute(banv1connect.BanServiceGetProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_READ))
+	authMiddleware.UserRoute(banv1connect.BanServiceQuerySourceBansProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_READ))
+	authMiddleware.UserRoute(banv1connect.BanServiceUpdateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_WRITE))
+	authMiddleware.UserRoute(banv1connect.BanServiceCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_CREATE))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

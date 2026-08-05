@@ -9,6 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/wiki/v1"
 	"github.com/leighmacdonald/gbans/internal/wiki/v1/wikiv1connect"
@@ -21,11 +22,11 @@ type Service struct {
 	wiki Wiki
 }
 
-func NewService(wiki Wiki, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(wiki Wiki, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := wikiv1connect.NewWikiServiceHandler(Service{wiki: wiki}, option...)
 
-	authMiddleware.UserRoute(wikiv1connect.WikiServiceGetProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.UserRoute(wikiv1connect.WikiServiceUpdateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.PublicRoute(wikiv1connect.WikiServiceGetProcedure)
+	authMiddleware.UserRoute(wikiv1connect.WikiServiceUpdateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_WIKI_EDIT))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

@@ -144,16 +144,18 @@ func (d Demos) createFromAsset(ctx context.Context, asset *asset.Asset, serverID
 		return nil, errGetServer
 	}
 	var (
-		parsedDemo *demoparse.Demo
-		err        error
-		filename   = asset.Name
-		mapName    string
+		parsedDemo     *demoparse.Demo
+		err            error
+		filename       = asset.Name
+		mapName        string
+		existingDemoID int32
 	)
 
 	namePartsAll := strings.Split(filename, "-")
 
 	existing, errExisting := d.repository.GetDemoByAssetID(ctx, asset.AssetID)
 	if errExisting == nil {
+		existingDemoID = existing.DemoID
 		if err := d.stats.Delete(ctx, existing.DemoID); err != nil {
 			return nil, err
 		}
@@ -205,6 +207,7 @@ func (d Demos) createFromAsset(ctx context.Context, asset *asset.Asset, serverID
 		MapName:   mapName,
 		Stats:     intStats,
 		AssetID:   asset.AssetID,
+		DemoID:    existingDemoID,
 	}
 
 	if errSave := d.repository.SaveDemo(ctx, &newDemo); errSave != nil {

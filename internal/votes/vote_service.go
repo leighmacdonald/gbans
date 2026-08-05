@@ -6,9 +6,9 @@ import (
 	"log/slog"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/votes/v1"
 	"github.com/leighmacdonald/gbans/internal/votes/v1/votesv1connect"
@@ -21,10 +21,10 @@ type Service struct {
 	votes Votes
 }
 
-func NewService(votes Votes, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(votes Votes, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := votesv1connect.NewVotesServiceHandler(Service{votes: votes}, option...)
 
-	authMiddleware.UserRoute(votesv1connect.VotesServiceQueryProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(votesv1connect.VotesServiceQueryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_VOTE_READ))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

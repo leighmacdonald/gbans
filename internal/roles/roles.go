@@ -17,6 +17,10 @@ var (
 
 const adminRoleID = 1
 
+// UserRoleName is the name of the default role granted to any authenticated
+// user without explicit role assignments.
+const UserRoleName = "user"
+
 type Role struct {
 	RoleID      int32
 	RoleName    string
@@ -99,13 +103,41 @@ func (r Roles) Assign(ctx context.Context, steamID steamid.SteamID, roleID int32
 	return r.repo.Assign(ctx, steamID, roleID)
 }
 
+// AssignUserRole ensures the default "user" role is assigned to the steam ID.
+// It is a no-op when the user already holds any role assignments. Concurrent
+// assignments are tolerated via the role_assignments primary key.
+func (r Roles) AssignUserRole(ctx context.Context, steamID steamid.SteamID) error {
+	userRoles, err := r.GetRolesBySteamID(ctx, steamID)
+	if err != nil {
+		return err
+	}
+
+	if len(userRoles) > 0 {
+		return nil
+	}
+
+	userRole, errRole := r.repo.GetByName(ctx, UserRoleName)
+	if errRole != nil {
+		return errRole
+	}
+
+	return r.Assign(ctx, steamID, userRole.RoleID)
+}
+
 func (r Roles) GetRolesBySteamID(ctx context.Context, steamID steamid.SteamID) ([]Role, error) {
 	return r.repo.GetRolesBySteamID(ctx, steamID)
 }
 
 // PermissionsBySteamID returns the union of all granular permissions granted to
 // the user via their assigned roles. Duplicate permissions are de-duplicated.
+//
+// Users without any role assignments are lazily granted the default "user" role
+// so that they always receive the baseline set of user-level permissions.
 func (r Roles) PermissionsBySteamID(ctx context.Context, steamID steamid.SteamID) ([]string, error) {
+	if errAssign := r.AssignUserRole(ctx, steamID); errAssign != nil && !errors.Is(errAssign, database.ErrDuplicate) {
+		return nil, errAssign
+	}
+
 	userRoles, err := r.GetRolesBySteamID(ctx, steamID)
 	if err != nil {
 		return nil, err

@@ -7,10 +7,10 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	mapsv1 "github.com/leighmacdonald/gbans/internal/maps/v1"
 	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	v1 "github.com/leighmacdonald/gbans/internal/stats/v1"
@@ -27,12 +27,12 @@ type Service struct {
 	servers *servers.Servers
 }
 
-func NewService(stats Stats, servers *servers.Servers, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(stats Stats, servers *servers.Servers, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := statsv1connect.NewStatsServiceHandler(Service{stats: stats, servers: servers}, option...)
 
-	authMiddleware.UserRoute(statsv1connect.StatsServiceMatchProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(statsv1connect.StatsServiceBucketsProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(statsv1connect.StatsServiceQueryStatsProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(statsv1connect.StatsServiceMatchProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
+	authMiddleware.UserRoute(statsv1connect.StatsServiceBucketsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
+	authMiddleware.UserRoute(statsv1connect.StatsServiceQueryStatsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
