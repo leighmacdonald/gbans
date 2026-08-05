@@ -9,7 +9,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	v1 "github.com/leighmacdonald/gbans/internal/asset/v1"
 	"github.com/leighmacdonald/gbans/internal/asset/v1/assetv1connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -20,11 +20,11 @@ type Service struct {
 	assets Assets
 }
 
-func NewService(assets Assets, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(assets Assets, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := assetv1connect.NewAssetServiceHandler(Service{assets: assets}, option...)
 
-	authMiddleware.UserRoute(assetv1connect.AssetServiceCreateProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(assetv1connect.AssetServiceDeleteProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(assetv1connect.AssetServiceCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ASSET_CREATE))
+	authMiddleware.UserRoute(assetv1connect.AssetServiceDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ASSET_DELETE))
 
 	return rpc.Service{
 		Pattern: pattern,

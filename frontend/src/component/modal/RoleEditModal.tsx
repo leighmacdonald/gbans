@@ -92,6 +92,11 @@ export const RoleEditModal = NiceModal.create(({ role }: { role: Role }) => {
 						<Grid size={{ xs: 12 }}>
 							<form.AppForm>
 								<ButtonGroup>
+									<form.CloseButton
+										onClick={() => {
+											modal.hide();
+										}}
+									/>
 									<form.ResetButton />
 									<form.SubmitButton />
 								</ButtonGroup>

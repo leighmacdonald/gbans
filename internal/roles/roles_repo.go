@@ -80,6 +80,30 @@ func (r Repository) savePermissions(ctx context.Context, roleID int32, perms []s
 	return nil
 }
 
+func (r Repository) GetByName(ctx context.Context, roleName string) (Role, error) {
+	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
+		Select("role_id", "role_name", "created_on", "updated_on").
+		From("roles").
+		Where(sq.Eq{"role_name": roleName}))
+	if errRow != nil {
+		return Role{}, database.Err(errRow)
+	}
+
+	var role Role
+	if errScan := row.Scan(&role.RoleID, &role.RoleName, &role.CreatedOn, &role.UpdatedOn); errScan != nil {
+		return Role{}, database.Err(errScan)
+	}
+
+	perms, errPerms := r.getPermissions(ctx, role.RoleID)
+	if errPerms != nil {
+		return Role{}, errPerms
+	}
+
+	role.Permissions = perms
+
+	return role, nil
+}
+
 func (r Repository) GetByID(ctx context.Context, roleID int32) (Role, error) {
 	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
 		Select("role_id", "role_name", "created_on", "updated_on").

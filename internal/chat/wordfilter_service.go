@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	banv1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	v1 "github.com/leighmacdonald/gbans/internal/chat/v1"
 	"github.com/leighmacdonald/gbans/internal/chat/v1/chatv1connect"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -22,15 +22,15 @@ type WordfilterService struct {
 	filters WordFilters
 }
 
-func NewWordfilterService(filters WordFilters, chat *Chat, config *Config, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
+func NewWordfilterService(filters WordFilters, chat *Chat, config *Config, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
 	pattern, handler := chatv1connect.NewWordfilterServiceHandler(WordfilterService{filters: filters, chat: chat, config: config}, options...)
 
-	authMiddleware.UserRoute(chatv1connect.WordfilterServiceFiltersProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(chatv1connect.WordfilterServiceWarningStateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(chatv1connect.WordfilterServiceFilterCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(chatv1connect.WordfilterServiceFilterEditProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(chatv1connect.WordfilterServiceFilterDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(chatv1connect.WordfilterServiceFilterMatchProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(chatv1connect.WordfilterServiceFiltersProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_WORDFILTER_READ))
+	authMiddleware.UserRoute(chatv1connect.WordfilterServiceWarningStateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_WORDFILTER_READ))
+	authMiddleware.UserRoute(chatv1connect.WordfilterServiceFilterCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_WORDFILTER_WRITE))
+	authMiddleware.UserRoute(chatv1connect.WordfilterServiceFilterEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_WORDFILTER_WRITE))
+	authMiddleware.UserRoute(chatv1connect.WordfilterServiceFilterDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_WORDFILTER_DELETE))
+	authMiddleware.UserRoute(chatv1connect.WordfilterServiceFilterMatchProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_WORDFILTER_READ))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

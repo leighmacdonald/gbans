@@ -6,10 +6,10 @@ import (
 	"net/netip"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	banv1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	"github.com/leighmacdonald/gbans/internal/database"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/sourcemod/v1"
 	"github.com/leighmacdonald/gbans/internal/sourcemod/v1/sourcemodv1connect"
@@ -26,29 +26,29 @@ type Service struct {
 	sourcemod Sourcemod
 }
 
-func NewSourcemodService(sourcemod Sourcemod, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewSourcemodService(sourcemod Sourcemod, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := sourcemodv1connect.NewSourcemodServiceHandler(Service{sourcemod: sourcemod}, option...)
 
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceGroupsProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateGroupProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceEditGroupsProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteGroupProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceGroupOverridesProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateGroupOverrideProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceEditGroupOverrideProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteGroupOverrideProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceAdminsProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateAdminProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceEditAdminProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteAdminProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceAddAdminGroupProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteAdminGroupProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceOverridesProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateOverridesProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceEditOverridesProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteOverridesProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceGroupImmunitiesProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateImmunityProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceGroupsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_READ))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateGroupProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceEditGroupsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteGroupProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceGroupOverridesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_READ))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateGroupOverrideProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceEditGroupOverrideProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteGroupOverrideProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceAdminsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_READ))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateAdminProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceEditAdminProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteAdminProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceAddAdminGroupProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteAdminGroupProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceOverridesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_READ))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateOverridesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceEditOverridesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteOverridesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceGroupImmunitiesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_READ))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateImmunityProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

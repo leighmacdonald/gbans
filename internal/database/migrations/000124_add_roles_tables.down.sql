@@ -1,7 +1,7 @@
-DROP TABLE IF EXISTS role_assignments;
+drop table if exists role_assignments;
 
-DROP TABLE IF EXISTS role_permissions;
+drop table if exists role_permissions;
 
-DROP TABLE IF EXISTS roles;
+drop table if exists roles;
 
-DROP TYPE IF EXISTS permission;
+drop type if exists permission;

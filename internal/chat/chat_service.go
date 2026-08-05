@@ -11,6 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/chat/v1/chatv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -21,11 +22,11 @@ type Service struct {
 	chat *Chat
 }
 
-func NewService(chat *Chat, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(chat *Chat, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := chatv1connect.NewChatServiceHandler(Service{chat: chat}, option...)
 
-	authMiddleware.UserRoute(chatv1connect.ChatServiceQueryProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(chatv1connect.ChatServiceQueryContextProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(chatv1connect.ChatServiceQueryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CHATLOG_READ))
+	authMiddleware.UserRoute(chatv1connect.ChatServiceQueryContextProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CHATLOG_READ))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

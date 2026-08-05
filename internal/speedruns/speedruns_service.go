@@ -5,10 +5,10 @@ import (
 	"errors"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/maps"
 	mapsv1 "github.com/leighmacdonald/gbans/internal/maps/v1"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/speedruns/v1"
 	"github.com/leighmacdonald/gbans/internal/speedruns/v1/speedrunsv1connect"
@@ -22,14 +22,14 @@ type Service struct {
 	speedruns Speedruns
 }
 
-func NewService(speedruns Speedruns, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(speedruns Speedruns, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := speedrunsv1connect.NewSpeedrunsServiceHandler(&Service{speedruns: speedruns}, option...)
 
-	authMiddleware.UserRoute(speedrunsv1connect.SpeedrunsServiceMapSpeedrunsProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(speedrunsv1connect.SpeedrunsServiceOverallTopNProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(speedrunsv1connect.SpeedrunsServiceOverallRecentProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(speedrunsv1connect.SpeedrunsServiceSpeedrunCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(speedrunsv1connect.SpeedrunsServiceQueryProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(speedrunsv1connect.SpeedrunsServiceMapSpeedrunsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SPEEDRUN_READ))
+	authMiddleware.UserRoute(speedrunsv1connect.SpeedrunsServiceOverallTopNProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SPEEDRUN_READ))
+	authMiddleware.UserRoute(speedrunsv1connect.SpeedrunsServiceOverallRecentProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SPEEDRUN_READ))
+	authMiddleware.UserRoute(speedrunsv1connect.SpeedrunsServiceSpeedrunCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SPEEDRUN_WRITE))
+	authMiddleware.UserRoute(speedrunsv1connect.SpeedrunsServiceQueryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SPEEDRUN_READ))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

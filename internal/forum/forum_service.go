@@ -12,6 +12,7 @@ import (
 	v1 "github.com/leighmacdonald/gbans/internal/forum/v1"
 	"github.com/leighmacdonald/gbans/internal/forum/v1/forumv1connect"
 	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -24,27 +25,27 @@ type Service struct {
 	forums Forums
 }
 
-func NewService(forums Forums, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(forums Forums, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := forumv1connect.NewForumServiceHandler(Service{forums: forums}, option...)
 
-	authMiddleware.UserRoute(forumv1connect.ForumServiceActiveUsersProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceOverviewProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceRecentMessagesProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadsProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadDeleteProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceForumProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadMessagesProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadCreateProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadEditProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadReplyCreateProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadReplyEditProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadMessageDeleteProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceCategoryCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceCategoryEditProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceCategoryProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceForumCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceForumEditProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.PublicRoute(forumv1connect.ForumServiceActiveUsersProcedure)
+	authMiddleware.PublicRoute(forumv1connect.ForumServiceOverviewProcedure)
+	authMiddleware.PublicRoute(forumv1connect.ForumServiceRecentMessagesProcedure)
+	authMiddleware.PublicRoute(forumv1connect.ForumServiceThreadsProcedure)
+	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_READ))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceForumProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_READ))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadMessagesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_READ))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadReplyCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadReplyEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadMessageDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceCategoryCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceCategoryEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceCategoryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceForumCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceForumEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

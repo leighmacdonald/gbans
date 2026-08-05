@@ -9,12 +9,12 @@ import (
 	"sync/atomic"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/network/ip2location"
 	v1 "github.com/leighmacdonald/gbans/internal/network/v1"
 	"github.com/leighmacdonald/gbans/internal/network/v1/networkv1connect"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -26,12 +26,12 @@ type Service struct {
 	networks         Networks
 }
 
-func NewNetworkService(networks Networks, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewNetworkService(networks Networks, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := networkv1connect.NewNetworkServiceHandler(&Service{networks: networks}, option...)
 
-	authMiddleware.UserRoute(networkv1connect.NetworkServiceQueryConnectionsProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(networkv1connect.NetworkServiceQueryNetworkProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(networkv1connect.NetworkServiceUpdateDBProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.UserRoute(networkv1connect.NetworkServiceQueryConnectionsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NETWORK_READ))
+	authMiddleware.UserRoute(networkv1connect.NetworkServiceQueryNetworkProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NETWORK_READ))
+	authMiddleware.UserRoute(networkv1connect.NetworkServiceUpdateDBProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NETWORK_ADMIN))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

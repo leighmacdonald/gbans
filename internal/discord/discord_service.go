@@ -4,16 +4,16 @@ import (
 	"context"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	discordv1 "github.com/leighmacdonald/gbans/internal/discord/v1"
 	"github.com/leighmacdonald/gbans/internal/discord/v1/discordv1connect"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func NewService(connection Connection, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(connection Connection, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := discordv1connect.NewDiscordServiceHandler(Service{connection: connection}, option...)
-	authMiddleware.UserRoute(discordv1connect.DiscordServiceSeedRoleIDsProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(discordv1connect.DiscordServiceSeedRoleIDsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CONFIG_WRITE))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
