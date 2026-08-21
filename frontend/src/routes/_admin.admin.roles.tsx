@@ -46,6 +46,7 @@ function AdminRoles() {
 			columnHelper.accessor("roleId", {
 				header: "Role ID",
 				grow: false,
+				enableColumnFilter: false,
 				size: 40,
 			}),
 			columnHelper.accessor("roleName", {
@@ -54,8 +55,9 @@ function AdminRoles() {
 				size: 150,
 			}),
 			columnHelper.accessor("userCount", {
-				header: "Users",
+				header: "Count",
 				grow: false,
+				enableColumnFilter: false,
 				size: 100,
 			}),
 			columnHelper.accessor("permissions", {
@@ -176,8 +178,8 @@ function AdminRoles() {
 				roleName: true,
 				permissions: true,
 				userCount: true,
-				createdOn: true,
-				updatedOn: true,
+				createdOn: false,
+				updatedOn: false,
 			},
 		},
 		enableRowActions: true,

@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/config/link"
@@ -22,6 +21,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -318,7 +318,7 @@ func (s Bans) Save(ctx context.Context, ban *Ban) error {
 
 	if oldState != ban.AppealState {
 		s.notif.Send(notification.NewSiteGroup(
-			[]permission.Privilege{permission.Moderator, permission.Admin},
+			[]rolesv1.Permission{rolesv1.Permission_PERMISSION_BAN_READ},
 			notification.Info,
 			fmt.Sprintf("Ban appeal state changed: %s -> %s", oldState, ban.AppealState),
 			link.Path(ban)))
@@ -399,7 +399,7 @@ func (s Bans) sendBanNotification(ctx context.Context, newBan Ban, author person
 	go func() {
 		s.notif.Send(notification.NewDiscord(s.logChannelID, createBanResponse(newBan, author, target)))
 		s.notif.Send(notification.NewSiteUserWithAuthor(
-			[]permission.Privilege{permission.Moderator, permission.Admin},
+			[]rolesv1.Permission{rolesv1.Permission_PERMISSION_BAN_READ},
 			notification.Info,
 			fmt.Sprintf("User banned (steam): %s Duration: %s Author: %s",
 				newBan.Name, expIn, author.GetName()),
@@ -471,7 +471,7 @@ func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason strin
 
 	s.notif.Send(notification.NewDiscord(s.logChannelID, unbanMessage(player, reason)))
 	s.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
-		[]permission.Privilege{permission.Moderator, permission.Admin},
+		[]rolesv1.Permission{rolesv1.Permission_PERMISSION_BAN_READ},
 		notification.Info,
 		fmt.Sprintf("A user has been unbanned: %s, Reason: %s", player.GetName(), reason),
 		link.Path(player),

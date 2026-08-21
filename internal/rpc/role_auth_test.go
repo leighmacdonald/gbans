@@ -12,12 +12,11 @@ import (
 )
 
 type fakeRoleResolver struct {
-	perms []string
-	err   error
+	perms []rolesv1.Permission
 }
 
-func (f fakeRoleResolver) PermissionsBySteamID(_ context.Context, _ steamid.SteamID) ([]string, error) {
-	return f.perms, f.err
+func (f fakeRoleResolver) PermissionsBySteamID(_ context.Context, _ steamid.SteamID) []rolesv1.Permission {
+	return f.perms
 }
 
 func TestRoleAuthWithPermissions(t *testing.T) {
@@ -43,13 +42,13 @@ func TestRoleAuthWithPermissions(t *testing.T) {
 	}{
 		{
 			name:     "granted when any permission matches",
-			resolver: fakeRoleResolver{perms: []string{banRead.String()}},
+			resolver: fakeRoleResolver{perms: []rolesv1.Permission{banRead}},
 			required: []rolesv1.Permission{roleRead, banRead},
 			want:     true,
 		},
 		{
 			name:     "denied when no required permission held",
-			resolver: fakeRoleResolver{perms: []string{banWrite.String()}},
+			resolver: fakeRoleResolver{perms: []rolesv1.Permission{banWrite}},
 			required: []rolesv1.Permission{roleRead, banRead},
 			want:     false,
 		},
@@ -60,14 +59,8 @@ func TestRoleAuthWithPermissions(t *testing.T) {
 			want:     false,
 		},
 		{
-			name:     "denied on resolver error",
-			resolver: fakeRoleResolver{err: context.DeadlineExceeded},
-			required: []rolesv1.Permission{banRead},
-			want:     false,
-		},
-		{
 			name:     "denied when no permissions required",
-			resolver: fakeRoleResolver{perms: []string{banRead.String()}},
+			resolver: fakeRoleResolver{perms: []rolesv1.Permission{banRead}},
 			required: nil,
 			want:     false,
 		},

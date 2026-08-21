@@ -26,7 +26,7 @@ import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { ReportService, type ReportWithAuthor } from "../rpc/ban/v1/report_pb.ts";
 import { reportMessageCreate, reportMessages } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { ContainerWithHeader } from "./ContainerWithHeader";
 import { ContainerWithHeaderAndButtons } from "./ContainerWithHeaderAndButtons.tsx";
 import { mdEditorRef } from "./form/field/MarkdownField.tsx";
@@ -117,7 +117,7 @@ export const ReportViewComponent = ({
 									aria-label="ReportCreatePage detail tabs"
 								>
 									<Tab label="Description" icon={<DescriptionIcon />} iconPosition={"start"} />
-									{hasPermission(Privilege.MODERATOR) && (
+									{hasPermission(Permission.REPORT_ADMIN) && (
 										<Tab
 											sx={{ height: 20 }}
 											label={`Chat Logs`}
@@ -125,7 +125,7 @@ export const ReportViewComponent = ({
 											iconPosition={"start"}
 										/>
 									)}
-									{hasPermission(Privilege.MODERATOR) && (
+									{hasPermission(Permission.REPORT_ADMIN) && (
 										<Tab label={`Connections`} icon={<LanIcon />} iconPosition={"start"} />
 									)}
 								</TabList>
@@ -191,11 +191,11 @@ export const ReportViewComponent = ({
 							</ContainerWithHeader>
 						)}
 
-						{hasPermission(Privilege.MODERATOR) && (
+						{hasPermission(Permission.REPORT_ADMIN) && (
 							<SourceBansList steamId={report.report.sourceId} isReporter={true} />
 						)}
 
-						{hasPermission(Privilege.MODERATOR) && (
+						{hasPermission(Permission.REPORT_ADMIN) && (
 							<SourceBansList steamId={report.report.targetId} isReporter={false} />
 						)}
 

@@ -15,8 +15,8 @@ import (
 
 	"connectrpc.com/authn"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -40,8 +40,11 @@ var (
 type UserClaimProvider interface {
 	GetAvatar() person.Avatar
 	GetSteamID() steamid.SteamID
-	GetPrivilege() permission.Privilege
 	GetName() string
+}
+
+type PermissionLoader interface {
+	PermissionsBySteamID(ctx context.Context, steamid steamid.SteamID) []rolesv1.Permission
 }
 
 // UserRouteAuthFn is a function type that determines if a user has permission to access a given RPC procedure.
@@ -57,20 +60,12 @@ func WithServer() ServerRouteAuthFn {
 	}
 }
 
-// WithMinPermissions returns a UserRouteAuthFn that checks if the user has at least the specified privilege level.
-func WithMinPermissions(permission permission.Privilege) UserRouteAuthFn {
-	return func(_ context.Context, _ *http.Request, user UserInfo) bool {
-		return user.HasPermission(permission)
-	}
-}
-
 type userClaims struct {
 	jwt.RegisteredClaims
 
 	// user context to prevent side-jacking
 	// https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html#token-sidejacking
 	Fingerprint string
-	Privilege   permission.Privilege
 	SteamID     string
 	AvatarHash  person.Avatar
 	Name        string
@@ -89,23 +84,25 @@ type serverClaims struct {
 type Middleware struct {
 	sync.RWMutex
 
-	siteName        string
-	cookie          string
-	userAllowList   map[string]UserRouteAuthFn
-	serverAllowList map[string]ServerRouteAuthFn
-	publicAllowList map[string]struct{}
+	siteName         string
+	cookie           string
+	permissionLoader PermissionLoader
+	userAllowList    map[string]UserRouteAuthFn
+	serverAllowList  map[string]ServerRouteAuthFn
+	publicAllowList  map[string]struct{}
 }
 
 // NewMiddleware creates a new authentication middleware for the given site name and cookie secret.
 // The cookie secret is used as the HMAC key for signing and verifying JWT tokens.
-func NewMiddleware(siteName string, cookie string) *Middleware {
+func NewMiddleware(siteName string, cookie string, permissionLoader PermissionLoader) *Middleware {
 	return &Middleware{
-		RWMutex:         sync.RWMutex{},
-		siteName:        siteName,
-		cookie:          cookie,
-		userAllowList:   map[string]UserRouteAuthFn{},
-		serverAllowList: map[string]ServerRouteAuthFn{},
-		publicAllowList: map[string]struct{}{},
+		RWMutex:          sync.RWMutex{},
+		siteName:         siteName,
+		cookie:           cookie,
+		permissionLoader: permissionLoader,
+		userAllowList:    map[string]UserRouteAuthFn{},
+		serverAllowList:  map[string]ServerRouteAuthFn{},
+		publicAllowList:  map[string]struct{}{},
 	}
 }
 
@@ -206,12 +203,10 @@ func (m *Middleware) authUser(ctx context.Context, req *http.Request, procedure 
 			sid := steamid.New(claims.Subject)
 			if sid.Valid() {
 				info.SteamID = sid
-				info.Privilege = claims.Privilege
 				info.AvatarHash = claims.AvatarHash
 				info.Name = claims.Name
+				info.Permissions = m.permissionLoader.PermissionsBySteamID(ctx, sid)
 			}
-		} else {
-			info.Privilege = permission.Guest
 		}
 
 		return info, nil
@@ -233,9 +228,9 @@ func (m *Middleware) authUser(ctx context.Context, req *http.Request, procedure 
 	}
 
 	info.SteamID = sid
-	info.Privilege = claims.Privilege
 	info.AvatarHash = claims.AvatarHash
 	info.Name = claims.Name
+	info.Permissions = m.permissionLoader.PermissionsBySteamID(ctx, sid)
 
 	if !authFn(ctx, req, info) {
 		return info, authn.Errorf("unauthorized")
@@ -388,7 +383,6 @@ func (m *Middleware) newUserToken(user UserClaimProvider, fingerPrint string, va
 			NotBefore: jwt.NewNumericDate(nowTime),
 		},
 		SteamID:    sid.String(),
-		Privilege:  user.GetPrivilege(),
 		AvatarHash: user.GetAvatar(),
 	}
 	tokenWithClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	v1 "github.com/leighmacdonald/gbans/internal/chat/v1"
 	"github.com/leighmacdonald/gbans/internal/chat/v1/chatv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
@@ -19,11 +18,12 @@ import (
 type Service struct {
 	// chatv1connect.UnimplementedChatServiceHandler
 
-	chat *Chat
+	chat     *Chat
+	roleAuth *rpc.RoleAuth
 }
 
 func NewService(chat *Chat, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := chatv1connect.NewChatServiceHandler(Service{chat: chat}, option...)
+	pattern, handler := chatv1connect.NewChatServiceHandler(Service{chat: chat, roleAuth: roleAuth}, option...)
 
 	authMiddleware.UserRoute(chatv1connect.ChatServiceQueryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CHATLOG_READ))
 	authMiddleware.UserRoute(chatv1connect.ChatServiceQueryContextProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CHATLOG_READ))
@@ -33,12 +33,13 @@ func NewService(chat *Chat, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middlewa
 
 func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResponse, error) {
 	ctxUser := rpc.UserInfoFromCtx(ctx)
+	moderator := s.roleAuth.HasPermission(ctx, *ctxUser, rolesv1.Permission_PERMISSION_BAN_READ)
 
 	chatQuery := HistoryQueryFilter{
 		Filter:        rpc.FromRPC(req.GetFilter()),
 		Query:         req.GetQuery(),
 		Personaname:   "",
-		Unrestricted:  ctxUser.HasPermission(permission.Moderator),
+		Unrestricted:  moderator,
 		DontCalcTotal: false,
 		FlaggedOnly:   req.GetFlaggedOnly(),
 	}
@@ -57,7 +58,7 @@ func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResp
 		chatQuery.SourceIDField = httphelper.SourceIDField{SourceID: strconv.FormatInt(steamID, 10)}
 	}
 
-	messages, errChat := s.chat.QueryChatHistory(ctx, ctxUser.Privilege, chatQuery)
+	messages, errChat := s.chat.QueryChatHistory(ctx, moderator, chatQuery)
 	if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 		return nil, connect.NewError(connect.CodeInternal, errChat)
 	}

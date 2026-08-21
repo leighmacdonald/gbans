@@ -21,12 +21,12 @@ func TestMain(m *testing.M) {
 
 func TestAssignUserRole(t *testing.T) {
 	repo := roles.NewRepository(fixture.Database)
-	service := roles.NewRoles(repo)
+	service := roles.NewRoles(repo, tests.OwnerSID)
 	ctx := t.Context()
 
 	t.Run("assigns user role when user has no roles", func(t *testing.T) {
 		sid := steamid.New(76561198000123457)
-		fixture.CreateTestPerson(ctx, sid, 0)
+		fixture.CreateTestPerson(ctx, sid)
 
 		require.NoError(t, service.AssignUserRole(ctx, sid))
 
@@ -39,7 +39,7 @@ func TestAssignUserRole(t *testing.T) {
 
 	t.Run("no-op when user already has a role", func(t *testing.T) {
 		sid := steamid.New(76561198000123458)
-		fixture.CreateTestPerson(ctx, sid, 0)
+		fixture.CreateTestPerson(ctx, sid)
 
 		adminRole, err := repo.GetByName(ctx, "admin")
 		require.NoError(t, err)
@@ -55,7 +55,7 @@ func TestAssignUserRole(t *testing.T) {
 
 	t.Run("idempotent on repeated calls", func(t *testing.T) {
 		sid := steamid.New(76561198000123459)
-		fixture.CreateTestPerson(ctx, sid, 0)
+		fixture.CreateTestPerson(ctx, sid)
 
 		require.NoError(t, service.AssignUserRole(ctx, sid))
 		require.NoError(t, service.AssignUserRole(ctx, sid))

@@ -4,17 +4,14 @@ package person.v1;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
-import "person/v1/privilege.proto";
+import "roles/v1/roles.proto";
 
 message PersonCore {
   int64 steam_id = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).int64 = {gte: 76561197960265729}
   ];
-  person.v1.Privilege permission_level = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).enum.defined_only = true
-  ];
+  repeated roles.v1.Permission permissions = 2;
   string name = 3 [
     (buf.validate.field).required = true,
     (buf.validate.field).string = {
@@ -59,5 +56,4 @@ message PersonDisplay {
     (buf.validate.field).required = true,
     (buf.validate.field).string.len = 40
   ];
-  person.v1.Privilege permission_level = 4 [(buf.validate.field).enum.defined_only = true];
 }

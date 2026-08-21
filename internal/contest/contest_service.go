@@ -15,11 +15,9 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	assetv1 "github.com/leighmacdonald/gbans/internal/asset/v1"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	v1 "github.com/leighmacdonald/gbans/internal/contest/v1"
 	"github.com/leighmacdonald/gbans/internal/contest/v1/contestv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
-	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -31,10 +29,11 @@ type Service struct {
 
 	contests Contests
 	assets   asset.Assets
+	roleAuth *rpc.RoleAuth
 }
 
 func NewService(contests Contests, assets asset.Assets, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
-	pattern, handler := contestv1connect.NewServiceHandler(Service{contests: contests, assets: assets}, options...)
+	pattern, handler := contestv1connect.NewServiceHandler(Service{contests: contests, assets: assets, roleAuth: roleAuth}, options...)
 
 	authMiddleware.UserRoute(contestv1connect.ServiceContestsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CONTEST_READ))
 	authMiddleware.UserRoute(contestv1connect.ServiceContestProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CONTEST_READ))
@@ -52,13 +51,27 @@ func NewService(contests Contests, assets asset.Assets, roleAuth *rpc.RoleAuth, 
 
 func (s Service) Contests(ctx context.Context, _ *emptypb.Empty) (*v1.ContestsResponse, error) {
 	user := rpc.UserInfoFromCtx(ctx)
-	contests, errContests := s.contests.Contests(ctx, user)
+	contests, errContests := s.contests.Contests(ctx)
 	if errContests != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	resp := v1.ContestsResponse{Contests: make([]*v1.Contest, len(contests))}
-	for idx, contest := range contests {
+	visible := make([]Contest, 0, len(contests))
+	for _, contest := range contests {
+		if !contest.Public && !s.roleAuth.HasPermission(ctx, *user, rolesv1.Permission_PERMISSION_CONTEST_ADMIN) {
+			continue
+		}
+
+		if contest.RequiredPermission != rolesv1.Permission_PERMISSION_UNSPECIFIED &&
+			!s.roleAuth.HasPermission(ctx, *user, contest.RequiredPermission) {
+			continue
+		}
+
+		visible = append(visible, contest)
+	}
+
+	resp := v1.ContestsResponse{Contests: make([]*v1.Contest, len(visible))}
+	for idx, contest := range visible {
 		resp.Contests[idx] = toContest(contest)
 	}
 
@@ -212,8 +225,8 @@ func (s Service) EntryDelete(ctx context.Context, req *v1.EntryDeleteRequest) (*
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	// Only >=moderators or the entry author are allowed to delete entries.
-	if !user.HasPermission(permission.Moderator) || user.GetSteamID() != entry.SteamID {
+	// Only allow the entry author or moderators+ to delete entries.
+	if user.GetSteamID() != entry.SteamID && !s.roleAuth.HasPermission(ctx, *user, rolesv1.Permission_PERMISSION_CONTEST_WRITE) {
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 
@@ -309,7 +322,7 @@ func fromContest(contest *v1.Contest) Contest {
 		NumEntries:         contest.GetNumEntries(),
 		Deleted:            false,
 		Voting:             contest.GetVoting(), //nolint:gosec
-		MinPermissionLevel: permission.Privilege(contest.GetMinPermissionLevel()),
+		RequiredPermission: contest.GetRequiredPermission(),
 		DownVotes:          contest.GetDownVotes(),
 		IsNew:              false,
 	}
@@ -328,11 +341,11 @@ func toContest(contest Contest) *v1.Contest {
 		MediaTypes:         &contest.MediaTypes,
 		NumEntries:         &contest.NumEntries,
 		Voting:             &contest.Voting,
-		MinPermissionLevel: new(personv1.Privilege(contest.MinPermissionLevel)),
+		RequiredPermission: new(rolesv1.Permission(contest.RequiredPermission)),
 		DownVotes:          &contest.DownVotes,
 		CreatedOn:          timestamppb.New(contest.CreatedOn),
 		UpdatedOn:          timestamppb.New(contest.UpdatedOn),
-		ContestId:          nil,
+		ContestId:          new(contest.ContestID.String()),
 	}
 }
 

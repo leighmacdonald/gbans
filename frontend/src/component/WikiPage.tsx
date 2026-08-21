@@ -12,7 +12,7 @@ import { z } from "zod/v4";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { type Wiki, WikiSchema } from "../rpc/wiki/v1/wiki_pb.ts";
 import { update } from "../rpc/wiki/v1/wiki-WikiService_connectquery.ts";
 import { enumValues } from "../util/lists.ts";
@@ -27,7 +27,7 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 	const { sendFlash, sendError } = useUserFlashCtx();
 
 	const buttons = useMemo(() => {
-		if (!hasPermission(Privilege.EDITOR)) {
+		if (!hasPermission(Permission.WIKI_EDIT)) {
 			return [];
 		}
 		return [
@@ -66,18 +66,18 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 				wiki: create(WikiSchema, {
 					slug,
 					bodyMd: value.bodyMd,
-					permissionLevel: value.permissionLevel,
+					requiredPermission: value.requiredPermission,
 				}),
 			});
 		},
 		validators: {
 			onChange: z.object({
-				permissionLevel: z.enum(Privilege),
+				requiredPermission: z.enum(Permission),
 				bodyMd: z.string(),
 			}),
 		},
 		defaultValues: {
-			permissionLevel: page?.permissionLevel ?? Privilege.GUEST,
+			requiredPermission: page?.requiredPermission ?? Permission.UNSPECIFIED,
 			bodyMd: page?.bodyMd ?? "",
 		},
 	});
@@ -95,16 +95,16 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 					<Grid container spacing={2}>
 						<Grid size={{ xs: 12 }}>
 							<form.AppField
-								name={"permissionLevel"}
+								name={"requiredPermission"}
 								children={(field) => {
 									return (
-										<field.SelectPrivilegeField
+										<field.SelectPermissionsField
 											label={"Permissions"}
-											items={enumValues(Privilege)}
+											items={enumValues(Permission)}
 											renderItem={(pl) => {
 												return (
 													<MenuItem value={pl} key={`pl-${pl}`}>
-														{Privilege[pl]}
+														{Permission[pl]}
 													</MenuItem>
 												);
 											}}

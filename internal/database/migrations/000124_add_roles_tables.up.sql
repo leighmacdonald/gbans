@@ -276,3 +276,35 @@ from
 where
   p.permission_level = 50
 on conflict do nothing;
+
+-- Replace the legacy forum.permission_level, wiki.permission_level and
+-- contest.min_permission_level integer columns with a granular required_permission
+-- enum column backed by the roles.v1.Permission enum values.
+
+alter table forum
+    add column if not exists required_permission permission not null default 'PERMISSION_FORUM_READ';
+
+alter table wiki
+    add column if not exists required_permission permission not null default 'PERMISSION_WIKI_READ';
+
+alter table contest
+    add column if not exists required_permission permission not null default 'PERMISSION_CONTEST_READ';
+
+-- Backfill any rows that previously required an elevated privilege (>=moderator)
+-- with the moderator-level staff permission. Everything else retains the default
+-- read permission assigned above.
+update forum set required_permission = 'PERMISSION_FORUM_EDIT' where permission_level >= 50;
+update wiki set required_permission = 'PERMISSION_WIKI_EDIT' where permission_level >= 50;
+update contest
+set required_permission = 'PERMISSION_CONTEST_ADMIN'
+where
+  min_permission_level >= 50;
+
+alter table forum
+  drop column if exists permission_level;
+
+alter table wiki
+  drop column if exists permission_level;
+
+alter table contest
+  drop column if exists min_permission_level;

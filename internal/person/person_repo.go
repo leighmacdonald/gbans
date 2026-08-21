@@ -78,9 +78,6 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, uint64, er
 		// builder = builder.OrderBy("p.updated_on_steam ASC")
 		constraints = append(constraints, sq.Lt{"p.updated_on_steam": query.SteamUpdateOlderThan})
 	}
-	if len(query.WithPermissions) > 0 {
-		constraints = append(constraints, sq.Eq{"p.permission_level": query.WithPermissions})
-	}
 
 	if query.DiscordID != "" {
 		constraints = append(constraints, sq.Eq{"p.discord_id": query.DiscordID})

@@ -28,7 +28,7 @@ import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { deleteAppealMessage, messages, reply } from "../rpc/ban/v1/appeal-AppealService_connectquery.ts";
 import { AppealState, BanReason, BanType } from "../rpc/ban/v1/ban_pb.ts";
 import { get } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { renderTimeDistance, renderTimestamp } from "../util/time.ts";
 
 export const Route = createFileRoute("/_auth/ban/$banId")({
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/_auth/ban/$banId")({
 });
 
 function BanPage() {
-	const { permissionLevel, profile } = useAuth();
+	const { hasPermission, profile } = useAuth();
 	const { banId } = Route.useParams();
 	const { sendFlash } = useUserFlashCtx();
 	const { appInfo } = Route.useRouteContext();
@@ -66,10 +66,10 @@ function BanPage() {
 
 	const canPost = useMemo(() => {
 		return (
-			permissionLevel() >= Privilege.MODERATOR ||
+			hasPermission(Permission.BAN_WRITE) ||
 			(banData?.ban?.appealState === AppealState.OPEN_UNSPECIFIED && banData.ban?.targetId === profile.steamId)
 		);
-	}, [banData?.ban, permissionLevel, profile.steamId]);
+	}, [banData?.ban, hasPermission, profile.steamId]);
 
 	const onDelete = useCallback(
 		async (banMessageId: string) => {
@@ -124,11 +124,11 @@ function BanPage() {
 						</ContainerWithHeader>
 					)}
 
-					{permissionLevel() >= Privilege.MODERATOR && (
+					{hasPermission(Permission.BAN_WRITE) && (
 						<SourceBansList steamId={banData.ban.sourceId} isReporter={true} />
 					)}
 
-					{permissionLevel() >= Privilege.MODERATOR && (
+					{hasPermission(Permission.BAN_WRITE) && (
 						<SourceBansList steamId={banData.ban.targetId} isReporter={false} />
 					)}
 
@@ -238,7 +238,7 @@ function BanPage() {
 									)}
 								/>
 							</ListItem>
-							{permissionLevel() >= Privilege.MODERATOR && (
+							{hasPermission(Permission.BAN_WRITE) && (
 								<ListItem>
 									<ListItemText primary={"Author"} secondary={banData.ban.sourceId.toString()} />
 								</ListItem>
@@ -248,13 +248,13 @@ function BanPage() {
 
 					<SteamIDList steamId={banData.ban.targetId} />
 
-					{permissionLevel() >= Privilege.MODERATOR && banData.ban.note !== "" && (
+					{hasPermission(Permission.BAN_WRITE) && banData.ban.note !== "" && (
 						<ContainerWithHeader title={"Mod Notes"} iconLeft={<DocumentScannerIcon />}>
 							<MarkDownRenderer bodyMd={banData.ban.note} assetURL={appInfo.assetUrl} />
 						</ContainerWithHeader>
 					)}
 
-					{permissionLevel() >= Privilege.MODERATOR && <BanModPanel banId={banData.ban.banId} />}
+					{hasPermission(Permission.BAN_WRITE) && <BanModPanel banId={banData.ban.banId} />}
 				</Stack>
 			</Grid>
 		</Grid>

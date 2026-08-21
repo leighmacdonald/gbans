@@ -15,7 +15,7 @@ import { OverallTable } from "../component/stats/OverallTable.tsx";
 import { REDCard } from "../component/stats/REDCard.tsx";
 import { RoundTable } from "../component/stats/RoundTable.tsx";
 import { makeSchemaDefaults, makeSchemaState } from "../component/table/options.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { Team } from "../rpc/stats/v1/stats_pb.ts";
 import { match } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_auth/match/$matchId")({
 	component: MatchPage,
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(
-			(context.appInfo.statsEnabled && context.auth?.hasPermission(Privilege.MODERATOR)) ?? false,
+			(context.appInfo.statsEnabled && context.auth?.hasPermission(Permission.BAN_WRITE)) ?? false,
 		);
 	},
 	validateSearch,

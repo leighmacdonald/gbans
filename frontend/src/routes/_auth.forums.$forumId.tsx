@@ -27,7 +27,7 @@ import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import type { Thread, ThreadWithSource } from "../rpc/forum/v1/forum_pb.ts";
 import { forum, threads } from "../rpc/forum/v1/forum-ForumService_connectquery.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { logErr } from "../util/errors.ts";
 import { avatarHashToURL } from "../util/strings.ts";
 import { RowsPerPage } from "../util/table.ts";
@@ -74,7 +74,7 @@ function ForumPage() {
 	const { data: forumData, isLoading: isLoadingForum } = useQuery(forum, { forumId: Number(forumId) });
 	const { data: threadsData, isLoading: isLoadingThreads } = useQuery(threads, { forumId: Number(forumId) });
 	const modalCreate = useModal(ForumThreadCreatorModal);
-	const { hasPermission } = useAuth();
+	const { isAuthenticated, hasPermission } = useAuth();
 	const { sendFlash } = useUserFlashCtx();
 	const navigate = useNavigate();
 
@@ -107,7 +107,7 @@ function ForumPage() {
 	const headerButtons = useMemo(() => {
 		const buttons = [];
 
-		if (hasPermission(Privilege.MODERATOR)) {
+		if (hasPermission(Permission.FORUM_EDIT)) {
 			buttons.push(
 				<Button
 					startIcon={<BuildIcon />}
@@ -123,7 +123,7 @@ function ForumPage() {
 		}
 		buttons.push(
 			<Button
-				disabled={!hasPermission(Privilege.GUEST)}
+				disabled={!isAuthenticated()}
 				variant={"contained"}
 				color={"success"}
 				size={"small"}
@@ -135,7 +135,7 @@ function ForumPage() {
 			</Button>,
 		);
 		return [<ButtonGroup key={"forum-header-buttons"}>{buttons}</ButtonGroup>];
-	}, [hasPermission, onEditForum, onNewThread]);
+	}, [hasPermission, isAuthenticated, onEditForum, onNewThread]);
 
 	if (isLoadingForum || isLoadingThreads || !forumData?.forum) {
 		return;

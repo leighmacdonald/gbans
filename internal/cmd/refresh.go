@@ -149,13 +149,8 @@ func refreshFiltersCmd() *cobra.Command {
 
 			matches := 0
 
-			admin, errAdmin := app.persons.BySteamID(ctx, steamid.New(app.config.Config().Owner))
-			if errAdmin != nil {
-				return errAdmin
-			}
-
 			for {
-				messages, errMessages := app.chat.QueryChatHistory(ctx, admin.PermissionLevel, query)
+				messages, errMessages := app.chat.QueryChatHistory(ctx, true, query)
 				if errMessages != nil {
 					slog.Error("Failed to load more messages", slog.String("error", errMessages.Error()))
 

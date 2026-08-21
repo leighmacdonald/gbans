@@ -3,11 +3,9 @@ package person
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	v1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	"github.com/leighmacdonald/gbans/internal/person/v1/personv1connect"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
@@ -21,11 +19,12 @@ import (
 type Service struct {
 	// personv1connect.UnimplementedPersonServiceHandler
 
-	persons *Persons
+	persons  *Persons
+	roleAuth *rpc.RoleAuth
 }
 
 func NewPersonService(persons *Persons, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := personv1connect.NewPersonServiceHandler(Service{persons: persons}, option...)
+	pattern, handler := personv1connect.NewPersonServiceHandler(Service{persons: persons, roleAuth: roleAuth}, option...)
 
 	authMiddleware.UserRoute(personv1connect.PersonServiceProfileProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_PERSON_READ))
 	authMiddleware.UserRoute(personv1connect.PersonServiceResolveSteamIDProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STEAMID_RESOLVE))
@@ -33,7 +32,6 @@ func NewPersonService(persons *Persons, roleAuth *rpc.RoleAuth, authMiddleware *
 	authMiddleware.UserRoute(personv1connect.PersonServiceProfileSettingsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CURRENT_SETTINGS))
 	authMiddleware.UserRoute(personv1connect.PersonServiceEditProfileSettingsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CURRENT_SETTINGS))
 	authMiddleware.UserRoute(personv1connect.PersonServiceQueryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_PERSON_READ))
-	authMiddleware.UserRoute(personv1connect.PersonServiceEditPermissionsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_PERSON_WRITE))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -52,7 +50,10 @@ func (s Service) CurrentProfile(ctx context.Context, _ *emptypb.Empty) (*v1.Curr
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	return &v1.CurrentProfileResponse{Profile: toPersonCore(response.Player)}, nil
+	core := toPersonCore(response.Player)
+	core.Permissions = s.roleAuth.PermissionsBySteamID(ctx, user.GetSteamID())
+
+	return &v1.CurrentProfileResponse{Profile: core}, nil
 }
 
 func (s Service) Profile(ctx context.Context, req *v1.ProfileRequest) (*v1.ProfileResponse, error) {
@@ -122,14 +123,9 @@ func (s Service) EditProfileSettings(ctx context.Context, req *v1.EditProfileSet
 }
 
 func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResponse, error) {
-	var perms []permission.Privilege //nolint:prealloc
-	for _, perm := range req.GetWithPermissions() {
-		perms = append(perms, permission.Privilege(perm)) //nolint:gosec
-	}
 	query := Query{
 		Filter:            rpc.FromRPC(req.GetFilter()),
 		PersonaName:       req.GetPersonaName(),
-		WithPermissions:   perms,
 		DiscordID:         req.GetDiscordId(),
 		SteamIDs:          req.GetSteamIds(),
 		VacBans:           req.GetVacBans(),
@@ -152,29 +148,6 @@ func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResp
 	return &resp, nil
 }
 
-func (s Service) EditPermissions(ctx context.Context, req *v1.EditPermissionsRequest) (*v1.EditPermissionsResponse, error) {
-	player, errPerson := s.persons.BySteamID(ctx, steamid.New(req.GetSteamId()))
-	if errPerson != nil {
-		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
-	}
-
-	player.PermissionLevel = permission.Privilege(req.GetPermissionLevel()) //nolint:gosec
-
-	if err := s.persons.Save(ctx, &player); err != nil {
-		if errors.Is(err, permission.ErrDenied) {
-			return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
-		}
-
-		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
-	}
-
-	slog.Info("Player permission updated",
-		slog.Int64("steam_id", player.SteamID.Int64()),
-		slog.String("permissions", player.PermissionLevel.String()))
-
-	return &v1.EditPermissionsResponse{Person: toPersonCore(&player)}, nil
-}
-
 func toUserSettings(settings Settings) *v1.Settings {
 	return &v1.Settings{
 		PersonSettingsId:     &settings.PersonSettingsID,
@@ -189,17 +162,36 @@ func toUserSettings(settings Settings) *v1.Settings {
 
 func toPersonCore(core *Person) *v1.PersonCore {
 	return &v1.PersonCore{
-		SteamId:         new(core.SteamID.Int64()),
-		PermissionLevel: new(v1.Privilege(core.PermissionLevel)),
-		Name:            new(core.GetName()),
-		AvatarHash:      new(string(core.GetAvatar())),
-		DiscordId:       new(core.GetDiscordID()),
-		VacBans:         new(core.GetVACBans()),
-		GameBans:        new(core.GetGameBans()),
-		TimeCreated:     timestamppb.New(core.GetTimeCreated()),
-		BanId:           &core.BanID,
-		PatreonId:       &core.PatreonID,
+		SteamId:     new(core.SteamID.Int64()),
+		Permissions: core.Permissions,
+		Name:        new(core.GetName()),
+		AvatarHash:  new(string(core.GetAvatar())),
+		DiscordId:   new(core.GetDiscordID()),
+		VacBans:     new(core.GetVACBans()),
+		GameBans:    new(core.GetGameBans()),
+		TimeCreated: timestamppb.New(core.GetTimeCreated()),
+		BanId:       &core.BanID,
+		PatreonId:   &core.PatreonID,
 	}
+}
+
+func stringsToPermissions(perms []string) []rolesv1.Permission {
+	out := make([]rolesv1.Permission, 0, len(perms))
+
+	for _, s := range perms {
+		p, ok := rolesv1.Permission_value[s]
+		if !ok || p == 0 {
+			continue
+		}
+
+		out = append(out, rolesv1.Permission(p))
+	}
+
+	if out == nil {
+		return []rolesv1.Permission{}
+	}
+
+	return out
 }
 
 func toPerson(core *Person) *v1.Person {
@@ -212,7 +204,6 @@ func toPerson(core *Person) *v1.Person {
 		SteamId:               new(core.SteamID.Int64()),
 		CreatedOn:             timestamppb.New(core.CreatedOn),
 		UpdatedOn:             timestamppb.New(core.UpdatedOn),
-		PermissionLevel:       new(v1.Privilege(core.PermissionLevel)),
 		Muted:                 &core.Muted,
 		DiscordId:             new(core.GetDiscordID()),
 		PatreonId:             &core.PatreonID,

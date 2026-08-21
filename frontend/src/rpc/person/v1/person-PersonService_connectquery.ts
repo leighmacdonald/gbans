@@ -33,8 +33,3 @@ export const editProfileSettings = PersonService.method.editProfileSettings;
  * @generated from rpc person.v1.PersonService.Query
  */
 export const query = PersonService.method.query;
-
-/**
- * @generated from rpc person.v1.PersonService.EditPermissions
- */
-export const editPermissions = PersonService.method.editPermissions;

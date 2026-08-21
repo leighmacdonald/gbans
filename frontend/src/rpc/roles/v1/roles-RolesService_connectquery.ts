@@ -30,6 +30,11 @@ export const roleDelete = RolesService.method.roleDelete;
 export const roleAssign = RolesService.method.roleAssign;
 
 /**
+ * @generated from rpc roles.v1.RolesService.RoleUnassign
+ */
+export const roleUnassign = RolesService.method.roleUnassign;
+
+/**
  * @generated from rpc roles.v1.RolesService.RoleBySteamID
  */
 export const roleBySteamID = RolesService.method.roleBySteamID;

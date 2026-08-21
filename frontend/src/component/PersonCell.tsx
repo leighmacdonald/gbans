@@ -20,7 +20,7 @@ import React, { type MouseEventHandler, type PropsWithChildren, useCallback, use
 import SteamID from "steamid";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { avatarHashToURL } from "../util/strings.ts";
 import { emptyOrNullString } from "../util/types.ts";
 import { MenuItemLink } from "./MenuItemLink.tsx";
@@ -62,7 +62,7 @@ const PersonCellInner = ({ steamId, avatarHash, personaName, onClick, children }
 	);
 
 	const menu = useMemo(() => {
-		let items = [
+		const items = [
 			<MenuItemLink to={`/profile/$steamId`} params={{ steamId: String(steamId) }} key={20}>
 				<ListItemIcon>
 					<AccountCircleIcon fontSize="small" color={"primary"} />
@@ -87,26 +87,37 @@ const PersonCellInner = ({ steamId, avatarHash, personaName, onClick, children }
 				</ListItemIcon>
 				Copy SteamID 64
 			</MenuItem>,
-			<MenuItemLink
-				to={`/chatlogs`}
-				search={{ columnFilters: [{ id: "steamId", value: String(steamId) }] }}
-				key={50}
-			>
-				<ListItemIcon>
-					<ChatIcon fontSize="small" color={"primary"} />
-				</ListItemIcon>
-				Chat Logs
-			</MenuItemLink>,
-			<MenuItemLink to={`/stv`} search={{ columnFilters: [{ id: "stats", value: String(steamId) }] }} key={60}>
-				<ListItemIcon>
-					<VideocamIcon fontSize="small" color={"primary"} />
-				</ListItemIcon>
-				SourceTV History
-			</MenuItemLink>,
 		];
-		if (hasPermission(Privilege.MODERATOR)) {
-			items = [
-				...items,
+		if (hasPermission(Permission.CHATLOG_READ)) {
+			items.push(
+				<MenuItemLink
+					to={`/chatlogs`}
+					search={{ columnFilters: [{ id: "steamId", value: String(steamId) }] }}
+					key={50}
+				>
+					<ListItemIcon>
+						<ChatIcon fontSize="small" color={"primary"} />
+					</ListItemIcon>
+					Chat Logs
+				</MenuItemLink>,
+			);
+		}
+		if (hasPermission(Permission.DEMO_READ)) {
+			items.push(
+				<MenuItemLink
+					to={`/stv`}
+					search={{ columnFilters: [{ id: "stats", value: String(steamId) }] }}
+					key={60}
+				>
+					<ListItemIcon>
+						<VideocamIcon fontSize="small" color={"primary"} />
+					</ListItemIcon>
+					SourceTV History
+				</MenuItemLink>,
+			);
+		}
+		if (hasPermission(Permission.NETWORK_READ)) {
+			items.push(
 				<MenuItemLink
 					to={"/admin/network/playersbyip"}
 					search={{ columnFilters: [{ id: "steamId", value: String(steamId) }] }}
@@ -117,7 +128,10 @@ const PersonCellInner = ({ steamId, avatarHash, personaName, onClick, children }
 					</ListItemIcon>
 					Connection History
 				</MenuItemLink>,
-
+			);
+		}
+		if (hasPermission(Permission.BAN_CREATE)) {
+			items.push(
 				<MenuItemLink
 					to={"/admin/bans"}
 					search={{ columnFilters: [{ id: "targetId", value: String(steamId) }] }}
@@ -128,6 +142,10 @@ const PersonCellInner = ({ steamId, avatarHash, personaName, onClick, children }
 					</ListItemIcon>
 					Ban History
 				</MenuItemLink>,
+			);
+		}
+		if (hasPermission(Permission.REPORT_ADMIN)) {
+			items.push(
 				<MenuItemLink
 					to={"/admin/reports"}
 					search={{ columnFilters: [{ id: "targetId", value: String(steamId) }] }}
@@ -138,8 +156,9 @@ const PersonCellInner = ({ steamId, avatarHash, personaName, onClick, children }
 					</ListItemIcon>
 					Report History
 				</MenuItemLink>,
-			];
+			);
 		}
+
 		return items;
 	}, [copySteamID, hasPermission, steamId, navigate]);
 

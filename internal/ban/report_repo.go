@@ -316,7 +316,7 @@ func (r ReportRepository) GetReport(ctx context.Context, reportID int32) (Report
 func (r ReportRepository) GetReportMessages(ctx context.Context, reportID int32) ([]ReportMessage, error) {
 	rows, errQuery := r.QueryBuilder(ctx, r.Builder().
 		Select("s.report_message_id", "s.report_id", "s.author_id", "s.message_md", "s.deleted",
-			"s.created_on", "s.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").
+			"s.created_on", "s.updated_on", "p.avatarhash", "p.personaname").
 		From("report_message s").
 		LeftJoin("person p ON s.author_id = p.steam_id").
 		Where(sq.And{sq.And{sq.Eq{"s.deleted": false}, sq.Eq{"s.report_id": reportID}}}).
@@ -347,7 +347,6 @@ func (r ReportRepository) GetReportMessages(ctx context.Context, reportID int32)
 			&msg.UpdatedOn,
 			&msg.Avatarhash,
 			&msg.Personaname,
-			&msg.PermissionLevel,
 		); errScan != nil {
 			return nil, database.Err(errQuery)
 		}
@@ -365,7 +364,7 @@ func (r ReportRepository) GetReportMessageByID(ctx context.Context, reportMessag
 
 	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
 		Select("s.report_message_id", "s.report_id", "s.author_id", "s.message_md", "s.deleted",
-			"s.created_on", "s.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").
+			"s.created_on", "s.updated_on", "p.avatarhash", "p.personaname").
 		From("report_message s").
 		LeftJoin("person p ON s.author_id = p.steam_id").
 		Where(sq.Eq{"s.report_message_id": reportMessageID}))
@@ -386,7 +385,6 @@ func (r ReportRepository) GetReportMessageByID(ctx context.Context, reportMessag
 		&message.UpdatedOn,
 		&message.Avatarhash,
 		&message.Personaname,
-		&message.PermissionLevel,
 	); errScan != nil {
 		return message, database.Err(errScan)
 	}

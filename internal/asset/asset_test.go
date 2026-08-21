@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/asset"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/gbans/pkg/zstd"
@@ -19,7 +18,7 @@ func TestAssets(t *testing.T) {
 	defer testFixture.Close()
 
 	tempRoot := t.TempDir()
-	owner := testFixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)
+	owner := testFixture.CreateTestPerson(t.Context(), tests.OwnerSID)
 	data := []byte(stringutil.SecureRandomString(100))
 	assetCase := asset.NewAssets(asset.NewLocalRepository(testFixture.Database, tempRoot))
 	saved, errCreate := assetCase.Create(t.Context(), owner.SteamID, asset.BucketDemo, stringutil.SecureRandomString(10), bytes.NewReader(data), false)

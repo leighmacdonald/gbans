@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/config/link"
@@ -95,9 +94,8 @@ const (
 )
 
 type ServerPermission struct {
-	SteamID         steamid.SID
-	PermissionLevel permission.Privilege
-	Flags           string
+	SteamID steamid.SID
+	Flags   string
 }
 
 type Admin struct {

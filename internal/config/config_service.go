@@ -37,7 +37,6 @@ func NewService(conf *Configuration, version string, roleAuth *rpc.RoleAuth, aut
 		version: version,
 	}, options...)
 
-	// authMiddleware.UserRoute(configv1connect.ConfigServiceInfoProcedure, rpc.WithMinPermissions(permission.Guest))
 	authMiddleware.UserRoute(configv1connect.ConfigServiceGetProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CONFIG_READ))
 	authMiddleware.UserRoute(configv1connect.ConfigServiceUpdateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CONFIG_WRITE))
 
