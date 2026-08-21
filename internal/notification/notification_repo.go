@@ -7,7 +7,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -68,7 +67,7 @@ func (r Repository) GetPersonNotifications(ctx context.Context, steamID steamid.
 	builder := r.Builder().
 		Select("r.person_notification_id", "r.steam_id", "r.read", "r.deleted", "r.severity",
 			"r.message", "r.link", "r.count", "r.created_on", "r.author_id",
-			"p.personaname", "p.permission_level", "p.discord_id", "p.avatarhash").
+			"p.personaname", "p.discord_id", "p.avatarhash").
 		From("person_notification r").
 		LeftJoin("person p on r.author_id = p.steam_id").
 		OrderBy("r.person_notification_id desc")
@@ -88,7 +87,6 @@ func (r Repository) GetPersonNotifications(ctx context.Context, steamID steamid.
 		var (
 			notif      UserNotification
 			name       *string
-			pLevel     *permission.Privilege
 			authorID   *int64
 			discordID  *string
 			avatarHash *string
@@ -97,20 +95,19 @@ func (r Repository) GetPersonNotifications(ctx context.Context, steamID steamid.
 
 		if errScan := rows.Scan(&notif.PersonNotificationID, &outSteamID, &notif.Read, &notif.Deleted,
 			&notif.Severity, &notif.Message, &notif.Link, &notif.Count, &notif.CreatedOn,
-			&authorID, &name, &pLevel, &discordID, &avatarHash); errScan != nil {
+			&authorID, &name, &discordID, &avatarHash); errScan != nil {
 			return nil, errors.Join(errScan, database.ErrScanResult)
 		}
 
 		notif.SteamID = steamid.New(outSteamID)
 
 		// TODO fixme
-		if authorID != nil && pLevel != nil && name != nil && avatarHash != nil && discordID != nil {
+		if authorID != nil && name != nil && avatarHash != nil && discordID != nil {
 			notif.Author = person.Core{
-				SteamID:         steamid.New(*authorID),
-				PermissionLevel: *pLevel,
-				Name:            *name,
-				Avatarhash:      *avatarHash,
-				DiscordID:       *discordID,
+				SteamID:    steamid.New(*authorID),
+				Name:       *name,
+				Avatarhash: *avatarHash,
+				DiscordID:  *discordID,
 			}
 		}
 

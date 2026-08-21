@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -49,8 +49,7 @@ type BaseUser interface {
 	GetName() string
 	GetAvatar() Avatar
 	GetSteamID() steamid.SteamID
-	HasPermission(privilege permission.Privilege) bool
-	GetPrivilege() permission.Privilege
+	GetPermissions() []rolesv1.Permission
 	Path() string
 }
 
@@ -64,30 +63,21 @@ type Info interface {
 	GetGameBans() int32
 	GetTimeCreated() time.Time
 	Path() string // link.Linkable
-	HasPermission(permission permission.Privilege) bool
-	Permissions() permission.Privilege
 }
 
 // Core is the model used in the webui representing the logged-in user.
 type Core struct {
-	SteamID         steamid.SteamID
-	PermissionLevel permission.Privilege
-	Name            string
-	Avatarhash      string
-	DiscordID       string
-	PatreonID       string
-	VacBans         int32
-	GameBans        int32
-	TimeCreated     time.Time
-	BanID           int32
-}
-
-func (p Core) Permissions() permission.Privilege {
-	return p.PermissionLevel
-}
-
-func (p Core) HasPermission(privilege permission.Privilege) bool {
-	return p.PermissionLevel >= privilege
+	SteamID     steamid.SteamID
+	Name        string
+	Avatarhash  string
+	DiscordID   string
+	PatreonID   string
+	VacBans     int32
+	GameBans    int32
+	TimeCreated time.Time
+	BanID       int32
+	// Permissions is the union of granular permissions granted via role assignments.
+	Permissions []rolesv1.Permission
 }
 
 func (p Core) GetVACBans() int32 {
@@ -102,10 +92,9 @@ func (p Core) GetTimeCreated() time.Time {
 	return p.TimeCreated
 }
 
-func (p Core) GetPrivilege() permission.Privilege {
-	return p.PermissionLevel
+func (p Core) GetPermissions() []rolesv1.Permission {
+	return p.Permissions
 }
-
 func (p Core) GetName() string {
 	if p.Name == "" {
 		return p.SteamID.String()

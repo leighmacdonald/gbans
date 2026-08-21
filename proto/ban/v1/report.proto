@@ -7,7 +7,6 @@ import "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "person/v1/person_core.proto";
-import "person/v1/privilege.proto";
 
 service ReportService {
   rpc ReportCreate(ReportCreateRequest) returns (ReportCreateResponse) {}
@@ -123,10 +122,6 @@ message ReportMessage {
     }
   ];
   string avatar_hash = 9 [(buf.validate.field).required = true];
-  person.v1.Privilege permission_level = 10 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).enum.defined_only = true
-  ];
 }
 
 message Report {

@@ -32,7 +32,7 @@ func (v AutoCompleValue) Value() string { return v.value }
 
 type AutoCompleter func(ctx context.Context, query string) ([]AutoCompleteValuer, error)
 
-// Autocomplete returns a function that will return results for a discord option autocompketion response.
+// Autocomplete returns a function that will return results for a discord option autocompletion response.
 func Autocomplete(completer AutoCompleter) func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) error {
 	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
 		var (

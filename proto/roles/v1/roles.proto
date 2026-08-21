@@ -12,6 +12,7 @@ service RolesService {
   rpc RoleEdit(RoleEditRequest) returns (RoleEditResponse) {}
   rpc RoleDelete(RoleDeleteRequest) returns (google.protobuf.Empty) {}
   rpc RoleAssign(RoleAssignRequest) returns (google.protobuf.Empty) {}
+  rpc RoleUnassign(RoleUnassignRequest) returns (google.protobuf.Empty) {}
   rpc RoleBySteamID(RoleBySteamIDRequest) returns (RoleBySteamIDResponse) {}
 }
 
@@ -24,6 +25,11 @@ message RoleBySteamIDResponse {
 }
 
 message RoleAssignRequest {
+  uint64 steam_id = 1 [(buf.validate.field).uint64 = {gte: 76561197960265729}];
+  int32 role_id = 2 [(buf.validate.field).int32 = {gt: 0}];
+}
+
+message RoleUnassignRequest {
   uint64 steam_id = 1 [(buf.validate.field).uint64 = {gte: 76561197960265729}];
   int32 role_id = 2 [(buf.validate.field).int32 = {gt: 0}];
 }

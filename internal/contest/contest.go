@@ -9,8 +9,8 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/asset"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -46,7 +46,7 @@ type Contest struct {
 	// Allow voting
 	Voting bool
 	// Minimum permission level allowed to vote
-	MinPermissionLevel permission.Privilege
+	RequiredPermission rolesv1.Permission
 	// Allow down voting
 	DownVotes bool
 	IsNew     bool
@@ -140,7 +140,7 @@ func NewContest(title string, description string, dateStart time.Time, dateEnd t
 		MediaTypes:         "",
 		Deleted:            false,
 		Voting:             false,
-		MinPermissionLevel: permission.User,
+		RequiredPermission: rolesv1.Permission_PERMISSION_CONTEST_READ,
 		DownVotes:          false,
 		IsNew:              true,
 		CreatedOn:          time.Now(),
@@ -206,8 +206,8 @@ func (c *Contests) EntryDelete(ctx context.Context, contestEntryID uuid.UUID) er
 	return c.repository.ContestEntryDelete(ctx, contestEntryID)
 }
 
-func (c *Contests) Contests(ctx context.Context, user person.BaseUser) ([]Contest, error) {
-	return c.repository.Contests(ctx, !user.HasPermission(permission.Moderator))
+func (c *Contests) Contests(ctx context.Context) ([]Contest, error) {
+	return c.repository.Contests(ctx)
 }
 
 func (c *Contests) Entry(ctx context.Context, contestID uuid.UUID, entry *Entry) error {
@@ -230,10 +230,6 @@ func (c *Contests) EntryVote(ctx context.Context, contestID uuid.UUID, contestEn
 	var contest Contest
 	if errContests := c.ByID(ctx, contestID, &contest); errContests != nil {
 		return errContests
-	}
-
-	if !contest.Public && !user.HasPermission(permission.Moderator) {
-		return permission.ErrDenied
 	}
 
 	if !contest.Voting || !contest.DownVotes && !vote {

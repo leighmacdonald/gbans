@@ -8,7 +8,6 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -58,29 +57,18 @@ type UserAuth struct {
 	Profile personDomain.Core
 }
 
-func (s *UserAuth) Middleware(level permission.Privilege) func(http.Handler) http.Handler {
+func (s *UserAuth) Middleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			if level > s.Profile.PermissionLevel {
-				res.WriteHeader(http.StatusForbidden)
-
-				return
-			}
-
 			*req = *req.WithContext(context.WithValue(req.Context(), auth.CtxKeyUserProfile, s.Profile))
 			next.ServeHTTP(res, req)
 		})
 	}
 }
 
-func (s *UserAuth) MiddlewareWS(level permission.Privilege) func(http.Handler) http.Handler {
+func (s *UserAuth) MiddlewareWS() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			if level > s.Profile.PermissionLevel {
-				res.WriteHeader(http.StatusForbidden)
-
-				return
-			}
 			*req = *req.WithContext(context.WithValue(req.Context(), auth.CtxKeyUserProfile, s.Profile))
 			next.ServeHTTP(res, req)
 		})

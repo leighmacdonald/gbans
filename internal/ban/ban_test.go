@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/asset"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
@@ -15,6 +14,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/maps"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/roles"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/stats"
 	"github.com/leighmacdonald/gbans/internal/tests"
@@ -25,6 +26,10 @@ import (
 
 // fixture provides a shared set of common dependencies that can be used for integration testing.
 var fixture *tests.Fixture //nolint:gochecknoglobals
+
+func testRoleAuth(fixture *tests.Fixture) *rpc.RoleAuth {
+	return rpc.NewRoleAuth(roles.NewRoles(roles.NewRepository(fixture.Database), tests.OwnerSID))
+}
 
 func TestMain(m *testing.M) {
 	fixture = tests.NewFixture()
@@ -43,8 +48,8 @@ func TestBan(t *testing.T) {
 		demos   = demo.NewDemos(asset.BucketDemo, demo.NewRepository(fixture.Database),
 			assets, stats, chat, fixture.Persons, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
 		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
-			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
-			demos, fixture.TFApi, notification.NewDiscard(), "")
+			person.NewPersons(person.NewRepository(fixture.Database, true), fixture.TFApi),
+			demos, fixture.TFApi, notification.NewDiscard(), "", testRoleAuth(fixture))
 		serversCase, _ = servers.New(servers.NewRepository(fixture.Database), nil, "")
 		bans           = ban.New(ban.NewRepository(fixture.Database), fixture.Persons,
 			fixture.Config.Config().Discord.BanLogChannelID, fixture.Config.Config().Discord.KickLogChannelID,
@@ -75,8 +80,8 @@ func TestDuplicate(t *testing.T) {
 		demos   = demo.NewDemos(asset.BucketDemo, demo.NewRepository(fixture.Database),
 			assets, stats, chat, fixture.Persons, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
 		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
-			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
-			demos, fixture.TFApi, notification.NewDiscard(), "")
+			person.NewPersons(person.NewRepository(fixture.Database, true), fixture.TFApi),
+			demos, fixture.TFApi, notification.NewDiscard(), "", testRoleAuth(fixture))
 		serversCase, _ = servers.New(servers.NewRepository(fixture.Database), nil, "")
 		bans           = ban.New(ban.NewRepository(fixture.Database), fixture.Persons,
 			fixture.Config.Config().Discord.BanLogChannelID, fixture.Config.Config().Discord.KickLogChannelID,
@@ -116,15 +121,15 @@ func TestUnban(t *testing.T) {
 		demos   = demo.NewDemos(asset.BucketDemo, demo.NewRepository(fixture.Database),
 			assets, stats, chat, fixture.Persons, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
 		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
-			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
-			demos, fixture.TFApi, notification.NewDiscard(), "")
+			person.NewPersons(person.NewRepository(fixture.Database, true), fixture.TFApi),
+			demos, fixture.TFApi, notification.NewDiscard(), "", testRoleAuth(fixture))
 		serversCase, _ = servers.New(servers.NewRepository(fixture.Database), nil, "")
 		bans           = ban.New(ban.NewRepository(fixture.Database), fixture.Persons,
 			fixture.Config.Config().Discord.BanLogChannelID, fixture.Config.Config().Discord.KickLogChannelID,
 			steamid.New(fixture.Config.Config().Owner), reports, notification.NewDiscard(), serversCase, tests.EmptyIPProvider{})
 		source = steamid.RandSID64()
 		target = steamid.RandSID64()
-		author = fixture.CreateTestPerson(t.Context(), source, permission.Admin)
+		author = fixture.CreateTestPerson(t.Context(), source)
 	)
 	testBan, err := bans.Create(t.Context(), ban.Opts{
 		SourceID: source, TargetID: target, ValidUntil: time.Now().Add(time.Hour * 10),

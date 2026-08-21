@@ -6,7 +6,6 @@ import "ban/v1/ban.proto";
 import "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-import "person/v1/privilege.proto";
 
 service AppealService {
   rpc Appeals(AppealsRequest) returns (AppealsResponse) {}
@@ -98,10 +97,6 @@ message AppealMessage {
       min_len: 2
       max_len: 32
     }
-  ];
-  person.v1.Privilege privilege = 10 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).enum.defined_only = true
   ];
 }
 

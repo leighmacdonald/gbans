@@ -5,13 +5,11 @@ import (
 	"errors"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	v1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	"github.com/leighmacdonald/gbans/internal/ban/v1/banv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
 	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
@@ -23,11 +21,12 @@ import (
 type ReportService struct {
 	// banv1connect.UnimplementedReportServiceHandler
 
-	reports Reports
+	reports  Reports
+	roleAuth *rpc.RoleAuth
 }
 
 func NewReportService(reports Reports, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := banv1connect.NewReportServiceHandler(ReportService{reports: reports}, option...)
+	pattern, handler := banv1connect.NewReportServiceHandler(ReportService{reports: reports, roleAuth: roleAuth}, option...)
 
 	authMiddleware.UserRoute(banv1connect.ReportServiceReportCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_CREATE))
 	authMiddleware.UserRoute(banv1connect.ReportServiceReportProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_READ))
@@ -129,7 +128,8 @@ func (s ReportService) ReportMessages(ctx context.Context, req *v1.ReportMessage
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	if !httphelper.HasPrivilege(user, steamid.Collection{report.SourceID, report.TargetID}, permission.Moderator) {
+	allowed := steamid.Collection{report.SourceID, report.TargetID}
+	if !s.roleAuth.HasPermission(ctx, *user, rolesv1.Permission_PERMISSION_BAN_READ) && !allowed.Contains(user.GetSteamID()) {
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 
@@ -186,7 +186,6 @@ func toReportMessage(msg ReportMessage) *v1.ReportMessage {
 		UpdatedOn:       timestamppb.New(msg.UpdatedOn),
 		PersonaName:     &msg.Personaname,
 		AvatarHash:      &msg.Avatarhash,
-		PermissionLevel: new(personv1.Privilege(msg.PermissionLevel)),
 	}
 }
 
@@ -200,16 +199,25 @@ func toReportWithAuthor(report ReportWithAuthor) *v1.ReportWithAuthor {
 
 func toPersonCore(person person.Core) *personv1.PersonCore {
 	return &personv1.PersonCore{
-		SteamId:         new(person.SteamID.Int64()),
-		PermissionLevel: new(personv1.Privilege(person.PermissionLevel)),
-		Name:            new(person.GetName()),
-		AvatarHash:      new(string(person.GetAvatar())),
-		DiscordId:       new(person.GetDiscordID()),
-		VacBans:         new(person.GetVACBans()),
-		GameBans:        new(person.GetGameBans()),
-		BanId:           &person.BanID,
-		TimeCreated:     timestamppb.New(person.GetTimeCreated()),
+		SteamId:     new(person.SteamID.Int64()),
+		Permissions: person.Permissions,
+		Name:        new(person.GetName()),
+		AvatarHash:  new(string(person.GetAvatar())),
+		DiscordId:   new(person.GetDiscordID()),
+		VacBans:     new(person.GetVACBans()),
+		GameBans:    new(person.GetGameBans()),
+		BanId:       &person.BanID,
+		TimeCreated: timestamppb.New(person.GetTimeCreated()),
 	}
+}
+
+func stringsToPermissions(perms []string) []rolesv1.Permission {
+	permissions := make([]rolesv1.Permission, 0, len(perms))
+	for _, perm := range perms {
+		permissions = append(permissions, rolesv1.Permission(rolesv1.Permission_value[perm]))
+	}
+
+	return permissions
 }
 
 func toReport(report Report) *v1.Report {

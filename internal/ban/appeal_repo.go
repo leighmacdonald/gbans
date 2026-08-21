@@ -142,7 +142,7 @@ func (r AppealRepository) insertBanMessage(ctx context.Context, message *AppealM
 func (r AppealRepository) Messages(ctx context.Context, banID int32) ([]AppealMessage, error) {
 	query := r.Builder().
 		Select("a.ban_message_id", "a.ban_id", "a.author_id", "a.message_md", "a.deleted",
-			"a.created_on", "a.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").
+			"a.created_on", "a.updated_on", "p.avatarhash", "p.personaname").
 		From("ban_appeal a").
 		LeftJoin("person p ON a.author_id = p.steam_id").
 		Where(sq.And{sq.Eq{"a.deleted": false}, sq.Eq{"a.ban_id": banID}}).
@@ -175,7 +175,6 @@ func (r AppealRepository) Messages(ctx context.Context, banID int32) ([]AppealMe
 			&msg.UpdatedOn,
 			&msg.Avatarhash,
 			&msg.Personaname,
-			&msg.PermissionLevel,
 		); errScan != nil {
 			return nil, database.Err(errQuery)
 		}
@@ -195,7 +194,7 @@ func (r AppealRepository) Messages(ctx context.Context, banID int32) ([]AppealMe
 func (r AppealRepository) MessageByID(ctx context.Context, banMessageID int64) (AppealMessage, error) {
 	query := r.Builder().
 		Select("a.ban_message_id", "a.ban_id", "a.author_id", "a.message_md", "a.deleted", "a.created_on",
-			"a.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").
+			"a.updated_on", "p.avatarhash", "p.personaname").
 		From("ban_appeal a").
 		LeftJoin("person p ON a.author_id = p.steam_id").
 		Where(sq.Eq{"a.ban_message_id": banMessageID})
@@ -220,7 +219,6 @@ func (r AppealRepository) MessageByID(ctx context.Context, banMessageID int64) (
 		&message.UpdatedOn,
 		&message.Avatarhash,
 		&message.Personaname,
-		&message.PermissionLevel,
 	); errScan != nil {
 		return message, database.Err(errScan)
 	}

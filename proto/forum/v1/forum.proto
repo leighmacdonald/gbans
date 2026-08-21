@@ -5,7 +5,7 @@ package forum.v1;
 import "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-import "person/v1/privilege.proto";
+import "roles/v1/roles.proto";
 
 service ForumService {
   rpc ActiveUsers(google.protobuf.Empty) returns (ActiveUsersResponse) {}
@@ -64,7 +64,7 @@ message ForumEditRequest {
     (buf.validate.field).required = true,
     (buf.validate.field).int32.gt = 0
   ];
-  person.v1.Privilege permission_level = 3 [
+  roles.v1.Permission required_permission = 3 [
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
   ];
@@ -90,7 +90,7 @@ message ForumCreateRequest {
     (buf.validate.field).required = true,
     (buf.validate.field).int32.gt = 0
   ];
-  person.v1.Privilege permission_level = 2 [
+  roles.v1.Permission required_permission = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
   ];
@@ -272,10 +272,6 @@ message ThreadWithSource {
   Thread thread = 1 [(buf.validate.field).required = true];
   string persona_name = 2 [(buf.validate.field).required = true];
   string avatar_hash = 3 [(buf.validate.field).required = true];
-  person.v1.Privilege permission_level = 4 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).enum.defined_only = true
-  ];
   int64 recent_forum_message_id = 5;
   google.protobuf.Timestamp recent_created_on = 6;
   int64 recent_steam_id = 7 [(buf.validate.field).int64 = {gte: 76561197960265729}];
@@ -289,10 +285,6 @@ message UserActivity {
     (buf.validate.field).int64 = {gte: 76561197960265729}
   ];
   string persona_name = 2 [(buf.validate.field).required = true];
-  person.v1.Privilege permission_level = 3 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).enum.defined_only = true
-  ];
   google.protobuf.Timestamp created_on = 4 [(buf.validate.field).required = true];
 }
 
@@ -322,7 +314,6 @@ message Message {
   string signature = 7 [(buf.validate.field).required = true];
   string persona_name = 8 [(buf.validate.field).required = true];
   string avatar_hash = 9 [(buf.validate.field).required = true];
-  person.v1.Privilege permission_level = 10 [(buf.validate.field).required = true];
   google.protobuf.Timestamp created_on = 11 [(buf.validate.field).required = true];
   google.protobuf.Timestamp updated_on = 12 [(buf.validate.field).required = true];
 }
@@ -358,7 +349,7 @@ message Forum {
   int32 ordering = 6 [(buf.validate.field).required = true];
   int32 count_threads = 7 [(buf.validate.field).required = true];
   int32 count_messages = 8 [(buf.validate.field).required = true];
-  person.v1.Privilege permission_level = 9 [
+  roles.v1.Permission required_permission = 9 [
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
   ];

@@ -694,107 +694,10 @@ func (x *EditProfileSettingsResponse) GetSettings() *Settings {
 	return nil
 }
 
-type EditPermissionsRequest struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	SteamId         *int64                 `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
-	PermissionLevel *Privilege             `protobuf:"varint,2,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
-}
-
-func (x *EditPermissionsRequest) Reset() {
-	*x = EditPermissionsRequest{}
-	mi := &file_person_v1_person_proto_msgTypes[11]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *EditPermissionsRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*EditPermissionsRequest) ProtoMessage() {}
-
-func (x *EditPermissionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_person_v1_person_proto_msgTypes[11]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use EditPermissionsRequest.ProtoReflect.Descriptor instead.
-func (*EditPermissionsRequest) Descriptor() ([]byte, []int) {
-	return file_person_v1_person_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *EditPermissionsRequest) GetSteamId() int64 {
-	if x != nil && x.SteamId != nil {
-		return *x.SteamId
-	}
-	return 0
-}
-
-func (x *EditPermissionsRequest) GetPermissionLevel() Privilege {
-	if x != nil && x.PermissionLevel != nil {
-		return *x.PermissionLevel
-	}
-	return Privilege_PRIVILEGE_BANNED_UNSPECIFIED
-}
-
-type EditPermissionsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Person        *PersonCore            `protobuf:"bytes,1,opt,name=person" json:"person,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *EditPermissionsResponse) Reset() {
-	*x = EditPermissionsResponse{}
-	mi := &file_person_v1_person_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *EditPermissionsResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*EditPermissionsResponse) ProtoMessage() {}
-
-func (x *EditPermissionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_person_v1_person_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use EditPermissionsResponse.ProtoReflect.Descriptor instead.
-func (*EditPermissionsResponse) Descriptor() ([]byte, []int) {
-	return file_person_v1_person_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *EditPermissionsResponse) GetPerson() *PersonCore {
-	if x != nil {
-		return x.Person
-	}
-	return nil
-}
-
 type QueryRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Filter            *v1.Filter             `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
 	PersonaName       *string                `protobuf:"bytes,2,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
-	WithPermissions   []Privilege            `protobuf:"varint,3,rep,packed,name=with_permissions,json=withPermissions,enum=person.v1.Privilege" json:"with_permissions,omitempty"`
 	DiscordId         *string                `protobuf:"bytes,4,opt,name=discord_id,json=discordId" json:"discord_id,omitempty"`
 	SteamIds          []string               `protobuf:"bytes,5,rep,name=steam_ids,json=steamIds" json:"steam_ids,omitempty"`
 	VacBans           *int32                 `protobuf:"varint,6,opt,name=vac_bans,json=vacBans" json:"vac_bans,omitempty"`
@@ -809,7 +712,7 @@ type QueryRequest struct {
 
 func (x *QueryRequest) Reset() {
 	*x = QueryRequest{}
-	mi := &file_person_v1_person_proto_msgTypes[13]
+	mi := &file_person_v1_person_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -821,7 +724,7 @@ func (x *QueryRequest) String() string {
 func (*QueryRequest) ProtoMessage() {}
 
 func (x *QueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_person_v1_person_proto_msgTypes[13]
+	mi := &file_person_v1_person_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -834,7 +737,7 @@ func (x *QueryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryRequest.ProtoReflect.Descriptor instead.
 func (*QueryRequest) Descriptor() ([]byte, []int) {
-	return file_person_v1_person_proto_rawDescGZIP(), []int{13}
+	return file_person_v1_person_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *QueryRequest) GetFilter() *v1.Filter {
@@ -849,13 +752,6 @@ func (x *QueryRequest) GetPersonaName() string {
 		return *x.PersonaName
 	}
 	return ""
-}
-
-func (x *QueryRequest) GetWithPermissions() []Privilege {
-	if x != nil {
-		return x.WithPermissions
-	}
-	return nil
 }
 
 func (x *QueryRequest) GetDiscordId() string {
@@ -919,7 +815,6 @@ type Person struct {
 	SteamId               *int64                 `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	CreatedOn             *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
 	UpdatedOn             *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
-	PermissionLevel       *Privilege             `protobuf:"varint,4,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
 	Muted                 *bool                  `protobuf:"varint,5,opt,name=muted" json:"muted,omitempty"`
 	DiscordId             *string                `protobuf:"bytes,6,opt,name=discord_id,json=discordId" json:"discord_id,omitempty"`
 	PatreonId             *string                `protobuf:"bytes,7,opt,name=patreon_id,json=patreonId" json:"patreon_id,omitempty"`
@@ -954,7 +849,7 @@ type Person struct {
 
 func (x *Person) Reset() {
 	*x = Person{}
-	mi := &file_person_v1_person_proto_msgTypes[14]
+	mi := &file_person_v1_person_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -966,7 +861,7 @@ func (x *Person) String() string {
 func (*Person) ProtoMessage() {}
 
 func (x *Person) ProtoReflect() protoreflect.Message {
-	mi := &file_person_v1_person_proto_msgTypes[14]
+	mi := &file_person_v1_person_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -979,7 +874,7 @@ func (x *Person) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Person.ProtoReflect.Descriptor instead.
 func (*Person) Descriptor() ([]byte, []int) {
-	return file_person_v1_person_proto_rawDescGZIP(), []int{14}
+	return file_person_v1_person_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *Person) GetSteamId() int64 {
@@ -1001,13 +896,6 @@ func (x *Person) GetUpdatedOn() *timestamppb.Timestamp {
 		return x.UpdatedOn
 	}
 	return nil
-}
-
-func (x *Person) GetPermissionLevel() Privilege {
-	if x != nil && x.PermissionLevel != nil {
-		return *x.PermissionLevel
-	}
-	return Privilege_PRIVILEGE_BANNED_UNSPECIFIED
 }
 
 func (x *Person) GetMuted() bool {
@@ -1216,7 +1104,7 @@ type QueryResponse struct {
 
 func (x *QueryResponse) Reset() {
 	*x = QueryResponse{}
-	mi := &file_person_v1_person_proto_msgTypes[15]
+	mi := &file_person_v1_person_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1228,7 +1116,7 @@ func (x *QueryResponse) String() string {
 func (*QueryResponse) ProtoMessage() {}
 
 func (x *QueryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_person_v1_person_proto_msgTypes[15]
+	mi := &file_person_v1_person_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1241,7 +1129,7 @@ func (x *QueryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryResponse.ProtoReflect.Descriptor instead.
 func (*QueryResponse) Descriptor() ([]byte, []int) {
-	return file_person_v1_person_proto_rawDescGZIP(), []int{15}
+	return file_person_v1_person_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *QueryResponse) GetPeople() []*Person {
@@ -1262,7 +1150,7 @@ var File_person_v1_person_proto protoreflect.FileDescriptor
 
 const file_person_v1_person_proto_rawDesc = "" +
 	"\n" +
-	"\x16person/v1/person.proto\x12\tperson.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bperson/v1/person_core.proto\x1a\x19person/v1/privilege.proto\"7\n" +
+	"\x16person/v1/person.proto\x12\tperson.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bperson/v1/person_core.proto\"7\n" +
 	"\x0eProfileRequest\x12%\n" +
 	"\bsteam_id\x18\x01 \x01(\tB\n" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\asteamId\"G\n" +
@@ -1309,17 +1197,10 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"\x17ProfileSettingsResponse\x127\n" +
 	"\bsettings\x18\x01 \x01(\v2\x13.person.v1.SettingsB\x06\xbaH\x03\xc8\x01\x01R\bsettings\"V\n" +
 	"\x1bEditProfileSettingsResponse\x127\n" +
-	"\bsettings\x18\x01 \x01(\v2\x13.person.v1.SettingsB\x06\xbaH\x03\xc8\x01\x01R\bsettings\"\x97\x01\n" +
-	"\x16EditPermissionsRequest\x12/\n" +
-	"\bsteam_id\x18\x01 \x01(\x03B\x14\xbaH\x0f\xc8\x01\x01\"\n" +
-	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\x12L\n" +
-	"\x10permission_level\x18\x02 \x01(\x0e2\x14.person.v1.PrivilegeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x0fpermissionLevel\"P\n" +
-	"\x17EditPermissionsResponse\x125\n" +
-	"\x06person\x18\x01 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\x06person\"\xfb\x03\n" +
+	"\bsettings\x18\x01 \x01(\v2\x13.person.v1.SettingsB\x06\xbaH\x03\xc8\x01\x01R\bsettings\"\xba\x03\n" +
 	"\fQueryRequest\x121\n" +
 	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12!\n" +
-	"\fpersona_name\x18\x02 \x01(\tR\vpersonaName\x12?\n" +
-	"\x10with_permissions\x18\x03 \x03(\x0e2\x14.person.v1.PrivilegeR\x0fwithPermissions\x12\x1d\n" +
+	"\fpersona_name\x18\x02 \x01(\tR\vpersonaName\x12\x1d\n" +
 	"\n" +
 	"discord_id\x18\x04 \x01(\tR\tdiscordId\x12\x1b\n" +
 	"\tsteam_ids\x18\x05 \x03(\tR\bsteamIds\x12\x19\n" +
@@ -1330,15 +1211,14 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"\x10community_banned\x18\t \x01(\bR\x0fcommunityBanned\x12H\n" +
 	"\x12time_created_after\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\x10timeCreatedAfter\x12J\n" +
-	"\x13time_created_before\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\x11timeCreatedBefore\"\xdd\f\n" +
+	"\x13time_created_before\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\x11timeCreatedBefore\"\x8f\f\n" +
 	"\x06Person\x12/\n" +
 	"\bsteam_id\x18\x01 \x01(\x03B\x14\xbaH\x0f\xc8\x01\x01\"\n" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\x12A\n" +
 	"\n" +
 	"created_on\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\x12L\n" +
-	"\x10permission_level\x18\x04 \x01(\x0e2\x14.person.v1.PrivilegeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x0fpermissionLevel\x12\x1c\n" +
+	"updated_on\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\x12\x1c\n" +
 	"\x05muted\x18\x05 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x05muted\x12%\n" +
 	"\n" +
 	"discord_id\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tdiscordId\x12%\n" +
@@ -1380,15 +1260,14 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"\x0fVisibilityState\x12 \n" +
 	"\x1cVISIBILITY_STATE_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18VISIBILITY_STATE_PRIVATE\x10\x01\x12\x1b\n" +
-	"\x17VISIBILITY_STATE_PUBLIC\x10\x032\xc4\x04\n" +
+	"\x17VISIBILITY_STATE_PUBLIC\x10\x032\xea\x03\n" +
 	"\rPersonService\x12B\n" +
 	"\aProfile\x12\x19.person.v1.ProfileRequest\x1a\x1a.person.v1.ProfileResponse\"\x00\x12W\n" +
 	"\x0eResolveSteamID\x12 .person.v1.ResolveSteamIDRequest\x1a!.person.v1.ResolveSteamIDResponse\"\x00\x12K\n" +
 	"\x0eCurrentProfile\x12\x16.google.protobuf.Empty\x1a!.person.v1.CurrentProfileResponse\x12M\n" +
 	"\x0fProfileSettings\x12\x16.google.protobuf.Empty\x1a\".person.v1.ProfileSettingsResponse\x12d\n" +
 	"\x13EditProfileSettings\x12%.person.v1.EditProfileSettingsRequest\x1a&.person.v1.EditProfileSettingsResponse\x12:\n" +
-	"\x05Query\x12\x17.person.v1.QueryRequest\x1a\x18.person.v1.QueryResponse\x12X\n" +
-	"\x0fEditPermissions\x12!.person.v1.EditPermissionsRequest\x1a\".person.v1.EditPermissionsResponseB\x9e\x01\n" +
+	"\x05Query\x12\x17.person.v1.QueryRequest\x1a\x18.person.v1.QueryResponseB\x9e\x01\n" +
 	"\rcom.person.v1B\vPersonProtoP\x01Z;github.com/leighmacdonald/gbans/internal/person/v1;personv1\xa2\x02\x03PXX\xaa\x02\tPerson.V1\xca\x02\tPerson\\V1\xe2\x02\x15Person\\V1\\GPBMetadata\xea\x02\n" +
 	"Person::V1b\beditionsp\xe8\a"
 
@@ -1405,7 +1284,7 @@ func file_person_v1_person_proto_rawDescGZIP() []byte {
 }
 
 var file_person_v1_person_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_person_v1_person_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_person_v1_person_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_person_v1_person_proto_goTypes = []any{
 	(VisibilityState)(0),                // 0: person.v1.VisibilityState
 	(*ProfileRequest)(nil),              // 1: person.v1.ProfileRequest
@@ -1419,62 +1298,53 @@ var file_person_v1_person_proto_goTypes = []any{
 	(*SteamFriend)(nil),                 // 9: person.v1.SteamFriend
 	(*ProfileSettingsResponse)(nil),     // 10: person.v1.ProfileSettingsResponse
 	(*EditProfileSettingsResponse)(nil), // 11: person.v1.EditProfileSettingsResponse
-	(*EditPermissionsRequest)(nil),      // 12: person.v1.EditPermissionsRequest
-	(*EditPermissionsResponse)(nil),     // 13: person.v1.EditPermissionsResponse
-	(*QueryRequest)(nil),                // 14: person.v1.QueryRequest
-	(*Person)(nil),                      // 15: person.v1.Person
-	(*QueryResponse)(nil),               // 16: person.v1.QueryResponse
-	(*PersonCore)(nil),                  // 17: person.v1.PersonCore
-	(*timestamppb.Timestamp)(nil),       // 18: google.protobuf.Timestamp
-	(Privilege)(0),                      // 19: person.v1.Privilege
-	(*v1.Filter)(nil),                   // 20: database.query.v1.Filter
-	(*emptypb.Empty)(nil),               // 21: google.protobuf.Empty
+	(*QueryRequest)(nil),                // 12: person.v1.QueryRequest
+	(*Person)(nil),                      // 13: person.v1.Person
+	(*QueryResponse)(nil),               // 14: person.v1.QueryResponse
+	(*PersonCore)(nil),                  // 15: person.v1.PersonCore
+	(*timestamppb.Timestamp)(nil),       // 16: google.protobuf.Timestamp
+	(*v1.Filter)(nil),                   // 17: database.query.v1.Filter
+	(*emptypb.Empty)(nil),               // 18: google.protobuf.Empty
 }
 var file_person_v1_person_proto_depIdxs = []int32{
 	8,  // 0: person.v1.ProfileResponse.profile:type_name -> person.v1.Profile
-	17, // 1: person.v1.CurrentProfileResponse.profile:type_name -> person.v1.PersonCore
-	18, // 2: person.v1.Settings.created_on:type_name -> google.protobuf.Timestamp
-	18, // 3: person.v1.Settings.updated_on:type_name -> google.protobuf.Timestamp
-	17, // 4: person.v1.Profile.player:type_name -> person.v1.PersonCore
+	15, // 1: person.v1.CurrentProfileResponse.profile:type_name -> person.v1.PersonCore
+	16, // 2: person.v1.Settings.created_on:type_name -> google.protobuf.Timestamp
+	16, // 3: person.v1.Settings.updated_on:type_name -> google.protobuf.Timestamp
+	15, // 4: person.v1.Profile.player:type_name -> person.v1.PersonCore
 	9,  // 5: person.v1.Profile.friends:type_name -> person.v1.SteamFriend
 	6,  // 6: person.v1.Profile.settings:type_name -> person.v1.Settings
-	18, // 7: person.v1.SteamFriend.friend_since:type_name -> google.protobuf.Timestamp
-	18, // 8: person.v1.SteamFriend.removed_on:type_name -> google.protobuf.Timestamp
+	16, // 7: person.v1.SteamFriend.friend_since:type_name -> google.protobuf.Timestamp
+	16, // 8: person.v1.SteamFriend.removed_on:type_name -> google.protobuf.Timestamp
 	6,  // 9: person.v1.ProfileSettingsResponse.settings:type_name -> person.v1.Settings
 	6,  // 10: person.v1.EditProfileSettingsResponse.settings:type_name -> person.v1.Settings
-	19, // 11: person.v1.EditPermissionsRequest.permission_level:type_name -> person.v1.Privilege
-	17, // 12: person.v1.EditPermissionsResponse.person:type_name -> person.v1.PersonCore
-	20, // 13: person.v1.QueryRequest.filter:type_name -> database.query.v1.Filter
-	19, // 14: person.v1.QueryRequest.with_permissions:type_name -> person.v1.Privilege
-	18, // 15: person.v1.QueryRequest.time_created_after:type_name -> google.protobuf.Timestamp
-	18, // 16: person.v1.QueryRequest.time_created_before:type_name -> google.protobuf.Timestamp
-	18, // 17: person.v1.Person.created_on:type_name -> google.protobuf.Timestamp
-	18, // 18: person.v1.Person.updated_on:type_name -> google.protobuf.Timestamp
-	19, // 19: person.v1.Person.permission_level:type_name -> person.v1.Privilege
-	18, // 20: person.v1.Person.updated_on_steam:type_name -> google.protobuf.Timestamp
-	18, // 21: person.v1.Person.last_logoff:type_name -> google.protobuf.Timestamp
-	18, // 22: person.v1.Person.time_created:type_name -> google.protobuf.Timestamp
-	0,  // 23: person.v1.Person.visibility_state:type_name -> person.v1.VisibilityState
-	15, // 24: person.v1.QueryResponse.people:type_name -> person.v1.Person
-	1,  // 25: person.v1.PersonService.Profile:input_type -> person.v1.ProfileRequest
-	3,  // 26: person.v1.PersonService.ResolveSteamID:input_type -> person.v1.ResolveSteamIDRequest
-	21, // 27: person.v1.PersonService.CurrentProfile:input_type -> google.protobuf.Empty
-	21, // 28: person.v1.PersonService.ProfileSettings:input_type -> google.protobuf.Empty
-	7,  // 29: person.v1.PersonService.EditProfileSettings:input_type -> person.v1.EditProfileSettingsRequest
-	14, // 30: person.v1.PersonService.Query:input_type -> person.v1.QueryRequest
-	12, // 31: person.v1.PersonService.EditPermissions:input_type -> person.v1.EditPermissionsRequest
-	2,  // 32: person.v1.PersonService.Profile:output_type -> person.v1.ProfileResponse
-	4,  // 33: person.v1.PersonService.ResolveSteamID:output_type -> person.v1.ResolveSteamIDResponse
-	5,  // 34: person.v1.PersonService.CurrentProfile:output_type -> person.v1.CurrentProfileResponse
-	10, // 35: person.v1.PersonService.ProfileSettings:output_type -> person.v1.ProfileSettingsResponse
-	11, // 36: person.v1.PersonService.EditProfileSettings:output_type -> person.v1.EditProfileSettingsResponse
-	16, // 37: person.v1.PersonService.Query:output_type -> person.v1.QueryResponse
-	13, // 38: person.v1.PersonService.EditPermissions:output_type -> person.v1.EditPermissionsResponse
-	32, // [32:39] is the sub-list for method output_type
-	25, // [25:32] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	17, // 11: person.v1.QueryRequest.filter:type_name -> database.query.v1.Filter
+	16, // 12: person.v1.QueryRequest.time_created_after:type_name -> google.protobuf.Timestamp
+	16, // 13: person.v1.QueryRequest.time_created_before:type_name -> google.protobuf.Timestamp
+	16, // 14: person.v1.Person.created_on:type_name -> google.protobuf.Timestamp
+	16, // 15: person.v1.Person.updated_on:type_name -> google.protobuf.Timestamp
+	16, // 16: person.v1.Person.updated_on_steam:type_name -> google.protobuf.Timestamp
+	16, // 17: person.v1.Person.last_logoff:type_name -> google.protobuf.Timestamp
+	16, // 18: person.v1.Person.time_created:type_name -> google.protobuf.Timestamp
+	0,  // 19: person.v1.Person.visibility_state:type_name -> person.v1.VisibilityState
+	13, // 20: person.v1.QueryResponse.people:type_name -> person.v1.Person
+	1,  // 21: person.v1.PersonService.Profile:input_type -> person.v1.ProfileRequest
+	3,  // 22: person.v1.PersonService.ResolveSteamID:input_type -> person.v1.ResolveSteamIDRequest
+	18, // 23: person.v1.PersonService.CurrentProfile:input_type -> google.protobuf.Empty
+	18, // 24: person.v1.PersonService.ProfileSettings:input_type -> google.protobuf.Empty
+	7,  // 25: person.v1.PersonService.EditProfileSettings:input_type -> person.v1.EditProfileSettingsRequest
+	12, // 26: person.v1.PersonService.Query:input_type -> person.v1.QueryRequest
+	2,  // 27: person.v1.PersonService.Profile:output_type -> person.v1.ProfileResponse
+	4,  // 28: person.v1.PersonService.ResolveSteamID:output_type -> person.v1.ResolveSteamIDResponse
+	5,  // 29: person.v1.PersonService.CurrentProfile:output_type -> person.v1.CurrentProfileResponse
+	10, // 30: person.v1.PersonService.ProfileSettings:output_type -> person.v1.ProfileSettingsResponse
+	11, // 31: person.v1.PersonService.EditProfileSettings:output_type -> person.v1.EditProfileSettingsResponse
+	14, // 32: person.v1.PersonService.Query:output_type -> person.v1.QueryResponse
+	27, // [27:33] is the sub-list for method output_type
+	21, // [21:27] is the sub-list for method input_type
+	21, // [21:21] is the sub-list for extension type_name
+	21, // [21:21] is the sub-list for extension extendee
+	0,  // [0:21] is the sub-list for field type_name
 }
 
 func init() { file_person_v1_person_proto_init() }
@@ -1483,14 +1353,13 @@ func file_person_v1_person_proto_init() {
 		return
 	}
 	file_person_v1_person_core_proto_init()
-	file_person_v1_privilege_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_person_v1_person_proto_rawDesc), len(file_person_v1_person_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   16,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

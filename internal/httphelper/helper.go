@@ -3,14 +3,10 @@ package httphelper
 import (
 	"net/http"
 	"net/url"
-	"slices"
 	"strings"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 func NewClient() *http.Client {
@@ -33,14 +29,6 @@ func GetUUIDParam(r *http.Request, key string) (uuid.UUID, bool) {
 	}
 
 	return parsedUUID, true
-}
-
-func HasPrivilege(person person.BaseUser, allowedSteamIDs steamid.Collection, minPrivilege permission.Privilege) bool {
-	if slices.Contains(allowedSteamIDs, person.GetSteamID()) {
-		return true
-	}
-
-	return person.HasPermission(minPrivilege)
 }
 
 func NewServer(listenAddr string, handler http.Handler) *http.Server {

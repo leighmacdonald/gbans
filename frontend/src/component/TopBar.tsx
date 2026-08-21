@@ -53,7 +53,7 @@ import steamLogo from "../icons/steam_login_sm.png";
 import type { InfoResponse } from "../rpc/config/v1/config_pb.ts";
 import type { UserNotification } from "../rpc/notification/v1/notification_pb.ts";
 import { notifications } from "../rpc/notification/v1/notification-NotificationService_connectquery.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { tf2Fonts } from "../theme";
 import { generateOIDCLink } from "../util/auth/generateOIDCLink.ts";
 import { avatarHashToURL } from "../util/strings.ts";
@@ -421,7 +421,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 									<IconButton onClick={colourMode.toggleColorMode}>{themeIcon}</IconButton>
 								</Tooltip>
 
-								{hasPermission(Privilege.USER) && (
+								{hasPermission(Permission.NOTIFICATIONS) && (
 									<IconButton component={RouterLink} to={"/notifications"} color={"inherit"}>
 										<Badge
 											color={"success"}
@@ -450,7 +450,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 										</Button>
 									</Tooltip>
 								)}
-								{hasPermission(Privilege.MODERATOR) && (
+								{hasPermission(Permission.BAN_WRITE) && (
 									<VCenterBox>
 										<NestedDropdown
 											menuItemsData={adminItems}

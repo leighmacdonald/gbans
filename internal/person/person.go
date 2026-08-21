@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -28,6 +28,7 @@ var (
 	ErrSteamAPISummaries    = errors.New("failed to fetch player summaries")
 	ErrSteamAPI             = errors.New("steam api requests have errors")
 	ErrUpdatePerson         = errors.New("failed to save updated person profile")
+	ErrNilPerson            = errors.New("nil person")
 )
 
 type SteamMember interface {
@@ -38,7 +39,6 @@ type Query struct {
 	query.Filter
 
 	PersonaName          string
-	WithPermissions      []permission.Privilege
 	DiscordID            string
 	SteamUpdateOlderThan time.Time
 	SteamIDs             []string
@@ -48,10 +48,6 @@ type Query struct {
 	CommunityBanned      *bool
 	TimeCreatedAfter     *time.Time
 	TimeCreatedBefore    *time.Time
-}
-
-type RequestPermissionLevelUpdate struct {
-	PermissionLevel permission.Privilege
 }
 
 // EconBanState  holds the users current economy ban status.
@@ -70,7 +66,7 @@ type Person struct {
 	SteamID           steamid.SteamID
 	CreatedOn         time.Time
 	UpdatedOn         time.Time
-	PermissionLevel   permission.Privilege
+	PermissionLevel   int32 // Legacy privilege level, write-only, derived from role assignments.
 	Muted             bool
 	isNew             bool
 	DiscordID         string
@@ -98,10 +94,8 @@ type Person struct {
 	TimeCreated       int64
 	VisibilityState   int32
 	BanID             int32
-}
-
-func (p Person) GetPrivilege() permission.Privilege {
-	return p.PermissionLevel
+	// Permissions is the union of granular permissions granted via role assignments.
+	Permissions []rolesv1.Permission
 }
 
 func (p Person) ApplySteamInfo(summary thirdparty.PlayerSummaryResponse, steamBan thirdparty.SteamBan) Person {
@@ -174,14 +168,6 @@ func (p Person) GetName() string {
 	return p.PersonaName
 }
 
-func (p Person) Permissions() permission.Privilege {
-	return p.PermissionLevel
-}
-
-func (p Person) HasPermission(privilege permission.Privilege) bool {
-	return p.PermissionLevel >= privilege
-}
-
 func (p Person) GetAvatar() person.Avatar {
 	return person.Avatar(p.AvatarHash)
 }
@@ -192,6 +178,10 @@ func (p Person) GetSteamID() steamid.SteamID {
 
 func (p Person) GetSteamIDString() string {
 	return p.SteamID.String()
+}
+
+func (p Person) GetPermissions() []rolesv1.Permission {
+	return p.Permissions
 }
 
 func (p Person) Path() string {
@@ -205,15 +195,15 @@ func (p Person) LoggedIn() bool {
 
 func (p Person) Core() person.Core {
 	return person.Core{
-		SteamID:         p.SteamID,
-		PermissionLevel: p.PermissionLevel,
-		Name:            p.GetName(),
-		Avatarhash:      p.AvatarHash,
-		DiscordID:       p.DiscordID,
-		PatreonID:       p.PatreonID,
-		VacBans:         p.VACBans,
-		GameBans:        p.GameBans,
-		TimeCreated:     p.CreatedOn,
+		SteamID:     p.SteamID,
+		Name:        p.GetName(),
+		Avatarhash:  p.AvatarHash,
+		DiscordID:   p.DiscordID,
+		PatreonID:   p.PatreonID,
+		VacBans:     p.VACBans,
+		GameBans:    p.GameBans,
+		TimeCreated: p.CreatedOn,
+		Permissions: p.Permissions,
 	}
 }
 
@@ -231,7 +221,7 @@ func New(sid64 steamid.SteamID) Person {
 		SteamID:          sid64,
 		CreatedOn:        curTime,
 		UpdatedOn:        curTime,
-		PermissionLevel:  permission.User,
+		PermissionLevel:  10, // Legacy default; derived from role assignments going forward.
 		Muted:            false,
 		isNew:            true,
 		DiscordID:        "",
@@ -287,29 +277,14 @@ type SettingsUpdate struct {
 }
 
 type Persons struct {
-	owner          steamid.SteamID
 	repo           Repository
 	tfAPI          thirdparty.APIProvider
 	knownPersonsMu *sync.RWMutex
 	knownPersons   map[steamid.SteamID]bool
 }
 
-func NewPersons(repository Repository, owner steamid.SteamID, tfAPI thirdparty.APIProvider) *Persons {
-	return &Persons{repo: repository, owner: owner, tfAPI: tfAPI, knownPersons: map[steamid.SteamID]bool{}, knownPersonsMu: &sync.RWMutex{}}
-}
-
-func (u *Persons) CanAlter(ctx context.Context, sourceID steamid.SteamID, targetID steamid.SteamID) (bool, error) {
-	source, errSource := u.GetOrCreatePersonBySteamID(ctx, sourceID)
-	if errSource != nil {
-		return false, errSource
-	}
-
-	target, errGetProfile := u.GetOrCreatePersonBySteamID(ctx, targetID)
-	if errGetProfile != nil {
-		return false, errGetProfile
-	}
-
-	return source.PermissionLevel > target.PermissionLevel, nil
+func NewPersons(repository Repository, tfAPI thirdparty.APIProvider) *Persons {
+	return &Persons{repo: repository, tfAPI: tfAPI, knownPersons: map[steamid.SteamID]bool{}, knownPersonsMu: &sync.RWMutex{}}
 }
 
 func (u *Persons) QueryProfile(ctx context.Context, query string) (ProfileResponse, error) {
@@ -481,11 +456,7 @@ func (u *Persons) Drop(ctx context.Context, steamID steamid.SteamID) error {
 
 func (u *Persons) Save(ctx context.Context, person *Person) error {
 	if person == nil {
-		return permission.ErrDenied
-	}
-	// Don't let owner un-admin themselves.
-	if person.SteamID == u.owner && person.PermissionLevel != permission.Admin {
-		return permission.ErrDenied
+		return ErrNilPerson
 	}
 
 	return u.repo.Save(ctx, person)
@@ -526,15 +497,14 @@ func (u *Persons) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.
 	}
 
 	return person.Core{
-		SteamID:         fetchedPerson.SteamID,
-		PermissionLevel: fetchedPerson.PermissionLevel,
-		Name:            fetchedPerson.PersonaName,
-		Avatarhash:      fetchedPerson.AvatarHash,
-		DiscordID:       fetchedPerson.DiscordID,
-		PatreonID:       fetchedPerson.PatreonID,
-		GameBans:        fetchedPerson.GameBans,
-		VacBans:         fetchedPerson.VACBans,
-		TimeCreated:     time.Unix(fetchedPerson.TimeCreated, 0),
+		SteamID:     fetchedPerson.SteamID,
+		Name:        fetchedPerson.PersonaName,
+		Avatarhash:  fetchedPerson.AvatarHash,
+		DiscordID:   fetchedPerson.DiscordID,
+		PatreonID:   fetchedPerson.PatreonID,
+		GameBans:    fetchedPerson.GameBans,
+		VacBans:     fetchedPerson.VACBans,
+		TimeCreated: time.Unix(fetchedPerson.TimeCreated, 0),
 	}, nil
 }
 
@@ -592,15 +562,14 @@ func (u *Persons) GetPersonByDiscordID(ctx context.Context, discordID string) (p
 	}
 
 	return person.Core{
-		SteamID:         fetchedPerson.SteamID,
-		PermissionLevel: fetchedPerson.PermissionLevel,
-		Name:            fetchedPerson.PersonaName,
-		Avatarhash:      fetchedPerson.AvatarHash,
-		PatreonID:       fetchedPerson.PatreonID,
-		GameBans:        fetchedPerson.GameBans,
-		VacBans:         fetchedPerson.VACBans,
-		TimeCreated:     time.Unix(fetchedPerson.TimeCreated, 0),
-		DiscordID:       fetchedPerson.DiscordID,
+		SteamID:     fetchedPerson.SteamID,
+		Name:        fetchedPerson.PersonaName,
+		Avatarhash:  fetchedPerson.AvatarHash,
+		PatreonID:   fetchedPerson.PatreonID,
+		GameBans:    fetchedPerson.GameBans,
+		VacBans:     fetchedPerson.VACBans,
+		TimeCreated: time.Unix(fetchedPerson.TimeCreated, 0),
+		DiscordID:   fetchedPerson.DiscordID,
 	}, nil
 }
 

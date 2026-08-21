@@ -16,10 +16,10 @@ import (
 )
 
 type Service struct {
-	roles Roles
+	roles *Roles
 }
 
-func NewService(roles Roles, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(roles *Roles, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := rolesv1connect.NewRolesServiceHandler(Service{roles: roles}, option...)
 
 	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleListProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_READ))
@@ -28,6 +28,7 @@ func NewService(roles Roles, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middlew
 	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
 	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
 	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleAssignProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleUnassignProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -97,6 +98,21 @@ func (s Service) RoleAssign(ctx context.Context, req *rolesv1.RoleAssignRequest)
 	}
 
 	slog.Info("Role assigned", slog.Int64("steam_id", int64(req.GetSteamId())), slog.Int("role_id", int(req.GetRoleId()))) //nolint:gosec
+
+	return &emptypb.Empty{}, nil
+}
+
+func (s Service) RoleUnassign(ctx context.Context, req *rolesv1.RoleUnassignRequest) (*emptypb.Empty, error) {
+	if err := s.roles.Unassign(ctx, steamid.New(req.GetSteamId()), req.GetRoleId()); err != nil { //nolint:gosec
+		switch {
+		case errors.Is(err, ErrAdminRoleProtected):
+			return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
+		default:
+			return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+		}
+	}
+
+	slog.Info("Role unassigned", slog.Int64("steam_id", int64(req.GetSteamId())), slog.Int("role_id", int(req.GetRoleId()))) //nolint:gosec
 
 	return &emptypb.Empty{}, nil
 }

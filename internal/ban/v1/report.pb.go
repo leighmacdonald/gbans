@@ -536,7 +536,6 @@ type ReportMessage struct {
 	UpdatedOn       *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
 	PersonaName     *string                `protobuf:"bytes,8,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
 	AvatarHash      *string                `protobuf:"bytes,9,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
-	PermissionLevel *v1.Privilege          `protobuf:"varint,10,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -632,13 +631,6 @@ func (x *ReportMessage) GetAvatarHash() string {
 		return *x.AvatarHash
 	}
 	return ""
-}
-
-func (x *ReportMessage) GetPermissionLevel() v1.Privilege {
-	if x != nil && x.PermissionLevel != nil {
-		return *x.PermissionLevel
-	}
-	return v1.Privilege(0)
 }
 
 type Report struct {
@@ -1137,7 +1129,7 @@ var File_ban_v1_report_proto protoreflect.FileDescriptor
 
 const file_ban_v1_report_proto_rawDesc = "" +
 	"\n" +
-	"\x13ban/v1/report.proto\x12\x06ban.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bperson/v1/person_core.proto\x1a\x19person/v1/privilege.proto\"M\n" +
+	"\x13ban/v1/report.proto\x12\x06ban.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bperson/v1/person_core.proto\"M\n" +
 	"\x0fReportsResponse\x12:\n" +
 	"\areports\x18\x01 \x03(\v2\x18.ban.v1.ReportWithAuthorB\x06\xbaH\x03\xc8\x01\x01R\areports\"T\n" +
 	"\x1aReportMessageDeleteRequest\x126\n" +
@@ -1163,7 +1155,7 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"\treport_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\breportId\"J\n" +
 	"\x0eReportResponse\x128\n" +
-	"\x06report\x18\x01 \x01(\v2\x18.ban.v1.ReportWithAuthorB\x06\xbaH\x03\xc8\x01\x01R\x06report\"\xa2\x04\n" +
+	"\x06report\x18\x01 \x01(\v2\x18.ban.v1.ReportWithAuthorB\x06\xbaH\x03\xc8\x01\x01R\x06report\"\xd4\x03\n" +
 	"\rReportMessage\x12'\n" +
 	"\treport_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\breportId\x126\n" +
@@ -1180,9 +1172,7 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\x12/\n" +
 	"\fpersona_name\x18\b \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x02\x18 R\vpersonaName\x12'\n" +
 	"\vavatar_hash\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"avatarHash\x12L\n" +
-	"\x10permission_level\x18\n" +
-	" \x01(\x0e2\x14.person.v1.PrivilegeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x0fpermissionLevel\"\xf8\x04\n" +
+	"avatarHash\"\xf8\x04\n" +
 	"\x06Report\x12'\n" +
 	"\treport_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\breportId\x121\n" +
@@ -1286,10 +1276,9 @@ var file_ban_v1_report_proto_goTypes = []any{
 	(*ReportMessageCreateRequest)(nil),  // 17: ban.v1.ReportMessageCreateRequest
 	(*ReportMessageCreateResponse)(nil), // 18: ban.v1.ReportMessageCreateResponse
 	(*timestamppb.Timestamp)(nil),       // 19: google.protobuf.Timestamp
-	(v1.Privilege)(0),                   // 20: person.v1.Privilege
-	(BanReason)(0),                      // 21: ban.v1.BanReason
-	(*v1.PersonCore)(nil),               // 22: person.v1.PersonCore
-	(*emptypb.Empty)(nil),               // 23: google.protobuf.Empty
+	(BanReason)(0),                      // 20: ban.v1.BanReason
+	(*v1.PersonCore)(nil),               // 21: person.v1.PersonCore
+	(*emptypb.Empty)(nil),               // 22: google.protobuf.Empty
 }
 var file_ban_v1_report_proto_depIdxs = []int32{
 	13, // 0: ban.v1.ReportsResponse.reports:type_name -> ban.v1.ReportWithAuthor
@@ -1299,41 +1288,40 @@ var file_ban_v1_report_proto_depIdxs = []int32{
 	13, // 4: ban.v1.ReportResponse.report:type_name -> ban.v1.ReportWithAuthor
 	19, // 5: ban.v1.ReportMessage.created_on:type_name -> google.protobuf.Timestamp
 	19, // 6: ban.v1.ReportMessage.updated_on:type_name -> google.protobuf.Timestamp
-	20, // 7: ban.v1.ReportMessage.permission_level:type_name -> person.v1.Privilege
-	0,  // 8: ban.v1.Report.report_status:type_name -> ban.v1.ReportStatus
-	21, // 9: ban.v1.Report.reason:type_name -> ban.v1.BanReason
-	19, // 10: ban.v1.Report.created_on:type_name -> google.protobuf.Timestamp
-	19, // 11: ban.v1.Report.updated_on:type_name -> google.protobuf.Timestamp
-	12, // 12: ban.v1.ReportWithAuthor.report:type_name -> ban.v1.Report
-	22, // 13: ban.v1.ReportWithAuthor.author:type_name -> person.v1.PersonCore
-	22, // 14: ban.v1.ReportWithAuthor.subject:type_name -> person.v1.PersonCore
-	0,  // 15: ban.v1.ReportStatusEditRequest.report_status:type_name -> ban.v1.ReportStatus
-	21, // 16: ban.v1.ReportCreateRequest.reason:type_name -> ban.v1.BanReason
-	13, // 17: ban.v1.ReportCreateResponse.report:type_name -> ban.v1.ReportWithAuthor
-	11, // 18: ban.v1.ReportMessageCreateResponse.report_message:type_name -> ban.v1.ReportMessage
-	15, // 19: ban.v1.ReportService.ReportCreate:input_type -> ban.v1.ReportCreateRequest
-	9,  // 20: ban.v1.ReportService.Report:input_type -> ban.v1.ReportRequest
-	14, // 21: ban.v1.ReportService.ReportStatusEdit:input_type -> ban.v1.ReportStatusEditRequest
-	6,  // 22: ban.v1.ReportService.UserReports:input_type -> ban.v1.UserReportsRequest
-	5,  // 23: ban.v1.ReportService.ReportMessages:input_type -> ban.v1.ReportMessagesRequest
-	17, // 24: ban.v1.ReportService.ReportMessageCreate:input_type -> ban.v1.ReportMessageCreateRequest
-	3,  // 25: ban.v1.ReportService.ReportMessageEdit:input_type -> ban.v1.ReportMessageEditRequest
-	2,  // 26: ban.v1.ReportService.ReportMessageDelete:input_type -> ban.v1.ReportMessageDeleteRequest
-	23, // 27: ban.v1.ReportService.Reports:input_type -> google.protobuf.Empty
-	16, // 28: ban.v1.ReportService.ReportCreate:output_type -> ban.v1.ReportCreateResponse
-	10, // 29: ban.v1.ReportService.Report:output_type -> ban.v1.ReportResponse
-	23, // 30: ban.v1.ReportService.ReportStatusEdit:output_type -> google.protobuf.Empty
-	8,  // 31: ban.v1.ReportService.UserReports:output_type -> ban.v1.UserReportsResponse
-	7,  // 32: ban.v1.ReportService.ReportMessages:output_type -> ban.v1.ReportMessagesResponse
-	18, // 33: ban.v1.ReportService.ReportMessageCreate:output_type -> ban.v1.ReportMessageCreateResponse
-	4,  // 34: ban.v1.ReportService.ReportMessageEdit:output_type -> ban.v1.ReportMessageEditResponse
-	23, // 35: ban.v1.ReportService.ReportMessageDelete:output_type -> google.protobuf.Empty
-	1,  // 36: ban.v1.ReportService.Reports:output_type -> ban.v1.ReportsResponse
-	28, // [28:37] is the sub-list for method output_type
-	19, // [19:28] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	0,  // 7: ban.v1.Report.report_status:type_name -> ban.v1.ReportStatus
+	20, // 8: ban.v1.Report.reason:type_name -> ban.v1.BanReason
+	19, // 9: ban.v1.Report.created_on:type_name -> google.protobuf.Timestamp
+	19, // 10: ban.v1.Report.updated_on:type_name -> google.protobuf.Timestamp
+	12, // 11: ban.v1.ReportWithAuthor.report:type_name -> ban.v1.Report
+	21, // 12: ban.v1.ReportWithAuthor.author:type_name -> person.v1.PersonCore
+	21, // 13: ban.v1.ReportWithAuthor.subject:type_name -> person.v1.PersonCore
+	0,  // 14: ban.v1.ReportStatusEditRequest.report_status:type_name -> ban.v1.ReportStatus
+	20, // 15: ban.v1.ReportCreateRequest.reason:type_name -> ban.v1.BanReason
+	13, // 16: ban.v1.ReportCreateResponse.report:type_name -> ban.v1.ReportWithAuthor
+	11, // 17: ban.v1.ReportMessageCreateResponse.report_message:type_name -> ban.v1.ReportMessage
+	15, // 18: ban.v1.ReportService.ReportCreate:input_type -> ban.v1.ReportCreateRequest
+	9,  // 19: ban.v1.ReportService.Report:input_type -> ban.v1.ReportRequest
+	14, // 20: ban.v1.ReportService.ReportStatusEdit:input_type -> ban.v1.ReportStatusEditRequest
+	6,  // 21: ban.v1.ReportService.UserReports:input_type -> ban.v1.UserReportsRequest
+	5,  // 22: ban.v1.ReportService.ReportMessages:input_type -> ban.v1.ReportMessagesRequest
+	17, // 23: ban.v1.ReportService.ReportMessageCreate:input_type -> ban.v1.ReportMessageCreateRequest
+	3,  // 24: ban.v1.ReportService.ReportMessageEdit:input_type -> ban.v1.ReportMessageEditRequest
+	2,  // 25: ban.v1.ReportService.ReportMessageDelete:input_type -> ban.v1.ReportMessageDeleteRequest
+	22, // 26: ban.v1.ReportService.Reports:input_type -> google.protobuf.Empty
+	16, // 27: ban.v1.ReportService.ReportCreate:output_type -> ban.v1.ReportCreateResponse
+	10, // 28: ban.v1.ReportService.Report:output_type -> ban.v1.ReportResponse
+	22, // 29: ban.v1.ReportService.ReportStatusEdit:output_type -> google.protobuf.Empty
+	8,  // 30: ban.v1.ReportService.UserReports:output_type -> ban.v1.UserReportsResponse
+	7,  // 31: ban.v1.ReportService.ReportMessages:output_type -> ban.v1.ReportMessagesResponse
+	18, // 32: ban.v1.ReportService.ReportMessageCreate:output_type -> ban.v1.ReportMessageCreateResponse
+	4,  // 33: ban.v1.ReportService.ReportMessageEdit:output_type -> ban.v1.ReportMessageEditResponse
+	22, // 34: ban.v1.ReportService.ReportMessageDelete:output_type -> google.protobuf.Empty
+	1,  // 35: ban.v1.ReportService.Reports:output_type -> ban.v1.ReportsResponse
+	27, // [27:36] is the sub-list for method output_type
+	18, // [18:27] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_ban_v1_report_proto_init() }

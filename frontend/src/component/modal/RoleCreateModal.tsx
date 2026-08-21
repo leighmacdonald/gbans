@@ -69,7 +69,7 @@ export const RoleCreateModal = NiceModal.create(() => {
 								name={"permissions"}
 								children={(field) => {
 									return (
-										<field.SelectpermissionsField
+										<field.SelectPermissionsField
 											multiple={true}
 											label={"Assigned Permissions"}
 											items={enumValues(Permission)}

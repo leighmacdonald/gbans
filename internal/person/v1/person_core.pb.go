@@ -8,6 +8,7 @@ package personv1
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
+	v1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -24,19 +25,19 @@ const (
 )
 
 type PersonCore struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	SteamId         *int64                 `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
-	PermissionLevel *Privilege             `protobuf:"varint,2,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
-	Name            *string                `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
-	AvatarHash      *string                `protobuf:"bytes,4,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
-	DiscordId       *string                `protobuf:"bytes,5,opt,name=discord_id,json=discordId" json:"discord_id,omitempty"`
-	PatreonId       *string                `protobuf:"bytes,6,opt,name=patreon_id,json=patreonId" json:"patreon_id,omitempty"`
-	VacBans         *int32                 `protobuf:"varint,7,opt,name=vac_bans,json=vacBans" json:"vac_bans,omitempty"`
-	GameBans        *int32                 `protobuf:"varint,8,opt,name=game_bans,json=gameBans" json:"game_bans,omitempty"`
-	BanId           *int32                 `protobuf:"varint,9,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
-	TimeCreated     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=time_created,json=timeCreated" json:"time_created,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SteamId       *int64                 `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	Permissions   []v1.Permission        `protobuf:"varint,2,rep,packed,name=permissions,enum=roles.v1.Permission" json:"permissions,omitempty"`
+	Name          *string                `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
+	AvatarHash    *string                `protobuf:"bytes,4,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
+	DiscordId     *string                `protobuf:"bytes,5,opt,name=discord_id,json=discordId" json:"discord_id,omitempty"`
+	PatreonId     *string                `protobuf:"bytes,6,opt,name=patreon_id,json=patreonId" json:"patreon_id,omitempty"`
+	VacBans       *int32                 `protobuf:"varint,7,opt,name=vac_bans,json=vacBans" json:"vac_bans,omitempty"`
+	GameBans      *int32                 `protobuf:"varint,8,opt,name=game_bans,json=gameBans" json:"game_bans,omitempty"`
+	BanId         *int32                 `protobuf:"varint,9,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	TimeCreated   *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=time_created,json=timeCreated" json:"time_created,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PersonCore) Reset() {
@@ -76,11 +77,11 @@ func (x *PersonCore) GetSteamId() int64 {
 	return 0
 }
 
-func (x *PersonCore) GetPermissionLevel() Privilege {
-	if x != nil && x.PermissionLevel != nil {
-		return *x.PermissionLevel
+func (x *PersonCore) GetPermissions() []v1.Permission {
+	if x != nil {
+		return x.Permissions
 	}
-	return Privilege_PRIVILEGE_BANNED_UNSPECIFIED
+	return nil
 }
 
 func (x *PersonCore) GetName() string {
@@ -140,13 +141,12 @@ func (x *PersonCore) GetTimeCreated() *timestamppb.Timestamp {
 }
 
 type PersonDisplay struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	SteamId         *int64                 `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
-	Name            *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
-	AvatarHash      *string                `protobuf:"bytes,3,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
-	PermissionLevel *Privilege             `protobuf:"varint,4,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SteamId       *int64                 `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	Name          *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	AvatarHash    *string                `protobuf:"bytes,3,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PersonDisplay) Reset() {
@@ -200,23 +200,16 @@ func (x *PersonDisplay) GetAvatarHash() string {
 	return ""
 }
 
-func (x *PersonDisplay) GetPermissionLevel() Privilege {
-	if x != nil && x.PermissionLevel != nil {
-		return *x.PermissionLevel
-	}
-	return Privilege_PRIVILEGE_BANNED_UNSPECIFIED
-}
-
 var File_person_v1_person_core_proto protoreflect.FileDescriptor
 
 const file_person_v1_person_core_proto_rawDesc = "" +
 	"\n" +
-	"\x1bperson/v1/person_core.proto\x12\tperson.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"\xd3\x03\n" +
+	"\x1bperson/v1/person_core.proto\x12\tperson.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14roles/v1/roles.proto\"\xbd\x03\n" +
 	"\n" +
 	"PersonCore\x12/\n" +
 	"\bsteam_id\x18\x01 \x01(\x03B\x14\xbaH\x0f\xc8\x01\x01\"\n" +
-	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\x12L\n" +
-	"\x10permission_level\x18\x02 \x01(\x0e2\x14.person.v1.PrivilegeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x0fpermissionLevel\x12 \n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\x126\n" +
+	"\vpermissions\x18\x02 \x03(\x0e2\x14.roles.v1.PermissionR\vpermissions\x12 \n" +
 	"\x04name\x18\x03 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x02\x18 R\x04name\x12,\n" +
 	"\vavatar_hash\x18\x04 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x98\x01(R\n" +
 	"avatarHash\x12\x1d\n" +
@@ -231,14 +224,13 @@ const file_person_v1_person_core_proto_rawDesc = "" +
 	"\x06ban_id\x18\t \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\x05banId\x12E\n" +
 	"\ftime_created\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\vtimeCreated\"\xdb\x01\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\vtimeCreated\"\x90\x01\n" +
 	"\rPersonDisplay\x12/\n" +
 	"\bsteam_id\x18\x01 \x01(\x03B\x14\xbaH\x0f\xc8\x01\x01\"\n" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\x12 \n" +
 	"\x04name\x18\x02 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x02\x18 R\x04name\x12,\n" +
 	"\vavatar_hash\x18\x03 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x98\x01(R\n" +
-	"avatarHash\x12I\n" +
-	"\x10permission_level\x18\x04 \x01(\x0e2\x14.person.v1.PrivilegeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x0fpermissionLevelB\xa2\x01\n" +
+	"avatarHashB\xa2\x01\n" +
 	"\rcom.person.v1B\x0fPersonCoreProtoP\x01Z;github.com/leighmacdonald/gbans/internal/person/v1;personv1\xa2\x02\x03PXX\xaa\x02\tPerson.V1\xca\x02\tPerson\\V1\xe2\x02\x15Person\\V1\\GPBMetadata\xea\x02\n" +
 	"Person::V1b\beditionsp\xe8\a"
 
@@ -258,18 +250,17 @@ var file_person_v1_person_core_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_person_v1_person_core_proto_goTypes = []any{
 	(*PersonCore)(nil),            // 0: person.v1.PersonCore
 	(*PersonDisplay)(nil),         // 1: person.v1.PersonDisplay
-	(Privilege)(0),                // 2: person.v1.Privilege
+	(v1.Permission)(0),            // 2: roles.v1.Permission
 	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
 }
 var file_person_v1_person_core_proto_depIdxs = []int32{
-	2, // 0: person.v1.PersonCore.permission_level:type_name -> person.v1.Privilege
+	2, // 0: person.v1.PersonCore.permissions:type_name -> roles.v1.Permission
 	3, // 1: person.v1.PersonCore.time_created:type_name -> google.protobuf.Timestamp
-	2, // 2: person.v1.PersonDisplay.permission_level:type_name -> person.v1.Privilege
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_person_v1_person_core_proto_init() }
@@ -277,7 +268,6 @@ func file_person_v1_person_core_proto_init() {
 	if File_person_v1_person_core_proto != nil {
 		return
 	}
-	file_person_v1_privilege_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

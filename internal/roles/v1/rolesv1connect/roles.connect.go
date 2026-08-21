@@ -44,6 +44,9 @@ const (
 	RolesServiceRoleDeleteProcedure = "/roles.v1.RolesService/RoleDelete"
 	// RolesServiceRoleAssignProcedure is the fully-qualified name of the RolesService's RoleAssign RPC.
 	RolesServiceRoleAssignProcedure = "/roles.v1.RolesService/RoleAssign"
+	// RolesServiceRoleUnassignProcedure is the fully-qualified name of the RolesService's RoleUnassign
+	// RPC.
+	RolesServiceRoleUnassignProcedure = "/roles.v1.RolesService/RoleUnassign"
 	// RolesServiceRoleBySteamIDProcedure is the fully-qualified name of the RolesService's
 	// RoleBySteamID RPC.
 	RolesServiceRoleBySteamIDProcedure = "/roles.v1.RolesService/RoleBySteamID"
@@ -56,6 +59,7 @@ type RolesServiceClient interface {
 	RoleEdit(context.Context, *v1.RoleEditRequest) (*v1.RoleEditResponse, error)
 	RoleDelete(context.Context, *v1.RoleDeleteRequest) (*emptypb.Empty, error)
 	RoleAssign(context.Context, *v1.RoleAssignRequest) (*emptypb.Empty, error)
+	RoleUnassign(context.Context, *v1.RoleUnassignRequest) (*emptypb.Empty, error)
 	RoleBySteamID(context.Context, *v1.RoleBySteamIDRequest) (*v1.RoleBySteamIDResponse, error)
 }
 
@@ -100,6 +104,12 @@ func NewRolesServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(rolesServiceMethods.ByName("RoleAssign")),
 			connect.WithClientOptions(opts...),
 		),
+		roleUnassign: connect.NewClient[v1.RoleUnassignRequest, emptypb.Empty](
+			httpClient,
+			baseURL+RolesServiceRoleUnassignProcedure,
+			connect.WithSchema(rolesServiceMethods.ByName("RoleUnassign")),
+			connect.WithClientOptions(opts...),
+		),
 		roleBySteamID: connect.NewClient[v1.RoleBySteamIDRequest, v1.RoleBySteamIDResponse](
 			httpClient,
 			baseURL+RolesServiceRoleBySteamIDProcedure,
@@ -116,6 +126,7 @@ type rolesServiceClient struct {
 	roleEdit      *connect.Client[v1.RoleEditRequest, v1.RoleEditResponse]
 	roleDelete    *connect.Client[v1.RoleDeleteRequest, emptypb.Empty]
 	roleAssign    *connect.Client[v1.RoleAssignRequest, emptypb.Empty]
+	roleUnassign  *connect.Client[v1.RoleUnassignRequest, emptypb.Empty]
 	roleBySteamID *connect.Client[v1.RoleBySteamIDRequest, v1.RoleBySteamIDResponse]
 }
 
@@ -164,6 +175,15 @@ func (c *rolesServiceClient) RoleAssign(ctx context.Context, req *v1.RoleAssignR
 	return nil, err
 }
 
+// RoleUnassign calls roles.v1.RolesService.RoleUnassign.
+func (c *rolesServiceClient) RoleUnassign(ctx context.Context, req *v1.RoleUnassignRequest) (*emptypb.Empty, error) {
+	response, err := c.roleUnassign.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // RoleBySteamID calls roles.v1.RolesService.RoleBySteamID.
 func (c *rolesServiceClient) RoleBySteamID(ctx context.Context, req *v1.RoleBySteamIDRequest) (*v1.RoleBySteamIDResponse, error) {
 	response, err := c.roleBySteamID.CallUnary(ctx, connect.NewRequest(req))
@@ -180,6 +200,7 @@ type RolesServiceHandler interface {
 	RoleEdit(context.Context, *v1.RoleEditRequest) (*v1.RoleEditResponse, error)
 	RoleDelete(context.Context, *v1.RoleDeleteRequest) (*emptypb.Empty, error)
 	RoleAssign(context.Context, *v1.RoleAssignRequest) (*emptypb.Empty, error)
+	RoleUnassign(context.Context, *v1.RoleUnassignRequest) (*emptypb.Empty, error)
 	RoleBySteamID(context.Context, *v1.RoleBySteamIDRequest) (*v1.RoleBySteamIDResponse, error)
 }
 
@@ -220,6 +241,12 @@ func NewRolesServiceHandler(svc RolesServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(rolesServiceMethods.ByName("RoleAssign")),
 		connect.WithHandlerOptions(opts...),
 	)
+	rolesServiceRoleUnassignHandler := connect.NewUnaryHandlerSimple(
+		RolesServiceRoleUnassignProcedure,
+		svc.RoleUnassign,
+		connect.WithSchema(rolesServiceMethods.ByName("RoleUnassign")),
+		connect.WithHandlerOptions(opts...),
+	)
 	rolesServiceRoleBySteamIDHandler := connect.NewUnaryHandlerSimple(
 		RolesServiceRoleBySteamIDProcedure,
 		svc.RoleBySteamID,
@@ -238,6 +265,8 @@ func NewRolesServiceHandler(svc RolesServiceHandler, opts ...connect.HandlerOpti
 			rolesServiceRoleDeleteHandler.ServeHTTP(w, r)
 		case RolesServiceRoleAssignProcedure:
 			rolesServiceRoleAssignHandler.ServeHTTP(w, r)
+		case RolesServiceRoleUnassignProcedure:
+			rolesServiceRoleUnassignHandler.ServeHTTP(w, r)
 		case RolesServiceRoleBySteamIDProcedure:
 			rolesServiceRoleBySteamIDHandler.ServeHTTP(w, r)
 		default:
@@ -267,6 +296,10 @@ func (UnimplementedRolesServiceHandler) RoleDelete(context.Context, *v1.RoleDele
 
 func (UnimplementedRolesServiceHandler) RoleAssign(context.Context, *v1.RoleAssignRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("roles.v1.RolesService.RoleAssign is not implemented"))
+}
+
+func (UnimplementedRolesServiceHandler) RoleUnassign(context.Context, *v1.RoleUnassignRequest) (*emptypb.Empty, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("roles.v1.RolesService.RoleUnassign is not implemented"))
 }
 
 func (UnimplementedRolesServiceHandler) RoleBySteamID(context.Context, *v1.RoleBySteamIDRequest) (*v1.RoleBySteamIDResponse, error) {

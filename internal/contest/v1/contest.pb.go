@@ -9,7 +9,7 @@ package contestv1
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	v1 "github.com/leighmacdonald/gbans/internal/asset/v1"
-	v11 "github.com/leighmacdonald/gbans/internal/person/v1"
+	v11 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -1105,7 +1105,7 @@ type Contest struct {
 	MediaTypes         *string                `protobuf:"bytes,9,opt,name=media_types,json=mediaTypes" json:"media_types,omitempty"`
 	NumEntries         *int32                 `protobuf:"varint,10,opt,name=num_entries,json=numEntries" json:"num_entries,omitempty"`
 	Voting             *bool                  `protobuf:"varint,11,opt,name=voting" json:"voting,omitempty"`
-	MinPermissionLevel *v11.Privilege         `protobuf:"varint,12,opt,name=min_permission_level,json=minPermissionLevel,enum=person.v1.Privilege" json:"min_permission_level,omitempty"`
+	RequiredPermission *v11.Permission        `protobuf:"varint,12,opt,name=required_permission,json=requiredPermission,enum=roles.v1.Permission" json:"required_permission,omitempty"`
 	DownVotes          *bool                  `protobuf:"varint,13,opt,name=down_votes,json=downVotes" json:"down_votes,omitempty"`
 	CreatedOn          *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
 	UpdatedOn          *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
@@ -1221,11 +1221,11 @@ func (x *Contest) GetVoting() bool {
 	return false
 }
 
-func (x *Contest) GetMinPermissionLevel() v11.Privilege {
-	if x != nil && x.MinPermissionLevel != nil {
-		return *x.MinPermissionLevel
+func (x *Contest) GetRequiredPermission() v11.Permission {
+	if x != nil && x.RequiredPermission != nil {
+		return *x.RequiredPermission
 	}
-	return v11.Privilege(0)
+	return v11.Permission(0)
 }
 
 func (x *Contest) GetDownVotes() bool {
@@ -1305,7 +1305,7 @@ var File_contest_v1_contest_proto protoreflect.FileDescriptor
 const file_contest_v1_contest_proto_rawDesc = "" +
 	"\n" +
 	"\x18contest/v1/contest.proto\x12\n" +
-	"contest.v1\x1a\x14asset/v1/asset.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"E\n" +
+	"contest.v1\x1a\x14asset/v1/asset.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14roles/v1/roles.proto\"E\n" +
 	"\x14ContestCreateRequest\x12-\n" +
 	"\acontest\x18\x01 \x01(\v2\x13.contest.v1.ContestR\acontest\"F\n" +
 	"\x15ContestCreateResponse\x12-\n" +
@@ -1380,7 +1380,7 @@ const file_contest_v1_contest_proto_rawDesc = "" +
 	"\n" +
 	"created_on\x18\r \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\x9b\x06\n" +
+	"updated_on\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\x9a\x06\n" +
 	"\aContest\x12\x1c\n" +
 	"\x05title\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05title\x12(\n" +
 	"\vdescription\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vdescription\x12\x1e\n" +
@@ -1396,8 +1396,8 @@ const file_contest_v1_contest_proto_rawDesc = "" +
 	"\vnum_entries\x18\n" +
 	" \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"numEntries\x12\x1e\n" +
-	"\x06voting\x18\v \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x06voting\x12N\n" +
-	"\x14min_permission_level\x18\f \x01(\x0e2\x14.person.v1.PrivilegeB\x06\xbaH\x03\xc8\x01\x01R\x12minPermissionLevel\x12%\n" +
+	"\x06voting\x18\v \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x06voting\x12M\n" +
+	"\x13required_permission\x18\f \x01(\x0e2\x14.roles.v1.PermissionB\x06\xbaH\x03\xc8\x01\x01R\x12requiredPermission\x12%\n" +
 	"\n" +
 	"down_votes\x18\r \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\tdownVotes\x12A\n" +
 	"\n" +
@@ -1465,7 +1465,7 @@ var file_contest_v1_contest_proto_goTypes = []any{
 	(*ContestsResponse)(nil),      // 21: contest.v1.ContestsResponse
 	(*v1.Asset)(nil),              // 22: asset.v1.Asset
 	(*timestamppb.Timestamp)(nil), // 23: google.protobuf.Timestamp
-	(v11.Privilege)(0),            // 24: person.v1.Privilege
+	(v11.Permission)(0),           // 24: roles.v1.Permission
 	(*emptypb.Empty)(nil),         // 25: google.protobuf.Empty
 }
 var file_contest_v1_contest_proto_depIdxs = []int32{
@@ -1487,7 +1487,7 @@ var file_contest_v1_contest_proto_depIdxs = []int32{
 	23, // 15: contest.v1.Entry.updated_on:type_name -> google.protobuf.Timestamp
 	23, // 16: contest.v1.Contest.date_start:type_name -> google.protobuf.Timestamp
 	23, // 17: contest.v1.Contest.date_end:type_name -> google.protobuf.Timestamp
-	24, // 18: contest.v1.Contest.min_permission_level:type_name -> person.v1.Privilege
+	24, // 18: contest.v1.Contest.required_permission:type_name -> roles.v1.Permission
 	23, // 19: contest.v1.Contest.created_on:type_name -> google.protobuf.Timestamp
 	23, // 20: contest.v1.Contest.updated_on:type_name -> google.protobuf.Timestamp
 	20, // 21: contest.v1.ContestsResponse.contests:type_name -> contest.v1.Contest

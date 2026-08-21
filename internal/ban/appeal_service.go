@@ -5,12 +5,10 @@ import (
 	"errors"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	v1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	"github.com/leighmacdonald/gbans/internal/ban/v1/banv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -80,7 +78,7 @@ func (s AppealService) Reply(ctx context.Context, req *v1.ReplyRequest) (*v1.Rep
 	user := rpc.UserInfoFromCtx(ctx)
 	msg, errSave := s.appeals.CreateBanMessage(ctx, user, req.GetBanId(), req.GetBodyMd())
 	if errSave != nil {
-		if errors.Is(errSave, permission.ErrDenied) {
+		if errors.Is(errSave, rpc.ErrPermission) {
 			return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 		}
 
@@ -97,7 +95,7 @@ func (s AppealService) EditAppealMessage(ctx context.Context, req *v1.EditAppeal
 		switch {
 		case errors.Is(errSave, httphelper.ErrParamInvalid):
 			return nil, connect.NewError(connect.CodeInvalidArgument, rpc.ErrBadRequest)
-		case errors.Is(errSave, permission.ErrDenied):
+		case errors.Is(errSave, rpc.ErrPermission):
 			return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 		case errors.Is(errSave, database.ErrDuplicate):
 			return nil, connect.NewError(connect.CodeAlreadyExists, rpc.ErrExists)
@@ -113,7 +111,7 @@ func (s AppealService) DeleteAppealMessage(ctx context.Context, req *v1.DeleteAp
 	user := rpc.UserInfoFromCtx(ctx)
 	if err := s.appeals.DropMessage(ctx, user, req.GetBanMessageId()); err != nil {
 		switch {
-		case errors.Is(err, permission.ErrDenied):
+		case errors.Is(err, rpc.ErrPermission):
 			return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 		case errors.Is(err, database.ErrNoResult):
 			return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
@@ -136,6 +134,5 @@ func toAppealMessage(message AppealMessage) *v1.AppealMessage {
 		UpdatedOn:    timestamppb.New(message.UpdatedOn),
 		AvatarHash:   &message.Avatarhash,
 		PersonaName:  &message.Personaname,
-		Privilege:    new(personv1.Privilege(message.PermissionLevel)),
 	}
 }

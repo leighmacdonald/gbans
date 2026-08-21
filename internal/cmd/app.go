@@ -17,7 +17,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
@@ -41,6 +40,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/roles"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
@@ -83,7 +83,8 @@ type GBans struct {
 	notifications  *notification.Notifications
 	persons        *person.Persons
 	reports        ban.Reports
-	roles          roles.Roles
+	roles          *roles.Roles
+	roleAuth       *rpc.RoleAuth
 	servers        *servers.Servers
 	speedruns      speedruns.Speedruns
 	sourcemod      sourcemod.Sourcemod
@@ -149,7 +150,9 @@ func (g *GBans) Init(ctx context.Context) error {
 	}
 	g.tfapiClient = tfapiClient
 
-	g.persons = person.NewPersons(person.NewRepository(g.database, conf.Clientprefs.CenterProjectiles), steamid.New(conf.Owner), g.tfapiClient)
+	g.persons = person.NewPersons(person.NewRepository(g.database, conf.Clientprefs.CenterProjectiles), g.tfapiClient)
+	g.roles = roles.NewRoles(roles.NewRepository(g.database), steamid.New(conf.Owner))
+	g.roleAuth = rpc.NewRoleAuth(g.roles)
 	g.bot = g.mustCreateBot(conf.Discord)
 	g.notifications = notification.NewNotifications(notification.NewRepository(g.database), g.bot)
 
@@ -184,13 +187,12 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler, conf.Discord.SafeChatLogChannelID())
 	g.demos = demo.NewDemos(asset.BucketDemo, demo.NewRepository(g.database), g.assets, g.stats, g.chat, g.persons, conf.Demo, steamid.New(conf.Owner))
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications,
-		conf.Discord.SafeAppealLogChannelID())
+		conf.Discord.SafeAppealLogChannelID(), g.roleAuth)
 
 	g.bans = ban.New(ban.NewRepository(g.database), g.persons, conf.Discord.SafeBanLogChannelID(),
 		conf.Discord.SafeKickLogChannelID(), steamid.New(conf.Owner), g.reports, g.notifications, g.servers, g.networks)
 	g.blocklists = blocklist.NewBlocklists(blocklist.NewRepository(g.database),
 		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database)))
-	g.roles = roles.NewRoles(roles.NewRepository(g.database))
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), conf.Discord)
 	g.forums = forum.New(forum.NewRepository(g.database), g.notifications, g.persons, "")
 	g.metrics = metrics.New(g.broadcaster)
@@ -205,7 +207,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications)
 	g.mge = mge.NewMGE(mge.NewRepository(g.database))
-	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications, conf.Discord.SafeAppealLogChannelID())
+	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications, conf.Discord.SafeAppealLogChannelID(), g.roleAuth)
 
 	if conf.Discord.Enabled {
 		anticheat.RegisterDiscordCommands(g.bot, g.anticheat)
@@ -521,16 +523,15 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	userAuth := auth.NewAuthentication(auth.NewRepository(g.database), conf.General.SiteName, conf.HTTPCookieKey, g.persons, g.bans, g.servers, g.config.Config().General.SentryDSN)
 	userAuth.StartExchange(ctx)
 
-	authMiddleware := rpc.NewMiddleware(conf.General.SiteName, conf.HTTPCookieKey)
-	roleAuth := rpc.NewRoleAuth(g.roles)
+	authMiddleware := rpc.NewMiddleware(conf.General.SiteName, conf.HTTPCookieKey, g.roles)
 
-	asset.NewAssetHandler(mux, g.assets)
+	asset.NewAssetHandler(mux, g.assets, g.roleAuth)
 	auth.NewAuthHandler(mux, userAuth, g.config, g.tfapiClient, g.notifications, authMiddleware, g.roles)
 	discordoauth.NewDiscordOAuthHandler(mux, g.config, g.persons, g.discordOAuth)
 
 	mux.HandleFunc("GET /health", g.healthCheck)
 
-	apiHandler := g.createAPI(authMiddleware, roleAuth)
+	apiHandler := g.createAPI(authMiddleware, g.roleAuth)
 
 	topMux := http.NewServeMux()
 
@@ -607,10 +608,14 @@ func (g *GBans) firstTimeSetup(ctx context.Context) error {
 	}
 
 	owner := person.New(steamid.New(conf.Owner))
-	owner.PermissionLevel = permission.Admin
 
 	if errSave := g.persons.Save(ctx, &owner); errSave != nil {
 		slog.Error("Failed create new owner", slog.String("error", errSave.Error()))
+	}
+
+	// Bootstrap the owner as an admin so they have full access.
+	if errAssign := g.roles.AssignAdminRole(ctx, steamid.New(conf.Owner)); errAssign != nil {
+		slog.Error("Failed to assign admin role to owner", slog.String("error", errAssign.Error()))
 	}
 
 	article := news.Article{
@@ -626,12 +631,12 @@ func (g *GBans) firstTimeSetup(ctx context.Context) error {
 	}
 
 	page := wiki.Page{
-		PermissionLevel: permission.Banned,
-		Slug:            wiki.RootSlug,
-		BodyMD:          "# Welcome to the wiki",
-		Revision:        1,
-		CreatedOn:       time.Now(),
-		UpdatedOn:       time.Now(),
+		RequiredPermission: rolesv1.Permission_PERMISSION_UNSPECIFIED,
+		Slug:               wiki.RootSlug,
+		BodyMD:             "# Welcome to the wiki",
+		Revision:           1,
+		CreatedOn:          time.Now(),
+		UpdatedOn:          time.Now(),
 	}
 	_, errSave := g.wiki.Save(ctx, page)
 	if errSave != nil {

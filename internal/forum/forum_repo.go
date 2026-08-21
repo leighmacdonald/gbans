@@ -6,7 +6,6 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -94,7 +93,7 @@ func (f Repository) ForumCategoryDelete(ctx context.Context, categoryID int32) e
 func (f Repository) Forums(ctx context.Context) ([]Forum, error) {
 	fromSelect := f.Builder().
 		Select("DISTINCT ON (s.forum_id) s.forum_id", "s.forum_category_id", "s.title", "s.description", "s.last_thread_id",
-			"s.count_threads", "s.count_messages", "s.ordering", "s.created_on", "s.updated_on", "s.permission_level",
+			"s.count_threads", "s.count_messages", "s.ordering", "s.created_on", "s.updated_on", "s.required_permission",
 			"t.forum_thread_id", "t.source_id", "p.personaname", "p.avatarhash", "t.created_on", "t.title").
 		From("forum s").
 		LeftJoin("forum_thread t ON s.last_thread_id = t.forum_thread_id").
@@ -127,7 +126,7 @@ func (f Repository) Forums(ctx context.Context) ([]Forum, error) {
 
 		if errScan := rows.Scan(&frm.ForumID, &frm.ForumCategoryID, &frm.Title, &frm.Description,
 			&lastID, &frm.CountThreads, &frm.CountMessages,
-			&frm.Ordering, &frm.CreatedOn, &frm.UpdatedOn, &frm.PermissionLevel,
+			&frm.Ordering, &frm.CreatedOn, &frm.UpdatedOn, &frm.RequiredPermission,
 			&lastForumTheadID, &lastSourceID, &lastPersonaname, &lastAvatarhash,
 			&lastCreatedOn, &lastTitle); errScan != nil {
 			return nil, database.Err(errScan)
@@ -165,15 +164,15 @@ func (f Repository) ForumSave(ctx context.Context, forum *Forum) error {
 		return database.Err(f.ExecUpdateBuilder(ctx, f.Builder().
 			Update("forum").
 			SetMap(map[string]any{
-				"forum_category_id": forum.ForumCategoryID,
-				"title":             forum.Title,
-				"description":       forum.Description,
-				"last_thread_id":    lastThreadID,
-				"count_threads":     forum.CountThreads,
-				"count_messages":    forum.CountMessages,
-				"ordering":          forum.Ordering,
-				"permission_level":  forum.PermissionLevel,
-				"updated_on":        forum.UpdatedOn,
+				"forum_category_id":   forum.ForumCategoryID,
+				"title":               forum.Title,
+				"description":         forum.Description,
+				"last_thread_id":      lastThreadID,
+				"count_threads":       forum.CountThreads,
+				"count_messages":      forum.CountMessages,
+				"ordering":            forum.Ordering,
+				"required_permission": forum.RequiredPermission,
+				"updated_on":          forum.UpdatedOn,
 			}).
 			Where(sq.Eq{"forum_id": forum.ForumID})))
 	}
@@ -183,16 +182,16 @@ func (f Repository) ForumSave(ctx context.Context, forum *Forum) error {
 	return database.Err(f.ExecInsertBuilderWithReturnValue(ctx, f.Builder().
 		Insert("forum").
 		SetMap(map[string]any{
-			"forum_category_id": forum.ForumCategoryID,
-			"title":             forum.Title,
-			"description":       forum.Description,
-			"last_thread_id":    lastThreadID,
-			"count_threads":     forum.CountThreads,
-			"count_messages":    forum.CountMessages,
-			"ordering":          forum.Ordering,
-			"permission_level":  forum.PermissionLevel,
-			"created_on":        forum.CreatedOn,
-			"updated_on":        forum.UpdatedOn,
+			"forum_category_id":   forum.ForumCategoryID,
+			"title":               forum.Title,
+			"description":         forum.Description,
+			"last_thread_id":      lastThreadID,
+			"count_threads":       forum.CountThreads,
+			"count_messages":      forum.CountMessages,
+			"ordering":            forum.Ordering,
+			"required_permission": forum.RequiredPermission,
+			"created_on":          forum.CreatedOn,
+			"updated_on":          forum.UpdatedOn,
 		}).
 		Suffix("RETURNING forum_id"), &forum.ForumID))
 }
@@ -200,7 +199,7 @@ func (f Repository) ForumSave(ctx context.Context, forum *Forum) error {
 func (f Repository) Forum(ctx context.Context, forumID int32, forum *Forum) error {
 	row, errRow := f.QueryRowBuilder(ctx, f.Builder().
 		Select("forum_id", "forum_category_id", "title", "description", "last_thread_id",
-			"count_threads", "count_messages", "ordering", "created_on", "updated_on", "permission_level").
+			"count_threads", "count_messages", "ordering", "created_on", "updated_on", "required_permission").
 		From("forum").
 		Where(sq.Eq{"forum_id": forumID}))
 	if errRow != nil {
@@ -210,7 +209,7 @@ func (f Repository) Forum(ctx context.Context, forumID int32, forum *Forum) erro
 	var lastThreadID *int32
 	if err := row.Scan(&forum.ForumID, &forum.ForumCategoryID, &forum.Title, &forum.Description,
 		&lastThreadID, &forum.CountThreads, &forum.CountMessages, &forum.Ordering,
-		&forum.CreatedOn, &forum.UpdatedOn, &forum.PermissionLevel); err != nil {
+		&forum.CreatedOn, &forum.UpdatedOn, &forum.RequiredPermission); err != nil {
 		return database.Err(err)
 	}
 
@@ -272,8 +271,7 @@ func (f Repository) ForumThreadSave(ctx context.Context, thread *Thread) error {
 func (f Repository) ForumThread(ctx context.Context, forumThreadID int32, thread *Thread) error {
 	row, errRow := f.QueryRowBuilder(ctx, f.Builder().
 		Select("t.forum_thread_id", "t.forum_id", "t.source_id", "t.title", "t.sticky",
-			"t.locked", "t.views", "t.created_on", "t.updated_on", "p.personaname", "p.avatarhash",
-			"p.permission_level").
+			"t.locked", "t.views", "t.created_on", "t.updated_on", "p.personaname", "p.avatarhash").
 		From("forum_thread t").
 		LeftJoin("person p ON p.steam_id = t.source_id").
 		Where(sq.Eq{"t.forum_thread_id": forumThreadID}))
@@ -283,7 +281,7 @@ func (f Repository) ForumThread(ctx context.Context, forumThreadID int32, thread
 
 	return database.Err(row.Scan(&thread.ForumThreadID, &thread.ForumID, &thread.SourceID, &thread.Title,
 		&thread.Sticky, &thread.Locked, &thread.Views, &thread.CreatedOn,
-		&thread.UpdatedOn, &thread.Personaname, &thread.Avatarhash, &thread.PermissionLevel))
+		&thread.UpdatedOn, &thread.Personaname, &thread.Avatarhash))
 }
 
 func (f Repository) ForumThreadIncrView(ctx context.Context, forumThreadID int32) error {
@@ -309,7 +307,7 @@ func (f Repository) ForumThreads(ctx context.Context, filter ThreadQueryFilter) 
 	//nolint:unqueryvet
 	builder := f.Builder().
 		Select("t.forum_thread_id", "t.forum_id", "t.source_id", "t.title", "t.sticky",
-			"t.locked", "t.views", "t.created_on", "t.updated_on", "p.personaname", "p.avatarhash", "p.permission_level",
+			"t.locked", "t.views", "t.created_on", "t.updated_on", "p.personaname", "p.avatarhash",
 			"a.steam_id", "a.personaname", "a.avatarhash", "a.forum_message_id", "a.created_on", "c.message_count").
 		From("forum_thread t").
 		LeftJoin("person p ON p.steam_id = t.source_id").
@@ -349,7 +347,7 @@ func (f Repository) ForumThreads(ctx context.Context, filter ThreadQueryFilter) 
 		if errScan := rows.
 			Scan(&tws.ForumThreadID, &tws.ForumID, &tws.SourceID, &tws.Title, &tws.Sticky,
 				&tws.Locked, &tws.Views, &tws.CreatedOn, &tws.UpdatedOn, &tws.Personaname, &tws.Avatarhash,
-				&tws.PermissionLevel, &RecentSteamID, &RecentPersonaname, &RecentAvatarHash, &RecentForumMessageID,
+				&RecentSteamID, &RecentPersonaname, &RecentAvatarHash, &RecentForumMessageID,
 				&RecentCreatedOn, &tws.Replies); errScan != nil {
 			return nil, database.Err(errScan)
 		}
@@ -417,8 +415,8 @@ func (f Repository) ForumMessageSave(ctx context.Context, message *Message) erro
 		Where(sq.Eq{"forum_thread_id": message.ForumThreadID})))
 }
 
-func (f Repository) ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel permission.Privilege) ([]Message, error) {
-	expr, _, errExpr := sq.Expr(`
+func (f Repository) ForumRecentActivity(ctx context.Context, limit uint64) ([]Message, error) {
+	const recentExpr = `
 			LATERAL (
 				SELECT m.forum_message_id,
 					   m.forum_thread_id,
@@ -426,26 +424,21 @@ func (f Repository) ForumRecentActivity(ctx context.Context, limit uint64, permi
 					   m.updated_on,
 					   p.steam_id,
 					   p.personaname,
-					   p.avatarhash,
-					   p.permission_level
+					   p.avatarhash
 				FROM forum_message m
 				LEFT JOIN person p on m.source_id = p.steam_id
-				WHERE m.forum_thread_id = t.forum_thread_id AND $1 >= s.permission_level
+				WHERE m.forum_thread_id = t.forum_thread_id
 				ORDER BY m.forum_message_id DESC
 				LIMIT 1
-				) m on TRUE`, permissionLevel).ToSql()
-	if errExpr != nil {
-		return nil, database.Err(errExpr)
-	}
+				) m on TRUE`
 
 	builder := f.Builder().
 		Select("t.forum_thread_id", "m.forum_message_id",
 			"m.steam_id", "m.created_on", "m.updated_on", "m.personaname",
-			"m.avatarhash", "s.permission_level", "t.title").
+			"m.avatarhash", "s.required_permission", "t.title").
 		From("forum_thread t").
 		LeftJoin("forum s ON s.forum_id = t.forum_id").
-		InnerJoin(expr).
-		Where(sq.GtOrEq{"m.permission_level": permissionLevel}).
+		InnerJoin(recentExpr).
 		OrderBy("t.updated_on DESC").
 		Limit(limit)
 
@@ -462,7 +455,7 @@ func (f Repository) ForumRecentActivity(ctx context.Context, limit uint64, permi
 		var msg Message
 		if errScan := rows.Scan(&msg.ForumThreadID, &msg.ForumMessageID, &msg.SourceID,
 			&msg.CreatedOn, &msg.UpdatedOn, &msg.Personaname,
-			&msg.Avatarhash, &msg.PermissionLevel, &msg.Title); errScan != nil {
+			&msg.Avatarhash, &msg.RequiredPermission, &msg.Title); errScan != nil {
 			return nil, database.Err(errScan)
 		}
 
@@ -475,7 +468,7 @@ func (f Repository) ForumRecentActivity(ctx context.Context, limit uint64, permi
 func (f Repository) ForumMessage(ctx context.Context, messageID int64, forumMessage *Message) error {
 	row, errRow := f.QueryRowBuilder(ctx, f.Builder().
 		Select("m.forum_message_id", "m.forum_thread_id", "m.source_id", "m.body_md", "m.created_on", "m.updated_on",
-			"p.personaname", "p.avatarhash", "p.permission_level", "coalesce(s.forum_signature, '')").
+			"p.personaname", "p.avatarhash", "coalesce(s.forum_signature, '')").
 		From("forum_message m").
 		LeftJoin("person p ON p.steam_id = m.source_id").
 		LeftJoin("person_settings s ON s.steam_id = m.source_id").
@@ -486,7 +479,7 @@ func (f Repository) ForumMessage(ctx context.Context, messageID int64, forumMess
 
 	return database.Err(row.Scan(&forumMessage.ForumMessageID, &forumMessage.ForumThreadID, &forumMessage.SourceID,
 		&forumMessage.BodyMD, &forumMessage.CreatedOn, &forumMessage.UpdatedOn, &forumMessage.Personaname,
-		&forumMessage.Avatarhash, &forumMessage.PermissionLevel, &forumMessage.Signature))
+		&forumMessage.Avatarhash, &forumMessage.Signature))
 }
 
 func (f Repository) ForumMessages(ctx context.Context, filters ThreadMessagesQuery) ([]Message, error) {
@@ -494,7 +487,7 @@ func (f Repository) ForumMessages(ctx context.Context, filters ThreadMessagesQue
 
 	builder := f.Builder().
 		Select("m.forum_message_id", "m.forum_thread_id", "m.source_id", "m.body_md", "m.created_on",
-			"m.updated_on", "p.personaname", "p.avatarhash", "p.permission_level", "coalesce(s.forum_signature, '')").
+			"m.updated_on", "p.personaname", "p.avatarhash", "coalesce(s.forum_signature, '')").
 		From("forum_message m").
 		LeftJoin("person p ON p.steam_id = m.source_id").
 		LeftJoin("person_settings s ON s.steam_id = m.source_id").
@@ -512,7 +505,7 @@ func (f Repository) ForumMessages(ctx context.Context, filters ThreadMessagesQue
 	for rows.Next() {
 		var msg Message
 		if errScan := rows.Scan(&msg.ForumMessageID, &msg.ForumThreadID, &msg.SourceID, &msg.BodyMD, &msg.CreatedOn, &msg.UpdatedOn,
-			&msg.Personaname, &msg.Avatarhash, &msg.PermissionLevel, &msg.Signature); errScan != nil {
+			&msg.Personaname, &msg.Avatarhash, &msg.Signature); errScan != nil {
 			return nil, database.Err(errScan)
 		}
 

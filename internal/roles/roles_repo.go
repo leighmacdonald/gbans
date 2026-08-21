@@ -212,6 +212,21 @@ func (r Repository) Assign(ctx context.Context, steamID steamid.SteamID, roleID 
 		})))
 }
 
+func (r Repository) Unassign(ctx context.Context, steamID steamid.SteamID, roleID int32) error {
+	return database.Err(r.ExecDeleteBuilder(ctx, r.Builder().
+		Delete("role_assignments").
+		Where(sq.Eq{"steam_id": steamID.Int64(), "role_id": roleID})))
+}
+
+// SetPermissionLevel updates the legacy person.permission_level column which is
+// maintained for reporting/display purposes only.
+func (r Repository) SetPermissionLevel(ctx context.Context, steamID steamid.SteamID, level int32) error {
+	return database.Err(r.ExecUpdateBuilder(ctx, r.Builder().
+		Update("person").
+		Set("permission_level", level).
+		Where(sq.Eq{"steam_id": steamID.Int64()})))
+}
+
 func (r Repository) GetRolesBySteamID(ctx context.Context, steamID steamid.SteamID) ([]Role, error) {
 	roles := make([]Role, 0)
 

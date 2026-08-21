@@ -39,7 +39,7 @@ import { profile as profileQuery } from "../rpc/discord/oauth/v1/discord-Discord
 import { PatreonService } from "../rpc/patreon/v1/patreon_pb.ts";
 import type { Settings } from "../rpc/person/v1/person_pb.ts";
 import { editProfileSettings, profileSettings } from "../rpc/person/v1/person-PersonService_connectquery.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { finalTransport } from "../transport.ts";
 import { logErr } from "../util/errors.ts";
 import { discordAvatarURL } from "../util/strings.ts";
@@ -115,7 +115,7 @@ function ProfileSettings() {
 							currentTab={tab}
 							label={"Gameplay"}
 						/>
-						{hasPermission(Privilege.MODERATOR) && (
+						{hasPermission(Permission.FORUM_EDIT) && (
 							<TabButton
 								tab={"forums"}
 								onClick={onTabClick}
@@ -137,7 +137,7 @@ function ProfileSettings() {
 				</Grid>
 				<GeneralSection tab={tab} settings={data?.settings} onSave={onSave} />
 				<GameplaySection tab={tab} settings={data?.settings} onSave={onSave} />
-				{hasPermission(Privilege.MODERATOR) && (
+				{hasPermission(Permission.FORUM_EDIT) && (
 					<ForumSection tab={tab} settings={data?.settings} onSave={onSave} />
 				)}
 				<ConnectionsSection tab={tab} settings={data?.settings} onSave={onSave} patreonId={profile.patreonId} />
