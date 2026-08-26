@@ -199,9 +199,11 @@ func (s PluginService) SMUsers(ctx context.Context, _ *emptypb.Empty) (*v1.SMUse
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
+	// UserGroups is always a non-nil slice so the JSON response contains the
+	// key even when empty; the sourcemod plugin dereferences it unconditionally.
 	resp := v1.SMUsersResponse{
 		Users:      make([]*v1.SMUser, len(users)),
-		UserGroups: nil,
+		UserGroups: make([]*v1.SMUserGroup, 0),
 	}
 
 	for idx, user := range users {

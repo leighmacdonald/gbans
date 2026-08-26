@@ -341,7 +341,7 @@ func toContest(contest Contest) *v1.Contest {
 		MediaTypes:         &contest.MediaTypes,
 		NumEntries:         &contest.NumEntries,
 		Voting:             &contest.Voting,
-		RequiredPermission: new(rolesv1.Permission(contest.RequiredPermission)),
+		RequiredPermission: new(contest.RequiredPermission),
 		DownVotes:          &contest.DownVotes,
 		CreatedOn:          timestamppb.New(contest.CreatedOn),
 		UpdatedOn:          timestamppb.New(contest.UpdatedOn),

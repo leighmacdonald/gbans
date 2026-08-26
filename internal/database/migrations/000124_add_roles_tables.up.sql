@@ -2,6 +2,7 @@ do
 $do$
 BEGIN
     CREATE TYPE permission AS ENUM (
+        'PERMISSION_UNSPECIFIED',
         'PERMISSION_ANTICHEAT_READ',
         'PERMISSION_APPEAL_READ',
         'PERMISSION_APPEAL_WRITE',
@@ -58,7 +59,28 @@ BEGIN
         'PERMISSION_VOTE_READ',
         'PERMISSION_WORDFILTER_READ',
         'PERMISSION_WORDFILTER_WRITE',
-        'PERMISSION_WORDFILTER_DELETE'
+        'PERMISSION_WORDFILTER_DELETE',
+        'PERMISSION_SOURCEMOD_RESERVED',
+        'PERMISSION_SOURCEMOD_GENERIC',
+        'PERMISSION_SOURCEMOD_KICK',
+        'PERMISSION_SOURCEMOD_BAN',
+        'PERMISSION_SOURCEMOD_UNBAN',
+        'PERMISSION_SOURCEMOD_SLAY',
+        'PERMISSION_SOURCEMOD_CHANGEMAP',
+        'PERMISSION_SOURCEMOD_CVAR',
+        'PERMISSION_SOURCEMOD_CFG',
+        'PERMISSION_SOURCEMOD_CHAT',
+        'PERMISSION_SOURCEMOD_VOTE',
+        'PERMISSION_SOURCEMOD_PASSWORD',
+        'PERMISSION_SOURCEMOD_RCON',
+        'PERMISSION_SOURCEMOD_CHEATS',
+        'PERMISSION_SOURCEMOD_ROOT',
+        'PERMISSION_SOURCEMOD_CUSTOM_1',
+        'PERMISSION_SOURCEMOD_CUSTOM_2',
+        'PERMISSION_SOURCEMOD_CUSTOM_3',
+        'PERMISSION_SOURCEMOD_CUSTOM_4',
+        'PERMISSION_SOURCEMOD_CUSTOM_5',
+        'PERMISSION_SOURCEMOD_CUSTOM_6'
     );
 EXCEPTION
     WHEN duplicate_object THEN NULL;
@@ -308,3 +330,161 @@ alter table wiki
 
 alter table contest
   drop column if exists min_permission_level;
+
+-- Migrate legacy sourcemod users: one role per sm_groups row, granted the
+-- PERMISSION_SOURCEMOD_* set implied by the group's flags, assigned to every
+-- member. Flag characters follow canonical SourceMod semantics.
+insert into roles (role_name)
+select
+  'sm-' || g.name
+from
+  sm_groups as g
+on conflict do nothing;
+
+insert into role_permissions (role_id, permission, created_on, updated_on)
+select
+  r.role_id,
+  v.permission,
+  NOW(),
+  NOW()
+from
+  sm_groups as g
+  cross join (values
+    ('a', 'PERMISSION_SOURCEMOD_GENERIC'::permission),
+    ('a', 'PERMISSION_SOURCEMOD_RESERVED'::permission),
+    ('b', 'PERMISSION_SOURCEMOD_KICK'::permission),
+    ('c', 'PERMISSION_SOURCEMOD_BAN'::permission),
+    ('d', 'PERMISSION_SOURCEMOD_UNBAN'::permission),
+    ('e', 'PERMISSION_SOURCEMOD_SLAY'::permission),
+    ('f', 'PERMISSION_SOURCEMOD_CHANGEMAP'::permission),
+    ('g', 'PERMISSION_SOURCEMOD_PASSWORD'::permission),
+    ('h', 'PERMISSION_SOURCEMOD_CVAR'::permission),
+    ('i', 'PERMISSION_SOURCEMOD_CFG'::permission),
+    ('j', 'PERMISSION_SOURCEMOD_CHAT'::permission),
+    ('k', 'PERMISSION_SOURCEMOD_VOTE'::permission),
+    ('l', 'PERMISSION_SOURCEMOD_RCON'::permission),
+    ('m', 'PERMISSION_SOURCEMOD_RCON'::permission),
+    ('n', 'PERMISSION_SOURCEMOD_CHEATS'::permission),
+    ('p', 'PERMISSION_SOURCEMOD_CUSTOM_1'::permission),
+    ('q', 'PERMISSION_SOURCEMOD_CUSTOM_2'::permission),
+    ('r', 'PERMISSION_SOURCEMOD_CUSTOM_3'::permission),
+    ('s', 'PERMISSION_SOURCEMOD_CUSTOM_4'::permission),
+    ('t', 'PERMISSION_SOURCEMOD_CUSTOM_5'::permission),
+    ('u', 'PERMISSION_SOURCEMOD_CUSTOM_6'::permission),
+    ('z', 'PERMISSION_SOURCEMOD_ROOT'::permission)
+  ) v (flag, permission)
+  inner join roles as r
+  on r.role_name = 'sm-' || g.name
+where
+  v.flag = any(string_to_array(g.flags, ''))
+group by
+  r.role_id,
+  v.permission
+on conflict do nothing;
+
+insert into role_assignments (steam_id, role_id, created_on)
+select
+  a.steam_id,
+  r.role_id,
+  NOW()
+from
+  sm_admins as a
+  inner join sm_admins_groups as agg
+  on agg.admin_id = a.id
+  inner join sm_groups as g
+  on g.id = agg.group_id
+  inner join roles as r
+  on r.role_name = 'sm-' || g.name
+on conflict do nothing;
+
+-- Group immunities and command/group overrides, previously stored in the sm_*
+-- tables, re-pointed at the roles system so the sourcemod package no longer
+-- touches the legacy tables.
+create table if not exists role_immunity (
+  role_immunity_id serial primary key,
+  role_id int not null references roles (role_id) on DELETE cascade,
+  other_id int not null references roles (role_id) on DELETE cascade,
+  created_on timestamp with time zone not null default NOW()
+);
+
+create unique index if not exists "role_immunity_role_other_uidx"
+on role_immunity
+using btree
+(
+  role_id,
+  other_id
+);
+
+create table if not exists role_overrides (
+  override_id serial primary key,
+  role_id int not null references roles (role_id) on DELETE cascade,
+  type text not null check (type in ('command', 'group')),
+  name text not null,
+  access text not null check (access in ('allow', 'deny')),
+  created_on timestamp with time zone not null default NOW(),
+  updated_on timestamp with time zone not null default NOW()
+);
+
+create unique index if not exists "role_overrides_role_type_name_uidx"
+on role_overrides
+using btree
+(
+  role_id,
+  type,
+  name
+);
+
+create table if not exists command_overrides (
+  override_id serial primary key,
+  type text not null check (type in ('command', 'group')),
+  name text not null,
+  flags text not null,
+  created_on timestamp with time zone not null default NOW(),
+  updated_on timestamp with time zone not null default NOW()
+);
+
+create unique index if not exists "command_overrides_type_name_uidx"
+on command_overrides
+using btree
+(
+  type,
+  name
+);
+
+insert into role_immunity (role_id, other_id, created_on)
+select
+  r.role_id,
+  o.role_id,
+  gi.created_on
+from
+  sm_group_immunity as gi
+  inner join sm_groups as g on g.id = gi.group_id
+  inner join roles as r on r.role_name = 'sm-' || g.name
+  inner join sm_groups as og on og.id = gi.other_id
+  inner join roles as o on o.role_name = 'sm-' || og.name
+on conflict do nothing;
+
+insert into role_overrides (role_id, type, name, access, created_on, updated_on)
+select
+  r.role_id,
+  go.type,
+  go.name,
+  go.access,
+  go.created_on,
+  go.updated_on
+from
+  sm_group_overrides as go
+  inner join sm_groups as g on g.id = go.group_id
+  inner join roles as r on r.role_name = 'sm-' || g.name
+on conflict do nothing;
+
+insert into command_overrides (type, name, flags, created_on, updated_on)
+select
+  type,
+  name,
+  flags,
+  created_on,
+  updated_on
+from
+  sm_overrides
+on conflict do nothing;

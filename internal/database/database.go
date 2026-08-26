@@ -15,7 +15,9 @@ import (
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 )
 
 var (
@@ -163,10 +165,10 @@ func (db *PgStore) Connect(ctx context.Context) error {
 		cfg.MaxConns = 8
 	}
 
-	cfg.AfterConnect = func(_ context.Context, conn *pgx.Conn) error {
+	cfg.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
 		pgxuuid.Register(conn.TypeMap())
 
-		return nil
+		return registerPermissionType(ctx, conn)
 	}
 
 	if db.logQueries {
@@ -290,6 +292,22 @@ func (db *PgStore) BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx
 }
 
 // Close will close the underlying database connection if it exists.
+// registerPermissionType teaches pgx to encode and scan the roles.v1.Permission Go enum as the
+// database `permission` enum type, for connections where the parameter OID is unknown as well as
+// result columns.
+func registerPermissionType(ctx context.Context, conn *pgx.Conn) error {
+	var oid uint32
+	if errOid := conn.QueryRow(ctx, "select oid from pg_type where typname = 'permission'").Scan(&oid); errOid != nil {
+		return fmt.Errorf("querying permission type oid: %w", errOid)
+	}
+
+	typeMap := conn.TypeMap()
+	typeMap.RegisterType(&pgtype.Type{OID: oid, Name: "permission", Codec: permissionCodec{}})
+	typeMap.RegisterDefaultPgType(rolesv1.Permission(0), "permission")
+
+	return nil
+}
+
 func (db *PgStore) Close() error {
 	if db.conn != nil {
 		db.conn.Close()

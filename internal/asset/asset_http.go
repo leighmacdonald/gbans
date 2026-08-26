@@ -15,6 +15,7 @@ import (
 
 type assetHandler struct {
 	Assets
+
 	roleAuth *rpc.RoleAuth
 }
 

@@ -694,7 +694,7 @@ func (x *SMUsersResponse) GetUserGroups() []*SMUserGroup {
 
 type SMUser struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            *int32                 `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
+	Id            *int64                 `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
 	AuthType      *string                `protobuf:"bytes,2,opt,name=auth_type,json=authType" json:"auth_type,omitempty"`
 	Identity      *string                `protobuf:"bytes,3,opt,name=identity" json:"identity,omitempty"`
 	Password      *string                `protobuf:"bytes,4,opt,name=password" json:"password,omitempty"`
@@ -735,7 +735,7 @@ func (*SMUser) Descriptor() ([]byte, []int) {
 	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *SMUser) GetId() int32 {
+func (x *SMUser) GetId() int64 {
 	if x != nil && x.Id != nil {
 		return *x.Id
 	}
@@ -786,7 +786,7 @@ func (x *SMUser) GetImmunity() int32 {
 
 type SMUserGroup struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AdminId       *int32                 `protobuf:"varint,1,opt,name=admin_id,json=adminId" json:"admin_id,omitempty"`
+	AdminId       *int64                 `protobuf:"varint,1,opt,name=admin_id,json=adminId" json:"admin_id,omitempty"`
 	GroupName     *string                `protobuf:"bytes,2,opt,name=group_name,json=groupName" json:"group_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -822,7 +822,7 @@ func (*SMUserGroup) Descriptor() ([]byte, []int) {
 	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *SMUserGroup) GetAdminId() int32 {
+func (x *SMUserGroup) GetAdminId() int64 {
 	if x != nil && x.AdminId != nil {
 		return *x.AdminId
 	}
@@ -890,19 +890,17 @@ const file_sourcemod_v1_plugin_proto_rawDesc = "" +
 	"\x0fSMUsersResponse\x122\n" +
 	"\x05users\x18\x01 \x03(\v2\x14.sourcemod.v1.SMUserB\x06\xbaH\x03\xc8\x01\x01R\x05users\x12B\n" +
 	"\vuser_groups\x18\x02 \x03(\v2\x19.sourcemod.v1.SMUserGroupB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"userGroups\"\x80\x02\n" +
-	"\x06SMUser\x12\x1a\n" +
-	"\x02id\x18\x01 \x01(\x05B\n" +
-	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x02id\x126\n" +
+	"userGroups\"\x82\x02\n" +
+	"\x06SMUser\x12\x1c\n" +
+	"\x02id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\x02id\x126\n" +
 	"\tauth_type\x18\x02 \x01(\tB\x19\xbaH\x16\xc8\x01\x01r\x11R\x05steamR\x04nameR\x02ipR\bauthType\x12\"\n" +
 	"\bidentity\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bidentity\x12\x1a\n" +
 	"\bpassword\x18\x04 \x01(\tR\bpassword\x12\x1c\n" +
 	"\x05flags\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05flags\x12\x1a\n" +
 	"\x04name\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12(\n" +
-	"\bimmunity\x18\a \x01(\x05B\f\xbaH\t\xc8\x01\x01\x1a\x04\x18d(\x00R\bimmunity\"_\n" +
-	"\vSMUserGroup\x12%\n" +
-	"\badmin_id\x18\x01 \x01(\x05B\n" +
-	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\aadminId\x12)\n" +
+	"\bimmunity\x18\a \x01(\x05B\f\xbaH\t\xc8\x01\x01\x1a\x04\x18d(\x00R\bimmunity\"a\n" +
+	"\vSMUserGroup\x12'\n" +
+	"\badmin_id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\aadminId\x12)\n" +
 	"\n" +
 	"group_name\x18\x02 \x01(\tB\n" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\tgroupName2\x9c\x04\n" +

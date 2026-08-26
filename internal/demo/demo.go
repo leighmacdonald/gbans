@@ -532,7 +532,7 @@ func (d Demos) GetDemos(ctx context.Context) ([]File, error) {
 const frameDuration = 16600 * time.Microsecond
 
 func ticksToDuration(ticks int32) time.Duration {
-	return (frameDuration) * time.Duration(ticks)
+	return frameDuration * time.Duration(ticks)
 }
 
 func (d Demos) RemoveOrphans(ctx context.Context) error {

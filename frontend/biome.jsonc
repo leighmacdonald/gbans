@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.5.5/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.5.9/schema.json",
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
@@ -12,6 +12,19 @@
 	"files": {
 		"includes": ["**", "!!**/dist", "!src/routeTree.gen.ts", "!src/rpc"]
 	},
+	"overrides": [
+		{
+			// Inkscape emits vendor CSS properties it tracks for its own editing.
+			"includes": ["src/icons/logo.svg"],
+			"linter": {
+				"rules": {
+					"correctness": {
+						"noUnknownProperty": "off"
+					}
+				}
+			}
+		}
+	],
 	"formatter": {
 		"enabled": true,
 		"indentStyle": "tab",

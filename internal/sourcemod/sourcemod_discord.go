@@ -291,7 +291,6 @@ func (h discordHandler) onAdminsEdit(ctx context.Context, session *discordgo.Ses
 		requestedSID string
 		alias        string
 		flags        string
-		immunity     string
 	)
 
 	sidOption, found := opts["steamid"]
@@ -305,7 +304,6 @@ func (h discordHandler) onAdminsEdit(ctx context.Context, session *discordgo.Ses
 		if admin, errAdmin := h.sourcemod.AdminBySteamID(ctx, sid); errAdmin == nil {
 			alias = admin.Name
 			flags = admin.Flags
-			immunity = strconv.Itoa(int(admin.Immunity))
 		}
 	}
 
@@ -315,15 +313,13 @@ func (h discordHandler) onAdminsEdit(ctx context.Context, session *discordgo.Ses
 		"Edit sourcemod admin settings",
 		discord.ModalInputRowRequired(discord.IDSteamID, "steamid", "SteamID or Profile URL", "76561197960542812", requestedSID, 0, 64),
 		discord.ModalInputRowRequired(discord.IDAlias, "alias", "Player Alias", "Bob Bobbins", alias, 0, 0),
-		discord.ModalInputRowRequired(discord.IDFlags, "flags", "Flag Set", "abcdef", flags, 1, 10),
-		discord.ModalInputRowRequired(discord.IDImmunityLevel, "immunity", "Immunity Level", "100", immunity, 0, 3))
+		discord.ModalInputRowRequired(discord.IDFlags, "flags", "Flag Set", "abcdef", flags, 1, 10))
 }
 
 type adminEditModal struct {
-	SteamID  steamid.SteamID `id:"1"`
-	Alias    string          `id:"8"`
-	Flags    string          `id:"9"`
-	Immunity int32           `id:"7"`
+	SteamID steamid.SteamID `id:"1"`
+	Alias   string          `id:"8"`
+	Flags   string          `id:"9"`
 }
 
 func (h discordHandler) onSourcemodAdminsEditModal(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -350,8 +346,9 @@ func (h discordHandler) onSourcemodAdminsEditModal(ctx context.Context, session 
 	admin.SteamID = request.SteamID
 	admin.Name = request.Alias
 	admin.Flags = request.Flags
-	admin.Immunity = request.Immunity
+	admin.Immunity = deriveImmunity(flagToPermissions(request.Flags))
 	admin.AuthType = AuthTypeSteam
+	admin.Identity = request.SteamID.String()
 
 	_, errSave := h.sourcemod.SaveAdmin(ctx, admin)
 	if errSave != nil {
