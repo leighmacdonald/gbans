@@ -1,11 +1,10 @@
 {
   inputs = {
-    # July 23
-    nixpkgs.url = "github:NixOS/nixpkgs/4c4fc8beef2dbd5813acf699dbded4d7a9c2e4c0";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
   outputs =
-    { self, nixpkgs }:
+    { nixpkgs, ... }:
     let
       lib = nixpkgs.lib;
 
@@ -32,7 +31,7 @@
           hardeningDisable = [ "fortify" ];
           buildInputs = with pkgs; [
             gcc
-            go
+            go_1_26
             golangci-lint
             goreleaser
             nilaway

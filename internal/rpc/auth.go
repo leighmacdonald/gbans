@@ -16,7 +16,6 @@ import (
 	"connectrpc.com/authn"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
-	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -41,10 +40,6 @@ type UserClaimProvider interface {
 	GetAvatar() person.Avatar
 	GetSteamID() steamid.SteamID
 	GetName() string
-}
-
-type PermissionLoader interface {
-	PermissionsBySteamID(ctx context.Context, steamid steamid.SteamID) []rolesv1.Permission
 }
 
 // UserRouteAuthFn is a function type that determines if a user has permission to access a given RPC procedure.
@@ -86,7 +81,7 @@ type Middleware struct {
 
 	siteName         string
 	cookie           string
-	permissionLoader PermissionLoader
+	permissionLoader RolePermissionsResolver
 	userAllowList    map[string]UserRouteAuthFn
 	serverAllowList  map[string]ServerRouteAuthFn
 	publicAllowList  map[string]struct{}
@@ -94,7 +89,7 @@ type Middleware struct {
 
 // NewMiddleware creates a new authentication middleware for the given site name and cookie secret.
 // The cookie secret is used as the HMAC key for signing and verifying JWT tokens.
-func NewMiddleware(siteName string, cookie string, permissionLoader PermissionLoader) *Middleware {
+func NewMiddleware(siteName string, cookie string, permissionLoader RolePermissionsResolver) *Middleware {
 	return &Middleware{
 		RWMutex:          sync.RWMutex{},
 		siteName:         siteName,

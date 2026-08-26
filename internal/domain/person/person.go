@@ -95,6 +95,7 @@ func (p Core) GetTimeCreated() time.Time {
 func (p Core) GetPermissions() []rolesv1.Permission {
 	return p.Permissions
 }
+
 func (p Core) GetName() string {
 	if p.Name == "" {
 		return p.SteamID.String()

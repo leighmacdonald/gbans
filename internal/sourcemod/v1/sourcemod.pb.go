@@ -1135,7 +1135,7 @@ func (x *CreateAdminResponse) GetAdmin() *Admin {
 
 type EditAdminRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AdminId       *int32                 `protobuf:"varint,1,opt,name=admin_id,json=adminId" json:"admin_id,omitempty"`
+	AdminId       *int64                 `protobuf:"varint,1,opt,name=admin_id,json=adminId" json:"admin_id,omitempty"`
 	AuthType      *AuthType              `protobuf:"varint,2,opt,name=auth_type,json=authType,enum=sourcemod.v1.AuthType" json:"auth_type,omitempty"`
 	Identity      *string                `protobuf:"bytes,3,opt,name=identity" json:"identity,omitempty"`
 	Password      *string                `protobuf:"bytes,4,opt,name=password" json:"password,omitempty"`
@@ -1176,7 +1176,7 @@ func (*EditAdminRequest) Descriptor() ([]byte, []int) {
 	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{18}
 }
 
-func (x *EditAdminRequest) GetAdminId() int32 {
+func (x *EditAdminRequest) GetAdminId() int64 {
 	if x != nil && x.AdminId != nil {
 		return *x.AdminId
 	}
@@ -1271,7 +1271,7 @@ func (x *EditAdminResponse) GetAdmin() *Admin {
 
 type DeleteAdminRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AdminId       *int32                 `protobuf:"varint,1,opt,name=admin_id,json=adminId" json:"admin_id,omitempty"`
+	AdminId       *int64                 `protobuf:"varint,1,opt,name=admin_id,json=adminId" json:"admin_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1306,7 +1306,7 @@ func (*DeleteAdminRequest) Descriptor() ([]byte, []int) {
 	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{20}
 }
 
-func (x *DeleteAdminRequest) GetAdminId() int32 {
+func (x *DeleteAdminRequest) GetAdminId() int64 {
 	if x != nil && x.AdminId != nil {
 		return *x.AdminId
 	}
@@ -1315,7 +1315,7 @@ func (x *DeleteAdminRequest) GetAdminId() int32 {
 
 type AddAdminGroupRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AdminId       *int32                 `protobuf:"varint,1,opt,name=admin_id,json=adminId" json:"admin_id,omitempty"`
+	AdminId       *int64                 `protobuf:"varint,1,opt,name=admin_id,json=adminId" json:"admin_id,omitempty"`
 	GroupId       *int32                 `protobuf:"varint,2,opt,name=group_id,json=groupId" json:"group_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1351,7 +1351,7 @@ func (*AddAdminGroupRequest) Descriptor() ([]byte, []int) {
 	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{21}
 }
 
-func (x *AddAdminGroupRequest) GetAdminId() int32 {
+func (x *AddAdminGroupRequest) GetAdminId() int64 {
 	if x != nil && x.AdminId != nil {
 		return *x.AdminId
 	}
@@ -1411,7 +1411,7 @@ func (x *AddAdminGroupResponse) GetAdmin() *Admin {
 
 type DeleteAdminGroupRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AdminId       *int32                 `protobuf:"varint,1,opt,name=admin_id,json=adminId" json:"admin_id,omitempty"`
+	AdminId       *int64                 `protobuf:"varint,1,opt,name=admin_id,json=adminId" json:"admin_id,omitempty"`
 	GroupId       *int32                 `protobuf:"varint,2,opt,name=group_id,json=groupId" json:"group_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1447,7 +1447,7 @@ func (*DeleteAdminGroupRequest) Descriptor() ([]byte, []int) {
 	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{23}
 }
 
-func (x *DeleteAdminGroupRequest) GetAdminId() int32 {
+func (x *DeleteAdminGroupRequest) GetAdminId() int64 {
 	if x != nil && x.AdminId != nil {
 		return *x.AdminId
 	}
@@ -2111,7 +2111,7 @@ func (x *GroupOverrides) GetUpdatedOn() *timestamppb.Timestamp {
 
 type Admin struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AdminId       *int32                 `protobuf:"varint,1,opt,name=admin_id,json=adminId" json:"admin_id,omitempty"`
+	AdminId       *int64                 `protobuf:"varint,1,opt,name=admin_id,json=adminId" json:"admin_id,omitempty"`
 	SteamId       *int64                 `protobuf:"varint,2,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	AuthType      *string                `protobuf:"bytes,3,opt,name=auth_type,json=authType" json:"auth_type,omitempty"`
 	Identity      *string                `protobuf:"bytes,4,opt,name=identity" json:"identity,omitempty"`
@@ -2156,7 +2156,7 @@ func (*Admin) Descriptor() ([]byte, []int) {
 	return file_sourcemod_v1_sourcemod_proto_rawDescGZIP(), []int{36}
 }
 
-func (x *Admin) GetAdminId() int32 {
+func (x *Admin) GetAdminId() int64 {
 	if x != nil && x.AdminId != nil {
 		return *x.AdminId
 	}
@@ -2395,10 +2395,9 @@ const file_sourcemod_v1_sourcemod_proto_rawDesc = "" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04name\x12(\n" +
 	"\bimmunity\x18\x06 \x01(\x05B\f\xbaH\t\xc8\x01\x01\x1a\x04\x18d(\x00R\bimmunity\"H\n" +
 	"\x13CreateAdminResponse\x121\n" +
-	"\x05admin\x18\x01 \x01(\v2\x13.sourcemod.v1.AdminB\x06\xbaH\x03\xc8\x01\x01R\x05admin\"\xa3\x02\n" +
-	"\x10EditAdminRequest\x12%\n" +
-	"\badmin_id\x18\x01 \x01(\x05B\n" +
-	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\aadminId\x12@\n" +
+	"\x05admin\x18\x01 \x01(\v2\x13.sourcemod.v1.AdminB\x06\xbaH\x03\xc8\x01\x01R\x05admin\"\xa5\x02\n" +
+	"\x10EditAdminRequest\x12'\n" +
+	"\badmin_id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\aadminId\x12@\n" +
 	"\tauth_type\x18\x02 \x01(\x0e2\x16.sourcemod.v1.AuthTypeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\bauthType\x12\"\n" +
 	"\bidentity\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bidentity\x12\x1a\n" +
 	"\bpassword\x18\x04 \x01(\tR\bpassword\x12\x1c\n" +
@@ -2407,20 +2406,17 @@ const file_sourcemod_v1_sourcemod_proto_rawDesc = "" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04name\x12(\n" +
 	"\bimmunity\x18\a \x01(\x05B\f\xbaH\t\xc8\x01\x01\x1a\x04\x18d(\x00R\bimmunity\"F\n" +
 	"\x11EditAdminResponse\x121\n" +
-	"\x05admin\x18\x01 \x01(\v2\x13.sourcemod.v1.AdminB\x06\xbaH\x03\xc8\x01\x01R\x05admin\";\n" +
-	"\x12DeleteAdminRequest\x12%\n" +
-	"\badmin_id\x18\x01 \x01(\x05B\n" +
-	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\aadminId\"d\n" +
-	"\x14AddAdminGroupRequest\x12%\n" +
-	"\badmin_id\x18\x01 \x01(\x05B\n" +
-	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\aadminId\x12%\n" +
+	"\x05admin\x18\x01 \x01(\v2\x13.sourcemod.v1.AdminB\x06\xbaH\x03\xc8\x01\x01R\x05admin\"=\n" +
+	"\x12DeleteAdminRequest\x12'\n" +
+	"\badmin_id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\aadminId\"f\n" +
+	"\x14AddAdminGroupRequest\x12'\n" +
+	"\badmin_id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\aadminId\x12%\n" +
 	"\bgroup_id\x18\x02 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\agroupId\"J\n" +
 	"\x15AddAdminGroupResponse\x121\n" +
-	"\x05admin\x18\x01 \x01(\v2\x13.sourcemod.v1.AdminB\x06\xbaH\x03\xc8\x01\x01R\x05admin\"g\n" +
-	"\x17DeleteAdminGroupRequest\x12%\n" +
-	"\badmin_id\x18\x01 \x01(\x05B\n" +
-	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\aadminId\x12%\n" +
+	"\x05admin\x18\x01 \x01(\v2\x13.sourcemod.v1.AdminB\x06\xbaH\x03\xc8\x01\x01R\x05admin\"i\n" +
+	"\x17DeleteAdminGroupRequest\x12'\n" +
+	"\badmin_id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\aadminId\x12%\n" +
 	"\bgroup_id\x18\x02 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\agroupId\"Q\n" +
 	"\x11OverridesResponse\x12<\n" +
@@ -2476,10 +2472,9 @@ const file_sourcemod_v1_sourcemod_proto_rawDesc = "" +
 	"\n" +
 	"created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xef\x03\n" +
-	"\x05Admin\x12%\n" +
-	"\badmin_id\x18\x01 \x01(\x05B\n" +
-	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\aadminId\x12#\n" +
+	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xf1\x03\n" +
+	"\x05Admin\x12'\n" +
+	"\badmin_id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\aadminId\x12#\n" +
 	"\bsteam_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x126\n" +
 	"\tauth_type\x18\x03 \x01(\tB\x19\xbaH\x16\xc8\x01\x01r\x11R\x05steamR\x04nameR\x02ipR\bauthType\x12\"\n" +
 	"\bidentity\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bidentity\x12\"\n" +

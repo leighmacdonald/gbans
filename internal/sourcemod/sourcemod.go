@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net"
 	"net/netip"
 	"slices"
 	"strings"
@@ -16,7 +15,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/config/link"
-	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -33,8 +31,7 @@ var (
 	ErrAdminGroupExists = errors.New("admin group already exists")
 	ErrAdminExists      = errors.New("admin already exists")
 	ErrAdminFlagInvalid = errors.New("invalid admin flag")
-	ErrRequirePassword  = errors.New("name auth type requires password")
-	ErrInvalidIP        = errors.New("invalid ip, could not parse")
+	ErrAdminNameExists  = errors.New("an admin group with this name already exists")
 	ErrGetPerson        = errors.New("failed to fetch person result")
 )
 
@@ -93,13 +90,8 @@ const (
 	OverrideAccessDeny  OverrideAccess = "deny"
 )
 
-type ServerPermission struct {
-	SteamID steamid.SID
-	Flags   string
-}
-
 type Admin struct {
-	AdminID   int32
+	AdminID   int64
 	SteamID   steamid.SteamID
 	AuthType  AuthType // steam | name |ip
 	Identity  string
@@ -145,14 +137,6 @@ type Overrides struct {
 	Flags      string
 	CreatedOn  time.Time
 	UpdatedOn  time.Time
-}
-
-type AdminGroups struct {
-	AdminID      int32
-	GroupID      int32
-	InheritOrder int32
-	CreatedOn    time.Time
-	UpdatedOn    time.Time
 }
 
 type ConfigEntry struct {
@@ -438,7 +422,7 @@ func (h Sourcemod) DelOverride(ctx context.Context, overrideID int32) error {
 	return h.repository.DelOverride(ctx, override)
 }
 
-func (h Sourcemod) DelAdminGroup(ctx context.Context, adminID int32, groupID int32) (Admin, error) {
+func (h Sourcemod) DelAdminGroup(ctx context.Context, adminID int64, groupID int32) (Admin, error) {
 	admin, errAdmin := h.AdminByID(ctx, adminID)
 	if errAdmin != nil {
 		return Admin{}, errAdmin
@@ -449,12 +433,7 @@ func (h Sourcemod) DelAdminGroup(ctx context.Context, adminID int32, groupID int
 		return Admin{}, errGroup
 	}
 
-	existing, errExisting := h.AdminGroups(ctx, admin)
-	if errExisting != nil && !errors.Is(errExisting, database.ErrNoResult) {
-		return admin, errExisting
-	}
-
-	if !slices.Contains(existing, group) {
+	if !slices.Contains(admin.Groups, group) {
 		return admin, ErrAdminGroupExists
 	}
 
@@ -469,7 +448,7 @@ func (h Sourcemod) DelAdminGroup(ctx context.Context, adminID int32, groupID int
 	return admin, nil
 }
 
-func (h Sourcemod) AddAdminGroup(ctx context.Context, adminID int32, groupID int32) (Admin, error) {
+func (h Sourcemod) AddAdminGroup(ctx context.Context, adminID int64, groupID int32) (Admin, error) {
 	admin, errAdmin := h.AdminByID(ctx, adminID)
 	if errAdmin != nil {
 		return Admin{}, errAdmin
@@ -480,51 +459,17 @@ func (h Sourcemod) AddAdminGroup(ctx context.Context, adminID int32, groupID int
 		return Admin{}, errGroup
 	}
 
-	existing, errExisting := h.AdminGroups(ctx, admin)
-	if errExisting != nil && !errors.Is(errExisting, database.ErrNoResult) {
-		return admin, errExisting
-	}
-
-	if slices.Contains(existing, group) {
+	if slices.Contains(admin.Groups, group) {
 		return admin, ErrAdminGroupExists
 	}
 
-	if err := h.repository.InsertAdminGroup(ctx, admin, group, len(existing)+1); err != nil {
+	if err := h.repository.InsertAdminGroup(ctx, admin, group); err != nil {
 		return Admin{}, err
 	}
 
 	admin.Groups = append(admin.Groups, group)
 
 	return admin, nil
-}
-
-func (h Sourcemod) AdminGroups(ctx context.Context, admin Admin) ([]Groups, error) {
-	return h.repository.GetAdminGroups(ctx, admin)
-}
-
-func (h Sourcemod) SetAdminGroups(ctx context.Context, authType AuthType, identity string, groups ...Groups) error {
-	admin, errAdmin := h.repository.GetAdminByIdentity(ctx, authType, identity)
-	if errAdmin != nil {
-		return errAdmin
-	}
-
-	// Delete existing groups.
-	if errDelete := h.repository.DeleteAdminGroups(ctx, admin); errDelete != nil && !errors.Is(errDelete, database.ErrNoResult) {
-		return errDelete
-	}
-
-	// If no groups are given to add, this is treated purely as a delete function
-	if len(groups) == 0 {
-		return nil
-	}
-
-	for i := range groups {
-		if errInsert := h.repository.InsertAdminGroup(ctx, admin, groups[i], i); errInsert != nil {
-			return errInsert
-		}
-	}
-
-	return nil
 }
 
 func (h Sourcemod) DelGroup(ctx context.Context, groupID int32) error {
@@ -560,34 +505,8 @@ func (h Sourcemod) AddGroup(ctx context.Context, name string, flags string, immu
 	})
 }
 
-func validateAuthIdentity(ctx context.Context, authType AuthType, identity string, password string) (string, error) {
-	switch authType {
-	case AuthTypeSteam:
-		steamID, errSteamID := steamid.Resolve(ctx, identity)
-		if errSteamID != nil {
-			return "", steamid.ErrDecodeSID
-		}
-
-		identity = steamID.String()
-	case AuthTypeIP:
-		if ip := net.ParseIP(identity); ip == nil || ip.To4() != nil {
-			return "", ErrInvalidIP
-		}
-	case AuthTypeName:
-		if identity == "" {
-			return "", ErrInvalidAuthName
-		}
-
-		if password == "" {
-			return "", ErrRequirePassword
-		}
-	}
-
-	return identity, nil
-}
-
-func (h Sourcemod) DelAdmin(ctx context.Context, adminID int32) error {
-	admin, errAdmin := h.repository.GetAdminByID(ctx, adminID)
+func (h Sourcemod) DelAdmin(ctx context.Context, adminID int64) error {
+	admin, errAdmin := h.AdminByID(ctx, adminID)
 	if errAdmin != nil {
 		return errAdmin
 	}
@@ -595,68 +514,61 @@ func (h Sourcemod) DelAdmin(ctx context.Context, adminID int32) error {
 	return h.repository.DelAdmin(ctx, admin)
 }
 
-func (h Sourcemod) AdminByID(ctx context.Context, adminID int32) (Admin, error) {
+func (h Sourcemod) AdminByID(ctx context.Context, adminID int64) (Admin, error) {
 	return h.repository.GetAdminByID(ctx, adminID)
 }
 
 func (h Sourcemod) SaveAdmin(ctx context.Context, admin Admin) (Admin, error) {
-	realIdentity, errValidate := validateAuthIdentity(ctx, admin.AuthType, admin.Identity, admin.Password)
-	if errValidate != nil {
-		return Admin{}, errValidate
+	if admin.AuthType != AuthTypeSteam {
+		return Admin{}, ErrInvalidAuthName
 	}
 
 	if admin.Immunity < 0 || admin.Immunity > 100 {
 		return Admin{}, ErrImmunity
 	}
 
-	var steamID steamid.SteamID
-	if admin.AuthType == AuthTypeSteam {
-		steamID = steamid.New(realIdentity)
-		if err := h.person.EnsurePerson(ctx, steamID); err != nil {
-			return Admin{}, ErrGetPerson
-		}
-
-		admin.Identity = string(steamID.Steam3())
-		admin.SteamID = steamID
+	steamID, errSteamID := steamid.Resolve(ctx, admin.Identity)
+	if errSteamID != nil || !steamID.Valid() {
+		return Admin{}, steamid.ErrDecodeSID
 	}
+
+	if err := h.person.EnsurePerson(ctx, steamID); err != nil {
+		return Admin{}, ErrGetPerson
+	}
+
+	admin.SteamID = steamID
+	admin.Identity = string(steamID.Steam3())
+	admin.Password = ""
 
 	return h.repository.SaveAdmin(ctx, admin)
 }
 
-func (h Sourcemod) AddAdmin(ctx context.Context, alias string, authType AuthType, identity string, flags string, immunity int32, password string) (Admin, error) {
-	realIdentity, errValidate := validateAuthIdentity(ctx, authType, identity, password)
-	if errValidate != nil {
-		return Admin{}, errValidate
+func (h Sourcemod) AddAdmin(ctx context.Context, alias string, authType AuthType, identity string, flags string, immunity int32, _ string) (Admin, error) {
+	if authType != AuthTypeSteam {
+		return Admin{}, ErrInvalidAuthName
 	}
 
 	if immunity < 0 || immunity > 100 {
 		return Admin{}, ErrImmunity
 	}
 
-	admin, errAdmin := h.repository.GetAdminByIdentity(ctx, authType, realIdentity)
-	if errAdmin != nil && !errors.Is(errAdmin, database.ErrNoResult) {
-		return Admin{}, errAdmin
+	steamID, errSteamID := steamid.Resolve(ctx, identity)
+	if errSteamID != nil || !steamID.Valid() {
+		return Admin{}, steamid.ErrDecodeSID
 	}
 
-	if errAdmin == nil {
-		return admin, ErrAdminExists
+	if _, errAdmin := h.AdminBySteamID(ctx, steamID); errAdmin == nil {
+		return Admin{}, ErrAdminExists
 	}
 
-	var steamID steamid.SteamID
-	if authType == AuthTypeSteam {
-		steamID = steamid.New(realIdentity)
-		if err := h.person.EnsurePerson(ctx, steamID); err != nil {
-			return Admin{}, ErrGetPerson
-		}
-
-		identity = string(steamID.Steam3())
+	if err := h.person.EnsurePerson(ctx, steamID); err != nil {
+		return Admin{}, ErrGetPerson
 	}
 
 	return h.repository.AddAdmin(ctx, Admin{
 		SteamID:  steamID,
-		AuthType: authType,
-		Identity: identity,
-		Password: password,
+		AuthType: AuthTypeSteam,
+		Identity: string(steamID.Steam3()),
 		Flags:    flags,
 		Name:     alias,
 		Immunity: immunity,
@@ -669,17 +581,7 @@ func (h Sourcemod) Admins(ctx context.Context) ([]Admin, error) {
 }
 
 func (h Sourcemod) AdminBySteamID(ctx context.Context, steamID steamid.SteamID) (Admin, error) {
-	admins, errAdmins := h.Admins(ctx)
-	if errAdmins != nil {
-		return Admin{}, errors.Join(errAdmins, database.ErrNoResult)
-	}
-	for _, admin := range admins {
-		if admin.SteamID.Equal(steamID) {
-			return admin, nil
-		}
-	}
-
-	return Admin{}, nil
+	return h.repository.GetAdminByID(ctx, steamID.Int64())
 }
 
 func (h Sourcemod) Groups(ctx context.Context) ([]Groups, error) {

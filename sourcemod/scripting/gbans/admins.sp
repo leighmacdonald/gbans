@@ -144,9 +144,12 @@ void onRebuildUsers(HTTPResponse response, any value) {
     int numUserGroups = userGroups.Length;
 
     /* Keep track of a mapping from admin DB IDs to internal AdminIds to
-     * enable group lookups en masse */
+     * enable group lookups en masse.
+     *
+     * The id is the 64-bit SteamID serialized as a JSON string by the
+     * protobuf JSON mapping, so it is read as a string. */
     StringMap htAdmins = new StringMap();
-    char      key[16];
+    char      key[24];
 
     for (int i = 0; i < numUsers; i++) {
         user = view_as<JSONObject>(users.Get(i));
@@ -171,7 +174,7 @@ void onRebuildUsers(HTTPResponse response, any value) {
             }
         }
 
-        IntToString(user.GetInt("id"), key, sizeof key);
+        user.GetString("id", key, sizeof key);
 
         htAdmins.SetValue(key, adm);
 
@@ -199,7 +202,7 @@ void onRebuildUsers(HTTPResponse response, any value) {
     for (int i = 0; i < numUserGroups; i++) {
         userGroup = view_as<JSONObject>(userGroups.Get(i));
 
-        IntToString(userGroup.GetInt("adminId"), key, sizeof key);
+        userGroup.GetString("adminId", key, sizeof key);
         userGroup.GetString("groupName", group, sizeof group);
 
         if (htAdmins.GetValue(key, adm)) {

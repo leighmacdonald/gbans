@@ -432,7 +432,7 @@ func (u *Persons) SetSteam(ctx context.Context, sid64 steamid.SteamID, discordID
 		return errGetPerson
 	}
 
-	if (newPerson.DiscordID) != "" {
+	if newPerson.DiscordID != "" {
 		return ErrDiscordAlreadyLinked
 	}
 

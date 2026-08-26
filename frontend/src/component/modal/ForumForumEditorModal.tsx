@@ -116,29 +116,29 @@ export const ForumForumEditorModal = NiceModal.create(
 									}}
 								/>
 							</Grid>
-						<Grid size={{ xs: 12 }}>
-							<form.AppField
-								name={"requiredPermission"}
-								validators={{
-									onChange: z.enum(Permission),
-								}}
-								children={(field) => {
-									return (
-										<field.SelectPermissionsField
-											label={"Permissions Required"}
-											items={enumValues(Permission)}
-											renderItem={(pl) => {
-												return (
-													<MenuItem value={pl} key={`pl-${pl}`}>
-														{toTitleCase(Permission[pl])}
-													</MenuItem>
-												);
-											}}
-										/>
-									);
-								}}
-							/>
-						</Grid>
+							<Grid size={{ xs: 12 }}>
+								<form.AppField
+									name={"requiredPermission"}
+									validators={{
+										onChange: z.enum(Permission),
+									}}
+									children={(field) => {
+										return (
+											<field.SelectPermissionsField
+												label={"Permissions Required"}
+												items={enumValues(Permission)}
+												renderItem={(pl) => {
+													return (
+														<MenuItem value={pl} key={`pl-${pl}`}>
+															{toTitleCase(Permission[pl])}
+														</MenuItem>
+													);
+												}}
+											/>
+										);
+									}}
+								/>
+							</Grid>
 						</Grid>
 					</DialogContent>
 

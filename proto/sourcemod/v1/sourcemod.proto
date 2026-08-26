@@ -200,9 +200,9 @@ message CreateAdminResponse {
 }
 
 message EditAdminRequest {
-  int32 admin_id = 1 [
+  int64 admin_id = 1 [
     (buf.validate.field).required = true,
-    (buf.validate.field).int32 = {gt: 0}
+    (buf.validate.field).int64 = {gt: 0}
   ];
   AuthType auth_type = 2 [
     (buf.validate.field).required = true,
@@ -228,16 +228,16 @@ message EditAdminResponse {
 }
 
 message DeleteAdminRequest {
-  int32 admin_id = 1 [
+  int64 admin_id = 1 [
     (buf.validate.field).required = true,
-    (buf.validate.field).int32 = {gt: 0}
+    (buf.validate.field).int64 = {gt: 0}
   ];
 }
 
 message AddAdminGroupRequest {
-  int32 admin_id = 1 [
+  int64 admin_id = 1 [
     (buf.validate.field).required = true,
-    (buf.validate.field).int32 = {gt: 0}
+    (buf.validate.field).int64 = {gt: 0}
   ];
   int32 group_id = 2 [
     (buf.validate.field).required = true,
@@ -250,9 +250,9 @@ message AddAdminGroupResponse {
 }
 
 message DeleteAdminGroupRequest {
-  int32 admin_id = 1 [
+  int64 admin_id = 1 [
     (buf.validate.field).required = true,
-    (buf.validate.field).int32 = {gt: 0}
+    (buf.validate.field).int64 = {gt: 0}
   ];
   int32 group_id = 2 [
     (buf.validate.field).required = true,
@@ -379,9 +379,9 @@ enum AuthType {
 }
 
 message Admin {
-  int32 admin_id = 1 [
+  int64 admin_id = 1 [
     (buf.validate.field).required = true,
-    (buf.validate.field).int32 = {gt: 0}
+    (buf.validate.field).int64 = {gt: 0}
   ];
   int64 steam_id = 2 [(buf.validate.field).required = true];
   string auth_type = 3 [
