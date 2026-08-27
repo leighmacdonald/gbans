@@ -19,6 +19,8 @@ import { RoleCreateModal } from "../component/modal/RoleCreateModal";
 import { RoleEditModal } from "../component/modal/RoleEditModal";
 import { RowActionContainer } from "../component/RowActionContainer";
 import { createDefaultTableOptions, makeRowActionsDefOptions } from "../component/table/options";
+import { SMImmunityTable } from "../component/table/SMImmunityTable";
+import { SMOverridesTable } from "../component/table/SMOverridesTable";
 import { SortableTable } from "../component/table/SortableTable";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx";
 import { Permission, type Role, RolesService } from "../rpc/roles/v1/roles_pb";
@@ -225,6 +227,12 @@ function AdminRoles() {
 						</Button>,
 					]}
 				/>
+			</Grid>
+			<Grid size={{ xs: 12 }}>
+				<SMOverridesTable />
+			</Grid>
+			<Grid size={{ xs: 12 }}>
+				<SMImmunityTable />
 			</Grid>
 		</Grid>
 	);
