@@ -186,7 +186,7 @@ func (s PluginService) SMOverrides(ctx context.Context, _ *emptypb.Empty) (*v1.S
 		resp.Overrides[idx] = &v1.SMOverride{
 			OverrideType: toOverrideType(override.Type),
 			Name:         &override.Name,
-			Flags:        &override.Flags,
+			Permissions:  override.Permissions,
 		}
 	}
 
@@ -208,13 +208,13 @@ func (s PluginService) SMUsers(ctx context.Context, _ *emptypb.Empty) (*v1.SMUse
 
 	for idx, user := range users {
 		resp.Users[idx] = &v1.SMUser{
-			Id:       &user.AdminID,
-			AuthType: toAuthType(user.AuthType),
-			Identity: &user.Identity,
-			Password: &user.Password,
-			Flags:    &user.Flags,
-			Name:     &user.Name,
-			Immunity: &user.Immunity,
+			Id:          &user.AdminID,
+			AuthType:    toAuthType(user.AuthType),
+			Identity:    &user.Identity,
+			Password:    &user.Password,
+			Name:        &user.Name,
+			Immunity:    &user.Immunity,
+			Permissions: user.Permissions,
 		}
 
 		for _, ug := range user.Groups {
@@ -247,9 +247,9 @@ func (s PluginService) SMGroups(ctx context.Context, _ *emptypb.Empty) (*v1.SMGr
 	//goland:noinspection ALL
 	for idx, group := range groups {
 		resp.Groups[idx] = &v1.Group{
-			Flags:         &group.Flags,
 			Name:          &group.Name,
 			ImmunityLevel: &group.ImmunityLevel,
+			Permissions:   group.Permissions,
 		}
 	}
 

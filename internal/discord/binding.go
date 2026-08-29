@@ -27,10 +27,8 @@ const (
 	IDDuration
 	IDNotes
 	IDBody
-	IDImmunityLevel
 	IDAlias
-	IDFlags
-	IDGroupID
+	IDPermissions
 )
 
 const tagName = "id"

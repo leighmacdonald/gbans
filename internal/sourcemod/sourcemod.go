@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net/netip"
 	"slices"
-	"strings"
 	"sync"
 	"time"
 
@@ -19,20 +18,20 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 var (
-	ErrInvalidAuthName  = errors.New("invalid auth name")
-	ErrImmunity         = errors.New("invalid immunity level, must be between 0-100")
-	ErrGroupName        = errors.New("group name cannot be empty")
-	ErrAdminGroupExists = errors.New("admin group already exists")
-	ErrAdminExists      = errors.New("admin already exists")
-	ErrAdminFlagInvalid = errors.New("invalid admin flag")
-	ErrAdminNameExists  = errors.New("an admin group with this name already exists")
-	ErrGetPerson        = errors.New("failed to fetch person result")
+	ErrInvalidAuthName   = errors.New("invalid auth name")
+	ErrGroupName         = errors.New("group name cannot be empty")
+	ErrAdminGroupExists  = errors.New("admin group already exists")
+	ErrAdminExists       = errors.New("admin already exists")
+	ErrAdminNameExists   = errors.New("an admin group with this name already exists")
+	ErrGetPerson         = errors.New("failed to fetch person result")
+	ErrUnknownPermission = errors.New("unknown permission")
 )
 
 type Config struct {
@@ -91,24 +90,24 @@ const (
 )
 
 type Admin struct {
-	AdminID   int64
-	SteamID   steamid.SteamID
-	AuthType  AuthType // steam | name |ip
-	Identity  string
-	Password  string
-	Flags     string
-	Name      string
-	Immunity  int32
-	Groups    []Groups
-	CreatedOn time.Time
-	UpdatedOn time.Time
+	AdminID     int64
+	SteamID     steamid.SteamID
+	AuthType    AuthType // steam | name |ip
+	Identity    string
+	Password    string
+	Name        string
+	Immunity    int32
+	Groups      []Groups
+	Permissions []rolesv1.Permission
+	CreatedOn   time.Time
+	UpdatedOn   time.Time
 }
 
 type Groups struct {
 	GroupID       int32
-	Flags         string
 	Name          string
 	ImmunityLevel int32
+	Permissions   []rolesv1.Permission
 	CreatedOn     time.Time
 	UpdatedOn     time.Time
 }
@@ -131,12 +130,12 @@ type GroupOverrides struct {
 }
 
 type Overrides struct {
-	OverrideID int32
-	Type       OverrideType // command | group
-	Name       string
-	Flags      string
-	CreatedOn  time.Time
-	UpdatedOn  time.Time
+	OverrideID  int32
+	Type        OverrideType // command | group
+	Name        string
+	Permissions []rolesv1.Permission
+	CreatedOn   time.Time
+	UpdatedOn   time.Time
 }
 
 type ConfigEntry struct {
@@ -390,26 +389,28 @@ func (h Sourcemod) Overrides(ctx context.Context) ([]Overrides, error) {
 }
 
 func (h Sourcemod) SaveOverride(ctx context.Context, override Overrides) (Overrides, error) {
-	if override.Name == "" || override.Flags == "" || override.Type != OverrideTypeCommand && override.Type != OverrideTypeGroup {
+	if override.Name == "" || override.Type != OverrideTypeCommand && override.Type != OverrideTypeGroup {
 		return Overrides{}, httphelper.ErrInvalidParameter
 	}
+
+	override.Permissions = normalizePermissions(override.Permissions)
 
 	return h.repository.SaveOverride(ctx, override)
 }
 
-func (h Sourcemod) AddOverride(ctx context.Context, name string, overrideType OverrideType, flags string) (Overrides, error) {
-	if name == "" || flags == "" || overrideType != OverrideTypeCommand && overrideType != OverrideTypeGroup {
+func (h Sourcemod) AddOverride(ctx context.Context, name string, overrideType OverrideType, permissions []rolesv1.Permission) (Overrides, error) {
+	if name == "" || overrideType != OverrideTypeCommand && overrideType != OverrideTypeGroup {
 		return Overrides{}, httphelper.ErrInvalidParameter
 	}
 
 	now := time.Now()
 
 	return h.repository.AddOverride(ctx, Overrides{
-		Type:      overrideType,
-		Name:      name,
-		Flags:     flags,
-		CreatedOn: now,
-		UpdatedOn: now,
+		Type:        overrideType,
+		Name:        name,
+		Permissions: normalizePermissions(permissions),
+		CreatedOn:   now,
+		UpdatedOn:   now,
 	})
 }
 
@@ -433,7 +434,16 @@ func (h Sourcemod) DelAdminGroup(ctx context.Context, adminID int64, groupID int
 		return Admin{}, errGroup
 	}
 
-	if !slices.Contains(admin.Groups, group) {
+	assigned := false
+	for _, g := range admin.Groups {
+		if g.GroupID == groupID {
+			assigned = true
+
+			break
+		}
+	}
+
+	if !assigned {
 		return admin, ErrAdminGroupExists
 	}
 
@@ -459,8 +469,10 @@ func (h Sourcemod) AddAdminGroup(ctx context.Context, adminID int64, groupID int
 		return Admin{}, errGroup
 	}
 
-	if slices.Contains(admin.Groups, group) {
-		return admin, ErrAdminGroupExists
+	for _, g := range admin.Groups {
+		if g.GroupID == groupID {
+			return admin, ErrAdminGroupExists
+		}
 	}
 
 	if err := h.repository.InsertAdminGroup(ctx, admin, group); err != nil {
@@ -481,27 +493,17 @@ func (h Sourcemod) DelGroup(ctx context.Context, groupID int32) error {
 	return h.repository.DeleteGroup(ctx, group)
 }
 
-const validFlags = "zabcdefghijklmnopqrst"
-
-func (h Sourcemod) AddGroup(ctx context.Context, name string, flags string, immunityLevel int32) (Groups, error) {
+func (h Sourcemod) AddGroup(ctx context.Context, name string, permissions []rolesv1.Permission) (Groups, error) {
 	if name == "" {
 		return Groups{}, ErrGroupName
 	}
 
-	if immunityLevel > 100 || immunityLevel < 0 {
-		return Groups{}, ErrImmunity
-	}
-
-	for _, flag := range flags {
-		if !strings.ContainsRune(validFlags, flag) {
-			return Groups{}, ErrAdminFlagInvalid
-		}
-	}
+	perms := normalizePermissions(permissions)
 
 	return h.repository.AddGroup(ctx, Groups{
-		Flags:         flags,
 		Name:          name,
-		ImmunityLevel: immunityLevel,
+		ImmunityLevel: deriveImmunity(perms),
+		Permissions:   perms,
 	})
 }
 
@@ -523,10 +525,6 @@ func (h Sourcemod) SaveAdmin(ctx context.Context, admin Admin) (Admin, error) {
 		return Admin{}, ErrInvalidAuthName
 	}
 
-	if admin.Immunity < 0 || admin.Immunity > 100 {
-		return Admin{}, ErrImmunity
-	}
-
 	steamID, errSteamID := steamid.Resolve(ctx, admin.Identity)
 	if errSteamID != nil || !steamID.Valid() {
 		return Admin{}, steamid.ErrDecodeSID
@@ -539,17 +537,15 @@ func (h Sourcemod) SaveAdmin(ctx context.Context, admin Admin) (Admin, error) {
 	admin.SteamID = steamID
 	admin.Identity = string(steamID.Steam3())
 	admin.Password = ""
+	admin.Permissions = normalizePermissions(admin.Permissions)
+	admin.Immunity = deriveImmunity(admin.Permissions)
 
 	return h.repository.SaveAdmin(ctx, admin)
 }
 
-func (h Sourcemod) AddAdmin(ctx context.Context, alias string, authType AuthType, identity string, flags string, immunity int32, _ string) (Admin, error) {
+func (h Sourcemod) AddAdmin(ctx context.Context, alias string, authType AuthType, identity string, permissions []rolesv1.Permission) (Admin, error) {
 	if authType != AuthTypeSteam {
 		return Admin{}, ErrInvalidAuthName
-	}
-
-	if immunity < 0 || immunity > 100 {
-		return Admin{}, ErrImmunity
 	}
 
 	steamID, errSteamID := steamid.Resolve(ctx, identity)
@@ -565,14 +561,16 @@ func (h Sourcemod) AddAdmin(ctx context.Context, alias string, authType AuthType
 		return Admin{}, ErrGetPerson
 	}
 
+	perms := normalizePermissions(permissions)
+
 	return h.repository.AddAdmin(ctx, Admin{
-		SteamID:  steamID,
-		AuthType: AuthTypeSteam,
-		Identity: string(steamID.Steam3()),
-		Flags:    flags,
-		Name:     alias,
-		Immunity: immunity,
-		Groups:   []Groups{},
+		SteamID:     steamID,
+		AuthType:    AuthTypeSteam,
+		Identity:    string(steamID.Steam3()),
+		Name:        alias,
+		Immunity:    deriveImmunity(perms),
+		Groups:      []Groups{},
+		Permissions: perms,
 	})
 }
 
@@ -597,15 +595,8 @@ func (h Sourcemod) SaveGroup(ctx context.Context, group Groups) (Groups, error) 
 		return Groups{}, ErrGroupName
 	}
 
-	if group.ImmunityLevel > 100 || group.ImmunityLevel < 0 {
-		return Groups{}, ErrImmunity
-	}
-
-	for _, flag := range group.Flags {
-		if !strings.ContainsRune(validFlags, flag) {
-			return Groups{}, ErrAdminFlagInvalid
-		}
-	}
+	group.Permissions = normalizePermissions(group.Permissions)
+	group.ImmunityLevel = deriveImmunity(group.Permissions)
 
 	return h.repository.SaveGroup(ctx, group)
 }

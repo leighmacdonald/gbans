@@ -7,17 +7,19 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
+import MenuItem from "@mui/material/MenuItem";
 import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
+import { Permission } from "../../rpc/roles/v1/roles_pb.ts";
 import type { Group } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
 import { createGroup, editGroups } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
-import { hasSMFlag, schemaFlags } from "../../util/strings.ts";
+import { smPermissions } from "../../util/strings.ts";
 import { Heading } from "../Heading";
 
-const schema = schemaFlags.extend({
+const schema = z.object({
 	name: z.string().min(2),
-	immunity: z.number().min(0).max(100),
+	permissions: z.array(z.number()),
 });
 
 export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: Group }) => {
@@ -25,28 +27,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: Group }
 	const { sendError } = useUserFlashCtx();
 	const defaultValues: z.input<typeof schema> = {
 		name: group?.name ?? "",
-		immunity: group?.immunityLevel ?? 0,
-		z: hasSMFlag("z", group),
-		a: hasSMFlag("a", group),
-		b: hasSMFlag("b", group),
-		c: hasSMFlag("c", group),
-		d: hasSMFlag("d", group),
-		e: hasSMFlag("e", group),
-		f: hasSMFlag("f", group),
-		g: hasSMFlag("g", group),
-		h: hasSMFlag("h", group),
-		i: hasSMFlag("i", group),
-		j: hasSMFlag("j", group),
-		k: hasSMFlag("k", group),
-		l: hasSMFlag("l", group),
-		m: hasSMFlag("m", group),
-		n: hasSMFlag("n", group),
-		o: hasSMFlag("o", group),
-		p: hasSMFlag("p", group),
-		q: hasSMFlag("q", group),
-		r: hasSMFlag("r", group),
-		s: hasSMFlag("s", group),
-		t: hasSMFlag("t", group),
+		permissions: group?.permissions ?? [],
 	};
 	const createMutation = useMutation(createGroup, {
 		onSuccess: async (group) => {
@@ -66,25 +47,10 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: Group }
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			const flags = Object.entries(value)
-				.filter((v) => !["name", "immunity"].includes(v[0]))
-				.reduce((acc, value) => {
-					if (value[1]) {
-						acc += value[0];
-					}
-					return acc;
-				}, "");
-
-			const args = {
-				name: value.name,
-				immunity: Number(value.immunity),
-				flags: flags,
-			};
-
 			if (group?.groupId) {
-				editMutation.mutate({ ...args, groupId: group.groupId });
+				editMutation.mutate({ groupId: group.groupId, ...value });
 			} else {
-				createMutation.mutate(args);
+				createMutation.mutate(value);
 			}
 		},
 		validators: {
@@ -108,7 +74,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: Group }
 
 				<DialogContent>
 					<Grid container spacing={2}>
-						<Grid size={{ xs: 6 }}>
+						<Grid size={{ xs: 12 }}>
 							<form.AppField
 								name={"name"}
 								children={(field) => {
@@ -116,180 +82,25 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: Group }
 								}}
 							/>
 						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"immunity"}
-								children={(field) => {
-									return <field.TextField label={"Immunity Level"} />;
-								}}
-							/>
-						</Grid>
 
-						<Grid size={{ xs: 6 }}>
+						<Grid size={{ xs: 12 }}>
 							<form.AppField
-								name={"z"}
+								name={"permissions"}
 								children={(field) => {
-									return <field.CheckboxField label={"(z) Full Admin"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"a"}
-								children={(field) => {
-									return <field.CheckboxField label={"(a) Reserved Slot"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"b"}
-								children={(field) => {
-									return <field.CheckboxField label={"(b) Generic Admin"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"c"}
-								children={(field) => {
-									return <field.CheckboxField label={"(c) Kick Players"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"d"}
-								children={(field) => {
-									return <field.CheckboxField label={"(d) Ban Players"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"e"}
-								children={(field) => {
-									return <field.CheckboxField label={"(e) Unban Players"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"f"}
-								children={(field) => {
-									return <field.CheckboxField label={"(f) Slay/Harm Players"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"g"}
-								children={(field) => {
-									return <field.CheckboxField label={"(g) Change Maps"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"h"}
-								children={(field) => {
-									return <field.CheckboxField label={"(h) Change CVARs"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"i"}
-								children={(field) => {
-									return <field.CheckboxField label={"(i) Exec Configs"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"j"}
-								children={(field) => {
-									return <field.CheckboxField label={"(j) Special Chat Privileges"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"k"}
-								children={(field) => {
-									return <field.CheckboxField label={"(k) Start Votes"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"l"}
-								children={(field) => {
-									return <field.CheckboxField label={"(l) Set Server Password"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"m"}
-								children={(field) => {
-									return <field.CheckboxField label={"(m) RCON Access"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"n"}
-								children={(field) => {
-									return <field.CheckboxField label={"(n) Enabled Cheats"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"o"}
-								children={(field) => {
-									return <field.CheckboxField label={"(o) Custom Flag"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"p"}
-								children={(field) => {
-									return <field.CheckboxField label={"(p) Custom Flag"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"q"}
-								children={(field) => {
-									return <field.CheckboxField label={"(q) Custom Flag"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"r"}
-								children={(field) => {
-									return <field.CheckboxField label={"(r) Custom Flag"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"s"}
-								children={(field) => {
-									return <field.CheckboxField label={"(s) Custom Flag"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"t"}
-								children={(field) => {
-									return <field.CheckboxField label={"(t) Custom Flag"} />;
+									return (
+										<field.SelectPermissionsField
+											multiple={true}
+											label={"Permissions"}
+											items={smPermissions}
+											renderItem={(p) => {
+												return (
+													<MenuItem value={p} key={`perm-${p}`}>
+														{Permission[p]}
+													</MenuItem>
+												);
+											}}
+										/>
+									);
 								}}
 							/>
 						</Grid>

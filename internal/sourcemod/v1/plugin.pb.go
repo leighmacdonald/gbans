@@ -8,7 +8,8 @@ package sourcemodv1
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
-	v1 "github.com/leighmacdonald/gbans/internal/ban/v1"
+	v11 "github.com/leighmacdonald/gbans/internal/ban/v1"
+	v1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -305,10 +306,11 @@ func (x *SMSeedResponse) GetMessage() string {
 }
 
 type SMOverride struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	OverrideType  *OverrideType          `protobuf:"varint,1,opt,name=override_type,json=overrideType,enum=sourcemod.v1.OverrideType" json:"override_type,omitempty"`
-	Name          *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
-	Flags         *string                `protobuf:"bytes,3,opt,name=flags" json:"flags,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	OverrideType *OverrideType          `protobuf:"varint,1,opt,name=override_type,json=overrideType,enum=sourcemod.v1.OverrideType" json:"override_type,omitempty"`
+	Name         *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	// The permission set required to use the overridden command or group.
+	Permissions   []v1.Permission `protobuf:"varint,4,rep,packed,name=permissions,enum=roles.v1.Permission" json:"permissions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -357,11 +359,11 @@ func (x *SMOverride) GetName() string {
 	return ""
 }
 
-func (x *SMOverride) GetFlags() string {
-	if x != nil && x.Flags != nil {
-		return *x.Flags
+func (x *SMOverride) GetPermissions() []v1.Permission {
+	if x != nil {
+		return x.Permissions
 	}
-	return ""
+	return nil
 }
 
 type SMOverridesResponse struct {
@@ -479,7 +481,7 @@ func (x *SMCheckRequest) GetName() string {
 type SMCheckResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ClientId      *int32                 `protobuf:"varint,1,opt,name=client_id,json=clientId" json:"client_id,omitempty"`
-	BanType       *v1.BanType            `protobuf:"varint,2,opt,name=ban_type,json=banType,enum=ban.v1.BanType" json:"ban_type,omitempty"`
+	BanType       *v11.BanType           `protobuf:"varint,2,opt,name=ban_type,json=banType,enum=ban.v1.BanType" json:"ban_type,omitempty"`
 	Msg           *string                `protobuf:"bytes,3,opt,name=msg" json:"msg,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -522,11 +524,11 @@ func (x *SMCheckResponse) GetClientId() int32 {
 	return 0
 }
 
-func (x *SMCheckResponse) GetBanType() v1.BanType {
+func (x *SMCheckResponse) GetBanType() v11.BanType {
 	if x != nil && x.BanType != nil {
 		return *x.BanType
 	}
-	return v1.BanType(0)
+	return v11.BanType(0)
 }
 
 func (x *SMCheckResponse) GetMsg() string {
@@ -693,14 +695,15 @@ func (x *SMUsersResponse) GetUserGroups() []*SMUserGroup {
 }
 
 type SMUser struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            *int64                 `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
-	AuthType      *string                `protobuf:"bytes,2,opt,name=auth_type,json=authType" json:"auth_type,omitempty"`
-	Identity      *string                `protobuf:"bytes,3,opt,name=identity" json:"identity,omitempty"`
-	Password      *string                `protobuf:"bytes,4,opt,name=password" json:"password,omitempty"`
-	Flags         *string                `protobuf:"bytes,5,opt,name=flags" json:"flags,omitempty"`
-	Name          *string                `protobuf:"bytes,6,opt,name=name" json:"name,omitempty"`
-	Immunity      *int32                 `protobuf:"varint,7,opt,name=immunity" json:"immunity,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Id       *int64                 `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
+	AuthType *string                `protobuf:"bytes,2,opt,name=auth_type,json=authType" json:"auth_type,omitempty"`
+	Identity *string                `protobuf:"bytes,3,opt,name=identity" json:"identity,omitempty"`
+	Password *string                `protobuf:"bytes,4,opt,name=password" json:"password,omitempty"`
+	Name     *string                `protobuf:"bytes,6,opt,name=name" json:"name,omitempty"`
+	Immunity *int32                 `protobuf:"varint,7,opt,name=immunity" json:"immunity,omitempty"`
+	// The full permission set of the user's personal role.
+	Permissions   []v1.Permission `protobuf:"varint,8,rep,packed,name=permissions,enum=roles.v1.Permission" json:"permissions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -763,13 +766,6 @@ func (x *SMUser) GetPassword() string {
 	return ""
 }
 
-func (x *SMUser) GetFlags() string {
-	if x != nil && x.Flags != nil {
-		return *x.Flags
-	}
-	return ""
-}
-
 func (x *SMUser) GetName() string {
 	if x != nil && x.Name != nil {
 		return *x.Name
@@ -782,6 +778,13 @@ func (x *SMUser) GetImmunity() int32 {
 		return *x.Immunity
 	}
 	return 0
+}
+
+func (x *SMUser) GetPermissions() []v1.Permission {
+	if x != nil {
+		return x.Permissions
+	}
+	return nil
 }
 
 type SMUserGroup struct {
@@ -840,7 +843,7 @@ var File_sourcemod_v1_plugin_proto protoreflect.FileDescriptor
 
 const file_sourcemod_v1_plugin_proto_rawDesc = "" +
 	"\n" +
-	"\x19sourcemod/v1/plugin.proto\x12\fsourcemod.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1csourcemod/v1/sourcemod.proto\"v\n" +
+	"\x19sourcemod/v1/plugin.proto\x12\fsourcemod.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x14roles/v1/roles.proto\x1a\x1csourcemod/v1/sourcemod.proto\"v\n" +
 	"\x10SMPingModRequest\x12\x19\n" +
 	"\bsteam_id\x18\x01 \x01(\tR\asteamId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
@@ -856,14 +859,13 @@ const file_sourcemod_v1_plugin_proto_rawDesc = "" +
 	"\bsteam_id\x18\x01 \x01(\tB\n" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\asteamId\"2\n" +
 	"\x0eSMSeedResponse\x12 \n" +
-	"\amessage\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\amessage\"\x9c\x01\n" +
+	"\amessage\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\amessage\"\xb8\x01\n" +
 	"\n" +
 	"SMOverride\x12L\n" +
 	"\roverride_type\x18\x01 \x01(\x0e2\x1a.sourcemod.v1.OverrideTypeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\foverrideType\x12\x1e\n" +
 	"\x04name\x18\x02 \x01(\tB\n" +
-	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04name\x12 \n" +
-	"\x05flags\x18\x03 \x01(\tB\n" +
-	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x05flags\"U\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04name\x126\n" +
+	"\vpermissions\x18\x04 \x03(\x0e2\x14.roles.v1.PermissionR\vpermissionsJ\x04\b\x03\x10\x04\"U\n" +
 	"\x13SMOverridesResponse\x12>\n" +
 	"\toverrides\x18\x01 \x03(\v2\x18.sourcemod.v1.SMOverrideB\x06\xbaH\x03\xc8\x01\x01R\toverrides\"\xa2\x01\n" +
 	"\x0eSMCheckRequest\x12%\n" +
@@ -890,15 +892,15 @@ const file_sourcemod_v1_plugin_proto_rawDesc = "" +
 	"\x0fSMUsersResponse\x122\n" +
 	"\x05users\x18\x01 \x03(\v2\x14.sourcemod.v1.SMUserB\x06\xbaH\x03\xc8\x01\x01R\x05users\x12B\n" +
 	"\vuser_groups\x18\x02 \x03(\v2\x19.sourcemod.v1.SMUserGroupB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"userGroups\"\x82\x02\n" +
+	"userGroups\"\xa2\x02\n" +
 	"\x06SMUser\x12\x1c\n" +
 	"\x02id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\x02id\x126\n" +
 	"\tauth_type\x18\x02 \x01(\tB\x19\xbaH\x16\xc8\x01\x01r\x11R\x05steamR\x04nameR\x02ipR\bauthType\x12\"\n" +
 	"\bidentity\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bidentity\x12\x1a\n" +
-	"\bpassword\x18\x04 \x01(\tR\bpassword\x12\x1c\n" +
-	"\x05flags\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05flags\x12\x1a\n" +
+	"\bpassword\x18\x04 \x01(\tR\bpassword\x12\x1a\n" +
 	"\x04name\x18\x06 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12(\n" +
-	"\bimmunity\x18\a \x01(\x05B\f\xbaH\t\xc8\x01\x01\x1a\x04\x18d(\x00R\bimmunity\"a\n" +
+	"\bimmunity\x18\a \x01(\x05B\f\xbaH\t\xc8\x01\x01\x1a\x04\x18d(\x00R\bimmunity\x126\n" +
+	"\vpermissions\x18\b \x03(\x0e2\x14.roles.v1.PermissionR\vpermissionsJ\x04\b\x05\x10\x06\"a\n" +
 	"\vSMUserGroup\x12'\n" +
 	"\badmin_id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\aadminId\x12)\n" +
 	"\n" +
@@ -944,37 +946,40 @@ var file_sourcemod_v1_plugin_proto_goTypes = []any{
 	(*SMUser)(nil),                 // 13: sourcemod.v1.SMUser
 	(*SMUserGroup)(nil),            // 14: sourcemod.v1.SMUserGroup
 	(OverrideType)(0),              // 15: sourcemod.v1.OverrideType
-	(v1.BanType)(0),                // 16: ban.v1.BanType
-	(*Group)(nil),                  // 17: sourcemod.v1.Group
-	(*emptypb.Empty)(nil),          // 18: google.protobuf.Empty
+	(v1.Permission)(0),             // 16: roles.v1.Permission
+	(v11.BanType)(0),               // 17: ban.v1.BanType
+	(*Group)(nil),                  // 18: sourcemod.v1.Group
+	(*emptypb.Empty)(nil),          // 19: google.protobuf.Empty
 }
 var file_sourcemod_v1_plugin_proto_depIdxs = []int32{
 	15, // 0: sourcemod.v1.SMOverride.override_type:type_name -> sourcemod.v1.OverrideType
-	6,  // 1: sourcemod.v1.SMOverridesResponse.overrides:type_name -> sourcemod.v1.SMOverride
-	16, // 2: sourcemod.v1.SMCheckResponse.ban_type:type_name -> ban.v1.BanType
-	17, // 3: sourcemod.v1.SMGroupsResponse.groups:type_name -> sourcemod.v1.Group
-	10, // 4: sourcemod.v1.SMGroupsResponse.immunities:type_name -> sourcemod.v1.SMGroupImmunity
-	13, // 5: sourcemod.v1.SMUsersResponse.users:type_name -> sourcemod.v1.SMUser
-	14, // 6: sourcemod.v1.SMUsersResponse.user_groups:type_name -> sourcemod.v1.SMUserGroup
-	2,  // 7: sourcemod.v1.PluginService.SMAuthenticate:input_type -> sourcemod.v1.SMAuthenticateRequest
-	8,  // 8: sourcemod.v1.PluginService.SMCheck:input_type -> sourcemod.v1.SMCheckRequest
-	18, // 9: sourcemod.v1.PluginService.SMOverrides:input_type -> google.protobuf.Empty
-	18, // 10: sourcemod.v1.PluginService.SMUsers:input_type -> google.protobuf.Empty
-	18, // 11: sourcemod.v1.PluginService.SMGroups:input_type -> google.protobuf.Empty
-	4,  // 12: sourcemod.v1.PluginService.SMSeed:input_type -> sourcemod.v1.SMSeedRequest
-	0,  // 13: sourcemod.v1.PluginService.SMPingMod:input_type -> sourcemod.v1.SMPingModRequest
-	3,  // 14: sourcemod.v1.PluginService.SMAuthenticate:output_type -> sourcemod.v1.SMAuthenticateResponse
-	9,  // 15: sourcemod.v1.PluginService.SMCheck:output_type -> sourcemod.v1.SMCheckResponse
-	7,  // 16: sourcemod.v1.PluginService.SMOverrides:output_type -> sourcemod.v1.SMOverridesResponse
-	12, // 17: sourcemod.v1.PluginService.SMUsers:output_type -> sourcemod.v1.SMUsersResponse
-	11, // 18: sourcemod.v1.PluginService.SMGroups:output_type -> sourcemod.v1.SMGroupsResponse
-	5,  // 19: sourcemod.v1.PluginService.SMSeed:output_type -> sourcemod.v1.SMSeedResponse
-	18, // 20: sourcemod.v1.PluginService.SMPingMod:output_type -> google.protobuf.Empty
-	14, // [14:21] is the sub-list for method output_type
-	7,  // [7:14] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	16, // 1: sourcemod.v1.SMOverride.permissions:type_name -> roles.v1.Permission
+	6,  // 2: sourcemod.v1.SMOverridesResponse.overrides:type_name -> sourcemod.v1.SMOverride
+	17, // 3: sourcemod.v1.SMCheckResponse.ban_type:type_name -> ban.v1.BanType
+	18, // 4: sourcemod.v1.SMGroupsResponse.groups:type_name -> sourcemod.v1.Group
+	10, // 5: sourcemod.v1.SMGroupsResponse.immunities:type_name -> sourcemod.v1.SMGroupImmunity
+	13, // 6: sourcemod.v1.SMUsersResponse.users:type_name -> sourcemod.v1.SMUser
+	14, // 7: sourcemod.v1.SMUsersResponse.user_groups:type_name -> sourcemod.v1.SMUserGroup
+	16, // 8: sourcemod.v1.SMUser.permissions:type_name -> roles.v1.Permission
+	2,  // 9: sourcemod.v1.PluginService.SMAuthenticate:input_type -> sourcemod.v1.SMAuthenticateRequest
+	8,  // 10: sourcemod.v1.PluginService.SMCheck:input_type -> sourcemod.v1.SMCheckRequest
+	19, // 11: sourcemod.v1.PluginService.SMOverrides:input_type -> google.protobuf.Empty
+	19, // 12: sourcemod.v1.PluginService.SMUsers:input_type -> google.protobuf.Empty
+	19, // 13: sourcemod.v1.PluginService.SMGroups:input_type -> google.protobuf.Empty
+	4,  // 14: sourcemod.v1.PluginService.SMSeed:input_type -> sourcemod.v1.SMSeedRequest
+	0,  // 15: sourcemod.v1.PluginService.SMPingMod:input_type -> sourcemod.v1.SMPingModRequest
+	3,  // 16: sourcemod.v1.PluginService.SMAuthenticate:output_type -> sourcemod.v1.SMAuthenticateResponse
+	9,  // 17: sourcemod.v1.PluginService.SMCheck:output_type -> sourcemod.v1.SMCheckResponse
+	7,  // 18: sourcemod.v1.PluginService.SMOverrides:output_type -> sourcemod.v1.SMOverridesResponse
+	12, // 19: sourcemod.v1.PluginService.SMUsers:output_type -> sourcemod.v1.SMUsersResponse
+	11, // 20: sourcemod.v1.PluginService.SMGroups:output_type -> sourcemod.v1.SMGroupsResponse
+	5,  // 21: sourcemod.v1.PluginService.SMSeed:output_type -> sourcemod.v1.SMSeedResponse
+	19, // 22: sourcemod.v1.PluginService.SMPingMod:output_type -> google.protobuf.Empty
+	16, // [16:23] is the sub-list for method output_type
+	9,  // [9:16] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_sourcemod_v1_plugin_proto_init() }

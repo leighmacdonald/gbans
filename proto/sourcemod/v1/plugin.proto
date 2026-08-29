@@ -5,6 +5,7 @@ package sourcemod.v1;
 import "ban/v1/ban.proto";
 import "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
+import "roles/v1/roles.proto";
 import "sourcemod/v1/sourcemod.proto";
 
 // Provides the API used to communicate with the game servers.
@@ -65,10 +66,9 @@ message SMOverride {
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1
   ];
-  string flags = 3 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1
-  ];
+  reserved 3;
+  // The permission set required to use the overridden command or group.
+  repeated roles.v1.Permission permissions = 4;
 }
 
 message SMOverridesResponse {
@@ -132,7 +132,7 @@ message SMUser {
   ];
   string identity = 3 [(buf.validate.field).required = true];
   string password = 4;
-  string flags = 5 [(buf.validate.field).required = true];
+  reserved 5;
   string name = 6 [(buf.validate.field).required = true];
   int32 immunity = 7 [
     (buf.validate.field).required = true,
@@ -141,6 +141,8 @@ message SMUser {
       lte: 100
     }
   ];
+  // The full permission set of the user's personal role.
+  repeated roles.v1.Permission permissions = 8;
 }
 
 message SMUserGroup {

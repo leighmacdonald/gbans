@@ -70,16 +70,16 @@ func (s Service) Groups(ctx context.Context, _ *emptypb.Empty) (*v1.GroupsRespon
 func toGroup(group Groups) *v1.Group {
 	return &v1.Group{
 		GroupId:       &group.GroupID,
-		Flags:         &group.Flags,
 		Name:          &group.Name,
 		ImmunityLevel: &group.ImmunityLevel,
 		CreatedOn:     timestamppb.New(group.CreatedOn),
 		UpdatedOn:     timestamppb.New(group.UpdatedOn),
+		Permissions:   group.Permissions,
 	}
 }
 
 func (s Service) CreateGroup(ctx context.Context, req *v1.CreateGroupRequest) (*v1.CreateGroupResponse, error) {
-	group, errGroup := s.sourcemod.AddGroup(ctx, req.GetName(), req.GetFlags(), req.GetImmunity())
+	group, errGroup := s.sourcemod.AddGroup(ctx, req.GetName(), req.GetPermissions())
 	if errGroup != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -98,8 +98,7 @@ func (s Service) EditGroups(ctx context.Context, req *v1.EditGroupsRequest) (*v1
 	}
 
 	group.Name = req.GetName()
-	group.Flags = req.GetFlags()
-	group.ImmunityLevel = req.GetImmunity()
+	group.Permissions = req.GetPermissions()
 
 	editedGroup, errSave := s.sourcemod.SaveGroup(ctx, group)
 	if errSave != nil {
@@ -219,7 +218,7 @@ func (s Service) Admins(ctx context.Context, _ *emptypb.Empty) (*v1.AdminsRespon
 }
 
 func (s Service) CreateAdmin(ctx context.Context, req *v1.CreateAdminRequest) (*v1.CreateAdminResponse, error) {
-	admin, errAdmin := s.sourcemod.AddAdmin(ctx, req.GetName(), fromAuthType(req.GetAuthType()), req.GetIdentity(), req.GetFlags(), req.GetImmunity(), req.GetPassword())
+	admin, errAdmin := s.sourcemod.AddAdmin(ctx, req.GetName(), fromAuthType(req.GetAuthType()), req.GetIdentity(), req.GetPermissions())
 	if errAdmin != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -238,8 +237,7 @@ func (s Service) EditAdmin(ctx context.Context, req *v1.EditAdminRequest) (*v1.E
 	}
 
 	admin.Name = req.GetName()
-	admin.Flags = req.GetFlags()
-	admin.Immunity = req.GetImmunity()
+	admin.Permissions = req.GetPermissions()
 	admin.AuthType = fromAuthType(req.GetAuthType())
 	admin.Identity = req.GetIdentity()
 	admin.Password = req.GetPassword()
@@ -293,7 +291,7 @@ func (s Service) Overrides(ctx context.Context, _ *emptypb.Empty) (*v1.Overrides
 }
 
 func (s Service) CreateOverrides(ctx context.Context, req *v1.CreateOverridesRequest) (*v1.CreateOverridesResponse, error) {
-	override, errCreate := s.sourcemod.AddOverride(ctx, req.GetName(), fromOverrideType(req.GetOverrideType()), req.GetFlags())
+	override, errCreate := s.sourcemod.AddOverride(ctx, req.GetName(), fromOverrideType(req.GetOverrideType()), req.GetPermissions())
 	if errCreate != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -313,7 +311,7 @@ func (s Service) EditOverrides(ctx context.Context, req *v1.EditOverridesRequest
 
 	override.Type = fromOverrideType(req.GetOverrideType())
 	override.Name = req.GetName()
-	override.Flags = req.GetFlags()
+	override.Permissions = req.GetPermissions()
 
 	edited, errSave := s.sourcemod.SaveOverride(ctx, override)
 	if errSave != nil {
@@ -431,25 +429,25 @@ func toOverride(override Overrides) *v1.Override {
 		OverrideId:   &override.OverrideID,
 		OverrideType: toOverrideType(override.Type),
 		Name:         &override.Name,
-		Flags:        &override.Flags,
 		CreatedOn:    timestamppb.New(override.CreatedOn),
 		UpdatedOn:    timestamppb.New(override.UpdatedOn),
+		Permissions:  override.Permissions,
 	}
 }
 
 func toAdmin(admin Admin) *v1.Admin {
 	resp := v1.Admin{
-		AdminId:   &admin.AdminID,
-		SteamId:   new(admin.SteamID.Int64()),
-		AuthType:  toAuthType(admin.AuthType),
-		Identity:  &admin.Identity,
-		Password:  &admin.Password,
-		Flags:     &admin.Flags,
-		Name:      &admin.Name,
-		Immunity:  &admin.Immunity,
-		Groups:    make([]*v1.Group, len(admin.Groups)),
-		CreatedOn: timestamppb.New(admin.CreatedOn),
-		UpdatedOn: timestamppb.New(admin.UpdatedOn),
+		AdminId:     &admin.AdminID,
+		SteamId:     new(admin.SteamID.Int64()),
+		AuthType:    toAuthType(admin.AuthType),
+		Identity:    &admin.Identity,
+		Password:    &admin.Password,
+		Name:        &admin.Name,
+		Immunity:    &admin.Immunity,
+		Groups:      make([]*v1.Group, len(admin.Groups)),
+		CreatedOn:   timestamppb.New(admin.CreatedOn),
+		UpdatedOn:   timestamppb.New(admin.UpdatedOn),
+		Permissions: admin.Permissions,
 	}
 
 	for idx, group := range admin.Groups {

@@ -1,11 +1,10 @@
 import type { Theme } from "@mui/material";
-import { z } from "zod/v4";
 import { Detection } from "../rpc/anticheat/v1/anticheat_pb.ts";
 import type { Asset } from "../rpc/asset/v1/asset_pb.ts";
 import { BanType } from "../rpc/ban/v1/ban_pb.ts";
 import { ReportStatus } from "../rpc/ban/v1/report_pb.ts";
 import type { DiscordProfile } from "../rpc/discord/oauth/v1/discord_pb.ts";
-import type { Admin, Group, Override } from "../rpc/sourcemod/v1/sourcemod_pb";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 
 const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -36,59 +35,9 @@ export const cidrHostCount = (cidr: string): number => {
 
 export const EMPTY_UUID = "feb4bf16-7f55-4cb4-923c-4de69a093b79";
 
-export const Flags = z.enum([
-	"z",
-	"a",
-	"b",
-	"c",
-	"d",
-	"e",
-	"f",
-	"g",
-	"h",
-	"i",
-	"j",
-	"k",
-	"l",
-	"m",
-	"n",
-	"o",
-	"p",
-	"q",
-	"r",
-	"s",
-	"t",
-]);
-
-export const schemaFlags = z.object({
-	a: z.boolean(),
-	b: z.boolean(),
-	c: z.boolean(),
-	d: z.boolean(),
-	e: z.boolean(),
-	f: z.boolean(),
-	g: z.boolean(),
-	h: z.boolean(),
-	i: z.boolean(),
-	j: z.boolean(),
-	k: z.boolean(),
-	l: z.boolean(),
-	m: z.boolean(),
-	n: z.boolean(),
-	o: z.boolean(),
-	p: z.boolean(),
-	q: z.boolean(),
-	r: z.boolean(),
-	s: z.boolean(),
-	t: z.boolean(),
-	z: z.boolean(),
-});
-
-export type Flags = z.infer<typeof Flags>;
-
-export const hasSMFlag = (flag: Flags, entity?: Admin | Group | Override) => {
-	return entity?.flags.includes(flag) ?? false;
-};
+export const smPermissions: Permission[] = (Object.keys(Permission) as (keyof typeof Permission)[])
+	.filter((name) => name.startsWith("PERMISSION_SOURCEMOD_"))
+	.map((name) => Permission[name]);
 
 export const cleanMapName = (name: string): string => {
 	if (!name.startsWith("workshop/")) {
