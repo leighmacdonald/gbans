@@ -9,6 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx";
+import { Permission } from "../../rpc/roles/v1/roles_pb.ts";
 import type { Override } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
 import { deleteOverrides, overrides } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
 import { logErr } from "../../util/errors";
@@ -98,10 +99,17 @@ export const SMOverridesTable = () => {
 				grow: false,
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
-			overrideColumnHelper.accessor("flags", {
-				header: "Flags",
+			overrideColumnHelper.accessor("permissions", {
+				header: "Permissions",
 				grow: false,
-				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+				Cell: ({ cell }) => (
+					<TableCellString>
+						{cell
+							.getValue()
+							.map((p) => Permission[p])
+							.join(", ")}
+					</TableCellString>
+				),
 			}),
 			overrideColumnHelper.accessor("createdOn", {
 				header: "Created On",
@@ -154,7 +162,7 @@ export const SMOverridesTable = () => {
 			sorting: [{ id: "updatedOn", desc: true }],
 			columnVisibility: {
 				name: true,
-				identity: true,
+				permissions: true,
 			},
 		},
 	});

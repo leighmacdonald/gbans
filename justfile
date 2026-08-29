@@ -63,11 +63,6 @@ air:
 update-backend:
     go get -u ./...
 
-upload-plugin:
-    @just sourcemod
-    @scp sourcemod/plugins/gbans.smx $SOURCEMOD_SCP_URI
-    @rcon-cli --host $SOURCEMOD_HOST --port $SOURCEMOD_PORT --password $SOURCEMOD_RCON "$SOURCEMOD_RELOAD_COMMAND"
-
 vulncheck:
     govulncheck -show verbose ./...
 
@@ -186,6 +181,11 @@ build-docs:
 clean-docs:
     rm -rf build
     rm -rf node_modules
+
+upload-plugin:
+    @just build-sourcemod
+    @scp sourcemod/plugins/gbans.smx $SOURCEMOD_SCP_URI
+    @rcon-cli --host $SOURCEMOD_HOST --port $SOURCEMOD_PORT --password $SOURCEMOD_RCON "$SOURCEMOD_RELOAD_COMMAND"
 
 [working-directory('sourcemod')]
 clean-sourcemod:

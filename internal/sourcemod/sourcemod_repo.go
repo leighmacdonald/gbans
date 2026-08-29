@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/netip"
+	"slices"
 	"strconv"
 	"time"
 
@@ -360,11 +361,17 @@ func (r Repository) refreshPermissionLevel(ctx context.Context, steamID int64) e
 }
 
 func toGroupFromRole(row roleRow, perms []rolesv1.Permission) Groups {
+	if perms == nil {
+		perms = []rolesv1.Permission{}
+	} else {
+		slices.Sort(perms)
+	}
+
 	return Groups{
 		GroupID:       row.RoleID,
-		Flags:         permissionsToFlags(perms),
 		Name:          nameFromSMRole(row.RoleName),
 		ImmunityLevel: deriveImmunity(perms),
+		Permissions:   perms,
 		CreatedOn:     row.CreatedOn,
 		UpdatedOn:     row.UpdatedOn,
 	}
@@ -457,7 +464,7 @@ func (r Repository) AddGroup(ctx context.Context, group Groups) (Groups, error) 
 		return Groups{}, database.Err(err)
 	}
 
-	if err := r.setRolePermissions(ctx, group.GroupID, groupPermissions(group.Flags, group.ImmunityLevel)); err != nil {
+	if err := r.setRolePermissions(ctx, group.GroupID, group.Permissions); err != nil {
 		return Groups{}, err
 	}
 
@@ -477,7 +484,7 @@ func (r Repository) SaveGroup(ctx context.Context, group Groups) (Groups, error)
 		return Groups{}, database.Err(err)
 	}
 
-	if err := r.setRolePermissions(ctx, group.GroupID, groupPermissions(group.Flags, group.ImmunityLevel)); err != nil {
+	if err := r.setRolePermissions(ctx, group.GroupID, group.Permissions); err != nil {
 		return Groups{}, err
 	}
 
@@ -587,17 +594,17 @@ func (r Repository) buildAdmins(ctx context.Context, steamIDs []int64) ([]Admin,
 	for _, base := range bases {
 		sid := steamid.New(base.SteamID)
 		admin := Admin{
-			AdminID:   base.SteamID,
-			SteamID:   sid,
-			AuthType:  AuthTypeSteam,
-			Identity:  string(sid.Steam3()),
-			Password:  "",
-			Flags:     "",
-			Name:      "",
-			Immunity:  0,
-			CreatedOn: base.CreatedOn,
-			UpdatedOn: base.UpdatedOn,
-			Groups:    []Groups{},
+			AdminID:     base.SteamID,
+			SteamID:     sid,
+			AuthType:    AuthTypeSteam,
+			Identity:    string(sid.Steam3()),
+			Password:    "",
+			Name:        "",
+			Immunity:    0,
+			CreatedOn:   base.CreatedOn,
+			UpdatedOn:   base.UpdatedOn,
+			Groups:      []Groups{},
+			Permissions: []rolesv1.Permission{},
 		}
 
 		// The personal role is the only sourcemod role assigned to this single
@@ -617,9 +624,16 @@ func (r Repository) buildAdmins(ctx context.Context, steamIDs []int64) ([]Admin,
 		}
 
 		if personal != nil {
+			perms := perms[personal.RoleID]
+			if perms == nil {
+				perms = []rolesv1.Permission{}
+			} else {
+				slices.Sort(perms)
+			}
+
 			admin.Name = nameFromSMRole(personal.RoleName)
-			admin.Flags = permissionsToFlags(perms[personal.RoleID])
-			admin.Immunity = deriveImmunity(perms[personal.RoleID])
+			admin.Immunity = deriveImmunity(perms)
+			admin.Permissions = perms
 		}
 
 		if admin.Name == "" {
@@ -804,7 +818,7 @@ func (r Repository) upsertAdmin(ctx context.Context, admin Admin) (Admin, error)
 		return Admin{}, err
 	}
 
-	if err := r.setRolePermissions(ctx, personalID, groupPermissions(admin.Flags, admin.Immunity)); err != nil {
+	if err := r.setRolePermissions(ctx, personalID, admin.Permissions); err != nil {
 		return Admin{}, err
 	}
 
@@ -1062,11 +1076,69 @@ func (r Repository) GroupOverrides(ctx context.Context, group Groups) ([]GroupOv
 	return overrides, nil
 }
 
+// overridePermissions returns the permission set of the given overrides.
+func (r Repository) overridePermissions(ctx context.Context, overrideIDs []int32) (map[int32][]rolesv1.Permission, error) {
+	perms := make(map[int32][]rolesv1.Permission, len(overrideIDs))
+	if len(overrideIDs) == 0 {
+		return perms, nil
+	}
+
+	rows, errRows := r.QueryBuilder(ctx, r.Builder().
+		Select("override_id", "permission").
+		From("command_override_permissions").
+		Where(sq.Eq{"override_id": overrideIDs}))
+	if errRows != nil {
+		return nil, database.Err(errRows)
+	}
+
+	for rows.Next() {
+		var (
+			overrideID int32
+			perm       rolesv1.Permission
+		)
+		if errScan := rows.Scan(&overrideID, &perm); errScan != nil {
+			return nil, database.Err(errScan)
+		}
+
+		perms[overrideID] = append(perms[overrideID], perm)
+	}
+
+	return perms, nil
+}
+
+// setOverridePermissions replaces the permission set of the given override.
+func (r Repository) setOverridePermissions(ctx context.Context, overrideID int32, perms []rolesv1.Permission) error {
+	if err := r.ExecDeleteBuilder(ctx, r.Builder().
+		Delete("command_override_permissions").
+		Where(sq.Eq{"override_id": overrideID})); err != nil {
+		return database.Err(err)
+	}
+
+	if len(perms) == 0 {
+		return nil
+	}
+
+	now := time.Now()
+	builder := r.Builder().
+		Insert("command_override_permissions").
+		Columns("override_id", "permission", "created_on", "updated_on")
+
+	for _, perm := range perms {
+		builder = builder.Values(overrideID, perm, now, now)
+	}
+
+	if err := r.ExecInsertBuilder(ctx, builder); err != nil {
+		return database.Err(err)
+	}
+
+	return nil
+}
+
 func (r Repository) GetOverride(ctx context.Context, overrideID int32) (Overrides, error) {
 	var override Overrides
 
 	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
-		Select("override_id", "type", "name", "flags", "created_on", "updated_on").
+		Select("override_id", "type", "name", "created_on", "updated_on").
 		From("command_overrides").
 		Where(sq.Eq{"override_id": overrideID}))
 	if errRow != nil {
@@ -1074,9 +1146,16 @@ func (r Repository) GetOverride(ctx context.Context, overrideID int32) (Override
 	}
 
 	if errScan := row.Scan(&override.OverrideID, &override.Type, &override.Name,
-		&override.Flags, &override.CreatedOn, &override.UpdatedOn); errScan != nil {
+		&override.CreatedOn, &override.UpdatedOn); errScan != nil {
 		return override, database.Err(errScan)
 	}
+
+	perms, errPerms := r.overridePermissions(ctx, []int32{overrideID})
+	if errPerms != nil {
+		return override, errPerms
+	}
+
+	override.Permissions = normalizePermissions(perms[overrideID])
 
 	return override, nil
 }
@@ -1087,12 +1166,15 @@ func (r Repository) AddOverride(ctx context.Context, overrides Overrides) (Overr
 		SetMap(map[string]any{
 			"type":       overrides.Type,
 			"name":       overrides.Name,
-			"flags":      overrides.Flags,
 			"created_on": overrides.CreatedOn,
 			"updated_on": overrides.UpdatedOn,
 		}).
 		Suffix("RETURNING override_id"), &overrides.OverrideID); err != nil {
 		return overrides, database.Err(err)
+	}
+
+	if err := r.setOverridePermissions(ctx, overrides.OverrideID, overrides.Permissions); err != nil {
+		return overrides, err
 	}
 
 	return overrides, nil
@@ -1113,11 +1195,14 @@ func (r Repository) SaveOverride(ctx context.Context, override Overrides) (Overr
 		SetMap(map[string]any{
 			"type":       override.Type,
 			"name":       override.Name,
-			"flags":      override.Flags,
 			"updated_on": override.UpdatedOn,
 		}).
 		Where(sq.Eq{"override_id": override.OverrideID})); err != nil {
 		return Overrides{}, database.Err(err)
+	}
+
+	if err := r.setOverridePermissions(ctx, override.OverrideID, override.Permissions); err != nil {
+		return Overrides{}, err
 	}
 
 	return override, nil
@@ -1125,7 +1210,7 @@ func (r Repository) SaveOverride(ctx context.Context, override Overrides) (Overr
 
 func (r Repository) Overrides(ctx context.Context) ([]Overrides, error) {
 	rows, errRows := r.QueryBuilder(ctx, r.Builder().
-		Select("override_id", "type", "name", "flags", "created_on", "updated_on").
+		Select("override_id", "type", "name", "created_on", "updated_on").
 		From("command_overrides"))
 	if errRows != nil {
 		return nil, database.Err(errRows)
@@ -1135,12 +1220,30 @@ func (r Repository) Overrides(ctx context.Context) ([]Overrides, error) {
 
 	for rows.Next() {
 		var override Overrides
-		if errScan := rows.Scan(&override.OverrideID, &override.Type, &override.Name, &override.Flags,
+		if errScan := rows.Scan(&override.OverrideID, &override.Type, &override.Name,
 			&override.CreatedOn, &override.UpdatedOn); errScan != nil {
 			return nil, database.Err(errScan)
 		}
 
 		overrides = append(overrides, override)
+	}
+
+	if len(overrides) == 0 {
+		return overrides, nil
+	}
+
+	var overrideIDs []int32
+	for _, override := range overrides {
+		overrideIDs = append(overrideIDs, override.OverrideID)
+	}
+
+	perms, errPerms := r.overridePermissions(ctx, overrideIDs)
+	if errPerms != nil {
+		return nil, errPerms
+	}
+
+	for idx := range overrides {
+		overrides[idx].Permissions = normalizePermissions(perms[overrides[idx].OverrideID])
 	}
 
 	return overrides, nil

@@ -23,6 +23,8 @@ alter table contest
   drop column if exists required_permission;
 
 
+drop table if exists command_override_permissions;
+
 drop table if exists command_overrides;
 
 drop table if exists role_overrides;

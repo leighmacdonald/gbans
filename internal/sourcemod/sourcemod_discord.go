@@ -290,7 +290,7 @@ func (h discordHandler) onAdminsEdit(ctx context.Context, session *discordgo.Ses
 	var (
 		requestedSID string
 		alias        string
-		flags        string
+		permissions  string
 	)
 
 	sidOption, found := opts["steamid"]
@@ -303,7 +303,7 @@ func (h discordHandler) onAdminsEdit(ctx context.Context, session *discordgo.Ses
 
 		if admin, errAdmin := h.sourcemod.AdminBySteamID(ctx, sid); errAdmin == nil {
 			alias = admin.Name
-			flags = admin.Flags
+			permissions = permissionNames(admin.Permissions)
 		}
 	}
 
@@ -313,13 +313,13 @@ func (h discordHandler) onAdminsEdit(ctx context.Context, session *discordgo.Ses
 		"Edit sourcemod admin settings",
 		discord.ModalInputRowRequired(discord.IDSteamID, "steamid", "SteamID or Profile URL", "76561197960542812", requestedSID, 0, 64),
 		discord.ModalInputRowRequired(discord.IDAlias, "alias", "Player Alias", "Bob Bobbins", alias, 0, 0),
-		discord.ModalInputRowRequired(discord.IDFlags, "flags", "Flag Set", "abcdef", flags, 1, 10))
+		discord.ModalInputRow(discord.IDPermissions, "permissions", "Permission Set (comma separated, e.g. PERMISSION_SOURCEMOD_KICK)", "PERMISSION_SOURCEMOD_KICK, PERMISSION_SOURCEMOD_RCON", permissions, 0, 1000))
 }
 
 type adminEditModal struct {
-	SteamID steamid.SteamID `id:"1"`
-	Alias   string          `id:"8"`
-	Flags   string          `id:"9"`
+	SteamID     steamid.SteamID `id:"1"`
+	Alias       string          `id:"7"`
+	Permissions string          `id:"8"`
 }
 
 func (h discordHandler) onSourcemodAdminsEditModal(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -327,6 +327,11 @@ func (h discordHandler) onSourcemodAdminsEditModal(ctx context.Context, session 
 	request, errReqiest := discord.Bind[adminEditModal](ctx, data.Components)
 	if errReqiest != nil {
 		return errReqiest
+	}
+
+	perms, errPerms := parsePermissions(request.Permissions)
+	if errPerms != nil {
+		return errPerms
 	}
 
 	admins, errAdmins := h.sourcemod.Admins(ctx)
@@ -345,8 +350,7 @@ func (h discordHandler) onSourcemodAdminsEditModal(ctx context.Context, session 
 
 	admin.SteamID = request.SteamID
 	admin.Name = request.Alias
-	admin.Flags = request.Flags
-	admin.Immunity = deriveImmunity(flagToPermissions(request.Flags))
+	admin.Permissions = perms
 	admin.AuthType = AuthTypeSteam
 	admin.Identity = request.SteamID.String()
 
@@ -360,10 +364,9 @@ func (h discordHandler) onSourcemodAdminsEditModal(ctx context.Context, session 
 
 func (h discordHandler) onGroupsEdit(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, opts discord.CommandOptions) error {
 	var (
-		alias    string
-		flags    string
-		immunity string
-		customID = "sourcemod_group_edit_modal"
+		alias       string
+		permissions string
+		customID    = "sourcemod_group_edit_modal"
 	)
 
 	gidOption, found := opts["groupid"]
@@ -379,16 +382,14 @@ func (h discordHandler) onGroupsEdit(ctx context.Context, session *discordgo.Ses
 		}
 
 		alias = group.Name
-		flags = group.Flags
-		immunity = strconv.Itoa(int(group.ImmunityLevel))
+		permissions = permissionNames(group.Permissions)
 		customID += fmt.Sprintf("_%d", gid)
 	}
 
 	return discord.RespondModal(session, interaction, customID,
 		"Edit sourcemod admin settings",
 		discord.ModalInputRowRequired(discord.IDAlias, "alias", "Group Alias/Name", "Bob Bobbins", alias, 0, 0),
-		discord.ModalInputRowRequired(discord.IDFlags, "flags", "Flag Set", "abcdef", flags, 1, 10),
-		discord.ModalInputRow(discord.IDImmunityLevel, "immunity", "Immunity Level", "100", immunity, 0, 3),
+		discord.ModalInputRow(discord.IDPermissions, "permissions", "Permission Set (comma separated, e.g. PERMISSION_SOURCEMOD_KICK)", "PERMISSION_SOURCEMOD_KICK, PERMISSION_SOURCEMOD_RCON", permissions, 0, 1000),
 	)
 }
 

@@ -438,7 +438,6 @@ create table if not exists command_overrides (
   override_id serial primary key,
   type text not null check (type in ('command', 'group')),
   name text not null,
-  flags text not null,
   created_on timestamp with time zone not null default NOW(),
   updated_on timestamp with time zone not null default NOW()
 );
@@ -449,6 +448,20 @@ using btree
 (
   type,
   name
+);
+
+create table if not exists command_override_permissions (
+  override_id int
+  not null
+  references command_overrides (override_id) on DELETE cascade,
+  permission permission not null,
+  created_on timestamp with time zone
+  not null
+  default NOW(),
+  updated_on timestamp with time zone
+  not null
+  default NOW(),
+  primary key (override_id, permission)
 );
 
 insert into role_immunity (role_id, other_id, created_on)
@@ -478,13 +491,51 @@ from
   inner join roles as r on r.role_name = 'sm-' || g.name
 on conflict do nothing;
 
-insert into command_overrides (type, name, flags, created_on, updated_on)
+insert into command_overrides (type, name, created_on, updated_on)
 select
   type,
   name,
-  flags,
   created_on,
   updated_on
 from
   sm_overrides
 on conflict do nothing;
+
+-- Translate the legacy override flag strings into permissions using the same
+-- flag mapping as the sm_groups migration above.
+insert into command_override_permissions (override_id, permission, created_on, updated_on)
+select distinct
+  co.override_id,
+  m.permission,
+  NOW(),
+  NOW()
+from
+  command_overrides as co
+  inner join sm_overrides as so
+  on so.type = co.type and so.name = co.name
+  cross join lateral regexp_split_to_table(so.flags, '') as f(ch)
+  join (values
+    ('a', 'PERMISSION_SOURCEMOD_RESERVED'::permission),
+    ('a', 'PERMISSION_SOURCEMOD_GENERIC'::permission),
+    ('b', 'PERMISSION_SOURCEMOD_KICK'::permission),
+    ('c', 'PERMISSION_SOURCEMOD_BAN'::permission),
+    ('d', 'PERMISSION_SOURCEMOD_UNBAN'::permission),
+    ('e', 'PERMISSION_SOURCEMOD_SLAY'::permission),
+    ('f', 'PERMISSION_SOURCEMOD_CHANGEMAP'::permission),
+    ('g', 'PERMISSION_SOURCEMOD_PASSWORD'::permission),
+    ('h', 'PERMISSION_SOURCEMOD_CVAR'::permission),
+    ('i', 'PERMISSION_SOURCEMOD_CFG'::permission),
+    ('j', 'PERMISSION_SOURCEMOD_CHAT'::permission),
+    ('k', 'PERMISSION_SOURCEMOD_VOTE'::permission),
+    ('l', 'PERMISSION_SOURCEMOD_RCON'::permission),
+    ('m', 'PERMISSION_SOURCEMOD_RCON'::permission),
+    ('n', 'PERMISSION_SOURCEMOD_CHEATS'::permission),
+    ('p', 'PERMISSION_SOURCEMOD_CUSTOM_1'::permission),
+    ('q', 'PERMISSION_SOURCEMOD_CUSTOM_2'::permission),
+    ('r', 'PERMISSION_SOURCEMOD_CUSTOM_3'::permission),
+    ('s', 'PERMISSION_SOURCEMOD_CUSTOM_4'::permission),
+    ('t', 'PERMISSION_SOURCEMOD_CUSTOM_5'::permission),
+    ('u', 'PERMISSION_SOURCEMOD_CUSTOM_6'::permission),
+    ('z', 'PERMISSION_SOURCEMOD_ROOT'::permission)
+  ) m(ch, permission) on m.ch = f.ch
+on conflict (override_id, permission) do nothing;
