@@ -45,6 +45,7 @@ func TestAppealRepository_SaveMessage(t *testing.T) {
 	require.Equal(t, "avatar-hash", fetched.Avatarhash)
 }
 
+//nolint:tparallel // subtests intentionally share one env: a later subtest drops a message the earlier ones read
 func TestAppealRepository_Messages(t *testing.T) {
 	t.Parallel()
 
@@ -127,6 +128,7 @@ func TestAppealRepository_MessageByID(t *testing.T) {
 	require.ErrorIs(t, err, database.ErrNoResult)
 }
 
+//nolint:tparallel // subtests intentionally share one env: the "deleted filter" subtest deletes the ban the earlier ones read
 func TestAppealRepository_ByActivity(t *testing.T) {
 	t.Parallel()
 

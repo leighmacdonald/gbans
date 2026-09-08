@@ -14,7 +14,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/roles"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -297,8 +296,79 @@ func (r Repository) unassignRole(ctx context.Context, steamID int64, roleID int3
 		Where(sq.And{sq.Eq{"steam_id": steamID}, sq.Eq{"role_id": roleID}})))
 }
 
-// moveAdminRoles moves every sourcemod role assignment from one steam id to
-// another, used when an admin's identity changes.
+// personalRoles maps steam ids to the role tracked as their personal role.
+func (r Repository) personalRoles(ctx context.Context, steamIDs []int64) (map[int64]int32, error) {
+	personal := make(map[int64]int32, len(steamIDs))
+
+	builder := r.Builder().
+		Select("steam_id", "role_id").
+		From("sm_personal_roles")
+	if len(steamIDs) > 0 {
+		builder = builder.Where(sq.Eq{"steam_id": steamIDs})
+	}
+
+	rows, errRows := r.QueryBuilder(ctx, builder)
+	if errRows != nil {
+		return nil, database.Err(errRows)
+	}
+
+	for rows.Next() {
+		var (
+			steamID int64
+			roleID  int32
+		)
+		if errScan := rows.Scan(&steamID, &roleID); errScan != nil {
+			return nil, database.Err(errScan)
+		}
+
+		personal[steamID] = roleID
+	}
+
+	return personal, nil
+}
+
+// personalRoleOwner returns the steam id a role is tracked as the personal
+// role for, or false when it is not tracked at all.
+func (r Repository) personalRoleOwner(ctx context.Context, roleID int32) (int64, bool, error) {
+	var steamID int64
+
+	dbRow, errRow := r.QueryRowBuilder(ctx, r.Builder().
+		Select("steam_id").
+		From("sm_personal_roles").
+		Where(sq.Eq{"role_id": roleID}))
+	if errRow != nil {
+		return 0, false, database.Err(errRow)
+	}
+
+	if errScan := dbRow.Scan(&steamID); errScan != nil {
+		if errors.Is(errScan, pgx.ErrNoRows) {
+			return 0, false, nil
+		}
+
+		return 0, false, database.Err(errScan)
+	}
+
+	return steamID, true, nil
+}
+
+// trackPersonalRole records roleID as the personal role of steamID.
+func (r Repository) trackPersonalRole(ctx context.Context, steamID int64, roleID int32) error {
+	now := time.Now()
+
+	if err := r.ExecInsertBuilder(ctx, r.Builder().
+		Insert("sm_personal_roles").
+		Columns("steam_id", "role_id", "created_on", "updated_on").
+		Values(steamID, roleID, now, now).
+		Suffix("ON CONFLICT (steam_id) DO NOTHING")); err != nil {
+		return database.Err(err)
+	}
+
+	return nil
+}
+
+// moveAdminRoles moves every sourcemod role assignment, and the personal role
+// tracking, from one steam id to another, used when an admin's identity
+// changes.
 func (r Repository) moveAdminRoles(ctx context.Context, fromSteamID, toSteamID int64) error {
 	roleIDs, errRoleIDs := r.smRoleIDs(ctx)
 	if errRoleIDs != nil {
@@ -318,46 +388,14 @@ func (r Repository) moveAdminRoles(ctx context.Context, fromSteamID, toSteamID i
 		return database.Err(err)
 	}
 
-	return nil
-}
-
-// setPermissionLevel updates the legacy person.permission_level column, kept
-// in sync with role assignments for reporting only.
-func (r Repository) setPermissionLevel(ctx context.Context, steamID int64, level int32) error {
 	if err := r.ExecUpdateBuilder(ctx, r.Builder().
-		Update("person").
-		Set("permission_level", level).
-		Where(sq.Eq{"steam_id": steamID})); err != nil {
+		Update("sm_personal_roles").
+		Set("steam_id", toSteamID).
+		Where(sq.Eq{"steam_id": fromSteamID})); err != nil {
 		return database.Err(err)
 	}
 
 	return nil
-}
-
-// refreshPermissionLevel recomputes the legacy permission level from all of
-// the steam id's role assignments.
-func (r Repository) refreshPermissionLevel(ctx context.Context, steamID int64) error {
-	rows, errRows := r.QueryBuilder(ctx, r.Builder().
-		Select("r.role_name").
-		From("role_assignments ra").
-		Join("roles r USING (role_id)").
-		Where(sq.Eq{"ra.steam_id": steamID}))
-	if errRows != nil {
-		return database.Err(errRows)
-	}
-
-	var userRoles []roles.Role
-
-	for rows.Next() {
-		var roleName string
-		if errScan := rows.Scan(&roleName); errScan != nil {
-			return database.Err(errScan)
-		}
-
-		userRoles = append(userRoles, roles.Role{RoleName: roleName}) //nolint:exhaustruct_v5
-	}
-
-	return r.setPermissionLevel(ctx, steamID, roles.EffectivePrivilegeLevel(userRoles))
 }
 
 func toGroupFromRole(row roleRow, perms []rolesv1.Permission) Groups {
@@ -580,14 +618,14 @@ func (r Repository) buildAdmins(ctx context.Context, steamIDs []int64) ([]Admin,
 		return nil, errPerms
 	}
 
-	members, errMembers := r.roleMemberCounts(ctx)
-	if errMembers != nil {
-		return nil, errMembers
-	}
-
 	assignments, errAssignments := r.roleAssignments(ctx, steamIDList, roleIDs)
 	if errAssignments != nil {
 		return nil, errAssignments
+	}
+
+	personalRoles, errPersonal := r.personalRoles(ctx, steamIDList)
+	if errPersonal != nil {
+		return nil, errPersonal
 	}
 
 	admins := make([]Admin, 0, len(bases))
@@ -607,8 +645,10 @@ func (r Repository) buildAdmins(ctx context.Context, steamIDs []int64) ([]Admin,
 			Permissions: []rolesv1.Permission{},
 		}
 
-		// The personal role is the only sourcemod role assigned to this single
-		// steam id; it carries the admin's direct flags and immunity.
+		// The personal role is the one tracked for this steam id; it carries
+		// the admin's direct flags and immunity.
+		personalID := personalRoles[base.SteamID]
+
 		var personal *roleRow
 		for _, roleID := range assignments[base.SteamID] {
 			row, ok := roleMap[roleID]
@@ -617,7 +657,7 @@ func (r Repository) buildAdmins(ctx context.Context, steamIDs []int64) ([]Admin,
 			}
 
 			admin.Groups = append(admin.Groups, toGroupFromRole(row, perms[roleID]))
-			if members[roleID] == 1 {
+			if roleID == personalID {
 				captured := row
 				personal = &captured
 			}
@@ -667,10 +707,10 @@ func (r Repository) GetAdminByID(ctx context.Context, adminID int64) (Admin, err
 	return admins[0], nil
 }
 
-// createPersonalRole creates, or adopts, a role dedicated to a single admin.
-// The role is named after the admin's alias when that name is free; when it is
-// already taken by a role with members the role falls back to the admin's
-// 64-bit steam id.
+// createPersonalRole creates, or adopts, a role dedicated to a single admin
+// and records it as that admin's personal role. The role is named after the
+// admin's alias when that name is free; when it is already taken by a role
+// with members the role falls back to the admin's 64-bit steam id.
 func (r Repository) createPersonalRole(ctx context.Context, steamID int64, alias string) (int32, error) {
 	names := make([]string, 0, 2)
 	if alias != "" {
@@ -679,41 +719,84 @@ func (r Repository) createPersonalRole(ctx context.Context, steamID int64, alias
 	names = append(names, smRoleName(strconv.FormatInt(steamID, 10)))
 
 	for idx, name := range names {
-		existingID, exists, errExists := r.roleIDByName(ctx, name)
-		if errExists != nil {
-			return 0, errExists
+		existingID, exists, adoptable, errCandidate := r.personalRoleAdoption(ctx, name, steamID)
+		if errCandidate != nil {
+			return 0, errCandidate
 		}
 
-		if exists {
-			count, errCount := r.roleMemberCounts(ctx)
-			if errCount != nil {
-				return 0, errCount
+		if adoptable {
+			if errTrack := r.trackPersonalRole(ctx, steamID, existingID); errTrack != nil {
+				return 0, errTrack
 			}
 
-			if count[existingID] == 0 {
-				return existingID, nil
-			}
-
-			if idx == len(names)-1 {
-				return 0, ErrAdminNameExists
-			}
-
-			continue
+			return existingID, nil
 		}
 
-		var roleID int32
-		if err := r.ExecInsertBuilderWithReturnValue(ctx, r.Builder().
-			Insert("roles").
-			Columns("role_name").
-			Values(name).
-			Suffix("RETURNING role_id"), &roleID); err != nil {
-			return 0, database.Err(err)
+		if !exists {
+			var roleID int32
+			if err := r.ExecInsertBuilderWithReturnValue(ctx, r.Builder().
+				Insert("roles").
+				Columns("role_name").
+				Values(name).
+				Suffix("RETURNING role_id"), &roleID); err != nil {
+				return 0, database.Err(err)
+			}
+
+			if errTrack := r.trackPersonalRole(ctx, steamID, roleID); errTrack != nil {
+				return 0, errTrack
+			}
+
+			return roleID, nil
 		}
 
-		return roleID, nil
+		if idx == len(names)-1 {
+			return 0, ErrAdminNameExists
+		}
 	}
 
 	return 0, ErrAdminNameExists
+}
+
+// personalRoleAdoption classifies the role with the given name for adoption as
+// the personal role of steamID. A role is adoptable when it is tracked for
+// steamID, or untracked and either empty or assigned only to steamID (left
+// untracked by earlier code versions).
+func (r Repository) personalRoleAdoption(ctx context.Context, roleName string, steamID int64) (int32, bool, bool, error) {
+	existingID, exists, errExists := r.roleIDByName(ctx, roleName)
+	if errExists != nil {
+		return 0, false, false, errExists
+	}
+	if !exists {
+		return 0, false, false, nil
+	}
+
+	owner, tracked, errOwner := r.personalRoleOwner(ctx, existingID)
+	if errOwner != nil {
+		return 0, false, false, errOwner
+	}
+
+	if tracked {
+		return existingID, true, owner == steamID, nil
+	}
+
+	count, errCount := r.roleMemberCounts(ctx)
+	if errCount != nil {
+		return 0, false, false, errCount
+	}
+
+	switch count[existingID] {
+	case 0:
+		return existingID, true, true, nil
+	case 1:
+		assigned, errAssigned := r.roleAssignments(ctx, []int64{steamID}, []int32{existingID})
+		if errAssigned != nil {
+			return 0, false, false, errAssigned
+		}
+
+		return existingID, true, len(assigned[steamID]) > 0, nil
+	default:
+		return existingID, true, false, nil
+	}
 }
 
 // renamePersonalRole renames the admin's personal role to the given alias, or
@@ -760,10 +843,9 @@ func (r Repository) renamePersonalRole(ctx context.Context, roleID int32, steamI
 	return nil
 }
 
-// upsertAdmin writes the admin's personal role (name, flags, immunity) and
-// refreshes the legacy permission level. Existing group assignments are
-// preserved; when the admin's identity changed, every sourcemod assignment is
-// moved to the new steam id first.
+// upsertAdmin writes the admin's personal role (name, flags, immunity).
+// Existing group assignments are preserved; when the admin's identity changed,
+// every sourcemod assignment is moved to the new steam id first.
 func (r Repository) upsertAdmin(ctx context.Context, admin Admin) (Admin, error) {
 	target := admin.SteamID.Int64()
 
@@ -771,35 +853,14 @@ func (r Repository) upsertAdmin(ctx context.Context, admin Admin) (Admin, error)
 		if err := r.moveAdminRoles(ctx, admin.AdminID, target); err != nil {
 			return Admin{}, err
 		}
-
-		if err := r.refreshPermissionLevel(ctx, admin.AdminID); err != nil {
-			return Admin{}, err
-		}
 	}
 
-	members, errMembers := r.roleMemberCounts(ctx)
-	if errMembers != nil {
-		return Admin{}, errMembers
+	personalRoles, errPersonal := r.personalRoles(ctx, []int64{target})
+	if errPersonal != nil {
+		return Admin{}, errPersonal
 	}
 
-	roleIDs, errRoleIDs := r.smRoleIDs(ctx)
-	if errRoleIDs != nil {
-		return Admin{}, errRoleIDs
-	}
-
-	assignments, errAssignments := r.roleAssignments(ctx, []int64{target}, roleIDs)
-	if errAssignments != nil {
-		return Admin{}, errAssignments
-	}
-
-	var personalID int32
-	for _, roleID := range assignments[target] {
-		if members[roleID] == 1 {
-			personalID = roleID
-
-			break
-		}
-	}
+	personalID := personalRoles[target]
 
 	if personalID == 0 {
 		roleID, errRole := r.createPersonalRole(ctx, target, admin.Name)
@@ -822,10 +883,6 @@ func (r Repository) upsertAdmin(ctx context.Context, admin Admin) (Admin, error)
 		return Admin{}, err
 	}
 
-	if err := r.refreshPermissionLevel(ctx, target); err != nil {
-		return Admin{}, err
-	}
-
 	slog.Info("Saved SM Admin", slog.String("steam_id", admin.SteamID.String()), slog.String("name", admin.Name))
 
 	return r.GetAdminByID(ctx, target)
@@ -842,11 +899,6 @@ func (r Repository) SaveAdmin(ctx context.Context, admin Admin) (Admin, error) {
 func (r Repository) DelAdmin(ctx context.Context, admin Admin) error {
 	steamID := admin.SteamID.Int64()
 
-	members, errMembers := r.roleMemberCounts(ctx)
-	if errMembers != nil {
-		return errMembers
-	}
-
 	roleIDs, errRoleIDs := r.smRoleIDs(ctx)
 	if errRoleIDs != nil {
 		return errRoleIDs
@@ -857,24 +909,25 @@ func (r Repository) DelAdmin(ctx context.Context, admin Admin) error {
 		return errAssignments
 	}
 
+	personalRoles, errPersonal := r.personalRoles(ctx, []int64{steamID})
+	if errPersonal != nil {
+		return errPersonal
+	}
+
 	for _, roleID := range assignments[steamID] {
 		if errUnassign := r.unassignRole(ctx, steamID, roleID); errUnassign != nil {
 			return errUnassign
 		}
-
-		// Roles that were personal to this admin (assigned to exactly one steam
-		// id) are removed entirely rather than left orphaned.
-		if members[roleID] == 1 {
-			if errDelete := r.ExecDeleteBuilder(ctx, r.Builder().
-				Delete("roles").
-				Where(sq.Eq{"role_id": roleID})); errDelete != nil {
-				return database.Err(errDelete)
-			}
-		}
 	}
 
-	if err := r.refreshPermissionLevel(ctx, steamID); err != nil {
-		return err
+	// The personal role is removed entirely rather than left orphaned; the
+	// tracking row cascades with it.
+	if personalID := personalRoles[steamID]; personalID != 0 {
+		if errDelete := r.ExecDeleteBuilder(ctx, r.Builder().
+			Delete("roles").
+			Where(sq.Eq{"role_id": personalID})); errDelete != nil {
+			return database.Err(errDelete)
+		}
 	}
 
 	slog.Info("Deleted SM Admin", slog.String("steam_id", admin.SteamID.String()))

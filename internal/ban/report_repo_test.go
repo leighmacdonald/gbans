@@ -29,6 +29,8 @@ func TestReportRepository_SaveReport(t *testing.T) {
 	t.Parallel()
 
 	t.Run("insert sets the report id", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -42,6 +44,8 @@ func TestReportRepository_SaveReport(t *testing.T) {
 	})
 
 	t.Run("update persists changes", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -63,6 +67,7 @@ func TestReportRepository_SaveReport(t *testing.T) {
 	})
 }
 
+//nolint:tparallel // subtests intentionally share one env: a later subtest drops a report the earlier ones read
 func TestReportRepository_GetReports(t *testing.T) {
 	t.Parallel()
 
@@ -111,6 +116,7 @@ func TestReportRepository_GetReports(t *testing.T) {
 	})
 }
 
+//nolint:tparallel // subtests intentionally share one env: the last subtest drops the report the earlier ones read
 func TestReportRepository_GetReport(t *testing.T) {
 	t.Parallel()
 
@@ -162,6 +168,7 @@ func TestReportRepository_GetReport(t *testing.T) {
 	})
 }
 
+//nolint:tparallel // subtests intentionally share one env: they create reports for overlapping author/target pairs, so order matters
 func TestReportRepository_GetReportBySteamID(t *testing.T) {
 	t.Parallel()
 
@@ -212,6 +219,7 @@ func TestReportRepository_GetReportBySteamID(t *testing.T) {
 	})
 }
 
+//nolint:tparallel // subtests intentionally share one env: later subtests mutate the messages the earlier ones read
 func TestReportRepository_Messages(t *testing.T) {
 	t.Parallel()
 

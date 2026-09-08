@@ -55,11 +55,38 @@ func (r Repository) Save(ctx context.Context, role *Role) error {
 	return nil
 }
 
+// savePermissions converges the role's permission set onto perms: entries no
+// longer present are removed and new entries are upserted, while unchanged
+// entries are left untouched so concurrent edits cannot wipe the whole set.
 func (r Repository) savePermissions(ctx context.Context, roleID int32, perms []string) error {
-	if err := database.Err(r.ExecDeleteBuilder(ctx, r.Builder().
-		Delete("role_permissions").
-		Where(sq.Eq{"role_id": roleID}))); err != nil {
-		return err
+	existing, errExisting := r.getPermissions(ctx, roleID)
+	if errExisting != nil {
+		return errExisting
+	}
+
+	existingSet := make(map[string]struct{}, len(existing))
+	for _, perm := range existing {
+		existingSet[perm] = struct{}{}
+	}
+
+	desiredSet := make(map[string]struct{}, len(perms))
+	for _, perm := range perms {
+		desiredSet[perm] = struct{}{}
+	}
+
+	for _, perm := range existing {
+		if _, ok := desiredSet[perm]; ok {
+			continue
+		}
+
+		if err := database.Err(r.ExecDeleteBuilder(ctx, r.Builder().
+			Delete("role_permissions").
+			Where(sq.And{
+				sq.Eq{"role_id": roleID},
+				sq.Eq{"permission": perm},
+			}))); err != nil {
+			return err
+		}
 	}
 
 	if len(perms) == 0 {
@@ -68,11 +95,24 @@ func (r Repository) savePermissions(ctx context.Context, roleID int32, perms []s
 
 	now := time.Now()
 
+	seen := make(map[string]struct{}, len(perms))
+
 	for _, perm := range perms {
+		if _, ok := existingSet[perm]; ok {
+			continue
+		}
+
+		if _, dup := seen[perm]; dup {
+			continue
+		}
+
+		seen[perm] = struct{}{}
+
 		if err := database.Err(r.ExecInsertBuilder(ctx, r.Builder().
 			Insert("role_permissions").
 			Columns("role_id", "permission", "created_on", "updated_on").
-			Values(roleID, perm, now, now))); err != nil {
+			Values(roleID, perm, now, now).
+			Suffix("ON CONFLICT (role_id, permission) DO NOTHING"))); err != nil {
 			return err
 		}
 	}
@@ -216,15 +256,6 @@ func (r Repository) Unassign(ctx context.Context, steamID steamid.SteamID, roleI
 	return database.Err(r.ExecDeleteBuilder(ctx, r.Builder().
 		Delete("role_assignments").
 		Where(sq.Eq{"steam_id": steamID.Int64(), "role_id": roleID})))
-}
-
-// SetPermissionLevel updates the legacy person.permission_level column which is
-// maintained for reporting/display purposes only.
-func (r Repository) SetPermissionLevel(ctx context.Context, steamID steamid.SteamID, level int32) error {
-	return database.Err(r.ExecUpdateBuilder(ctx, r.Builder().
-		Update("person").
-		Set("permission_level", level).
-		Where(sq.Eq{"steam_id": steamID.Int64()})))
 }
 
 func (r Repository) GetRolesBySteamID(ctx context.Context, steamID steamid.SteamID) ([]Role, error) {

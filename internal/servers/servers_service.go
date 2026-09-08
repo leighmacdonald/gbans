@@ -92,6 +92,8 @@ func (s Service) State(ctx context.Context, _ *emptypb.Empty) (*v1.StateResponse
 	return &resp, nil
 }
 
+// Servers returns a list of all servers.
+// Public endpoint, no authentication required.
 func (s Service) Servers(ctx context.Context, _ *emptypb.Empty) (*v1.ServersResponse, error) {
 	fullServers, errServers := s.servers.Servers(ctx, Query{IncludeDisabled: false, IncludeDeleted: false})
 	if errServers != nil && !errors.Is(errServers, database.ErrNoResult) {

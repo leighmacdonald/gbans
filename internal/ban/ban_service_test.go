@@ -26,9 +26,9 @@ import (
 // rpcHarness wires the ban connect services behind the real auth middleware and
 // serves them over a local httptest server.
 type rpcHarness struct {
-	env    *env
-	mw     *rpc.Middleware
-	server *httptest.Server
+	env        *env
+	middleware *rpc.Middleware
+	server     *httptest.Server
 }
 
 func newRPCHarness(t *testing.T) *rpcHarness {
@@ -36,11 +36,11 @@ func newRPCHarness(t *testing.T) *rpcHarness {
 
 	e := newEnv(t)
 
-	mw := rpc.NewMiddleware("gbans-test", "test-cookie-secret", e.roleSvc)
+	middleware := rpc.NewMiddleware("gbans-test", "test-cookie-secret", e.roleSvc)
 
-	banSvc := ban.NewBanService(e.bans, e.roleAuth, mw)
-	appealSvc := ban.NewAppealService(e.appeals, e.roleAuth, mw)
-	reportSvc := ban.NewReportService(e.reports, e.roleAuth, mw)
+	banSvc := ban.NewBanService(e.bans, e.roleAuth, middleware)
+	appealSvc := ban.NewAppealService(e.appeals, e.roleAuth, middleware)
+	reportSvc := ban.NewReportService(e.reports, e.roleAuth, middleware)
 	exportSvc := ban.NewExportService(e.bans, []string{"export-test-key"}, "gbans-test")
 
 	api := http.NewServeMux()
@@ -48,12 +48,12 @@ func newRPCHarness(t *testing.T) *rpcHarness {
 		api.Handle(svc.Pattern, svc.Handler)
 	}
 
-	handler := authn.NewMiddleware(mw.Authenticate).Wrap(api)
+	handler := authn.NewMiddleware(middleware.Authenticate).Wrap(api)
 
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
 
-	return &rpcHarness{env: e, mw: mw, server: server}
+	return &rpcHarness{env: e, middleware: middleware, server: server}
 }
 
 // authClientOption returns a client option that attaches the bearer token and
@@ -77,7 +77,7 @@ func authClientOption(token, fingerprint string) connect.ClientOption {
 func (h *rpcHarness) clientOptions(t *testing.T, person personDomain.Core) []connect.ClientOption {
 	t.Helper()
 
-	token, fingerprint, err := h.mw.MakeUserToken(person)
+	token, fingerprint, err := h.middleware.MakeUserToken(person)
 	require.NoError(t, err)
 
 	return []connect.ClientOption{authClientOption(token, fingerprint)}
@@ -186,30 +186,36 @@ func requireCode(t *testing.T, want connect.Code, err error) {
 func TestBanService_Query(t *testing.T) {
 	t.Parallel()
 
-	h := newRPCHarness(t)
-	mod := h.newRPCUser(t)
-	target := h.newPlainUser(t)
-	created := h.newBan(t, target.SteamID)
+	harness := newRPCHarness(t)
+	mod := harness.newRPCUser(t)
+	target := harness.newPlainUser(t)
+	created := harness.newBan(t, target.SteamID)
 
 	t.Run("query by target", func(t *testing.T) {
-		client := h.banClient(t, mod)
+		t.Parallel()
+
+		client := harness.banClient(t, mod)
 
 		resp, err := client.Query(t.Context(), &v1.QueryRequest{TargetId: new(target.SteamID.Int64())})
 		require.NoError(t, err)
-		require.Len(t, resp.Bans, 1)
-		require.Equal(t, created.BanID, resp.Bans[0].GetBanId())
-		require.Equal(t, created.SourceID, steamid.New(resp.Bans[0].GetSourceId()))
+		require.Len(t, resp.GetBans(), 1)
+		require.Equal(t, created.BanID, resp.GetBans()[0].GetBanId())
+		require.Equal(t, created.SourceID, steamid.New(resp.GetBans()[0].GetSourceId()))
 	})
 
 	t.Run("anonymous is denied", func(t *testing.T) {
-		client := banv1connect.NewBanServiceClient(h.server.Client(), h.server.URL)
+		t.Parallel()
+
+		client := banv1connect.NewBanServiceClient(harness.server.Client(), harness.server.URL)
 
 		_, err := client.Query(t.Context(), &v1.QueryRequest{TargetId: new(target.SteamID.Int64())})
 		requireCode(t, connect.CodeUnauthenticated, err)
 	})
 
 	t.Run("user without ban read is denied", func(t *testing.T) {
-		client := h.banClient(t, h.newPlainUser(t))
+		t.Parallel()
+
+		client := harness.banClient(t, harness.newPlainUser(t))
 
 		_, err := client.Query(t.Context(), &v1.QueryRequest{TargetId: new(target.SteamID.Int64())})
 		requireCode(t, connect.CodeUnauthenticated, err)
@@ -225,6 +231,8 @@ func TestBanService_Get(t *testing.T) {
 	created := h.newBan(t, target.SteamID)
 
 	t.Run("moderator can get", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.banClient(t, mod)
 
 		resp, err := client.Get(t.Context(), &v1.GetRequest{BanId: &created.BanID})
@@ -233,6 +241,8 @@ func TestBanService_Get(t *testing.T) {
 	})
 
 	t.Run("target can get", func(t *testing.T) {
+		t.Parallel()
+
 		// The Get route requires BAN_READ in the auth middleware, so the
 		// target needs it to even reach the domain level target check.
 		ownTarget := h.newRPCUserWithPerms(t, "PERMISSION_BAN_READ")
@@ -247,6 +257,8 @@ func TestBanService_Get(t *testing.T) {
 	// The Get procedure requires BAN_READ in the auth middleware, so users
 	// without it are rejected before the domain level target check runs.
 	t.Run("stranger is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.banClient(t, h.newPlainUser(t))
 
 		_, err := client.Get(t.Context(), &v1.GetRequest{BanId: &created.BanID})
@@ -254,6 +266,8 @@ func TestBanService_Get(t *testing.T) {
 	})
 
 	t.Run("unknown ban is not found", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.banClient(t, mod)
 
 		// QueryOne returns ErrBanDoesNotExist but the handler only maps
@@ -264,6 +278,8 @@ func TestBanService_Get(t *testing.T) {
 	})
 
 	t.Run("anonymous is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := banv1connect.NewBanServiceClient(h.server.Client(), h.server.URL)
 
 		_, err := client.Get(t.Context(), &v1.GetRequest{BanId: &created.BanID})
@@ -279,6 +295,8 @@ func TestBanService_Create(t *testing.T) {
 	target := h.newPlainUser(t)
 
 	t.Run("moderator creates", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.banClient(t, mod)
 
 		resp, err := client.Create(t.Context(), &v1.CreateRequest{
@@ -298,6 +316,8 @@ func TestBanService_Create(t *testing.T) {
 	})
 
 	t.Run("custom reason without text is invalid", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.banClient(t, h.newRPCUser(t))
 		targetSID := steamid.RandSID64()
 
@@ -323,6 +343,8 @@ func TestBanService_Create(t *testing.T) {
 	})
 
 	t.Run("user without ban create is denied", func(t *testing.T) {
+		t.Parallel()
+
 		// Plain users get the auto-assigned user role which grants BAN_CREATE,
 		// so use a user with only BAN_READ to trigger the middleware rejection.
 		client := h.banClient(t, h.newRPCUserWithPerms(t, "PERMISSION_BAN_READ"))
@@ -344,6 +366,8 @@ func TestBanService_Update(t *testing.T) {
 	created := h.newBan(t, h.newPlainUser(t).SteamID)
 
 	t.Run("update persists", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.banClient(t, mod)
 
 		resp, err := client.Update(t.Context(), &v1.UpdateRequest{
@@ -365,6 +389,8 @@ func TestBanService_Update(t *testing.T) {
 	})
 
 	t.Run("custom reason without text is invalid", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.banClient(t, mod)
 
 		_, err := client.Update(t.Context(), &v1.UpdateRequest{
@@ -375,6 +401,8 @@ func TestBanService_Update(t *testing.T) {
 	})
 
 	t.Run("unknown ban is not found", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.banClient(t, mod)
 
 		_, err := client.Update(t.Context(), &v1.UpdateRequest{
@@ -384,6 +412,8 @@ func TestBanService_Update(t *testing.T) {
 	})
 
 	t.Run("user without ban write is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.banClient(t, h.newPlainUser(t))
 
 		_, err := client.Update(t.Context(), &v1.UpdateRequest{BanId: &created.BanID})
@@ -399,6 +429,8 @@ func TestBanService_Delete(t *testing.T) {
 	created := h.newBan(t, h.newPlainUser(t).SteamID)
 
 	t.Run("unban deletes", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.banClient(t, mod)
 
 		_, err := client.Delete(t.Context(), &v1.DeleteRequest{BanId: &created.BanID, Reason: new("evidence was wrong")})
@@ -410,6 +442,8 @@ func TestBanService_Delete(t *testing.T) {
 	})
 
 	t.Run("unknown ban is not found", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.banClient(t, mod)
 
 		// QueryOne returns ErrBanDoesNotExist but the handler only maps
@@ -420,6 +454,8 @@ func TestBanService_Delete(t *testing.T) {
 	})
 
 	t.Run("user without ban write is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.banClient(t, h.newPlainUser(t))
 
 		_, err := client.Delete(t.Context(), &v1.DeleteRequest{BanId: &created.BanID})
@@ -438,33 +474,37 @@ func TestBanService_GetBanByReportID(t *testing.T) {
 	created := h.newBan(t, target.SteamID, func(o *ban.Opts) { o.ReportID = &report.ReportID })
 
 	t.Run("unknown report is not found", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.banClient(t, mod)
 
 		_, err := client.GetBanByReportID(t.Context(), &v1.GetBanByReportIDRequest{ReportId: new(int32(99999999))})
 		requireCode(t, connect.CodeNotFound, err)
 	})
 
-	// GetBanByReportIDProcedure is not registered in the auth middleware, so the
-	// handler always sees an empty user and denies even users with BAN_READ.
-	t.Run("denies ban reader when route is not registered", func(t *testing.T) {
+	// GetBanByReportIDProcedure is registered with BAN_READ permission.
+	t.Run("returns ban for valid report id", func(t *testing.T) {
 		client := h.banClient(t, mod)
 
-		_, err := client.GetBanByReportID(t.Context(), &v1.GetBanByReportIDRequest{ReportId: &report.ReportID})
-		requireCode(t, connect.CodePermissionDenied, err)
-		require.Positive(t, created.BanID)
+		resp, err := client.GetBanByReportID(t.Context(), &v1.GetBanByReportIDRequest{ReportId: &report.ReportID})
+		require.NoError(t, err)
+		require.NotNil(t, resp.GetBan())
+		require.Equal(t, created.BanID, resp.GetBan().GetBanId())
 	})
 }
 
 func TestAppealService_Reply(t *testing.T) {
 	t.Parallel()
 
-	h := newRPCHarness(t)
-	mod := h.newRPCUser(t)
-	target := h.newPlainUser(t)
-	created := h.newBan(t, target.SteamID)
+	harness := newRPCHarness(t)
+	mod := harness.newRPCUser(t)
+	target := harness.newPlainUser(t)
+	created := harness.newBan(t, target.SteamID)
 
 	t.Run("moderator replies to open ban", func(t *testing.T) {
-		client := h.appealClient(t, mod)
+		t.Parallel()
+
+		client := harness.appealClient(t, mod)
 
 		resp, err := client.Reply(t.Context(), &v1.ReplyRequest{
 			BanId:  &created.BanID,
@@ -473,17 +513,19 @@ func TestAppealService_Reply(t *testing.T) {
 		require.NoError(t, err)
 		require.Positive(t, resp.GetMessage().GetBanMessageId())
 
-		messages, err := h.env.appealRepo.Messages(t.Context(), created.BanID)
+		messages, err := harness.env.appealRepo.Messages(t.Context(), created.BanID)
 		require.NoError(t, err)
 		require.Len(t, messages, 1)
 	})
 
 	t.Run("moderator is denied on closed ban", func(t *testing.T) {
-		closed := h.newBan(t, h.newPlainUser(t).SteamID)
-		closed.AppealState = ban.Denied
-		require.NoError(t, h.env.bans.Save(t.Context(), &closed))
+		t.Parallel()
 
-		client := h.appealClient(t, mod)
+		closed := harness.newBan(t, harness.newPlainUser(t).SteamID)
+		closed.AppealState = ban.Denied
+		require.NoError(t, harness.env.bans.Save(t.Context(), &closed))
+
+		client := harness.appealClient(t, mod)
 
 		_, err := client.Reply(t.Context(), &v1.ReplyRequest{
 			BanId:  &closed.BanID,
@@ -493,14 +535,16 @@ func TestAppealService_Reply(t *testing.T) {
 	})
 
 	t.Run("appeal admin can reply to closed ban", func(t *testing.T) {
-		closed := h.newBan(t, h.newPlainUser(t).SteamID)
+		t.Parallel()
+
+		closed := harness.newBan(t, harness.newPlainUser(t).SteamID)
 		closed.AppealState = ban.Denied
-		require.NoError(t, h.env.bans.Save(t.Context(), &closed))
+		require.NoError(t, harness.env.bans.Save(t.Context(), &closed))
 
 		// CreateBanMessage requires BAN_CREATE or being the target before the
 		// APPEAL_ADMIN check on closed appeals.
-		admin := h.newRPCUserWithPerms(t, "PERMISSION_APPEAL_ADMIN", "PERMISSION_APPEAL_WRITE", "PERMISSION_BAN_CREATE")
-		client := h.appealClient(t, admin)
+		admin := harness.newRPCUserWithPerms(t, "PERMISSION_APPEAL_ADMIN", "PERMISSION_APPEAL_WRITE", "PERMISSION_BAN_CREATE")
+		client := harness.appealClient(t, admin)
 
 		_, err := client.Reply(t.Context(), &v1.ReplyRequest{
 			BanId:  &closed.BanID,
@@ -510,7 +554,9 @@ func TestAppealService_Reply(t *testing.T) {
 	})
 
 	t.Run("plain user is denied", func(t *testing.T) {
-		client := h.appealClient(t, h.newPlainUser(t))
+		t.Parallel()
+
+		client := harness.appealClient(t, harness.newPlainUser(t))
 
 		_, err := client.Reply(t.Context(), &v1.ReplyRequest{
 			BanId:  &created.BanID,
@@ -532,15 +578,19 @@ func TestAppealService_Messages(t *testing.T) {
 	require.Positive(t, resp.BanMessageID)
 
 	t.Run("moderator can read", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.appealClient(t, mod)
 
 		resp, err := client.Messages(t.Context(), &v1.MessagesRequest{BanId: &created.BanID})
 		require.NoError(t, err)
-		require.Len(t, resp.Messages, 1)
-		require.Equal(t, "original appeal", resp.Messages[0].GetMessageMd())
+		require.Len(t, resp.GetMessages(), 1)
+		require.Equal(t, "original appeal", resp.GetMessages()[0].GetMessageMd())
 	})
 
 	t.Run("plain user is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.appealClient(t, h.newPlainUser(t))
 
 		_, err := client.Messages(t.Context(), &v1.MessagesRequest{BanId: &created.BanID})
@@ -559,13 +609,15 @@ func TestAppealService_Appeals(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("moderator can list", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.appealClient(t, mod)
 
 		resp, err := client.Appeals(t.Context(), &v1.AppealsRequest{})
 		require.NoError(t, err)
 
-		ids := make([]int32, 0, len(resp.Appeals))
-		for _, appeal := range resp.Appeals {
+		ids := make([]int32, 0, len(resp.GetAppeals()))
+		for _, appeal := range resp.GetAppeals() {
 			ids = append(ids, appeal.GetBan().GetBanId())
 		}
 
@@ -573,6 +625,8 @@ func TestAppealService_Appeals(t *testing.T) {
 	})
 
 	t.Run("plain user is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.appealClient(t, h.newPlainUser(t))
 
 		_, err := client.Appeals(t.Context(), &v1.AppealsRequest{})
@@ -593,6 +647,8 @@ func TestAppealService_EditAppealMessage(t *testing.T) {
 	admin := h.newRPCUserWithPerms(t, "PERMISSION_APPEAL_ADMIN", "PERMISSION_APPEAL_WRITE")
 
 	t.Run("appeal admin edits", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.appealClient(t, admin)
 
 		resp, err := client.EditAppealMessage(t.Context(), &v1.EditAppealMessageRequest{
@@ -604,16 +660,23 @@ func TestAppealService_EditAppealMessage(t *testing.T) {
 	})
 
 	t.Run("same body is duplicate", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.appealClient(t, admin)
 
-		_, err := client.EditAppealMessage(t.Context(), &v1.EditAppealMessageRequest{
-			BanMessageId: &msg.BanMessageID,
-			BodyMd:       new("edited appeal"),
+		ownMsg, err := h.env.appeals.CreateBanMessage(t.Context(), h.ownerPerson(t), created.BanID, "duplicate check")
+		require.NoError(t, err)
+
+		_, err = client.EditAppealMessage(t.Context(), &v1.EditAppealMessageRequest{
+			BanMessageId: &ownMsg.BanMessageID,
+			BodyMd:       new("duplicate check"),
 		})
 		requireCode(t, connect.CodeAlreadyExists, err)
 	})
 
 	t.Run("non admin non author is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.appealClient(t, mod)
 
 		_, err := client.EditAppealMessage(t.Context(), &v1.EditAppealMessageRequest{
@@ -624,6 +687,8 @@ func TestAppealService_EditAppealMessage(t *testing.T) {
 	})
 
 	t.Run("unknown message", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.appealClient(t, admin)
 
 		_, err := client.EditAppealMessage(t.Context(), &v1.EditAppealMessageRequest{
@@ -647,6 +712,8 @@ func TestAppealService_DeleteAppealMessage(t *testing.T) {
 	admin := h.newRPCUserWithPerms(t, "PERMISSION_APPEAL_ADMIN", "PERMISSION_APPEAL_WRITE")
 
 	t.Run("appeal admin deletes", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.appealClient(t, admin)
 
 		_, err := client.DeleteAppealMessage(t.Context(), &v1.DeleteAppealMessageRequest{BanMessageId: &msg.BanMessageID})
@@ -660,6 +727,8 @@ func TestAppealService_DeleteAppealMessage(t *testing.T) {
 	})
 
 	t.Run("non admin is denied", func(t *testing.T) {
+		t.Parallel()
+
 		msg2, err := h.env.appeals.CreateBanMessage(t.Context(), h.ownerPerson(t), created.BanID, "second appeal")
 		require.NoError(t, err)
 
@@ -670,6 +739,8 @@ func TestAppealService_DeleteAppealMessage(t *testing.T) {
 	})
 
 	t.Run("unknown message is not found", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.appealClient(t, admin)
 
 		_, err := client.DeleteAppealMessage(t.Context(), &v1.DeleteAppealMessageRequest{BanMessageId: new(int64(99999999))})
@@ -685,6 +756,8 @@ func TestReportService_ReportCreate(t *testing.T) {
 	target := h.newPlainUser(t)
 
 	t.Run("user creates", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, user)
 
 		resp, err := client.ReportCreate(t.Context(), &v1.ReportCreateRequest{
@@ -703,6 +776,8 @@ func TestReportService_ReportCreate(t *testing.T) {
 	})
 
 	t.Run("duplicate is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		dupTarget := h.newPlainUser(t)
 
 		client := h.reportClient(t, user)
@@ -721,6 +796,8 @@ func TestReportService_ReportCreate(t *testing.T) {
 	})
 
 	t.Run("short description is invalid", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, user)
 		shortTarget := h.newPlainUser(t)
 
@@ -732,6 +809,8 @@ func TestReportService_ReportCreate(t *testing.T) {
 	})
 
 	t.Run("anonymous is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := banv1connect.NewReportServiceClient(h.server.Client(), h.server.URL)
 		anonTarget := h.newPlainUser(t)
 
@@ -754,6 +833,8 @@ func TestReportService_Report(t *testing.T) {
 	admin := h.newRPCUserWithPerms(t, "PERMISSION_REPORT_ADMIN", "PERMISSION_REPORT_READ", "PERMISSION_REPORT_WRITE")
 
 	t.Run("author without report read is denied", func(t *testing.T) {
+		t.Parallel()
+
 		// The Report route requires REPORT_READ in the auth middleware, so an
 		// author who only has REPORT_CREATE (the auto assigned user role) is
 		// rejected before the domain level author check runs.
@@ -764,6 +845,8 @@ func TestReportService_Report(t *testing.T) {
 	})
 
 	t.Run("report admin can read", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, admin)
 
 		resp, err := client.Report(t.Context(), &v1.ReportRequest{ReportId: &report.ReportID})
@@ -772,6 +855,8 @@ func TestReportService_Report(t *testing.T) {
 	})
 
 	t.Run("moderator is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, mod)
 
 		_, err := client.Report(t.Context(), &v1.ReportRequest{ReportId: &report.ReportID})
@@ -779,6 +864,8 @@ func TestReportService_Report(t *testing.T) {
 	})
 
 	t.Run("unknown report is not found", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, admin)
 
 		_, err := client.Report(t.Context(), &v1.ReportRequest{ReportId: new(int32(99999999))})
@@ -786,6 +873,8 @@ func TestReportService_Report(t *testing.T) {
 	})
 
 	t.Run("anonymous is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := banv1connect.NewReportServiceClient(h.server.Client(), h.server.URL)
 
 		_, err := client.Report(t.Context(), &v1.ReportRequest{ReportId: &report.ReportID})
@@ -796,15 +885,17 @@ func TestReportService_Report(t *testing.T) {
 func TestReportService_ReportStatusEdit(t *testing.T) {
 	t.Parallel()
 
-	h := newRPCHarness(t)
-	author := h.newPlainUser(t)
-	report := h.newReport(t, author.SteamID, h.newPlainUser(t).SteamID)
+	harness := newRPCHarness(t)
+	author := harness.newPlainUser(t)
+	report := harness.newReport(t, author.SteamID, harness.newPlainUser(t).SteamID)
 
-	admin := h.newRPCUserWithPerms(t, "PERMISSION_REPORT_ADMIN", "PERMISSION_REPORT_READ", "PERMISSION_REPORT_WRITE")
-	mod := h.newRPCUser(t)
+	admin := harness.newRPCUserWithPerms(t, "PERMISSION_REPORT_ADMIN", "PERMISSION_REPORT_READ", "PERMISSION_REPORT_WRITE")
+	mod := harness.newRPCUser(t)
 
 	t.Run("report admin changes status", func(t *testing.T) {
-		client := h.reportClient(t, admin)
+		t.Parallel()
+
+		client := harness.reportClient(t, admin)
 
 		_, err := client.ReportStatusEdit(t.Context(), &v1.ReportStatusEditRequest{
 			ReportId:     &report.ReportID,
@@ -812,13 +903,15 @@ func TestReportService_ReportStatusEdit(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		fetched, err := h.env.reportRepo.GetReport(t.Context(), report.ReportID)
+		fetched, err := harness.env.reportRepo.GetReport(t.Context(), report.ReportID)
 		require.NoError(t, err)
 		require.Equal(t, ban.NeedMoreInfo, fetched.ReportStatus)
 	})
 
 	t.Run("moderator is denied", func(t *testing.T) {
-		client := h.reportClient(t, mod)
+		t.Parallel()
+
+		client := harness.reportClient(t, mod)
 
 		_, err := client.ReportStatusEdit(t.Context(), &v1.ReportStatusEditRequest{
 			ReportId:     &report.ReportID,
@@ -828,7 +921,9 @@ func TestReportService_ReportStatusEdit(t *testing.T) {
 	})
 
 	t.Run("anonymous is denied", func(t *testing.T) {
-		client := banv1connect.NewReportServiceClient(h.server.Client(), h.server.URL)
+		t.Parallel()
+
+		client := banv1connect.NewReportServiceClient(harness.server.Client(), harness.server.URL)
 
 		_, err := client.ReportStatusEdit(t.Context(), &v1.ReportStatusEditRequest{
 			ReportId:     &report.ReportID,
@@ -846,20 +941,24 @@ func TestReportService_UserReports(t *testing.T) {
 	report := h.newReport(t, user.SteamID, h.newPlainUser(t).SteamID)
 
 	t.Run("user lists own reports", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, user)
 
 		resp, err := client.UserReports(t.Context(), &v1.UserReportsRequest{})
 		require.NoError(t, err)
 
-		ids := make([]int32, 0, len(resp.Reports))
-		for _, r := range resp.Reports {
-			ids = append(ids, r.GetReport().GetReportId())
+		ids := make([]int32, 0, len(resp.GetReports()))
+		for _, item := range resp.GetReports() {
+			ids = append(ids, item.GetReport().GetReportId())
 		}
 
 		require.Contains(t, ids, report.ReportID)
 	})
 
 	t.Run("anonymous is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := banv1connect.NewReportServiceClient(h.server.Client(), h.server.URL)
 
 		_, err := client.UserReports(t.Context(), &v1.UserReportsRequest{})
@@ -878,20 +977,24 @@ func TestReportService_Reports(t *testing.T) {
 	mod := h.newRPCUser(t)
 
 	t.Run("report admin lists all", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, admin)
 
 		resp, err := client.Reports(t.Context(), &emptypb.Empty{})
 		require.NoError(t, err)
 
-		ids := make([]int32, 0, len(resp.Reports))
-		for _, r := range resp.Reports {
-			ids = append(ids, r.GetReport().GetReportId())
+		ids := make([]int32, 0, len(resp.GetReports()))
+		for _, item := range resp.GetReports() {
+			ids = append(ids, item.GetReport().GetReportId())
 		}
 
 		require.Contains(t, ids, report.ReportID)
 	})
 
 	t.Run("moderator without report admin is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, mod)
 
 		_, err := client.Reports(t.Context(), &emptypb.Empty{})
@@ -899,6 +1002,8 @@ func TestReportService_Reports(t *testing.T) {
 	})
 
 	t.Run("anonymous is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := banv1connect.NewReportServiceClient(h.server.Client(), h.server.URL)
 
 		_, err := client.Reports(t.Context(), &emptypb.Empty{})
@@ -925,15 +1030,19 @@ func TestReportService_ReportMessages(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("report admin author can read", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, adminAuthor)
 
 		resp, err := client.ReportMessages(t.Context(), &v1.ReportMessagesRequest{ReportId: &reportByAdmin.ReportID})
 		require.NoError(t, err)
-		require.Len(t, resp.Messages, 1)
-		require.Equal(t, "admin report message", resp.Messages[0].GetMessageMd())
+		require.Len(t, resp.GetMessages(), 1)
+		require.Equal(t, "admin report message", resp.GetMessages()[0].GetMessageMd())
 	})
 
 	t.Run("report admin who is not a participant is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, adminOther)
 
 		_, err := client.ReportMessages(t.Context(), &v1.ReportMessagesRequest{ReportId: &reportByPlain.ReportID})
@@ -941,6 +1050,8 @@ func TestReportService_ReportMessages(t *testing.T) {
 	})
 
 	t.Run("moderator is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, mod)
 
 		_, err := client.ReportMessages(t.Context(), &v1.ReportMessagesRequest{ReportId: &reportByPlain.ReportID})
@@ -948,6 +1059,8 @@ func TestReportService_ReportMessages(t *testing.T) {
 	})
 
 	t.Run("author without report read is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, plainAuthor)
 
 		_, err := client.ReportMessages(t.Context(), &v1.ReportMessagesRequest{ReportId: &reportByPlain.ReportID})
@@ -963,6 +1076,8 @@ func TestReportService_ReportMessageCreate(t *testing.T) {
 	report := h.newReport(t, user.SteamID, h.newPlainUser(t).SteamID)
 
 	t.Run("author creates", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, user)
 
 		resp, err := client.ReportMessageCreate(t.Context(), &v1.ReportMessageCreateRequest{
@@ -975,6 +1090,8 @@ func TestReportService_ReportMessageCreate(t *testing.T) {
 	})
 
 	t.Run("anonymous is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := banv1connect.NewReportServiceClient(h.server.Client(), h.server.URL)
 
 		_, err := client.ReportMessageCreate(t.Context(), &v1.ReportMessageCreateRequest{
@@ -999,6 +1116,8 @@ func TestReportService_ReportMessageEdit(t *testing.T) {
 	mod := h.newRPCUser(t)
 
 	t.Run("report admin edits", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, admin)
 
 		resp, err := client.ReportMessageEdit(t.Context(), &v1.ReportMessageEditRequest{
@@ -1010,6 +1129,8 @@ func TestReportService_ReportMessageEdit(t *testing.T) {
 	})
 
 	t.Run("moderator is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, mod)
 
 		_, err := client.ReportMessageEdit(t.Context(), &v1.ReportMessageEditRequest{
@@ -1033,6 +1154,8 @@ func TestReportService_ReportMessageDelete(t *testing.T) {
 	admin := h.newRPCUserWithPerms(t, "PERMISSION_REPORT_ADMIN", "PERMISSION_REPORT_READ", "PERMISSION_REPORT_WRITE")
 
 	t.Run("report admin deletes", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, admin)
 
 		_, err := client.ReportMessageDelete(t.Context(), &v1.ReportMessageDeleteRequest{ReportMessageId: &msg.ReportMessageID})
@@ -1046,6 +1169,8 @@ func TestReportService_ReportMessageDelete(t *testing.T) {
 	})
 
 	t.Run("unknown message", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, admin)
 
 		_, err := client.ReportMessageDelete(t.Context(), &v1.ReportMessageDeleteRequest{ReportMessageId: new(int32(99999999))})
@@ -1068,6 +1193,8 @@ func TestExportService_GetTF2BD(t *testing.T) {
 	h.newBan(t, spammer, func(o *ban.Opts) { o.Reason = reason.Spam })
 
 	t.Run("missing key is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.exportClient(t, h.newPlainUser(t))
 
 		_, err := client.GetTF2BD(t.Context(), &v1.GetTF2BDRequest{})
@@ -1075,6 +1202,8 @@ func TestExportService_GetTF2BD(t *testing.T) {
 	})
 
 	t.Run("wrong key is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.exportClient(t, h.newPlainUser(t))
 
 		_, err := client.GetTF2BD(t.Context(), &v1.GetTF2BDRequest{Key: new("wrong-key")})
@@ -1082,6 +1211,8 @@ func TestExportService_GetTF2BD(t *testing.T) {
 	})
 
 	t.Run("valid key returns cheaters only", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.exportClient(t, h.newPlainUser(t))
 
 		resp, err := client.GetTF2BD(t.Context(), &v1.GetTF2BDRequest{Key: new("export-test-key")})
@@ -1089,8 +1220,8 @@ func TestExportService_GetTF2BD(t *testing.T) {
 		require.Equal(t, "https://raw.githubusercontent.com/PazerOP/tf2_bot_detector/master/schemas/v3/playerlist.schema.json", resp.GetSchema())
 		require.Contains(t, resp.GetFileInfo().GetTitle(), "gbans-test")
 
-		ids := make([]string, 0, len(resp.Players))
-		for _, player := range resp.Players {
+		ids := make([]string, 0, len(resp.GetPlayers()))
+		for _, player := range resp.GetPlayers() {
 			ids = append(ids, player.GetSteamId())
 		}
 
@@ -1111,6 +1242,8 @@ func TestExportService_GetValveSteamID(t *testing.T) {
 	h.newBan(t, spammer, func(o *ban.Opts) { o.Reason = reason.Spam })
 
 	t.Run("missing key is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.exportClient(t, h.newPlainUser(t))
 
 		_, err := client.GetValveSteamID(t.Context(), &v1.GetValveSteamIDRequest{})
@@ -1118,6 +1251,8 @@ func TestExportService_GetValveSteamID(t *testing.T) {
 	})
 
 	t.Run("literal key placeholder is denied", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.exportClient(t, h.newPlainUser(t))
 
 		_, err := client.GetValveSteamID(t.Context(), &v1.GetValveSteamIDRequest{Key: new("key")})
@@ -1125,6 +1260,8 @@ func TestExportService_GetValveSteamID(t *testing.T) {
 	})
 
 	t.Run("valid key returns ban lines", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.exportClient(t, h.newPlainUser(t))
 
 		resp, err := client.GetValveSteamID(t.Context(), &v1.GetValveSteamIDRequest{Key: new("export-test-key")})
@@ -1132,7 +1269,7 @@ func TestExportService_GetValveSteamID(t *testing.T) {
 
 		// GetValveSteamID has no reason filter, unlike GetTF2BD, so spam bans
 		// are exported as well. Pinned until export_service.go:83 is fixed.
-		require.True(t, slices.Contains(resp.BanLines, "banid 0 "+string(banned.Steam(false))))
-		require.True(t, slices.Contains(resp.BanLines, "banid 0 "+string(spammer.Steam(false))))
+		require.True(t, slices.Contains(resp.GetBanLines(), "banid 0 "+string(banned.Steam(false))))
+		require.True(t, slices.Contains(resp.GetBanLines(), "banid 0 "+string(spammer.Steam(false))))
 	})
 }

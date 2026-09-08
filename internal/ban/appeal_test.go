@@ -18,6 +18,8 @@ import (
 )
 
 func TestAppealState_String(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name  string
 		state ban.AppealState
@@ -48,6 +50,8 @@ func TestAppeals_CreateBanMessage(t *testing.T) {
 	t.Parallel()
 
 	t.Run("target can reply on an open appeal", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -76,6 +80,8 @@ func TestAppeals_CreateBanMessage(t *testing.T) {
 	})
 
 	t.Run("invalid ban id is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 
 		user := createPerson(t, steamid.RandSID64())
@@ -84,6 +90,8 @@ func TestAppeals_CreateBanMessage(t *testing.T) {
 	})
 
 	t.Run("unknown ban is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 
 		user := createPerson(t, steamid.RandSID64())
@@ -92,6 +100,8 @@ func TestAppeals_CreateBanMessage(t *testing.T) {
 	})
 
 	t.Run("empty message is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -109,6 +119,8 @@ func TestAppeals_CreateBanMessage(t *testing.T) {
 	})
 
 	t.Run("closed appeal denies non admin", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -130,6 +142,8 @@ func TestAppeals_CreateBanMessage(t *testing.T) {
 	})
 
 	t.Run("appeal admin can reply on a closed appeal", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -154,6 +168,8 @@ func TestAppeals_CreateBanMessage(t *testing.T) {
 	})
 
 	t.Run("sends notifications to group and target", func(t *testing.T) {
+		t.Parallel()
+
 		capt := &capturingNotifier{}
 		e := newEnv(t, withNotifier(capt))
 		ctx := t.Context()
@@ -199,6 +215,8 @@ func TestAppeals_EditBanMessage(t *testing.T) {
 	t.Parallel()
 
 	t.Run("author can edit their message", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -224,6 +242,8 @@ func TestAppeals_EditBanMessage(t *testing.T) {
 	})
 
 	t.Run("unknown message is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 
 		user := createPerson(t, steamid.RandSID64())
@@ -233,6 +253,8 @@ func TestAppeals_EditBanMessage(t *testing.T) {
 	})
 
 	t.Run("empty message is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -253,6 +275,8 @@ func TestAppeals_EditBanMessage(t *testing.T) {
 	})
 
 	t.Run("unchanged message is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -273,6 +297,8 @@ func TestAppeals_EditBanMessage(t *testing.T) {
 	})
 
 	t.Run("non author without appeal admin is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -294,6 +320,8 @@ func TestAppeals_EditBanMessage(t *testing.T) {
 	})
 
 	t.Run("appeal admin can edit any message", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -366,6 +394,8 @@ func TestAppeals_DropMessage(t *testing.T) {
 	t.Parallel()
 
 	t.Run("author can drop their message", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -389,6 +419,8 @@ func TestAppeals_DropMessage(t *testing.T) {
 	})
 
 	t.Run("non author is denied", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -410,6 +442,8 @@ func TestAppeals_DropMessage(t *testing.T) {
 	})
 
 	t.Run("appeal admin can drop any message", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -435,6 +469,8 @@ func TestAppeals_DropMessage(t *testing.T) {
 	})
 
 	t.Run("unknown message is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 
 		user := createPerson(t, steamid.RandSID64())

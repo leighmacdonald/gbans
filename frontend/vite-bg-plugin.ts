@@ -14,7 +14,7 @@ export function bgWebPPlugin(): PluginOption {
 		async closeBundle() {
 			if (process.env.NODE_ENV === "development") return;
 
-			const distBgDir = join(__dirname, "dist", "bg");
+			const distBgDir = join(import.meta.dirname, "dist", "bg");
 			const files = readdirSync(distBgDir).filter((f) => f.endsWith(".png"));
 
 			let converted = 0;

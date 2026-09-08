@@ -139,7 +139,7 @@ func NewDemos(bucket asset.Bucket, repository Repository, assets asset.Assets, s
 	}
 }
 
-func (d Demos) createFromAsset(ctx context.Context, asset *asset.Asset, serverID int32, createStats bool) (*File, error) {
+func (d Demos) createFromAsset(ctx context.Context, asset *asset.Asset, serverID int32, createStats bool, force bool) (*File, error) {
 	if errGetServer := d.repository.ValidateServer(ctx, serverID); errGetServer != nil {
 		return nil, errGetServer
 	}
@@ -155,10 +155,19 @@ func (d Demos) createFromAsset(ctx context.Context, asset *asset.Asset, serverID
 
 	existing, errExisting := d.repository.GetDemoByAssetID(ctx, asset.AssetID)
 	if errExisting == nil {
+		if !force {
+			slog.Debug("Skipping already imported demo",
+				slog.Int("demo_id", int(existing.DemoID)),
+				slog.String("asset_id", asset.AssetID.String()))
+
+			return existing, nil
+		}
+
 		existingDemoID = existing.DemoID
 		if err := d.stats.Delete(ctx, existing.DemoID); err != nil {
 			return nil, err
 		}
+
 		if err := d.chat.DeleteByDemoID(ctx, existing.DemoID); err != nil {
 			return nil, err
 		}
@@ -287,7 +296,7 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 		return errNewAsset
 	}
 
-	if _, errDemo := d.createFromAsset(ctx, &demoAsset, demo.ServerID, true); errDemo != nil {
+	if _, errDemo := d.createFromAsset(ctx, &demoAsset, demo.ServerID, true, false); errDemo != nil {
 		// Cleanup the asset not attached to a valid demo
 		if _, errDelete := d.asset.Delete(ctx, demoAsset.AssetID); errDelete != nil {
 			return errors.Join(errDelete, errDelete)
@@ -299,7 +308,7 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 	return nil
 }
 
-func (d Demos) ImportFile(ctx context.Context, serverID int32, demoPath string, createStats bool) (*File, error) {
+func (d Demos) ImportFile(ctx context.Context, serverID int32, demoPath string, createStats bool, force bool) (*File, error) {
 	demoFile, err := os.Open(demoPath)
 	if err != nil {
 		return nil, errors.Join(err, ErrDemoLoad)
@@ -312,7 +321,7 @@ func (d Demos) ImportFile(ctx context.Context, serverID int32, demoPath string, 
 		return nil, errors.Join(errAsset, ErrDemoLoad)
 	}
 
-	demo, errDemo := d.createFromAsset(ctx, &demoAsset, serverID, createStats)
+	demo, errDemo := d.createFromAsset(ctx, &demoAsset, serverID, createStats, force)
 	if errDemo != nil {
 		return nil, errors.Join(errDemo, ErrDemoLoad)
 	}

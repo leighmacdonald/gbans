@@ -27,7 +27,11 @@ func importCmd() *cobra.Command {
 }
 
 func importDemoCmd() *cobra.Command {
-	var serverName string
+	var (
+		serverName string
+		force      bool
+	)
+
 	cmd := &cobra.Command{
 		Use:   "demo [DEMOFILE] [DEMODIR]",
 		Short: "Import a demo",
@@ -69,7 +73,7 @@ func importDemoCmd() *cobra.Command {
 					serverID = int32(parsedID)
 				}
 
-				_, errImport := app.demos.ImportFile(ctx, serverID, arg, true)
+				_, errImport := app.demos.ImportFile(ctx, serverID, arg, true, force)
 				if errImport != nil {
 					return errImport
 				}
@@ -118,6 +122,7 @@ func importDemoCmd() *cobra.Command {
 	}
 
 	cmd.PersistentFlags().StringVarP(&serverName, "server", "s", "", "Shorthand name of the server (srv-1), or its numerical server id (6)")
+	cmd.PersistentFlags().BoolVarP(&force, "force", "f", false, "Force re-import of already imported demos")
 
 	return cmd
 }

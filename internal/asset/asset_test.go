@@ -39,6 +39,27 @@ func TestAssets(t *testing.T) {
 	require.Error(t, errFetchedNotFound)
 }
 
+func TestAssetDeduplication(t *testing.T) {
+	testFixture := tests.NewFixture()
+	defer testFixture.Close()
+
+	tempRoot := t.TempDir()
+	owner := testFixture.CreateTestPerson(t.Context(), tests.OwnerSID)
+	data := []byte(stringutil.SecureRandomString(200))
+	name := stringutil.SecureRandomString(10)
+	assetCase := asset.NewAssets(asset.NewLocalRepository(testFixture.Database, tempRoot))
+	ctx := t.Context()
+
+	first, errFirst := assetCase.Create(ctx, owner.SteamID, asset.BucketDemo, name, bytes.NewReader(data), false)
+	require.NoError(t, errFirst)
+
+	second, errSecond := assetCase.Create(ctx, owner.SteamID, asset.BucketDemo, name, bytes.NewReader(data), false)
+	require.NoError(t, errSecond)
+
+	require.Equal(t, first.AssetID, second.AssetID, "duplicate upload should return the same asset")
+	require.Equal(t, first.Hash, second.Hash)
+}
+
 func TestAssetReader(t *testing.T) {
 	for idx := range 2 {
 		data := []byte(stringutil.SecureRandomString(25_000_000))
