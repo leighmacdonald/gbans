@@ -1,10 +1,7 @@
 import { create } from "@bufbuild/protobuf";
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQuery } from "@connectrpc/connect-query";
-import NiceModal from "@ebay/nice-modal-react";
-import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import Grid from "@mui/material/Grid";
-import IconButton from "@mui/material/IconButton";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
@@ -16,16 +13,13 @@ import {
 	useMaterialReactTable,
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { PersonEditModal } from "../component/modal/PersonEditModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import RouterLink from "../component/RouterLink.tsx";
-import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
 import {
 	createDefaultTableOptions,
 	filterValueBool,
 	filterValueNumber,
-	filterValueNumberArray,
 	filterValueString,
 	makeSchemaDefaults,
 	makeSchemaState,
@@ -36,13 +30,8 @@ import {
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { renderTableError } from "../error.tsx";
-import { useAuth } from "../hooks/useAuth.ts";
-import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { type Person, QueryRequestSchema, VisibilityState } from "../rpc/person/v1/person_pb.ts";
 import { query } from "../rpc/person/v1/person-PersonService_connectquery.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
-import { enumValues } from "../util/lists.ts";
-import { toTitleCase } from "../util/strings.ts";
 
 const defaultValues = makeSchemaDefaults({ defaultColumn: "createdOn" });
 const validateSearch = makeSchemaState("createdOn");
@@ -64,8 +53,6 @@ function AdminPeople() {
 	const search = Route.useSearch();
 	const navigate = useNavigate();
 	const theme = useTheme();
-	const { sendFlash } = useUserFlashCtx();
-	const { hasPermission } = useAuth();
 
 	const opts = useMemo(() => {
 		const sort = search.sorting ? sortValueDefault(search.sorting, "createdOn") : undefined;
@@ -84,11 +71,6 @@ function AdminPeople() {
 		const vacBans = filterValueNumber("vacBans", search.columnFilters);
 		const gameBans = filterValueNumber("gameBans", search.columnFilters);
 		const communityBanned = filterValueBool("communityBanned", search.columnFilters);
-		const withPermissions = filterValueNumberArray<Person, Privilege>("permissionLevel", search.columnFilters);
-
-		if (withPermissions !== undefined && withPermissions.length > 0) {
-			o.withPermissions = withPermissions;
-		}
 
 		if (vacBans !== undefined) {
 			o.vacBans = vacBans;
@@ -109,20 +91,6 @@ function AdminPeople() {
 	}, [search]);
 
 	const { data, isLoading, isError, isRefetching, error } = useQuery(query, opts);
-
-	const onEditPerson = useCallback(
-		async (person: Person) => {
-			try {
-				await NiceModal.show(PersonEditModal, {
-					person,
-				});
-				sendFlash("success", "Updated permission level successfully");
-			} catch (e) {
-				sendFlash("error", `${e}`);
-			}
-		},
-		[sendFlash],
-	);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		async (updater) => {
@@ -243,21 +211,6 @@ function AdminPeople() {
 					return <TableCellRelativeDateField date={timestampDate(value)} />;
 				},
 			}),
-
-			columnHelper.accessor("permissionLevel", {
-				header: "Perms",
-				grow: false,
-				filterVariant: "multi-select",
-				filterSelectOptions: enumValues(Privilege).map((perm) => ({
-					label: toTitleCase(Privilege[perm]),
-					value: perm,
-				})),
-				Cell: ({ row }) => (
-					<Typography>
-						{toTitleCase(Privilege[row.original ? row.original.permissionLevel : Privilege.GUEST])}
-					</Typography>
-				),
-			}),
 		];
 	}, [theme, search]);
 
@@ -267,7 +220,6 @@ function AdminPeople() {
 		data: data ? data.people : [],
 		rowCount: Number(data ? data.count : 0),
 		enableFilters: true,
-		enableRowActions: true,
 		state: {
 			columnFilters: search.columnFilters,
 			isLoading: isLoading || isRefetching,
@@ -292,18 +244,6 @@ function AdminPeople() {
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
 		muiToolbarAlertBannerProps: renderTableError(error),
-		renderRowActions: ({ row }) => (
-			<RowActionContainer>
-				<IconButton
-					disabled={!hasPermission(Privilege.ADMIN)}
-					color={"warning"}
-					onClick={() => onEditPerson(row.original)}
-					key={"editperms"}
-				>
-					<VpnKeyIcon />
-				</IconButton>
-			</RowActionContainer>
-		),
 	});
 	return (
 		<Grid container spacing={2}>

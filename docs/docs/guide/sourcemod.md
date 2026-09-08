@@ -9,6 +9,7 @@ This covers functionality available through the gbans plugin as well as some rec
 | gb_mod     |              | Sends a notification to discord (if its enabled) to the users belonging to the group |
 |            |              | configured in the "mod ping role id" discord setting.                                |
 | gb_ban     | ADMFLAG_BAN  | Ban a user using in-game menu.                                                       |
+| gb_admins  | ADMFLAG_ROOT | Lists the sourcemod groups and admins configured in gbans.                           |
 | gb_reload  | ADMFLAG_ROOT | Reinitializes some parts of the plugin such as authentication password.              |
 | gb_version |              | Shows the current plugin version.                                                    |
 | report     |              | Report a user.                                                                       |
