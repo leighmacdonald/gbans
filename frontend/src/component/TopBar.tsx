@@ -498,9 +498,6 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 						</Box>
 					</Toolbar>
 				</Container>
-				{/*{hasPermission(PermissionLevel.User) && (
-                    <DesktopNotifications notifications={notifications} isLoading={isLoading} />
-                )}*/}
 			</AppBar>
 			<div style={{ padding: 24 }}></div>
 		</>

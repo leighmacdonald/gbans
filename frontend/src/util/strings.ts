@@ -125,27 +125,6 @@ export const reportStatusColour = (rs: ReportStatus, theme: Theme): string => {
 	}
 };
 
-// export const privilegeString = (privilege: Privilege) => {
-// 	switch (privilege) {
-// 		case Privilege.ADMIN:
-// 			return "Admin";
-// 		case Privilege.MODERATOR:
-// 			return "Moderator";
-// 		case Privilege.EDITOR:
-// 			return "Editor";
-// 		case Privilege.RESERVED:
-// 			return "Reserved";
-// 		case Privilege.USER:
-// 			return "User";
-// 		case Privilege.GUEST:
-// 			return "Guest";
-// 		case Privilege.BANNED_UNSPECIFIED:
-// 			return "Banned";
-// 		default:
-// 			return "Unknown";
-// 	}
-// };
-
 // export const appealStateString = (appealState: AppealState) => {
 // 	switch (appealState) {
 // 		case AppealState.DENIED:
