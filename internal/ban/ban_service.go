@@ -43,6 +43,7 @@ func NewBanService(bans Bans, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middle
 	authMiddleware.UserRoute(banv1connect.BanServiceQuerySourceBansProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_READ))
 	authMiddleware.UserRoute(banv1connect.BanServiceUpdateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_WRITE))
 	authMiddleware.UserRoute(banv1connect.BanServiceCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_CREATE))
+	authMiddleware.UserRoute(banv1connect.BanServiceGetBanByReportIDProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_READ))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

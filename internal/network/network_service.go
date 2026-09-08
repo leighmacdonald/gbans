@@ -10,7 +10,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/network/ip2location"
 	v1 "github.com/leighmacdonald/gbans/internal/network/v1"
 	"github.com/leighmacdonald/gbans/internal/network/v1/networkv1connect"
@@ -38,13 +37,13 @@ func NewNetworkService(networks Networks, roleAuth *rpc.RoleAuth, authMiddleware
 
 func (s *Service) QueryConnections(ctx context.Context, req *v1.QueryConnectionsRequest) (*v1.QueryConnectionsResponse, error) {
 	ipHist, errIPHist := s.networks.QueryConnectionHistory(ctx, ConnectionHistoryQuery{
-		Filter:        rpc.FromRPC(req.GetFilter()),
-		SourceIDField: httphelper.SourceIDField{SourceID: strconv.FormatInt(req.GetSteamId(), 10)},
-		CIDR:          req.GetCidr(),
-		CountryCode:   req.GetCountryCode(),
-		CountryName:   req.GetCountryName(),
-		CityName:      req.GetCityName(),
-		ServerID:      req.GetServerId(),
+		Filter:      rpc.FromRPC(req.GetFilter()),
+		SourceID:    strconv.FormatInt(req.GetSteamId(), 10),
+		CIDR:        req.GetCidr(),
+		CountryCode: req.GetCountryCode(),
+		CountryName: req.GetCountryName(),
+		CityName:    req.GetCityName(),
+		ServerID:    req.GetServerId(),
 	})
 	if errIPHist != nil && !errors.Is(errIPHist, database.ErrNoResult) {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)

@@ -190,9 +190,12 @@ type seedRequestView struct {
 	MaxPlayers  int32
 }
 
-func (h Sourcemod) seedRequest(roleIDs []string, server servers.SafeServer, userID string) bool {
+// seedRequest queues a seed request for the given server and user. It returns false with
+// ErrReqTooSoon when the user is still on cooldown, and false with another error when the
+// request could not be rendered or the server has no seed roles configured.
+func (h Sourcemod) seedRequest(roleIDs []string, server servers.SafeServer, userID string) (bool, error) {
 	if !h.seedQueue.Allowed(server.ServerID, userID) {
-		return false
+		return false, ErrReqTooSoon
 	}
 
 	if len(roleIDs) > 0 {
@@ -210,7 +213,7 @@ func (h Sourcemod) seedRequest(roleIDs []string, server servers.SafeServer, user
 		if errContent != nil {
 			slog.Error("Failed to render content", slog.String("error", errContent.Error()))
 
-			return false
+			return false, errContent
 		}
 
 		go h.notifier.Send(notification.NewDiscord(h.seedChannelID, discord.NewMessage(
@@ -229,12 +232,12 @@ func (h Sourcemod) seedRequest(roleIDs []string, server servers.SafeServer, user
 				},
 			})))
 
-		return true
+		return true, nil
 	}
 
-	slog.Error("No seed channel found", slog.String("server", server.NameShort))
+	slog.Error("No seed roles configured", slog.String("server", server.NameShort))
 
-	return false
+	return false, ErrNoSeedRoles
 }
 
 func (h Sourcemod) GetBanState(ctx context.Context, steamID steamid.SteamID, ipAddr netip.Addr) (PlayerBanState, string, error) {

@@ -17,22 +17,26 @@ func TestRepository_Save(t *testing.T) {
 	t.Parallel()
 
 	t.Run("insert sets ban id and timestamps", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 
 		source, target := steamid.RandSID64(), steamid.RandSID64()
 
-		b := ban.Ban{
+		subject := ban.Ban{
 			SourceID: source, TargetID: target, ValidUntil: time.Now().Add(time.Hour),
 			BanType: bantype.Banned, Reason: reason.Cheating,
 		}
 
-		e.saveRawBan(t, &b)
-		require.Positive(t, b.BanID)
-		require.False(t, b.CreatedOn.IsZero())
-		require.False(t, b.UpdatedOn.IsZero())
+		e.saveRawBan(t, &subject)
+		require.Positive(t, subject.BanID)
+		require.False(t, subject.CreatedOn.IsZero())
+		require.False(t, subject.UpdatedOn.IsZero())
 	})
 
 	t.Run("update persists changes", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -54,6 +58,8 @@ func TestRepository_Save(t *testing.T) {
 	})
 
 	t.Run("duplicate ban for same target is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -71,6 +77,8 @@ func TestRepository_Save(t *testing.T) {
 	})
 
 	t.Run("same ban type as existing is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -88,6 +96,8 @@ func TestRepository_Save(t *testing.T) {
 	})
 
 	t.Run("upgrading the ban type is allowed", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -108,6 +118,8 @@ func TestRepository_Save(t *testing.T) {
 	})
 
 	t.Run("deleted bans do not block new bans", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -134,25 +146,25 @@ func TestRepository_Query(t *testing.T) {
 	e := newEnv(t)
 
 	var (
-		source   = steamid.RandSID64()
-		t1, t2   = steamid.RandSID64(), steamid.RandSID64()
-		t3, t4   = steamid.RandSID64(), steamid.RandSID64()
-		groupSID = steamid.New(steamid.BaseGID + 99)
+		source     = steamid.RandSID64()
+		tgtA, tgtB = steamid.RandSID64(), steamid.RandSID64()
+		tgtC, tgtD = steamid.RandSID64(), steamid.RandSID64()
+		groupSID   = steamid.New(steamid.BaseGID + 99)
 	)
-	for _, sid := range []steamid.SteamID{source, t1, t2, t3, t4, groupSID} {
+	for _, sid := range []steamid.SteamID{source, tgtA, tgtB, tgtC, tgtD, groupSID} {
 		createPerson(t, sid)
 	}
 
 	banA := e.saveRawBan(t, &ban.Ban{
-		SourceID: source, TargetID: t1, ValidUntil: time.Now().Add(time.Hour),
+		SourceID: source, TargetID: tgtA, ValidUntil: time.Now().Add(time.Hour),
 		BanType: bantype.Banned, Reason: reason.Cheating,
 	})
 	banB := e.saveRawBan(t, &ban.Ban{
-		SourceID: source, TargetID: t2, ValidUntil: time.Now().Add(-time.Hour),
+		SourceID: source, TargetID: tgtB, ValidUntil: time.Now().Add(-time.Hour),
 		BanType: bantype.Banned, Reason: reason.Cheating,
 	})
 	banC := e.saveRawBan(t, &ban.Ban{
-		SourceID: source, TargetID: t3, ValidUntil: time.Now().Add(time.Hour),
+		SourceID: source, TargetID: tgtC, ValidUntil: time.Now().Add(time.Hour),
 		BanType: bantype.Banned, Reason: reason.Cheating,
 	})
 	require.NoError(t, e.repo.Delete(ctx, &banC, false))
@@ -163,14 +175,14 @@ func TestRepository_Query(t *testing.T) {
 	})
 
 	report := ban.Report{
-		SourceID: source, TargetID: t4, Description: "cheating evidence",
+		SourceID: source, TargetID: tgtD, Description: "cheating evidence",
 		ReportStatus: ban.Opened, CreatedOn: time.Now(), UpdatedOn: time.Now(),
 	}
 	require.NoError(t, e.reportRepo.SaveReport(ctx, &report))
 
 	cidr := "198.51.100.0/24"
 	banE := e.saveRawBan(t, &ban.Ban{
-		SourceID: source, TargetID: t4, ValidUntil: time.Now().Add(time.Hour),
+		SourceID: source, TargetID: tgtD, ValidUntil: time.Now().Add(time.Hour),
 		BanType: bantype.Network, Reason: reason.External, CIDR: &cidr, ReportID: &report.ReportID,
 	})
 
@@ -201,7 +213,7 @@ func TestRepository_Query(t *testing.T) {
 	t.Run("by target id", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := e.repo.Query(ctx, ban.QueryOpts{TargetID: t1})
+		got, err := e.repo.Query(ctx, ban.QueryOpts{TargetID: tgtA})
 		require.NoError(t, err)
 		require.Equal(t, []int32{banA.BanID}, banIDs(got))
 	})
@@ -222,17 +234,18 @@ func TestRepository_Query(t *testing.T) {
 		require.Equal(t, []int32{banE.BanID}, banIDs(got))
 	})
 
-	t.Run("cidr filter is broken", func(t *testing.T) {
+	t.Run("by cidr", func(t *testing.T) {
 		t.Parallel()
 
-		// The CIDR filter SQL references a non-existent ip_range column (the
-		// ban table column is b.cidr), so any query using CIDR fails until
-		// ban_repo.go is fixed.
-		_, err := e.repo.Query(ctx, ban.QueryOpts{CIDR: "198.51.100.77"})
-		require.Error(t, err)
+		// 198.51.100.77 is inside banE's 198.51.100.0/24 range.
+		got, err := e.repo.Query(ctx, ban.QueryOpts{CIDR: "198.51.100.77"})
+		require.NoError(t, err)
+		require.Contains(t, banIDs(got), banE.BanID)
 
-		_, err = e.repo.Query(ctx, ban.QueryOpts{CIDR: "203.0.113.50"})
-		require.Error(t, err)
+		// 203.0.113.50 is not contained by any ban range.
+		got, err = e.repo.Query(ctx, ban.QueryOpts{CIDR: "203.0.113.50"})
+		require.NoError(t, err)
+		require.Empty(t, got)
 	})
 
 	t.Run("cidr only", func(t *testing.T) {
@@ -281,6 +294,8 @@ func TestRepository_Delete(t *testing.T) {
 	t.Parallel()
 
 	t.Run("soft delete keeps the row", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -301,6 +316,8 @@ func TestRepository_Delete(t *testing.T) {
 	})
 
 	t.Run("hard delete removes the row", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -326,10 +343,10 @@ func TestRepository_GetOlderThan(t *testing.T) {
 	e := newEnv(t)
 	ctx := t.Context()
 
-	source, t1, t2 := steamid.RandSID64(), steamid.RandSID64(), steamid.RandSID64()
+	source, oldTarget, recentTarget := steamid.RandSID64(), steamid.RandSID64(), steamid.RandSID64()
 
 	older := e.saveRawBan(t, &ban.Ban{
-		SourceID: source, TargetID: t1, ValidUntil: time.Now().Add(time.Hour),
+		SourceID: source, TargetID: oldTarget, ValidUntil: time.Now().Add(time.Hour),
 		BanType: bantype.Banned, Reason: reason.Cheating,
 	})
 
@@ -339,7 +356,7 @@ func TestRepository_GetOlderThan(t *testing.T) {
 	since := time.Now()
 
 	recent := e.saveRawBan(t, &ban.Ban{
-		SourceID: source, TargetID: t2, ValidUntil: time.Now().Add(time.Hour),
+		SourceID: source, TargetID: recentTarget, ValidUntil: time.Now().Add(time.Hour),
 		BanType: bantype.Banned, Reason: reason.Cheating,
 	})
 

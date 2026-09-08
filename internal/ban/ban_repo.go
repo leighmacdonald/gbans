@@ -47,7 +47,8 @@ func (r Repository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
 	}
 
 	if opts.CIDR != "" {
-		ands = append(ands, sq.Expr("?::inet <<= ip_range", opts.CIDR))
+		// ip4 implicitly casts to ip4r, so this matches bans whose cidr range contains the address.
+		ands = append(ands, sq.Expr("?::ip4 <<= b.cidr", opts.CIDR))
 	}
 
 	if !opts.ValidUntil.IsZero() {

@@ -173,15 +173,15 @@ func setPersonName(t *testing.T, sid steamid.SteamID, name, avatar string) {
 }
 
 // saveRawBan saves a ban directly through the repository, bypassing service level validation.
-func (e *env) saveRawBan(t *testing.T, b *ban.Ban) ban.Ban {
+func (e *env) saveRawBan(t *testing.T, subject *ban.Ban) ban.Ban {
 	t.Helper()
 
-	createPerson(t, b.TargetID)
-	createPerson(t, b.SourceID)
+	createPerson(t, subject.TargetID)
+	createPerson(t, subject.SourceID)
 
-	require.NoError(t, e.repo.Save(t.Context(), b))
+	require.NoError(t, e.repo.Save(t.Context(), subject))
 
-	return *b
+	return *subject
 }
 
 // banIDs returns the sorted ban ids of the given bans.
@@ -225,6 +225,8 @@ func (s staticIPProvider) GetPlayerMostRecentIP(_ context.Context, _ steamid.Ste
 }
 
 func TestOrigin_String(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name   string
 		origin ban.Origin
@@ -247,6 +249,8 @@ func TestOrigin_String(t *testing.T) {
 }
 
 func TestOpts_Validate(t *testing.T) {
+	t.Parallel()
+
 	future := time.Now().Add(time.Hour)
 
 	tests := []struct {
@@ -261,7 +265,7 @@ func TestOpts_Validate(t *testing.T) {
 		},
 		{
 			name: "valid with cidr",
-			opts: ban.Opts{ValidUntil: future, Reason: reason.Cheating, CIDR: strPtr("198.51.100.0/24")},
+			opts: ban.Opts{ValidUntil: future, Reason: reason.Cheating, CIDR: new("198.51.100.0/24")},
 		},
 		{
 			name: "valid custom reason",
@@ -280,38 +284,40 @@ func TestOpts_Validate(t *testing.T) {
 		},
 		{
 			name:    "invalid cidr",
-			opts:    ban.Opts{ValidUntil: future, Reason: reason.Cheating, CIDR: strPtr("not-a-cidr")},
+			opts:    ban.Opts{ValidUntil: future, Reason: reason.Cheating, CIDR: new("not-a-cidr")},
 			wantErr: ban.ErrInvalidBanOpts,
 		},
 		{
 			name:    "cidr too many hosts",
-			opts:    ban.Opts{ValidUntil: future, Reason: reason.Cheating, CIDR: strPtr("10.0.0.0/15")},
+			opts:    ban.Opts{ValidUntil: future, Reason: reason.Cheating, CIDR: new("10.0.0.0/15")},
 			wantErr: ban.ErrInvalidBanOpts,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := tt.opts.Validate()
-			if tt.wantErr == nil {
+			err := testCase.opts.Validate()
+			if testCase.wantErr == nil {
 				require.NoError(t, err)
 
 				return
 			}
 
 			require.Error(t, err)
-			require.ErrorIs(t, err, tt.wantErr)
+			require.ErrorIs(t, err, testCase.wantErr)
 
-			if tt.wantErrAlso != nil {
-				require.ErrorIs(t, err, tt.wantErrAlso)
+			if testCase.wantErrAlso != nil {
+				require.ErrorIs(t, err, testCase.wantErrAlso)
 			}
 		})
 	}
 }
 
 func TestAddressCount(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name string
 		cidr string
@@ -326,18 +332,20 @@ func TestAddressCount(t *testing.T) {
 		{name: "ipv6 /48 shift overflow", cidr: "2001:db8:abcd::/48", want: 0},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, ipnet, err := net.ParseCIDR(tt.cidr)
+			_, ipnet, err := net.ParseCIDR(testCase.cidr)
 			require.NoError(t, err)
-			require.Equal(t, tt.want, ban.AddressCount(ipnet))
+			require.Equal(t, testCase.want, ban.AddressCount(ipnet))
 		})
 	}
 }
 
 func TestBan_IsGroup(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name string
 		sid  steamid.SteamID
@@ -361,17 +369,19 @@ func TestBan_Path(t *testing.T) {
 }
 
 func TestBan_String(t *testing.T) {
-	b := ban.Ban{
+	subject := ban.Ban{
 		TargetID:   steamid.New(76561198000000001),
 		Origin:     ban.System,
 		ReasonText: "cheat engine",
 		BanType:    bantype.Banned,
 	}
 
-	require.Equal(t, "SID: 76561198000000001 Origin: System Reason: cheat engine Type: banned", b.String())
+	require.Equal(t, "SID: 76561198000000001 Origin: System Reason: cheat engine Type: banned", subject.String())
 }
 
 func TestBan_Expired(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name       string
 		validUntil time.Time
@@ -396,33 +406,33 @@ func TestBans_Query(t *testing.T) {
 	e := newEnv(t)
 
 	var (
-		s1, s2   = steamid.RandSID64(), steamid.RandSID64()
-		t1, t2   = steamid.RandSID64(), steamid.RandSID64()
-		t3       = steamid.RandSID64()
-		t4, t5   = steamid.RandSID64(), steamid.RandSID64()
-		groupSID = steamid.New(steamid.BaseGID + 1337)
-		cidr     = "192.0.2.0/28"
+		srcA, srcB = steamid.RandSID64(), steamid.RandSID64()
+		tgtA, tgtB = steamid.RandSID64(), steamid.RandSID64()
+		tgtC       = steamid.RandSID64()
+		tgtD, tgtE = steamid.RandSID64(), steamid.RandSID64()
+		groupSID   = steamid.New(steamid.BaseGID + 1337)
+		cidr       = "192.0.2.0/28"
 	)
 
-	for _, sid := range []steamid.SteamID{s1, s2, t1, t2, t3, t4, t5, groupSID} {
+	for _, sid := range []steamid.SteamID{srcA, srcB, tgtA, tgtB, tgtC, tgtD, tgtE, groupSID} {
 		createPerson(t, sid)
 	}
 
 	banA, err := e.bans.Create(ctx, ban.Opts{
-		SourceID: s1, TargetID: t1, ValidUntil: time.Now().Add(time.Hour),
+		SourceID: srcA, TargetID: tgtA, ValidUntil: time.Now().Add(time.Hour),
 		BanType: bantype.Banned, Reason: reason.Cheating,
 	})
 	require.NoError(t, err)
 
 	banB, err := e.bans.Create(ctx, ban.Opts{
-		SourceID: s1, TargetID: t2, ValidUntil: time.Now().Add(time.Hour),
+		SourceID: srcA, TargetID: tgtB, ValidUntil: time.Now().Add(time.Hour),
 		BanType: bantype.NoComm, Reason: reason.Spam,
 	})
 	require.NoError(t, err)
 
-	// t3 is soft deleted below
+	// tgtC is soft deleted below
 	banC, err := e.bans.Create(ctx, ban.Opts{
-		SourceID: s2, TargetID: t3, ValidUntil: time.Now().Add(time.Hour),
+		SourceID: srcB, TargetID: tgtC, ValidUntil: time.Now().Add(time.Hour),
 		BanType: bantype.Banned, Reason: reason.Cheating,
 	})
 	require.NoError(t, err)
@@ -432,25 +442,25 @@ func TestBans_Query(t *testing.T) {
 	// default group exclusion (target_id < BaseGID), so creation fails with
 	// "ban does not exist". Save at repository level instead.
 	banD := e.saveRawBan(t, &ban.Ban{
-		SourceID: s2, TargetID: groupSID, ValidUntil: time.Now().Add(time.Hour),
+		SourceID: srcB, TargetID: groupSID, ValidUntil: time.Now().Add(time.Hour),
 		BanType: bantype.Banned, Reason: reason.Cheating,
 	})
 
 	banE, err := e.bans.Create(ctx, ban.Opts{
-		SourceID: s2, TargetID: t4, ValidUntil: time.Now().Add(time.Hour),
+		SourceID: srcB, TargetID: tgtD, ValidUntil: time.Now().Add(time.Hour),
 		BanType: bantype.Network, Reason: reason.External, CIDR: &cidr,
 	})
 	require.NoError(t, err)
 
 	// banF is attached to a report
 	report := ban.Report{
-		SourceID: s2, TargetID: t5, Description: "cheating evidence",
+		SourceID: srcB, TargetID: tgtE, Description: "cheating evidence",
 		ReportStatus: ban.Opened, CreatedOn: time.Now(), UpdatedOn: time.Now(),
 	}
 	require.NoError(t, e.reportRepo.SaveReport(ctx, &report))
 
 	banF, err := e.bans.Create(ctx, ban.Opts{
-		SourceID: s2, TargetID: t5, ValidUntil: time.Now().Add(time.Hour),
+		SourceID: srcB, TargetID: tgtE, ValidUntil: time.Now().Add(time.Hour),
 		BanType: bantype.Banned, Reason: reason.Cheating, ReportID: &report.ReportID,
 	})
 	require.NoError(t, err)
@@ -458,7 +468,7 @@ func TestBans_Query(t *testing.T) {
 	t.Run("by target id", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := e.bans.Query(ctx, ban.QueryOpts{TargetID: t1})
+		got, err := e.bans.Query(ctx, ban.QueryOpts{TargetID: tgtA})
 		require.NoError(t, err)
 		require.Equal(t, []int32{banA.BanID}, banIDs(got))
 	})
@@ -466,7 +476,7 @@ func TestBans_Query(t *testing.T) {
 	t.Run("by source id excludes deleted", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := e.bans.Query(ctx, ban.QueryOpts{SourceID: s1})
+		got, err := e.bans.Query(ctx, ban.QueryOpts{SourceID: srcA})
 		require.NoError(t, err)
 		require.Equal(t, banIDs([]ban.Ban{banA, banB}), banIDs(got))
 	})
@@ -474,7 +484,7 @@ func TestBans_Query(t *testing.T) {
 	t.Run("by source id including deleted", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := e.bans.Query(ctx, ban.QueryOpts{SourceID: s1, Deleted: true})
+		got, err := e.bans.Query(ctx, ban.QueryOpts{SourceID: srcA, Deleted: true})
 		require.NoError(t, err)
 		require.Len(t, got, 2)
 	})
@@ -482,7 +492,7 @@ func TestBans_Query(t *testing.T) {
 	t.Run("by source and reason", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := e.bans.Query(ctx, ban.QueryOpts{SourceID: s2, Reasons: []reason.Reason{reason.Cheating}})
+		got, err := e.bans.Query(ctx, ban.QueryOpts{SourceID: srcB, Reasons: []reason.Reason{reason.Cheating}})
 		require.NoError(t, err)
 		require.Equal(t, []int32{banF.BanID}, banIDs(got))
 	})
@@ -491,7 +501,7 @@ func TestBans_Query(t *testing.T) {
 		t.Parallel()
 
 		got, err := e.bans.Query(ctx, ban.QueryOpts{
-			SourceID: s2, Reasons: []reason.Reason{reason.Cheating}, Deleted: true, IncludeGroups: true,
+			SourceID: srcB, Reasons: []reason.Reason{reason.Cheating}, Deleted: true, IncludeGroups: true,
 		})
 		require.NoError(t, err)
 		require.Equal(t, banIDs([]ban.Ban{banC, banD, banF}), banIDs(got))
@@ -516,7 +526,7 @@ func TestBans_Query(t *testing.T) {
 	t.Run("excludes groups by default", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := e.bans.Query(ctx, ban.QueryOpts{SourceID: s2})
+		got, err := e.bans.Query(ctx, ban.QueryOpts{SourceID: srcB})
 		require.NoError(t, err)
 		require.NotContains(t, banIDs(got), banD.BanID)
 	})
@@ -524,7 +534,7 @@ func TestBans_Query(t *testing.T) {
 	t.Run("groups only", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := e.bans.Query(ctx, ban.QueryOpts{SourceID: s2, GroupsOnly: true, IncludeGroups: true})
+		got, err := e.bans.Query(ctx, ban.QueryOpts{SourceID: srcB, GroupsOnly: true, IncludeGroups: true})
 		require.NoError(t, err)
 		require.Equal(t, []int32{banD.BanID}, banIDs(got))
 	})
@@ -532,7 +542,7 @@ func TestBans_Query(t *testing.T) {
 	t.Run("include groups", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := e.bans.Query(ctx, ban.QueryOpts{SourceID: s2, IncludeGroups: true})
+		got, err := e.bans.Query(ctx, ban.QueryOpts{SourceID: srcB, IncludeGroups: true})
 		require.NoError(t, err)
 		require.Contains(t, banIDs(got), banD.BanID)
 	})
@@ -540,17 +550,16 @@ func TestBans_Query(t *testing.T) {
 	t.Run("by cidr range", func(t *testing.T) {
 		t.Parallel()
 
-		// The CIDR filter SQL references a non-existent ip_range column (the
-		// ban table column is b.cidr), so any query using CIDR fails until
-		// ban_repo.go is fixed.
-		_, err := e.bans.Query(ctx, ban.QueryOpts{CIDR: "192.0.2.5"})
-		require.Error(t, err)
+		// 192.0.2.5 is inside banE's 192.0.2.0/28 range.
+		got, err := e.bans.Query(ctx, ban.QueryOpts{CIDR: "192.0.2.5"})
+		require.NoError(t, err)
+		require.Contains(t, banIDs(got), banE.BanID)
 	})
 
 	t.Run("cidr only", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := e.bans.Query(ctx, ban.QueryOpts{SourceID: s2, CIDROnly: true})
+		got, err := e.bans.Query(ctx, ban.QueryOpts{SourceID: srcB, CIDROnly: true})
 		require.NoError(t, err)
 		require.Equal(t, []int32{banE.BanID}, banIDs(got))
 	})
@@ -575,6 +584,8 @@ func TestBans_Save(t *testing.T) {
 	t.Parallel()
 
 	t.Run("appeal state change sends notifications", func(t *testing.T) {
+		t.Parallel()
+
 		capt := &capturingNotifier{}
 		e := newEnv(t, withNotifier(capt))
 
@@ -607,6 +618,8 @@ func TestBans_Save(t *testing.T) {
 	})
 
 	t.Run("no notification when appeal state unchanged", func(t *testing.T) {
+		t.Parallel()
+
 		capt := &capturingNotifier{}
 		e := newEnv(t, withNotifier(capt))
 
@@ -626,14 +639,16 @@ func TestBans_Create(t *testing.T) {
 	t.Parallel()
 
 	t.Run("creates a ban", func(t *testing.T) {
-		e := newEnv(t)
+		t.Parallel()
+
+		harness := newEnv(t)
 
 		source, target := steamid.RandSID64(), steamid.RandSID64()
 		createPerson(t, source)
 		createPerson(t, target)
 
 		cidr := "198.51.100.0/30"
-		created, err := e.bans.Create(t.Context(), ban.Opts{
+		created, err := harness.bans.Create(t.Context(), ban.Opts{
 			SourceID: source, TargetID: target, ValidUntil: time.Now().Add(10 * time.Hour),
 			BanType: bantype.Banned, Reason: reason.Custom, ReasonText: "aimbot",
 			Origin: ban.Web, Note: "admin note", Name: "cheater", CIDR: &cidr,
@@ -652,19 +667,21 @@ func TestBans_Create(t *testing.T) {
 		require.False(t, created.CreatedOn.IsZero())
 		require.False(t, created.UpdatedOn.IsZero())
 
-		fetched, err := e.bans.QueryOne(t.Context(), ban.QueryOpts{BanID: created.BanID})
+		fetched, err := harness.bans.QueryOne(t.Context(), ban.QueryOpts{BanID: created.BanID})
 		require.NoError(t, err)
 		require.Equal(t, created, fetched)
 	})
 
 	t.Run("stores the most recent player ip", func(t *testing.T) {
-		e := newEnv(t, withIPProvider(staticIPProvider{ip: net.ParseIP("1.2.3.4")}))
+		t.Parallel()
+
+		harness := newEnv(t, withIPProvider(staticIPProvider{ip: net.ParseIP("1.2.3.4")}))
 
 		source, target := steamid.RandSID64(), steamid.RandSID64()
 		createPerson(t, source)
 		createPerson(t, target)
 
-		created, err := e.bans.Create(t.Context(), ban.Opts{
+		created, err := harness.bans.Create(t.Context(), ban.Opts{
 			SourceID: source, TargetID: target, ValidUntil: time.Now().Add(time.Hour),
 			BanType: bantype.Banned, Reason: reason.Cheating,
 		})
@@ -679,13 +696,15 @@ func TestBans_Create(t *testing.T) {
 	})
 
 	t.Run("no last ip when provider has none", func(t *testing.T) {
-		e := newEnv(t)
+		t.Parallel()
+
+		harness := newEnv(t)
 
 		source, target := steamid.RandSID64(), steamid.RandSID64()
 		createPerson(t, source)
 		createPerson(t, target)
 
-		created, err := e.bans.Create(t.Context(), ban.Opts{
+		created, err := harness.bans.Create(t.Context(), ban.Opts{
 			SourceID: source, TargetID: target, ValidUntil: time.Now().Add(time.Hour),
 			BanType: bantype.Banned, Reason: reason.Cheating,
 		})
@@ -698,10 +717,12 @@ func TestBans_Create(t *testing.T) {
 	})
 
 	t.Run("invalid options are rejected", func(t *testing.T) {
-		e := newEnv(t)
+		t.Parallel()
+
+		harness := newEnv(t)
 
 		source, target := steamid.RandSID64(), steamid.RandSID64()
-		_, err := e.bans.Create(t.Context(), ban.Opts{
+		_, err := harness.bans.Create(t.Context(), ban.Opts{
 			SourceID: source, TargetID: target, ValidUntil: time.Now().Add(-time.Hour),
 			BanType: bantype.Banned, Reason: reason.Cheating,
 		})
@@ -711,7 +732,9 @@ func TestBans_Create(t *testing.T) {
 	})
 
 	t.Run("duplicate ban is rejected", func(t *testing.T) {
-		e := newEnv(t)
+		t.Parallel()
+
+		harness := newEnv(t)
 
 		source, target := steamid.RandSID64(), steamid.RandSID64()
 		createPerson(t, source)
@@ -722,18 +745,20 @@ func TestBans_Create(t *testing.T) {
 			BanType: bantype.Banned, Reason: reason.Cheating,
 		}
 
-		created, err := e.bans.Create(t.Context(), opts)
+		created, err := harness.bans.Create(t.Context(), opts)
 		require.NoError(t, err)
 		require.Positive(t, created.BanID)
 
-		_, err = e.bans.Create(t.Context(), opts)
+		_, err = harness.bans.Create(t.Context(), opts)
 		require.Error(t, err)
 		require.ErrorIs(t, err, database.ErrDuplicate)
 		require.ErrorIs(t, err, ban.ErrSaveBan)
 	})
 
 	t.Run("closes the attached report", func(t *testing.T) {
-		e := newEnv(t)
+		t.Parallel()
+
+		harness := newEnv(t)
 
 		source, target := steamid.RandSID64(), steamid.RandSID64()
 		createPerson(t, source)
@@ -743,9 +768,9 @@ func TestBans_Create(t *testing.T) {
 			SourceID: source, TargetID: target, Description: "cheating evidence",
 			ReportStatus: ban.Opened, CreatedOn: time.Now(), UpdatedOn: time.Now(),
 		}
-		require.NoError(t, e.reportRepo.SaveReport(t.Context(), &report))
+		require.NoError(t, harness.reportRepo.SaveReport(t.Context(), &report))
 
-		created, err := e.bans.Create(t.Context(), ban.Opts{
+		created, err := harness.bans.Create(t.Context(), ban.Opts{
 			SourceID: source, TargetID: target, ValidUntil: time.Now().Add(time.Hour),
 			BanType: bantype.Banned, Reason: reason.Cheating, ReportID: &report.ReportID,
 		})
@@ -753,20 +778,22 @@ func TestBans_Create(t *testing.T) {
 		require.NotNil(t, created.ReportID)
 		require.Equal(t, report.ReportID, *created.ReportID)
 
-		savedReport, err := e.reportRepo.GetReport(t.Context(), report.ReportID)
+		savedReport, err := harness.reportRepo.GetReport(t.Context(), report.ReportID)
 		require.NoError(t, err)
 		require.Equal(t, ban.ClosedWithAction, savedReport.ReportStatus)
 	})
 
 	t.Run("sends ban notifications", func(t *testing.T) {
+		t.Parallel()
+
 		capt := &capturingNotifier{}
-		e := newEnv(t, withNotifier(capt))
+		harness := newEnv(t, withNotifier(capt))
 
 		source, target := steamid.RandSID64(), steamid.RandSID64()
 		createPerson(t, source)
 		createPerson(t, target)
 
-		_, err := e.bans.Create(t.Context(), ban.Opts{
+		_, err := harness.bans.Create(t.Context(), ban.Opts{
 			SourceID: source, TargetID: target, ValidUntil: time.Now().Add(time.Hour),
 			BanType: bantype.Banned, Reason: reason.Cheating, Name: "cheater",
 		})
@@ -796,6 +823,8 @@ func TestBans_Unban(t *testing.T) {
 	t.Parallel()
 
 	t.Run("unbans an existing ban", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -820,6 +849,8 @@ func TestBans_Unban(t *testing.T) {
 	})
 
 	t.Run("unbanning again returns false", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -846,6 +877,8 @@ func TestBans_Unban(t *testing.T) {
 	})
 
 	t.Run("unbanning an unknown player returns false", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 
 		author := createPerson(t, steamid.RandSID64())
@@ -860,6 +893,8 @@ func TestBans_Delete(t *testing.T) {
 	t.Parallel()
 
 	t.Run("soft delete", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -884,6 +919,8 @@ func TestBans_Delete(t *testing.T) {
 	})
 
 	t.Run("hard delete", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -978,35 +1015,32 @@ func TestBans_CheckEvadeStatus(t *testing.T) {
 	ctx := t.Context()
 
 	var (
-		source = steamid.RandSID64()
-		t1     = steamid.RandSID64()
-		t2     = steamid.RandSID64()
+		source       = steamid.RandSID64()
+		bannedPlayer = steamid.RandSID64()
+		evader       = steamid.RandSID64()
 	)
-	for _, sid := range []steamid.SteamID{source, t1, t2} {
+	for _, sid := range []steamid.SteamID{source, bannedPlayer, evader} {
 		createPerson(t, sid)
 	}
 
 	bannedCIDR := "192.0.2.16/28"
 	_, err := e.bans.Create(ctx, ban.Opts{
-		SourceID: source, TargetID: t1, ValidUntil: time.Now().Add(time.Hour),
+		SourceID: source, TargetID: bannedPlayer, ValidUntil: time.Now().Add(time.Hour),
 		BanType: bantype.Banned, Reason: reason.Cheating, CIDR: &bannedCIDR,
 	})
 	require.NoError(t, err)
 
-	// CheckEvadeStatus starts with a CIDR query, but the CIDR filter SQL
-	// references a non-existent ip_range column (the ban table column is
-	// b.cidr), so the check always fails and no evade ban can be created
-	// until ban_repo.go is fixed.
-	t.Run("cidr match query fails", func(t *testing.T) {
-		_, err := e.bans.CheckEvadeStatus(ctx, t2, netip.MustParseAddr("192.0.2.21"))
-		require.Error(t, err)
+	// 192.0.2.21 is inside the banned range, so the evader gets an evasion ban.
+	t.Run("cidr match creates evade ban", func(t *testing.T) {
+		t.Parallel()
 
-		_, err = e.bans.QueryOne(ctx, ban.QueryOpts{TargetID: t2})
-		require.ErrorIs(t, err, ban.ErrBanDoesNotExist)
+		evadeBanned, err := e.bans.CheckEvadeStatus(ctx, evader, netip.MustParseAddr("192.0.2.21"))
+		require.NoError(t, err)
+		require.True(t, evadeBanned)
+
+		evadeBan, err := e.bans.QueryOne(ctx, ban.QueryOpts{TargetID: evader})
+		require.NoError(t, err)
+		require.Equal(t, bantype.Banned, evadeBan.BanType)
+		require.Equal(t, reason.Evading, evadeBan.Reason)
 	})
-}
-
-//nolint:modernize // the stdlib ptr package is unavailable in this toolchain
-func strPtr(s string) *string {
-	return &s
 }

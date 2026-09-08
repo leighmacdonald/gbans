@@ -15,7 +15,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/rpc"
-	"github.com/leighmacdonald/gbans/internal/servers"
 	v1 "github.com/leighmacdonald/gbans/internal/sourcemod/v1"
 	"github.com/leighmacdonald/gbans/internal/sourcemod/v1/sourcemodv1connect"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -61,6 +60,7 @@ func NewPluginService(sourcemod Sourcemod, persons *person.Persons, serverAuthen
 	authMiddleware.ServerRoute(sourcemodv1connect.PluginServiceSMUsersProcedure, serverAuth)
 	authMiddleware.ServerRoute(sourcemodv1connect.PluginServiceSMGroupsProcedure, serverAuth)
 	authMiddleware.ServerRoute(sourcemodv1connect.PluginServiceSMSeedProcedure, serverAuth)
+	authMiddleware.ServerRoute(sourcemodv1connect.PluginServiceSMPingModProcedure, serverAuth)
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -283,20 +283,17 @@ func (s PluginService) SMSeed(ctx context.Context, req *v1.SMSeedRequest) (*v1.S
 		return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
 	}
 
-	var serverState servers.SafeServer
-	for _, srv := range s.sourcemod.servers.Current() {
-		if serverInfo.ServerID == server.ServerID {
-			serverState = srv
+	serverState, errState := s.sourcemod.servers.SafeState(ctx, server.ServerID)
+	if errState != nil {
+		return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
+	}
 
-			break
+	if ok, errSeed := s.sourcemod.seedRequest(server.DiscordSeedRoleIDs, serverState, steamID.String()); !ok {
+		if errors.Is(errSeed, ErrReqTooSoon) {
+			// The plugin maps this error to HTTP 429 and tells the requesting player to wait.
+			return nil, connect.NewError(connect.CodeResourceExhausted, errSeed)
 		}
-	}
 
-	if serverState.ServerID == 0 {
-		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
-	}
-
-	if !s.sourcemod.seedRequest(server.DiscordSeedRoleIDs, serverState, steamID.String()) {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 

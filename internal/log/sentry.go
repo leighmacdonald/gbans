@@ -19,10 +19,12 @@ func NewSentryClient(dsn string, tracing bool, sampleRate float64, buildVersion 
 		Dsn:              dsn,
 		EnableTracing:    tracing,
 		TracesSampleRate: sampleRate,
-		SendDefaultPII:   true,
-		SampleRate:       1.0,
-		Release:          buildVersion,
-		Environment:      env,
+		// Equivalent to the legacy SendDefaultPII=true: automatically
+		// collect default PII such as user info.
+		DataCollection: &sentry.DataCollection{UserInfo: sentry.Set(true)},
+		SampleRate:     1.0,
+		Release:        buildVersion,
+		Environment:    env,
 	})
 
 	if errClient != nil {

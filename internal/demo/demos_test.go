@@ -80,7 +80,7 @@ func TestDemoUploadDeduplication(t *testing.T) {
 		return count
 	}
 
-	first, err := demos.ImportFile(t.Context(), server.ServerID, demoPath, true)
+	first, err := demos.ImportFile(t.Context(), server.ServerID, demoPath, true, false)
 	require.NoError(t, err)
 
 	counts := map[string]int{
@@ -93,11 +93,12 @@ func TestDemoUploadDeduplication(t *testing.T) {
 		"person_messages":             countRows("person_messages"),
 	}
 
-	second, err := demos.ImportFile(t.Context(), server.ServerID, demoPath, true)
+	second, err := demos.ImportFile(t.Context(), server.ServerID, demoPath, true, false)
 	require.NoError(t, err)
 
 	for table, expected := range counts {
 		require.Equalf(t, expected, countRows(table), "unexpected duplicate rows in %s", table)
 	}
 	require.Equal(t, first.AssetID, second.AssetID)
+	require.Equal(t, first.DemoID, second.DemoID)
 }

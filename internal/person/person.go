@@ -66,7 +66,6 @@ type Person struct {
 	SteamID           steamid.SteamID
 	CreatedOn         time.Time
 	UpdatedOn         time.Time
-	PermissionLevel   int32 // Legacy privilege level, write-only, derived from role assignments.
 	Muted             bool
 	isNew             bool
 	DiscordID         string
@@ -221,7 +220,6 @@ func New(sid64 steamid.SteamID) Person {
 		SteamID:          sid64,
 		CreatedOn:        curTime,
 		UpdatedOn:        curTime,
-		PermissionLevel:  10, // Legacy default; derived from role assignments going forward.
 		Muted:            false,
 		isNew:            true,
 		DiscordID:        "",
@@ -575,9 +573,7 @@ func (u *Persons) GetPersonByDiscordID(ctx context.Context, discordID string) (p
 
 func (u *Persons) GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, uint64, error) {
 	return u.repo.Query(ctx, Query{
-		Filter: query.Filter{
-			Limit: limit,
-		},
+		Limit:                limit,
 		SteamUpdateOlderThan: time.Now().AddDate(0, 0, -30),
 	})
 }

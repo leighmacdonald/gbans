@@ -6,7 +6,10 @@ import (
 	"time"
 )
 
-var ErrReqTooSoon = errors.New("⏱️ request is not available yet")
+var (
+	ErrReqTooSoon  = errors.New("⏱️ request is not available yet")
+	ErrNoSeedRoles = errors.New("no seed role ids configured for server")
+)
 
 type seedRequest struct {
 	userID    string

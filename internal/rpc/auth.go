@@ -344,14 +344,12 @@ func NewServerTokenGenerator(siteName string, cookie []byte) func(serverID int32
 	return func(serverID int32, serverName string) (string, error) {
 		nowTime := time.Now()
 		claims := serverClaims{
-			RegisteredClaims: jwt.RegisteredClaims{
-				ID:        strconv.FormatInt(int64(serverID), 10),
-				Issuer:    siteName,
-				Subject:   serverName,
-				ExpiresAt: jwt.NewNumericDate(nowTime.AddDate(0, 0, 7)),
-				IssuedAt:  jwt.NewNumericDate(nowTime),
-				NotBefore: jwt.NewNumericDate(nowTime),
-			},
+			ID:        strconv.FormatInt(int64(serverID), 10),
+			Issuer:    siteName,
+			Subject:   serverName,
+			ExpiresAt: jwt.NewNumericDate(nowTime.AddDate(0, 0, 7)),
+			IssuedAt:  jwt.NewNumericDate(nowTime),
+			NotBefore: jwt.NewNumericDate(nowTime),
 		}
 
 		tokenWithClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -370,15 +368,13 @@ func (m *Middleware) newUserToken(user UserClaimProvider, fingerPrint string, va
 	sid := user.GetSteamID()
 	claims := userClaims{
 		Fingerprint: fingerprintHash(fingerPrint),
-		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    m.siteName,
-			Subject:   sid.String(),
-			ExpiresAt: jwt.NewNumericDate(nowTime.Add(validDuration)),
-			IssuedAt:  jwt.NewNumericDate(nowTime),
-			NotBefore: jwt.NewNumericDate(nowTime),
-		},
-		SteamID:    sid.String(),
-		AvatarHash: user.GetAvatar(),
+		Issuer:      m.siteName,
+		Subject:     sid.String(),
+		ExpiresAt:   jwt.NewNumericDate(nowTime.Add(validDuration)),
+		IssuedAt:    jwt.NewNumericDate(nowTime),
+		NotBefore:   jwt.NewNumericDate(nowTime),
+		SteamID:     sid.String(),
+		AvatarHash:  user.GetAvatar(),
 	}
 	tokenWithClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, errSigned := tokenWithClaims.SignedString([]byte(m.cookie))

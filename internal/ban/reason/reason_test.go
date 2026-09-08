@@ -8,6 +8,8 @@ import (
 )
 
 func TestReason_String(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name   string
 		reason reason.Reason

@@ -221,19 +221,17 @@ func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, pers
 	u.WarningChan <- NewUserWarning{
 		UserMessage: userMsg,
 		PlayerID:    person.PID,
-		UserWarning: UserWarning{
-			WarnReason: reason,
-			Message:    userMsg.Body,
-			// todo
-			// Matched:       matchResult,
-			MatchedFilter: matchResult,
-			CreatedOn:     time.Now(),
-			Personaname:   userMsg.PersonaName,
-			Avatar:        userMsg.AvatarHash,
-			ServerName:    evt.ServerName,
-			ServerID:      userMsg.ServerID,
-			SteamID:       userMsg.SteamID.Int64(),
-		},
+		WarnReason:  reason,
+		Message:     userMsg.Body,
+		// todo
+		// Matched:       matchResult,
+		MatchedFilter: matchResult,
+		CreatedOn:     time.Now(),
+		Personaname:   userMsg.PersonaName,
+		Avatar:        userMsg.AvatarHash,
+		ServerName:    evt.ServerName,
+		ServerID:      userMsg.ServerID,
+		SteamID:       userMsg.SteamID.Int64(),
 	}
 
 	return nil

@@ -43,13 +43,13 @@ func TestSteamGroupInfo_XML(t *testing.T) {
 }
 
 func TestNewMembersList(t *testing.T) {
-	m1, m2 := steamid.RandSID64(), steamid.RandSID64()
+	memberA, memberB := steamid.RandSID64(), steamid.RandSID64()
 
-	list := ban.NewMembersList(42, steamid.Collection{m1, m2})
+	list := ban.NewMembersList(42, steamid.Collection{memberA, memberB})
 
 	require.Zero(t, list.MembersID)
 	require.Equal(t, int64(42), list.ParentID)
-	require.Equal(t, steamid.Collection{m1, m2}, list.Members)
+	require.Equal(t, steamid.Collection{memberA, memberB}, list.Members)
 	require.True(t, list.CreatedOn.Before(time.Now().Add(time.Second)))
 	require.True(t, list.UpdatedOn.Before(time.Now().Add(time.Second)))
 }

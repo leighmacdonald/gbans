@@ -75,7 +75,17 @@ func (l Repository) Put(ctx context.Context, asset Asset, body io.ReadSeeker) (A
 
 	if errSave := l.saveAssetToDB(ctx, asset); errSave != nil {
 		if errRemove := os.Remove(outPath); errRemove != nil {
-			return Asset{}, errors.Join(errRemove, errSave)
+			var e *os.PathError
+			if !errors.As(errRemove, &e) || !errors.Is(e.Err, os.ErrNotExist) {
+				return Asset{}, errors.Join(errRemove, errSave)
+			}
+		}
+
+		// Another goroutine inserted the same hash between our lookup and
+		// insert (race condition). Return the existing asset instead of
+		// failing.
+		if errors.Is(errSave, database.ErrDuplicate) {
+			return l.getAssetByHash(ctx, asset.Hash)
 		}
 
 		return Asset{}, errSave

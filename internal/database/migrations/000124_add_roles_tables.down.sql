@@ -23,6 +23,8 @@ alter table contest
   drop column if exists required_permission;
 
 
+drop table if exists sm_personal_roles;
+
 drop table if exists command_override_permissions;
 
 drop table if exists command_overrides;
@@ -38,3 +40,10 @@ drop table if exists role_permissions;
 drop table if exists roles;
 
 drop type if exists permission;
+
+alter table person
+    add column if not exists permission_level integer not null default 10;
+
+create index if not exists idx_person_permission on person (permission_level);
+
+DROP INDEX IF EXISTS asset_hash_unique;

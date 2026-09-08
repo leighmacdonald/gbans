@@ -17,6 +17,8 @@ import (
 )
 
 func TestReportStatus_String(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name   string
 		status ban.ReportStatus
@@ -72,6 +74,8 @@ func TestReports_Save(t *testing.T) {
 	t.Parallel()
 
 	t.Run("creates a report", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -94,6 +98,8 @@ func TestReports_Save(t *testing.T) {
 	})
 
 	t.Run("short description is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 
 		author := createPerson(t, steamid.RandSID64())
@@ -109,6 +115,8 @@ func TestReports_Save(t *testing.T) {
 	})
 
 	t.Run("missing target is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 
 		author := createPerson(t, steamid.RandSID64())
@@ -120,6 +128,8 @@ func TestReports_Save(t *testing.T) {
 	})
 
 	t.Run("self report is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 
 		author := createPerson(t, steamid.RandSID64())
@@ -132,6 +142,8 @@ func TestReports_Save(t *testing.T) {
 	})
 
 	t.Run("duplicate open report is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -154,7 +166,9 @@ func TestReports_Save(t *testing.T) {
 	})
 
 	t.Run("a closed report allows a new report", func(t *testing.T) {
-		e := newEnv(t)
+		t.Parallel()
+
+		harness := newEnv(t)
 		ctx := t.Context()
 
 		author := createPerson(t, steamid.RandSID64())
@@ -167,18 +181,20 @@ func TestReports_Save(t *testing.T) {
 			Reason:      reason.Cheating,
 		}
 
-		first, err := e.reports.Save(ctx, author, req)
+		first, err := harness.reports.Save(ctx, author, req)
 		require.NoError(t, err)
 
-		_, err = e.reports.SetReportStatus(ctx, first.ReportID, author, ban.ClosedWithAction)
+		_, err = harness.reports.SetReportStatus(ctx, first.ReportID, author, ban.ClosedWithAction)
 		require.NoError(t, err)
 
-		second, err := e.reports.Save(ctx, author, req)
+		second, err := harness.reports.Save(ctx, author, req)
 		require.NoError(t, err)
 		require.NotEqual(t, first.ReportID, second.ReportID)
 	})
 
 	t.Run("unknown demo is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 
 		author := createPerson(t, steamid.RandSID64())
@@ -194,6 +210,8 @@ func TestReports_Save(t *testing.T) {
 	})
 
 	t.Run("sends notifications", func(t *testing.T) {
+		t.Parallel()
+
 		capt := &capturingNotifier{}
 		e := newEnv(t, withNotifier(capt))
 		ctx := t.Context()
@@ -303,6 +321,8 @@ func TestReports_SetReportStatus(t *testing.T) {
 	t.Parallel()
 
 	t.Run("author can change the status", func(t *testing.T) {
+		t.Parallel()
+
 		capt := &capturingNotifier{}
 		e := newEnv(t, withNotifier(capt))
 		ctx := t.Context()
@@ -336,6 +356,8 @@ func TestReports_SetReportStatus(t *testing.T) {
 	})
 
 	t.Run("same status is a no op", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -352,6 +374,8 @@ func TestReports_SetReportStatus(t *testing.T) {
 	})
 
 	t.Run("other users are denied", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -433,6 +457,8 @@ func TestReports_CreateMessage(t *testing.T) {
 	t.Parallel()
 
 	t.Run("author can create a message", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -454,6 +480,8 @@ func TestReports_CreateMessage(t *testing.T) {
 	})
 
 	t.Run("empty body is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -469,6 +497,8 @@ func TestReports_CreateMessage(t *testing.T) {
 	})
 
 	t.Run("other users are denied", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -485,6 +515,8 @@ func TestReports_CreateMessage(t *testing.T) {
 	})
 
 	t.Run("notifies group and author for foreign replies", func(t *testing.T) {
+		t.Parallel()
+
 		capt := &capturingNotifier{}
 		e := newEnv(t, withNotifier(capt))
 		ctx := t.Context()
@@ -524,6 +556,8 @@ func TestReports_EditMessage(t *testing.T) {
 	t.Parallel()
 
 	t.Run("author can edit their message", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -543,6 +577,8 @@ func TestReports_EditMessage(t *testing.T) {
 	})
 
 	t.Run("invalid id is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 
 		author := createPerson(t, steamid.RandSID64())
@@ -551,6 +587,8 @@ func TestReports_EditMessage(t *testing.T) {
 	})
 
 	t.Run("unknown message is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 
 		author := createPerson(t, steamid.RandSID64())
@@ -560,6 +598,8 @@ func TestReports_EditMessage(t *testing.T) {
 	})
 
 	t.Run("empty body is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -578,6 +618,8 @@ func TestReports_EditMessage(t *testing.T) {
 	})
 
 	t.Run("unchanged body is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -596,6 +638,8 @@ func TestReports_EditMessage(t *testing.T) {
 	})
 
 	t.Run("other users are denied", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -615,6 +659,8 @@ func TestReports_EditMessage(t *testing.T) {
 	})
 
 	t.Run("report admin can edit any message", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -643,6 +689,8 @@ func TestReports_DropMessage(t *testing.T) {
 	t.Parallel()
 
 	t.Run("author can drop their message", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -664,6 +712,8 @@ func TestReports_DropMessage(t *testing.T) {
 	})
 
 	t.Run("other users are denied", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 
@@ -687,6 +737,8 @@ func TestReports_DropMessage(t *testing.T) {
 	})
 
 	t.Run("report admin can drop any message", func(t *testing.T) {
+		t.Parallel()
+
 		e := newEnv(t)
 		ctx := t.Context()
 

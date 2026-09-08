@@ -48,6 +48,7 @@ void OnPluginStart() {
 
     RegAdminCmd("gb_ban", onAdminCmdBan, ADMFLAG_BAN);
     RegAdminCmd("gb_reload", onAdminCmdReload, ADMFLAG_ROOT);
+    RegAdminCmd("gb_admins", onCmdAdmins, ADMFLAG_ROOT, "List gbans admins and groups");
 
     RegAdminCmd("gb_stv_record", Command_Record, ADMFLAG_KICK, "Starts a SourceTV demo");
     RegAdminCmd("gb_stv_stoprecord", Command_StopRecord, ADMFLAG_KICK, "Stops the current SourceTV demo");

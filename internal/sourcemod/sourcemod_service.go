@@ -49,6 +49,7 @@ func NewSourcemodService(sourcemod Sourcemod, roleAuth *rpc.RoleAuth, authMiddle
 	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteOverridesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
 	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceGroupImmunitiesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_READ))
 	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateImmunityProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteImmunityProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

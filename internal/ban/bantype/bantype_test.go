@@ -8,6 +8,8 @@ import (
 )
 
 func TestType_String(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name string
 		typ  bantype.Type

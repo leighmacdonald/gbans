@@ -19,16 +19,6 @@ var (
 
 const adminRoleID = 1
 
-// Legacy levels derived from role assignments for the person.permission_level
-// column. The column predates the RBAC system and is only maintained for
-// reporting/display purposes.
-const (
-	LegacyLevelBanned int32 = 0
-	LegacyLevelUser   int32 = 10
-	LegacyLevelMod    int32 = 50
-	LegacyLevelAdmin  int32 = 100
-)
-
 // UserRoleName is the name of the default role granted to any authenticated
 // user without explicit role assignments.
 const UserRoleName = "user"
@@ -113,11 +103,7 @@ func (r *Roles) Delete(ctx context.Context, roleID int32) error {
 }
 
 func (r *Roles) Assign(ctx context.Context, steamID steamid.SteamID, roleID int32) error {
-	if err := r.repo.Assign(ctx, steamID, roleID); err != nil {
-		return err
-	}
-
-	return r.updateLegacyLevel(ctx, steamID)
+	return r.repo.Assign(ctx, steamID, roleID)
 }
 
 // Unassign removes the role from the steam ID. The admin role cannot be
@@ -127,38 +113,7 @@ func (r *Roles) Unassign(ctx context.Context, steamID steamid.SteamID, roleID in
 		return ErrAdminRoleProtected
 	}
 
-	if err := r.repo.Unassign(ctx, steamID, roleID); err != nil {
-		return err
-	}
-
-	return r.updateLegacyLevel(ctx, steamID)
-}
-
-// EffectivePrivilegeLevel derives the legacy privilege level represented by
-// the given roles. It is used to keep the person.permission_level column
-// populated for reporting/display; it is not used for authorization.
-func EffectivePrivilegeLevel(roles []Role) int32 {
-	for _, role := range roles {
-		switch role.RoleName {
-		case "banned":
-			return LegacyLevelBanned
-		case "admin":
-			return LegacyLevelAdmin
-		case "moderator":
-			return LegacyLevelMod
-		}
-	}
-
-	return LegacyLevelUser
-}
-
-func (r *Roles) updateLegacyLevel(ctx context.Context, steamID steamid.SteamID) error {
-	userRoles, errRoles := r.GetRolesBySteamID(ctx, steamID)
-	if errRoles != nil {
-		return errRoles
-	}
-
-	return r.repo.SetPermissionLevel(ctx, steamID, EffectivePrivilegeLevel(userRoles))
+	return r.repo.Unassign(ctx, steamID, roleID)
 }
 
 // AssignAdminRole grants the admin role to the given steam id. Used to
