@@ -6,17 +6,16 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/auth/v1/authv1connect"
-	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type Service struct{}
 
-func NewService(roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := authv1connect.NewAuthServiceHandler(Service{}, option...)
 
-	authMiddleware.UserRoute(authv1connect.AuthServiceLogoutProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_LOGIN))
+	authMiddleware.AuthedRoute(authv1connect.AuthServiceLogoutProcedure)
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

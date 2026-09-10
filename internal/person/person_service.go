@@ -28,7 +28,7 @@ func NewPersonService(persons *Persons, roleAuth *rpc.RoleAuth, authMiddleware *
 
 	authMiddleware.UserRoute(personv1connect.PersonServiceProfileProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_PERSON_READ))
 	authMiddleware.UserRoute(personv1connect.PersonServiceResolveSteamIDProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STEAMID_RESOLVE))
-	authMiddleware.UserRoute(personv1connect.PersonServiceCurrentProfileProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_LOGIN))
+	authMiddleware.AuthedRoute(personv1connect.PersonServiceCurrentProfileProcedure)
 	authMiddleware.UserRoute(personv1connect.PersonServiceProfileSettingsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CURRENT_SETTINGS))
 	authMiddleware.UserRoute(personv1connect.PersonServiceEditProfileSettingsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CURRENT_SETTINGS))
 	authMiddleware.UserRoute(personv1connect.PersonServiceQueryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_PERSON_READ))

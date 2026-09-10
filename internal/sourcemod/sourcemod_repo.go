@@ -152,7 +152,8 @@ func (r Repository) rolePermissions(ctx context.Context, roleIDs []int32) (map[i
 	rows, errRows := r.QueryBuilder(ctx, r.Builder().
 		Select("role_id", "permission").
 		From("role_permissions").
-		Where(sq.Eq{"role_id": roleIDs}))
+		Where(sq.Eq{"role_id": roleIDs}).
+		OrderBy("permission"))
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
@@ -172,16 +173,20 @@ func (r Repository) rolePermissions(ctx context.Context, roleIDs []int32) (map[i
 	return perms, nil
 }
 
-// setRolePermissions replaces the permission set of the given role.
-func (r Repository) setRolePermissions(ctx context.Context, roleID int32, perms []rolesv1.Permission) error {
+// setRolePermissions replaces the permission set of the given role with the
+// normalised (deduplicated, sorted) requested permissions. It returns the
+// effective set that was persisted.
+func (r Repository) setRolePermissions(ctx context.Context, roleID int32, perms []rolesv1.Permission) ([]rolesv1.Permission, error) {
+	perms = normalizePermissions(perms)
+
 	if err := r.ExecDeleteBuilder(ctx, r.Builder().
 		Delete("role_permissions").
 		Where(sq.Eq{"role_id": roleID})); err != nil {
-		return database.Err(err)
+		return nil, database.Err(err)
 	}
 
 	if len(perms) == 0 {
-		return nil
+		return perms, nil
 	}
 
 	now := time.Now()
@@ -194,10 +199,10 @@ func (r Repository) setRolePermissions(ctx context.Context, roleID int32, perms 
 	}
 
 	if err := r.ExecInsertBuilder(ctx, builder); err != nil {
-		return database.Err(err)
+		return nil, database.Err(err)
 	}
 
-	return nil
+	return perms, nil
 }
 
 // roleMemberCounts returns the number of assignments for every sourcemod role.
@@ -502,9 +507,12 @@ func (r Repository) AddGroup(ctx context.Context, group Groups) (Groups, error) 
 		return Groups{}, database.Err(err)
 	}
 
-	if err := r.setRolePermissions(ctx, group.GroupID, group.Permissions); err != nil {
-		return Groups{}, err
+	perms, errPerms := r.setRolePermissions(ctx, group.GroupID, group.Permissions)
+	if errPerms != nil {
+		return Groups{}, errPerms
 	}
+
+	group.Permissions = perms
 
 	slog.Info("Created SM Group", slog.Int("group_id", int(group.GroupID)), slog.String("name", group.Name))
 
@@ -522,9 +530,12 @@ func (r Repository) SaveGroup(ctx context.Context, group Groups) (Groups, error)
 		return Groups{}, database.Err(err)
 	}
 
-	if err := r.setRolePermissions(ctx, group.GroupID, group.Permissions); err != nil {
-		return Groups{}, err
+	perms, errPerms := r.setRolePermissions(ctx, group.GroupID, group.Permissions)
+	if errPerms != nil {
+		return Groups{}, errPerms
 	}
+
+	group.Permissions = perms
 
 	return group, nil
 }
@@ -879,9 +890,12 @@ func (r Repository) upsertAdmin(ctx context.Context, admin Admin) (Admin, error)
 		return Admin{}, err
 	}
 
-	if err := r.setRolePermissions(ctx, personalID, admin.Permissions); err != nil {
-		return Admin{}, err
+	perms, errPerms := r.setRolePermissions(ctx, personalID, admin.Permissions)
+	if errPerms != nil {
+		return Admin{}, errPerms
 	}
+
+	admin.Permissions = perms
 
 	slog.Info("Saved SM Admin", slog.String("steam_id", admin.SteamID.String()), slog.String("name", admin.Name))
 

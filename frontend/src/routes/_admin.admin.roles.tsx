@@ -19,6 +19,7 @@ import { RoleCreateModal } from "../component/modal/RoleCreateModal";
 import { RoleEditModal } from "../component/modal/RoleEditModal";
 import { RowActionContainer } from "../component/RowActionContainer";
 import { createDefaultTableOptions, makeRowActionsDefOptions } from "../component/table/options";
+import { RoleUsersTable } from "../component/table/RoleUsersTable";
 import { SMImmunityTable } from "../component/table/SMImmunityTable";
 import { SMOverridesTable } from "../component/table/SMOverridesTable";
 import { SortableTable } from "../component/table/SortableTable";
@@ -216,6 +217,9 @@ function AdminRoles() {
 
 	return (
 		<Grid container spacing={2}>
+			<Grid size={{ xs: 12 }}>
+				<RoleUsersTable />
+			</Grid>
 			<Grid size={{ xs: 12 }}>
 				<SortableTable
 					table={table}

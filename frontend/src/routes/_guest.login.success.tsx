@@ -3,8 +3,8 @@ import { useEffect } from "react";
 import { z } from "zod/v4";
 import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
-
-const exchanging = new Set<string>();
+import { logErr } from "../util/errors.ts";
+import { once } from "../util/once.ts";
 
 const exchangeToken = async (code: string): Promise<string> => {
 	const res = await fetch("/api/auth/exchange", {
@@ -53,23 +53,28 @@ function LoginSteamSuccess() {
 			return;
 		}
 
-		if (exchanging.has(code)) return;
-		exchanging.add(code);
-
 		let cancelled = false;
 
-		const runLogin = async () => {
-			try {
-				await login(await exchangeToken(code));
-				await navigate({ to: search.nextUrl });
-			} catch {
+		// Exchange codes are single-use, so the exchange is dispatched only
+		// once per code even if the effect runs more than once (StrictMode).
+		once(code, async () => {
+			const token = await exchangeToken(code);
+			await login(token);
+		}).then(
+			() => {
 				if (!cancelled) {
-					navigate({ to: "/" });
+					navigate({ to: search.nextUrl });
 				}
-			}
-		};
+			},
+			(error) => {
+				if (cancelled) {
+					return;
+				}
 
-		runLogin();
+				logErr(error);
+				navigate({ to: "/" });
+			},
+		);
 
 		return () => {
 			cancelled = true;

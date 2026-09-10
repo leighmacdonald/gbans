@@ -1,6 +1,7 @@
 package sourcemod_test
 
 import (
+	"slices"
 	"testing"
 	"time"
 
@@ -61,6 +62,24 @@ func createTestGroup(t *testing.T, repo sourcemod.Repository, name string, perms
 	return group
 }
 
+// normalizePerms deduplicates and sorts a permission set, matching the
+// deterministic order the repository stores and reads them in.
+func normalizePerms(perms ...rolesv1.Permission) []rolesv1.Permission {
+	seen := make(map[rolesv1.Permission]struct{}, len(perms))
+	out := make([]rolesv1.Permission, 0, len(perms))
+	for _, perm := range perms {
+		if _, ok := seen[perm]; ok {
+			continue
+		}
+
+		seen[perm] = struct{}{}
+		out = append(out, perm)
+	}
+	slices.Sort(out)
+
+	return out
+}
+
 func TestAdminLifecycle(t *testing.T) {
 	repo := sourcemod.NewRepository(fixture.Database)
 	ctx := t.Context()
@@ -77,8 +96,8 @@ func TestAdminLifecycle(t *testing.T) {
 	require.Equal(t, int32(0), admin.Immunity)
 	require.Len(t, admin.Groups, 1)
 	require.Equal(t, "smoke-admin", admin.Groups[0].Name)
-	require.Equal(t, kickRcon, admin.Permissions)
-	require.Equal(t, kickRcon, admin.Groups[0].Permissions)
+	require.Equal(t, normalizePerms(kickRcon...), admin.Permissions)
+	require.Equal(t, normalizePerms(kickRcon...), admin.Groups[0].Permissions)
 
 	t.Run("reads back by id and lists admins", func(t *testing.T) {
 		byID, err := repo.GetAdminByID(ctx, sid.Int64())
@@ -104,7 +123,7 @@ func TestAdminLifecycle(t *testing.T) {
 		root := createTestAdmin(t, repo, rootSID, "smoke-root", kickRoot)
 
 		require.Equal(t, int32(100), root.Immunity)
-		require.Equal(t, kickRoot, root.Permissions)
+		require.Equal(t, normalizePerms(kickRoot...), root.Permissions)
 
 		require.NoError(t, repo.DelAdmin(ctx, root))
 		_, err := repo.GetAdminByID(ctx, rootSID.Int64())
@@ -131,7 +150,7 @@ func TestAdminLifecycle(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Equal(t, "smoke-renamed-admin", saved.Name)
-		require.Equal(t, kickVote, saved.Permissions)
+		require.Equal(t, normalizePerms(kickVote...), saved.Permissions)
 
 		missing, err := repo.GetGroupByName(ctx, "smoke-admin")
 		require.ErrorIs(t, err, database.ErrNoResult)
@@ -139,7 +158,7 @@ func TestAdminLifecycle(t *testing.T) {
 
 		renamed, err := repo.GetGroupByName(ctx, "smoke-renamed-admin")
 		require.NoError(t, err)
-		require.Equal(t, kickVote, renamed.Permissions)
+		require.Equal(t, normalizePerms(kickVote...), renamed.Permissions)
 	})
 
 	t.Run("delete admin removes the personal role", func(t *testing.T) {
@@ -174,7 +193,7 @@ func TestAdminGroupAssignment(t *testing.T) {
 	byName, err := repo.GetGroupByName(ctx, "smoke-testers")
 	require.NoError(t, err)
 	require.Equal(t, group.GroupID, byName.GroupID)
-	require.Equal(t, banUnban, byName.Permissions)
+	require.Equal(t, normalizePerms(banUnban...), byName.Permissions)
 
 	groups, err := repo.Groups(ctx)
 	require.NoError(t, err)

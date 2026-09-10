@@ -295,7 +295,7 @@ func TestSourcemodServiceGroupCRUD(t *testing.T) {
 	group := created.GetGroup()
 	require.NotZero(t, group.GetGroupId())
 	require.Equal(t, "svc-group", group.GetName())
-	require.Equal(t, kickRcon, group.GetPermissions())
+	require.Equal(t, normalizePerms(kickRcon...), group.GetPermissions())
 	require.Zero(t, group.GetImmunityLevel())
 
 	rootGroup, err := client.CreateGroup(ctx, &sourcemodv1.CreateGroupRequest{
@@ -313,7 +313,7 @@ func TestSourcemodServiceGroupCRUD(t *testing.T) {
 	require.NoError(t, err)
 	found := findGroup(list.GetGroups(), "svc-group")
 	require.NotNil(t, found)
-	require.Equal(t, kickRcon, found.GetPermissions())
+	require.Equal(t, normalizePerms(kickRcon...), found.GetPermissions())
 
 	chat := []rolesv1.Permission{rolesv1.Permission_PERMISSION_SOURCEMOD_CHAT}
 	groupID := group.GetGroupId()
@@ -324,7 +324,7 @@ func TestSourcemodServiceGroupCRUD(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, "svc-group-renamed", edited.GetGroup().GetName())
-	require.Equal(t, chat, edited.GetGroup().GetPermissions())
+	require.Equal(t, normalizePerms(chat...), edited.GetGroup().GetPermissions())
 
 	missingID := int32(999999)
 	_, err = client.EditGroups(ctx, &sourcemodv1.EditGroupsRequest{GroupId: &missingID, Name: new("svc-missing")})
@@ -440,7 +440,7 @@ func TestSourcemodServiceAdminCRUD(t *testing.T) {
 	require.Equal(t, string(adminSid.Steam3()), admin.GetIdentity())
 	require.Equal(t, "svc-admin", admin.GetName())
 	require.Equal(t, "steam", admin.GetAuthType())
-	require.Equal(t, kickBan, admin.GetPermissions())
+	require.Equal(t, normalizePerms(kickBan...), admin.GetPermissions())
 	require.Len(t, admin.GetGroups(), 1)
 
 	list, err := client.Admins(ctx, &emptypb.Empty{})
@@ -453,7 +453,7 @@ func TestSourcemodServiceAdminCRUD(t *testing.T) {
 		}
 	}
 	require.NotNil(t, found)
-	require.Equal(t, kickBan, found.GetPermissions())
+	require.Equal(t, normalizePerms(kickBan...), found.GetPermissions())
 
 	group, err := client.CreateGroup(ctx, &sourcemodv1.CreateGroupRequest{Name: new("svc-admin-group")})
 	require.NoError(t, err)
@@ -481,7 +481,7 @@ func TestSourcemodServiceAdminCRUD(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, "svc-admin-edited", edited.GetAdmin().GetName())
-	require.Equal(t, banOnly, edited.GetAdmin().GetPermissions())
+	require.Equal(t, normalizePerms(banOnly...), edited.GetAdmin().GetPermissions())
 
 	missingID := int64(999999)
 	missingIdentity := "76561198000000000"
@@ -677,7 +677,7 @@ func TestPluginServiceSMGroups(t *testing.T) {
 
 	found := findGroup(resp.GetGroups(), "svc-sm-groups")
 	require.NotNil(t, found)
-	require.Equal(t, kickRcon, found.GetPermissions())
+	require.Equal(t, normalizePerms(kickRcon...), found.GetPermissions())
 	require.Zero(t, found.GetImmunityLevel())
 
 	rootGroup := findGroup(resp.GetGroups(), "svc-sm-root")
@@ -702,7 +702,7 @@ func TestPluginServiceSMUsers(t *testing.T) {
 
 	admin, err := harness.sm.AddAdmin(ctx, "svc-sm-admin", sourcemod.AuthTypeSteam, adminSid.String(), kickBan)
 	require.NoError(t, err)
-	require.Equal(t, kickBan, admin.Permissions)
+	require.Equal(t, normalizePerms(kickBan...), admin.Permissions)
 
 	resp, err := harness.pluginClient(t, harness.serverToken(t)).SMUsers(ctx, &emptypb.Empty{})
 	require.NoError(t, err)
@@ -717,7 +717,7 @@ func TestPluginServiceSMUsers(t *testing.T) {
 	require.Equal(t, admin.AdminID, found.GetId())
 	require.Equal(t, "steam", found.GetAuthType())
 	require.Equal(t, "svc-sm-admin", found.GetName())
-	require.Equal(t, kickBan, found.GetPermissions())
+	require.Equal(t, normalizePerms(kickBan...), found.GetPermissions())
 
 	var groupLinks int
 	for _, link := range resp.GetUserGroups() {

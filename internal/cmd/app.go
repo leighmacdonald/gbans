@@ -453,7 +453,7 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware, roleAuth *rpc.RoleAuth
 	services := []rpc.Service{
 		anticheat.NewService(g.anticheat, roleAuth, authMiddleware, interceptors),
 		asset.NewService(g.assets, roleAuth, authMiddleware, interceptors),
-		auth.NewService(roleAuth, authMiddleware, interceptors),
+		auth.NewService(authMiddleware, interceptors),
 		ban.NewAppealService(g.appeals, roleAuth, authMiddleware, interceptors),
 		ban.NewBanService(g.bans, roleAuth, authMiddleware, interceptors),
 		ban.NewExportService(g.bans, strings.Split(conf.Exports.AuthorizedKeys, ","), conf.General.SiteName),
@@ -470,7 +470,7 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware, roleAuth *rpc.RoleAuth
 		network.NewNetworkService(g.networks, roleAuth, authMiddleware, interceptors),
 		news.NewService(g.news, roleAuth, authMiddleware, interceptors),
 		notification.NewService(g.notifications, roleAuth, authMiddleware, interceptors),
-		roles.NewService(g.roles, roleAuth, authMiddleware, interceptors),
+		roles.NewService(g.roles, g.persons, roleAuth, authMiddleware, interceptors),
 		person.NewPersonService(g.persons, roleAuth, authMiddleware, interceptors),
 		servers.NewServersService(g.servers, roleAuth, authMiddleware, interceptors),
 		demo.NewService(g.demos, roleAuth, authMiddleware, interceptors),
@@ -598,24 +598,31 @@ func (g *GBans) Shutdown(ctx context.Context) error {
 
 func (g *GBans) firstTimeSetup(ctx context.Context) error {
 	conf := g.config.Config()
-	_, errRootUser := g.persons.BySteamID(ctx, steamid.New(conf.Owner))
-	if errRootUser == nil {
-		return nil
+
+	firstTime := false
+	if _, errRootUser := g.persons.BySteamID(ctx, steamid.New(conf.Owner)); errRootUser != nil {
+		if !errors.Is(errRootUser, person.ErrPlayerDoesNotExist) {
+			return errRootUser
+		}
+
+		firstTime = true
+
+		owner := person.New(steamid.New(conf.Owner))
+
+		if errSave := g.persons.Save(ctx, &owner); errSave != nil {
+			slog.Error("Failed create new owner", slog.String("error", errSave.Error()))
+		}
 	}
 
-	if !errors.Is(errRootUser, person.ErrPlayerDoesNotExist) {
-		return errRootUser
-	}
-
-	owner := person.New(steamid.New(conf.Owner))
-
-	if errSave := g.persons.Save(ctx, &owner); errSave != nil {
-		slog.Error("Failed create new owner", slog.String("error", errSave.Error()))
-	}
-
-	// Bootstrap the owner as an admin so they have full access.
+	// Bootstrap the owner as an admin so they have full access. Runs on
+	// every start (idempotently) so the owner is repaired if their role
+	// assignments predate the roles system or were ever reset.
 	if errAssign := g.roles.AssignAdminRole(ctx, steamid.New(conf.Owner)); errAssign != nil {
 		slog.Error("Failed to assign admin role to owner", slog.String("error", errAssign.Error()))
+	}
+
+	if !firstTime {
+		return nil
 	}
 
 	article := news.Article{

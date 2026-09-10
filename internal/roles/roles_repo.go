@@ -6,6 +6,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -249,7 +250,8 @@ func (r Repository) Assign(ctx context.Context, steamID steamid.SteamID, roleID 
 			"steam_id":   steamID.Int64(),
 			"role_id":    roleID,
 			"created_on": time.Now(),
-		})))
+		}).
+		Suffix("ON CONFLICT (steam_id, role_id) DO NOTHING")))
 }
 
 func (r Repository) Unassign(ctx context.Context, steamID steamid.SteamID, roleID int32) error {
@@ -295,4 +297,88 @@ func (r Repository) GetRolesBySteamID(ctx context.Context, steamID steamid.Steam
 	}
 
 	return roles, nil
+}
+
+func (r Repository) RoleUsers(ctx context.Context) ([]RoleUser, error) {
+	users := make([]RoleUser, 0)
+
+	rows, errRows := r.QueryBuilder(ctx, r.Builder().
+		Select("p.steam_id", "p.personaname", "r.role_id", "r.role_name").
+		From("role_assignments ra").
+		Join("person p ON p.steam_id = ra.steam_id").
+		Join("roles r ON r.role_id = ra.role_id").
+		OrderBy("p.personaname ASC", "r.role_name ASC"))
+	if errRows != nil {
+		if errors.Is(errRows, database.ErrNoResult) {
+			return users, nil
+		}
+
+		return nil, database.Err(errRows)
+	}
+
+	defer rows.Close()
+
+	bySteam := make(map[int64]int)
+
+	for rows.Next() {
+		var steamID int64
+		var personaName string
+		var role Role
+
+		if errScan := rows.Scan(&steamID, &personaName, &role.RoleID, &role.RoleName); errScan != nil {
+			return nil, database.Err(errScan)
+		}
+
+		idx, ok := bySteam[steamID]
+		if !ok {
+			users = append(users, RoleUser{SteamID: steamID, PersonaName: personaName, Roles: []Role{role}})
+			bySteam[steamID] = len(users) - 1
+		} else {
+			users[idx].Roles = append(users[idx].Roles, role)
+		}
+	}
+
+	return users, nil
+}
+
+// SetUserRoles replaces the user's full set of role assignments in a single
+// transaction: all existing assignments are removed, then the provided roles
+// are inserted. The caller is responsible for ensuring the person exists first.
+func (r Repository) SetUserRoles(ctx context.Context, steamID steamid.SteamID, roleIDs []int32) error {
+	return database.Err(r.WrapTx(ctx, func(transaction pgx.Tx) error {
+		deleteQuery, deleteArgs, errDelete := r.Builder().
+			Delete("role_assignments").
+			Where(sq.Eq{"steam_id": steamID.Int64()}).
+			ToSql()
+		if errDelete != nil {
+			return database.Err(errDelete)
+		}
+
+		if _, errExec := transaction.Exec(ctx, deleteQuery, deleteArgs...); errExec != nil {
+			return database.Err(errExec)
+		}
+
+		if len(roleIDs) == 0 {
+			return nil
+		}
+
+		insert := r.Builder().
+			Insert("role_assignments").
+			Columns("steam_id", "role_id", "created_on").
+			Suffix("ON CONFLICT (steam_id, role_id) DO NOTHING")
+
+		now := time.Now()
+		for _, roleID := range roleIDs {
+			insert = insert.Values(steamID.Int64(), roleID, now)
+		}
+
+		insertQuery, insertArgs, errInsert := insert.ToSql()
+		if errInsert != nil {
+			return database.Err(errInsert)
+		}
+
+		_, errExec := transaction.Exec(ctx, insertQuery, insertArgs...)
+
+		return database.Err(errExec)
+	}))
 }

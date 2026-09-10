@@ -41,7 +41,6 @@ func TestAssignUserRole(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, userRoles, 1)
 		require.Equal(t, roles.UserRoleName, userRoles[0].RoleName)
-		require.Contains(t, userRoles[0].Permissions, rolesv1.Permission_PERMISSION_LOGIN.String())
 	})
 
 	t.Run("no-op when user already has a role", func(t *testing.T) {
@@ -382,6 +381,23 @@ func TestAssign(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, userRoles, 2)
 	})
+
+	t.Run("reassigning the same role is idempotent", func(t *testing.T) {
+		t.Parallel()
+
+		sid := steamid.New(76561198000125102)
+		fixture.CreateTestPerson(ctx, sid)
+
+		moderatorRole, err := repo.GetByName(ctx, "moderator")
+		require.NoError(t, err)
+
+		require.NoError(t, service.Assign(ctx, sid, moderatorRole.RoleID))
+		require.NoError(t, service.Assign(ctx, sid, moderatorRole.RoleID))
+
+		userRoles, err := service.GetRolesBySteamID(ctx, sid)
+		require.NoError(t, err)
+		require.Len(t, userRoles, 1)
+	})
 }
 
 func TestUnassign(t *testing.T) {
@@ -580,8 +596,8 @@ func TestPermissionsBySteamID(t *testing.T) {
 		perms := service.PermissionsBySteamID(ctx, sid)
 		require.NotEmpty(t, perms)
 
-		require.True(t, slices.Contains(perms, rolesv1.Permission_PERMISSION_LOGIN),
-			"expected PERMISSION_LOGIN in auto-assigned user role")
+		require.True(t, slices.Contains(perms, rolesv1.Permission_PERMISSION_FORUM_READ),
+			"expected baseline user permissions in auto-assigned user role")
 	})
 
 	t.Run("returns nil for user with no roles assignment error", func(t *testing.T) {
@@ -726,6 +742,124 @@ func TestRoleProtection(t *testing.T) {
 	})
 }
 
+func TestSetUserRoles(t *testing.T) {
+	t.Parallel()
+
+	repo := roles.NewRepository(fixture.Database)
+	service := roles.NewRoles(repo, tests.OwnerSID)
+	ctx := t.Context()
+
+	t.Run("sets a user's full role set", func(t *testing.T) {
+		t.Parallel()
+
+		sid := steamid.New(76561198000132100)
+		fixture.CreateTestPerson(ctx, sid)
+
+		modRole, err := repo.GetByName(ctx, "moderator")
+		require.NoError(t, err)
+		streamerRole, err := repo.GetByName(ctx, "streamer")
+		require.NoError(t, err)
+
+		require.NoError(t, service.SetUserRoles(ctx, sid, []int32{modRole.RoleID, streamerRole.RoleID}))
+
+		userRoles, err := service.GetRolesBySteamID(ctx, sid)
+		require.NoError(t, err)
+		require.Len(t, userRoles, 2)
+	})
+
+	t.Run("replaces the existing full set", func(t *testing.T) {
+		t.Parallel()
+
+		sid := steamid.New(76561198000132101)
+		fixture.CreateTestPerson(ctx, sid)
+
+		modRole, err := repo.GetByName(ctx, "moderator")
+		require.NoError(t, err)
+		adminRole, err := repo.GetByName(ctx, "admin")
+		require.NoError(t, err)
+
+		require.NoError(t, service.SetUserRoles(ctx, sid, []int32{modRole.RoleID}))
+		require.NoError(t, service.SetUserRoles(ctx, sid, []int32{adminRole.RoleID}))
+
+		userRoles, err := service.GetRolesBySteamID(ctx, sid)
+		require.NoError(t, err)
+		require.Len(t, userRoles, 1)
+		require.Equal(t, "admin", userRoles[0].RoleName)
+	})
+
+	t.Run("clears all roles when given an empty set", func(t *testing.T) {
+		t.Parallel()
+
+		sid := steamid.New(76561198000132102)
+		fixture.CreateTestPerson(ctx, sid)
+
+		modRole, err := repo.GetByName(ctx, "moderator")
+		require.NoError(t, err)
+
+		require.NoError(t, service.SetUserRoles(ctx, sid, []int32{modRole.RoleID}))
+		require.NoError(t, service.SetUserRoles(ctx, sid, nil))
+
+		userRoles, err := service.GetRolesBySteamID(ctx, sid)
+		require.NoError(t, err)
+		require.Empty(t, userRoles)
+	})
+}
+
+func TestRoleUsers(t *testing.T) {
+	t.Parallel()
+
+	repo := roles.NewRepository(fixture.Database)
+	service := roles.NewRoles(repo, tests.OwnerSID)
+	ctx := t.Context()
+
+	t.Run("returns persons with their assigned roles", func(t *testing.T) {
+		t.Parallel()
+
+		sidA := steamid.New(76561198000133100)
+		sidB := steamid.New(76561198000133101)
+		fixture.CreateTestPerson(ctx, sidA)
+		fixture.CreateTestPerson(ctx, sidB)
+
+		modRole, err := repo.GetByName(ctx, "moderator")
+		require.NoError(t, err)
+		streamerRole, err := repo.GetByName(ctx, "streamer")
+		require.NoError(t, err)
+
+		require.NoError(t, service.SetUserRoles(ctx, sidA, []int32{modRole.RoleID, streamerRole.RoleID}))
+		require.NoError(t, service.SetUserRoles(ctx, sidB, []int32{modRole.RoleID}))
+
+		users, err := service.RoleUsers(ctx)
+		require.NoError(t, err)
+
+		bySteam := make(map[int64]roles.RoleUser, len(users))
+		for _, u := range users {
+			bySteam[u.SteamID] = u
+		}
+
+		userA, okA := bySteam[sidA.Int64()]
+		require.True(t, okA, "expected person A in RoleUsers result")
+		require.Len(t, userA.Roles, 2)
+
+		userB, okB := bySteam[sidB.Int64()]
+		require.True(t, okB, "expected person B in RoleUsers result")
+		require.Len(t, userB.Roles, 1)
+	})
+
+	t.Run("excludes persons with no roles", func(t *testing.T) {
+		t.Parallel()
+
+		sid := steamid.New(76561198000133102)
+		fixture.CreateTestPerson(ctx, sid)
+
+		users, err := service.RoleUsers(ctx)
+		require.NoError(t, err)
+
+		for _, u := range users {
+			require.NotEqual(t, sid.Int64(), u.SteamID, "person with no roles should not be listed")
+		}
+	})
+}
+
 func TestRoleAssignmentPermissions(t *testing.T) {
 	t.Parallel()
 
@@ -787,6 +921,6 @@ func TestRoleAssignmentPermissions(t *testing.T) {
 			permSet[p] = true
 		}
 
-		require.True(t, permSet[rolesv1.Permission_PERMISSION_LOGIN])
+		require.True(t, permSet[rolesv1.Permission_PERMISSION_FORUM_READ])
 	})
 }

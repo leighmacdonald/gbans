@@ -38,3 +38,13 @@ export const roleUnassign = RolesService.method.roleUnassign;
  * @generated from rpc roles.v1.RolesService.RoleBySteamID
  */
 export const roleBySteamID = RolesService.method.roleBySteamID;
+
+/**
+ * @generated from rpc roles.v1.RolesService.RoleUsers
+ */
+export const roleUsers = RolesService.method.roleUsers;
+
+/**
+ * @generated from rpc roles.v1.RolesService.SetUserRoles
+ */
+export const setUserRoles = RolesService.method.setUserRoles;

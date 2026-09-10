@@ -119,6 +119,14 @@ func (m *Middleware) PublicRoute(procedure string) {
 	m.Unlock()
 }
 
+// AuthedRoute registers a user-facing RPC procedure that requires a valid
+// authenticated user but no specific permission. Any logged-in user may access
+// it. The JWT and steam id are still validated by Authenticate before the
+// check runs, so this is exactly "any valid user". Thread-safe.
+func (m *Middleware) AuthedRoute(procedure string) {
+	m.UserRoute(procedure, func(context.Context, *http.Request, UserInfo) bool { return true })
+}
+
 // ServerRoute registers an authentication check for a server-facing RPC procedure.
 // The authFunc is called during Authenticate to determine if the requesting server
 // has permission to access the procedure. Thread-safe.
