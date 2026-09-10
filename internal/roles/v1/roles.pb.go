@@ -57,7 +57,6 @@ const (
 	Permission_PERMISSION_FORUM_EDIT        Permission = 122
 	Permission_PERMISSION_GAMEADMIN_READ    Permission = 130
 	Permission_PERMISSION_GAMEADMIN_WRITE   Permission = 131
-	Permission_PERMISSION_LOGIN             Permission = 140
 	Permission_PERMISSION_NETWORK_READ      Permission = 150
 	Permission_PERMISSION_NETWORK_ADMIN     Permission = 151
 	Permission_PERMISSION_NEWS_READ         Permission = 160
@@ -143,7 +142,6 @@ var (
 		122:  "PERMISSION_FORUM_EDIT",
 		130:  "PERMISSION_GAMEADMIN_READ",
 		131:  "PERMISSION_GAMEADMIN_WRITE",
-		140:  "PERMISSION_LOGIN",
 		150:  "PERMISSION_NETWORK_READ",
 		151:  "PERMISSION_NETWORK_ADMIN",
 		160:  "PERMISSION_NEWS_READ",
@@ -224,7 +222,6 @@ var (
 		"PERMISSION_FORUM_EDIT":          122,
 		"PERMISSION_GAMEADMIN_READ":      130,
 		"PERMISSION_GAMEADMIN_WRITE":     131,
-		"PERMISSION_LOGIN":               140,
 		"PERMISSION_NETWORK_READ":        150,
 		"PERMISSION_NETWORK_ADMIN":       151,
 		"PERMISSION_NEWS_READ":           160,
@@ -391,6 +388,110 @@ func (x *RoleBySteamIDResponse) GetRoles() []*Role {
 	return nil
 }
 
+type RoleUser struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SteamId       *uint64                `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	PersonaName   *string                `protobuf:"bytes,2,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
+	Roles         []*Role                `protobuf:"bytes,3,rep,name=roles" json:"roles,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RoleUser) Reset() {
+	*x = RoleUser{}
+	mi := &file_roles_v1_roles_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RoleUser) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RoleUser) ProtoMessage() {}
+
+func (x *RoleUser) ProtoReflect() protoreflect.Message {
+	mi := &file_roles_v1_roles_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RoleUser.ProtoReflect.Descriptor instead.
+func (*RoleUser) Descriptor() ([]byte, []int) {
+	return file_roles_v1_roles_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *RoleUser) GetSteamId() uint64 {
+	if x != nil && x.SteamId != nil {
+		return *x.SteamId
+	}
+	return 0
+}
+
+func (x *RoleUser) GetPersonaName() string {
+	if x != nil && x.PersonaName != nil {
+		return *x.PersonaName
+	}
+	return ""
+}
+
+func (x *RoleUser) GetRoles() []*Role {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+type RoleUsersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Users         []*RoleUser            `protobuf:"bytes,1,rep,name=users" json:"users,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RoleUsersResponse) Reset() {
+	*x = RoleUsersResponse{}
+	mi := &file_roles_v1_roles_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RoleUsersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RoleUsersResponse) ProtoMessage() {}
+
+func (x *RoleUsersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_roles_v1_roles_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RoleUsersResponse.ProtoReflect.Descriptor instead.
+func (*RoleUsersResponse) Descriptor() ([]byte, []int) {
+	return file_roles_v1_roles_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *RoleUsersResponse) GetUsers() []*RoleUser {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
 type RoleAssignRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SteamId       *uint64                `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
@@ -401,7 +502,7 @@ type RoleAssignRequest struct {
 
 func (x *RoleAssignRequest) Reset() {
 	*x = RoleAssignRequest{}
-	mi := &file_roles_v1_roles_proto_msgTypes[2]
+	mi := &file_roles_v1_roles_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -413,7 +514,7 @@ func (x *RoleAssignRequest) String() string {
 func (*RoleAssignRequest) ProtoMessage() {}
 
 func (x *RoleAssignRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_roles_v1_roles_proto_msgTypes[2]
+	mi := &file_roles_v1_roles_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -426,7 +527,7 @@ func (x *RoleAssignRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoleAssignRequest.ProtoReflect.Descriptor instead.
 func (*RoleAssignRequest) Descriptor() ([]byte, []int) {
-	return file_roles_v1_roles_proto_rawDescGZIP(), []int{2}
+	return file_roles_v1_roles_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *RoleAssignRequest) GetSteamId() uint64 {
@@ -453,7 +554,7 @@ type RoleUnassignRequest struct {
 
 func (x *RoleUnassignRequest) Reset() {
 	*x = RoleUnassignRequest{}
-	mi := &file_roles_v1_roles_proto_msgTypes[3]
+	mi := &file_roles_v1_roles_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -465,7 +566,7 @@ func (x *RoleUnassignRequest) String() string {
 func (*RoleUnassignRequest) ProtoMessage() {}
 
 func (x *RoleUnassignRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_roles_v1_roles_proto_msgTypes[3]
+	mi := &file_roles_v1_roles_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -478,7 +579,7 @@ func (x *RoleUnassignRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoleUnassignRequest.ProtoReflect.Descriptor instead.
 func (*RoleUnassignRequest) Descriptor() ([]byte, []int) {
-	return file_roles_v1_roles_proto_rawDescGZIP(), []int{3}
+	return file_roles_v1_roles_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *RoleUnassignRequest) GetSteamId() uint64 {
@@ -495,6 +596,58 @@ func (x *RoleUnassignRequest) GetRoleId() int32 {
 	return 0
 }
 
+type SetUserRolesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SteamId       *uint64                `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	RoleId        []int32                `protobuf:"varint,2,rep,packed,name=role_id,json=roleId" json:"role_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetUserRolesRequest) Reset() {
+	*x = SetUserRolesRequest{}
+	mi := &file_roles_v1_roles_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetUserRolesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetUserRolesRequest) ProtoMessage() {}
+
+func (x *SetUserRolesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_roles_v1_roles_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetUserRolesRequest.ProtoReflect.Descriptor instead.
+func (*SetUserRolesRequest) Descriptor() ([]byte, []int) {
+	return file_roles_v1_roles_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *SetUserRolesRequest) GetSteamId() uint64 {
+	if x != nil && x.SteamId != nil {
+		return *x.SteamId
+	}
+	return 0
+}
+
+func (x *SetUserRolesRequest) GetRoleId() []int32 {
+	if x != nil {
+		return x.RoleId
+	}
+	return nil
+}
+
 type RoleDeleteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RoleId        *uint32                `protobuf:"varint,1,opt,name=role_id,json=roleId" json:"role_id,omitempty"`
@@ -504,7 +657,7 @@ type RoleDeleteRequest struct {
 
 func (x *RoleDeleteRequest) Reset() {
 	*x = RoleDeleteRequest{}
-	mi := &file_roles_v1_roles_proto_msgTypes[4]
+	mi := &file_roles_v1_roles_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -516,7 +669,7 @@ func (x *RoleDeleteRequest) String() string {
 func (*RoleDeleteRequest) ProtoMessage() {}
 
 func (x *RoleDeleteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_roles_v1_roles_proto_msgTypes[4]
+	mi := &file_roles_v1_roles_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -529,7 +682,7 @@ func (x *RoleDeleteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoleDeleteRequest.ProtoReflect.Descriptor instead.
 func (*RoleDeleteRequest) Descriptor() ([]byte, []int) {
-	return file_roles_v1_roles_proto_rawDescGZIP(), []int{4}
+	return file_roles_v1_roles_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *RoleDeleteRequest) GetRoleId() uint32 {
@@ -550,7 +703,7 @@ type RoleEditRequest struct {
 
 func (x *RoleEditRequest) Reset() {
 	*x = RoleEditRequest{}
-	mi := &file_roles_v1_roles_proto_msgTypes[5]
+	mi := &file_roles_v1_roles_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -562,7 +715,7 @@ func (x *RoleEditRequest) String() string {
 func (*RoleEditRequest) ProtoMessage() {}
 
 func (x *RoleEditRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_roles_v1_roles_proto_msgTypes[5]
+	mi := &file_roles_v1_roles_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -575,7 +728,7 @@ func (x *RoleEditRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoleEditRequest.ProtoReflect.Descriptor instead.
 func (*RoleEditRequest) Descriptor() ([]byte, []int) {
-	return file_roles_v1_roles_proto_rawDescGZIP(), []int{5}
+	return file_roles_v1_roles_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *RoleEditRequest) GetRoleId() int32 {
@@ -607,7 +760,7 @@ type RoleEditResponse struct {
 
 func (x *RoleEditResponse) Reset() {
 	*x = RoleEditResponse{}
-	mi := &file_roles_v1_roles_proto_msgTypes[6]
+	mi := &file_roles_v1_roles_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -619,7 +772,7 @@ func (x *RoleEditResponse) String() string {
 func (*RoleEditResponse) ProtoMessage() {}
 
 func (x *RoleEditResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_roles_v1_roles_proto_msgTypes[6]
+	mi := &file_roles_v1_roles_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -632,7 +785,7 @@ func (x *RoleEditResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoleEditResponse.ProtoReflect.Descriptor instead.
 func (*RoleEditResponse) Descriptor() ([]byte, []int) {
-	return file_roles_v1_roles_proto_rawDescGZIP(), []int{6}
+	return file_roles_v1_roles_proto_rawDescGZIP(), []int{9}
 }
 
 type RoleListResponse struct {
@@ -644,7 +797,7 @@ type RoleListResponse struct {
 
 func (x *RoleListResponse) Reset() {
 	*x = RoleListResponse{}
-	mi := &file_roles_v1_roles_proto_msgTypes[7]
+	mi := &file_roles_v1_roles_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -656,7 +809,7 @@ func (x *RoleListResponse) String() string {
 func (*RoleListResponse) ProtoMessage() {}
 
 func (x *RoleListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_roles_v1_roles_proto_msgTypes[7]
+	mi := &file_roles_v1_roles_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -669,7 +822,7 @@ func (x *RoleListResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoleListResponse.ProtoReflect.Descriptor instead.
 func (*RoleListResponse) Descriptor() ([]byte, []int) {
-	return file_roles_v1_roles_proto_rawDescGZIP(), []int{7}
+	return file_roles_v1_roles_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *RoleListResponse) GetRoles() []*Role {
@@ -688,7 +841,7 @@ type RoleCreateResponse struct {
 
 func (x *RoleCreateResponse) Reset() {
 	*x = RoleCreateResponse{}
-	mi := &file_roles_v1_roles_proto_msgTypes[8]
+	mi := &file_roles_v1_roles_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -700,7 +853,7 @@ func (x *RoleCreateResponse) String() string {
 func (*RoleCreateResponse) ProtoMessage() {}
 
 func (x *RoleCreateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_roles_v1_roles_proto_msgTypes[8]
+	mi := &file_roles_v1_roles_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -713,7 +866,7 @@ func (x *RoleCreateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoleCreateResponse.ProtoReflect.Descriptor instead.
 func (*RoleCreateResponse) Descriptor() ([]byte, []int) {
-	return file_roles_v1_roles_proto_rawDescGZIP(), []int{8}
+	return file_roles_v1_roles_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *RoleCreateResponse) GetRole() *Role {
@@ -733,7 +886,7 @@ type RoleCreateRequest struct {
 
 func (x *RoleCreateRequest) Reset() {
 	*x = RoleCreateRequest{}
-	mi := &file_roles_v1_roles_proto_msgTypes[9]
+	mi := &file_roles_v1_roles_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -745,7 +898,7 @@ func (x *RoleCreateRequest) String() string {
 func (*RoleCreateRequest) ProtoMessage() {}
 
 func (x *RoleCreateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_roles_v1_roles_proto_msgTypes[9]
+	mi := &file_roles_v1_roles_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -758,7 +911,7 @@ func (x *RoleCreateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoleCreateRequest.ProtoReflect.Descriptor instead.
 func (*RoleCreateRequest) Descriptor() ([]byte, []int) {
-	return file_roles_v1_roles_proto_rawDescGZIP(), []int{9}
+	return file_roles_v1_roles_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *RoleCreateRequest) GetRoleName() string {
@@ -789,7 +942,7 @@ type Role struct {
 
 func (x *Role) Reset() {
 	*x = Role{}
-	mi := &file_roles_v1_roles_proto_msgTypes[10]
+	mi := &file_roles_v1_roles_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -801,7 +954,7 @@ func (x *Role) String() string {
 func (*Role) ProtoMessage() {}
 
 func (x *Role) ProtoReflect() protoreflect.Message {
-	mi := &file_roles_v1_roles_proto_msgTypes[10]
+	mi := &file_roles_v1_roles_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -814,7 +967,7 @@ func (x *Role) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Role.ProtoReflect.Descriptor instead.
 func (*Role) Descriptor() ([]byte, []int) {
-	return file_roles_v1_roles_proto_rawDescGZIP(), []int{10}
+	return file_roles_v1_roles_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Role) GetRoleId() int32 {
@@ -868,7 +1021,13 @@ const file_roles_v1_roles_proto_rawDesc = "" +
 	"\bsteam_id\x18\x01 \x01(\x04B\x11\xbaH\f2\n" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\"=\n" +
 	"\x15RoleBySteamIDResponse\x12$\n" +
-	"\x05roles\x18\x01 \x03(\v2\x0e.roles.v1.RoleR\x05roles\"c\n" +
+	"\x05roles\x18\x01 \x03(\v2\x0e.roles.v1.RoleR\x05roles\"r\n" +
+	"\bRoleUser\x12\x1d\n" +
+	"\bsteam_id\x18\x01 \x01(\x04B\x020\x01R\asteamId\x12!\n" +
+	"\fpersona_name\x18\x02 \x01(\tR\vpersonaName\x12$\n" +
+	"\x05roles\x18\x03 \x03(\v2\x0e.roles.v1.RoleR\x05roles\"=\n" +
+	"\x11RoleUsersResponse\x12(\n" +
+	"\x05users\x18\x01 \x03(\v2\x12.roles.v1.RoleUserR\x05users\"c\n" +
 	"\x11RoleAssignRequest\x12,\n" +
 	"\bsteam_id\x18\x01 \x01(\x04B\x11\xbaH\f2\n" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\x12 \n" +
@@ -876,7 +1035,11 @@ const file_roles_v1_roles_proto_rawDesc = "" +
 	"\x13RoleUnassignRequest\x12,\n" +
 	"\bsteam_id\x18\x01 \x01(\x04B\x11\xbaH\f2\n" +
 	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\x12 \n" +
-	"\arole_id\x18\x02 \x01(\x05B\a\xbaH\x04\x1a\x02 \x00R\x06roleId\"5\n" +
+	"\arole_id\x18\x02 \x01(\x05B\a\xbaH\x04\x1a\x02 \x00R\x06roleId\"l\n" +
+	"\x13SetUserRolesRequest\x12,\n" +
+	"\bsteam_id\x18\x01 \x01(\x04B\x11\xbaH\f2\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\x12'\n" +
+	"\arole_id\x18\x02 \x03(\x05B\x0e\xbaH\v\x92\x01\b\x18\x01\"\x04\x1a\x02 \x00R\x06roleId\"5\n" +
 	"\x11RoleDeleteRequest\x12 \n" +
 	"\arole_id\x18\x01 \x01(\rB\a\xbaH\x04*\x02 \x00R\x06roleId\"\xa4\x01\n" +
 	"\x0fRoleEditRequest\x12 \n" +
@@ -900,7 +1063,7 @@ const file_roles_v1_roles_proto_rawDesc = "" +
 	"\n" +
 	"updated_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x12!\n" +
 	"\n" +
-	"user_count\x18\x06 \x01(\x04B\x020\x01R\tuserCount*\xfc\x12\n" +
+	"user_count\x18\x06 \x01(\x04B\x020\x01R\tuserCount*\xe5\x12\n" +
 	"\n" +
 	"Permission\x12\x1a\n" +
 	"\x16PERMISSION_UNSPECIFIED\x10\x00\x12\x1d\n" +
@@ -933,8 +1096,7 @@ const file_roles_v1_roles_proto_rawDesc = "" +
 	"\x16PERMISSION_FORUM_WRITE\x10y\x12\x19\n" +
 	"\x15PERMISSION_FORUM_EDIT\x10z\x12\x1e\n" +
 	"\x19PERMISSION_GAMEADMIN_READ\x10\x82\x01\x12\x1f\n" +
-	"\x1aPERMISSION_GAMEADMIN_WRITE\x10\x83\x01\x12\x15\n" +
-	"\x10PERMISSION_LOGIN\x10\x8c\x01\x12\x1c\n" +
+	"\x1aPERMISSION_GAMEADMIN_WRITE\x10\x83\x01\x12\x1c\n" +
 	"\x17PERMISSION_NETWORK_READ\x10\x96\x01\x12\x1d\n" +
 	"\x18PERMISSION_NETWORK_ADMIN\x10\x97\x01\x12\x19\n" +
 	"\x14PERMISSION_NEWS_READ\x10\xa0\x01\x12\x1a\n" +
@@ -982,7 +1144,7 @@ const file_roles_v1_roles_proto_rawDesc = "" +
 	"\x1dPERMISSION_SOURCEMOD_CUSTOM_3\x10\xf9\a\x12\"\n" +
 	"\x1dPERMISSION_SOURCEMOD_CUSTOM_4\x10\xfa\a\x12\"\n" +
 	"\x1dPERMISSION_SOURCEMOD_CUSTOM_5\x10\xfb\a\x12\"\n" +
-	"\x1dPERMISSION_SOURCEMOD_CUSTOM_6\x10\xfc\a2\x87\x04\n" +
+	"\x1dPERMISSION_SOURCEMOD_CUSTOM_6\x10\xfc\a2\x94\x05\n" +
 	"\fRolesService\x12@\n" +
 	"\bRoleList\x12\x16.google.protobuf.Empty\x1a\x1a.roles.v1.RoleListResponse\"\x00\x12I\n" +
 	"\n" +
@@ -993,7 +1155,9 @@ const file_roles_v1_roles_proto_rawDesc = "" +
 	"\n" +
 	"RoleAssign\x12\x1b.roles.v1.RoleAssignRequest\x1a\x16.google.protobuf.Empty\"\x00\x12G\n" +
 	"\fRoleUnassign\x12\x1d.roles.v1.RoleUnassignRequest\x1a\x16.google.protobuf.Empty\"\x00\x12R\n" +
-	"\rRoleBySteamID\x12\x1e.roles.v1.RoleBySteamIDRequest\x1a\x1f.roles.v1.RoleBySteamIDResponse\"\x00B\x96\x01\n" +
+	"\rRoleBySteamID\x12\x1e.roles.v1.RoleBySteamIDRequest\x1a\x1f.roles.v1.RoleBySteamIDResponse\"\x00\x12B\n" +
+	"\tRoleUsers\x12\x16.google.protobuf.Empty\x1a\x1b.roles.v1.RoleUsersResponse\"\x00\x12G\n" +
+	"\fSetUserRoles\x12\x1d.roles.v1.SetUserRolesRequest\x1a\x16.google.protobuf.Empty\"\x00B\x96\x01\n" +
 	"\fcom.roles.v1B\n" +
 	"RolesProtoP\x01Z9github.com/leighmacdonald/gbans/internal/roles/v1;rolesv1\xa2\x02\x03RXX\xaa\x02\bRoles.V1\xca\x02\bRoles\\V1\xe2\x02\x14Roles\\V1\\GPBMetadata\xea\x02\tRoles::V1b\beditionsp\xe8\a"
 
@@ -1010,51 +1174,60 @@ func file_roles_v1_roles_proto_rawDescGZIP() []byte {
 }
 
 var file_roles_v1_roles_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_roles_v1_roles_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_roles_v1_roles_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_roles_v1_roles_proto_goTypes = []any{
 	(Permission)(0),               // 0: roles.v1.Permission
 	(*RoleBySteamIDRequest)(nil),  // 1: roles.v1.RoleBySteamIDRequest
 	(*RoleBySteamIDResponse)(nil), // 2: roles.v1.RoleBySteamIDResponse
-	(*RoleAssignRequest)(nil),     // 3: roles.v1.RoleAssignRequest
-	(*RoleUnassignRequest)(nil),   // 4: roles.v1.RoleUnassignRequest
-	(*RoleDeleteRequest)(nil),     // 5: roles.v1.RoleDeleteRequest
-	(*RoleEditRequest)(nil),       // 6: roles.v1.RoleEditRequest
-	(*RoleEditResponse)(nil),      // 7: roles.v1.RoleEditResponse
-	(*RoleListResponse)(nil),      // 8: roles.v1.RoleListResponse
-	(*RoleCreateResponse)(nil),    // 9: roles.v1.RoleCreateResponse
-	(*RoleCreateRequest)(nil),     // 10: roles.v1.RoleCreateRequest
-	(*Role)(nil),                  // 11: roles.v1.Role
-	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),         // 13: google.protobuf.Empty
+	(*RoleUser)(nil),              // 3: roles.v1.RoleUser
+	(*RoleUsersResponse)(nil),     // 4: roles.v1.RoleUsersResponse
+	(*RoleAssignRequest)(nil),     // 5: roles.v1.RoleAssignRequest
+	(*RoleUnassignRequest)(nil),   // 6: roles.v1.RoleUnassignRequest
+	(*SetUserRolesRequest)(nil),   // 7: roles.v1.SetUserRolesRequest
+	(*RoleDeleteRequest)(nil),     // 8: roles.v1.RoleDeleteRequest
+	(*RoleEditRequest)(nil),       // 9: roles.v1.RoleEditRequest
+	(*RoleEditResponse)(nil),      // 10: roles.v1.RoleEditResponse
+	(*RoleListResponse)(nil),      // 11: roles.v1.RoleListResponse
+	(*RoleCreateResponse)(nil),    // 12: roles.v1.RoleCreateResponse
+	(*RoleCreateRequest)(nil),     // 13: roles.v1.RoleCreateRequest
+	(*Role)(nil),                  // 14: roles.v1.Role
+	(*timestamppb.Timestamp)(nil), // 15: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),         // 16: google.protobuf.Empty
 }
 var file_roles_v1_roles_proto_depIdxs = []int32{
-	11, // 0: roles.v1.RoleBySteamIDResponse.roles:type_name -> roles.v1.Role
-	0,  // 1: roles.v1.RoleEditRequest.permissions:type_name -> roles.v1.Permission
-	11, // 2: roles.v1.RoleListResponse.roles:type_name -> roles.v1.Role
-	11, // 3: roles.v1.RoleCreateResponse.role:type_name -> roles.v1.Role
-	0,  // 4: roles.v1.RoleCreateRequest.permissions:type_name -> roles.v1.Permission
-	0,  // 5: roles.v1.Role.permissions:type_name -> roles.v1.Permission
-	12, // 6: roles.v1.Role.created_on:type_name -> google.protobuf.Timestamp
-	12, // 7: roles.v1.Role.updated_on:type_name -> google.protobuf.Timestamp
-	13, // 8: roles.v1.RolesService.RoleList:input_type -> google.protobuf.Empty
-	10, // 9: roles.v1.RolesService.RoleCreate:input_type -> roles.v1.RoleCreateRequest
-	6,  // 10: roles.v1.RolesService.RoleEdit:input_type -> roles.v1.RoleEditRequest
-	5,  // 11: roles.v1.RolesService.RoleDelete:input_type -> roles.v1.RoleDeleteRequest
-	3,  // 12: roles.v1.RolesService.RoleAssign:input_type -> roles.v1.RoleAssignRequest
-	4,  // 13: roles.v1.RolesService.RoleUnassign:input_type -> roles.v1.RoleUnassignRequest
-	1,  // 14: roles.v1.RolesService.RoleBySteamID:input_type -> roles.v1.RoleBySteamIDRequest
-	8,  // 15: roles.v1.RolesService.RoleList:output_type -> roles.v1.RoleListResponse
-	9,  // 16: roles.v1.RolesService.RoleCreate:output_type -> roles.v1.RoleCreateResponse
-	7,  // 17: roles.v1.RolesService.RoleEdit:output_type -> roles.v1.RoleEditResponse
-	13, // 18: roles.v1.RolesService.RoleDelete:output_type -> google.protobuf.Empty
-	13, // 19: roles.v1.RolesService.RoleAssign:output_type -> google.protobuf.Empty
-	13, // 20: roles.v1.RolesService.RoleUnassign:output_type -> google.protobuf.Empty
-	2,  // 21: roles.v1.RolesService.RoleBySteamID:output_type -> roles.v1.RoleBySteamIDResponse
-	15, // [15:22] is the sub-list for method output_type
-	8,  // [8:15] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	14, // 0: roles.v1.RoleBySteamIDResponse.roles:type_name -> roles.v1.Role
+	14, // 1: roles.v1.RoleUser.roles:type_name -> roles.v1.Role
+	3,  // 2: roles.v1.RoleUsersResponse.users:type_name -> roles.v1.RoleUser
+	0,  // 3: roles.v1.RoleEditRequest.permissions:type_name -> roles.v1.Permission
+	14, // 4: roles.v1.RoleListResponse.roles:type_name -> roles.v1.Role
+	14, // 5: roles.v1.RoleCreateResponse.role:type_name -> roles.v1.Role
+	0,  // 6: roles.v1.RoleCreateRequest.permissions:type_name -> roles.v1.Permission
+	0,  // 7: roles.v1.Role.permissions:type_name -> roles.v1.Permission
+	15, // 8: roles.v1.Role.created_on:type_name -> google.protobuf.Timestamp
+	15, // 9: roles.v1.Role.updated_on:type_name -> google.protobuf.Timestamp
+	16, // 10: roles.v1.RolesService.RoleList:input_type -> google.protobuf.Empty
+	13, // 11: roles.v1.RolesService.RoleCreate:input_type -> roles.v1.RoleCreateRequest
+	9,  // 12: roles.v1.RolesService.RoleEdit:input_type -> roles.v1.RoleEditRequest
+	8,  // 13: roles.v1.RolesService.RoleDelete:input_type -> roles.v1.RoleDeleteRequest
+	5,  // 14: roles.v1.RolesService.RoleAssign:input_type -> roles.v1.RoleAssignRequest
+	6,  // 15: roles.v1.RolesService.RoleUnassign:input_type -> roles.v1.RoleUnassignRequest
+	1,  // 16: roles.v1.RolesService.RoleBySteamID:input_type -> roles.v1.RoleBySteamIDRequest
+	16, // 17: roles.v1.RolesService.RoleUsers:input_type -> google.protobuf.Empty
+	7,  // 18: roles.v1.RolesService.SetUserRoles:input_type -> roles.v1.SetUserRolesRequest
+	11, // 19: roles.v1.RolesService.RoleList:output_type -> roles.v1.RoleListResponse
+	12, // 20: roles.v1.RolesService.RoleCreate:output_type -> roles.v1.RoleCreateResponse
+	10, // 21: roles.v1.RolesService.RoleEdit:output_type -> roles.v1.RoleEditResponse
+	16, // 22: roles.v1.RolesService.RoleDelete:output_type -> google.protobuf.Empty
+	16, // 23: roles.v1.RolesService.RoleAssign:output_type -> google.protobuf.Empty
+	16, // 24: roles.v1.RolesService.RoleUnassign:output_type -> google.protobuf.Empty
+	2,  // 25: roles.v1.RolesService.RoleBySteamID:output_type -> roles.v1.RoleBySteamIDResponse
+	4,  // 26: roles.v1.RolesService.RoleUsers:output_type -> roles.v1.RoleUsersResponse
+	16, // 27: roles.v1.RolesService.SetUserRoles:output_type -> google.protobuf.Empty
+	19, // [19:28] is the sub-list for method output_type
+	10, // [10:19] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_roles_v1_roles_proto_init() }
@@ -1068,7 +1241,7 @@ func file_roles_v1_roles_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_roles_v1_roles_proto_rawDesc), len(file_roles_v1_roles_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   11,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

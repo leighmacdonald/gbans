@@ -15,20 +15,29 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type Service struct {
-	roles *Roles
+// PersonCreator ensures a person row exists for a steam id, creating a bare
+// record when it does not. Satisfied by *person.Persons.
+type PersonCreator interface {
+	EnsurePerson(ctx context.Context, steamID steamid.SteamID) error
 }
 
-func NewService(roles *Roles, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := rolesv1connect.NewRolesServiceHandler(Service{roles: roles}, option...)
+type Service struct {
+	roles   *Roles
+	persons PersonCreator
+}
+
+func NewService(roles *Roles, persons PersonCreator, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := rolesv1connect.NewRolesServiceHandler(Service{roles: roles, persons: persons}, option...)
 
 	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleListProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_READ))
 	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleBySteamIDProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_READ))
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleUsersProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_READ))
 	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
 	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
 	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
 	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleAssignProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
 	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleUnassignProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceSetUserRolesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -129,6 +138,46 @@ func (s Service) RoleBySteamID(ctx context.Context, req *rolesv1.RoleBySteamIDRe
 	}
 
 	return resp, nil
+}
+
+func (s Service) RoleUsers(ctx context.Context, _ *emptypb.Empty) (*rolesv1.RoleUsersResponse, error) {
+	users, err := s.roles.RoleUsers(ctx)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	resp := &rolesv1.RoleUsersResponse{Users: make([]*rolesv1.RoleUser, len(users))}
+	for idx, user := range users {
+		steamID := uint64(user.SteamID) //nolint:gosec
+		protoUser := &rolesv1.RoleUser{
+			SteamId:     &steamID,
+			PersonaName: &user.PersonaName,
+			Roles:       make([]*rolesv1.Role, len(user.Roles)),
+		}
+		for roleIdx, role := range user.Roles {
+			protoUser.Roles[roleIdx] = &rolesv1.Role{RoleId: &role.RoleID, RoleName: &role.RoleName}
+		}
+
+		resp.Users[idx] = protoUser
+	}
+
+	return resp, nil
+}
+
+func (s Service) SetUserRoles(ctx context.Context, req *rolesv1.SetUserRolesRequest) (*emptypb.Empty, error) {
+	steamID := steamid.New(req.GetSteamId())
+
+	if err := s.persons.EnsurePerson(ctx, steamID); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	if err := s.roles.SetUserRoles(ctx, steamID, req.GetRoleId()); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	slog.Info("User roles set", slog.Int64("steam_id", int64(req.GetSteamId())), slog.Any("role_ids", req.GetRoleId())) //nolint:gosec
+
+	return &emptypb.Empty{}, nil
 }
 
 func toProtoRole(role Role) *rolesv1.Role {

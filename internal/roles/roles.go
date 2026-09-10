@@ -32,6 +32,14 @@ type Role struct {
 	UserCount   uint64
 }
 
+// RoleUser is a person with their explicitly assigned roles, used to list who
+// currently holds which roles.
+type RoleUser struct {
+	SteamID     int64
+	PersonaName string
+	Roles       []Role
+}
+
 type Roles struct {
 	repo  Repository
 	owner steamid.SteamID
@@ -145,6 +153,14 @@ func (r *Roles) AssignUserRole(ctx context.Context, steamID steamid.SteamID) err
 
 func (r *Roles) GetRolesBySteamID(ctx context.Context, steamID steamid.SteamID) ([]Role, error) {
 	return r.repo.GetRolesBySteamID(ctx, steamID)
+}
+
+func (r *Roles) RoleUsers(ctx context.Context) ([]RoleUser, error) {
+	return r.repo.RoleUsers(ctx)
+}
+
+func (r *Roles) SetUserRoles(ctx context.Context, steamID steamid.SteamID, roleIDs []int32) error {
+	return r.repo.SetUserRoles(ctx, steamID, roleIDs)
 }
 
 // PermissionsBySteamID returns the union of all granular permissions granted to

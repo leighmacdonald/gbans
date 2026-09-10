@@ -14,6 +14,8 @@ service RolesService {
   rpc RoleAssign(RoleAssignRequest) returns (google.protobuf.Empty) {}
   rpc RoleUnassign(RoleUnassignRequest) returns (google.protobuf.Empty) {}
   rpc RoleBySteamID(RoleBySteamIDRequest) returns (RoleBySteamIDResponse) {}
+  rpc RoleUsers(google.protobuf.Empty) returns (RoleUsersResponse) {}
+  rpc SetUserRoles(SetUserRolesRequest) returns (google.protobuf.Empty) {}
 }
 
 message RoleBySteamIDRequest {
@@ -24,6 +26,16 @@ message RoleBySteamIDResponse {
   repeated Role roles = 1;
 }
 
+message RoleUser {
+  uint64 steam_id = 1;
+  string persona_name = 2;
+  repeated Role roles = 3;
+}
+
+message RoleUsersResponse {
+  repeated RoleUser users = 1;
+}
+
 message RoleAssignRequest {
   uint64 steam_id = 1 [(buf.validate.field).uint64 = {gte: 76561197960265729}];
   int32 role_id = 2 [(buf.validate.field).int32 = {gt: 0}];
@@ -32,6 +44,16 @@ message RoleAssignRequest {
 message RoleUnassignRequest {
   uint64 steam_id = 1 [(buf.validate.field).uint64 = {gte: 76561197960265729}];
   int32 role_id = 2 [(buf.validate.field).int32 = {gt: 0}];
+}
+
+message SetUserRolesRequest {
+  uint64 steam_id = 1 [(buf.validate.field).uint64 = {gte: 76561197960265729}];
+  repeated int32 role_id = 2 [(buf.validate.field).repeated = {
+    unique: true
+    items: {
+      int32: {gt: 0}
+    }
+  }];
 }
 
 message RoleDeleteRequest {
@@ -123,7 +145,6 @@ enum Permission {
   PERMISSION_FORUM_EDIT = 122;
   PERMISSION_GAMEADMIN_READ = 130;
   PERMISSION_GAMEADMIN_WRITE = 131;
-  PERMISSION_LOGIN = 140;
   PERMISSION_NETWORK_READ = 150;
   PERMISSION_NETWORK_ADMIN = 151;
   PERMISSION_NEWS_READ = 160;
