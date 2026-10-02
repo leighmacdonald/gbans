@@ -7,12 +7,12 @@ import (
 	"strconv"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	v1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	"github.com/leighmacdonald/gbans/internal/ban/v1/banv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -24,24 +24,26 @@ import (
 type Service struct {
 	// banv1connect.UnimplementedBanServiceHandler
 
-	client thirdparty.ClientWithResponsesInterface
-	bans   Bans
+	client   thirdparty.ClientWithResponsesInterface
+	bans     Bans
+	roleAuth *rpc.RoleAuth
 }
 
-func NewBanService(bans Bans, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewBanService(bans Bans, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	client, errClient := thirdparty.NewClientWithResponses("https://tf-api.roto.lol")
 	if errClient != nil {
 		panic(errClient)
 	}
 
-	pattern, handler := banv1connect.NewBanServiceHandler(Service{bans: bans, client: client}, option...)
+	pattern, handler := banv1connect.NewBanServiceHandler(Service{bans: bans, client: client, roleAuth: roleAuth}, option...)
 
-	authMiddleware.UserRoute(banv1connect.BanServiceQueryProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(banv1connect.BanServiceDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(banv1connect.BanServiceGetProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(banv1connect.BanServiceQuerySourceBansProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(banv1connect.BanServiceUpdateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(banv1connect.BanServiceCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(banv1connect.BanServiceQueryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_READ))
+	authMiddleware.UserRoute(banv1connect.BanServiceDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_WRITE))
+	authMiddleware.UserRoute(banv1connect.BanServiceGetProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_READ))
+	authMiddleware.UserRoute(banv1connect.BanServiceQuerySourceBansProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_READ))
+	authMiddleware.UserRoute(banv1connect.BanServiceUpdateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_WRITE))
+	authMiddleware.UserRoute(banv1connect.BanServiceCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_CREATE))
+	authMiddleware.UserRoute(banv1connect.BanServiceGetBanByReportIDProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_READ))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -116,7 +118,7 @@ func (s Service) GetBanByReportID(ctx context.Context, req *v1.GetBanByReportIDR
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	if !user.HasPermission(permission.Moderator) && !bannedPerson.TargetID.Equal(user.GetSteamID()) {
+	if !s.roleAuth.HasPermission(ctx, *user, rolesv1.Permission_PERMISSION_BAN_READ) && !bannedPerson.TargetID.Equal(user.GetSteamID()) {
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 
@@ -135,7 +137,7 @@ func (s Service) Get(ctx context.Context, req *v1.GetRequest) (*v1.GetResponse, 
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	if !user.HasPermission(permission.Moderator) && !bannedPerson.TargetID.Equal(user.GetSteamID()) {
+	if !s.roleAuth.HasPermission(ctx, *user, rolesv1.Permission_PERMISSION_BAN_READ) && !bannedPerson.TargetID.Equal(user.GetSteamID()) {
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 

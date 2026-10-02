@@ -7,17 +7,20 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 )
 
 type assetHandler struct {
 	Assets
+
+	roleAuth *rpc.RoleAuth
 }
 
-func NewAssetHandler(mux *http.ServeMux, assets Assets) {
-	handler := assetHandler{Assets: assets}
+func NewAssetHandler(mux *http.ServeMux, assets Assets, roleAuth *rpc.RoleAuth) {
+	handler := assetHandler{Assets: assets, roleAuth: roleAuth}
 	mux.HandleFunc("GET /asset/{asset_id}", handler.getAsset())
 }
 
@@ -53,8 +56,8 @@ func (h assetHandler) getAsset() http.HandlerFunc {
 			}
 
 			sid := user.GetSteamID()
-			if !sid.Valid() || sid != assetValue.AuthorID && !user.HasPermission(permission.Moderator) {
-				httphelper.SetError(res, req, httphelper.NewAPIErrorf(http.StatusForbidden, permission.ErrDenied,
+			if !sid.Valid() || sid != assetValue.AuthorID && !h.roleAuth.HasPermissionForSteamID(req.Context(), sid, rolesv1.Permission_PERMISSION_BAN_READ) {
+				httphelper.SetError(res, req, httphelper.NewAPIErrorf(http.StatusForbidden, rpc.ErrPermission,
 					"You do not have permission to access this asset."))
 
 				return

@@ -7,7 +7,6 @@ import "database/query/v1/filter.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "person/v1/person_core.proto";
-import "person/v1/privilege.proto";
 
 service PersonService {
   rpc Profile(ProfileRequest) returns (ProfileResponse) {}
@@ -17,7 +16,6 @@ service PersonService {
   rpc ProfileSettings(google.protobuf.Empty) returns (ProfileSettingsResponse);
   rpc EditProfileSettings(EditProfileSettingsRequest) returns (EditProfileSettingsResponse);
   rpc Query(QueryRequest) returns (QueryResponse);
-  rpc EditPermissions(EditPermissionsRequest) returns (EditPermissionsResponse);
 }
 
 message ProfileRequest {
@@ -99,25 +97,9 @@ message EditProfileSettingsResponse {
   Settings settings = 1 [(buf.validate.field).required = true];
 }
 
-message EditPermissionsRequest {
-  int64 steam_id = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).int64 = {gte: 76561197960265729}
-  ];
-  Privilege permission_level = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).enum.defined_only = true
-  ];
-}
-
-message EditPermissionsResponse {
-  PersonCore person = 1 [(buf.validate.field).required = true];
-}
-
 message QueryRequest {
   database.query.v1.Filter filter = 1;
   string persona_name = 2;
-  repeated Privilege with_permissions = 3;
   string discord_id = 4;
   repeated string steam_ids = 5;
   int32 vac_bans = 6;
@@ -141,10 +123,6 @@ message Person {
   ];
   google.protobuf.Timestamp created_on = 2 [(buf.validate.field).required = true];
   google.protobuf.Timestamp updated_on = 3 [(buf.validate.field).required = true];
-  Privilege permission_level = 4 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).enum.defined_only = true
-  ];
   bool muted = 5 [(buf.validate.field).required = true];
   string discord_id = 6 [(buf.validate.field).required = true];
   string patreon_id = 7 [(buf.validate.field).required = true];

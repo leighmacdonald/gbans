@@ -26,7 +26,7 @@ func (c *Repository) ContestByID(ctx context.Context, contestID uuid.UUID, conte
 
 	query := c.Builder().
 		Select("contest_id", "title", "public", "description", "date_start",
-			"date_end", "max_submissions", "media_types", "deleted", "voting", "min_permission_level", "down_votes",
+			"date_end", "max_submissions", "media_types", "deleted", "voting", "required_permission", "down_votes",
 			"created_on", "updated_on", "hide_submissions").
 		From("contest").
 		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"contest_id": contestID.String()}})
@@ -38,7 +38,7 @@ func (c *Repository) ContestByID(ctx context.Context, contestID uuid.UUID, conte
 
 	return database.Err(row.Scan(&contest.ContestID, &contest.Title, &contest.Public, &contest.Description,
 		&contest.DateStart, &contest.DateEnd, &contest.MaxSubmissions, &contest.MediaTypes,
-		&contest.Deleted, &contest.Voting, &contest.MinPermissionLevel, &contest.DownVotes,
+		&contest.Deleted, &contest.Voting, &contest.RequiredPermission, &contest.DownVotes,
 		&contest.CreatedOn, &contest.UpdatedOn, &contest.HideSubmissions))
 }
 
@@ -55,12 +55,12 @@ func (c *Repository) ContestEntryDelete(ctx context.Context, contestEntryID uuid
 		Where(sq.Eq{"contest_entry_id": contestEntryID})))
 }
 
-func (c *Repository) Contests(ctx context.Context, publicOnly bool) ([]Contest, error) {
+func (c *Repository) Contests(ctx context.Context) ([]Contest, error) {
 	var contests []Contest
 
 	builder := c.Builder().
 		Select("c.contest_id", "c.title", "c.public", "c.description", "c.date_start",
-			"c.date_end", "c.max_submissions", "c.media_types", "c.deleted", "c.voting", "c.min_permission_level",
+			"c.date_end", "c.max_submissions", "c.media_types", "c.deleted", "c.voting", "c.required_permission",
 			"c.down_votes", "c.created_on", "c.updated_on", "count(ce.contest_entry_id) as num_entries",
 			"c.hide_submissions").
 		From("contest c").
@@ -68,12 +68,7 @@ func (c *Repository) Contests(ctx context.Context, publicOnly bool) ([]Contest, 
 		OrderBy("c.date_end DESC").
 		GroupBy("c.contest_id")
 
-	ands := sq.And{sq.Eq{"c.deleted": false}}
-	if publicOnly {
-		ands = append(ands, sq.Eq{"c.public": true})
-	}
-
-	rows, errRows := c.QueryBuilder(ctx, builder.Where(ands))
+	rows, errRows := c.QueryBuilder(ctx, builder.Where(sq.Eq{"c.deleted": false}))
 	if errRows != nil {
 		if errors.Is(errRows, database.ErrNoResult) {
 			return []Contest{}, nil
@@ -88,7 +83,7 @@ func (c *Repository) Contests(ctx context.Context, publicOnly bool) ([]Contest, 
 		var contest Contest
 		if errScan := rows.Scan(&contest.ContestID, &contest.Title, &contest.Public, &contest.Description,
 			&contest.DateStart, &contest.DateEnd, &contest.MaxSubmissions, &contest.MediaTypes,
-			&contest.Deleted, &contest.Voting, &contest.MinPermissionLevel, &contest.DownVotes,
+			&contest.Deleted, &contest.Voting, &contest.RequiredPermission, &contest.DownVotes,
 			&contest.CreatedOn, &contest.UpdatedOn, &contest.NumEntries, &contest.HideSubmissions); errScan != nil {
 			return nil, database.Err(errScan)
 		}
@@ -127,11 +122,11 @@ func (c *Repository) contestInsert(ctx context.Context, contest *Contest) error 
 	query := c.Builder().
 		Insert("contest").
 		Columns("contest_id", "title", "public", "description", "date_start",
-			"date_end", "max_submissions", "media_types", "deleted", "voting", "min_permission_level", "down_votes",
+			"date_end", "max_submissions", "media_types", "deleted", "voting", "required_permission", "down_votes",
 			"created_on", "updated_on", "hide_submissions").
 		Values(contest.ContestID, contest.Title, contest.Public, contest.Description, contest.DateStart,
 			contest.DateEnd, contest.MaxSubmissions, contest.MediaTypes, contest.Deleted,
-			contest.Voting, contest.MinPermissionLevel, contest.DownVotes,
+			contest.Voting, contest.RequiredPermission, contest.DownVotes,
 			contest.CreatedOn, contest.UpdatedOn, contest.HideSubmissions)
 
 	if errExec := c.ExecInsertBuilder(ctx, query); errExec != nil {
@@ -156,7 +151,7 @@ func (c *Repository) contestUpdate(ctx context.Context, contest *Contest) error 
 		Set("hide_submissions", contest.HideSubmissions).
 		Set("max_submissions", contest.MaxSubmissions).
 		Set("voting", contest.Voting).
-		Set("min_permission_level", contest.MinPermissionLevel).
+		Set("required_permission", contest.RequiredPermission).
 		Set("down_votes", contest.DownVotes).
 		Set("media_types", contest.MediaTypes).
 		Set("deleted", contest.Deleted).

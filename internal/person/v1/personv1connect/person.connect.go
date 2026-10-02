@@ -50,9 +50,6 @@ const (
 	PersonServiceEditProfileSettingsProcedure = "/person.v1.PersonService/EditProfileSettings"
 	// PersonServiceQueryProcedure is the fully-qualified name of the PersonService's Query RPC.
 	PersonServiceQueryProcedure = "/person.v1.PersonService/Query"
-	// PersonServiceEditPermissionsProcedure is the fully-qualified name of the PersonService's
-	// EditPermissions RPC.
-	PersonServiceEditPermissionsProcedure = "/person.v1.PersonService/EditPermissions"
 )
 
 // PersonServiceClient is a client for the person.v1.PersonService service.
@@ -63,7 +60,6 @@ type PersonServiceClient interface {
 	ProfileSettings(context.Context, *emptypb.Empty) (*v1.ProfileSettingsResponse, error)
 	EditProfileSettings(context.Context, *v1.EditProfileSettingsRequest) (*v1.EditProfileSettingsResponse, error)
 	Query(context.Context, *v1.QueryRequest) (*v1.QueryResponse, error)
-	EditPermissions(context.Context, *v1.EditPermissionsRequest) (*v1.EditPermissionsResponse, error)
 }
 
 // NewPersonServiceClient constructs a client for the person.v1.PersonService service. By default,
@@ -113,12 +109,6 @@ func NewPersonServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(personServiceMethods.ByName("Query")),
 			connect.WithClientOptions(opts...),
 		),
-		editPermissions: connect.NewClient[v1.EditPermissionsRequest, v1.EditPermissionsResponse](
-			httpClient,
-			baseURL+PersonServiceEditPermissionsProcedure,
-			connect.WithSchema(personServiceMethods.ByName("EditPermissions")),
-			connect.WithClientOptions(opts...),
-		),
 	}
 }
 
@@ -130,7 +120,6 @@ type personServiceClient struct {
 	profileSettings     *connect.Client[emptypb.Empty, v1.ProfileSettingsResponse]
 	editProfileSettings *connect.Client[v1.EditProfileSettingsRequest, v1.EditProfileSettingsResponse]
 	query               *connect.Client[v1.QueryRequest, v1.QueryResponse]
-	editPermissions     *connect.Client[v1.EditPermissionsRequest, v1.EditPermissionsResponse]
 }
 
 // Profile calls person.v1.PersonService.Profile.
@@ -187,15 +176,6 @@ func (c *personServiceClient) Query(ctx context.Context, req *v1.QueryRequest) (
 	return nil, err
 }
 
-// EditPermissions calls person.v1.PersonService.EditPermissions.
-func (c *personServiceClient) EditPermissions(ctx context.Context, req *v1.EditPermissionsRequest) (*v1.EditPermissionsResponse, error) {
-	response, err := c.editPermissions.CallUnary(ctx, connect.NewRequest(req))
-	if response != nil {
-		return response.Msg, err
-	}
-	return nil, err
-}
-
 // PersonServiceHandler is an implementation of the person.v1.PersonService service.
 type PersonServiceHandler interface {
 	Profile(context.Context, *v1.ProfileRequest) (*v1.ProfileResponse, error)
@@ -204,7 +184,6 @@ type PersonServiceHandler interface {
 	ProfileSettings(context.Context, *emptypb.Empty) (*v1.ProfileSettingsResponse, error)
 	EditProfileSettings(context.Context, *v1.EditProfileSettingsRequest) (*v1.EditProfileSettingsResponse, error)
 	Query(context.Context, *v1.QueryRequest) (*v1.QueryResponse, error)
-	EditPermissions(context.Context, *v1.EditPermissionsRequest) (*v1.EditPermissionsResponse, error)
 }
 
 // NewPersonServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -250,12 +229,6 @@ func NewPersonServiceHandler(svc PersonServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(personServiceMethods.ByName("Query")),
 		connect.WithHandlerOptions(opts...),
 	)
-	personServiceEditPermissionsHandler := connect.NewUnaryHandlerSimple(
-		PersonServiceEditPermissionsProcedure,
-		svc.EditPermissions,
-		connect.WithSchema(personServiceMethods.ByName("EditPermissions")),
-		connect.WithHandlerOptions(opts...),
-	)
 	return "/person.v1.PersonService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PersonServiceProfileProcedure:
@@ -270,8 +243,6 @@ func NewPersonServiceHandler(svc PersonServiceHandler, opts ...connect.HandlerOp
 			personServiceEditProfileSettingsHandler.ServeHTTP(w, r)
 		case PersonServiceQueryProcedure:
 			personServiceQueryHandler.ServeHTTP(w, r)
-		case PersonServiceEditPermissionsProcedure:
-			personServiceEditPermissionsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -303,8 +274,4 @@ func (UnimplementedPersonServiceHandler) EditProfileSettings(context.Context, *v
 
 func (UnimplementedPersonServiceHandler) Query(context.Context, *v1.QueryRequest) (*v1.QueryResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("person.v1.PersonService.Query is not implemented"))
-}
-
-func (UnimplementedPersonServiceHandler) EditPermissions(context.Context, *v1.EditPermissionsRequest) (*v1.EditPermissionsResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("person.v1.PersonService.EditPermissions is not implemented"))
 }

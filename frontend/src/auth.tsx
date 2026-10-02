@@ -6,7 +6,7 @@ import { AuthContext } from "./contexts/AuthContext.tsx";
 import { StorageType, useStorage } from "./hooks/useSessionStorage.tsx";
 import { type PersonCore, PersonCoreSchema } from "./rpc/person/v1/person_core_pb.ts";
 import { PersonService } from "./rpc/person/v1/person_pb.ts";
-import { Privilege } from "./rpc/person/v1/privilege_pb.ts";
+import type { Permission } from "./rpc/roles/v1/roles_pb.ts";
 import { finalTransport } from "./transport.ts";
 import { logErr } from "./util/errors.ts";
 import { defaultAvatarHash } from "./util/strings.ts";
@@ -85,13 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		return profile.steamId !== "";
 	};
 
-	const permissionLevel = () => {
-		return profile?.permissionLevel ?? Privilege.GUEST;
-	};
-
-	const hasPermission = (wantedLevel: Privilege) => {
-		const currentLevel = permissionLevel();
-		return currentLevel >= wantedLevel;
+	const hasPermission = (permission: Permission) => {
+		return profile.permissions.includes(permission);
 	};
 
 	return (
@@ -100,7 +95,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				profile,
 				logout,
 				isAuthenticated,
-				permissionLevel,
 				hasPermission,
 				login,
 			}}
@@ -112,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 const defaultProfile = create(PersonCoreSchema, {
 	steamId: "",
-	permissionLevel: Privilege.GUEST,
+	permissions: [],
 	avatarHash: defaultAvatarHash,
 	name: "",
 	banId: 0,
@@ -148,6 +142,5 @@ export type AuthContextProps = {
 	login: (token: string) => Promise<void>;
 	logout: () => Promise<void>;
 	isAuthenticated: () => boolean;
-	permissionLevel: () => Privilege;
-	hasPermission: (level: Privilege) => boolean;
+	hasPermission: (permission: Permission) => boolean;
 };

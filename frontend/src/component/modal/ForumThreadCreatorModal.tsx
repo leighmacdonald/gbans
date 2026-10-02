@@ -15,7 +15,7 @@ import { useAuth } from "../../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import type { Forum } from "../../rpc/forum/v1/forum_pb.ts";
 import { threadCreate } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
-import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../../rpc/roles/v1/roles_pb.ts";
 import { logErr } from "../../util/errors";
 import { mdEditorRef } from "../form/field/MarkdownField.tsx";
 import { ConfirmationModal } from "./ConfirmationModal.tsx";
@@ -120,7 +120,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
 									return (
 										<field.CheckboxField
 											label={"Stickied"}
-											disabled={!hasPermission(Privilege.EDITOR)}
+											disabled={!hasPermission(Permission.FORUM_EDIT)}
 										/>
 									);
 								}}
@@ -133,7 +133,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
 									return (
 										<field.CheckboxField
 											label={"Locked"}
-											disabled={!hasPermission(Privilege.EDITOR)}
+											disabled={!hasPermission(Permission.FORUM_EDIT)}
 										/>
 									);
 								}}

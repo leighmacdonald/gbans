@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/pkg/sliceutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -65,7 +65,7 @@ var (
 type Payload struct {
 	Types           []MessageType
 	Sids            steamid.Collection
-	Groups          []permission.Privilege
+	Groups          []rolesv1.Permission
 	DiscordChannels []string
 	Severity        Severity
 	Message         string
@@ -115,14 +115,14 @@ func NewSiteUser(recipients steamid.Collection, severity Severity, message strin
 	}
 }
 
-func NewSiteUserWithAuthor(groups []permission.Privilege, severity Severity, message string, link string, _ person.Info) Payload {
+func NewSiteUserWithAuthor(groups []rolesv1.Permission, severity Severity, message string, link string, _ person.Info) Payload {
 	payload := NewSiteGroup(groups, severity, message, link)
 	// payload.Author = &author
 
 	return payload
 }
 
-func NewSiteGroup(groups []permission.Privilege, severity Severity, message string, link string) Payload {
+func NewSiteGroup(groups []rolesv1.Permission, severity Severity, message string, link string) Payload {
 	return Payload{
 		Types:           []MessageType{User},
 		Sids:            nil,
@@ -134,7 +134,7 @@ func NewSiteGroup(groups []permission.Privilege, severity Severity, message stri
 	}
 }
 
-func NewSiteGroupNotificationWithAuthor(groups []permission.Privilege, severity Severity, message string, link string, _ person.BaseUser) Payload {
+func NewSiteGroupNotificationWithAuthor(groups []rolesv1.Permission, severity Severity, message string, link string, _ person.BaseUser) Payload {
 	payload := NewSiteGroup(groups, severity, message, link)
 	// payload.Author = &author
 

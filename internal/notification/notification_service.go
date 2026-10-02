@@ -5,10 +5,10 @@ import (
 	"errors"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	v1 "github.com/leighmacdonald/gbans/internal/notification/v1"
 	"github.com/leighmacdonald/gbans/internal/notification/v1/notificationv1connect"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -20,14 +20,14 @@ type Service struct {
 	notifications *Notifications
 }
 
-func NewService(notifications *Notifications, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(notifications *Notifications, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := notificationv1connect.NewNotificationServiceHandler(Service{notifications: notifications}, option...)
 
-	authMiddleware.UserRoute(notificationv1connect.NotificationServiceNotificationsProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(notificationv1connect.NotificationServiceMarkReadProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(notificationv1connect.NotificationServiceMarkReadAllProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(notificationv1connect.NotificationServiceDeleteAllProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(notificationv1connect.NotificationServiceDeleteProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(notificationv1connect.NotificationServiceNotificationsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NOTIFICATIONS))
+	authMiddleware.UserRoute(notificationv1connect.NotificationServiceMarkReadProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NOTIFICATIONS))
+	authMiddleware.UserRoute(notificationv1connect.NotificationServiceMarkReadAllProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NOTIFICATIONS))
+	authMiddleware.UserRoute(notificationv1connect.NotificationServiceDeleteAllProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NOTIFICATIONS))
+	authMiddleware.UserRoute(notificationv1connect.NotificationServiceDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NOTIFICATIONS))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

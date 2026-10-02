@@ -9,12 +9,11 @@ import (
 	"sync/atomic"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/network/ip2location"
 	v1 "github.com/leighmacdonald/gbans/internal/network/v1"
 	"github.com/leighmacdonald/gbans/internal/network/v1/networkv1connect"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -26,25 +25,25 @@ type Service struct {
 	networks         Networks
 }
 
-func NewNetworkService(networks Networks, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewNetworkService(networks Networks, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := networkv1connect.NewNetworkServiceHandler(&Service{networks: networks}, option...)
 
-	authMiddleware.UserRoute(networkv1connect.NetworkServiceQueryConnectionsProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(networkv1connect.NetworkServiceQueryNetworkProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(networkv1connect.NetworkServiceUpdateDBProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.UserRoute(networkv1connect.NetworkServiceQueryConnectionsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NETWORK_READ))
+	authMiddleware.UserRoute(networkv1connect.NetworkServiceQueryNetworkProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NETWORK_READ))
+	authMiddleware.UserRoute(networkv1connect.NetworkServiceUpdateDBProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NETWORK_ADMIN))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
 func (s *Service) QueryConnections(ctx context.Context, req *v1.QueryConnectionsRequest) (*v1.QueryConnectionsResponse, error) {
 	ipHist, errIPHist := s.networks.QueryConnectionHistory(ctx, ConnectionHistoryQuery{
-		Filter:        rpc.FromRPC(req.GetFilter()),
-		SourceIDField: httphelper.SourceIDField{SourceID: strconv.FormatInt(req.GetSteamId(), 10)},
-		CIDR:          req.GetCidr(),
-		CountryCode:   req.GetCountryCode(),
-		CountryName:   req.GetCountryName(),
-		CityName:      req.GetCityName(),
-		ServerID:      req.GetServerId(),
+		Filter:      rpc.FromRPC(req.GetFilter()),
+		SourceID:    strconv.FormatInt(req.GetSteamId(), 10),
+		CIDR:        req.GetCidr(),
+		CountryCode: req.GetCountryCode(),
+		CountryName: req.GetCountryName(),
+		CityName:    req.GetCityName(),
+		ServerID:    req.GetServerId(),
 	})
 	if errIPHist != nil && !errors.Is(errIPHist, database.ErrNoResult) {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)

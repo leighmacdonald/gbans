@@ -6,10 +6,10 @@ import (
 	"log/slog"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	v1 "github.com/leighmacdonald/gbans/internal/discord/oauth/v1"
 	"github.com/leighmacdonald/gbans/internal/discord/oauth/v1/oauthv1connect"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -19,11 +19,11 @@ type DiscordService struct {
 	discordOAuth DiscordOAuth
 }
 
-func NewService(discord DiscordOAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(discord DiscordOAuth, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := oauthv1connect.NewDiscordOAuthServiceHandler(&DiscordService{discordOAuth: discord}, option...)
-	authMiddleware.UserRoute(oauthv1connect.DiscordOAuthServiceLoginProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(oauthv1connect.DiscordOAuthServiceLogoutProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(oauthv1connect.DiscordOAuthServiceProfileProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.UserRoute(oauthv1connect.DiscordOAuthServiceLoginProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_DISCORD))
+	authMiddleware.UserRoute(oauthv1connect.DiscordOAuthServiceLogoutProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_DISCORD))
+	authMiddleware.UserRoute(oauthv1connect.DiscordOAuthServiceProfileProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_DISCORD))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

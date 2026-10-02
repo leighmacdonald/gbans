@@ -101,6 +101,7 @@ void onCmdSeedReceived(HTTPResponse response, any clientId) {
 public
 Action onCmdHelp(int clientId, int argc) {
     onCmdVersion(clientId, argc);
+    ReplyToCommand(clientId, "gb_admins -- List admins and groups");
     ReplyToCommand(clientId, "gb_ban #user duration [reason]");
     ReplyToCommand(clientId, "gb_ban_ip #user duration [reason]");
     ReplyToCommand(clientId, "gb_kick #user [reason]");
@@ -175,4 +176,210 @@ Action onAdminCmdBan(int clientId, int argc) {
     }
 
     return Plugin_Handled;
+}
+
+/**
+ * List the gbans sourcemod groups and admins, fetched from the gbans backend.
+ */
+public
+Action onCmdAdmins(int clientId, int argc) {
+    if (gToken[0] == '\0') {
+        reply(clientId, "[GB] Not authenticated with gbans yet, try again later");
+        authenticateServer();
+        return Plugin_Handled;
+    }
+
+    postHTTPRequest("/connect/sourcemod.v1.PluginService/SMGroups", new JSONObject(), onCmdAdminsGroupsResp, clientId);
+
+    return Plugin_Handled;
+}
+
+void onCmdAdminsGroupsResp(HTTPResponse response, any value) {
+    int clientId = view_as<int>(value);
+    if (!isValidClient(clientId)) {
+        clientId = 0;
+    }
+
+    if (response.Status != HTTPStatus_OK) {
+        PrintRPCError(response);
+        reply(clientId, "[GB] Failed to fetch groups from gbans");
+        return;
+    }
+
+    JSONObject obj = view_as<JSONObject>(response.Data);
+
+    JSONArray groups;
+    if (obj.HasKey("groups")) {
+        groups = view_as<JSONArray>(obj.Get("groups"));
+    } else {
+        groups = new JSONArray();
+    }
+
+    JSONObject group;
+    char       name[80];
+    char       flags[24];
+    char       line[96];
+
+    Format(line, sizeof line, "[GB] Groups (%d):", groups.Length);
+    reply(clientId, line);
+
+    Format(line, sizeof line, "[GB]   %-24s %-21s %3s", "NAME", "FLAGS", "IMM");
+    reply(clientId, line);
+
+    for (int i = 0; i < groups.Length; i++) {
+        group = view_as<JSONObject>(groups.Get(i));
+
+        group.GetString("name", name, sizeof name);
+        if (strlen(name) > 24) {
+            name[24] = '\0';
+        }
+
+        permissionSetToFlags(group, "permissions", flags, sizeof flags);
+        if (flags[0] == '\0') {
+            Format(flags, sizeof flags, "-");
+        }
+
+        int immunity = 0;
+        if (group.HasKey("immunityLevel")) {
+            immunity = group.GetInt("immunityLevel");
+        }
+
+        Format(line, sizeof line, "[GB]   %-24s %-21s %3d", name, flags, immunity);
+        reply(clientId, line);
+
+        delete group;
+    }
+
+    delete groups;
+
+    postHTTPRequest("/connect/sourcemod.v1.PluginService/SMUsers", new JSONObject(), onCmdAdminsUsersResp, clientId);
+}
+
+void onCmdAdminsUsersResp(HTTPResponse response, any value) {
+    int clientId = view_as<int>(value);
+    if (!isValidClient(clientId)) {
+        clientId = 0;
+    }
+
+    if (response.Status != HTTPStatus_OK) {
+        PrintRPCError(response);
+        reply(clientId, "[GB] Failed to fetch admins from gbans");
+        return;
+    }
+
+    JSONObject obj = view_as<JSONObject>(response.Data);
+
+    JSONArray users;
+    if (obj.HasKey("users")) {
+        users = view_as<JSONArray>(obj.Get("users"));
+    } else {
+        users = new JSONArray();
+    }
+
+    JSONArray userGroups;
+    if (obj.HasKey("userGroups")) {
+        userGroups = view_as<JSONArray>(obj.Get("userGroups"));
+    } else {
+        userGroups = new JSONArray();
+    }
+
+    JSONObject user;
+    char       name[80];
+    char       identity[80];
+    char       id[24];
+    char       flags[24];
+    char       groups[64];
+    char       line[256];
+
+    Format(line, sizeof line, "[GB] Admins (%d):", users.Length);
+    reply(clientId, line);
+
+    Format(line, sizeof line, "[GB]   %-20s %-17s %-21s %3s %s", "NAME", "IDENTITY", "FLAGS", "IMM", "GROUPS");
+    reply(clientId, line);
+
+    for (int i = 0; i < users.Length; i++) {
+        user = view_as<JSONObject>(users.Get(i));
+
+        user.GetString("name", name, sizeof name);
+        if (strlen(name) > 20) {
+            name[20] = '\0';
+        }
+
+        user.GetString("identity", identity, sizeof identity);
+        if (strlen(identity) > 17) {
+            identity[17] = '\0';
+        }
+
+        user.GetString("id", id, sizeof id);
+
+        permissionSetToFlags(user, "permissions", flags, sizeof flags);
+        if (flags[0] == '\0') {
+            Format(flags, sizeof flags, "-");
+        }
+
+        int immunity = 0;
+        if (user.HasKey("immunity")) {
+            immunity = user.GetInt("immunity");
+        }
+
+        userGroupNames(id, userGroups, groups, sizeof groups);
+
+        Format(line, sizeof line, "[GB]   %-20s %-17s %-21s %3d %s", name, identity, flags, immunity, groups);
+        reply(clientId, line);
+
+        delete user;
+    }
+
+    delete users;
+    delete userGroups;
+}
+
+// Builds the sourcemod flag string for the gbans permissions JSON array held
+// on obj under field (e.g. "permissions").
+stock void permissionSetToFlags(JSONObject obj, const char[] field, char[] flags, int flagsLen) {
+    int bits = 0;
+
+    if (obj.HasKey(field)) {
+        JSONArray perms = view_as<JSONArray>(obj.Get(field));
+
+        char      perm[40];
+        AdminFlag flag;
+        for (int i = 0; i < perms.Length; i++) {
+            if (!perms.GetString(i, perm, sizeof perm)) {
+                continue;
+            }
+
+            if (PermissionToFlag(perm, flag)) {
+                bits |= 1 << view_as<int>(flag);
+            }
+        }
+
+        delete perms;
+    }
+
+    FlagBitsToString(bits, flags, flagsLen);
+}
+
+// Comma-separated names of the groups the admin (matched by gbans id string)
+// belongs to.
+stock void userGroupNames(const char[] adminId, JSONArray userGroups, char[] names, int namesLen) {
+    names[0] = '\0';
+
+    char id[24];
+    char groupName[80];
+    for (int i = 0; i < userGroups.Length; i++) {
+        JSONObject ug = view_as<JSONObject>(userGroups.Get(i));
+
+        ug.GetString("adminId", id, sizeof id);
+        if (StrEqual(id, adminId)) {
+            ug.GetString("groupName", groupName, sizeof groupName);
+
+            if (names[0] != '\0') {
+                StrCat(names, namesLen, ", ");
+            }
+            StrCat(names, namesLen, groupName);
+        }
+
+        delete ug;
+    }
 }

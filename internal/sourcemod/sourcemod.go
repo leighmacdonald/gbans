@@ -5,38 +5,33 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net"
 	"net/netip"
 	"slices"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/config/link"
-	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 var (
-	ErrInvalidAuthName  = errors.New("invalid auth name")
-	ErrImmunity         = errors.New("invalid immunity level, must be between 0-100")
-	ErrGroupName        = errors.New("group name cannot be empty")
-	ErrAdminGroupExists = errors.New("admin group already exists")
-	ErrAdminExists      = errors.New("admin already exists")
-	ErrAdminFlagInvalid = errors.New("invalid admin flag")
-	ErrRequirePassword  = errors.New("name auth type requires password")
-	ErrInvalidIP        = errors.New("invalid ip, could not parse")
-	ErrGetPerson        = errors.New("failed to fetch person result")
+	ErrInvalidAuthName   = errors.New("invalid auth name")
+	ErrGroupName         = errors.New("group name cannot be empty")
+	ErrAdminGroupExists  = errors.New("admin group already exists")
+	ErrAdminExists       = errors.New("admin already exists")
+	ErrAdminNameExists   = errors.New("an admin group with this name already exists")
+	ErrGetPerson         = errors.New("failed to fetch person result")
+	ErrUnknownPermission = errors.New("unknown permission")
 )
 
 type Config struct {
@@ -94,31 +89,25 @@ const (
 	OverrideAccessDeny  OverrideAccess = "deny"
 )
 
-type ServerPermission struct {
-	SteamID         steamid.SID
-	PermissionLevel permission.Privilege
-	Flags           string
-}
-
 type Admin struct {
-	AdminID   int32
-	SteamID   steamid.SteamID
-	AuthType  AuthType // steam | name |ip
-	Identity  string
-	Password  string
-	Flags     string
-	Name      string
-	Immunity  int32
-	Groups    []Groups
-	CreatedOn time.Time
-	UpdatedOn time.Time
+	AdminID     int64
+	SteamID     steamid.SteamID
+	AuthType    AuthType // steam | name |ip
+	Identity    string
+	Password    string
+	Name        string
+	Immunity    int32
+	Groups      []Groups
+	Permissions []rolesv1.Permission
+	CreatedOn   time.Time
+	UpdatedOn   time.Time
 }
 
 type Groups struct {
 	GroupID       int32
-	Flags         string
 	Name          string
 	ImmunityLevel int32
+	Permissions   []rolesv1.Permission
 	CreatedOn     time.Time
 	UpdatedOn     time.Time
 }
@@ -141,20 +130,12 @@ type GroupOverrides struct {
 }
 
 type Overrides struct {
-	OverrideID int32
-	Type       OverrideType // command | group
-	Name       string
-	Flags      string
-	CreatedOn  time.Time
-	UpdatedOn  time.Time
-}
-
-type AdminGroups struct {
-	AdminID      int32
-	GroupID      int32
-	InheritOrder int32
-	CreatedOn    time.Time
-	UpdatedOn    time.Time
+	OverrideID  int32
+	Type        OverrideType // command | group
+	Name        string
+	Permissions []rolesv1.Permission
+	CreatedOn   time.Time
+	UpdatedOn   time.Time
 }
 
 type ConfigEntry struct {
@@ -209,9 +190,12 @@ type seedRequestView struct {
 	MaxPlayers  int32
 }
 
-func (h Sourcemod) seedRequest(roleIDs []string, server servers.SafeServer, userID string) bool {
+// seedRequest queues a seed request for the given server and user. It returns false with
+// ErrReqTooSoon when the user is still on cooldown, and false with another error when the
+// request could not be rendered or the server has no seed roles configured.
+func (h Sourcemod) seedRequest(roleIDs []string, server servers.SafeServer, userID string) (bool, error) {
 	if !h.seedQueue.Allowed(server.ServerID, userID) {
-		return false
+		return false, ErrReqTooSoon
 	}
 
 	if len(roleIDs) > 0 {
@@ -229,7 +213,7 @@ func (h Sourcemod) seedRequest(roleIDs []string, server servers.SafeServer, user
 		if errContent != nil {
 			slog.Error("Failed to render content", slog.String("error", errContent.Error()))
 
-			return false
+			return false, errContent
 		}
 
 		go h.notifier.Send(notification.NewDiscord(h.seedChannelID, discord.NewMessage(
@@ -248,12 +232,12 @@ func (h Sourcemod) seedRequest(roleIDs []string, server servers.SafeServer, user
 				},
 			})))
 
-		return true
+		return true, nil
 	}
 
-	slog.Error("No seed channel found", slog.String("server", server.NameShort))
+	slog.Error("No seed roles configured", slog.String("server", server.NameShort))
 
-	return false
+	return false, ErrNoSeedRoles
 }
 
 func (h Sourcemod) GetBanState(ctx context.Context, steamID steamid.SteamID, ipAddr netip.Addr) (PlayerBanState, string, error) {
@@ -408,26 +392,28 @@ func (h Sourcemod) Overrides(ctx context.Context) ([]Overrides, error) {
 }
 
 func (h Sourcemod) SaveOverride(ctx context.Context, override Overrides) (Overrides, error) {
-	if override.Name == "" || override.Flags == "" || override.Type != OverrideTypeCommand && override.Type != OverrideTypeGroup {
+	if override.Name == "" || override.Type != OverrideTypeCommand && override.Type != OverrideTypeGroup {
 		return Overrides{}, httphelper.ErrInvalidParameter
 	}
+
+	override.Permissions = normalizePermissions(override.Permissions)
 
 	return h.repository.SaveOverride(ctx, override)
 }
 
-func (h Sourcemod) AddOverride(ctx context.Context, name string, overrideType OverrideType, flags string) (Overrides, error) {
-	if name == "" || flags == "" || overrideType != OverrideTypeCommand && overrideType != OverrideTypeGroup {
+func (h Sourcemod) AddOverride(ctx context.Context, name string, overrideType OverrideType, permissions []rolesv1.Permission) (Overrides, error) {
+	if name == "" || overrideType != OverrideTypeCommand && overrideType != OverrideTypeGroup {
 		return Overrides{}, httphelper.ErrInvalidParameter
 	}
 
 	now := time.Now()
 
 	return h.repository.AddOverride(ctx, Overrides{
-		Type:      overrideType,
-		Name:      name,
-		Flags:     flags,
-		CreatedOn: now,
-		UpdatedOn: now,
+		Type:        overrideType,
+		Name:        name,
+		Permissions: normalizePermissions(permissions),
+		CreatedOn:   now,
+		UpdatedOn:   now,
 	})
 }
 
@@ -440,7 +426,7 @@ func (h Sourcemod) DelOverride(ctx context.Context, overrideID int32) error {
 	return h.repository.DelOverride(ctx, override)
 }
 
-func (h Sourcemod) DelAdminGroup(ctx context.Context, adminID int32, groupID int32) (Admin, error) {
+func (h Sourcemod) DelAdminGroup(ctx context.Context, adminID int64, groupID int32) (Admin, error) {
 	admin, errAdmin := h.AdminByID(ctx, adminID)
 	if errAdmin != nil {
 		return Admin{}, errAdmin
@@ -451,12 +437,16 @@ func (h Sourcemod) DelAdminGroup(ctx context.Context, adminID int32, groupID int
 		return Admin{}, errGroup
 	}
 
-	existing, errExisting := h.AdminGroups(ctx, admin)
-	if errExisting != nil && !errors.Is(errExisting, database.ErrNoResult) {
-		return admin, errExisting
+	assigned := false
+	for _, g := range admin.Groups {
+		if g.GroupID == groupID {
+			assigned = true
+
+			break
+		}
 	}
 
-	if !slices.Contains(existing, group) {
+	if !assigned {
 		return admin, ErrAdminGroupExists
 	}
 
@@ -471,7 +461,7 @@ func (h Sourcemod) DelAdminGroup(ctx context.Context, adminID int32, groupID int
 	return admin, nil
 }
 
-func (h Sourcemod) AddAdminGroup(ctx context.Context, adminID int32, groupID int32) (Admin, error) {
+func (h Sourcemod) AddAdminGroup(ctx context.Context, adminID int64, groupID int32) (Admin, error) {
 	admin, errAdmin := h.AdminByID(ctx, adminID)
 	if errAdmin != nil {
 		return Admin{}, errAdmin
@@ -482,51 +472,19 @@ func (h Sourcemod) AddAdminGroup(ctx context.Context, adminID int32, groupID int
 		return Admin{}, errGroup
 	}
 
-	existing, errExisting := h.AdminGroups(ctx, admin)
-	if errExisting != nil && !errors.Is(errExisting, database.ErrNoResult) {
-		return admin, errExisting
+	for _, g := range admin.Groups {
+		if g.GroupID == groupID {
+			return admin, ErrAdminGroupExists
+		}
 	}
 
-	if slices.Contains(existing, group) {
-		return admin, ErrAdminGroupExists
-	}
-
-	if err := h.repository.InsertAdminGroup(ctx, admin, group, len(existing)+1); err != nil {
+	if err := h.repository.InsertAdminGroup(ctx, admin, group); err != nil {
 		return Admin{}, err
 	}
 
 	admin.Groups = append(admin.Groups, group)
 
 	return admin, nil
-}
-
-func (h Sourcemod) AdminGroups(ctx context.Context, admin Admin) ([]Groups, error) {
-	return h.repository.GetAdminGroups(ctx, admin)
-}
-
-func (h Sourcemod) SetAdminGroups(ctx context.Context, authType AuthType, identity string, groups ...Groups) error {
-	admin, errAdmin := h.repository.GetAdminByIdentity(ctx, authType, identity)
-	if errAdmin != nil {
-		return errAdmin
-	}
-
-	// Delete existing groups.
-	if errDelete := h.repository.DeleteAdminGroups(ctx, admin); errDelete != nil && !errors.Is(errDelete, database.ErrNoResult) {
-		return errDelete
-	}
-
-	// If no groups are given to add, this is treated purely as a delete function
-	if len(groups) == 0 {
-		return nil
-	}
-
-	for i := range groups {
-		if errInsert := h.repository.InsertAdminGroup(ctx, admin, groups[i], i); errInsert != nil {
-			return errInsert
-		}
-	}
-
-	return nil
 }
 
 func (h Sourcemod) DelGroup(ctx context.Context, groupID int32) error {
@@ -538,58 +496,22 @@ func (h Sourcemod) DelGroup(ctx context.Context, groupID int32) error {
 	return h.repository.DeleteGroup(ctx, group)
 }
 
-const validFlags = "zabcdefghijklmnopqrst"
-
-func (h Sourcemod) AddGroup(ctx context.Context, name string, flags string, immunityLevel int32) (Groups, error) {
+func (h Sourcemod) AddGroup(ctx context.Context, name string, permissions []rolesv1.Permission) (Groups, error) {
 	if name == "" {
 		return Groups{}, ErrGroupName
 	}
 
-	if immunityLevel > 100 || immunityLevel < 0 {
-		return Groups{}, ErrImmunity
-	}
-
-	for _, flag := range flags {
-		if !strings.ContainsRune(validFlags, flag) {
-			return Groups{}, ErrAdminFlagInvalid
-		}
-	}
+	perms := normalizePermissions(permissions)
 
 	return h.repository.AddGroup(ctx, Groups{
-		Flags:         flags,
 		Name:          name,
-		ImmunityLevel: immunityLevel,
+		ImmunityLevel: deriveImmunity(perms),
+		Permissions:   perms,
 	})
 }
 
-func validateAuthIdentity(ctx context.Context, authType AuthType, identity string, password string) (string, error) {
-	switch authType {
-	case AuthTypeSteam:
-		steamID, errSteamID := steamid.Resolve(ctx, identity)
-		if errSteamID != nil {
-			return "", steamid.ErrDecodeSID
-		}
-
-		identity = steamID.String()
-	case AuthTypeIP:
-		if ip := net.ParseIP(identity); ip == nil || ip.To4() != nil {
-			return "", ErrInvalidIP
-		}
-	case AuthTypeName:
-		if identity == "" {
-			return "", ErrInvalidAuthName
-		}
-
-		if password == "" {
-			return "", ErrRequirePassword
-		}
-	}
-
-	return identity, nil
-}
-
-func (h Sourcemod) DelAdmin(ctx context.Context, adminID int32) error {
-	admin, errAdmin := h.repository.GetAdminByID(ctx, adminID)
+func (h Sourcemod) DelAdmin(ctx context.Context, adminID int64) error {
+	admin, errAdmin := h.AdminByID(ctx, adminID)
 	if errAdmin != nil {
 		return errAdmin
 	}
@@ -597,72 +519,61 @@ func (h Sourcemod) DelAdmin(ctx context.Context, adminID int32) error {
 	return h.repository.DelAdmin(ctx, admin)
 }
 
-func (h Sourcemod) AdminByID(ctx context.Context, adminID int32) (Admin, error) {
+func (h Sourcemod) AdminByID(ctx context.Context, adminID int64) (Admin, error) {
 	return h.repository.GetAdminByID(ctx, adminID)
 }
 
 func (h Sourcemod) SaveAdmin(ctx context.Context, admin Admin) (Admin, error) {
-	realIdentity, errValidate := validateAuthIdentity(ctx, admin.AuthType, admin.Identity, admin.Password)
-	if errValidate != nil {
-		return Admin{}, errValidate
+	if admin.AuthType != AuthTypeSteam {
+		return Admin{}, ErrInvalidAuthName
 	}
 
-	if admin.Immunity < 0 || admin.Immunity > 100 {
-		return Admin{}, ErrImmunity
+	steamID, errSteamID := steamid.Resolve(ctx, admin.Identity)
+	if errSteamID != nil || !steamID.Valid() {
+		return Admin{}, steamid.ErrDecodeSID
 	}
 
-	var steamID steamid.SteamID
-	if admin.AuthType == AuthTypeSteam {
-		steamID = steamid.New(realIdentity)
-		if err := h.person.EnsurePerson(ctx, steamID); err != nil {
-			return Admin{}, ErrGetPerson
-		}
-
-		admin.Identity = string(steamID.Steam3())
-		admin.SteamID = steamID
+	if err := h.person.EnsurePerson(ctx, steamID); err != nil {
+		return Admin{}, ErrGetPerson
 	}
+
+	admin.SteamID = steamID
+	admin.Identity = string(steamID.Steam3())
+	admin.Password = ""
+	admin.Permissions = normalizePermissions(admin.Permissions)
+	admin.Immunity = deriveImmunity(admin.Permissions)
 
 	return h.repository.SaveAdmin(ctx, admin)
 }
 
-func (h Sourcemod) AddAdmin(ctx context.Context, alias string, authType AuthType, identity string, flags string, immunity int32, password string) (Admin, error) {
-	realIdentity, errValidate := validateAuthIdentity(ctx, authType, identity, password)
-	if errValidate != nil {
-		return Admin{}, errValidate
+func (h Sourcemod) AddAdmin(ctx context.Context, alias string, authType AuthType, identity string, permissions []rolesv1.Permission) (Admin, error) {
+	if authType != AuthTypeSteam {
+		return Admin{}, ErrInvalidAuthName
 	}
 
-	if immunity < 0 || immunity > 100 {
-		return Admin{}, ErrImmunity
+	steamID, errSteamID := steamid.Resolve(ctx, identity)
+	if errSteamID != nil || !steamID.Valid() {
+		return Admin{}, steamid.ErrDecodeSID
 	}
 
-	admin, errAdmin := h.repository.GetAdminByIdentity(ctx, authType, realIdentity)
-	if errAdmin != nil && !errors.Is(errAdmin, database.ErrNoResult) {
-		return Admin{}, errAdmin
+	if _, errAdmin := h.AdminBySteamID(ctx, steamID); errAdmin == nil {
+		return Admin{}, ErrAdminExists
 	}
 
-	if errAdmin == nil {
-		return admin, ErrAdminExists
+	if err := h.person.EnsurePerson(ctx, steamID); err != nil {
+		return Admin{}, ErrGetPerson
 	}
 
-	var steamID steamid.SteamID
-	if authType == AuthTypeSteam {
-		steamID = steamid.New(realIdentity)
-		if err := h.person.EnsurePerson(ctx, steamID); err != nil {
-			return Admin{}, ErrGetPerson
-		}
-
-		identity = string(steamID.Steam3())
-	}
+	perms := normalizePermissions(permissions)
 
 	return h.repository.AddAdmin(ctx, Admin{
-		SteamID:  steamID,
-		AuthType: authType,
-		Identity: identity,
-		Password: password,
-		Flags:    flags,
-		Name:     alias,
-		Immunity: immunity,
-		Groups:   []Groups{},
+		SteamID:     steamID,
+		AuthType:    AuthTypeSteam,
+		Identity:    string(steamID.Steam3()),
+		Name:        alias,
+		Immunity:    deriveImmunity(perms),
+		Groups:      []Groups{},
+		Permissions: perms,
 	})
 }
 
@@ -671,17 +582,7 @@ func (h Sourcemod) Admins(ctx context.Context) ([]Admin, error) {
 }
 
 func (h Sourcemod) AdminBySteamID(ctx context.Context, steamID steamid.SteamID) (Admin, error) {
-	admins, errAdmins := h.Admins(ctx)
-	if errAdmins != nil {
-		return Admin{}, errors.Join(errAdmins, database.ErrNoResult)
-	}
-	for _, admin := range admins {
-		if admin.SteamID.Equal(steamID) {
-			return admin, nil
-		}
-	}
-
-	return Admin{}, nil
+	return h.repository.GetAdminByID(ctx, steamID.Int64())
 }
 
 func (h Sourcemod) Groups(ctx context.Context) ([]Groups, error) {
@@ -697,15 +598,8 @@ func (h Sourcemod) SaveGroup(ctx context.Context, group Groups) (Groups, error) 
 		return Groups{}, ErrGroupName
 	}
 
-	if group.ImmunityLevel > 100 || group.ImmunityLevel < 0 {
-		return Groups{}, ErrImmunity
-	}
-
-	for _, flag := range group.Flags {
-		if !strings.ContainsRune(validFlags, flag) {
-			return Groups{}, ErrAdminFlagInvalid
-		}
-	}
+	group.Permissions = normalizePermissions(group.Permissions)
+	group.ImmunityLevel = deriveImmunity(group.Permissions)
 
 	return h.repository.SaveGroup(ctx, group)
 }

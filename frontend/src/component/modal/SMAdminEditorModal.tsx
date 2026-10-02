@@ -12,21 +12,22 @@ import MenuItem from "@mui/material/MenuItem";
 import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import { type Admin, AuthType, type Group } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
+import { Permission } from "../../rpc/roles/v1/roles_pb.ts";
+import { type Admin, AuthType } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
 import { createAdmin, editAdmin } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
 import { enumValues } from "../../util/lists.ts";
-import { hasSMFlag, schemaFlags } from "../../util/strings.ts";
+import { smPermissions } from "../../util/strings.ts";
 import { Heading } from "../Heading";
 
-const schema = schemaFlags.extend({
+const schema = z.object({
 	name: z.string().min(2),
 	password: z.string(),
 	authType: z.enum(AuthType),
 	identity: z.string().min(1),
-	immunity: z.number().min(0).max(100),
+	permissions: z.array(z.number()),
 });
 
-export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: Admin; groups: Group[] }) => {
+export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: Admin }) => {
 	const modal = useModal();
 	const { sendError, sendFlash } = useUserFlashCtx();
 	const defaultValues: z.input<typeof schema> = {
@@ -41,28 +42,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: Admin; 
 		identity: admin?.identity ?? "",
 		password: admin?.password ?? "",
 		name: admin?.name ?? "",
-		immunity: admin?.immunity ?? 0,
-		z: hasSMFlag("z", admin),
-		a: hasSMFlag("a", admin),
-		b: hasSMFlag("b", admin),
-		c: hasSMFlag("c", admin),
-		d: hasSMFlag("d", admin),
-		e: hasSMFlag("e", admin),
-		f: hasSMFlag("f", admin),
-		g: hasSMFlag("g", admin),
-		h: hasSMFlag("h", admin),
-		i: hasSMFlag("i", admin),
-		j: hasSMFlag("j", admin),
-		k: hasSMFlag("k", admin),
-		l: hasSMFlag("l", admin),
-		m: hasSMFlag("m", admin),
-		n: hasSMFlag("n", admin),
-		o: hasSMFlag("o", admin),
-		p: hasSMFlag("p", admin),
-		q: hasSMFlag("q", admin),
-		r: hasSMFlag("r", admin),
-		s: hasSMFlag("s", admin),
-		t: hasSMFlag("t", admin),
+		permissions: admin?.permissions ?? [],
 	};
 
 	const createMutation = useMutation(createAdmin, {
@@ -89,23 +69,13 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: Admin; 
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			const filteredKeys = ["name", "immunity", "auth_type", "password", "identity"];
-			const flags = Object.entries(value)
-				.filter((v) => !filteredKeys.includes(v[0]))
-				.reduce((acc, value) => {
-					if (value[1]) {
-						acc += value[0];
-					}
-					return acc;
-				}, "");
 			if (admin?.adminId) {
 				editMutation.mutate({
+					adminId: admin.adminId,
 					...value,
-					immunity: Number(value.immunity),
-					flags: flags,
 				});
 			} else {
-				createMutation.mutate({ ...value });
+				createMutation.mutate(value);
 			}
 		},
 		defaultValues,
@@ -151,7 +121,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: Admin; 
 								name={"authType"}
 								children={(field) => {
 									return (
-										<field.AuthTypeField
+										<field.SelectAuthTypeField
 											label={"Auth Type"}
 											items={enumValues(AuthType)}
 											renderItem={(i) => {
@@ -177,202 +147,26 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: Admin; 
 
 						<Grid size={{ xs: 12 }}>
 							<form.AppField
-								name={"immunity"}
+								name={"permissions"}
 								children={(field) => {
-									return <field.TextField label={"Immunity Level"} />;
+									return (
+										<field.SelectPermissionsField
+											multiple={true}
+											label={"Permissions"}
+											items={smPermissions}
+											renderItem={(p) => {
+												return (
+													<MenuItem value={p} key={`perm-${p}`}>
+														{Permission[p]}
+													</MenuItem>
+												);
+											}}
+										/>
+									);
 								}}
 							/>
 						</Grid>
 
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"z"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(z) Full Admin"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"a"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(a) Reserved Slot"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"b"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(b) Generic Admin"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"c"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(c) Kick Players"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"d"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(d) Ban Players"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"e"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(e) Unban Players"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"f"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(f) Slay/Harm Players"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"g"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(g) Change Maps"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"h"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(h) Change CVARs"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"i"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(i) Exec Configs"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"j"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(j) Special Chat Privileges"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"k"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(k) Start Votes"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"l"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(l) Set Server Password"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"m"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(m) RCON Access"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"n"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(n) Enabled Cheats"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"o"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(o) Custom Flag"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"p"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(p) Custom Flag"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"q"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(q) Custom Flag"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"r"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(r) Custom Flag"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"s"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(s) Custom Flag"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"t"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(t) Custom Flag"} />;
-								}}
-							/>
-						</Grid>
 						<Grid size={{ xs: 12 }}>
 							<Link target={"_blank"} href={"https://wiki.alliedmods.net/Adding_Admins_(SourceMod)"}>
 								Additional SourceMod Admin Info

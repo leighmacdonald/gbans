@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
@@ -60,7 +59,6 @@ func NewFixture() *Fixture {
 		DSN:       testDB.dsn,
 		Persons: person.NewPersons(
 			person.NewRepository(databaseConn, conf.Config().Clientprefs.CenterProjectiles),
-			steamid.New(conf.Config().Owner),
 			api),
 		Close: func() {
 			termCtx, termCancel := context.WithTimeout(context.Background(), time.Second*30)
@@ -104,16 +102,12 @@ $do$;`
 	}
 }
 
-func (f Fixture) CreateTestPerson(ctx context.Context, steamID steamid.SteamID, perm permission.Privilege) personDomain.Core {
-	people := person.NewPersons(person.NewRepository(f.Database, f.Config.Config().Clientprefs.CenterProjectiles), OwnerSID, f.TFApi)
+func (f Fixture) CreateTestPerson(ctx context.Context, steamID steamid.SteamID) personDomain.Core {
+	people := person.NewPersons(person.NewRepository(f.Database, f.Config.Config().Clientprefs.CenterProjectiles), f.TFApi)
 	player, errPerson := people.GetOrCreatePersonBySteamID(ctx, steamID)
 	if errPerson != nil {
 		panic(errPerson)
 	}
-	full, _ := people.BySteamID(ctx, steamID)
-	full.PermissionLevel = perm
-	player.PermissionLevel = perm
-	_ = people.Save(ctx, &full)
 
 	return player
 }

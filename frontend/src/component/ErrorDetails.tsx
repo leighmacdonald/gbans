@@ -11,7 +11,11 @@ import { logErr } from "../util/errors.ts";
 import { ContainerWithHeader } from "./ContainerWithHeader.tsx";
 
 const ErrorBox = ({ error }: { error: string }) => {
-	return <Typography variant={"body1"}>{error}</Typography>;
+	return (
+		<Typography variant={"body1"} sx={{ padding: 2 }}>
+			{error}
+		</Typography>
+	);
 };
 
 export const ErrorDetails = ({ error }: { error: AppError | unknown }) => {

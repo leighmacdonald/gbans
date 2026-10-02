@@ -14,7 +14,7 @@ import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import type { Contest } from "../../rpc/contest/v1/contest_pb.ts";
 import { contestCreate } from "../../rpc/contest/v1/contest-Service_connectquery.ts";
-import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../../rpc/roles/v1/roles_pb.ts";
 import { enumValues } from "../../util/lists.ts";
 import { EMPTY_UUID } from "../../util/strings.ts";
 import { Heading } from "../Heading";
@@ -36,7 +36,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 			mutation.mutate({ contest: value });
 		},
 		defaultValues: {
-			dateStart: contest?.dateStart ? timestampDate(contest?.dateStart).toISOString() : "",
+			dateStart: contest?.dateStart ? timestampDate(contest?.dateStart) : new Date(),
 			dateEnd: contest?.dateEnd ? timestampDate(contest.dateEnd).toISOString() : "",
 			description: contest ? contest.description : "",
 			hideSubmissions: contest ? contest.hideSubmissions : false,
@@ -46,7 +46,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 			maxSubmissions: contest ? String(contest.maxSubmissions) : "1",
 			mediaTypes: contest ? contest.mediaTypes : "",
 			public: contest ? contest.public : true,
-			minPermissionLevel: contest ? contest.minPermissionLevel : Privilege.USER,
+			requiredPermission: contest ? contest.requiredPermission : Permission.CONTEST_READ,
 			//deleted: contest ? contest.deleted : false,
 			numEntries: 0,
 			updatedOn: new Date(),
@@ -123,16 +123,16 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 						</Grid>
 						<Grid size={{ xs: 6 }}>
 							<form.AppField
-								name={"minPermissionLevel"}
+								name={"requiredPermission"}
 								children={(field) => {
 									return (
-										<field.SelectPrivilegeField
+										<field.SelectPermissionsField
 											label={"Min Permissions"}
-											items={enumValues(Privilege)}
+											items={enumValues(Permission)}
 											renderItem={(pl) => {
 												return (
 													<MenuItem value={pl} key={`pl-${pl}`}>
-														{Privilege[pl]}
+														{Permission[pl]}
 													</MenuItem>
 												);
 											}}

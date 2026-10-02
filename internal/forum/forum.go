@@ -12,11 +12,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -76,7 +75,7 @@ type Forum struct {
 	Ordering            int32
 	CountThreads        int32
 	CountMessages       int32
-	PermissionLevel     permission.Privilege
+	RequiredPermission  rolesv1.Permission
 	RecentForumThreadID int32
 	RecentForumTitle    string
 	RecentSourceID      string
@@ -102,19 +101,19 @@ func (f Forum) NewThread(title string, sourceID steamid.SteamID) Thread {
 }
 
 type Thread struct {
-	ForumThreadID   int32
-	ForumID         int32
-	SourceID        steamid.SteamID
-	Title           string
-	Sticky          bool
-	Locked          bool
-	Views           int32
-	Replies         int32
-	Personaname     string
-	Avatarhash      string
-	PermissionLevel permission.Privilege
-	CreatedOn       time.Time
-	UpdatedOn       time.Time
+	ForumThreadID int32
+	ForumID       int32
+	SourceID      steamid.SteamID
+	Title         string
+	Sticky        bool
+	Locked        bool
+	Views         int32
+	Replies       int32
+	Personaname   string
+	Avatarhash    string
+
+	CreatedOn time.Time
+	UpdatedOn time.Time
 }
 
 func (t Thread) Path() string {
@@ -133,18 +132,18 @@ func (t Thread) NewMessage(sourceID steamid.SteamID, body string) Message {
 }
 
 type Message struct {
-	ForumMessageID  int64
-	ForumThreadID   int32
-	SourceID        steamid.SteamID
-	BodyMD          string
-	Title           string
-	Online          bool
-	Signature       string
-	Personaname     string
-	Avatarhash      string
-	PermissionLevel permission.Privilege
-	CreatedOn       time.Time
-	UpdatedOn       time.Time
+	ForumMessageID     int64
+	ForumThreadID      int32
+	SourceID           steamid.SteamID
+	BodyMD             string
+	Title              string
+	Online             bool
+	Signature          string
+	Personaname        string
+	Avatarhash         string
+	RequiredPermission rolesv1.Permission
+	CreatedOn          time.Time
+	UpdatedOn          time.Time
 }
 
 func (m Message) Path() string {
@@ -173,9 +172,9 @@ type MessageVote struct {
 type ThreadWithSource struct {
 	Thread
 
-	Personaname          string
-	Avatarhash           string
-	PermissionLevel      permission.Privilege
+	Personaname string
+	Avatarhash  string
+
 	RecentForumMessageID int64
 	RecentCreatedOn      time.Time
 	RecentSteamID        int64
@@ -388,8 +387,8 @@ func (f Forums) MessageSave(ctx context.Context, fMessage *Message) error {
 	return nil
 }
 
-func (f Forums) RecentActivity(ctx context.Context, limit uint64, permissionLevel permission.Privilege) ([]Message, error) {
-	return f.repo.ForumRecentActivity(ctx, limit, permissionLevel)
+func (f Forums) RecentActivity(ctx context.Context, limit uint64) ([]Message, error) {
+	return f.repo.ForumRecentActivity(ctx, limit)
 }
 
 func (f Forums) Message(ctx context.Context, messageID int64, forumMessage *Message) error {
@@ -404,7 +403,7 @@ func (f Forums) Messages(ctx context.Context, filters ThreadMessagesQuery) ([]Me
 	return f.repo.ForumMessages(ctx, filters)
 }
 
-func (f Forums) MessageDelete(ctx context.Context, person person.BaseUser, messageID int64) error {
+func (f Forums) MessageDelete(ctx context.Context, messageID int64) error {
 	var message Message
 	if err := f.Message(ctx, messageID, &message); err != nil {
 		return err
@@ -417,10 +416,6 @@ func (f Forums) MessageDelete(ctx context.Context, person person.BaseUser, messa
 
 	if thread.Locked {
 		return ErrThreadLocked
-	}
-
-	if !httphelper.HasPrivilege(person, steamid.Collection{message.SourceID}, permission.Editor) {
-		return permission.ErrDenied
 	}
 
 	messages, errMessage := f.Messages(ctx, ThreadMessagesQuery{ForumThreadID: message.ForumThreadID})

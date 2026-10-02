@@ -15,7 +15,6 @@ import (
 
 	"connectrpc.com/authn"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -40,7 +39,6 @@ var (
 type UserClaimProvider interface {
 	GetAvatar() person.Avatar
 	GetSteamID() steamid.SteamID
-	GetPrivilege() permission.Privilege
 	GetName() string
 }
 
@@ -57,20 +55,12 @@ func WithServer() ServerRouteAuthFn {
 	}
 }
 
-// WithMinPermissions returns a UserRouteAuthFn that checks if the user has at least the specified privilege level.
-func WithMinPermissions(permission permission.Privilege) UserRouteAuthFn {
-	return func(_ context.Context, _ *http.Request, user UserInfo) bool {
-		return user.HasPermission(permission)
-	}
-}
-
 type userClaims struct {
 	jwt.RegisteredClaims
 
 	// user context to prevent side-jacking
 	// https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html#token-sidejacking
 	Fingerprint string
-	Privilege   permission.Privilege
 	SteamID     string
 	AvatarHash  person.Avatar
 	Name        string
@@ -89,21 +79,25 @@ type serverClaims struct {
 type Middleware struct {
 	sync.RWMutex
 
-	siteName        string
-	cookie          string
-	userAllowList   map[string]UserRouteAuthFn
-	serverAllowList map[string]ServerRouteAuthFn
+	siteName         string
+	cookie           string
+	permissionLoader RolePermissionsResolver
+	userAllowList    map[string]UserRouteAuthFn
+	serverAllowList  map[string]ServerRouteAuthFn
+	publicAllowList  map[string]struct{}
 }
 
 // NewMiddleware creates a new authentication middleware for the given site name and cookie secret.
 // The cookie secret is used as the HMAC key for signing and verifying JWT tokens.
-func NewMiddleware(siteName string, cookie string) *Middleware {
+func NewMiddleware(siteName string, cookie string, permissionLoader RolePermissionsResolver) *Middleware {
 	return &Middleware{
-		RWMutex:         sync.RWMutex{},
-		siteName:        siteName,
-		cookie:          cookie,
-		userAllowList:   map[string]UserRouteAuthFn{},
-		serverAllowList: map[string]ServerRouteAuthFn{},
+		RWMutex:          sync.RWMutex{},
+		siteName:         siteName,
+		cookie:           cookie,
+		permissionLoader: permissionLoader,
+		userAllowList:    map[string]UserRouteAuthFn{},
+		serverAllowList:  map[string]ServerRouteAuthFn{},
+		publicAllowList:  map[string]struct{}{},
 	}
 }
 
@@ -114,6 +108,23 @@ func (m *Middleware) UserRoute(procedure string, authFunc UserRouteAuthFn) {
 	m.Lock()
 	m.userAllowList[procedure] = authFunc
 	m.Unlock()
+}
+
+// PublicRoute registers a user-facing RPC procedure that is accessible without
+// authentication. If a valid token is present in the request it is still used to
+// populate the UserInfo for personalization. Thread-safe.
+func (m *Middleware) PublicRoute(procedure string) {
+	m.Lock()
+	m.publicAllowList[procedure] = struct{}{}
+	m.Unlock()
+}
+
+// AuthedRoute registers a user-facing RPC procedure that requires a valid
+// authenticated user but no specific permission. Any logged-in user may access
+// it. The JWT and steam id are still validated by Authenticate before the
+// check runs, so this is exactly "any valid user". Thread-safe.
+func (m *Middleware) AuthedRoute(procedure string) {
+	m.UserRoute(procedure, func(context.Context, *http.Request, UserInfo) bool { return true })
 }
 
 // ServerRoute registers an authentication check for a server-facing RPC procedure.
@@ -188,6 +199,22 @@ func (m *Middleware) authUser(ctx context.Context, req *http.Request, procedure 
 
 	var info UserInfo
 
+	if _, isPublic := m.publicAllowList[procedure]; isPublic {
+		// Public routes do not require authentication. If a valid token is
+		// present, use it for personalization; otherwise treat as a guest.
+		if claims, errToken := m.userClaimsFromRequest(req); errToken == nil {
+			sid := steamid.New(claims.Subject)
+			if sid.Valid() {
+				info.SteamID = sid
+				info.AvatarHash = claims.AvatarHash
+				info.Name = claims.Name
+				info.Permissions = m.permissionLoader.PermissionsBySteamID(ctx, sid)
+			}
+		}
+
+		return info, nil
+	}
+
 	authFn, found := m.userAllowList[procedure]
 	if !found {
 		return info, nil
@@ -204,9 +231,9 @@ func (m *Middleware) authUser(ctx context.Context, req *http.Request, procedure 
 	}
 
 	info.SteamID = sid
-	info.Privilege = claims.Privilege
 	info.AvatarHash = claims.AvatarHash
 	info.Name = claims.Name
+	info.Permissions = m.permissionLoader.PermissionsBySteamID(ctx, sid)
 
 	if !authFn(ctx, req, info) {
 		return info, authn.Errorf("unauthorized")
@@ -325,14 +352,12 @@ func NewServerTokenGenerator(siteName string, cookie []byte) func(serverID int32
 	return func(serverID int32, serverName string) (string, error) {
 		nowTime := time.Now()
 		claims := serverClaims{
-			RegisteredClaims: jwt.RegisteredClaims{
-				ID:        strconv.FormatInt(int64(serverID), 10),
-				Issuer:    siteName,
-				Subject:   serverName,
-				ExpiresAt: jwt.NewNumericDate(nowTime.AddDate(0, 0, 7)),
-				IssuedAt:  jwt.NewNumericDate(nowTime),
-				NotBefore: jwt.NewNumericDate(nowTime),
-			},
+			ID:        strconv.FormatInt(int64(serverID), 10),
+			Issuer:    siteName,
+			Subject:   serverName,
+			ExpiresAt: jwt.NewNumericDate(nowTime.AddDate(0, 0, 7)),
+			IssuedAt:  jwt.NewNumericDate(nowTime),
+			NotBefore: jwt.NewNumericDate(nowTime),
 		}
 
 		tokenWithClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -351,16 +376,13 @@ func (m *Middleware) newUserToken(user UserClaimProvider, fingerPrint string, va
 	sid := user.GetSteamID()
 	claims := userClaims{
 		Fingerprint: fingerprintHash(fingerPrint),
-		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    m.siteName,
-			Subject:   sid.String(),
-			ExpiresAt: jwt.NewNumericDate(nowTime.Add(validDuration)),
-			IssuedAt:  jwt.NewNumericDate(nowTime),
-			NotBefore: jwt.NewNumericDate(nowTime),
-		},
-		SteamID:    sid.String(),
-		Privilege:  user.GetPrivilege(),
-		AvatarHash: user.GetAvatar(),
+		Issuer:      m.siteName,
+		Subject:     sid.String(),
+		ExpiresAt:   jwt.NewNumericDate(nowTime.Add(validDuration)),
+		IssuedAt:    jwt.NewNumericDate(nowTime),
+		NotBefore:   jwt.NewNumericDate(nowTime),
+		SteamID:     sid.String(),
+		AvatarHash:  user.GetAvatar(),
 	}
 	tokenWithClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, errSigned := tokenWithClaims.SignedString([]byte(m.cookie))

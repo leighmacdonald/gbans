@@ -8,10 +8,10 @@ import (
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/parser"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/microcosm-cc/bluemonday"
 )
 
@@ -33,12 +33,12 @@ func NewParser() *parser.Parser {
 const RootSlug = "home"
 
 type Page struct {
-	Slug            string
-	BodyMD          string
-	Revision        int32
-	PermissionLevel permission.Privilege
-	CreatedOn       time.Time
-	UpdatedOn       time.Time
+	Slug               string
+	BodyMD             string
+	Revision           int32
+	RequiredPermission rolesv1.Permission
+	CreatedOn          time.Time
+	UpdatedOn          time.Time
 }
 
 func (page Page) NewRevision() Page {
@@ -56,11 +56,11 @@ func NewPage(slug string, body string) Page {
 	now := time.Now()
 
 	return Page{
-		Slug:            slug,
-		BodyMD:          body,
-		PermissionLevel: permission.Guest,
-		CreatedOn:       now,
-		UpdatedOn:       now,
+		Slug:               slug,
+		BodyMD:             body,
+		RequiredPermission: rolesv1.Permission_PERMISSION_UNSPECIFIED,
+		CreatedOn:          now,
+		UpdatedOn:          now,
 	}
 }
 
@@ -114,7 +114,7 @@ func (w *Wiki) Save(ctx context.Context, update Page) (Page, error) {
 	}
 
 	page.Revision++
-	page.PermissionLevel = update.PermissionLevel
+	page.RequiredPermission = update.RequiredPermission
 	page.BodyMD = update.BodyMD
 
 	if errSave := w.Repository.Save(ctx, page); errSave != nil {

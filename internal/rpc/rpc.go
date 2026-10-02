@@ -9,10 +9,10 @@ import (
 	"connectrpc.com/authn"
 	"connectrpc.com/connect"
 	"connectrpc.com/validate"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/stoewer/go-strcase"
 )
@@ -32,18 +32,14 @@ type Service struct {
 }
 
 type UserInfo struct {
-	SteamID    steamid.SteamID
-	AvatarHash person.Avatar
-	Name       string
-	Privilege  permission.Privilege
+	SteamID     steamid.SteamID
+	AvatarHash  person.Avatar
+	Name        string
+	Permissions []rolesv1.Permission
 }
 
 func (u UserInfo) Path() string {
 	return fmt.Sprintf("https://steamcommunity.com/profiles/%d", u.SteamID.Int64())
-}
-
-func (u UserInfo) HasPermission(privilege permission.Privilege) bool {
-	return u.Privilege >= privilege
 }
 
 func (u UserInfo) GetSteamID() steamid.SteamID {
@@ -58,16 +54,16 @@ func (u UserInfo) GetName() string {
 	return u.Name
 }
 
-func (u UserInfo) GetPrivilege() permission.Privilege {
-	return u.Privilege
-}
-
 func (u UserInfo) GetAvatar() person.Avatar {
 	if u.AvatarHash == "" {
 		return "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"
 	}
 
 	return u.AvatarHash
+}
+
+func (u UserInfo) GetPermissions() []rolesv1.Permission {
+	return u.Permissions
 }
 
 type ServerAuthenticator interface {
@@ -105,15 +101,6 @@ func UserInfoFromCtx(ctx context.Context) *UserInfo {
 	}
 
 	return &user
-}
-
-func UserInfoFromCtxWithCheck(ctx context.Context, privilege permission.Privilege) (*UserInfo, error) {
-	user := UserInfoFromCtx(ctx)
-	if user == nil || !user.HasPermission(privilege) {
-		return nil, connect.NewError(connect.CodePermissionDenied, permission.ErrDenied)
-	}
-
-	return user, nil
 }
 
 func FromRPC(filter *v1.Filter) query.Filter {

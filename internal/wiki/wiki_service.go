@@ -6,9 +6,8 @@ import (
 	"fmt"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
-	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/wiki/v1"
 	"github.com/leighmacdonald/gbans/internal/wiki/v1/wikiv1connect"
@@ -18,14 +17,15 @@ import (
 type Service struct {
 	// wikiv1connect.UnimplementedWikiServiceHandler
 
-	wiki Wiki
+	wiki     Wiki
+	roleAuth *rpc.RoleAuth
 }
 
-func NewService(wiki Wiki, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := wikiv1connect.NewWikiServiceHandler(Service{wiki: wiki}, option...)
+func NewService(wiki Wiki, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := wikiv1connect.NewWikiServiceHandler(Service{wiki: wiki, roleAuth: roleAuth}, option...)
 
-	authMiddleware.UserRoute(wikiv1connect.WikiServiceGetProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.UserRoute(wikiv1connect.WikiServiceUpdateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.PublicRoute(wikiv1connect.WikiServiceGetProcedure)
+	authMiddleware.UserRoute(wikiv1connect.WikiServiceUpdateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_WIKI_EDIT))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -38,33 +38,34 @@ func (s Service) Get(ctx context.Context, request *v1.GetRequest) (*v1.GetRespon
 		case errors.Is(err, database.ErrNoResult):
 			return &v1.GetResponse{
 				Wiki: &v1.Wiki{
-					Slug:            &slug,
-					BodyMd:          new(fmt.Sprintf("# New %s Wiki", slug)),
-					Revision:        new(int32(0)),
-					PermissionLevel: new(personv1.Privilege(page.PermissionLevel)),
-					CreatedOn:       timestamppb.Now(),
-					UpdatedOn:       timestamppb.Now(),
+					Slug:               &slug,
+					BodyMd:             new(fmt.Sprintf("# New %s Wiki", slug)),
+					Revision:           new(int32(0)),
+					RequiredPermission: new(rolesv1.Permission_PERMISSION_UNSPECIFIED),
+					CreatedOn:          timestamppb.Now(),
+					UpdatedOn:          timestamppb.Now(),
 				},
 			}, nil
-		case errors.Is(err, permission.ErrDenied):
-			return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 		default:
 			return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 		}
 	}
 
-	if _, errAuth := rpc.UserInfoFromCtxWithCheck(ctx, page.PermissionLevel); errAuth != nil {
-		return nil, errAuth
+	if page.RequiredPermission != rolesv1.Permission_PERMISSION_UNSPECIFIED {
+		user := rpc.UserInfoFromCtx(ctx)
+		if !s.roleAuth.HasPermission(ctx, *user, page.RequiredPermission) {
+			return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
+		}
 	}
 
 	return &v1.GetResponse{
 		Wiki: &v1.Wiki{
-			Slug:            &page.Slug,
-			BodyMd:          &page.BodyMD,
-			Revision:        &page.Revision,
-			PermissionLevel: new(personv1.Privilege(page.PermissionLevel)),
-			CreatedOn:       timestamppb.New(page.CreatedOn),
-			UpdatedOn:       timestamppb.New(page.UpdatedOn),
+			Slug:               &page.Slug,
+			BodyMd:             &page.BodyMD,
+			Revision:           &page.Revision,
+			RequiredPermission: new(page.RequiredPermission),
+			CreatedOn:          timestamppb.New(page.CreatedOn),
+			UpdatedOn:          timestamppb.New(page.UpdatedOn),
 		},
 	}, nil
 }
@@ -78,7 +79,7 @@ func (s Service) Update(ctx context.Context, request *v1.UpdateRequest) (*v1.Upd
 
 	page.Slug = update.GetSlug()
 	page.BodyMD = update.GetBodyMd()
-	page.PermissionLevel = permission.Privilege(update.GetPermissionLevel()) //nolint:gosec
+	page.RequiredPermission = update.GetRequiredPermission()
 
 	updatedPage, errSave := s.wiki.Save(ctx, page)
 	if errSave != nil {
@@ -86,11 +87,11 @@ func (s Service) Update(ctx context.Context, request *v1.UpdateRequest) (*v1.Upd
 	}
 
 	return &v1.UpdateResponse{Wiki: &v1.Wiki{
-		Slug:            &updatedPage.Slug,
-		BodyMd:          &updatedPage.BodyMD,
-		Revision:        &updatedPage.Revision,
-		PermissionLevel: new(personv1.Privilege(updatedPage.PermissionLevel)),
-		CreatedOn:       timestamppb.New(updatedPage.CreatedOn),
-		UpdatedOn:       timestamppb.New(updatedPage.UpdatedOn),
+		Slug:               &updatedPage.Slug,
+		BodyMd:             &updatedPage.BodyMD,
+		Revision:           &updatedPage.Revision,
+		RequiredPermission: new(updatedPage.RequiredPermission),
+		CreatedOn:          timestamppb.New(updatedPage.CreatedOn),
+		UpdatedOn:          timestamppb.New(updatedPage.UpdatedOn),
 	}}, nil
 }

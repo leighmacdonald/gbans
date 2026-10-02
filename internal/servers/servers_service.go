@@ -8,10 +8,10 @@ import (
 	"strconv"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	networkv1 "github.com/leighmacdonald/gbans/internal/network/v1"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/servers/v1"
 	"github.com/leighmacdonald/gbans/internal/servers/v1/serversv1connect"
@@ -26,14 +26,14 @@ type Service struct {
 	servers *Servers
 }
 
-func NewServersService(servers *Servers, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewServersService(servers *Servers, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := serversv1connect.NewServersServiceHandler(&Service{servers: servers}, option...)
 
-	authMiddleware.UserRoute(serversv1connect.ServersServiceStateProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.UserRoute(serversv1connect.ServersServiceEditServerProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(serversv1connect.ServersServiceDeleteServerProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(serversv1connect.ServersServiceServersAdminProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(serversv1connect.ServersServiceQueryLogsProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.PublicRoute(serversv1connect.ServersServiceStateProcedure)
+	authMiddleware.UserRoute(serversv1connect.ServersServiceEditServerProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_WRITE))
+	authMiddleware.UserRoute(serversv1connect.ServersServiceDeleteServerProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_WRITE))
+	authMiddleware.UserRoute(serversv1connect.ServersServiceServersAdminProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_READ))
+	authMiddleware.UserRoute(serversv1connect.ServersServiceQueryLogsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_READ))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -92,6 +92,8 @@ func (s Service) State(ctx context.Context, _ *emptypb.Empty) (*v1.StateResponse
 	return &resp, nil
 }
 
+// Servers returns a list of all servers.
+// Public endpoint, no authentication required.
 func (s Service) Servers(ctx context.Context, _ *emptypb.Empty) (*v1.ServersResponse, error) {
 	fullServers, errServers := s.servers.Servers(ctx, Query{IncludeDisabled: false, IncludeDeleted: false})
 	if errServers != nil && !errors.Is(errServers, database.ErrNoResult) {

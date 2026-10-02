@@ -18,7 +18,7 @@ import { ButtonLink } from "../component/ButtonLink.tsx";
 import { NewsView } from "../component/NewsView";
 import RouterLink from "../component/RouterLink.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 
 export const Route = createFileRoute("/_guest/")({
 	component: Index,
@@ -71,7 +71,7 @@ function Index() {
 							Appeal Ban
 						</Button>
 					)}
-					{appInfo.wikiEnabled && (
+					{appInfo.wikiEnabled && hasPermission(Permission.WIKI_READ) && (
 						<>
 							<Button
 								component={RouterLink}
@@ -108,7 +108,7 @@ function Index() {
 							Donate
 						</Button>
 					)}
-					{appInfo.contestsEnabled && (
+					{appInfo.contestsEnabled && hasPermission(Permission.CONTEST_READ) && (
 						<Button
 							component={RouterLink}
 							startIcon={<EmojiEventsIcon />}
@@ -132,7 +132,7 @@ function Index() {
 							MGE Rankings
 						</Button>
 					)}
-					{appInfo.chatlogsEnabled && (
+					{appInfo.chatlogsEnabled && hasPermission(Permission.CHATLOG_READ) && (
 						<Button
 							component={RouterLink}
 							startIcon={<ChatIcon />}
@@ -144,7 +144,7 @@ function Index() {
 							Chat Logs
 						</Button>
 					)}
-					{appInfo.demosEnabled && (
+					{appInfo.demosEnabled && hasPermission(Permission.DEMO_READ) && (
 						<Button
 							component={RouterLink}
 							startIcon={<VideocamIcon />}
@@ -156,7 +156,7 @@ function Index() {
 							SourceTV
 						</Button>
 					)}
-					{appInfo.statsEnabled && hasPermission(Privilege.MODERATOR) && (
+					{appInfo.statsEnabled && hasPermission(Permission.STATS_READ) && (
 						<ButtonLink
 							startIcon={<PieChartIcon />}
 							fullWidth

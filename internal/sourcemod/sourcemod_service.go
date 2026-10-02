@@ -6,10 +6,10 @@ import (
 	"net/netip"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	banv1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	"github.com/leighmacdonald/gbans/internal/database"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/sourcemod/v1"
 	"github.com/leighmacdonald/gbans/internal/sourcemod/v1/sourcemodv1connect"
@@ -26,29 +26,30 @@ type Service struct {
 	sourcemod Sourcemod
 }
 
-func NewSourcemodService(sourcemod Sourcemod, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewSourcemodService(sourcemod Sourcemod, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := sourcemodv1connect.NewSourcemodServiceHandler(Service{sourcemod: sourcemod}, option...)
 
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceGroupsProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateGroupProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceEditGroupsProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteGroupProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceGroupOverridesProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateGroupOverrideProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceEditGroupOverrideProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteGroupOverrideProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceAdminsProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateAdminProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceEditAdminProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteAdminProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceAddAdminGroupProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteAdminGroupProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceOverridesProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateOverridesProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceEditOverridesProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteOverridesProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceGroupImmunitiesProcedure, rpc.WithMinPermissions(permission.Admin))
-	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateImmunityProcedure, rpc.WithMinPermissions(permission.Admin))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceGroupsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_READ))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateGroupProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceEditGroupsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteGroupProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceGroupOverridesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_READ))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateGroupOverrideProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceEditGroupOverrideProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteGroupOverrideProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceAdminsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_READ))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateAdminProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceEditAdminProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteAdminProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceAddAdminGroupProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteAdminGroupProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceOverridesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_READ))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateOverridesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceEditOverridesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteOverridesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceGroupImmunitiesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_READ))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceCreateImmunityProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
+	authMiddleware.UserRoute(sourcemodv1connect.SourcemodServiceDeleteImmunityProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_GAMEADMIN_WRITE))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -70,16 +71,16 @@ func (s Service) Groups(ctx context.Context, _ *emptypb.Empty) (*v1.GroupsRespon
 func toGroup(group Groups) *v1.Group {
 	return &v1.Group{
 		GroupId:       &group.GroupID,
-		Flags:         &group.Flags,
 		Name:          &group.Name,
 		ImmunityLevel: &group.ImmunityLevel,
 		CreatedOn:     timestamppb.New(group.CreatedOn),
 		UpdatedOn:     timestamppb.New(group.UpdatedOn),
+		Permissions:   group.Permissions,
 	}
 }
 
 func (s Service) CreateGroup(ctx context.Context, req *v1.CreateGroupRequest) (*v1.CreateGroupResponse, error) {
-	group, errGroup := s.sourcemod.AddGroup(ctx, req.GetName(), req.GetFlags(), req.GetImmunity())
+	group, errGroup := s.sourcemod.AddGroup(ctx, req.GetName(), req.GetPermissions())
 	if errGroup != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -98,8 +99,7 @@ func (s Service) EditGroups(ctx context.Context, req *v1.EditGroupsRequest) (*v1
 	}
 
 	group.Name = req.GetName()
-	group.Flags = req.GetFlags()
-	group.ImmunityLevel = req.GetImmunity()
+	group.Permissions = req.GetPermissions()
 
 	editedGroup, errSave := s.sourcemod.SaveGroup(ctx, group)
 	if errSave != nil {
@@ -219,7 +219,7 @@ func (s Service) Admins(ctx context.Context, _ *emptypb.Empty) (*v1.AdminsRespon
 }
 
 func (s Service) CreateAdmin(ctx context.Context, req *v1.CreateAdminRequest) (*v1.CreateAdminResponse, error) {
-	admin, errAdmin := s.sourcemod.AddAdmin(ctx, req.GetName(), fromAuthType(req.GetAuthType()), req.GetIdentity(), req.GetFlags(), req.GetImmunity(), req.GetPassword())
+	admin, errAdmin := s.sourcemod.AddAdmin(ctx, req.GetName(), fromAuthType(req.GetAuthType()), req.GetIdentity(), req.GetPermissions())
 	if errAdmin != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -238,8 +238,7 @@ func (s Service) EditAdmin(ctx context.Context, req *v1.EditAdminRequest) (*v1.E
 	}
 
 	admin.Name = req.GetName()
-	admin.Flags = req.GetFlags()
-	admin.Immunity = req.GetImmunity()
+	admin.Permissions = req.GetPermissions()
 	admin.AuthType = fromAuthType(req.GetAuthType())
 	admin.Identity = req.GetIdentity()
 	admin.Password = req.GetPassword()
@@ -293,7 +292,7 @@ func (s Service) Overrides(ctx context.Context, _ *emptypb.Empty) (*v1.Overrides
 }
 
 func (s Service) CreateOverrides(ctx context.Context, req *v1.CreateOverridesRequest) (*v1.CreateOverridesResponse, error) {
-	override, errCreate := s.sourcemod.AddOverride(ctx, req.GetName(), fromOverrideType(req.GetOverrideType()), req.GetFlags())
+	override, errCreate := s.sourcemod.AddOverride(ctx, req.GetName(), fromOverrideType(req.GetOverrideType()), req.GetPermissions())
 	if errCreate != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -313,7 +312,7 @@ func (s Service) EditOverrides(ctx context.Context, req *v1.EditOverridesRequest
 
 	override.Type = fromOverrideType(req.GetOverrideType())
 	override.Name = req.GetName()
-	override.Flags = req.GetFlags()
+	override.Permissions = req.GetPermissions()
 
 	edited, errSave := s.sourcemod.SaveOverride(ctx, override)
 	if errSave != nil {
@@ -431,25 +430,25 @@ func toOverride(override Overrides) *v1.Override {
 		OverrideId:   &override.OverrideID,
 		OverrideType: toOverrideType(override.Type),
 		Name:         &override.Name,
-		Flags:        &override.Flags,
 		CreatedOn:    timestamppb.New(override.CreatedOn),
 		UpdatedOn:    timestamppb.New(override.UpdatedOn),
+		Permissions:  override.Permissions,
 	}
 }
 
 func toAdmin(admin Admin) *v1.Admin {
 	resp := v1.Admin{
-		AdminId:   &admin.AdminID,
-		SteamId:   new(admin.SteamID.Int64()),
-		AuthType:  toAuthType(admin.AuthType),
-		Identity:  &admin.Identity,
-		Password:  &admin.Password,
-		Flags:     &admin.Flags,
-		Name:      &admin.Name,
-		Immunity:  &admin.Immunity,
-		Groups:    make([]*v1.Group, len(admin.Groups)),
-		CreatedOn: timestamppb.New(admin.CreatedOn),
-		UpdatedOn: timestamppb.New(admin.UpdatedOn),
+		AdminId:     &admin.AdminID,
+		SteamId:     new(admin.SteamID.Int64()),
+		AuthType:    toAuthType(admin.AuthType),
+		Identity:    &admin.Identity,
+		Password:    &admin.Password,
+		Name:        &admin.Name,
+		Immunity:    &admin.Immunity,
+		Groups:      make([]*v1.Group, len(admin.Groups)),
+		CreatedOn:   timestamppb.New(admin.CreatedOn),
+		UpdatedOn:   timestamppb.New(admin.UpdatedOn),
+		Permissions: admin.Permissions,
 	}
 
 	for idx, group := range admin.Groups {

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	v1 "github.com/leighmacdonald/gbans/internal/news/v1"
 	"github.com/leighmacdonald/gbans/internal/news/v1/newsv1connect"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -18,13 +18,13 @@ type Service struct {
 	news News
 }
 
-func NewService(news News, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(news News, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := newsv1connect.NewNewsServiceHandler(Service{news: news}, option...)
 
-	authMiddleware.UserRoute(newsv1connect.NewsServiceEditProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(newsv1connect.NewsServiceCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(newsv1connect.NewsServiceDeleteProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(newsv1connect.NewsServiceAllProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(newsv1connect.NewsServiceEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NEWS_WRITE))
+	authMiddleware.UserRoute(newsv1connect.NewsServiceCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NEWS_WRITE))
+	authMiddleware.UserRoute(newsv1connect.NewsServiceDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NEWS_DELETE))
+	authMiddleware.UserRoute(newsv1connect.NewsServiceAllProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NEWS_READ))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

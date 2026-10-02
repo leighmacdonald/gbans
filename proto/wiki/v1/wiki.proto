@@ -4,7 +4,7 @@ package wiki.v1;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
-import "person/v1/privilege.proto";
+import "roles/v1/roles.proto";
 
 service WikiService {
   rpc Get(GetRequest) returns (GetResponse) {}
@@ -27,7 +27,7 @@ message Wiki {
     }
   ];
   int32 revision = 3 [(buf.validate.field).int32 = {gte: 0}];
-  person.v1.Privilege permission_level = 4 [
+  roles.v1.Permission required_permission = 4 [
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
   ];

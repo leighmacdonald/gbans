@@ -1,0 +1,225 @@
+package roles
+
+import (
+	"context"
+	"errors"
+	"log/slog"
+
+	"connectrpc.com/connect"
+	"github.com/leighmacdonald/gbans/internal/database"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
+	"github.com/leighmacdonald/gbans/internal/roles/v1/rolesv1connect"
+	"github.com/leighmacdonald/gbans/internal/rpc"
+	"github.com/leighmacdonald/steamid/v4/steamid"
+	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
+)
+
+// PersonCreator ensures a person row exists for a steam id, creating a bare
+// record when it does not. Satisfied by *person.Persons.
+type PersonCreator interface {
+	EnsurePerson(ctx context.Context, steamID steamid.SteamID) error
+}
+
+type Service struct {
+	roles   *Roles
+	persons PersonCreator
+}
+
+func NewService(roles *Roles, persons PersonCreator, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := rolesv1connect.NewRolesServiceHandler(Service{roles: roles, persons: persons}, option...)
+
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleListProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_READ))
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleBySteamIDProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_READ))
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleUsersProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_READ))
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleAssignProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleUnassignProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
+	authMiddleware.UserRoute(rolesv1connect.RolesServiceSetUserRolesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_WRITE))
+
+	return rpc.Service{Pattern: pattern, Handler: handler}
+}
+
+func (s Service) RoleList(ctx context.Context, _ *emptypb.Empty) (*rolesv1.RoleListResponse, error) {
+	allRoles, err := s.roles.GetAll(ctx)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	resp := &rolesv1.RoleListResponse{Roles: make([]*rolesv1.Role, len(allRoles))}
+	for idx, role := range allRoles {
+		resp.Roles[idx] = toProtoRole(role)
+	}
+
+	return resp, nil
+}
+
+func (s Service) RoleCreate(ctx context.Context, req *rolesv1.RoleCreateRequest) (*rolesv1.RoleCreateResponse, error) {
+	role, errSave := s.roles.Create(ctx, req.GetRoleName(), permissionsToStrings(req.GetPermissions()))
+	if errSave != nil {
+		if errors.Is(errSave, database.ErrDuplicate) {
+			return nil, connect.NewError(connect.CodeAlreadyExists, rpc.ErrExists)
+		}
+
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	slog.Info("Role created", slog.String("role_name", role.RoleName), slog.Int("role_id", int(role.RoleID)))
+
+	return &rolesv1.RoleCreateResponse{Role: toProtoRole(role)}, nil
+}
+
+func (s Service) RoleEdit(ctx context.Context, req *rolesv1.RoleEditRequest) (*rolesv1.RoleEditResponse, error) {
+	role, errUpdate := s.roles.Edit(ctx, req.GetRoleId(), req.GetRoleName(), permissionsToStrings(req.GetPermissions()))
+	if errUpdate != nil {
+		if errors.Is(errUpdate, database.ErrDuplicate) {
+			return nil, connect.NewError(connect.CodeAlreadyExists, rpc.ErrExists)
+		}
+
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	slog.Info("Role updated", slog.String("role_name", role.RoleName), slog.Int("role_id", int(role.RoleID)))
+
+	return &rolesv1.RoleEditResponse{}, nil
+}
+
+func (s Service) RoleDelete(ctx context.Context, req *rolesv1.RoleDeleteRequest) (*emptypb.Empty, error) {
+	if err := s.roles.Delete(ctx, int32(req.GetRoleId())); err != nil { //nolint:gosec
+		switch {
+		case errors.Is(err, ErrAdminRoleProtected):
+			return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
+		default:
+			return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+		}
+	}
+
+	slog.Info("Role deleted", slog.Int("role_id", int(req.GetRoleId())))
+
+	return &emptypb.Empty{}, nil
+}
+
+func (s Service) RoleAssign(ctx context.Context, req *rolesv1.RoleAssignRequest) (*emptypb.Empty, error) {
+	if err := s.roles.Assign(ctx, steamid.New(req.GetSteamId()), req.GetRoleId()); err != nil { //nolint:gosec
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	slog.Info("Role assigned", slog.Int64("steam_id", int64(req.GetSteamId())), slog.Int("role_id", int(req.GetRoleId()))) //nolint:gosec
+
+	return &emptypb.Empty{}, nil
+}
+
+func (s Service) RoleUnassign(ctx context.Context, req *rolesv1.RoleUnassignRequest) (*emptypb.Empty, error) {
+	if err := s.roles.Unassign(ctx, steamid.New(req.GetSteamId()), req.GetRoleId()); err != nil { //nolint:gosec
+		switch {
+		case errors.Is(err, ErrAdminRoleProtected):
+			return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
+		default:
+			return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+		}
+	}
+
+	slog.Info("Role unassigned", slog.Int64("steam_id", int64(req.GetSteamId())), slog.Int("role_id", int(req.GetRoleId()))) //nolint:gosec
+
+	return &emptypb.Empty{}, nil
+}
+
+func (s Service) RoleBySteamID(ctx context.Context, req *rolesv1.RoleBySteamIDRequest) (*rolesv1.RoleBySteamIDResponse, error) {
+	assignedRoles, err := s.roles.GetRolesBySteamID(ctx, steamid.New(req.GetSteamId())) //nolint:gosec
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	resp := &rolesv1.RoleBySteamIDResponse{Roles: make([]*rolesv1.Role, len(assignedRoles))}
+	for idx, role := range assignedRoles {
+		resp.Roles[idx] = toProtoRole(role)
+	}
+
+	return resp, nil
+}
+
+func (s Service) RoleUsers(ctx context.Context, _ *emptypb.Empty) (*rolesv1.RoleUsersResponse, error) {
+	users, err := s.roles.RoleUsers(ctx)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	resp := &rolesv1.RoleUsersResponse{Users: make([]*rolesv1.RoleUser, len(users))}
+	for idx, user := range users {
+		steamID := uint64(user.SteamID) //nolint:gosec
+		protoUser := &rolesv1.RoleUser{
+			SteamId:     &steamID,
+			PersonaName: &user.PersonaName,
+			Roles:       make([]*rolesv1.Role, len(user.Roles)),
+		}
+		for roleIdx, role := range user.Roles {
+			protoUser.Roles[roleIdx] = &rolesv1.Role{RoleId: &role.RoleID, RoleName: &role.RoleName}
+		}
+
+		resp.Users[idx] = protoUser
+	}
+
+	return resp, nil
+}
+
+func (s Service) SetUserRoles(ctx context.Context, req *rolesv1.SetUserRolesRequest) (*emptypb.Empty, error) {
+	steamID := steamid.New(req.GetSteamId())
+
+	if err := s.persons.EnsurePerson(ctx, steamID); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	if err := s.roles.SetUserRoles(ctx, steamID, req.GetRoleId()); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	slog.Info("User roles set", slog.Int64("steam_id", int64(req.GetSteamId())), slog.Any("role_ids", req.GetRoleId())) //nolint:gosec
+
+	return &emptypb.Empty{}, nil
+}
+
+func toProtoRole(role Role) *rolesv1.Role {
+	return &rolesv1.Role{
+		RoleId:      &role.RoleID,
+		RoleName:    &role.RoleName,
+		Permissions: stringsToPermissions(role.Permissions),
+		CreatedOn:   timestamppb.New(role.CreatedOn),
+		UpdatedOn:   timestamppb.New(role.UpdatedOn),
+		UserCount:   &role.UserCount,
+	}
+}
+
+func stringsToPermissions(perms []string) []rolesv1.Permission {
+	out := make([]rolesv1.Permission, 0, len(perms))
+
+	for _, s := range perms {
+		p, ok := rolesv1.Permission_value[s]
+		if !ok || p == 0 {
+			continue
+		}
+
+		out = append(out, rolesv1.Permission(p))
+	}
+
+	if out == nil {
+		return []rolesv1.Permission{}
+	}
+
+	return out
+}
+
+func permissionsToStrings(perms []rolesv1.Permission) []string {
+	out := make([]string, 0, len(perms))
+
+	for _, p := range perms {
+		if p == rolesv1.Permission_PERMISSION_UNSPECIFIED {
+			continue
+		}
+
+		out = append(out, p.String())
+	}
+
+	return out
+}

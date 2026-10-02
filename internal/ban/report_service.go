@@ -5,14 +5,13 @@ import (
 	"errors"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	v1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	"github.com/leighmacdonald/gbans/internal/ban/v1/banv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
 	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -22,21 +21,22 @@ import (
 type ReportService struct {
 	// banv1connect.UnimplementedReportServiceHandler
 
-	reports Reports
+	reports  Reports
+	roleAuth *rpc.RoleAuth
 }
 
-func NewReportService(reports Reports, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := banv1connect.NewReportServiceHandler(ReportService{reports: reports}, option...)
+func NewReportService(reports Reports, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := banv1connect.NewReportServiceHandler(ReportService{reports: reports, roleAuth: roleAuth}, option...)
 
-	authMiddleware.UserRoute(banv1connect.ReportServiceReportCreateProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(banv1connect.ReportServiceReportProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(banv1connect.ReportServiceReportStatusEditProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(banv1connect.ReportServiceUserReportsProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(banv1connect.ReportServiceReportMessagesProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(banv1connect.ReportServiceReportMessageCreateProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(banv1connect.ReportServiceReportMessageEditProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(banv1connect.ReportServiceReportMessageDeleteProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(banv1connect.ReportServiceReportsProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(banv1connect.ReportServiceReportCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_CREATE))
+	authMiddleware.UserRoute(banv1connect.ReportServiceReportProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_READ))
+	authMiddleware.UserRoute(banv1connect.ReportServiceReportStatusEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_WRITE))
+	authMiddleware.UserRoute(banv1connect.ReportServiceUserReportsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_CREATE))
+	authMiddleware.UserRoute(banv1connect.ReportServiceReportMessagesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_READ))
+	authMiddleware.UserRoute(banv1connect.ReportServiceReportMessageCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_CREATE))
+	authMiddleware.UserRoute(banv1connect.ReportServiceReportMessageEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_READ))
+	authMiddleware.UserRoute(banv1connect.ReportServiceReportMessageDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_READ))
+	authMiddleware.UserRoute(banv1connect.ReportServiceReportsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_ADMIN))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -128,7 +128,8 @@ func (s ReportService) ReportMessages(ctx context.Context, req *v1.ReportMessage
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	if !httphelper.HasPrivilege(user, steamid.Collection{report.SourceID, report.TargetID}, permission.Moderator) {
+	allowed := steamid.Collection{report.SourceID, report.TargetID}
+	if !s.roleAuth.HasPermission(ctx, *user, rolesv1.Permission_PERMISSION_BAN_READ) && !allowed.Contains(user.GetSteamID()) {
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 
@@ -185,7 +186,6 @@ func toReportMessage(msg ReportMessage) *v1.ReportMessage {
 		UpdatedOn:       timestamppb.New(msg.UpdatedOn),
 		PersonaName:     &msg.Personaname,
 		AvatarHash:      &msg.Avatarhash,
-		PermissionLevel: new(personv1.Privilege(msg.PermissionLevel)),
 	}
 }
 
@@ -199,16 +199,25 @@ func toReportWithAuthor(report ReportWithAuthor) *v1.ReportWithAuthor {
 
 func toPersonCore(person person.Core) *personv1.PersonCore {
 	return &personv1.PersonCore{
-		SteamId:         new(person.SteamID.Int64()),
-		PermissionLevel: new(personv1.Privilege(person.PermissionLevel)),
-		Name:            new(person.GetName()),
-		AvatarHash:      new(string(person.GetAvatar())),
-		DiscordId:       new(person.GetDiscordID()),
-		VacBans:         new(person.GetVACBans()),
-		GameBans:        new(person.GetGameBans()),
-		BanId:           &person.BanID,
-		TimeCreated:     timestamppb.New(person.GetTimeCreated()),
+		SteamId:     new(person.SteamID.Int64()),
+		Permissions: person.Permissions,
+		Name:        new(person.GetName()),
+		AvatarHash:  new(string(person.GetAvatar())),
+		DiscordId:   new(person.GetDiscordID()),
+		VacBans:     new(person.GetVACBans()),
+		GameBans:    new(person.GetGameBans()),
+		BanId:       &person.BanID,
+		TimeCreated: timestamppb.New(person.GetTimeCreated()),
 	}
+}
+
+func stringsToPermissions(perms []string) []rolesv1.Permission {
+	permissions := make([]rolesv1.Permission, 0, len(perms))
+	for _, perm := range perms {
+		permissions = append(permissions, rolesv1.Permission(rolesv1.Permission_value[perm]))
+	}
+
+	return permissions
 }
 
 func toReport(report Report) *v1.Report {

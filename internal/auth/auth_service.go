@@ -5,7 +5,6 @@ import (
 	"log/slog"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/v1/authv1connect"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -16,7 +15,7 @@ type Service struct{}
 func NewService(authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := authv1connect.NewAuthServiceHandler(Service{}, option...)
 
-	authMiddleware.UserRoute(authv1connect.AuthServiceLogoutProcedure, rpc.WithMinPermissions(permission.User))
+	authMiddleware.AuthedRoute(authv1connect.AuthServiceLogoutProcedure)
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }

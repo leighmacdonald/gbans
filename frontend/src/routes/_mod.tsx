@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb";
 
 export const Route = createFileRoute("/_mod")({
 	beforeLoad: ({ context, location }) => {
@@ -15,8 +15,8 @@ export const Route = createFileRoute("/_mod")({
 				},
 			});
 		}
-
-		if (!context.auth?.hasPermission(Privilege.MODERATOR)) {
+		// TODO Check for more roles
+		if (!context.auth?.hasPermission(Permission.BAN_WRITE)) {
 			throw redirect({ to: "/permission" });
 		}
 

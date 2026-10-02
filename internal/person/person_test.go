@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -23,30 +22,19 @@ func TestMain(m *testing.M) {
 }
 
 func TestPerson(t *testing.T) {
-	personCase := person.NewPersons(person.NewRepository(fixture.Database, true), tests.OwnerSID, fixture.TFApi)
+	personCase := person.NewPersons(person.NewRepository(fixture.Database, true), fixture.TFApi)
 
 	_, err := personCase.BySteamID(t.Context(), steamid.RandSID64())
 	require.Error(t, err)
 
-	for idx, sid := range []steamid.SteamID{tests.OwnerSID, tests.ModSID, tests.UserSID, tests.GuestSID} {
+	for _, sid := range []steamid.SteamID{tests.OwnerSID, tests.ModSID, tests.UserSID, tests.GuestSID} {
 		user := person.New(sid)
-		switch idx {
-		case 0:
-			user.PermissionLevel = permission.Admin
-		case 1:
-			user.PermissionLevel = permission.Moderator
-		case 2:
-			user.PermissionLevel = permission.User
-		case 3:
-			user.PermissionLevel = permission.Guest
-		}
 		require.NoError(t, personCase.Save(t.Context(), &user))
 	}
 
 	fetched, errFetched := personCase.BySteamID(t.Context(), tests.UserSID)
 	require.NoError(t, errFetched)
 
-	fetched.PermissionLevel = permission.Moderator
 	fetched.PersonaName = stringutil.SecureRandomString(10)
 	fetched.DiscordID = strconv.FormatInt(rand.Int64(), 10) //nolint:gosec
 

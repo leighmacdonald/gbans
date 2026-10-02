@@ -15,7 +15,7 @@ import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import type { Contest } from "../rpc/contest/v1/contest_pb.ts";
 import { contests } from "../rpc/contest/v1/contest-Service_connectquery.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { logErr } from "../util/errors.ts";
 import { renderTimestamp } from "../util/time.ts";
 
@@ -84,12 +84,12 @@ function AdminContests() {
 				grow: false,
 				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
-			columnHelper.accessor("minPermissionLevel", {
-				meta: { tooltip: "Minimum permission level required to participate" },
-				header: "Min. Perms",
+			columnHelper.accessor("requiredPermission", {
+				meta: { tooltip: "Permission required to participate" },
+				header: "Required Permission",
 				enableColumnFilter: false,
 				grow: false,
-				Cell: ({ cell }) => <TableCellString>{Privilege[cell.getValue()]}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{Permission[cell.getValue()]}</TableCellString>,
 			}),
 			columnHelper.accessor("dateStart", {
 				meta: { tooltip: "Start date" },
@@ -135,7 +135,7 @@ function AdminContests() {
 				downVotes: false,
 				hideSubmissions: false,
 				voting: true,
-				minPermissionLevel: false,
+				requiredPermission: false,
 				dateStart: true,
 				dateEnd: true,
 				createdOn: false,

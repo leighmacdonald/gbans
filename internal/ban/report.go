@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/database"
@@ -17,6 +16,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/sliceutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -125,7 +126,6 @@ type ReportMessage struct {
 	UpdatedOn       time.Time
 	Personaname     string
 	Avatarhash      string
-	PermissionLevel permission.Privilege
 }
 
 func (m ReportMessage) Path() string {
@@ -163,10 +163,11 @@ type Reports struct {
 	tfAPI      thirdparty.APIProvider
 	notif      notification.Notifier
 	logChannel string
+	roleAuth   *rpc.RoleAuth
 }
 
 func NewReports(repo ReportRepository, persons *person.Persons, demos demo.Demos, tfAPI thirdparty.APIProvider,
-	notif notification.Notifier, logChannel string,
+	notif notification.Notifier, logChannel string, roleAuth *rpc.RoleAuth,
 ) Reports {
 	return Reports{
 		repository: repo,
@@ -175,6 +176,7 @@ func NewReports(repo ReportRepository, persons *person.Persons, demos demo.Demos
 		tfAPI:      tfAPI,
 		notif:      notif,
 		logChannel: logChannel,
+		roleAuth:   roleAuth,
 	}
 }
 
@@ -271,7 +273,7 @@ func (r Reports) SetReportStatus(ctx context.Context, reportID int32, user perso
 		ReportStatusChangeMessage(report, fromStatus)))
 
 	go r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
-		[]permission.Privilege{permission.Moderator, permission.Admin},
+		[]rolesv1.Permission{rolesv1.Permission_PERMISSION_BAN_READ},
 		notification.Info,
 		fmt.Sprintf("A report status has changed: %s -> %s", fromStatus, status),
 		link.Path(report),
@@ -333,8 +335,8 @@ func (r Reports) Report(ctx context.Context, curUser personDomain.BaseUser, repo
 		return ReportWithAuthor{}, errAuthor
 	}
 
-	if !httphelper.HasPrivilege(curUser, steamid.Collection{author.SteamID}, permission.Moderator) {
-		return ReportWithAuthor{}, permission.ErrDenied
+	if !r.roleAuth.HasPermissionForSteamID(ctx, curUser.GetSteamID(), rolesv1.Permission_PERMISSION_REPORT_ADMIN) && !author.SteamID.Equal(curUser.GetSteamID()) {
+		return ReportWithAuthor{}, rpc.ErrPermission
 	}
 
 	target, errTarget := r.persons.BySteamID(ctx, report.TargetID)
@@ -367,8 +369,8 @@ func (r Reports) DropMessage(ctx context.Context, curUser personDomain.BaseUser,
 		return errExist
 	}
 
-	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, permission.Moderator) {
-		return permission.ErrDenied
+	if !r.roleAuth.HasPermissionForSteamID(ctx, curUser.GetSteamID(), rolesv1.Permission_PERMISSION_REPORT_ADMIN) && !existing.AuthorID.Equal(curUser.GetSteamID()) {
+		return rpc.ErrPermission
 	}
 
 	if err := r.repository.DropReportMessage(ctx, &existing); err != nil {
@@ -472,7 +474,7 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.BaseUser, re
 
 	go r.notif.Send(notification.NewDiscord(r.logChannel, newInGameReportResponse(newReport)))
 	go r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
-		[]permission.Privilege{permission.Moderator, permission.Admin},
+		[]rolesv1.Permission{rolesv1.Permission_PERMISSION_BAN_READ},
 		notification.Info,
 		fmt.Sprintf("A new report was created. Author: %s, Target: %s", currentUser.GetName(), personTarget.GetName()),
 		link.Path(newReport),
@@ -492,8 +494,8 @@ func (r Reports) EditMessage(ctx context.Context, reportMessageID int32, curUser
 		return ReportMessage{}, errExist
 	}
 
-	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, permission.Moderator) {
-		return ReportMessage{}, permission.ErrDenied
+	if !r.roleAuth.HasPermissionForSteamID(ctx, curUser.GetSteamID(), rolesv1.Permission_PERMISSION_REPORT_ADMIN) && !existing.AuthorID.Equal(curUser.GetSteamID()) {
+		return ReportMessage{}, rpc.ErrPermission
 	}
 
 	req.BodyMD = strings.TrimSpace(req.BodyMD)
@@ -547,7 +549,7 @@ func (r Reports) CreateMessage(ctx context.Context, reportID int32, curUser pers
 	go r.notif.Send(notification.NewDiscord(r.logChannel, NewReportMessageResponse(report, msg)))
 
 	r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
-		[]permission.Privilege{permission.Moderator, permission.Admin},
+		[]rolesv1.Permission{rolesv1.Permission_PERMISSION_BAN_READ},
 		notification.Info,
 		"A new report reply has been posted. Author: "+curUser.GetName(),
 		link.Path(report),

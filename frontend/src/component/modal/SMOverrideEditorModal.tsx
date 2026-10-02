@@ -11,25 +11,18 @@ import MenuItem from "@mui/material/MenuItem";
 import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
+import { Permission } from "../../rpc/roles/v1/roles_pb.ts";
 import { type Override, OverrideType } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
 import { createOverrides, editOverrides } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
 import { enumValues } from "../../util/lists.ts";
-import { hasSMFlag, schemaFlags } from "../../util/strings.ts";
+import { smPermissions } from "../../util/strings.ts";
 import { Heading } from "../Heading";
 
-const schema = schemaFlags.extend({
+const schema = z.object({
 	name: z.string(),
 	type: z.enum(OverrideType),
+	permissions: z.array(z.number()),
 });
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-// const schemaValues = z.object({
-// 	name: z.string(),
-// 	type: z.enum(["command", "group"]),
-// 	flags: z.string(),
-// });
-//
-// type Values = z.infer<typeof schemaValues>;
 
 export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?: Override }) => {
 	const modal = useModal();
@@ -38,27 +31,7 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
 	const defaultValues: z.input<typeof schema> = {
 		type: override?.overrideType ?? OverrideType.COMMAND_UNSPECIFIED,
 		name: override?.name ?? "",
-		z: hasSMFlag("z", override),
-		a: hasSMFlag("a", override),
-		b: hasSMFlag("b", override),
-		c: hasSMFlag("c", override),
-		d: hasSMFlag("d", override),
-		e: hasSMFlag("e", override),
-		f: hasSMFlag("f", override),
-		g: hasSMFlag("g", override),
-		h: hasSMFlag("h", override),
-		i: hasSMFlag("i", override),
-		j: hasSMFlag("j", override),
-		k: hasSMFlag("k", override),
-		l: hasSMFlag("l", override),
-		m: hasSMFlag("m", override),
-		n: hasSMFlag("n", override),
-		o: hasSMFlag("o", override),
-		p: hasSMFlag("p", override),
-		q: hasSMFlag("q", override),
-		r: hasSMFlag("r", override),
-		s: hasSMFlag("s", override),
-		t: hasSMFlag("t", override),
+		permissions: override?.permissions ?? [],
 	};
 
 	const createMutation = useMutation(createOverrides, {
@@ -79,19 +52,10 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			const filteredKeys = ["name", "type"];
-			const flags = Object.entries(value)
-				.filter((v) => !filteredKeys.includes(v[0]))
-				.reduce((acc, value) => {
-					if (value[1]) {
-						acc += value[0];
-					}
-					return acc;
-				}, "");
 			if (Number(override?.overrideId) > 0) {
-				editMutation.mutate(value);
+				editMutation.mutate({ overrideId: override.overrideId, ...value });
 			} else {
-				createMutation.mutate({ name: value.name, overrideType: value.type, flags });
+				createMutation.mutate(value);
 			}
 		},
 		defaultValues,
@@ -128,7 +92,7 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
 								name={"type"}
 								children={(field) => {
 									return (
-										<field.OverrideTypeField
+										<field.SelectOverrideTypeField
 											label={"Override Type"}
 											items={enumValues(OverrideType)}
 											renderItem={(i) => {
@@ -143,192 +107,24 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
 								}}
 							/>
 						</Grid>
-						<Grid size={{ xs: 6 }}>
+						<Grid size={{ xs: 12 }}>
 							<form.AppField
-								name={"z"}
-								validators={{ onChange: z.boolean() }}
+								name={"permissions"}
 								children={(field) => {
-									return <field.CheckboxField label={"(z) Full Admin"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"a"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(a) Reserved Slot"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"b"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(b) Generic Admin"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"c"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(c) Kick Players"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"d"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(d) Ban Players"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"e"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(e) Unban Players"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"f"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(f) Slay/Harm Players"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"g"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(g) Change Maps"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"h"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(h) Change CVARs"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"i"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(i) Exec Configs"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"j"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(j) Special Chat Privileges"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"k"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(k) Start Votes"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"l"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(l) Set Server Password"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"m"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(m) RCON Access"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"n"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(n) Enabled Cheats"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"o"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(o) Custom Flag"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"p"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(p) Custom Flag"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"q"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(q) Custom Flag"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"r"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(r) Custom Flag"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"s"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(s) Custom Flag"} />;
-								}}
-							/>
-						</Grid>
-						<Grid size={{ xs: 6 }}>
-							<form.AppField
-								name={"t"}
-								validators={{ onChange: z.boolean() }}
-								children={(field) => {
-									return <field.CheckboxField label={"(t) Custom Flag"} />;
+									return (
+										<field.SelectPermissionsField
+											multiple={true}
+											label={"Permissions"}
+											items={smPermissions}
+											renderItem={(p) => {
+												return (
+													<MenuItem value={p} key={`perm-${p}`}>
+														{Permission[p]}
+													</MenuItem>
+												);
+											}}
+										/>
+									);
 								}}
 							/>
 						</Grid>

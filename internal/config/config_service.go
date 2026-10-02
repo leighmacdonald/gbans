@@ -7,7 +7,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/asset"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	configv1 "github.com/leighmacdonald/gbans/internal/config/v1"
@@ -19,6 +18,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network/ip2location"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/patreon"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -31,15 +31,14 @@ type Service struct {
 	version string
 }
 
-func NewService(conf *Configuration, version string, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
+func NewService(conf *Configuration, version string, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
 	pattern, handler := configv1connect.NewConfigServiceHandler(&Service{
 		config:  conf,
 		version: version,
 	}, options...)
 
-	// authMiddleware.UserRoute(configv1connect.ConfigServiceInfoProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.UserRoute(configv1connect.ConfigServiceGetProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(configv1connect.ConfigServiceUpdateProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.UserRoute(configv1connect.ConfigServiceGetProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CONFIG_READ))
+	authMiddleware.UserRoute(configv1connect.ConfigServiceUpdateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CONFIG_WRITE))
 
 	return rpc.Service{
 		Pattern: pattern,

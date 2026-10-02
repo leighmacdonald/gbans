@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -222,19 +221,17 @@ func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, pers
 	u.WarningChan <- NewUserWarning{
 		UserMessage: userMsg,
 		PlayerID:    person.PID,
-		UserWarning: UserWarning{
-			WarnReason: reason,
-			Message:    userMsg.Body,
-			// todo
-			// Matched:       matchResult,
-			MatchedFilter: matchResult,
-			CreatedOn:     time.Now(),
-			Personaname:   userMsg.PersonaName,
-			Avatar:        userMsg.AvatarHash,
-			ServerName:    evt.ServerName,
-			ServerID:      userMsg.ServerID,
-			SteamID:       userMsg.SteamID.Int64(),
-		},
+		WarnReason:  reason,
+		Message:     userMsg.Body,
+		// todo
+		// Matched:       matchResult,
+		MatchedFilter: matchResult,
+		CreatedOn:     time.Now(),
+		Personaname:   userMsg.PersonaName,
+		Avatar:        userMsg.AvatarHash,
+		ServerName:    evt.ServerName,
+		ServerID:      userMsg.ServerID,
+		SteamID:       userMsg.SteamID.Int64(),
 	}
 
 	return nil
@@ -357,12 +354,12 @@ func (u *Chat) AddChatHistory(ctx context.Context, message *Message) error {
 	return u.repository.AddChatHistory(ctx, message)
 }
 
-func (u *Chat) QueryChatHistory(ctx context.Context, permissions permission.Privilege, req HistoryQueryFilter) ([]*QueryChatHistoryResult, error) {
-	if req.Limit <= 0 || (req.Limit > 100 && permissions < permission.Moderator) {
+func (u *Chat) QueryChatHistory(ctx context.Context, moderator bool, req HistoryQueryFilter) ([]*QueryChatHistoryResult, error) {
+	if req.Limit <= 0 || (req.Limit > 100 && !moderator) {
 		req.Limit = 100
 	}
 
-	req.Unrestricted = permissions >= permission.Moderator
+	req.Unrestricted = moderator
 
 	return u.repository.QueryChatHistory(ctx, req)
 }

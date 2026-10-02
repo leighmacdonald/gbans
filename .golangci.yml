@@ -16,6 +16,7 @@ linters:
     - ireturn
     - lll
     - exhaustruct
+    - exhaustruct_v5
     - mnd
     - godoclint
     - godox
@@ -28,8 +29,6 @@ linters:
     - unused
     - goconst
     - gomoddirectives
-  enable:
-    - gomodguard_v2
   settings:
     cyclop:
       # The maximal code complexity to report.
@@ -45,6 +44,9 @@ linters:
         - T any
         - r *gin.Engine
         - r fixture.CreateRouter
+        # test fixture handles in internal/ban tests
+        - e *env
+        - h *rpcHarness
     depguard:
       rules:
         errors:

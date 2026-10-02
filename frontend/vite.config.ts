@@ -9,6 +9,9 @@ import { bgWebPPlugin } from "./vite-bg-plugin.ts";
 export default defineConfig({
 	base: "",
 	publicDir: "public",
+	optimizeDeps: {
+		include: ["@mui/icons-material"],
+	},
 	build: {
 		copyPublicDir: true,
 		sourcemap: false,

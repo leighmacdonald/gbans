@@ -31,7 +31,7 @@ import { Route as GuestPatreonRouteImport } from './routes/_guest.patreon'
 import { Route as GuestPrivacyPolicyRouteImport } from './routes/_guest.privacy-policy'
 import { Route as GuestServersRouteImport } from './routes/_guest.servers'
 import { Route as GuestWikiRouteImport } from './routes/_guest.wiki'
-import { Route as AdminAdminGameAdminsRouteImport } from './routes/_admin.admin.game-admins'
+import { Route as AdminAdminRolesRouteImport } from './routes/_admin.admin.roles'
 import { Route as AdminAdminServerlogsRouteImport } from './routes/_admin.admin.serverlogs'
 import { Route as AdminAdminServersRouteImport } from './routes/_admin.admin.servers'
 import { Route as AdminAdminSettingsRouteImport } from './routes/_admin.admin.settings'
@@ -172,9 +172,9 @@ const GuestWikiRoute = GuestWikiRouteImport.update({
   path: '/wiki',
   getParentRoute: () => GuestRoute,
 } as any)
-const AdminAdminGameAdminsRoute = AdminAdminGameAdminsRouteImport.update({
-  id: '/admin/game-admins',
-  path: '/admin/game-admins',
+const AdminAdminRolesRoute = AdminAdminRolesRouteImport.update({
+  id: '/admin/roles',
+  path: '/admin/roles',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAdminServerlogsRoute = AdminAdminServerlogsRouteImport.update({
@@ -365,7 +365,7 @@ export interface FileRoutesByFullPath {
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/servers': typeof GuestServersRoute
   '/wiki': typeof GuestWikiRouteWithChildren
-  '/admin/game-admins': typeof AdminAdminGameAdminsRoute
+  '/admin/roles': typeof AdminAdminRolesRoute
   '/admin/serverlogs': typeof AdminAdminServerlogsRoute
   '/admin/servers': typeof AdminAdminServersRoute
   '/admin/settings': typeof AdminAdminSettingsRoute
@@ -414,7 +414,7 @@ export interface FileRoutesByTo {
   '/patreon': typeof GuestPatreonRoute
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/servers': typeof GuestServersRoute
-  '/admin/game-admins': typeof AdminAdminGameAdminsRoute
+  '/admin/roles': typeof AdminAdminRolesRoute
   '/admin/serverlogs': typeof AdminAdminServerlogsRoute
   '/admin/servers': typeof AdminAdminServersRoute
   '/admin/settings': typeof AdminAdminSettingsRoute
@@ -473,7 +473,7 @@ export interface FileRoutesById {
   '/_guest/servers': typeof GuestServersRoute
   '/_guest/wiki': typeof GuestWikiRouteWithChildren
   '/_guest/': typeof GuestIndexRoute
-  '/_admin/admin/game-admins': typeof AdminAdminGameAdminsRoute
+  '/_admin/admin/roles': typeof AdminAdminRolesRoute
   '/_admin/admin/serverlogs': typeof AdminAdminServerlogsRoute
   '/_admin/admin/servers': typeof AdminAdminServersRoute
   '/_admin/admin/settings': typeof AdminAdminSettingsRoute
@@ -529,7 +529,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/servers'
     | '/wiki'
-    | '/admin/game-admins'
+    | '/admin/roles'
     | '/admin/serverlogs'
     | '/admin/servers'
     | '/admin/settings'
@@ -578,7 +578,7 @@ export interface FileRouteTypes {
     | '/patreon'
     | '/privacy-policy'
     | '/servers'
-    | '/admin/game-admins'
+    | '/admin/roles'
     | '/admin/serverlogs'
     | '/admin/servers'
     | '/admin/settings'
@@ -636,7 +636,7 @@ export interface FileRouteTypes {
     | '/_guest/servers'
     | '/_guest/wiki'
     | '/_guest/'
-    | '/_admin/admin/game-admins'
+    | '/_admin/admin/roles'
     | '/_admin/admin/serverlogs'
     | '/_admin/admin/servers'
     | '/_admin/admin/settings'
@@ -835,11 +835,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestWikiRouteImport
       parentRoute: typeof GuestRoute
     }
-    '/_admin/admin/game-admins': {
-      id: '/_admin/admin/game-admins'
-      path: '/admin/game-admins'
-      fullPath: '/admin/game-admins'
-      preLoaderRoute: typeof AdminAdminGameAdminsRouteImport
+    '/_admin/admin/roles': {
+      id: '/_admin/admin/roles'
+      path: '/admin/roles'
+      fullPath: '/admin/roles'
+      preLoaderRoute: typeof AdminAdminRolesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/_admin/admin/serverlogs': {
@@ -1077,14 +1077,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
-  AdminAdminGameAdminsRoute: typeof AdminAdminGameAdminsRoute
+  AdminAdminRolesRoute: typeof AdminAdminRolesRoute
   AdminAdminServerlogsRoute: typeof AdminAdminServerlogsRoute
   AdminAdminServersRoute: typeof AdminAdminServersRoute
   AdminAdminSettingsRoute: typeof AdminAdminSettingsRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
-  AdminAdminGameAdminsRoute: AdminAdminGameAdminsRoute,
+  AdminAdminRolesRoute: AdminAdminRolesRoute,
   AdminAdminServerlogsRoute: AdminAdminServerlogsRoute,
   AdminAdminServersRoute: AdminAdminServersRoute,
   AdminAdminSettingsRoute: AdminAdminSettingsRoute,

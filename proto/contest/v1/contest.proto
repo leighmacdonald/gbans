@@ -6,7 +6,7 @@ import "asset/v1/asset.proto";
 import "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-import "person/v1/privilege.proto";
+import "roles/v1/roles.proto";
 
 service Service {
   rpc Contests(google.protobuf.Empty) returns (ContestsResponse) {}
@@ -160,7 +160,7 @@ message Contest {
   string media_types = 9 [(buf.validate.field).required = true];
   int32 num_entries = 10 [(buf.validate.field).required = true];
   bool voting = 11 [(buf.validate.field).required = true];
-  person.v1.Privilege min_permission_level = 12 [(buf.validate.field).required = true];
+  roles.v1.Permission required_permission = 12 [(buf.validate.field).required = true];
   bool down_votes = 13 [(buf.validate.field).required = true];
   google.protobuf.Timestamp created_on = 14 [(buf.validate.field).required = true];
   google.protobuf.Timestamp updated_on = 15 [(buf.validate.field).required = true];

@@ -153,6 +153,31 @@ func NewServer(shortName string, address string, port uint16) Server {
 	}
 }
 
+// snapshot returns a copy of the server's static config and dynamic state. The caller must hold
+// the server's read lock.
+func (s *Server) snapshot() SafeServer {
+	return SafeServer{
+		Host:              s.Address,
+		Port:              s.Port,
+		IP:                s.IP.String(),
+		Name:              s.Name,
+		NameShort:         s.ShortName,
+		Region:            s.Region,
+		CC:                s.CC,
+		ServerID:          s.ServerID,
+		Players:           s.state.PlayerCount,
+		MaxPlayers:        s.state.MaxPlayers,
+		MaxPlayersVisible: s.state.MaxPlayersVisible,
+		Bots:              s.state.Bots,
+		Humans:            s.state.Humans,
+		Map:               s.state.Map,
+		Tags:              s.state.Tags,
+		GameTypes:         []string{},
+		Latitude:          s.Latitude,
+		Longitude:         s.Longitude,
+	}
+}
+
 func (s *Server) resolveAll() error {
 	waitGroup := errgroup.Group{}
 	waitGroup.Go(s.resolveIP)

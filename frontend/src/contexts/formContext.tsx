@@ -20,7 +20,7 @@ const SelectStatsVariantField = lazy(() => import("../component/form/field/Selec
 const SelectLevelField = lazy(() => import("../component/form/field/SelectLevelField.tsx"));
 const SelectAuthTypeField = lazy(() => import("../component/form/field/SelectAuthTypeField.tsx"));
 const SelectActionField = lazy(() => import("../component/form/field/SelectActionField.tsx"));
-const SelectPrivilegeField = lazy(() => import("../component/form/field/SelectPrivilegeField.tsx"));
+const SelectPermissionsField = lazy(() => import("../component/form/field/SelectPermissionsField.tsx"));
 const SelectDiscordRolesField = lazy(() => import("../component/form/field/SelectDiscordRolesField.tsx"));
 const SteamIDField = lazy(() => import("../component/form/field/SteamIDField.tsx"));
 const TextField = lazy(() => import("../component/form/field/TextField.tsx"));
@@ -46,7 +46,7 @@ export const { useAppForm, withForm } = createFormHook({
 		SelectBanTypeField,
 		SelectAppealStateField,
 		DateTimeField,
-		SelectPrivilegeField,
+		SelectPermissionsField,
 		SelectReportStatusField,
 		SelectDemoStrategyField,
 		SelectLevelField,

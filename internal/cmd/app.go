@@ -17,7 +17,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
@@ -40,6 +39,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/news"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/roles"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
@@ -82,6 +83,8 @@ type GBans struct {
 	notifications  *notification.Notifications
 	persons        *person.Persons
 	reports        ban.Reports
+	roles          *roles.Roles
+	roleAuth       *rpc.RoleAuth
 	servers        *servers.Servers
 	speedruns      speedruns.Speedruns
 	sourcemod      sourcemod.Sourcemod
@@ -147,7 +150,9 @@ func (g *GBans) Init(ctx context.Context) error {
 	}
 	g.tfapiClient = tfapiClient
 
-	g.persons = person.NewPersons(person.NewRepository(g.database, conf.Clientprefs.CenterProjectiles), steamid.New(conf.Owner), g.tfapiClient)
+	g.persons = person.NewPersons(person.NewRepository(g.database, conf.Clientprefs.CenterProjectiles), g.tfapiClient)
+	g.roles = roles.NewRoles(roles.NewRepository(g.database), steamid.New(conf.Owner))
+	g.roleAuth = rpc.NewRoleAuth(g.roles)
 	g.bot = g.mustCreateBot(conf.Discord)
 	g.notifications = notification.NewNotifications(notification.NewRepository(g.database), g.bot)
 
@@ -182,7 +187,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler, conf.Discord.SafeChatLogChannelID())
 	g.demos = demo.NewDemos(asset.BucketDemo, demo.NewRepository(g.database), g.assets, g.stats, g.chat, g.persons, conf.Demo, steamid.New(conf.Owner))
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications,
-		conf.Discord.SafeAppealLogChannelID())
+		conf.Discord.SafeAppealLogChannelID(), g.roleAuth)
 
 	g.bans = ban.New(ban.NewRepository(g.database), g.persons, conf.Discord.SafeBanLogChannelID(),
 		conf.Discord.SafeKickLogChannelID(), steamid.New(conf.Owner), g.reports, g.notifications, g.servers, g.networks)
@@ -202,7 +207,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications)
 	g.mge = mge.NewMGE(mge.NewRepository(g.database))
-	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications, conf.Discord.SafeAppealLogChannelID())
+	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications, conf.Discord.SafeAppealLogChannelID(), g.roleAuth)
 
 	if conf.Discord.Enabled {
 		anticheat.RegisterDiscordCommands(g.bot, g.anticheat)
@@ -440,41 +445,42 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	}
 }
 
-func (g *GBans) createAPI(authMiddleware *rpc.Middleware) *http.ServeMux {
+func (g *GBans) createAPI(authMiddleware *rpc.Middleware, roleAuth *rpc.RoleAuth) *http.ServeMux {
 	interceptors := rpc.CreateInterceptors()
 	api := http.NewServeMux()
 	conf := g.config.Config()
 
 	services := []rpc.Service{
-		anticheat.NewService(g.anticheat, authMiddleware, interceptors),
-		asset.NewService(g.assets, authMiddleware, interceptors),
+		anticheat.NewService(g.anticheat, roleAuth, authMiddleware, interceptors),
+		asset.NewService(g.assets, roleAuth, authMiddleware, interceptors),
 		auth.NewService(authMiddleware, interceptors),
-		ban.NewAppealService(g.appeals, authMiddleware, interceptors),
-		ban.NewBanService(g.bans, authMiddleware, interceptors),
+		ban.NewAppealService(g.appeals, roleAuth, authMiddleware, interceptors),
+		ban.NewBanService(g.bans, roleAuth, authMiddleware, interceptors),
 		ban.NewExportService(g.bans, strings.Split(conf.Exports.AuthorizedKeys, ","), conf.General.SiteName),
-		ban.NewReportService(g.reports, authMiddleware, interceptors),
-		chat.NewService(g.chat, authMiddleware, interceptors),
-		chat.NewWordfilterService(g.wordFilters, g.chat, g.config.Config().Filters, authMiddleware, interceptors),
-		config.NewService(g.config, BuildVersion, authMiddleware, interceptors),
-		contest.NewService(g.contests, g.assets, authMiddleware, interceptors),
-		discord.NewService(g.bot, authMiddleware, interceptors),
-		discordoauth.NewService(g.discordOAuth, authMiddleware, interceptors),
-		forum.NewService(g.forums, authMiddleware, interceptors),
-		mge.NewService(g.mge, authMiddleware, interceptors),
-		blocklist.NewService(g.blocklists, authMiddleware, interceptors),
-		network.NewNetworkService(g.networks, authMiddleware, interceptors),
-		news.NewService(g.news, authMiddleware, interceptors),
-		notification.NewService(g.notifications, authMiddleware, interceptors),
-		person.NewPersonService(g.persons, authMiddleware, interceptors),
-		servers.NewServersService(g.servers, authMiddleware, interceptors),
-		demo.NewService(g.demos, authMiddleware, interceptors),
-		speedruns.NewService(g.speedruns, authMiddleware, interceptors),
+		ban.NewReportService(g.reports, roleAuth, authMiddleware, interceptors),
+		chat.NewService(g.chat, roleAuth, authMiddleware, interceptors),
+		chat.NewWordfilterService(g.wordFilters, g.chat, g.config.Config().Filters, roleAuth, authMiddleware, interceptors),
+		config.NewService(g.config, BuildVersion, roleAuth, authMiddleware, interceptors),
+		contest.NewService(g.contests, g.assets, roleAuth, authMiddleware, interceptors),
+		discord.NewService(g.bot, roleAuth, authMiddleware, interceptors),
+		discordoauth.NewService(g.discordOAuth, roleAuth, authMiddleware, interceptors),
+		forum.NewService(g.forums, roleAuth, authMiddleware, interceptors),
+		mge.NewService(g.mge, roleAuth, authMiddleware, interceptors),
+		blocklist.NewService(g.blocklists, roleAuth, authMiddleware, interceptors),
+		network.NewNetworkService(g.networks, roleAuth, authMiddleware, interceptors),
+		news.NewService(g.news, roleAuth, authMiddleware, interceptors),
+		notification.NewService(g.notifications, roleAuth, authMiddleware, interceptors),
+		roles.NewService(g.roles, g.persons, roleAuth, authMiddleware, interceptors),
+		person.NewPersonService(g.persons, roleAuth, authMiddleware, interceptors),
+		servers.NewServersService(g.servers, roleAuth, authMiddleware, interceptors),
+		demo.NewService(g.demos, roleAuth, authMiddleware, interceptors),
+		speedruns.NewService(g.speedruns, roleAuth, authMiddleware, interceptors),
 		sourcemod.NewPluginService(g.sourcemod, g.persons, g.servers, g.bans,
 			rpc.NewServerTokenGenerator(conf.General.SiteName, []byte(conf.HTTPCookieKey)), g.notifications, conf.Discord.LogChannelID, authMiddleware, interceptors),
-		sourcemod.NewSourcemodService(g.sourcemod, authMiddleware, interceptors),
-		stats.NewService(g.stats, g.servers, authMiddleware, interceptors),
-		votes.NewService(g.votes, authMiddleware, interceptors),
-		wiki.NewService(g.wiki, authMiddleware, interceptors),
+		sourcemod.NewSourcemodService(g.sourcemod, roleAuth, authMiddleware, interceptors),
+		stats.NewService(g.stats, g.servers, roleAuth, authMiddleware, interceptors),
+		votes.NewService(g.votes, roleAuth, authMiddleware, interceptors),
+		wiki.NewService(g.wiki, roleAuth, authMiddleware, interceptors),
 	}
 
 	for _, service := range services {
@@ -517,15 +523,15 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	userAuth := auth.NewAuthentication(auth.NewRepository(g.database), conf.General.SiteName, conf.HTTPCookieKey, g.persons, g.bans, g.servers, g.config.Config().General.SentryDSN)
 	userAuth.StartExchange(ctx)
 
-	authMiddleware := rpc.NewMiddleware(conf.General.SiteName, conf.HTTPCookieKey)
+	authMiddleware := rpc.NewMiddleware(conf.General.SiteName, conf.HTTPCookieKey, g.roles)
 
-	asset.NewAssetHandler(mux, g.assets)
-	auth.NewAuthHandler(mux, userAuth, g.config, g.tfapiClient, g.notifications, authMiddleware)
+	asset.NewAssetHandler(mux, g.assets, g.roleAuth)
+	auth.NewAuthHandler(mux, userAuth, g.config, g.tfapiClient, g.notifications, authMiddleware, g.roles)
 	discordoauth.NewDiscordOAuthHandler(mux, g.config, g.persons, g.discordOAuth)
 
 	mux.HandleFunc("GET /health", g.healthCheck)
 
-	apiHandler := g.createAPI(authMiddleware)
+	apiHandler := g.createAPI(authMiddleware, g.roleAuth)
 
 	topMux := http.NewServeMux()
 
@@ -592,20 +598,31 @@ func (g *GBans) Shutdown(ctx context.Context) error {
 
 func (g *GBans) firstTimeSetup(ctx context.Context) error {
 	conf := g.config.Config()
-	_, errRootUser := g.persons.BySteamID(ctx, steamid.New(conf.Owner))
-	if errRootUser == nil {
+
+	firstTime := false
+	if _, errRootUser := g.persons.BySteamID(ctx, steamid.New(conf.Owner)); errRootUser != nil {
+		if !errors.Is(errRootUser, person.ErrPlayerDoesNotExist) {
+			return errRootUser
+		}
+
+		firstTime = true
+
+		owner := person.New(steamid.New(conf.Owner))
+
+		if errSave := g.persons.Save(ctx, &owner); errSave != nil {
+			slog.Error("Failed create new owner", slog.String("error", errSave.Error()))
+		}
+	}
+
+	// Bootstrap the owner as an admin so they have full access. Runs on
+	// every start (idempotently) so the owner is repaired if their role
+	// assignments predate the roles system or were ever reset.
+	if errAssign := g.roles.AssignAdminRole(ctx, steamid.New(conf.Owner)); errAssign != nil {
+		slog.Error("Failed to assign admin role to owner", slog.String("error", errAssign.Error()))
+	}
+
+	if !firstTime {
 		return nil
-	}
-
-	if !errors.Is(errRootUser, person.ErrPlayerDoesNotExist) {
-		return errRootUser
-	}
-
-	owner := person.New(steamid.New(conf.Owner))
-	owner.PermissionLevel = permission.Admin
-
-	if errSave := g.persons.Save(ctx, &owner); errSave != nil {
-		slog.Error("Failed create new owner", slog.String("error", errSave.Error()))
 	}
 
 	article := news.Article{
@@ -621,12 +638,12 @@ func (g *GBans) firstTimeSetup(ctx context.Context) error {
 	}
 
 	page := wiki.Page{
-		PermissionLevel: permission.Banned,
-		Slug:            wiki.RootSlug,
-		BodyMD:          "# Welcome to the wiki",
-		Revision:        1,
-		CreatedOn:       time.Now(),
-		UpdatedOn:       time.Now(),
+		RequiredPermission: rolesv1.Permission_PERMISSION_UNSPECIFIED,
+		Slug:               wiki.RootSlug,
+		BodyMD:             "# Welcome to the wiki",
+		Revision:           1,
+		CreatedOn:          time.Now(),
+		UpdatedOn:          time.Now(),
 	}
 	_, errSave := g.wiki.Save(ctx, page)
 	if errSave != nil {

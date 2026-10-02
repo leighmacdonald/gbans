@@ -144,26 +144,7 @@ func (s *Servers) Current() []SafeServer {
 	for _, srv := range s.servers {
 		if !srv.Deleted && srv.IsEnabled {
 			srv.RLock()
-			curState = append(curState, SafeServer{
-				Host:              srv.Address,
-				Port:              srv.Port,
-				IP:                srv.IP.String(),
-				Name:              srv.Name,
-				NameShort:         srv.ShortName,
-				Region:            srv.Region,
-				CC:                srv.CC,
-				ServerID:          srv.ServerID,
-				Players:           srv.state.PlayerCount,
-				MaxPlayers:        srv.state.MaxPlayers,
-				MaxPlayersVisible: srv.state.MaxPlayersVisible,
-				Bots:              srv.state.Bots,
-				Humans:            srv.state.Humans,
-				Map:               srv.state.Map,
-				Tags:              srv.state.Tags,
-				GameTypes:         []string{},
-				Latitude:          srv.Latitude,
-				Longitude:         srv.Longitude,
-			})
+			curState = append(curState, srv.snapshot())
 			srv.RUnlock()
 		}
 	}
@@ -324,6 +305,50 @@ func (s *Servers) Server(ctx context.Context, serverID int32) (Server, error) {
 	}
 
 	return servers[0], nil
+}
+
+// SafeState returns the live state of the given server if it is currently being polled, or a
+// static state derived from the database row otherwise. This lets callers that only need basic
+// server info (e.g. the seed request) work before the status poll loop has resolved the server.
+// Servers that are not enabled (or not found) return ErrNotFound.
+func (s *Servers) SafeState(ctx context.Context, serverID int32) (SafeServer, error) {
+	s.serversMu.RLock()
+	live, ok := s.servers.byServerID(serverID)
+	s.serversMu.RUnlock()
+	if ok {
+		live.RLock()
+		snapshot := live.snapshot()
+		live.RUnlock()
+
+		return snapshot, nil
+	}
+
+	server, errServer := s.Server(ctx, serverID)
+	if errServer != nil {
+		return SafeServer{}, errServer
+	}
+
+	if !server.IsEnabled {
+		return SafeServer{}, ErrNotFound
+	}
+
+	ipAddr := ""
+	if server.IP != nil {
+		ipAddr = server.IP.String()
+	}
+
+	return SafeServer{
+		ServerID:  server.ServerID,
+		Host:      server.Address,
+		Port:      server.Port,
+		Name:      server.Name,
+		NameShort: server.ShortName,
+		IP:        ipAddr,
+		CC:        server.CC,
+		Region:    server.Region,
+		Latitude:  server.Latitude,
+		Longitude: server.Longitude,
+	}, nil
 }
 
 func (s *Servers) Servers(ctx context.Context, filter Query) ([]Server, error) {

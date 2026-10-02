@@ -5,12 +5,16 @@ import (
 	"errors"
 	"log/slog"
 	"net/netip"
+	"slices"
+	"strconv"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/database"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -66,61 +70,966 @@ func (r Repository) QueryBanState(ctx context.Context, steamID steamid.SteamID, 
 	return banState, nil
 }
 
-func (r Repository) GetGroupImmunities(ctx context.Context) ([]GroupImmunity, error) {
-	var immunities []GroupImmunity
+type roleRow struct {
+	RoleID    int32
+	RoleName  string
+	CreatedOn time.Time
+	UpdatedOn time.Time
+}
+
+func (r Repository) smRoles(ctx context.Context) ([]roleRow, error) {
+	rows, errRows := r.QueryBuilder(ctx, r.Builder().
+		Select("role_id", "role_name", "created_on", "updated_on").
+		From("roles").
+		Where(sq.Like{"role_name": smRolePrefix + "%"}).
+		OrderBy("role_id"))
+	if errRows != nil {
+		return nil, database.Err(errRows)
+	}
+
+	var roleRows []roleRow
+
+	for rows.Next() {
+		var row roleRow
+		if errScan := rows.Scan(&row.RoleID, &row.RoleName, &row.CreatedOn, &row.UpdatedOn); errScan != nil {
+			return nil, database.Err(errScan)
+		}
+
+		roleRows = append(roleRows, row)
+	}
+
+	return roleRows, nil
+}
+
+func (r Repository) smRoleByID(ctx context.Context, roleID int32) (roleRow, error) {
+	var row roleRow
+
+	dbRow, errRow := r.QueryRowBuilder(ctx, r.Builder().
+		Select("role_id", "role_name", "created_on", "updated_on").
+		From("roles").
+		Where(sq.And{sq.Eq{"role_id": roleID}, sq.Like{"role_name": smRolePrefix + "%"}}))
+	if errRow != nil {
+		return roleRow{}, database.Err(errRow)
+	}
+
+	if errScan := dbRow.Scan(&row.RoleID, &row.RoleName, &row.CreatedOn, &row.UpdatedOn); errScan != nil {
+		return roleRow{}, database.Err(errScan)
+	}
+
+	return row, nil
+}
+
+// roleIDByName returns the role id for the exact role name, or false when no
+// such role exists.
+func (r Repository) roleIDByName(ctx context.Context, roleName string) (int32, bool, error) {
+	var roleID int32
+
+	dbRow, errRow := r.QueryRowBuilder(ctx, r.Builder().
+		Select("role_id").
+		From("roles").
+		Where(sq.Eq{"role_name": roleName}))
+	if errRow != nil {
+		return 0, false, database.Err(errRow)
+	}
+
+	if errScan := dbRow.Scan(&roleID); errScan != nil {
+		if errors.Is(errScan, pgx.ErrNoRows) {
+			return 0, false, nil
+		}
+
+		return 0, false, database.Err(errScan)
+	}
+
+	return roleID, true, nil
+}
+
+func (r Repository) rolePermissions(ctx context.Context, roleIDs []int32) (map[int32][]rolesv1.Permission, error) {
+	perms := make(map[int32][]rolesv1.Permission, len(roleIDs))
+	if len(roleIDs) == 0 {
+		return perms, nil
+	}
 
 	rows, errRows := r.QueryBuilder(ctx, r.Builder().
-		Select("gi.group_immunity_id", "gi.created_on",
-			"g.id", "g.flags", "g.name", "g.immunity_level", "g.created_on", "g.updated_on",
-			"o.id", "o.flags", "o.name", "o.immunity_level", "o.created_on", "o.updated_on").
-		From("sm_group_immunity gi").
-		LeftJoin("sm_groups g ON g.id = gi.group_id").
-		LeftJoin("sm_groups o ON o.id = gi.other_id"))
+		Select("role_id", "permission").
+		From("role_permissions").
+		Where(sq.Eq{"role_id": roleIDs}).
+		OrderBy("permission"))
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
 
 	for rows.Next() {
-		var immunity GroupImmunity
-
-		if errScan := rows.Scan(&immunity.GroupImmunityID, &immunity.CreatedOn,
-			&immunity.Group.GroupID, &immunity.Group.Flags, &immunity.Group.Name, &immunity.Group.ImmunityLevel,
-			&immunity.Group.CreatedOn, &immunity.Group.UpdatedOn,
-			&immunity.Other.GroupID, &immunity.Other.Flags, &immunity.Other.Name, &immunity.Other.ImmunityLevel,
-			&immunity.Other.CreatedOn, &immunity.Other.UpdatedOn); errScan != nil {
+		var (
+			roleID int32
+			perm   rolesv1.Permission
+		)
+		if errScan := rows.Scan(&roleID, &perm); errScan != nil {
 			return nil, database.Err(errScan)
 		}
 
-		immunities = append(immunities, immunity)
+		perms[roleID] = append(perms[roleID], perm)
 	}
 
-	return immunities, nil
+	return perms, nil
+}
+
+// setRolePermissions replaces the permission set of the given role with the
+// normalised (deduplicated, sorted) requested permissions. It returns the
+// effective set that was persisted.
+func (r Repository) setRolePermissions(ctx context.Context, roleID int32, perms []rolesv1.Permission) ([]rolesv1.Permission, error) {
+	perms = normalizePermissions(perms)
+
+	if err := r.ExecDeleteBuilder(ctx, r.Builder().
+		Delete("role_permissions").
+		Where(sq.Eq{"role_id": roleID})); err != nil {
+		return nil, database.Err(err)
+	}
+
+	if len(perms) == 0 {
+		return perms, nil
+	}
+
+	now := time.Now()
+	builder := r.Builder().
+		Insert("role_permissions").
+		Columns("role_id", "permission", "created_on", "updated_on")
+
+	for _, perm := range perms {
+		builder = builder.Values(roleID, perm, now, now)
+	}
+
+	if err := r.ExecInsertBuilder(ctx, builder); err != nil {
+		return nil, database.Err(err)
+	}
+
+	return perms, nil
+}
+
+// roleMemberCounts returns the number of assignments for every sourcemod role.
+func (r Repository) roleMemberCounts(ctx context.Context) (map[int32]int, error) {
+	members := make(map[int32]int)
+
+	rows, errRows := r.QueryBuilder(ctx, r.Builder().
+		Select("r.role_id", "count(ra.steam_id)").
+		From("roles r").
+		LeftJoin("role_assignments ra USING (role_id)").
+		Where(sq.Like{"r.role_name": smRolePrefix + "%"}).
+		GroupBy("r.role_id"))
+	if errRows != nil {
+		return nil, database.Err(errRows)
+	}
+
+	for rows.Next() {
+		var (
+			roleID int32
+			count  int
+		)
+		if errScan := rows.Scan(&roleID, &count); errScan != nil {
+			return nil, database.Err(errScan)
+		}
+
+		members[roleID] = count
+	}
+
+	return members, nil
+}
+
+// smRoleIDs returns the ids of every sourcemod role.
+func (r Repository) smRoleIDs(ctx context.Context) ([]int32, error) {
+	roleRows, errRows := r.smRoles(ctx)
+	if errRows != nil {
+		return nil, errRows
+	}
+
+	roleIDs := make([]int32, 0, len(roleRows))
+	for _, row := range roleRows {
+		roleIDs = append(roleIDs, row.RoleID)
+	}
+
+	return roleIDs, nil
+}
+
+// roleAssignments maps steam ids to the given sourcemod roles they are assigned to.
+func (r Repository) roleAssignments(ctx context.Context, steamIDs []int64, roleIDs []int32) (map[int64][]int32, error) {
+	assignments := make(map[int64][]int32, len(steamIDs))
+	if len(steamIDs) == 0 || len(roleIDs) == 0 {
+		return assignments, nil
+	}
+
+	rows, errRows := r.QueryBuilder(ctx, r.Builder().
+		Select("steam_id", "role_id").
+		From("role_assignments").
+		Where(sq.And{
+			sq.Eq{"steam_id": steamIDs},
+			sq.Eq{"role_id": roleIDs},
+		}).
+		OrderBy("steam_id", "role_id"))
+	if errRows != nil {
+		return nil, database.Err(errRows)
+	}
+
+	for rows.Next() {
+		var (
+			steamID int64
+			roleID  int32
+		)
+		if errScan := rows.Scan(&steamID, &roleID); errScan != nil {
+			return nil, database.Err(errScan)
+		}
+
+		assignments[steamID] = append(assignments[steamID], roleID)
+	}
+
+	return assignments, nil
+}
+
+func (r Repository) assignRole(ctx context.Context, steamID int64, roleID int32) error {
+	if err := r.ExecInsertBuilder(ctx, r.Builder().
+		Insert("role_assignments").
+		Columns("steam_id", "role_id", "created_on").
+		Values(steamID, roleID, time.Now()).
+		Suffix("ON CONFLICT DO NOTHING")); err != nil {
+		return database.Err(err)
+	}
+
+	return nil
+}
+
+func (r Repository) unassignRole(ctx context.Context, steamID int64, roleID int32) error {
+	return database.Err(r.ExecDeleteBuilder(ctx, r.Builder().
+		Delete("role_assignments").
+		Where(sq.And{sq.Eq{"steam_id": steamID}, sq.Eq{"role_id": roleID}})))
+}
+
+// personalRoles maps steam ids to the role tracked as their personal role.
+func (r Repository) personalRoles(ctx context.Context, steamIDs []int64) (map[int64]int32, error) {
+	personal := make(map[int64]int32, len(steamIDs))
+
+	builder := r.Builder().
+		Select("steam_id", "role_id").
+		From("sm_personal_roles")
+	if len(steamIDs) > 0 {
+		builder = builder.Where(sq.Eq{"steam_id": steamIDs})
+	}
+
+	rows, errRows := r.QueryBuilder(ctx, builder)
+	if errRows != nil {
+		return nil, database.Err(errRows)
+	}
+
+	for rows.Next() {
+		var (
+			steamID int64
+			roleID  int32
+		)
+		if errScan := rows.Scan(&steamID, &roleID); errScan != nil {
+			return nil, database.Err(errScan)
+		}
+
+		personal[steamID] = roleID
+	}
+
+	return personal, nil
+}
+
+// personalRoleOwner returns the steam id a role is tracked as the personal
+// role for, or false when it is not tracked at all.
+func (r Repository) personalRoleOwner(ctx context.Context, roleID int32) (int64, bool, error) {
+	var steamID int64
+
+	dbRow, errRow := r.QueryRowBuilder(ctx, r.Builder().
+		Select("steam_id").
+		From("sm_personal_roles").
+		Where(sq.Eq{"role_id": roleID}))
+	if errRow != nil {
+		return 0, false, database.Err(errRow)
+	}
+
+	if errScan := dbRow.Scan(&steamID); errScan != nil {
+		if errors.Is(errScan, pgx.ErrNoRows) {
+			return 0, false, nil
+		}
+
+		return 0, false, database.Err(errScan)
+	}
+
+	return steamID, true, nil
+}
+
+// trackPersonalRole records roleID as the personal role of steamID.
+func (r Repository) trackPersonalRole(ctx context.Context, steamID int64, roleID int32) error {
+	now := time.Now()
+
+	if err := r.ExecInsertBuilder(ctx, r.Builder().
+		Insert("sm_personal_roles").
+		Columns("steam_id", "role_id", "created_on", "updated_on").
+		Values(steamID, roleID, now, now).
+		Suffix("ON CONFLICT (steam_id) DO NOTHING")); err != nil {
+		return database.Err(err)
+	}
+
+	return nil
+}
+
+// moveAdminRoles moves every sourcemod role assignment, and the personal role
+// tracking, from one steam id to another, used when an admin's identity
+// changes.
+func (r Repository) moveAdminRoles(ctx context.Context, fromSteamID, toSteamID int64) error {
+	roleIDs, errRoleIDs := r.smRoleIDs(ctx)
+	if errRoleIDs != nil {
+		return errRoleIDs
+	}
+	if len(roleIDs) == 0 {
+		return nil
+	}
+
+	if err := r.ExecUpdateBuilder(ctx, r.Builder().
+		Update("role_assignments").
+		Set("steam_id", toSteamID).
+		Where(sq.And{
+			sq.Eq{"steam_id": fromSteamID},
+			sq.Eq{"role_id": roleIDs},
+		})); err != nil {
+		return database.Err(err)
+	}
+
+	if err := r.ExecUpdateBuilder(ctx, r.Builder().
+		Update("sm_personal_roles").
+		Set("steam_id", toSteamID).
+		Where(sq.Eq{"steam_id": fromSteamID})); err != nil {
+		return database.Err(err)
+	}
+
+	return nil
+}
+
+func toGroupFromRole(row roleRow, perms []rolesv1.Permission) Groups {
+	if perms == nil {
+		perms = []rolesv1.Permission{}
+	} else {
+		slices.Sort(perms)
+	}
+
+	return Groups{
+		GroupID:       row.RoleID,
+		Name:          nameFromSMRole(row.RoleName),
+		ImmunityLevel: deriveImmunity(perms),
+		Permissions:   perms,
+		CreatedOn:     row.CreatedOn,
+		UpdatedOn:     row.UpdatedOn,
+	}
+}
+
+// groupsByIDs loads the given sourcemod role ids as groups.
+func (r Repository) groupsByIDs(ctx context.Context, roleIDs []int32) (map[int32]Groups, error) {
+	groups := make(map[int32]Groups, len(roleIDs))
+	if len(roleIDs) == 0 {
+		return groups, nil
+	}
+
+	perms, errPerms := r.rolePermissions(ctx, roleIDs)
+	if errPerms != nil {
+		return nil, errPerms
+	}
+
+	for _, roleID := range roleIDs {
+		row, errRow := r.smRoleByID(ctx, roleID)
+		if errRow != nil {
+			return nil, errRow
+		}
+
+		groups[roleID] = toGroupFromRole(row, perms[roleID])
+	}
+
+	return groups, nil
+}
+
+func (r Repository) Groups(ctx context.Context) ([]Groups, error) {
+	roleRows, errRoles := r.smRoles(ctx)
+	if errRoles != nil {
+		return nil, errRoles
+	}
+
+	var roleIDs []int32
+	for _, row := range roleRows {
+		roleIDs = append(roleIDs, row.RoleID)
+	}
+
+	perms, errPerms := r.rolePermissions(ctx, roleIDs)
+	if errPerms != nil {
+		return nil, errPerms
+	}
+
+	groups := make([]Groups, 0, len(roleRows))
+	for _, row := range roleRows {
+		groups = append(groups, toGroupFromRole(row, perms[row.RoleID]))
+	}
+
+	return groups, nil
+}
+
+func (r Repository) GetGroupByID(ctx context.Context, groupID int32) (Groups, error) {
+	row, errRow := r.smRoleByID(ctx, groupID)
+	if errRow != nil {
+		return Groups{}, errRow
+	}
+
+	perms, errPerms := r.rolePermissions(ctx, []int32{groupID})
+	if errPerms != nil {
+		return Groups{}, errPerms
+	}
+
+	return toGroupFromRole(row, perms[groupID]), nil
+}
+
+func (r Repository) GetGroupByName(ctx context.Context, groupName string) (Groups, error) {
+	roleID, exists, errExists := r.roleIDByName(ctx, smRoleName(groupName))
+	if errExists != nil {
+		return Groups{}, errExists
+	}
+	if !exists {
+		return Groups{}, database.ErrNoResult
+	}
+
+	return r.GetGroupByID(ctx, roleID)
+}
+
+func (r Repository) AddGroup(ctx context.Context, group Groups) (Groups, error) {
+	now := time.Now()
+	group.CreatedOn = now
+	group.UpdatedOn = now
+
+	if err := r.ExecInsertBuilderWithReturnValue(ctx, r.Builder().
+		Insert("roles").
+		Columns("role_name").
+		Values(smRoleName(group.Name)).
+		Suffix("RETURNING role_id"), &group.GroupID); err != nil {
+		return Groups{}, database.Err(err)
+	}
+
+	perms, errPerms := r.setRolePermissions(ctx, group.GroupID, group.Permissions)
+	if errPerms != nil {
+		return Groups{}, errPerms
+	}
+
+	group.Permissions = perms
+
+	slog.Info("Created SM Group", slog.Int("group_id", int(group.GroupID)), slog.String("name", group.Name))
+
+	return group, nil
+}
+
+func (r Repository) SaveGroup(ctx context.Context, group Groups) (Groups, error) {
+	group.UpdatedOn = time.Now()
+
+	if err := r.ExecUpdateBuilder(ctx, r.Builder().
+		Update("roles").
+		Set("role_name", smRoleName(group.Name)).
+		Set("updated_on", group.UpdatedOn).
+		Where(sq.And{sq.Eq{"role_id": group.GroupID}, sq.Like{"role_name": smRolePrefix + "%"}})); err != nil {
+		return Groups{}, database.Err(err)
+	}
+
+	perms, errPerms := r.setRolePermissions(ctx, group.GroupID, group.Permissions)
+	if errPerms != nil {
+		return Groups{}, errPerms
+	}
+
+	group.Permissions = perms
+
+	return group, nil
+}
+
+func (r Repository) DeleteGroup(ctx context.Context, group Groups) error {
+	if err := r.ExecDeleteBuilder(ctx, r.Builder().
+		Delete("roles").
+		Where(sq.And{sq.Eq{"role_id": group.GroupID}, sq.Like{"role_name": smRolePrefix + "%"}})); err != nil {
+		return database.Err(err)
+	}
+
+	slog.Info("Deleted SM Group", slog.Int("group_id", int(group.GroupID)), slog.String("name", group.Name))
+
+	return nil
+}
+
+type adminBase struct {
+	SteamID    int64
+	PersonName *string
+	CreatedOn  time.Time
+	UpdatedOn  time.Time
+}
+
+// adminBases loads the identity of every steam id holding a sourcemod role.
+func (r Repository) adminBases(ctx context.Context, steamIDs []int64) ([]adminBase, error) {
+	builder := r.Builder().
+		Select("ra.steam_id", "p.personaname", "min(ra.created_on)", "max(r.updated_on)").
+		From("role_assignments ra").
+		Join("roles r USING (role_id)").
+		Join("person p ON p.steam_id = ra.steam_id").
+		Where(sq.Like{"r.role_name": smRolePrefix + "%"}).
+		GroupBy("ra.steam_id", "p.personaname").
+		OrderBy("ra.steam_id")
+
+	if len(steamIDs) > 0 {
+		builder = builder.Where(sq.Eq{"ra.steam_id": steamIDs})
+	}
+
+	rows, errRows := r.QueryBuilder(ctx, builder)
+	if errRows != nil {
+		return nil, database.Err(errRows)
+	}
+
+	var bases []adminBase
+
+	for rows.Next() {
+		var base adminBase
+		if errScan := rows.Scan(&base.SteamID, &base.PersonName, &base.CreatedOn, &base.UpdatedOn); errScan != nil {
+			return nil, database.Err(errScan)
+		}
+
+		bases = append(bases, base)
+	}
+
+	return bases, nil
+}
+
+// buildAdmins assembles the full admin records for the given steam ids (all of
+// them when the slice is empty). The admin identity, flags and immunity are
+// derived from the admin's personal role; the display name falls back to the
+// person name, then the steam id.
+func (r Repository) buildAdmins(ctx context.Context, steamIDs []int64) ([]Admin, error) {
+	bases, errBases := r.adminBases(ctx, steamIDs)
+	if errBases != nil {
+		return nil, errBases
+	}
+
+	if len(bases) == 0 {
+		return []Admin{}, nil
+	}
+
+	steamIDList := make([]int64, 0, len(bases))
+	for _, base := range bases {
+		steamIDList = append(steamIDList, base.SteamID)
+	}
+
+	roleRows, errRoles := r.smRoles(ctx)
+	if errRoles != nil {
+		return nil, errRoles
+	}
+
+	roleMap := make(map[int32]roleRow, len(roleRows))
+	roleIDs := make([]int32, 0, len(roleRows))
+	for _, row := range roleRows {
+		roleMap[row.RoleID] = row
+		roleIDs = append(roleIDs, row.RoleID)
+	}
+
+	perms, errPerms := r.rolePermissions(ctx, roleIDs)
+	if errPerms != nil {
+		return nil, errPerms
+	}
+
+	assignments, errAssignments := r.roleAssignments(ctx, steamIDList, roleIDs)
+	if errAssignments != nil {
+		return nil, errAssignments
+	}
+
+	personalRoles, errPersonal := r.personalRoles(ctx, steamIDList)
+	if errPersonal != nil {
+		return nil, errPersonal
+	}
+
+	admins := make([]Admin, 0, len(bases))
+	for _, base := range bases {
+		sid := steamid.New(base.SteamID)
+		admin := Admin{
+			AdminID:     base.SteamID,
+			SteamID:     sid,
+			AuthType:    AuthTypeSteam,
+			Identity:    string(sid.Steam3()),
+			Password:    "",
+			Name:        "",
+			Immunity:    0,
+			CreatedOn:   base.CreatedOn,
+			UpdatedOn:   base.UpdatedOn,
+			Groups:      []Groups{},
+			Permissions: []rolesv1.Permission{},
+		}
+
+		// The personal role is the one tracked for this steam id; it carries
+		// the admin's direct flags and immunity.
+		personalID := personalRoles[base.SteamID]
+
+		var personal *roleRow
+		for _, roleID := range assignments[base.SteamID] {
+			row, ok := roleMap[roleID]
+			if !ok {
+				continue
+			}
+
+			admin.Groups = append(admin.Groups, toGroupFromRole(row, perms[roleID]))
+			if roleID == personalID {
+				captured := row
+				personal = &captured
+			}
+		}
+
+		if personal != nil {
+			perms := perms[personal.RoleID]
+			if perms == nil {
+				perms = []rolesv1.Permission{}
+			} else {
+				slices.Sort(perms)
+			}
+
+			admin.Name = nameFromSMRole(personal.RoleName)
+			admin.Immunity = deriveImmunity(perms)
+			admin.Permissions = perms
+		}
+
+		if admin.Name == "" {
+			if base.PersonName != nil && *base.PersonName != "" {
+				admin.Name = *base.PersonName
+			} else {
+				admin.Name = admin.SteamID.String()
+			}
+		}
+
+		admins = append(admins, admin)
+	}
+
+	return admins, nil
+}
+
+func (r Repository) Admins(ctx context.Context) ([]Admin, error) {
+	return r.buildAdmins(ctx, nil)
+}
+
+func (r Repository) GetAdminByID(ctx context.Context, adminID int64) (Admin, error) {
+	admins, errAdmins := r.buildAdmins(ctx, []int64{adminID})
+	if errAdmins != nil {
+		return Admin{}, errAdmins
+	}
+
+	if len(admins) == 0 {
+		return Admin{}, database.ErrNoResult
+	}
+
+	return admins[0], nil
+}
+
+// createPersonalRole creates, or adopts, a role dedicated to a single admin
+// and records it as that admin's personal role. The role is named after the
+// admin's alias when that name is free; when it is already taken by a role
+// with members the role falls back to the admin's 64-bit steam id.
+func (r Repository) createPersonalRole(ctx context.Context, steamID int64, alias string) (int32, error) {
+	names := make([]string, 0, 2)
+	if alias != "" {
+		names = append(names, smRoleName(alias))
+	}
+	names = append(names, smRoleName(strconv.FormatInt(steamID, 10)))
+
+	for idx, name := range names {
+		existingID, exists, adoptable, errCandidate := r.personalRoleAdoption(ctx, name, steamID)
+		if errCandidate != nil {
+			return 0, errCandidate
+		}
+
+		if adoptable {
+			if errTrack := r.trackPersonalRole(ctx, steamID, existingID); errTrack != nil {
+				return 0, errTrack
+			}
+
+			return existingID, nil
+		}
+
+		if !exists {
+			var roleID int32
+			if err := r.ExecInsertBuilderWithReturnValue(ctx, r.Builder().
+				Insert("roles").
+				Columns("role_name").
+				Values(name).
+				Suffix("RETURNING role_id"), &roleID); err != nil {
+				return 0, database.Err(err)
+			}
+
+			if errTrack := r.trackPersonalRole(ctx, steamID, roleID); errTrack != nil {
+				return 0, errTrack
+			}
+
+			return roleID, nil
+		}
+
+		if idx == len(names)-1 {
+			return 0, ErrAdminNameExists
+		}
+	}
+
+	return 0, ErrAdminNameExists
+}
+
+// personalRoleAdoption classifies the role with the given name for adoption as
+// the personal role of steamID. A role is adoptable when it is tracked for
+// steamID, or untracked and either empty or assigned only to steamID (left
+// untracked by earlier code versions).
+func (r Repository) personalRoleAdoption(ctx context.Context, roleName string, steamID int64) (int32, bool, bool, error) {
+	existingID, exists, errExists := r.roleIDByName(ctx, roleName)
+	if errExists != nil {
+		return 0, false, false, errExists
+	}
+	if !exists {
+		return 0, false, false, nil
+	}
+
+	owner, tracked, errOwner := r.personalRoleOwner(ctx, existingID)
+	if errOwner != nil {
+		return 0, false, false, errOwner
+	}
+
+	if tracked {
+		return existingID, true, owner == steamID, nil
+	}
+
+	count, errCount := r.roleMemberCounts(ctx)
+	if errCount != nil {
+		return 0, false, false, errCount
+	}
+
+	switch count[existingID] {
+	case 0:
+		return existingID, true, true, nil
+	case 1:
+		assigned, errAssigned := r.roleAssignments(ctx, []int64{steamID}, []int32{existingID})
+		if errAssigned != nil {
+			return 0, false, false, errAssigned
+		}
+
+		return existingID, true, len(assigned[steamID]) > 0, nil
+	default:
+		return existingID, true, false, nil
+	}
+}
+
+// renamePersonalRole renames the admin's personal role to the given alias, or
+// to the steam id when the alias is empty.
+func (r Repository) renamePersonalRole(ctx context.Context, roleID int32, steamID int64, alias string) error {
+	desired := smRoleName(strconv.FormatInt(steamID, 10))
+	if alias != "" {
+		desired = smRoleName(alias)
+	}
+
+	var current string
+	dbRow, errRow := r.QueryRowBuilder(ctx, r.Builder().
+		Select("role_name").
+		From("roles").
+		Where(sq.Eq{"role_id": roleID}))
+	if errRow != nil {
+		return database.Err(errRow)
+	}
+
+	if errScan := dbRow.Scan(&current); errScan != nil {
+		return database.Err(errScan)
+	}
+
+	if current == desired {
+		return nil
+	}
+
+	_, exists, errExists := r.roleIDByName(ctx, desired)
+	if errExists != nil {
+		return errExists
+	}
+	if exists {
+		return ErrAdminNameExists
+	}
+
+	if err := r.ExecUpdateBuilder(ctx, r.Builder().
+		Update("roles").
+		Set("role_name", desired).
+		Set("updated_on", time.Now()).
+		Where(sq.Eq{"role_id": roleID})); err != nil {
+		return database.Err(err)
+	}
+
+	return nil
+}
+
+// upsertAdmin writes the admin's personal role (name, flags, immunity).
+// Existing group assignments are preserved; when the admin's identity changed,
+// every sourcemod assignment is moved to the new steam id first.
+func (r Repository) upsertAdmin(ctx context.Context, admin Admin) (Admin, error) {
+	target := admin.SteamID.Int64()
+
+	if admin.AdminID != 0 && admin.AdminID != target {
+		if err := r.moveAdminRoles(ctx, admin.AdminID, target); err != nil {
+			return Admin{}, err
+		}
+	}
+
+	personalRoles, errPersonal := r.personalRoles(ctx, []int64{target})
+	if errPersonal != nil {
+		return Admin{}, errPersonal
+	}
+
+	personalID := personalRoles[target]
+
+	if personalID == 0 {
+		roleID, errRole := r.createPersonalRole(ctx, target, admin.Name)
+		if errRole != nil {
+			return Admin{}, errRole
+		}
+
+		if errAssign := r.assignRole(ctx, target, roleID); errAssign != nil {
+			return Admin{}, errAssign
+		}
+
+		personalID = roleID
+	}
+
+	if err := r.renamePersonalRole(ctx, personalID, target, admin.Name); err != nil {
+		return Admin{}, err
+	}
+
+	perms, errPerms := r.setRolePermissions(ctx, personalID, admin.Permissions)
+	if errPerms != nil {
+		return Admin{}, errPerms
+	}
+
+	admin.Permissions = perms
+
+	slog.Info("Saved SM Admin", slog.String("steam_id", admin.SteamID.String()), slog.String("name", admin.Name))
+
+	return r.GetAdminByID(ctx, target)
+}
+
+func (r Repository) AddAdmin(ctx context.Context, admin Admin) (Admin, error) {
+	return r.upsertAdmin(ctx, admin)
+}
+
+func (r Repository) SaveAdmin(ctx context.Context, admin Admin) (Admin, error) {
+	return r.upsertAdmin(ctx, admin)
+}
+
+func (r Repository) DelAdmin(ctx context.Context, admin Admin) error {
+	steamID := admin.SteamID.Int64()
+
+	roleIDs, errRoleIDs := r.smRoleIDs(ctx)
+	if errRoleIDs != nil {
+		return errRoleIDs
+	}
+
+	assignments, errAssignments := r.roleAssignments(ctx, []int64{steamID}, roleIDs)
+	if errAssignments != nil {
+		return errAssignments
+	}
+
+	personalRoles, errPersonal := r.personalRoles(ctx, []int64{steamID})
+	if errPersonal != nil {
+		return errPersonal
+	}
+
+	for _, roleID := range assignments[steamID] {
+		if errUnassign := r.unassignRole(ctx, steamID, roleID); errUnassign != nil {
+			return errUnassign
+		}
+	}
+
+	// The personal role is removed entirely rather than left orphaned; the
+	// tracking row cascades with it.
+	if personalID := personalRoles[steamID]; personalID != 0 {
+		if errDelete := r.ExecDeleteBuilder(ctx, r.Builder().
+			Delete("roles").
+			Where(sq.Eq{"role_id": personalID})); errDelete != nil {
+			return database.Err(errDelete)
+		}
+	}
+
+	slog.Info("Deleted SM Admin", slog.String("steam_id", admin.SteamID.String()))
+
+	return nil
+}
+
+func (r Repository) InsertAdminGroup(ctx context.Context, admin Admin, group Groups) error {
+	return r.assignRole(ctx, admin.SteamID.Int64(), group.GroupID)
+}
+
+func (r Repository) DeleteAdminGroup(ctx context.Context, admin Admin, group Groups) error {
+	return r.unassignRole(ctx, admin.SteamID.Int64(), group.GroupID)
+}
+
+func (r Repository) GetGroupImmunities(ctx context.Context) ([]GroupImmunity, error) {
+	return r.groupImmunities(ctx, nil)
 }
 
 func (r Repository) GetGroupImmunityByID(ctx context.Context, groupImmunityID int32) (GroupImmunity, error) {
-	var immunity GroupImmunity
-
-	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
-		Select("gi.group_immunity_id", "gi.created_on",
-			"g.id", "g.flags", "g.name", "g.immunity_level", "g.created_on", "g.updated_on",
-			"o.id", "o.flags", "o.name", "o.immunity_level", "o.created_on", "o.updated_on").
-		From("sm_group_immunity gi").
-		LeftJoin("sm_groups g ON g.id = gi.group_id").
-		LeftJoin("sm_groups o ON o.id = gi.other_id").
-		Where(sq.Eq{"gi.group_immunity_id": groupImmunityID}))
-	if errRow != nil {
-		return GroupImmunity{}, database.Err(errRow)
+	immunities, errImmunities := r.groupImmunities(ctx, &groupImmunityID)
+	if errImmunities != nil {
+		return GroupImmunity{}, errImmunities
 	}
 
-	if errScan := row.Scan(&immunity.GroupImmunityID, &immunity.CreatedOn,
-		&immunity.Group.GroupID, &immunity.Group.Flags, &immunity.Group.Name, &immunity.Group.ImmunityLevel,
-		&immunity.Group.CreatedOn, &immunity.Group.UpdatedOn,
-		&immunity.Other.GroupID, &immunity.Other.Flags, &immunity.Other.Name, &immunity.Other.ImmunityLevel,
-		&immunity.Other.CreatedOn, &immunity.Other.UpdatedOn); errScan != nil {
-		return GroupImmunity{}, database.Err(errScan)
+	if len(immunities) == 0 {
+		return GroupImmunity{}, database.ErrNoResult
 	}
 
-	return immunity, nil
+	return immunities[0], nil
+}
+
+func (r Repository) groupImmunities(ctx context.Context, immunityID *int32) ([]GroupImmunity, error) {
+	builder := r.Builder().
+		Select("ri.role_immunity_id", "ri.created_on", "ri.role_id", "ri.other_id").
+		From("role_immunity ri").
+		OrderBy("ri.role_immunity_id")
+	if immunityID != nil {
+		builder = builder.Where(sq.Eq{"ri.role_immunity_id": *immunityID})
+	}
+
+	rows, errRows := r.QueryBuilder(ctx, builder)
+	if errRows != nil {
+		return nil, database.Err(errRows)
+	}
+
+	type immunityRow struct {
+		ID        int32
+		CreatedOn time.Time
+		RoleID    int32
+		OtherID   int32
+	}
+
+	var rowsData []immunityRow
+	ids := make(map[int32]struct{})
+
+	for rows.Next() {
+		var row immunityRow
+		if errScan := rows.Scan(&row.ID, &row.CreatedOn, &row.RoleID, &row.OtherID); errScan != nil {
+			return nil, database.Err(errScan)
+		}
+
+		rowsData = append(rowsData, row)
+		ids[row.RoleID] = struct{}{}
+		ids[row.OtherID] = struct{}{}
+	}
+
+	var roleIDs []int32
+	for id := range ids {
+		roleIDs = append(roleIDs, id)
+	}
+
+	groups, errGroups := r.groupsByIDs(ctx, roleIDs)
+	if errGroups != nil {
+		return nil, errGroups
+	}
+
+	immunities := make([]GroupImmunity, 0, len(rowsData))
+	for _, row := range rowsData {
+		immunities = append(immunities, GroupImmunity{
+			GroupImmunityID: row.ID,
+			Group:           groups[row.RoleID],
+			Other:           groups[row.OtherID],
+			CreatedOn:       row.CreatedOn,
+		})
+	}
+
+	return immunities, nil
 }
 
 func (r Repository) AddGroupImmunity(ctx context.Context, group Groups, other Groups) (GroupImmunity, error) {
@@ -130,14 +1039,12 @@ func (r Repository) AddGroupImmunity(ctx context.Context, group Groups, other Gr
 		Other:           other,
 		CreatedOn:       time.Now(),
 	}
+
 	if err := r.ExecInsertBuilderWithReturnValue(ctx, r.Builder().
-		Insert("sm_group_immunity").
-		SetMap(map[string]any{
-			"group_id":   immunity.Group.GroupID,
-			"other_id":   immunity.Other.GroupID,
-			"created_on": immunity.CreatedOn,
-		}).
-		Suffix("RETURNING group_immunity_id"), &immunity.GroupImmunityID); err != nil {
+		Insert("role_immunity").
+		Columns("role_id", "other_id", "created_on").
+		Values(group.GroupID, other.GroupID, immunity.CreatedOn).
+		Suffix("RETURNING role_immunity_id"), &immunity.GroupImmunityID); err != nil {
 		return GroupImmunity{}, database.Err(err)
 	}
 
@@ -146,22 +1053,22 @@ func (r Repository) AddGroupImmunity(ctx context.Context, group Groups, other Gr
 
 func (r Repository) DelGroupImmunity(ctx context.Context, groupImmunity GroupImmunity) error {
 	return database.Err(r.ExecDeleteBuilder(ctx, r.Builder().
-		Delete("sm_group_immunity").
-		Where(sq.Eq{"group_immunity_id": groupImmunity.GroupImmunityID})))
+		Delete("role_immunity").
+		Where(sq.Eq{"role_immunity_id": groupImmunity.GroupImmunityID})))
 }
 
 func (r Repository) AddGroupOverride(ctx context.Context, override GroupOverrides) (GroupOverrides, error) {
 	if err := r.ExecInsertBuilderWithReturnValue(ctx, r.Builder().
-		Insert("sm_group_overrides").
+		Insert("role_overrides").
 		SetMap(map[string]any{
-			"group_id":   override.GroupID,
+			"role_id":    override.GroupID,
 			"type":       override.Type,
 			"name":       override.Name,
 			"access":     override.Access,
 			"created_on": override.CreatedOn,
 			"updated_on": override.UpdatedOn,
 		}).
-		Suffix("RETURNING group_override_id"), &override.GroupOverrideID); err != nil {
+		Suffix("RETURNING override_id"), &override.GroupOverrideID); err != nil {
 		return override, database.Err(err)
 	}
 
@@ -170,17 +1077,17 @@ func (r Repository) AddGroupOverride(ctx context.Context, override GroupOverride
 
 func (r Repository) DelGroupOverride(ctx context.Context, override GroupOverrides) error {
 	return database.Err(r.ExecDeleteBuilder(ctx, r.Builder().
-		Delete("sm_group_overrides").
-		Where(sq.Eq{"group_override_id": override.GroupOverrideID})))
+		Delete("role_overrides").
+		Where(sq.Eq{"override_id": override.GroupOverrideID})))
 }
 
 func (r Repository) GetGroupOverride(ctx context.Context, overrideID int32) (GroupOverrides, error) {
 	var override GroupOverrides
 
 	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
-		Select("group_override_id", "group_id", "type", "name", "access", "created_on", "updated_on").
-		From("sm_group_overrides").
-		Where(sq.Eq{"group_override_id": overrideID}))
+		Select("override_id", "role_id", "type", "name", "access", "created_on", "updated_on").
+		From("role_overrides").
+		Where(sq.Eq{"override_id": overrideID}))
 	if errRow != nil {
 		return GroupOverrides{}, database.Err(errRow)
 	}
@@ -197,34 +1104,16 @@ func (r Repository) SaveGroupOverride(ctx context.Context, override GroupOverrid
 	override.UpdatedOn = time.Now()
 
 	if err := r.ExecUpdateBuilder(ctx, r.Builder().
-		Update("sm_group_overrides").
+		Update("role_overrides").
 		SetMap(map[string]any{
-			"group_id":   override.GroupID,
+			"role_id":    override.GroupID,
 			"type":       override.Type,
 			"name":       override.Name,
 			"access":     override.Access,
 			"updated_on": override.UpdatedOn,
 		}).
-		Where(sq.Eq{"group_override_id": override.GroupOverrideID})); err != nil {
+		Where(sq.Eq{"override_id": override.GroupOverrideID})); err != nil {
 		return GroupOverrides{}, database.Err(err)
-	}
-
-	return override, nil
-}
-
-func (r Repository) SaveOverride(ctx context.Context, override Overrides) (Overrides, error) {
-	override.UpdatedOn = time.Now()
-
-	if err := r.ExecUpdateBuilder(ctx, r.Builder().
-		Update("sm_overrides").
-		SetMap(map[string]any{
-			"type":       override.Type,
-			"name":       override.Name,
-			"flags":      override.Flags,
-			"updated_on": override.UpdatedOn,
-		}).
-		Where(sq.Eq{"override_id": override.OverrideID})); err != nil {
-		return Overrides{}, database.Err(err)
 	}
 
 	return override, nil
@@ -232,9 +1121,9 @@ func (r Repository) SaveOverride(ctx context.Context, override Overrides) (Overr
 
 func (r Repository) GroupOverrides(ctx context.Context, group Groups) ([]GroupOverrides, error) {
 	rows, errRows := r.QueryBuilder(ctx, r.Builder().
-		Select("group_override_id", "group_id", "type", "name", "access", "created_on", "updated_on").
-		From("sm_group_overrides").
-		Where(sq.Eq{"group_id": group.GroupID}))
+		Select("override_id", "role_id", "type", "name", "access", "created_on", "updated_on").
+		From("role_overrides").
+		Where(sq.Eq{"role_id": group.GroupID}))
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
@@ -254,32 +1143,96 @@ func (r Repository) GroupOverrides(ctx context.Context, group Groups) ([]GroupOv
 	return overrides, nil
 }
 
+// overridePermissions returns the permission set of the given overrides.
+func (r Repository) overridePermissions(ctx context.Context, overrideIDs []int32) (map[int32][]rolesv1.Permission, error) {
+	perms := make(map[int32][]rolesv1.Permission, len(overrideIDs))
+	if len(overrideIDs) == 0 {
+		return perms, nil
+	}
+
+	rows, errRows := r.QueryBuilder(ctx, r.Builder().
+		Select("override_id", "permission").
+		From("command_override_permissions").
+		Where(sq.Eq{"override_id": overrideIDs}))
+	if errRows != nil {
+		return nil, database.Err(errRows)
+	}
+
+	for rows.Next() {
+		var (
+			overrideID int32
+			perm       rolesv1.Permission
+		)
+		if errScan := rows.Scan(&overrideID, &perm); errScan != nil {
+			return nil, database.Err(errScan)
+		}
+
+		perms[overrideID] = append(perms[overrideID], perm)
+	}
+
+	return perms, nil
+}
+
+// setOverridePermissions replaces the permission set of the given override.
+func (r Repository) setOverridePermissions(ctx context.Context, overrideID int32, perms []rolesv1.Permission) error {
+	if err := r.ExecDeleteBuilder(ctx, r.Builder().
+		Delete("command_override_permissions").
+		Where(sq.Eq{"override_id": overrideID})); err != nil {
+		return database.Err(err)
+	}
+
+	if len(perms) == 0 {
+		return nil
+	}
+
+	now := time.Now()
+	builder := r.Builder().
+		Insert("command_override_permissions").
+		Columns("override_id", "permission", "created_on", "updated_on")
+
+	for _, perm := range perms {
+		builder = builder.Values(overrideID, perm, now, now)
+	}
+
+	if err := r.ExecInsertBuilder(ctx, builder); err != nil {
+		return database.Err(err)
+	}
+
+	return nil
+}
+
 func (r Repository) GetOverride(ctx context.Context, overrideID int32) (Overrides, error) {
 	var override Overrides
 
-	row, err := r.QueryRowBuilder(ctx, r.Builder().
-		Select("override_id", "type", "name", "flags", "created_on", "updated_on").
-		From("sm_overrides").
+	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
+		Select("override_id", "type", "name", "created_on", "updated_on").
+		From("command_overrides").
 		Where(sq.Eq{"override_id": overrideID}))
-	if err != nil {
-		return override, database.Err(err)
+	if errRow != nil {
+		return override, database.Err(errRow)
 	}
 
 	if errScan := row.Scan(&override.OverrideID, &override.Type, &override.Name,
-		&override.Flags, &override.CreatedOn, &override.UpdatedOn); errScan != nil {
+		&override.CreatedOn, &override.UpdatedOn); errScan != nil {
 		return override, database.Err(errScan)
 	}
+
+	perms, errPerms := r.overridePermissions(ctx, []int32{overrideID})
+	if errPerms != nil {
+		return override, errPerms
+	}
+
+	override.Permissions = normalizePermissions(perms[overrideID])
 
 	return override, nil
 }
 
 func (r Repository) AddOverride(ctx context.Context, overrides Overrides) (Overrides, error) {
 	if err := r.ExecInsertBuilderWithReturnValue(ctx, r.Builder().
-		Insert("sm_overrides").
+		Insert("command_overrides").
 		SetMap(map[string]any{
 			"type":       overrides.Type,
 			"name":       overrides.Name,
-			"flags":      overrides.Flags,
 			"created_on": overrides.CreatedOn,
 			"updated_on": overrides.UpdatedOn,
 		}).
@@ -287,20 +1240,45 @@ func (r Repository) AddOverride(ctx context.Context, overrides Overrides) (Overr
 		return overrides, database.Err(err)
 	}
 
+	if err := r.setOverridePermissions(ctx, overrides.OverrideID, overrides.Permissions); err != nil {
+		return overrides, err
+	}
+
 	return overrides, nil
 }
 
 func (r Repository) DelOverride(ctx context.Context, override Overrides) error {
 	return database.Err(r.ExecDeleteBuilder(ctx, r.Builder().
-		Delete("sm_overrides").
+		Delete("command_overrides").
 		Where(sq.Eq{"override_id": override.OverrideID}),
 	))
 }
 
+func (r Repository) SaveOverride(ctx context.Context, override Overrides) (Overrides, error) {
+	override.UpdatedOn = time.Now()
+
+	if err := r.ExecUpdateBuilder(ctx, r.Builder().
+		Update("command_overrides").
+		SetMap(map[string]any{
+			"type":       override.Type,
+			"name":       override.Name,
+			"updated_on": override.UpdatedOn,
+		}).
+		Where(sq.Eq{"override_id": override.OverrideID})); err != nil {
+		return Overrides{}, database.Err(err)
+	}
+
+	if err := r.setOverridePermissions(ctx, override.OverrideID, override.Permissions); err != nil {
+		return Overrides{}, err
+	}
+
+	return override, nil
+}
+
 func (r Repository) Overrides(ctx context.Context) ([]Overrides, error) {
 	rows, errRows := r.QueryBuilder(ctx, r.Builder().
-		Select("override_id", "type", "name", "flags", "created_on", "updated_on").
-		From("sm_overrides"))
+		Select("override_id", "type", "name", "created_on", "updated_on").
+		From("command_overrides"))
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
@@ -309,7 +1287,7 @@ func (r Repository) Overrides(ctx context.Context) ([]Overrides, error) {
 
 	for rows.Next() {
 		var override Overrides
-		if errScan := rows.Scan(&override.OverrideID, &override.Type, &override.Name, &override.Flags,
+		if errScan := rows.Scan(&override.OverrideID, &override.Type, &override.Name,
 			&override.CreatedOn, &override.UpdatedOn); errScan != nil {
 			return nil, database.Err(errScan)
 		}
@@ -317,393 +1295,23 @@ func (r Repository) Overrides(ctx context.Context) ([]Overrides, error) {
 		overrides = append(overrides, override)
 	}
 
+	if len(overrides) == 0 {
+		return overrides, nil
+	}
+
+	var overrideIDs []int32
+	for _, override := range overrides {
+		overrideIDs = append(overrideIDs, override.OverrideID)
+	}
+
+	perms, errPerms := r.overridePermissions(ctx, overrideIDs)
+	if errPerms != nil {
+		return nil, errPerms
+	}
+
+	for idx := range overrides {
+		overrides[idx].Permissions = normalizePermissions(perms[overrides[idx].OverrideID])
+	}
+
 	return overrides, nil
-}
-
-func (r Repository) GetAdminGroups(ctx context.Context, admin Admin) ([]Groups, error) {
-	rows, errRows := r.QueryBuilder(ctx, r.Builder().
-		Select("g.id", "g.flags", "g.name", "g.immunity_level", "g.created_on", "g.updated_on").
-		From("sm_groups g").
-		LeftJoin("sm_admins_groups ag ON ag.group_id = g.id").
-		Where(sq.Eq{"ag.admin_id": admin.AdminID}))
-	if errRows != nil {
-		return nil, errRows
-	}
-
-	var groups []Groups
-
-	for rows.Next() {
-		var group Groups
-		if errScan := rows.Scan(&group.GroupID, &group.Flags, &group.Name, &group.ImmunityLevel,
-			&group.CreatedOn, &group.UpdatedOn); errScan != nil {
-			return nil, database.Err(errScan)
-		}
-
-		groups = append(groups, group)
-	}
-
-	if groups == nil {
-		groups = []Groups{}
-	}
-
-	return groups, nil
-}
-
-func (r Repository) Admins(ctx context.Context) ([]Admin, error) {
-	groups, errGroups := r.Groups(ctx)
-	if errGroups != nil && !errors.Is(errGroups, database.ErrNoResult) {
-		return nil, errGroups
-	}
-
-	rows, errRows := r.QueryBuilder(ctx, r.Builder().
-		Select("a.id", "a.steam_id", "a.authtype", "a.identity", "a.password", "a.flags", "a.name", "a.immunity",
-			"a.created_on", "a.updated_on", "array_agg(sag.group_id) as group_ids").
-		From("sm_admins a").
-		LeftJoin("sm_admins_groups sag on a.id = sag.admin_id").
-		GroupBy("a.id"))
-	if errRows != nil {
-		if errors.Is(errRows, database.ErrNoResult) {
-			return []Admin{}, nil
-		}
-
-		return nil, database.Err(errRows)
-	}
-
-	var admins []Admin
-
-	for rows.Next() {
-		var (
-			// array_agg will return a {null} if no group entry exists
-			groupIDs []*int32
-			admin    = Admin{Groups: []Groups{}}
-		)
-
-		if errScan := rows.Scan(&admin.AdminID, &admin.SteamID, &admin.AuthType, &admin.Identity, &admin.Password,
-			&admin.Flags, &admin.Name, &admin.Immunity, &admin.CreatedOn, &admin.UpdatedOn, &groupIDs); errScan != nil {
-			return nil, database.Err(errScan)
-		}
-
-		for _, groupID := range groupIDs {
-			if groupID == nil {
-				continue
-			}
-
-			for _, group := range groups {
-				if group.GroupID == *groupID {
-					admin.Groups = append(admin.Groups, group)
-				}
-			}
-		}
-
-		admins = append(admins, admin)
-	}
-
-	return admins, nil
-}
-
-func (r Repository) Groups(ctx context.Context) ([]Groups, error) {
-	rows, errRows := r.QueryBuilder(ctx, r.Builder().
-		Select("id", "flags", "name", "immunity_level", "created_on", "updated_on").
-		From("sm_groups"))
-	if errRows != nil {
-		if errors.Is(errRows, database.ErrNoResult) {
-			return []Groups{}, nil
-		}
-
-		return nil, database.Err(errRows)
-	}
-
-	var groups []Groups
-
-	for rows.Next() {
-		var group Groups
-		if errScan := rows.Scan(&group.GroupID, &group.Flags, &group.Name, &group.ImmunityLevel,
-			&group.CreatedOn, &group.UpdatedOn); errScan != nil {
-			return nil, database.Err(errScan)
-		}
-
-		groups = append(groups, group)
-	}
-
-	if groups == nil {
-		groups = []Groups{}
-	}
-
-	return groups, nil
-}
-
-func (r Repository) GetAdminByID(ctx context.Context, adminID int32) (Admin, error) {
-	var (
-		admin Admin
-		id64  *int64
-	)
-
-	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
-		Select("id", "steam_id", "authtype", "identity", "password", "flags", "name", "immunity", "created_on", "updated_on").
-		From("sm_admins").
-		Where(sq.And{sq.Eq{"id": adminID}}))
-	if errRow != nil {
-		return admin, database.Err(errRow)
-	}
-
-	if errScan := row.Scan(&admin.AdminID, &id64, &admin.AuthType, &admin.Identity,
-		&admin.Password, &admin.Flags, &admin.Name, &admin.Immunity, &admin.CreatedOn, &admin.UpdatedOn); errScan != nil {
-		return admin, database.Err(errScan)
-	}
-
-	if id64 != nil {
-		admin.SteamID = steamid.New(*id64)
-	}
-
-	groups, errGroup := r.GetAdminGroups(ctx, admin)
-	if errGroup != nil && !errors.Is(errGroup, database.ErrNoResult) {
-		return Admin{}, errGroup
-	}
-
-	admin.Groups = groups
-
-	return admin, nil
-}
-
-func (r Repository) SaveAdmin(ctx context.Context, admin Admin) (Admin, error) {
-	admin.UpdatedOn = time.Now()
-
-	var sid64 *int64
-
-	if admin.SteamID.Valid() {
-		sidValue := admin.SteamID.Int64()
-		sid64 = &sidValue
-	}
-
-	if err := r.ExecUpdateBuilder(ctx, r.Builder().
-		Update("sm_admins").
-		SetMap(map[string]any{
-			"steam_id":   sid64,
-			"authtype":   admin.AuthType,
-			"identity":   admin.Identity,
-			"password":   admin.Password,
-			"flags":      admin.Flags,
-			"name":       admin.Name,
-			"immunity":   admin.Immunity,
-			"updated_on": admin.UpdatedOn,
-		}).Where(sq.Eq{"id": admin.AdminID})); err != nil {
-		return Admin{}, err
-	}
-
-	return admin, nil
-}
-
-func (r Repository) GetAdminByIdentity(ctx context.Context, authType AuthType, identity string) (Admin, error) {
-	var (
-		admin Admin
-		id64  int64
-	)
-
-	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
-		Select("id", "steam_id", "authtype", "identity", "password", "flags", "name", "immunity", "created_on", "updated_on").
-		From("sm_admins").
-		Where(sq.And{sq.Eq{"authtype": authType}, sq.Eq{"identity": identity}}))
-	if errRow != nil {
-		return admin, database.Err(errRow)
-	}
-
-	if errScan := row.Scan(&admin.AdminID, &id64, &admin.AuthType, &admin.Identity,
-		&admin.Password, &admin.Flags, &admin.Name, &admin.Immunity, &admin.CreatedOn, &admin.UpdatedOn); errScan != nil {
-		return admin, database.Err(errScan)
-	}
-
-	admin.SteamID = steamid.New(id64)
-
-	return admin, nil
-}
-
-func (r Repository) GetGroupByName(ctx context.Context, groupName string) (Groups, error) {
-	var group Groups
-
-	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
-		Select("id", "flags", "name", "immunity_level", "created_on", "updated_on").
-		From("sm_groups").
-		Where(sq.Eq{"name": groupName}))
-	if errRow != nil {
-		return group, database.Err(errRow)
-	}
-
-	if errScan := row.Scan(&group.GroupID, &group.Flags, &group.Name, &group.ImmunityLevel,
-		&group.CreatedOn, &group.UpdatedOn); errScan != nil {
-		return group, database.Err(errScan)
-	}
-
-	return group, nil
-}
-
-func (r Repository) GetGroupByID(ctx context.Context, groupID int32) (Groups, error) {
-	var group Groups
-
-	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
-		Select("id", "flags", "name", "immunity_level", "created_on", "updated_on").
-		From("sm_groups").
-		Where(sq.Eq{"id": groupID}))
-	if errRow != nil {
-		return group, database.Err(errRow)
-	}
-
-	if errScan := row.Scan(&group.GroupID, &group.Flags, &group.Name, &group.ImmunityLevel,
-		&group.CreatedOn, &group.UpdatedOn); errScan != nil {
-		return group, database.Err(errScan)
-	}
-
-	return group, nil
-}
-
-func (r Repository) InsertAdminGroup(ctx context.Context, admin Admin, group Groups, inheritOrder int) error {
-	now := time.Now()
-
-	return database.Err(r.ExecInsertBuilder(ctx, r.Builder().
-		Insert("sm_admins_groups").
-		SetMap(map[string]any{
-			"admin_id":      admin.AdminID,
-			"group_id":      group.GroupID,
-			"inherit_order": inheritOrder,
-			"created_on":    now,
-			"updated_on":    now,
-		})))
-}
-
-func (r Repository) DeleteAdminGroups(ctx context.Context, admin Admin) error {
-	if err := r.ExecDeleteBuilder(ctx, r.Builder().
-		Delete("sm_admins_groups").
-		Where(sq.Eq{"admin_id": admin.AdminID})); err != nil {
-		return database.Err(err)
-	}
-
-	slog.Info("Deleted SM admin groups", slog.String("steam_id", admin.SteamID.String()))
-
-	return nil
-}
-
-func (r Repository) DeleteAdminGroup(ctx context.Context, admin Admin, group Groups) error {
-	return r.ExecDeleteBuilder(ctx, r.Builder().
-		Delete("sm_admins_groups").
-		Where(sq.And{sq.Eq{"admin_id": admin.AdminID}, sq.Eq{"group_id": group.GroupID}}))
-}
-
-func (r Repository) SaveGroup(ctx context.Context, group Groups) (Groups, error) {
-	group.UpdatedOn = time.Now()
-	if err := r.ExecUpdateBuilder(ctx, r.Builder().
-		Update("sm_groups").
-		SetMap(map[string]any{
-			"name":           group.Name,
-			"immunity_level": group.ImmunityLevel,
-			"flags":          group.Flags,
-		}).
-		Where(sq.Eq{"id": group.GroupID})); err != nil {
-		return group, database.Err(err)
-	}
-
-	return group, nil
-}
-
-func (r Repository) DeleteGroup(ctx context.Context, group Groups) error {
-	if err := r.ExecDeleteBuilder(ctx, r.Builder().
-		Delete("sm_admins_groups").
-		Where(sq.Eq{"group_id": group.GroupID})); err != nil {
-		return database.Err(err)
-	}
-
-	if err := r.ExecDeleteBuilder(ctx, r.Builder().
-		Delete("sm_group_overrides").
-		Where(sq.Eq{"group_id": group.GroupID})); err != nil {
-		return database.Err(err)
-	}
-
-	if err := r.ExecDeleteBuilder(ctx, r.Builder().
-		Delete("sm_group_immunity").
-		Where(sq.Or{sq.Eq{"group_id": group.GroupID}, sq.Eq{"other_id": group.GroupID}})); err != nil {
-		return database.Err(err)
-	}
-
-	if err := r.ExecDeleteBuilder(ctx, r.Builder().
-		Delete("sm_groups").
-		Where(sq.Eq{"id": group.GroupID})); err != nil {
-		return database.Err(err)
-	}
-
-	slog.Info("Deleted SM Group", slog.Int("group_id", int(group.GroupID)), slog.String("name", group.Name))
-
-	return nil
-}
-
-func (r Repository) AddGroup(ctx context.Context, group Groups) (Groups, error) {
-	now := time.Now()
-
-	if err := r.ExecInsertBuilderWithReturnValue(ctx, r.Builder().
-		Insert("sm_groups").
-		SetMap(map[string]any{
-			"name":           group.Name,
-			"immunity_level": group.ImmunityLevel,
-			"flags":          group.Flags,
-			"created_on":     now,
-			"updated_on":     now,
-		}).
-		Suffix("RETURNING id"), &group.GroupID); err != nil {
-		return group, err
-	}
-
-	slog.Info("Created SM Group", slog.Int("group_id", int(group.GroupID)), slog.String("name", group.Name))
-
-	return group, nil
-}
-
-func (r Repository) DelAdmin(ctx context.Context, admin Admin) error {
-	if err := r.ExecDeleteBuilder(ctx, r.Builder().
-		Delete("sm_admins_groups").
-		Where(sq.Eq{"admin_id": admin.AdminID})); err != nil {
-		return database.Err(err)
-	}
-
-	if err := r.ExecDeleteBuilder(ctx, r.Builder().
-		Delete("sm_admins").
-		Where(sq.Eq{"id": admin.AdminID})); err != nil {
-		return database.Err(err)
-	}
-
-	slog.Info("Deleted SM Admin", slog.Int("id", int(admin.AdminID)),
-		slog.String("steam_id", admin.SteamID.String()))
-
-	return nil
-}
-
-func (r Repository) AddAdmin(ctx context.Context, admin Admin) (Admin, error) {
-	var nullableSID64 *int64
-
-	if admin.SteamID.Valid() {
-		steamID := admin.SteamID.Int64()
-		nullableSID64 = &steamID
-	}
-
-	now := time.Now()
-
-	admin.CreatedOn = now
-	admin.UpdatedOn = now
-
-	if err := r.ExecInsertBuilderWithReturnValue(ctx, r.Builder().
-		Insert("sm_admins").
-		SetMap(map[string]any{
-			"steam_id":   nullableSID64,
-			"authtype":   admin.AuthType,
-			"identity":   admin.Identity,
-			"password":   admin.Password,
-			"flags":      admin.Flags,
-			"name":       admin.Name,
-			"immunity":   admin.Immunity,
-			"created_on": admin.CreatedOn,
-			"updated_on": admin.UpdatedOn,
-		}).
-		Suffix("RETURNING id"), &admin.AdminID); err != nil {
-		return admin, database.Err(err)
-	}
-
-	slog.Info("Added SM Admin", slog.Int("id", int(admin.AdminID)), slog.String("identity", admin.Identity))
-
-	return admin, nil
 }

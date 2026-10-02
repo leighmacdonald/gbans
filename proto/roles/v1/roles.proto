@@ -1,0 +1,198 @@
+edition = "2023";
+
+package roles.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service RolesService {
+  rpc RoleList(google.protobuf.Empty) returns (RoleListResponse) {}
+  rpc RoleCreate(RoleCreateRequest) returns (RoleCreateResponse) {}
+  rpc RoleEdit(RoleEditRequest) returns (RoleEditResponse) {}
+  rpc RoleDelete(RoleDeleteRequest) returns (google.protobuf.Empty) {}
+  rpc RoleAssign(RoleAssignRequest) returns (google.protobuf.Empty) {}
+  rpc RoleUnassign(RoleUnassignRequest) returns (google.protobuf.Empty) {}
+  rpc RoleBySteamID(RoleBySteamIDRequest) returns (RoleBySteamIDResponse) {}
+  rpc RoleUsers(google.protobuf.Empty) returns (RoleUsersResponse) {}
+  rpc SetUserRoles(SetUserRolesRequest) returns (google.protobuf.Empty) {}
+}
+
+message RoleBySteamIDRequest {
+  uint64 steam_id = 1 [(buf.validate.field).uint64 = {gte: 76561197960265729}];
+}
+
+message RoleBySteamIDResponse {
+  repeated Role roles = 1;
+}
+
+message RoleUser {
+  uint64 steam_id = 1;
+  string persona_name = 2;
+  repeated Role roles = 3;
+}
+
+message RoleUsersResponse {
+  repeated RoleUser users = 1;
+}
+
+message RoleAssignRequest {
+  uint64 steam_id = 1 [(buf.validate.field).uint64 = {gte: 76561197960265729}];
+  int32 role_id = 2 [(buf.validate.field).int32 = {gt: 0}];
+}
+
+message RoleUnassignRequest {
+  uint64 steam_id = 1 [(buf.validate.field).uint64 = {gte: 76561197960265729}];
+  int32 role_id = 2 [(buf.validate.field).int32 = {gt: 0}];
+}
+
+message SetUserRolesRequest {
+  uint64 steam_id = 1 [(buf.validate.field).uint64 = {gte: 76561197960265729}];
+  repeated int32 role_id = 2 [(buf.validate.field).repeated = {
+    unique: true
+    items: {
+      int32: {gt: 0}
+    }
+  }];
+}
+
+message RoleDeleteRequest {
+  uint32 role_id = 1 [(buf.validate.field).uint32 = {gt: 0}];
+}
+
+message RoleEditRequest {
+  int32 role_id = 1 [(buf.validate.field).int32 = {gt: 0}];
+  string role_name = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+  }];
+  repeated Permission permissions = 3 [(buf.validate.field).repeated = {
+    unique: true
+    items: {
+      enum: {defined_only: true}
+    }
+  }];
+}
+
+message RoleEditResponse {}
+
+message RoleListResponse {
+  repeated Role roles = 1;
+}
+
+message RoleCreateResponse {
+  Role role = 1;
+}
+
+message RoleCreateRequest {
+  string role_name = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+  }];
+  repeated Permission permissions = 2 [(buf.validate.field).repeated = {
+    unique: true
+    items: {
+      enum: {defined_only: true}
+    }
+  }];
+}
+
+message Role {
+  int32 role_id = 1;
+  string role_name = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+  }];
+  repeated Permission permissions = 3 [(buf.validate.field).repeated = {
+    unique: true
+    items: {
+      enum: {defined_only: true}
+    }
+  }];
+  google.protobuf.Timestamp created_on = 4;
+  google.protobuf.Timestamp updated_on = 5;
+  uint64 user_count = 6;
+}
+
+enum Permission {
+  PERMISSION_UNSPECIFIED = 0;
+  PERMISSION_ANTICHEAT_READ = 10;
+  PERMISSION_APPEAL_READ = 20;
+  PERMISSION_APPEAL_WRITE = 21;
+  PERMISSION_APPEAL_ADMIN = 22;
+  PERMISSION_ASSET_CREATE = 30;
+  PERMISSION_ASSET_DELETE = 31;
+  PERMISSION_BAN_READ = 40;
+  PERMISSION_BAN_WRITE = 41;
+  PERMISSION_BAN_CREATE = 42;
+  PERMISSION_BLOCKLIST_READ = 50;
+  PERMISSION_BLOCKLIST_WRITE = 51;
+  PERMISSION_BLOCKLIST_DELETE = 52;
+  PERMISSION_CHATLOG_READ = 60;
+  PERMISSION_CONFIG_READ = 70;
+  PERMISSION_CONFIG_WRITE = 71;
+  PERMISSION_CONTEST_READ = 80;
+  PERMISSION_CONTEST_WRITE = 81;
+  PERMISSION_CONTEST_DELETE = 82;
+  PERMISSION_CONTEST_ADMIN = 83;
+  PERMISSION_CURRENT_PROFILE = 90;
+  PERMISSION_CURRENT_SETTINGS = 91;
+  PERMISSION_DEMO_READ = 100;
+  PERMISSION_DEMO_ADMIN = 101;
+  PERMISSION_DISCORD = 110;
+  PERMISSION_FORUM_READ = 120;
+  PERMISSION_FORUM_WRITE = 121;
+  PERMISSION_FORUM_EDIT = 122;
+  PERMISSION_GAMEADMIN_READ = 130;
+  PERMISSION_GAMEADMIN_WRITE = 131;
+  PERMISSION_NETWORK_READ = 150;
+  PERMISSION_NETWORK_ADMIN = 151;
+  PERMISSION_NEWS_READ = 160;
+  PERMISSION_NEWS_WRITE = 161;
+  PERMISSION_NEWS_DELETE = 162;
+  PERMISSION_NOTIFICATIONS = 170;
+  PERMISSION_PERSON_READ = 180;
+  PERMISSION_PERSON_WRITE = 181;
+  PERMISSION_PLAYER_PROFILE = 190;
+  PERMISSION_REPORT_READ = 200;
+  PERMISSION_REPORT_WRITE = 201;
+  PERMISSION_REPORT_CREATE = 202;
+  PERMISSION_REPORT_ADMIN = 203;
+  PERMISSION_ROLE_READ = 210;
+  PERMISSION_ROLE_WRITE = 211;
+  PERMISSION_SERVER_READ = 220;
+  PERMISSION_SERVER_WRITE = 221;
+  PERMISSION_SPEEDRUN_READ = 230;
+  PERMISSION_SPEEDRUN_WRITE = 231;
+  PERMISSION_STATS_READ = 240;
+  PERMISSION_STEAMID_RESOLVE = 250;
+  PERMISSION_WIKI_READ = 260;
+  PERMISSION_WIKI_EDIT = 261;
+  PERMISSION_VOTE_READ = 270;
+  PERMISSION_WORDFILTER_READ = 280;
+  PERMISSION_WORDFILTER_WRITE = 281;
+  PERMISSION_WORDFILTER_DELETE = 282;
+  // These mirror the sourcemod permission system; the comment is the SM flag
+  // character(s) the permission corresponds to.
+  PERMISSION_SOURCEMOD_RESERVED = 1000; // a
+  PERMISSION_SOURCEMOD_GENERIC = 1001; // a
+  PERMISSION_SOURCEMOD_KICK = 1002; // b
+  PERMISSION_SOURCEMOD_BAN = 1003; // c
+  PERMISSION_SOURCEMOD_UNBAN = 1004; // d
+  PERMISSION_SOURCEMOD_SLAY = 1005; // e
+  PERMISSION_SOURCEMOD_CHANGEMAP = 1006; // f
+  PERMISSION_SOURCEMOD_CVAR = 1007; // h
+  PERMISSION_SOURCEMOD_CFG = 1008; // i
+  PERMISSION_SOURCEMOD_CHAT = 1009; // j
+  PERMISSION_SOURCEMOD_VOTE = 1010; // k
+  PERMISSION_SOURCEMOD_PASSWORD = 1011; // g
+  PERMISSION_SOURCEMOD_RCON = 1012; // l, m
+  PERMISSION_SOURCEMOD_CHEATS = 1013; // n
+  PERMISSION_SOURCEMOD_ROOT = 1014; // z
+  PERMISSION_SOURCEMOD_CUSTOM_1 = 1015; // p
+  PERMISSION_SOURCEMOD_CUSTOM_2 = 1016; // q
+  PERMISSION_SOURCEMOD_CUSTOM_3 = 1017; // r
+  PERMISSION_SOURCEMOD_CUSTOM_4 = 1018; // s
+  PERMISSION_SOURCEMOD_CUSTOM_5 = 1019; // t
+  PERMISSION_SOURCEMOD_CUSTOM_6 = 1020; // u
+}

@@ -29,7 +29,7 @@ import { getBanByReportID } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
 import { ReportStatus } from "../rpc/ban/v1/report_pb.ts";
 import { report } from "../rpc/ban/v1/report-ReportService_connectquery.ts";
 import { getDemo } from "../rpc/demo/v1/demo-DemoService_connectquery.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { avatarHashToURL, reportStatusColour, reportStatusString } from "../util/strings.ts";
 import { renderTimeDistance, renderTimestamp } from "../util/time.ts";
 
@@ -248,7 +248,7 @@ function ReportView() {
 								</List>
 							</ContainerWithHeader>
 						</Grid>
-						{hasPermission(Privilege.MODERATOR) && (
+						{hasPermission(Permission.REPORT_ADMIN) && (
 							<Grid size={{ xs: 6, md: 12 }}>
 								<ReportModPanel reportId={Number(reportId)} />
 							</Grid>

@@ -7,11 +7,10 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	v1 "github.com/leighmacdonald/gbans/internal/forum/v1"
 	"github.com/leighmacdonald/gbans/internal/forum/v1/forumv1connect"
-	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -21,32 +20,43 @@ import (
 type Service struct {
 	// forumv1connect.UnimplementedForumServiceHandler
 
-	forums Forums
+	forums   Forums
+	roleAuth *rpc.RoleAuth
 }
 
-func NewService(forums Forums, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := forumv1connect.NewForumServiceHandler(Service{forums: forums}, option...)
+func NewService(forums Forums, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := forumv1connect.NewForumServiceHandler(Service{forums: forums, roleAuth: roleAuth}, option...)
 
-	authMiddleware.UserRoute(forumv1connect.ForumServiceActiveUsersProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceOverviewProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceRecentMessagesProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadsProcedure, rpc.WithMinPermissions(permission.Guest))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadDeleteProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceForumProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadMessagesProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadCreateProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadEditProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadReplyCreateProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadReplyEditProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadMessageDeleteProcedure, rpc.WithMinPermissions(permission.User))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceCategoryCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceCategoryEditProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceCategoryProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceForumCreateProcedure, rpc.WithMinPermissions(permission.Moderator))
-	authMiddleware.UserRoute(forumv1connect.ForumServiceForumEditProcedure, rpc.WithMinPermissions(permission.Moderator))
+	authMiddleware.PublicRoute(forumv1connect.ForumServiceActiveUsersProcedure)
+	authMiddleware.PublicRoute(forumv1connect.ForumServiceOverviewProcedure)
+	authMiddleware.PublicRoute(forumv1connect.ForumServiceRecentMessagesProcedure)
+	authMiddleware.PublicRoute(forumv1connect.ForumServiceThreadsProcedure)
+	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_READ))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceForumProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_READ))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadMessagesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_READ))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadReplyCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadReplyEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceThreadMessageDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceCategoryCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceCategoryEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceCategoryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceForumCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
+	authMiddleware.UserRoute(forumv1connect.ForumServiceForumEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_FORUM_EDIT))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
+}
+
+// canAccess reports whether the user can view content gated behind the given
+// required permission. An UNSPECIFIED permission means the content is public.
+func (s Service) canAccess(ctx context.Context, user *rpc.UserInfo, required rolesv1.Permission) bool {
+	if required == rolesv1.Permission_PERMISSION_UNSPECIFIED {
+		return true
+	}
+
+	return s.roleAuth.HasPermission(ctx, *user, required)
 }
 
 func (s Service) ActiveUsers(_ context.Context, _ *emptypb.Empty) (*v1.ActiveUsersResponse, error) {
@@ -56,10 +66,9 @@ func (s Service) ActiveUsers(_ context.Context, _ *emptypb.Empty) (*v1.ActiveUse
 	for idx, act := range current {
 		sid := act.Person.GetSteamID()
 		resp.UserActivity[idx] = &v1.UserActivity{
-			SteamId:         new(sid.Int64()),
-			PersonaName:     new(act.Person.GetName()),
-			PermissionLevel: new(personv1.Privilege(act.Person.GetPrivilege())),
-			CreatedOn:       timestamppb.New(act.LastActivity),
+			SteamId:     new(sid.Int64()),
+			PersonaName: new(act.Person.GetName()),
+			CreatedOn:   timestamppb.New(act.LastActivity),
 		}
 	}
 
@@ -82,7 +91,7 @@ func (s Service) Overview(ctx context.Context, _ *emptypb.Empty) (*v1.OverviewRe
 
 	for index := range categories {
 		for _, forum := range currentForums {
-			if !user.HasPermission(forum.PermissionLevel) {
+			if !s.canAccess(ctx, user, forum.RequiredPermission) {
 				continue
 			}
 
@@ -106,13 +115,20 @@ func (s Service) Overview(ctx context.Context, _ *emptypb.Empty) (*v1.OverviewRe
 
 func (s Service) RecentMessages(ctx context.Context, _ *emptypb.Empty) (*v1.RecentMessagesResponse, error) {
 	user := rpc.UserInfoFromCtx(ctx)
-	messages, errThreads := s.forums.RecentActivity(ctx, 5, user.GetPrivilege())
+	messages, errThreads := s.forums.RecentActivity(ctx, 5)
 	if errThreads != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	resp := v1.RecentMessagesResponse{Messages: make([]*v1.Message, len(messages))}
-	for idx, msg := range messages {
+	visible := make([]Message, 0, len(messages))
+	for _, msg := range messages {
+		if s.canAccess(ctx, user, msg.RequiredPermission) {
+			visible = append(visible, msg)
+		}
+	}
+
+	resp := v1.RecentMessagesResponse{Messages: make([]*v1.Message, len(visible))}
+	for idx, msg := range visible {
 		resp.Messages[idx] = toMessage(msg)
 	}
 
@@ -121,18 +137,17 @@ func (s Service) RecentMessages(ctx context.Context, _ *emptypb.Empty) (*v1.Rece
 
 func toMessage(msg Message) *v1.Message {
 	return &v1.Message{
-		ForumMessageId:  &msg.ForumMessageID,
-		ForumThreadId:   &msg.ForumThreadID,
-		SourceId:        new(msg.SourceID.Int64()),
-		BodyMd:          &msg.BodyMD,
-		Title:           &msg.Title,
-		Online:          &msg.Online,
-		Signature:       &msg.Signature,
-		PersonaName:     &msg.Personaname,
-		AvatarHash:      &msg.Avatarhash,
-		PermissionLevel: new(personv1.Privilege(msg.PermissionLevel)),
-		CreatedOn:       timestamppb.New(msg.CreatedOn),
-		UpdatedOn:       timestamppb.New(msg.UpdatedOn),
+		ForumMessageId: &msg.ForumMessageID,
+		ForumThreadId:  &msg.ForumThreadID,
+		SourceId:       new(msg.SourceID.Int64()),
+		BodyMd:         &msg.BodyMD,
+		Title:          &msg.Title,
+		Online:         &msg.Online,
+		Signature:      &msg.Signature,
+		PersonaName:    &msg.Personaname,
+		AvatarHash:     &msg.Avatarhash,
+		CreatedOn:      timestamppb.New(msg.CreatedOn),
+		UpdatedOn:      timestamppb.New(msg.UpdatedOn),
 	}
 }
 
@@ -150,7 +165,7 @@ func (s Service) Threads(ctx context.Context, req *v1.ThreadsRequest) (*v1.Threa
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	if !user.HasPermission(forum.PermissionLevel) {
+	if !s.canAccess(ctx, user, forum.RequiredPermission) {
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 
@@ -220,7 +235,7 @@ func (s Service) Forum(ctx context.Context, req *v1.ForumRequest) (*v1.ForumResp
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	if !user.HasPermission(forum.PermissionLevel) {
+	if !s.canAccess(ctx, user, forum.RequiredPermission) {
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 
@@ -312,7 +327,7 @@ func (s Service) ThreadEdit(ctx context.Context, req *v1.ThreadEditRequest) (*v1
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	if thread.SourceID != user.GetSteamID() && !user.HasPermission(permission.Moderator) {
+	if thread.SourceID != user.GetSteamID() && !s.roleAuth.HasPermission(ctx, *user, rolesv1.Permission_PERMISSION_FORUM_EDIT) {
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 
@@ -336,7 +351,7 @@ func (s Service) ThreadReplyCreate(ctx context.Context, req *v1.ThreadReplyCreat
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	if thread.Locked && !user.HasPermission(permission.Editor) {
+	if thread.Locked && !s.roleAuth.HasPermission(ctx, *user, rolesv1.Permission_PERMISSION_FORUM_EDIT) {
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 
@@ -348,7 +363,6 @@ func (s Service) ThreadReplyCreate(ctx context.Context, req *v1.ThreadReplyCreat
 
 	newMessage.Personaname = user.GetName()
 	newMessage.Avatarhash = user.GetAvatar().Hash()
-	newMessage.PermissionLevel = user.GetPrivilege()
 	newMessage.Online = true
 
 	return &v1.ThreadReplyCreateResponse{Message: toMessage(newMessage)}, nil
@@ -367,7 +381,7 @@ func (s Service) ThreadReplyEdit(ctx context.Context, req *v1.ThreadReplyEditReq
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	if message.SourceID != user.GetSteamID() && !user.HasPermission(permission.Moderator) {
+	if message.SourceID != user.GetSteamID() && !s.roleAuth.HasPermission(ctx, *user, rolesv1.Permission_PERMISSION_FORUM_EDIT) {
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 
@@ -382,13 +396,25 @@ func (s Service) ThreadReplyEdit(ctx context.Context, req *v1.ThreadReplyEditReq
 
 func (s Service) ThreadMessageDelete(ctx context.Context, req *v1.ThreadMessageDeleteRequest) (*emptypb.Empty, error) {
 	user := rpc.UserInfoFromCtx(ctx)
-	if err := s.forums.MessageDelete(ctx, user, req.GetForumMessageId()); err != nil {
+
+	var message Message
+	if err := s.forums.Message(ctx, req.GetForumMessageId(), &message); err != nil {
+		if errors.Is(err, database.ErrNoResult) {
+			return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
+		}
+
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	if message.SourceID != user.GetSteamID() && !s.roleAuth.HasPermission(ctx, *user, rolesv1.Permission_PERMISSION_FORUM_EDIT) {
+		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
+	}
+
+	if err := s.forums.MessageDelete(ctx, req.GetForumMessageId()); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNoResult):
 			return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
 		case errors.Is(err, ErrThreadLocked):
-			return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
-		case errors.Is(err, permission.ErrDenied):
 			return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 		default:
 			return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -442,13 +468,13 @@ func (s Service) Category(ctx context.Context, req *v1.CategoryRequest) (*v1.Cat
 
 func (s Service) ForumCreate(ctx context.Context, req *v1.ForumCreateRequest) (*v1.ForumCreateResponse, error) {
 	forum := Forum{
-		ForumCategoryID: req.GetForumCategoryId(),
-		Title:           stringutil.SanitizeUGC(req.GetTitle()),
-		Description:     stringutil.SanitizeUGC(req.GetDescription()),
-		Ordering:        req.GetOrdering(),
-		PermissionLevel: permission.Privilege(req.GetPermissionLevel()), //nolint:gosec
-		CreatedOn:       time.Now(),
-		UpdatedOn:       time.Now(),
+		ForumCategoryID:    req.GetForumCategoryId(),
+		Title:              stringutil.SanitizeUGC(req.GetTitle()),
+		Description:        stringutil.SanitizeUGC(req.GetDescription()),
+		Ordering:           req.GetOrdering(),
+		RequiredPermission: req.GetRequiredPermission(),
+		CreatedOn:          time.Now(),
+		UpdatedOn:          time.Now(),
 	}
 
 	if errSave := s.forums.ForumSave(ctx, &forum); errSave != nil {
@@ -468,7 +494,7 @@ func (s Service) ForumEdit(ctx context.Context, req *v1.ForumEditRequest) (*v1.F
 	forum.Title = stringutil.SanitizeUGC(req.GetTitle())
 	forum.Description = stringutil.SanitizeUGC(req.GetDescription())
 	forum.Ordering = req.GetOrdering()
-	forum.PermissionLevel = permission.Privilege(req.GetPermissionLevel()) //nolint:gosec
+	forum.RequiredPermission = req.GetRequiredPermission()
 
 	if errSave := s.forums.ForumSave(ctx, &forum); errSave != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -497,7 +523,6 @@ func fromThreadWithSource(thread ThreadWithSource) *v1.ThreadWithSource {
 		Thread:               fromThread(thread.Thread),
 		PersonaName:          &thread.Personaname,
 		AvatarHash:           &thread.Avatarhash,
-		PermissionLevel:      new(personv1.Privilege(thread.PermissionLevel)),
 		RecentForumMessageId: &thread.RecentForumMessageID,
 		RecentCreatedOn:      timestamppb.New(thread.RecentCreatedOn),
 		RecentSteamId:        &thread.RecentSteamID,
@@ -516,7 +541,7 @@ func toForum(forum Forum) *v1.Forum {
 		Ordering:            &forum.Ordering,
 		CountThreads:        &forum.CountThreads,
 		CountMessages:       &forum.CountMessages,
-		PermissionLevel:     new(personv1.Privilege(forum.PermissionLevel)),
+		RequiredPermission:  &forum.RequiredPermission,
 		RecentForumThreadId: &forum.RecentForumThreadID,
 		RecentForumTitle:    &forum.RecentForumTitle,
 		RecentSourceId:      &forum.RecentSourceID,

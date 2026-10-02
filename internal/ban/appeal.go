@@ -6,26 +6,26 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type AppealMessage struct {
-	BanID           int32
-	BanMessageID    int64
-	AuthorID        steamid.SteamID
-	MessageMD       string
-	Deleted         bool
-	CreatedOn       time.Time
-	UpdatedOn       time.Time
-	Avatarhash      string
-	Personaname     string
-	PermissionLevel permission.Privilege
+	BanID        int32
+	BanMessageID int64
+	AuthorID     steamid.SteamID
+	MessageMD    string
+	Deleted      bool
+	CreatedOn    time.Time
+	UpdatedOn    time.Time
+	Avatarhash   string
+	Personaname  string
 }
 
 func (am AppealMessage) Path() string {
@@ -92,10 +92,11 @@ type Appeals struct {
 	persons      person.Provider
 	notif        notification.Notifier
 	logChannelID string
+	roleAuth     *rpc.RoleAuth
 }
 
-func NewAppeals(ar AppealRepository, bans Bans, persons person.Provider, notif notification.Notifier, logChannelID string) Appeals {
-	return Appeals{AppealRepository: ar, bans: bans, persons: persons, notif: notif, logChannelID: logChannelID}
+func NewAppeals(ar AppealRepository, bans Bans, persons person.Provider, notif notification.Notifier, logChannelID string, roleAuth *rpc.RoleAuth) Appeals {
+	return Appeals{AppealRepository: ar, bans: bans, persons: persons, notif: notif, logChannelID: logChannelID, roleAuth: roleAuth}
 }
 
 func (u *Appeals) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, error) {
@@ -117,8 +118,8 @@ func (u *Appeals) EditBanMessage(ctx context.Context, curUser person.BaseUser, b
 		return existing, errReport
 	}
 
-	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, permission.Moderator) {
-		return existing, permission.ErrDenied
+	if !u.roleAuth.HasPermissionForSteamID(ctx, curUser.GetSteamID(), rolesv1.Permission_PERMISSION_APPEAL_ADMIN) && !existing.AuthorID.Equal(curUser.GetSteamID()) {
+		return existing, rpc.ErrPermission
 	}
 
 	if newMsg == "" {
@@ -154,8 +155,8 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.BaseUser,
 		return AppealMessage{}, httphelper.ErrInvalidParameter
 	}
 
-	if !httphelper.HasPrivilege(curUser, steamid.Collection{ban.TargetID}, permission.Moderator) {
-		return AppealMessage{}, permission.ErrDenied
+	if !u.roleAuth.HasPermissionForSteamID(ctx, curUser.GetSteamID(), rolesv1.Permission_PERMISSION_BAN_CREATE) && !ban.TargetID.Equal(curUser.GetSteamID()) {
+		return AppealMessage{}, rpc.ErrPermission
 	}
 
 	if newMsg == "" {
@@ -171,8 +172,8 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.BaseUser,
 		return AppealMessage{}, errReport
 	}
 
-	if bannedPerson.AppealState != Open && !curUser.HasPermission(permission.Moderator) {
-		return AppealMessage{}, permission.ErrDenied
+	if bannedPerson.AppealState != Open && !u.roleAuth.HasPermissionForSteamID(ctx, curUser.GetSteamID(), rolesv1.Permission_PERMISSION_APPEAL_ADMIN) {
+		return AppealMessage{}, rpc.ErrPermission
 	}
 
 	if errTarget := u.persons.EnsurePerson(ctx, bannedPerson.TargetID); errTarget != nil {
@@ -184,7 +185,6 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.BaseUser,
 	}
 
 	msg := NewBanAppealMessage(banID, curUser.GetSteamID(), newMsg)
-	msg.PermissionLevel = curUser.GetPrivilege()
 	msg.Personaname = curUser.GetName()
 	msg.Avatarhash = curUser.GetAvatar().Hash()
 
@@ -201,7 +201,7 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.BaseUser,
 	go u.notif.Send(notification.NewDiscord(u.logChannelID, newAppealMessageResponse(msg)))
 
 	go u.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
-		[]permission.Privilege{permission.Moderator, permission.Admin},
+		[]rolesv1.Permission{rolesv1.Permission_PERMISSION_BAN_READ},
 		notification.Info,
 		"A new ban appeal message",
 		link.Path(bannedPerson),
@@ -228,8 +228,8 @@ func (u *Appeals) Messages(ctx context.Context, userProfile person.BaseUser, ban
 		return nil, errGetBan
 	}
 
-	if !userProfile.HasPermission(permission.Moderator) && !banPerson.TargetID.Equal(userProfile.GetSteamID()) {
-		return nil, permission.ErrDenied
+	if !u.roleAuth.HasPermissionForSteamID(ctx, userProfile.GetSteamID(), rolesv1.Permission_PERMISSION_APPEAL_READ) && !banPerson.TargetID.Equal(userProfile.GetSteamID()) {
+		return nil, rpc.ErrPermission
 	}
 
 	return u.AppealRepository.Messages(ctx, banID)
@@ -245,8 +245,8 @@ func (u *Appeals) DropMessage(ctx context.Context, curUser person.BaseUser, banM
 		return errExist
 	}
 
-	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, permission.Moderator) {
-		return permission.ErrDenied
+	if !u.roleAuth.HasPermissionForSteamID(ctx, curUser.GetSteamID(), rolesv1.Permission_PERMISSION_APPEAL_ADMIN) && !existing.AuthorID.Equal(curUser.GetSteamID()) {
+		return rpc.ErrPermission
 	}
 
 	if errDrop := u.AppealRepository.DropMessage(ctx, &existing); errDrop != nil {

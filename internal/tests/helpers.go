@@ -8,7 +8,6 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -58,29 +57,18 @@ type UserAuth struct {
 	Profile personDomain.Core
 }
 
-func (s *UserAuth) Middleware(level permission.Privilege) func(http.Handler) http.Handler {
+func (s *UserAuth) Middleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			if level > s.Profile.PermissionLevel {
-				res.WriteHeader(http.StatusForbidden)
-
-				return
-			}
-
 			*req = *req.WithContext(context.WithValue(req.Context(), auth.CtxKeyUserProfile, s.Profile))
 			next.ServeHTTP(res, req)
 		})
 	}
 }
 
-func (s *UserAuth) MiddlewareWS(level permission.Privilege) func(http.Handler) http.Handler {
+func (s *UserAuth) MiddlewareWS() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			if level > s.Profile.PermissionLevel {
-				res.WriteHeader(http.StatusForbidden)
-
-				return
-			}
 			*req = *req.WithContext(context.WithValue(req.Context(), auth.CtxKeyUserProfile, s.Profile))
 			next.ServeHTTP(res, req)
 		})
@@ -101,19 +89,17 @@ func newDB(ctx context.Context) (*postgresContainer, error) {
 	username, password, dbName := testInfo, testInfo, testInfo
 
 	cont, errContainer := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: testcontainers.ContainerRequest{
-			Image: "gbans/postgres-ip4r:latest",
+		Image: "gbans/postgres-ip4r:latest",
 
-			Env: map[string]string{
-				"POSTGRES_DB":       dbName,
-				"POSTGRES_USER":     username,
-				"POSTGRES_PASSWORD": password,
-			},
-			AlwaysPullImage: false,
-			WaitingFor: wait.
-				ForLog("database system is ready to accept connections").
-				WithOccurrence(2),
+		Env: map[string]string{
+			"POSTGRES_DB":       dbName,
+			"POSTGRES_USER":     username,
+			"POSTGRES_PASSWORD": password,
 		},
+		AlwaysPullImage: false,
+		WaitingFor: wait.
+			ForLog("database system is ready to accept connections").
+			WithOccurrence(2),
 		Started: true,
 	})
 
@@ -159,22 +145,20 @@ func (c *TestConfigRepo) Init(_ context.Context) error {
 
 func TestConfig(ctx context.Context, dsn string) (*config.Configuration, error) {
 	return config.NewConfiguration(ctx, config.Static{}, config.NewMemConfigRepository(config.Config{
-		Static: config.Static{
-			Owner:               OwnerSID.String(),
-			ExternalURL:         "http://example.com",
-			HTTPHost:            "localhost",
-			HTTPPort:            6006,
-			HTTPStaticPath:      "",
-			HTTPCookieKey:       stringutil.SecureRandomString(10),
-			HTTPClientTimeout:   10,
-			HTTPCORSEnabled:     false,
-			HTTPCorsOrigins:     nil,
-			DatabaseDSN:         dsn,
-			DatabaseAutoMigrate: true,
-			DatabaseLogQueries:  false,
-			PrometheusEnabled:   false,
-			PProfEnabled:        false,
-		},
+		Owner:               OwnerSID.String(),
+		ExternalURL:         "http://example.com",
+		HTTPHost:            "localhost",
+		HTTPPort:            6006,
+		HTTPStaticPath:      "",
+		HTTPCookieKey:       stringutil.SecureRandomString(10),
+		HTTPClientTimeout:   10,
+		HTTPCORSEnabled:     false,
+		HTTPCorsOrigins:     nil,
+		DatabaseDSN:         dsn,
+		DatabaseAutoMigrate: true,
+		DatabaseLogQueries:  false,
+		PrometheusEnabled:   false,
+		PProfEnabled:        false,
 		General: &config.General{
 			SiteName:           "gbans",
 			Mode:               config.TestMode,

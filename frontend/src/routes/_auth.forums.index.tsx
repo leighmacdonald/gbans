@@ -27,7 +27,7 @@ import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import type { Category } from "../rpc/forum/v1/forum_pb.ts";
 import { overview } from "../rpc/forum/v1/forum-ForumService_connectquery.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { logErr } from "../util/errors.ts";
 import { avatarHashToURL, humanCount } from "../util/strings.ts";
 import { renderTimestamp } from "../util/time.ts";
@@ -53,7 +53,7 @@ const CategoryBlock = ({ category }: { category: Category }) => {
 	}, [category]);
 
 	const buttons = useMemo(() => {
-		return hasPermission(Privilege.MODERATOR)
+		return hasPermission(Permission.FORUM_EDIT)
 			? [
 					<Button
 						size={"small"}
@@ -227,7 +227,7 @@ function ForumOverview() {
 				<Stack spacing={2}>
 					<ForumRecentMessageActivity />
 					<ForumRecentUserActivity />
-					{hasPermission(Privilege.MODERATOR) && (
+					{hasPermission(Permission.FORUM_EDIT) && (
 						<ContainerWithHeader title={"Mod Tools"} iconLeft={<ConstructionIcon />}>
 							<Button onClick={onNewCategory} variant={"contained"} color={"success"}>
 								New Category

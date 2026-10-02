@@ -19,7 +19,7 @@ import { useAuth } from "../../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import type { Message } from "../../rpc/forum/v1/forum_pb.ts";
 import { threadReplyEdit } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
-import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../../rpc/roles/v1/roles_pb.ts";
 import { avatarHashToURL } from "../../util/strings.ts";
 import { renderTimestamp } from "../../util/time.ts";
 import { mdEditorRef } from "../form/field/MarkdownField.tsx";
@@ -46,7 +46,7 @@ export const ThreadMessageContainer = ({
 	const theme = useTheme();
 
 	const editable = useMemo(() => {
-		return profile.steamId === message.sourceId || hasPermission(Privilege.MODERATOR);
+		return profile.steamId === message.sourceId || hasPermission(Permission.FORUM_EDIT);
 	}, [hasPermission, message.sourceId, profile.steamId]);
 
 	const mutation = useMutation(threadReplyEdit, {
@@ -99,9 +99,6 @@ export const ThreadMessageContainer = ({
 							to={`/profile/${message.sourceId}`}
 							align={"center"}
 						/>
-						<Typography variant={"subtitle1"} align={"center"}>
-							{Privilege[message.permissionLevel]}
-						</Typography>
 					</Stack>
 				</Grid>
 				<Grid size={{ xs: 10 }}>

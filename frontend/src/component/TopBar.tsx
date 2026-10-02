@@ -9,6 +9,7 @@ import DeveloperBoardIcon from "@mui/icons-material/DeveloperBoard";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import ForumIcon from "@mui/icons-material/Forum";
+import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import HowToVoteIcon from "@mui/icons-material/HowToVote";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import ListIcon from "@mui/icons-material/List";
@@ -52,7 +53,7 @@ import steamLogo from "../icons/steam_login_sm.png";
 import type { InfoResponse } from "../rpc/config/v1/config_pb.ts";
 import type { UserNotification } from "../rpc/notification/v1/notification_pb.ts";
 import { notifications } from "../rpc/notification/v1/notification-NotificationService_connectquery.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { tf2Fonts } from "../theme";
 import { generateOIDCLink } from "../util/auth/generateOIDCLink.ts";
 import { avatarHashToURL } from "../util/strings.ts";
@@ -257,6 +258,11 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 					callback: onClickHandler("/admin/people"),
 				},
 				{
+					leftIcon: <GroupAddIcon sx={colourOpts} />,
+					label: "Roles",
+					callback: onClickHandler("/admin/roles"),
+				},
+				{
 					leftIcon: <HowToVoteIcon sx={colourOpts} />,
 					label: "Vote History",
 					callback: onClickHandler("/admin/votes"),
@@ -415,7 +421,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 									<IconButton onClick={colourMode.toggleColorMode}>{themeIcon}</IconButton>
 								</Tooltip>
 
-								{hasPermission(Privilege.USER) && (
+								{hasPermission(Permission.NOTIFICATIONS) && (
 									<IconButton component={RouterLink} to={"/notifications"} color={"inherit"}>
 										<Badge
 											color={"success"}
@@ -444,7 +450,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 										</Button>
 									</Tooltip>
 								)}
-								{hasPermission(Privilege.MODERATOR) && (
+								{hasPermission(Permission.BAN_WRITE) && (
 									<VCenterBox>
 										<NestedDropdown
 											menuItemsData={adminItems}
@@ -492,9 +498,6 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 						</Box>
 					</Toolbar>
 				</Container>
-				{/*{hasPermission(PermissionLevel.User) && (
-                    <DesktopNotifications notifications={notifications} isLoading={isLoading} />
-                )}*/}
 			</AppBar>
 			<div style={{ padding: 24 }}></div>
 		</>

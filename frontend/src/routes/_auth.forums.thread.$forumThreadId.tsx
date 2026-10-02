@@ -34,7 +34,7 @@ import {
 	threadMessages,
 	threadReplyCreate,
 } from "../rpc/forum/v1/forum-ForumService_connectquery.ts";
-import { Privilege } from "../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { logErr } from "../util/errors.ts";
 import { useScrollToLocation } from "../util/history.ts";
 import { commonTableSearchSchema, RowsPerPage } from "../util/table.ts";
@@ -51,7 +51,7 @@ export const Route = createFileRoute("/_auth/forums/thread/$forumThreadId")({
 });
 
 function ForumThreadPage() {
-	const { hasPermission, permissionLevel } = useAuth();
+	const { isAuthenticated, hasPermission } = useAuth();
 	const { forumThreadId } = Route.useParams();
 	const { appInfo } = Route.useRouteContext();
 	const { pageIndex } = Route.useSearch();
@@ -172,7 +172,7 @@ function ForumThreadPage() {
 	});
 
 	const replyContainer = useMemo(() => {
-		if (permissionLevel() === Privilege.GUEST) {
+		if (!isAuthenticated()) {
 			return (
 				<Navigate
 					to={"/login"}
@@ -217,10 +217,10 @@ function ForumThreadPage() {
 		} else {
 			return null;
 		}
-	}, [permissionLevel, threadData?.thread?.forumThreadId, threadData?.thread?.locked, form]);
+	}, [isAuthenticated, threadData?.thread?.forumThreadId, threadData?.thread?.locked, form]);
 
 	const buttons = useMemo(() => {
-		if (hasPermission(Privilege.MODERATOR)) {
+		if (hasPermission(Permission.FORUM_EDIT)) {
 			return [
 				<IconButton color={"warning"} onClick={onEditThread} key={"thread-buttons"}>
 					<ConstructionIcon fontSize={"small"} />
@@ -245,7 +245,7 @@ function ForumThreadPage() {
 							sx={{ color: (theme) => theme.palette.text.primary }}
 							to={`/profile/${threadData?.thread?.sourceId}`}
 						>
-							{threadData?.personaName}
+							{"FIXME"}
 						</Typography>
 					</VCenterBox>
 					<AccessTimeIcon />

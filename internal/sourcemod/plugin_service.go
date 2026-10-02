@@ -15,7 +15,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/rpc"
-	"github.com/leighmacdonald/gbans/internal/servers"
 	v1 "github.com/leighmacdonald/gbans/internal/sourcemod/v1"
 	"github.com/leighmacdonald/gbans/internal/sourcemod/v1/sourcemodv1connect"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -61,6 +60,7 @@ func NewPluginService(sourcemod Sourcemod, persons *person.Persons, serverAuthen
 	authMiddleware.ServerRoute(sourcemodv1connect.PluginServiceSMUsersProcedure, serverAuth)
 	authMiddleware.ServerRoute(sourcemodv1connect.PluginServiceSMGroupsProcedure, serverAuth)
 	authMiddleware.ServerRoute(sourcemodv1connect.PluginServiceSMSeedProcedure, serverAuth)
+	authMiddleware.ServerRoute(sourcemodv1connect.PluginServiceSMPingModProcedure, serverAuth)
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -186,7 +186,7 @@ func (s PluginService) SMOverrides(ctx context.Context, _ *emptypb.Empty) (*v1.S
 		resp.Overrides[idx] = &v1.SMOverride{
 			OverrideType: toOverrideType(override.Type),
 			Name:         &override.Name,
-			Flags:        &override.Flags,
+			Permissions:  override.Permissions,
 		}
 	}
 
@@ -199,20 +199,22 @@ func (s PluginService) SMUsers(ctx context.Context, _ *emptypb.Empty) (*v1.SMUse
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
+	// UserGroups is always a non-nil slice so the JSON response contains the
+	// key even when empty; the sourcemod plugin dereferences it unconditionally.
 	resp := v1.SMUsersResponse{
 		Users:      make([]*v1.SMUser, len(users)),
-		UserGroups: nil,
+		UserGroups: make([]*v1.SMUserGroup, 0),
 	}
 
 	for idx, user := range users {
 		resp.Users[idx] = &v1.SMUser{
-			Id:       &user.AdminID,
-			AuthType: toAuthType(user.AuthType),
-			Identity: &user.Identity,
-			Password: &user.Password,
-			Flags:    &user.Flags,
-			Name:     &user.Name,
-			Immunity: &user.Immunity,
+			Id:          &user.AdminID,
+			AuthType:    toAuthType(user.AuthType),
+			Identity:    &user.Identity,
+			Password:    &user.Password,
+			Name:        &user.Name,
+			Immunity:    &user.Immunity,
+			Permissions: user.Permissions,
 		}
 
 		for _, ug := range user.Groups {
@@ -245,9 +247,9 @@ func (s PluginService) SMGroups(ctx context.Context, _ *emptypb.Empty) (*v1.SMGr
 	//goland:noinspection ALL
 	for idx, group := range groups {
 		resp.Groups[idx] = &v1.Group{
-			Flags:         &group.Flags,
 			Name:          &group.Name,
 			ImmunityLevel: &group.ImmunityLevel,
+			Permissions:   group.Permissions,
 		}
 	}
 
@@ -281,20 +283,17 @@ func (s PluginService) SMSeed(ctx context.Context, req *v1.SMSeedRequest) (*v1.S
 		return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
 	}
 
-	var serverState servers.SafeServer
-	for _, srv := range s.sourcemod.servers.Current() {
-		if serverInfo.ServerID == server.ServerID {
-			serverState = srv
+	serverState, errState := s.sourcemod.servers.SafeState(ctx, server.ServerID)
+	if errState != nil {
+		return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
+	}
 
-			break
+	if ok, errSeed := s.sourcemod.seedRequest(server.DiscordSeedRoleIDs, serverState, steamID.String()); !ok {
+		if errors.Is(errSeed, ErrReqTooSoon) {
+			// The plugin maps this error to HTTP 429 and tells the requesting player to wait.
+			return nil, connect.NewError(connect.CodeResourceExhausted, errSeed)
 		}
-	}
 
-	if serverState.ServerID == 0 {
-		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
-	}
-
-	if !s.sourcemod.seedRequest(server.DiscordSeedRoleIDs, serverState, steamID.String()) {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 

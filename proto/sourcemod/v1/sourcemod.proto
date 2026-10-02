@@ -5,6 +5,7 @@ package sourcemod.v1;
 import "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "roles/v1/roles.proto";
 
 service SourcemodService {
   rpc Groups(google.protobuf.Empty) returns (GroupsResponse) {}
@@ -38,7 +39,7 @@ message Group {
     (buf.validate.field).required = true,
     (buf.validate.field).int32 = {gt: 0}
   ];
-  string flags = 2 [(buf.validate.field).required = true];
+  reserved 2;
   string name = 3 [
     (buf.validate.field).required = true,
     (buf.validate.field).string = {min_len: 1}
@@ -52,6 +53,8 @@ message Group {
   ];
   google.protobuf.Timestamp created_on = 5;
   google.protobuf.Timestamp updated_on = 6;
+  // The full permission set of the group's role.
+  repeated roles.v1.Permission permissions = 7;
 }
 
 message GroupsResponse {
@@ -63,11 +66,8 @@ message CreateGroupRequest {
     (buf.validate.field).required = true,
     (buf.validate.field).string = {min_len: 1}
   ];
-  int32 immunity = 2 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 100
-  ];
-  string flags = 3 [(buf.validate.field).required = true];
+  reserved 2, 3;
+  repeated roles.v1.Permission permissions = 4;
 }
 
 message CreateGroupResponse {
@@ -83,11 +83,8 @@ message EditGroupsRequest {
     (buf.validate.field).required = true,
     (buf.validate.field).string = {min_len: 1}
   ];
-  int32 immunity = 3 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 100
-  ];
-  string flags = 4 [(buf.validate.field).required = true];
+  reserved 3, 4;
+  repeated roles.v1.Permission permissions = 5;
 }
 
 message EditGroupsResponse {
@@ -181,18 +178,12 @@ message CreateAdminRequest {
   ];
   string identity = 2 [(buf.validate.field).required = true];
   string password = 3;
-  string flags = 4 [(buf.validate.field).required = true];
+  reserved 4, 6;
   string name = 5 [
     (buf.validate.field).required = true,
     (buf.validate.field).string = {min_len: 1}
   ];
-  int32 immunity = 6 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).int32 = {
-      gte: 0
-      lte: 100
-    }
-  ];
+  repeated roles.v1.Permission permissions = 7;
 }
 
 message CreateAdminResponse {
@@ -200,9 +191,9 @@ message CreateAdminResponse {
 }
 
 message EditAdminRequest {
-  int32 admin_id = 1 [
+  int64 admin_id = 1 [
     (buf.validate.field).required = true,
-    (buf.validate.field).int32 = {gt: 0}
+    (buf.validate.field).int64 = {gt: 0}
   ];
   AuthType auth_type = 2 [
     (buf.validate.field).required = true,
@@ -210,34 +201,28 @@ message EditAdminRequest {
   ];
   string identity = 3 [(buf.validate.field).required = true];
   string password = 4;
-  string flags = 5 [(buf.validate.field).required = true];
+  reserved 5, 7;
   string name = 6 [
     (buf.validate.field).required = true,
     (buf.validate.field).string = {min_len: 1}
   ];
-  int32 immunity = 7 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).int32 = {
-      gte: 0
-      lte: 100
-    }
-  ];
+  repeated roles.v1.Permission permissions = 8;
 }
 message EditAdminResponse {
   Admin admin = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteAdminRequest {
-  int32 admin_id = 1 [
+  int64 admin_id = 1 [
     (buf.validate.field).required = true,
-    (buf.validate.field).int32 = {gt: 0}
+    (buf.validate.field).int64 = {gt: 0}
   ];
 }
 
 message AddAdminGroupRequest {
-  int32 admin_id = 1 [
+  int64 admin_id = 1 [
     (buf.validate.field).required = true,
-    (buf.validate.field).int32 = {gt: 0}
+    (buf.validate.field).int64 = {gt: 0}
   ];
   int32 group_id = 2 [
     (buf.validate.field).required = true,
@@ -250,9 +235,9 @@ message AddAdminGroupResponse {
 }
 
 message DeleteAdminGroupRequest {
-  int32 admin_id = 1 [
+  int64 admin_id = 1 [
     (buf.validate.field).required = true,
-    (buf.validate.field).int32 = {gt: 0}
+    (buf.validate.field).int64 = {gt: 0}
   ];
   int32 group_id = 2 [
     (buf.validate.field).required = true,
@@ -273,7 +258,8 @@ message CreateOverridesRequest {
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
   ];
-  string flags = 3 [(buf.validate.field).required = true];
+  reserved 3;
+  repeated roles.v1.Permission permissions = 4;
 }
 
 message CreateOverridesResponse {
@@ -293,7 +279,8 @@ message EditOverridesRequest {
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
   ];
-  string flags = 4 [(buf.validate.field).required = true];
+  reserved 4;
+  repeated roles.v1.Permission permissions = 5;
 }
 
 message EditOverridesResponse {
@@ -379,9 +366,9 @@ enum AuthType {
 }
 
 message Admin {
-  int32 admin_id = 1 [
+  int64 admin_id = 1 [
     (buf.validate.field).required = true,
-    (buf.validate.field).int32 = {gt: 0}
+    (buf.validate.field).int64 = {gt: 0}
   ];
   int64 steam_id = 2 [(buf.validate.field).required = true];
   string auth_type = 3 [
@@ -392,7 +379,7 @@ message Admin {
   ];
   string identity = 4 [(buf.validate.field).required = true];
   string password = 5 [(buf.validate.field).required = true];
-  string flags = 6 [(buf.validate.field).required = true];
+  reserved 6;
   string name = 7 [(buf.validate.field).required = true];
   int32 immunity = 8 [
     (buf.validate.field).int32.gte = 0,
@@ -401,6 +388,8 @@ message Admin {
   repeated Group groups = 9 [(buf.validate.field).required = true];
   google.protobuf.Timestamp created_on = 10 [(buf.validate.field).required = true];
   google.protobuf.Timestamp updated_on = 11 [(buf.validate.field).required = true];
+  // The full permission set of the admin's personal role.
+  repeated roles.v1.Permission permissions = 12;
 }
 
 message Override {
@@ -413,7 +402,9 @@ message Override {
     (buf.validate.field).enum.defined_only = true
   ];
   string name = 3 [(buf.validate.field).required = true];
-  string flags = 4 [(buf.validate.field).required = true];
+  reserved 4;
   google.protobuf.Timestamp created_on = 5 [(buf.validate.field).required = true];
   google.protobuf.Timestamp updated_on = 6 [(buf.validate.field).required = true];
+  // The permission set required to use the overridden command or group.
+  repeated roles.v1.Permission permissions = 7;
 }

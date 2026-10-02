@@ -12,7 +12,7 @@ import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import type { Category, Forum } from "../../rpc/forum/v1/forum_pb.ts";
 import { forumCreate } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
-import { Privilege } from "../../rpc/person/v1/privilege_pb.ts";
+import { Permission } from "../../rpc/roles/v1/roles_pb.ts";
 import { enumValues } from "../../util/lists.ts";
 import { toTitleCase } from "../../util/strings.ts";
 
@@ -43,7 +43,7 @@ export const ForumForumEditorModal = NiceModal.create(
 				title: forum?.title ?? "",
 				description: forum?.description ?? "",
 				ordering: forum?.ordering ? String(forum?.ordering) : "0",
-				permissionLevel: forum?.permissionLevel ?? Privilege.USER,
+				requiredPermission: forum?.requiredPermission ?? Permission.FORUM_READ,
 			},
 		});
 
@@ -118,19 +118,19 @@ export const ForumForumEditorModal = NiceModal.create(
 							</Grid>
 							<Grid size={{ xs: 12 }}>
 								<form.AppField
-									name={"permissionLevel"}
+									name={"requiredPermission"}
 									validators={{
-										onChange: z.enum(Privilege),
+										onChange: z.enum(Permission),
 									}}
 									children={(field) => {
 										return (
-											<field.SelectPrivilegeField
+											<field.SelectPermissionsField
 												label={"Permissions Required"}
-												items={enumValues(Privilege)}
+												items={enumValues(Permission)}
 												renderItem={(pl) => {
 													return (
 														<MenuItem value={pl} key={`pl-${pl}`}>
-															{toTitleCase(Privilege[pl])}
+															{toTitleCase(Permission[pl])}
 														</MenuItem>
 													);
 												}}
