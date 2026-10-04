@@ -6,7 +6,7 @@
 
 public
 Action onCmdAutoTeamAction(int clientId, int argc) {
-    if (GetConVarBool(gbDisableAutoteam)) {
+    if (GetConVarBool(gb_disable_autoteam)) {
         KickClient(clientId, "Please stop trying to stack :(");
 
         char auth_id[50];

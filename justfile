@@ -108,8 +108,9 @@ db:
     ./dev_db.sh
 
 demostats-serve:
-    $DEMOSTATS_BIN update --api-key $STEAM_KEY
-    $DEMOSTATS_BIN serve
+    docker pull ghcr.io/leighmacdonald/tf2_demostats:v0.2.0
+    docker run  -v ./schema.json:/app/schema.json ghcr.io/leighmacdonald/tf2_demostats:v0.2.0 update --api-key $STEAM_KEY
+    docker run -p 8811:8811 -v ./schema.json:/app/schema.json ghcr.io/leighmacdonald/tf2_demostats:v0.2.0 serve
 
 dev:
     @zellij --layout .zellij.kdl attach --create gbans

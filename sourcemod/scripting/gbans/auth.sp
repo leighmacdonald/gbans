@@ -26,7 +26,7 @@ void OnClientPostAdminCheck(int clientId) {
 public
 void authenticateServer() {
     char passwd[40];
-    gbCoreServerKey.GetString(passwd, sizeof passwd);
+    gb_core_server_key.GetString(passwd, sizeof passwd);
 
     JSONObject req = new JSONObject();
     req.SetString("password", passwd);

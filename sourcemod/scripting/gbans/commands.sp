@@ -42,7 +42,7 @@ Action onCmdMod(int clientId, int argc) {
     }
 
     char serverName[PLATFORM_MAX_PATH];
-    GetConVarString(gbCoreHost, serverName, sizeof serverName);
+    GetConVarString(gb_core_host, serverName, sizeof serverName);
 
     JSONObject obj = new JSONObject();
     obj.SetString("steamId", authId);

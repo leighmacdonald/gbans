@@ -2,46 +2,37 @@
 #pragma tabsize 4
 #pragma newdecls required
 
-#define PLUGIN_NAME    "gbans"
-#define PLUGIN_VERSION "0.7.47"
+#define PLUGIN_VERSION "0.7.45"
 
 #define MAX_SCORES 256
 
-bool gLateLoaded;
-
-bool gPlayerStatus[MAXPLAYERS + 1];
-
 // Core gbans options
-ConVar gbCoreHost;
-ConVar gbCorePort;
-ConVar gbCoreServerKey;
-
+ConVar gb_core_host;
+ConVar gb_core_port;
+ConVar gb_core_server_key;
 // In Game Tweaks
-ConVar gbDisableAutoteam;
-ConVar gbHideConnections;
-
+ConVar gb_disable_autoteam;
+ConVar gb_hide_connections;
 // STV options
-ConVar gbStvEnable;
-ConVar gbAutoRecord;
-ConVar gbStvMinplayers;
-ConVar gbStvIgnorebots;
-ConVar gbStvTimestart;
-ConVar gbStvTimestop;
-ConVar gbStvFinishmap;
-ConVar gbStvPath;
-ConVar gbStvPathComplete;
+ConVar gb_stv_enable;
+ConVar gb_auto_record;
+ConVar gb_stv_minplayers;
+ConVar gb_stv_ignorebots;
+ConVar gb_stv_timestart;
+ConVar gb_stv_timestop;
+ConVar gb_stv_finishmap;
+ConVar gb_stv_path;
+ConVar gb_stv_path_complete;
 
 // Reports command
-int          gReportSourceId         = -1;
-int          gReportTargetId         = -1;
-bool         gReportWaitingForReason = false;
+int gReportSourceId = -1;
+int gReportTargetId = -1;
+bool gReportWaitingForReason = false;
 GB_BanReason gReportTargetReason;
-int          gReportStartedAtTime = -1;
+int gReportStartedAtTime = -1;
 
-// Stv
 bool gIsRecording = false;
-bool gIsManual    = false;
-
+bool gIsManual = false;
 // jwt returned and used once authenticated
 char gToken[1024] = "";
-// int gLastAuthAttempt = 0;
+bool gLateLoaded;
