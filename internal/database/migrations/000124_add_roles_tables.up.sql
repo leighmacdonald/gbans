@@ -32,7 +32,6 @@ BEGIN
         'PERMISSION_FORUM_EDIT',
         'PERMISSION_GAMEADMIN_READ',
         'PERMISSION_GAMEADMIN_WRITE',
-        'PERMISSION_LOGIN',
         'PERMISSION_NETWORK_READ',
         'PERMISSION_NETWORK_ADMIN',
         'PERMISSION_NEWS_READ',
@@ -172,7 +171,6 @@ CROSS JOIN (VALUES
     ('PERMISSION_FORUM_EDIT'::permission),
     ('PERMISSION_GAMEADMIN_READ'::permission),
     ('PERMISSION_GAMEADMIN_WRITE'::permission),
-    ('PERMISSION_LOGIN'::permission),
     ('PERMISSION_NETWORK_READ'::permission),
     ('PERMISSION_NETWORK_ADMIN'::permission),
     ('PERMISSION_NEWS_READ'::permission),
@@ -224,7 +222,6 @@ CROSS JOIN (VALUES
     ('PERMISSION_CONTEST_DELETE'::permission),
     ('PERMISSION_DEMO_READ'::permission),
     ('PERMISSION_FORUM_EDIT'::permission),
-    ('PERMISSION_LOGIN'::permission),
     ('PERMISSION_NETWORK_READ'::permission),
     ('PERMISSION_NEWS_READ'::permission),
     ('PERMISSION_NEWS_WRITE'::permission),
@@ -246,7 +243,6 @@ INSERT INTO role_permissions (role_id, permission, created_on, updated_on)
 SELECT r.role_id, v.permission, NOW(), NOW()
 FROM (SELECT role_id FROM roles WHERE role_name = 'streamer') r
 CROSS JOIN (VALUES
-    ('PERMISSION_LOGIN'::permission),
     ('PERMISSION_BAN_WRITE'::permission)
  ) v(permission)
 on conflict do nothing;
@@ -264,7 +260,6 @@ CROSS JOIN (VALUES
     ('PERMISSION_DEMO_READ'::permission),
     ('PERMISSION_FORUM_READ'::permission),
     ('PERMISSION_FORUM_WRITE'::permission),
-    ('PERMISSION_LOGIN'::permission),
     ('PERMISSION_NEWS_READ'::permission),
     ('PERMISSION_REPORT_CREATE'::permission),
     ('PERMISSION_SPEEDRUN_READ'::permission),

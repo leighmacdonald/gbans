@@ -57,8 +57,8 @@ void postHTTPRequest(const char[] path, JSON data, HTTPRequestCallback callback,
 
 stock void makeURL(const char[] path, char[] outURL, int maxLen) {
     char serverHost[PLATFORM_MAX_PATH];
-    GetConVarString(gbCoreHost, serverHost, sizeof serverHost);
-    int port = GetConVarInt(gbCorePort);
+    GetConVarString(gb_core_host, serverHost, sizeof serverHost);
+    int port = GetConVarInt(gb_core_port);
 
     Format(outURL, maxLen, "%s:%d%s", serverHost, port, path);
 }
