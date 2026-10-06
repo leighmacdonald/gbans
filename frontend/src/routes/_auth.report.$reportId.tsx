@@ -60,7 +60,11 @@ function ReportView() {
 		{ enabled: Boolean(reportResp?.report?.report?.demoId) },
 	);
 
-	const { data: banResp, isLoading: isLoadingBan } = useQuery(getBanByReportID, { reportId: Number(reportId) });
+	const { data: banResp, isLoading: isLoadingBan } = useQuery(
+		getBanByReportID,
+		{ reportId: Number(reportId) },
+		{ enabled: hasPermission(Permission.BAN_READ), retry: false },
+	);
 
 	const reportStatusView = useMemo(() => {
 		return (
@@ -126,7 +130,7 @@ function ReportView() {
 										<ListItem>
 											<ListItemText primary={"Ban ID"} secondary={banResp.ban.banId} />
 										</ListItem>
-										{banResp.ban.demoId && !isLoadingDemo && (
+										{Number(banResp.ban.demoId) > 0 && !isLoadingDemo && (
 											<ListItem>
 												<ListItemText primary={"Demo"} secondary={demoResp?.demo?.title} />
 											</ListItem>

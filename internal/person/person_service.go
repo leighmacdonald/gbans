@@ -26,8 +26,7 @@ type Service struct {
 func NewPersonService(persons *Persons, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := personv1connect.NewPersonServiceHandler(Service{persons: persons, roleAuth: roleAuth}, option...)
 
-	authMiddleware.UserRoute(personv1connect.PersonServiceProfileProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_PERSON_READ))
-	authMiddleware.UserRoute(personv1connect.PersonServiceResolveSteamIDProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STEAMID_RESOLVE))
+	authMiddleware.AuthedRoute(personv1connect.PersonServiceProfileProcedure)
 	authMiddleware.AuthedRoute(personv1connect.PersonServiceCurrentProfileProcedure)
 	authMiddleware.UserRoute(personv1connect.PersonServiceProfileSettingsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CURRENT_SETTINGS))
 	authMiddleware.UserRoute(personv1connect.PersonServiceEditProfileSettingsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CURRENT_SETTINGS))

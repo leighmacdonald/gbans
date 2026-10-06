@@ -17,12 +17,14 @@ import { TileLayer } from "react-leaflet/TileLayer";
 import "leaflet/dist/leaflet.css";
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQuery } from "@connectrpc/connect-query";
+import { useTheme } from "@mui/material";
 import { z } from "zod/v4";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { queryNetwork } from "../rpc/network/v1/network-NetworkService_connectquery.ts";
 import { getFlagEmoji } from "../util/emoji.ts";
+import { emptyOrNullString } from "../util/types.ts";
 
 const searchSchema = z.object({
 	ip: z.ipv4().optional(),
@@ -54,7 +56,8 @@ const InfoRow = ({ label, children }: { label: string; children: ReactNode }) =>
 function AdminNetworkInfo() {
 	const navigate = useNavigate({ from: Route.fullPath });
 	const { ip } = Route.useSearch();
-	const { data, isLoading } = useQuery(queryNetwork, { ip });
+
+	const { data, isLoading } = useQuery(queryNetwork, { ip }, { enabled: !emptyOrNullString(ip) });
 
 	const defaultValues: z.input<typeof searchSchema> = {
 		ip: ip ?? "",
@@ -92,7 +95,7 @@ function AdminNetworkInfo() {
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
+				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2} padding={2}>
 					<form
 						onSubmit={async (e) => {
 							e.preventDefault();
@@ -124,7 +127,7 @@ function AdminNetworkInfo() {
 				</ContainerWithHeader>
 			</Grid>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader title="Network Info" iconLeft={<CellTowerIcon />}>
+				<ContainerWithHeader title="Network Info" iconLeft={<CellTowerIcon />} padding={2}>
 					<Grid container spacing={2}>
 						<Grid size={{ xs: 12 }}>
 							{/*<Formik onSubmit={onSubmit} initialValues={{ ip: '' }}>*/}

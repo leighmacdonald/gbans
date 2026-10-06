@@ -27,9 +27,11 @@ export const SourceBansList = ({ steamId, isReporter }: SourceBansListProps) => 
 	}
 
 	return (
-		<ContainerWithHeader title={"External Ban History"} iconLeft={<HistoryIcon />}>
+		<ContainerWithHeader
+			title={`${isReporter ? "Reporter" : "Suspect"} External Ban History`}
+			iconLeft={<HistoryIcon />}
+		>
 			<Stack spacing={1}>
-				<Typography variant={"h5"}>{isReporter ? "Reporter History" : "Suspect History"}</Typography>
 				<TableContainer>
 					<Table size="small">
 						<TableHead>

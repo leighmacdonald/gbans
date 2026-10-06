@@ -278,6 +278,8 @@ func toConfig(conf Config) *configv1.Config {
 			AppId:                   &conf.Discord.AppID,
 			LinkId:                  &conf.Discord.LinkID,
 			GuildId:                 &conf.Discord.GuildID,
+			AppSecret:               &conf.Discord.AppID,
+			Token:                   &conf.Discord.Token,
 			PublicLogChannelEnable:  &conf.Discord.PublicLogChannelEnable,
 			LogChannelId:            &conf.Discord.LogChannelID,
 			PublicMatchLogChannelId: &conf.Discord.PublicMatchLogChannelID,

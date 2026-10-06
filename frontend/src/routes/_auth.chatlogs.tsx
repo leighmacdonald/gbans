@@ -40,8 +40,10 @@ import {
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { renderTableError } from "../error.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
 import { type Message, QueryRequestSchema } from "../rpc/chat/v1/chat_pb.ts";
 import { query } from "../rpc/chat/v1/chat-ChatService_connectquery.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
@@ -81,7 +83,7 @@ function ChatLogs() {
 	const { data: serverList, isLoading: isLoadingServers } = useQuery(servers);
 	const navigate = useNavigate();
 	const theme = useTheme();
-
+	const { hasPermission } = useAuth();
 	const serversSorted = useMemo(() => {
 		return serverList?.servers.toSorted((a, b) => a.serverName.localeCompare(b.serverName)) ?? [];
 	}, [serverList]);
@@ -323,7 +325,7 @@ function ChatLogs() {
 						<ReportIcon />
 					</IconButtonLink>
 				</Tooltip>
-				{!emptyOrNullString(row.original.matchId) && (
+				{!emptyOrNullString(row.original.matchId) && hasPermission(Permission.STATS_READ) && (
 					<Tooltip title={"Match Results"} key={1}>
 						<IconButtonLink
 							color={"success"}

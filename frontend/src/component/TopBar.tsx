@@ -1,6 +1,5 @@
 import { useQuery } from "@connectrpc/connect-query";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import AddModeratorIcon from "@mui/icons-material/AddModerator";
 import ArticleIcon from "@mui/icons-material/Article";
 import CellTowerIcon from "@mui/icons-material/CellTower";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
@@ -203,98 +202,126 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 			};
 		};
 
+		const items = [];
+
+		if (hasPermission(Permission.WORDFILTER_READ)) {
+			items.push({
+				leftIcon: <SubjectIcon sx={colourOpts} />,
+				label: "Filtered Words",
+				callback: onClickHandler("/admin/filters"),
+			});
+		}
+
+		if (hasPermission(Permission.BAN_WRITE)) {
+			items.push({
+				leftIcon: <NoAccountsIcon sx={colourOpts} />,
+				label: "Bans",
+				callback: onClickHandler("/admin/bans"),
+			});
+		}
+		if (hasPermission(Permission.REPORT_WRITE)) {
+			items.push({
+				leftIcon: <ReportIcon sx={colourOpts} />,
+				label: "Reports",
+				callback: onClickHandler("/admin/reports"),
+			});
+		}
+		if (hasPermission(Permission.APPEAL_WRITE)) {
+			items.push({
+				leftIcon: <LiveHelpIcon sx={colourOpts} />,
+				label: "Ban Appeals",
+				callback: onClickHandler("/admin/appeals"),
+			});
+		}
+		if (hasPermission(Permission.NEWS_READ)) {
+			items.push({
+				label: "News",
+				leftIcon: <NewspaperIcon sx={colourOpts} />,
+				callback: onClickHandler("/admin/news"),
+			});
+		}
+		if (hasPermission(Permission.NETWORK_READ)) {
+			items.push({
+				leftIcon: <WifiFindIcon sx={colourOpts} />,
+				label: "Find Players By IP",
+				callback: onClickHandler("/admin/network/playersbyip"),
+			});
+		}
+		if (hasPermission(Permission.NETWORK_READ)) {
+			items.push({
+				leftIcon: <CellTowerIcon sx={colourOpts} />,
+				label: "IP Info",
+				callback: onClickHandler("/admin/network/ipinfo"),
+			});
+		}
+		if (hasPermission(Permission.BLOCKLIST_READ)) {
+			items.push({
+				leftIcon: <WifiOffIcon sx={colourOpts} />,
+				label: "CIDR/IP Blocklist",
+				callback: onClickHandler("/admin/network/cidrblocks"),
+			});
+		}
+		if (hasPermission(Permission.CONTEST_READ)) {
+			items.push({
+				leftIcon: <EmojiEventsIcon sx={colourOpts} />,
+				label: "Contests",
+				callback: onClickHandler("/admin/contests"),
+			});
+		}
+		if (hasPermission(Permission.PERSON_READ)) {
+			items.push({
+				leftIcon: <PersonSearchIcon sx={colourOpts} />,
+				label: "People",
+				callback: onClickHandler("/admin/people"),
+			});
+		}
+		if (hasPermission(Permission.ROLE_READ)) {
+			items.push({
+				leftIcon: <GroupAddIcon sx={colourOpts} />,
+				label: "Roles",
+				callback: onClickHandler("/admin/roles"),
+			});
+		}
+		if (hasPermission(Permission.VOTE_READ)) {
+			items.push({
+				leftIcon: <HowToVoteIcon sx={colourOpts} />,
+				label: "Vote History",
+				callback: onClickHandler("/admin/votes"),
+			});
+		}
+		if (hasPermission(Permission.ANTICHEAT_READ)) {
+			items.push({
+				leftIcon: <DeveloperBoardIcon sx={colourOpts} />,
+				label: "Anticheat Logs",
+				callback: onClickHandler("/admin/anticheat"),
+			});
+		}
+		if (hasPermission(Permission.SERVER_READ)) {
+			items.push({
+				leftIcon: <SettingsIcon sx={colourOpts} />,
+				label: "Servers",
+				callback: onClickHandler("/admin/servers"),
+			});
+		}
+		if (hasPermission(Permission.SERVER_READ)) {
+			items.push({
+				leftIcon: <ListIcon sx={colourOpts} />,
+				label: "Server Logs",
+				callback: onClickHandler("/admin/serverlogs"),
+			});
+		}
+		if (hasPermission(Permission.CONFIG_READ)) {
+			items.push({
+				leftIcon: <DeveloperBoardIcon sx={colourOpts} />,
+				label: "System Settings",
+				callback: onClickHandler("/admin/settings"),
+			});
+		}
 		return {
 			label: <SettingsIcon />,
-			items: [
-				{
-					leftIcon: <SubjectIcon sx={colourOpts} />,
-					label: "Filtered Words",
-					callback: onClickHandler("/admin/filters"),
-				},
-				{
-					leftIcon: <NoAccountsIcon sx={colourOpts} />,
-					label: "Bans",
-					callback: onClickHandler("/admin/bans"),
-				},
-
-				{
-					leftIcon: <ReportIcon sx={colourOpts} />,
-					label: "Reports",
-					callback: onClickHandler("/admin/reports"),
-				},
-				{
-					leftIcon: <LiveHelpIcon sx={colourOpts} />,
-					label: "Ban Appeals",
-					callback: onClickHandler("/admin/appeals"),
-				},
-				{
-					label: "News",
-					leftIcon: <NewspaperIcon sx={colourOpts} />,
-					callback: onClickHandler("/admin/news"),
-				},
-				{
-					leftIcon: <WifiFindIcon sx={colourOpts} />,
-					label: "Find Players By IP",
-					callback: onClickHandler("/admin/network/playersbyip"),
-				},
-				{
-					leftIcon: <CellTowerIcon sx={colourOpts} />,
-					label: "IP Info",
-					callback: onClickHandler("/admin/network/ipinfo"),
-				},
-				{
-					leftIcon: <WifiOffIcon sx={colourOpts} />,
-					label: "CIDR/IP Blocklist",
-					callback: onClickHandler("/admin/network/cidrblocks"),
-				},
-				{
-					leftIcon: <EmojiEventsIcon sx={colourOpts} />,
-					label: "Contests",
-					callback: onClickHandler("/admin/contests"),
-				},
-				{
-					leftIcon: <PersonSearchIcon sx={colourOpts} />,
-					label: "People",
-					callback: onClickHandler("/admin/people"),
-				},
-				{
-					leftIcon: <GroupAddIcon sx={colourOpts} />,
-					label: "Roles",
-					callback: onClickHandler("/admin/roles"),
-				},
-				{
-					leftIcon: <HowToVoteIcon sx={colourOpts} />,
-					label: "Vote History",
-					callback: onClickHandler("/admin/votes"),
-				},
-				{
-					leftIcon: <DeveloperBoardIcon sx={colourOpts} />,
-					label: "Anticheat Logs",
-					callback: onClickHandler("/admin/anticheat"),
-				},
-				{
-					leftIcon: <SettingsIcon sx={colourOpts} />,
-					label: "Servers",
-					callback: onClickHandler("/admin/servers"),
-				},
-				{
-					leftIcon: <ListIcon sx={colourOpts} />,
-					label: "Server Logs",
-					callback: onClickHandler("/admin/serverlogs"),
-				},
-				{
-					leftIcon: <AddModeratorIcon sx={colourOpts} />,
-					label: "Game Admins",
-					callback: onClickHandler("/admin/game-admins"),
-				},
-				{
-					leftIcon: <DeveloperBoardIcon sx={colourOpts} />,
-					label: "System Settings",
-					callback: onClickHandler("/admin/settings"),
-				},
-			],
+			items: items,
 		};
-	}, [colourOpts, navigate]);
+	}, [colourOpts, navigate, hasPermission]);
 
 	const renderLinkedMenuItem = useCallback(
 		(text: string, route: string, icon: JSX.Element) => (
@@ -450,7 +477,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 										</Button>
 									</Tooltip>
 								)}
-								{hasPermission(Permission.BAN_WRITE) && (
+								{adminItems?.items && adminItems.items.length > 0 && (
 									<VCenterBox>
 										<NestedDropdown
 											menuItemsData={adminItems}
