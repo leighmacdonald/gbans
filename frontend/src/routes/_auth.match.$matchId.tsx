@@ -1,23 +1,26 @@
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQuery } from "@connectrpc/connect-query";
+import DownloadIcon from "@mui/icons-material/Download";
+import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
-import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useTheme } from "@mui/system";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
-import { BLUCard } from "../component/stats/BLUCard.tsx";
+import { KillFeedTable } from "../component/stats/KillFeedTable.tsx";
+import { MatchChatTable } from "../component/stats/MatchChatTable.tsx";
 import { assembleMatch } from "../component/stats/match.ts";
 import { OverallTable } from "../component/stats/OverallTable.tsx";
-import { REDCard } from "../component/stats/REDCard.tsx";
 import { RoundTable } from "../component/stats/RoundTable.tsx";
+import { ScoreBanner } from "../component/stats/ScoreBanner.tsx";
+import { TeamTotalsStrip } from "../component/stats/TeamTotalsStrip.tsx";
 import { makeSchemaDefaults, makeSchemaState } from "../component/table/options.ts";
 import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { Team } from "../rpc/stats/v1/stats_pb.ts";
 import { match } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
+import { tf2Fonts } from "../theme.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { durationString, renderDateTime } from "../util/time.ts";
 
@@ -41,7 +44,6 @@ export const Route = createFileRoute("/_auth/match/$matchId")({
 });
 
 function MatchPage() {
-	const theme = useTheme();
 	const { matchId } = Route.useParams();
 	const { data, isLoading, isError, error } = useQuery(match, { matchId });
 
@@ -54,7 +56,7 @@ function MatchPage() {
 
 	const winner = useMemo(() => {
 		if (!data?.match?.overview) {
-			return "";
+			return Team.UNASSIGNED_UNSPECIFIED;
 		}
 		return data.match.overview.scoreRed > data.match.overview.scoreBlu
 			? Team.RED
@@ -67,59 +69,81 @@ function MatchPage() {
 		return <LoadingPlaceholder />;
 	}
 
+	const overview = data?.match?.overview;
+
 	return (
 		<Grid container spacing={2}>
-			<Grid size={{ xs: 12, md: 12 }} component={Paper}>
-				<Grid container component={Paper} sx={{ backgroundColor: theme.palette.primary.main }}>
-					<Grid size={{ md: 6, xs: 12 }}>
-						<Typography variant={"subtitle1"}> {data?.match?.overview?.serverName}</Typography>
-					</Grid>
-					<Grid size={{ md: 6, xs: 12 }}>
-						<Typography variant={"subtitle1"} sx={{ textAlign: "right" }}>
-							{data?.match?.overview?.hostname}
+			<Grid size={{ xs: 12 }}>
+				<Paper sx={{ padding: 2 }}>
+					<Stack spacing={1}>
+						<Typography variant="h5" sx={{ ...tf2Fonts }}>
+							{overview?.serverName} BLU vs RED
 						</Typography>
-					</Grid>
-					<Grid size={{ md: 6, xs: 12 }}>
-						<Typography variant={"subtitle1"}> {data?.match?.overview?.map?.name}</Typography>
-					</Grid>
-					{data?.match?.overview?.createdOn && (
-						<Grid size={{ md: 6, xs: 12 }}>
-							<Typography sx={{ textAlign: "right" }} variant={"subtitle1"}>
-								{renderDateTime(timestampDate(data.match.overview.createdOn))}
+						<Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
+							<Typography variant="body1" sx={{ fontWeight: 700 }}>
+								{overview?.map?.name}
 							</Typography>
-						</Grid>
-					)}
-					<Grid size={{ md: 6, xs: 12 }}>
-						<Typography variant={"subtitle1"}>
-							{durationString(Number(data?.match?.overview?.duration ?? 0) * 1000)}
-						</Typography>
-					</Grid>
-
-					<Grid size={{ md: 6, xs: 12 }}>
-						<Typography sx={{ textAlign: "right" }}>
-							<Link color="textPrimary" href={`/asset/${data?.match?.overview?.assetId}`}>
-								Download STV
-							</Link>
-						</Typography>
-					</Grid>
-				</Grid>
-
-				<Stack direction="row">
-					<REDCard score={data?.match?.overview?.scoreRed ?? 0} winner={winner === Team.RED} />
-					<BLUCard score={data?.match?.overview?.scoreBlu ?? 0} winner={winner === Team.BLU} />
-				</Stack>
-
-				<Stack spacing={4}>
-					<OverallTable
-						data={summary}
-						matchId={matchId}
-						isError={isError}
-						error={error}
-						isLoading={isLoading}
-					/>
-					<RoundTable data={summary?.rounds ?? []} />
-				</Stack>
+							<Typography variant="body2" color="textSecondary">
+								{durationString(Number(overview?.duration ?? 0) * 1000)}
+							</Typography>
+							{overview?.createdOn && (
+								<Typography variant="body2" color="textSecondary">
+									{renderDateTime(timestampDate(overview.createdOn))}
+								</Typography>
+							)}
+						</Stack>
+						<Stack
+							direction={{ xs: "column", sm: "row" }}
+							spacing={1}
+							sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}
+						>
+							<Typography variant="body2" color="textSecondary">
+								{overview?.hostname}
+							</Typography>
+							{overview?.assetId && (
+								<Button
+									variant="contained"
+									size="small"
+									startIcon={<DownloadIcon />}
+									href={`/asset/${overview.assetId}`}
+								>
+									Download STV
+								</Button>
+							)}
+						</Stack>
+					</Stack>
+				</Paper>
 			</Grid>
+
+			<Grid size={{ xs: 12 }}>
+				<ScoreBanner scoreBlu={overview?.scoreBlu ?? 0} scoreRed={overview?.scoreRed ?? 0} winner={winner} />
+			</Grid>
+
+			{summary && (
+				<Grid size={{ xs: 12 }}>
+					<TeamTotalsStrip totals={summary.teamTotals} />
+				</Grid>
+			)}
+
+			<Grid size={{ xs: 12 }}>
+				<OverallTable data={summary} matchId={matchId} isError={isError} error={error} isLoading={isLoading} />
+			</Grid>
+
+			<Grid size={{ xs: 12 }}>
+				<RoundTable data={summary?.rounds ?? []} />
+			</Grid>
+
+			{summary && summary.kills.length > 0 && (
+				<Grid size={{ xs: 12 }}>
+					<KillFeedTable kills={summary.kills} players={summary.players} />
+				</Grid>
+			)}
+
+			{summary && summary.chatFeed.length > 0 && (
+				<Grid size={{ xs: 12 }}>
+					<MatchChatTable chat={summary.chatFeed} players={summary.players} />
+				</Grid>
+			)}
 		</Grid>
 	);
 }
