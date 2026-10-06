@@ -36,7 +36,7 @@ export const VariantDetailPanel = ({
 	const columns = useMemo(
 		() => [
 			roundColumnHelper.accessor("name", {
-				header: "Player",
+				header: isWeapons ? "Weapon" : "Class",
 			}),
 
 			roundColumnHelper.accessor("kills", {
@@ -87,7 +87,7 @@ export const VariantDetailPanel = ({
 				size: colSize,
 			}),
 		],
-		[roundColumnHelper],
+		[roundColumnHelper, isWeapons],
 	);
 
 	const table = useMaterialReactTable({

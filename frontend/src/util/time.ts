@@ -32,6 +32,25 @@ export const durationString = (d: number) => {
 	return `${hours}:${minutes}:${seconds}`;
 };
 
+/** TF2 demo tick rate (ticks per second). */
+export const TF2_TICK_RATE = 66.6667;
+
+/**
+ * Formats a tick count as a match clock (mm:ss, or h:mm:ss over an hour).
+ */
+export const formatMatchClock = (totalTicks: number): string => {
+	const s = Math.max(0, Math.floor(totalTicks / TF2_TICK_RATE));
+	const hours = Math.floor(s / 3600);
+	const minutes = Math.floor((s % 3600) / 60);
+	const seconds = s % 60;
+	const mm = String(minutes).padStart(2, "0");
+	const ss = String(seconds).padStart(2, "0");
+	if (hours > 0) {
+		return `${hours}:${mm}:${ss}`;
+	}
+	return `${mm}:${ss}`;
+};
+
 export const parseDateTime = (t: string | Date): Date => {
 	if (t instanceof Date) {
 		return t;
