@@ -1,0 +1,253 @@
+-- New per-player stats reported by tf2_demostats v0.3.x.
+alter table match_round_player
+  add column if not exists heals integer not null default 0,
+  add column if not exists healed integer not null default 0,
+  add column if not exists crossbow_heals integer not null default 0,
+  add column if not exists crossbow_healing bigint not null default 0,
+  add column if not exists heal_on_hit integer not null default 0,
+  add column if not exists building_healing bigint not null default 0,
+  add column if not exists dropped_ubers integer not null default 0,
+  add column if not exists reflects integer not null default 0,
+  add column if not exists defenses integer not null default 0,
+  add column if not exists direct_hits integer not null default 0,
+  add column if not exists teleports integer not null default 0,
+  add column if not exists push_distance integer not null default 0,
+  add column if not exists environmental_deaths integer not null default 0,
+  add column if not exists environmental_kills integer not null default 0,
+  add column if not exists object_placed integer not null default 0,
+  add column if not exists object_upgraded integer not null default 0,
+  add column if not exists object_carried integer not null default 0,
+  add column if not exists object_dropped integer not null default 0,
+  add column if not exists object_removed integer not null default 0,
+  add column if not exists object_detonated integer not null default 0,
+  add column if not exists ammo_packs integer not null default 0,
+  add column if not exists health_packs integer not null default 0,
+  add column if not exists health_pack_healing bigint not null default 0;
+
+alter table match_round_player_variants
+  add column if not exists heals integer not null default 0,
+  add column if not exists healed integer not null default 0,
+  add column if not exists crossbow_heals integer not null default 0,
+  add column if not exists crossbow_healing bigint not null default 0,
+  add column if not exists heal_on_hit integer not null default 0,
+  add column if not exists extinguishes integer not null default 0,
+  add column if not exists building_healing bigint not null default 0,
+  add column if not exists dropped_ubers integer not null default 0,
+  add column if not exists reflects integer not null default 0,
+  add column if not exists defenses integer not null default 0,
+  add column if not exists direct_hits integer not null default 0,
+  add column if not exists teleports integer not null default 0,
+  add column if not exists push_distance integer not null default 0,
+  add column if not exists environmental_deaths integer not null default 0,
+  add column if not exists environmental_kills integer not null default 0,
+  add column if not exists object_placed integer not null default 0,
+  add column if not exists object_upgraded integer not null default 0,
+  add column if not exists object_carried integer not null default 0,
+  add column if not exists object_dropped integer not null default 0,
+  add column if not exists object_removed integer not null default 0,
+  add column if not exists object_detonated integer not null default 0,
+  add column if not exists ammo_packs integer not null default 0,
+  add column if not exists health_packs integer not null default 0,
+  add column if not exists health_pack_healing bigint not null default 0;
+
+-- Kill feed details parsed from demos, linked to the owning match.
+-- killer_steam_id is NULL for world/environment kills.
+create table if not exists match_kill (
+  match_kill_id serial primary key,
+  match_id uuid not null references match (match_id) on delete cascade,
+  tick integer not null,
+  killer_steam_id bigint references person (steam_id),
+  victim_steam_id bigint not null references person (steam_id),
+  weapon text not null,
+  killer_pos_x double precision,
+  killer_pos_y double precision,
+  killer_pos_z double precision,
+  victim_pos_x double precision,
+  victim_pos_y double precision,
+  victim_pos_z double precision,
+  killer_angles_pitch double precision,
+  killer_angles_yaw double precision,
+  victim_angles_pitch double precision,
+  victim_angles_yaw double precision
+);
+
+create index if not exists idx_match_kill_match_id on match_kill (match_id, tick);
+
+drop materialized view if exists stats_summary_daily_overall_view;
+
+create materialized view stats_summary_daily_overall_view as
+select
+  date_trunc('day', m.created_on) as date_bucket,
+  m.stats_bucket_id,
+  rank() over (
+    order by
+      sum(p.points) desc
+  ) as rank,
+  p.steam_id,
+  sum(p.points) as points,
+  sum(p.connection_count) as connection_count,
+  sum(p.bonus_points) as bonus_points,
+  sum(p.kills) as kills,
+  sum(p.assists) as assists,
+  sum(p.deaths) as deaths,
+  sum(p.postround_kills) as postround_kills,
+  sum(p.postround_assists) as postround_assists,
+  sum(p.preround_healing) as preround_healing,
+  sum(p.healing) as healing,
+  sum(p.drops) as drops,
+  sum(p.near_full_charge_death) as near_full_charge_death,
+  sum(p.charges_uber) as charges_uber,
+  sum(p.charges_kritz) as charges_kritz,
+  sum(p.charges_vacc) as charges_vacc,
+  sum(p.charges_quickfix) as charges_quickfix,
+  sum(p.damage) as damage,
+  sum(p.damage_taken) as damage_taken,
+  sum(p.dominations) as dominations,
+  sum(p.dominated) as dominated,
+  sum(p.revenges) as revenges,
+  sum(p.revenged) as revenged,
+  sum(p.airshots) as airshots,
+  sum(p.headshots) as headshots,
+  sum(p.headshot_kills) as headshot_kills,
+  sum(p.backstabs) as backstabs,
+  sum(p.backstab_kills) as backstab_kills,
+  sum(p.was_headshot) as was_headshot,
+  sum(p.was_backstabbed) as was_backstabbed,
+  sum(p.shots) as shots,
+  sum(p.hits) as hits,
+  sum(p.objects_built) as objects_built,
+  sum(p.objects_destroyed) as objects_destroyed,
+  sum(p.scoreboard_kills) as scoreboard_kills,
+  sum(p.scoreboard_assists) as scoreboard_assists,
+  sum(p.scoreboard_deaths) as scoreboard_deaths,
+  sum(p.suicides) as suicides,
+  sum(p.postround_deaths) as postround_deaths,
+  sum(p.captures) as captures,
+  sum(p.captures_blocked) as captures_blocked,
+  sum(p.scoreboard_damage) as scoreboard_damage,
+  sum(p.extinguishes) as extinguishes,
+  sum(p.ignites) as ignites,
+  sum(p.heals) as heals,
+  sum(p.healed) as healed,
+  sum(p.crossbow_heals) as crossbow_heals,
+  sum(p.crossbow_healing) as crossbow_healing,
+  sum(p.heal_on_hit) as heal_on_hit,
+  sum(p.building_healing) as building_healing,
+  sum(p.dropped_ubers) as dropped_ubers,
+  sum(p.reflects) as reflects,
+  sum(p.defenses) as defenses,
+  sum(p.direct_hits) as direct_hits,
+  sum(p.teleports) as teleports,
+  sum(p.push_distance) as push_distance,
+  sum(p.environmental_deaths) as environmental_deaths,
+  sum(p.environmental_kills) as environmental_kills,
+  sum(p.object_placed) as object_placed,
+  sum(p.object_upgraded) as object_upgraded,
+  sum(p.object_carried) as object_carried,
+  sum(p.object_dropped) as object_dropped,
+  sum(p.object_removed) as object_removed,
+  sum(p.object_detonated) as object_detonated,
+  sum(p.ammo_packs) as ammo_packs,
+  sum(p.health_packs) as health_packs,
+  sum(p.health_pack_healing) as health_pack_healing
+from
+  match m
+  left join match_round r USING (match_id)
+  left join match_round_player p USING (round_id)
+group by
+  date_bucket,
+  m.stats_bucket_id,
+  p.steam_id;
+
+drop materialized view if exists stats_summary_daily_variants_view;
+
+create materialized view stats_summary_daily_variants_view as
+select
+  date_trunc('day', m.created_on) as date_bucket,
+  m.stats_bucket_id,
+  v.steam_id,
+  v.variant,
+  rank() over (
+    partition by
+      date_trunc('day', m.created_on),
+      v.variant
+    order by
+      sum(v.kills) desc
+  ) as rank,
+  sum(v.kills) as kills,
+  sum(v.assists) as assists,
+  sum(v.deaths) as deaths,
+  sum(v.postround_kills) as postround_kills,
+  sum(v.postround_assists) as postround_assists,
+  sum(v.postround_deaths) as postround_deaths,
+  sum(v.damage) as damage,
+  sum(v.damage_taken) as damage_taken,
+  sum(v.dominations) as dominations,
+  sum(v.dominated) as dominated,
+  sum(v.revenges) as revenges,
+  sum(v.revenged) as revenged,
+  sum(v.airshots) as airshots,
+  sum(v.headshot_kills) as headshot_kills,
+  sum(v.backstab_kills) as backstab_kills,
+  sum(v.headshots) as headshots,
+  sum(v.backstabs) as backstabs,
+  sum(v.was_headshot) as was_headshot,
+  sum(v.was_backstabbed) as was_backstabbed,
+  sum(v.preround_healing) as preround_healing,
+  sum(v.healing) as healing,
+  sum(v.postround_healing) as postround_healing,
+  sum(v.drops) as drops,
+  sum(v.near_full_charge_death) as near_full_charge_death,
+  sum(v.charges_uber) as charges_uber,
+  sum(v.charges_kritz) as charges_kritz,
+  sum(v.charges_vacc) as charges_vacc,
+  sum(v.charges_quickfix) as charges_quickfix,
+  sum(v.shots) as shots,
+  sum(v.hits) as hits,
+  sum(v.objects_built) as objects_built,
+  sum(v.objects_destroyed) as objects_destroyed,
+  sum(v.heals) as heals,
+  sum(v.healed) as healed,
+  sum(v.crossbow_heals) as crossbow_heals,
+  sum(v.crossbow_healing) as crossbow_healing,
+  sum(v.heal_on_hit) as heal_on_hit,
+  sum(v.extinguishes) as extinguishes,
+  sum(v.building_healing) as building_healing,
+  sum(v.dropped_ubers) as dropped_ubers,
+  sum(v.reflects) as reflects,
+  sum(v.defenses) as defenses,
+  sum(v.direct_hits) as direct_hits,
+  sum(v.teleports) as teleports,
+  sum(v.push_distance) as push_distance,
+  sum(v.environmental_deaths) as environmental_deaths,
+  sum(v.environmental_kills) as environmental_kills,
+  sum(v.object_placed) as object_placed,
+  sum(v.object_upgraded) as object_upgraded,
+  sum(v.object_carried) as object_carried,
+  sum(v.object_dropped) as object_dropped,
+  sum(v.object_removed) as object_removed,
+  sum(v.object_detonated) as object_detonated,
+  sum(v.ammo_packs) as ammo_packs,
+  sum(v.health_packs) as health_packs,
+  sum(v.health_pack_healing) as health_pack_healing
+from
+  match m
+  left join match_round r using (match_id)
+  left join match_round_player_variants v using (round_id)
+group by
+  date_bucket,
+  m.stats_bucket_id,
+  v.steam_id,
+  v.variant;
+
+create index if not exists stats_summary_daily_variant_idx on stats_summary_daily_variants_view (variant);
+
+create index if not exists stats_summary_daily_variant_steamid_idx on stats_summary_daily_variants_view (steam_id);
+
+create index if not exists stats_summary_daily_overall_steamid_idx on stats_summary_daily_overall_view (steam_id);
+
+refresh materialized view stats_weapons_view;
+
+refresh materialized view stats_summary_daily_overall_view;
+
+refresh materialized view stats_summary_daily_variants_view;

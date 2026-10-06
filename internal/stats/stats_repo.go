@@ -217,7 +217,12 @@ func (r Repository) loadOverallView(ctx context.Context, statsBucketID uint32, o
 			"airshots", "headshots", "headshot_kills", "backstabs", "backstab_kills",
 			"was_headshot", "was_backstabbed", "shots", "hits", "objects_built", "objects_destroyed",
 			"scoreboard_kills", "scoreboard_assists", "scoreboard_deaths", "suicides", "postround_deaths",
-			"captures", "captures_blocked", "scoreboard_damage", "extinguishes", "ignites").
+			"captures", "captures_blocked", "scoreboard_damage", "extinguishes", "ignites",
+			"heals", "healed", "crossbow_heals", "crossbow_healing", "heal_on_hit", "building_healing",
+			"dropped_ubers", "reflects", "defenses", "direct_hits", "teleports", "push_distance",
+			"environmental_deaths", "environmental_kills",
+			"object_placed", "object_upgraded", "object_carried", "object_dropped", "object_removed", "object_detonated",
+			"ammo_packs", "health_packs", "health_pack_healing").
 		From(opts.view()).
 		Where(constraints)
 	builder = builder.OrderBy("rank ASC")
@@ -239,7 +244,12 @@ func (r Repository) loadOverallView(ctx context.Context, statsBucketID uint32, o
 			&overallStat.Airshots, &overallStat.Headshots, &overallStat.HeadshotKills, &overallStat.Backstabs, &overallStat.BackstabKills,
 			&overallStat.WasHeadshot, &overallStat.WasBackstabbed, &overallStat.Shots, &overallStat.Hits, &overallStat.ObjectsBuilt, &overallStat.ObjectsDestroyed,
 			&overallStat.ScoreboardKills, &overallStat.ScoreboardAssists, &overallStat.ScoreboardDeaths, &overallStat.Suicides, &overallStat.PostroundDeaths,
-			&overallStat.Captures, &overallStat.CapturesBlocked, &overallStat.ScoreboardDamage, &overallStat.Extinguishes, &overallStat.Ignites); err != nil {
+			&overallStat.Captures, &overallStat.CapturesBlocked, &overallStat.ScoreboardDamage, &overallStat.Extinguishes, &overallStat.Ignites,
+			&overallStat.Heals, &overallStat.Healed, &overallStat.CrossbowHeals, &overallStat.CrossbowHealing, &overallStat.HealOnHit, &overallStat.BuildingHealing,
+			&overallStat.DroppedUbers, &overallStat.Reflects, &overallStat.Defenses, &overallStat.DirectHits, &overallStat.Teleports, &overallStat.PushDistance,
+			&overallStat.EnvironmentalDeaths, &overallStat.EnvironmentalKills,
+			&overallStat.ObjectPlaced, &overallStat.ObjectUpgraded, &overallStat.ObjectCarried, &overallStat.ObjectDropped, &overallStat.ObjectRemoved, &overallStat.ObjectDetonated,
+			&overallStat.AmmoPacks, &overallStat.HealthPacks, &overallStat.HealthPackHealing); err != nil {
 			return nil, 0, database.Err(err)
 		}
 
@@ -276,6 +286,11 @@ func (r Repository) loadVariantView(ctx context.Context, statsBucketID uint32, o
 			"airshots", "headshots", "headshot_kills", "backstabs", "backstab_kills",
 			"was_headshot", "was_backstabbed", "shots", "hits", "objects_built", "objects_destroyed",
 			"postround_deaths", "preround_healing", "postround_healing",
+			"heals", "healed", "crossbow_heals", "crossbow_healing", "heal_on_hit", "extinguishes", "building_healing",
+			"dropped_ubers", "reflects", "defenses", "direct_hits", "teleports", "push_distance",
+			"environmental_deaths", "environmental_kills",
+			"object_placed", "object_upgraded", "object_carried", "object_dropped", "object_removed", "object_detonated",
+			"ammo_packs", "health_packs", "health_pack_healing",
 		).
 		From(opts.view()).
 		Where(constraints)
@@ -297,7 +312,12 @@ func (r Repository) loadVariantView(ctx context.Context, statsBucketID uint32, o
 			&variantStat.Damage, &variantStat.DamageTaken, &variantStat.Dominations, &variantStat.Dominated, &variantStat.Revenges, &variantStat.Revenged,
 			&variantStat.Airshots, &variantStat.Headshots, &variantStat.HeadshotKills, &variantStat.Backstabs, &variantStat.BackstabKills,
 			&variantStat.WasHeadshot, &variantStat.WasBackstabbed, &variantStat.Shots, &variantStat.Hits, &variantStat.ObjectsBuilt, &variantStat.ObjectsDestroyed,
-			&variantStat.PostroundDeaths, &variantStat.PreroundHealing, &variantStat.PostroundHealing); err != nil {
+			&variantStat.PostroundDeaths, &variantStat.PreroundHealing, &variantStat.PostroundHealing,
+			&variantStat.Heals, &variantStat.Healed, &variantStat.CrossbowHeals, &variantStat.CrossbowHealing, &variantStat.HealOnHit, &variantStat.Extinguishes, &variantStat.BuildingHealing,
+			&variantStat.DroppedUbers, &variantStat.Reflects, &variantStat.Defenses, &variantStat.DirectHits, &variantStat.Teleports, &variantStat.PushDistance,
+			&variantStat.EnvironmentalDeaths, &variantStat.EnvironmentalKills,
+			&variantStat.ObjectPlaced, &variantStat.ObjectUpgraded, &variantStat.ObjectCarried, &variantStat.ObjectDropped, &variantStat.ObjectRemoved, &variantStat.ObjectDetonated,
+			&variantStat.AmmoPacks, &variantStat.HealthPacks, &variantStat.HealthPackHealing); err != nil {
 			return nil, 0, database.Err(err)
 		}
 
@@ -352,6 +372,10 @@ func (r Repository) Match(ctx context.Context, matchID uuid.UUID) (*Match, error
 		return nil, errChat
 	}
 
+	if errKills := r.getKills(ctx, match); errKills != nil {
+		return nil, errKills
+	}
+
 	return match, nil
 }
 
@@ -390,7 +414,13 @@ func (r Repository) getRoundPlayers(ctx context.Context, match *Match) error {
 			p.backstabs, p.backstab_kills, p.captures, p.captures_blocked, p.was_headshot, p.was_backstabbed, p.shots, p.hits,
 			p.objects_built, p.objects_destroyed, p.points, p.connection_count, p.bonus_points,
 			p.scoreboard_kills, p.scoreboard_assists, p.scoreboard_healing, p.scoreboard_deaths, p.scoreboard_damage,
-			p.suicides, p.extinguishes, p.ignites, pe.personaname, pe.avatarhash
+			p.suicides, p.extinguishes, p.ignites,
+			p.heals, p.healed, p.crossbow_heals, p.crossbow_healing, p.heal_on_hit, p.building_healing,
+			p.dropped_ubers, p.reflects, p.defenses, p.direct_hits, p.teleports, p.push_distance,
+			p.environmental_deaths, p.environmental_kills,
+			p.object_placed, p.object_upgraded, p.object_carried, p.object_dropped, p.object_removed, p.object_detonated,
+			p.ammo_packs, p.health_packs, p.health_pack_healing,
+			pe.personaname, pe.avatarhash
 		FROM
 			match_round_player p
 		LEFT JOIN
@@ -414,7 +444,13 @@ func (r Repository) getRoundPlayers(ctx context.Context, match *Match) error {
 			&mrp.Backstabs, &mrp.BackstabKills, &mrp.Captures, &mrp.CapturesBlocked, &mrp.WasHeadshot, &mrp.WasBackstabbed, &mrp.Shots, &mrp.Hits,
 			&mrp.ObjectsBuilt, &mrp.ObjectsDestroyed, &mrp.Points, &mrp.ConnectionCount, &mrp.BonusPoints,
 			&mrp.ScoreboardKills, &mrp.ScoreboardAssists, &mrp.ScoreboardHealing, &mrp.ScoreboardDeaths, &mrp.ScoreboardDamage,
-			&mrp.Suicides, &mrp.Extinguishes, &mrp.Ignites, &mrp.Personaname, &mrp.AvatarHash,
+			&mrp.Suicides, &mrp.Extinguishes, &mrp.Ignites,
+			&mrp.Heals, &mrp.Healed, &mrp.CrossbowHeals, &mrp.CrossbowHealing, &mrp.HealOnHit, &mrp.BuildingHealing,
+			&mrp.DroppedUbers, &mrp.Reflects, &mrp.Defenses, &mrp.DirectHits, &mrp.Teleports, &mrp.PushDistance,
+			&mrp.EnvironmentalDeaths, &mrp.EnvironmentalKills,
+			&mrp.ObjectPlaced, &mrp.ObjectUpgraded, &mrp.ObjectCarried, &mrp.ObjectDropped, &mrp.ObjectRemoved, &mrp.ObjectDetonated,
+			&mrp.AmmoPacks, &mrp.HealthPacks, &mrp.HealthPackHealing,
+			&mrp.Personaname, &mrp.AvatarHash,
 		); err != nil {
 			return database.Err(err)
 		}
@@ -433,7 +469,12 @@ func (r Repository) getRoundPlayersVariants(ctx context.Context, match *Match) e
 			w.charges_kritz, w.charges_vacc, w.charges_quickfix,
 			w.damage, w.damage_taken, w.dominations, w.dominated, w.revenges, w.revenged,
 			w.airshots, w.headshots, w.headshot_kills, w.backstabs, w.backstab_kills, w.captures, w.captures_blocked, w.was_headshot, w.was_backstabbed,
-			w.shots, w.hits, w.objects_built, w.objects_destroyed
+			w.shots, w.hits, w.objects_built, w.objects_destroyed,
+			w.heals, w.healed, w.crossbow_heals, w.crossbow_healing, w.heal_on_hit, w.extinguishes, w.building_healing,
+			w.dropped_ubers, w.reflects, w.defenses, w.direct_hits, w.teleports, w.push_distance,
+			w.environmental_deaths, w.environmental_kills,
+			w.object_placed, w.object_upgraded, w.object_carried, w.object_dropped, w.object_removed, w.object_detonated,
+			w.ammo_packs, w.health_packs, w.health_pack_healing
 		FROM
 			match_round_player_variants w
 		LEFT JOIN
@@ -455,6 +496,11 @@ func (r Repository) getRoundPlayersVariants(ctx context.Context, match *Match) e
 			&mrws.Airshots, &mrws.Headshots, &mrws.HeadshotKills, &mrws.Backstabs, &mrws.BackstabKills,
 			&mrws.Captures, &mrws.CapturesBlocked,
 			&mrws.WasHeadshot, &mrws.WasBackstabbed, &mrws.Shots, &mrws.Hits, &mrws.ObjectsBuilt, &mrws.ObjectsDestroyed,
+			&mrws.Heals, &mrws.Healed, &mrws.CrossbowHeals, &mrws.CrossbowHealing, &mrws.HealOnHit, &mrws.Extinguishes, &mrws.BuildingHealing,
+			&mrws.DroppedUbers, &mrws.Reflects, &mrws.Defenses, &mrws.DirectHits, &mrws.Teleports, &mrws.PushDistance,
+			&mrws.EnvironmentalDeaths, &mrws.EnvironmentalKills,
+			&mrws.ObjectPlaced, &mrws.ObjectUpgraded, &mrws.ObjectCarried, &mrws.ObjectDropped, &mrws.ObjectRemoved, &mrws.ObjectDetonated,
+			&mrws.AmmoPacks, &mrws.HealthPacks, &mrws.HealthPackHealing,
 		); err != nil {
 			return database.Err(err)
 		}
@@ -601,6 +647,14 @@ func (r Repository) CreateMatch(ctx context.Context, serverID int32, demoID int3
 		}
 	}
 
+	if err := r.insertKills(ctx, transaction, newID, demo.Kills); err != nil {
+		if err := transaction.Rollback(ctx); err != nil {
+			slog.Error("Failed to rollback tx", slog.String("error", err.Error()))
+		}
+
+		return newID, err
+	}
+
 	if err := transaction.Commit(ctx); err != nil {
 		if err := transaction.Rollback(ctx); err != nil {
 			slog.Error("Failed to rollback tx", slog.String("error", err.Error()))
@@ -655,14 +709,21 @@ func (r Repository) insertRoundPlayer(ctx context.Context, transaction pgx.Tx, r
 			backstabs, backstab_kills, captures, captures_blocked, was_headshot, was_backstabbed,
 			shots, hits, objects_built, objects_destroyed,
 			points, connection_count, bonus_points, scoreboard_kills, scoreboard_assists, scoreboard_healing, scoreboard_deaths,
-			scoreboard_damage, suicides, extinguishes, ignites)
+			scoreboard_damage, suicides, extinguishes, ignites,
+			heals, healed, crossbow_heals, crossbow_healing, heal_on_hit, building_healing, dropped_ubers,
+			reflects, defenses, direct_hits, teleports, push_distance,
+			environmental_deaths, environmental_kills,
+			object_placed, object_upgraded, object_carried, object_dropped, object_removed, object_detonated,
+			ammo_packs, health_packs, health_pack_healing)
 		VALUES(
 			$1,  $2,  $3,  $4,  $5,  $6,  $7,  $8,  $9,  $10,
 			$11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
 			$21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
 			$31, $32, $33, $34, $35, $36, $37, $38, $39, $40,
 			$41, $42, $43, $44, $45, $46, $47, $48, $49, $50,
-			$51
+			$51, $52, $53, $54, $55, $56, $57, $58, $59, $60,
+			$61, $62, $63, $64, $65, $66, $67, $68, $69, $70,
+			$71, $72, $73, $74
 		)`
 
 	isMvp := slices.Contains(round.Mvps, string(steamID.Steam3()))
@@ -678,7 +739,11 @@ func (r Repository) insertRoundPlayer(ctx context.Context, transaction pgx.Tx, r
 		player.Hits, player.ObjectBuilt, player.ObjectDestroyed, player.Points, player.ConnectionCount,
 		player.BonusPoints, player.ScoreboardKills, player.ScoreboardAssists, player.ScoreboardHealing,
 		player.ScoreboardDeaths, player.ScoreboardDamage, player.Suicides, player.Extinguishes,
-		player.Ignites); err != nil {
+		player.Ignites, player.Heals, player.Healed, player.CrossbowHeals, player.CrossbowHealing,
+		player.HealOnHit, player.BuildingHealing, player.DroppedUbers, player.Reflects, player.Defenses,
+		player.DirectHits, player.Teleports, player.PushDistance, player.EnvironmentalDeaths, player.EnvironmentalKills,
+		player.ObjectPlaced, player.ObjectUpgraded, player.ObjectCarried, player.ObjectDropped, player.ObjectRemoved,
+		player.ObjectDetonated, player.AmmoPacks, player.HealthPacks, player.HealthPackHealing); err != nil {
 		return database.Err(err)
 	}
 
@@ -705,12 +770,19 @@ func (r Repository) insertRoundPlayerVariants(ctx context.Context, transaction p
 			near_full_charge_death, charges_uber, charges_kritz, charges_vacc, charges_quickfix, damage,
 			damage_taken, dominations, dominated, revenges, revenged, airshots, headshots, headshot_kills,
 			backstabs, backstab_kills, captures, captures_blocked, was_headshot, was_backstabbed,
-			shots, hits, objects_built, objects_destroyed
+			shots, hits, objects_built, objects_destroyed,
+			heals, healed, crossbow_heals, crossbow_healing, heal_on_hit, extinguishes, building_healing,
+			dropped_ubers, reflects, defenses, direct_hits, teleports, push_distance,
+			environmental_deaths, environmental_kills,
+			object_placed, object_upgraded, object_carried, object_dropped, object_removed, object_detonated,
+			ammo_packs, health_packs, health_pack_healing
 		) VALUES (
 			LOWER($1),$2,  $3,  $4,  $5,  $6,  $7,  $8,  $9,  $10,
 			$11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
 			$21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31,
-			$32, $33, $34, $35, $36, $37
+			$32, $33, $34, $35, $36, $37, $38, $39, $40, $41,
+			$42, $43, $44, $45, $46, $47, $48, $49, $50, $51,
+			$52, $53, $54, $55, $56, $57, $58, $59, $60, $61
 		)`
 
 	if _, err := transaction.Exec(ctx, query,
@@ -719,8 +791,146 @@ func (r Repository) insertRoundPlayerVariants(ctx context.Context, transaction p
 		stats.NearFullChargeDeath, stats.ChargesUber, stats.ChargesKritz, stats.ChargesVacc, stats.ChargesQuickfix, stats.Damage,
 		stats.DamageTaken, stats.Dominations, stats.Dominated, stats.Revenges, stats.Revenged, stats.Airshots, stats.Headshots, stats.HeadshotKills,
 		stats.Backstabs, stats.BackstabKills, stats.Captures, stats.CapturesBlocked, stats.WasHeadshot, stats.WasBackstabbed,
-		stats.Shots, stats.Hits, stats.ObjectBuilt, stats.ObjectDestroyed); err != nil {
+		stats.Shots, stats.Hits, stats.ObjectBuilt, stats.ObjectDestroyed,
+		stats.Heals, stats.Healed, stats.CrossbowHeals, stats.CrossbowHealing, stats.HealOnHit, stats.Extinguishes, stats.BuildingHealing,
+		stats.DroppedUbers, stats.Reflects, stats.Defenses, stats.DirectHits, stats.Teleports, stats.PushDistance,
+		stats.EnvironmentalDeaths, stats.EnvironmentalKills,
+		stats.ObjectPlaced, stats.ObjectUpgraded, stats.ObjectCarried, stats.ObjectDropped, stats.ObjectRemoved, stats.ObjectDetonated,
+		stats.AmmoPacks, stats.HealthPacks, stats.HealthPackHealing); err != nil {
 		return database.Err(err)
+	}
+
+	return nil
+}
+
+func (r Repository) insertKills(ctx context.Context, transaction pgx.Tx, matchID uuid.UUID, kills []demoparse.KillEvent) error {
+	const query = `
+		INSERT INTO match_kill (
+			match_id, tick, killer_steam_id, victim_steam_id, weapon,
+			killer_pos_x, killer_pos_y, killer_pos_z,
+			victim_pos_x, victim_pos_y, victim_pos_z,
+			killer_angles_pitch, killer_angles_yaw,
+			victim_angles_pitch, victim_angles_yaw
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+		)`
+
+	for _, kill := range kills {
+		victim := steamid.New(kill.Victim)
+		if !victim.Valid() {
+			slog.Warn("Skipping kill with invalid victim steamid", slog.String("victim", kill.Victim))
+
+			continue
+		}
+
+		var killerID *int64
+		if killer := steamid.New(kill.Killer); killer.Valid() {
+			id := killer.Int64()
+			killerID = &id
+		}
+
+		killerX, killerY, killerZ := killPosCoords(kill.KillerPos)
+		victimX, victimY, victimZ := killPosCoords(kill.VictimPos)
+		killerPitch, killerYaw := killAnglesCoords(kill.KillerAngles)
+		victimPitch, victimYaw := killAnglesCoords(kill.VictimAngles)
+
+		if _, err := transaction.Exec(ctx, query,
+			matchID, kill.Tick, killerID, victim.Int64(), kill.Weapon,
+			killerX, killerY, killerZ,
+			victimX, victimY, victimZ,
+			killerPitch, killerYaw,
+			victimPitch, victimYaw); err != nil {
+			return database.Err(err)
+		}
+	}
+
+	return nil
+}
+
+func killPosCoords(pos *demoparse.Position) (*float64, *float64, *float64) {
+	if pos == nil {
+		return nil, nil, nil
+	}
+
+	return &pos.X, &pos.Y, &pos.Z
+}
+
+func killAnglesCoords(angles *demoparse.EyeAngles) (*float64, *float64) {
+	if angles == nil {
+		return nil, nil
+	}
+
+	return &angles.Pitch, &angles.Yaw
+}
+
+func (r Repository) getKills(ctx context.Context, match *Match) error {
+	const query = `
+		SELECT
+			match_kill_id, tick, killer_steam_id, victim_steam_id, weapon,
+			killer_pos_x, killer_pos_y, killer_pos_z,
+			victim_pos_x, victim_pos_y, victim_pos_z,
+			killer_angles_pitch, killer_angles_yaw,
+			victim_angles_pitch, victim_angles_yaw
+		FROM
+			match_kill
+		WHERE
+			match_id = $1
+		ORDER BY
+			tick ASC, match_kill_id ASC`
+	rows, errRows := r.Database.Query(ctx, query, match.MatchID)
+	if errRows != nil {
+		return database.Err(errRows)
+	}
+
+	for rows.Next() {
+		var (
+			kill        MatchKill
+			killerID    *int64
+			victimID    int64
+			killerX     *float64
+			killerY     *float64
+			killerZ     *float64
+			victimX     *float64
+			victimY     *float64
+			victimZ     *float64
+			killerPitch *float64
+			killerYaw   *float64
+			victimPitch *float64
+			victimYaw   *float64
+		)
+
+		if err := rows.Scan(&kill.MatchKillID, &kill.Tick, &killerID, &victimID, &kill.Weapon,
+			&killerX, &killerY, &killerZ,
+			&victimX, &victimY, &victimZ,
+			&killerPitch, &killerYaw,
+			&victimPitch, &victimYaw); err != nil {
+			return database.Err(err)
+		}
+
+		if killerID != nil {
+			kill.KillerSteamID = steamid.New(*killerID)
+			kill.HasKiller = true
+		}
+
+		kill.VictimSteamID = steamid.New(victimID)
+
+		if killerX != nil && killerY != nil && killerZ != nil {
+			kill.KillerPos = &demoparse.Position{X: *killerX, Y: *killerY, Z: *killerZ}
+		}
+
+		if victimX != nil && victimY != nil && victimZ != nil {
+			kill.VictimPos = &demoparse.Position{X: *victimX, Y: *victimY, Z: *victimZ}
+		}
+
+		if killerPitch != nil && killerYaw != nil {
+			kill.KillerAngles = &demoparse.EyeAngles{Pitch: *killerPitch, Yaw: *killerYaw}
+		}
+
+		if victimPitch != nil && victimYaw != nil {
+			kill.VictimAngles = &demoparse.EyeAngles{Pitch: *victimPitch, Yaw: *victimYaw}
+		}
+
+		match.Kills = append(match.Kills, kill)
 	}
 
 	return nil

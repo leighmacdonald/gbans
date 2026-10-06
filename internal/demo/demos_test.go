@@ -1,8 +1,8 @@
 package demo_test
 
 import (
+	"context"
 	"io"
-	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
@@ -11,10 +11,14 @@ import (
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/demo"
+	demostatsv1 "github.com/leighmacdonald/gbans/internal/demostats/v1"
+	"github.com/leighmacdonald/gbans/internal/demostats/v1/demostatsv1connect"
+	"github.com/leighmacdonald/gbans/internal/json"
 	"github.com/leighmacdonald/gbans/internal/maps"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/stats"
 	"github.com/leighmacdonald/gbans/internal/tests"
+	"github.com/leighmacdonald/gbans/pkg/demoparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/stretchr/testify/require"
 )
@@ -29,17 +33,35 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
+// fakeParser serves fixture parse results over ConnectRPC like a
+// tf2_demostats v0.3.x server.
+type fakeParser struct {
+	demo *demoparse.Demo
+}
+
+func (f fakeParser) ParseDemo(_ context.Context, req *demostatsv1.ParseDemoRequest) (*demostatsv1.ParseDemoResponse, error) {
+	resp := demoparse.ProtoFromDemo(f.demo)
+	if req.GetFilename() != "" {
+		resp.GetDemo().Filename = req.GetFilename()
+	}
+
+	return resp, nil
+}
+
 // TestDemoUploadDeduplication ensures that uploading the same demo twice does not create
 // duplicate asset, demo, or stats entries.
 func TestDemoUploadDeduplication(t *testing.T) {
-	parsedJSON, err := os.ReadFile(filepath.Join("..", "stats", "testdata", "demo-1427611.json"))
+	demoFile, err := os.Open(filepath.Join("..", "stats", "testdata", "demo-1427611.json"))
 	require.NoError(t, err)
 
-	parser := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
-		writer.Header().Set("Content-Type", "application/json")
+	defer demoFile.Close()
 
-		_, _ = writer.Write(parsedJSON)
-	}))
+	parsed, err := json.Decode[demoparse.Demo](demoFile)
+	require.NoError(t, err)
+
+	_, handler := demostatsv1connect.NewDemoServiceHandler(fakeParser{demo: &parsed})
+	parser := httptest.NewServer(handler)
+
 	defer parser.Close()
 
 	fixture.Config.Config().Demo.DemoParserURL = parser.URL

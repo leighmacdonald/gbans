@@ -59,3 +59,238 @@ func TestImport(t *testing.T) {
 	require.NoError(t, importErr)
 	require.NotNil(t, matchID)
 }
+
+// TestImportNewParserStats ensures the stats added with the tf2_demostats
+// v0.3.x parser survive the full import, match read, and summary view paths.
+func TestImportNewParserStats(t *testing.T) {
+	testFixture := tests.NewFixture()
+	defer testFixture.Close()
+
+	ctx := t.Context()
+	server := testFixture.CreateTestServer(ctx)
+
+	steamID := steamid.New("[U:1:12345678]")
+	require.True(t, steamID.Valid())
+
+	victimID := steamid.New("[U:1:87654321]")
+	require.True(t, victimID.Valid())
+
+	for _, person := range []struct {
+		id   steamid.SteamID
+		name string
+	}{
+		{steamID, "NewStats"},
+		{victimID, "Victim"},
+	} {
+		require.NoError(t, testFixture.Database.Exec(ctx,
+			`INSERT INTO person (steam_id, created_on, updated_on, personaname, avatarhash, profilestate, personastate,
+			                    realname, timecreated, loccountrycode, locstatecode, loccityid)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+			 ON CONFLICT DO NOTHING`,
+			person.id.Int64(), time.Now(), time.Now(), person.name, "", 0, 0, "", 0, "", "", 0))
+	}
+
+	var demoID int32
+	require.NoError(t, testFixture.Database.QueryRow(ctx,
+		`INSERT INTO demo (server_id, title, map_name, created_on) VALUES ($1, $2, $3, $4) RETURNING demo_id`,
+		server.ServerID, "new-stats.dem", "cp_process_final", time.Now()).Scan(&demoID))
+
+	player := demoparse.PlayerSummary{
+		Name: "NewStats", SteamID: string(steamID.Steam3()),
+		Kills: 10, Healing: 500,
+		Heals: 101, Healed: 102, CrossbowHeals: 103, CrossbowHealing: 104,
+		HealOnHit: 105, BuildingHealing: 106, DroppedUbers: 107,
+		Reflects: 108, Defenses: 109, DirectHits: 110, Teleports: 111,
+		PushDistance: 112, EnvironmentalDeaths: 113, EnvironmentalKills: 114,
+		ObjectPlaced: 115, ObjectUpgraded: 116, ObjectCarried: 117,
+		ObjectDropped: 118, ObjectRemoved: 119, ObjectDetonated: 120,
+		AmmoPacks: 121, HealthPacks: 122, HealthPackHealing: 123,
+		Classes: map[string]demoparse.Stats{
+			"soldier": {
+				Kills: 201, Heals: 202, Healed: 203, CrossbowHeals: 204,
+				CrossbowHealing: 205, HealOnHit: 206, Extinguishes: 207,
+				BuildingHealing: 208, DroppedUbers: 209, Reflects: 210,
+				Defenses: 211, DirectHits: 212, Teleports: 213, PushDistance: 214,
+				EnvironmentalDeaths: 215, EnvironmentalKills: 216,
+				ObjectPlaced: 217, ObjectUpgraded: 218, ObjectCarried: 219,
+				ObjectDropped: 220, ObjectRemoved: 221, ObjectDetonated: 222,
+				AmmoPacks: 223, HealthPacks: 224, HealthPackHealing: 225,
+			},
+		},
+		Weapons: map[string]demoparse.Stats{
+			"tf_projectile_rocket": {
+				Kills: 301, Heals: 302, Healed: 303, CrossbowHeals: 304,
+				CrossbowHealing: 305, HealOnHit: 306, Extinguishes: 307,
+				BuildingHealing: 308, DroppedUbers: 309, Reflects: 310,
+				Defenses: 311, DirectHits: 312, Teleports: 313, PushDistance: 314,
+				EnvironmentalDeaths: 315, EnvironmentalKills: 316,
+				ObjectPlaced: 317, ObjectUpgraded: 318, ObjectCarried: 319,
+				ObjectDropped: 320, ObjectRemoved: 321, ObjectDetonated: 322,
+				AmmoPacks: 323, HealthPacks: 324, HealthPackHealing: 325,
+			},
+		},
+	}
+
+	demo := demoparse.Demo{
+		Filename: "new-stats.dem", DemoType: demoparse.HL2Demo,
+		Server: "test", Map: "cp_process_final", Game: "tf",
+		Duration: 600, Ticks: 40000, Frames: 39900, Signon: 1000,
+		Rounds: []demoparse.RoundSummary{
+			{
+				Winner: "red", Time: 300,
+				Mvps:    []string{string(steamID.Steam3())},
+				Winners: []string{string(steamID.Steam3())},
+				Players: []demoparse.PlayerSummary{player},
+			},
+		},
+		Kills: []demoparse.KillEvent{
+			{
+				Tick: 1000, Killer: string(steamID.Steam3()), Victim: string(victimID.Steam3()),
+				Weapon:       "tf_projectile_rocket",
+				KillerPos:    &demoparse.Position{X: -5496, Y: 5393.625, Z: 348},
+				VictimPos:    &demoparse.Position{X: -5441.75, Y: 5269.125, Z: 363.25},
+				KillerAngles: &demoparse.EyeAngles{Pitch: 26.47, Yaw: 268.85},
+				VictimAngles: &demoparse.EyeAngles{Pitch: 8.82, Yaw: 137.24},
+			},
+			{
+				// Environmental kill has no killer or positions.
+				Tick: 2000, Victim: string(steamID.Steam3()), Weapon: "world",
+			},
+		},
+	}
+
+	repo := stats.NewRepository(testFixture.Database)
+	st := stats.New(repo, maps.New(maps.NewRepository(testFixture.Database)))
+
+	matchID, errImport := st.Import(ctx, server.ServerID, demoID, &demo, time.Now())
+	require.NoError(t, errImport)
+	require.NotNil(t, matchID)
+
+	match, errMatch := repo.Match(ctx, *matchID)
+	require.NoError(t, errMatch)
+	require.Len(t, match.Players, 1)
+
+	got := match.Players[0]
+	require.Equal(t, "NewStats", got.Personaname)
+	require.Equal(t, uint64(10), got.Kills)
+	require.Equal(t, uint64(500), got.Healing)
+	require.Equal(t, uint64(101), got.Heals)
+	require.Equal(t, uint64(102), got.Healed)
+	require.Equal(t, uint64(103), got.CrossbowHeals)
+	require.Equal(t, uint64(104), got.CrossbowHealing)
+	require.Equal(t, uint64(105), got.HealOnHit)
+	require.Equal(t, uint64(106), got.BuildingHealing)
+	require.Equal(t, uint64(107), got.DroppedUbers)
+	require.Equal(t, uint64(108), got.Reflects)
+	require.Equal(t, uint64(109), got.Defenses)
+	require.Equal(t, uint64(110), got.DirectHits)
+	require.Equal(t, uint64(111), got.Teleports)
+	require.Equal(t, uint64(112), got.PushDistance)
+	require.Equal(t, uint64(113), got.EnvironmentalDeaths)
+	require.Equal(t, uint64(114), got.EnvironmentalKills)
+	require.Equal(t, uint64(115), got.ObjectPlaced)
+	require.Equal(t, uint64(116), got.ObjectUpgraded)
+	require.Equal(t, uint64(117), got.ObjectCarried)
+	require.Equal(t, uint64(118), got.ObjectDropped)
+	require.Equal(t, uint64(119), got.ObjectRemoved)
+	require.Equal(t, uint64(120), got.ObjectDetonated)
+	require.Equal(t, uint64(121), got.AmmoPacks)
+	require.Equal(t, uint64(122), got.HealthPacks)
+	require.Equal(t, uint64(123), got.HealthPackHealing)
+
+	byVariant := map[string]stats.MatchVariantStatsRound{}
+	for _, variant := range match.Variants {
+		byVariant[variant.Variant] = variant
+	}
+
+	require.Contains(t, byVariant, "soldier")
+	require.Contains(t, byVariant, "tf_projectile_rocket")
+	require.Equal(t, uint64(202), byVariant["soldier"].Heals)
+	require.Equal(t, uint64(207), byVariant["soldier"].Extinguishes)
+	require.Equal(t, uint64(225), byVariant["soldier"].HealthPackHealing)
+	require.Equal(t, uint64(302), byVariant["tf_projectile_rocket"].Heals)
+	require.Equal(t, uint64(307), byVariant["tf_projectile_rocket"].Extinguishes)
+	require.Equal(t, uint64(325), byVariant["tf_projectile_rocket"].HealthPackHealing)
+
+	require.Len(t, match.Kills, 2)
+	requireMatchKills(t, match, steamID, victimID)
+
+	// RefreshMaterializedView rejects all names (validViewNames is never
+	// populated), so refresh directly here.
+	require.NoError(t, testFixture.Database.Exec(ctx, "REFRESH MATERIALIZED VIEW stats_summary_daily_overall_view"))
+	require.NoError(t, testFixture.Database.Exec(ctx, "REFRESH MATERIALIZED VIEW stats_summary_daily_variants_view"))
+
+	overallRows, _, errOverall := repo.Query(ctx, stats.Opts{
+		StatsBucketID: 1, TimeBucket: stats.TimeBucketDaily,
+	})
+	require.NoError(t, errOverall)
+
+	var overall *stats.OverallStats
+
+	for _, row := range overallRows {
+		if stat, ok := row.(stats.OverallStats); ok && stat.SteamID.Equal(steamID) {
+			stat := stat
+			overall = &stat
+
+			break
+		}
+	}
+
+	require.NotNil(t, overall)
+	require.Equal(t, uint64(101), overall.Heals)
+	require.Equal(t, uint64(108), overall.Reflects)
+	require.Equal(t, uint64(123), overall.HealthPackHealing)
+
+	variantRows, _, errVariants := repo.Query(ctx, stats.Opts{
+		StatsBucketID: 1, Variant: stats.VariantWeapons, VariantKey: "soldier",
+		TimeBucket: stats.TimeBucketDaily,
+	})
+	require.NoError(t, errVariants)
+	require.NotEmpty(t, variantRows)
+
+	found := false
+
+	for _, row := range variantRows {
+		if stat, ok := row.(stats.VariantStats); ok && stat.SteamID.Equal(steamID) {
+			require.Equal(t, uint64(202), stat.Heals)
+			require.Equal(t, uint64(210), stat.Reflects)
+			require.Equal(t, uint64(225), stat.HealthPackHealing)
+
+			found = true
+		}
+	}
+
+	require.True(t, found)
+}
+
+func requireMatchKills(t *testing.T, match *stats.Match, steamID steamid.SteamID, victimID steamid.SteamID) {
+	t.Helper()
+
+	pvpKill := match.Kills[0]
+	require.Equal(t, 1000, pvpKill.Tick)
+	require.True(t, pvpKill.HasKiller)
+	require.True(t, pvpKill.KillerSteamID.Equal(steamID))
+	require.True(t, pvpKill.VictimSteamID.Equal(victimID))
+	require.Equal(t, "tf_projectile_rocket", pvpKill.Weapon)
+	require.NotNil(t, pvpKill.KillerPos)
+	require.InDelta(t, -5496, pvpKill.KillerPos.X, 0.001)
+	require.InDelta(t, 5393.625, pvpKill.KillerPos.Y, 0.001)
+	require.InDelta(t, 348, pvpKill.KillerPos.Z, 0.001)
+	require.NotNil(t, pvpKill.VictimPos)
+	require.InDelta(t, -5441.75, pvpKill.VictimPos.X, 0.001)
+	require.NotNil(t, pvpKill.KillerAngles)
+	require.InDelta(t, 26.47, pvpKill.KillerAngles.Pitch, 0.001)
+	require.InDelta(t, 268.85, pvpKill.KillerAngles.Yaw, 0.001)
+	require.NotNil(t, pvpKill.VictimAngles)
+	require.InDelta(t, 8.82, pvpKill.VictimAngles.Pitch, 0.001)
+
+	worldKill := match.Kills[1]
+	require.Equal(t, 2000, worldKill.Tick)
+	require.False(t, worldKill.HasKiller)
+	require.True(t, worldKill.VictimSteamID.Equal(steamID))
+	require.Equal(t, "world", worldKill.Weapon)
+	require.Nil(t, worldKill.KillerPos)
+	require.Nil(t, worldKill.VictimPos)
+	require.Nil(t, worldKill.KillerAngles)
+	require.Nil(t, worldKill.VictimAngles)
+}
