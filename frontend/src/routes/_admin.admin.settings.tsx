@@ -1618,7 +1618,7 @@ function AdminSettings() {
 							<Grid size={{ xs: 12 }}>
 								<SubHeading>
 									Format for generating a path to look for demos. Use <kbd>%s</kbd> as a substitution
-									for the short server name.
+									for the short server name. Example: <kbd>~/srcds-%s/tf/stv_demos/complete</kbd>
 								</SubHeading>
 								<form.AppField
 									name={"ssh.demoPathFmt"}
@@ -1630,7 +1630,8 @@ function AdminSettings() {
 							<Grid size={{ xs: 12 }}>
 								<SubHeading>
 									Format for generating a path to look for stac anticheat logs. Use <kbd>%s</kbd> as a
-									substitution for the short server name.
+									substitution for the short server name.{" "}
+									<kbd>~/srcds-%s/tf/addons/sourcemod/logs/stac</kbd>
 								</SubHeading>
 								<form.AppField
 									name={"ssh.stacPathFmt"}

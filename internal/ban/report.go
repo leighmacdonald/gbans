@@ -335,6 +335,7 @@ func (r Reports) Report(ctx context.Context, curUser personDomain.BaseUser, repo
 		return ReportWithAuthor{}, errAuthor
 	}
 
+	// Only allow users with admin permissions or the author to view.
 	if !r.roleAuth.HasPermissionForSteamID(ctx, curUser.GetSteamID(), rolesv1.Permission_PERMISSION_REPORT_ADMIN) && !author.SteamID.Equal(curUser.GetSteamID()) {
 		return ReportWithAuthor{}, rpc.ErrPermission
 	}

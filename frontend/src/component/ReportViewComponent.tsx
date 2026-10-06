@@ -52,6 +52,7 @@ export const ReportViewComponent = ({
 	const { hasPermission } = useAuth();
 	const queryClient = useQueryClient();
 	const transport = useTransport();
+
 	const { data: messageData, isLoading: isLoadingMessages } = useQuery(
 		reportMessages,
 		{
@@ -185,7 +186,7 @@ export const ReportViewComponent = ({
 							</ContainerWithHeaderAndButtons>
 						)}
 
-						{report.report.personMessageId !== "" && (
+						{Number(report.report.personMessageId) > 0 && (
 							<ContainerWithHeader title={"Message Context"} iconLeft={<QuickreplyIcon />}>
 								<PlayerMessageContext playerMessageId={report.report.personMessageId} padding={4} />
 							</ContainerWithHeader>

@@ -103,12 +103,7 @@ function AdminReports() {
 				header: "ID",
 				grow: false,
 				Cell: ({ cell }) => (
-					<TextLink
-						color={"primary"}
-						to={`/report/$reportId`}
-						params={{ reportId: String(cell.getValue()) }}
-						marginRight={2}
-					>
+					<TextLink color={"primary"} to={`/report/$reportId`} params={{ reportId: String(cell.getValue()) }}>
 						#{cell.getValue()}
 					</TextLink>
 				),

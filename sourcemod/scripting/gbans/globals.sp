@@ -25,14 +25,14 @@ ConVar gb_stv_path;
 ConVar gb_stv_path_complete;
 
 // Reports command
-int gReportSourceId = -1;
-int gReportTargetId = -1;
-bool gReportWaitingForReason = false;
+int          gReportSourceId         = -1;
+int          gReportTargetId         = -1;
+bool         gReportWaitingForReason = false;
 GB_BanReason gReportTargetReason;
-int gReportStartedAtTime = -1;
+int          gReportStartedAtTime = -1;
 
 bool gIsRecording = false;
-bool gIsManual = false;
+bool gIsManual    = false;
 // jwt returned and used once authenticated
 char gToken[1024] = "";
 bool gLateLoaded;

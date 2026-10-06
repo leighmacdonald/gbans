@@ -826,8 +826,8 @@ func TestReportService_Report(t *testing.T) {
 	t.Parallel()
 
 	h := newRPCHarness(t)
-	author := h.newPlainUser(t)
-	mod := h.newRPCUser(t)
+	author := h.newRPCUserWithPerms(t, "PERMISSION_REPORT_CREATE")
+	reader := h.newRPCUserWithPerms(t, "PERMISSION_REPORT_READ")
 	report := h.newReport(t, author.SteamID, h.newPlainUser(t).SteamID)
 
 	admin := h.newRPCUserWithPerms(t, "PERMISSION_REPORT_ADMIN", "PERMISSION_REPORT_READ", "PERMISSION_REPORT_WRITE")
@@ -836,8 +836,8 @@ func TestReportService_Report(t *testing.T) {
 		t.Parallel()
 
 		// The Report route requires REPORT_READ in the auth middleware, so an
-		// author who only has REPORT_CREATE (the auto assigned user role) is
-		// rejected before the domain level author check runs.
+		// author who only has REPORT_CREATE is rejected before the domain
+		// level author check runs.
 		client := h.reportClient(t, author)
 
 		_, err := client.Report(t.Context(), &v1.ReportRequest{ReportId: &report.ReportID})
@@ -854,10 +854,10 @@ func TestReportService_Report(t *testing.T) {
 		require.Equal(t, report.ReportID, resp.GetReport().GetReport().GetReportId())
 	})
 
-	t.Run("moderator is denied", func(t *testing.T) {
+	t.Run("reader without admin is denied", func(t *testing.T) {
 		t.Parallel()
 
-		client := h.reportClient(t, mod)
+		client := h.reportClient(t, reader)
 
 		_, err := client.Report(t.Context(), &v1.ReportRequest{ReportId: &report.ReportID})
 		requireCode(t, connect.CodeInternal, err)
@@ -890,7 +890,7 @@ func TestReportService_ReportStatusEdit(t *testing.T) {
 	report := harness.newReport(t, author.SteamID, harness.newPlainUser(t).SteamID)
 
 	admin := harness.newRPCUserWithPerms(t, "PERMISSION_REPORT_ADMIN", "PERMISSION_REPORT_READ", "PERMISSION_REPORT_WRITE")
-	mod := harness.newRPCUser(t)
+	writer := harness.newRPCUserWithPerms(t, "PERMISSION_REPORT_WRITE")
 
 	t.Run("report admin changes status", func(t *testing.T) {
 		t.Parallel()
@@ -908,10 +908,10 @@ func TestReportService_ReportStatusEdit(t *testing.T) {
 		require.Equal(t, ban.NeedMoreInfo, fetched.ReportStatus)
 	})
 
-	t.Run("moderator is denied", func(t *testing.T) {
+	t.Run("writer without admin is denied", func(t *testing.T) {
 		t.Parallel()
 
-		client := harness.reportClient(t, mod)
+		client := harness.reportClient(t, writer)
 
 		_, err := client.ReportStatusEdit(t.Context(), &v1.ReportStatusEditRequest{
 			ReportId:     &report.ReportID,
@@ -974,7 +974,7 @@ func TestReportService_Reports(t *testing.T) {
 	report := h.newReport(t, author.SteamID, h.newPlainUser(t).SteamID)
 
 	admin := h.newRPCUserWithPerms(t, "PERMISSION_REPORT_ADMIN", "PERMISSION_REPORT_READ", "PERMISSION_REPORT_WRITE")
-	mod := h.newRPCUser(t)
+	reader := h.newRPCUserWithPerms(t, "PERMISSION_REPORT_READ")
 
 	t.Run("report admin lists all", func(t *testing.T) {
 		t.Parallel()
@@ -992,10 +992,10 @@ func TestReportService_Reports(t *testing.T) {
 		require.Contains(t, ids, report.ReportID)
 	})
 
-	t.Run("moderator without report admin is denied", func(t *testing.T) {
+	t.Run("reader without report admin is denied", func(t *testing.T) {
 		t.Parallel()
 
-		client := h.reportClient(t, mod)
+		client := h.reportClient(t, reader)
 
 		_, err := client.Reports(t.Context(), &emptypb.Empty{})
 		requireCode(t, connect.CodeUnauthenticated, err)
@@ -1015,14 +1015,16 @@ func TestReportService_ReportMessages(t *testing.T) {
 	t.Parallel()
 
 	h := newRPCHarness(t)
-	mod := h.newRPCUser(t)
 
 	adminAuthor := h.newRPCUserWithPerms(t, "PERMISSION_REPORT_ADMIN", "PERMISSION_REPORT_READ", "PERMISSION_REPORT_WRITE")
 	adminOther := h.newRPCUserWithPerms(t, "PERMISSION_REPORT_ADMIN", "PERMISSION_REPORT_READ", "PERMISSION_REPORT_WRITE")
 	plainAuthor := h.newPlainUser(t)
+	reader := h.newRPCUserWithPerms(t, "PERMISSION_REPORT_READ")
+	noReadAuthor := h.newRPCUserWithPerms(t, "PERMISSION_REPORT_CREATE")
 
 	reportByAdmin := h.newReport(t, adminAuthor.SteamID, h.newPlainUser(t).SteamID)
 	reportByPlain := h.newReport(t, plainAuthor.SteamID, h.newPlainUser(t).SteamID)
+	reportByNoRead := h.newReport(t, noReadAuthor.SteamID, h.newPlainUser(t).SteamID)
 
 	_, err := h.env.reports.CreateMessage(t.Context(), reportByAdmin.ReportID, adminAuthor, ban.RequestMessageBodyMD{BodyMD: "admin report message"})
 	require.NoError(t, err)
@@ -1049,10 +1051,10 @@ func TestReportService_ReportMessages(t *testing.T) {
 		requireCode(t, connect.CodePermissionDenied, err)
 	})
 
-	t.Run("moderator is denied", func(t *testing.T) {
+	t.Run("reader without admin is denied", func(t *testing.T) {
 		t.Parallel()
 
-		client := h.reportClient(t, mod)
+		client := h.reportClient(t, reader)
 
 		_, err := client.ReportMessages(t.Context(), &v1.ReportMessagesRequest{ReportId: &reportByPlain.ReportID})
 		requireCode(t, connect.CodeInternal, err)
@@ -1061,10 +1063,20 @@ func TestReportService_ReportMessages(t *testing.T) {
 	t.Run("author without report read is denied", func(t *testing.T) {
 		t.Parallel()
 
+		client := h.reportClient(t, noReadAuthor)
+
+		_, err := client.ReportMessages(t.Context(), &v1.ReportMessagesRequest{ReportId: &reportByNoRead.ReportID})
+		requireCode(t, connect.CodeUnauthenticated, err)
+	})
+
+	t.Run("author with report read can read own messages", func(t *testing.T) {
+		t.Parallel()
+
 		client := h.reportClient(t, plainAuthor)
 
-		_, err := client.ReportMessages(t.Context(), &v1.ReportMessagesRequest{ReportId: &reportByPlain.ReportID})
-		requireCode(t, connect.CodeUnauthenticated, err)
+		resp, err := client.ReportMessages(t.Context(), &v1.ReportMessagesRequest{ReportId: &reportByPlain.ReportID})
+		require.NoError(t, err)
+		require.Len(t, resp.GetMessages(), 1)
 	})
 }
 
@@ -1113,7 +1125,7 @@ func TestReportService_ReportMessageEdit(t *testing.T) {
 	require.NoError(t, err)
 
 	admin := h.newRPCUserWithPerms(t, "PERMISSION_REPORT_ADMIN", "PERMISSION_REPORT_READ", "PERMISSION_REPORT_WRITE")
-	mod := h.newRPCUser(t)
+	reader := h.newRPCUserWithPerms(t, "PERMISSION_REPORT_READ")
 
 	t.Run("report admin edits", func(t *testing.T) {
 		t.Parallel()
@@ -1128,10 +1140,10 @@ func TestReportService_ReportMessageEdit(t *testing.T) {
 		require.Equal(t, "edited detail", resp.GetMessage().GetMessageMd())
 	})
 
-	t.Run("moderator is denied", func(t *testing.T) {
+	t.Run("reader without admin is denied", func(t *testing.T) {
 		t.Parallel()
 
-		client := h.reportClient(t, mod)
+		client := h.reportClient(t, reader)
 
 		_, err := client.ReportMessageEdit(t.Context(), &v1.ReportMessageEditRequest{
 			ReportMessageId: &msg.ReportMessageID,

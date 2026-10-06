@@ -136,11 +136,11 @@ message Discord {
   bool enabled = 1 [(buf.validate.field).required = true];
   bool bot_enabled = 2 [(buf.validate.field).required = true];
   bool integrations_enabled = 3 [(buf.validate.field).required = true];
-  string app_id = 4 [(buf.validate.field).required = true];
-  string app_secret = 5 [(buf.validate.field).required = true];
-  string link_id = 6 [(buf.validate.field).required = true];
-  string token = 7 [(buf.validate.field).required = true];
-  string guild_id = 8 [(buf.validate.field).required = true];
+  string app_id = 4;
+  string app_secret = 5;
+  string link_id = 6;
+  string token = 7;
+  string guild_id = 8;
   bool public_log_channel_enable = 9 [(buf.validate.field).required = true];
   string log_channel_id = 10 [(buf.validate.field).required = true];
   string public_match_log_channel_id = 11 [(buf.validate.field).required = true];
@@ -184,16 +184,16 @@ message Log {
 message GeoLocation {
   bool enabled = 1 [(buf.validate.field).required = true];
   string cache_path = 2 [(buf.validate.field).required = true];
-  string token = 3 [(buf.validate.field).required = true];
+  string token = 3;
 }
 
 message Patreon {
   bool enabled = 1 [(buf.validate.field).required = true];
   bool integrations_enabled = 2 [(buf.validate.field).required = true];
-  string client_id = 3 [(buf.validate.field).required = true];
-  string client_secret = 4 [(buf.validate.field).required = true];
-  string creator_access_token = 5 [(buf.validate.field).required = true];
-  string creator_refresh_token = 6 [(buf.validate.field).required = true];
+  string client_id = 3;
+  string client_secret = 4;
+  string creator_access_token = 5;
+  string creator_refresh_token = 6;
 }
 
 enum HostKeyStrategy {
@@ -206,12 +206,12 @@ message SSH {
   bool enabled = 1 [(buf.validate.field).required = true];
   string username = 2 [(buf.validate.field).required = true];
   int32 port = 3 [(buf.validate.field).required = true];
-  string private_key_path = 4 [(buf.validate.field).required = true];
+  string private_key_path = 4;
   HostKeyStrategy host_key_strategy = 5 [
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
   ];
-  string password = 6 [(buf.validate.field).required = true];
+  string password = 6;
   int32 update_interval = 7 [(buf.validate.field).required = true];
   int32 timeout = 8 [(buf.validate.field).required = true];
   string demo_path_fmt = 9 [(buf.validate.field).required = true];
