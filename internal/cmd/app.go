@@ -568,13 +568,14 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 }
 
 func (g *GBans) Shutdown(ctx context.Context) error {
-	conf := g.config.Config()
-	if conf.Debug.AddRCONLogAddress != "" {
-		g.servers.Each(func(server *servers.Server) error {
-			return server.LogAddressDel(ctx, conf.Debug.AddRCONLogAddress)
-		})
+	if g.config != nil {
+		conf := g.config.Config()
+		if conf.Debug.AddRCONLogAddress != "" {
+			g.servers.Each(func(server *servers.Server) error {
+				return server.LogAddressDel(ctx, conf.Debug.AddRCONLogAddress)
+			})
+		}
 	}
-
 	if g.bot != nil {
 		g.bot.Close()
 	}
