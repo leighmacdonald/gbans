@@ -249,7 +249,7 @@ function BanPage() {
 					<SteamIDList steamId={banData.ban.targetId} />
 
 					{hasPermission(Permission.BAN_WRITE) && banData.ban.note !== "" && (
-						<ContainerWithHeader title={"Mod Notes"} iconLeft={<DocumentScannerIcon />}>
+						<ContainerWithHeader title={"Mod Notes"} iconLeft={<DocumentScannerIcon />} marginTop={2}>
 							<MarkDownRenderer bodyMd={banData.ban.note} assetURL={appInfo.assetUrl} />
 						</ContainerWithHeader>
 					)}
