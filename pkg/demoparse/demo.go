@@ -23,6 +23,11 @@ type Demo struct {
 	Signon   int            `json:"signon"`
 	Rounds   []RoundSummary `json:"rounds"`
 	Chat     []ChatMessage  `json:"chat"`
+
+	Votes          []VoteSummary   `json:"votes"`
+	SourceModVotes []SourceModVote `json:"sourcemod_votes"`
+	PointCaptures  []PointCapture  `json:"point_captures"`
+	Kills          []KillEvent     `json:"kills"`
 }
 
 func (d Demo) UserName(steamID steamid.SteamID) string {
@@ -63,9 +68,10 @@ func (d Demo) Winner() logparse.Team {
 func (d Demo) Scores() logparse.TeamScores {
 	var scores logparse.TeamScores
 	for _, round := range d.Rounds {
-		if round.Winner == logparse.RED.String() {
+		switch strings.ToLower(round.Winner) {
+		case "red":
 			scores.Red++
-		} else if round.Winner == logparse.BLU.String() {
+		case "blu", "blue":
 			scores.Blu++
 		}
 	}
@@ -131,6 +137,30 @@ type Stats struct {
 	Hits                int `json:"hits"`
 	ObjectBuilt         int `json:"object_built"`
 	ObjectDestroyed     int `json:"object_destroyed"`
+	Heals               int `json:"heals"`
+	Healed              int `json:"healed"`
+	CrossbowHeals       int `json:"crossbow_heals"`
+	CrossbowHealing     int `json:"crossbow_healing"`
+	HealOnHit           int `json:"heal_on_hit"`
+	Extinguishes        int `json:"extinguishes"`
+	BuildingHealing     int `json:"building_healing"`
+	DroppedUbers        int `json:"dropped_ubers"`
+	Reflects            int `json:"reflects"`
+	Defenses            int `json:"defenses"`
+	DirectHits          int `json:"direct_hits"`
+	Teleports           int `json:"teleports"`
+	PushDistance        int `json:"push_distance"`
+	EnvironmentalDeaths int `json:"environmental_deaths"`
+	EnvironmentalKills  int `json:"environmental_kills"`
+	ObjectPlaced        int `json:"object_placed"`
+	ObjectUpgraded      int `json:"object_upgraded"`
+	ObjectCarried       int `json:"object_carried"`
+	ObjectDropped       int `json:"object_dropped"`
+	ObjectRemoved       int `json:"object_removed"`
+	ObjectDetonated     int `json:"object_detonated"`
+	AmmoPacks           int `json:"ammo_packs"`
+	HealthPacks         int `json:"health_packs"`
+	HealthPackHealing   int `json:"health_pack_healing"`
 }
 
 type PlayerSummary struct {
@@ -177,8 +207,35 @@ type PlayerSummary struct {
 	ObjectBuilt         int `json:"object_built"`
 	ObjectDestroyed     int `json:"object_destroyed"`
 
+	Heals             int `json:"heals"`
+	Healed            int `json:"healed"`
+	CrossbowHeals     int `json:"crossbow_heals"`
+	CrossbowHealing   int `json:"crossbow_healing"`
+	HealOnHit         int `json:"heal_on_hit"`
+	BuildingHealing   int `json:"building_healing"`
+	DroppedUbers      int `json:"dropped_ubers"`
+	Reflects          int `json:"reflects"`
+	Defenses          int `json:"defenses"`
+	DirectHits        int `json:"direct_hits"`
+	Teleports         int `json:"teleports"`
+	PushDistance      int `json:"push_distance"`
+	AmmoPacks         int `json:"ammo_packs"`
+	HealthPacks       int `json:"health_packs"`
+	HealthPackHealing int `json:"health_pack_healing"`
+
+	EnvironmentalDeaths int `json:"environmental_deaths"`
+	EnvironmentalKills  int `json:"environmental_kills"`
+	ObjectPlaced        int `json:"object_placed"`
+	ObjectUpgraded      int `json:"object_upgraded"`
+	ObjectCarried       int `json:"object_carried"`
+	ObjectDropped       int `json:"object_dropped"`
+	ObjectRemoved       int `json:"object_removed"`
+	ObjectDetonated     int `json:"object_detonated"`
+
 	Classes map[string]Stats `json:"classes"`
 	Weapons map[string]Stats `json:"weapons"`
+
+	HealTargets map[string]float64 `json:"heal_targets"`
 
 	ScoreboardKills   int `json:"scoreboard_kills"`
 	ScoreboardAssists int `json:"scoreboard_assists"`
@@ -231,9 +288,13 @@ type Player struct {
 }
 
 type ChatMessage struct {
-	User    string `json:"user"`
-	Tick    int32  `json:"tick"`
-	Message string `json:"message"`
+	User         string `json:"user"`
+	Tick         int32  `json:"tick"`
+	Message      string `json:"message"`
+	IsDead       bool   `json:"is_dead"`
+	IsTeam       bool   `json:"is_team"`
+	IsSpec       bool   `json:"is_spec"`
+	IsNameChange bool   `json:"is_name_change"`
 }
 
 type Results struct {
@@ -244,3 +305,96 @@ type Results struct {
 }
 
 type DemoRoundSummary struct{}
+
+type VoteBallot struct {
+	Tick        int    `json:"tick"`
+	VoterEntity int    `json:"voter_entity"`
+	Voter       string `json:"voter"`
+	VoterName   string `json:"voter_name"`
+	Option      int    `json:"option"`
+	OptionName  string `json:"option_name"`
+}
+
+type VoteSummary struct {
+	VoteIdx         int          `json:"voteidx"`
+	TickStart       int          `json:"tick_start"`
+	TickEnd         int          `json:"tick_end"`
+	Issue           string       `json:"issue"`
+	Param1          string       `json:"param1"`
+	Team            int          `json:"team"`
+	InitiatorEntity int          `json:"initiator_entity"`
+	Initiator       string       `json:"initiator"`
+	InitiatorName   string       `json:"initiator_name"`
+	Options         []string     `json:"options"`
+	Ballots         []VoteBallot `json:"ballots"`
+	Counts          []int        `json:"counts"`
+	PotentialVotes  int          `json:"potential_votes"`
+	Passed          bool         `json:"passed"`
+	ResultDetails   string       `json:"result_details"`
+	ResultParam1    string       `json:"result_param1"`
+}
+
+type SmVoteInitiator struct {
+	Name     string `json:"name"`
+	SteamID  string `json:"steamid"`
+	Tick     int    `json:"tick"`
+	Current  int    `json:"current"`
+	Required int    `json:"required"`
+}
+
+type SmNomination struct {
+	Name    string `json:"name"`
+	SteamID string `json:"steamid"`
+	Map     string `json:"map"`
+	Tick    int    `json:"tick"`
+}
+
+type SmVoteOption struct {
+	Name  string `json:"name"`
+	Votes int    `json:"votes"`
+}
+
+type SourceModVote struct {
+	Kind           string            `json:"kind"`
+	TickStart      int               `json:"tick_start"`
+	TickEnd        int               `json:"tick_end"`
+	Initiators     []SmVoteInitiator `json:"initiators"`
+	Nominations    []SmNomination    `json:"nominations"`
+	TotalVotes     int               `json:"total_votes"`
+	PotentialVotes int               `json:"potential_votes"`
+	Options        []SmVoteOption    `json:"options"`
+	Result         string            `json:"result"`
+	Passed         bool              `json:"passed"`
+}
+
+type PointCapture struct {
+	Tick    int      `json:"tick"`
+	Cp      int      `json:"cp"`
+	CpName  string   `json:"cp_name"`
+	Team    int      `json:"team"`
+	CapTeam int      `json:"cap_team"`
+	Cappers []string `json:"cappers"`
+	CapTime float64  `json:"cap_time"`
+}
+
+type Position struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+	Z float64 `json:"z"`
+}
+
+type EyeAngles struct {
+	Pitch float64 `json:"pitch"`
+	Yaw   float64 `json:"yaw"`
+}
+
+type KillEvent struct {
+	Tick         int        `json:"tick"`
+	Killer       string     `json:"killer"`
+	Victim       string     `json:"victim"`
+	Weapon       string     `json:"weapon"`
+	KillerPos    *Position  `json:"killer_pos"`
+	VictimPos    *Position  `json:"victim_pos"`
+	KillerAngles *EyeAngles `json:"killer_angles"`
+	VictimAngles *EyeAngles `json:"victim_angles"`
+}

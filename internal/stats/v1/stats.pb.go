@@ -960,6 +960,30 @@ type VariantStats struct {
 	ChargesKritz        *uint64                `protobuf:"varint,29,opt,name=charges_kritz,json=chargesKritz" json:"charges_kritz,omitempty"`
 	ChargesVacc         *uint64                `protobuf:"varint,30,opt,name=charges_vacc,json=chargesVacc" json:"charges_vacc,omitempty"`
 	ChargesQuickfix     *uint64                `protobuf:"varint,31,opt,name=charges_quickfix,json=chargesQuickfix" json:"charges_quickfix,omitempty"`
+	Heals               *uint64                `protobuf:"varint,32,opt,name=heals" json:"heals,omitempty"`
+	Healed              *uint64                `protobuf:"varint,33,opt,name=healed" json:"healed,omitempty"`
+	CrossbowHeals       *uint64                `protobuf:"varint,34,opt,name=crossbow_heals,json=crossbowHeals" json:"crossbow_heals,omitempty"`
+	CrossbowHealing     *uint64                `protobuf:"varint,35,opt,name=crossbow_healing,json=crossbowHealing" json:"crossbow_healing,omitempty"`
+	HealOnHit           *uint64                `protobuf:"varint,36,opt,name=heal_on_hit,json=healOnHit" json:"heal_on_hit,omitempty"`
+	Extinguishes        *uint64                `protobuf:"varint,37,opt,name=extinguishes" json:"extinguishes,omitempty"`
+	BuildingHealing     *uint64                `protobuf:"varint,38,opt,name=building_healing,json=buildingHealing" json:"building_healing,omitempty"`
+	DroppedUbers        *uint64                `protobuf:"varint,39,opt,name=dropped_ubers,json=droppedUbers" json:"dropped_ubers,omitempty"`
+	Reflects            *uint64                `protobuf:"varint,40,opt,name=reflects" json:"reflects,omitempty"`
+	Defenses            *uint64                `protobuf:"varint,41,opt,name=defenses" json:"defenses,omitempty"`
+	DirectHits          *uint64                `protobuf:"varint,42,opt,name=direct_hits,json=directHits" json:"direct_hits,omitempty"`
+	Teleports           *uint64                `protobuf:"varint,43,opt,name=teleports" json:"teleports,omitempty"`
+	PushDistance        *uint64                `protobuf:"varint,44,opt,name=push_distance,json=pushDistance" json:"push_distance,omitempty"`
+	EnvironmentalDeaths *uint64                `protobuf:"varint,45,opt,name=environmental_deaths,json=environmentalDeaths" json:"environmental_deaths,omitempty"`
+	EnvironmentalKills  *uint64                `protobuf:"varint,46,opt,name=environmental_kills,json=environmentalKills" json:"environmental_kills,omitempty"`
+	ObjectPlaced        *uint64                `protobuf:"varint,47,opt,name=object_placed,json=objectPlaced" json:"object_placed,omitempty"`
+	ObjectUpgraded      *uint64                `protobuf:"varint,48,opt,name=object_upgraded,json=objectUpgraded" json:"object_upgraded,omitempty"`
+	ObjectCarried       *uint64                `protobuf:"varint,49,opt,name=object_carried,json=objectCarried" json:"object_carried,omitempty"`
+	ObjectDropped       *uint64                `protobuf:"varint,50,opt,name=object_dropped,json=objectDropped" json:"object_dropped,omitempty"`
+	ObjectRemoved       *uint64                `protobuf:"varint,51,opt,name=object_removed,json=objectRemoved" json:"object_removed,omitempty"`
+	ObjectDetonated     *uint64                `protobuf:"varint,52,opt,name=object_detonated,json=objectDetonated" json:"object_detonated,omitempty"`
+	AmmoPacks           *uint64                `protobuf:"varint,53,opt,name=ammo_packs,json=ammoPacks" json:"ammo_packs,omitempty"`
+	HealthPacks         *uint64                `protobuf:"varint,54,opt,name=health_packs,json=healthPacks" json:"health_packs,omitempty"`
+	HealthPackHealing   *uint64                `protobuf:"varint,55,opt,name=health_pack_healing,json=healthPackHealing" json:"health_pack_healing,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -1207,6 +1231,174 @@ func (x *VariantStats) GetChargesVacc() uint64 {
 func (x *VariantStats) GetChargesQuickfix() uint64 {
 	if x != nil && x.ChargesQuickfix != nil {
 		return *x.ChargesQuickfix
+	}
+	return 0
+}
+
+func (x *VariantStats) GetHeals() uint64 {
+	if x != nil && x.Heals != nil {
+		return *x.Heals
+	}
+	return 0
+}
+
+func (x *VariantStats) GetHealed() uint64 {
+	if x != nil && x.Healed != nil {
+		return *x.Healed
+	}
+	return 0
+}
+
+func (x *VariantStats) GetCrossbowHeals() uint64 {
+	if x != nil && x.CrossbowHeals != nil {
+		return *x.CrossbowHeals
+	}
+	return 0
+}
+
+func (x *VariantStats) GetCrossbowHealing() uint64 {
+	if x != nil && x.CrossbowHealing != nil {
+		return *x.CrossbowHealing
+	}
+	return 0
+}
+
+func (x *VariantStats) GetHealOnHit() uint64 {
+	if x != nil && x.HealOnHit != nil {
+		return *x.HealOnHit
+	}
+	return 0
+}
+
+func (x *VariantStats) GetExtinguishes() uint64 {
+	if x != nil && x.Extinguishes != nil {
+		return *x.Extinguishes
+	}
+	return 0
+}
+
+func (x *VariantStats) GetBuildingHealing() uint64 {
+	if x != nil && x.BuildingHealing != nil {
+		return *x.BuildingHealing
+	}
+	return 0
+}
+
+func (x *VariantStats) GetDroppedUbers() uint64 {
+	if x != nil && x.DroppedUbers != nil {
+		return *x.DroppedUbers
+	}
+	return 0
+}
+
+func (x *VariantStats) GetReflects() uint64 {
+	if x != nil && x.Reflects != nil {
+		return *x.Reflects
+	}
+	return 0
+}
+
+func (x *VariantStats) GetDefenses() uint64 {
+	if x != nil && x.Defenses != nil {
+		return *x.Defenses
+	}
+	return 0
+}
+
+func (x *VariantStats) GetDirectHits() uint64 {
+	if x != nil && x.DirectHits != nil {
+		return *x.DirectHits
+	}
+	return 0
+}
+
+func (x *VariantStats) GetTeleports() uint64 {
+	if x != nil && x.Teleports != nil {
+		return *x.Teleports
+	}
+	return 0
+}
+
+func (x *VariantStats) GetPushDistance() uint64 {
+	if x != nil && x.PushDistance != nil {
+		return *x.PushDistance
+	}
+	return 0
+}
+
+func (x *VariantStats) GetEnvironmentalDeaths() uint64 {
+	if x != nil && x.EnvironmentalDeaths != nil {
+		return *x.EnvironmentalDeaths
+	}
+	return 0
+}
+
+func (x *VariantStats) GetEnvironmentalKills() uint64 {
+	if x != nil && x.EnvironmentalKills != nil {
+		return *x.EnvironmentalKills
+	}
+	return 0
+}
+
+func (x *VariantStats) GetObjectPlaced() uint64 {
+	if x != nil && x.ObjectPlaced != nil {
+		return *x.ObjectPlaced
+	}
+	return 0
+}
+
+func (x *VariantStats) GetObjectUpgraded() uint64 {
+	if x != nil && x.ObjectUpgraded != nil {
+		return *x.ObjectUpgraded
+	}
+	return 0
+}
+
+func (x *VariantStats) GetObjectCarried() uint64 {
+	if x != nil && x.ObjectCarried != nil {
+		return *x.ObjectCarried
+	}
+	return 0
+}
+
+func (x *VariantStats) GetObjectDropped() uint64 {
+	if x != nil && x.ObjectDropped != nil {
+		return *x.ObjectDropped
+	}
+	return 0
+}
+
+func (x *VariantStats) GetObjectRemoved() uint64 {
+	if x != nil && x.ObjectRemoved != nil {
+		return *x.ObjectRemoved
+	}
+	return 0
+}
+
+func (x *VariantStats) GetObjectDetonated() uint64 {
+	if x != nil && x.ObjectDetonated != nil {
+		return *x.ObjectDetonated
+	}
+	return 0
+}
+
+func (x *VariantStats) GetAmmoPacks() uint64 {
+	if x != nil && x.AmmoPacks != nil {
+		return *x.AmmoPacks
+	}
+	return 0
+}
+
+func (x *VariantStats) GetHealthPacks() uint64 {
+	if x != nil && x.HealthPacks != nil {
+		return *x.HealthPacks
+	}
+	return 0
+}
+
+func (x *VariantStats) GetHealthPackHealing() uint64 {
+	if x != nil && x.HealthPackHealing != nil {
+		return *x.HealthPackHealing
 	}
 	return 0
 }
@@ -1581,6 +1773,7 @@ type Match struct {
 	Rounds        []*Round                      `protobuf:"bytes,2,rep,name=rounds" json:"rounds,omitempty"`
 	ChatLogs      []*MatchChatLog               `protobuf:"bytes,3,rep,name=chat_logs,json=chatLogs" json:"chat_logs,omitempty"`
 	Players       map[string]*v12.PersonDisplay `protobuf:"bytes,4,rep,name=players" json:"players,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Kills         []*MatchKill                  `protobuf:"bytes,5,rep,name=kills" json:"kills,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1643,6 +1836,169 @@ func (x *Match) GetPlayers() map[string]*v12.PersonDisplay {
 	return nil
 }
 
+func (x *Match) GetKills() []*MatchKill {
+	if x != nil {
+		return x.Kills
+	}
+	return nil
+}
+
+type MatchKill struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	MatchKillId       *int64                 `protobuf:"varint,1,opt,name=match_kill_id,json=matchKillId" json:"match_kill_id,omitempty"`
+	Tick              *int32                 `protobuf:"varint,2,opt,name=tick" json:"tick,omitempty"`
+	KillerSteamId     *int64                 `protobuf:"varint,3,opt,name=killer_steam_id,json=killerSteamId" json:"killer_steam_id,omitempty"`
+	VictimSteamId     *int64                 `protobuf:"varint,4,opt,name=victim_steam_id,json=victimSteamId" json:"victim_steam_id,omitempty"`
+	Weapon            *string                `protobuf:"bytes,5,opt,name=weapon" json:"weapon,omitempty"`
+	KillerPosX        *float64               `protobuf:"fixed64,6,opt,name=killer_pos_x,json=killerPosX" json:"killer_pos_x,omitempty"`
+	KillerPosY        *float64               `protobuf:"fixed64,7,opt,name=killer_pos_y,json=killerPosY" json:"killer_pos_y,omitempty"`
+	KillerPosZ        *float64               `protobuf:"fixed64,8,opt,name=killer_pos_z,json=killerPosZ" json:"killer_pos_z,omitempty"`
+	VictimPosX        *float64               `protobuf:"fixed64,9,opt,name=victim_pos_x,json=victimPosX" json:"victim_pos_x,omitempty"`
+	VictimPosY        *float64               `protobuf:"fixed64,10,opt,name=victim_pos_y,json=victimPosY" json:"victim_pos_y,omitempty"`
+	VictimPosZ        *float64               `protobuf:"fixed64,11,opt,name=victim_pos_z,json=victimPosZ" json:"victim_pos_z,omitempty"`
+	KillerAnglesPitch *float64               `protobuf:"fixed64,12,opt,name=killer_angles_pitch,json=killerAnglesPitch" json:"killer_angles_pitch,omitempty"`
+	KillerAnglesYaw   *float64               `protobuf:"fixed64,13,opt,name=killer_angles_yaw,json=killerAnglesYaw" json:"killer_angles_yaw,omitempty"`
+	VictimAnglesPitch *float64               `protobuf:"fixed64,14,opt,name=victim_angles_pitch,json=victimAnglesPitch" json:"victim_angles_pitch,omitempty"`
+	VictimAnglesYaw   *float64               `protobuf:"fixed64,15,opt,name=victim_angles_yaw,json=victimAnglesYaw" json:"victim_angles_yaw,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *MatchKill) Reset() {
+	*x = MatchKill{}
+	mi := &file_stats_v1_stats_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MatchKill) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MatchKill) ProtoMessage() {}
+
+func (x *MatchKill) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MatchKill.ProtoReflect.Descriptor instead.
+func (*MatchKill) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *MatchKill) GetMatchKillId() int64 {
+	if x != nil && x.MatchKillId != nil {
+		return *x.MatchKillId
+	}
+	return 0
+}
+
+func (x *MatchKill) GetTick() int32 {
+	if x != nil && x.Tick != nil {
+		return *x.Tick
+	}
+	return 0
+}
+
+func (x *MatchKill) GetKillerSteamId() int64 {
+	if x != nil && x.KillerSteamId != nil {
+		return *x.KillerSteamId
+	}
+	return 0
+}
+
+func (x *MatchKill) GetVictimSteamId() int64 {
+	if x != nil && x.VictimSteamId != nil {
+		return *x.VictimSteamId
+	}
+	return 0
+}
+
+func (x *MatchKill) GetWeapon() string {
+	if x != nil && x.Weapon != nil {
+		return *x.Weapon
+	}
+	return ""
+}
+
+func (x *MatchKill) GetKillerPosX() float64 {
+	if x != nil && x.KillerPosX != nil {
+		return *x.KillerPosX
+	}
+	return 0
+}
+
+func (x *MatchKill) GetKillerPosY() float64 {
+	if x != nil && x.KillerPosY != nil {
+		return *x.KillerPosY
+	}
+	return 0
+}
+
+func (x *MatchKill) GetKillerPosZ() float64 {
+	if x != nil && x.KillerPosZ != nil {
+		return *x.KillerPosZ
+	}
+	return 0
+}
+
+func (x *MatchKill) GetVictimPosX() float64 {
+	if x != nil && x.VictimPosX != nil {
+		return *x.VictimPosX
+	}
+	return 0
+}
+
+func (x *MatchKill) GetVictimPosY() float64 {
+	if x != nil && x.VictimPosY != nil {
+		return *x.VictimPosY
+	}
+	return 0
+}
+
+func (x *MatchKill) GetVictimPosZ() float64 {
+	if x != nil && x.VictimPosZ != nil {
+		return *x.VictimPosZ
+	}
+	return 0
+}
+
+func (x *MatchKill) GetKillerAnglesPitch() float64 {
+	if x != nil && x.KillerAnglesPitch != nil {
+		return *x.KillerAnglesPitch
+	}
+	return 0
+}
+
+func (x *MatchKill) GetKillerAnglesYaw() float64 {
+	if x != nil && x.KillerAnglesYaw != nil {
+		return *x.KillerAnglesYaw
+	}
+	return 0
+}
+
+func (x *MatchKill) GetVictimAnglesPitch() float64 {
+	if x != nil && x.VictimAnglesPitch != nil {
+		return *x.VictimAnglesPitch
+	}
+	return 0
+}
+
+func (x *MatchKill) GetVictimAnglesYaw() float64 {
+	if x != nil && x.VictimAnglesYaw != nil {
+		return *x.VictimAnglesYaw
+	}
+	return 0
+}
+
 type Round struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RoundId       *uint32                `protobuf:"varint,1,opt,name=round_id,json=roundId" json:"round_id,omitempty"`
@@ -1657,7 +2013,7 @@ type Round struct {
 
 func (x *Round) Reset() {
 	*x = Round{}
-	mi := &file_stats_v1_stats_proto_msgTypes[18]
+	mi := &file_stats_v1_stats_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1669,7 +2025,7 @@ func (x *Round) String() string {
 func (*Round) ProtoMessage() {}
 
 func (x *Round) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[18]
+	mi := &file_stats_v1_stats_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1682,7 +2038,7 @@ func (x *Round) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Round.ProtoReflect.Descriptor instead.
 func (*Round) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{18}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *Round) GetRoundId() uint32 {
@@ -1779,6 +2135,29 @@ type RoundPlayer struct {
 	Ignites             *uint64                `protobuf:"varint,48,opt,name=ignites" json:"ignites,omitempty"`
 	BuildingsBuilt      *uint64                `protobuf:"varint,49,opt,name=buildings_built,json=buildingsBuilt" json:"buildings_built,omitempty"`
 	BuildingsDestroyed  *uint64                `protobuf:"varint,50,opt,name=buildings_destroyed,json=buildingsDestroyed" json:"buildings_destroyed,omitempty"`
+	Heals               *uint64                `protobuf:"varint,51,opt,name=heals" json:"heals,omitempty"`
+	Healed              *uint64                `protobuf:"varint,52,opt,name=healed" json:"healed,omitempty"`
+	CrossbowHeals       *uint64                `protobuf:"varint,53,opt,name=crossbow_heals,json=crossbowHeals" json:"crossbow_heals,omitempty"`
+	CrossbowHealing     *uint64                `protobuf:"varint,54,opt,name=crossbow_healing,json=crossbowHealing" json:"crossbow_healing,omitempty"`
+	HealOnHit           *uint64                `protobuf:"varint,55,opt,name=heal_on_hit,json=healOnHit" json:"heal_on_hit,omitempty"`
+	BuildingHealing     *uint64                `protobuf:"varint,56,opt,name=building_healing,json=buildingHealing" json:"building_healing,omitempty"`
+	DroppedUbers        *uint64                `protobuf:"varint,57,opt,name=dropped_ubers,json=droppedUbers" json:"dropped_ubers,omitempty"`
+	Reflects            *uint64                `protobuf:"varint,58,opt,name=reflects" json:"reflects,omitempty"`
+	Defenses            *uint64                `protobuf:"varint,59,opt,name=defenses" json:"defenses,omitempty"`
+	DirectHits          *uint64                `protobuf:"varint,60,opt,name=direct_hits,json=directHits" json:"direct_hits,omitempty"`
+	Teleports           *uint64                `protobuf:"varint,61,opt,name=teleports" json:"teleports,omitempty"`
+	PushDistance        *uint64                `protobuf:"varint,62,opt,name=push_distance,json=pushDistance" json:"push_distance,omitempty"`
+	EnvironmentalDeaths *uint64                `protobuf:"varint,63,opt,name=environmental_deaths,json=environmentalDeaths" json:"environmental_deaths,omitempty"`
+	EnvironmentalKills  *uint64                `protobuf:"varint,64,opt,name=environmental_kills,json=environmentalKills" json:"environmental_kills,omitempty"`
+	ObjectPlaced        *uint64                `protobuf:"varint,65,opt,name=object_placed,json=objectPlaced" json:"object_placed,omitempty"`
+	ObjectUpgraded      *uint64                `protobuf:"varint,66,opt,name=object_upgraded,json=objectUpgraded" json:"object_upgraded,omitempty"`
+	ObjectCarried       *uint64                `protobuf:"varint,67,opt,name=object_carried,json=objectCarried" json:"object_carried,omitempty"`
+	ObjectDropped       *uint64                `protobuf:"varint,68,opt,name=object_dropped,json=objectDropped" json:"object_dropped,omitempty"`
+	ObjectRemoved       *uint64                `protobuf:"varint,69,opt,name=object_removed,json=objectRemoved" json:"object_removed,omitempty"`
+	ObjectDetonated     *uint64                `protobuf:"varint,70,opt,name=object_detonated,json=objectDetonated" json:"object_detonated,omitempty"`
+	AmmoPacks           *uint64                `protobuf:"varint,71,opt,name=ammo_packs,json=ammoPacks" json:"ammo_packs,omitempty"`
+	HealthPacks         *uint64                `protobuf:"varint,72,opt,name=health_packs,json=healthPacks" json:"health_packs,omitempty"`
+	HealthPackHealing   *uint64                `protobuf:"varint,73,opt,name=health_pack_healing,json=healthPackHealing" json:"health_pack_healing,omitempty"`
 	Variants            []*RoundPlayerVariant  `protobuf:"bytes,100,rep,name=variants" json:"variants,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
@@ -1786,7 +2165,7 @@ type RoundPlayer struct {
 
 func (x *RoundPlayer) Reset() {
 	*x = RoundPlayer{}
-	mi := &file_stats_v1_stats_proto_msgTypes[19]
+	mi := &file_stats_v1_stats_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1798,7 +2177,7 @@ func (x *RoundPlayer) String() string {
 func (*RoundPlayer) ProtoMessage() {}
 
 func (x *RoundPlayer) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[19]
+	mi := &file_stats_v1_stats_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1811,7 +2190,7 @@ func (x *RoundPlayer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoundPlayer.ProtoReflect.Descriptor instead.
 func (*RoundPlayer) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{19}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *RoundPlayer) GetRoundId() uint32 {
@@ -2164,6 +2543,167 @@ func (x *RoundPlayer) GetBuildingsDestroyed() uint64 {
 	return 0
 }
 
+func (x *RoundPlayer) GetHeals() uint64 {
+	if x != nil && x.Heals != nil {
+		return *x.Heals
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetHealed() uint64 {
+	if x != nil && x.Healed != nil {
+		return *x.Healed
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetCrossbowHeals() uint64 {
+	if x != nil && x.CrossbowHeals != nil {
+		return *x.CrossbowHeals
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetCrossbowHealing() uint64 {
+	if x != nil && x.CrossbowHealing != nil {
+		return *x.CrossbowHealing
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetHealOnHit() uint64 {
+	if x != nil && x.HealOnHit != nil {
+		return *x.HealOnHit
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetBuildingHealing() uint64 {
+	if x != nil && x.BuildingHealing != nil {
+		return *x.BuildingHealing
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetDroppedUbers() uint64 {
+	if x != nil && x.DroppedUbers != nil {
+		return *x.DroppedUbers
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetReflects() uint64 {
+	if x != nil && x.Reflects != nil {
+		return *x.Reflects
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetDefenses() uint64 {
+	if x != nil && x.Defenses != nil {
+		return *x.Defenses
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetDirectHits() uint64 {
+	if x != nil && x.DirectHits != nil {
+		return *x.DirectHits
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetTeleports() uint64 {
+	if x != nil && x.Teleports != nil {
+		return *x.Teleports
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetPushDistance() uint64 {
+	if x != nil && x.PushDistance != nil {
+		return *x.PushDistance
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetEnvironmentalDeaths() uint64 {
+	if x != nil && x.EnvironmentalDeaths != nil {
+		return *x.EnvironmentalDeaths
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetEnvironmentalKills() uint64 {
+	if x != nil && x.EnvironmentalKills != nil {
+		return *x.EnvironmentalKills
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetObjectPlaced() uint64 {
+	if x != nil && x.ObjectPlaced != nil {
+		return *x.ObjectPlaced
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetObjectUpgraded() uint64 {
+	if x != nil && x.ObjectUpgraded != nil {
+		return *x.ObjectUpgraded
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetObjectCarried() uint64 {
+	if x != nil && x.ObjectCarried != nil {
+		return *x.ObjectCarried
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetObjectDropped() uint64 {
+	if x != nil && x.ObjectDropped != nil {
+		return *x.ObjectDropped
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetObjectRemoved() uint64 {
+	if x != nil && x.ObjectRemoved != nil {
+		return *x.ObjectRemoved
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetObjectDetonated() uint64 {
+	if x != nil && x.ObjectDetonated != nil {
+		return *x.ObjectDetonated
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetAmmoPacks() uint64 {
+	if x != nil && x.AmmoPacks != nil {
+		return *x.AmmoPacks
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetHealthPacks() uint64 {
+	if x != nil && x.HealthPacks != nil {
+		return *x.HealthPacks
+	}
+	return 0
+}
+
+func (x *RoundPlayer) GetHealthPackHealing() uint64 {
+	if x != nil && x.HealthPackHealing != nil {
+		return *x.HealthPackHealing
+	}
+	return 0
+}
+
 func (x *RoundPlayer) GetVariants() []*RoundPlayerVariant {
 	if x != nil {
 		return x.Variants
@@ -2204,13 +2744,37 @@ type RoundPlayerVariant struct {
 	ChargesKritz        *uint64                `protobuf:"varint,29,opt,name=charges_kritz,json=chargesKritz" json:"charges_kritz,omitempty"`
 	ChargesVacc         *uint64                `protobuf:"varint,30,opt,name=charges_vacc,json=chargesVacc" json:"charges_vacc,omitempty"`
 	ChargesQuickfix     *uint64                `protobuf:"varint,31,opt,name=charges_quickfix,json=chargesQuickfix" json:"charges_quickfix,omitempty"`
+	Heals               *uint64                `protobuf:"varint,32,opt,name=heals" json:"heals,omitempty"`
+	Healed              *uint64                `protobuf:"varint,33,opt,name=healed" json:"healed,omitempty"`
+	CrossbowHeals       *uint64                `protobuf:"varint,34,opt,name=crossbow_heals,json=crossbowHeals" json:"crossbow_heals,omitempty"`
+	CrossbowHealing     *uint64                `protobuf:"varint,35,opt,name=crossbow_healing,json=crossbowHealing" json:"crossbow_healing,omitempty"`
+	HealOnHit           *uint64                `protobuf:"varint,36,opt,name=heal_on_hit,json=healOnHit" json:"heal_on_hit,omitempty"`
+	Extinguishes        *uint64                `protobuf:"varint,37,opt,name=extinguishes" json:"extinguishes,omitempty"`
+	BuildingHealing     *uint64                `protobuf:"varint,38,opt,name=building_healing,json=buildingHealing" json:"building_healing,omitempty"`
+	DroppedUbers        *uint64                `protobuf:"varint,39,opt,name=dropped_ubers,json=droppedUbers" json:"dropped_ubers,omitempty"`
+	Reflects            *uint64                `protobuf:"varint,40,opt,name=reflects" json:"reflects,omitempty"`
+	Defenses            *uint64                `protobuf:"varint,41,opt,name=defenses" json:"defenses,omitempty"`
+	DirectHits          *uint64                `protobuf:"varint,42,opt,name=direct_hits,json=directHits" json:"direct_hits,omitempty"`
+	Teleports           *uint64                `protobuf:"varint,43,opt,name=teleports" json:"teleports,omitempty"`
+	PushDistance        *uint64                `protobuf:"varint,44,opt,name=push_distance,json=pushDistance" json:"push_distance,omitempty"`
+	EnvironmentalDeaths *uint64                `protobuf:"varint,45,opt,name=environmental_deaths,json=environmentalDeaths" json:"environmental_deaths,omitempty"`
+	EnvironmentalKills  *uint64                `protobuf:"varint,46,opt,name=environmental_kills,json=environmentalKills" json:"environmental_kills,omitempty"`
+	ObjectPlaced        *uint64                `protobuf:"varint,47,opt,name=object_placed,json=objectPlaced" json:"object_placed,omitempty"`
+	ObjectUpgraded      *uint64                `protobuf:"varint,48,opt,name=object_upgraded,json=objectUpgraded" json:"object_upgraded,omitempty"`
+	ObjectCarried       *uint64                `protobuf:"varint,49,opt,name=object_carried,json=objectCarried" json:"object_carried,omitempty"`
+	ObjectDropped       *uint64                `protobuf:"varint,50,opt,name=object_dropped,json=objectDropped" json:"object_dropped,omitempty"`
+	ObjectRemoved       *uint64                `protobuf:"varint,51,opt,name=object_removed,json=objectRemoved" json:"object_removed,omitempty"`
+	ObjectDetonated     *uint64                `protobuf:"varint,52,opt,name=object_detonated,json=objectDetonated" json:"object_detonated,omitempty"`
+	AmmoPacks           *uint64                `protobuf:"varint,53,opt,name=ammo_packs,json=ammoPacks" json:"ammo_packs,omitempty"`
+	HealthPacks         *uint64                `protobuf:"varint,54,opt,name=health_packs,json=healthPacks" json:"health_packs,omitempty"`
+	HealthPackHealing   *uint64                `protobuf:"varint,55,opt,name=health_pack_healing,json=healthPackHealing" json:"health_pack_healing,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
 
 func (x *RoundPlayerVariant) Reset() {
 	*x = RoundPlayerVariant{}
-	mi := &file_stats_v1_stats_proto_msgTypes[20]
+	mi := &file_stats_v1_stats_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2222,7 +2786,7 @@ func (x *RoundPlayerVariant) String() string {
 func (*RoundPlayerVariant) ProtoMessage() {}
 
 func (x *RoundPlayerVariant) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[20]
+	mi := &file_stats_v1_stats_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2235,7 +2799,7 @@ func (x *RoundPlayerVariant) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoundPlayerVariant.ProtoReflect.Descriptor instead.
 func (*RoundPlayerVariant) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{20}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *RoundPlayerVariant) GetVariant() string {
@@ -2455,6 +3019,174 @@ func (x *RoundPlayerVariant) GetChargesQuickfix() uint64 {
 	return 0
 }
 
+func (x *RoundPlayerVariant) GetHeals() uint64 {
+	if x != nil && x.Heals != nil {
+		return *x.Heals
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetHealed() uint64 {
+	if x != nil && x.Healed != nil {
+		return *x.Healed
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetCrossbowHeals() uint64 {
+	if x != nil && x.CrossbowHeals != nil {
+		return *x.CrossbowHeals
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetCrossbowHealing() uint64 {
+	if x != nil && x.CrossbowHealing != nil {
+		return *x.CrossbowHealing
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetHealOnHit() uint64 {
+	if x != nil && x.HealOnHit != nil {
+		return *x.HealOnHit
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetExtinguishes() uint64 {
+	if x != nil && x.Extinguishes != nil {
+		return *x.Extinguishes
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetBuildingHealing() uint64 {
+	if x != nil && x.BuildingHealing != nil {
+		return *x.BuildingHealing
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetDroppedUbers() uint64 {
+	if x != nil && x.DroppedUbers != nil {
+		return *x.DroppedUbers
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetReflects() uint64 {
+	if x != nil && x.Reflects != nil {
+		return *x.Reflects
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetDefenses() uint64 {
+	if x != nil && x.Defenses != nil {
+		return *x.Defenses
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetDirectHits() uint64 {
+	if x != nil && x.DirectHits != nil {
+		return *x.DirectHits
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetTeleports() uint64 {
+	if x != nil && x.Teleports != nil {
+		return *x.Teleports
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetPushDistance() uint64 {
+	if x != nil && x.PushDistance != nil {
+		return *x.PushDistance
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetEnvironmentalDeaths() uint64 {
+	if x != nil && x.EnvironmentalDeaths != nil {
+		return *x.EnvironmentalDeaths
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetEnvironmentalKills() uint64 {
+	if x != nil && x.EnvironmentalKills != nil {
+		return *x.EnvironmentalKills
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetObjectPlaced() uint64 {
+	if x != nil && x.ObjectPlaced != nil {
+		return *x.ObjectPlaced
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetObjectUpgraded() uint64 {
+	if x != nil && x.ObjectUpgraded != nil {
+		return *x.ObjectUpgraded
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetObjectCarried() uint64 {
+	if x != nil && x.ObjectCarried != nil {
+		return *x.ObjectCarried
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetObjectDropped() uint64 {
+	if x != nil && x.ObjectDropped != nil {
+		return *x.ObjectDropped
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetObjectRemoved() uint64 {
+	if x != nil && x.ObjectRemoved != nil {
+		return *x.ObjectRemoved
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetObjectDetonated() uint64 {
+	if x != nil && x.ObjectDetonated != nil {
+		return *x.ObjectDetonated
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetAmmoPacks() uint64 {
+	if x != nil && x.AmmoPacks != nil {
+		return *x.AmmoPacks
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetHealthPacks() uint64 {
+	if x != nil && x.HealthPacks != nil {
+		return *x.HealthPacks
+	}
+	return 0
+}
+
+func (x *RoundPlayerVariant) GetHealthPackHealing() uint64 {
+	if x != nil && x.HealthPackHealing != nil {
+		return *x.HealthPackHealing
+	}
+	return 0
+}
+
 var File_stats_v1_stats_proto protoreflect.FileDescriptor
 
 const file_stats_v1_stats_proto_rawDesc = "" +
@@ -2521,7 +3253,7 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\avariant\x18\x01 \x01(\x0e2\x11.stats.v1.VariantR\avariant\x12\x18\n" +
 	"\x05count\x18\x02 \x01(\x04B\x020\x01R\x05count\x12F\n" +
 	"\rstats_variant\x18\x03 \x01(\v2\x1f.stats.v1.VariantStatsContainerH\x00R\fstatsVariantB\x10\n" +
-	"\x0estat_container\"\xa3\t\n" +
+	"\x0estat_container\"\xf7\x10\n" +
 	"\fVariantStats\x12\x18\n" +
 	"\avariant\x18\x01 \x01(\tR\avariant\x12\x16\n" +
 	"\x04rank\x18\x02 \x01(\x04B\x020\x01R\x04rank\x120\n" +
@@ -2554,7 +3286,33 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\fcharges_uber\x18\x1c \x01(\x04B\x020\x01R\vchargesUber\x12'\n" +
 	"\rcharges_kritz\x18\x1d \x01(\x04B\x020\x01R\fchargesKritz\x12%\n" +
 	"\fcharges_vacc\x18\x1e \x01(\x04B\x020\x01R\vchargesVacc\x12-\n" +
-	"\x10charges_quickfix\x18\x1f \x01(\x04B\x020\x01R\x0fchargesQuickfix\"E\n" +
+	"\x10charges_quickfix\x18\x1f \x01(\x04B\x020\x01R\x0fchargesQuickfix\x12\x18\n" +
+	"\x05heals\x18  \x01(\x04B\x020\x01R\x05heals\x12\x1a\n" +
+	"\x06healed\x18! \x01(\x04B\x020\x01R\x06healed\x12)\n" +
+	"\x0ecrossbow_heals\x18\" \x01(\x04B\x020\x01R\rcrossbowHeals\x12-\n" +
+	"\x10crossbow_healing\x18# \x01(\x04B\x020\x01R\x0fcrossbowHealing\x12\"\n" +
+	"\vheal_on_hit\x18$ \x01(\x04B\x020\x01R\thealOnHit\x12&\n" +
+	"\fextinguishes\x18% \x01(\x04B\x020\x01R\fextinguishes\x12-\n" +
+	"\x10building_healing\x18& \x01(\x04B\x020\x01R\x0fbuildingHealing\x12'\n" +
+	"\rdropped_ubers\x18' \x01(\x04B\x020\x01R\fdroppedUbers\x12\x1e\n" +
+	"\breflects\x18( \x01(\x04B\x020\x01R\breflects\x12\x1e\n" +
+	"\bdefenses\x18) \x01(\x04B\x020\x01R\bdefenses\x12#\n" +
+	"\vdirect_hits\x18* \x01(\x04B\x020\x01R\n" +
+	"directHits\x12 \n" +
+	"\tteleports\x18+ \x01(\x04B\x020\x01R\tteleports\x12'\n" +
+	"\rpush_distance\x18, \x01(\x04B\x020\x01R\fpushDistance\x125\n" +
+	"\x14environmental_deaths\x18- \x01(\x04B\x020\x01R\x13environmentalDeaths\x123\n" +
+	"\x13environmental_kills\x18. \x01(\x04B\x020\x01R\x12environmentalKills\x12'\n" +
+	"\robject_placed\x18/ \x01(\x04B\x020\x01R\fobjectPlaced\x12+\n" +
+	"\x0fobject_upgraded\x180 \x01(\x04B\x020\x01R\x0eobjectUpgraded\x12)\n" +
+	"\x0eobject_carried\x181 \x01(\x04B\x020\x01R\robjectCarried\x12)\n" +
+	"\x0eobject_dropped\x182 \x01(\x04B\x020\x01R\robjectDropped\x12)\n" +
+	"\x0eobject_removed\x183 \x01(\x04B\x020\x01R\robjectRemoved\x12-\n" +
+	"\x10object_detonated\x184 \x01(\x04B\x020\x01R\x0fobjectDetonated\x12!\n" +
+	"\n" +
+	"ammo_packs\x185 \x01(\x04B\x020\x01R\tammoPacks\x12%\n" +
+	"\fhealth_packs\x186 \x01(\x04B\x020\x01R\vhealthPacks\x122\n" +
+	"\x13health_pack_healing\x187 \x01(\x04B\x020\x01R\x11healthPackHealing\"E\n" +
 	"\x15VariantStatsContainer\x12,\n" +
 	"\x05stats\x18\x01 \x03(\v2\x16.stats.v1.VariantStatsR\x05stats\"3\n" +
 	"\fMatchRequest\x12#\n" +
@@ -2586,15 +3344,39 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\bsteam_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12\x1a\n" +
 	"\x04body\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04body\x12#\n" +
 	"\tdemo_tick\x18\x04 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bdemoTick\x12\x1a\n" +
-	"\x04name\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\"\xc8\x02\n" +
+	"\x04name\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\"\xf3\x02\n" +
 	"\x05Match\x12;\n" +
 	"\boverview\x18\x01 \x01(\v2\x17.stats.v1.MatchOverviewB\x06\xbaH\x03\xc8\x01\x01R\boverview\x12/\n" +
 	"\x06rounds\x18\x02 \x03(\v2\x0f.stats.v1.RoundB\x06\xbaH\x03\xc8\x01\x01R\x06rounds\x12;\n" +
 	"\tchat_logs\x18\x03 \x03(\v2\x16.stats.v1.MatchChatLogB\x06\xbaH\x03\xc8\x01\x01R\bchatLogs\x12>\n" +
-	"\aplayers\x18\x04 \x03(\v2\x1c.stats.v1.Match.PlayersEntryB\x06\xbaH\x03\xc8\x01\x01R\aplayers\x1aT\n" +
+	"\aplayers\x18\x04 \x03(\v2\x1c.stats.v1.Match.PlayersEntryB\x06\xbaH\x03\xc8\x01\x01R\aplayers\x12)\n" +
+	"\x05kills\x18\x05 \x03(\v2\x13.stats.v1.MatchKillR\x05kills\x1aT\n" +
 	"\fPlayersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12.\n" +
-	"\x05value\x18\x02 \x01(\v2\x18.person.v1.PersonDisplayR\x05value:\x028\x01\"\xeb\x01\n" +
+	"\x05value\x18\x02 \x01(\v2\x18.person.v1.PersonDisplayR\x05value:\x028\x01\"\xc9\x04\n" +
+	"\tMatchKill\x12&\n" +
+	"\rmatch_kill_id\x18\x01 \x01(\x03B\x020\x01R\vmatchKillId\x12\x12\n" +
+	"\x04tick\x18\x02 \x01(\x05R\x04tick\x12*\n" +
+	"\x0fkiller_steam_id\x18\x03 \x01(\x03B\x020\x01R\rkillerSteamId\x120\n" +
+	"\x0fvictim_steam_id\x18\x04 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\rvictimSteamId\x12\x1e\n" +
+	"\x06weapon\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06weapon\x12 \n" +
+	"\fkiller_pos_x\x18\x06 \x01(\x01R\n" +
+	"killerPosX\x12 \n" +
+	"\fkiller_pos_y\x18\a \x01(\x01R\n" +
+	"killerPosY\x12 \n" +
+	"\fkiller_pos_z\x18\b \x01(\x01R\n" +
+	"killerPosZ\x12 \n" +
+	"\fvictim_pos_x\x18\t \x01(\x01R\n" +
+	"victimPosX\x12 \n" +
+	"\fvictim_pos_y\x18\n" +
+	" \x01(\x01R\n" +
+	"victimPosY\x12 \n" +
+	"\fvictim_pos_z\x18\v \x01(\x01R\n" +
+	"victimPosZ\x12.\n" +
+	"\x13killer_angles_pitch\x18\f \x01(\x01R\x11killerAnglesPitch\x12*\n" +
+	"\x11killer_angles_yaw\x18\r \x01(\x01R\x0fkillerAnglesYaw\x12.\n" +
+	"\x13victim_angles_pitch\x18\x0e \x01(\x01R\x11victimAnglesPitch\x12*\n" +
+	"\x11victim_angles_yaw\x18\x0f \x01(\x01R\x0fvictimAnglesYaw\"\xeb\x01\n" +
 	"\x05Round\x12\x19\n" +
 	"\bround_id\x18\x01 \x01(\rR\aroundId\x12&\n" +
 	"\x06winner\x18\x02 \x01(\x0e2\x0e.stats.v1.TeamR\x06winner\x12!\n" +
@@ -2602,7 +3384,7 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\x0fis_sudden_death\x18\x04 \x01(\bR\risSuddenDeath\x12#\n" +
 	"\vduration_ms\x18\x05 \x01(\x04B\x020\x01R\n" +
 	"durationMs\x12/\n" +
-	"\aplayers\x18\x06 \x03(\v2\x15.stats.v1.RoundPlayerR\aplayers\"\xcd\x0f\n" +
+	"\aplayers\x18\x06 \x03(\v2\x15.stats.v1.RoundPlayerR\aplayers\"\xf9\x16\n" +
 	"\vRoundPlayer\x12\x19\n" +
 	"\bround_id\x18\x01 \x01(\rR\aroundId\x128\n" +
 	"\x06person\x18\x02 \x01(\v2\x18.person.v1.PersonDisplayB\x06\xbaH\x03\xc8\x01\x01R\x06person\x12\"\n" +
@@ -2655,8 +3437,33 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\fextinguishes\x18/ \x01(\x04B\x020\x01R\fextinguishes\x12\x1c\n" +
 	"\aignites\x180 \x01(\x04B\x020\x01R\aignites\x12+\n" +
 	"\x0fbuildings_built\x181 \x01(\x04B\x020\x01R\x0ebuildingsBuilt\x123\n" +
-	"\x13buildings_destroyed\x182 \x01(\x04B\x020\x01R\x12buildingsDestroyed\x128\n" +
-	"\bvariants\x18d \x03(\v2\x1c.stats.v1.RoundPlayerVariantR\bvariants\"\xa8\t\n" +
+	"\x13buildings_destroyed\x182 \x01(\x04B\x020\x01R\x12buildingsDestroyed\x12\x18\n" +
+	"\x05heals\x183 \x01(\x04B\x020\x01R\x05heals\x12\x1a\n" +
+	"\x06healed\x184 \x01(\x04B\x020\x01R\x06healed\x12)\n" +
+	"\x0ecrossbow_heals\x185 \x01(\x04B\x020\x01R\rcrossbowHeals\x12-\n" +
+	"\x10crossbow_healing\x186 \x01(\x04B\x020\x01R\x0fcrossbowHealing\x12\"\n" +
+	"\vheal_on_hit\x187 \x01(\x04B\x020\x01R\thealOnHit\x12-\n" +
+	"\x10building_healing\x188 \x01(\x04B\x020\x01R\x0fbuildingHealing\x12'\n" +
+	"\rdropped_ubers\x189 \x01(\x04B\x020\x01R\fdroppedUbers\x12\x1e\n" +
+	"\breflects\x18: \x01(\x04B\x020\x01R\breflects\x12\x1e\n" +
+	"\bdefenses\x18; \x01(\x04B\x020\x01R\bdefenses\x12#\n" +
+	"\vdirect_hits\x18< \x01(\x04B\x020\x01R\n" +
+	"directHits\x12 \n" +
+	"\tteleports\x18= \x01(\x04B\x020\x01R\tteleports\x12'\n" +
+	"\rpush_distance\x18> \x01(\x04B\x020\x01R\fpushDistance\x125\n" +
+	"\x14environmental_deaths\x18? \x01(\x04B\x020\x01R\x13environmentalDeaths\x123\n" +
+	"\x13environmental_kills\x18@ \x01(\x04B\x020\x01R\x12environmentalKills\x12'\n" +
+	"\robject_placed\x18A \x01(\x04B\x020\x01R\fobjectPlaced\x12+\n" +
+	"\x0fobject_upgraded\x18B \x01(\x04B\x020\x01R\x0eobjectUpgraded\x12)\n" +
+	"\x0eobject_carried\x18C \x01(\x04B\x020\x01R\robjectCarried\x12)\n" +
+	"\x0eobject_dropped\x18D \x01(\x04B\x020\x01R\robjectDropped\x12)\n" +
+	"\x0eobject_removed\x18E \x01(\x04B\x020\x01R\robjectRemoved\x12-\n" +
+	"\x10object_detonated\x18F \x01(\x04B\x020\x01R\x0fobjectDetonated\x12!\n" +
+	"\n" +
+	"ammo_packs\x18G \x01(\x04B\x020\x01R\tammoPacks\x12%\n" +
+	"\fhealth_packs\x18H \x01(\x04B\x020\x01R\vhealthPacks\x122\n" +
+	"\x13health_pack_healing\x18I \x01(\x04B\x020\x01R\x11healthPackHealing\x128\n" +
+	"\bvariants\x18d \x03(\v2\x1c.stats.v1.RoundPlayerVariantR\bvariants\"\xfc\x10\n" +
 	"\x12RoundPlayerVariant\x12\x18\n" +
 	"\avariant\x18\x01 \x01(\tR\avariant\x12\x19\n" +
 	"\bround_id\x18\x02 \x01(\rR\aroundId\x12,\n" +
@@ -2690,7 +3497,33 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\fcharges_uber\x18\x1c \x01(\x04B\x020\x01R\vchargesUber\x12'\n" +
 	"\rcharges_kritz\x18\x1d \x01(\x04B\x020\x01R\fchargesKritz\x12%\n" +
 	"\fcharges_vacc\x18\x1e \x01(\x04B\x020\x01R\vchargesVacc\x12-\n" +
-	"\x10charges_quickfix\x18\x1f \x01(\x04B\x020\x01R\x0fchargesQuickfix*R\n" +
+	"\x10charges_quickfix\x18\x1f \x01(\x04B\x020\x01R\x0fchargesQuickfix\x12\x18\n" +
+	"\x05heals\x18  \x01(\x04B\x020\x01R\x05heals\x12\x1a\n" +
+	"\x06healed\x18! \x01(\x04B\x020\x01R\x06healed\x12)\n" +
+	"\x0ecrossbow_heals\x18\" \x01(\x04B\x020\x01R\rcrossbowHeals\x12-\n" +
+	"\x10crossbow_healing\x18# \x01(\x04B\x020\x01R\x0fcrossbowHealing\x12\"\n" +
+	"\vheal_on_hit\x18$ \x01(\x04B\x020\x01R\thealOnHit\x12&\n" +
+	"\fextinguishes\x18% \x01(\x04B\x020\x01R\fextinguishes\x12-\n" +
+	"\x10building_healing\x18& \x01(\x04B\x020\x01R\x0fbuildingHealing\x12'\n" +
+	"\rdropped_ubers\x18' \x01(\x04B\x020\x01R\fdroppedUbers\x12\x1e\n" +
+	"\breflects\x18( \x01(\x04B\x020\x01R\breflects\x12\x1e\n" +
+	"\bdefenses\x18) \x01(\x04B\x020\x01R\bdefenses\x12#\n" +
+	"\vdirect_hits\x18* \x01(\x04B\x020\x01R\n" +
+	"directHits\x12 \n" +
+	"\tteleports\x18+ \x01(\x04B\x020\x01R\tteleports\x12'\n" +
+	"\rpush_distance\x18, \x01(\x04B\x020\x01R\fpushDistance\x125\n" +
+	"\x14environmental_deaths\x18- \x01(\x04B\x020\x01R\x13environmentalDeaths\x123\n" +
+	"\x13environmental_kills\x18. \x01(\x04B\x020\x01R\x12environmentalKills\x12'\n" +
+	"\robject_placed\x18/ \x01(\x04B\x020\x01R\fobjectPlaced\x12+\n" +
+	"\x0fobject_upgraded\x180 \x01(\x04B\x020\x01R\x0eobjectUpgraded\x12)\n" +
+	"\x0eobject_carried\x181 \x01(\x04B\x020\x01R\robjectCarried\x12)\n" +
+	"\x0eobject_dropped\x182 \x01(\x04B\x020\x01R\robjectDropped\x12)\n" +
+	"\x0eobject_removed\x183 \x01(\x04B\x020\x01R\robjectRemoved\x12-\n" +
+	"\x10object_detonated\x184 \x01(\x04B\x020\x01R\x0fobjectDetonated\x12!\n" +
+	"\n" +
+	"ammo_packs\x185 \x01(\x04B\x020\x01R\tammoPacks\x12%\n" +
+	"\fhealth_packs\x186 \x01(\x04B\x020\x01R\vhealthPacks\x122\n" +
+	"\x13health_pack_healing\x187 \x01(\x04B\x020\x01R\x11healthPackHealing*R\n" +
 	"\x04Team\x12\x1f\n" +
 	"\x1bTEAM_UNASSIGNED_UNSPECIFIED\x10\x00\x12\r\n" +
 	"\tTEAM_SPEC\x10\x01\x12\f\n" +
@@ -2736,7 +3569,7 @@ func file_stats_v1_stats_proto_rawDescGZIP() []byte {
 }
 
 var file_stats_v1_stats_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_stats_v1_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_stats_v1_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_stats_v1_stats_proto_goTypes = []any{
 	(Team)(0),                         // 0: stats.v1.Team
 	(Variant)(0),                      // 1: stats.v1.Variant
@@ -2759,65 +3592,67 @@ var file_stats_v1_stats_proto_goTypes = []any{
 	(*MatchOverview)(nil),             // 18: stats.v1.MatchOverview
 	(*MatchChatLog)(nil),              // 19: stats.v1.MatchChatLog
 	(*Match)(nil),                     // 20: stats.v1.Match
-	(*Round)(nil),                     // 21: stats.v1.Round
-	(*RoundPlayer)(nil),               // 22: stats.v1.RoundPlayer
-	(*RoundPlayerVariant)(nil),        // 23: stats.v1.RoundPlayerVariant
-	nil,                               // 24: stats.v1.Match.PlayersEntry
-	(*v1.Map)(nil),                    // 25: maps.v1.Map
-	(*timestamppb.Timestamp)(nil),     // 26: google.protobuf.Timestamp
-	(*v11.Filter)(nil),                // 27: database.query.v1.Filter
-	(*v12.PersonDisplay)(nil),         // 28: person.v1.PersonDisplay
-	(*emptypb.Empty)(nil),             // 29: google.protobuf.Empty
+	(*MatchKill)(nil),                 // 21: stats.v1.MatchKill
+	(*Round)(nil),                     // 22: stats.v1.Round
+	(*RoundPlayer)(nil),               // 23: stats.v1.RoundPlayer
+	(*RoundPlayerVariant)(nil),        // 24: stats.v1.RoundPlayerVariant
+	nil,                               // 25: stats.v1.Match.PlayersEntry
+	(*v1.Map)(nil),                    // 26: maps.v1.Map
+	(*timestamppb.Timestamp)(nil),     // 27: google.protobuf.Timestamp
+	(*v11.Filter)(nil),                // 28: database.query.v1.Filter
+	(*v12.PersonDisplay)(nil),         // 29: person.v1.PersonDisplay
+	(*emptypb.Empty)(nil),             // 30: google.protobuf.Empty
 }
 var file_stats_v1_stats_proto_depIdxs = []int32{
-	25, // 0: stats.v1.MapListResponse.maps:type_name -> maps.v1.Map
-	26, // 1: stats.v1.PlayerMatchHistory.created_on:type_name -> google.protobuf.Timestamp
-	26, // 2: stats.v1.PlayerMatchHistory.start_time:type_name -> google.protobuf.Timestamp
+	26, // 0: stats.v1.MapListResponse.maps:type_name -> maps.v1.Map
+	27, // 1: stats.v1.PlayerMatchHistory.created_on:type_name -> google.protobuf.Timestamp
+	27, // 2: stats.v1.PlayerMatchHistory.start_time:type_name -> google.protobuf.Timestamp
 	5,  // 3: stats.v1.MatchesWithPlayerResponse.matches:type_name -> stats.v1.PlayerMatchHistory
 	8,  // 4: stats.v1.BucketsResponse.buckets:type_name -> stats.v1.Bucket
-	27, // 5: stats.v1.QueryMatchesRequest.filter:type_name -> database.query.v1.Filter
+	28, // 5: stats.v1.QueryMatchesRequest.filter:type_name -> database.query.v1.Filter
 	18, // 6: stats.v1.QueryMatchesResponse.matches:type_name -> stats.v1.MatchOverview
-	27, // 7: stats.v1.QueryStatsRequest.filter:type_name -> database.query.v1.Filter
+	28, // 7: stats.v1.QueryStatsRequest.filter:type_name -> database.query.v1.Filter
 	2,  // 8: stats.v1.QueryStatsRequest.time_bucket:type_name -> stats.v1.TimeBucket
 	1,  // 9: stats.v1.QueryStatsRequest.variant:type_name -> stats.v1.Variant
-	26, // 10: stats.v1.QueryStatsRequest.time:type_name -> google.protobuf.Timestamp
+	27, // 10: stats.v1.QueryStatsRequest.time:type_name -> google.protobuf.Timestamp
 	1,  // 11: stats.v1.QueryStatsResponse.variant:type_name -> stats.v1.Variant
 	15, // 12: stats.v1.QueryStatsResponse.stats_variant:type_name -> stats.v1.VariantStatsContainer
-	28, // 13: stats.v1.VariantStats.player:type_name -> person.v1.PersonDisplay
+	29, // 13: stats.v1.VariantStats.player:type_name -> person.v1.PersonDisplay
 	14, // 14: stats.v1.VariantStatsContainer.stats:type_name -> stats.v1.VariantStats
 	20, // 15: stats.v1.MatchResponse.match:type_name -> stats.v1.Match
-	25, // 16: stats.v1.MatchOverview.map:type_name -> maps.v1.Map
-	26, // 17: stats.v1.MatchOverview.start_time:type_name -> google.protobuf.Timestamp
-	26, // 18: stats.v1.MatchOverview.created_on:type_name -> google.protobuf.Timestamp
+	26, // 16: stats.v1.MatchOverview.map:type_name -> maps.v1.Map
+	27, // 17: stats.v1.MatchOverview.start_time:type_name -> google.protobuf.Timestamp
+	27, // 18: stats.v1.MatchOverview.created_on:type_name -> google.protobuf.Timestamp
 	18, // 19: stats.v1.Match.overview:type_name -> stats.v1.MatchOverview
-	21, // 20: stats.v1.Match.rounds:type_name -> stats.v1.Round
+	22, // 20: stats.v1.Match.rounds:type_name -> stats.v1.Round
 	19, // 21: stats.v1.Match.chat_logs:type_name -> stats.v1.MatchChatLog
-	24, // 22: stats.v1.Match.players:type_name -> stats.v1.Match.PlayersEntry
-	0,  // 23: stats.v1.Round.winner:type_name -> stats.v1.Team
-	22, // 24: stats.v1.Round.players:type_name -> stats.v1.RoundPlayer
-	28, // 25: stats.v1.RoundPlayer.person:type_name -> person.v1.PersonDisplay
-	0,  // 26: stats.v1.RoundPlayer.team:type_name -> stats.v1.Team
-	23, // 27: stats.v1.RoundPlayer.variants:type_name -> stats.v1.RoundPlayerVariant
-	28, // 28: stats.v1.Match.PlayersEntry.value:type_name -> person.v1.PersonDisplay
-	16, // 29: stats.v1.StatsService.Match:input_type -> stats.v1.MatchRequest
-	10, // 30: stats.v1.StatsService.QueryMatches:input_type -> stats.v1.QueryMatchesRequest
-	3,  // 31: stats.v1.StatsService.MatchesWithPlayer:input_type -> stats.v1.MatchesWithPlayerRequest
-	12, // 32: stats.v1.StatsService.QueryStats:input_type -> stats.v1.QueryStatsRequest
-	29, // 33: stats.v1.StatsService.WeaponList:input_type -> google.protobuf.Empty
-	29, // 34: stats.v1.StatsService.MapList:input_type -> google.protobuf.Empty
-	29, // 35: stats.v1.StatsService.Buckets:input_type -> google.protobuf.Empty
-	17, // 36: stats.v1.StatsService.Match:output_type -> stats.v1.MatchResponse
-	11, // 37: stats.v1.StatsService.QueryMatches:output_type -> stats.v1.QueryMatchesResponse
-	6,  // 38: stats.v1.StatsService.MatchesWithPlayer:output_type -> stats.v1.MatchesWithPlayerResponse
-	13, // 39: stats.v1.StatsService.QueryStats:output_type -> stats.v1.QueryStatsResponse
-	7,  // 40: stats.v1.StatsService.WeaponList:output_type -> stats.v1.WeaponListResponse
-	4,  // 41: stats.v1.StatsService.MapList:output_type -> stats.v1.MapListResponse
-	9,  // 42: stats.v1.StatsService.Buckets:output_type -> stats.v1.BucketsResponse
-	36, // [36:43] is the sub-list for method output_type
-	29, // [29:36] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	25, // 22: stats.v1.Match.players:type_name -> stats.v1.Match.PlayersEntry
+	21, // 23: stats.v1.Match.kills:type_name -> stats.v1.MatchKill
+	0,  // 24: stats.v1.Round.winner:type_name -> stats.v1.Team
+	23, // 25: stats.v1.Round.players:type_name -> stats.v1.RoundPlayer
+	29, // 26: stats.v1.RoundPlayer.person:type_name -> person.v1.PersonDisplay
+	0,  // 27: stats.v1.RoundPlayer.team:type_name -> stats.v1.Team
+	24, // 28: stats.v1.RoundPlayer.variants:type_name -> stats.v1.RoundPlayerVariant
+	29, // 29: stats.v1.Match.PlayersEntry.value:type_name -> person.v1.PersonDisplay
+	16, // 30: stats.v1.StatsService.Match:input_type -> stats.v1.MatchRequest
+	10, // 31: stats.v1.StatsService.QueryMatches:input_type -> stats.v1.QueryMatchesRequest
+	3,  // 32: stats.v1.StatsService.MatchesWithPlayer:input_type -> stats.v1.MatchesWithPlayerRequest
+	12, // 33: stats.v1.StatsService.QueryStats:input_type -> stats.v1.QueryStatsRequest
+	30, // 34: stats.v1.StatsService.WeaponList:input_type -> google.protobuf.Empty
+	30, // 35: stats.v1.StatsService.MapList:input_type -> google.protobuf.Empty
+	30, // 36: stats.v1.StatsService.Buckets:input_type -> google.protobuf.Empty
+	17, // 37: stats.v1.StatsService.Match:output_type -> stats.v1.MatchResponse
+	11, // 38: stats.v1.StatsService.QueryMatches:output_type -> stats.v1.QueryMatchesResponse
+	6,  // 39: stats.v1.StatsService.MatchesWithPlayer:output_type -> stats.v1.MatchesWithPlayerResponse
+	13, // 40: stats.v1.StatsService.QueryStats:output_type -> stats.v1.QueryStatsResponse
+	7,  // 41: stats.v1.StatsService.WeaponList:output_type -> stats.v1.WeaponListResponse
+	4,  // 42: stats.v1.StatsService.MapList:output_type -> stats.v1.MapListResponse
+	9,  // 43: stats.v1.StatsService.Buckets:output_type -> stats.v1.BucketsResponse
+	37, // [37:44] is the sub-list for method output_type
+	30, // [30:37] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_stats_v1_stats_proto_init() }
@@ -2834,7 +3669,7 @@ func file_stats_v1_stats_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stats_v1_stats_proto_rawDesc), len(file_stats_v1_stats_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   22,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

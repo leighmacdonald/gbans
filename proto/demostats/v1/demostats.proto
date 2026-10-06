@@ -1,0 +1,297 @@
+syntax = "proto3";
+
+package demostats.v1;
+
+// Demo parsing service, exposed over ConnectRPC (Connect, gRPC, gRPC-Web).
+service DemoService {
+  // Parse a raw .dem file and return the full typed summary.
+  rpc ParseDemo(ParseDemoRequest) returns (ParseDemoResponse);
+}
+
+message ParseDemoRequest {
+  // Raw .dem file bytes.
+  bytes demo = 1;
+  // Optional original filename, echoed back in the response.
+  string filename = 2;
+}
+
+message ParseDemoResponse {
+  DemoOutput demo = 1;
+}
+
+message DemoOutput {
+  // Echo of request filename, if provided (or parsed filename).
+  string filename = 1;
+  Header header = 2;
+  DemoSummary summary = 3;
+}
+
+message Header {
+  string demo_type = 1;
+  uint32 version = 2;
+  uint32 protocol = 3;
+  string server = 4;
+  string nick = 5;
+  string map = 6;
+  string game = 7;
+  float duration = 8;
+  uint32 ticks = 9;
+  uint32 frames = 10;
+  uint32 signon = 11;
+}
+
+message DemoSummary {
+  repeated RoundSummary rounds = 1;
+  repeated ChatMessage chat = 2;
+  repeated VoteSummary votes = 3;
+  repeated SourceModVote sourcemod_votes = 4;
+  repeated PointCaptureStart point_captures = 5;
+  repeated KillEvent kills = 6;
+}
+
+message ChatMessage {
+  uint32 tick = 1;
+  string user = 2;
+  string message = 3;
+  bool is_dead = 4;
+  bool is_team = 5;
+  bool is_spec = 6;
+  bool is_name_change = 7;
+}
+
+message RoundSummary {
+  // Absent when the round has no winner yet.
+  optional Team winner = 1;
+  bool is_stalemate = 2;
+  bool is_sudden_death = 3;
+  float time = 4;
+  // steamids
+  repeated string mvps = 5;
+  repeated PlayerSummary players = 6;
+  // steamids
+  repeated string winners = 7;
+  // steamids
+  repeated string losers = 8;
+}
+
+message PlayerSummary {
+  string name = 1;
+  string steamid = 2;
+  optional uint32 tick_start = 3;
+  optional uint32 tick_end = 4;
+  optional uint32 points = 5;
+  uint32 connection_count = 6;
+  optional uint32 bonus_points = 7;
+  // Flattened `Stats` in the JSON API; nested here.
+  Stats stats = 8;
+  // `classes` is a map keyed by Class in Rust; proto maps cannot use
+  // enums as keys, so it is modeled as a list.
+  repeated ClassStats classes = 9;
+  map<string, Stats> weapons = 10;
+  optional uint32 scoreboard_kills = 11;
+  // Only present in PoV demos.
+  optional uint32 scoreboard_assists = 12;
+  uint32 suicides = 13;
+  optional uint32 scoreboard_deaths = 14;
+  uint32 postround_deaths = 15;
+  uint32 captures = 16;
+  uint32 captures_blocked = 17;
+  optional uint32 scoreboard_damage = 18;
+  bool is_fake_player = 19;
+  bool is_hl_tv = 20;
+  bool is_replay = 21;
+  // Medigun beam seconds per heal target steamid.
+  map<string, float> heal_targets = 22;
+}
+
+message ClassStats {
+  Class class = 1;
+  Stats stats = 2;
+}
+
+message Stats {
+  uint32 kills = 1;
+  uint32 assists = 2;
+  uint32 deaths = 3;
+  uint32 postround_kills = 4;
+  uint32 postround_assists = 5;
+  uint32 postround_deaths = 6;
+  uint32 preround_healing = 7;
+  uint32 healing = 8;
+  uint32 postround_healing = 9;
+  uint32 drops = 10;
+  uint32 near_full_charge_death = 11;
+  uint32 charges_uber = 12;
+  uint32 charges_kritz = 13;
+  uint32 charges_quickfix = 14;
+  uint32 damage = 15;
+  uint32 damage_taken = 16;
+  uint32 dominations = 17;
+  uint32 dominated = 18;
+  uint32 revenges = 19;
+  uint32 revenged = 20;
+  uint32 airshots = 21;
+  uint32 headshot_kills = 22;
+  uint32 backstab_kills = 23;
+  uint32 headshots = 24;
+  uint32 backstabs = 25;
+  uint32 captures = 26;
+  uint32 captures_blocked = 27;
+  uint32 was_headshot = 28;
+  uint32 was_backstabbed = 29;
+  uint32 shots = 30;
+  uint32 hits = 31;
+  uint32 object_built = 32;
+  uint32 object_destroyed = 33;
+  uint32 heals = 34;
+  uint32 healed = 35;
+  uint32 crossbow_heals = 36;
+  uint32 crossbow_healing = 37;
+  uint32 heal_on_hit = 38;
+  uint32 extinguishes = 39;
+  uint32 building_healing = 40;
+  uint32 dropped_ubers = 41;
+  uint32 reflects = 42;
+  uint32 defenses = 43;
+  uint32 direct_hits = 44;
+  uint32 teleports = 45;
+  uint32 push_distance = 46;
+  uint32 environmental_deaths = 47;
+  uint32 environmental_kills = 48;
+  uint32 object_placed = 49;
+  uint32 object_upgraded = 50;
+  uint32 object_carried = 51;
+  uint32 object_dropped = 52;
+  uint32 object_removed = 53;
+  uint32 object_detonated = 54;
+  uint32 ammo_packs = 55;
+  uint32 health_packs = 56;
+  uint32 health_pack_healing = 57;
+}
+
+enum Team {
+  TEAM_OTHER = 0;
+  TEAM_SPECTATOR = 1;
+  TEAM_RED = 2;
+  TEAM_BLUE = 3;
+}
+
+enum Class {
+  CLASS_OTHER = 0;
+  CLASS_SCOUT = 1;
+  CLASS_SNIPER = 2;
+  CLASS_SOLDIER = 3;
+  CLASS_DEMOMAN = 4;
+  CLASS_MEDIC = 5;
+  CLASS_HEAVY = 6;
+  CLASS_PYRO = 7;
+  CLASS_SPY = 8;
+  CLASS_ENGINEER = 9;
+}
+
+message VoteBallot {
+  uint32 tick = 1;
+  uint32 voter_entity = 2;
+  // steamid of the voter, if resolved.
+  optional string voter = 3;
+  optional string voter_name = 4;
+  // 0-based option index (vote_cast.vote_option).
+  uint32 option = 5;
+  optional string option_name = 6;
+}
+
+message VoteSummary {
+  uint32 voteidx = 1;
+  uint32 tick_start = 2;
+  optional uint32 tick_end = 3;
+  string issue = 4;
+  string param1 = 5;
+  uint32 team = 6;
+  // Raw initiator client/entity index; 99 means the server.
+  optional uint32 initiator_entity = 7;
+  // steamid of the initiator, if resolved.
+  optional string initiator = 8;
+  optional string initiator_name = 9;
+  repeated string options = 10;
+  repeated VoteBallot ballots = 11;
+  // Last-seen per-option tallies from vote_changed.
+  repeated uint32 counts = 12;
+  optional uint32 potential_votes = 13;
+  // True = passed, false = failed, absent = no vote_passed/vote_failed seen.
+  optional bool passed = 14;
+  optional string result_details = 15;
+  optional string result_param1 = 16;
+}
+
+message SmVoteInitiator {
+  string name = 1;
+  optional string steamid = 2;
+  uint32 tick = 3;
+  uint32 current = 4;
+  uint32 required = 5;
+}
+
+message SmNomination {
+  string name = 1;
+  optional string steamid = 2;
+  string map = 3;
+  uint32 tick = 4;
+}
+
+message SmVoteOption {
+  string name = 1;
+  uint32 votes = 2;
+}
+
+message SourceModVote {
+  // "scramble" or "map".
+  string kind = 1;
+  uint32 tick_start = 2;
+  optional uint32 tick_end = 3;
+  repeated SmVoteInitiator initiators = 4;
+  repeated SmNomination nominations = 5;
+  uint32 total_votes = 6;
+  uint32 potential_votes = 7;
+  // Aggregate tallies only; individual ballots are not broadcast.
+  repeated SmVoteOption options = 8;
+  // "Scrambling the teams due to vote." or the winning map name.
+  optional string result = 9;
+  optional bool passed = 10;
+}
+
+message PointCaptureStart {
+  uint32 tick = 1;
+  uint32 cp = 2;
+  string cp_name = 3;
+  uint32 team = 4;
+  uint32 cap_team = 5;
+  // Steamids of players on the point, best effort.
+  repeated string cappers = 6;
+  // Expected seconds to cap from this event.
+  float cap_time = 7;
+}
+
+message Position {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+message EyeAngles {
+  // m_angEyeAngles[0] (pitch) and [1] (yaw).
+  float pitch = 1;
+  float yaw = 2;
+}
+
+message KillEvent {
+  uint32 tick = 1;
+  // Steamid of the killer; absent for world/environment kills.
+  optional string killer = 2;
+  // Steamid of the victim.
+  string victim = 3;
+  string weapon = 4;
+  optional Position killer_pos = 5;
+  optional Position victim_pos = 6;
+  optional EyeAngles killer_angles = 7;
+  optional EyeAngles victim_angles = 8;
+}

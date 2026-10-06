@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/pkg/demoparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -57,6 +58,7 @@ type Match struct {
 	Players  []MatchOverallStatsRound
 	Variants []MatchVariantStatsRound
 	ChatLogs []MatchChatLog
+	Kills    []MatchKill
 }
 
 type MatchChatLog struct {
@@ -65,6 +67,20 @@ type MatchChatLog struct {
 	Name            string
 	Body            string
 	DemoTick        int32
+}
+
+// MatchKill is a single kill feed event with optional positions and eye angles.
+type MatchKill struct {
+	MatchKillID   int64
+	Tick          int
+	KillerSteamID steamid.SteamID
+	HasKiller     bool
+	VictimSteamID steamid.SteamID
+	Weapon        string
+	KillerPos     *demoparse.Position
+	VictimPos     *demoparse.Position
+	KillerAngles  *demoparse.EyeAngles
+	VictimAngles  *demoparse.EyeAngles
 }
 
 type MatchRound struct {

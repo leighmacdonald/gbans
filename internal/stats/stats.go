@@ -75,6 +75,30 @@ type VariantStats struct {
 	ObjectsDestroyed    uint64
 	Captures            uint64
 	CapturesBlocked     uint64
+	Heals               uint64
+	Healed              uint64
+	CrossbowHeals       uint64
+	CrossbowHealing     uint64
+	HealOnHit           uint64
+	Extinguishes        uint64
+	BuildingHealing     uint64
+	DroppedUbers        uint64
+	Reflects            uint64
+	Defenses            uint64
+	DirectHits          uint64
+	Teleports           uint64
+	PushDistance        uint64
+	EnvironmentalDeaths uint64
+	EnvironmentalKills  uint64
+	ObjectPlaced        uint64
+	ObjectUpgraded      uint64
+	ObjectCarried       uint64
+	ObjectDropped       uint64
+	ObjectRemoved       uint64
+	ObjectDetonated     uint64
+	AmmoPacks           uint64
+	HealthPacks         uint64
+	HealthPackHealing   uint64
 }
 
 type OverallStats struct {
@@ -132,6 +156,29 @@ type OverallStats struct {
 	ObjectsDestroyed    uint64
 	BuildingsBuilt      uint64
 	BUildingsDestroyed  uint64
+	Heals               uint64
+	Healed              uint64
+	CrossbowHeals       uint64
+	CrossbowHealing     uint64
+	HealOnHit           uint64
+	BuildingHealing     uint64
+	DroppedUbers        uint64
+	Reflects            uint64
+	Defenses            uint64
+	DirectHits          uint64
+	Teleports           uint64
+	PushDistance        uint64
+	EnvironmentalDeaths uint64
+	EnvironmentalKills  uint64
+	ObjectPlaced        uint64
+	ObjectUpgraded      uint64
+	ObjectCarried       uint64
+	ObjectDropped       uint64
+	ObjectRemoved       uint64
+	ObjectDetonated     uint64
+	AmmoPacks           uint64
+	HealthPacks         uint64
+	HealthPackHealing   uint64
 
 	Personaname string
 	AvatarHash  string

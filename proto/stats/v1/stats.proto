@@ -187,6 +187,30 @@ message VariantStats {
   uint64 charges_kritz = 29;
   uint64 charges_vacc = 30;
   uint64 charges_quickfix = 31;
+  uint64 heals = 32;
+  uint64 healed = 33;
+  uint64 crossbow_heals = 34;
+  uint64 crossbow_healing = 35;
+  uint64 heal_on_hit = 36;
+  uint64 extinguishes = 37;
+  uint64 building_healing = 38;
+  uint64 dropped_ubers = 39;
+  uint64 reflects = 40;
+  uint64 defenses = 41;
+  uint64 direct_hits = 42;
+  uint64 teleports = 43;
+  uint64 push_distance = 44;
+  uint64 environmental_deaths = 45;
+  uint64 environmental_kills = 46;
+  uint64 object_placed = 47;
+  uint64 object_upgraded = 48;
+  uint64 object_carried = 49;
+  uint64 object_dropped = 50;
+  uint64 object_removed = 51;
+  uint64 object_detonated = 52;
+  uint64 ammo_packs = 53;
+  uint64 health_packs = 54;
+  uint64 health_pack_healing = 55;
 }
 
 message VariantStatsContainer {
@@ -232,6 +256,25 @@ message Match {
   repeated Round rounds = 2 [(buf.validate.field).required = true];
   repeated MatchChatLog chat_logs = 3 [(buf.validate.field).required = true];
   map<string, person.v1.PersonDisplay> players = 4 [(buf.validate.field).required = true];
+  repeated MatchKill kills = 5;
+}
+
+message MatchKill {
+  int64 match_kill_id = 1;
+  int32 tick = 2;
+  int64 killer_steam_id = 3;
+  int64 victim_steam_id = 4 [(buf.validate.field).required = true];
+  string weapon = 5 [(buf.validate.field).required = true];
+  double killer_pos_x = 6;
+  double killer_pos_y = 7;
+  double killer_pos_z = 8;
+  double victim_pos_x = 9;
+  double victim_pos_y = 10;
+  double victim_pos_z = 11;
+  double killer_angles_pitch = 12;
+  double killer_angles_yaw = 13;
+  double victim_angles_pitch = 14;
+  double victim_angles_yaw = 15;
 }
 
 message Round {
@@ -295,6 +338,29 @@ message RoundPlayer {
   uint64 ignites = 48;
   uint64 buildings_built = 49;
   uint64 buildings_destroyed = 50;
+  uint64 heals = 51;
+  uint64 healed = 52;
+  uint64 crossbow_heals = 53;
+  uint64 crossbow_healing = 54;
+  uint64 heal_on_hit = 55;
+  uint64 building_healing = 56;
+  uint64 dropped_ubers = 57;
+  uint64 reflects = 58;
+  uint64 defenses = 59;
+  uint64 direct_hits = 60;
+  uint64 teleports = 61;
+  uint64 push_distance = 62;
+  uint64 environmental_deaths = 63;
+  uint64 environmental_kills = 64;
+  uint64 object_placed = 65;
+  uint64 object_upgraded = 66;
+  uint64 object_carried = 67;
+  uint64 object_dropped = 68;
+  uint64 object_removed = 69;
+  uint64 object_detonated = 70;
+  uint64 ammo_packs = 71;
+  uint64 health_packs = 72;
+  uint64 health_pack_healing = 73;
 
   repeated RoundPlayerVariant variants = 100;
 }
@@ -331,4 +397,28 @@ message RoundPlayerVariant {
   uint64 charges_kritz = 29;
   uint64 charges_vacc = 30;
   uint64 charges_quickfix = 31;
+  uint64 heals = 32;
+  uint64 healed = 33;
+  uint64 crossbow_heals = 34;
+  uint64 crossbow_healing = 35;
+  uint64 heal_on_hit = 36;
+  uint64 extinguishes = 37;
+  uint64 building_healing = 38;
+  uint64 dropped_ubers = 39;
+  uint64 reflects = 40;
+  uint64 defenses = 41;
+  uint64 direct_hits = 42;
+  uint64 teleports = 43;
+  uint64 push_distance = 44;
+  uint64 environmental_deaths = 45;
+  uint64 environmental_kills = 46;
+  uint64 object_placed = 47;
+  uint64 object_upgraded = 48;
+  uint64 object_carried = 49;
+  uint64 object_dropped = 50;
+  uint64 object_removed = 51;
+  uint64 object_detonated = 52;
+  uint64 ammo_packs = 53;
+  uint64 health_packs = 54;
+  uint64 health_pack_healing = 55;
 }

@@ -10,6 +10,9 @@ lint:
     - STANDARD
   rpc_allow_google_protobuf_empty_requests: true
   rpc_allow_google_protobuf_empty_responses: true
+  # Vendored from tf2_demostats v0.3.2, keep upstream enum names.
+  ignore:
+    - proto/demostats/v1/demostats.proto
 breaking:
   use:
     - FILE

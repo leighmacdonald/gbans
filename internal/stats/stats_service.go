@@ -15,6 +15,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/servers"
 	v1 "github.com/leighmacdonald/gbans/internal/stats/v1"
 	"github.com/leighmacdonald/gbans/internal/stats/v1/statsv1connect"
+	"github.com/leighmacdonald/gbans/pkg/demoparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -266,12 +267,14 @@ func (s Service) loadMatch(ctx context.Context, matchID uuid.UUID) (*v1.Match, e
 		Players:  map[string]*personv1.PersonDisplay{},
 		Rounds:   []*v1.Round{},
 		ChatLogs: make([]*v1.MatchChatLog, len(match.ChatLogs)),
+		Kills:    make([]*v1.MatchKill, len(match.Kills)),
 	}
 
 	assembleRounds(out, match)
 	assemblePlayers(out, match)
 	assembleVariants(out, match)
 	assembleChat(out, match)
+	assembleKills(out, match)
 
 	return out, nil
 }
@@ -286,6 +289,59 @@ func assembleChat(out *v1.Match, match *Match) {
 			Name:            &chat.Name,
 		}
 	}
+}
+
+func assembleKills(out *v1.Match, match *Match) {
+	for idx, kill := range match.Kills {
+		tick := int32(kill.Tick) //nolint:gosec
+		out.Kills[idx] = &v1.MatchKill{
+			MatchKillId:       &kill.MatchKillID,
+			Tick:              &tick,
+			VictimSteamId:     new(kill.VictimSteamID.Int64()),
+			Weapon:            &kill.Weapon,
+			KillerPosX:        killCoord(kill.KillerPos, 'x'),
+			KillerPosY:        killCoord(kill.KillerPos, 'y'),
+			KillerPosZ:        killCoord(kill.KillerPos, 'z'),
+			VictimPosX:        killCoord(kill.VictimPos, 'x'),
+			VictimPosY:        killCoord(kill.VictimPos, 'y'),
+			VictimPosZ:        killCoord(kill.VictimPos, 'z'),
+			KillerAnglesPitch: killAngles(kill.KillerAngles, true),
+			KillerAnglesYaw:   killAngles(kill.KillerAngles, false),
+			VictimAnglesPitch: killAngles(kill.VictimAngles, true),
+			VictimAnglesYaw:   killAngles(kill.VictimAngles, false),
+		}
+
+		if kill.HasKiller {
+			out.Kills[idx].KillerSteamId = new(kill.KillerSteamID.Int64())
+		}
+	}
+}
+
+func killCoord(pos *demoparse.Position, axis rune) *float64 {
+	if pos == nil {
+		return nil
+	}
+
+	switch axis {
+	case 'x':
+		return &pos.X
+	case 'y':
+		return &pos.Y
+	default:
+		return &pos.Z
+	}
+}
+
+func killAngles(angles *demoparse.EyeAngles, pitch bool) *float64 {
+	if angles == nil {
+		return nil
+	}
+
+	if pitch {
+		return &angles.Pitch
+	}
+
+	return &angles.Yaw
 }
 
 func createResp(opts Opts, request *v1.QueryStatsRequest, count uint64, size int) *v1.QueryStatsResponse {
@@ -343,6 +399,30 @@ func toVariantStats(stats VariantStats) *v1.VariantStats {
 		ChargesKritz:        &stats.ChargesKritz,
 		ChargesVacc:         &stats.ChargesVacc,
 		ChargesQuickfix:     &stats.ChargesQuickfix,
+		Heals:               &stats.Heals,
+		Healed:              &stats.Healed,
+		CrossbowHeals:       &stats.CrossbowHeals,
+		CrossbowHealing:     &stats.CrossbowHealing,
+		HealOnHit:           &stats.HealOnHit,
+		Extinguishes:        &stats.Extinguishes,
+		BuildingHealing:     &stats.BuildingHealing,
+		DroppedUbers:        &stats.DroppedUbers,
+		Reflects:            &stats.Reflects,
+		Defenses:            &stats.Defenses,
+		DirectHits:          &stats.DirectHits,
+		Teleports:           &stats.Teleports,
+		PushDistance:        &stats.PushDistance,
+		EnvironmentalDeaths: &stats.EnvironmentalDeaths,
+		EnvironmentalKills:  &stats.EnvironmentalKills,
+		ObjectPlaced:        &stats.ObjectPlaced,
+		ObjectUpgraded:      &stats.ObjectUpgraded,
+		ObjectCarried:       &stats.ObjectCarried,
+		ObjectDropped:       &stats.ObjectDropped,
+		ObjectRemoved:       &stats.ObjectRemoved,
+		ObjectDetonated:     &stats.ObjectDetonated,
+		AmmoPacks:           &stats.AmmoPacks,
+		HealthPacks:         &stats.HealthPacks,
+		HealthPackHealing:   &stats.HealthPackHealing,
 	}
 }
 
@@ -401,6 +481,29 @@ func assemblePlayers(out *v1.Match, match *Match) {
 					Ignites:             &player.Ignites,
 					BuildingsBuilt:      &player.BuildingsBuilt,
 					BuildingsDestroyed:  &player.BUildingsDestroyed,
+					Heals:               &player.Heals,
+					Healed:              &player.Healed,
+					CrossbowHeals:       &player.CrossbowHeals,
+					CrossbowHealing:     &player.CrossbowHealing,
+					HealOnHit:           &player.HealOnHit,
+					BuildingHealing:     &player.BuildingHealing,
+					DroppedUbers:        &player.DroppedUbers,
+					Reflects:            &player.Reflects,
+					Defenses:            &player.Defenses,
+					DirectHits:          &player.DirectHits,
+					Teleports:           &player.Teleports,
+					PushDistance:        &player.PushDistance,
+					EnvironmentalDeaths: &player.EnvironmentalDeaths,
+					EnvironmentalKills:  &player.EnvironmentalKills,
+					ObjectPlaced:        &player.ObjectPlaced,
+					ObjectUpgraded:      &player.ObjectUpgraded,
+					ObjectCarried:       &player.ObjectCarried,
+					ObjectDropped:       &player.ObjectDropped,
+					ObjectRemoved:       &player.ObjectRemoved,
+					ObjectDetonated:     &player.ObjectDetonated,
+					AmmoPacks:           &player.AmmoPacks,
+					HealthPacks:         &player.HealthPacks,
+					HealthPackHealing:   &player.HealthPackHealing,
 					Variants:            []*v1.RoundPlayerVariant{},
 				})
 
@@ -457,6 +560,30 @@ func assembleVariants(out *v1.Match, match *Match) {
 					ChargesKritz:        &cls.ChargesKritz,
 					ChargesVacc:         &cls.ChargesVacc,
 					ChargesQuickfix:     &cls.ChargesQuickfix,
+					Heals:               &cls.Heals,
+					Healed:              &cls.Healed,
+					CrossbowHeals:       &cls.CrossbowHeals,
+					CrossbowHealing:     &cls.CrossbowHealing,
+					HealOnHit:           &cls.HealOnHit,
+					Extinguishes:        &cls.Extinguishes,
+					BuildingHealing:     &cls.BuildingHealing,
+					DroppedUbers:        &cls.DroppedUbers,
+					Reflects:            &cls.Reflects,
+					Defenses:            &cls.Defenses,
+					DirectHits:          &cls.DirectHits,
+					Teleports:           &cls.Teleports,
+					PushDistance:        &cls.PushDistance,
+					EnvironmentalDeaths: &cls.EnvironmentalDeaths,
+					EnvironmentalKills:  &cls.EnvironmentalKills,
+					ObjectPlaced:        &cls.ObjectPlaced,
+					ObjectUpgraded:      &cls.ObjectUpgraded,
+					ObjectCarried:       &cls.ObjectCarried,
+					ObjectDropped:       &cls.ObjectDropped,
+					ObjectRemoved:       &cls.ObjectRemoved,
+					ObjectDetonated:     &cls.ObjectDetonated,
+					AmmoPacks:           &cls.AmmoPacks,
+					HealthPacks:         &cls.HealthPacks,
+					HealthPackHealing:   &cls.HealthPackHealing,
 				})
 
 				break
