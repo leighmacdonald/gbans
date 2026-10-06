@@ -44,7 +44,7 @@
             nodejs
             pnpm_11
             protoc-gen-es
-            typescript-go
+            typescript
 
             # go tooling
             golangci-lint
