@@ -1,7 +1,9 @@
-onlyBuiltDependencies:
-  - "@sentry/cli"
-  - "@swc/core"
-  - es5-ext
-  - esbuild
 packages:
   - .
+
+onlyBuiltDependencies:
+  - '@sentry/cli'
+  - '@swc/core'
+  - es5-ext
+  - esbuild
+  - pnpm
