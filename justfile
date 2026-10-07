@@ -6,6 +6,7 @@ alias d := dev
 
 SOURCEMOD_INCLUDE_DIR := shell('dirname $(which spcomp64)') + "/include"
 DOCKER_DB_CONTAINER := "gbans-db"
+DEMOSTATS_CONTAINER := "demostats"
 
 all: build-backend build-frontend build-sourcemod build-docs
 
@@ -58,6 +59,7 @@ run-forever:
     @while true; do go run -race . serve; sleep 1; done
 
 air:
+    @port=$(sed -n 's/^http_port: //p' gbans.yml); port=${port:-6006}; lsof -ti tcp:"${port}" -sTCP:LISTEN | xargs -r kill || true
     @while true; do air -c .air.toml -- serve; sleep 1; done
 
 update-backend:
@@ -108,11 +110,13 @@ db:
     ./dev_db.sh
 
 demostats-serve version="0.3.2":
+    @docker rm -f {{ DEMOSTATS_CONTAINER }} 2>/dev/null || true
     @docker pull ghcr.io/leighmacdonald/tf2_demostats:v{{ version }}
     @docker run  -v ./schema.json:/app/schema.json ghcr.io/leighmacdonald/tf2_demostats:v{{ version }} update --api-key $STEAM_KEY
-    @docker run -p 8811:8811 -v ./schema.json:/app/schema.json ghcr.io/leighmacdonald/tf2_demostats:v{{ version }} serve
+    @docker run --name {{ DEMOSTATS_CONTAINER }} -p 8811:8811 -v ./schema.json:/app/schema.json ghcr.io/leighmacdonald/tf2_demostats:v{{ version }} serve
 
 dev:
+    @zellij d gbans --force || true
     @zellij --layout .zellij.kdl attach --create gbans
 
 pgcli host=`sed -n 's/^database_dsn: //p' gbans.yml`:

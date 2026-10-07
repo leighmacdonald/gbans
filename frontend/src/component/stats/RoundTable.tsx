@@ -2,6 +2,7 @@ import Chip from "@mui/material/Chip";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Tooltip from "@mui/material/Tooltip";
@@ -42,76 +43,101 @@ const winnerColor = (winner: Team): string | undefined => {
 	}
 };
 
-const RoundPlayersDetail = ({ players }: { players: RoundPlayer[] }) => {
+const H = ({ title, short, align }: { title: string; short: string; align?: "right" }) => (
+	<TableCell align={align}>
+		<Tooltip title={title}>
+			<span>{short}</span>
+		</Tooltip>
+	</TableCell>
+);
+
+const fmt1dp = (value: number): string => (Number.isFinite(value) ? value.toFixed(1) : "0.0");
+
+const chargesOf = (p: RoundPlayer): number =>
+	Number(p.chargesUber) + Number(p.chargesKritz) + Number(p.chargesVacc) + Number(p.chargesQuickfix);
+
+const RoundPlayersDetail = ({ players, durationMs }: { players: RoundPlayer[]; durationMs: number }) => {
 	const rows = useMemo(
 		() => [...players].toSorted((a, b) => Number(b.scoreboardDamage) - Number(a.scoreboardDamage)),
 		[players],
 	);
+	const durationMins = Math.max(1, Number(durationMs)) / 60000;
 	return (
-		<Table size="small">
-			<TableHead>
-				<TableRow>
-					<TableCell>
-						<Tooltip title="Player">
-							<span>Player</span>
-						</Tooltip>
-					</TableCell>
-					<TableCell>
-						<Tooltip title="Team">
-							<span>Team</span>
-						</Tooltip>
-					</TableCell>
-					<TableCell align="right">
-						<Tooltip title="Kills">
-							<span>K</span>
-						</Tooltip>
-					</TableCell>
-					<TableCell align="right">
-						<Tooltip title="Assists">
-							<span>A</span>
-						</Tooltip>
-					</TableCell>
-					<TableCell align="right">
-						<Tooltip title="Deaths">
-							<span>D</span>
-						</Tooltip>
-					</TableCell>
-					<TableCell align="right">
-						<Tooltip title="Damage dealt">
-							<span>Damage</span>
-						</Tooltip>
-					</TableCell>
-					<TableCell align="right">
-						<Tooltip title="Healing">
-							<span>Healing</span>
-						</Tooltip>
-					</TableCell>
-				</TableRow>
-			</TableHead>
-			<TableBody>
-				{rows.map((p) => (
-					<TableRow key={p.person?.steamId ?? `${p.roundId}`}>
-						<TableCell>
-							{p.person ? (
-								<PersonCell
-									steamId={p.person.steamId}
-									avatarHash={p.person.avatarHash}
-									personaName={p.person.name}
-								/>
-							) : (
-								<Typography variant="body2">Unknown</Typography>
-							)}
-						</TableCell>
-						<TableCell>{p.team === Team.RED ? "RED" : p.team === Team.BLU ? "BLU" : "—"}</TableCell>
-						<TableCell align="right">{Number(p.kills)}</TableCell>
-						<TableCell align="right">{Number(p.assists)}</TableCell>
-						<TableCell align="right">{Number(p.scoreboardDeaths)}</TableCell>
-						<TableCell align="right">{Number(p.scoreboardDamage).toLocaleString()}</TableCell>
-						<TableCell align="right">{Number(p.healing).toLocaleString()}</TableCell>
+		<TableContainer sx={{ maxWidth: "100%", overflowX: "auto" }}>
+			<Table size="small">
+				<TableHead>
+					<TableRow>
+						<H title="Player" short="Player" />
+						<H title="Team" short="Team" />
+						<H title="Kills" short="K" align="right" />
+						<H title="Assists" short="A" align="right" />
+						<H title="Deaths" short="D" align="right" />
+						<H title="Damage dealt" short="DA" align="right" />
+						<H title="Damage dealt per minute" short="DA/M" align="right" />
+						<H title="(Kills + Assists) / Deaths" short="KA/D" align="right" />
+						<H title="Kills / Deaths" short="K/D" align="right" />
+						<H title="Damage taken" short="DT" align="right" />
+						<H title="Damage taken per minute" short="DT/M" align="right" />
+						<H title="Healing" short="HP" align="right" />
+						<H title="ÜberCharges (all types)" short="UC" align="right" />
+						<H title="Charge drops" short="Drops" align="right" />
+						<H title="Airshots" short="AS" align="right" />
+						<H title="Backstabs" short="BS" align="right" />
+						<H title="Headshots" short="HS" align="right" />
+						<H title="Point captures" short="CAP" align="right" />
+						<H title="Captures blocked" short="Blocked" align="right" />
+						<H title="Scoreboard points" short="P" align="right" />
 					</TableRow>
-				))}
-			</TableBody>
-		</Table>
+				</TableHead>
+				<TableBody>
+					{rows.map((p) => {
+						const kills = Number(p.kills);
+						const assists = Number(p.assists);
+						const deaths = Number(p.scoreboardDeaths);
+						const damage = Number(p.scoreboardDamage);
+						const damageTaken = Number(p.damageTaken);
+						return (
+							<TableRow key={p.person?.steamId ?? `${p.roundId}`}>
+								<TableCell>
+									{p.person ? (
+										<PersonCell
+											steamId={p.person.steamId}
+											avatarHash={p.person.avatarHash}
+											personaName={p.person.name}
+										/>
+									) : (
+										<Typography variant="body2">Unknown</Typography>
+									)}
+								</TableCell>
+								<TableCell>{p.team === Team.RED ? "RED" : p.team === Team.BLU ? "BLU" : "—"}</TableCell>
+								<TableCell align="right">{kills}</TableCell>
+								<TableCell align="right">{assists}</TableCell>
+								<TableCell align="right">{deaths}</TableCell>
+								<TableCell align="right">{damage.toLocaleString()}</TableCell>
+								<TableCell align="right">
+									{Math.round(damage / durationMins).toLocaleString()}
+								</TableCell>
+								<TableCell align="right">{fmt1dp((kills + assists) / Math.max(1, deaths))}</TableCell>
+								<TableCell align="right">{fmt1dp(kills / Math.max(1, deaths))}</TableCell>
+								<TableCell align="right">{damageTaken.toLocaleString()}</TableCell>
+								<TableCell align="right">
+									{Math.round(damageTaken / durationMins).toLocaleString()}
+								</TableCell>
+								<TableCell align="right">{Number(p.healing).toLocaleString()}</TableCell>
+								<TableCell align="right">{chargesOf(p)}</TableCell>
+								<TableCell align="right">{Number(p.drops)}</TableCell>
+								<TableCell align="right">{Number(p.airshots)}</TableCell>
+								<TableCell align="right">{Number(p.backstabs)}</TableCell>
+								<TableCell align="right">{Number(p.headshots)}</TableCell>
+								<TableCell align="right">{Number(p.captures)}</TableCell>
+								<TableCell align="right">{Number(p.capturesBlocked)}</TableCell>
+								<TableCell align="right">{Number(p.points).toLocaleString()}</TableCell>
+							</TableRow>
+						);
+					})}
+				</TableBody>
+			</Table>
+		</TableContainer>
 	);
 };
 
@@ -217,7 +243,9 @@ export const RoundTable = ({ data }: { data: MatchRound[] }) => {
 		enableFacetedValues: false,
 		enableColumnActions: false,
 		enablePagination: false,
-		renderDetailPanel: ({ row }) => <RoundPlayersDetail players={row.original.players} />,
+		renderDetailPanel: ({ row }) => (
+			<RoundPlayersDetail players={row.original.players} durationMs={row.original.durationMs} />
+		),
 		initialState: {
 			...defaultRoundOptions.initialState,
 			columnVisibility: {
