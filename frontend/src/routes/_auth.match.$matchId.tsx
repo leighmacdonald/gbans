@@ -11,6 +11,7 @@ import { useMemo } from "react";
 import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { KillFeedTable } from "../component/stats/KillFeedTable.tsx";
 import { MatchChatTable } from "../component/stats/MatchChatTable.tsx";
+import { MatchKillMap } from "../component/stats/MatchKillMap.tsx";
 import { assembleMatch } from "../component/stats/match.ts";
 import { OverallTable } from "../component/stats/OverallTable.tsx";
 import { RoundTable } from "../component/stats/RoundTable.tsx";
@@ -142,6 +143,12 @@ function MatchPage() {
 			{summary && summary.chatFeed.length > 0 && (
 				<Grid size={{ xs: 12 }}>
 					<MatchChatTable chat={summary.chatFeed} players={summary.players} />
+				</Grid>
+			)}
+
+			{summary && (
+				<Grid size={{ xs: 12 }}>
+					<MatchKillMap summary={summary} mapName={summary.info.mapName} />
 				</Grid>
 			)}
 		</Grid>

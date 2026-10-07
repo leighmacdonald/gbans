@@ -3,6 +3,7 @@ import { TimestampSchema } from "@bufbuild/protobuf/wkt";
 import { expect, test } from "vitest";
 import { PersonDisplaySchema } from "../../rpc/person/v1/person_core_pb.ts";
 import {
+	MatchKillSchema,
 	MatchSchema,
 	RoundPlayerSchema,
 	RoundPlayerVariantSchema,
@@ -51,8 +52,8 @@ test("variant stats accumulate across rounds", () => {
 	expect(view.summaries[0].kills).toBe(28);
 	expect(view.variants[steamId].soldier.kills).toBe(28);
 	expect(view.variants[steamId].soldier.isWeapon).toBe(false);
-	expect(view.variants[steamId]["tf_projectile_rocket"].kills).toBe(18);
-	expect(view.variants[steamId]["tf_projectile_rocket"].isWeapon).toBe(true);
+	expect(view.variants[steamId].tf_projectile_rocket.kills).toBe(18);
+	expect(view.variants[steamId].tf_projectile_rocket.isWeapon).toBe(true);
 	expect(view.summaries[0].classes).toContain("soldier");
 	expect(view.variants[steamId]).not.toHaveProperty("spy");
 });
@@ -90,6 +91,45 @@ test("demoman is classified as a class, not a weapon", () => {
 	expect(view.summaries[0].kills).toBe(8);
 	expect(view.variants[demoId].demoman.isWeapon).toBe(false);
 	expect(view.variants[demoId].demoman.kills).toBe(6);
-	expect(view.variants[demoId]["stickybomb_launcher"].isWeapon).toBe(true);
+	expect(view.variants[demoId].stickybomb_launcher.isWeapon).toBe(true);
 	expect(view.summaries[0].classes).toContain("demoman");
+});
+
+test("kill feed keeps killer/victim positions for the overview map", () => {
+	const victimId = "76561198000000002";
+	const data = create(MatchSchema, {
+		overview: {
+			duration: "1260",
+			hostname: "test",
+			scoreBlu: 1,
+			scoreRed: 1,
+			createdOn: create(TimestampSchema, { seconds: 1725668520n, nanos: 0 }),
+		},
+		players: { [steamId]: create(PersonDisplaySchema, { steamId, name: "shnowshner" }) },
+		rounds: [round([player(1, [variant("soldier", 1)])])],
+		kills: [
+			create(MatchKillSchema, {
+				matchKillId: "42",
+				tick: 1234,
+				killerSteamId: steamId,
+				victimSteamId: victimId,
+				weapon: "tf_projectile_rocket",
+				killerPosX: 100.5,
+				killerPosY: -200.25,
+				victimPosX: 150.75,
+				victimPosY: -250.5,
+			}),
+		],
+	});
+
+	const view = assembleMatch(data);
+
+	expect(view.kills).toHaveLength(1);
+	expect(view.kills[0].matchKillId).toBe("42");
+	expect(view.kills[0].killerX).toBe(100.5);
+	expect(view.kills[0].killerY).toBe(-200.25);
+	expect(view.kills[0].victimX).toBe(150.75);
+	expect(view.kills[0].victimY).toBe(-250.5);
+	expect(view.kills[0].weapon).toBe("tf_projectile_rocket");
+	expect(view.kills[0].ticksSinceStart).toBe(1234);
 });
