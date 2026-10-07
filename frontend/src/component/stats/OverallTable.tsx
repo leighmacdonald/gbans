@@ -141,6 +141,7 @@ export const OverallTable = ({
 			overallColumnHelper.accessor("player", {
 				grow: true,
 				header: "Player",
+				enablePinning: true,
 				sortingFn: (rowA, rowB) => {
 					return rowA.original.player.name.toLocaleLowerCase() > rowB.original.player.name.toLocaleLowerCase()
 						? -1
@@ -297,6 +298,7 @@ export const OverallTable = ({
 		...defaultOverallOptions,
 		columns,
 		data: data?.summaries || [],
+		enableColumnPinning: true,
 		enableFilters: false,
 		enableFacetedValues: false,
 		enableColumnActions: false,
@@ -317,6 +319,10 @@ export const OverallTable = ({
 		},
 		initialState: {
 			...defaultOverallOptions.initialState,
+			columnPinning: {
+				left: ["player"],
+				right: [],
+			},
 			columnVisibility: {
 				points: false,
 			},
