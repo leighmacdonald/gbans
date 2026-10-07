@@ -2,7 +2,7 @@ export const classList = [
 	"scout",
 	"soldier",
 	"pyro",
-	"demo",
+	"demoman",
 	"heavy",
 	"engineer",
 	"medic",

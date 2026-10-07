@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { PersonDisplay } from "../../rpc/person/v1/person_core_pb";
 import { formatMatchClock } from "../../util/time.ts";
 import { PersonCell } from "../PersonCell";
+import { shortHeader } from "../table/columnHeaders";
 import { createDefaultTableOptions } from "../table/options";
 import { SortableTable } from "../table/SortableTable";
 import type { ChatFeedEntry } from "./match";
@@ -21,7 +22,7 @@ export const MatchChatTable = ({
 	const columns = useMemo(
 		() => [
 			chatColumnHelper.accessor("round", {
-				header: "Round",
+				...shortHeader("Round", "Round number"),
 				size: 70,
 				grow: false,
 				Cell: ({ cell }) => {
@@ -30,18 +31,18 @@ export const MatchChatTable = ({
 				},
 			}),
 			chatColumnHelper.accessor("tick", {
-				header: "Tick",
+				...shortHeader("Tick", "Demo tick"),
 				size: 80,
 				grow: false,
 			}),
 			chatColumnHelper.accessor("ticksSinceStart", {
-				header: "Time",
+				...shortHeader("Time", "Match time"),
 				size: 80,
 				grow: false,
 				Cell: ({ cell }) => formatMatchClock(cell.getValue<number>()),
 			}),
 			chatColumnHelper.accessor("steamId", {
-				header: "Player",
+				...shortHeader("Player", "Player"),
 				grow: false,
 				Cell: ({ row }) => {
 					const p: PersonDisplay | undefined = players[row.original.steamId];
@@ -52,7 +53,7 @@ export const MatchChatTable = ({
 				},
 			}),
 			chatColumnHelper.accessor("body", {
-				header: "Message",
+				...shortHeader("Message", "Chat message"),
 				grow: true,
 			}),
 		],

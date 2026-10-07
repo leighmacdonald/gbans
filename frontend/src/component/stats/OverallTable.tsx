@@ -19,6 +19,7 @@ import { Route } from "../../routes/_auth.match.$matchId";
 import { Team } from "../../rpc/stats/v1/stats_pb.ts";
 import { blu, red } from "../../theme.ts";
 import { PersonCell } from "../PersonCell";
+import { shortHeader } from "../table/columnHeaders";
 import { createDefaultTableOptions, type OnChangeFn } from "../table/options";
 import { SortableTable } from "../table/SortableTable";
 import type { MatchRow, MatchView } from "./match";
@@ -27,17 +28,6 @@ import { VariantDetailPanel } from "./WeaponDetailPanel";
 const overallColumnHelper = createMRTColumnHelper<MatchRow>();
 const defaultOverallOptions = createDefaultTableOptions<MatchRow>();
 const colSize = 70;
-
-const shortHeader = (short: string, full: string) => ({
-	header: short,
-	Header: () => (
-		<Tooltip title={full}>
-			<Typography variant="body2" sx={{ fontWeight: 700 }}>
-				{short}
-			</Typography>
-		</Tooltip>
-	),
-});
 
 const teamLabel = (team: Team): string => {
 	switch (team) {
@@ -76,7 +66,7 @@ const rowTint = (team: Team): string | undefined => {
 const format1dp = (value: number): string => (Number.isFinite(value) ? value.toFixed(1) : "0.0");
 
 const classIcons: Record<string, string> = {
-	demo: classDemo,
+	demoman: classDemo,
 	engineer: classEngineer,
 	heavy: classHeavy,
 	medic: classMedic,
@@ -140,7 +130,7 @@ export const OverallTable = ({
 			}),
 			overallColumnHelper.accessor("player", {
 				grow: true,
-				header: "Player",
+				...shortHeader("Player", "Player"),
 				enablePinning: true,
 				sortingFn: (rowA, rowB) => {
 					return rowA.original.player.name.toLocaleLowerCase() > rowB.original.player.name.toLocaleLowerCase()
@@ -306,7 +296,7 @@ export const OverallTable = ({
 		enablePagination: false,
 		renderDetailPanel: ({ row }) =>
 			data?.summaries ? (
-				<Stack>
+				<Stack spacing={2} sx={{ px: 2 }}>
 					<VariantDetailPanel match={data} steamId={row.original.player.steamId} isWeapons={true} />
 					<VariantDetailPanel match={data} steamId={row.original.player.steamId} isWeapons={false} />
 				</Stack>
@@ -334,6 +324,12 @@ export const OverallTable = ({
 				backgroundColor: rowTint(row.original.team),
 			},
 		}),
+		// The detail cell is display:flex in grid layout mode, which shrink-wraps
+		// the expandable weapons/classes tables to their content width. Force block
+		// layout so the child tables fill the full row width.
+		muiDetailPanelProps: {
+			sx: { display: "block" },
+		},
 	});
 
 	return <SortableTable table={overallTable} title={"Overall Match Stats"} hidePagination={true} />;

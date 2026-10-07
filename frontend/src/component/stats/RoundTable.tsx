@@ -4,6 +4,7 @@ import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useMemo } from "react";
@@ -11,6 +12,7 @@ import { type RoundPlayer, Team } from "../../rpc/stats/v1/stats_pb.ts";
 import { blu, red } from "../../theme.ts";
 import { durationString } from "../../util/time.ts";
 import { PersonCell } from "../PersonCell.tsx";
+import { shortHeader } from "../table/columnHeaders";
 import { createDefaultTableOptions } from "../table/options";
 import { SortableTable } from "../table/SortableTable";
 import type { MatchRound } from "./match";
@@ -49,13 +51,41 @@ const RoundPlayersDetail = ({ players }: { players: RoundPlayer[] }) => {
 		<Table size="small">
 			<TableHead>
 				<TableRow>
-					<TableCell>Player</TableCell>
-					<TableCell>Team</TableCell>
-					<TableCell align="right">K</TableCell>
-					<TableCell align="right">A</TableCell>
-					<TableCell align="right">D</TableCell>
-					<TableCell align="right">Damage</TableCell>
-					<TableCell align="right">Healing</TableCell>
+					<TableCell>
+						<Tooltip title="Player">
+							<span>Player</span>
+						</Tooltip>
+					</TableCell>
+					<TableCell>
+						<Tooltip title="Team">
+							<span>Team</span>
+						</Tooltip>
+					</TableCell>
+					<TableCell align="right">
+						<Tooltip title="Kills">
+							<span>K</span>
+						</Tooltip>
+					</TableCell>
+					<TableCell align="right">
+						<Tooltip title="Assists">
+							<span>A</span>
+						</Tooltip>
+					</TableCell>
+					<TableCell align="right">
+						<Tooltip title="Deaths">
+							<span>D</span>
+						</Tooltip>
+					</TableCell>
+					<TableCell align="right">
+						<Tooltip title="Damage dealt">
+							<span>Damage</span>
+						</Tooltip>
+					</TableCell>
+					<TableCell align="right">
+						<Tooltip title="Healing">
+							<span>Healing</span>
+						</Tooltip>
+					</TableCell>
 				</TableRow>
 			</TableHead>
 			<TableBody>
@@ -91,7 +121,7 @@ export const RoundTable = ({ data }: { data: MatchRound[] }) => {
 			roundColumnHelper.accessor("winner", {
 				grow: false,
 				enableSorting: false,
-				header: "Winner",
+				...shortHeader("Winner", "Round winner"),
 				size: 90,
 				Cell: ({ row }) => (
 					<Chip
@@ -109,14 +139,14 @@ export const RoundTable = ({ data }: { data: MatchRound[] }) => {
 			roundColumnHelper.accessor("durationMs", {
 				grow: false,
 				enableSorting: false,
-				header: "Length",
+				...shortHeader("Length", "Round length"),
 				size: 80,
 				Cell: ({ cell }) => durationString(Number(cell.getValue()) * 1000),
 			}),
 			roundColumnHelper.display({
 				id: "score",
 				grow: false,
-				header: "Score",
+				...shortHeader("Score", "Match score after this round (BLU – RED)"),
 				size: 80,
 				Cell: ({ row }) => (
 					<Typography variant="body2" sx={{ fontWeight: 700 }}>
@@ -127,45 +157,45 @@ export const RoundTable = ({ data }: { data: MatchRound[] }) => {
 			roundColumnHelper.accessor("killsBlu", {
 				grow: false,
 				enableSorting: false,
-				header: "BLU K",
+				...shortHeader("BLU K", "BLU kills"),
 				size: 70,
 			}),
 			roundColumnHelper.accessor("killsRed", {
 				grow: false,
 				enableSorting: false,
-				header: "RED K",
+				...shortHeader("RED K", "RED kills"),
 				size: 70,
 			}),
 			roundColumnHelper.accessor("chargesBlu", {
 				grow: false,
 				enableSorting: false,
-				header: "BLU UC",
+				...shortHeader("BLU UC", "BLU ÜberCharges"),
 				size: 70,
 			}),
 			roundColumnHelper.accessor("chargesRed", {
 				grow: false,
 				enableSorting: false,
-				header: "RED UC",
+				...shortHeader("RED UC", "RED ÜberCharges"),
 				size: 70,
 			}),
 			roundColumnHelper.accessor("damageBlu", {
 				grow: false,
 				enableSorting: false,
-				header: "BLU DA",
+				...shortHeader("BLU DA", "BLU damage dealt"),
 				size: 80,
 				Cell: ({ cell }) => Number(cell.getValue()).toLocaleString(),
 			}),
 			roundColumnHelper.accessor("damageRed", {
 				grow: false,
 				enableSorting: false,
-				header: "RED DA",
+				...shortHeader("RED DA", "RED damage dealt"),
 				size: 80,
 				Cell: ({ cell }) => Number(cell.getValue()).toLocaleString(),
 			}),
 			roundColumnHelper.display({
 				id: "status",
 				grow: false,
-				header: "Status",
+				...shortHeader("Status", "Round outcome"),
 				Cell: ({ row }) => {
 					return row.original.isStalemate
 						? "Stalemate"

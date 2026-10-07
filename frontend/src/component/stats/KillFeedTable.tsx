@@ -3,6 +3,7 @@ import { createMRTColumnHelper, useMaterialReactTable } from "material-react-tab
 import { useMemo } from "react";
 import type { PersonDisplay } from "../../rpc/person/v1/person_core_pb";
 import { PersonCell } from "../PersonCell";
+import { shortHeader } from "../table/columnHeaders";
 import { createDefaultTableOptions } from "../table/options";
 import { SortableTable } from "../table/SortableTable";
 import type { KillFeedEntry } from "./match";
@@ -35,7 +36,7 @@ export const KillFeedTable = ({
 	const columns = useMemo(
 		() => [
 			killColumnHelper.accessor("round", {
-				header: "Round",
+				...shortHeader("Round", "Round number"),
 				size: 70,
 				grow: false,
 				Cell: ({ cell }) => {
@@ -44,21 +45,21 @@ export const KillFeedTable = ({
 				},
 			}),
 			killColumnHelper.accessor("tick", {
-				header: "Tick",
+				...shortHeader("Tick", "Demo tick of the kill"),
 				size: 80,
 				grow: false,
 			}),
 			killColumnHelper.accessor("killerSteamId", {
-				header: "Killer",
+				...shortHeader("Killer", "Killer"),
 				grow: true,
 				Cell: ({ cell }) => <KillerCell steamId={cell.getValue<string>()} players={players} />,
 			}),
 			killColumnHelper.accessor("weapon", {
-				header: "Weapon",
+				...shortHeader("Weapon", "Kill weapon"),
 				grow: true,
 			}),
 			killColumnHelper.accessor("victimSteamId", {
-				header: "Victim",
+				...shortHeader("Victim", "Victim"),
 				grow: true,
 				Cell: ({ cell }) => <KillerCell steamId={cell.getValue<string>()} players={players} />,
 			}),
