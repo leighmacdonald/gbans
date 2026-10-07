@@ -29,6 +29,7 @@ var (
 	ErrMaxPlayerIntParse = errors.New("failed to cast max players value")
 	ErrMaxPlayerParse    = errors.New("failed to parse sv_visiblemaxplayers response")
 	ErrNotFound          = errors.New("server not found")
+	ErrServerDisabled    = errors.New("server is disabled")
 )
 
 const (
@@ -419,6 +420,13 @@ func (s *Servers) Each(serverFn ServerFunc) {
 
 	waitGroup := &sync.WaitGroup{}
 	for _, server := range s.servers {
+		server.RLock()
+		disabled := server.Deleted || !server.IsEnabled
+		server.RUnlock()
+		if disabled {
+			continue
+		}
+
 		waitGroup.Go(func() {
 			if err := serverFn(server); err != nil {
 				slog.Error("Failed to execute server fn",

@@ -53,6 +53,13 @@ func (c Collection) broadcast(ctx context.Context, cmd string) map[int32]string 
 	)
 
 	for _, server := range c {
+		server.RLock()
+		disabled := server.Deleted || !server.IsEnabled
+		server.RUnlock()
+		if disabled {
+			continue
+		}
+
 		errGroup.Go(func() error {
 			resp, errExec := server.Exec(egCtx, cmd)
 			if errExec != nil {
@@ -98,6 +105,13 @@ func (c Collection) find(opts FindOpts) []FindResult {
 	var found []FindResult
 
 	for _, server := range c {
+		server.RLock()
+		disabled := server.Deleted || !server.IsEnabled
+		server.RUnlock()
+		if disabled {
+			continue
+		}
+
 		server.RLock()
 		for _, player := range server.state.Players {
 			matched := false
@@ -197,6 +211,13 @@ func (c Collection) findExec(ctx context.Context, opts FindOpts, onFoundCmd func
 
 	var err error
 	for _, psi := range found {
+		psi.Server.RLock()
+		disabled := psi.Server.Deleted || !psi.Server.IsEnabled
+		psi.Server.RUnlock()
+		if disabled {
+			continue
+		}
+
 		if errRcon := psi.Server.ExecDiscard(ctx, onFoundCmd(psi)); errRcon != nil {
 			err = errors.Join(errRcon)
 		}

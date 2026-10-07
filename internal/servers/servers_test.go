@@ -71,4 +71,22 @@ func TestServers(t *testing.T) {
 		require.GreaterOrEqual(t, len(serversAllDeleted), 2)
 		require.NoError(t, errServers4)
 	})
+
+	t.Run("disabled servers are never rcon queried", func(t *testing.T) {
+		disabled := servers.NewServer(stringutil.SecureRandomString(10), "192.0.2.1", 27015)
+		disabled.IsEnabled = false
+
+		saved, errSave := serversCase.Save(t.Context(), disabled)
+		require.NoError(t, errSave)
+		require.False(t, saved.IsEnabled)
+
+		// Exec must fail fast with ErrServerDisabled without attempting a connection.
+		_, errExec := saved.Exec(t.Context(), "status")
+		require.ErrorIs(t, errExec, servers.ErrServerDisabled)
+		require.ErrorIs(t, errExec, servers.ErrExecRCON)
+
+		// Name lookups exclude disabled servers so callers cannot resolve them for rcon.
+		_, errName := serversCase.GetByName(t.Context(), saved.ShortName)
+		require.ErrorIs(t, errName, servers.ErrUnknownServer)
+	})
 }

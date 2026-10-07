@@ -312,9 +312,14 @@ func (s *Server) Exec(ctx context.Context, command string) (string, error) {
 	}
 
 	s.RLock()
+	disabled := s.Deleted || !s.IsEnabled
 	addr := s.Addr()
 	passwd := s.RCON
 	s.RUnlock()
+
+	if disabled {
+		return "", fmt.Errorf("%w: %w", ErrExecRCON, ErrServerDisabled)
+	}
 
 	conn, errConn := rcon.Dial(ctx, addr, passwd, serverQueryTimeout)
 	if errConn != nil {
@@ -569,6 +574,11 @@ func (s *Server) updateMaxVisiblePlayers(ctx context.Context) error {
 
 func (s *Server) updateState(ctx context.Context) {
 	s.RLock()
+	if s.Deleted || !s.IsEnabled {
+		s.RUnlock()
+
+		return
+	}
 	lastA2SUpdate := s.lastA2SUpdate
 	lastPlayersUpdate := s.lastMaxVisiblePlayersUpdate
 	s.RUnlock()
