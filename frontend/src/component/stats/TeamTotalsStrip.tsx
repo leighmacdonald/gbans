@@ -32,6 +32,7 @@ const TeamTotalsCard = ({ totals, color, label }: { totals?: TeamTotals; color: 
 					<Stat label="Kills" value={totals.kills} />
 					<Stat label="Assists" value={totals.assists} />
 					<Stat label="Deaths" value={totals.deaths} />
+					<Stat label="K/D" value={(totals.kills / Math.max(1, totals.deaths)).toFixed(1)} />
 					<Stat label="Damage" value={totals.damage} />
 					<Stat label="Healing" value={totals.healing} />
 					<Stat label="Charges" value={totals.charges} />
