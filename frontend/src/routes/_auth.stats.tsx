@@ -183,6 +183,7 @@ function StatsComponent() {
 				header: "Player",
 				enableColumnFilter: false,
 				enableSorting: false,
+				enablePinning: true,
 				grow: false,
 
 				Cell: ({ row }) => (
@@ -361,6 +362,10 @@ function StatsComponent() {
 		},
 		initialState: {
 			...defaultOptions.initialState,
+			columnPinning: {
+				left: ["player"],
+				right: [],
+			},
 			columnVisibility: {
 				rank: true,
 				steamID: true,
@@ -372,6 +377,7 @@ function StatsComponent() {
 		manualFiltering: true,
 		manualPagination: true,
 		manualSorting: true,
+		enableColumnPinning: true,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
