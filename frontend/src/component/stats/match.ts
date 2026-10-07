@@ -121,11 +121,19 @@ export type TeamTotals = {
 };
 
 export type KillFeedEntry = {
+	matchKillId: string;
 	tick: number;
 	round: number;
 	killerSteamId: string;
 	victimSteamId: string;
 	weapon: string;
+	/** World coordinates of killer and victim, used by the overview kill map. */
+	killerX: number;
+	killerY: number;
+	victimX: number;
+	victimY: number;
+	/** Ticks since the start of the match, derived from demo ticks. */
+	ticksSinceStart: number;
 };
 
 export type ChatFeedEntry = {
@@ -463,14 +471,32 @@ const roundForTick = (rounds: MatchRound[], tick: number): number => {
 };
 
 const assembleKillFeed = (kills: MatchKill[], rounds: MatchRound[]): KillFeedEntry[] => {
+	let startTick = Number.MAX_SAFE_INTEGER;
+	for (const r of rounds) {
+		if (r.tickStart < startTick) {
+			startTick = r.tickStart;
+		}
+	}
+	if (startTick === Number.MAX_SAFE_INTEGER) {
+		startTick = 0;
+	}
 	return (kills ?? [])
-		.map((k) => ({
-			tick: Number(k.tick),
-			round: roundForTick(rounds, Number(k.tick)),
-			killerSteamId: String(k.killerSteamId ?? ""),
-			victimSteamId: String(k.victimSteamId ?? ""),
-			weapon: k.weapon,
-		}))
+		.map((k) => {
+			const tick = Number(k.tick);
+			return {
+				matchKillId: String(k.matchKillId ?? ""),
+				tick,
+				round: roundForTick(rounds, tick),
+				killerSteamId: String(k.killerSteamId ?? ""),
+				victimSteamId: String(k.victimSteamId ?? ""),
+				weapon: k.weapon,
+				killerX: Number(k.killerPosX ?? 0),
+				killerY: Number(k.killerPosY ?? 0),
+				victimX: Number(k.victimPosX ?? 0),
+				victimY: Number(k.victimPosY ?? 0),
+				ticksSinceStart: Math.max(0, tick - startTick),
+			};
+		})
 		.toSorted((a, b) => a.tick - b.tick);
 };
 
