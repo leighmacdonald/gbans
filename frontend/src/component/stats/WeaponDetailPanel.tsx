@@ -1,6 +1,7 @@
 import Typography from "@mui/material/Typography";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useMemo } from "react";
+import { shortHeader } from "../table/columnHeaders";
 import { createDefaultTableOptions } from "../table/options";
 import { SortableTable } from "../table/SortableTable";
 import type { MatchPlayerVariantStats, MatchView } from "./match";
@@ -36,53 +37,113 @@ export const VariantDetailPanel = ({
 	const columns = useMemo(
 		() => [
 			roundColumnHelper.accessor("name", {
-				header: isWeapons ? "Weapon" : "Class",
+				...shortHeader(isWeapons ? "Weapon" : "Class", isWeapons ? "Weapon used" : "Class played"),
 			}),
 
 			roundColumnHelper.accessor("kills", {
-				header: "Kills",
+				...shortHeader("Kills", "Kills"),
 				sortDescFirst: true,
 				size: colSize,
 			}),
 
 			roundColumnHelper.accessor("assists", {
-				header: "Assists",
+				...shortHeader("Assists", "Assists"),
 				sortDescFirst: true,
 				size: colSize,
 			}),
 			roundColumnHelper.accessor("deaths", {
-				header: "Deaths",
+				...shortHeader("Deaths", "Deaths"),
 				sortDescFirst: true,
 				size: colSize,
 			}),
 			roundColumnHelper.accessor("healing", {
-				header: "Healing",
+				...shortHeader("Healing", "Healing"),
 				sortDescFirst: true,
 				size: colSize,
 			}),
 			roundColumnHelper.accessor("damage", {
-				header: "Damage",
+				...shortHeader("Damage", "Damage dealt"),
 				sortDescFirst: true,
 				size: colSize,
 			}),
 			roundColumnHelper.accessor("damageTaken", {
-				header: "Damage Taken",
+				...shortHeader("Damage Taken", "Damage taken"),
 				sortDescFirst: true,
 				size: colSize,
 			}),
 			roundColumnHelper.accessor("airshots", {
-				header: "AS",
+				...shortHeader("AS", "Airshots"),
 				sortDescFirst: true,
 				size: colSize,
 			}),
 			roundColumnHelper.accessor("headshots", {
-				header: "HS (K)",
+				...shortHeader("HS (K)", "Headshots"),
+				sortDescFirst: true,
+				size: colSize,
+			}),
+			roundColumnHelper.accessor("headshotKills", {
+				...shortHeader("HSK", "Headshot kills"),
 				sortDescFirst: true,
 				size: colSize,
 			}),
 			roundColumnHelper.accessor("backstabs", {
 				grow: false,
-				header: "BS (K)",
+				...shortHeader("BS (K)", "Backstabs"),
+				sortDescFirst: true,
+				size: colSize,
+			}),
+			roundColumnHelper.accessor("backstabKills", {
+				...shortHeader("BSK", "Backstab kills"),
+				sortDescFirst: true,
+				size: colSize,
+			}),
+			roundColumnHelper.accessor("dominations", {
+				...shortHeader("DOM", "Dominations"),
+				sortDescFirst: true,
+				size: colSize,
+			}),
+			roundColumnHelper.accessor("dominated", {
+				...shortHeader("DOMD", "Times dominated"),
+				sortDescFirst: true,
+				size: colSize,
+			}),
+			roundColumnHelper.accessor("revenges", {
+				...shortHeader("Revenges", "Revenges"),
+				sortDescFirst: true,
+				size: colSize,
+			}),
+			roundColumnHelper.accessor("revenged", {
+				...shortHeader("Revenged", "Times revenged"),
+				sortDescFirst: true,
+				size: colSize,
+			}),
+			roundColumnHelper.accessor("drops", {
+				...shortHeader("Drops", "Charge drops"),
+				sortDescFirst: true,
+				size: colSize,
+			}),
+			roundColumnHelper.accessor("nearFullChargeDeath", {
+				...shortHeader("NFCD", "Deaths with near-full ÜberCharge"),
+				sortDescFirst: true,
+				size: colSize,
+			}),
+			roundColumnHelper.accessor("chargesUber", {
+				...shortHeader("Uber", "ÜberCharges"),
+				sortDescFirst: true,
+				size: colSize,
+			}),
+			roundColumnHelper.accessor("chargesKritz", {
+				...shortHeader("Kritz", "Kritzkrieg charges"),
+				sortDescFirst: true,
+				size: colSize,
+			}),
+			roundColumnHelper.accessor("chargesVacc", {
+				...shortHeader("Vacc", "Vaccinator charges"),
+				sortDescFirst: true,
+				size: colSize,
+			}),
+			roundColumnHelper.accessor("chargesQuickfix", {
+				...shortHeader("Quickfix", "Quick-Fix charges"),
 				sortDescFirst: true,
 				size: colSize,
 			}),
@@ -92,6 +153,9 @@ export const VariantDetailPanel = ({
 
 	const table = useMaterialReactTable({
 		...defaultRoundOptions,
+		// Keep natural column widths and horizontal-scroll on overflow instead of
+		// stretching columns across the full detail panel width.
+		layoutMode: "grid-no-grow",
 		columns,
 		data,
 		enableFilters: false,

@@ -284,6 +284,10 @@ export const assembleMatch = (data: Match): MatchView => {
 const assemblePlayerVariants = (data: Match): Record<string, Record<string, MatchPlayerVariantStats>> => {
 	const variantSummaries: Record<string, Record<string, MatchPlayerVariantStats>> = {};
 	for (let r = 0; r < data.rounds.length; r++) {
+		// Same scope as the summary loop: skip zero-duration rounds.
+		if (Number(data.rounds[r].durationMs) === 0) {
+			continue;
+		}
 		for (let p = 0; p < data.rounds[r].players.length; p++) {
 			const steamId = data?.rounds[r].players[p].person?.steamId ?? "";
 			if (emptyOrNullString(steamId)) {
@@ -296,7 +300,7 @@ const assemblePlayerVariants = (data: Match): Record<string, Record<string, Matc
 				}
 				const variantStats = data?.rounds[r].players[p].variants[v];
 				const isWeapon = !classList.includes(variantStats.variant);
-				if (!Object.hasOwn(variantSummaries, variantStats.variant)) {
+				if (!Object.hasOwn(variantSummaries[steamId], variantStats.variant)) {
 					variantSummaries[steamId][variantStats.variant] = newVariant(variantStats);
 				}
 				const variant = variantSummaries[steamId][variantStats.variant];
