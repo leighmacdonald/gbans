@@ -28,6 +28,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { z } from "zod/v4";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
+import { ManualDemoUpload } from "../component/demo/ManualDemoUpload.tsx";
 import { ErrorDetails } from "../component/ErrorDetails.tsx";
 import { UploadButton } from "../component/form/button/UploadButton.tsx";
 import { CheckboxField } from "../component/form/field/CheckboxField.tsx";
@@ -696,6 +697,21 @@ function AdminSettings() {
 					label={"Demos/SourceTV"}
 					description={"How to handle demo storage and cleanup"}
 				>
+					<ConfigContainer>
+						<Grid size={{ xs: 12 }}>
+							<Button
+								startIcon={<CleaningServicesIcon />}
+								variant={"contained"}
+								color={"secondary"}
+								onClick={onCleanup}
+							>
+								Start Cleanup
+							</Button>
+						</Grid>
+						<Grid size={{ xs: 12 }}>
+							<ManualDemoUpload />
+						</Grid>
+					</ConfigContainer>
 					<form
 						onSubmit={async (e) => {
 							e.preventDefault();
@@ -704,16 +720,6 @@ function AdminSettings() {
 						}}
 					>
 						<ConfigContainer>
-							<Grid size={{ xs: 12 }}>
-								<Button
-									startIcon={<CleaningServicesIcon />}
-									variant={"contained"}
-									color={"secondary"}
-									onClick={onCleanup}
-								>
-									Start Cleanup
-								</Button>
-							</Grid>
 							<Grid size={{ xs: 12 }}>
 								<SubHeading>
 									Enable automatic deletion of demos. This ignores demos that have been marked as

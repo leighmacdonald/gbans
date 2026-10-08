@@ -95,6 +95,15 @@ func (r Repository) Delete(ctx context.Context, demoID int32) error {
 	return nil
 }
 
+func (r Repository) MatchIDByDemoID(ctx context.Context, demoID int32) (uuid.UUID, error) {
+	var matchID uuid.UUID
+	if err := r.QueryRow(ctx, `SELECT match_id FROM match WHERE demo_id = $1`, demoID).Scan(&matchID); err != nil {
+		return matchID, database.Err(err)
+	}
+
+	return matchID, nil
+}
+
 func (r Repository) Matches(ctx context.Context, opts MatchesOpts) ([]Match, uint64, error) {
 	builder := r.Builder().Select("m.match_id", "m.server_id", "m.map_id", "mp.map_name",
 		"m.demo_id", "s.stats_bucket_id", "s.bucket_name", "m.hostname",
@@ -599,6 +608,51 @@ func (r Repository) getRounds(ctx context.Context, match *Match) error {
 	return nil
 }
 
+type roundTickRange struct {
+	roundID int64
+	minTick int
+	maxTick int
+}
+
+// roundTickRanges preserves the association between newly inserted rounds and
+// their parsed player tick intervals. Only rounds with a positive duration are
+// eligible, matching the match view's exclusion of zero-duration stub rounds.
+func roundTickRanges(rounds []demoparse.RoundSummary, roundIDs []int64) []roundTickRange {
+	ranges := make([]roundTickRange, 0, len(rounds))
+
+	for idx, round := range rounds {
+		if idx >= len(roundIDs) || round.Time <= 0 || len(round.Players) == 0 {
+			continue
+		}
+
+		minTick := round.Players[0].TickStart
+		maxTick := round.Players[0].TickEnd
+
+		for _, player := range round.Players[1:] {
+			minTick = min(minTick, player.TickStart)
+			maxTick = max(maxTick, player.TickEnd)
+		}
+
+		ranges = append(ranges, roundTickRange{roundID: roundIDs[idx], minTick: minTick, maxTick: maxTick})
+	}
+
+	return ranges
+}
+
+// roundIDForTick returns the first parsed round containing tick. Kills outside
+// all known round intervals retain a NULL round rather than a guessed round.
+func roundIDForTick(ranges []roundTickRange, tick int) *int64 {
+	for _, round := range ranges {
+		if tick >= round.minTick && tick <= round.maxTick {
+			roundID := round.roundID
+
+			return &roundID
+		}
+	}
+
+	return nil
+}
+
 func (r Repository) CreateMatch(ctx context.Context, serverID int32, demoID int32, demo *demoparse.Demo, timeStart time.Time, mapInfo maps.Map, statsBucketID *int32) (uuid.UUID, error) {
 	newID, errID := uuid.NewV4()
 	if errID != nil {
@@ -637,17 +691,22 @@ func (r Repository) CreateMatch(ctx context.Context, serverID int32, demoID int3
 		return newID, database.Err(errMatch)
 	}
 	playerTeams := playerTeamMap(demo)
+	roundIDs := make([]int64, 0, len(demo.Rounds))
+
 	for _, round := range demo.Rounds {
-		if err := r.insertRound(ctx, transaction, newID, playerTeams, round); err != nil {
+		roundID, err := r.insertRound(ctx, transaction, newID, playerTeams, round)
+		if err != nil {
 			if err := transaction.Rollback(ctx); err != nil {
 				slog.Error("Failed to rollback tx", slog.String("error", err.Error()))
 			}
 
 			return newID, err
 		}
+
+		roundIDs = append(roundIDs, roundID)
 	}
 
-	if err := r.insertKills(ctx, transaction, newID, demo.Kills); err != nil {
+	if err := r.insertKills(ctx, transaction, newID, demo.Kills, roundTickRanges(demo.Rounds, roundIDs)); err != nil {
 		if err := transaction.Rollback(ctx); err != nil {
 			slog.Error("Failed to rollback tx", slog.String("error", err.Error()))
 		}
@@ -666,7 +725,7 @@ func (r Repository) CreateMatch(ctx context.Context, serverID int32, demoID int3
 	return newID, nil
 }
 
-func (r Repository) insertRound(ctx context.Context, transaction pgx.Tx, matchID uuid.UUID, playerTeams map[string]string, round demoparse.RoundSummary) error {
+func (r Repository) insertRound(ctx context.Context, transaction pgx.Tx, matchID uuid.UUID, playerTeams map[string]string, round demoparse.RoundSummary) (int64, error) {
 	const query = `
 		INSERT INTO match_round (
 			match_id, winner, is_stalemate, is_sudden_death, duration_ms
@@ -680,7 +739,7 @@ func (r Repository) insertRound(ctx context.Context, transaction pgx.Tx, matchID
 	if errRound := transaction.
 		QueryRow(ctx, query, matchID, toTfTeam(round.Winner), round.IsStalemate, round.IsSuddenDeath, duration.Milliseconds()).
 		Scan(&roundID); errRound != nil {
-		return database.Err(errRound)
+		return 0, database.Err(errRound)
 	}
 
 	for _, player := range round.Players {
@@ -692,11 +751,11 @@ func (r Repository) insertRound(ctx context.Context, transaction pgx.Tx, matchID
 		player.Team = playerTeams[player.SteamID]
 
 		if err := r.insertRoundPlayer(ctx, transaction, roundID, steamID, round, player); err != nil {
-			return err
+			return 0, err
 		}
 	}
 
-	return nil
+	return roundID, nil
 }
 
 func (r Repository) insertRoundPlayer(ctx context.Context, transaction pgx.Tx, roundID int64, steamID steamid.SteamID, round demoparse.RoundSummary, player demoparse.PlayerSummary) error {
@@ -803,16 +862,16 @@ func (r Repository) insertRoundPlayerVariants(ctx context.Context, transaction p
 	return nil
 }
 
-func (r Repository) insertKills(ctx context.Context, transaction pgx.Tx, matchID uuid.UUID, kills []demoparse.KillEvent) error {
+func (r Repository) insertKills(ctx context.Context, transaction pgx.Tx, matchID uuid.UUID, kills []demoparse.KillEvent, rounds []roundTickRange) error {
 	const query = `
 		INSERT INTO match_kill (
-			match_id, tick, killer_steam_id, victim_steam_id, weapon,
+			match_id, round_id, tick, killer_steam_id, victim_steam_id, weapon,
 			killer_pos_x, killer_pos_y, killer_pos_z,
 			victim_pos_x, victim_pos_y, victim_pos_z,
 			killer_angles_pitch, killer_angles_yaw,
 			victim_angles_pitch, victim_angles_yaw
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
 		)`
 
 	for _, kill := range kills {
@@ -835,7 +894,7 @@ func (r Repository) insertKills(ctx context.Context, transaction pgx.Tx, matchID
 		victimPitch, victimYaw := killAnglesCoords(kill.VictimAngles)
 
 		if _, err := transaction.Exec(ctx, query,
-			matchID, kill.Tick, killerID, victim.Int64(), kill.Weapon,
+			matchID, roundIDForTick(rounds, kill.Tick), kill.Tick, killerID, victim.Int64(), kill.Weapon,
 			killerX, killerY, killerZ,
 			victimX, victimY, victimZ,
 			killerPitch, killerYaw,

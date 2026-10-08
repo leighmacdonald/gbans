@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -33,10 +34,13 @@ import (
 
 var (
 	ErrDemoLoad       = errors.New("could not load demo file")
+	ErrDemoFilename   = errors.New("invalid demo filename")
 	ErrFailedOpenFile = errors.New("failed to open file")
 	ErrFailedReadFile = errors.New("failed to read file")
 	ErrParse          = errors.New("could not parse demo")
 )
+
+var demoFilenamePattern = regexp.MustCompile(`^(?:\d{8}-\d{6})-(?:workshop-[^.]+\.dem|[^.]+\.dem)$`)
 
 type Strategy string
 
@@ -137,6 +141,34 @@ func NewDemos(bucket asset.Bucket, repository Repository, assets asset.Assets, s
 		owner:       owner,
 		person:      person,
 	}
+}
+
+// normalizeDemoFilename preserves filenames already in the timestamped format
+// required for map and timestamp extraction. Arbitrary manual upload names are
+// prefixed with the current timestamp so the existing parser-facing format is
+// retained without changing the user-selected basename.
+func normalizeDemoFilename(name string) (string, error) {
+	base := path.Base(strings.ReplaceAll(strings.TrimSpace(name), "\\", "/"))
+	if base == "" || base == "." || base == "/" || len(base) > 255 {
+		return "", ErrDemoFilename
+	}
+
+	if !strings.HasSuffix(strings.ToLower(base), ".dem") {
+		return "", ErrDemoFilename
+	}
+
+	base = base[:len(base)-len(".dem")] + ".dem"
+
+	if demoFilenamePattern.MatchString(base) {
+		return base, nil
+	}
+
+	normalized := time.Now().UTC().Format("20060102-150405") + "-" + base
+	if !demoFilenamePattern.MatchString(normalized) {
+		return "", ErrDemoFilename
+	}
+
+	return normalized, nil
 }
 
 func (d Demos) createFromAsset(ctx context.Context, asset *asset.Asset, serverID int32, createStats bool, force bool) (*File, error) {
@@ -277,35 +309,55 @@ func (d Demos) importChatMessages(ctx context.Context, serverID int32, demoID in
 	return nil
 }
 
-func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
+func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo, force bool) (*File, error) {
+	filename, errFilename := normalizeDemoFilename(demo.Name)
+	if errFilename != nil {
+		return nil, errFilename
+	}
+
 	slog.Debug("Got new demo",
 		slog.Int("server_id", int(demo.ServerID)),
-		slog.String("name", demo.Name))
+		slog.String("name", filename))
 
 	// TOOO make these interfaces less clunky for compressed data.
 	compressed := new(bytes.Buffer)
 	reader := bytes.NewReader(demo.Content)
 	if err := zstd.Compress(reader, compressed); err != nil {
-		return err
+		return nil, err
 	}
 	compressedData := compressed.Bytes()
 
 	demoAsset, errNewAsset := d.asset.Create(ctx, d.owner,
-		asset.BucketDemo, demo.Name+zstd.Extension, bytes.NewReader(compressedData), false)
+		asset.BucketDemo, filename+zstd.Extension, bytes.NewReader(compressedData), false)
 	if errNewAsset != nil {
-		return errNewAsset
+		return nil, errNewAsset
 	}
 
-	if _, errDemo := d.createFromAsset(ctx, &demoAsset, demo.ServerID, true, false); errDemo != nil {
+	demoFile, errDemo := d.createFromAsset(ctx, &demoAsset, demo.ServerID, true, force)
+	if errDemo != nil {
 		// Cleanup the asset not attached to a valid demo
 		if _, errDelete := d.asset.Delete(ctx, demoAsset.AssetID); errDelete != nil {
-			return errors.Join(errDelete, errDelete)
+			return nil, errors.Join(errDemo, errDelete)
 		}
 
-		return errDemo
+		return nil, errDemo
 	}
 
-	return nil
+	return demoFile, nil
+}
+
+func (d Demos) Upload(ctx context.Context, demo UploadedDemo, force bool) (*File, uuid.UUID, error) {
+	demoFile, errDemo := d.onDemoReceived(ctx, demo, force)
+	if errDemo != nil {
+		return nil, uuid.Nil, errDemo
+	}
+
+	matchID, errMatch := d.stats.MatchIDByDemoID(ctx, demoFile.DemoID)
+	if errMatch != nil {
+		return nil, uuid.Nil, errMatch
+	}
+
+	return demoFile, matchID, nil
 }
 
 func (d Demos) ImportFile(ctx context.Context, serverID int32, demoPath string, createStats bool, force bool) (*File, error) {
@@ -365,7 +417,7 @@ func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, ser
 
 			// need Seeker, but afs does not provide
 			demo := UploadedDemo{Name: file.Name(), ServerID: instance.ServerID, Content: data}
-			if errDemo := d.onDemoReceived(ctx, demo); errDemo != nil {
+			if _, errDemo := d.onDemoReceived(ctx, demo, false); errDemo != nil {
 				if !errors.Is(errDemo, asset.ErrAssetTooLarge) {
 					slog.Error("Failed to create new demo asset", slog.String("error", errDemo.Error()))
 				}

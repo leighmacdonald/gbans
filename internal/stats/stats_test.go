@@ -294,3 +294,189 @@ func requireMatchKills(t *testing.T, match *stats.Match, steamID steamid.SteamID
 	require.Nil(t, worldKill.KillerAngles)
 	require.Nil(t, worldKill.VictimAngles)
 }
+
+func TestImportKillRoundAndPositions(t *testing.T) {
+	testFixture := tests.NewFixture()
+	defer testFixture.Close()
+
+	ctx := t.Context()
+	server := testFixture.CreateTestServer(ctx)
+
+	killerID := steamid.New("[U:1:11111111]")
+	victimID := steamid.New("[U:1:22222222]")
+	require.True(t, killerID.Valid())
+	require.True(t, victimID.Valid())
+
+	for _, person := range []struct {
+		id   steamid.SteamID
+		name string
+	}{
+		{killerID, "Killer"},
+		{victimID, "Victim"},
+	} {
+		require.NoError(t, testFixture.Database.Exec(ctx,
+			`INSERT INTO person (steam_id, created_on, updated_on, personaname, avatarhash, profilestate, personastate,
+			                    realname, timecreated, loccountrycode, locstatecode, loccityid)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+			 ON CONFLICT DO NOTHING`,
+			person.id.Int64(), time.Now(), time.Now(), person.name, "", 0, 0, "", 0, "", "", 0))
+	}
+
+	var demoID int32
+	require.NoError(t, testFixture.Database.QueryRow(ctx,
+		`INSERT INTO demo (server_id, title, map_name, created_on) VALUES ($1, $2, $3, $4) RETURNING demo_id`,
+		server.ServerID, "kill-geometry.dem", "cp_process_final", time.Now()).Scan(&demoID))
+
+	demo := demoparse.Demo{
+		Filename: "kill-geometry.dem", DemoType: demoparse.HL2Demo,
+		Server: "test", Map: "cp_process_final", Game: "tf",
+		Duration: 600, Ticks: 40000, Frames: 39900, Signon: 1000,
+		Rounds: []demoparse.RoundSummary{
+			{
+				Winner: "red", Time: 300,
+				Players: []demoparse.PlayerSummary{
+					{
+						Name: "Killer", SteamID: string(killerID.Steam3()), Team: "red",
+						TickStart: 1000, TickEnd: 1500,
+					},
+				},
+			},
+			{
+				Winner: "blu", Time: 300,
+				Players: []demoparse.PlayerSummary{
+					{
+						Name: "Killer", SteamID: string(killerID.Steam3()), Team: "blu",
+						TickStart: 2000, TickEnd: 2500,
+					},
+				},
+			},
+		},
+		Kills: []demoparse.KillEvent{
+			{
+				Tick: 1200, Killer: string(killerID.Steam3()), Victim: string(victimID.Steam3()),
+				Weapon:       "tf_projectile_rocket",
+				KillerPos:    &demoparse.Position{X: -5496, Y: 5393.625, Z: 348},
+				VictimPos:    &demoparse.Position{X: -5441.75, Y: 5269.125, Z: 363.25},
+				KillerAngles: &demoparse.EyeAngles{Pitch: 26.47, Yaw: 268.85},
+				VictimAngles: &demoparse.EyeAngles{Pitch: 8.82, Yaw: 137.24},
+			},
+			{
+				Tick: 2200, Killer: string(killerID.Steam3()), Victim: string(victimID.Steam3()),
+				Weapon:       "scattergun",
+				KillerPos:    &demoparse.Position{X: 100.5, Y: -200.25, Z: 10},
+				VictimPos:    &demoparse.Position{X: 150.75, Y: -250.5, Z: 20},
+				KillerAngles: &demoparse.EyeAngles{Pitch: 0, Yaw: 90},
+				VictimAngles: &demoparse.EyeAngles{Pitch: 0, Yaw: 270},
+			},
+			{
+				// A world kill outside every parsed round interval retains a NULL round.
+				Tick: 99999, Victim: string(victimID.Steam3()), Weapon: "world",
+			},
+		},
+	}
+
+	repo := stats.NewRepository(testFixture.Database)
+	st := stats.New(repo, maps.New(maps.NewRepository(testFixture.Database)))
+	matchID, errImport := st.Import(ctx, server.ServerID, demoID, &demo, time.Now())
+	require.NoError(t, errImport)
+	require.NotNil(t, matchID)
+
+	roundRows, errRounds := testFixture.Database.Query(ctx,
+		`SELECT round_id FROM match_round WHERE match_id = $1 ORDER BY round_id`,
+		*matchID)
+	require.NoError(t, errRounds)
+	defer roundRows.Close()
+
+	var roundIDs []int64
+	for roundRows.Next() {
+		var roundID int64
+		require.NoError(t, roundRows.Scan(&roundID))
+		roundIDs = append(roundIDs, roundID)
+	}
+	require.NoError(t, roundRows.Err())
+	require.Len(t, roundIDs, 2)
+
+	killRows, errKills := testFixture.Database.Query(ctx,
+		`SELECT
+			tick, round_id,
+			ST_NDims(killer_position), ST_Zmflag(killer_position), ST_SRID(killer_position),
+			ST_X(killer_position), ST_Y(killer_position), ST_Z(killer_position),
+			ST_NDims(victim_position), ST_Zmflag(victim_position), ST_SRID(victim_position),
+			ST_X(victim_position), ST_Y(victim_position), ST_Z(victim_position)
+		FROM match_kill
+		WHERE match_id = $1
+		ORDER BY tick`,
+		*matchID)
+	require.NoError(t, errKills)
+	defer killRows.Close()
+
+	type killPosition struct {
+		dimensions *int32
+		zmFlag     *int32
+		srid       *int32
+		x          *float64
+		y          *float64
+		z          *float64
+	}
+
+	type killRow struct {
+		tick   int
+		round  *int64
+		killer killPosition
+		victim killPosition
+	}
+
+	var kills []killRow
+	for killRows.Next() {
+		var kill killRow
+		require.NoError(t, killRows.Scan(
+			&kill.tick, &kill.round,
+			&kill.killer.dimensions, &kill.killer.zmFlag, &kill.killer.srid,
+			&kill.killer.x, &kill.killer.y, &kill.killer.z,
+			&kill.victim.dimensions, &kill.victim.zmFlag, &kill.victim.srid,
+			&kill.victim.x, &kill.victim.y, &kill.victim.z,
+		))
+		kills = append(kills, kill)
+	}
+	require.NoError(t, killRows.Err())
+	require.Len(t, kills, 3)
+
+	require.Equal(t, 1200, kills[0].tick)
+	require.NotNil(t, kills[0].round)
+	require.Equal(t, roundIDs[0], *kills[0].round)
+	for _, position := range []killPosition{kills[0].killer, kills[0].victim} {
+		require.NotNil(t, position.dimensions)
+		require.Equal(t, int32(3), *position.dimensions)
+		require.NotNil(t, position.zmFlag)
+		require.Equal(t, int32(2), *position.zmFlag)
+		require.NotNil(t, position.srid)
+		require.Equal(t, int32(0), *position.srid)
+	}
+	require.InDelta(t, -5496, *kills[0].killer.x, 0.001)
+	require.InDelta(t, 5393.625, *kills[0].killer.y, 0.001)
+	require.InDelta(t, 348, *kills[0].killer.z, 0.001)
+	require.InDelta(t, -5441.75, *kills[0].victim.x, 0.001)
+	require.InDelta(t, 5269.125, *kills[0].victim.y, 0.001)
+	require.InDelta(t, 363.25, *kills[0].victim.z, 0.001)
+
+	require.Equal(t, 2200, kills[1].tick)
+	require.NotNil(t, kills[1].round)
+	require.Equal(t, roundIDs[1], *kills[1].round)
+	require.NotNil(t, kills[1].killer.dimensions)
+	require.Equal(t, int32(3), *kills[1].killer.dimensions)
+	require.InDelta(t, 100.5, *kills[1].killer.x, 0.001)
+	require.InDelta(t, -200.25, *kills[1].killer.y, 0.001)
+	require.InDelta(t, 10, *kills[1].killer.z, 0.001)
+	require.NotNil(t, kills[1].victim.dimensions)
+	require.Equal(t, int32(3), *kills[1].victim.dimensions)
+	require.InDelta(t, 150.75, *kills[1].victim.x, 0.001)
+	require.InDelta(t, -250.5, *kills[1].victim.y, 0.001)
+	require.InDelta(t, 20, *kills[1].victim.z, 0.001)
+
+	require.Equal(t, 99999, kills[2].tick)
+	require.Nil(t, kills[2].round)
+	require.Nil(t, kills[2].killer.dimensions)
+	require.Nil(t, kills[2].killer.x)
+	require.Nil(t, kills[2].victim.dimensions)
+	require.Nil(t, kills[2].victim.x)
+}

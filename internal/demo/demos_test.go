@@ -124,3 +124,73 @@ func TestDemoUploadDeduplication(t *testing.T) {
 	require.Equal(t, first.AssetID, second.AssetID)
 	require.Equal(t, first.DemoID, second.DemoID)
 }
+
+func TestUploadDemo(t *testing.T) {
+	demoFile, err := os.Open(filepath.Join("..", "stats", "testdata", "demo-1427611.json"))
+	require.NoError(t, err)
+
+	defer demoFile.Close()
+
+	parsed, err := json.Decode[demoparse.Demo](demoFile)
+	require.NoError(t, err)
+
+	_, handler := demostatsv1connect.NewDemoServiceHandler(fakeParser{demo: &parsed})
+	parser := httptest.NewServer(handler)
+
+	defer parser.Close()
+
+	fixture.Config.Config().Demo.DemoParserURL = parser.URL
+	ownerSID := steamid.New(fixture.Config.Config().Owner)
+	require.NoError(t, fixture.Persons.EnsurePerson(t.Context(), ownerSID))
+
+	var (
+		server  = fixture.CreateTestServer(t.Context())
+		assets  = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
+		filters = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database),
+			notification.NewDiscard(), fixture.Config.Config().Filters)
+		chatUC = chat.New(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters,
+			filters, fixture.Persons, notification.NewDiscard(), nil, "")
+		statsUC = stats.New(stats.NewRepository(fixture.Database), maps.New(maps.NewRepository(fixture.Database)))
+		demos   = demo.NewDemos(asset.BucketDemo, demo.NewRepository(fixture.Database),
+			assets, statsUC, chatUC, fixture.Persons, fixture.Config.Config().Demo, ownerSID)
+	)
+
+	upload := demo.UploadedDemo{
+		Name:     "manual_upload.dem",
+		ServerID: server.ServerID,
+		Content:  []byte("manual demo upload"),
+	}
+	first, firstMatchID, err := demos.Upload(t.Context(), upload, false)
+	require.NoError(t, err)
+	require.NotNil(t, first)
+	require.Regexp(t, `^\d{8}-\d{6}-manual_upload\.dem\.zstd$`, func() string {
+		uploadedAsset, errAsset := assets.Get(t.Context(), first.AssetID)
+		require.NoError(t, errAsset)
+
+		return uploadedAsset.Name
+	}())
+
+	match, errMatch := statsUC.Match(t.Context(), firstMatchID)
+	require.NoError(t, errMatch)
+	require.Equal(t, first.DemoID, match.DemoID)
+
+	second, secondMatchID, err := demos.Upload(t.Context(), upload, false)
+	require.NoError(t, err)
+	require.Equal(t, first.AssetID, second.AssetID)
+	require.Equal(t, first.DemoID, second.DemoID)
+	require.Equal(t, firstMatchID, secondMatchID)
+
+	_, _, invalidNameErr := demos.Upload(t.Context(), demo.UploadedDemo{
+		Name:     "manual_upload.txt",
+		ServerID: server.ServerID,
+		Content:  []byte("manual demo upload"),
+	}, false)
+	require.ErrorIs(t, invalidNameErr, demo.ErrDemoFilename)
+
+	_, _, invalidServerErr := demos.Upload(t.Context(), demo.UploadedDemo{
+		Name:     "20240101-120000-koth_lakeside_f5.dem",
+		ServerID: -1,
+		Content:  []byte("manual demo upload"),
+	}, false)
+	require.ErrorIs(t, invalidServerErr, demo.ErrServerValidate)
+}

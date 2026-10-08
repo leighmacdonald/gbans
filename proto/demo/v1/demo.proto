@@ -10,6 +10,7 @@ service DemoService {
   rpc GetDemo(GetDemoRequest) returns (GetDemoResponse);
   rpc GetDemos(google.protobuf.Empty) returns (GetDemosResponse);
   rpc RunCleanup(google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc UploadDemo(UploadDemoRequest) returns (UploadDemoResponse);
 }
 
 message GetDemoRequest {
@@ -25,6 +26,41 @@ message GetDemoResponse {
 
 message GetDemosResponse {
   repeated Demo demos = 1 [(buf.validate.field).required = true];
+}
+
+message UploadDemoRequest {
+  int32 server_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  string filename = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 255
+  ];
+  bytes contents = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).bytes = {
+      min_len: 1
+      max_len: 500000000
+    }
+  ];
+  bool force = 4;
+}
+
+message UploadDemoResponse {
+  int32 demo_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  string asset_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uuid = true
+  ];
+  string match_id = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uuid = true
+  ];
 }
 
 message Demo {
