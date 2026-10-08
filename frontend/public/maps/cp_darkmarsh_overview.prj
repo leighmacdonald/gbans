@@ -1,0 +1,5 @@
+ENGCRS["TF2_HAMMER_METERS",
+    EDATUM["TF2 map-local"],
+    CS[Cartesian,2],
+        AXIS["easting (X)",east,ORDER[1],LENGTHUNIT["metre",1]],
+        AXIS["northing (Y)",north,ORDER[2],LENGTHUNIT["metre",1]]]

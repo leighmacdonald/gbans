@@ -1,0 +1,1968 @@
+{
+ "type": "FeatureCollection",
+ "note": "pseudo-WGS84 via crs.local_to_wgs84 ((0,0)m maps to (0,0)deg); viewing only, not survey",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0010948780002673227,
+     -0.0003247966311504053
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_1",
+    "hx": 6397.99,
+    "hy": -1897.97,
+    "hz": -240.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0011051217482405929,
+     -0.00032408131430229463
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_1",
+    "hx": 6457.85,
+    "hy": -1893.79,
+    "hz": -240.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0011133153775917473,
+     -0.0003235080340532107
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_1",
+    "hx": 6505.73,
+    "hy": -1890.44,
+    "hz": -240.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0011215107182272266,
+     -0.0003229347538041267
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_1",
+    "hx": 6553.62,
+    "hy": -1887.09,
+    "hz": -240.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0011221302031541056,
+     -0.0003318111856011369
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_1",
+    "hx": 6557.24,
+    "hy": -1938.96,
+    "hz": -240.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0011139365738029466,
+     -0.0003323861771345465
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_1",
+    "hx": 6509.36,
+    "hy": -1942.32,
+    "hz": -240.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0011057429444517864,
+     -0.00033295774609930483
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_1",
+    "hx": 6461.48,
+    "hy": -1945.66,
+    "hz": -240.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0010954991964785095,
+     -0.00033367477423174117
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_1",
+    "hx": 6401.62,
+    "hy": -1949.85,
+    "hz": -240.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0010961665973665945,
+     -0.00034323400847467527
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_1",
+    "hx": 6405.52,
+    "hy": -2005.71,
+    "hz": -240.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0010967877935778379,
+     -0.0003521104402716855
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_1",
+    "hx": 6409.15,
+    "hy": -2057.58,
+    "hz": -240.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0011070315415511302,
+     -0.0003513951234235748
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_1",
+    "hx": 6469.01,
+    "hy": -2053.4,
+    "hz": -240.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0011152251709023026,
+     -0.00035082184317449086
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_1",
+    "hx": 6516.89,
+    "hy": -2050.05,
+    "hz": -240.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0011270518568769498,
+     -0.00035115554361798745
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_1",
+    "hx": 6586.0,
+    "hy": -2052.0,
+    "hz": -240.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0011213002302576365,
+     -0.0003445568312583824
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_1",
+    "hx": 6552.39,
+    "hy": -2013.44,
+    "hz": -240.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0011146039746910456,
+     -0.00034194541137748066
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_1",
+    "hx": 6513.26,
+    "hy": -1998.18,
+    "hz": -240.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.001106410345339879,
+     -0.00034251698034223893
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_1",
+    "hx": 6465.38,
+    "hy": -2001.52,
+    "hz": -240.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00041164088810735763,
+     -5.645133394837761e-05
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_2",
+    "hx": 2405.45,
+    "hy": -329.877,
+    "hz": 8.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0004386552224718134,
+     -7.335711180121435e-05
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_2",
+    "hx": 2563.31,
+    "hy": -428.667,
+    "hz": 8.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0004359342803938827,
+     -5.068447689945823e-05
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_2",
+    "hx": 2547.41,
+    "hy": -296.178,
+    "hz": 8.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00044405603580337683,
+     -6.133568167057283e-05
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_2",
+    "hx": 2594.87,
+    "hy": -358.419,
+    "hz": 8.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00041987216571360067,
+     -5.489012925811109e-05
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_2",
+    "hx": 2453.55,
+    "hy": -320.754,
+    "hz": 8.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00042604990212907973,
+     -5.120333830698734e-05
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_2",
+    "hx": 2489.65,
+    "hy": -299.21,
+    "hz": 8.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0004231218946480313,
+     -6.399125268707572e-05
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_2",
+    "hx": 2472.54,
+    "hy": -373.937,
+    "hz": 8.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0004489999362200074,
+     -4.807613733034256e-05
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_2",
+    "hx": 2623.76,
+    "hy": -280.936,
+    "hz": 8.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00043443519532471484,
+     -6.13449226059312e-05
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_2",
+    "hx": 2538.65,
+    "hy": -358.473,
+    "hz": 8.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0004216809932459543,
+     -7.508653574068968e-05
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_2",
+    "hx": 2464.12,
+    "hy": -438.773,
+    "hz": 8.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0004530026302577556,
+     -6.282877724467954e-05
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "blue_spawn_2",
+    "hx": 2647.15,
+    "hy": -367.144,
+    "hz": 8.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.000359027451516767,
+     0.00012903083815202855
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_3",
+    "hx": 2098.0,
+    "hy": 754.0,
+    "hz": -124.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003501287730240887,
+     0.00016633683645062564
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_3",
+    "hx": 2046.0,
+    "hy": 972.0,
+    "hz": -127.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003535513416749366,
+     0.00014135208529651933
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_3",
+    "hx": 2066.0,
+    "hy": 826.0,
+    "hz": -127.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0005949040378237416,
+     -0.00011574630906064416
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_full",
+    "team": "",
+    "targetname": "",
+    "hx": 3476.36,
+    "hy": -676.371,
+    "hz": -151.789
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00027886747113989833,
+     -0.00033993465229487275
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_1",
+    "hx": 1629.58,
+    "hy": -1986.43,
+    "hz": -12.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002900695383356088,
+     -0.00033928094168248445
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_1",
+    "hx": 1695.04,
+    "hy": -1982.61,
+    "hz": -12.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002963944452040601,
+     -0.0003655303319532267
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_1",
+    "hx": 1732.0,
+    "hy": -2136.0,
+    "hz": -12.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.000287495766710592,
+     -0.00036416130449272774
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_1",
+    "hx": 1680.0,
+    "hy": -2128.0,
+    "hz": -12.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00026796316741708884,
+     -0.0003490643541720753
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_1",
+    "hx": 1565.86,
+    "hy": -2039.78,
+    "hz": -12.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002565660138082117,
+     -0.00034863653309066936
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_1",
+    "hx": 1499.26,
+    "hy": -2037.28,
+    "hz": -12.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002566875149950811,
+     -0.000339260406270577
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_1",
+    "hx": 1499.97,
+    "hy": -1982.49,
+    "hz": -12.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002680795347509698,
+     -0.00033968993863630855
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_1",
+    "hx": 1566.54,
+    "hy": -1985.0,
+    "hz": -12.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00025721116799849004,
+     -0.00033006738687332637
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_1",
+    "hx": 1503.03,
+    "hy": -1928.77,
+    "hz": -12.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002686048990386933,
+     -0.0003304934966704067
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_1",
+    "hx": 1569.61,
+    "hy": -1931.26,
+    "hz": -12.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002793911241432861,
+     -0.0003307416328976221
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_1",
+    "hx": 1632.64,
+    "hy": -1932.71,
+    "hz": -12.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002905914800546608,
+     -0.00033008621100090826
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_1",
+    "hx": 1698.09,
+    "hy": -1928.88,
+    "hz": -12.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002907129812415119,
+     -0.00032071008418081584
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_1",
+    "hx": 1698.8,
+    "hy": -1874.09,
+    "hz": -12.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00027951091404582136,
+     -0.00032136208350887853
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_1",
+    "hx": 1633.34,
+    "hy": -1877.9,
+    "hz": -12.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002687264002255646,
+     -0.0003211190811346399
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_1",
+    "hx": 1570.32,
+    "hy": -1876.48,
+    "hz": -12.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002878174881634079,
+     -0.00035115554361798745
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_1",
+    "hx": 1681.88,
+    "hy": -2052.0,
+    "hz": -12.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0006530260986703722,
+     -0.0003525245710784865
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_full",
+    "team": "",
+    "targetname": "",
+    "hx": 3816.0,
+    "hy": -2060.0,
+    "hz": -43.7438
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -0.00014687149063724784,
+     -0.00048649075322561384
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_2",
+    "hx": -858.253,
+    "hy": -2842.84,
+    "hz": 263.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -0.00015949169915419187,
+     -0.000499510204374959
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_2",
+    "hx": -932.0,
+    "hy": -2918.92,
+    "hz": 263.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -0.00016921213638102108,
+     -0.0005015243860262182
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_2",
+    "hx": -988.802,
+    "hy": -2930.69,
+    "hz": 263.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -0.0001783158267363436,
+     -0.00048360895042126345
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_2",
+    "hx": -1042.0,
+    "hy": -2826.0,
+    "hz": 263.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -0.00016692312246669954,
+     -0.0004904386861648277
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_2",
+    "hx": -975.426,
+    "hy": -2865.91,
+    "hz": 263.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -0.0001565944947905416,
+     -0.0004885100687298498
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_2",
+    "hx": -915.07,
+    "hy": -2854.64,
+    "hz": 263.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -0.00016968325295532689,
+     -0.0004795788758344195
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_2",
+    "hx": -991.555,
+    "hy": -2802.45,
+    "hz": 263.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -0.00015935513866448335,
+     -0.00047764512454646484
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_2",
+    "hx": -931.202,
+    "hy": -2791.15,
+    "hz": 263.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -0.00014963127886904255,
+     -0.00047562923161088003
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_2",
+    "hx": -874.38,
+    "hy": -2779.37,
+    "hz": 263.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -0.00014836835103726947,
+     -0.0005019196927054373
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_2",
+    "hx": -867.0,
+    "hy": -2933.0,
+    "hz": 263.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -0.00016253915428059257,
+     -0.00046665696789163487
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_2",
+    "hx": -949.808,
+    "hy": -2726.94,
+    "hz": 263.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -0.000172867097442987,
+     -0.0004685890078952641
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_2",
+    "hx": -1010.16,
+    "hy": -2738.23,
+    "hz": 263.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0006117841464152854,
+     -0.00022708743001026774
+    ]
+   },
+   "properties": {
+    "classname": "team_control_point",
+    "team": "",
+    "targetname": "cap_1",
+    "hx": 3575.0,
+    "hy": -1327.0,
+    "hz": -144.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00025806167631123387,
+     -0.000427307696108243
+    ]
+   },
+   "properties": {
+    "classname": "team_control_point",
+    "team": "",
+    "targetname": "cap_2",
+    "hx": 1508.0,
+    "hy": -2497.0,
+    "hz": -220.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00048805828967338856,
+     -0.0002720942077741716
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_full",
+    "team": "",
+    "targetname": "",
+    "hx": 2852.0,
+    "hy": -1590.0,
+    "hz": -212.107
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0006045967522441075,
+     -0.000116367334142413
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_medium",
+    "team": "",
+    "targetname": "",
+    "hx": 3533.0,
+    "hy": -680.0,
+    "hz": -151.765
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00029160284908629836,
+     1.916638444698567e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_small",
+    "team": "0",
+    "targetname": "",
+    "hx": 1704.0,
+    "hy": 112.0,
+    "hz": -221.764
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -1.950864131224681e-05,
+     -0.0002142527975680898
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_small",
+    "team": "",
+    "targetname": "",
+    "hx": -114.0,
+    "hy": -1252.0,
+    "hz": -104.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002823619137280612,
+     -5.8525923936331244e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_small",
+    "team": "0",
+    "targetname": "",
+    "hx": 1650.0,
+    "hy": -342.0,
+    "hz": 130.236
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00028236191372801693,
+     -4.894273171283841e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_medium",
+    "team": "0",
+    "targetname": "",
+    "hx": 1650.0,
+    "hy": -286.0,
+    "hz": 130.236
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00012731955382653786,
+     -8.282616136018808e-05
+    ]
+   },
+   "properties": {
+    "classname": "team_control_point",
+    "team": "",
+    "targetname": "cap_4",
+    "hx": 744.0,
+    "hy": -484.0,
+    "hz": -126.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00035834293778698955,
+     0.000159149442283006
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_3b",
+    "hx": 2094.0,
+    "hy": 930.0,
+    "hz": -123.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003504710298885394,
+     0.0001225279577146584
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_3b",
+    "hx": 2048.0,
+    "hy": 716.0,
+    "hz": -123.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00035902745151707307,
+     0.00014915177699584712
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_3b",
+    "hx": 2098.0,
+    "hy": 871.578,
+    "hz": -123.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -7.906133584408526e-05,
+     0.00014956625005951317
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_3",
+    "hx": -462.0,
+    "hy": 874.0,
+    "hz": 144.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -7.820569368129607e-05,
+     0.00015658251579457044
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_3",
+    "hx": -457.0,
+    "hy": 915.0,
+    "hz": 144.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -5.5274483717851235e-05,
+     0.00015606913049688332
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_3",
+    "hx": -323.0,
+    "hy": 912.0,
+    "hz": 144.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -6.708234556469599e-05,
+     0.00015521348833407144
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_3b",
+    "hx": -392.0,
+    "hy": 907.0,
+    "hz": 154.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -6.913588675542586e-05,
+     0.0001469993235710776
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_3b",
+    "hx": -404.0,
+    "hy": 859.0,
+    "hz": 154.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002026160641596791,
+     -0.000434666218708425
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_full",
+    "team": "",
+    "targetname": "",
+    "hx": 1184.0,
+    "hy": -2540.0,
+    "hz": 44.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -7.940359270918345e-05,
+     0.00014169434216164406
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_3b",
+    "hx": -464.0,
+    "hy": 828.0,
+    "hz": 154.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00035800068092200343,
+     0.00016702135018087513
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_3",
+    "hx": 2092.0,
+    "hy": 976.0,
+    "hz": -124.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00034978651615868577,
+     0.0001499085069246379
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_3b",
+    "hx": 2044.0,
+    "hy": 876.0,
+    "hz": -114.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003603964789773741,
+     0.00013621823231964815
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_3",
+    "hx": 2106.0,
+    "hy": 796.0,
+    "hz": -124.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00011807861846805089,
+     2.8065062940229017e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_full",
+    "team": "",
+    "targetname": "",
+    "hx": 690.0,
+    "hy": 164.0,
+    "hz": -128.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -6.126397885751836e-05,
+     0.00014237885589189354
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_3b",
+    "hx": -358.0,
+    "hy": 832.0,
+    "hz": 136.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -5.356319939219547e-05,
+     0.00014563029611057863
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "red_spawn_3b",
+    "hx": -313.0,
+    "hy": 851.0,
+    "hz": 136.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00011653846257574751,
+     -0.00020856962232269343
+    ]
+   },
+   "properties": {
+    "classname": "team_control_point",
+    "team": "",
+    "targetname": "cap_3",
+    "hx": 681.0,
+    "hy": -1218.79,
+    "hz": -203.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00026148424496395876,
+     -0.00046615385029990153
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_full",
+    "team": "",
+    "targetname": "",
+    "hx": 1528.0,
+    "hy": -2724.0,
+    "hz": -215.789
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00024266011737747524,
+     -0.0003302778748453781
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_medium",
+    "team": "",
+    "targetname": "",
+    "hx": 1418.0,
+    "hy": -1930.0,
+    "hz": -226.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003525245710861661,
+     -0.0003781938359628423
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_medium",
+    "team": "",
+    "targetname": "",
+    "hx": 2060.0,
+    "hy": -2210.0,
+    "hz": 40.2562
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0006537106124015148,
+     -0.00036484581822297725
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_small",
+    "team": "",
+    "targetname": "",
+    "hx": 3820.0,
+    "hy": -2132.0,
+    "hz": -43.7648
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4.41511356015554e-05,
+     -0.00026251101555067874
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_full",
+    "team": "0",
+    "targetname": "",
+    "hx": -258.0,
+    "hy": -1534.0,
+    "hz": 416.256
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0008434424168662188,
+     -0.00030217516364998534
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_medium",
+    "team": "",
+    "targetname": "",
+    "hx": 4928.71,
+    "hy": -1765.78,
+    "hz": -271.507
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     3.1487631591542174e-05,
+     -0.00011705184787266249
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_medium",
+    "team": "",
+    "targetname": "",
+    "hx": 184.0,
+    "hy": -684.0,
+    "hz": -125.789
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0007255845540669185,
+     -0.00014922399319438842
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_full",
+    "team": "",
+    "targetname": "",
+    "hx": 4240.0,
+    "hy": -872.0,
+    "hz": -269.739
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0007255845540672446,
+     -0.00015880718541788126
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_small",
+    "team": "",
+    "targetname": "",
+    "hx": 4240.0,
+    "hy": -928.0,
+    "hz": -266.765
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0004949034269867116,
+     -0.000465469336569652
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_medium",
+    "team": "",
+    "targetname": "",
+    "hx": 2892.0,
+    "hy": -2720.0,
+    "hz": -203.744
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0004771060699996376,
+     -0.000465469336569652
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_medium",
+    "team": "0",
+    "targetname": "",
+    "hx": 2788.0,
+    "hy": -2720.0,
+    "hz": -203.744
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -1.8995256014755457e-05,
+     -0.0003388342964734967
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_medium",
+    "team": "0",
+    "targetname": "",
+    "hx": -111.0,
+    "hy": -1980.0,
+    "hz": -255.764
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.532700801924322e-05,
+     -5.6130125880458034e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_small",
+    "team": "",
+    "targetname": "",
+    "hx": 148.0,
+    "hy": -328.0,
+    "hz": 144.256
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     3.901728262423955e-05,
+     -5.6130125880458034e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_small",
+    "team": "",
+    "targetname": "",
+    "hx": 228.0,
+    "hy": -328.0,
+    "hz": 144.256
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.1219925637736207e-05,
+     2.532700801923107e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_full",
+    "team": "",
+    "targetname": "",
+    "hx": 124.0,
+    "hy": 148.0,
+    "hz": -127.731
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -6.280413475088309e-05,
+     -0.00022691630157770535
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_full",
+    "team": "",
+    "targetname": "",
+    "hx": -367.0,
+    "hy": -1326.0,
+    "hz": 30.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002197289074101013,
+     2.156218250285888e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_small",
+    "team": "0",
+    "targetname": "",
+    "hx": 1284.0,
+    "hy": 126.0,
+    "hz": -127.765
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00020261606415993903,
+     -0.00044424941093191786
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_medium",
+    "team": "0",
+    "targetname": "",
+    "hx": 1184.0,
+    "hy": -2596.0,
+    "hz": 40.2361
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -5.5787869015918836e-05,
+     -0.00026251101555067874
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_small",
+    "team": "0",
+    "targetname": "",
+    "hx": -326.0,
+    "hy": -1534.0,
+    "hz": 416.256
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00043038800790310783,
+     -0.000365188075088102
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_medium",
+    "team": "",
+    "targetname": "",
+    "hx": 2515.0,
+    "hy": -2134.0,
+    "hz": -215.625
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00017249746002539167,
+     -0.0003097424629378934
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_medium",
+    "team": "",
+    "targetname": "",
+    "hx": 1008.0,
+    "hy": -1810.0,
+    "hz": -95.7439
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003046086099634764,
+     -0.00022999661336382804
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_full",
+    "team": "",
+    "targetname": "",
+    "hx": 1780.0,
+    "hy": -1344.0,
+    "hz": 56.2361
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.000305293123693956,
+     -0.0002402643193175704
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_medium",
+    "team": "",
+    "targetname": "",
+    "hx": 1784.0,
+    "hy": -1404.0,
+    "hz": 56.2361
+   }
+  }
+ ]
+}

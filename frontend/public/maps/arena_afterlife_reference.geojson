@@ -1,0 +1,1104 @@
+{
+ "type": "FeatureCollection",
+ "note": "pseudo-WGS84 via crs.local_to_wgs84 ((0,0)m maps to (0,0)deg); viewing only, not survey",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00029570993146812465,
+     8.76177574719345e-05
+    ]
+   },
+   "properties": {
+    "classname": "team_control_point",
+    "team": "",
+    "targetname": "cp_arena",
+    "hx": 1728.0,
+    "hy": 512.0,
+    "hz": 72.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002779125744930515,
+     0.000527075572292106
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_overworld_spawn_blu",
+    "hx": 1624.0,
+    "hy": 3080.0,
+    "hz": 36.319
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002779125744925978,
+     0.0005168078663383637
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_overworld_spawn_blu",
+    "hx": 1624.0,
+    "hy": 3020.0,
+    "hz": 36.319
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.000277912574492153,
+     0.0005065401603846214
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_overworld_spawn_blu",
+    "hx": 1624.0,
+    "hy": 2960.0,
+    "hz": 36.319
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00027791257449171717,
+     0.000496272454430879
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_overworld_spawn_blu",
+    "hx": 1624.0,
+    "hy": 2900.0,
+    "hz": 36.319
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00028886479417611984,
+     0.000496272454430879
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_overworld_spawn_blu",
+    "hx": 1688.0,
+    "hy": 2900.0,
+    "hz": 36.319
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00028886479417657287,
+     0.0005065401603846214
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_overworld_spawn_blu",
+    "hx": 1688.0,
+    "hy": 2960.0,
+    "hz": 36.319
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002888647941770352,
+     0.0005168078663383637
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_overworld_spawn_blu",
+    "hx": 1688.0,
+    "hy": 3020.0,
+    "hz": 36.319
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00028886479417750675,
+     0.000527075572292106
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_overworld_spawn_blu",
+    "hx": 1688.0,
+    "hy": 3080.0,
+    "hz": 36.319
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002998170138619619,
+     0.000527075572292106
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_overworld_spawn_blu",
+    "hx": 1752.0,
+    "hy": 3080.0,
+    "hz": 36.319
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002998170138614725,
+     0.0005168078663383637
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_overworld_spawn_blu",
+    "hx": 1752.0,
+    "hy": 3020.0,
+    "hz": 36.319
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002998170138609926,
+     0.0005065401603846214
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_overworld_spawn_blu",
+    "hx": 1752.0,
+    "hy": 2960.0,
+    "hz": 36.319
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00029981701386052245,
+     0.000496272454430879
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_overworld_spawn_blu",
+    "hx": 1752.0,
+    "hy": 2900.0,
+    "hz": 36.319
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003107692335449251,
+     0.000496272454430879
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_overworld_spawn_blu",
+    "hx": 1816.0,
+    "hy": 2900.0,
+    "hz": 36.319
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00031076923354541247,
+     0.0005065401603846214
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_overworld_spawn_blu",
+    "hx": 1816.0,
+    "hy": 2960.0,
+    "hz": 36.319
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00031076923354590984,
+     0.0005168078663383637
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_overworld_spawn_blu",
+    "hx": 1816.0,
+    "hy": 3020.0,
+    "hz": 36.319
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00031076923354641714,
+     0.000527075572292106
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_overworld_spawn_blu",
+    "hx": 1816.0,
+    "hy": 3080.0,
+    "hz": 36.319
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002888647941698573,
+     -0.00032240596694750893
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_overworld_spawn_red",
+    "hx": 1688.0,
+    "hy": -1884.0,
+    "hz": 36.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002779125744856921,
+     -0.00032240596694750893
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_overworld_spawn_red",
+    "hx": 1624.0,
+    "hy": -1884.0,
+    "hz": 36.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002998170138540225,
+     -0.00032240596694750893
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_overworld_spawn_red",
+    "hx": 1752.0,
+    "hy": -1884.0,
+    "hz": 36.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00031076923353818767,
+     -0.00032240596694750893
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_overworld_spawn_red",
+    "hx": 1816.0,
+    "hy": -1884.0,
+    "hz": 36.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00029981701385432965,
+     -0.0003326736729012513
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_overworld_spawn_red",
+    "hx": 1752.0,
+    "hy": -1944.0,
+    "hz": 36.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00028886479417015326,
+     -0.0003326736729012513
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_overworld_spawn_red",
+    "hx": 1688.0,
+    "hy": -1944.0,
+    "hz": 36.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00031076923353850604,
+     -0.0003326736729012513
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_overworld_spawn_red",
+    "hx": 1816.0,
+    "hy": -1944.0,
+    "hz": 36.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002779125744859768,
+     -0.0003326736729012513
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_overworld_spawn_red",
+    "hx": 1624.0,
+    "hy": -1944.0,
+    "hz": 36.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00028886479417045846,
+     -0.00034294137885499364
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_overworld_spawn_red",
+    "hx": 1688.0,
+    "hy": -2004.0,
+    "hz": 36.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00031076923353883445,
+     -0.00034294137885499364
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_overworld_spawn_red",
+    "hx": 1816.0,
+    "hy": -2004.0,
+    "hz": 36.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002998170138546464,
+     -0.00034294137885499364
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_overworld_spawn_red",
+    "hx": 1752.0,
+    "hy": -2004.0,
+    "hz": 36.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003107692335391728,
+     -0.00035320908480873593
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_overworld_spawn_red",
+    "hx": 1816.0,
+    "hy": -2064.0,
+    "hz": 36.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002998170138549728,
+     -0.00035320908480873593
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_overworld_spawn_red",
+    "hx": 1752.0,
+    "hy": -2064.0,
+    "hz": 36.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00028886479417077293,
+     -0.00035320908480873593
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_overworld_spawn_red",
+    "hx": 1688.0,
+    "hy": -2064.0,
+    "hz": 36.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00027791257448627046,
+     -0.00034294137885499364
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_overworld_spawn_red",
+    "hx": 1624.0,
+    "hy": -2004.0,
+    "hz": 36.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.000277912574486573,
+     -0.00035320908480873593
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_overworld_spawn_red",
+    "hx": 1624.0,
+    "hy": -2064.0,
+    "hz": 36.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0004603953785446564,
+     8.262251852543886e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_medium",
+    "team": "",
+    "targetname": "",
+    "hx": 2690.35,
+    "hy": 482.81,
+    "hz": -154.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     6.297526318303605e-05,
+     9.30938673139304e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_medium",
+    "team": "",
+    "targetname": "",
+    "hx": 368.0,
+    "hy": 544.0,
+    "hz": -40.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00027791257448359845,
+     0.0002334191820150755
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_medium",
+    "team": "",
+    "targetname": "",
+    "hx": 1624.0,
+    "hy": 1364.0,
+    "hz": -116.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002779125744814355,
+     -5.81836670712065e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_medium",
+    "team": "",
+    "targetname": "",
+    "hx": 1624.0,
+    "hy": -340.0,
+    "hz": -116.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002943409040116478,
+     0.00031213826099376664
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_full",
+    "team": "",
+    "targetname": "",
+    "hx": 1720.0,
+    "hy": 1824.0,
+    "hz": 32.2561
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00029434090400812013,
+     -0.00013690274604989764
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_full",
+    "team": "",
+    "targetname": "",
+    "hx": 1720.0,
+    "hy": -800.0,
+    "hz": 32.2562
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00045965952628475196,
+     9.199180020822872e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_small",
+    "team": "",
+    "targetname": "",
+    "hx": 2686.05,
+    "hy": 537.56,
+    "hz": -154.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     6.297526318301764e-05,
+     8.21416476299386e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_small",
+    "team": "",
+    "targetname": "",
+    "hx": 368.0,
+    "hy": 480.0,
+    "hz": -40.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.000246424942890069,
+     8.21416476299386e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_full",
+    "team": "",
+    "targetname": "",
+    "hx": 1440.0,
+    "hy": 480.0,
+    "hz": -4935.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00024642494289014104,
+     9.30938673139304e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_full",
+    "team": "",
+    "targetname": "",
+    "hx": 1440.0,
+    "hy": 544.0,
+    "hz": -4935.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003176143708358554,
+     -4.3807167451641626e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_medium",
+    "team": "",
+    "targetname": "",
+    "hx": 1856.0,
+    "hy": -255.99,
+    "hz": -4976.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003094002060728591,
+     -4.3807167451641626e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_small",
+    "team": "",
+    "targetname": "",
+    "hx": 1808.0,
+    "hy": -255.99,
+    "hz": -4976.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003395188102039012,
+     -5.476109841995906e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_small",
+    "team": "",
+    "targetname": "",
+    "hx": 1984.0,
+    "hy": -320.0,
+    "hz": -5066.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003395188102039695,
+     -6.571331810395088e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_small",
+    "team": "",
+    "targetname": "",
+    "hx": 1984.0,
+    "hy": -384.0,
+    "hz": -5066.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003176143708380837,
+     0.00021904610496416188
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_medium",
+    "team": "",
+    "targetname": "",
+    "hx": 1856.0,
+    "hy": 1280.01,
+    "hz": -4976.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00033951881020648163,
+     0.00022999661336382804
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_small",
+    "team": "",
+    "targetname": "",
+    "hx": 1984.0,
+    "hy": 1344.0,
+    "hz": -5066.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003395188102067484,
+     0.00024094883304781988
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_small",
+    "team": "",
+    "targetname": "",
+    "hx": 1984.0,
+    "hy": 1408.0,
+    "hz": -5066.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00030940020607502975,
+     0.00021904610496416188
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_small",
+    "team": "",
+    "targetname": "",
+    "hx": 1808.0,
+    "hy": 1280.01,
+    "hz": -4976.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00039427990862422565,
+     9.30938673139304e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_small",
+    "team": "",
+    "targetname": "",
+    "hx": 2304.0,
+    "hy": 544.0,
+    "hz": 145.005
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003942799086241104,
+     8.21416476299386e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_small",
+    "team": "",
+    "targetname": "",
+    "hx": 2304.0,
+    "hy": 480.0,
+    "hz": 145.005
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     8.761775747202453e-05,
+     8.21416476299386e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_small",
+    "team": "",
+    "targetname": "",
+    "hx": 512.0,
+    "hy": 480.0,
+    "hz": 113.005
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     8.761775747205014e-05,
+     9.30938673139304e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_small",
+    "team": "",
+    "targetname": "",
+    "hx": 512.0,
+    "hy": 544.0,
+    "hz": 113.005
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003668993594165255,
+     -0.00022383598979158265
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_underworld_spawn_red",
+    "hx": 2144.0,
+    "hy": -1308.0,
+    "hz": -4800.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003100847198053844,
+     -0.00022383598979158265
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_underworld_spawn_red",
+    "hx": 1812.0,
+    "hy": -1308.0,
+    "hz": -4800.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.00025190105273373395,
+     -0.00022383598979158265
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "afterlife_underworld_spawn_red",
+    "hx": 1472.0,
+    "hy": -1308.0,
+    "hz": -4800.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003668993594226254,
+     0.0003990715047354517
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_underworld_spawn_blu",
+    "hx": 2144.0,
+    "hy": 2332.0,
+    "hz": -4800.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0003100847198105397,
+     0.0003990715047354517
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_underworld_spawn_blu",
+    "hx": 1812.0,
+    "hy": 2332.0,
+    "hz": -4800.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0002519010527379219,
+     0.0003990715047354517
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "afterlife_underworld_spawn_blu",
+    "hx": 1472.0,
+    "hy": 2332.0,
+    "hz": -4800.0
+   }
+  }
+ ]
+}

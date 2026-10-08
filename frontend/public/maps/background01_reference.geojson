@@ -1,0 +1,42 @@
+{
+ "type": "FeatureCollection",
+ "note": "pseudo-WGS84 via crs.local_to_wgs84 ((0,0)m maps to (0,0)deg); viewing only, not survey",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     9.30938673141362e-05,
+     0.00012047441652390994
+    ]
+   },
+   "properties": {
+    "classname": "team_control_point",
+    "team": "",
+    "targetname": "cap_red_6",
+    "hx": 544.0,
+    "hy": 704.0,
+    "hz": 5.58536
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     7.250027173939821e-05,
+     -4.6281342329628396e-05
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "0",
+    "targetname": "",
+    "hx": 423.66,
+    "hy": -270.448,
+    "hz": 29.8556
+   }
+  }
+ ]
+}
