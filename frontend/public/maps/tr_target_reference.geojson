@@ -1,0 +1,168 @@
+{
+ "type": "FeatureCollection",
+ "note": "pseudo-WGS84 via crs.local_to_wgs84 ((0,0)m maps to (0,0)deg); viewing only, not survey",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0,
+     -9.172483985343143e-05
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "teamspawn1",
+    "hx": 0.0,
+    "hy": -536.0,
+    "hz": -56.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4.1070823815030075e-06,
+     -9.856997715592632e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_full",
+    "team": "0",
+    "targetname": "pickupAmmo",
+    "hx": -24.0,
+    "hy": -576.0,
+    "hz": -55.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     4.1070823815030075e-06,
+     -9.856997715592632e-05
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_full",
+    "team": "0",
+    "targetname": "pickupAmmo",
+    "hx": 24.0,
+    "hy": -576.0,
+    "hz": -55.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.0,
+     -0.00014237885589189354
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "2",
+    "targetname": "target_lookat",
+    "hx": 0.0,
+    "hy": -832.0,
+    "hz": -56.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -1.6428329526285534e-05,
+     -0.00034499492004574206
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "teamspawn2",
+    "hx": -96.0,
+    "hy": -2016.0,
+    "hz": -48.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     1.0952219684082165e-05,
+     -0.000232734668284826
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_full",
+    "team": "0",
+    "targetname": "pickupAmmo_spy",
+    "hx": 64.0,
+    "hy": -1360.0,
+    "hz": -63.7894
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -1.9166384447290398e-05,
+     -0.00032309048067775845
+    ]
+   },
+   "properties": {
+    "classname": "item_ammopack_medium",
+    "team": "0",
+    "targetname": "pickupAmmo_spy",
+    "hx": -112.0,
+    "hy": -1888.0,
+    "hz": -59.7894
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -1.3690274605207428e-05,
+     -0.00032309048067775845
+    ]
+   },
+   "properties": {
+    "classname": "item_healthkit_medium",
+    "team": "0",
+    "targetname": "pickupAmmo_spy",
+    "hx": -80.0,
+    "hy": -1888.0,
+    "hz": -59.7894
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -0.00013553371858957756,
+     -9.30938673139304e-05
+    ]
+   },
+   "properties": {
+    "classname": "info_player_teamspawn",
+    "team": "3",
+    "targetname": "soldier_tp_dest",
+    "hx": -792.0,
+    "hy": -544.0,
+    "hz": 192.0
+   }
+  }
+ ]
+}
