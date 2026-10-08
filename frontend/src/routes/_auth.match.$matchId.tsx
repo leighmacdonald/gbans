@@ -134,12 +134,6 @@ function MatchPage() {
 				<RoundTable data={summary?.rounds ?? []} />
 			</Grid>
 
-			{summary && summary.kills.length > 0 && (
-				<Grid size={{ xs: 12 }}>
-					<KillFeedTable kills={summary.kills} players={summary.players} />
-				</Grid>
-			)}
-
 			{summary && summary.chatFeed.length > 0 && (
 				<Grid size={{ xs: 12 }}>
 					<MatchChatTable chat={summary.chatFeed} players={summary.players} />
@@ -149,6 +143,12 @@ function MatchPage() {
 			{summary && (
 				<Grid size={{ xs: 12 }}>
 					<MatchKillMap summary={summary} mapName={summary.info.mapName} />
+				</Grid>
+			)}
+
+			{summary && summary.kills.length > 0 && (
+				<Grid size={{ xs: 12 }}>
+					<KillFeedTable kills={summary.kills} players={summary.players} />
 				</Grid>
 			)}
 		</Grid>

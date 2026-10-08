@@ -1,7 +1,23 @@
 import { expect, test } from "vitest";
 import { Team } from "../../rpc/stats/v1/stats_pb.ts";
 import { blu, red } from "../../theme.ts";
-import { overviewUrls, parseWorldFile, playerColor, teamColorOf, worldToPixel } from "./killMap.ts";
+import {
+	HAMMER_UNIT_IN_METERS,
+	overviewPixelBounds,
+	overviewUrls,
+	paddedOverviewPixelBounds,
+	parseReferenceFile,
+	parseWorldFile,
+	pixelBoundsToLatLng,
+	playerColor,
+	REFERENCE_AMMO_COLOR,
+	REFERENCE_HEALTH_COLOR,
+	referencePointLabel,
+	referencePointStyle,
+	referenceUrls,
+	teamColorOf,
+	worldToPixel,
+} from "./killMap.ts";
 
 // pl_upward_overview.pgw
 const upwardPgw = "0.076200000000\n0.0\n0.0\n-0.076200000000\n-63.969900000000\n44.462700000000\n";
@@ -22,19 +38,47 @@ test("parseWorldFile rejects malformed input", () => {
 	expect(parseWorldFile("0\n0\n0\n0\n0\n0\n")).toBeNull();
 });
 
-test("worldToPixel maps the top-left world corner to pixel origin", () => {
+test("worldToPixel converts Hammer units to the metre-based world file", () => {
 	const wf = parseWorldFile(upwardPgw);
 	expect(wf).not.toBeNull();
 	if (!wf) {
 		return;
 	}
-	const origin = worldToPixel(wf, wf.topLeftX, wf.topLeftY);
+	const origin = worldToPixel(wf, wf.topLeftX / HAMMER_UNIT_IN_METERS, wf.topLeftY / HAMMER_UNIT_IN_METERS);
 	expect(origin.px).toBeCloseTo(0, 6);
 	expect(origin.py).toBeCloseTo(0, 6);
-	// One pixel right/down in world units lands on pixel (1, 1).
-	const next = worldToPixel(wf, wf.topLeftX + wf.pixelSizeX, wf.topLeftY + wf.pixelSizeY);
+	// One pixel right/down in Hammer units lands on pixel (1, 1).
+	const next = worldToPixel(
+		wf,
+		(wf.topLeftX + wf.pixelSizeX) / HAMMER_UNIT_IN_METERS,
+		(wf.topLeftY + wf.pixelSizeY) / HAMMER_UNIT_IN_METERS,
+	);
 	expect(next.px).toBeCloseTo(1, 6);
 	expect(next.py).toBeCloseTo(1, 6);
+});
+
+test("worldToPixel places a Snakewater kill inside the overview", () => {
+	const wf = parseWorldFile("0.076200000000\n0.0\n0.0\n-0.076200000000\n-113.499900000000\n73.037700000000\n");
+	expect(wf).not.toBeNull();
+	if (!wf) {
+		return;
+	}
+	const point = worldToPixel(wf, 1487.75, 244.875);
+	expect(point.px).toBeCloseTo(1985.42, 2);
+	expect(point.py).toBeCloseTo(876.88, 2);
+});
+
+test("the overview viewport contains the image plus a buffer", () => {
+	const size = { width: 3245, height: 1815 };
+	const view = paddedOverviewPixelBounds(size);
+	expect(view.minX).toBeLessThan(0);
+	expect(view.minY).toBeLessThan(0);
+	expect(view.maxX).toBeGreaterThan(size.width);
+	expect(view.maxY).toBeGreaterThan(size.height);
+	expect(pixelBoundsToLatLng(size.height, overviewPixelBounds(size))).toEqual([
+		[size.height, 0],
+		[0, size.width],
+	]);
 });
 
 test("overviewUrls follows the <map>_overview naming", () => {
@@ -42,6 +86,78 @@ test("overviewUrls follows the <map>_overview naming", () => {
 		image: "/maps/pl_upward_overview.png",
 		worldFile: "/maps/pl_upward_overview.pgw",
 	});
+});
+
+test("referenceUrls prefers the GeoJSON reference and falls back to JSON", () => {
+	expect(referenceUrls("pl_upward")).toEqual({
+		primary: "/maps/pl_upward_reference.geojson",
+		fallback: "/maps/pl_upward_reference.json",
+	});
+});
+
+test("parseReferenceFile keeps Hammer-unit reference points and ignores preview coordinates", () => {
+	const points = parseReferenceFile({
+		type: "FeatureCollection",
+		features: [
+			{
+				type: "Feature",
+				geometry: { type: "Point", coordinates: [0.0001, 0.00002] },
+				properties: {
+					classname: "team_control_point",
+					targetname: "cp_3",
+					team: "",
+					hx: 527.999,
+					hy: 207.999,
+					hz: 67.7749,
+				},
+			},
+			{
+				type: "Feature",
+				geometry: { type: "Point", coordinates: [0.0004, -0.0003] },
+				properties: { classname: "info_player_teamspawn", targetname: "", team: "3", hx: 2120, hy: 376, hz: 0 },
+			},
+			{
+				type: "Feature",
+				geometry: { type: "LineString", coordinates: [[0, 0]] },
+				properties: { classname: "ignored", hx: 1, hy: 2, hz: 3 },
+			},
+			{
+				type: "Feature",
+				geometry: { type: "Point", coordinates: [0, 0] },
+				properties: { classname: "broken", hx: "nowhere", hy: 2, hz: 3 },
+			},
+		],
+	});
+	expect(points).toEqual([
+		{ classname: "team_control_point", targetname: "cp_3", team: "", x: 527.999, y: 207.999, z: 67.7749 },
+		{ classname: "info_player_teamspawn", targetname: "", team: "3", x: 2120, y: 376, z: 0 },
+	]);
+	expect(points?.[0] ? referencePointLabel(points[0]) : "").toBe("cp_3");
+	expect(points?.[1] ? referencePointLabel(points[1]) : "").toBe("info_player_teamspawn · team 3");
+	expect(points?.[0] ? referencePointStyle(points[0]).radius : 0).toBe(5);
+	expect(parseReferenceFile({ type: "FeatureCollection" })).toBeNull();
+});
+
+test("ammopacks and health kits use distinct colors", () => {
+	const ammo = referencePointStyle({
+		classname: "item_ammopack_medium",
+		targetname: "",
+		team: "",
+		x: 1546,
+		y: -56,
+		z: -14.7387,
+	});
+	const health = referencePointStyle({
+		classname: "item_healthkit_medium",
+		targetname: "",
+		team: "",
+		x: 1548,
+		y: 0,
+		z: -14.7639,
+	});
+	expect(ammo.color).toBe(REFERENCE_AMMO_COLOR);
+	expect(health.color).toBe(REFERENCE_HEALTH_COLOR);
+	expect(ammo.color).not.toBe(health.color);
 });
 
 test("playerColor is deterministic and varies by steamId", () => {
