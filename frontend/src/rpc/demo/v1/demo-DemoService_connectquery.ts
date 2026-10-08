@@ -18,3 +18,8 @@ export const getDemos = DemoService.method.getDemos;
  * @generated from rpc demo.v1.DemoService.RunCleanup
  */
 export const runCleanup = DemoService.method.runCleanup;
+
+/**
+ * @generated from rpc demo.v1.DemoService.UploadDemo
+ */
+export const uploadDemo = DemoService.method.uploadDemo;

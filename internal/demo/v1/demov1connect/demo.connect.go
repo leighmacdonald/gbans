@@ -40,6 +40,8 @@ const (
 	DemoServiceGetDemosProcedure = "/demo.v1.DemoService/GetDemos"
 	// DemoServiceRunCleanupProcedure is the fully-qualified name of the DemoService's RunCleanup RPC.
 	DemoServiceRunCleanupProcedure = "/demo.v1.DemoService/RunCleanup"
+	// DemoServiceUploadDemoProcedure is the fully-qualified name of the DemoService's UploadDemo RPC.
+	DemoServiceUploadDemoProcedure = "/demo.v1.DemoService/UploadDemo"
 )
 
 // DemoServiceClient is a client for the demo.v1.DemoService service.
@@ -47,6 +49,7 @@ type DemoServiceClient interface {
 	GetDemo(context.Context, *v1.GetDemoRequest) (*v1.GetDemoResponse, error)
 	GetDemos(context.Context, *emptypb.Empty) (*v1.GetDemosResponse, error)
 	RunCleanup(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+	UploadDemo(context.Context, *v1.UploadDemoRequest) (*v1.UploadDemoResponse, error)
 }
 
 // NewDemoServiceClient constructs a client for the demo.v1.DemoService service. By default, it uses
@@ -78,6 +81,12 @@ func NewDemoServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(demoServiceMethods.ByName("RunCleanup")),
 			connect.WithClientOptions(opts...),
 		),
+		uploadDemo: connect.NewClient[v1.UploadDemoRequest, v1.UploadDemoResponse](
+			httpClient,
+			baseURL+DemoServiceUploadDemoProcedure,
+			connect.WithSchema(demoServiceMethods.ByName("UploadDemo")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -86,6 +95,7 @@ type demoServiceClient struct {
 	getDemo    *connect.Client[v1.GetDemoRequest, v1.GetDemoResponse]
 	getDemos   *connect.Client[emptypb.Empty, v1.GetDemosResponse]
 	runCleanup *connect.Client[emptypb.Empty, emptypb.Empty]
+	uploadDemo *connect.Client[v1.UploadDemoRequest, v1.UploadDemoResponse]
 }
 
 // GetDemo calls demo.v1.DemoService.GetDemo.
@@ -115,11 +125,21 @@ func (c *demoServiceClient) RunCleanup(ctx context.Context, req *emptypb.Empty) 
 	return nil, err
 }
 
+// UploadDemo calls demo.v1.DemoService.UploadDemo.
+func (c *demoServiceClient) UploadDemo(ctx context.Context, req *v1.UploadDemoRequest) (*v1.UploadDemoResponse, error) {
+	response, err := c.uploadDemo.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // DemoServiceHandler is an implementation of the demo.v1.DemoService service.
 type DemoServiceHandler interface {
 	GetDemo(context.Context, *v1.GetDemoRequest) (*v1.GetDemoResponse, error)
 	GetDemos(context.Context, *emptypb.Empty) (*v1.GetDemosResponse, error)
 	RunCleanup(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+	UploadDemo(context.Context, *v1.UploadDemoRequest) (*v1.UploadDemoResponse, error)
 }
 
 // NewDemoServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -147,6 +167,12 @@ func NewDemoServiceHandler(svc DemoServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(demoServiceMethods.ByName("RunCleanup")),
 		connect.WithHandlerOptions(opts...),
 	)
+	demoServiceUploadDemoHandler := connect.NewUnaryHandlerSimple(
+		DemoServiceUploadDemoProcedure,
+		svc.UploadDemo,
+		connect.WithSchema(demoServiceMethods.ByName("UploadDemo")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/demo.v1.DemoService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case DemoServiceGetDemoProcedure:
@@ -155,6 +181,8 @@ func NewDemoServiceHandler(svc DemoServiceHandler, opts ...connect.HandlerOption
 			demoServiceGetDemosHandler.ServeHTTP(w, r)
 		case DemoServiceRunCleanupProcedure:
 			demoServiceRunCleanupHandler.ServeHTTP(w, r)
+		case DemoServiceUploadDemoProcedure:
+			demoServiceUploadDemoHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -174,4 +202,8 @@ func (UnimplementedDemoServiceHandler) GetDemos(context.Context, *emptypb.Empty)
 
 func (UnimplementedDemoServiceHandler) RunCleanup(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("demo.v1.DemoService.RunCleanup is not implemented"))
+}
+
+func (UnimplementedDemoServiceHandler) UploadDemo(context.Context, *v1.UploadDemoRequest) (*v1.UploadDemoResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("demo.v1.DemoService.UploadDemo is not implemented"))
 }

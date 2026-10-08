@@ -36,6 +36,10 @@ func (s Stats) Delete(ctx context.Context, demoID int32) error {
 	return s.repo.Delete(ctx, demoID)
 }
 
+func (s Stats) MatchIDByDemoID(ctx context.Context, demoID int32) (uuid.UUID, error) {
+	return s.repo.MatchIDByDemoID(ctx, demoID)
+}
+
 type VariantStats struct {
 	Rank    uint64
 	SteamID steamid.SteamID

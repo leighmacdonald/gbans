@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file demo/v1/demo.proto.
  */
 export const file_demo_v1_demo: GenFile = /*@__PURE__*/
-  fileDesc("ChJkZW1vL3YxL2RlbW8ucHJvdG8SB2RlbW8udjEiLQoOR2V0RGVtb1JlcXVlc3QSGwoHZGVtb19pZBgBIAEoBUIKukgHyAEBGgIgACI2Cg9HZXREZW1vUmVzcG9uc2USIwoEZGVtbxgBIAEoCzINLmRlbW8udjEuRGVtb0IGukgDyAEBIjgKEEdldERlbW9zUmVzcG9uc2USJAoFZGVtb3MYASADKAsyDS5kZW1vLnYxLkRlbW9CBrpIA8gBASK0AwoERGVtbxIbCgdkZW1vX2lkGAEgASgFQgq6SAfIAQEaAiAAEh0KCXNlcnZlcl9pZBgCIAEoBUIKukgHyAEBGgIgABIhChFzZXJ2ZXJfbmFtZV9zaG9ydBgDIAEoCUIGukgDyAEBEiAKEHNlcnZlcl9uYW1lX2xvbmcYBCABKAlCBrpIA8gBARIVCgV0aXRsZRgFIAEoCUIGukgDyAEBEjYKCmNyZWF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESGwoJZG93bmxvYWRzGAcgASgDQggwAbpIA8gBARIWCgRzaXplGAggASgDQggwAbpIA8gBARIYCghtYXBfbmFtZRgJIAEoCUIGukgDyAEBEhcKB2FyY2hpdmUYCiABKAhCBrpIA8gBARInCgVzdGF0cxgLIAMoCzIYLmRlbW8udjEuRGVtby5TdGF0c0VudHJ5Eh0KCGFzc2V0X2lkGAwgASgJQgu6SAjIAQFyA7ABARosCgpTdGF0c0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEyyAEKC0RlbW9TZXJ2aWNlEjwKB0dldERlbW8SFy5kZW1vLnYxLkdldERlbW9SZXF1ZXN0GhguZGVtby52MS5HZXREZW1vUmVzcG9uc2USPQoIR2V0RGVtb3MSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaGS5kZW1vLnYxLkdldERlbW9zUmVzcG9uc2USPAoKUnVuQ2xlYW51cBIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eUKOAQoLY29tLmRlbW8udjFCCURlbW9Qcm90b1ABWjdnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL2RlbW8vdjE7ZGVtb3YxogIDRFhYqgIHRGVtby5WMcoCB0RlbW9cVjHiAhNEZW1vXFYxXEdQQk1ldGFkYXRh6gIIRGVtbzo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp]);
+  fileDesc("ChJkZW1vL3YxL2RlbW8ucHJvdG8SB2RlbW8udjEiLQoOR2V0RGVtb1JlcXVlc3QSGwoHZGVtb19pZBgBIAEoBUIKukgHyAEBGgIgACI2Cg9HZXREZW1vUmVzcG9uc2USIwoEZGVtbxgBIAEoCzINLmRlbW8udjEuRGVtb0IGukgDyAEBIjgKEEdldERlbW9zUmVzcG9uc2USJAoFZGVtb3MYASADKAsyDS5kZW1vLnYxLkRlbW9CBrpIA8gBASKGAQoRVXBsb2FkRGVtb1JlcXVlc3QSHQoJc2VydmVyX2lkGAEgASgFQgq6SAfIAQEaAiAAEh8KCGZpbGVuYW1lGAIgASgJQg26SArIAQFyBRABGP8BEiIKCGNvbnRlbnRzGAMgASgMQhC6SA3IAQF6CBABGIDKte4BEg0KBWZvcmNlGAQgASgIIm8KElVwbG9hZERlbW9SZXNwb25zZRIbCgdkZW1vX2lkGAEgASgFQgq6SAfIAQEaAiAAEh0KCGFzc2V0X2lkGAIgASgJQgu6SAjIAQFyA7ABARIdCghtYXRjaF9pZBgDIAEoCUILukgIyAEBcgOwAQEitAMKBERlbW8SGwoHZGVtb19pZBgBIAEoBUIKukgHyAEBGgIgABIdCglzZXJ2ZXJfaWQYAiABKAVCCrpIB8gBARoCIAASIQoRc2VydmVyX25hbWVfc2hvcnQYAyABKAlCBrpIA8gBARIgChBzZXJ2ZXJfbmFtZV9sb25nGAQgASgJQga6SAPIAQESFQoFdGl0bGUYBSABKAlCBrpIA8gBARI2CgpjcmVhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEhsKCWRvd25sb2FkcxgHIAEoA0IIMAG6SAPIAQESFgoEc2l6ZRgIIAEoA0IIMAG6SAPIAQESGAoIbWFwX25hbWUYCSABKAlCBrpIA8gBARIXCgdhcmNoaXZlGAogASgIQga6SAPIAQESJwoFc3RhdHMYCyADKAsyGC5kZW1vLnYxLkRlbW8uU3RhdHNFbnRyeRIdCghhc3NldF9pZBgMIAEoCUILukgIyAEBcgOwAQEaLAoKU3RhdHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBMo8CCgtEZW1vU2VydmljZRI8CgdHZXREZW1vEhcuZGVtby52MS5HZXREZW1vUmVxdWVzdBoYLmRlbW8udjEuR2V0RGVtb1Jlc3BvbnNlEj0KCEdldERlbW9zEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhkuZGVtby52MS5HZXREZW1vc1Jlc3BvbnNlEjwKClJ1bkNsZWFudXASFi5nb29nbGUucHJvdG9idWYuRW1wdHkaFi5nb29nbGUucHJvdG9idWYuRW1wdHkSRQoKVXBsb2FkRGVtbxIaLmRlbW8udjEuVXBsb2FkRGVtb1JlcXVlc3QaGy5kZW1vLnYxLlVwbG9hZERlbW9SZXNwb25zZUKOAQoLY29tLmRlbW8udjFCCURlbW9Qcm90b1ABWjdnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL2RlbW8vdjE7ZGVtb3YxogIDRFhYqgIHRGVtby5WMcoCB0RlbW9cVjHiAhNEZW1vXFYxXEdQQk1ldGFkYXRh6gIIRGVtbzo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message demo.v1.GetDemoRequest
@@ -65,6 +65,65 @@ export type GetDemosResponse = Message<"demo.v1.GetDemosResponse"> & {
  */
 export const GetDemosResponseSchema: GenMessage<GetDemosResponse> = /*@__PURE__*/
   messageDesc(file_demo_v1_demo, 2);
+
+/**
+ * @generated from message demo.v1.UploadDemoRequest
+ */
+export type UploadDemoRequest = Message<"demo.v1.UploadDemoRequest"> & {
+  /**
+   * @generated from field: int32 server_id = 1;
+   */
+  serverId: number;
+
+  /**
+   * @generated from field: string filename = 2;
+   */
+  filename: string;
+
+  /**
+   * @generated from field: bytes contents = 3;
+   */
+  contents: Uint8Array;
+
+  /**
+   * @generated from field: bool force = 4;
+   */
+  force: boolean;
+};
+
+/**
+ * Describes the message demo.v1.UploadDemoRequest.
+ * Use `create(UploadDemoRequestSchema)` to create a new message.
+ */
+export const UploadDemoRequestSchema: GenMessage<UploadDemoRequest> = /*@__PURE__*/
+  messageDesc(file_demo_v1_demo, 3);
+
+/**
+ * @generated from message demo.v1.UploadDemoResponse
+ */
+export type UploadDemoResponse = Message<"demo.v1.UploadDemoResponse"> & {
+  /**
+   * @generated from field: int32 demo_id = 1;
+   */
+  demoId: number;
+
+  /**
+   * @generated from field: string asset_id = 2;
+   */
+  assetId: string;
+
+  /**
+   * @generated from field: string match_id = 3;
+   */
+  matchId: string;
+};
+
+/**
+ * Describes the message demo.v1.UploadDemoResponse.
+ * Use `create(UploadDemoResponseSchema)` to create a new message.
+ */
+export const UploadDemoResponseSchema: GenMessage<UploadDemoResponse> = /*@__PURE__*/
+  messageDesc(file_demo_v1_demo, 4);
 
 /**
  * @generated from message demo.v1.Demo
@@ -136,7 +195,7 @@ export type Demo = Message<"demo.v1.Demo"> & {
  * Use `create(DemoSchema)` to create a new message.
  */
 export const DemoSchema: GenMessage<Demo> = /*@__PURE__*/
-  messageDesc(file_demo_v1_demo, 3);
+  messageDesc(file_demo_v1_demo, 5);
 
 /**
  * @generated from service demo.v1.DemoService
@@ -165,6 +224,14 @@ export const DemoService: GenService<{
     methodKind: "unary";
     input: typeof EmptySchema;
     output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc demo.v1.DemoService.UploadDemo
+   */
+  uploadDemo: {
+    methodKind: "unary";
+    input: typeof UploadDemoRequestSchema;
+    output: typeof UploadDemoResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_demo_v1_demo, 0);
