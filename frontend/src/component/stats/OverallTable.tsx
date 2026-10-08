@@ -1,3 +1,4 @@
+import BarChartIcon from "@mui/icons-material/BarChart";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
@@ -332,5 +333,5 @@ export const OverallTable = ({
 		},
 	});
 
-	return <SortableTable table={overallTable} title={"Overall Match Stats"} hidePagination={true} />;
+	return <SortableTable table={overallTable} title={"Overall Match Stats"} iconLeft={<BarChartIcon />} hidePagination={true} />;
 };

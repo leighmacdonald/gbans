@@ -1,3 +1,4 @@
+import HistoryIcon from "@mui/icons-material/History";
 import Chip from "@mui/material/Chip";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -254,5 +255,5 @@ export const RoundTable = ({ data }: { data: MatchRound[] }) => {
 		},
 	});
 
-	return <SortableTable table={roundTable} title={"Rounds"} hidePagination={true} />;
+	return <SortableTable table={roundTable} title={"Rounds"} iconLeft={<HistoryIcon />} hidePagination={true} />;
 };

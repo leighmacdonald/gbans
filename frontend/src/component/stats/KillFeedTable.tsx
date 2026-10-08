@@ -1,3 +1,4 @@
+import GavelIcon from "@mui/icons-material/Gavel";
 import Typography from "@mui/material/Typography";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useMemo } from "react";
@@ -82,5 +83,5 @@ export const KillFeedTable = ({
 		return null;
 	}
 
-	return <SortableTable table={table} title={"Kill Feed"} />;
+	return <SortableTable table={table} title={"Kill Feed"} iconLeft={<GavelIcon />} />;
 };

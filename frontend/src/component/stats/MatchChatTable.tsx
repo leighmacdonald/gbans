@@ -1,3 +1,4 @@
+import ChatIcon from "@mui/icons-material/Chat";
 import Typography from "@mui/material/Typography";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useMemo } from "react";
@@ -75,5 +76,5 @@ export const MatchChatTable = ({
 		return null;
 	}
 
-	return <SortableTable table={table} title={"Match Chat"} />;
+	return <SortableTable table={table} title={"Match Chat"} iconLeft={<ChatIcon />} />;
 };
