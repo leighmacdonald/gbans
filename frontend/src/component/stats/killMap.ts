@@ -245,9 +245,9 @@ export const playerColor = (steamId: string): string => {
 
 export const teamColorOf = (team: Team): string => (team === Team.BLU ? blu : red);
 
-/** Highlight colors for the selected player's kills/deaths; vivid against team colors and dark overviews. */
-export const HIGHLIGHT_KILL = "#c8ff00";
-export const HIGHLIGHT_DEATH = "#ff2e88";
+/** Highlight colors for the selected player's kills/deaths; dark and distinct from team colors. */
+export const HIGHLIGHT_KILL = "#1b5e20";
+export const HIGHLIGHT_DEATH = "#7f1d1d";
 export const DIMMED_OPACITY = 0.25;
 /** Line color for kills with no killer (world/environment). */
 export const WORLD_COLOR = "#9e9e9e";
