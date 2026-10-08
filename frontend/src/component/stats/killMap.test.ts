@@ -3,6 +3,8 @@ import { Team } from "../../rpc/stats/v1/stats_pb.ts";
 import { blu, red } from "../../theme.ts";
 import {
 	HAMMER_UNIT_IN_METERS,
+	HIGHLIGHT_DEATH,
+	HIGHLIGHT_KILL,
 	overviewPixelBounds,
 	overviewUrls,
 	paddedOverviewPixelBounds,
@@ -172,4 +174,9 @@ test("playerColor is deterministic and varies by steamId", () => {
 test("teamColorOf maps teams to theme colors", () => {
 	expect(teamColorOf(Team.BLU)).toBe(blu);
 	expect(teamColorOf(Team.RED)).toBe(red);
+});
+
+test("selection highlights use dark green for kills and dark red for deaths", () => {
+	expect(HIGHLIGHT_KILL).toBe("#1b5e20");
+	expect(HIGHLIGHT_DEATH).toBe("#7f1d1d");
 });

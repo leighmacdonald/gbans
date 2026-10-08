@@ -250,7 +250,13 @@ export const MatchKillMap = ({ summary, mapName }: { summary: MatchView; mapName
 	);
 
 	return (
-		<ContainerWithHeaderAndButtons title="Kill Map" iconLeft={<MapIcon />} buttons={[roundFilterControl]} padding={0} spacing={0}>
+		<ContainerWithHeaderAndButtons
+			title="Kill Map"
+			iconLeft={<MapIcon />}
+			buttons={[roundFilterControl]}
+			padding={0}
+			spacing={0}
+		>
 			<Box sx={{ paddingX: 1.5, paddingTop: 1.5 }}>
 				<MapContainer
 					crs={CRS.Simple}
@@ -263,7 +269,7 @@ export const MatchKillMap = ({ summary, mapName }: { summary: MatchView; mapName
 					maxBounds={viewLatLngBounds}
 					maxBoundsViscosity={1}
 					scrollWheelZoom={false}
-					style={{ height: MAP_HEIGHT, width: "100%" }}
+					style={{ height: MAP_HEIGHT, width: "100%", background: "transparent" }}
 				>
 					<FitOverview bounds={viewLatLngBounds} />
 					<ImageOverlay url={overviewUrls(mapName).image} bounds={overlayLatLngBounds} />
