@@ -257,6 +257,20 @@ message Match {
   repeated MatchChatLog chat_logs = 3 [(buf.validate.field).required = true];
   map<string, person.v1.PersonDisplay> players = 4 [(buf.validate.field).required = true];
   repeated MatchKill kills = 5;
+  repeated MatchEvent events = 6;
+}
+
+message MatchEvent {
+  int64 match_event_id = 1;
+  int32 tick = 2;
+  string event_type = 3 [(buf.validate.field).required = true];
+  int64 actor_steam_id = 4;
+  int64 target_steam_id = 5;
+  string weapon = 6;
+  string building = 7;
+  // Variant-specific payload (control points, cappers, flags, angles, etc.)
+  // as JSON.
+  string details = 8;
 }
 
 message MatchKill {

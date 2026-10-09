@@ -59,6 +59,20 @@ type Match struct {
 	Variants []MatchVariantStatsRound
 	ChatLogs []MatchChatLog
 	Kills    []MatchKill
+	Events   []MatchEvent
+}
+
+// MatchEvent is a single stored match event with its variant-specific payload
+// as raw JSON details.
+type MatchEvent struct {
+	MatchEventID  int64
+	Tick          int
+	Type          string
+	ActorSteamID  *int64
+	TargetSteamID *int64
+	Weapon        *string
+	Building      *string
+	Details       string
 }
 
 type MatchChatLog struct {

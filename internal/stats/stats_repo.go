@@ -386,6 +386,10 @@ func (r Repository) Match(ctx context.Context, matchID uuid.UUID) (*Match, error
 		return nil, errKills
 	}
 
+	if errEvents := r.getEvents(ctx, match); errEvents != nil {
+		return nil, errEvents
+	}
+
 	return match, nil
 }
 
@@ -1214,6 +1218,40 @@ func (r Repository) getKills(ctx context.Context, match *Match) error {
 		kill.VictimAngles = payload.VictimAngles
 
 		match.Kills = append(match.Kills, kill)
+	}
+
+	return nil
+}
+
+func (r Repository) getEvents(ctx context.Context, match *Match) error {
+	const query = `
+		SELECT
+			match_event_id, tick, event_type, actor_steam_id, target_steam_id,
+			weapon, building, details
+		FROM
+			match_event
+		WHERE
+			match_id = $1
+		ORDER BY
+			tick ASC, match_event_id ASC`
+	rows, errRows := r.Database.Query(ctx, query, match.MatchID)
+	if errRows != nil {
+		return database.Err(errRows)
+	}
+
+	for rows.Next() {
+		var (
+			event   MatchEvent
+			details []byte
+		)
+		if err := rows.Scan(&event.MatchEventID, &event.Tick, &event.Type,
+			&event.ActorSteamID, &event.TargetSteamID,
+			&event.Weapon, &event.Building, &details); err != nil {
+			return database.Err(err)
+		}
+
+		event.Details = string(details)
+		match.Events = append(match.Events, event)
 	}
 
 	return nil

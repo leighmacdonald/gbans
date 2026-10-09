@@ -245,6 +245,39 @@ export const playerColor = (steamId: string): string => {
 
 export const teamColorOf = (team: Team): string => (team === Team.BLU ? blu : red);
 
+/** Base colors for positional event-type layers on the event map. */
+export const EVENT_TYPE_COLORS: Record<string, string> = {
+	kill: "#e53935",
+	building_built: "#00c853",
+	building_built_sentry: "#00c853",
+	building_built_dispenser: "#00b8d4",
+	building_built_teleporter: "#7c4dff",
+	building_destroyed: "#ff6d00",
+};
+
+/**
+ * Deterministic color per event type. Known positional types use fixed
+ * colors; anything else hashes to a hue so new layers stay distinct.
+ */
+export const eventTypeColor = (eventType: string): string => {
+	const fixed = EVENT_TYPE_COLORS[eventType];
+	if (fixed) {
+		return fixed;
+	}
+	let hash = 0x811c9dc5;
+	for (let i = 0; i < eventType.length; i++) {
+		hash ^= eventType.charCodeAt(i);
+		hash = Math.imul(hash, 0x01000193);
+	}
+	return `hsl(${Math.abs(hash) % 360}, 70%, 50%)`;
+};
+
+export const eventTypeStyle = (eventType: string): ReferenceMarkerStyle => {
+	const color = eventTypeColor(eventType);
+	const radius = eventType.startsWith("building_") ? 5 : 3.5;
+	return { radius, color, fillColor: color, fillOpacity: 0.9, weight: 1.5 };
+};
+
 /** Highlight colors for the selected player's kills/deaths; dark and distinct from team colors. */
 export const HIGHLIGHT_KILL = "#1b5e20";
 export const HIGHLIGHT_DEATH = "#7f1d1d";

@@ -704,4 +704,13 @@ func TestImportMatchEvents(t *testing.T) {
 	require.NoError(t, errMatch)
 	require.Len(t, match.Kills, 1)
 	require.True(t, match.Kills[0].VictimSteamID.Equal(victimID))
+
+	byType := map[string]int{}
+	for _, event := range match.Events {
+		byType[event.Type]++
+	}
+	require.Equal(t, map[string]int{
+		"kill": 2, "building_built": 1, "capture_started": 1,
+		"killstreak_ended": 1, "setup_finished": 1,
+	}, byType)
 }

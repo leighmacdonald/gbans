@@ -9,9 +9,9 @@ import Typography from "@mui/material/Typography";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
-import { KillFeedTable } from "../component/stats/KillFeedTable.tsx";
+import { EventFeedTable } from "../component/stats/EventFeedTable.tsx";
 import { MatchChatTable } from "../component/stats/MatchChatTable.tsx";
-import { MatchKillMap } from "../component/stats/MatchKillMap.tsx";
+import { MatchEventMap } from "../component/stats/MatchEventMap.tsx";
 import { assembleMatch } from "../component/stats/match.ts";
 import { OverallTable } from "../component/stats/OverallTable.tsx";
 import { RoundTable } from "../component/stats/RoundTable.tsx";
@@ -142,13 +142,13 @@ function MatchPage() {
 
 			{summary && (
 				<Grid size={{ xs: 12 }}>
-					<MatchKillMap summary={summary} mapName={summary.info.mapName} />
+					<MatchEventMap summary={summary} mapName={summary.info.mapName} />
 				</Grid>
 			)}
 
-			{summary && summary.kills.length > 0 && (
+			{summary && summary.events.length > 0 && (
 				<Grid size={{ xs: 12 }}>
-					<KillFeedTable kills={summary.kills} players={summary.players} />
+					<EventFeedTable events={summary.events} players={summary.players} />
 				</Grid>
 			)}
 		</Grid>

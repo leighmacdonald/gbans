@@ -268,6 +268,7 @@ func (s Service) loadMatch(ctx context.Context, matchID uuid.UUID) (*v1.Match, e
 		Rounds:   []*v1.Round{},
 		ChatLogs: make([]*v1.MatchChatLog, len(match.ChatLogs)),
 		Kills:    make([]*v1.MatchKill, len(match.Kills)),
+		Events:   make([]*v1.MatchEvent, len(match.Events)),
 	}
 
 	assembleRounds(out, match)
@@ -275,6 +276,7 @@ func (s Service) loadMatch(ctx context.Context, matchID uuid.UUID) (*v1.Match, e
 	assembleVariants(out, match)
 	assembleChat(out, match)
 	assembleKills(out, match)
+	assembleEvents(out, match)
 
 	return out, nil
 }
@@ -313,6 +315,22 @@ func assembleKills(out *v1.Match, match *Match) {
 
 		if kill.HasKiller {
 			out.Kills[idx].KillerSteamId = new(kill.KillerSteamID.Int64())
+		}
+	}
+}
+
+func assembleEvents(out *v1.Match, match *Match) {
+	for idx, event := range match.Events {
+		tick := int32(event.Tick) //nolint:gosec
+		out.Events[idx] = &v1.MatchEvent{
+			MatchEventId:  &event.MatchEventID,
+			Tick:          &tick,
+			EventType:     &event.Type,
+			ActorSteamId:  event.ActorSteamID,
+			TargetSteamId: event.TargetSteamID,
+			Weapon:        event.Weapon,
+			Building:      event.Building,
+			Details:       &event.Details,
 		}
 	}
 }
@@ -428,11 +446,15 @@ func toVariantStats(stats VariantStats) *v1.VariantStats {
 
 func assemblePlayers(out *v1.Match, match *Match) {
 	for _, player := range match.Players {
+		person := &personv1.PersonDisplay{SteamId: new(player.SteamID.Int64()), Name: &player.Personaname, AvatarHash: &player.AvatarHash}
+		// Every match participant must resolve by steamid for the kill and
+		// event feeds, not just players holding variant rows.
+		out.Players[player.SteamID.String()] = person
 		for _, round := range out.GetRounds() {
 			if round.GetRoundId() == player.RoundID {
 				round.Players = append(round.Players, &v1.RoundPlayer{
 					RoundId:             &player.RoundID,
-					Person:              &personv1.PersonDisplay{SteamId: new(player.SteamID.Int64()), Name: &player.Personaname, AvatarHash: &player.AvatarHash},
+					Person:              person,
 					Team:                toTeam(player.Team),
 					Mvp:                 &player.MVP,
 					TickStart:           &player.TickStart,
