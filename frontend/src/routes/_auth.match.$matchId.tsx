@@ -1,7 +1,12 @@
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQuery } from "@connectrpc/connect-query";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DownloadIcon from "@mui/icons-material/Download";
+import MapIcon from "@mui/icons-material/Map";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -21,7 +26,7 @@ import { makeSchemaDefaults, makeSchemaState } from "../component/table/options.
 import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { Team } from "../rpc/stats/v1/stats_pb.ts";
 import { match } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
-import { tf2Fonts } from "../theme.ts";
+import { blu, red, tf2Fonts } from "../theme.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { durationString, renderDateTime } from "../util/time.ts";
 
@@ -75,22 +80,50 @@ function MatchPage() {
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<Paper sx={{ padding: 2 }}>
-					<Stack spacing={1}>
-						<Typography variant="h5" sx={{ ...tf2Fonts }}>
-							{overview?.serverName} BLU vs RED
-						</Typography>
-						<Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
-							<Typography variant="body1" sx={{ fontWeight: 700 }}>
-								{overview?.map?.name}
+				<Paper sx={{ padding: 2.5, overflow: "hidden" }}>
+					<Box
+						sx={{
+							height: 4,
+							marginX: -2.5,
+							marginTop: -2.5,
+							marginBottom: 2,
+							background: `linear-gradient(90deg, ${blu} 0%, ${blu} 50%, ${red} 50%, ${red} 100%)`,
+						}}
+					/>
+					<Stack spacing={1.5}>
+						<Box>
+							<Typography variant="overline" color="textSecondary" sx={{ letterSpacing: 1.5 }}>
+								{overview?.serverName}
 							</Typography>
-							<Typography variant="body2" color="textSecondary">
-								{durationString(Number(overview?.duration ?? 0) * 1000)}
+							<Typography variant="h4" sx={{ ...tf2Fonts, fontWeight: 700, lineHeight: 1.1 }}>
+								<Box component="span" sx={{ color: blu }}>
+									BLU
+								</Box>
+								<Box component="span" color="textSecondary">
+									{" vs "}
+								</Box>
+								<Box component="span" sx={{ color: red }}>
+									RED
+								</Box>
 							</Typography>
+						</Box>
+						<Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
+							{overview?.map?.name && (
+								<Chip icon={<MapIcon />} label={overview.map.name} size="small" variant="outlined" />
+							)}
+							<Chip
+								icon={<AccessTimeIcon />}
+								label={durationString(Number(overview?.duration ?? 0) * 1000)}
+								size="small"
+								variant="outlined"
+							/>
 							{overview?.createdOn && (
-								<Typography variant="body2" color="textSecondary">
-									{renderDateTime(timestampDate(overview.createdOn))}
-								</Typography>
+								<Chip
+									icon={<CalendarMonthIcon />}
+									label={renderDateTime(timestampDate(overview.createdOn))}
+									size="small"
+									variant="outlined"
+								/>
 							)}
 						</Stack>
 						<Stack
@@ -98,7 +131,7 @@ function MatchPage() {
 							spacing={1}
 							sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}
 						>
-							<Typography variant="body2" color="textSecondary">
+							<Typography variant="body2" color="textSecondary" noWrap title={overview?.hostname}>
 								{overview?.hostname}
 							</Typography>
 							{overview?.assetId && (
@@ -107,6 +140,7 @@ function MatchPage() {
 									size="small"
 									startIcon={<DownloadIcon />}
 									href={`/asset/${overview.assetId}`}
+									sx={{ flexShrink: 0 }}
 								>
 									Download STV
 								</Button>

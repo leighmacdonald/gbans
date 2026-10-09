@@ -53,7 +53,7 @@ export const SortableTable = <TData extends MRT_RowData>({
 						},
 					})}
 				>
-					<Grid sx={{ padding: 1, paddingRight: 0 }}>
+					<Grid sx={{ padding: 1, paddingRight: 0, color: "white" }}>
 						<VCenteredElement icon={iconLeft} />
 					</Grid>
 					{!emptyOrNullString(title) && (
