@@ -278,6 +278,19 @@ export const eventTypeStyle = (eventType: string): ReferenceMarkerStyle => {
 	return { radius, color, fillColor: color, fillOpacity: 0.9, weight: 1.5 };
 };
 
+/**
+ * Marker/line color for a map geometry. Building layers always use their
+ * legend color so markers match the layer toggles; other layers (kills)
+ * prefer the actor team color so team stays visible, falling back to the
+ * layer color when the team is unknown.
+ */
+export const eventMarkerColor = (layerKey: string, team: Team): string => {
+	if (layerKey.startsWith("building_")) {
+		return eventTypeColor(layerKey);
+	}
+	return team === Team.BLU || team === Team.RED ? teamColorOf(team) : eventTypeColor(layerKey);
+};
+
 /** Highlight colors for the selected player's kills/deaths; dark and distinct from team colors. */
 export const HIGHLIGHT_KILL = "#1b5e20";
 export const HIGHLIGHT_DEATH = "#7f1d1d";

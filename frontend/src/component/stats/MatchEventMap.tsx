@@ -18,6 +18,7 @@ import { formatMatchClock } from "../../util/time.ts";
 import { ContainerWithHeaderAndButtons } from "../ContainerWithHeaderAndButtons.tsx";
 import { humanizeEventType } from "./EventFeedTable.tsx";
 import {
+	eventMarkerColor,
 	eventTypeColor,
 	fetchReferenceFile,
 	fetchWorldFile,
@@ -29,7 +30,6 @@ import {
 	referencePointLabel,
 	referencePointStyle,
 	referenceUrls,
-	teamColorOf,
 	type WorldFile,
 	worldToPixel,
 } from "./killMap.ts";
@@ -264,11 +264,8 @@ export const MatchEventMap = ({ summary, mapName }: { summary: MatchView; mapNam
 		return [clamp(lat, 0, imgSize.height), clamp(lng, 0, imgSize.width)];
 	};
 
-	/** Prefer the actor team color so team stays visible; fall back to the per-layer color. */
 	const markerColor = (event: EventFeedEntry): string =>
-		event.team === Team.BLU || event.team === Team.RED
-			? teamColorOf(event.team)
-			: eventTypeColor(eventMapLayerKey(event) ?? event.eventType);
+		eventMarkerColor(eventMapLayerKey(event) ?? event.eventType, event.team);
 
 	const roundFilterControl = (
 		<Stack key="event-map-round-filter" direction="row" spacing={1} sx={{ alignItems: "center" }}>
