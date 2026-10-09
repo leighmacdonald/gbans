@@ -1071,6 +1071,30 @@ from
   on m.ch = f.ch
 on conflict (override_id, permission) do nothing;
 
+-- Resolve pre-existing duplicate live asset hashes (identical files uploaded
+-- more than once) before the partial unique index below is built. Keeps the
+-- earliest row per hash and soft-deletes the rest; deleted rows are ignored
+-- by the index, so this is a no-op on databases without duplicates.
+update asset as dup
+set
+  deleted = true
+where
+  not dup.deleted
+  and dup.asset_id <> (
+    select
+      keeper.asset_id
+    from
+      asset as keeper
+    where
+      not keeper.deleted
+      and keeper.hash = dup.hash
+    order by
+      keeper.created_on nulls last,
+      keeper.asset_id
+    limit
+      1
+  );
+
 -- Ensure no duplicate assets with the same content hash are created.
 -- Partial index: only non-deleted assets must have unique hashes; deleted
 -- assets can coexist so that Restore() can re-activate them.
