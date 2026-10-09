@@ -1,6 +1,7 @@
 package stats_test
 
 import (
+	stdjson "encoding/json"
 	"os"
 	"testing"
 	"time"
@@ -143,18 +144,24 @@ func TestImportNewParserStats(t *testing.T) {
 				Players: []demoparse.PlayerSummary{player},
 			},
 		},
-		Kills: []demoparse.KillEvent{
+		Events: []demoparse.MatchEvent{
 			{
-				Tick: 1000, Killer: string(steamID.Steam3()), Victim: string(victimID.Steam3()),
-				Weapon:       "tf_projectile_rocket",
-				KillerPos:    &demoparse.Position{X: -5496, Y: 5393.625, Z: 348},
-				VictimPos:    &demoparse.Position{X: -5441.75, Y: 5269.125, Z: 363.25},
-				KillerAngles: &demoparse.EyeAngles{Pitch: 26.47, Yaw: 268.85},
-				VictimAngles: &demoparse.EyeAngles{Pitch: 8.82, Yaw: 137.24},
+				Tick: 1000, Type: demoparse.MatchEventKill,
+				Kill: &demoparse.KillEvent{
+					Tick: 1000, Killer: string(steamID.Steam3()), Victim: string(victimID.Steam3()),
+					Weapon:       "tf_projectile_rocket",
+					KillerPos:    &demoparse.Position{X: -5496, Y: 5393.625, Z: 348},
+					VictimPos:    &demoparse.Position{X: -5441.75, Y: 5269.125, Z: 363.25},
+					KillerAngles: &demoparse.EyeAngles{Pitch: 26.47, Yaw: 268.85},
+					VictimAngles: &demoparse.EyeAngles{Pitch: 8.82, Yaw: 137.24},
+				},
 			},
 			{
 				// Environmental kill has no killer or positions.
-				Tick: 2000, Victim: string(steamID.Steam3()), Weapon: "world",
+				Tick: 2000, Type: demoparse.MatchEventKill,
+				Kill: &demoparse.KillEvent{
+					Tick: 2000, Victim: string(steamID.Steam3()), Weapon: "world",
+				},
 			},
 		},
 	}
@@ -351,26 +358,35 @@ func TestImportKillRoundAndPositions(t *testing.T) {
 				},
 			},
 		},
-		Kills: []demoparse.KillEvent{
+		Events: []demoparse.MatchEvent{
 			{
-				Tick: 1200, Killer: string(killerID.Steam3()), Victim: string(victimID.Steam3()),
-				Weapon:       "tf_projectile_rocket",
-				KillerPos:    &demoparse.Position{X: -5496, Y: 5393.625, Z: 348},
-				VictimPos:    &demoparse.Position{X: -5441.75, Y: 5269.125, Z: 363.25},
-				KillerAngles: &demoparse.EyeAngles{Pitch: 26.47, Yaw: 268.85},
-				VictimAngles: &demoparse.EyeAngles{Pitch: 8.82, Yaw: 137.24},
+				Tick: 1200, Type: demoparse.MatchEventKill,
+				Kill: &demoparse.KillEvent{
+					Tick: 1200, Killer: string(killerID.Steam3()), Victim: string(victimID.Steam3()),
+					Weapon:       "tf_projectile_rocket",
+					KillerPos:    &demoparse.Position{X: -5496, Y: 5393.625, Z: 348},
+					VictimPos:    &demoparse.Position{X: -5441.75, Y: 5269.125, Z: 363.25},
+					KillerAngles: &demoparse.EyeAngles{Pitch: 26.47, Yaw: 268.85},
+					VictimAngles: &demoparse.EyeAngles{Pitch: 8.82, Yaw: 137.24},
+				},
 			},
 			{
-				Tick: 2200, Killer: string(killerID.Steam3()), Victim: string(victimID.Steam3()),
-				Weapon:       "scattergun",
-				KillerPos:    &demoparse.Position{X: 100.5, Y: -200.25, Z: 10},
-				VictimPos:    &demoparse.Position{X: 150.75, Y: -250.5, Z: 20},
-				KillerAngles: &demoparse.EyeAngles{Pitch: 0, Yaw: 90},
-				VictimAngles: &demoparse.EyeAngles{Pitch: 0, Yaw: 270},
+				Tick: 2200, Type: demoparse.MatchEventKill,
+				Kill: &demoparse.KillEvent{
+					Tick: 2200, Killer: string(killerID.Steam3()), Victim: string(victimID.Steam3()),
+					Weapon:       "scattergun",
+					KillerPos:    &demoparse.Position{X: 100.5, Y: -200.25, Z: 10},
+					VictimPos:    &demoparse.Position{X: 150.75, Y: -250.5, Z: 20},
+					KillerAngles: &demoparse.EyeAngles{Pitch: 0, Yaw: 90},
+					VictimAngles: &demoparse.EyeAngles{Pitch: 0, Yaw: 270},
+				},
 			},
 			{
 				// A world kill outside every parsed round interval retains a NULL round.
-				Tick: 99999, Victim: string(victimID.Steam3()), Weapon: "world",
+				Tick: 99999, Type: demoparse.MatchEventKill,
+				Kill: &demoparse.KillEvent{
+					Tick: 99999, Victim: string(victimID.Steam3()), Weapon: "world",
+				},
 			},
 		},
 	}
@@ -403,8 +419,8 @@ func TestImportKillRoundAndPositions(t *testing.T) {
 			ST_X(killer_position), ST_Y(killer_position), ST_Z(killer_position),
 			ST_NDims(victim_position), ST_Zmflag(victim_position), ST_SRID(victim_position),
 			ST_X(victim_position), ST_Y(victim_position), ST_Z(victim_position)
-		FROM match_kill
-		WHERE match_id = $1
+		FROM match_event
+		WHERE match_id = $1 AND event_type = 'kill'
 		ORDER BY tick`,
 		*matchID)
 	require.NoError(t, errKills)
@@ -479,4 +495,213 @@ func TestImportKillRoundAndPositions(t *testing.T) {
 	require.Nil(t, kills[2].killer.x)
 	require.Nil(t, kills[2].victim.dimensions)
 	require.Nil(t, kills[2].victim.x)
+}
+
+func TestImportMatchEvents(t *testing.T) {
+	testFixture := tests.NewFixture()
+	defer testFixture.Close()
+
+	ctx := t.Context()
+	server := testFixture.CreateTestServer(ctx)
+
+	killerID := steamid.New("[U:1:33333333]")
+	victimID := steamid.New("[U:1:44444444]")
+	engineerID := steamid.New("[U:1:55555555]")
+	require.True(t, killerID.Valid())
+	require.True(t, victimID.Valid())
+	require.True(t, engineerID.Valid())
+
+	for _, person := range []struct {
+		id   steamid.SteamID
+		name string
+	}{
+		{killerID, "Killer"},
+		{victimID, "Victim"},
+		{engineerID, "Engineer"},
+	} {
+		require.NoError(t, testFixture.Database.Exec(ctx,
+			`INSERT INTO person (steam_id, created_on, updated_on, personaname, avatarhash, profilestate, personastate,
+			                    realname, timecreated, loccountrycode, locstatecode, loccityid)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+			 ON CONFLICT DO NOTHING`,
+			person.id.Int64(), time.Now(), time.Now(), person.name, "", 0, 0, "", 0, "", "", 0))
+	}
+
+	var demoID int32
+	require.NoError(t, testFixture.Database.QueryRow(ctx,
+		`INSERT INTO demo (server_id, title, map_name, created_on) VALUES ($1, $2, $3, $4) RETURNING demo_id`,
+		server.ServerID, "match-events.dem", "cp_process_final", time.Now()).Scan(&demoID))
+
+	demo := demoparse.Demo{
+		Filename: "match-events.dem", DemoType: demoparse.HL2Demo,
+		Server: "test", Map: "cp_process_final", Game: "tf",
+		Duration: 600, Ticks: 40000, Frames: 39900, Signon: 1000,
+		Rounds: []demoparse.RoundSummary{
+			{
+				Winner: "red", Time: 300,
+				Players: []demoparse.PlayerSummary{
+					{
+						Name: "Killer", SteamID: string(killerID.Steam3()), Team: "red",
+						TickStart: 1000, TickEnd: 5000,
+					},
+					{
+						Name: "Engineer", SteamID: string(engineerID.Steam3()), Team: "red",
+						TickStart: 1000, TickEnd: 5000,
+					},
+				},
+			},
+		},
+		Events: []demoparse.MatchEvent{
+			{
+				Tick: 1100, Type: demoparse.MatchEventKill,
+				Kill: &demoparse.KillEvent{
+					Tick: 1100, Killer: string(killerID.Steam3()), Victim: string(victimID.Steam3()),
+					Weapon:    "scattergun",
+					VictimPos: &demoparse.Position{X: 10, Y: 20, Z: 30},
+				},
+			},
+			{
+				Tick: 1200, Type: demoparse.MatchEventBuildingBuilt,
+				BuildingBuilt: &demoparse.BuildingBuiltEvent{
+					Owner: string(engineerID.Steam3()), Building: "sentry", Level: 3,
+					Pos: demoparse.Position{X: 1, Y: 2, Z: 3},
+				},
+			},
+			{
+				Tick: 1300, Type: demoparse.MatchEventCaptureStarted,
+				CaptureStarted: &demoparse.CaptureStartedEvent{
+					Cp: 2, CpName: "cp_2", Team: 3, CapTeam: 3,
+					Cappers: []string{string(killerID.Steam3()), string(engineerID.Steam3())},
+					CapTime: 4.5,
+				},
+			},
+			{
+				Tick: 1400, Type: demoparse.MatchEventKillstreakEnded,
+				KillstreakEnded: &demoparse.KillstreakEndedEvent{
+					Player: string(killerID.Steam3()), Streak: 7, Killer: string(victimID.Steam3()),
+				},
+			},
+			{
+				Tick: 1500, Type: demoparse.MatchEventSetupFinished,
+			},
+			{
+				// Invalid victims are stored but excluded from the kill projection.
+				Tick: 1600, Type: demoparse.MatchEventKill,
+				Kill: &demoparse.KillEvent{Tick: 1600, Victim: "BOT", Weapon: "world"},
+			},
+		},
+	}
+
+	repo := stats.NewRepository(testFixture.Database)
+	st := stats.New(repo, maps.New(maps.NewRepository(testFixture.Database)))
+	matchID, errImport := st.Import(ctx, server.ServerID, demoID, &demo, time.Now())
+	require.NoError(t, errImport)
+	require.NotNil(t, matchID)
+
+	rows, err := testFixture.Database.Query(ctx,
+		`SELECT event_type, tick, actor_steam_id, target_steam_id, weapon, building,
+			ST_X(event_position), ST_Y(event_position), ST_Z(event_position),
+			details
+		FROM match_event
+		WHERE match_id = $1
+		ORDER BY tick`,
+		*matchID)
+	require.NoError(t, err)
+	defer rows.Close()
+
+	type eventRow struct {
+		eventType string
+		tick      int
+		actor     *int64
+		target    *int64
+		weapon    *string
+		building  *string
+		x         *float64
+		y         *float64
+		z         *float64
+		details   string
+	}
+
+	var events []eventRow
+	for rows.Next() {
+		var event eventRow
+		require.NoError(t, rows.Scan(
+			&event.eventType, &event.tick, &event.actor, &event.target,
+			&event.weapon, &event.building,
+			&event.x, &event.y, &event.z,
+			&event.details,
+		))
+		events = append(events, event)
+	}
+	require.NoError(t, rows.Err())
+	require.Len(t, events, 6)
+
+	require.Equal(t, "kill", events[0].eventType)
+	require.NotNil(t, events[0].actor)
+	require.Equal(t, killerID.Int64(), *events[0].actor)
+	require.NotNil(t, events[0].target)
+	require.Equal(t, victimID.Int64(), *events[0].target)
+	require.NotNil(t, events[0].weapon)
+	require.Equal(t, "scattergun", *events[0].weapon)
+
+	require.Equal(t, "building_built", events[1].eventType)
+	require.NotNil(t, events[1].actor)
+	require.Equal(t, engineerID.Int64(), *events[1].actor)
+	require.NotNil(t, events[1].building)
+	require.Equal(t, "sentry", *events[1].building)
+	require.NotNil(t, events[1].x)
+	require.InDelta(t, 1, *events[1].x, 0.001)
+	require.InDelta(t, 2, *events[1].y, 0.001)
+	require.InDelta(t, 3, *events[1].z, 0.001)
+
+	var builtDetails struct {
+		Owner    string `json:"owner"`
+		Building string `json:"building"`
+		Level    int    `json:"level"`
+		IsMini   bool   `json:"is_mini"`
+		Pos      struct {
+			X float64 `json:"x"`
+			Y float64 `json:"y"`
+			Z float64 `json:"z"`
+		} `json:"pos"`
+	}
+	require.NoError(t, stdjson.Unmarshal([]byte(events[1].details), &builtDetails))
+	require.Equal(t, string(engineerID.Steam3()), builtDetails.Owner)
+	require.Equal(t, "sentry", builtDetails.Building)
+	require.Equal(t, 3, builtDetails.Level)
+	require.False(t, builtDetails.IsMini)
+	require.InDelta(t, 1, builtDetails.Pos.X, 0.001)
+
+	require.Equal(t, "capture_started", events[2].eventType)
+	require.Nil(t, events[2].actor)
+
+	var captureDetails struct {
+		Cp      int      `json:"cp"`
+		CpName  string   `json:"cp_name"`
+		Cappers []string `json:"cappers"`
+		CapTime float64  `json:"cap_time"`
+	}
+	require.NoError(t, stdjson.Unmarshal([]byte(events[2].details), &captureDetails))
+	require.Equal(t, 2, captureDetails.Cp)
+	require.Equal(t, "cp_2", captureDetails.CpName)
+	require.Contains(t, captureDetails.Cappers, string(killerID.Steam3()))
+	require.Contains(t, captureDetails.Cappers, string(engineerID.Steam3()))
+	require.InDelta(t, 4.5, captureDetails.CapTime, 0.001)
+
+	require.Equal(t, "killstreak_ended", events[3].eventType)
+	require.NotNil(t, events[3].actor)
+	require.Equal(t, victimID.Int64(), *events[3].actor)
+	require.NotNil(t, events[3].target)
+	require.Equal(t, killerID.Int64(), *events[3].target)
+
+	require.Equal(t, "setup_finished", events[4].eventType)
+	require.Equal(t, "{}", events[4].details)
+
+	require.Equal(t, "kill", events[5].eventType)
+	require.Nil(t, events[5].target)
+
+	match, errMatch := repo.Match(ctx, *matchID)
+	require.NoError(t, errMatch)
+	require.Len(t, match.Kills, 1)
+	require.True(t, match.Kills[0].VictimSteamID.Equal(victimID))
 }

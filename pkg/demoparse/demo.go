@@ -26,8 +26,7 @@ type Demo struct {
 
 	Votes          []VoteSummary   `json:"votes"`
 	SourceModVotes []SourceModVote `json:"sourcemod_votes"`
-	PointCaptures  []PointCapture  `json:"point_captures"`
-	Kills          []KillEvent     `json:"kills"`
+	Events         []MatchEvent    `json:"events"`
 }
 
 func (d Demo) UserName(steamID steamid.SteamID) string {
@@ -367,16 +366,6 @@ type SourceModVote struct {
 	Passed         bool              `json:"passed"`
 }
 
-type PointCapture struct {
-	Tick    int      `json:"tick"`
-	Cp      int      `json:"cp"`
-	CpName  string   `json:"cp_name"`
-	Team    int      `json:"team"`
-	CapTeam int      `json:"cap_team"`
-	Cappers []string `json:"cappers"`
-	CapTime float64  `json:"cap_time"`
-}
-
 type Position struct {
 	X float64 `json:"x"`
 	Y float64 `json:"y"`
@@ -397,4 +386,266 @@ type KillEvent struct {
 	VictimPos    *Position  `json:"victim_pos"`
 	KillerAngles *EyeAngles `json:"killer_angles"`
 	VictimAngles *EyeAngles `json:"victim_angles"`
+	IsFirstBlood bool       `json:"is_first_blood"`
+	IsDomination bool       `json:"is_domination"`
+	IsRevenge    bool       `json:"is_revenge"`
+}
+
+// MatchEventType identifies the variant of a MatchEvent. Values mirror the
+// snake_case variant names exported by tf2_demostats.
+type MatchEventType string
+
+const (
+	MatchEventKill              MatchEventType = "kill"
+	MatchEventCaptureStarted    MatchEventType = "capture_started"
+	MatchEventCapture           MatchEventType = "capture"
+	MatchEventCaptureBlocked    MatchEventType = "capture_blocked"
+	MatchEventCaptureBroken     MatchEventType = "capture_broken"
+	MatchEventBuildingBuilt     MatchEventType = "building_built"
+	MatchEventBuildingDestroyed MatchEventType = "building_destroyed"
+	MatchEventBuildingUpgraded  MatchEventType = "building_upgraded"
+	MatchEventBuildingCarried   MatchEventType = "building_carried"
+	MatchEventBuildingDropped   MatchEventType = "building_dropped"
+	MatchEventBuildingRemoved   MatchEventType = "building_removed"
+	MatchEventBuildingDetonated MatchEventType = "building_detonated"
+	MatchEventSapperPlaced      MatchEventType = "sapper_placed"
+	MatchEventRoundStarted      MatchEventType = "round_started"
+	MatchEventRoundWon          MatchEventType = "round_won"
+	MatchEventStalemate         MatchEventType = "stalemate"
+	MatchEventGameOver          MatchEventType = "game_over"
+	MatchEventSuddenDeathBegin  MatchEventType = "sudden_death_begin"
+	MatchEventSuddenDeathEnd    MatchEventType = "sudden_death_end"
+	MatchEventOvertimeBegin     MatchEventType = "overtime_begin"
+	MatchEventOvertimeEnd       MatchEventType = "overtime_end"
+	MatchEventSetupFinished     MatchEventType = "setup_finished"
+	MatchEventUberDropped       MatchEventType = "uber_dropped"
+	MatchEventUberDeployed      MatchEventType = "uber_deployed"
+	MatchEventFlagEvent         MatchEventType = "flag_event"
+	MatchEventFlagCaptured      MatchEventType = "flag_captured"
+	MatchEventKillstreakEnded   MatchEventType = "killstreak_ended"
+)
+
+// MatchEvent is a single noteworthy match moment exported by tf2_demostats
+// v0.3.3+. Exactly one variant payload is set; tick-marker variants carry no
+// payload beyond Type.
+type MatchEvent struct {
+	Tick int            `json:"tick"`
+	Type MatchEventType `json:"type"`
+
+	Kill              *KillEvent              `json:"kill,omitempty"`
+	CaptureStarted    *CaptureStartedEvent    `json:"capture_started,omitempty"`
+	Capture           *CaptureEvent           `json:"capture,omitempty"`
+	CaptureBlocked    *CaptureBlockedEvent    `json:"capture_blocked,omitempty"`
+	CaptureBroken     *CaptureBrokenEvent     `json:"capture_broken,omitempty"`
+	BuildingBuilt     *BuildingBuiltEvent     `json:"building_built,omitempty"`
+	BuildingDestroyed *BuildingDestroyedEvent `json:"building_destroyed,omitempty"`
+	BuildingUpgraded  *BuildingLifecycleEvent `json:"building_upgraded,omitempty"`
+	BuildingCarried   *BuildingLifecycleEvent `json:"building_carried,omitempty"`
+	BuildingDropped   *BuildingLifecycleEvent `json:"building_dropped,omitempty"`
+	BuildingRemoved   *BuildingLifecycleEvent `json:"building_removed,omitempty"`
+	BuildingDetonated *BuildingLifecycleEvent `json:"building_detonated,omitempty"`
+	SapperPlaced      *SapperPlacedEvent      `json:"sapper_placed,omitempty"`
+	RoundStarted      *RoundStartedEvent      `json:"round_started,omitempty"`
+	RoundWon          *RoundWonEvent          `json:"round_won,omitempty"`
+	Stalemate         *StalemateEvent         `json:"stalemate,omitempty"`
+	GameOver          *GameOverEvent          `json:"game_over,omitempty"`
+	UberDropped       *UberDroppedEvent       `json:"uber_dropped,omitempty"`
+	UberDeployed      *UberDeployedEvent      `json:"uber_deployed,omitempty"`
+	FlagEvent         *FlagEvent              `json:"flag_event,omitempty"`
+	FlagCaptured      *FlagCapturedEvent      `json:"flag_captured,omitempty"`
+	KillstreakEnded   *KillstreakEndedEvent   `json:"killstreak_ended,omitempty"`
+}
+
+// SteamIDs returns the raw participant identifiers referenced by the event,
+// including multi-party roles such as capture cappers.
+func (e MatchEvent) SteamIDs() []string {
+	var out []string
+
+	add := func(raw ...string) {
+		for _, id := range raw {
+			if id == "" {
+				continue
+			}
+			out = append(out, id)
+		}
+	}
+
+	switch e.Type {
+	case MatchEventKill:
+		if e.Kill != nil {
+			add(e.Kill.Killer, e.Kill.Victim)
+		}
+	case MatchEventCaptureStarted:
+		if e.CaptureStarted != nil {
+			add(e.CaptureStarted.Cappers...)
+		}
+	case MatchEventCapture:
+		if e.Capture != nil {
+			add(e.Capture.Cappers...)
+		}
+	case MatchEventCaptureBlocked:
+		if e.CaptureBlocked != nil {
+			add(e.CaptureBlocked.Blocker, e.CaptureBlocked.Victim)
+		}
+	case MatchEventBuildingBuilt:
+		if e.BuildingBuilt != nil {
+			add(e.BuildingBuilt.Owner)
+		}
+	case MatchEventBuildingDestroyed:
+		if e.BuildingDestroyed != nil {
+			add(e.BuildingDestroyed.Owner, e.BuildingDestroyed.Attacker, e.BuildingDestroyed.Assister)
+		}
+	case MatchEventBuildingUpgraded:
+		if e.BuildingUpgraded != nil {
+			add(e.BuildingUpgraded.Player)
+		}
+	case MatchEventBuildingCarried:
+		if e.BuildingCarried != nil {
+			add(e.BuildingCarried.Player)
+		}
+	case MatchEventBuildingDropped:
+		if e.BuildingDropped != nil {
+			add(e.BuildingDropped.Player)
+		}
+	case MatchEventBuildingRemoved:
+		if e.BuildingRemoved != nil {
+			add(e.BuildingRemoved.Player)
+		}
+	case MatchEventBuildingDetonated:
+		if e.BuildingDetonated != nil {
+			add(e.BuildingDetonated.Player)
+		}
+	case MatchEventSapperPlaced:
+		if e.SapperPlaced != nil {
+			add(e.SapperPlaced.Spy, e.SapperPlaced.Owner)
+		}
+	case MatchEventUberDropped:
+		if e.UberDropped != nil {
+			add(e.UberDropped.Medic, e.UberDropped.Attacker)
+		}
+	case MatchEventUberDeployed:
+		if e.UberDeployed != nil {
+			add(e.UberDeployed.Medic, e.UberDeployed.Target)
+		}
+	case MatchEventFlagEvent:
+		if e.FlagEvent != nil {
+			add(e.FlagEvent.Player, e.FlagEvent.Carrier)
+		}
+	case MatchEventKillstreakEnded:
+		if e.KillstreakEnded != nil {
+			add(e.KillstreakEnded.Player, e.KillstreakEnded.Killer)
+		}
+	}
+
+	return out
+}
+
+type CaptureStartedEvent struct {
+	Cp      int      `json:"cp"`
+	CpName  string   `json:"cp_name"`
+	Team    int      `json:"team"`
+	CapTeam int      `json:"cap_team"`
+	Cappers []string `json:"cappers"`
+	CapTime float64  `json:"cap_time"`
+}
+
+type CaptureEvent struct {
+	Cp      int      `json:"cp"`
+	CpName  string   `json:"cp_name"`
+	Team    int      `json:"team"`
+	CapTeam int      `json:"cap_team"`
+	Cappers []string `json:"cappers"`
+}
+
+type CaptureBlockedEvent struct {
+	Cp      int    `json:"cp"`
+	CpName  string `json:"cp_name"`
+	Blocker string `json:"blocker"`
+	Victim  string `json:"victim"`
+}
+
+type CaptureBrokenEvent struct {
+	Cp            int     `json:"cp"`
+	CpName        string  `json:"cp_name"`
+	TimeRemaining float64 `json:"time_remaining"`
+}
+
+type BuildingBuiltEvent struct {
+	Owner    string   `json:"owner"`
+	Building string   `json:"building"`
+	Level    int      `json:"level"`
+	IsMini   bool     `json:"is_mini"`
+	Pos      Position `json:"pos"`
+}
+
+type BuildingDestroyedEvent struct {
+	Owner    string    `json:"owner"`
+	Attacker string    `json:"attacker"`
+	Assister string    `json:"assister"`
+	Weapon   string    `json:"weapon"`
+	Building string    `json:"building"`
+	Pos      *Position `json:"pos"`
+}
+
+type BuildingLifecycleEvent struct {
+	Player   string `json:"player"`
+	Building string `json:"building"`
+	Index    int    `json:"index"`
+}
+
+type SapperPlacedEvent struct {
+	Spy         string `json:"spy"`
+	Owner       string `json:"owner"`
+	Building    string `json:"building"`
+	SapperIndex int    `json:"sapper_index"`
+}
+
+type RoundStartedEvent struct {
+	FullReset bool `json:"full_reset"`
+}
+
+type RoundWonEvent struct {
+	Winner         string  `json:"winner"`
+	IsStalemate    bool    `json:"is_stalemate"`
+	WinReason      int     `json:"win_reason"`
+	RoundTime      float64 `json:"round_time"`
+	WasSuddenDeath bool    `json:"was_sudden_death"`
+}
+
+type StalemateEvent struct {
+	Reason int `json:"reason"`
+}
+
+type GameOverEvent struct {
+	Reason string `json:"reason"`
+}
+
+type UberDroppedEvent struct {
+	Medic    string `json:"medic"`
+	Attacker string `json:"attacker"`
+	Healing  int    `json:"healing"`
+}
+
+type UberDeployedEvent struct {
+	Medic  string `json:"medic"`
+	Target string `json:"target"`
+}
+
+type FlagEvent struct {
+	Player    string `json:"player"`
+	Carrier   string `json:"carrier"`
+	EventType int    `json:"event_type"`
+	Team      int    `json:"team"`
+	Home      bool   `json:"home"`
+}
+
+type FlagCapturedEvent struct {
+	CappingTeam int `json:"capping_team"`
+	Score       int `json:"score"`
+}
+
+type KillstreakEndedEvent struct {
+	Player string `json:"player"`
+	Streak int    `json:"streak"`
+	Killer string `json:"killer"`
 }

@@ -143,6 +143,63 @@ func (Class) EnumDescriptor() ([]byte, []int) {
 	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{1}
 }
 
+// Building kind for building lifecycle events. Mirrors the TF2
+// `ObjectType` numbering: dispenser=0, teleporter=1, sentry=2, sapper=3.
+type BuildingType int32
+
+const (
+	BuildingType_BUILDING_UNKNOWN    BuildingType = 0
+	BuildingType_BUILDING_SENTRY     BuildingType = 1
+	BuildingType_BUILDING_DISPENSER  BuildingType = 2
+	BuildingType_BUILDING_TELEPORTER BuildingType = 3
+	BuildingType_BUILDING_SAPPER     BuildingType = 4
+)
+
+// Enum value maps for BuildingType.
+var (
+	BuildingType_name = map[int32]string{
+		0: "BUILDING_UNKNOWN",
+		1: "BUILDING_SENTRY",
+		2: "BUILDING_DISPENSER",
+		3: "BUILDING_TELEPORTER",
+		4: "BUILDING_SAPPER",
+	}
+	BuildingType_value = map[string]int32{
+		"BUILDING_UNKNOWN":    0,
+		"BUILDING_SENTRY":     1,
+		"BUILDING_DISPENSER":  2,
+		"BUILDING_TELEPORTER": 3,
+		"BUILDING_SAPPER":     4,
+	}
+)
+
+func (x BuildingType) Enum() *BuildingType {
+	p := new(BuildingType)
+	*p = x
+	return p
+}
+
+func (x BuildingType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (BuildingType) Descriptor() protoreflect.EnumDescriptor {
+	return file_demostats_v1_demostats_proto_enumTypes[2].Descriptor()
+}
+
+func (BuildingType) Type() protoreflect.EnumType {
+	return &file_demostats_v1_demostats_proto_enumTypes[2]
+}
+
+func (x BuildingType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use BuildingType.Descriptor instead.
+func (BuildingType) EnumDescriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{2}
+}
+
 type ParseDemoRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Raw .dem file bytes.
@@ -432,8 +489,7 @@ type DemoSummary struct {
 	Chat           []*ChatMessage         `protobuf:"bytes,2,rep,name=chat,proto3" json:"chat,omitempty"`
 	Votes          []*VoteSummary         `protobuf:"bytes,3,rep,name=votes,proto3" json:"votes,omitempty"`
 	SourcemodVotes []*SourceModVote       `protobuf:"bytes,4,rep,name=sourcemod_votes,json=sourcemodVotes,proto3" json:"sourcemod_votes,omitempty"`
-	PointCaptures  []*PointCaptureStart   `protobuf:"bytes,5,rep,name=point_captures,json=pointCaptures,proto3" json:"point_captures,omitempty"`
-	Kills          []*KillEvent           `protobuf:"bytes,6,rep,name=kills,proto3" json:"kills,omitempty"`
+	Events         []*GameEvent           `protobuf:"bytes,7,rep,name=events,proto3" json:"events,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -496,16 +552,9 @@ func (x *DemoSummary) GetSourcemodVotes() []*SourceModVote {
 	return nil
 }
 
-func (x *DemoSummary) GetPointCaptures() []*PointCaptureStart {
+func (x *DemoSummary) GetEvents() []*GameEvent {
 	if x != nil {
-		return x.PointCaptures
-	}
-	return nil
-}
-
-func (x *DemoSummary) GetKills() []*KillEvent {
-	if x != nil {
-		return x.Kills
+		return x.Events
 	}
 	return nil
 }
@@ -2255,6 +2304,9 @@ type KillEvent struct {
 	VictimPos     *Position  `protobuf:"bytes,6,opt,name=victim_pos,json=victimPos,proto3,oneof" json:"victim_pos,omitempty"`
 	KillerAngles  *EyeAngles `protobuf:"bytes,7,opt,name=killer_angles,json=killerAngles,proto3,oneof" json:"killer_angles,omitempty"`
 	VictimAngles  *EyeAngles `protobuf:"bytes,8,opt,name=victim_angles,json=victimAngles,proto3,oneof" json:"victim_angles,omitempty"`
+	IsFirstBlood  bool       `protobuf:"varint,9,opt,name=is_first_blood,json=isFirstBlood,proto3" json:"is_first_blood,omitempty"`
+	IsDomination  bool       `protobuf:"varint,10,opt,name=is_domination,json=isDomination,proto3" json:"is_domination,omitempty"`
+	IsRevenge     bool       `protobuf:"varint,11,opt,name=is_revenge,json=isRevenge,proto3" json:"is_revenge,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2345,6 +2397,1713 @@ func (x *KillEvent) GetVictimAngles() *EyeAngles {
 	return nil
 }
 
+func (x *KillEvent) GetIsFirstBlood() bool {
+	if x != nil {
+		return x.IsFirstBlood
+	}
+	return false
+}
+
+func (x *KillEvent) GetIsDomination() bool {
+	if x != nil {
+		return x.IsDomination
+	}
+	return false
+}
+
+func (x *KillEvent) GetIsRevenge() bool {
+	if x != nil {
+		return x.IsRevenge
+	}
+	return false
+}
+
+type PointCapture struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Tick    uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	Cp      uint32                 `protobuf:"varint,2,opt,name=cp,proto3" json:"cp,omitempty"`
+	CpName  string                 `protobuf:"bytes,3,opt,name=cp_name,json=cpName,proto3" json:"cp_name,omitempty"`
+	Team    uint32                 `protobuf:"varint,4,opt,name=team,proto3" json:"team,omitempty"`
+	CapTeam uint32                 `protobuf:"varint,5,opt,name=cap_team,json=capTeam,proto3" json:"cap_team,omitempty"`
+	// Steamids of players on the point, best effort.
+	Cappers       []string `protobuf:"bytes,6,rep,name=cappers,proto3" json:"cappers,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PointCapture) Reset() {
+	*x = PointCapture{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PointCapture) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PointCapture) ProtoMessage() {}
+
+func (x *PointCapture) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PointCapture.ProtoReflect.Descriptor instead.
+func (*PointCapture) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *PointCapture) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *PointCapture) GetCp() uint32 {
+	if x != nil {
+		return x.Cp
+	}
+	return 0
+}
+
+func (x *PointCapture) GetCpName() string {
+	if x != nil {
+		return x.CpName
+	}
+	return ""
+}
+
+func (x *PointCapture) GetTeam() uint32 {
+	if x != nil {
+		return x.Team
+	}
+	return 0
+}
+
+func (x *PointCapture) GetCapTeam() uint32 {
+	if x != nil {
+		return x.CapTeam
+	}
+	return 0
+}
+
+func (x *PointCapture) GetCappers() []string {
+	if x != nil {
+		return x.Cappers
+	}
+	return nil
+}
+
+type CaptureBlocked struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Tick   uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	Cp     uint32                 `protobuf:"varint,2,opt,name=cp,proto3" json:"cp,omitempty"`
+	CpName string                 `protobuf:"bytes,3,opt,name=cp_name,json=cpName,proto3" json:"cp_name,omitempty"`
+	// Steamid of the blocker, if resolved.
+	Blocker *string `protobuf:"bytes,4,opt,name=blocker,proto3,oneof" json:"blocker,omitempty"`
+	// Steamid of the capped player, if resolved.
+	Victim        *string `protobuf:"bytes,5,opt,name=victim,proto3,oneof" json:"victim,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CaptureBlocked) Reset() {
+	*x = CaptureBlocked{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CaptureBlocked) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CaptureBlocked) ProtoMessage() {}
+
+func (x *CaptureBlocked) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CaptureBlocked.ProtoReflect.Descriptor instead.
+func (*CaptureBlocked) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *CaptureBlocked) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *CaptureBlocked) GetCp() uint32 {
+	if x != nil {
+		return x.Cp
+	}
+	return 0
+}
+
+func (x *CaptureBlocked) GetCpName() string {
+	if x != nil {
+		return x.CpName
+	}
+	return ""
+}
+
+func (x *CaptureBlocked) GetBlocker() string {
+	if x != nil && x.Blocker != nil {
+		return *x.Blocker
+	}
+	return ""
+}
+
+func (x *CaptureBlocked) GetVictim() string {
+	if x != nil && x.Victim != nil {
+		return *x.Victim
+	}
+	return ""
+}
+
+type CaptureBroken struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tick          uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	Cp            uint32                 `protobuf:"varint,2,opt,name=cp,proto3" json:"cp,omitempty"`
+	CpName        string                 `protobuf:"bytes,3,opt,name=cp_name,json=cpName,proto3" json:"cp_name,omitempty"`
+	TimeRemaining float32                `protobuf:"fixed32,4,opt,name=time_remaining,json=timeRemaining,proto3" json:"time_remaining,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CaptureBroken) Reset() {
+	*x = CaptureBroken{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CaptureBroken) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CaptureBroken) ProtoMessage() {}
+
+func (x *CaptureBroken) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CaptureBroken.ProtoReflect.Descriptor instead.
+func (*CaptureBroken) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *CaptureBroken) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *CaptureBroken) GetCp() uint32 {
+	if x != nil {
+		return x.Cp
+	}
+	return 0
+}
+
+func (x *CaptureBroken) GetCpName() string {
+	if x != nil {
+		return x.CpName
+	}
+	return ""
+}
+
+func (x *CaptureBroken) GetTimeRemaining() float32 {
+	if x != nil {
+		return x.TimeRemaining
+	}
+	return 0
+}
+
+type BuildingBuilt struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Tick  uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	// Steamid of the owning engineer, if resolved.
+	Owner         *string      `protobuf:"bytes,2,opt,name=owner,proto3,oneof" json:"owner,omitempty"`
+	Building      BuildingType `protobuf:"varint,3,opt,name=building,proto3,enum=demostats.v1.BuildingType" json:"building,omitempty"`
+	Level         uint32       `protobuf:"varint,4,opt,name=level,proto3" json:"level,omitempty"`
+	IsMini        bool         `protobuf:"varint,5,opt,name=is_mini,json=isMini,proto3" json:"is_mini,omitempty"`
+	Pos           *Position    `protobuf:"bytes,6,opt,name=pos,proto3" json:"pos,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BuildingBuilt) Reset() {
+	*x = BuildingBuilt{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BuildingBuilt) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BuildingBuilt) ProtoMessage() {}
+
+func (x *BuildingBuilt) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BuildingBuilt.ProtoReflect.Descriptor instead.
+func (*BuildingBuilt) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *BuildingBuilt) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *BuildingBuilt) GetOwner() string {
+	if x != nil && x.Owner != nil {
+		return *x.Owner
+	}
+	return ""
+}
+
+func (x *BuildingBuilt) GetBuilding() BuildingType {
+	if x != nil {
+		return x.Building
+	}
+	return BuildingType_BUILDING_UNKNOWN
+}
+
+func (x *BuildingBuilt) GetLevel() uint32 {
+	if x != nil {
+		return x.Level
+	}
+	return 0
+}
+
+func (x *BuildingBuilt) GetIsMini() bool {
+	if x != nil {
+		return x.IsMini
+	}
+	return false
+}
+
+func (x *BuildingBuilt) GetPos() *Position {
+	if x != nil {
+		return x.Pos
+	}
+	return nil
+}
+
+type BuildingDestroyed struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Tick  uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	// Steamid of the owning engineer, if resolved.
+	Owner *string `protobuf:"bytes,2,opt,name=owner,proto3,oneof" json:"owner,omitempty"`
+	// Steamid of the destroyer; absent for world/carried losses.
+	Attacker *string      `protobuf:"bytes,3,opt,name=attacker,proto3,oneof" json:"attacker,omitempty"`
+	Assister *string      `protobuf:"bytes,4,opt,name=assister,proto3,oneof" json:"assister,omitempty"`
+	Weapon   string       `protobuf:"bytes,5,opt,name=weapon,proto3" json:"weapon,omitempty"`
+	Building BuildingType `protobuf:"varint,6,opt,name=building,proto3,enum=demostats.v1.BuildingType" json:"building,omitempty"`
+	// Last known position; absent when the entity was already gone.
+	Pos           *Position `protobuf:"bytes,7,opt,name=pos,proto3,oneof" json:"pos,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BuildingDestroyed) Reset() {
+	*x = BuildingDestroyed{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BuildingDestroyed) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BuildingDestroyed) ProtoMessage() {}
+
+func (x *BuildingDestroyed) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BuildingDestroyed.ProtoReflect.Descriptor instead.
+func (*BuildingDestroyed) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *BuildingDestroyed) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *BuildingDestroyed) GetOwner() string {
+	if x != nil && x.Owner != nil {
+		return *x.Owner
+	}
+	return ""
+}
+
+func (x *BuildingDestroyed) GetAttacker() string {
+	if x != nil && x.Attacker != nil {
+		return *x.Attacker
+	}
+	return ""
+}
+
+func (x *BuildingDestroyed) GetAssister() string {
+	if x != nil && x.Assister != nil {
+		return *x.Assister
+	}
+	return ""
+}
+
+func (x *BuildingDestroyed) GetWeapon() string {
+	if x != nil {
+		return x.Weapon
+	}
+	return ""
+}
+
+func (x *BuildingDestroyed) GetBuilding() BuildingType {
+	if x != nil {
+		return x.Building
+	}
+	return BuildingType_BUILDING_UNKNOWN
+}
+
+func (x *BuildingDestroyed) GetPos() *Position {
+	if x != nil {
+		return x.Pos
+	}
+	return nil
+}
+
+type BuildingLifecycle struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Tick  uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	// Steamid of the engineer, if resolved.
+	Player        *string      `protobuf:"bytes,2,opt,name=player,proto3,oneof" json:"player,omitempty"`
+	Building      BuildingType `protobuf:"varint,3,opt,name=building,proto3,enum=demostats.v1.BuildingType" json:"building,omitempty"`
+	Index         uint32       `protobuf:"varint,4,opt,name=index,proto3" json:"index,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BuildingLifecycle) Reset() {
+	*x = BuildingLifecycle{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BuildingLifecycle) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BuildingLifecycle) ProtoMessage() {}
+
+func (x *BuildingLifecycle) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BuildingLifecycle.ProtoReflect.Descriptor instead.
+func (*BuildingLifecycle) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *BuildingLifecycle) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *BuildingLifecycle) GetPlayer() string {
+	if x != nil && x.Player != nil {
+		return *x.Player
+	}
+	return ""
+}
+
+func (x *BuildingLifecycle) GetBuilding() BuildingType {
+	if x != nil {
+		return x.Building
+	}
+	return BuildingType_BUILDING_UNKNOWN
+}
+
+func (x *BuildingLifecycle) GetIndex() uint32 {
+	if x != nil {
+		return x.Index
+	}
+	return 0
+}
+
+type SapperPlaced struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Tick  uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	// Steamid of the spy, if resolved.
+	Spy *string `protobuf:"bytes,2,opt,name=spy,proto3,oneof" json:"spy,omitempty"`
+	// Steamid of the building owner, if resolved.
+	Owner         *string      `protobuf:"bytes,3,opt,name=owner,proto3,oneof" json:"owner,omitempty"`
+	Building      BuildingType `protobuf:"varint,4,opt,name=building,proto3,enum=demostats.v1.BuildingType" json:"building,omitempty"`
+	SapperIndex   uint32       `protobuf:"varint,5,opt,name=sapper_index,json=sapperIndex,proto3" json:"sapper_index,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SapperPlaced) Reset() {
+	*x = SapperPlaced{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SapperPlaced) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SapperPlaced) ProtoMessage() {}
+
+func (x *SapperPlaced) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SapperPlaced.ProtoReflect.Descriptor instead.
+func (*SapperPlaced) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *SapperPlaced) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *SapperPlaced) GetSpy() string {
+	if x != nil && x.Spy != nil {
+		return *x.Spy
+	}
+	return ""
+}
+
+func (x *SapperPlaced) GetOwner() string {
+	if x != nil && x.Owner != nil {
+		return *x.Owner
+	}
+	return ""
+}
+
+func (x *SapperPlaced) GetBuilding() BuildingType {
+	if x != nil {
+		return x.Building
+	}
+	return BuildingType_BUILDING_UNKNOWN
+}
+
+func (x *SapperPlaced) GetSapperIndex() uint32 {
+	if x != nil {
+		return x.SapperIndex
+	}
+	return 0
+}
+
+type TickMarker struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tick          uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TickMarker) Reset() {
+	*x = TickMarker{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TickMarker) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TickMarker) ProtoMessage() {}
+
+func (x *TickMarker) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TickMarker.ProtoReflect.Descriptor instead.
+func (*TickMarker) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *TickMarker) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+type RoundStarted struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tick          uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	FullReset     bool                   `protobuf:"varint,2,opt,name=full_reset,json=fullReset,proto3" json:"full_reset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RoundStarted) Reset() {
+	*x = RoundStarted{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RoundStarted) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RoundStarted) ProtoMessage() {}
+
+func (x *RoundStarted) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RoundStarted.ProtoReflect.Descriptor instead.
+func (*RoundStarted) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *RoundStarted) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *RoundStarted) GetFullReset() bool {
+	if x != nil {
+		return x.FullReset
+	}
+	return false
+}
+
+type RoundWon struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Tick  uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	// Absent on stalemates.
+	Winner         *Team   `protobuf:"varint,2,opt,name=winner,proto3,enum=demostats.v1.Team,oneof" json:"winner,omitempty"`
+	IsStalemate    bool    `protobuf:"varint,3,opt,name=is_stalemate,json=isStalemate,proto3" json:"is_stalemate,omitempty"`
+	WinReason      uint32  `protobuf:"varint,4,opt,name=win_reason,json=winReason,proto3" json:"win_reason,omitempty"`
+	RoundTime      float32 `protobuf:"fixed32,5,opt,name=round_time,json=roundTime,proto3" json:"round_time,omitempty"`
+	WasSuddenDeath bool    `protobuf:"varint,6,opt,name=was_sudden_death,json=wasSuddenDeath,proto3" json:"was_sudden_death,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *RoundWon) Reset() {
+	*x = RoundWon{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RoundWon) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RoundWon) ProtoMessage() {}
+
+func (x *RoundWon) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RoundWon.ProtoReflect.Descriptor instead.
+func (*RoundWon) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *RoundWon) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *RoundWon) GetWinner() Team {
+	if x != nil && x.Winner != nil {
+		return *x.Winner
+	}
+	return Team_TEAM_OTHER
+}
+
+func (x *RoundWon) GetIsStalemate() bool {
+	if x != nil {
+		return x.IsStalemate
+	}
+	return false
+}
+
+func (x *RoundWon) GetWinReason() uint32 {
+	if x != nil {
+		return x.WinReason
+	}
+	return 0
+}
+
+func (x *RoundWon) GetRoundTime() float32 {
+	if x != nil {
+		return x.RoundTime
+	}
+	return 0
+}
+
+func (x *RoundWon) GetWasSuddenDeath() bool {
+	if x != nil {
+		return x.WasSuddenDeath
+	}
+	return false
+}
+
+type Stalemate struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tick          uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	Reason        uint32                 `protobuf:"varint,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Stalemate) Reset() {
+	*x = Stalemate{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Stalemate) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Stalemate) ProtoMessage() {}
+
+func (x *Stalemate) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Stalemate.ProtoReflect.Descriptor instead.
+func (*Stalemate) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *Stalemate) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *Stalemate) GetReason() uint32 {
+	if x != nil {
+		return x.Reason
+	}
+	return 0
+}
+
+type GameOver struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tick          uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	Reason        string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GameOver) Reset() {
+	*x = GameOver{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GameOver) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GameOver) ProtoMessage() {}
+
+func (x *GameOver) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GameOver.ProtoReflect.Descriptor instead.
+func (*GameOver) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *GameOver) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *GameOver) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type UberDropped struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Tick  uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	// Steamid of the medic, if resolved.
+	Medic *string `protobuf:"bytes,2,opt,name=medic,proto3,oneof" json:"medic,omitempty"`
+	// Steamid of the killer, if resolved.
+	Attacker      *string `protobuf:"bytes,3,opt,name=attacker,proto3,oneof" json:"attacker,omitempty"`
+	Healing       uint32  `protobuf:"varint,4,opt,name=healing,proto3" json:"healing,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UberDropped) Reset() {
+	*x = UberDropped{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UberDropped) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UberDropped) ProtoMessage() {}
+
+func (x *UberDropped) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UberDropped.ProtoReflect.Descriptor instead.
+func (*UberDropped) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *UberDropped) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *UberDropped) GetMedic() string {
+	if x != nil && x.Medic != nil {
+		return *x.Medic
+	}
+	return ""
+}
+
+func (x *UberDropped) GetAttacker() string {
+	if x != nil && x.Attacker != nil {
+		return *x.Attacker
+	}
+	return ""
+}
+
+func (x *UberDropped) GetHealing() uint32 {
+	if x != nil {
+		return x.Healing
+	}
+	return 0
+}
+
+type UberDeployed struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Tick  uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	// Steamid of the medic, if resolved.
+	Medic *string `protobuf:"bytes,2,opt,name=medic,proto3,oneof" json:"medic,omitempty"`
+	// Steamid of the charge target, if resolved.
+	Target        *string `protobuf:"bytes,3,opt,name=target,proto3,oneof" json:"target,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UberDeployed) Reset() {
+	*x = UberDeployed{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UberDeployed) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UberDeployed) ProtoMessage() {}
+
+func (x *UberDeployed) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UberDeployed.ProtoReflect.Descriptor instead.
+func (*UberDeployed) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *UberDeployed) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *UberDeployed) GetMedic() string {
+	if x != nil && x.Medic != nil {
+		return *x.Medic
+	}
+	return ""
+}
+
+func (x *UberDeployed) GetTarget() string {
+	if x != nil && x.Target != nil {
+		return *x.Target
+	}
+	return ""
+}
+
+type FlagEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Tick  uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	// Steamid of the involved player, if resolved.
+	Player *string `protobuf:"bytes,2,opt,name=player,proto3,oneof" json:"player,omitempty"`
+	// Steamid of the flag carrier, if resolved.
+	Carrier *string `protobuf:"bytes,3,opt,name=carrier,proto3,oneof" json:"carrier,omitempty"`
+	// TF2 TF_FLAGEVENT_* numbering.
+	EventType     uint32 `protobuf:"varint,4,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"`
+	Team          uint32 `protobuf:"varint,5,opt,name=team,proto3" json:"team,omitempty"`
+	Home          bool   `protobuf:"varint,6,opt,name=home,proto3" json:"home,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FlagEvent) Reset() {
+	*x = FlagEvent{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FlagEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FlagEvent) ProtoMessage() {}
+
+func (x *FlagEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FlagEvent.ProtoReflect.Descriptor instead.
+func (*FlagEvent) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *FlagEvent) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *FlagEvent) GetPlayer() string {
+	if x != nil && x.Player != nil {
+		return *x.Player
+	}
+	return ""
+}
+
+func (x *FlagEvent) GetCarrier() string {
+	if x != nil && x.Carrier != nil {
+		return *x.Carrier
+	}
+	return ""
+}
+
+func (x *FlagEvent) GetEventType() uint32 {
+	if x != nil {
+		return x.EventType
+	}
+	return 0
+}
+
+func (x *FlagEvent) GetTeam() uint32 {
+	if x != nil {
+		return x.Team
+	}
+	return 0
+}
+
+func (x *FlagEvent) GetHome() bool {
+	if x != nil {
+		return x.Home
+	}
+	return false
+}
+
+type FlagCaptured struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tick          uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	CappingTeam   uint32                 `protobuf:"varint,2,opt,name=capping_team,json=cappingTeam,proto3" json:"capping_team,omitempty"`
+	Score         uint32                 `protobuf:"varint,3,opt,name=score,proto3" json:"score,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FlagCaptured) Reset() {
+	*x = FlagCaptured{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FlagCaptured) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FlagCaptured) ProtoMessage() {}
+
+func (x *FlagCaptured) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FlagCaptured.ProtoReflect.Descriptor instead.
+func (*FlagCaptured) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *FlagCaptured) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *FlagCaptured) GetCappingTeam() uint32 {
+	if x != nil {
+		return x.CappingTeam
+	}
+	return 0
+}
+
+func (x *FlagCaptured) GetScore() uint32 {
+	if x != nil {
+		return x.Score
+	}
+	return 0
+}
+
+type KillstreakEnded struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Tick  uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	// Steamid of the player whose streak ended.
+	Player string `protobuf:"bytes,2,opt,name=player,proto3" json:"player,omitempty"`
+	// Kills + assists since their last death.
+	Streak uint32 `protobuf:"varint,3,opt,name=streak,proto3" json:"streak,omitempty"`
+	// Steamid of the killer; absent for world deaths.
+	Killer        *string `protobuf:"bytes,4,opt,name=killer,proto3,oneof" json:"killer,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *KillstreakEnded) Reset() {
+	*x = KillstreakEnded{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *KillstreakEnded) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*KillstreakEnded) ProtoMessage() {}
+
+func (x *KillstreakEnded) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use KillstreakEnded.ProtoReflect.Descriptor instead.
+func (*KillstreakEnded) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *KillstreakEnded) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *KillstreakEnded) GetPlayer() string {
+	if x != nil {
+		return x.Player
+	}
+	return ""
+}
+
+func (x *KillstreakEnded) GetStreak() uint32 {
+	if x != nil {
+		return x.Streak
+	}
+	return 0
+}
+
+func (x *KillstreakEnded) GetKiller() string {
+	if x != nil && x.Killer != nil {
+		return *x.Killer
+	}
+	return ""
+}
+
+// One noteworthy match moment. The JSON API uses
+// `{"type": "<snake_case variant>", ...fields}`; the proto schema uses
+// this oneof with the same per-variant messages.
+type GameEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Tick  uint32                 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
+	// Types that are valid to be assigned to Kind:
+	//
+	//	*GameEvent_Kill
+	//	*GameEvent_CaptureStarted
+	//	*GameEvent_Capture
+	//	*GameEvent_CaptureBlocked
+	//	*GameEvent_CaptureBroken
+	//	*GameEvent_BuildingBuilt
+	//	*GameEvent_BuildingDestroyed
+	//	*GameEvent_BuildingUpgraded
+	//	*GameEvent_BuildingCarried
+	//	*GameEvent_BuildingDropped
+	//	*GameEvent_BuildingRemoved
+	//	*GameEvent_BuildingDetonated
+	//	*GameEvent_SapperPlaced
+	//	*GameEvent_RoundStarted
+	//	*GameEvent_RoundWon
+	//	*GameEvent_Stalemate
+	//	*GameEvent_GameOver
+	//	*GameEvent_SuddenDeathBegin
+	//	*GameEvent_SuddenDeathEnd
+	//	*GameEvent_OvertimeBegin
+	//	*GameEvent_OvertimeEnd
+	//	*GameEvent_SetupFinished
+	//	*GameEvent_UberDropped
+	//	*GameEvent_UberDeployed
+	//	*GameEvent_FlagEvent
+	//	*GameEvent_FlagCaptured
+	//	*GameEvent_KillstreakEnded
+	Kind          isGameEvent_Kind `protobuf_oneof:"kind"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GameEvent) Reset() {
+	*x = GameEvent{}
+	mi := &file_demostats_v1_demostats_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GameEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GameEvent) ProtoMessage() {}
+
+func (x *GameEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_demostats_v1_demostats_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GameEvent.ProtoReflect.Descriptor instead.
+func (*GameEvent) Descriptor() ([]byte, []int) {
+	return file_demostats_v1_demostats_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *GameEvent) GetTick() uint32 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *GameEvent) GetKind() isGameEvent_Kind {
+	if x != nil {
+		return x.Kind
+	}
+	return nil
+}
+
+func (x *GameEvent) GetKill() *KillEvent {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_Kill); ok {
+			return x.Kill
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetCaptureStarted() *PointCaptureStart {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_CaptureStarted); ok {
+			return x.CaptureStarted
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetCapture() *PointCapture {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_Capture); ok {
+			return x.Capture
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetCaptureBlocked() *CaptureBlocked {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_CaptureBlocked); ok {
+			return x.CaptureBlocked
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetCaptureBroken() *CaptureBroken {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_CaptureBroken); ok {
+			return x.CaptureBroken
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetBuildingBuilt() *BuildingBuilt {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_BuildingBuilt); ok {
+			return x.BuildingBuilt
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetBuildingDestroyed() *BuildingDestroyed {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_BuildingDestroyed); ok {
+			return x.BuildingDestroyed
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetBuildingUpgraded() *BuildingLifecycle {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_BuildingUpgraded); ok {
+			return x.BuildingUpgraded
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetBuildingCarried() *BuildingLifecycle {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_BuildingCarried); ok {
+			return x.BuildingCarried
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetBuildingDropped() *BuildingLifecycle {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_BuildingDropped); ok {
+			return x.BuildingDropped
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetBuildingRemoved() *BuildingLifecycle {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_BuildingRemoved); ok {
+			return x.BuildingRemoved
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetBuildingDetonated() *BuildingLifecycle {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_BuildingDetonated); ok {
+			return x.BuildingDetonated
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetSapperPlaced() *SapperPlaced {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_SapperPlaced); ok {
+			return x.SapperPlaced
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetRoundStarted() *RoundStarted {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_RoundStarted); ok {
+			return x.RoundStarted
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetRoundWon() *RoundWon {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_RoundWon); ok {
+			return x.RoundWon
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetStalemate() *Stalemate {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_Stalemate); ok {
+			return x.Stalemate
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetGameOver() *GameOver {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_GameOver); ok {
+			return x.GameOver
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetSuddenDeathBegin() *TickMarker {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_SuddenDeathBegin); ok {
+			return x.SuddenDeathBegin
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetSuddenDeathEnd() *TickMarker {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_SuddenDeathEnd); ok {
+			return x.SuddenDeathEnd
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetOvertimeBegin() *TickMarker {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_OvertimeBegin); ok {
+			return x.OvertimeBegin
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetOvertimeEnd() *TickMarker {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_OvertimeEnd); ok {
+			return x.OvertimeEnd
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetSetupFinished() *TickMarker {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_SetupFinished); ok {
+			return x.SetupFinished
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetUberDropped() *UberDropped {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_UberDropped); ok {
+			return x.UberDropped
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetUberDeployed() *UberDeployed {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_UberDeployed); ok {
+			return x.UberDeployed
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetFlagEvent() *FlagEvent {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_FlagEvent); ok {
+			return x.FlagEvent
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetFlagCaptured() *FlagCaptured {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_FlagCaptured); ok {
+			return x.FlagCaptured
+		}
+	}
+	return nil
+}
+
+func (x *GameEvent) GetKillstreakEnded() *KillstreakEnded {
+	if x != nil {
+		if x, ok := x.Kind.(*GameEvent_KillstreakEnded); ok {
+			return x.KillstreakEnded
+		}
+	}
+	return nil
+}
+
+type isGameEvent_Kind interface {
+	isGameEvent_Kind()
+}
+
+type GameEvent_Kill struct {
+	Kill *KillEvent `protobuf:"bytes,2,opt,name=kill,proto3,oneof"`
+}
+
+type GameEvent_CaptureStarted struct {
+	CaptureStarted *PointCaptureStart `protobuf:"bytes,3,opt,name=capture_started,json=captureStarted,proto3,oneof"`
+}
+
+type GameEvent_Capture struct {
+	Capture *PointCapture `protobuf:"bytes,4,opt,name=capture,proto3,oneof"`
+}
+
+type GameEvent_CaptureBlocked struct {
+	CaptureBlocked *CaptureBlocked `protobuf:"bytes,5,opt,name=capture_blocked,json=captureBlocked,proto3,oneof"`
+}
+
+type GameEvent_CaptureBroken struct {
+	CaptureBroken *CaptureBroken `protobuf:"bytes,6,opt,name=capture_broken,json=captureBroken,proto3,oneof"`
+}
+
+type GameEvent_BuildingBuilt struct {
+	BuildingBuilt *BuildingBuilt `protobuf:"bytes,7,opt,name=building_built,json=buildingBuilt,proto3,oneof"`
+}
+
+type GameEvent_BuildingDestroyed struct {
+	BuildingDestroyed *BuildingDestroyed `protobuf:"bytes,8,opt,name=building_destroyed,json=buildingDestroyed,proto3,oneof"`
+}
+
+type GameEvent_BuildingUpgraded struct {
+	BuildingUpgraded *BuildingLifecycle `protobuf:"bytes,9,opt,name=building_upgraded,json=buildingUpgraded,proto3,oneof"`
+}
+
+type GameEvent_BuildingCarried struct {
+	BuildingCarried *BuildingLifecycle `protobuf:"bytes,10,opt,name=building_carried,json=buildingCarried,proto3,oneof"`
+}
+
+type GameEvent_BuildingDropped struct {
+	BuildingDropped *BuildingLifecycle `protobuf:"bytes,11,opt,name=building_dropped,json=buildingDropped,proto3,oneof"`
+}
+
+type GameEvent_BuildingRemoved struct {
+	BuildingRemoved *BuildingLifecycle `protobuf:"bytes,12,opt,name=building_removed,json=buildingRemoved,proto3,oneof"`
+}
+
+type GameEvent_BuildingDetonated struct {
+	BuildingDetonated *BuildingLifecycle `protobuf:"bytes,13,opt,name=building_detonated,json=buildingDetonated,proto3,oneof"`
+}
+
+type GameEvent_SapperPlaced struct {
+	SapperPlaced *SapperPlaced `protobuf:"bytes,14,opt,name=sapper_placed,json=sapperPlaced,proto3,oneof"`
+}
+
+type GameEvent_RoundStarted struct {
+	RoundStarted *RoundStarted `protobuf:"bytes,15,opt,name=round_started,json=roundStarted,proto3,oneof"`
+}
+
+type GameEvent_RoundWon struct {
+	RoundWon *RoundWon `protobuf:"bytes,16,opt,name=round_won,json=roundWon,proto3,oneof"`
+}
+
+type GameEvent_Stalemate struct {
+	Stalemate *Stalemate `protobuf:"bytes,17,opt,name=stalemate,proto3,oneof"`
+}
+
+type GameEvent_GameOver struct {
+	GameOver *GameOver `protobuf:"bytes,18,opt,name=game_over,json=gameOver,proto3,oneof"`
+}
+
+type GameEvent_SuddenDeathBegin struct {
+	SuddenDeathBegin *TickMarker `protobuf:"bytes,19,opt,name=sudden_death_begin,json=suddenDeathBegin,proto3,oneof"`
+}
+
+type GameEvent_SuddenDeathEnd struct {
+	SuddenDeathEnd *TickMarker `protobuf:"bytes,20,opt,name=sudden_death_end,json=suddenDeathEnd,proto3,oneof"`
+}
+
+type GameEvent_OvertimeBegin struct {
+	OvertimeBegin *TickMarker `protobuf:"bytes,21,opt,name=overtime_begin,json=overtimeBegin,proto3,oneof"`
+}
+
+type GameEvent_OvertimeEnd struct {
+	OvertimeEnd *TickMarker `protobuf:"bytes,22,opt,name=overtime_end,json=overtimeEnd,proto3,oneof"`
+}
+
+type GameEvent_SetupFinished struct {
+	SetupFinished *TickMarker `protobuf:"bytes,23,opt,name=setup_finished,json=setupFinished,proto3,oneof"`
+}
+
+type GameEvent_UberDropped struct {
+	UberDropped *UberDropped `protobuf:"bytes,24,opt,name=uber_dropped,json=uberDropped,proto3,oneof"`
+}
+
+type GameEvent_UberDeployed struct {
+	UberDeployed *UberDeployed `protobuf:"bytes,25,opt,name=uber_deployed,json=uberDeployed,proto3,oneof"`
+}
+
+type GameEvent_FlagEvent struct {
+	FlagEvent *FlagEvent `protobuf:"bytes,26,opt,name=flag_event,json=flagEvent,proto3,oneof"`
+}
+
+type GameEvent_FlagCaptured struct {
+	FlagCaptured *FlagCaptured `protobuf:"bytes,27,opt,name=flag_captured,json=flagCaptured,proto3,oneof"`
+}
+
+type GameEvent_KillstreakEnded struct {
+	KillstreakEnded *KillstreakEnded `protobuf:"bytes,28,opt,name=killstreak_ended,json=killstreakEnded,proto3,oneof"`
+}
+
+func (*GameEvent_Kill) isGameEvent_Kind() {}
+
+func (*GameEvent_CaptureStarted) isGameEvent_Kind() {}
+
+func (*GameEvent_Capture) isGameEvent_Kind() {}
+
+func (*GameEvent_CaptureBlocked) isGameEvent_Kind() {}
+
+func (*GameEvent_CaptureBroken) isGameEvent_Kind() {}
+
+func (*GameEvent_BuildingBuilt) isGameEvent_Kind() {}
+
+func (*GameEvent_BuildingDestroyed) isGameEvent_Kind() {}
+
+func (*GameEvent_BuildingUpgraded) isGameEvent_Kind() {}
+
+func (*GameEvent_BuildingCarried) isGameEvent_Kind() {}
+
+func (*GameEvent_BuildingDropped) isGameEvent_Kind() {}
+
+func (*GameEvent_BuildingRemoved) isGameEvent_Kind() {}
+
+func (*GameEvent_BuildingDetonated) isGameEvent_Kind() {}
+
+func (*GameEvent_SapperPlaced) isGameEvent_Kind() {}
+
+func (*GameEvent_RoundStarted) isGameEvent_Kind() {}
+
+func (*GameEvent_RoundWon) isGameEvent_Kind() {}
+
+func (*GameEvent_Stalemate) isGameEvent_Kind() {}
+
+func (*GameEvent_GameOver) isGameEvent_Kind() {}
+
+func (*GameEvent_SuddenDeathBegin) isGameEvent_Kind() {}
+
+func (*GameEvent_SuddenDeathEnd) isGameEvent_Kind() {}
+
+func (*GameEvent_OvertimeBegin) isGameEvent_Kind() {}
+
+func (*GameEvent_OvertimeEnd) isGameEvent_Kind() {}
+
+func (*GameEvent_SetupFinished) isGameEvent_Kind() {}
+
+func (*GameEvent_UberDropped) isGameEvent_Kind() {}
+
+func (*GameEvent_UberDeployed) isGameEvent_Kind() {}
+
+func (*GameEvent_FlagEvent) isGameEvent_Kind() {}
+
+func (*GameEvent_FlagCaptured) isGameEvent_Kind() {}
+
+func (*GameEvent_KillstreakEnded) isGameEvent_Kind() {}
+
 var File_demostats_v1_demostats_proto protoreflect.FileDescriptor
 
 const file_demostats_v1_demostats_proto_rawDesc = "" +
@@ -2372,14 +4131,13 @@ const file_demostats_v1_demostats_proto_rawDesc = "" +
 	"\x05ticks\x18\t \x01(\rR\x05ticks\x12\x16\n" +
 	"\x06frames\x18\n" +
 	" \x01(\rR\x06frames\x12\x16\n" +
-	"\x06signon\x18\v \x01(\rR\x06signon\"\xde\x02\n" +
+	"\x06signon\x18\v \x01(\rR\x06signon\"\xa4\x02\n" +
 	"\vDemoSummary\x122\n" +
 	"\x06rounds\x18\x01 \x03(\v2\x1a.demostats.v1.RoundSummaryR\x06rounds\x12-\n" +
 	"\x04chat\x18\x02 \x03(\v2\x19.demostats.v1.ChatMessageR\x04chat\x12/\n" +
 	"\x05votes\x18\x03 \x03(\v2\x19.demostats.v1.VoteSummaryR\x05votes\x12D\n" +
-	"\x0fsourcemod_votes\x18\x04 \x03(\v2\x1b.demostats.v1.SourceModVoteR\x0esourcemodVotes\x12F\n" +
-	"\x0epoint_captures\x18\x05 \x03(\v2\x1f.demostats.v1.PointCaptureStartR\rpointCaptures\x12-\n" +
-	"\x05kills\x18\x06 \x03(\v2\x17.demostats.v1.KillEventR\x05kills\"\xc0\x01\n" +
+	"\x0fsourcemod_votes\x18\x04 \x03(\v2\x1b.demostats.v1.SourceModVoteR\x0esourcemodVotes\x12/\n" +
+	"\x06events\x18\a \x03(\v2\x17.demostats.v1.GameEventR\x06eventsJ\x04\b\x05\x10\x06J\x04\b\x06\x10\a\"\xc0\x01\n" +
 	"\vChatMessage\x12\x12\n" +
 	"\x04tick\x18\x01 \x01(\rR\x04tick\x12\x12\n" +
 	"\x04user\x18\x02 \x01(\tR\x04user\x12\x18\n" +
@@ -2594,7 +4352,7 @@ const file_demostats_v1_demostats_proto_rawDesc = "" +
 	"\x01z\x18\x03 \x01(\x02R\x01z\"3\n" +
 	"\tEyeAngles\x12\x14\n" +
 	"\x05pitch\x18\x01 \x01(\x02R\x05pitch\x12\x10\n" +
-	"\x03yaw\x18\x02 \x01(\x02R\x03yaw\"\xb7\x03\n" +
+	"\x03yaw\x18\x02 \x01(\x02R\x03yaw\"\xa1\x04\n" +
 	"\tKillEvent\x12\x12\n" +
 	"\x04tick\x18\x01 \x01(\rR\x04tick\x12\x1b\n" +
 	"\x06killer\x18\x02 \x01(\tH\x00R\x06killer\x88\x01\x01\x12\x16\n" +
@@ -2605,12 +4363,161 @@ const file_demostats_v1_demostats_proto_rawDesc = "" +
 	"\n" +
 	"victim_pos\x18\x06 \x01(\v2\x16.demostats.v1.PositionH\x02R\tvictimPos\x88\x01\x01\x12A\n" +
 	"\rkiller_angles\x18\a \x01(\v2\x17.demostats.v1.EyeAnglesH\x03R\fkillerAngles\x88\x01\x01\x12A\n" +
-	"\rvictim_angles\x18\b \x01(\v2\x17.demostats.v1.EyeAnglesH\x04R\fvictimAngles\x88\x01\x01B\t\n" +
+	"\rvictim_angles\x18\b \x01(\v2\x17.demostats.v1.EyeAnglesH\x04R\fvictimAngles\x88\x01\x01\x12$\n" +
+	"\x0eis_first_blood\x18\t \x01(\bR\fisFirstBlood\x12#\n" +
+	"\ris_domination\x18\n" +
+	" \x01(\bR\fisDomination\x12\x1d\n" +
+	"\n" +
+	"is_revenge\x18\v \x01(\bR\tisRevengeB\t\n" +
 	"\a_killerB\r\n" +
 	"\v_killer_posB\r\n" +
 	"\v_victim_posB\x10\n" +
 	"\x0e_killer_anglesB\x10\n" +
-	"\x0e_victim_angles*G\n" +
+	"\x0e_victim_angles\"\x94\x01\n" +
+	"\fPointCapture\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\x12\x0e\n" +
+	"\x02cp\x18\x02 \x01(\rR\x02cp\x12\x17\n" +
+	"\acp_name\x18\x03 \x01(\tR\x06cpName\x12\x12\n" +
+	"\x04team\x18\x04 \x01(\rR\x04team\x12\x19\n" +
+	"\bcap_team\x18\x05 \x01(\rR\acapTeam\x12\x18\n" +
+	"\acappers\x18\x06 \x03(\tR\acappers\"\xa0\x01\n" +
+	"\x0eCaptureBlocked\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\x12\x0e\n" +
+	"\x02cp\x18\x02 \x01(\rR\x02cp\x12\x17\n" +
+	"\acp_name\x18\x03 \x01(\tR\x06cpName\x12\x1d\n" +
+	"\ablocker\x18\x04 \x01(\tH\x00R\ablocker\x88\x01\x01\x12\x1b\n" +
+	"\x06victim\x18\x05 \x01(\tH\x01R\x06victim\x88\x01\x01B\n" +
+	"\n" +
+	"\b_blockerB\t\n" +
+	"\a_victim\"s\n" +
+	"\rCaptureBroken\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\x12\x0e\n" +
+	"\x02cp\x18\x02 \x01(\rR\x02cp\x12\x17\n" +
+	"\acp_name\x18\x03 \x01(\tR\x06cpName\x12%\n" +
+	"\x0etime_remaining\x18\x04 \x01(\x02R\rtimeRemaining\"\xd9\x01\n" +
+	"\rBuildingBuilt\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\x12\x19\n" +
+	"\x05owner\x18\x02 \x01(\tH\x00R\x05owner\x88\x01\x01\x126\n" +
+	"\bbuilding\x18\x03 \x01(\x0e2\x1a.demostats.v1.BuildingTypeR\bbuilding\x12\x14\n" +
+	"\x05level\x18\x04 \x01(\rR\x05level\x12\x17\n" +
+	"\ais_mini\x18\x05 \x01(\bR\x06isMini\x12(\n" +
+	"\x03pos\x18\x06 \x01(\v2\x16.demostats.v1.PositionR\x03posB\b\n" +
+	"\x06_owner\"\xaf\x02\n" +
+	"\x11BuildingDestroyed\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\x12\x19\n" +
+	"\x05owner\x18\x02 \x01(\tH\x00R\x05owner\x88\x01\x01\x12\x1f\n" +
+	"\battacker\x18\x03 \x01(\tH\x01R\battacker\x88\x01\x01\x12\x1f\n" +
+	"\bassister\x18\x04 \x01(\tH\x02R\bassister\x88\x01\x01\x12\x16\n" +
+	"\x06weapon\x18\x05 \x01(\tR\x06weapon\x126\n" +
+	"\bbuilding\x18\x06 \x01(\x0e2\x1a.demostats.v1.BuildingTypeR\bbuilding\x12-\n" +
+	"\x03pos\x18\a \x01(\v2\x16.demostats.v1.PositionH\x03R\x03pos\x88\x01\x01B\b\n" +
+	"\x06_ownerB\v\n" +
+	"\t_attackerB\v\n" +
+	"\t_assisterB\x06\n" +
+	"\x04_pos\"\x9d\x01\n" +
+	"\x11BuildingLifecycle\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\x12\x1b\n" +
+	"\x06player\x18\x02 \x01(\tH\x00R\x06player\x88\x01\x01\x126\n" +
+	"\bbuilding\x18\x03 \x01(\x0e2\x1a.demostats.v1.BuildingTypeR\bbuilding\x12\x14\n" +
+	"\x05index\x18\x04 \x01(\rR\x05indexB\t\n" +
+	"\a_player\"\xc1\x01\n" +
+	"\fSapperPlaced\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\x12\x15\n" +
+	"\x03spy\x18\x02 \x01(\tH\x00R\x03spy\x88\x01\x01\x12\x19\n" +
+	"\x05owner\x18\x03 \x01(\tH\x01R\x05owner\x88\x01\x01\x126\n" +
+	"\bbuilding\x18\x04 \x01(\x0e2\x1a.demostats.v1.BuildingTypeR\bbuilding\x12!\n" +
+	"\fsapper_index\x18\x05 \x01(\rR\vsapperIndexB\x06\n" +
+	"\x04_spyB\b\n" +
+	"\x06_owner\" \n" +
+	"\n" +
+	"TickMarker\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\"A\n" +
+	"\fRoundStarted\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\x12\x1d\n" +
+	"\n" +
+	"full_reset\x18\x02 \x01(\bR\tfullReset\"\xe5\x01\n" +
+	"\bRoundWon\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\x12/\n" +
+	"\x06winner\x18\x02 \x01(\x0e2\x12.demostats.v1.TeamH\x00R\x06winner\x88\x01\x01\x12!\n" +
+	"\fis_stalemate\x18\x03 \x01(\bR\visStalemate\x12\x1d\n" +
+	"\n" +
+	"win_reason\x18\x04 \x01(\rR\twinReason\x12\x1d\n" +
+	"\n" +
+	"round_time\x18\x05 \x01(\x02R\troundTime\x12(\n" +
+	"\x10was_sudden_death\x18\x06 \x01(\bR\x0ewasSuddenDeathB\t\n" +
+	"\a_winner\"7\n" +
+	"\tStalemate\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\x12\x16\n" +
+	"\x06reason\x18\x02 \x01(\rR\x06reason\"6\n" +
+	"\bGameOver\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\x12\x16\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\"\x8e\x01\n" +
+	"\vUberDropped\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\x12\x19\n" +
+	"\x05medic\x18\x02 \x01(\tH\x00R\x05medic\x88\x01\x01\x12\x1f\n" +
+	"\battacker\x18\x03 \x01(\tH\x01R\battacker\x88\x01\x01\x12\x18\n" +
+	"\ahealing\x18\x04 \x01(\rR\ahealingB\b\n" +
+	"\x06_medicB\v\n" +
+	"\t_attacker\"o\n" +
+	"\fUberDeployed\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\x12\x19\n" +
+	"\x05medic\x18\x02 \x01(\tH\x00R\x05medic\x88\x01\x01\x12\x1b\n" +
+	"\x06target\x18\x03 \x01(\tH\x01R\x06target\x88\x01\x01B\b\n" +
+	"\x06_medicB\t\n" +
+	"\a_target\"\xb9\x01\n" +
+	"\tFlagEvent\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\x12\x1b\n" +
+	"\x06player\x18\x02 \x01(\tH\x00R\x06player\x88\x01\x01\x12\x1d\n" +
+	"\acarrier\x18\x03 \x01(\tH\x01R\acarrier\x88\x01\x01\x12\x1d\n" +
+	"\n" +
+	"event_type\x18\x04 \x01(\rR\teventType\x12\x12\n" +
+	"\x04team\x18\x05 \x01(\rR\x04team\x12\x12\n" +
+	"\x04home\x18\x06 \x01(\bR\x04homeB\t\n" +
+	"\a_playerB\n" +
+	"\n" +
+	"\b_carrier\"[\n" +
+	"\fFlagCaptured\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\x12!\n" +
+	"\fcapping_team\x18\x02 \x01(\rR\vcappingTeam\x12\x14\n" +
+	"\x05score\x18\x03 \x01(\rR\x05score\"}\n" +
+	"\x0fKillstreakEnded\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\x12\x16\n" +
+	"\x06player\x18\x02 \x01(\tR\x06player\x12\x16\n" +
+	"\x06streak\x18\x03 \x01(\rR\x06streak\x12\x1b\n" +
+	"\x06killer\x18\x04 \x01(\tH\x00R\x06killer\x88\x01\x01B\t\n" +
+	"\a_killer\"\xdb\x0e\n" +
+	"\tGameEvent\x12\x12\n" +
+	"\x04tick\x18\x01 \x01(\rR\x04tick\x12-\n" +
+	"\x04kill\x18\x02 \x01(\v2\x17.demostats.v1.KillEventH\x00R\x04kill\x12J\n" +
+	"\x0fcapture_started\x18\x03 \x01(\v2\x1f.demostats.v1.PointCaptureStartH\x00R\x0ecaptureStarted\x126\n" +
+	"\acapture\x18\x04 \x01(\v2\x1a.demostats.v1.PointCaptureH\x00R\acapture\x12G\n" +
+	"\x0fcapture_blocked\x18\x05 \x01(\v2\x1c.demostats.v1.CaptureBlockedH\x00R\x0ecaptureBlocked\x12D\n" +
+	"\x0ecapture_broken\x18\x06 \x01(\v2\x1b.demostats.v1.CaptureBrokenH\x00R\rcaptureBroken\x12D\n" +
+	"\x0ebuilding_built\x18\a \x01(\v2\x1b.demostats.v1.BuildingBuiltH\x00R\rbuildingBuilt\x12P\n" +
+	"\x12building_destroyed\x18\b \x01(\v2\x1f.demostats.v1.BuildingDestroyedH\x00R\x11buildingDestroyed\x12N\n" +
+	"\x11building_upgraded\x18\t \x01(\v2\x1f.demostats.v1.BuildingLifecycleH\x00R\x10buildingUpgraded\x12L\n" +
+	"\x10building_carried\x18\n" +
+	" \x01(\v2\x1f.demostats.v1.BuildingLifecycleH\x00R\x0fbuildingCarried\x12L\n" +
+	"\x10building_dropped\x18\v \x01(\v2\x1f.demostats.v1.BuildingLifecycleH\x00R\x0fbuildingDropped\x12L\n" +
+	"\x10building_removed\x18\f \x01(\v2\x1f.demostats.v1.BuildingLifecycleH\x00R\x0fbuildingRemoved\x12P\n" +
+	"\x12building_detonated\x18\r \x01(\v2\x1f.demostats.v1.BuildingLifecycleH\x00R\x11buildingDetonated\x12A\n" +
+	"\rsapper_placed\x18\x0e \x01(\v2\x1a.demostats.v1.SapperPlacedH\x00R\fsapperPlaced\x12A\n" +
+	"\rround_started\x18\x0f \x01(\v2\x1a.demostats.v1.RoundStartedH\x00R\froundStarted\x125\n" +
+	"\tround_won\x18\x10 \x01(\v2\x16.demostats.v1.RoundWonH\x00R\broundWon\x127\n" +
+	"\tstalemate\x18\x11 \x01(\v2\x17.demostats.v1.StalemateH\x00R\tstalemate\x125\n" +
+	"\tgame_over\x18\x12 \x01(\v2\x16.demostats.v1.GameOverH\x00R\bgameOver\x12H\n" +
+	"\x12sudden_death_begin\x18\x13 \x01(\v2\x18.demostats.v1.TickMarkerH\x00R\x10suddenDeathBegin\x12D\n" +
+	"\x10sudden_death_end\x18\x14 \x01(\v2\x18.demostats.v1.TickMarkerH\x00R\x0esuddenDeathEnd\x12A\n" +
+	"\x0eovertime_begin\x18\x15 \x01(\v2\x18.demostats.v1.TickMarkerH\x00R\rovertimeBegin\x12=\n" +
+	"\fovertime_end\x18\x16 \x01(\v2\x18.demostats.v1.TickMarkerH\x00R\vovertimeEnd\x12A\n" +
+	"\x0esetup_finished\x18\x17 \x01(\v2\x18.demostats.v1.TickMarkerH\x00R\rsetupFinished\x12>\n" +
+	"\fuber_dropped\x18\x18 \x01(\v2\x19.demostats.v1.UberDroppedH\x00R\vuberDropped\x12A\n" +
+	"\ruber_deployed\x18\x19 \x01(\v2\x1a.demostats.v1.UberDeployedH\x00R\fuberDeployed\x128\n" +
+	"\n" +
+	"flag_event\x18\x1a \x01(\v2\x17.demostats.v1.FlagEventH\x00R\tflagEvent\x12A\n" +
+	"\rflag_captured\x18\x1b \x01(\v2\x1a.demostats.v1.FlagCapturedH\x00R\fflagCaptured\x12J\n" +
+	"\x10killstreak_ended\x18\x1c \x01(\v2\x1d.demostats.v1.KillstreakEndedH\x00R\x0fkillstreakEndedB\x06\n" +
+	"\x04kind*G\n" +
 	"\x04Team\x12\x0e\n" +
 	"\n" +
 	"TEAM_OTHER\x10\x00\x12\x12\n" +
@@ -2628,7 +4535,13 @@ const file_demostats_v1_demostats_proto_rawDesc = "" +
 	"\n" +
 	"CLASS_PYRO\x10\a\x12\r\n" +
 	"\tCLASS_SPY\x10\b\x12\x12\n" +
-	"\x0eCLASS_ENGINEER\x10\t2[\n" +
+	"\x0eCLASS_ENGINEER\x10\t*\x7f\n" +
+	"\fBuildingType\x12\x14\n" +
+	"\x10BUILDING_UNKNOWN\x10\x00\x12\x13\n" +
+	"\x0fBUILDING_SENTRY\x10\x01\x12\x16\n" +
+	"\x12BUILDING_DISPENSER\x10\x02\x12\x17\n" +
+	"\x13BUILDING_TELEPORTER\x10\x03\x12\x13\n" +
+	"\x0fBUILDING_SAPPER\x10\x042[\n" +
 	"\vDemoService\x12L\n" +
 	"\tParseDemo\x12\x1e.demostats.v1.ParseDemoRequest\x1a\x1f.demostats.v1.ParseDemoResponseB\xb6\x01\n" +
 	"\x10com.demostats.v1B\x0eDemostatsProtoP\x01ZAgithub.com/leighmacdonald/gbans/internal/demostats/v1;demostatsv1\xa2\x02\x03DXX\xaa\x02\fDemostats.V1\xca\x02\fDemostats\\V1\xe2\x02\x18Demostats\\V1\\GPBMetadata\xea\x02\rDemostats::V1b\x06proto3"
@@ -2645,68 +4558,120 @@ func file_demostats_v1_demostats_proto_rawDescGZIP() []byte {
 	return file_demostats_v1_demostats_proto_rawDescData
 }
 
-var file_demostats_v1_demostats_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_demostats_v1_demostats_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_demostats_v1_demostats_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_demostats_v1_demostats_proto_msgTypes = make([]protoimpl.MessageInfo, 40)
 var file_demostats_v1_demostats_proto_goTypes = []any{
 	(Team)(0),                 // 0: demostats.v1.Team
 	(Class)(0),                // 1: demostats.v1.Class
-	(*ParseDemoRequest)(nil),  // 2: demostats.v1.ParseDemoRequest
-	(*ParseDemoResponse)(nil), // 3: demostats.v1.ParseDemoResponse
-	(*DemoOutput)(nil),        // 4: demostats.v1.DemoOutput
-	(*Header)(nil),            // 5: demostats.v1.Header
-	(*DemoSummary)(nil),       // 6: demostats.v1.DemoSummary
-	(*ChatMessage)(nil),       // 7: demostats.v1.ChatMessage
-	(*RoundSummary)(nil),      // 8: demostats.v1.RoundSummary
-	(*PlayerSummary)(nil),     // 9: demostats.v1.PlayerSummary
-	(*ClassStats)(nil),        // 10: demostats.v1.ClassStats
-	(*Stats)(nil),             // 11: demostats.v1.Stats
-	(*VoteBallot)(nil),        // 12: demostats.v1.VoteBallot
-	(*VoteSummary)(nil),       // 13: demostats.v1.VoteSummary
-	(*SmVoteInitiator)(nil),   // 14: demostats.v1.SmVoteInitiator
-	(*SmNomination)(nil),      // 15: demostats.v1.SmNomination
-	(*SmVoteOption)(nil),      // 16: demostats.v1.SmVoteOption
-	(*SourceModVote)(nil),     // 17: demostats.v1.SourceModVote
-	(*PointCaptureStart)(nil), // 18: demostats.v1.PointCaptureStart
-	(*Position)(nil),          // 19: demostats.v1.Position
-	(*EyeAngles)(nil),         // 20: demostats.v1.EyeAngles
-	(*KillEvent)(nil),         // 21: demostats.v1.KillEvent
-	nil,                       // 22: demostats.v1.PlayerSummary.WeaponsEntry
-	nil,                       // 23: demostats.v1.PlayerSummary.HealTargetsEntry
+	(BuildingType)(0),         // 2: demostats.v1.BuildingType
+	(*ParseDemoRequest)(nil),  // 3: demostats.v1.ParseDemoRequest
+	(*ParseDemoResponse)(nil), // 4: demostats.v1.ParseDemoResponse
+	(*DemoOutput)(nil),        // 5: demostats.v1.DemoOutput
+	(*Header)(nil),            // 6: demostats.v1.Header
+	(*DemoSummary)(nil),       // 7: demostats.v1.DemoSummary
+	(*ChatMessage)(nil),       // 8: demostats.v1.ChatMessage
+	(*RoundSummary)(nil),      // 9: demostats.v1.RoundSummary
+	(*PlayerSummary)(nil),     // 10: demostats.v1.PlayerSummary
+	(*ClassStats)(nil),        // 11: demostats.v1.ClassStats
+	(*Stats)(nil),             // 12: demostats.v1.Stats
+	(*VoteBallot)(nil),        // 13: demostats.v1.VoteBallot
+	(*VoteSummary)(nil),       // 14: demostats.v1.VoteSummary
+	(*SmVoteInitiator)(nil),   // 15: demostats.v1.SmVoteInitiator
+	(*SmNomination)(nil),      // 16: demostats.v1.SmNomination
+	(*SmVoteOption)(nil),      // 17: demostats.v1.SmVoteOption
+	(*SourceModVote)(nil),     // 18: demostats.v1.SourceModVote
+	(*PointCaptureStart)(nil), // 19: demostats.v1.PointCaptureStart
+	(*Position)(nil),          // 20: demostats.v1.Position
+	(*EyeAngles)(nil),         // 21: demostats.v1.EyeAngles
+	(*KillEvent)(nil),         // 22: demostats.v1.KillEvent
+	(*PointCapture)(nil),      // 23: demostats.v1.PointCapture
+	(*CaptureBlocked)(nil),    // 24: demostats.v1.CaptureBlocked
+	(*CaptureBroken)(nil),     // 25: demostats.v1.CaptureBroken
+	(*BuildingBuilt)(nil),     // 26: demostats.v1.BuildingBuilt
+	(*BuildingDestroyed)(nil), // 27: demostats.v1.BuildingDestroyed
+	(*BuildingLifecycle)(nil), // 28: demostats.v1.BuildingLifecycle
+	(*SapperPlaced)(nil),      // 29: demostats.v1.SapperPlaced
+	(*TickMarker)(nil),        // 30: demostats.v1.TickMarker
+	(*RoundStarted)(nil),      // 31: demostats.v1.RoundStarted
+	(*RoundWon)(nil),          // 32: demostats.v1.RoundWon
+	(*Stalemate)(nil),         // 33: demostats.v1.Stalemate
+	(*GameOver)(nil),          // 34: demostats.v1.GameOver
+	(*UberDropped)(nil),       // 35: demostats.v1.UberDropped
+	(*UberDeployed)(nil),      // 36: demostats.v1.UberDeployed
+	(*FlagEvent)(nil),         // 37: demostats.v1.FlagEvent
+	(*FlagCaptured)(nil),      // 38: demostats.v1.FlagCaptured
+	(*KillstreakEnded)(nil),   // 39: demostats.v1.KillstreakEnded
+	(*GameEvent)(nil),         // 40: demostats.v1.GameEvent
+	nil,                       // 41: demostats.v1.PlayerSummary.WeaponsEntry
+	nil,                       // 42: demostats.v1.PlayerSummary.HealTargetsEntry
 }
 var file_demostats_v1_demostats_proto_depIdxs = []int32{
-	4,  // 0: demostats.v1.ParseDemoResponse.demo:type_name -> demostats.v1.DemoOutput
-	5,  // 1: demostats.v1.DemoOutput.header:type_name -> demostats.v1.Header
-	6,  // 2: demostats.v1.DemoOutput.summary:type_name -> demostats.v1.DemoSummary
-	8,  // 3: demostats.v1.DemoSummary.rounds:type_name -> demostats.v1.RoundSummary
-	7,  // 4: demostats.v1.DemoSummary.chat:type_name -> demostats.v1.ChatMessage
-	13, // 5: demostats.v1.DemoSummary.votes:type_name -> demostats.v1.VoteSummary
-	17, // 6: demostats.v1.DemoSummary.sourcemod_votes:type_name -> demostats.v1.SourceModVote
-	18, // 7: demostats.v1.DemoSummary.point_captures:type_name -> demostats.v1.PointCaptureStart
-	21, // 8: demostats.v1.DemoSummary.kills:type_name -> demostats.v1.KillEvent
-	0,  // 9: demostats.v1.RoundSummary.winner:type_name -> demostats.v1.Team
-	9,  // 10: demostats.v1.RoundSummary.players:type_name -> demostats.v1.PlayerSummary
-	11, // 11: demostats.v1.PlayerSummary.stats:type_name -> demostats.v1.Stats
-	10, // 12: demostats.v1.PlayerSummary.classes:type_name -> demostats.v1.ClassStats
-	22, // 13: demostats.v1.PlayerSummary.weapons:type_name -> demostats.v1.PlayerSummary.WeaponsEntry
-	23, // 14: demostats.v1.PlayerSummary.heal_targets:type_name -> demostats.v1.PlayerSummary.HealTargetsEntry
-	1,  // 15: demostats.v1.ClassStats.class:type_name -> demostats.v1.Class
-	11, // 16: demostats.v1.ClassStats.stats:type_name -> demostats.v1.Stats
-	12, // 17: demostats.v1.VoteSummary.ballots:type_name -> demostats.v1.VoteBallot
-	14, // 18: demostats.v1.SourceModVote.initiators:type_name -> demostats.v1.SmVoteInitiator
-	15, // 19: demostats.v1.SourceModVote.nominations:type_name -> demostats.v1.SmNomination
-	16, // 20: demostats.v1.SourceModVote.options:type_name -> demostats.v1.SmVoteOption
-	19, // 21: demostats.v1.KillEvent.killer_pos:type_name -> demostats.v1.Position
-	19, // 22: demostats.v1.KillEvent.victim_pos:type_name -> demostats.v1.Position
-	20, // 23: demostats.v1.KillEvent.killer_angles:type_name -> demostats.v1.EyeAngles
-	20, // 24: demostats.v1.KillEvent.victim_angles:type_name -> demostats.v1.EyeAngles
-	11, // 25: demostats.v1.PlayerSummary.WeaponsEntry.value:type_name -> demostats.v1.Stats
-	2,  // 26: demostats.v1.DemoService.ParseDemo:input_type -> demostats.v1.ParseDemoRequest
-	3,  // 27: demostats.v1.DemoService.ParseDemo:output_type -> demostats.v1.ParseDemoResponse
-	27, // [27:28] is the sub-list for method output_type
-	26, // [26:27] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	5,  // 0: demostats.v1.ParseDemoResponse.demo:type_name -> demostats.v1.DemoOutput
+	6,  // 1: demostats.v1.DemoOutput.header:type_name -> demostats.v1.Header
+	7,  // 2: demostats.v1.DemoOutput.summary:type_name -> demostats.v1.DemoSummary
+	9,  // 3: demostats.v1.DemoSummary.rounds:type_name -> demostats.v1.RoundSummary
+	8,  // 4: demostats.v1.DemoSummary.chat:type_name -> demostats.v1.ChatMessage
+	14, // 5: demostats.v1.DemoSummary.votes:type_name -> demostats.v1.VoteSummary
+	18, // 6: demostats.v1.DemoSummary.sourcemod_votes:type_name -> demostats.v1.SourceModVote
+	40, // 7: demostats.v1.DemoSummary.events:type_name -> demostats.v1.GameEvent
+	0,  // 8: demostats.v1.RoundSummary.winner:type_name -> demostats.v1.Team
+	10, // 9: demostats.v1.RoundSummary.players:type_name -> demostats.v1.PlayerSummary
+	12, // 10: demostats.v1.PlayerSummary.stats:type_name -> demostats.v1.Stats
+	11, // 11: demostats.v1.PlayerSummary.classes:type_name -> demostats.v1.ClassStats
+	41, // 12: demostats.v1.PlayerSummary.weapons:type_name -> demostats.v1.PlayerSummary.WeaponsEntry
+	42, // 13: demostats.v1.PlayerSummary.heal_targets:type_name -> demostats.v1.PlayerSummary.HealTargetsEntry
+	1,  // 14: demostats.v1.ClassStats.class:type_name -> demostats.v1.Class
+	12, // 15: demostats.v1.ClassStats.stats:type_name -> demostats.v1.Stats
+	13, // 16: demostats.v1.VoteSummary.ballots:type_name -> demostats.v1.VoteBallot
+	15, // 17: demostats.v1.SourceModVote.initiators:type_name -> demostats.v1.SmVoteInitiator
+	16, // 18: demostats.v1.SourceModVote.nominations:type_name -> demostats.v1.SmNomination
+	17, // 19: demostats.v1.SourceModVote.options:type_name -> demostats.v1.SmVoteOption
+	20, // 20: demostats.v1.KillEvent.killer_pos:type_name -> demostats.v1.Position
+	20, // 21: demostats.v1.KillEvent.victim_pos:type_name -> demostats.v1.Position
+	21, // 22: demostats.v1.KillEvent.killer_angles:type_name -> demostats.v1.EyeAngles
+	21, // 23: demostats.v1.KillEvent.victim_angles:type_name -> demostats.v1.EyeAngles
+	2,  // 24: demostats.v1.BuildingBuilt.building:type_name -> demostats.v1.BuildingType
+	20, // 25: demostats.v1.BuildingBuilt.pos:type_name -> demostats.v1.Position
+	2,  // 26: demostats.v1.BuildingDestroyed.building:type_name -> demostats.v1.BuildingType
+	20, // 27: demostats.v1.BuildingDestroyed.pos:type_name -> demostats.v1.Position
+	2,  // 28: demostats.v1.BuildingLifecycle.building:type_name -> demostats.v1.BuildingType
+	2,  // 29: demostats.v1.SapperPlaced.building:type_name -> demostats.v1.BuildingType
+	0,  // 30: demostats.v1.RoundWon.winner:type_name -> demostats.v1.Team
+	22, // 31: demostats.v1.GameEvent.kill:type_name -> demostats.v1.KillEvent
+	19, // 32: demostats.v1.GameEvent.capture_started:type_name -> demostats.v1.PointCaptureStart
+	23, // 33: demostats.v1.GameEvent.capture:type_name -> demostats.v1.PointCapture
+	24, // 34: demostats.v1.GameEvent.capture_blocked:type_name -> demostats.v1.CaptureBlocked
+	25, // 35: demostats.v1.GameEvent.capture_broken:type_name -> demostats.v1.CaptureBroken
+	26, // 36: demostats.v1.GameEvent.building_built:type_name -> demostats.v1.BuildingBuilt
+	27, // 37: demostats.v1.GameEvent.building_destroyed:type_name -> demostats.v1.BuildingDestroyed
+	28, // 38: demostats.v1.GameEvent.building_upgraded:type_name -> demostats.v1.BuildingLifecycle
+	28, // 39: demostats.v1.GameEvent.building_carried:type_name -> demostats.v1.BuildingLifecycle
+	28, // 40: demostats.v1.GameEvent.building_dropped:type_name -> demostats.v1.BuildingLifecycle
+	28, // 41: demostats.v1.GameEvent.building_removed:type_name -> demostats.v1.BuildingLifecycle
+	28, // 42: demostats.v1.GameEvent.building_detonated:type_name -> demostats.v1.BuildingLifecycle
+	29, // 43: demostats.v1.GameEvent.sapper_placed:type_name -> demostats.v1.SapperPlaced
+	31, // 44: demostats.v1.GameEvent.round_started:type_name -> demostats.v1.RoundStarted
+	32, // 45: demostats.v1.GameEvent.round_won:type_name -> demostats.v1.RoundWon
+	33, // 46: demostats.v1.GameEvent.stalemate:type_name -> demostats.v1.Stalemate
+	34, // 47: demostats.v1.GameEvent.game_over:type_name -> demostats.v1.GameOver
+	30, // 48: demostats.v1.GameEvent.sudden_death_begin:type_name -> demostats.v1.TickMarker
+	30, // 49: demostats.v1.GameEvent.sudden_death_end:type_name -> demostats.v1.TickMarker
+	30, // 50: demostats.v1.GameEvent.overtime_begin:type_name -> demostats.v1.TickMarker
+	30, // 51: demostats.v1.GameEvent.overtime_end:type_name -> demostats.v1.TickMarker
+	30, // 52: demostats.v1.GameEvent.setup_finished:type_name -> demostats.v1.TickMarker
+	35, // 53: demostats.v1.GameEvent.uber_dropped:type_name -> demostats.v1.UberDropped
+	36, // 54: demostats.v1.GameEvent.uber_deployed:type_name -> demostats.v1.UberDeployed
+	37, // 55: demostats.v1.GameEvent.flag_event:type_name -> demostats.v1.FlagEvent
+	38, // 56: demostats.v1.GameEvent.flag_captured:type_name -> demostats.v1.FlagCaptured
+	39, // 57: demostats.v1.GameEvent.killstreak_ended:type_name -> demostats.v1.KillstreakEnded
+	12, // 58: demostats.v1.PlayerSummary.WeaponsEntry.value:type_name -> demostats.v1.Stats
+	3,  // 59: demostats.v1.DemoService.ParseDemo:input_type -> demostats.v1.ParseDemoRequest
+	4,  // 60: demostats.v1.DemoService.ParseDemo:output_type -> demostats.v1.ParseDemoResponse
+	60, // [60:61] is the sub-list for method output_type
+	59, // [59:60] is the sub-list for method input_type
+	59, // [59:59] is the sub-list for extension type_name
+	59, // [59:59] is the sub-list for extension extendee
+	0,  // [0:59] is the sub-list for field type_name
 }
 
 func init() { file_demostats_v1_demostats_proto_init() }
@@ -2722,13 +4687,52 @@ func file_demostats_v1_demostats_proto_init() {
 	file_demostats_v1_demostats_proto_msgTypes[13].OneofWrappers = []any{}
 	file_demostats_v1_demostats_proto_msgTypes[15].OneofWrappers = []any{}
 	file_demostats_v1_demostats_proto_msgTypes[19].OneofWrappers = []any{}
+	file_demostats_v1_demostats_proto_msgTypes[21].OneofWrappers = []any{}
+	file_demostats_v1_demostats_proto_msgTypes[23].OneofWrappers = []any{}
+	file_demostats_v1_demostats_proto_msgTypes[24].OneofWrappers = []any{}
+	file_demostats_v1_demostats_proto_msgTypes[25].OneofWrappers = []any{}
+	file_demostats_v1_demostats_proto_msgTypes[26].OneofWrappers = []any{}
+	file_demostats_v1_demostats_proto_msgTypes[29].OneofWrappers = []any{}
+	file_demostats_v1_demostats_proto_msgTypes[32].OneofWrappers = []any{}
+	file_demostats_v1_demostats_proto_msgTypes[33].OneofWrappers = []any{}
+	file_demostats_v1_demostats_proto_msgTypes[34].OneofWrappers = []any{}
+	file_demostats_v1_demostats_proto_msgTypes[36].OneofWrappers = []any{}
+	file_demostats_v1_demostats_proto_msgTypes[37].OneofWrappers = []any{
+		(*GameEvent_Kill)(nil),
+		(*GameEvent_CaptureStarted)(nil),
+		(*GameEvent_Capture)(nil),
+		(*GameEvent_CaptureBlocked)(nil),
+		(*GameEvent_CaptureBroken)(nil),
+		(*GameEvent_BuildingBuilt)(nil),
+		(*GameEvent_BuildingDestroyed)(nil),
+		(*GameEvent_BuildingUpgraded)(nil),
+		(*GameEvent_BuildingCarried)(nil),
+		(*GameEvent_BuildingDropped)(nil),
+		(*GameEvent_BuildingRemoved)(nil),
+		(*GameEvent_BuildingDetonated)(nil),
+		(*GameEvent_SapperPlaced)(nil),
+		(*GameEvent_RoundStarted)(nil),
+		(*GameEvent_RoundWon)(nil),
+		(*GameEvent_Stalemate)(nil),
+		(*GameEvent_GameOver)(nil),
+		(*GameEvent_SuddenDeathBegin)(nil),
+		(*GameEvent_SuddenDeathEnd)(nil),
+		(*GameEvent_OvertimeBegin)(nil),
+		(*GameEvent_OvertimeEnd)(nil),
+		(*GameEvent_SetupFinished)(nil),
+		(*GameEvent_UberDropped)(nil),
+		(*GameEvent_UberDeployed)(nil),
+		(*GameEvent_FlagEvent)(nil),
+		(*GameEvent_FlagCaptured)(nil),
+		(*GameEvent_KillstreakEnded)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_demostats_v1_demostats_proto_rawDesc), len(file_demostats_v1_demostats_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   22,
+			NumEnums:      3,
+			NumMessages:   40,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
