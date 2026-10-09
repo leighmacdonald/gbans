@@ -118,11 +118,10 @@ like:
 
     docker run -it --rm -v `$(pwd)`/gbans.yml:/app/gbans.yml:ro ghcr.io/leighmacdonald/gbans:latest
 
-There is also a docker-compose config you can use which provides the database as
-well.
+For local development, a helper script provisions a PostgreSQL container with the
+required PostGIS, ip4r & hypopg extensions:
 
-    docker-compose -f docker/docker-compose.yml up --build --remove-orphans \
-    --abort-on-container-exit --exit-code-from gbans
+    just db
 
 ## Documentation
 
