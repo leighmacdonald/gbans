@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import { Team } from "../../rpc/stats/v1/stats_pb.ts";
 import { blu, red } from "../../theme.ts";
 import {
+	eventMarkerColor,
 	eventTypeColor,
 	eventTypeStyle,
 	HAMMER_UNIT_IN_METERS,
@@ -198,4 +199,20 @@ test("building_built sub-layers have distinct colors", () => {
 	expect(eventTypeColor("building_built_dispenser")).toBe("#00b8d4");
 	expect(eventTypeColor("building_built_teleporter")).toBe("#7c4dff");
 	expect(eventTypeStyle("building_built_sentry").radius).toBe(5);
+});
+
+test("building markers use legend colors regardless of team", () => {
+	for (const layer of [
+		"building_built_sentry",
+		"building_built_dispenser",
+		"building_built_teleporter",
+		"building_destroyed",
+	]) {
+		expect(eventMarkerColor(layer, Team.BLU)).toBe(eventTypeColor(layer));
+		expect(eventMarkerColor(layer, Team.RED)).toBe(eventTypeColor(layer));
+	}
+	// Kills keep team colors so the attacking side stays visible.
+	expect(eventMarkerColor("kill", Team.BLU)).toBe(blu);
+	expect(eventMarkerColor("kill", Team.RED)).toBe(red);
+	expect(eventMarkerColor("kill", Team.UNASSIGNED_UNSPECIFIED)).toBe(eventTypeColor("kill"));
 });
