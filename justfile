@@ -109,7 +109,7 @@ run-docker-snapshot: build-backend-snapshot
 db:
     ./dev_db.sh
 
-demostats-serve version="0.3.2":
+demostats-serve version="0.3.3":
     @docker rm -f {{ DEMOSTATS_CONTAINER }} 2>/dev/null || true
     @docker pull ghcr.io/leighmacdonald/tf2_demostats:v{{ version }}
     @docker run  -v ./schema.json:/app/schema.json ghcr.io/leighmacdonald/tf2_demostats:v{{ version }} update --api-key $STEAM_KEY

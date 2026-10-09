@@ -233,6 +233,30 @@ func (d Demos) createFromAsset(ctx context.Context, asset *asset.Asset, serverID
 		}
 	}
 
+	// Event participants (killers, victims, cappers, engineers, medics) must
+	// exist for the match_event person references.
+	ensured := map[steamid.SteamID]struct{}{}
+	for _, event := range parsedDemo.Events {
+		for _, raw := range event.SteamIDs() {
+			playerSteamID := steamid.New(raw)
+			if !playerSteamID.Valid() {
+				continue
+			}
+
+			if _, ok := ensured[playerSteamID]; ok {
+				continue
+			}
+
+			ensured[playerSteamID] = struct{}{}
+
+			if err := d.person.EnsurePerson(ctx, playerSteamID); err != nil {
+				slog.Error("Failed to insert event participant", slog.String("error", err.Error()))
+
+				return nil, err
+			}
+		}
+	}
+
 	timeStr := fmt.Sprintf("%s-%s", namePartsAll[0], namePartsAll[1])
 	createdTime, errTime := time.Parse("20060102-150405", timeStr) // 20240511-211121
 	if errTime != nil {

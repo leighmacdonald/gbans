@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file demostats/v1/demostats.proto.
  */
 export const file_demostats_v1_demostats: GenFile = /*@__PURE__*/
-  fileDesc("ChxkZW1vc3RhdHMvdjEvZGVtb3N0YXRzLnByb3RvEgxkZW1vc3RhdHMudjEiMgoQUGFyc2VEZW1vUmVxdWVzdBIMCgRkZW1vGAEgASgMEhAKCGZpbGVuYW1lGAIgASgJIjsKEVBhcnNlRGVtb1Jlc3BvbnNlEiYKBGRlbW8YASABKAsyGC5kZW1vc3RhdHMudjEuRGVtb091dHB1dCJwCgpEZW1vT3V0cHV0EhAKCGZpbGVuYW1lGAEgASgJEiQKBmhlYWRlchgCIAEoCzIULmRlbW9zdGF0cy52MS5IZWFkZXISKgoHc3VtbWFyeRgDIAEoCzIZLmRlbW9zdGF0cy52MS5EZW1vU3VtbWFyeSK4AQoGSGVhZGVyEhEKCWRlbW9fdHlwZRgBIAEoCRIPCgd2ZXJzaW9uGAIgASgNEhAKCHByb3RvY29sGAMgASgNEg4KBnNlcnZlchgEIAEoCRIMCgRuaWNrGAUgASgJEgsKA21hcBgGIAEoCRIMCgRnYW1lGAcgASgJEhAKCGR1cmF0aW9uGAggASgCEg0KBXRpY2tzGAkgASgNEg4KBmZyYW1lcxgKIAEoDRIOCgZzaWdub24YCyABKA0iowIKC0RlbW9TdW1tYXJ5EioKBnJvdW5kcxgBIAMoCzIaLmRlbW9zdGF0cy52MS5Sb3VuZFN1bW1hcnkSJwoEY2hhdBgCIAMoCzIZLmRlbW9zdGF0cy52MS5DaGF0TWVzc2FnZRIoCgV2b3RlcxgDIAMoCzIZLmRlbW9zdGF0cy52MS5Wb3RlU3VtbWFyeRI0Cg9zb3VyY2Vtb2Rfdm90ZXMYBCADKAsyGy5kZW1vc3RhdHMudjEuU291cmNlTW9kVm90ZRI3Cg5wb2ludF9jYXB0dXJlcxgFIAMoCzIfLmRlbW9zdGF0cy52MS5Qb2ludENhcHR1cmVTdGFydBImCgVraWxscxgGIAMoCzIXLmRlbW9zdGF0cy52MS5LaWxsRXZlbnQihQEKC0NoYXRNZXNzYWdlEgwKBHRpY2sYASABKA0SDAoEdXNlchgCIAEoCRIPCgdtZXNzYWdlGAMgASgJEg8KB2lzX2RlYWQYBCABKAgSDwoHaXNfdGVhbRgFIAEoCBIPCgdpc19zcGVjGAYgASgIEhYKDmlzX25hbWVfY2hhbmdlGAcgASgIItwBCgxSb3VuZFN1bW1hcnkSJwoGd2lubmVyGAEgASgOMhIuZGVtb3N0YXRzLnYxLlRlYW1IAIgBARIUCgxpc19zdGFsZW1hdGUYAiABKAgSFwoPaXNfc3VkZGVuX2RlYXRoGAMgASgIEgwKBHRpbWUYBCABKAISDAoEbXZwcxgFIAMoCRIsCgdwbGF5ZXJzGAYgAygLMhsuZGVtb3N0YXRzLnYxLlBsYXllclN1bW1hcnkSDwoHd2lubmVycxgHIAMoCRIOCgZsb3NlcnMYCCADKAlCCQoHX3dpbm5lciKUBwoNUGxheWVyU3VtbWFyeRIMCgRuYW1lGAEgASgJEg8KB3N0ZWFtaWQYAiABKAkSFwoKdGlja19zdGFydBgDIAEoDUgAiAEBEhUKCHRpY2tfZW5kGAQgASgNSAGIAQESEwoGcG9pbnRzGAUgASgNSAKIAQESGAoQY29ubmVjdGlvbl9jb3VudBgGIAEoDRIZCgxib251c19wb2ludHMYByABKA1IA4gBARIiCgVzdGF0cxgIIAEoCzITLmRlbW9zdGF0cy52MS5TdGF0cxIpCgdjbGFzc2VzGAkgAygLMhguZGVtb3N0YXRzLnYxLkNsYXNzU3RhdHMSOQoHd2VhcG9ucxgKIAMoCzIoLmRlbW9zdGF0cy52MS5QbGF5ZXJTdW1tYXJ5LldlYXBvbnNFbnRyeRIdChBzY29yZWJvYXJkX2tpbGxzGAsgASgNSASIAQESHwoSc2NvcmVib2FyZF9hc3Npc3RzGAwgASgNSAWIAQESEAoIc3VpY2lkZXMYDSABKA0SHgoRc2NvcmVib2FyZF9kZWF0aHMYDiABKA1IBogBARIYChBwb3N0cm91bmRfZGVhdGhzGA8gASgNEhAKCGNhcHR1cmVzGBAgASgNEhgKEGNhcHR1cmVzX2Jsb2NrZWQYESABKA0SHgoRc2NvcmVib2FyZF9kYW1hZ2UYEiABKA1IB4gBARIWCg5pc19mYWtlX3BsYXllchgTIAEoCBIQCghpc19obF90dhgUIAEoCBIRCglpc19yZXBsYXkYFSABKAgSQgoMaGVhbF90YXJnZXRzGBYgAygLMiwuZGVtb3N0YXRzLnYxLlBsYXllclN1bW1hcnkuSGVhbFRhcmdldHNFbnRyeRpDCgxXZWFwb25zRW50cnkSCwoDa2V5GAEgASgJEiIKBXZhbHVlGAIgASgLMhMuZGVtb3N0YXRzLnYxLlN0YXRzOgI4ARoyChBIZWFsVGFyZ2V0c0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoAjoCOAFCDQoLX3RpY2tfc3RhcnRCCwoJX3RpY2tfZW5kQgkKB19wb2ludHNCDwoNX2JvbnVzX3BvaW50c0ITChFfc2NvcmVib2FyZF9raWxsc0IVChNfc2NvcmVib2FyZF9hc3Npc3RzQhQKEl9zY29yZWJvYXJkX2RlYXRoc0IUChJfc2NvcmVib2FyZF9kYW1hZ2UiVAoKQ2xhc3NTdGF0cxIiCgVjbGFzcxgBIAEoDjITLmRlbW9zdGF0cy52MS5DbGFzcxIiCgVzdGF0cxgCIAEoCzITLmRlbW9zdGF0cy52MS5TdGF0cyLnCQoFU3RhdHMSDQoFa2lsbHMYASABKA0SDwoHYXNzaXN0cxgCIAEoDRIOCgZkZWF0aHMYAyABKA0SFwoPcG9zdHJvdW5kX2tpbGxzGAQgASgNEhkKEXBvc3Ryb3VuZF9hc3Npc3RzGAUgASgNEhgKEHBvc3Ryb3VuZF9kZWF0aHMYBiABKA0SGAoQcHJlcm91bmRfaGVhbGluZxgHIAEoDRIPCgdoZWFsaW5nGAggASgNEhkKEXBvc3Ryb3VuZF9oZWFsaW5nGAkgASgNEg0KBWRyb3BzGAogASgNEh4KFm5lYXJfZnVsbF9jaGFyZ2VfZGVhdGgYCyABKA0SFAoMY2hhcmdlc191YmVyGAwgASgNEhUKDWNoYXJnZXNfa3JpdHoYDSABKA0SGAoQY2hhcmdlc19xdWlja2ZpeBgOIAEoDRIOCgZkYW1hZ2UYDyABKA0SFAoMZGFtYWdlX3Rha2VuGBAgASgNEhMKC2RvbWluYXRpb25zGBEgASgNEhEKCWRvbWluYXRlZBgSIAEoDRIQCghyZXZlbmdlcxgTIAEoDRIQCghyZXZlbmdlZBgUIAEoDRIQCghhaXJzaG90cxgVIAEoDRIWCg5oZWFkc2hvdF9raWxscxgWIAEoDRIWCg5iYWNrc3RhYl9raWxscxgXIAEoDRIRCgloZWFkc2hvdHMYGCABKA0SEQoJYmFja3N0YWJzGBkgASgNEhAKCGNhcHR1cmVzGBogASgNEhgKEGNhcHR1cmVzX2Jsb2NrZWQYGyABKA0SFAoMd2FzX2hlYWRzaG90GBwgASgNEhcKD3dhc19iYWNrc3RhYmJlZBgdIAEoDRINCgVzaG90cxgeIAEoDRIMCgRoaXRzGB8gASgNEhQKDG9iamVjdF9idWlsdBggIAEoDRIYChBvYmplY3RfZGVzdHJveWVkGCEgASgNEg0KBWhlYWxzGCIgASgNEg4KBmhlYWxlZBgjIAEoDRIWCg5jcm9zc2Jvd19oZWFscxgkIAEoDRIYChBjcm9zc2Jvd19oZWFsaW5nGCUgASgNEhMKC2hlYWxfb25faGl0GCYgASgNEhQKDGV4dGluZ3Vpc2hlcxgnIAEoDRIYChBidWlsZGluZ19oZWFsaW5nGCggASgNEhUKDWRyb3BwZWRfdWJlcnMYKSABKA0SEAoIcmVmbGVjdHMYKiABKA0SEAoIZGVmZW5zZXMYKyABKA0SEwoLZGlyZWN0X2hpdHMYLCABKA0SEQoJdGVsZXBvcnRzGC0gASgNEhUKDXB1c2hfZGlzdGFuY2UYLiABKA0SHAoUZW52aXJvbm1lbnRhbF9kZWF0aHMYLyABKA0SGwoTZW52aXJvbm1lbnRhbF9raWxscxgwIAEoDRIVCg1vYmplY3RfcGxhY2VkGDEgASgNEhcKD29iamVjdF91cGdyYWRlZBgyIAEoDRIWCg5vYmplY3RfY2FycmllZBgzIAEoDRIWCg5vYmplY3RfZHJvcHBlZBg0IAEoDRIWCg5vYmplY3RfcmVtb3ZlZBg1IAEoDRIYChBvYmplY3RfZGV0b25hdGVkGDYgASgNEhIKCmFtbW9fcGFja3MYNyABKA0SFAoMaGVhbHRoX3BhY2tzGDggASgNEhsKE2hlYWx0aF9wYWNrX2hlYWxpbmcYOSABKA0isAEKClZvdGVCYWxsb3QSDAoEdGljaxgBIAEoDRIUCgx2b3Rlcl9lbnRpdHkYAiABKA0SEgoFdm90ZXIYAyABKAlIAIgBARIXCgp2b3Rlcl9uYW1lGAQgASgJSAGIAQESDgoGb3B0aW9uGAUgASgNEhgKC29wdGlvbl9uYW1lGAYgASgJSAKIAQFCCAoGX3ZvdGVyQg0KC192b3Rlcl9uYW1lQg4KDF9vcHRpb25fbmFtZSKJBAoLVm90ZVN1bW1hcnkSDwoHdm90ZWlkeBgBIAEoDRISCgp0aWNrX3N0YXJ0GAIgASgNEhUKCHRpY2tfZW5kGAMgASgNSACIAQESDQoFaXNzdWUYBCABKAkSDgoGcGFyYW0xGAUgASgJEgwKBHRlYW0YBiABKA0SHQoQaW5pdGlhdG9yX2VudGl0eRgHIAEoDUgBiAEBEhYKCWluaXRpYXRvchgIIAEoCUgCiAEBEhsKDmluaXRpYXRvcl9uYW1lGAkgASgJSAOIAQESDwoHb3B0aW9ucxgKIAMoCRIpCgdiYWxsb3RzGAsgAygLMhguZGVtb3N0YXRzLnYxLlZvdGVCYWxsb3QSDgoGY291bnRzGAwgAygNEhwKD3BvdGVudGlhbF92b3RlcxgNIAEoDUgEiAEBEhMKBnBhc3NlZBgOIAEoCEgFiAEBEhsKDnJlc3VsdF9kZXRhaWxzGA8gASgJSAaIAQESGgoNcmVzdWx0X3BhcmFtMRgQIAEoCUgHiAEBQgsKCV90aWNrX2VuZEITChFfaW5pdGlhdG9yX2VudGl0eUIMCgpfaW5pdGlhdG9yQhEKD19pbml0aWF0b3JfbmFtZUISChBfcG90ZW50aWFsX3ZvdGVzQgkKB19wYXNzZWRCEQoPX3Jlc3VsdF9kZXRhaWxzQhAKDl9yZXN1bHRfcGFyYW0xInIKD1NtVm90ZUluaXRpYXRvchIMCgRuYW1lGAEgASgJEhQKB3N0ZWFtaWQYAiABKAlIAIgBARIMCgR0aWNrGAMgASgNEg8KB2N1cnJlbnQYBCABKA0SEAoIcmVxdWlyZWQYBSABKA1CCgoIX3N0ZWFtaWQiWQoMU21Ob21pbmF0aW9uEgwKBG5hbWUYASABKAkSFAoHc3RlYW1pZBgCIAEoCUgAiAEBEgsKA21hcBgDIAEoCRIMCgR0aWNrGAQgASgNQgoKCF9zdGVhbWlkIisKDFNtVm90ZU9wdGlvbhIMCgRuYW1lGAEgASgJEg0KBXZvdGVzGAIgASgNItQCCg1Tb3VyY2VNb2RWb3RlEgwKBGtpbmQYASABKAkSEgoKdGlja19zdGFydBgCIAEoDRIVCgh0aWNrX2VuZBgDIAEoDUgAiAEBEjEKCmluaXRpYXRvcnMYBCADKAsyHS5kZW1vc3RhdHMudjEuU21Wb3RlSW5pdGlhdG9yEi8KC25vbWluYXRpb25zGAUgAygLMhouZGVtb3N0YXRzLnYxLlNtTm9taW5hdGlvbhITCgt0b3RhbF92b3RlcxgGIAEoDRIXCg9wb3RlbnRpYWxfdm90ZXMYByABKA0SKwoHb3B0aW9ucxgIIAMoCzIaLmRlbW9zdGF0cy52MS5TbVZvdGVPcHRpb24SEwoGcmVzdWx0GAkgASgJSAGIAQESEwoGcGFzc2VkGAogASgISAKIAQFCCwoJX3RpY2tfZW5kQgkKB19yZXN1bHRCCQoHX3Bhc3NlZCKBAQoRUG9pbnRDYXB0dXJlU3RhcnQSDAoEdGljaxgBIAEoDRIKCgJjcBgCIAEoDRIPCgdjcF9uYW1lGAMgASgJEgwKBHRlYW0YBCABKA0SEAoIY2FwX3RlYW0YBSABKA0SDwoHY2FwcGVycxgGIAMoCRIQCghjYXBfdGltZRgHIAEoAiIrCghQb3NpdGlvbhIJCgF4GAEgASgCEgkKAXkYAiABKAISCQoBehgDIAEoAiInCglFeWVBbmdsZXMSDQoFcGl0Y2gYASABKAISCwoDeWF3GAIgASgCIucCCglLaWxsRXZlbnQSDAoEdGljaxgBIAEoDRITCgZraWxsZXIYAiABKAlIAIgBARIOCgZ2aWN0aW0YAyABKAkSDgoGd2VhcG9uGAQgASgJEi8KCmtpbGxlcl9wb3MYBSABKAsyFi5kZW1vc3RhdHMudjEuUG9zaXRpb25IAYgBARIvCgp2aWN0aW1fcG9zGAYgASgLMhYuZGVtb3N0YXRzLnYxLlBvc2l0aW9uSAKIAQESMwoNa2lsbGVyX2FuZ2xlcxgHIAEoCzIXLmRlbW9zdGF0cy52MS5FeWVBbmdsZXNIA4gBARIzCg12aWN0aW1fYW5nbGVzGAggASgLMhcuZGVtb3N0YXRzLnYxLkV5ZUFuZ2xlc0gEiAEBQgkKB19raWxsZXJCDQoLX2tpbGxlcl9wb3NCDQoLX3ZpY3RpbV9wb3NCEAoOX2tpbGxlcl9hbmdsZXNCEAoOX3ZpY3RpbV9hbmdsZXMqRwoEVGVhbRIOCgpURUFNX09USEVSEAASEgoOVEVBTV9TUEVDVEFUT1IQARIMCghURUFNX1JFRBACEg0KCVRFQU1fQkxVRRADKrYBCgVDbGFzcxIPCgtDTEFTU19PVEhFUhAAEg8KC0NMQVNTX1NDT1VUEAESEAoMQ0xBU1NfU05JUEVSEAISEQoNQ0xBU1NfU09MRElFUhADEhEKDUNMQVNTX0RFTU9NQU4QBBIPCgtDTEFTU19NRURJQxAFEg8KC0NMQVNTX0hFQVZZEAYSDgoKQ0xBU1NfUFlSTxAHEg0KCUNMQVNTX1NQWRAIEhIKDkNMQVNTX0VOR0lORUVSEAkyWwoLRGVtb1NlcnZpY2USTAoJUGFyc2VEZW1vEh4uZGVtb3N0YXRzLnYxLlBhcnNlRGVtb1JlcXVlc3QaHy5kZW1vc3RhdHMudjEuUGFyc2VEZW1vUmVzcG9uc2VCtgEKEGNvbS5kZW1vc3RhdHMudjFCDkRlbW9zdGF0c1Byb3RvUAFaQWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvZGVtb3N0YXRzL3YxO2RlbW9zdGF0c3YxogIDRFhYqgIMRGVtb3N0YXRzLlYxygIMRGVtb3N0YXRzXFYx4gIYRGVtb3N0YXRzXFYxXEdQQk1ldGFkYXRh6gINRGVtb3N0YXRzOjpWMWIGcHJvdG8z");
+  fileDesc("ChxkZW1vc3RhdHMvdjEvZGVtb3N0YXRzLnByb3RvEgxkZW1vc3RhdHMudjEiMgoQUGFyc2VEZW1vUmVxdWVzdBIMCgRkZW1vGAEgASgMEhAKCGZpbGVuYW1lGAIgASgJIjsKEVBhcnNlRGVtb1Jlc3BvbnNlEiYKBGRlbW8YASABKAsyGC5kZW1vc3RhdHMudjEuRGVtb091dHB1dCJwCgpEZW1vT3V0cHV0EhAKCGZpbGVuYW1lGAEgASgJEiQKBmhlYWRlchgCIAEoCzIULmRlbW9zdGF0cy52MS5IZWFkZXISKgoHc3VtbWFyeRgDIAEoCzIZLmRlbW9zdGF0cy52MS5EZW1vU3VtbWFyeSK4AQoGSGVhZGVyEhEKCWRlbW9fdHlwZRgBIAEoCRIPCgd2ZXJzaW9uGAIgASgNEhAKCHByb3RvY29sGAMgASgNEg4KBnNlcnZlchgEIAEoCRIMCgRuaWNrGAUgASgJEgsKA21hcBgGIAEoCRIMCgRnYW1lGAcgASgJEhAKCGR1cmF0aW9uGAggASgCEg0KBXRpY2tzGAkgASgNEg4KBmZyYW1lcxgKIAEoDRIOCgZzaWdub24YCyABKA0i9wEKC0RlbW9TdW1tYXJ5EioKBnJvdW5kcxgBIAMoCzIaLmRlbW9zdGF0cy52MS5Sb3VuZFN1bW1hcnkSJwoEY2hhdBgCIAMoCzIZLmRlbW9zdGF0cy52MS5DaGF0TWVzc2FnZRIoCgV2b3RlcxgDIAMoCzIZLmRlbW9zdGF0cy52MS5Wb3RlU3VtbWFyeRI0Cg9zb3VyY2Vtb2Rfdm90ZXMYBCADKAsyGy5kZW1vc3RhdHMudjEuU291cmNlTW9kVm90ZRInCgZldmVudHMYByADKAsyFy5kZW1vc3RhdHMudjEuR2FtZUV2ZW50SgQIBRAGSgQIBhAHIoUBCgtDaGF0TWVzc2FnZRIMCgR0aWNrGAEgASgNEgwKBHVzZXIYAiABKAkSDwoHbWVzc2FnZRgDIAEoCRIPCgdpc19kZWFkGAQgASgIEg8KB2lzX3RlYW0YBSABKAgSDwoHaXNfc3BlYxgGIAEoCBIWCg5pc19uYW1lX2NoYW5nZRgHIAEoCCLcAQoMUm91bmRTdW1tYXJ5EicKBndpbm5lchgBIAEoDjISLmRlbW9zdGF0cy52MS5UZWFtSACIAQESFAoMaXNfc3RhbGVtYXRlGAIgASgIEhcKD2lzX3N1ZGRlbl9kZWF0aBgDIAEoCBIMCgR0aW1lGAQgASgCEgwKBG12cHMYBSADKAkSLAoHcGxheWVycxgGIAMoCzIbLmRlbW9zdGF0cy52MS5QbGF5ZXJTdW1tYXJ5Eg8KB3dpbm5lcnMYByADKAkSDgoGbG9zZXJzGAggAygJQgkKB193aW5uZXIilAcKDVBsYXllclN1bW1hcnkSDAoEbmFtZRgBIAEoCRIPCgdzdGVhbWlkGAIgASgJEhcKCnRpY2tfc3RhcnQYAyABKA1IAIgBARIVCgh0aWNrX2VuZBgEIAEoDUgBiAEBEhMKBnBvaW50cxgFIAEoDUgCiAEBEhgKEGNvbm5lY3Rpb25fY291bnQYBiABKA0SGQoMYm9udXNfcG9pbnRzGAcgASgNSAOIAQESIgoFc3RhdHMYCCABKAsyEy5kZW1vc3RhdHMudjEuU3RhdHMSKQoHY2xhc3NlcxgJIAMoCzIYLmRlbW9zdGF0cy52MS5DbGFzc1N0YXRzEjkKB3dlYXBvbnMYCiADKAsyKC5kZW1vc3RhdHMudjEuUGxheWVyU3VtbWFyeS5XZWFwb25zRW50cnkSHQoQc2NvcmVib2FyZF9raWxscxgLIAEoDUgEiAEBEh8KEnNjb3JlYm9hcmRfYXNzaXN0cxgMIAEoDUgFiAEBEhAKCHN1aWNpZGVzGA0gASgNEh4KEXNjb3JlYm9hcmRfZGVhdGhzGA4gASgNSAaIAQESGAoQcG9zdHJvdW5kX2RlYXRocxgPIAEoDRIQCghjYXB0dXJlcxgQIAEoDRIYChBjYXB0dXJlc19ibG9ja2VkGBEgASgNEh4KEXNjb3JlYm9hcmRfZGFtYWdlGBIgASgNSAeIAQESFgoOaXNfZmFrZV9wbGF5ZXIYEyABKAgSEAoIaXNfaGxfdHYYFCABKAgSEQoJaXNfcmVwbGF5GBUgASgIEkIKDGhlYWxfdGFyZ2V0cxgWIAMoCzIsLmRlbW9zdGF0cy52MS5QbGF5ZXJTdW1tYXJ5LkhlYWxUYXJnZXRzRW50cnkaQwoMV2VhcG9uc0VudHJ5EgsKA2tleRgBIAEoCRIiCgV2YWx1ZRgCIAEoCzITLmRlbW9zdGF0cy52MS5TdGF0czoCOAEaMgoQSGVhbFRhcmdldHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAI6AjgBQg0KC190aWNrX3N0YXJ0QgsKCV90aWNrX2VuZEIJCgdfcG9pbnRzQg8KDV9ib251c19wb2ludHNCEwoRX3Njb3JlYm9hcmRfa2lsbHNCFQoTX3Njb3JlYm9hcmRfYXNzaXN0c0IUChJfc2NvcmVib2FyZF9kZWF0aHNCFAoSX3Njb3JlYm9hcmRfZGFtYWdlIlQKCkNsYXNzU3RhdHMSIgoFY2xhc3MYASABKA4yEy5kZW1vc3RhdHMudjEuQ2xhc3MSIgoFc3RhdHMYAiABKAsyEy5kZW1vc3RhdHMudjEuU3RhdHMi5wkKBVN0YXRzEg0KBWtpbGxzGAEgASgNEg8KB2Fzc2lzdHMYAiABKA0SDgoGZGVhdGhzGAMgASgNEhcKD3Bvc3Ryb3VuZF9raWxscxgEIAEoDRIZChFwb3N0cm91bmRfYXNzaXN0cxgFIAEoDRIYChBwb3N0cm91bmRfZGVhdGhzGAYgASgNEhgKEHByZXJvdW5kX2hlYWxpbmcYByABKA0SDwoHaGVhbGluZxgIIAEoDRIZChFwb3N0cm91bmRfaGVhbGluZxgJIAEoDRINCgVkcm9wcxgKIAEoDRIeChZuZWFyX2Z1bGxfY2hhcmdlX2RlYXRoGAsgASgNEhQKDGNoYXJnZXNfdWJlchgMIAEoDRIVCg1jaGFyZ2VzX2tyaXR6GA0gASgNEhgKEGNoYXJnZXNfcXVpY2tmaXgYDiABKA0SDgoGZGFtYWdlGA8gASgNEhQKDGRhbWFnZV90YWtlbhgQIAEoDRITCgtkb21pbmF0aW9ucxgRIAEoDRIRCglkb21pbmF0ZWQYEiABKA0SEAoIcmV2ZW5nZXMYEyABKA0SEAoIcmV2ZW5nZWQYFCABKA0SEAoIYWlyc2hvdHMYFSABKA0SFgoOaGVhZHNob3Rfa2lsbHMYFiABKA0SFgoOYmFja3N0YWJfa2lsbHMYFyABKA0SEQoJaGVhZHNob3RzGBggASgNEhEKCWJhY2tzdGFicxgZIAEoDRIQCghjYXB0dXJlcxgaIAEoDRIYChBjYXB0dXJlc19ibG9ja2VkGBsgASgNEhQKDHdhc19oZWFkc2hvdBgcIAEoDRIXCg93YXNfYmFja3N0YWJiZWQYHSABKA0SDQoFc2hvdHMYHiABKA0SDAoEaGl0cxgfIAEoDRIUCgxvYmplY3RfYnVpbHQYICABKA0SGAoQb2JqZWN0X2Rlc3Ryb3llZBghIAEoDRINCgVoZWFscxgiIAEoDRIOCgZoZWFsZWQYIyABKA0SFgoOY3Jvc3Nib3dfaGVhbHMYJCABKA0SGAoQY3Jvc3Nib3dfaGVhbGluZxglIAEoDRITCgtoZWFsX29uX2hpdBgmIAEoDRIUCgxleHRpbmd1aXNoZXMYJyABKA0SGAoQYnVpbGRpbmdfaGVhbGluZxgoIAEoDRIVCg1kcm9wcGVkX3ViZXJzGCkgASgNEhAKCHJlZmxlY3RzGCogASgNEhAKCGRlZmVuc2VzGCsgASgNEhMKC2RpcmVjdF9oaXRzGCwgASgNEhEKCXRlbGVwb3J0cxgtIAEoDRIVCg1wdXNoX2Rpc3RhbmNlGC4gASgNEhwKFGVudmlyb25tZW50YWxfZGVhdGhzGC8gASgNEhsKE2Vudmlyb25tZW50YWxfa2lsbHMYMCABKA0SFQoNb2JqZWN0X3BsYWNlZBgxIAEoDRIXCg9vYmplY3RfdXBncmFkZWQYMiABKA0SFgoOb2JqZWN0X2NhcnJpZWQYMyABKA0SFgoOb2JqZWN0X2Ryb3BwZWQYNCABKA0SFgoOb2JqZWN0X3JlbW92ZWQYNSABKA0SGAoQb2JqZWN0X2RldG9uYXRlZBg2IAEoDRISCgphbW1vX3BhY2tzGDcgASgNEhQKDGhlYWx0aF9wYWNrcxg4IAEoDRIbChNoZWFsdGhfcGFja19oZWFsaW5nGDkgASgNIrABCgpWb3RlQmFsbG90EgwKBHRpY2sYASABKA0SFAoMdm90ZXJfZW50aXR5GAIgASgNEhIKBXZvdGVyGAMgASgJSACIAQESFwoKdm90ZXJfbmFtZRgEIAEoCUgBiAEBEg4KBm9wdGlvbhgFIAEoDRIYCgtvcHRpb25fbmFtZRgGIAEoCUgCiAEBQggKBl92b3RlckINCgtfdm90ZXJfbmFtZUIOCgxfb3B0aW9uX25hbWUiiQQKC1ZvdGVTdW1tYXJ5Eg8KB3ZvdGVpZHgYASABKA0SEgoKdGlja19zdGFydBgCIAEoDRIVCgh0aWNrX2VuZBgDIAEoDUgAiAEBEg0KBWlzc3VlGAQgASgJEg4KBnBhcmFtMRgFIAEoCRIMCgR0ZWFtGAYgASgNEh0KEGluaXRpYXRvcl9lbnRpdHkYByABKA1IAYgBARIWCglpbml0aWF0b3IYCCABKAlIAogBARIbCg5pbml0aWF0b3JfbmFtZRgJIAEoCUgDiAEBEg8KB29wdGlvbnMYCiADKAkSKQoHYmFsbG90cxgLIAMoCzIYLmRlbW9zdGF0cy52MS5Wb3RlQmFsbG90Eg4KBmNvdW50cxgMIAMoDRIcCg9wb3RlbnRpYWxfdm90ZXMYDSABKA1IBIgBARITCgZwYXNzZWQYDiABKAhIBYgBARIbCg5yZXN1bHRfZGV0YWlscxgPIAEoCUgGiAEBEhoKDXJlc3VsdF9wYXJhbTEYECABKAlIB4gBAUILCglfdGlja19lbmRCEwoRX2luaXRpYXRvcl9lbnRpdHlCDAoKX2luaXRpYXRvckIRCg9faW5pdGlhdG9yX25hbWVCEgoQX3BvdGVudGlhbF92b3Rlc0IJCgdfcGFzc2VkQhEKD19yZXN1bHRfZGV0YWlsc0IQCg5fcmVzdWx0X3BhcmFtMSJyCg9TbVZvdGVJbml0aWF0b3ISDAoEbmFtZRgBIAEoCRIUCgdzdGVhbWlkGAIgASgJSACIAQESDAoEdGljaxgDIAEoDRIPCgdjdXJyZW50GAQgASgNEhAKCHJlcXVpcmVkGAUgASgNQgoKCF9zdGVhbWlkIlkKDFNtTm9taW5hdGlvbhIMCgRuYW1lGAEgASgJEhQKB3N0ZWFtaWQYAiABKAlIAIgBARILCgNtYXAYAyABKAkSDAoEdGljaxgEIAEoDUIKCghfc3RlYW1pZCIrCgxTbVZvdGVPcHRpb24SDAoEbmFtZRgBIAEoCRINCgV2b3RlcxgCIAEoDSLUAgoNU291cmNlTW9kVm90ZRIMCgRraW5kGAEgASgJEhIKCnRpY2tfc3RhcnQYAiABKA0SFQoIdGlja19lbmQYAyABKA1IAIgBARIxCgppbml0aWF0b3JzGAQgAygLMh0uZGVtb3N0YXRzLnYxLlNtVm90ZUluaXRpYXRvchIvCgtub21pbmF0aW9ucxgFIAMoCzIaLmRlbW9zdGF0cy52MS5TbU5vbWluYXRpb24SEwoLdG90YWxfdm90ZXMYBiABKA0SFwoPcG90ZW50aWFsX3ZvdGVzGAcgASgNEisKB29wdGlvbnMYCCADKAsyGi5kZW1vc3RhdHMudjEuU21Wb3RlT3B0aW9uEhMKBnJlc3VsdBgJIAEoCUgBiAEBEhMKBnBhc3NlZBgKIAEoCEgCiAEBQgsKCV90aWNrX2VuZEIJCgdfcmVzdWx0QgkKB19wYXNzZWQigQEKEVBvaW50Q2FwdHVyZVN0YXJ0EgwKBHRpY2sYASABKA0SCgoCY3AYAiABKA0SDwoHY3BfbmFtZRgDIAEoCRIMCgR0ZWFtGAQgASgNEhAKCGNhcF90ZWFtGAUgASgNEg8KB2NhcHBlcnMYBiADKAkSEAoIY2FwX3RpbWUYByABKAIiKwoIUG9zaXRpb24SCQoBeBgBIAEoAhIJCgF5GAIgASgCEgkKAXoYAyABKAIiJwoJRXllQW5nbGVzEg0KBXBpdGNoGAEgASgCEgsKA3lhdxgCIAEoAiKqAwoJS2lsbEV2ZW50EgwKBHRpY2sYASABKA0SEwoGa2lsbGVyGAIgASgJSACIAQESDgoGdmljdGltGAMgASgJEg4KBndlYXBvbhgEIAEoCRIvCgpraWxsZXJfcG9zGAUgASgLMhYuZGVtb3N0YXRzLnYxLlBvc2l0aW9uSAGIAQESLwoKdmljdGltX3BvcxgGIAEoCzIWLmRlbW9zdGF0cy52MS5Qb3NpdGlvbkgCiAEBEjMKDWtpbGxlcl9hbmdsZXMYByABKAsyFy5kZW1vc3RhdHMudjEuRXllQW5nbGVzSAOIAQESMwoNdmljdGltX2FuZ2xlcxgIIAEoCzIXLmRlbW9zdGF0cy52MS5FeWVBbmdsZXNIBIgBARIWCg5pc19maXJzdF9ibG9vZBgJIAEoCBIVCg1pc19kb21pbmF0aW9uGAogASgIEhIKCmlzX3JldmVuZ2UYCyABKAhCCQoHX2tpbGxlckINCgtfa2lsbGVyX3Bvc0INCgtfdmljdGltX3Bvc0IQCg5fa2lsbGVyX2FuZ2xlc0IQCg5fdmljdGltX2FuZ2xlcyJqCgxQb2ludENhcHR1cmUSDAoEdGljaxgBIAEoDRIKCgJjcBgCIAEoDRIPCgdjcF9uYW1lGAMgASgJEgwKBHRlYW0YBCABKA0SEAoIY2FwX3RlYW0YBSABKA0SDwoHY2FwcGVycxgGIAMoCSJ9Cg5DYXB0dXJlQmxvY2tl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MS5LaWxsRXZlbnRIABI6Cg9jYXB0dXJlX3N0YXJ0ZWQYAyABKAsyHy5kZW1vc3RhdHMudjEuUG9pbnRDYXB0dXJlU3RhcnRIABItCgdjYXB0dXJlGAQgASgLMhouZGVtb3N0YXRzLnYxLlBvaW50Q2FwdHVyZUgAEjcKD2NhcHR1cmVfYmxvY2tlZBgFIAEoCzIcLmRlbW9zdGF0cy52MS5DYXB0dXJlQmxvY2tlZEgAEjUKDmNhcHR1cmVfYnJva2VuGAYgASgLMhsuZGVtb3N0YXRzLnYxLkNhcHR1cmVCcm9rZW5IABI1Cg5idWlsZGluZ19idWlsdBgHIAEoCzIbLmRlbW9zdGF0cy52MS5CdWlsZGluZ0J1aWx0SAASPQoSYnVpbGRpbmdfZGVzdHJveWVkGAggASgLMh8uZGVtb3N0YXRzLnYxLkJ1aWxkaW5nRGVzdHJveWVkSAASPAoRYnVpbGRpbmdfdXBncmFkZWQYCSABKAsyHy5kZW1vc3RhdHMudjEuQnVpbGRpbmdMaWZlY3ljbGVIABI7ChBidWlsZGluZ19jYXJyaWVkGAogASgLMh8uZGVtb3N0YXRzLnYxLkJ1aWxkaW5nTGlmZWN5Y2xlSAASOwoQYnVpbGRpbmdfZHJvcHBlZBgLIAEoCzIfLmRlbW9zdGF0cy52MS5CdWlsZGluZ0xpZmVjeWNsZUgAEjsKEGJ1aWxkaW5nX3JlbW92ZWQYDCABKAsyHy5kZW1vc3RhdHMudjEuQnVpbGRpbmdMaWZlY3ljbGVIABI9ChJidWlsZGluZ19kZXRvbmF0ZWQYDSABKAsyHy5kZW1vc3RhdHMudjEuQnVpbGRpbmdMaWZlY3ljbGVIABIzCg1zYXBwZXJfcGxhY2VkGA4gASgLMhouZGVtb3N0YXRzLnYxLlNhcHBlclBsYWNlZEgAEjMKDXJvdW5kX3N0YXJ0ZWQYDyABKAsyGi5kZW1vc3RhdHMudjEuUm91bmRTdGFydGVkSAASKwoJcm91bmRfd29uGBAgASgLMhYuZGVtb3N0YXRzLnYxLlJvdW5kV29uSAASLAoJc3RhbGVtYXRlGBEgASgLMhcuZGVtb3N0YXRzLnYxLlN0YWxlbWF0ZUgAEisKCWdhbWVfb3ZlchgSIAEoCzIWLmRlbW9zdGF0cy52MS5HYW1lT3ZlckgAEjYKEnN1ZGRlbl9kZWF0aF9iZWdpbhgTIAEoCzIYLmRlbW9zdGF0cy52MS5UaWNrTWFya2VySAASNAoQc3VkZGVuX2RlYXRoX2VuZBgUIAEoCzIYLmRlbW9zdGF0cy52MS5UaWNrTWFya2VySAASMgoOb3ZlcnRpbWVfYmVnaW4YFSABKAsyGC5kZW1vc3RhdHMudjEuVGlja01hcmtlckgAEjAKDG92ZXJ0aW1lX2VuZBgWIAEoCzIYLmRlbW9zdGF0cy52MS5UaWNrTWFya2VySAASMgoOc2V0dXBfZmluaXNoZWQYFyABKAsyGC5kZW1vc3RhdHMudjEuVGlja01hcmtlckgAEjEKDHViZXJfZHJvcHBlZBgYIAEoCzIZLmRlbW9zdGF0cy52MS5VYmVyRHJvcHBlZEgAEjMKDXViZXJfZGVwbG95ZWQYGSABKAsyGi5kZW1vc3RhdHMudjEuVWJlckRlcGxveWVkSAASLQoKZmxhZ19ldmVudBgaIAEoCzIXLmRlbW9zdGF0cy52MS5GbGFnRXZlbnRIABIzCg1mbGFnX2NhcHR1cmVkGBsgASgLMhouZGVtb3N0YXRzLnYxLkZsYWdDYXB0dXJlZEgAEjkKEGtpbGxzdHJlYWtfZW5kZWQYHCABKAsyHS5kZW1vc3RhdHMudjEuS2lsbHN0cmVha0VuZGVkSABCBgoEa2luZCpHCgRUZWFtEg4KClRFQU1fT1RIRVIQABISCg5URUFNX1NQRUNUQVRPUhABEgwKCFRFQU1fUkVEEAISDQoJVEVBTV9CTFVFEAMqtgEKBUNsYXNzEg8KC0NMQVNTX09USEVSEAASDwoLQ0xBU1NfU0NPVVQQARIQCgxDTEFTU19TTklQRVIQAhIRCg1DTEFTU19TT0xESUVSEAMSEQoNQ0xBU1NfREVNT01BThAEEg8KC0NMQVNTX01FRElDEAUSDwoLQ0xBU1NfSEVBVlkQBhIOCgpDTEFTU19QWVJPEAcSDQoJQ0xBU1NfU1BZEAgSEgoOQ0xBU1NfRU5HSU5FRVIQCSp/CgxCdWlsZGluZ1R5cGUSFAoQQlVJTERJTkdfVU5LTk9XThAAEhMKD0JVSUxESU5HX1NFTlRSWRABEhYKEkJVSUxESU5HX0RJU1BFTlNFUhACEhcKE0JVSUxESU5HX1RFTEVQT1JURVIQAxITCg9CVUlMRElOR19TQVBQRVIQBDJbCgtEZW1vU2VydmljZRJMCglQYXJzZURlbW8SHi5kZW1vc3RhdHMudjEuUGFyc2VEZW1vUmVxdWVzdBofLmRlbW9zdGF0cy52MS5QYXJzZURlbW9SZXNwb25zZUK2AQoQY29tLmRlbW9zdGF0cy52MUIORGVtb3N0YXRzUHJvdG9QAVpBZ2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9kZW1vc3RhdHMvdjE7ZGVtb3N0YXRzdjGiAgNEWFiqAgxEZW1vc3RhdHMuVjHKAgxEZW1vc3RhdHNcVjHiAhhEZW1vc3RhdHNcVjFcR1BCTWV0YWRhdGHqAg1EZW1vc3RhdHM6OlYxYgZwcm90bzM");
 
 /**
  * @generated from message demostats.v1.ParseDemoRequest
@@ -176,14 +176,9 @@ export type DemoSummary = Message<"demostats.v1.DemoSummary"> & {
   sourcemodVotes: SourceModVote[];
 
   /**
-   * @generated from field: repeated demostats.v1.PointCaptureStart point_captures = 5;
+   * @generated from field: repeated demostats.v1.GameEvent events = 7;
    */
-  pointCaptures: PointCaptureStart[];
-
-  /**
-   * @generated from field: repeated demostats.v1.KillEvent kills = 6;
-   */
-  kills: KillEvent[];
+  events: GameEvent[];
 };
 
 /**
@@ -1204,6 +1199,21 @@ export type KillEvent = Message<"demostats.v1.KillEvent"> & {
    * @generated from field: optional demostats.v1.EyeAngles victim_angles = 8;
    */
   victimAngles?: EyeAngles | undefined;
+
+  /**
+   * @generated from field: bool is_first_blood = 9;
+   */
+  isFirstBlood: boolean;
+
+  /**
+   * @generated from field: bool is_domination = 10;
+   */
+  isDomination: boolean;
+
+  /**
+   * @generated from field: bool is_revenge = 11;
+   */
+  isRevenge: boolean;
 };
 
 /**
@@ -1212,6 +1222,790 @@ export type KillEvent = Message<"demostats.v1.KillEvent"> & {
  */
 export const KillEventSchema: GenMessage<KillEvent> = /*@__PURE__*/
   messageDesc(file_demostats_v1_demostats, 19);
+
+/**
+ * @generated from message demostats.v1.PointCapture
+ */
+export type PointCapture = Message<"demostats.v1.PointCapture"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+
+  /**
+   * @generated from field: uint32 cp = 2;
+   */
+  cp: number;
+
+  /**
+   * @generated from field: string cp_name = 3;
+   */
+  cpName: string;
+
+  /**
+   * @generated from field: uint32 team = 4;
+   */
+  team: number;
+
+  /**
+   * @generated from field: uint32 cap_team = 5;
+   */
+  capTeam: number;
+
+  /**
+   * Steamids of players on the point, best effort.
+   *
+   * @generated from field: repeated string cappers = 6;
+   */
+  cappers: string[];
+};
+
+/**
+ * Describes the message demostats.v1.PointCapture.
+ * Use `create(PointCaptureSchema)` to create a new message.
+ */
+export const PointCaptureSchema: GenMessage<PointCapture> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 20);
+
+/**
+ * @generated from message demostats.v1.CaptureBlocked
+ */
+export type CaptureBlocked = Message<"demostats.v1.CaptureBlocked"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+
+  /**
+   * @generated from field: uint32 cp = 2;
+   */
+  cp: number;
+
+  /**
+   * @generated from field: string cp_name = 3;
+   */
+  cpName: string;
+
+  /**
+   * Steamid of the blocker, if resolved.
+   *
+   * @generated from field: optional string blocker = 4;
+   */
+  blocker?: string | undefined;
+
+  /**
+   * Steamid of the capped player, if resolved.
+   *
+   * @generated from field: optional string victim = 5;
+   */
+  victim?: string | undefined;
+};
+
+/**
+ * Describes the message demostats.v1.CaptureBlocked.
+ * Use `create(CaptureBlockedSchema)` to create a new message.
+ */
+export const CaptureBlockedSchema: GenMessage<CaptureBlocked> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 21);
+
+/**
+ * @generated from message demostats.v1.CaptureBroken
+ */
+export type CaptureBroken = Message<"demostats.v1.CaptureBroken"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+
+  /**
+   * @generated from field: uint32 cp = 2;
+   */
+  cp: number;
+
+  /**
+   * @generated from field: string cp_name = 3;
+   */
+  cpName: string;
+
+  /**
+   * @generated from field: float time_remaining = 4;
+   */
+  timeRemaining: number;
+};
+
+/**
+ * Describes the message demostats.v1.CaptureBroken.
+ * Use `create(CaptureBrokenSchema)` to create a new message.
+ */
+export const CaptureBrokenSchema: GenMessage<CaptureBroken> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 22);
+
+/**
+ * @generated from message demostats.v1.BuildingBuilt
+ */
+export type BuildingBuilt = Message<"demostats.v1.BuildingBuilt"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+
+  /**
+   * Steamid of the owning engineer, if resolved.
+   *
+   * @generated from field: optional string owner = 2;
+   */
+  owner?: string | undefined;
+
+  /**
+   * @generated from field: demostats.v1.BuildingType building = 3;
+   */
+  building: BuildingType;
+
+  /**
+   * @generated from field: uint32 level = 4;
+   */
+  level: number;
+
+  /**
+   * @generated from field: bool is_mini = 5;
+   */
+  isMini: boolean;
+
+  /**
+   * @generated from field: demostats.v1.Position pos = 6;
+   */
+  pos?: Position | undefined;
+};
+
+/**
+ * Describes the message demostats.v1.BuildingBuilt.
+ * Use `create(BuildingBuiltSchema)` to create a new message.
+ */
+export const BuildingBuiltSchema: GenMessage<BuildingBuilt> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 23);
+
+/**
+ * @generated from message demostats.v1.BuildingDestroyed
+ */
+export type BuildingDestroyed = Message<"demostats.v1.BuildingDestroyed"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+
+  /**
+   * Steamid of the owning engineer, if resolved.
+   *
+   * @generated from field: optional string owner = 2;
+   */
+  owner?: string | undefined;
+
+  /**
+   * Steamid of the destroyer; absent for world/carried losses.
+   *
+   * @generated from field: optional string attacker = 3;
+   */
+  attacker?: string | undefined;
+
+  /**
+   * @generated from field: optional string assister = 4;
+   */
+  assister?: string | undefined;
+
+  /**
+   * @generated from field: string weapon = 5;
+   */
+  weapon: string;
+
+  /**
+   * @generated from field: demostats.v1.BuildingType building = 6;
+   */
+  building: BuildingType;
+
+  /**
+   * Last known position; absent when the entity was already gone.
+   *
+   * @generated from field: optional demostats.v1.Position pos = 7;
+   */
+  pos?: Position | undefined;
+};
+
+/**
+ * Describes the message demostats.v1.BuildingDestroyed.
+ * Use `create(BuildingDestroyedSchema)` to create a new message.
+ */
+export const BuildingDestroyedSchema: GenMessage<BuildingDestroyed> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 24);
+
+/**
+ * @generated from message demostats.v1.BuildingLifecycle
+ */
+export type BuildingLifecycle = Message<"demostats.v1.BuildingLifecycle"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+
+  /**
+   * Steamid of the engineer, if resolved.
+   *
+   * @generated from field: optional string player = 2;
+   */
+  player?: string | undefined;
+
+  /**
+   * @generated from field: demostats.v1.BuildingType building = 3;
+   */
+  building: BuildingType;
+
+  /**
+   * @generated from field: uint32 index = 4;
+   */
+  index: number;
+};
+
+/**
+ * Describes the message demostats.v1.BuildingLifecycle.
+ * Use `create(BuildingLifecycleSchema)` to create a new message.
+ */
+export const BuildingLifecycleSchema: GenMessage<BuildingLifecycle> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 25);
+
+/**
+ * @generated from message demostats.v1.SapperPlaced
+ */
+export type SapperPlaced = Message<"demostats.v1.SapperPlaced"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+
+  /**
+   * Steamid of the spy, if resolved.
+   *
+   * @generated from field: optional string spy = 2;
+   */
+  spy?: string | undefined;
+
+  /**
+   * Steamid of the building owner, if resolved.
+   *
+   * @generated from field: optional string owner = 3;
+   */
+  owner?: string | undefined;
+
+  /**
+   * @generated from field: demostats.v1.BuildingType building = 4;
+   */
+  building: BuildingType;
+
+  /**
+   * @generated from field: uint32 sapper_index = 5;
+   */
+  sapperIndex: number;
+};
+
+/**
+ * Describes the message demostats.v1.SapperPlaced.
+ * Use `create(SapperPlacedSchema)` to create a new message.
+ */
+export const SapperPlacedSchema: GenMessage<SapperPlaced> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 26);
+
+/**
+ * @generated from message demostats.v1.TickMarker
+ */
+export type TickMarker = Message<"demostats.v1.TickMarker"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+};
+
+/**
+ * Describes the message demostats.v1.TickMarker.
+ * Use `create(TickMarkerSchema)` to create a new message.
+ */
+export const TickMarkerSchema: GenMessage<TickMarker> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 27);
+
+/**
+ * @generated from message demostats.v1.RoundStarted
+ */
+export type RoundStarted = Message<"demostats.v1.RoundStarted"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+
+  /**
+   * @generated from field: bool full_reset = 2;
+   */
+  fullReset: boolean;
+};
+
+/**
+ * Describes the message demostats.v1.RoundStarted.
+ * Use `create(RoundStartedSchema)` to create a new message.
+ */
+export const RoundStartedSchema: GenMessage<RoundStarted> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 28);
+
+/**
+ * @generated from message demostats.v1.RoundWon
+ */
+export type RoundWon = Message<"demostats.v1.RoundWon"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+
+  /**
+   * Absent on stalemates.
+   *
+   * @generated from field: optional demostats.v1.Team winner = 2;
+   */
+  winner?: Team | undefined;
+
+  /**
+   * @generated from field: bool is_stalemate = 3;
+   */
+  isStalemate: boolean;
+
+  /**
+   * @generated from field: uint32 win_reason = 4;
+   */
+  winReason: number;
+
+  /**
+   * @generated from field: float round_time = 5;
+   */
+  roundTime: number;
+
+  /**
+   * @generated from field: bool was_sudden_death = 6;
+   */
+  wasSuddenDeath: boolean;
+};
+
+/**
+ * Describes the message demostats.v1.RoundWon.
+ * Use `create(RoundWonSchema)` to create a new message.
+ */
+export const RoundWonSchema: GenMessage<RoundWon> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 29);
+
+/**
+ * @generated from message demostats.v1.Stalemate
+ */
+export type Stalemate = Message<"demostats.v1.Stalemate"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+
+  /**
+   * @generated from field: uint32 reason = 2;
+   */
+  reason: number;
+};
+
+/**
+ * Describes the message demostats.v1.Stalemate.
+ * Use `create(StalemateSchema)` to create a new message.
+ */
+export const StalemateSchema: GenMessage<Stalemate> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 30);
+
+/**
+ * @generated from message demostats.v1.GameOver
+ */
+export type GameOver = Message<"demostats.v1.GameOver"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+
+  /**
+   * @generated from field: string reason = 2;
+   */
+  reason: string;
+};
+
+/**
+ * Describes the message demostats.v1.GameOver.
+ * Use `create(GameOverSchema)` to create a new message.
+ */
+export const GameOverSchema: GenMessage<GameOver> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 31);
+
+/**
+ * @generated from message demostats.v1.UberDropped
+ */
+export type UberDropped = Message<"demostats.v1.UberDropped"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+
+  /**
+   * Steamid of the medic, if resolved.
+   *
+   * @generated from field: optional string medic = 2;
+   */
+  medic?: string | undefined;
+
+  /**
+   * Steamid of the killer, if resolved.
+   *
+   * @generated from field: optional string attacker = 3;
+   */
+  attacker?: string | undefined;
+
+  /**
+   * @generated from field: uint32 healing = 4;
+   */
+  healing: number;
+};
+
+/**
+ * Describes the message demostats.v1.UberDropped.
+ * Use `create(UberDroppedSchema)` to create a new message.
+ */
+export const UberDroppedSchema: GenMessage<UberDropped> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 32);
+
+/**
+ * @generated from message demostats.v1.UberDeployed
+ */
+export type UberDeployed = Message<"demostats.v1.UberDeployed"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+
+  /**
+   * Steamid of the medic, if resolved.
+   *
+   * @generated from field: optional string medic = 2;
+   */
+  medic?: string | undefined;
+
+  /**
+   * Steamid of the charge target, if resolved.
+   *
+   * @generated from field: optional string target = 3;
+   */
+  target?: string | undefined;
+};
+
+/**
+ * Describes the message demostats.v1.UberDeployed.
+ * Use `create(UberDeployedSchema)` to create a new message.
+ */
+export const UberDeployedSchema: GenMessage<UberDeployed> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 33);
+
+/**
+ * @generated from message demostats.v1.FlagEvent
+ */
+export type FlagEvent = Message<"demostats.v1.FlagEvent"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+
+  /**
+   * Steamid of the involved player, if resolved.
+   *
+   * @generated from field: optional string player = 2;
+   */
+  player?: string | undefined;
+
+  /**
+   * Steamid of the flag carrier, if resolved.
+   *
+   * @generated from field: optional string carrier = 3;
+   */
+  carrier?: string | undefined;
+
+  /**
+   * TF2 TF_FLAGEVENT_* numbering.
+   *
+   * @generated from field: uint32 event_type = 4;
+   */
+  eventType: number;
+
+  /**
+   * @generated from field: uint32 team = 5;
+   */
+  team: number;
+
+  /**
+   * @generated from field: bool home = 6;
+   */
+  home: boolean;
+};
+
+/**
+ * Describes the message demostats.v1.FlagEvent.
+ * Use `create(FlagEventSchema)` to create a new message.
+ */
+export const FlagEventSchema: GenMessage<FlagEvent> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 34);
+
+/**
+ * @generated from message demostats.v1.FlagCaptured
+ */
+export type FlagCaptured = Message<"demostats.v1.FlagCaptured"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+
+  /**
+   * @generated from field: uint32 capping_team = 2;
+   */
+  cappingTeam: number;
+
+  /**
+   * @generated from field: uint32 score = 3;
+   */
+  score: number;
+};
+
+/**
+ * Describes the message demostats.v1.FlagCaptured.
+ * Use `create(FlagCapturedSchema)` to create a new message.
+ */
+export const FlagCapturedSchema: GenMessage<FlagCaptured> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 35);
+
+/**
+ * @generated from message demostats.v1.KillstreakEnded
+ */
+export type KillstreakEnded = Message<"demostats.v1.KillstreakEnded"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+
+  /**
+   * Steamid of the player whose streak ended.
+   *
+   * @generated from field: string player = 2;
+   */
+  player: string;
+
+  /**
+   * Kills + assists since their last death.
+   *
+   * @generated from field: uint32 streak = 3;
+   */
+  streak: number;
+
+  /**
+   * Steamid of the killer; absent for world deaths.
+   *
+   * @generated from field: optional string killer = 4;
+   */
+  killer?: string | undefined;
+};
+
+/**
+ * Describes the message demostats.v1.KillstreakEnded.
+ * Use `create(KillstreakEndedSchema)` to create a new message.
+ */
+export const KillstreakEndedSchema: GenMessage<KillstreakEnded> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 36);
+
+/**
+ * One noteworthy match moment. The JSON API uses
+ * `{"type": "<snake_case variant>", ...fields}`; the proto schema uses
+ * this oneof with the same per-variant messages.
+ *
+ * @generated from message demostats.v1.GameEvent
+ */
+export type GameEvent = Message<"demostats.v1.GameEvent"> & {
+  /**
+   * @generated from field: uint32 tick = 1;
+   */
+  tick: number;
+
+  /**
+   * @generated from oneof demostats.v1.GameEvent.kind
+   */
+  kind: {
+    /**
+     * @generated from field: demostats.v1.KillEvent kill = 2;
+     */
+    value: KillEvent;
+    case: "kill";
+  } | {
+    /**
+     * @generated from field: demostats.v1.PointCaptureStart capture_started = 3;
+     */
+    value: PointCaptureStart;
+    case: "captureStarted";
+  } | {
+    /**
+     * @generated from field: demostats.v1.PointCapture capture = 4;
+     */
+    value: PointCapture;
+    case: "capture";
+  } | {
+    /**
+     * @generated from field: demostats.v1.CaptureBlocked capture_blocked = 5;
+     */
+    value: CaptureBlocked;
+    case: "captureBlocked";
+  } | {
+    /**
+     * @generated from field: demostats.v1.CaptureBroken capture_broken = 6;
+     */
+    value: CaptureBroken;
+    case: "captureBroken";
+  } | {
+    /**
+     * @generated from field: demostats.v1.BuildingBuilt building_built = 7;
+     */
+    value: BuildingBuilt;
+    case: "buildingBuilt";
+  } | {
+    /**
+     * @generated from field: demostats.v1.BuildingDestroyed building_destroyed = 8;
+     */
+    value: BuildingDestroyed;
+    case: "buildingDestroyed";
+  } | {
+    /**
+     * @generated from field: demostats.v1.BuildingLifecycle building_upgraded = 9;
+     */
+    value: BuildingLifecycle;
+    case: "buildingUpgraded";
+  } | {
+    /**
+     * @generated from field: demostats.v1.BuildingLifecycle building_carried = 10;
+     */
+    value: BuildingLifecycle;
+    case: "buildingCarried";
+  } | {
+    /**
+     * @generated from field: demostats.v1.BuildingLifecycle building_dropped = 11;
+     */
+    value: BuildingLifecycle;
+    case: "buildingDropped";
+  } | {
+    /**
+     * @generated from field: demostats.v1.BuildingLifecycle building_removed = 12;
+     */
+    value: BuildingLifecycle;
+    case: "buildingRemoved";
+  } | {
+    /**
+     * @generated from field: demostats.v1.BuildingLifecycle building_detonated = 13;
+     */
+    value: BuildingLifecycle;
+    case: "buildingDetonated";
+  } | {
+    /**
+     * @generated from field: demostats.v1.SapperPlaced sapper_placed = 14;
+     */
+    value: SapperPlaced;
+    case: "sapperPlaced";
+  } | {
+    /**
+     * @generated from field: demostats.v1.RoundStarted round_started = 15;
+     */
+    value: RoundStarted;
+    case: "roundStarted";
+  } | {
+    /**
+     * @generated from field: demostats.v1.RoundWon round_won = 16;
+     */
+    value: RoundWon;
+    case: "roundWon";
+  } | {
+    /**
+     * @generated from field: demostats.v1.Stalemate stalemate = 17;
+     */
+    value: Stalemate;
+    case: "stalemate";
+  } | {
+    /**
+     * @generated from field: demostats.v1.GameOver game_over = 18;
+     */
+    value: GameOver;
+    case: "gameOver";
+  } | {
+    /**
+     * @generated from field: demostats.v1.TickMarker sudden_death_begin = 19;
+     */
+    value: TickMarker;
+    case: "suddenDeathBegin";
+  } | {
+    /**
+     * @generated from field: demostats.v1.TickMarker sudden_death_end = 20;
+     */
+    value: TickMarker;
+    case: "suddenDeathEnd";
+  } | {
+    /**
+     * @generated from field: demostats.v1.TickMarker overtime_begin = 21;
+     */
+    value: TickMarker;
+    case: "overtimeBegin";
+  } | {
+    /**
+     * @generated from field: demostats.v1.TickMarker overtime_end = 22;
+     */
+    value: TickMarker;
+    case: "overtimeEnd";
+  } | {
+    /**
+     * @generated from field: demostats.v1.TickMarker setup_finished = 23;
+     */
+    value: TickMarker;
+    case: "setupFinished";
+  } | {
+    /**
+     * @generated from field: demostats.v1.UberDropped uber_dropped = 24;
+     */
+    value: UberDropped;
+    case: "uberDropped";
+  } | {
+    /**
+     * @generated from field: demostats.v1.UberDeployed uber_deployed = 25;
+     */
+    value: UberDeployed;
+    case: "uberDeployed";
+  } | {
+    /**
+     * @generated from field: demostats.v1.FlagEvent flag_event = 26;
+     */
+    value: FlagEvent;
+    case: "flagEvent";
+  } | {
+    /**
+     * @generated from field: demostats.v1.FlagCaptured flag_captured = 27;
+     */
+    value: FlagCaptured;
+    case: "flagCaptured";
+  } | {
+    /**
+     * @generated from field: demostats.v1.KillstreakEnded killstreak_ended = 28;
+     */
+    value: KillstreakEnded;
+    case: "killstreakEnded";
+  } | { case: undefined; value?: undefined };
+};
+
+/**
+ * Describes the message demostats.v1.GameEvent.
+ * Use `create(GameEventSchema)` to create a new message.
+ */
+export const GameEventSchema: GenMessage<GameEvent> = /*@__PURE__*/
+  messageDesc(file_demostats_v1_demostats, 37);
 
 /**
  * @generated from enum demostats.v1.Team
@@ -1304,6 +2098,45 @@ export enum Class {
  */
 export const ClassSchema: GenEnum<Class> = /*@__PURE__*/
   enumDesc(file_demostats_v1_demostats, 1);
+
+/**
+ * Building kind for building lifecycle events. Mirrors the TF2
+ * `ObjectType` numbering: dispenser=0, teleporter=1, sentry=2, sapper=3.
+ *
+ * @generated from enum demostats.v1.BuildingType
+ */
+export enum BuildingType {
+  /**
+   * @generated from enum value: BUILDING_UNKNOWN = 0;
+   */
+  BUILDING_UNKNOWN = 0,
+
+  /**
+   * @generated from enum value: BUILDING_SENTRY = 1;
+   */
+  BUILDING_SENTRY = 1,
+
+  /**
+   * @generated from enum value: BUILDING_DISPENSER = 2;
+   */
+  BUILDING_DISPENSER = 2,
+
+  /**
+   * @generated from enum value: BUILDING_TELEPORTER = 3;
+   */
+  BUILDING_TELEPORTER = 3,
+
+  /**
+   * @generated from enum value: BUILDING_SAPPER = 4;
+   */
+  BUILDING_SAPPER = 4,
+}
+
+/**
+ * Describes the enum demostats.v1.BuildingType.
+ */
+export const BuildingTypeSchema: GenEnum<BuildingType> = /*@__PURE__*/
+  enumDesc(file_demostats_v1_demostats, 2);
 
 /**
  * Demo parsing service, exposed over ConnectRPC (Connect, gRPC, gRPC-Web).

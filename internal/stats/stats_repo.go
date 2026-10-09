@@ -2,6 +2,7 @@ package stats
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"slices"
@@ -706,7 +707,7 @@ func (r Repository) CreateMatch(ctx context.Context, serverID int32, demoID int3
 		roundIDs = append(roundIDs, roundID)
 	}
 
-	if err := r.insertKills(ctx, transaction, newID, demo.Kills, roundTickRanges(demo.Rounds, roundIDs)); err != nil {
+	if err := r.insertEvents(ctx, transaction, newID, demo.Events, roundTickRanges(demo.Rounds, roundIDs)); err != nil {
 		if err := transaction.Rollback(ctx); err != nil {
 			slog.Error("Failed to rollback tx", slog.String("error", err.Error()))
 		}
@@ -862,43 +863,274 @@ func (r Repository) insertRoundPlayerVariants(ctx context.Context, transaction p
 	return nil
 }
 
-func (r Repository) insertKills(ctx context.Context, transaction pgx.Tx, matchID uuid.UUID, kills []demoparse.KillEvent, rounds []roundTickRange) error {
+// matchEventRow is the storable projection of a demoparse.MatchEvent. Actor,
+// target, and assister carry the singular participant roles; multi-party
+// roles such as capture cappers live in details.
+type matchEventRow struct {
+	eventType string
+	actor     *int64
+	target    *int64
+	assister  *int64
+	weapon    *string
+	building  *string
+	killerPos *demoparse.Position
+	victimPos *demoparse.Position
+	eventPos  *demoparse.Position
+	details   []byte
+}
+
+func eventSteamID(raw string) *int64 {
+	sid := steamid.New(raw)
+	if !sid.Valid() {
+		return nil
+	}
+
+	id := sid.Int64()
+
+	return &id
+}
+
+func optionalEventString(value string) *string {
+	if value == "" {
+		return nil
+	}
+
+	return &value
+}
+
+func optionalEventBuilding(value string) *string {
+	switch value {
+	case "sentry", "dispenser", "teleporter", "sapper":
+		return &value
+	default:
+		return nil
+	}
+}
+
+// pointWKT renders a position as WKT for geometry column binding. A nil
+// position binds NULL; otherwise Postgres coerces the text to PointZ.
+func pointWKT(pos *demoparse.Position) *string {
+	if pos == nil {
+		return nil
+	}
+
+	out := fmt.Sprintf("POINT Z (%v %v %v)", pos.X, pos.Y, pos.Z)
+
+	return &out
+}
+
+// matchEventRowFromEvent projects a parsed match event onto its storable row.
+// Variant-specific payloads are preserved verbatim in details; positions use
+// the geometry columns.
+func matchEventRowFromEvent(event demoparse.MatchEvent) (matchEventRow, error) {
+	row := matchEventRow{eventType: string(event.Type)}
+
+	marshal := func(payload any) ([]byte, error) {
+		if payload == nil {
+			return []byte("{}"), nil
+		}
+
+		return json.Marshal(payload)
+	}
+
+	var (
+		payload any
+		err     error
+	)
+
+	switch event.Type {
+	case demoparse.MatchEventKill:
+		kill := event.Kill
+		if kill == nil {
+			kill = &demoparse.KillEvent{}
+		}
+		row.actor = eventSteamID(kill.Killer)
+		row.target = eventSteamID(kill.Victim)
+		row.weapon = optionalEventString(kill.Weapon)
+		row.killerPos = kill.KillerPos
+		row.victimPos = kill.VictimPos
+		payload = kill
+	case demoparse.MatchEventCaptureStarted:
+		cap := event.CaptureStarted
+		if cap == nil {
+			cap = &demoparse.CaptureStartedEvent{}
+		}
+		payload = cap
+	case demoparse.MatchEventCapture:
+		cap := event.Capture
+		if cap == nil {
+			cap = &demoparse.CaptureEvent{}
+		}
+		payload = cap
+	case demoparse.MatchEventCaptureBlocked:
+		blocked := event.CaptureBlocked
+		if blocked == nil {
+			blocked = &demoparse.CaptureBlockedEvent{}
+		}
+		row.actor = eventSteamID(blocked.Blocker)
+		row.target = eventSteamID(blocked.Victim)
+		payload = blocked
+	case demoparse.MatchEventCaptureBroken:
+		broken := event.CaptureBroken
+		if broken == nil {
+			broken = &demoparse.CaptureBrokenEvent{}
+		}
+		payload = broken
+	case demoparse.MatchEventBuildingBuilt:
+		built := event.BuildingBuilt
+		if built == nil {
+			built = &demoparse.BuildingBuiltEvent{}
+		}
+		row.actor = eventSteamID(built.Owner)
+		row.building = optionalEventBuilding(built.Building)
+		row.eventPos = &built.Pos
+		payload = built
+	case demoparse.MatchEventBuildingDestroyed:
+		destroyed := event.BuildingDestroyed
+		if destroyed == nil {
+			destroyed = &demoparse.BuildingDestroyedEvent{}
+		}
+		row.actor = eventSteamID(destroyed.Attacker)
+		row.target = eventSteamID(destroyed.Owner)
+		row.assister = eventSteamID(destroyed.Assister)
+		row.weapon = optionalEventString(destroyed.Weapon)
+		row.building = optionalEventBuilding(destroyed.Building)
+		row.eventPos = destroyed.Pos
+		payload = destroyed
+	case demoparse.MatchEventBuildingUpgraded:
+		payload = lifecycleOrEmpty(event.BuildingUpgraded, &row)
+	case demoparse.MatchEventBuildingCarried:
+		payload = lifecycleOrEmpty(event.BuildingCarried, &row)
+	case demoparse.MatchEventBuildingDropped:
+		payload = lifecycleOrEmpty(event.BuildingDropped, &row)
+	case demoparse.MatchEventBuildingRemoved:
+		payload = lifecycleOrEmpty(event.BuildingRemoved, &row)
+	case demoparse.MatchEventBuildingDetonated:
+		payload = lifecycleOrEmpty(event.BuildingDetonated, &row)
+	case demoparse.MatchEventSapperPlaced:
+		sapper := event.SapperPlaced
+		if sapper == nil {
+			sapper = &demoparse.SapperPlacedEvent{}
+		}
+		row.actor = eventSteamID(sapper.Spy)
+		row.target = eventSteamID(sapper.Owner)
+		row.building = optionalEventBuilding(sapper.Building)
+		payload = sapper
+	case demoparse.MatchEventRoundStarted:
+		started := event.RoundStarted
+		if started == nil {
+			started = &demoparse.RoundStartedEvent{}
+		}
+		payload = started
+	case demoparse.MatchEventRoundWon:
+		won := event.RoundWon
+		if won == nil {
+			won = &demoparse.RoundWonEvent{}
+		}
+		payload = won
+	case demoparse.MatchEventStalemate:
+		stalemate := event.Stalemate
+		if stalemate == nil {
+			stalemate = &demoparse.StalemateEvent{}
+		}
+		payload = stalemate
+	case demoparse.MatchEventGameOver:
+		over := event.GameOver
+		if over == nil {
+			over = &demoparse.GameOverEvent{}
+		}
+		payload = over
+	case demoparse.MatchEventSuddenDeathBegin,
+		demoparse.MatchEventSuddenDeathEnd,
+		demoparse.MatchEventOvertimeBegin,
+		demoparse.MatchEventOvertimeEnd,
+		demoparse.MatchEventSetupFinished:
+		payload = nil
+	case demoparse.MatchEventUberDropped:
+		dropped := event.UberDropped
+		if dropped == nil {
+			dropped = &demoparse.UberDroppedEvent{}
+		}
+		row.actor = eventSteamID(dropped.Attacker)
+		row.target = eventSteamID(dropped.Medic)
+		payload = dropped
+	case demoparse.MatchEventUberDeployed:
+		deployed := event.UberDeployed
+		if deployed == nil {
+			deployed = &demoparse.UberDeployedEvent{}
+		}
+		row.actor = eventSteamID(deployed.Medic)
+		row.target = eventSteamID(deployed.Target)
+		payload = deployed
+	case demoparse.MatchEventFlagEvent:
+		flag := event.FlagEvent
+		if flag == nil {
+			flag = &demoparse.FlagEvent{}
+		}
+		row.actor = eventSteamID(flag.Player)
+		row.target = eventSteamID(flag.Carrier)
+		payload = flag
+	case demoparse.MatchEventFlagCaptured:
+		captured := event.FlagCaptured
+		if captured == nil {
+			captured = &demoparse.FlagCapturedEvent{}
+		}
+		payload = captured
+	case demoparse.MatchEventKillstreakEnded:
+		streak := event.KillstreakEnded
+		if streak == nil {
+			streak = &demoparse.KillstreakEndedEvent{}
+		}
+		row.actor = eventSteamID(streak.Killer)
+		row.target = eventSteamID(streak.Player)
+		payload = streak
+	default:
+		return row, fmt.Errorf("unknown match event type: %q", event.Type)
+	}
+
+	row.details, err = marshal(payload)
+	if err != nil {
+		return row, err
+	}
+
+	return row, nil
+}
+
+func lifecycleOrEmpty(lifecycle *demoparse.BuildingLifecycleEvent, row *matchEventRow) *demoparse.BuildingLifecycleEvent {
+	if lifecycle == nil {
+		lifecycle = &demoparse.BuildingLifecycleEvent{}
+	}
+
+	row.actor = eventSteamID(lifecycle.Player)
+	row.building = optionalEventBuilding(lifecycle.Building)
+
+	return lifecycle
+}
+
+func (r Repository) insertEvents(ctx context.Context, transaction pgx.Tx, matchID uuid.UUID, events []demoparse.MatchEvent, rounds []roundTickRange) error {
 	const query = `
-		INSERT INTO match_kill (
-			match_id, round_id, tick, killer_steam_id, victim_steam_id, weapon,
-			killer_pos_x, killer_pos_y, killer_pos_z,
-			victim_pos_x, victim_pos_y, victim_pos_z,
-			killer_angles_pitch, killer_angles_yaw,
-			victim_angles_pitch, victim_angles_yaw
+		INSERT INTO match_event (
+			match_id, round_id, tick, event_type,
+			actor_steam_id, target_steam_id, assister_steam_id,
+			weapon, building,
+			killer_position, victim_position, event_position,
+			details
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
 		)`
 
-	for _, kill := range kills {
-		victim := steamid.New(kill.Victim)
-		if !victim.Valid() {
-			slog.Warn("Skipping kill with invalid victim steamid", slog.String("victim", kill.Victim))
-
-			continue
+	for _, event := range events {
+		row, err := matchEventRowFromEvent(event)
+		if err != nil {
+			return err
 		}
-
-		var killerID *int64
-		if killer := steamid.New(kill.Killer); killer.Valid() {
-			id := killer.Int64()
-			killerID = &id
-		}
-
-		killerX, killerY, killerZ := killPosCoords(kill.KillerPos)
-		victimX, victimY, victimZ := killPosCoords(kill.VictimPos)
-		killerPitch, killerYaw := killAnglesCoords(kill.KillerAngles)
-		victimPitch, victimYaw := killAnglesCoords(kill.VictimAngles)
 
 		if _, err := transaction.Exec(ctx, query,
-			matchID, roundIDForTick(rounds, kill.Tick), kill.Tick, killerID, victim.Int64(), kill.Weapon,
-			killerX, killerY, killerZ,
-			victimX, victimY, victimZ,
-			killerPitch, killerYaw,
-			victimPitch, victimYaw); err != nil {
+			matchID, roundIDForTick(rounds, event.Tick), event.Tick, row.eventType,
+			row.actor, row.target, row.assister,
+			row.weapon, row.building,
+			pointWKT(row.killerPos), pointWKT(row.victimPos), pointWKT(row.eventPos),
+			row.details); err != nil {
 			return database.Err(err)
 		}
 	}
@@ -906,36 +1138,19 @@ func (r Repository) insertKills(ctx context.Context, transaction pgx.Tx, matchID
 	return nil
 }
 
-func killPosCoords(pos *demoparse.Position) (*float64, *float64, *float64) {
-	if pos == nil {
-		return nil, nil, nil
-	}
-
-	return &pos.X, &pos.Y, &pos.Z
-}
-
-func killAnglesCoords(angles *demoparse.EyeAngles) (*float64, *float64) {
-	if angles == nil {
-		return nil, nil
-	}
-
-	return &angles.Pitch, &angles.Yaw
-}
-
 func (r Repository) getKills(ctx context.Context, match *Match) error {
 	const query = `
 		SELECT
-			match_kill_id, tick, killer_steam_id, victim_steam_id, weapon,
-			killer_pos_x, killer_pos_y, killer_pos_z,
-			victim_pos_x, victim_pos_y, victim_pos_z,
-			killer_angles_pitch, killer_angles_yaw,
-			victim_angles_pitch, victim_angles_yaw
+			match_event_id, tick, actor_steam_id, target_steam_id, weapon,
+			ST_X(killer_position), ST_Y(killer_position), ST_Z(killer_position),
+			ST_X(victim_position), ST_Y(victim_position), ST_Z(victim_position),
+			details
 		FROM
-			match_kill
+			match_event
 		WHERE
-			match_id = $1
+			match_id = $1 AND event_type = 'kill'
 		ORDER BY
-			tick ASC, match_kill_id ASC`
+			tick ASC, match_event_id ASC`
 	rows, errRows := r.Database.Query(ctx, query, match.MatchID)
 	if errRows != nil {
 		return database.Err(errRows)
@@ -943,27 +1158,32 @@ func (r Repository) getKills(ctx context.Context, match *Match) error {
 
 	for rows.Next() {
 		var (
-			kill        MatchKill
-			killerID    *int64
-			victimID    int64
-			killerX     *float64
-			killerY     *float64
-			killerZ     *float64
-			victimX     *float64
-			victimY     *float64
-			victimZ     *float64
-			killerPitch *float64
-			killerYaw   *float64
-			victimPitch *float64
-			victimYaw   *float64
+			kill     MatchKill
+			killerID *int64
+			victimID *int64
+			killerX  *float64
+			killerY  *float64
+			killerZ  *float64
+			victimX  *float64
+			victimY  *float64
+			victimZ  *float64
+			details  []byte
+			weapon   *string
 		)
 
-		if err := rows.Scan(&kill.MatchKillID, &kill.Tick, &killerID, &victimID, &kill.Weapon,
+		if err := rows.Scan(&kill.MatchKillID, &kill.Tick, &killerID, &victimID, &weapon,
 			&killerX, &killerY, &killerZ,
 			&victimX, &victimY, &victimZ,
-			&killerPitch, &killerYaw,
-			&victimPitch, &victimYaw); err != nil {
+			&details); err != nil {
 			return database.Err(err)
+		}
+
+		// The kill feed API requires a victim; events without a resolvable
+		// victim remain stored but are not projected.
+		if victimID == nil {
+			slog.Debug("Skipping kill event without victim steamid", slog.Int("tick", kill.Tick))
+
+			continue
 		}
 
 		if killerID != nil {
@@ -971,7 +1191,11 @@ func (r Repository) getKills(ctx context.Context, match *Match) error {
 			kill.HasKiller = true
 		}
 
-		kill.VictimSteamID = steamid.New(victimID)
+		kill.VictimSteamID = steamid.New(*victimID)
+
+		if weapon != nil {
+			kill.Weapon = *weapon
+		}
 
 		if killerX != nil && killerY != nil && killerZ != nil {
 			kill.KillerPos = &demoparse.Position{X: *killerX, Y: *killerY, Z: *killerZ}
@@ -981,13 +1205,13 @@ func (r Repository) getKills(ctx context.Context, match *Match) error {
 			kill.VictimPos = &demoparse.Position{X: *victimX, Y: *victimY, Z: *victimZ}
 		}
 
-		if killerPitch != nil && killerYaw != nil {
-			kill.KillerAngles = &demoparse.EyeAngles{Pitch: *killerPitch, Yaw: *killerYaw}
+		var payload demoparse.KillEvent
+		if err := json.Unmarshal(details, &payload); err != nil {
+			return database.Err(err)
 		}
 
-		if victimPitch != nil && victimYaw != nil {
-			kill.VictimAngles = &demoparse.EyeAngles{Pitch: *victimPitch, Yaw: *victimYaw}
-		}
+		kill.KillerAngles = payload.KillerAngles
+		kill.VictimAngles = payload.VictimAngles
 
 		match.Kills = append(match.Kills, kill)
 	}

@@ -45,8 +45,10 @@ message DemoSummary {
   repeated ChatMessage chat = 2;
   repeated VoteSummary votes = 3;
   repeated SourceModVote sourcemod_votes = 4;
-  repeated PointCaptureStart point_captures = 5;
-  repeated KillEvent kills = 6;
+  // Removed: PointCaptureStart point_captures = 5; KillEvent kills = 6.
+  // Superseded by the generic `events` feed.
+  reserved 5, 6;
+  repeated GameEvent events = 7;
 }
 
 message ChatMessage {
@@ -294,4 +296,195 @@ message KillEvent {
   optional Position victim_pos = 6;
   optional EyeAngles killer_angles = 7;
   optional EyeAngles victim_angles = 8;
+  bool is_first_blood = 9;
+  bool is_domination = 10;
+  bool is_revenge = 11;
+}
+
+// Building kind for building lifecycle events. Mirrors the TF2
+// `ObjectType` numbering: dispenser=0, teleporter=1, sentry=2, sapper=3.
+enum BuildingType {
+  BUILDING_UNKNOWN = 0;
+  BUILDING_SENTRY = 1;
+  BUILDING_DISPENSER = 2;
+  BUILDING_TELEPORTER = 3;
+  BUILDING_SAPPER = 4;
+}
+
+message PointCapture {
+  uint32 tick = 1;
+  uint32 cp = 2;
+  string cp_name = 3;
+  uint32 team = 4;
+  uint32 cap_team = 5;
+  // Steamids of players on the point, best effort.
+  repeated string cappers = 6;
+}
+
+message CaptureBlocked {
+  uint32 tick = 1;
+  uint32 cp = 2;
+  string cp_name = 3;
+  // Steamid of the blocker, if resolved.
+  optional string blocker = 4;
+  // Steamid of the capped player, if resolved.
+  optional string victim = 5;
+}
+
+message CaptureBroken {
+  uint32 tick = 1;
+  uint32 cp = 2;
+  string cp_name = 3;
+  float time_remaining = 4;
+}
+
+message BuildingBuilt {
+  uint32 tick = 1;
+  // Steamid of the owning engineer, if resolved.
+  optional string owner = 2;
+  BuildingType building = 3;
+  uint32 level = 4;
+  bool is_mini = 5;
+  Position pos = 6;
+}
+
+message BuildingDestroyed {
+  uint32 tick = 1;
+  // Steamid of the owning engineer, if resolved.
+  optional string owner = 2;
+  // Steamid of the destroyer; absent for world/carried losses.
+  optional string attacker = 3;
+  optional string assister = 4;
+  string weapon = 5;
+  BuildingType building = 6;
+  // Last known position; absent when the entity was already gone.
+  optional Position pos = 7;
+}
+
+message BuildingLifecycle {
+  uint32 tick = 1;
+  // Steamid of the engineer, if resolved.
+  optional string player = 2;
+  BuildingType building = 3;
+  uint32 index = 4;
+}
+
+message SapperPlaced {
+  uint32 tick = 1;
+  // Steamid of the spy, if resolved.
+  optional string spy = 2;
+  // Steamid of the building owner, if resolved.
+  optional string owner = 3;
+  BuildingType building = 4;
+  uint32 sapper_index = 5;
+}
+
+message TickMarker {
+  uint32 tick = 1;
+}
+
+message RoundStarted {
+  uint32 tick = 1;
+  bool full_reset = 2;
+}
+
+message RoundWon {
+  uint32 tick = 1;
+  // Absent on stalemates.
+  optional Team winner = 2;
+  bool is_stalemate = 3;
+  uint32 win_reason = 4;
+  float round_time = 5;
+  bool was_sudden_death = 6;
+}
+
+message Stalemate {
+  uint32 tick = 1;
+  uint32 reason = 2;
+}
+
+message GameOver {
+  uint32 tick = 1;
+  string reason = 2;
+}
+
+message UberDropped {
+  uint32 tick = 1;
+  // Steamid of the medic, if resolved.
+  optional string medic = 2;
+  // Steamid of the killer, if resolved.
+  optional string attacker = 3;
+  uint32 healing = 4;
+}
+
+message UberDeployed {
+  uint32 tick = 1;
+  // Steamid of the medic, if resolved.
+  optional string medic = 2;
+  // Steamid of the charge target, if resolved.
+  optional string target = 3;
+}
+
+message FlagEvent {
+  uint32 tick = 1;
+  // Steamid of the involved player, if resolved.
+  optional string player = 2;
+  // Steamid of the flag carrier, if resolved.
+  optional string carrier = 3;
+  // TF2 TF_FLAGEVENT_* numbering.
+  uint32 event_type = 4;
+  uint32 team = 5;
+  bool home = 6;
+}
+
+message FlagCaptured {
+  uint32 tick = 1;
+  uint32 capping_team = 2;
+  uint32 score = 3;
+}
+
+message KillstreakEnded {
+  uint32 tick = 1;
+  // Steamid of the player whose streak ended.
+  string player = 2;
+  // Kills + assists since their last death.
+  uint32 streak = 3;
+  // Steamid of the killer; absent for world deaths.
+  optional string killer = 4;
+}
+
+// One noteworthy match moment. The JSON API uses
+// `{"type": "<snake_case variant>", ...fields}`; the proto schema uses
+// this oneof with the same per-variant messages.
+message GameEvent {
+  uint32 tick = 1;
+  oneof kind {
+    KillEvent kill = 2;
+    PointCaptureStart capture_started = 3;
+    PointCapture capture = 4;
+    CaptureBlocked capture_blocked = 5;
+    CaptureBroken capture_broken = 6;
+    BuildingBuilt building_built = 7;
+    BuildingDestroyed building_destroyed = 8;
+    BuildingLifecycle building_upgraded = 9;
+    BuildingLifecycle building_carried = 10;
+    BuildingLifecycle building_dropped = 11;
+    BuildingLifecycle building_removed = 12;
+    BuildingLifecycle building_detonated = 13;
+    SapperPlaced sapper_placed = 14;
+    RoundStarted round_started = 15;
+    RoundWon round_won = 16;
+    Stalemate stalemate = 17;
+    GameOver game_over = 18;
+    TickMarker sudden_death_begin = 19;
+    TickMarker sudden_death_end = 20;
+    TickMarker overtime_begin = 21;
+    TickMarker overtime_end = 22;
+    TickMarker setup_finished = 23;
+    UberDropped uber_dropped = 24;
+    UberDeployed uber_deployed = 25;
+    FlagEvent flag_event = 26;
+    FlagCaptured flag_captured = 27;
+    KillstreakEnded killstreak_ended = 28;
+  }
 }

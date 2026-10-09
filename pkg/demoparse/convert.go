@@ -7,7 +7,7 @@ import (
 	demostatsv1 "github.com/leighmacdonald/gbans/internal/demostats/v1"
 )
 
-// DemoFromProto converts a v0.3.2+ ConnectRPC ParseDemoResponse into the
+// DemoFromProto converts a v0.3.3+ ConnectRPC ParseDemoResponse into the
 // domain Demo model used by the stats and demo packages.
 //
 // The protobuf schema nests per-player totals under PlayerSummary.stats and
@@ -72,22 +72,9 @@ func DemoFromProto(resp *demostatsv1.ParseDemoResponse, fallbackName string) *De
 			demo.SourceModVotes[i] = sourceModVoteFromProto(vote)
 		}
 
-		demo.PointCaptures = make([]PointCapture, len(summary.GetPointCaptures()))
-		for i, cap := range summary.GetPointCaptures() {
-			demo.PointCaptures[i] = PointCapture{
-				Tick:    int(cap.GetTick()),
-				Cp:      int(cap.GetCp()),
-				CpName:  cap.GetCpName(),
-				Team:    int(cap.GetTeam()),
-				CapTeam: int(cap.GetCapTeam()),
-				Cappers: cap.GetCappers(),
-				CapTime: float64(cap.GetCapTime()),
-			}
-		}
-
-		demo.Kills = make([]KillEvent, len(summary.GetKills()))
-		for i, kill := range summary.GetKills() {
-			demo.Kills[i] = killFromProto(kill)
+		demo.Events = make([]MatchEvent, len(summary.GetEvents()))
+		for i, event := range summary.GetEvents() {
+			demo.Events[i] = eventFromProto(event)
 		}
 	}
 
@@ -403,29 +390,459 @@ func sourceModVoteFromProto(vote *demostatsv1.SourceModVote) SourceModVote {
 	return out
 }
 
+func positionFromProto(pos *demostatsv1.Position) *Position {
+	if pos == nil {
+		return nil
+	}
+
+	return &Position{X: float64(pos.GetX()), Y: float64(pos.GetY()), Z: float64(pos.GetZ())}
+}
+
+func eyeAnglesFromProto(angles *demostatsv1.EyeAngles) *EyeAngles {
+	if angles == nil {
+		return nil
+	}
+
+	return &EyeAngles{Pitch: float64(angles.GetPitch()), Yaw: float64(angles.GetYaw())}
+}
+
+func positionToProto(pos *Position) *demostatsv1.Position {
+	if pos == nil {
+		return nil
+	}
+
+	return &demostatsv1.Position{
+		X: float32(pos.X), //nolint:gosec
+		Y: float32(pos.Y), //nolint:gosec
+		Z: float32(pos.Z), //nolint:gosec
+	}
+}
+
+func eyeAnglesToProto(angles *EyeAngles) *demostatsv1.EyeAngles {
+	if angles == nil {
+		return nil
+	}
+
+	return &demostatsv1.EyeAngles{
+		Pitch: float32(angles.Pitch), //nolint:gosec
+		Yaw:   float32(angles.Yaw),   //nolint:gosec
+	}
+}
+
+func buildingToString(building demostatsv1.BuildingType) string {
+	switch building {
+	case demostatsv1.BuildingType_BUILDING_SENTRY:
+		return "sentry"
+	case demostatsv1.BuildingType_BUILDING_DISPENSER:
+		return "dispenser"
+	case demostatsv1.BuildingType_BUILDING_TELEPORTER:
+		return "teleporter"
+	case demostatsv1.BuildingType_BUILDING_SAPPER:
+		return "sapper"
+	default:
+		return "unknown"
+	}
+}
+
+func stringToBuilding(building string) demostatsv1.BuildingType {
+	switch strings.ToLower(building) {
+	case "sentry":
+		return demostatsv1.BuildingType_BUILDING_SENTRY
+	case "dispenser":
+		return demostatsv1.BuildingType_BUILDING_DISPENSER
+	case "teleporter":
+		return demostatsv1.BuildingType_BUILDING_TELEPORTER
+	case "sapper":
+		return demostatsv1.BuildingType_BUILDING_SAPPER
+	default:
+		return demostatsv1.BuildingType_BUILDING_UNKNOWN
+	}
+}
+
+func eventWinnerToString(winner demostatsv1.Team) string {
+	switch winner {
+	case demostatsv1.Team_TEAM_RED:
+		return "red"
+	case demostatsv1.Team_TEAM_BLUE:
+		return "blu"
+	default:
+		return ""
+	}
+}
+
+func stringToEventWinner(winner string) *demostatsv1.Team {
+	switch strings.ToLower(winner) {
+	case "red":
+		out := demostatsv1.Team_TEAM_RED
+
+		return &out
+	case "blu", "blue":
+		out := demostatsv1.Team_TEAM_BLUE
+
+		return &out
+	default:
+		return nil
+	}
+}
+
 func killFromProto(kill *demostatsv1.KillEvent) KillEvent {
-	out := KillEvent{
-		Tick:   int(kill.GetTick()),
-		Killer: kill.GetKiller(),
-		Victim: kill.GetVictim(),
-		Weapon: kill.GetWeapon(),
+	return KillEvent{
+		Tick:         int(kill.GetTick()),
+		Killer:       kill.GetKiller(),
+		Victim:       kill.GetVictim(),
+		Weapon:       kill.GetWeapon(),
+		KillerPos:    positionFromProto(kill.GetKillerPos()),
+		VictimPos:    positionFromProto(kill.GetVictimPos()),
+		KillerAngles: eyeAnglesFromProto(kill.GetKillerAngles()),
+		VictimAngles: eyeAnglesFromProto(kill.GetVictimAngles()),
+		IsFirstBlood: kill.GetIsFirstBlood(),
+		IsDomination: kill.GetIsDomination(),
+		IsRevenge:    kill.GetIsRevenge(),
+	}
+}
+
+// eventFromProto converts a v0.3.3 GameEvent oneof into the domain MatchEvent
+// model. Unknown or absent kinds produce a zero MatchEvent carrying only the
+// tick so the feed stays append-only and observable.
+func eventFromProto(event *demostatsv1.GameEvent) MatchEvent {
+	out := MatchEvent{Tick: int(event.GetTick())}
+
+	switch kind := event.GetKind().(type) {
+	case *demostatsv1.GameEvent_Kill:
+		out.Type = MatchEventKill
+		kill := killFromProto(kind.Kill)
+		out.Kill = &kill
+	case *demostatsv1.GameEvent_CaptureStarted:
+		out.Type = MatchEventCaptureStarted
+		out.CaptureStarted = &CaptureStartedEvent{
+			Cp: int(kind.CaptureStarted.GetCp()), CpName: kind.CaptureStarted.GetCpName(),
+			Team: int(kind.CaptureStarted.GetTeam()), CapTeam: int(kind.CaptureStarted.GetCapTeam()),
+			Cappers: kind.CaptureStarted.GetCappers(), CapTime: float64(kind.CaptureStarted.GetCapTime()),
+		}
+	case *demostatsv1.GameEvent_Capture:
+		out.Type = MatchEventCapture
+		out.Capture = &CaptureEvent{
+			Cp: int(kind.Capture.GetCp()), CpName: kind.Capture.GetCpName(),
+			Team: int(kind.Capture.GetTeam()), CapTeam: int(kind.Capture.GetCapTeam()),
+			Cappers: kind.Capture.GetCappers(),
+		}
+	case *demostatsv1.GameEvent_CaptureBlocked:
+		out.Type = MatchEventCaptureBlocked
+		out.CaptureBlocked = &CaptureBlockedEvent{
+			Cp: int(kind.CaptureBlocked.GetCp()), CpName: kind.CaptureBlocked.GetCpName(),
+			Blocker: kind.CaptureBlocked.GetBlocker(), Victim: kind.CaptureBlocked.GetVictim(),
+		}
+	case *demostatsv1.GameEvent_CaptureBroken:
+		out.Type = MatchEventCaptureBroken
+		out.CaptureBroken = &CaptureBrokenEvent{
+			Cp: int(kind.CaptureBroken.GetCp()), CpName: kind.CaptureBroken.GetCpName(),
+			TimeRemaining: float64(kind.CaptureBroken.GetTimeRemaining()),
+		}
+	case *demostatsv1.GameEvent_BuildingBuilt:
+		out.Type = MatchEventBuildingBuilt
+		out.BuildingBuilt = &BuildingBuiltEvent{
+			Owner: kind.BuildingBuilt.GetOwner(), Building: buildingToString(kind.BuildingBuilt.GetBuilding()),
+			Level: int(kind.BuildingBuilt.GetLevel()), IsMini: kind.BuildingBuilt.GetIsMini(),
+			Pos: *positionFromProto(kind.BuildingBuilt.GetPos()),
+		}
+	case *demostatsv1.GameEvent_BuildingDestroyed:
+		out.Type = MatchEventBuildingDestroyed
+		out.BuildingDestroyed = &BuildingDestroyedEvent{
+			Owner: kind.BuildingDestroyed.GetOwner(), Attacker: kind.BuildingDestroyed.GetAttacker(),
+			Assister: kind.BuildingDestroyed.GetAssister(), Weapon: kind.BuildingDestroyed.GetWeapon(),
+			Building: buildingToString(kind.BuildingDestroyed.GetBuilding()),
+			Pos:      positionFromProto(kind.BuildingDestroyed.GetPos()),
+		}
+	case *demostatsv1.GameEvent_BuildingUpgraded:
+		out.Type = MatchEventBuildingUpgraded
+		out.BuildingUpgraded = buildingLifecycleFromProto(kind.BuildingUpgraded)
+	case *demostatsv1.GameEvent_BuildingCarried:
+		out.Type = MatchEventBuildingCarried
+		out.BuildingCarried = buildingLifecycleFromProto(kind.BuildingCarried)
+	case *demostatsv1.GameEvent_BuildingDropped:
+		out.Type = MatchEventBuildingDropped
+		out.BuildingDropped = buildingLifecycleFromProto(kind.BuildingDropped)
+	case *demostatsv1.GameEvent_BuildingRemoved:
+		out.Type = MatchEventBuildingRemoved
+		out.BuildingRemoved = buildingLifecycleFromProto(kind.BuildingRemoved)
+	case *demostatsv1.GameEvent_BuildingDetonated:
+		out.Type = MatchEventBuildingDetonated
+		out.BuildingDetonated = buildingLifecycleFromProto(kind.BuildingDetonated)
+	case *demostatsv1.GameEvent_SapperPlaced:
+		out.Type = MatchEventSapperPlaced
+		out.SapperPlaced = &SapperPlacedEvent{
+			Spy: kind.SapperPlaced.GetSpy(), Owner: kind.SapperPlaced.GetOwner(),
+			Building:    buildingToString(kind.SapperPlaced.GetBuilding()),
+			SapperIndex: int(kind.SapperPlaced.GetSapperIndex()),
+		}
+	case *demostatsv1.GameEvent_RoundStarted:
+		out.Type = MatchEventRoundStarted
+		out.RoundStarted = &RoundStartedEvent{FullReset: kind.RoundStarted.GetFullReset()}
+	case *demostatsv1.GameEvent_RoundWon:
+		out.Type = MatchEventRoundWon
+		out.RoundWon = &RoundWonEvent{
+			Winner:      eventWinnerToString(kind.RoundWon.GetWinner()),
+			IsStalemate: kind.RoundWon.GetIsStalemate(), WinReason: int(kind.RoundWon.GetWinReason()),
+			RoundTime: float64(kind.RoundWon.GetRoundTime()), WasSuddenDeath: kind.RoundWon.GetWasSuddenDeath(),
+		}
+	case *demostatsv1.GameEvent_Stalemate:
+		out.Type = MatchEventStalemate
+		out.Stalemate = &StalemateEvent{Reason: int(kind.Stalemate.GetReason())}
+	case *demostatsv1.GameEvent_GameOver:
+		out.Type = MatchEventGameOver
+		out.GameOver = &GameOverEvent{Reason: kind.GameOver.GetReason()}
+	case *demostatsv1.GameEvent_SuddenDeathBegin:
+		out.Type = MatchEventSuddenDeathBegin
+	case *demostatsv1.GameEvent_SuddenDeathEnd:
+		out.Type = MatchEventSuddenDeathEnd
+	case *demostatsv1.GameEvent_OvertimeBegin:
+		out.Type = MatchEventOvertimeBegin
+	case *demostatsv1.GameEvent_OvertimeEnd:
+		out.Type = MatchEventOvertimeEnd
+	case *demostatsv1.GameEvent_SetupFinished:
+		out.Type = MatchEventSetupFinished
+	case *demostatsv1.GameEvent_UberDropped:
+		out.Type = MatchEventUberDropped
+		out.UberDropped = &UberDroppedEvent{
+			Medic: kind.UberDropped.GetMedic(), Attacker: kind.UberDropped.GetAttacker(),
+			Healing: int(kind.UberDropped.GetHealing()),
+		}
+	case *demostatsv1.GameEvent_UberDeployed:
+		out.Type = MatchEventUberDeployed
+		out.UberDeployed = &UberDeployedEvent{
+			Medic: kind.UberDeployed.GetMedic(), Target: kind.UberDeployed.GetTarget(),
+		}
+	case *demostatsv1.GameEvent_FlagEvent:
+		out.Type = MatchEventFlagEvent
+		out.FlagEvent = &FlagEvent{
+			Player: kind.FlagEvent.GetPlayer(), Carrier: kind.FlagEvent.GetCarrier(),
+			EventType: int(kind.FlagEvent.GetEventType()), Team: int(kind.FlagEvent.GetTeam()),
+			Home: kind.FlagEvent.GetHome(),
+		}
+	case *demostatsv1.GameEvent_FlagCaptured:
+		out.Type = MatchEventFlagCaptured
+		out.FlagCaptured = &FlagCapturedEvent{
+			CappingTeam: int(kind.FlagCaptured.GetCappingTeam()), Score: int(kind.FlagCaptured.GetScore()),
+		}
+	case *demostatsv1.GameEvent_KillstreakEnded:
+		out.Type = MatchEventKillstreakEnded
+		out.KillstreakEnded = &KillstreakEndedEvent{
+			Player: kind.KillstreakEnded.GetPlayer(), Streak: int(kind.KillstreakEnded.GetStreak()),
+			Killer: kind.KillstreakEnded.GetKiller(),
+		}
 	}
 
-	if pos := kill.GetKillerPos(); pos != nil {
-		out.KillerPos = &Position{X: float64(pos.GetX()), Y: float64(pos.GetY()), Z: float64(pos.GetZ())}
+	return out
+}
+
+func buildingLifecycleFromProto(lifecycle *demostatsv1.BuildingLifecycle) *BuildingLifecycleEvent {
+	return &BuildingLifecycleEvent{
+		Player: lifecycle.GetPlayer(), Building: buildingToString(lifecycle.GetBuilding()),
+		Index: int(lifecycle.GetIndex()),
+	}
+}
+
+// eventToProto converts a domain MatchEvent back into a v0.3.3 GameEvent. It
+// is primarily used to serve fixture data from ConnectRPC test servers.
+func eventToProto(event MatchEvent) *demostatsv1.GameEvent {
+	out := &demostatsv1.GameEvent{Tick: uint32(event.Tick)} //nolint:gosec
+
+	switch event.Type {
+	case MatchEventKill:
+		if event.Kill == nil {
+			break
+		}
+		kill := event.Kill
+		out.Kind = &demostatsv1.GameEvent_Kill{Kill: &demostatsv1.KillEvent{
+			Tick: uint32(event.Tick), Killer: strPtr(kill.Killer), Victim: kill.Victim, Weapon: kill.Weapon, //nolint:gosec
+			KillerPos: positionToProto(kill.KillerPos), VictimPos: positionToProto(kill.VictimPos),
+			KillerAngles: eyeAnglesToProto(kill.KillerAngles), VictimAngles: eyeAnglesToProto(kill.VictimAngles),
+			IsFirstBlood: kill.IsFirstBlood, IsDomination: kill.IsDomination, IsRevenge: kill.IsRevenge,
+		}}
+	case MatchEventCaptureStarted:
+		if event.CaptureStarted == nil {
+			break
+		}
+		cap := event.CaptureStarted
+		out.Kind = &demostatsv1.GameEvent_CaptureStarted{CaptureStarted: &demostatsv1.PointCaptureStart{
+			Tick: uint32(event.Tick), Cp: uint32(cap.Cp), CpName: cap.CpName, Team: uint32(cap.Team), //nolint:gosec
+			CapTeam: uint32(cap.CapTeam), Cappers: cap.Cappers, CapTime: float32(cap.CapTime), //nolint:gosec
+		}}
+	case MatchEventCapture:
+		if event.Capture == nil {
+			break
+		}
+		cap := event.Capture
+		out.Kind = &demostatsv1.GameEvent_Capture{Capture: &demostatsv1.PointCapture{
+			Tick: uint32(event.Tick), Cp: uint32(cap.Cp), CpName: cap.CpName, Team: uint32(cap.Team), //nolint:gosec
+			CapTeam: uint32(cap.CapTeam), Cappers: cap.Cappers, //nolint:gosec
+		}}
+	case MatchEventCaptureBlocked:
+		if event.CaptureBlocked == nil {
+			break
+		}
+		blocked := event.CaptureBlocked
+		out.Kind = &demostatsv1.GameEvent_CaptureBlocked{CaptureBlocked: &demostatsv1.CaptureBlocked{
+			Tick: uint32(event.Tick), Cp: uint32(blocked.Cp), CpName: blocked.CpName, //nolint:gosec
+			Blocker: strPtr(blocked.Blocker), Victim: strPtr(blocked.Victim),
+		}}
+	case MatchEventCaptureBroken:
+		if event.CaptureBroken == nil {
+			break
+		}
+		broken := event.CaptureBroken
+		out.Kind = &demostatsv1.GameEvent_CaptureBroken{CaptureBroken: &demostatsv1.CaptureBroken{
+			Tick: uint32(event.Tick), Cp: uint32(broken.Cp), CpName: broken.CpName, //nolint:gosec
+			TimeRemaining: float32(broken.TimeRemaining), //nolint:gosec
+		}}
+	case MatchEventBuildingBuilt:
+		if event.BuildingBuilt == nil {
+			break
+		}
+		built := event.BuildingBuilt
+		out.Kind = &demostatsv1.GameEvent_BuildingBuilt{BuildingBuilt: &demostatsv1.BuildingBuilt{
+			Tick: uint32(event.Tick), Owner: strPtr(built.Owner), Building: buildingToEnum(built.Building), //nolint:gosec
+			Level: uint32(built.Level), IsMini: built.IsMini, Pos: positionToProto(&built.Pos), //nolint:gosec
+		}}
+	case MatchEventBuildingDestroyed:
+		if event.BuildingDestroyed == nil {
+			break
+		}
+		destroyed := event.BuildingDestroyed
+		out.Kind = &demostatsv1.GameEvent_BuildingDestroyed{BuildingDestroyed: &demostatsv1.BuildingDestroyed{
+			Tick: uint32(event.Tick), Owner: strPtr(destroyed.Owner), Attacker: strPtr(destroyed.Attacker), //nolint:gosec
+			Assister: strPtr(destroyed.Assister), Weapon: destroyed.Weapon,
+			Building: buildingToEnum(destroyed.Building), Pos: positionToProto(destroyed.Pos),
+		}}
+	case MatchEventBuildingUpgraded:
+		out.Kind = &demostatsv1.GameEvent_BuildingUpgraded{BuildingUpgraded: buildingLifecycleToProto(event.Tick, event.BuildingUpgraded)}
+	case MatchEventBuildingCarried:
+		out.Kind = &demostatsv1.GameEvent_BuildingCarried{BuildingCarried: buildingLifecycleToProto(event.Tick, event.BuildingCarried)}
+	case MatchEventBuildingDropped:
+		out.Kind = &demostatsv1.GameEvent_BuildingDropped{BuildingDropped: buildingLifecycleToProto(event.Tick, event.BuildingDropped)}
+	case MatchEventBuildingRemoved:
+		out.Kind = &demostatsv1.GameEvent_BuildingRemoved{BuildingRemoved: buildingLifecycleToProto(event.Tick, event.BuildingRemoved)}
+	case MatchEventBuildingDetonated:
+		out.Kind = &demostatsv1.GameEvent_BuildingDetonated{BuildingDetonated: buildingLifecycleToProto(event.Tick, event.BuildingDetonated)}
+	case MatchEventSapperPlaced:
+		if event.SapperPlaced == nil {
+			break
+		}
+		sapper := event.SapperPlaced
+		out.Kind = &demostatsv1.GameEvent_SapperPlaced{SapperPlaced: &demostatsv1.SapperPlaced{
+			Tick: uint32(event.Tick), Spy: strPtr(sapper.Spy), Owner: strPtr(sapper.Owner), //nolint:gosec
+			Building: buildingToEnum(sapper.Building), SapperIndex: uint32(sapper.SapperIndex), //nolint:gosec
+		}}
+	case MatchEventRoundStarted:
+		if event.RoundStarted == nil {
+			break
+		}
+		out.Kind = &demostatsv1.GameEvent_RoundStarted{RoundStarted: &demostatsv1.RoundStarted{
+			Tick: uint32(event.Tick), FullReset: event.RoundStarted.FullReset, //nolint:gosec
+		}}
+	case MatchEventRoundWon:
+		if event.RoundWon == nil {
+			break
+		}
+		won := event.RoundWon
+		out.Kind = &demostatsv1.GameEvent_RoundWon{RoundWon: &demostatsv1.RoundWon{
+			Tick: uint32(event.Tick), Winner: stringToEventWinner(won.Winner), IsStalemate: won.IsStalemate, //nolint:gosec
+			WinReason: uint32(won.WinReason), RoundTime: float32(won.RoundTime), WasSuddenDeath: won.WasSuddenDeath, //nolint:gosec
+		}}
+	case MatchEventStalemate:
+		if event.Stalemate == nil {
+			break
+		}
+		out.Kind = &demostatsv1.GameEvent_Stalemate{Stalemate: &demostatsv1.Stalemate{
+			Tick: uint32(event.Tick), Reason: uint32(event.Stalemate.Reason), //nolint:gosec
+		}}
+	case MatchEventGameOver:
+		if event.GameOver == nil {
+			break
+		}
+		out.Kind = &demostatsv1.GameEvent_GameOver{GameOver: &demostatsv1.GameOver{
+			Tick: uint32(event.Tick), Reason: event.GameOver.Reason, //nolint:gosec
+		}}
+	case MatchEventSuddenDeathBegin:
+		out.Kind = &demostatsv1.GameEvent_SuddenDeathBegin{SuddenDeathBegin: &demostatsv1.TickMarker{Tick: uint32(event.Tick)}} //nolint:gosec
+	case MatchEventSuddenDeathEnd:
+		out.Kind = &demostatsv1.GameEvent_SuddenDeathEnd{SuddenDeathEnd: &demostatsv1.TickMarker{Tick: uint32(event.Tick)}} //nolint:gosec
+	case MatchEventOvertimeBegin:
+		out.Kind = &demostatsv1.GameEvent_OvertimeBegin{OvertimeBegin: &demostatsv1.TickMarker{Tick: uint32(event.Tick)}} //nolint:gosec
+	case MatchEventOvertimeEnd:
+		out.Kind = &demostatsv1.GameEvent_OvertimeEnd{OvertimeEnd: &demostatsv1.TickMarker{Tick: uint32(event.Tick)}} //nolint:gosec
+	case MatchEventSetupFinished:
+		out.Kind = &demostatsv1.GameEvent_SetupFinished{SetupFinished: &demostatsv1.TickMarker{Tick: uint32(event.Tick)}} //nolint:gosec
+	case MatchEventUberDropped:
+		if event.UberDropped == nil {
+			break
+		}
+		dropped := event.UberDropped
+		out.Kind = &demostatsv1.GameEvent_UberDropped{UberDropped: &demostatsv1.UberDropped{
+			Tick: uint32(event.Tick), Medic: strPtr(dropped.Medic), Attacker: strPtr(dropped.Attacker), //nolint:gosec
+			Healing: uint32(dropped.Healing), //nolint:gosec
+		}}
+	case MatchEventUberDeployed:
+		if event.UberDeployed == nil {
+			break
+		}
+		deployed := event.UberDeployed
+		out.Kind = &demostatsv1.GameEvent_UberDeployed{UberDeployed: &demostatsv1.UberDeployed{
+			Tick: uint32(event.Tick), Medic: strPtr(deployed.Medic), Target: strPtr(deployed.Target), //nolint:gosec
+		}}
+	case MatchEventFlagEvent:
+		if event.FlagEvent == nil {
+			break
+		}
+		flag := event.FlagEvent
+		out.Kind = &demostatsv1.GameEvent_FlagEvent{FlagEvent: &demostatsv1.FlagEvent{
+			Tick: uint32(event.Tick), Player: strPtr(flag.Player), Carrier: strPtr(flag.Carrier), //nolint:gosec
+			EventType: uint32(flag.EventType), Team: uint32(flag.Team), Home: flag.Home, //nolint:gosec
+		}}
+	case MatchEventFlagCaptured:
+		if event.FlagCaptured == nil {
+			break
+		}
+		captured := event.FlagCaptured
+		out.Kind = &demostatsv1.GameEvent_FlagCaptured{FlagCaptured: &demostatsv1.FlagCaptured{
+			Tick: uint32(event.Tick), CappingTeam: uint32(captured.CappingTeam), Score: uint32(captured.Score), //nolint:gosec
+		}}
+	case MatchEventKillstreakEnded:
+		if event.KillstreakEnded == nil {
+			break
+		}
+		streak := event.KillstreakEnded
+		out.Kind = &demostatsv1.GameEvent_KillstreakEnded{KillstreakEnded: &demostatsv1.KillstreakEnded{
+			Tick: uint32(event.Tick), Player: streak.Player, Streak: uint32(streak.Streak), Killer: strPtr(streak.Killer), //nolint:gosec
+		}}
 	}
 
-	if pos := kill.GetVictimPos(); pos != nil {
-		out.VictimPos = &Position{X: float64(pos.GetX()), Y: float64(pos.GetY()), Z: float64(pos.GetZ())}
+	return out
+}
+
+func buildingToEnum(building string) demostatsv1.BuildingType {
+	return stringToBuilding(building)
+}
+
+// strPtr preserves proto optional presence: empty steamids stay absent rather
+// than becoming present-but-empty.
+func strPtr(value string) *string {
+	if value == "" {
+		return nil
 	}
 
-	if angles := kill.GetKillerAngles(); angles != nil {
-		out.KillerAngles = &EyeAngles{Pitch: float64(angles.GetPitch()), Yaw: float64(angles.GetYaw())}
+	return &value
+}
+
+func buildingLifecycleToProto(tick int, lifecycle *BuildingLifecycleEvent) *demostatsv1.BuildingLifecycle {
+	out := &demostatsv1.BuildingLifecycle{Tick: uint32(tick)} //nolint:gosec
+	if lifecycle == nil {
+		return out
 	}
 
-	if angles := kill.GetVictimAngles(); angles != nil {
-		out.VictimAngles = &EyeAngles{Pitch: float64(angles.GetPitch()), Yaw: float64(angles.GetYaw())}
-	}
+	out.Player = strPtr(lifecycle.Player)
+	out.Building = buildingToEnum(lifecycle.Building)
+	out.Index = uint32(lifecycle.Index) //nolint:gosec
 
 	return out
 }
@@ -471,6 +888,11 @@ func ProtoFromDemo(demo *Demo) *demostatsv1.ParseDemoResponse {
 			IsSpec:       msg.IsSpec,
 			IsNameChange: msg.IsNameChange,
 		}
+	}
+
+	summary.Events = make([]*demostatsv1.GameEvent, len(demo.Events))
+	for i, event := range demo.Events {
+		summary.Events[i] = eventToProto(event)
 	}
 
 	return out
