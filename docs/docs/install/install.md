@@ -67,7 +67,7 @@ It's recommended to use the docker images as they are currently the only tested 
 
 - [just](https://github.com/casey/just) Not strictly required but provides predefined build commands
 - [golang 1.24+](https://golang.org/) Version >=1.23 is required.
-- [PostgreSQL](https://www.postgresql.org/) Version 16 is the only version currently tested against. All non-EOL
+- [PostgreSQL](https://www.postgresql.org/) Version 19 is the only version currently tested against. All non-EOL
   versions should be supported.
   - [PostGIS](https://postgis.net/) Provides some basic GIS functionality.
   - [ip4r](https://github.com/RhodiumToad/ip4r) Improved ip/cidr indexed and types.
