@@ -6,6 +6,7 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Select from "@mui/material/Select";
+import Slider from "@mui/material/Slider";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import Typography from "@mui/material/Typography";
@@ -89,6 +90,8 @@ export const MatchEventMap = ({ summary, mapName }: { summary: MatchView; mapNam
 	const [roundFilter, setRoundFilter] = useState<number>(0);
 	const [showReferencePoints, setShowReferencePoints] = useState(true);
 	const [eventVisibility, setEventVisibility] = useState<Record<string, boolean>>({});
+	/** Scrub position in demo ticks; null means "show everything". */
+	const [tickFilter, setTickFilter] = useState<number | null>(null);
 
 	/**
 	 * Only positional events with a layer key get map geometries; the rest
@@ -190,10 +193,29 @@ export const MatchEventMap = ({ summary, mapName }: { summary: MatchView; mapNam
 		return r ? `Round ${round} (${r.scoreBlu} – ${r.scoreRed})` : `Round ${round}`;
 	};
 
-	const filteredEvents = useMemo(
-		() => (roundFilter === 0 ? mappableEvents : mappableEvents.filter((e) => e.round === roundFilter)),
-		[mappableEvents, roundFilter],
+	/** Demo-tick range of the mappable events, bounding the scrub slider. */
+	const minTick = useMemo(
+		() => mappableEvents.reduce((min, e) => Math.min(min, e.tick), Number.MAX_SAFE_INTEGER),
+		[mappableEvents],
 	);
+	const maxTick = useMemo(() => mappableEvents.reduce((max, e) => Math.max(max, e.tick), 0), [mappableEvents]);
+
+	/** Effective scrub position; defaults to the latest tick (show everything). */
+	const scrubTick = tickFilter ?? maxTick;
+
+	// Reset the scrub position when switching matches.
+	useEffect(() => {
+		setTickFilter(null);
+	}, [mapName]);
+
+	const filteredEvents = useMemo(() => {
+		const roundFiltered =
+			roundFilter === 0 ? mappableEvents : mappableEvents.filter((e) => e.round === roundFilter);
+		// Tick scrub: only draw events up to the scrub position, oldest first.
+		return roundFiltered
+			.filter((e) => e.tick <= scrubTick)
+			.toSorted((a, b) => a.tick - b.tick || a.matchEventId.localeCompare(b.matchEventId));
+	}, [mappableEvents, roundFilter, scrubTick]);
 
 	const visibleEvents = useMemo(
 		() => filteredEvents.filter((event) => eventVisibility[eventMapLayerKey(event) as string] !== false),
@@ -400,6 +422,28 @@ export const MatchEventMap = ({ summary, mapName }: { summary: MatchView; mapNam
 				</MapContainer>
 			</Box>
 			<Box sx={{ padding: 1.5 }}>
+				<Typography variant="caption" color="textSecondary" sx={{ textTransform: "uppercase" }}>
+					Timeline scrub
+				</Typography>
+				<Stack direction="row" spacing={2} sx={{ alignItems: "center", marginBottom: 1 }}>
+					<Box sx={{ flexGrow: 1 }}>
+						<Slider
+							min={minTick}
+							max={maxTick}
+							step={1}
+							value={scrubTick}
+							onChange={(_e, value) => setTickFilter(value as number)}
+							valueLabelDisplay="auto"
+							valueLabelFormat={(value) => `Tick ${value}`}
+							aria-label="Scrub events by demo tick"
+						/>
+					</Box>
+					<Typography variant="body2" sx={{ minWidth: 220 }}>
+						{filteredEvents.length > 0
+							? `Tick ${scrubTick} · ${formatMatchClock(filteredEvents[filteredEvents.length - 1].ticksSinceStart)} · ${filteredEvents.length} event${filteredEvents.length === 1 ? "" : "s"}`
+							: `Tick ${scrubTick} · no events yet`}
+					</Typography>
+				</Stack>
 				<Typography variant="caption" color="textSecondary" sx={{ textTransform: "uppercase" }}>
 					Layers — showing {visibleEvents.length} of {filteredEvents.length} positioned events
 				</Typography>
