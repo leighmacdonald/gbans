@@ -10,18 +10,17 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import Typography from "@mui/material/Typography";
 import { CRS } from "leaflet";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { CircleMarker, ImageOverlay, MapContainer, Polyline, Popup, Tooltip } from "react-leaflet";
 import { useMap } from "react-leaflet/hooks";
 import { Team } from "../../rpc/stats/v1/stats_pb.ts";
 import { formatMatchClock } from "../../util/time.ts";
 import { ContainerWithHeaderAndButtons } from "../ContainerWithHeaderAndButtons.tsx";
+import { humanizeEventType } from "./EventFeedTable.tsx";
 import {
-	DIMMED_OPACITY,
+	eventTypeColor,
 	fetchReferenceFile,
 	fetchWorldFile,
-	HIGHLIGHT_DEATH,
-	HIGHLIGHT_KILL,
 	overviewPixelBounds,
 	overviewUrls,
 	paddedOverviewPixelBounds,
@@ -31,11 +30,10 @@ import {
 	referencePointStyle,
 	referenceUrls,
 	teamColorOf,
-	WORLD_COLOR,
 	type WorldFile,
 	worldToPixel,
 } from "./killMap.ts";
-import type { KillFeedEntry, MatchView } from "./match";
+import { type EventFeedEntry, eventMapLayerKey, eventMapLayerLabel, type MatchView } from "./match";
 
 const MAP_HEIGHT = 480;
 
@@ -55,18 +53,78 @@ const FitOverview = ({ bounds }: { bounds: [[number, number], [number, number]] 
 	return null;
 };
 
-const isWorldKill = (kill: KillFeedEntry): boolean => kill.killerSteamId === "" || kill.killerSteamId === "0";
+const hasPosition = (event: EventFeedEntry): boolean =>
+	event.eventX !== null && event.eventY !== null && Number.isFinite(event.eventX) && Number.isFinite(event.eventY);
 
-export const MatchKillMap = ({ summary, mapName }: { summary: MatchView; mapName: string }) => {
+/**
+ * True when a kill has distinct attacker and victim positions, so it draws
+ * as an attacker→victim line instead of a point marker. World kills (no
+ * attacker) and kills missing an end fall back to the victim point.
+ */
+const hasKillLine = (event: EventFeedEntry): boolean =>
+	event.eventType === "kill" &&
+	event.attackerX !== null &&
+	event.attackerY !== null &&
+	event.eventX !== null &&
+	event.eventY !== null &&
+	Number.isFinite(event.attackerX) &&
+	Number.isFinite(event.attackerY) &&
+	(event.attackerX !== event.eventX || event.attackerY !== event.eventY);
+
+const teamLabel = (team: Team): string => {
+	if (team === Team.BLU) {
+		return "BLU";
+	}
+	if (team === Team.RED) {
+		return "RED";
+	}
+	return "";
+};
+
+export const MatchEventMap = ({ summary, mapName }: { summary: MatchView; mapName: string }) => {
 	const [worldFile, setWorldFile] = useState<WorldFile | null>(null);
 	const [imgSize, setImgSize] = useState<{ width: number; height: number } | null>(null);
 	const [referencePoints, setReferencePoints] = useState<ReferencePoint[]>([]);
 	const [loadError, setLoadError] = useState<string | null>(null);
-	const [selectedSteamId, setSelectedSteamId] = useState<string | null>(null);
 	const [roundFilter, setRoundFilter] = useState<number>(0);
-	const [showKillLines, setShowKillLines] = useState(true);
-	const [showKillMarkers, setShowKillMarkers] = useState(true);
 	const [showReferencePoints, setShowReferencePoints] = useState(true);
+	const [eventVisibility, setEventVisibility] = useState<Record<string, boolean>>({});
+
+	/**
+	 * Only positional events with a layer key get map geometries; the rest
+	 * (non-positional events, mini/gunslinger builds, unknown building kinds)
+	 * stay in the feed table.
+	 */
+	const mappableEvents = useMemo(
+		() => summary.events.filter((event) => hasPosition(event) && eventMapLayerKey(event) !== null),
+		[summary.events],
+	);
+
+	const layerKeys = useMemo(() => {
+		const seen = new Set<string>();
+		for (const event of mappableEvents) {
+			const key = eventMapLayerKey(event);
+			if (key !== null) {
+				seen.add(key);
+			}
+		}
+		return [...seen].toSorted();
+	}, [mappableEvents]);
+
+	// Default new layers to visible without clobbering user toggles.
+	useEffect(() => {
+		setEventVisibility((prev) => {
+			let changed = false;
+			const next = { ...prev };
+			for (const key of layerKeys) {
+				if (!(key in next)) {
+					next[key] = true;
+					changed = true;
+				}
+			}
+			return changed ? next : prev;
+		});
+	}, [layerKeys]);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -74,7 +132,7 @@ export const MatchKillMap = ({ summary, mapName }: { summary: MatchView; mapName
 		setImgSize(null);
 		setReferencePoints([]);
 		setLoadError(null);
-		if (summary.kills.length === 0) {
+		if (mappableEvents.length === 0) {
 			return;
 		}
 		const urls = overviewUrls(mapName);
@@ -108,15 +166,7 @@ export const MatchKillMap = ({ summary, mapName }: { summary: MatchView; mapName
 		return () => {
 			cancelled = true;
 		};
-	}, [mapName, summary.kills.length]);
-
-	const teams = useMemo(() => {
-		const out: Record<string, Team> = {};
-		for (const s of summary.summaries) {
-			out[s.player.steamId] = s.team;
-		}
-		return out;
-	}, [summary.summaries]);
+	}, [mapName, mappableEvents.length]);
 
 	const nameOf = (steamId: string): string => {
 		if (steamId === "" || steamId === "0") {
@@ -127,33 +177,39 @@ export const MatchKillMap = ({ summary, mapName }: { summary: MatchView; mapName
 
 	const rounds = useMemo(() => {
 		const seen = new Set<number>();
-		for (const k of summary.kills) {
-			if (k.round > 0) {
-				seen.add(k.round);
+		for (const event of mappableEvents) {
+			if (event.round > 0) {
+				seen.add(event.round);
 			}
 		}
 		return [...seen].toSorted((a, b) => a - b);
-	}, [summary.kills]);
+	}, [mappableEvents]);
 
 	const roundLabel = (round: number): string => {
 		const r = summary.rounds.find((x) => x.round === round);
 		return r ? `Round ${round} (${r.scoreBlu} – ${r.scoreRed})` : `Round ${round}`;
 	};
 
-	const kills = useMemo(
-		() => (roundFilter === 0 ? summary.kills : summary.kills.filter((k) => k.round === roundFilter)),
-		[summary.kills, roundFilter],
+	const filteredEvents = useMemo(
+		() => (roundFilter === 0 ? mappableEvents : mappableEvents.filter((e) => e.round === roundFilter)),
+		[mappableEvents, roundFilter],
 	);
 
-	const legend = useMemo(() => {
+	const visibleEvents = useMemo(
+		() => filteredEvents.filter((event) => eventVisibility[eventMapLayerKey(event) as string] !== false),
+		[filteredEvents, eventVisibility],
+	);
+
+	const countsByLayer = useMemo(() => {
 		const counts = new Map<string, number>();
-		for (const k of kills) {
-			if (!isWorldKill(k)) {
-				counts.set(k.killerSteamId, (counts.get(k.killerSteamId) ?? 0) + 1);
+		for (const event of filteredEvents) {
+			const key = eventMapLayerKey(event);
+			if (key !== null) {
+				counts.set(key, (counts.get(key) ?? 0) + 1);
 			}
 		}
-		return [...counts.entries()].toSorted((a, b) => b[1] - a[1]);
-	}, [kills]);
+		return counts;
+	}, [filteredEvents]);
 
 	const referenceMarkers = useMemo(() => {
 		if (!worldFile || !imgSize) {
@@ -177,10 +233,10 @@ export const MatchKillMap = ({ summary, mapName }: { summary: MatchView; mapName
 		[imgSize, overlayBounds],
 	);
 
-	if (summary.kills.length === 0) {
+	if (mappableEvents.length === 0) {
 		return (
 			<Paper sx={{ padding: 2 }}>
-				<Alert severity="info">No kill events were recorded for this match.</Alert>
+				<Alert severity="info">No positioned events were recorded for this match.</Alert>
 			</Paper>
 		);
 	}
@@ -208,22 +264,14 @@ export const MatchKillMap = ({ summary, mapName }: { summary: MatchView; mapName
 		return [clamp(lat, 0, imgSize.height), clamp(lng, 0, imgSize.width)];
 	};
 
-	const baseColor = (kill: KillFeedEntry): string => {
-		if (isWorldKill(kill)) {
-			return WORLD_COLOR;
-		}
-		return teamColorOf(teams[kill.killerSteamId] ?? Team.UNASSIGNED_UNSPECIFIED);
-	};
-
-	const toggleSelect = (steamId: string) => {
-		if (steamId === "" || steamId === "0") {
-			return;
-		}
-		setSelectedSteamId((prev) => (prev === steamId ? null : steamId));
-	};
+	/** Prefer the actor team color so team stays visible; fall back to the per-layer color. */
+	const markerColor = (event: EventFeedEntry): string =>
+		event.team === Team.BLU || event.team === Team.RED
+			? teamColorOf(event.team)
+			: eventTypeColor(eventMapLayerKey(event) ?? event.eventType);
 
 	const roundFilterControl = (
-		<Stack key="kill-map-round-filter" direction="row" spacing={1} sx={{ alignItems: "center" }}>
+		<Stack key="event-map-round-filter" direction="row" spacing={1} sx={{ alignItems: "center" }}>
 			<Typography variant="body2" sx={{ color: "common.white" }}>
 				Round
 			</Typography>
@@ -251,17 +299,17 @@ export const MatchKillMap = ({ summary, mapName }: { summary: MatchView; mapName
 
 	return (
 		<ContainerWithHeaderAndButtons
-			title="Kill Map"
+			title="Event Map"
 			iconLeft={<MapIcon />}
 			buttons={[roundFilterControl]}
 			padding={0}
 			spacing={0}
 		>
 			<Box sx={{ paddingX: 1.5, paddingTop: 1.5 }}>
-			<MapContainer
-				crs={CRS.Simple}
-				attributionControl={false}
-				center={[imgSize.height / 2, imgSize.width / 2]}
+				<MapContainer
+					crs={CRS.Simple}
+					attributionControl={false}
+					center={[imgSize.height / 2, imgSize.width / 2]}
 					zoom={0}
 					minZoom={-5}
 					maxZoom={3}
@@ -290,82 +338,103 @@ export const MatchKillMap = ({ summary, mapName }: { summary: MatchView; mapName
 								<Tooltip>{marker.label}</Tooltip>
 							</CircleMarker>
 						))}
-					{showKillLines &&
-						kills.map((kill) => {
-							const start = toLatLng(kill.killerX, kill.killerY);
-							const end = toLatLng(kill.victimX, kill.victimY);
-							const isKiller = selectedSteamId !== null && kill.killerSteamId === selectedSteamId;
-							const isVictim = selectedSteamId !== null && kill.victimSteamId === selectedSteamId;
-							const color = isKiller ? HIGHLIGHT_KILL : isVictim ? HIGHLIGHT_DEATH : baseColor(kill);
-							const dimmed = selectedSteamId !== null && !isKiller && !isVictim;
+					{visibleEvents.map((event) => {
+						const color = markerColor(event);
+						const team = teamLabel(event.team);
+						const popup = (
+							<Popup>
+								<Stack spacing={0.5}>
+									<Typography variant="body2" sx={{ fontWeight: 700 }}>
+										{event.summary}
+									</Typography>
+									<Typography variant="caption">
+										{humanizeEventType(event.eventType)}
+										{event.building ? ` · ${event.building}` : ""}
+										{event.weapon ? ` · ${event.weapon}` : ""}
+										{team ? ` · ${team}` : ""}
+									</Typography>
+									<Typography variant="caption">
+										Round {event.round > 0 ? event.round : "—"} · Tick {event.tick} ·{" "}
+										{formatMatchClock(event.ticksSinceStart)}
+									</Typography>
+									<Typography variant="caption" color="textSecondary">
+										{nameOf(event.actorSteamId)}
+										{event.targetSteamId &&
+										event.targetSteamId !== "" &&
+										event.targetSteamId !== "0"
+											? ` → ${nameOf(event.targetSteamId)}`
+											: ""}
+									</Typography>
+								</Stack>
+							</Popup>
+						);
+						// Kills with both ends draw an attacker→victim line plus
+						// a victim endpoint marker; everything else is a point.
+						if (hasKillLine(event)) {
+							const start = toLatLng(event.attackerX as number, event.attackerY as number);
+							const end = toLatLng(event.eventX as number, event.eventY as number);
 							return (
-								<Polyline
-									key={kill.matchKillId}
-									positions={[start, end]}
-									pathOptions={{
-										color,
-										weight: isKiller || isVictim ? 4 : 2,
-										opacity: dimmed ? DIMMED_OPACITY : 0.9,
-									}}
-									eventHandlers={{ click: () => toggleSelect(kill.killerSteamId) }}
-								>
-									<Popup>
-										<Stack spacing={0.5}>
-											<Typography variant="body2" sx={{ fontWeight: 700 }}>
-												{nameOf(kill.killerSteamId)} → {nameOf(kill.victimSteamId)}
-											</Typography>
-											<Typography variant="caption">
-												{kill.weapon} · Round {kill.round > 0 ? kill.round : "—"} ·{" "}
-												{formatMatchClock(kill.ticksSinceStart)}
-											</Typography>
-										</Stack>
-									</Popup>
-								</Polyline>
+								<Fragment key={event.matchEventId}>
+									<Polyline positions={[start, end]} pathOptions={{ color, weight: 2, opacity: 0.9 }}>
+										<Tooltip>{event.summary}</Tooltip>
+										{popup}
+									</Polyline>
+									<CircleMarker
+										center={end}
+										radius={3}
+										pathOptions={{ color, fillColor: color, fillOpacity: 1, weight: 1 }}
+										interactive={false}
+									/>
+								</Fragment>
 							);
-						})}
-					{showKillMarkers &&
-						kills.map((kill) => {
-							const color =
-								selectedSteamId !== null && kill.killerSteamId === selectedSteamId
-									? HIGHLIGHT_KILL
-									: selectedSteamId !== null && kill.victimSteamId === selectedSteamId
-										? HIGHLIGHT_DEATH
-										: baseColor(kill);
-							return (
-								<CircleMarker
-									key={`m-${kill.matchKillId}`}
-									center={toLatLng(kill.killerX, kill.killerY)}
-									radius={3}
-									pathOptions={{ color, fillColor: color, fillOpacity: 1, weight: 1 }}
-									interactive={false}
-								/>
-							);
-						})}
+						}
+						return (
+							<CircleMarker
+								key={event.matchEventId}
+								center={toLatLng(event.eventX as number, event.eventY as number)}
+								radius={event.eventType.startsWith("building_") ? 5 : 3.5}
+								pathOptions={{ color, fillColor: color, fillOpacity: 0.9, weight: 1.5 }}
+							>
+								<Tooltip>{event.summary}</Tooltip>
+								{popup}
+							</CircleMarker>
+						);
+					})}
 				</MapContainer>
 			</Box>
 			<Box sx={{ padding: 1.5 }}>
 				<Typography variant="caption" color="textSecondary" sx={{ textTransform: "uppercase" }}>
-					Layers
+					Layers — showing {visibleEvents.length} of {filteredEvents.length} positioned events
 				</Typography>
 				<Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap", marginBottom: 1.5 }}>
-					<FormControlLabel
-						control={
-							<Switch
-								checked={showKillLines}
-								onChange={(event) => setShowKillLines(event.target.checked)}
-							/>
-						}
-						label={`Kill lines (${kills.length})`}
-					/>
-					<FormControlLabel
-						control={
-							<Switch
-								checked={showKillMarkers}
-								onChange={(event) => setShowKillMarkers(event.target.checked)}
-							/>
-						}
-						label={`Killer markers (${kills.length})`}
-					/>
+					{layerKeys.map((layerKey) => (
+						<FormControlLabel
+							key={layerKey}
+							control={
+								<Switch
+									checked={eventVisibility[layerKey] !== false}
+									onChange={(e) =>
+										setEventVisibility((prev) => ({ ...prev, [layerKey]: e.target.checked }))
+									}
+								/>
+							}
+							label={
+								<Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
+									<Box
+										sx={{
+											width: 12,
+											height: 12,
+											borderRadius: "50%",
+											backgroundColor: eventTypeColor(layerKey),
+										}}
+									/>
+									<Typography variant="body2">
+										{eventMapLayerLabel(layerKey)} ({countsByLayer.get(layerKey) ?? 0})
+									</Typography>
+								</Stack>
+							}
+						/>
+					))}
 					{referenceMarkers.length > 0 && (
 						<FormControlLabel
 							control={
@@ -378,46 +447,10 @@ export const MatchKillMap = ({ summary, mapName }: { summary: MatchView; mapName
 						/>
 					)}
 				</Stack>
-				<Typography variant="caption" color="textSecondary" sx={{ textTransform: "uppercase" }}>
-					Killers — click a name or a line to highlight kills and deaths
-				</Typography>
-				<Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap", marginTop: 0.5 }}>
-					{legend.map(([steamId, count]) => {
-						const selected = selectedSteamId === steamId;
-						return (
-							<Box
-								key={steamId}
-								onClick={() => toggleSelect(steamId)}
-								title={`${nameOf(steamId)}: ${count} kills`}
-								sx={{
-									display: "flex",
-									alignItems: "center",
-									gap: 0.75,
-									paddingX: 1,
-									paddingY: 0.5,
-									borderRadius: 1,
-									cursor: "pointer",
-									border: "1px solid",
-									borderColor: selected ? HIGHLIGHT_KILL : "divider",
-									backgroundColor: selected ? "action.selected" : "transparent",
-								}}
-							>
-								<Box
-									sx={{
-										width: 12,
-										height: 12,
-										borderRadius: "50%",
-										backgroundColor: teamColorOf(teams[steamId] ?? Team.UNASSIGNED_UNSPECIFIED),
-									}}
-								/>
-								<Typography variant="body2">
-									{nameOf(steamId)} ({count})
-								</Typography>
-							</Box>
-						);
-					})}
-				</Stack>
 			</Box>
 		</ContainerWithHeaderAndButtons>
 	);
 };
+
+/** Deprecated alias kept while callers migrate to the event map. */
+export const MatchKillMap = MatchEventMap;

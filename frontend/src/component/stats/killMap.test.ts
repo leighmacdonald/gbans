@@ -2,6 +2,8 @@ import { expect, test } from "vitest";
 import { Team } from "../../rpc/stats/v1/stats_pb.ts";
 import { blu, red } from "../../theme.ts";
 import {
+	eventTypeColor,
+	eventTypeStyle,
 	HAMMER_UNIT_IN_METERS,
 	HIGHLIGHT_DEATH,
 	HIGHLIGHT_KILL,
@@ -179,4 +181,21 @@ test("teamColorOf maps teams to theme colors", () => {
 test("selection highlights use dark green for kills and dark red for deaths", () => {
 	expect(HIGHLIGHT_KILL).toBe("#1b5e20");
 	expect(HIGHLIGHT_DEATH).toBe("#7f1d1d");
+});
+
+test("positional event types have distinct layer colors", () => {
+	expect(eventTypeColor("kill")).toBe("#e53935");
+	expect(eventTypeColor("building_built")).toBe("#00c853");
+	expect(eventTypeColor("building_destroyed")).toBe("#ff6d00");
+	expect(eventTypeColor("kill")).not.toBe(eventTypeColor("building_built"));
+	// Unknown future types still get a deterministic color.
+	expect(eventTypeColor("custom_type")).toBe(eventTypeColor("custom_type"));
+	expect(eventTypeStyle("kill").radius).toBeLessThan(eventTypeStyle("building_built").radius);
+});
+
+test("building_built sub-layers have distinct colors", () => {
+	expect(eventTypeColor("building_built_sentry")).toBe("#00c853");
+	expect(eventTypeColor("building_built_dispenser")).toBe("#00b8d4");
+	expect(eventTypeColor("building_built_teleporter")).toBe("#7c4dff");
+	expect(eventTypeStyle("building_built_sentry").radius).toBe(5);
 });
