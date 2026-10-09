@@ -86,7 +86,7 @@ export const EventFeedTable = ({
 		enableColumnActions: false,
 		initialState: {
 			...defaultEventOptions.initialState,
-			pagination: { pageIndex: 0, pageSize: 50 },
+			pagination: { pageIndex: 0, pageSize: 10 },
 		},
 	});
 
