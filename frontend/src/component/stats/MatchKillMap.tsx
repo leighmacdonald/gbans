@@ -258,9 +258,10 @@ export const MatchKillMap = ({ summary, mapName }: { summary: MatchView; mapName
 			spacing={0}
 		>
 			<Box sx={{ paddingX: 1.5, paddingTop: 1.5 }}>
-				<MapContainer
-					crs={CRS.Simple}
-					center={[imgSize.height / 2, imgSize.width / 2]}
+			<MapContainer
+				crs={CRS.Simple}
+				attributionControl={false}
+				center={[imgSize.height / 2, imgSize.width / 2]}
 					zoom={0}
 					minZoom={-5}
 					maxZoom={3}
