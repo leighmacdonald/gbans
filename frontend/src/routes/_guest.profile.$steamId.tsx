@@ -5,6 +5,7 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import ErrorIcon from "@mui/icons-material/Error";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import GavelIcon from "@mui/icons-material/Gavel";
 import GroupIcon from "@mui/icons-material/Group";
 import LinkIcon from "@mui/icons-material/Link";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -24,7 +25,7 @@ import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { createFileRoute } from "@tanstack/react-router";
-import { format } from "date-fns";
+import { format, formatDistanceStrict } from "date-fns";
 import { formatDistanceToNowStrict } from "date-fns/formatDistanceToNowStrict";
 import prettyMilliseconds from "pretty-ms";
 import { useMemo, useState } from "react";
@@ -34,11 +35,15 @@ import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { SteamIDList } from "../component/SteamIDList.tsx";
 import { TextLink } from "../component/TextLink.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
+import { get as getBan } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
 import { profile } from "../rpc/person/v1/person-PersonService_connectquery.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import type { PlayerMatchHistory } from "../rpc/stats/v1/stats_pb.ts";
 import { matchesWithPlayer } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
 import { createExternalLinks } from "../util/history.ts";
-import { avatarHashToURL } from "../util/strings.ts";
+import { avatarHashToURL, banTypeString } from "../util/strings.ts";
+import { isPermanentBan } from "../util/table.ts";
 import { isValidSteamDate } from "../util/time.ts";
 
 export const Route = createFileRoute("/_guest/profile/$steamId")({
@@ -58,6 +63,43 @@ function StandingRow({ clean, title, detail }: { clean: boolean; title: string; 
 				{clean ? <VerifiedUserIcon color={"success"} /> : <ErrorIcon color={"error"} />}
 			</ListItemIcon>
 			<ListItemText primary={title} secondary={detail} />
+		</ListItem>
+	);
+}
+
+function LocalBanRow({ banId, siteName }: { banId: number; siteName: string }) {
+	const { hasPermission } = useAuth();
+	const canRead = hasPermission(Permission.BAN_READ);
+	const { data, isLoading, isError } = useQuery(getBan, { banId }, { enabled: banId > 0 && canRead });
+
+	if (banId <= 0) {
+		return <StandingRow clean={true} title={siteName} detail={"No active ban"} />;
+	}
+
+	if (!canRead || isError) {
+		return <StandingRow clean={false} title={siteName} detail={"Currently banned"} />;
+	}
+
+	if (isLoading || !data?.ban) {
+		return (
+			<ListItem>
+				<Skeleton variant={"circular"} width={24} height={24} sx={{ mr: 2 }} />
+				<Skeleton variant={"text"} width={"60%"} />
+			</ListItem>
+		);
+	}
+
+	const ban = data.ban;
+	const detail = isPermanentBan(timestampDate(ban.createdOn), timestampDate(ban.validUntil))
+		? "Permanent"
+		: `Expires in ${formatDistanceStrict(timestampDate(ban.createdOn), timestampDate(ban.validUntil))}`;
+
+	return (
+		<ListItem>
+			<ListItemIcon sx={{ minWidth: 40 }}>
+				<GavelIcon color={"error"} />
+			</ListItemIcon>
+			<ListItemText primary={title} secondary={`${banTypeString(ban.banType)} · ${detail}`} />
 		</ListItem>
 	);
 }
@@ -188,6 +230,7 @@ function FriendsCard({ steamIds }: { steamIds: string[] }) {
 
 function ProfilePage() {
 	const { steamId } = Route.useParams();
+	const { appInfo } = Route.useRouteContext();
 	const { data } = useQuery(profile, { steamId });
 
 	const friendIds = useMemo(() => {
@@ -283,6 +326,7 @@ function ProfilePage() {
 				<Stack spacing={3}>
 					<ContainerWithHeader title={"Account Standing"} iconLeft={<VerifiedUserIcon />}>
 						<List disablePadding>
+							<LocalBanRow banId={banId} siteName={appInfo.siteName} />
 							<StandingRow
 								clean={vacBans === 0}
 								title={"VAC Bans"}
