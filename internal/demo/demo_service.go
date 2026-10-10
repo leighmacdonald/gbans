@@ -3,6 +3,7 @@ package demo
 import (
 	"context"
 	"errors"
+	"log/slog"
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/asset"
@@ -10,6 +11,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/demo/v1/demov1connect"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
+	"github.com/leighmacdonald/gbans/internal/stats"
+	"github.com/leighmacdonald/gbans/pkg/demoparse"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -103,9 +106,12 @@ func (s Service) UploadDemo(ctx context.Context, req *v1.UploadDemoRequest) (*v1
 	}, req.GetForce())
 	if errUpload != nil {
 		if errors.Is(errUpload, ErrDemoFilename) || errors.Is(errUpload, ErrServerValidate) ||
-			errors.Is(errUpload, asset.ErrAssetTooLarge) {
+			errors.Is(errUpload, asset.ErrAssetTooLarge) || errors.Is(errUpload, stats.ErrInvalidState) ||
+			errors.Is(errUpload, demoparse.ErrDemoSubmit) {
 			return nil, connect.NewError(connect.CodeInvalidArgument, errUpload)
 		}
+
+		slog.Error("Failed to upload demo", slog.String("error", errUpload.Error()))
 
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}

@@ -714,3 +714,79 @@ func TestImportMatchEvents(t *testing.T) {
 		"killstreak_ended": 1, "setup_finished": 1,
 	}, byType)
 }
+
+// TestImportSkipsUnknownMatchEvents ensures demos containing event types from
+// a newer parser version don't fail the whole import (previously surfaced as
+// an internal server error on manual demo upload). Unknown events are
+// skipped while known events are still stored.
+func TestImportSkipsUnknownMatchEvents(t *testing.T) {
+	testFixture := tests.NewFixture()
+	defer testFixture.Close()
+
+	ctx := t.Context()
+	server := testFixture.CreateTestServer(ctx)
+
+	killerID := steamid.New("[U:1:33333333]")
+	victimID := steamid.New("[U:1:44444444]")
+	require.True(t, killerID.Valid())
+	require.True(t, victimID.Valid())
+
+	for _, person := range []struct {
+		id   steamid.SteamID
+		name string
+	}{
+		{killerID, "Killer"},
+		{victimID, "Victim"},
+	} {
+		require.NoError(t, testFixture.Database.Exec(ctx,
+			`INSERT INTO person (steam_id, created_on, updated_on, personaname, avatarhash, profilestate, personastate,
+			                    realname, timecreated, loccountrycode, locstatecode, loccityid)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+			 ON CONFLICT DO NOTHING`,
+			person.id.Int64(), time.Now(), time.Now(), person.name, "", 0, 0, "", 0, "", "", 0))
+	}
+
+	var demoID int32
+	require.NoError(t, testFixture.Database.QueryRow(ctx,
+		`INSERT INTO demo (server_id, title, map_name, created_on) VALUES ($1, $2, $3, $4) RETURNING demo_id`,
+		server.ServerID, "unknown-events.dem", "cp_process_final", time.Now()).Scan(&demoID))
+
+	demo := demoparse.Demo{
+		Filename: "unknown-events.dem", DemoType: demoparse.HL2Demo,
+		Server: "test", Map: "cp_process_final", Game: "tf",
+		Duration: 600, Ticks: 40000, Frames: 39900, Signon: 1000,
+		Rounds: []demoparse.RoundSummary{
+			{
+				Winner: "red", Time: 300,
+				Players: []demoparse.PlayerSummary{
+					{
+						Name: "Killer", SteamID: string(killerID.Steam3()), Team: "red",
+						TickStart: 1000, TickEnd: 5000,
+					},
+				},
+			},
+		},
+		Events: []demoparse.MatchEvent{
+			{
+				Tick: 1100, Type: demoparse.MatchEventKill,
+				Kill: &demoparse.KillEvent{
+					Tick: 1100, Killer: string(killerID.Steam3()), Victim: string(victimID.Steam3()),
+					Weapon: "scattergun",
+				},
+			},
+			{Tick: 1200, Type: demoparse.MatchEventType("some_future_event")},
+			{Tick: 1300},
+		},
+	}
+
+	repo := stats.NewRepository(testFixture.Database)
+	st := stats.New(repo, maps.New(maps.NewRepository(testFixture.Database)))
+	matchID, errImport := st.Import(ctx, server.ServerID, demoID, &demo, time.Now())
+	require.NoError(t, errImport)
+	require.NotNil(t, matchID)
+
+	var count int
+	require.NoError(t, testFixture.Database.QueryRow(ctx,
+		`SELECT count(*) FROM match_event WHERE match_id = $1`, *matchID).Scan(&count))
+	require.Equal(t, 1, count)
+}
