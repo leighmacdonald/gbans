@@ -3,6 +3,7 @@ package stats
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"slices"
@@ -867,6 +868,12 @@ func (r Repository) insertRoundPlayerVariants(ctx context.Context, transaction p
 	return nil
 }
 
+// ErrUnknownMatchEventType is returned when a parsed match event carries a
+// type not recognised by this version of gbans (e.g. a newer parser emits
+// additional kinds). Callers should skip such events rather than fail the
+// whole import so manual demo uploads don't surface internal errors.
+var ErrUnknownMatchEventType = errors.New("unknown match event type")
+
 // matchEventRow is the storable projection of a demoparse.MatchEvent. Actor,
 // target, and assister carry the singular participant roles; multi-party
 // roles such as capture cappers live in details.
@@ -1089,7 +1096,7 @@ func matchEventRowFromEvent(event demoparse.MatchEvent) (matchEventRow, error) {
 		row.target = eventSteamID(streak.Player)
 		payload = streak
 	default:
-		return row, fmt.Errorf("unknown match event type: %q", event.Type)
+		return row, fmt.Errorf("%w: %q", ErrUnknownMatchEventType, event.Type)
 	}
 
 	row.details, err = marshal(payload)
@@ -1126,6 +1133,14 @@ func (r Repository) insertEvents(ctx context.Context, transaction pgx.Tx, matchI
 	for _, event := range events {
 		row, err := matchEventRowFromEvent(event)
 		if err != nil {
+			if errors.Is(err, ErrUnknownMatchEventType) {
+				slog.Warn("Skipping unknown match event type",
+					slog.String("event_type", string(event.Type)),
+					slog.Int("tick", event.Tick))
+
+				continue
+			}
+
 			return err
 		}
 

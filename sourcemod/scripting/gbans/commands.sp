@@ -48,7 +48,7 @@ Action onCmdMod(int clientId, int argc) {
     obj.SetString("steamId", authId);
     obj.SetString("name", name);
     obj.SetString("reason", reason);
-    obj.SetInt("client", clientId);
+    obj.SetInt("clientId", clientId);
 
     postHTTPRequest("/connect/sourcemod.v1.PluginService/SMPingMod", obj, onPingModRespReceived);
 

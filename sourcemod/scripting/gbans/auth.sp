@@ -99,7 +99,7 @@ void onCheckResp(HTTPResponse response, any value) {
         LogError("Could not parse message");
         return;
     }
-    if (StrEqual(banType, "BAN_TYPE_NOCOMM")) {
+    if (StrEqual(banType, "BAN_TYPE_NO_COMM")) {
         if (!BaseComm_IsClientMuted(clientId)) {
             BaseComm_SetClientMute(clientId, true);
         }

@@ -81,13 +81,13 @@ bool report(int sourceId, int targetId, GB_BanReason reason, const char[] reason
     obj.SetString("demoName", demoName);
     obj.SetInt("demoTick", demoTick);
 
-    postHTTPRequest("/connect/ban.v1.ReportService/Report", obj, onReportRespReceived, sourceId);
+    postHTTPRequest("/connect/ban.v1.ReportService/ReportCreate", obj, onReportRespReceived, sourceId);
 
     return true;
 }
 
 void onReportRespReceived(HTTPResponse response, any clientId) {
-    if (response.Status != HTTPStatus_Created) {
+    if (response.Status != HTTPStatus_OK) {
         if (response.Status == HTTPStatus_Conflict) {
             PrintToChat(clientId, "[Report] User has already been reported, thanks.");
             resetReportStatus();
