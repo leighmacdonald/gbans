@@ -110,6 +110,19 @@ func New(dsn string, autoMigrate bool, logQueries bool) *PgStore {
 		dsn:         dsn,
 		autoMigrate: autoMigrate,
 		logQueries:  logQueries,
+		validViewNames: []string{
+			"stats_summary_daily_overall_view",
+			"stats_summary_daily_variants_view",
+			"stats_summary_weekly_overall_view",
+			"stats_summary_weekly_variants_view",
+			"stats_summary_monthly_overall_view",
+			"stats_summary_monthly_variants_view",
+			"stats_summary_yearly_overall_view",
+			"stats_summary_yearly_variants_view",
+			"stats_summary_alltime_overall_view",
+			"stats_summary_alltime_variants_view",
+			"stats_weapons_view",
+		},
 	}
 }
 
@@ -145,7 +158,7 @@ func (db *PgStore) RefreshMaterializedView(ctx context.Context, viewName string)
 		return ErrInvalidView
 	}
 
-	if err := db.Exec(ctx, "refresh materialized view concurrently "+viewName); err != nil {
+	if err := db.Exec(ctx, "refresh materialized view concurrently "+pgx.Identifier([]string{viewName}).Sanitize()); err != nil {
 		return Err(err)
 	}
 

@@ -66,3 +66,10 @@ export const mapList = StatsService.method.mapList;
  * @generated from rpc stats.v1.StatsService.Buckets
  */
 export const buckets = StatsService.method.buckets;
+
+/**
+ * RefreshStats recomputes all stats summary views on demand. Admin only.
+ *
+ * @generated from rpc stats.v1.StatsService.RefreshStats
+ */
+export const refreshStats = StatsService.method.refreshStats;

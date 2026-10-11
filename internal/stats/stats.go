@@ -227,17 +227,44 @@ func (s Stats) StartRefreshHandler(ctx context.Context) error {
 	return nil
 }
 
+// StatViews lists every materialized view backing QueryStats, refreshed by
+// the daily job. Keep in sync with database.validViewNames (minus
+// stats_weapons_view, which is only refreshed here for convenience).
+var StatViews = []string{
+	"stats_summary_daily_overall_view",
+	"stats_summary_daily_variants_view",
+	"stats_summary_weekly_overall_view",
+	"stats_summary_weekly_variants_view",
+	"stats_summary_monthly_overall_view",
+	"stats_summary_monthly_variants_view",
+	"stats_summary_yearly_overall_view",
+	"stats_summary_yearly_variants_view",
+	"stats_summary_alltime_overall_view",
+	"stats_summary_alltime_variants_view",
+	"stats_weapons_view",
+}
+
 func (s Stats) UpdateDailyViews(ctx context.Context) func() {
 	return func() {
-		slog.Debug("Refreshing daily stat views")
-		for _, viewName := range []string{"stats_summary_daily", "stats_summary_daily_weapons", "stats_summary_daily_classes"} {
-			if err := s.repo.RefreshMaterializedView(ctx, viewName); err != nil {
-				slog.Error("Failed to refresh view", slog.String("view", viewName), slog.String("error", err.Error()))
-
-				return
-			}
+		if err := s.RefreshViews(ctx); err != nil {
+			slog.Error("Failed to refresh views", slog.String("error", err.Error()))
 		}
 	}
+}
+
+// RefreshViews refreshes every stats summary view synchronously. Used by the
+// daily scheduler and the admin RefreshStats RPC.
+func (s Stats) RefreshViews(ctx context.Context) error {
+	for _, viewName := range StatViews {
+		start := time.Now()
+		if err := s.repo.RefreshMaterializedView(ctx, viewName); err != nil {
+			return fmt.Errorf("refresh view %s: %w", viewName, err)
+		}
+
+		slog.Debug("Refreshed stats view", slog.String("view", viewName), slog.Duration("duration", time.Since(start)))
+	}
+
+	return nil
 }
 
 func (s Stats) Bucket(ctx context.Context, bucketID int32) (*Bucket, error) {

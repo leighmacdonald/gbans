@@ -407,6 +407,12 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	go g.blocklists.Sync(ctx)
 	go g.demos.Cleanup(ctx)
 
+	go func() {
+		if err := g.stats.StartRefreshHandler(ctx); err != nil {
+			slog.Error("Failed to start stats refresh handler", slog.String("error", err.Error()))
+		}
+	}()
+
 	membershipsTicker := time.NewTicker(12 * time.Hour)
 	defer membershipsTicker.Stop()
 	expirationsTicker := time.NewTicker(60 * time.Second)

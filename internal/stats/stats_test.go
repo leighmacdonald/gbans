@@ -61,6 +61,190 @@ func TestImport(t *testing.T) {
 	require.NotNil(t, matchID)
 }
 
+// demoPlayerSums aggregates per-player totals across all rounds of a parsed
+// demo, mirroring how the summary views group by steam_id.
+type demoPlayerSums struct {
+	kills             uint64
+	deaths            uint64
+	points            uint64
+	healing           uint64
+	postroundHealing  uint64
+	scoreboardHealing uint64
+}
+
+func sumDemoPlayers(demo *demoparse.Demo) map[steamid.SteamID]*demoPlayerSums {
+	sums := map[steamid.SteamID]*demoPlayerSums{}
+	for _, round := range demo.Rounds {
+		for _, player := range round.Players {
+			sid := steamid.New(player.SteamID)
+			if !sid.Valid() {
+				continue
+			}
+			agg, ok := sums[sid]
+			if !ok {
+				agg = &demoPlayerSums{}
+				sums[sid] = agg
+			}
+			agg.kills += uint64(player.Kills)
+			agg.deaths += uint64(player.Deaths)
+			agg.points += uint64(player.Points)
+			agg.healing += uint64(player.Healing)
+			agg.postroundHealing += uint64(player.PostroundHealing)
+			agg.scoreboardHealing += uint64(player.ScoreboardHealing)
+		}
+	}
+
+	return sums
+}
+
+func importDemoAt(t *testing.T, testFixture *tests.Fixture, st stats.Stats, serverID int32, demo *demoparse.Demo, start time.Time) {
+	t.Helper()
+	ctx := t.Context()
+
+	var demoID int32
+	require.NoError(t, testFixture.Database.QueryRow(ctx,
+		`INSERT INTO demo (server_id, title, map_name, created_on) VALUES ($1, $2, $3, $4) RETURNING demo_id`,
+		serverID, demo.Filename, demo.Map, start).Scan(&demoID))
+
+	_, errImport := st.Import(ctx, serverID, demoID, demo, start)
+	require.NoError(t, errImport)
+}
+
+func queryOverall(t *testing.T, repo stats.Repository, bucket uint32, timeBucket stats.TimeBucket, stamp time.Time) map[steamid.SteamID]stats.OverallStats {
+	t.Helper()
+
+	rows, _, errQuery := repo.Query(t.Context(), stats.Opts{
+		StatsBucketID: bucket,
+		TimeBucket:    timeBucket,
+		TimeStamp:     stamp,
+	})
+	require.NoError(t, errQuery)
+
+	out := map[steamid.SteamID]stats.OverallStats{}
+	for _, row := range rows {
+		stat, ok := row.(stats.OverallStats)
+		require.True(t, ok)
+		out[stat.SteamID] = stat
+	}
+
+	return out
+}
+
+// TestGlobalStatsAcrossBucketsAndTime imports the same match several times on
+// different servers (stats buckets) and match dates, then verifies the
+// summary views aggregate correctly per stats bucket and time bucket.
+func TestGlobalStatsAcrossBucketsAndTime(t *testing.T) {
+	testFixture := tests.NewFixture()
+	defer testFixture.Close()
+
+	ctx := t.Context()
+
+	serverA := testFixture.CreateTestServer(ctx)
+	serverB := testFixture.CreateTestServer(ctx)
+	require.NoError(t, testFixture.Database.Exec(ctx,
+		`UPDATE server SET stats_bucket_id = 2 WHERE server_id = $1`, serverB.ServerID))
+
+	demoJSON, err := os.Open("testdata/demo-1427611.json")
+	require.NoError(t, err)
+	demo, errDemo := json.Decode[demoparse.Demo](demoJSON)
+	require.NoError(t, errDemo)
+
+	seen := map[steamid.SteamID]struct{}{}
+	for _, round := range demo.Rounds {
+		for _, player := range round.Players {
+			sid := steamid.New(player.SteamID)
+			if !sid.Valid() {
+				continue
+			}
+			if _, ok := seen[sid]; ok {
+				continue
+			}
+			seen[sid] = struct{}{}
+			require.NoError(t, testFixture.Database.Exec(ctx,
+				`INSERT INTO person (steam_id, created_on, updated_on, personaname, avatarhash, profilestate, personastate,
+				                    realname, timecreated, loccountrycode, locstatecode, loccityid)
+				 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+				 ON CONFLICT DO NOTHING`,
+				sid.Int64(), time.Now(), time.Now(), player.Name, "", 0, 0, "", 0, "", "", 0))
+		}
+	}
+
+	repo := stats.NewRepository(testFixture.Database)
+	st := stats.New(repo, maps.New(maps.NewRepository(testFixture.Database)))
+
+	// Mon 2026-09-07, Tue 2026-09-08 (same ISO week, same month) and Sat
+	// 2026-08-15 (different week and month).
+	day1 := time.Date(2026, 9, 7, 12, 0, 0, 0, time.UTC)
+	day2 := time.Date(2026, 9, 8, 12, 0, 0, 0, time.UTC)
+	day3 := time.Date(2026, 8, 15, 12, 0, 0, 0, time.UTC)
+
+	importDemoAt(t, testFixture, st, serverA.ServerID, &demo, day1)
+	importDemoAt(t, testFixture, st, serverA.ServerID, &demo, day2)
+	importDemoAt(t, testFixture, st, serverA.ServerID, &demo, day3)
+	importDemoAt(t, testFixture, st, serverB.ServerID, &demo, day1)
+
+	// Exercise the same path as the daily scheduler and admin RefreshStats RPC.
+	require.NoError(t, st.RefreshViews(ctx))
+
+	expected := sumDemoPlayers(&demo)
+	require.NotEmpty(t, expected)
+
+	topPlayer := steamid.SteamID{}
+	var topPoints uint64
+	for sid, sums := range expected {
+		if sums.points > topPoints {
+			topPoints = sums.points
+			topPlayer = sid
+		}
+	}
+
+	assertBucket := func(rows map[steamid.SteamID]stats.OverallStats, multiplier uint64, msg string) {
+		require.Len(t, rows, len(expected), msg)
+		for sid, sums := range expected {
+			got, ok := rows[sid]
+			require.True(t, ok, "%s: missing player %s", msg, sid)
+			require.Equal(t, sums.kills*multiplier, got.Kills, "%s: kills %s", msg, sid)
+			require.Equal(t, sums.deaths*multiplier, got.Deaths, "%s: deaths %s", msg, sid)
+			require.Equal(t, sums.points*multiplier, got.Points, "%s: points %s", msg, sid)
+			require.Equal(t, sums.healing*multiplier, got.Healing, "%s: healing %s", msg, sid)
+			require.Equal(t, sums.postroundHealing*multiplier, got.PostroundHealing, "%s: postround_healing %s", msg, sid)
+			require.Equal(t, sums.scoreboardHealing*multiplier, got.ScoreboardHealing, "%s: scoreboard_healing %s", msg, sid)
+		}
+	}
+
+	// Daily: each import day holds exactly one copy in bucket 1.
+	assertBucket(queryOverall(t, repo, 1, stats.TimeBucketDaily, day1), 1, "daily bucket1 day1")
+	assertBucket(queryOverall(t, repo, 1, stats.TimeBucketDaily, day2), 1, "daily bucket1 day2")
+	assertBucket(queryOverall(t, repo, 1, stats.TimeBucketDaily, day3), 1, "daily bucket1 day3")
+
+	// Weekly: day1+day2 share the week of 2026-09-07; day3 stands alone.
+	assertBucket(queryOverall(t, repo, 1, stats.TimeBucketWeekly, day2), 2, "weekly bucket1")
+	assertBucket(queryOverall(t, repo, 1, stats.TimeBucketWeekly, day3), 1, "weekly bucket1 day3")
+
+	// Monthly: September holds day1+day2, August holds day3.
+	assertBucket(queryOverall(t, repo, 1, stats.TimeBucketMonthly, day1), 2, "monthly bucket1 september")
+	assertBucket(queryOverall(t, repo, 1, stats.TimeBucketMonthly, day3), 1, "monthly bucket1 august")
+
+	// Yearly + alltime aggregate everything in the bucket.
+	assertBucket(queryOverall(t, repo, 1, stats.TimeBucketYearly, day1), 3, "yearly bucket1")
+	assertBucket(queryOverall(t, repo, 1, stats.TimeBucketAlltime, day1), 3, "alltime bucket1")
+
+	// Bucket isolation: serverB's import lives in bucket 2 only.
+	assertBucket(queryOverall(t, repo, 2, stats.TimeBucketDaily, day1), 1, "daily bucket2 day1")
+	assertBucket(queryOverall(t, repo, 2, stats.TimeBucketAlltime, day1), 1, "alltime bucket2")
+
+	// Ranks are partitioned per (bucket, period): each bucket crowns its own
+	// rank 1 for the same top player.
+	for _, rows := range []map[steamid.SteamID]stats.OverallStats{
+		queryOverall(t, repo, 1, stats.TimeBucketDaily, day1),
+		queryOverall(t, repo, 1, stats.TimeBucketAlltime, day1),
+		queryOverall(t, repo, 2, stats.TimeBucketDaily, day1),
+		queryOverall(t, repo, 2, stats.TimeBucketAlltime, day1),
+	} {
+		require.Equal(t, uint64(1), rows[topPlayer].Rank, "top player must rank 1")
+	}
+}
+
 // TestImportNewParserStats ensures the stats added with the tf2_demostats
 // v0.3.x parser survive the full import, match read, and summary view paths.
 func TestImportNewParserStats(t *testing.T) {
@@ -222,10 +406,9 @@ func TestImportNewParserStats(t *testing.T) {
 	require.Len(t, match.Kills, 2)
 	requireMatchKills(t, match, steamID, victimID)
 
-	// RefreshMaterializedView rejects all names (validViewNames is never
-	// populated), so refresh directly here.
-	require.NoError(t, testFixture.Database.Exec(ctx, "REFRESH MATERIALIZED VIEW stats_summary_daily_overall_view"))
-	require.NoError(t, testFixture.Database.Exec(ctx, "REFRESH MATERIALIZED VIEW stats_summary_daily_variants_view"))
+	// Exercise the allow-listed concurrent refresh path used by the daily job.
+	require.NoError(t, testFixture.Database.RefreshMaterializedView(ctx, "stats_summary_daily_overall_view"))
+	require.NoError(t, testFixture.Database.RefreshMaterializedView(ctx, "stats_summary_daily_variants_view"))
 
 	overallRows, _, errOverall := repo.Query(ctx, stats.Opts{
 		StatsBucketID: 1, TimeBucket: stats.TimeBucketDaily,

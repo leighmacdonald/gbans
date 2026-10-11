@@ -48,6 +48,8 @@ service StatsService {
   rpc WeaponList(google.protobuf.Empty) returns (WeaponListResponse) {}
   rpc MapList(google.protobuf.Empty) returns (MapListResponse) {}
   rpc Buckets(google.protobuf.Empty) returns (BucketsResponse) {}
+  // RefreshStats recomputes all stats summary views on demand. Admin only.
+  rpc RefreshStats(google.protobuf.Empty) returns (RefreshStatsResponse) {}
 }
 
 message MatchesWithPlayerRequest {
@@ -96,6 +98,10 @@ message Bucket {
 
 message BucketsResponse {
   repeated Bucket buckets = 1;
+}
+
+message RefreshStatsResponse {
+  repeated string refreshed_views = 1;
 }
 
 // The Variant picked specifies which set of stats structs are being shown.
@@ -152,7 +158,87 @@ message QueryStatsResponse {
   uint64 count = 2;
   oneof stat_container {
     VariantStatsContainer stats_variant = 3;
+    OverallStatsContainer stats_overall = 4;
   }
+}
+
+// OverallStats is a single player's aggregated per-player (global) stats for
+// a stats bucket + time bucket. Backed by stats_summary_*_overall_view.
+message OverallStats {
+  uint64 rank = 1;
+  person.v1.PersonDisplay player = 2;
+  uint64 points = 3;
+  uint64 connection_count = 4;
+  uint64 bonus_points = 5;
+  uint64 kills = 6;
+  uint64 assists = 7;
+  uint64 deaths = 8;
+  uint64 postround_kills = 9;
+  uint64 postround_assists = 10;
+  uint64 postround_deaths = 11;
+  uint64 preround_healing = 12;
+  uint64 healing = 13;
+  uint64 postround_healing = 14;
+  uint64 drops = 15;
+  uint64 near_full_charge_death = 16;
+  uint64 charges_uber = 17;
+  uint64 charges_kritz = 18;
+  uint64 charges_vacc = 19;
+  uint64 charges_quickfix = 20;
+  uint64 damage = 21;
+  uint64 damage_taken = 22;
+  uint64 dominations = 23;
+  uint64 dominated = 24;
+  uint64 revenges = 25;
+  uint64 revenged = 26;
+  uint64 airshots = 27;
+  uint64 headshots = 28;
+  uint64 headshot_kills = 29;
+  uint64 backstabs = 30;
+  uint64 backstab_kills = 31;
+  uint64 was_headshot = 32;
+  uint64 was_backstabbed = 33;
+  uint64 shots = 34;
+  uint64 hits = 35;
+  uint64 scoreboard_kills = 36;
+  uint64 scoreboard_assists = 37;
+  uint64 scoreboard_deaths = 38;
+  uint64 scoreboard_healing = 39;
+  uint64 suicides = 40;
+  uint64 captures = 41;
+  uint64 captures_blocked = 42;
+  uint64 scoreboard_damage = 43;
+  uint64 extinguishes = 44;
+  uint64 ignites = 45;
+  uint64 objects_built = 46;
+  uint64 objects_destroyed = 47;
+  uint64 heals = 48;
+  uint64 healed = 49;
+  uint64 crossbow_heals = 50;
+  uint64 crossbow_healing = 51;
+  uint64 heal_on_hit = 52;
+  uint64 building_healing = 53;
+  uint64 dropped_ubers = 54;
+  uint64 reflects = 55;
+  uint64 defenses = 56;
+  uint64 direct_hits = 57;
+  uint64 teleports = 58;
+  uint64 push_distance = 59;
+  uint64 environmental_deaths = 60;
+  uint64 environmental_kills = 61;
+  uint64 object_placed = 62;
+  uint64 object_upgraded = 63;
+  uint64 object_carried = 64;
+  uint64 object_dropped = 65;
+  uint64 object_removed = 66;
+  uint64 object_detonated = 67;
+  uint64 ammo_packs = 68;
+  uint64 health_packs = 69;
+  uint64 health_pack_healing = 70;
+}
+
+message OverallStatsContainer {
+  repeated OverallStats stats = 1;
 }
 
 message VariantStats {
@@ -211,6 +297,12 @@ message VariantStats {
   uint64 ammo_packs = 53;
   uint64 health_packs = 54;
   uint64 health_pack_healing = 55;
+  uint64 shots = 56;
+  uint64 hits = 57;
+  uint64 objects_built = 58;
+  uint64 objects_destroyed = 59;
+  uint64 captures = 60;
+  uint64 captures_blocked = 61;
 }
 
 message VariantStatsContainer {
