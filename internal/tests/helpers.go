@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
@@ -99,7 +100,8 @@ func newDB(ctx context.Context) (*postgresContainer, error) {
 		AlwaysPullImage: false,
 		WaitingFor: wait.
 			ForLog("database system is ready to accept connections").
-			WithOccurrence(2),
+			WithOccurrence(2).
+			WithStartupTimeout(5 * time.Minute),
 		Started: true,
 	})
 

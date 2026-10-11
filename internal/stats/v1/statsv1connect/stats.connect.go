@@ -50,6 +50,9 @@ const (
 	StatsServiceMapListProcedure = "/stats.v1.StatsService/MapList"
 	// StatsServiceBucketsProcedure is the fully-qualified name of the StatsService's Buckets RPC.
 	StatsServiceBucketsProcedure = "/stats.v1.StatsService/Buckets"
+	// StatsServiceRefreshStatsProcedure is the fully-qualified name of the StatsService's RefreshStats
+	// RPC.
+	StatsServiceRefreshStatsProcedure = "/stats.v1.StatsService/RefreshStats"
 )
 
 // StatsServiceClient is a client for the stats.v1.StatsService service.
@@ -83,6 +86,8 @@ type StatsServiceClient interface {
 	WeaponList(context.Context, *emptypb.Empty) (*v1.WeaponListResponse, error)
 	MapList(context.Context, *emptypb.Empty) (*v1.MapListResponse, error)
 	Buckets(context.Context, *emptypb.Empty) (*v1.BucketsResponse, error)
+	// RefreshStats recomputes all stats summary views on demand. Admin only.
+	RefreshStats(context.Context, *emptypb.Empty) (*v1.RefreshStatsResponse, error)
 }
 
 // NewStatsServiceClient constructs a client for the stats.v1.StatsService service. By default, it
@@ -138,6 +143,12 @@ func NewStatsServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(statsServiceMethods.ByName("Buckets")),
 			connect.WithClientOptions(opts...),
 		),
+		refreshStats: connect.NewClient[emptypb.Empty, v1.RefreshStatsResponse](
+			httpClient,
+			baseURL+StatsServiceRefreshStatsProcedure,
+			connect.WithSchema(statsServiceMethods.ByName("RefreshStats")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -150,6 +161,7 @@ type statsServiceClient struct {
 	weaponList        *connect.Client[emptypb.Empty, v1.WeaponListResponse]
 	mapList           *connect.Client[emptypb.Empty, v1.MapListResponse]
 	buckets           *connect.Client[emptypb.Empty, v1.BucketsResponse]
+	refreshStats      *connect.Client[emptypb.Empty, v1.RefreshStatsResponse]
 }
 
 // Match calls stats.v1.StatsService.Match.
@@ -215,6 +227,15 @@ func (c *statsServiceClient) Buckets(ctx context.Context, req *emptypb.Empty) (*
 	return nil, err
 }
 
+// RefreshStats calls stats.v1.StatsService.RefreshStats.
+func (c *statsServiceClient) RefreshStats(ctx context.Context, req *emptypb.Empty) (*v1.RefreshStatsResponse, error) {
+	response, err := c.refreshStats.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // StatsServiceHandler is an implementation of the stats.v1.StatsService service.
 type StatsServiceHandler interface {
 	// Query a single match
@@ -246,6 +267,8 @@ type StatsServiceHandler interface {
 	WeaponList(context.Context, *emptypb.Empty) (*v1.WeaponListResponse, error)
 	MapList(context.Context, *emptypb.Empty) (*v1.MapListResponse, error)
 	Buckets(context.Context, *emptypb.Empty) (*v1.BucketsResponse, error)
+	// RefreshStats recomputes all stats summary views on demand. Admin only.
+	RefreshStats(context.Context, *emptypb.Empty) (*v1.RefreshStatsResponse, error)
 }
 
 // NewStatsServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -297,6 +320,12 @@ func NewStatsServiceHandler(svc StatsServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(statsServiceMethods.ByName("Buckets")),
 		connect.WithHandlerOptions(opts...),
 	)
+	statsServiceRefreshStatsHandler := connect.NewUnaryHandlerSimple(
+		StatsServiceRefreshStatsProcedure,
+		svc.RefreshStats,
+		connect.WithSchema(statsServiceMethods.ByName("RefreshStats")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/stats.v1.StatsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case StatsServiceMatchProcedure:
@@ -313,6 +342,8 @@ func NewStatsServiceHandler(svc StatsServiceHandler, opts ...connect.HandlerOpti
 			statsServiceMapListHandler.ServeHTTP(w, r)
 		case StatsServiceBucketsProcedure:
 			statsServiceBucketsHandler.ServeHTTP(w, r)
+		case StatsServiceRefreshStatsProcedure:
+			statsServiceRefreshStatsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -348,4 +379,8 @@ func (UnimplementedStatsServiceHandler) MapList(context.Context, *emptypb.Empty)
 
 func (UnimplementedStatsServiceHandler) Buckets(context.Context, *emptypb.Empty) (*v1.BucketsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.Buckets is not implemented"))
+}
+
+func (UnimplementedStatsServiceHandler) RefreshStats(context.Context, *emptypb.Empty) (*v1.RefreshStatsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.RefreshStats is not implemented"))
 }

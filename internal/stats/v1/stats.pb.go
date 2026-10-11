@@ -641,6 +641,50 @@ func (x *BucketsResponse) GetBuckets() []*Bucket {
 	return nil
 }
 
+type RefreshStatsResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	RefreshedViews []string               `protobuf:"bytes,1,rep,name=refreshed_views,json=refreshedViews" json:"refreshed_views,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *RefreshStatsResponse) Reset() {
+	*x = RefreshStatsResponse{}
+	mi := &file_stats_v1_stats_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RefreshStatsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefreshStatsResponse) ProtoMessage() {}
+
+func (x *RefreshStatsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefreshStatsResponse.ProtoReflect.Descriptor instead.
+func (*RefreshStatsResponse) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *RefreshStatsResponse) GetRefreshedViews() []string {
+	if x != nil {
+		return x.RefreshedViews
+	}
+	return nil
+}
+
 type QueryMatchesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Filter        *v11.Filter            `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
@@ -653,7 +697,7 @@ type QueryMatchesRequest struct {
 
 func (x *QueryMatchesRequest) Reset() {
 	*x = QueryMatchesRequest{}
-	mi := &file_stats_v1_stats_proto_msgTypes[7]
+	mi := &file_stats_v1_stats_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -665,7 +709,7 @@ func (x *QueryMatchesRequest) String() string {
 func (*QueryMatchesRequest) ProtoMessage() {}
 
 func (x *QueryMatchesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[7]
+	mi := &file_stats_v1_stats_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -678,7 +722,7 @@ func (x *QueryMatchesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryMatchesRequest.ProtoReflect.Descriptor instead.
 func (*QueryMatchesRequest) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{7}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *QueryMatchesRequest) GetFilter() *v11.Filter {
@@ -719,7 +763,7 @@ type QueryMatchesResponse struct {
 
 func (x *QueryMatchesResponse) Reset() {
 	*x = QueryMatchesResponse{}
-	mi := &file_stats_v1_stats_proto_msgTypes[8]
+	mi := &file_stats_v1_stats_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -731,7 +775,7 @@ func (x *QueryMatchesResponse) String() string {
 func (*QueryMatchesResponse) ProtoMessage() {}
 
 func (x *QueryMatchesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[8]
+	mi := &file_stats_v1_stats_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -744,7 +788,7 @@ func (x *QueryMatchesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryMatchesResponse.ProtoReflect.Descriptor instead.
 func (*QueryMatchesResponse) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{8}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *QueryMatchesResponse) GetCount() uint64 {
@@ -775,7 +819,7 @@ type QueryStatsRequest struct {
 
 func (x *QueryStatsRequest) Reset() {
 	*x = QueryStatsRequest{}
-	mi := &file_stats_v1_stats_proto_msgTypes[9]
+	mi := &file_stats_v1_stats_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -787,7 +831,7 @@ func (x *QueryStatsRequest) String() string {
 func (*QueryStatsRequest) ProtoMessage() {}
 
 func (x *QueryStatsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[9]
+	mi := &file_stats_v1_stats_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -800,7 +844,7 @@ func (x *QueryStatsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryStatsRequest.ProtoReflect.Descriptor instead.
 func (*QueryStatsRequest) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{9}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *QueryStatsRequest) GetFilter() *v11.Filter {
@@ -852,6 +896,7 @@ type QueryStatsResponse struct {
 	// Types that are valid to be assigned to StatContainer:
 	//
 	//	*QueryStatsResponse_StatsVariant
+	//	*QueryStatsResponse_StatsOverall
 	StatContainer isQueryStatsResponse_StatContainer `protobuf_oneof:"stat_container"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -859,7 +904,7 @@ type QueryStatsResponse struct {
 
 func (x *QueryStatsResponse) Reset() {
 	*x = QueryStatsResponse{}
-	mi := &file_stats_v1_stats_proto_msgTypes[10]
+	mi := &file_stats_v1_stats_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -871,7 +916,7 @@ func (x *QueryStatsResponse) String() string {
 func (*QueryStatsResponse) ProtoMessage() {}
 
 func (x *QueryStatsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[10]
+	mi := &file_stats_v1_stats_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -884,7 +929,7 @@ func (x *QueryStatsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryStatsResponse.ProtoReflect.Descriptor instead.
 func (*QueryStatsResponse) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{10}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *QueryStatsResponse) GetVariant() Variant {
@@ -917,6 +962,15 @@ func (x *QueryStatsResponse) GetStatsVariant() *VariantStatsContainer {
 	return nil
 }
 
+func (x *QueryStatsResponse) GetStatsOverall() *OverallStatsContainer {
+	if x != nil {
+		if x, ok := x.StatContainer.(*QueryStatsResponse_StatsOverall); ok {
+			return x.StatsOverall
+		}
+	}
+	return nil
+}
+
 type isQueryStatsResponse_StatContainer interface {
 	isQueryStatsResponse_StatContainer()
 }
@@ -925,7 +979,655 @@ type QueryStatsResponse_StatsVariant struct {
 	StatsVariant *VariantStatsContainer `protobuf:"bytes,3,opt,name=stats_variant,json=statsVariant,oneof"`
 }
 
+type QueryStatsResponse_StatsOverall struct {
+	StatsOverall *OverallStatsContainer `protobuf:"bytes,4,opt,name=stats_overall,json=statsOverall,oneof"`
+}
+
 func (*QueryStatsResponse_StatsVariant) isQueryStatsResponse_StatContainer() {}
+
+func (*QueryStatsResponse_StatsOverall) isQueryStatsResponse_StatContainer() {}
+
+// OverallStats is a single player's aggregated per-player (global) stats for
+// a stats bucket + time bucket. Backed by stats_summary_*_overall_view.
+type OverallStats struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Rank                *uint64                `protobuf:"varint,1,opt,name=rank" json:"rank,omitempty"`
+	Player              *v12.PersonDisplay     `protobuf:"bytes,2,opt,name=player" json:"player,omitempty"`
+	Points              *uint64                `protobuf:"varint,3,opt,name=points" json:"points,omitempty"`
+	ConnectionCount     *uint64                `protobuf:"varint,4,opt,name=connection_count,json=connectionCount" json:"connection_count,omitempty"`
+	BonusPoints         *uint64                `protobuf:"varint,5,opt,name=bonus_points,json=bonusPoints" json:"bonus_points,omitempty"`
+	Kills               *uint64                `protobuf:"varint,6,opt,name=kills" json:"kills,omitempty"`
+	Assists             *uint64                `protobuf:"varint,7,opt,name=assists" json:"assists,omitempty"`
+	Deaths              *uint64                `protobuf:"varint,8,opt,name=deaths" json:"deaths,omitempty"`
+	PostroundKills      *uint64                `protobuf:"varint,9,opt,name=postround_kills,json=postroundKills" json:"postround_kills,omitempty"`
+	PostroundAssists    *uint64                `protobuf:"varint,10,opt,name=postround_assists,json=postroundAssists" json:"postround_assists,omitempty"`
+	PostroundDeaths     *uint64                `protobuf:"varint,11,opt,name=postround_deaths,json=postroundDeaths" json:"postround_deaths,omitempty"`
+	PreroundHealing     *uint64                `protobuf:"varint,12,opt,name=preround_healing,json=preroundHealing" json:"preround_healing,omitempty"`
+	Healing             *uint64                `protobuf:"varint,13,opt,name=healing" json:"healing,omitempty"`
+	PostroundHealing    *uint64                `protobuf:"varint,14,opt,name=postround_healing,json=postroundHealing" json:"postround_healing,omitempty"`
+	Drops               *uint64                `protobuf:"varint,15,opt,name=drops" json:"drops,omitempty"`
+	NearFullChargeDeath *uint64                `protobuf:"varint,16,opt,name=near_full_charge_death,json=nearFullChargeDeath" json:"near_full_charge_death,omitempty"`
+	ChargesUber         *uint64                `protobuf:"varint,17,opt,name=charges_uber,json=chargesUber" json:"charges_uber,omitempty"`
+	ChargesKritz        *uint64                `protobuf:"varint,18,opt,name=charges_kritz,json=chargesKritz" json:"charges_kritz,omitempty"`
+	ChargesVacc         *uint64                `protobuf:"varint,19,opt,name=charges_vacc,json=chargesVacc" json:"charges_vacc,omitempty"`
+	ChargesQuickfix     *uint64                `protobuf:"varint,20,opt,name=charges_quickfix,json=chargesQuickfix" json:"charges_quickfix,omitempty"`
+	Damage              *uint64                `protobuf:"varint,21,opt,name=damage" json:"damage,omitempty"`
+	DamageTaken         *uint64                `protobuf:"varint,22,opt,name=damage_taken,json=damageTaken" json:"damage_taken,omitempty"`
+	Dominations         *uint64                `protobuf:"varint,23,opt,name=dominations" json:"dominations,omitempty"`
+	Dominated           *uint64                `protobuf:"varint,24,opt,name=dominated" json:"dominated,omitempty"`
+	Revenges            *uint64                `protobuf:"varint,25,opt,name=revenges" json:"revenges,omitempty"`
+	Revenged            *uint64                `protobuf:"varint,26,opt,name=revenged" json:"revenged,omitempty"`
+	Airshots            *uint64                `protobuf:"varint,27,opt,name=airshots" json:"airshots,omitempty"`
+	Headshots           *uint64                `protobuf:"varint,28,opt,name=headshots" json:"headshots,omitempty"`
+	HeadshotKills       *uint64                `protobuf:"varint,29,opt,name=headshot_kills,json=headshotKills" json:"headshot_kills,omitempty"`
+	Backstabs           *uint64                `protobuf:"varint,30,opt,name=backstabs" json:"backstabs,omitempty"`
+	BackstabKills       *uint64                `protobuf:"varint,31,opt,name=backstab_kills,json=backstabKills" json:"backstab_kills,omitempty"`
+	WasHeadshot         *uint64                `protobuf:"varint,32,opt,name=was_headshot,json=wasHeadshot" json:"was_headshot,omitempty"`
+	WasBackstabbed      *uint64                `protobuf:"varint,33,opt,name=was_backstabbed,json=wasBackstabbed" json:"was_backstabbed,omitempty"`
+	Shots               *uint64                `protobuf:"varint,34,opt,name=shots" json:"shots,omitempty"`
+	Hits                *uint64                `protobuf:"varint,35,opt,name=hits" json:"hits,omitempty"`
+	ScoreboardKills     *uint64                `protobuf:"varint,36,opt,name=scoreboard_kills,json=scoreboardKills" json:"scoreboard_kills,omitempty"`
+	ScoreboardAssists   *uint64                `protobuf:"varint,37,opt,name=scoreboard_assists,json=scoreboardAssists" json:"scoreboard_assists,omitempty"`
+	ScoreboardDeaths    *uint64                `protobuf:"varint,38,opt,name=scoreboard_deaths,json=scoreboardDeaths" json:"scoreboard_deaths,omitempty"`
+	ScoreboardHealing   *uint64                `protobuf:"varint,39,opt,name=scoreboard_healing,json=scoreboardHealing" json:"scoreboard_healing,omitempty"`
+	Suicides            *uint64                `protobuf:"varint,40,opt,name=suicides" json:"suicides,omitempty"`
+	Captures            *uint64                `protobuf:"varint,41,opt,name=captures" json:"captures,omitempty"`
+	CapturesBlocked     *uint64                `protobuf:"varint,42,opt,name=captures_blocked,json=capturesBlocked" json:"captures_blocked,omitempty"`
+	ScoreboardDamage    *uint64                `protobuf:"varint,43,opt,name=scoreboard_damage,json=scoreboardDamage" json:"scoreboard_damage,omitempty"`
+	Extinguishes        *uint64                `protobuf:"varint,44,opt,name=extinguishes" json:"extinguishes,omitempty"`
+	Ignites             *uint64                `protobuf:"varint,45,opt,name=ignites" json:"ignites,omitempty"`
+	ObjectsBuilt        *uint64                `protobuf:"varint,46,opt,name=objects_built,json=objectsBuilt" json:"objects_built,omitempty"`
+	ObjectsDestroyed    *uint64                `protobuf:"varint,47,opt,name=objects_destroyed,json=objectsDestroyed" json:"objects_destroyed,omitempty"`
+	Heals               *uint64                `protobuf:"varint,48,opt,name=heals" json:"heals,omitempty"`
+	Healed              *uint64                `protobuf:"varint,49,opt,name=healed" json:"healed,omitempty"`
+	CrossbowHeals       *uint64                `protobuf:"varint,50,opt,name=crossbow_heals,json=crossbowHeals" json:"crossbow_heals,omitempty"`
+	CrossbowHealing     *uint64                `protobuf:"varint,51,opt,name=crossbow_healing,json=crossbowHealing" json:"crossbow_healing,omitempty"`
+	HealOnHit           *uint64                `protobuf:"varint,52,opt,name=heal_on_hit,json=healOnHit" json:"heal_on_hit,omitempty"`
+	BuildingHealing     *uint64                `protobuf:"varint,53,opt,name=building_healing,json=buildingHealing" json:"building_healing,omitempty"`
+	DroppedUbers        *uint64                `protobuf:"varint,54,opt,name=dropped_ubers,json=droppedUbers" json:"dropped_ubers,omitempty"`
+	Reflects            *uint64                `protobuf:"varint,55,opt,name=reflects" json:"reflects,omitempty"`
+	Defenses            *uint64                `protobuf:"varint,56,opt,name=defenses" json:"defenses,omitempty"`
+	DirectHits          *uint64                `protobuf:"varint,57,opt,name=direct_hits,json=directHits" json:"direct_hits,omitempty"`
+	Teleports           *uint64                `protobuf:"varint,58,opt,name=teleports" json:"teleports,omitempty"`
+	PushDistance        *uint64                `protobuf:"varint,59,opt,name=push_distance,json=pushDistance" json:"push_distance,omitempty"`
+	EnvironmentalDeaths *uint64                `protobuf:"varint,60,opt,name=environmental_deaths,json=environmentalDeaths" json:"environmental_deaths,omitempty"`
+	EnvironmentalKills  *uint64                `protobuf:"varint,61,opt,name=environmental_kills,json=environmentalKills" json:"environmental_kills,omitempty"`
+	ObjectPlaced        *uint64                `protobuf:"varint,62,opt,name=object_placed,json=objectPlaced" json:"object_placed,omitempty"`
+	ObjectUpgraded      *uint64                `protobuf:"varint,63,opt,name=object_upgraded,json=objectUpgraded" json:"object_upgraded,omitempty"`
+	ObjectCarried       *uint64                `protobuf:"varint,64,opt,name=object_carried,json=objectCarried" json:"object_carried,omitempty"`
+	ObjectDropped       *uint64                `protobuf:"varint,65,opt,name=object_dropped,json=objectDropped" json:"object_dropped,omitempty"`
+	ObjectRemoved       *uint64                `protobuf:"varint,66,opt,name=object_removed,json=objectRemoved" json:"object_removed,omitempty"`
+	ObjectDetonated     *uint64                `protobuf:"varint,67,opt,name=object_detonated,json=objectDetonated" json:"object_detonated,omitempty"`
+	AmmoPacks           *uint64                `protobuf:"varint,68,opt,name=ammo_packs,json=ammoPacks" json:"ammo_packs,omitempty"`
+	HealthPacks         *uint64                `protobuf:"varint,69,opt,name=health_packs,json=healthPacks" json:"health_packs,omitempty"`
+	HealthPackHealing   *uint64                `protobuf:"varint,70,opt,name=health_pack_healing,json=healthPackHealing" json:"health_pack_healing,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *OverallStats) Reset() {
+	*x = OverallStats{}
+	mi := &file_stats_v1_stats_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OverallStats) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OverallStats) ProtoMessage() {}
+
+func (x *OverallStats) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OverallStats.ProtoReflect.Descriptor instead.
+func (*OverallStats) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *OverallStats) GetRank() uint64 {
+	if x != nil && x.Rank != nil {
+		return *x.Rank
+	}
+	return 0
+}
+
+func (x *OverallStats) GetPlayer() *v12.PersonDisplay {
+	if x != nil {
+		return x.Player
+	}
+	return nil
+}
+
+func (x *OverallStats) GetPoints() uint64 {
+	if x != nil && x.Points != nil {
+		return *x.Points
+	}
+	return 0
+}
+
+func (x *OverallStats) GetConnectionCount() uint64 {
+	if x != nil && x.ConnectionCount != nil {
+		return *x.ConnectionCount
+	}
+	return 0
+}
+
+func (x *OverallStats) GetBonusPoints() uint64 {
+	if x != nil && x.BonusPoints != nil {
+		return *x.BonusPoints
+	}
+	return 0
+}
+
+func (x *OverallStats) GetKills() uint64 {
+	if x != nil && x.Kills != nil {
+		return *x.Kills
+	}
+	return 0
+}
+
+func (x *OverallStats) GetAssists() uint64 {
+	if x != nil && x.Assists != nil {
+		return *x.Assists
+	}
+	return 0
+}
+
+func (x *OverallStats) GetDeaths() uint64 {
+	if x != nil && x.Deaths != nil {
+		return *x.Deaths
+	}
+	return 0
+}
+
+func (x *OverallStats) GetPostroundKills() uint64 {
+	if x != nil && x.PostroundKills != nil {
+		return *x.PostroundKills
+	}
+	return 0
+}
+
+func (x *OverallStats) GetPostroundAssists() uint64 {
+	if x != nil && x.PostroundAssists != nil {
+		return *x.PostroundAssists
+	}
+	return 0
+}
+
+func (x *OverallStats) GetPostroundDeaths() uint64 {
+	if x != nil && x.PostroundDeaths != nil {
+		return *x.PostroundDeaths
+	}
+	return 0
+}
+
+func (x *OverallStats) GetPreroundHealing() uint64 {
+	if x != nil && x.PreroundHealing != nil {
+		return *x.PreroundHealing
+	}
+	return 0
+}
+
+func (x *OverallStats) GetHealing() uint64 {
+	if x != nil && x.Healing != nil {
+		return *x.Healing
+	}
+	return 0
+}
+
+func (x *OverallStats) GetPostroundHealing() uint64 {
+	if x != nil && x.PostroundHealing != nil {
+		return *x.PostroundHealing
+	}
+	return 0
+}
+
+func (x *OverallStats) GetDrops() uint64 {
+	if x != nil && x.Drops != nil {
+		return *x.Drops
+	}
+	return 0
+}
+
+func (x *OverallStats) GetNearFullChargeDeath() uint64 {
+	if x != nil && x.NearFullChargeDeath != nil {
+		return *x.NearFullChargeDeath
+	}
+	return 0
+}
+
+func (x *OverallStats) GetChargesUber() uint64 {
+	if x != nil && x.ChargesUber != nil {
+		return *x.ChargesUber
+	}
+	return 0
+}
+
+func (x *OverallStats) GetChargesKritz() uint64 {
+	if x != nil && x.ChargesKritz != nil {
+		return *x.ChargesKritz
+	}
+	return 0
+}
+
+func (x *OverallStats) GetChargesVacc() uint64 {
+	if x != nil && x.ChargesVacc != nil {
+		return *x.ChargesVacc
+	}
+	return 0
+}
+
+func (x *OverallStats) GetChargesQuickfix() uint64 {
+	if x != nil && x.ChargesQuickfix != nil {
+		return *x.ChargesQuickfix
+	}
+	return 0
+}
+
+func (x *OverallStats) GetDamage() uint64 {
+	if x != nil && x.Damage != nil {
+		return *x.Damage
+	}
+	return 0
+}
+
+func (x *OverallStats) GetDamageTaken() uint64 {
+	if x != nil && x.DamageTaken != nil {
+		return *x.DamageTaken
+	}
+	return 0
+}
+
+func (x *OverallStats) GetDominations() uint64 {
+	if x != nil && x.Dominations != nil {
+		return *x.Dominations
+	}
+	return 0
+}
+
+func (x *OverallStats) GetDominated() uint64 {
+	if x != nil && x.Dominated != nil {
+		return *x.Dominated
+	}
+	return 0
+}
+
+func (x *OverallStats) GetRevenges() uint64 {
+	if x != nil && x.Revenges != nil {
+		return *x.Revenges
+	}
+	return 0
+}
+
+func (x *OverallStats) GetRevenged() uint64 {
+	if x != nil && x.Revenged != nil {
+		return *x.Revenged
+	}
+	return 0
+}
+
+func (x *OverallStats) GetAirshots() uint64 {
+	if x != nil && x.Airshots != nil {
+		return *x.Airshots
+	}
+	return 0
+}
+
+func (x *OverallStats) GetHeadshots() uint64 {
+	if x != nil && x.Headshots != nil {
+		return *x.Headshots
+	}
+	return 0
+}
+
+func (x *OverallStats) GetHeadshotKills() uint64 {
+	if x != nil && x.HeadshotKills != nil {
+		return *x.HeadshotKills
+	}
+	return 0
+}
+
+func (x *OverallStats) GetBackstabs() uint64 {
+	if x != nil && x.Backstabs != nil {
+		return *x.Backstabs
+	}
+	return 0
+}
+
+func (x *OverallStats) GetBackstabKills() uint64 {
+	if x != nil && x.BackstabKills != nil {
+		return *x.BackstabKills
+	}
+	return 0
+}
+
+func (x *OverallStats) GetWasHeadshot() uint64 {
+	if x != nil && x.WasHeadshot != nil {
+		return *x.WasHeadshot
+	}
+	return 0
+}
+
+func (x *OverallStats) GetWasBackstabbed() uint64 {
+	if x != nil && x.WasBackstabbed != nil {
+		return *x.WasBackstabbed
+	}
+	return 0
+}
+
+func (x *OverallStats) GetShots() uint64 {
+	if x != nil && x.Shots != nil {
+		return *x.Shots
+	}
+	return 0
+}
+
+func (x *OverallStats) GetHits() uint64 {
+	if x != nil && x.Hits != nil {
+		return *x.Hits
+	}
+	return 0
+}
+
+func (x *OverallStats) GetScoreboardKills() uint64 {
+	if x != nil && x.ScoreboardKills != nil {
+		return *x.ScoreboardKills
+	}
+	return 0
+}
+
+func (x *OverallStats) GetScoreboardAssists() uint64 {
+	if x != nil && x.ScoreboardAssists != nil {
+		return *x.ScoreboardAssists
+	}
+	return 0
+}
+
+func (x *OverallStats) GetScoreboardDeaths() uint64 {
+	if x != nil && x.ScoreboardDeaths != nil {
+		return *x.ScoreboardDeaths
+	}
+	return 0
+}
+
+func (x *OverallStats) GetScoreboardHealing() uint64 {
+	if x != nil && x.ScoreboardHealing != nil {
+		return *x.ScoreboardHealing
+	}
+	return 0
+}
+
+func (x *OverallStats) GetSuicides() uint64 {
+	if x != nil && x.Suicides != nil {
+		return *x.Suicides
+	}
+	return 0
+}
+
+func (x *OverallStats) GetCaptures() uint64 {
+	if x != nil && x.Captures != nil {
+		return *x.Captures
+	}
+	return 0
+}
+
+func (x *OverallStats) GetCapturesBlocked() uint64 {
+	if x != nil && x.CapturesBlocked != nil {
+		return *x.CapturesBlocked
+	}
+	return 0
+}
+
+func (x *OverallStats) GetScoreboardDamage() uint64 {
+	if x != nil && x.ScoreboardDamage != nil {
+		return *x.ScoreboardDamage
+	}
+	return 0
+}
+
+func (x *OverallStats) GetExtinguishes() uint64 {
+	if x != nil && x.Extinguishes != nil {
+		return *x.Extinguishes
+	}
+	return 0
+}
+
+func (x *OverallStats) GetIgnites() uint64 {
+	if x != nil && x.Ignites != nil {
+		return *x.Ignites
+	}
+	return 0
+}
+
+func (x *OverallStats) GetObjectsBuilt() uint64 {
+	if x != nil && x.ObjectsBuilt != nil {
+		return *x.ObjectsBuilt
+	}
+	return 0
+}
+
+func (x *OverallStats) GetObjectsDestroyed() uint64 {
+	if x != nil && x.ObjectsDestroyed != nil {
+		return *x.ObjectsDestroyed
+	}
+	return 0
+}
+
+func (x *OverallStats) GetHeals() uint64 {
+	if x != nil && x.Heals != nil {
+		return *x.Heals
+	}
+	return 0
+}
+
+func (x *OverallStats) GetHealed() uint64 {
+	if x != nil && x.Healed != nil {
+		return *x.Healed
+	}
+	return 0
+}
+
+func (x *OverallStats) GetCrossbowHeals() uint64 {
+	if x != nil && x.CrossbowHeals != nil {
+		return *x.CrossbowHeals
+	}
+	return 0
+}
+
+func (x *OverallStats) GetCrossbowHealing() uint64 {
+	if x != nil && x.CrossbowHealing != nil {
+		return *x.CrossbowHealing
+	}
+	return 0
+}
+
+func (x *OverallStats) GetHealOnHit() uint64 {
+	if x != nil && x.HealOnHit != nil {
+		return *x.HealOnHit
+	}
+	return 0
+}
+
+func (x *OverallStats) GetBuildingHealing() uint64 {
+	if x != nil && x.BuildingHealing != nil {
+		return *x.BuildingHealing
+	}
+	return 0
+}
+
+func (x *OverallStats) GetDroppedUbers() uint64 {
+	if x != nil && x.DroppedUbers != nil {
+		return *x.DroppedUbers
+	}
+	return 0
+}
+
+func (x *OverallStats) GetReflects() uint64 {
+	if x != nil && x.Reflects != nil {
+		return *x.Reflects
+	}
+	return 0
+}
+
+func (x *OverallStats) GetDefenses() uint64 {
+	if x != nil && x.Defenses != nil {
+		return *x.Defenses
+	}
+	return 0
+}
+
+func (x *OverallStats) GetDirectHits() uint64 {
+	if x != nil && x.DirectHits != nil {
+		return *x.DirectHits
+	}
+	return 0
+}
+
+func (x *OverallStats) GetTeleports() uint64 {
+	if x != nil && x.Teleports != nil {
+		return *x.Teleports
+	}
+	return 0
+}
+
+func (x *OverallStats) GetPushDistance() uint64 {
+	if x != nil && x.PushDistance != nil {
+		return *x.PushDistance
+	}
+	return 0
+}
+
+func (x *OverallStats) GetEnvironmentalDeaths() uint64 {
+	if x != nil && x.EnvironmentalDeaths != nil {
+		return *x.EnvironmentalDeaths
+	}
+	return 0
+}
+
+func (x *OverallStats) GetEnvironmentalKills() uint64 {
+	if x != nil && x.EnvironmentalKills != nil {
+		return *x.EnvironmentalKills
+	}
+	return 0
+}
+
+func (x *OverallStats) GetObjectPlaced() uint64 {
+	if x != nil && x.ObjectPlaced != nil {
+		return *x.ObjectPlaced
+	}
+	return 0
+}
+
+func (x *OverallStats) GetObjectUpgraded() uint64 {
+	if x != nil && x.ObjectUpgraded != nil {
+		return *x.ObjectUpgraded
+	}
+	return 0
+}
+
+func (x *OverallStats) GetObjectCarried() uint64 {
+	if x != nil && x.ObjectCarried != nil {
+		return *x.ObjectCarried
+	}
+	return 0
+}
+
+func (x *OverallStats) GetObjectDropped() uint64 {
+	if x != nil && x.ObjectDropped != nil {
+		return *x.ObjectDropped
+	}
+	return 0
+}
+
+func (x *OverallStats) GetObjectRemoved() uint64 {
+	if x != nil && x.ObjectRemoved != nil {
+		return *x.ObjectRemoved
+	}
+	return 0
+}
+
+func (x *OverallStats) GetObjectDetonated() uint64 {
+	if x != nil && x.ObjectDetonated != nil {
+		return *x.ObjectDetonated
+	}
+	return 0
+}
+
+func (x *OverallStats) GetAmmoPacks() uint64 {
+	if x != nil && x.AmmoPacks != nil {
+		return *x.AmmoPacks
+	}
+	return 0
+}
+
+func (x *OverallStats) GetHealthPacks() uint64 {
+	if x != nil && x.HealthPacks != nil {
+		return *x.HealthPacks
+	}
+	return 0
+}
+
+func (x *OverallStats) GetHealthPackHealing() uint64 {
+	if x != nil && x.HealthPackHealing != nil {
+		return *x.HealthPackHealing
+	}
+	return 0
+}
+
+type OverallStatsContainer struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Stats         []*OverallStats        `protobuf:"bytes,1,rep,name=stats" json:"stats,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OverallStatsContainer) Reset() {
+	*x = OverallStatsContainer{}
+	mi := &file_stats_v1_stats_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OverallStatsContainer) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OverallStatsContainer) ProtoMessage() {}
+
+func (x *OverallStatsContainer) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OverallStatsContainer.ProtoReflect.Descriptor instead.
+func (*OverallStatsContainer) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *OverallStatsContainer) GetStats() []*OverallStats {
+	if x != nil {
+		return x.Stats
+	}
+	return nil
+}
 
 type VariantStats struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
@@ -984,13 +1686,19 @@ type VariantStats struct {
 	AmmoPacks           *uint64                `protobuf:"varint,53,opt,name=ammo_packs,json=ammoPacks" json:"ammo_packs,omitempty"`
 	HealthPacks         *uint64                `protobuf:"varint,54,opt,name=health_packs,json=healthPacks" json:"health_packs,omitempty"`
 	HealthPackHealing   *uint64                `protobuf:"varint,55,opt,name=health_pack_healing,json=healthPackHealing" json:"health_pack_healing,omitempty"`
+	Shots               *uint64                `protobuf:"varint,56,opt,name=shots" json:"shots,omitempty"`
+	Hits                *uint64                `protobuf:"varint,57,opt,name=hits" json:"hits,omitempty"`
+	ObjectsBuilt        *uint64                `protobuf:"varint,58,opt,name=objects_built,json=objectsBuilt" json:"objects_built,omitempty"`
+	ObjectsDestroyed    *uint64                `protobuf:"varint,59,opt,name=objects_destroyed,json=objectsDestroyed" json:"objects_destroyed,omitempty"`
+	Captures            *uint64                `protobuf:"varint,60,opt,name=captures" json:"captures,omitempty"`
+	CapturesBlocked     *uint64                `protobuf:"varint,61,opt,name=captures_blocked,json=capturesBlocked" json:"captures_blocked,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
 
 func (x *VariantStats) Reset() {
 	*x = VariantStats{}
-	mi := &file_stats_v1_stats_proto_msgTypes[11]
+	mi := &file_stats_v1_stats_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1002,7 +1710,7 @@ func (x *VariantStats) String() string {
 func (*VariantStats) ProtoMessage() {}
 
 func (x *VariantStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[11]
+	mi := &file_stats_v1_stats_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1015,7 +1723,7 @@ func (x *VariantStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VariantStats.ProtoReflect.Descriptor instead.
 func (*VariantStats) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{11}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *VariantStats) GetVariant() string {
@@ -1403,6 +2111,48 @@ func (x *VariantStats) GetHealthPackHealing() uint64 {
 	return 0
 }
 
+func (x *VariantStats) GetShots() uint64 {
+	if x != nil && x.Shots != nil {
+		return *x.Shots
+	}
+	return 0
+}
+
+func (x *VariantStats) GetHits() uint64 {
+	if x != nil && x.Hits != nil {
+		return *x.Hits
+	}
+	return 0
+}
+
+func (x *VariantStats) GetObjectsBuilt() uint64 {
+	if x != nil && x.ObjectsBuilt != nil {
+		return *x.ObjectsBuilt
+	}
+	return 0
+}
+
+func (x *VariantStats) GetObjectsDestroyed() uint64 {
+	if x != nil && x.ObjectsDestroyed != nil {
+		return *x.ObjectsDestroyed
+	}
+	return 0
+}
+
+func (x *VariantStats) GetCaptures() uint64 {
+	if x != nil && x.Captures != nil {
+		return *x.Captures
+	}
+	return 0
+}
+
+func (x *VariantStats) GetCapturesBlocked() uint64 {
+	if x != nil && x.CapturesBlocked != nil {
+		return *x.CapturesBlocked
+	}
+	return 0
+}
+
 type VariantStatsContainer struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Stats         []*VariantStats        `protobuf:"bytes,1,rep,name=stats" json:"stats,omitempty"`
@@ -1412,7 +2162,7 @@ type VariantStatsContainer struct {
 
 func (x *VariantStatsContainer) Reset() {
 	*x = VariantStatsContainer{}
-	mi := &file_stats_v1_stats_proto_msgTypes[12]
+	mi := &file_stats_v1_stats_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1424,7 +2174,7 @@ func (x *VariantStatsContainer) String() string {
 func (*VariantStatsContainer) ProtoMessage() {}
 
 func (x *VariantStatsContainer) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[12]
+	mi := &file_stats_v1_stats_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1437,7 +2187,7 @@ func (x *VariantStatsContainer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VariantStatsContainer.ProtoReflect.Descriptor instead.
 func (*VariantStatsContainer) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{12}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *VariantStatsContainer) GetStats() []*VariantStats {
@@ -1456,7 +2206,7 @@ type MatchRequest struct {
 
 func (x *MatchRequest) Reset() {
 	*x = MatchRequest{}
-	mi := &file_stats_v1_stats_proto_msgTypes[13]
+	mi := &file_stats_v1_stats_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1468,7 +2218,7 @@ func (x *MatchRequest) String() string {
 func (*MatchRequest) ProtoMessage() {}
 
 func (x *MatchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[13]
+	mi := &file_stats_v1_stats_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1481,7 +2231,7 @@ func (x *MatchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchRequest.ProtoReflect.Descriptor instead.
 func (*MatchRequest) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{13}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *MatchRequest) GetMatchId() string {
@@ -1500,7 +2250,7 @@ type MatchResponse struct {
 
 func (x *MatchResponse) Reset() {
 	*x = MatchResponse{}
-	mi := &file_stats_v1_stats_proto_msgTypes[14]
+	mi := &file_stats_v1_stats_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1512,7 +2262,7 @@ func (x *MatchResponse) String() string {
 func (*MatchResponse) ProtoMessage() {}
 
 func (x *MatchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[14]
+	mi := &file_stats_v1_stats_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1525,7 +2275,7 @@ func (x *MatchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchResponse.ProtoReflect.Descriptor instead.
 func (*MatchResponse) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{14}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *MatchResponse) GetMatch() *Match {
@@ -1558,7 +2308,7 @@ type MatchOverview struct {
 
 func (x *MatchOverview) Reset() {
 	*x = MatchOverview{}
-	mi := &file_stats_v1_stats_proto_msgTypes[15]
+	mi := &file_stats_v1_stats_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1570,7 +2320,7 @@ func (x *MatchOverview) String() string {
 func (*MatchOverview) ProtoMessage() {}
 
 func (x *MatchOverview) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[15]
+	mi := &file_stats_v1_stats_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1583,7 +2333,7 @@ func (x *MatchOverview) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchOverview.ProtoReflect.Descriptor instead.
 func (*MatchOverview) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{15}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *MatchOverview) GetMatchId() string {
@@ -1704,7 +2454,7 @@ type MatchChatLog struct {
 
 func (x *MatchChatLog) Reset() {
 	*x = MatchChatLog{}
-	mi := &file_stats_v1_stats_proto_msgTypes[16]
+	mi := &file_stats_v1_stats_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1716,7 +2466,7 @@ func (x *MatchChatLog) String() string {
 func (*MatchChatLog) ProtoMessage() {}
 
 func (x *MatchChatLog) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[16]
+	mi := &file_stats_v1_stats_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1729,7 +2479,7 @@ func (x *MatchChatLog) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchChatLog.ProtoReflect.Descriptor instead.
 func (*MatchChatLog) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{16}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *MatchChatLog) GetPersonMessageId() int64 {
@@ -1781,7 +2531,7 @@ type Match struct {
 
 func (x *Match) Reset() {
 	*x = Match{}
-	mi := &file_stats_v1_stats_proto_msgTypes[17]
+	mi := &file_stats_v1_stats_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1793,7 +2543,7 @@ func (x *Match) String() string {
 func (*Match) ProtoMessage() {}
 
 func (x *Match) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[17]
+	mi := &file_stats_v1_stats_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1806,7 +2556,7 @@ func (x *Match) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Match.ProtoReflect.Descriptor instead.
 func (*Match) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{17}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *Match) GetOverview() *MatchOverview {
@@ -1869,7 +2619,7 @@ type MatchEvent struct {
 
 func (x *MatchEvent) Reset() {
 	*x = MatchEvent{}
-	mi := &file_stats_v1_stats_proto_msgTypes[18]
+	mi := &file_stats_v1_stats_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1881,7 +2631,7 @@ func (x *MatchEvent) String() string {
 func (*MatchEvent) ProtoMessage() {}
 
 func (x *MatchEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[18]
+	mi := &file_stats_v1_stats_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1894,7 +2644,7 @@ func (x *MatchEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchEvent.ProtoReflect.Descriptor instead.
 func (*MatchEvent) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{18}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *MatchEvent) GetMatchEventId() int64 {
@@ -1976,7 +2726,7 @@ type MatchKill struct {
 
 func (x *MatchKill) Reset() {
 	*x = MatchKill{}
-	mi := &file_stats_v1_stats_proto_msgTypes[19]
+	mi := &file_stats_v1_stats_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1988,7 +2738,7 @@ func (x *MatchKill) String() string {
 func (*MatchKill) ProtoMessage() {}
 
 func (x *MatchKill) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[19]
+	mi := &file_stats_v1_stats_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2001,7 +2751,7 @@ func (x *MatchKill) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchKill.ProtoReflect.Descriptor instead.
 func (*MatchKill) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{19}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *MatchKill) GetMatchKillId() int64 {
@@ -2123,7 +2873,7 @@ type Round struct {
 
 func (x *Round) Reset() {
 	*x = Round{}
-	mi := &file_stats_v1_stats_proto_msgTypes[20]
+	mi := &file_stats_v1_stats_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2135,7 +2885,7 @@ func (x *Round) String() string {
 func (*Round) ProtoMessage() {}
 
 func (x *Round) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[20]
+	mi := &file_stats_v1_stats_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2148,7 +2898,7 @@ func (x *Round) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Round.ProtoReflect.Descriptor instead.
 func (*Round) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{20}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *Round) GetRoundId() uint32 {
@@ -2275,7 +3025,7 @@ type RoundPlayer struct {
 
 func (x *RoundPlayer) Reset() {
 	*x = RoundPlayer{}
-	mi := &file_stats_v1_stats_proto_msgTypes[21]
+	mi := &file_stats_v1_stats_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2287,7 +3037,7 @@ func (x *RoundPlayer) String() string {
 func (*RoundPlayer) ProtoMessage() {}
 
 func (x *RoundPlayer) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[21]
+	mi := &file_stats_v1_stats_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2300,7 +3050,7 @@ func (x *RoundPlayer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoundPlayer.ProtoReflect.Descriptor instead.
 func (*RoundPlayer) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{21}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *RoundPlayer) GetRoundId() uint32 {
@@ -2884,7 +3634,7 @@ type RoundPlayerVariant struct {
 
 func (x *RoundPlayerVariant) Reset() {
 	*x = RoundPlayerVariant{}
-	mi := &file_stats_v1_stats_proto_msgTypes[22]
+	mi := &file_stats_v1_stats_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2896,7 +3646,7 @@ func (x *RoundPlayerVariant) String() string {
 func (*RoundPlayerVariant) ProtoMessage() {}
 
 func (x *RoundPlayerVariant) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[22]
+	mi := &file_stats_v1_stats_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2909,7 +3659,7 @@ func (x *RoundPlayerVariant) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoundPlayerVariant.ProtoReflect.Descriptor instead.
 func (*RoundPlayerVariant) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{22}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *RoundPlayerVariant) GetVariant() string {
@@ -3340,7 +4090,9 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\n" +
 	"is_enabled\x18\x03 \x01(\bR\tisEnabled\"=\n" +
 	"\x0fBucketsResponse\x12*\n" +
-	"\abuckets\x18\x01 \x03(\v2\x10.stats.v1.BucketR\abuckets\"\xad\x01\n" +
+	"\abuckets\x18\x01 \x03(\v2\x10.stats.v1.BucketR\abuckets\"?\n" +
+	"\x14RefreshStatsResponse\x12'\n" +
+	"\x0frefreshed_views\x18\x01 \x03(\tR\x0erefreshedViews\"\xad\x01\n" +
 	"\x13QueryMatchesRequest\x121\n" +
 	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12/\n" +
 	"\x0fstats_bucket_id\x18\x02 \x01(\rB\a\xbaH\x04*\x02 \x00R\rstatsBucketId\x12\x1b\n" +
@@ -3358,12 +4110,89 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\avariant\x18\x04 \x01(\x0e2\x11.stats.v1.VariantB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\avariant\x12\x1f\n" +
 	"\vvariant_key\x18\x05 \x01(\tR\n" +
 	"variantKey\x126\n" +
-	"\x04time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\x04time\"\xb5\x01\n" +
+	"\x04time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\x04time\"\xfd\x01\n" +
 	"\x12QueryStatsResponse\x12+\n" +
 	"\avariant\x18\x01 \x01(\x0e2\x11.stats.v1.VariantR\avariant\x12\x18\n" +
 	"\x05count\x18\x02 \x01(\x04B\x020\x01R\x05count\x12F\n" +
-	"\rstats_variant\x18\x03 \x01(\v2\x1f.stats.v1.VariantStatsContainerH\x00R\fstatsVariantB\x10\n" +
-	"\x0estat_container\"\xf7\x10\n" +
+	"\rstats_variant\x18\x03 \x01(\v2\x1f.stats.v1.VariantStatsContainerH\x00R\fstatsVariant\x12F\n" +
+	"\rstats_overall\x18\x04 \x01(\v2\x1f.stats.v1.OverallStatsContainerH\x00R\fstatsOverallB\x10\n" +
+	"\x0estat_container\"\xdf\x15\n" +
+	"\fOverallStats\x12\x16\n" +
+	"\x04rank\x18\x01 \x01(\x04B\x020\x01R\x04rank\x120\n" +
+	"\x06player\x18\x02 \x01(\v2\x18.person.v1.PersonDisplayR\x06player\x12\x1a\n" +
+	"\x06points\x18\x03 \x01(\x04B\x020\x01R\x06points\x12-\n" +
+	"\x10connection_count\x18\x04 \x01(\x04B\x020\x01R\x0fconnectionCount\x12%\n" +
+	"\fbonus_points\x18\x05 \x01(\x04B\x020\x01R\vbonusPoints\x12\x18\n" +
+	"\x05kills\x18\x06 \x01(\x04B\x020\x01R\x05kills\x12\x1c\n" +
+	"\aassists\x18\a \x01(\x04B\x020\x01R\aassists\x12\x1a\n" +
+	"\x06deaths\x18\b \x01(\x04B\x020\x01R\x06deaths\x12+\n" +
+	"\x0fpostround_kills\x18\t \x01(\x04B\x020\x01R\x0epostroundKills\x12/\n" +
+	"\x11postround_assists\x18\n" +
+	" \x01(\x04B\x020\x01R\x10postroundAssists\x12-\n" +
+	"\x10postround_deaths\x18\v \x01(\x04B\x020\x01R\x0fpostroundDeaths\x12-\n" +
+	"\x10preround_healing\x18\f \x01(\x04B\x020\x01R\x0fpreroundHealing\x12\x1c\n" +
+	"\ahealing\x18\r \x01(\x04B\x020\x01R\ahealing\x12/\n" +
+	"\x11postround_healing\x18\x0e \x01(\x04B\x020\x01R\x10postroundHealing\x12\x18\n" +
+	"\x05drops\x18\x0f \x01(\x04B\x020\x01R\x05drops\x127\n" +
+	"\x16near_full_charge_death\x18\x10 \x01(\x04B\x020\x01R\x13nearFullChargeDeath\x12%\n" +
+	"\fcharges_uber\x18\x11 \x01(\x04B\x020\x01R\vchargesUber\x12'\n" +
+	"\rcharges_kritz\x18\x12 \x01(\x04B\x020\x01R\fchargesKritz\x12%\n" +
+	"\fcharges_vacc\x18\x13 \x01(\x04B\x020\x01R\vchargesVacc\x12-\n" +
+	"\x10charges_quickfix\x18\x14 \x01(\x04B\x020\x01R\x0fchargesQuickfix\x12\x1a\n" +
+	"\x06damage\x18\x15 \x01(\x04B\x020\x01R\x06damage\x12%\n" +
+	"\fdamage_taken\x18\x16 \x01(\x04B\x020\x01R\vdamageTaken\x12$\n" +
+	"\vdominations\x18\x17 \x01(\x04B\x020\x01R\vdominations\x12 \n" +
+	"\tdominated\x18\x18 \x01(\x04B\x020\x01R\tdominated\x12\x1e\n" +
+	"\brevenges\x18\x19 \x01(\x04B\x020\x01R\brevenges\x12\x1e\n" +
+	"\brevenged\x18\x1a \x01(\x04B\x020\x01R\brevenged\x12\x1e\n" +
+	"\bairshots\x18\x1b \x01(\x04B\x020\x01R\bairshots\x12 \n" +
+	"\theadshots\x18\x1c \x01(\x04B\x020\x01R\theadshots\x12)\n" +
+	"\x0eheadshot_kills\x18\x1d \x01(\x04B\x020\x01R\rheadshotKills\x12 \n" +
+	"\tbackstabs\x18\x1e \x01(\x04B\x020\x01R\tbackstabs\x12)\n" +
+	"\x0ebackstab_kills\x18\x1f \x01(\x04B\x020\x01R\rbackstabKills\x12%\n" +
+	"\fwas_headshot\x18  \x01(\x04B\x020\x01R\vwasHeadshot\x12+\n" +
+	"\x0fwas_backstabbed\x18! \x01(\x04B\x020\x01R\x0ewasBackstabbed\x12\x18\n" +
+	"\x05shots\x18\" \x01(\x04B\x020\x01R\x05shots\x12\x16\n" +
+	"\x04hits\x18# \x01(\x04B\x020\x01R\x04hits\x12-\n" +
+	"\x10scoreboard_kills\x18$ \x01(\x04B\x020\x01R\x0fscoreboardKills\x121\n" +
+	"\x12scoreboard_assists\x18% \x01(\x04B\x020\x01R\x11scoreboardAssists\x12/\n" +
+	"\x11scoreboard_deaths\x18& \x01(\x04B\x020\x01R\x10scoreboardDeaths\x121\n" +
+	"\x12scoreboard_healing\x18' \x01(\x04B\x020\x01R\x11scoreboardHealing\x12\x1e\n" +
+	"\bsuicides\x18( \x01(\x04B\x020\x01R\bsuicides\x12\x1e\n" +
+	"\bcaptures\x18) \x01(\x04B\x020\x01R\bcaptures\x12-\n" +
+	"\x10captures_blocked\x18* \x01(\x04B\x020\x01R\x0fcapturesBlocked\x12/\n" +
+	"\x11scoreboard_damage\x18+ \x01(\x04B\x020\x01R\x10scoreboardDamage\x12&\n" +
+	"\fextinguishes\x18, \x01(\x04B\x020\x01R\fextinguishes\x12\x1c\n" +
+	"\aignites\x18- \x01(\x04B\x020\x01R\aignites\x12'\n" +
+	"\robjects_built\x18. \x01(\x04B\x020\x01R\fobjectsBuilt\x12/\n" +
+	"\x11objects_destroyed\x18/ \x01(\x04B\x020\x01R\x10objectsDestroyed\x12\x18\n" +
+	"\x05heals\x180 \x01(\x04B\x020\x01R\x05heals\x12\x1a\n" +
+	"\x06healed\x181 \x01(\x04B\x020\x01R\x06healed\x12)\n" +
+	"\x0ecrossbow_heals\x182 \x01(\x04B\x020\x01R\rcrossbowHeals\x12-\n" +
+	"\x10crossbow_healing\x183 \x01(\x04B\x020\x01R\x0fcrossbowHealing\x12\"\n" +
+	"\vheal_on_hit\x184 \x01(\x04B\x020\x01R\thealOnHit\x12-\n" +
+	"\x10building_healing\x185 \x01(\x04B\x020\x01R\x0fbuildingHealing\x12'\n" +
+	"\rdropped_ubers\x186 \x01(\x04B\x020\x01R\fdroppedUbers\x12\x1e\n" +
+	"\breflects\x187 \x01(\x04B\x020\x01R\breflects\x12\x1e\n" +
+	"\bdefenses\x188 \x01(\x04B\x020\x01R\bdefenses\x12#\n" +
+	"\vdirect_hits\x189 \x01(\x04B\x020\x01R\n" +
+	"directHits\x12 \n" +
+	"\tteleports\x18: \x01(\x04B\x020\x01R\tteleports\x12'\n" +
+	"\rpush_distance\x18; \x01(\x04B\x020\x01R\fpushDistance\x125\n" +
+	"\x14environmental_deaths\x18< \x01(\x04B\x020\x01R\x13environmentalDeaths\x123\n" +
+	"\x13environmental_kills\x18= \x01(\x04B\x020\x01R\x12environmentalKills\x12'\n" +
+	"\robject_placed\x18> \x01(\x04B\x020\x01R\fobjectPlaced\x12+\n" +
+	"\x0fobject_upgraded\x18? \x01(\x04B\x020\x01R\x0eobjectUpgraded\x12)\n" +
+	"\x0eobject_carried\x18@ \x01(\x04B\x020\x01R\robjectCarried\x12)\n" +
+	"\x0eobject_dropped\x18A \x01(\x04B\x020\x01R\robjectDropped\x12)\n" +
+	"\x0eobject_removed\x18B \x01(\x04B\x020\x01R\robjectRemoved\x12-\n" +
+	"\x10object_detonated\x18C \x01(\x04B\x020\x01R\x0fobjectDetonated\x12!\n" +
+	"\n" +
+	"ammo_packs\x18D \x01(\x04B\x020\x01R\tammoPacks\x12%\n" +
+	"\fhealth_packs\x18E \x01(\x04B\x020\x01R\vhealthPacks\x122\n" +
+	"\x13health_pack_healing\x18F \x01(\x04B\x020\x01R\x11healthPackHealing\"E\n" +
+	"\x15OverallStatsContainer\x12,\n" +
+	"\x05stats\x18\x01 \x03(\v2\x16.stats.v1.OverallStatsR\x05stats\"\xd2\x12\n" +
 	"\fVariantStats\x12\x18\n" +
 	"\avariant\x18\x01 \x01(\tR\avariant\x12\x16\n" +
 	"\x04rank\x18\x02 \x01(\x04B\x020\x01R\x04rank\x120\n" +
@@ -3422,7 +4251,13 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\n" +
 	"ammo_packs\x185 \x01(\x04B\x020\x01R\tammoPacks\x12%\n" +
 	"\fhealth_packs\x186 \x01(\x04B\x020\x01R\vhealthPacks\x122\n" +
-	"\x13health_pack_healing\x187 \x01(\x04B\x020\x01R\x11healthPackHealing\"E\n" +
+	"\x13health_pack_healing\x187 \x01(\x04B\x020\x01R\x11healthPackHealing\x12\x18\n" +
+	"\x05shots\x188 \x01(\x04B\x020\x01R\x05shots\x12\x16\n" +
+	"\x04hits\x189 \x01(\x04B\x020\x01R\x04hits\x12'\n" +
+	"\robjects_built\x18: \x01(\x04B\x020\x01R\fobjectsBuilt\x12/\n" +
+	"\x11objects_destroyed\x18; \x01(\x04B\x020\x01R\x10objectsDestroyed\x12\x1e\n" +
+	"\bcaptures\x18< \x01(\x04B\x020\x01R\bcaptures\x12-\n" +
+	"\x10captures_blocked\x18= \x01(\x04B\x020\x01R\x0fcapturesBlocked\"E\n" +
 	"\x15VariantStatsContainer\x12,\n" +
 	"\x05stats\x18\x01 \x03(\v2\x16.stats.v1.VariantStatsR\x05stats\"3\n" +
 	"\fMatchRequest\x12#\n" +
@@ -3664,7 +4499,7 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\x12TIME_BUCKET_WEEKLY\x10\a\x12\x17\n" +
 	"\x13TIME_BUCKET_MONTHLY\x10\x1f\x12\x17\n" +
 	"\x12TIME_BUCKET_YEARLY\x10\xed\x02\x12\x19\n" +
-	"\x13TIME_BUCKET_ALLTIME\x10\x9f\x8d\x062\x8c\x04\n" +
+	"\x13TIME_BUCKET_ALLTIME\x10\x9f\x8d\x062\xd6\x04\n" +
 	"\fStatsService\x12:\n" +
 	"\x05Match\x12\x16.stats.v1.MatchRequest\x1a\x17.stats.v1.MatchResponse\"\x00\x12O\n" +
 	"\fQueryMatches\x12\x1d.stats.v1.QueryMatchesRequest\x1a\x1e.stats.v1.QueryMatchesResponse\"\x00\x12^\n" +
@@ -3674,7 +4509,8 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\n" +
 	"WeaponList\x12\x16.google.protobuf.Empty\x1a\x1c.stats.v1.WeaponListResponse\"\x00\x12>\n" +
 	"\aMapList\x12\x16.google.protobuf.Empty\x1a\x19.stats.v1.MapListResponse\"\x00\x12>\n" +
-	"\aBuckets\x12\x16.google.protobuf.Empty\x1a\x19.stats.v1.BucketsResponse\"\x00B\x96\x01\n" +
+	"\aBuckets\x12\x16.google.protobuf.Empty\x1a\x19.stats.v1.BucketsResponse\"\x00\x12H\n" +
+	"\fRefreshStats\x12\x16.google.protobuf.Empty\x1a\x1e.stats.v1.RefreshStatsResponse\"\x00B\x96\x01\n" +
 	"\fcom.stats.v1B\n" +
 	"StatsProtoP\x01Z9github.com/leighmacdonald/gbans/internal/stats/v1;statsv1\xa2\x02\x03SXX\xaa\x02\bStats.V1\xca\x02\bStats\\V1\xe2\x02\x14Stats\\V1\\GPBMetadata\xea\x02\tStats::V1b\beditionsp\xe8\a"
 
@@ -3691,7 +4527,7 @@ func file_stats_v1_stats_proto_rawDescGZIP() []byte {
 }
 
 var file_stats_v1_stats_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_stats_v1_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_stats_v1_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
 var file_stats_v1_stats_proto_goTypes = []any{
 	(Team)(0),                         // 0: stats.v1.Team
 	(Variant)(0),                      // 1: stats.v1.Variant
@@ -3703,80 +4539,88 @@ var file_stats_v1_stats_proto_goTypes = []any{
 	(*WeaponListResponse)(nil),        // 7: stats.v1.WeaponListResponse
 	(*Bucket)(nil),                    // 8: stats.v1.Bucket
 	(*BucketsResponse)(nil),           // 9: stats.v1.BucketsResponse
-	(*QueryMatchesRequest)(nil),       // 10: stats.v1.QueryMatchesRequest
-	(*QueryMatchesResponse)(nil),      // 11: stats.v1.QueryMatchesResponse
-	(*QueryStatsRequest)(nil),         // 12: stats.v1.QueryStatsRequest
-	(*QueryStatsResponse)(nil),        // 13: stats.v1.QueryStatsResponse
-	(*VariantStats)(nil),              // 14: stats.v1.VariantStats
-	(*VariantStatsContainer)(nil),     // 15: stats.v1.VariantStatsContainer
-	(*MatchRequest)(nil),              // 16: stats.v1.MatchRequest
-	(*MatchResponse)(nil),             // 17: stats.v1.MatchResponse
-	(*MatchOverview)(nil),             // 18: stats.v1.MatchOverview
-	(*MatchChatLog)(nil),              // 19: stats.v1.MatchChatLog
-	(*Match)(nil),                     // 20: stats.v1.Match
-	(*MatchEvent)(nil),                // 21: stats.v1.MatchEvent
-	(*MatchKill)(nil),                 // 22: stats.v1.MatchKill
-	(*Round)(nil),                     // 23: stats.v1.Round
-	(*RoundPlayer)(nil),               // 24: stats.v1.RoundPlayer
-	(*RoundPlayerVariant)(nil),        // 25: stats.v1.RoundPlayerVariant
-	nil,                               // 26: stats.v1.Match.PlayersEntry
-	(*v1.Map)(nil),                    // 27: maps.v1.Map
-	(*timestamppb.Timestamp)(nil),     // 28: google.protobuf.Timestamp
-	(*v11.Filter)(nil),                // 29: database.query.v1.Filter
-	(*v12.PersonDisplay)(nil),         // 30: person.v1.PersonDisplay
-	(*emptypb.Empty)(nil),             // 31: google.protobuf.Empty
+	(*RefreshStatsResponse)(nil),      // 10: stats.v1.RefreshStatsResponse
+	(*QueryMatchesRequest)(nil),       // 11: stats.v1.QueryMatchesRequest
+	(*QueryMatchesResponse)(nil),      // 12: stats.v1.QueryMatchesResponse
+	(*QueryStatsRequest)(nil),         // 13: stats.v1.QueryStatsRequest
+	(*QueryStatsResponse)(nil),        // 14: stats.v1.QueryStatsResponse
+	(*OverallStats)(nil),              // 15: stats.v1.OverallStats
+	(*OverallStatsContainer)(nil),     // 16: stats.v1.OverallStatsContainer
+	(*VariantStats)(nil),              // 17: stats.v1.VariantStats
+	(*VariantStatsContainer)(nil),     // 18: stats.v1.VariantStatsContainer
+	(*MatchRequest)(nil),              // 19: stats.v1.MatchRequest
+	(*MatchResponse)(nil),             // 20: stats.v1.MatchResponse
+	(*MatchOverview)(nil),             // 21: stats.v1.MatchOverview
+	(*MatchChatLog)(nil),              // 22: stats.v1.MatchChatLog
+	(*Match)(nil),                     // 23: stats.v1.Match
+	(*MatchEvent)(nil),                // 24: stats.v1.MatchEvent
+	(*MatchKill)(nil),                 // 25: stats.v1.MatchKill
+	(*Round)(nil),                     // 26: stats.v1.Round
+	(*RoundPlayer)(nil),               // 27: stats.v1.RoundPlayer
+	(*RoundPlayerVariant)(nil),        // 28: stats.v1.RoundPlayerVariant
+	nil,                               // 29: stats.v1.Match.PlayersEntry
+	(*v1.Map)(nil),                    // 30: maps.v1.Map
+	(*timestamppb.Timestamp)(nil),     // 31: google.protobuf.Timestamp
+	(*v11.Filter)(nil),                // 32: database.query.v1.Filter
+	(*v12.PersonDisplay)(nil),         // 33: person.v1.PersonDisplay
+	(*emptypb.Empty)(nil),             // 34: google.protobuf.Empty
 }
 var file_stats_v1_stats_proto_depIdxs = []int32{
-	27, // 0: stats.v1.MapListResponse.maps:type_name -> maps.v1.Map
-	28, // 1: stats.v1.PlayerMatchHistory.created_on:type_name -> google.protobuf.Timestamp
-	28, // 2: stats.v1.PlayerMatchHistory.start_time:type_name -> google.protobuf.Timestamp
+	30, // 0: stats.v1.MapListResponse.maps:type_name -> maps.v1.Map
+	31, // 1: stats.v1.PlayerMatchHistory.created_on:type_name -> google.protobuf.Timestamp
+	31, // 2: stats.v1.PlayerMatchHistory.start_time:type_name -> google.protobuf.Timestamp
 	5,  // 3: stats.v1.MatchesWithPlayerResponse.matches:type_name -> stats.v1.PlayerMatchHistory
 	8,  // 4: stats.v1.BucketsResponse.buckets:type_name -> stats.v1.Bucket
-	29, // 5: stats.v1.QueryMatchesRequest.filter:type_name -> database.query.v1.Filter
-	18, // 6: stats.v1.QueryMatchesResponse.matches:type_name -> stats.v1.MatchOverview
-	29, // 7: stats.v1.QueryStatsRequest.filter:type_name -> database.query.v1.Filter
+	32, // 5: stats.v1.QueryMatchesRequest.filter:type_name -> database.query.v1.Filter
+	21, // 6: stats.v1.QueryMatchesResponse.matches:type_name -> stats.v1.MatchOverview
+	32, // 7: stats.v1.QueryStatsRequest.filter:type_name -> database.query.v1.Filter
 	2,  // 8: stats.v1.QueryStatsRequest.time_bucket:type_name -> stats.v1.TimeBucket
 	1,  // 9: stats.v1.QueryStatsRequest.variant:type_name -> stats.v1.Variant
-	28, // 10: stats.v1.QueryStatsRequest.time:type_name -> google.protobuf.Timestamp
+	31, // 10: stats.v1.QueryStatsRequest.time:type_name -> google.protobuf.Timestamp
 	1,  // 11: stats.v1.QueryStatsResponse.variant:type_name -> stats.v1.Variant
-	15, // 12: stats.v1.QueryStatsResponse.stats_variant:type_name -> stats.v1.VariantStatsContainer
-	30, // 13: stats.v1.VariantStats.player:type_name -> person.v1.PersonDisplay
-	14, // 14: stats.v1.VariantStatsContainer.stats:type_name -> stats.v1.VariantStats
-	20, // 15: stats.v1.MatchResponse.match:type_name -> stats.v1.Match
-	27, // 16: stats.v1.MatchOverview.map:type_name -> maps.v1.Map
-	28, // 17: stats.v1.MatchOverview.start_time:type_name -> google.protobuf.Timestamp
-	28, // 18: stats.v1.MatchOverview.created_on:type_name -> google.protobuf.Timestamp
-	18, // 19: stats.v1.Match.overview:type_name -> stats.v1.MatchOverview
-	23, // 20: stats.v1.Match.rounds:type_name -> stats.v1.Round
-	19, // 21: stats.v1.Match.chat_logs:type_name -> stats.v1.MatchChatLog
-	26, // 22: stats.v1.Match.players:type_name -> stats.v1.Match.PlayersEntry
-	22, // 23: stats.v1.Match.kills:type_name -> stats.v1.MatchKill
-	21, // 24: stats.v1.Match.events:type_name -> stats.v1.MatchEvent
-	0,  // 25: stats.v1.Round.winner:type_name -> stats.v1.Team
-	24, // 26: stats.v1.Round.players:type_name -> stats.v1.RoundPlayer
-	30, // 27: stats.v1.RoundPlayer.person:type_name -> person.v1.PersonDisplay
-	0,  // 28: stats.v1.RoundPlayer.team:type_name -> stats.v1.Team
-	25, // 29: stats.v1.RoundPlayer.variants:type_name -> stats.v1.RoundPlayerVariant
-	30, // 30: stats.v1.Match.PlayersEntry.value:type_name -> person.v1.PersonDisplay
-	16, // 31: stats.v1.StatsService.Match:input_type -> stats.v1.MatchRequest
-	10, // 32: stats.v1.StatsService.QueryMatches:input_type -> stats.v1.QueryMatchesRequest
-	3,  // 33: stats.v1.StatsService.MatchesWithPlayer:input_type -> stats.v1.MatchesWithPlayerRequest
-	12, // 34: stats.v1.StatsService.QueryStats:input_type -> stats.v1.QueryStatsRequest
-	31, // 35: stats.v1.StatsService.WeaponList:input_type -> google.protobuf.Empty
-	31, // 36: stats.v1.StatsService.MapList:input_type -> google.protobuf.Empty
-	31, // 37: stats.v1.StatsService.Buckets:input_type -> google.protobuf.Empty
-	17, // 38: stats.v1.StatsService.Match:output_type -> stats.v1.MatchResponse
-	11, // 39: stats.v1.StatsService.QueryMatches:output_type -> stats.v1.QueryMatchesResponse
-	6,  // 40: stats.v1.StatsService.MatchesWithPlayer:output_type -> stats.v1.MatchesWithPlayerResponse
-	13, // 41: stats.v1.StatsService.QueryStats:output_type -> stats.v1.QueryStatsResponse
-	7,  // 42: stats.v1.StatsService.WeaponList:output_type -> stats.v1.WeaponListResponse
-	4,  // 43: stats.v1.StatsService.MapList:output_type -> stats.v1.MapListResponse
-	9,  // 44: stats.v1.StatsService.Buckets:output_type -> stats.v1.BucketsResponse
-	38, // [38:45] is the sub-list for method output_type
-	31, // [31:38] is the sub-list for method input_type
-	31, // [31:31] is the sub-list for extension type_name
-	31, // [31:31] is the sub-list for extension extendee
-	0,  // [0:31] is the sub-list for field type_name
+	18, // 12: stats.v1.QueryStatsResponse.stats_variant:type_name -> stats.v1.VariantStatsContainer
+	16, // 13: stats.v1.QueryStatsResponse.stats_overall:type_name -> stats.v1.OverallStatsContainer
+	33, // 14: stats.v1.OverallStats.player:type_name -> person.v1.PersonDisplay
+	15, // 15: stats.v1.OverallStatsContainer.stats:type_name -> stats.v1.OverallStats
+	33, // 16: stats.v1.VariantStats.player:type_name -> person.v1.PersonDisplay
+	17, // 17: stats.v1.VariantStatsContainer.stats:type_name -> stats.v1.VariantStats
+	23, // 18: stats.v1.MatchResponse.match:type_name -> stats.v1.Match
+	30, // 19: stats.v1.MatchOverview.map:type_name -> maps.v1.Map
+	31, // 20: stats.v1.MatchOverview.start_time:type_name -> google.protobuf.Timestamp
+	31, // 21: stats.v1.MatchOverview.created_on:type_name -> google.protobuf.Timestamp
+	21, // 22: stats.v1.Match.overview:type_name -> stats.v1.MatchOverview
+	26, // 23: stats.v1.Match.rounds:type_name -> stats.v1.Round
+	22, // 24: stats.v1.Match.chat_logs:type_name -> stats.v1.MatchChatLog
+	29, // 25: stats.v1.Match.players:type_name -> stats.v1.Match.PlayersEntry
+	25, // 26: stats.v1.Match.kills:type_name -> stats.v1.MatchKill
+	24, // 27: stats.v1.Match.events:type_name -> stats.v1.MatchEvent
+	0,  // 28: stats.v1.Round.winner:type_name -> stats.v1.Team
+	27, // 29: stats.v1.Round.players:type_name -> stats.v1.RoundPlayer
+	33, // 30: stats.v1.RoundPlayer.person:type_name -> person.v1.PersonDisplay
+	0,  // 31: stats.v1.RoundPlayer.team:type_name -> stats.v1.Team
+	28, // 32: stats.v1.RoundPlayer.variants:type_name -> stats.v1.RoundPlayerVariant
+	33, // 33: stats.v1.Match.PlayersEntry.value:type_name -> person.v1.PersonDisplay
+	19, // 34: stats.v1.StatsService.Match:input_type -> stats.v1.MatchRequest
+	11, // 35: stats.v1.StatsService.QueryMatches:input_type -> stats.v1.QueryMatchesRequest
+	3,  // 36: stats.v1.StatsService.MatchesWithPlayer:input_type -> stats.v1.MatchesWithPlayerRequest
+	13, // 37: stats.v1.StatsService.QueryStats:input_type -> stats.v1.QueryStatsRequest
+	34, // 38: stats.v1.StatsService.WeaponList:input_type -> google.protobuf.Empty
+	34, // 39: stats.v1.StatsService.MapList:input_type -> google.protobuf.Empty
+	34, // 40: stats.v1.StatsService.Buckets:input_type -> google.protobuf.Empty
+	34, // 41: stats.v1.StatsService.RefreshStats:input_type -> google.protobuf.Empty
+	20, // 42: stats.v1.StatsService.Match:output_type -> stats.v1.MatchResponse
+	12, // 43: stats.v1.StatsService.QueryMatches:output_type -> stats.v1.QueryMatchesResponse
+	6,  // 44: stats.v1.StatsService.MatchesWithPlayer:output_type -> stats.v1.MatchesWithPlayerResponse
+	14, // 45: stats.v1.StatsService.QueryStats:output_type -> stats.v1.QueryStatsResponse
+	7,  // 46: stats.v1.StatsService.WeaponList:output_type -> stats.v1.WeaponListResponse
+	4,  // 47: stats.v1.StatsService.MapList:output_type -> stats.v1.MapListResponse
+	9,  // 48: stats.v1.StatsService.Buckets:output_type -> stats.v1.BucketsResponse
+	10, // 49: stats.v1.StatsService.RefreshStats:output_type -> stats.v1.RefreshStatsResponse
+	42, // [42:50] is the sub-list for method output_type
+	34, // [34:42] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_stats_v1_stats_proto_init() }
@@ -3784,8 +4628,9 @@ func file_stats_v1_stats_proto_init() {
 	if File_stats_v1_stats_proto != nil {
 		return
 	}
-	file_stats_v1_stats_proto_msgTypes[10].OneofWrappers = []any{
+	file_stats_v1_stats_proto_msgTypes[11].OneofWrappers = []any{
 		(*QueryStatsResponse_StatsVariant)(nil),
+		(*QueryStatsResponse_StatsOverall)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -3793,7 +4638,7 @@ func file_stats_v1_stats_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stats_v1_stats_proto_rawDesc), len(file_stats_v1_stats_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   24,
+			NumMessages:   27,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

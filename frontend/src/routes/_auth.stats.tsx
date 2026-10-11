@@ -1,11 +1,13 @@
 import { create } from "@bufbuild/protobuf";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
-import { useQuery } from "@connectrpc/connect-query";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
+import Button from "@mui/material/Button";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/system/Grid";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import { format, subDays } from "date-fns";
 import {
@@ -28,10 +30,20 @@ import {
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { renderTableError } from "../error.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
+import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { FilterSchema } from "../rpc/database/query/v1/filter_pb.ts";
-import { QueryStatsRequestSchema, TimeBucket, Variant, type VariantStats } from "../rpc/stats/v1/stats_pb.ts";
-import { buckets, queryStats, weaponList } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
+import {
+	type OverallStats,
+	QueryStatsRequestSchema,
+	TimeBucket,
+	Variant,
+	type VariantStats,
+} from "../rpc/stats/v1/stats_pb.ts";
+import { buckets, queryStats, refreshStats, weaponList } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
 import { classList } from "../tf2.tsx";
+import { logErr } from "../util/errors.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { enumValues } from "../util/lists.ts";
 import { toTitleCase } from "../util/strings.ts";
@@ -61,13 +73,31 @@ export const Route = createFileRoute("/_auth/stats")({
 	}),
 });
 
-const columnHelper = createMRTColumnHelper<VariantStats>();
-const defaultOptions = createDefaultTableOptions<VariantStats>();
+// Rows arrive as VariantStats (weapons/classes) or OverallStats (global
+// leaderboards) depending on the selected variant. Both share the displayed
+// stat fields; overall-only fields are read through OverallStats below.
+type StatRow = VariantStats | OverallStats;
+
+const columnHelper = createMRTColumnHelper<StatRow>();
+const defaultOptions = createDefaultTableOptions<StatRow>();
 
 function StatsComponent() {
 	const search = Route.useSearch();
 	const navigate = useNavigate();
 	const [selectedVariant, setSelectedVariant] = useState(Variant.OVERALL_UNSPECIFIED);
+	const { hasPermission } = useAuth();
+	const { sendFlash } = useUserFlashCtx();
+	const queryClient = useQueryClient();
+	const refreshMutation = useMutation(refreshStats, {
+		onSuccess: (resp) => {
+			sendFlash("success", `Refreshed ${resp.refreshedViews.length} stats views`);
+			queryClient.invalidateQueries();
+		},
+		onError: (e) => {
+			logErr(e);
+			sendFlash("error", "Stats refresh failed");
+		},
+	});
 
 	const {
 		data: variantKeys,
@@ -163,12 +193,25 @@ function StatsComponent() {
 			case TimeBucket.DAILY:
 				period = "Daily";
 				break;
+			case TimeBucket.WEEKLY:
+				period = "Weekly";
+				break;
+			case TimeBucket.MONTHLY:
+				period = "Monthly";
+				break;
+			case TimeBucket.YEARLY:
+				period = "Yearly";
+				break;
+			case TimeBucket.ALLTIME:
+				period = "Alltime";
+				break;
 		}
 
 		return `${period}	${bucket} Stats (${format(search.time ?? new Date(), "PPP")}) [${search.variantKey}]`;
 	}, [search, statBuckets]);
 
 	const columns = useMemo(() => {
+		const isOverall = search.variant !== Variant.WEAPONS && search.variant !== Variant.CLASSES;
 		return [
 			columnHelper.accessor("rank", {
 				header: "#",
@@ -194,6 +237,19 @@ function StatsComponent() {
 					/>
 				),
 			}),
+
+			...(isOverall
+				? [
+						columnHelper.accessor((row) => (row as OverallStats).points ?? "", {
+							id: "points",
+							header: "Points",
+							size: 100,
+							grow: false,
+							enableSorting: false,
+							enableColumnFilter: false,
+						}),
+					]
+				: []),
 
 			columnHelper.accessor("kills", {
 				header: "Kills",
@@ -343,7 +399,7 @@ function StatsComponent() {
 				enableColumnFilter: false,
 			}),
 		];
-	}, []);
+	}, [search.variant]);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,
@@ -507,6 +563,16 @@ function StatsComponent() {
 							<form.AppForm>
 								<form.SubmitButton fullWidth label="Show Me" />
 							</form.AppForm>
+
+							{hasPermission(Permission.DEMO_ADMIN) && (
+								<Button
+									variant="outlined"
+									disabled={refreshMutation.isPending}
+									onClick={() => refreshMutation.mutate({})}
+								>
+									{refreshMutation.isPending ? "Refreshing…" : "Refresh Stats"}
+								</Button>
+							)}
 						</Stack>
 					</form>
 				</Paper>

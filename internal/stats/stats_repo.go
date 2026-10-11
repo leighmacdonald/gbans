@@ -13,6 +13,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/maps"
@@ -63,7 +64,7 @@ func (t TimeBucket) String() string {
 	case TimeBucketDaily:
 		return "daily"
 	case TimeBucketWeekly:
-		return "weeky"
+		return "weekly"
 	case TimeBucketMonthly:
 		return "monthly"
 	case TimeBucketYearly:
@@ -85,6 +86,32 @@ type Opts struct {
 
 func (o Opts) view() string {
 	return fmt.Sprintf("stats_summary_%s_%s_view", o.TimeBucket, o.Variant)
+}
+
+// dateConstraint restricts rows to the time-bucket period containing
+// TimeStamp. Alltime views carry no date_bucket and are never constrained,
+// and a zero TimeStamp disables filtering (used by tests/backfills).
+func (o Opts) dateConstraint() sq.Sqlizer { //nolint:ireturn
+	if o.TimeStamp.IsZero() {
+		return nil
+	}
+
+	var trunc string
+
+	switch o.TimeBucket {
+	case TimeBucketDaily:
+		trunc = "day"
+	case TimeBucketWeekly:
+		trunc = "week"
+	case TimeBucketMonthly:
+		trunc = "month"
+	case TimeBucketYearly:
+		trunc = "year"
+	default:
+		return nil
+	}
+
+	return sq.Expr("date_bucket = date_trunc('"+trunc+"', ?::timestamptz)", o.TimeStamp)
 }
 
 type Repository struct{ database.Database }
@@ -217,17 +244,21 @@ func NewRepository(database database.Database) Repository {
 func (r Repository) loadOverallView(ctx context.Context, statsBucketID uint32, opts Opts) ([]any, uint64, error) {
 	constraints := sq.And{
 		sq.Eq{"stats_bucket_id": statsBucketID},
-		// sq.Expr("date_trunc('day', ?::date) = date_bucket", opts.TimeStamp),
+	}
+
+	if dateConstraint := opts.dateConstraint(); dateConstraint != nil {
+		constraints = append(constraints, dateConstraint)
 	}
 
 	builder := r.Builder().
 		Select("rank", "steam_id", "points", "connection_count", "bonus_points", "kills", "assists", "deaths",
-			"postround_kills", "postround_assists", "preround_healing", "healing", "drops", "near_full_charge_death",
+			"postround_kills", "postround_assists", "postround_deaths",
+			"preround_healing", "healing", "postround_healing", "drops", "near_full_charge_death",
 			"charges_uber", "charges_kritz", "charges_vacc", "charges_quickfix",
 			"damage", "damage_taken", "dominations", "dominated", "revenges", "revenged",
 			"airshots", "headshots", "headshot_kills", "backstabs", "backstab_kills",
 			"was_headshot", "was_backstabbed", "shots", "hits", "objects_built", "objects_destroyed",
-			"scoreboard_kills", "scoreboard_assists", "scoreboard_deaths", "suicides", "postround_deaths",
+			"scoreboard_kills", "scoreboard_assists", "scoreboard_deaths", "scoreboard_healing", "suicides",
 			"captures", "captures_blocked", "scoreboard_damage", "extinguishes", "ignites",
 			"heals", "healed", "crossbow_heals", "crossbow_healing", "heal_on_hit", "building_healing",
 			"dropped_ubers", "reflects", "defenses", "direct_hits", "teleports", "push_distance",
@@ -249,12 +280,13 @@ func (r Repository) loadOverallView(ctx context.Context, statsBucketID uint32, o
 		var overallStat OverallStats
 		if err := rows.Scan(
 			&overallStat.Rank, &overallStat.SteamID, &overallStat.Points, &overallStat.ConnectionCount, &overallStat.BonusPoints, &overallStat.Kills, &overallStat.Assists, &overallStat.Deaths,
-			&overallStat.PostroundKills, &overallStat.PostroundAssists, &overallStat.PreroundHealing, &overallStat.Healing, &overallStat.Drops, &overallStat.NearFullChargeDeath,
+			&overallStat.PostroundKills, &overallStat.PostroundAssists, &overallStat.PostroundDeaths,
+			&overallStat.PreroundHealing, &overallStat.Healing, &overallStat.PostroundHealing, &overallStat.Drops, &overallStat.NearFullChargeDeath,
 			&overallStat.ChargesUber, &overallStat.ChargesKritz, &overallStat.ChargesVacc, &overallStat.ChargesQuickfix,
 			&overallStat.Damage, &overallStat.DamageTaken, &overallStat.Dominations, &overallStat.Dominated, &overallStat.Revenges, &overallStat.Revenged,
 			&overallStat.Airshots, &overallStat.Headshots, &overallStat.HeadshotKills, &overallStat.Backstabs, &overallStat.BackstabKills,
 			&overallStat.WasHeadshot, &overallStat.WasBackstabbed, &overallStat.Shots, &overallStat.Hits, &overallStat.ObjectsBuilt, &overallStat.ObjectsDestroyed,
-			&overallStat.ScoreboardKills, &overallStat.ScoreboardAssists, &overallStat.ScoreboardDeaths, &overallStat.Suicides, &overallStat.PostroundDeaths,
+			&overallStat.ScoreboardKills, &overallStat.ScoreboardAssists, &overallStat.ScoreboardDeaths, &overallStat.ScoreboardHealing, &overallStat.Suicides,
 			&overallStat.Captures, &overallStat.CapturesBlocked, &overallStat.ScoreboardDamage, &overallStat.Extinguishes, &overallStat.Ignites,
 			&overallStat.Heals, &overallStat.Healed, &overallStat.CrossbowHeals, &overallStat.CrossbowHealing, &overallStat.HealOnHit, &overallStat.BuildingHealing,
 			&overallStat.DroppedUbers, &overallStat.Reflects, &overallStat.Defenses, &overallStat.DirectHits, &overallStat.Teleports, &overallStat.PushDistance,
@@ -286,17 +318,21 @@ func (r Repository) loadVariantView(ctx context.Context, statsBucketID uint32, o
 	constraints := sq.And{
 		sq.Eq{"stats_bucket_id": statsBucketID},
 		sq.Eq{"variant": opts.VariantKey},
-		// sq.Expr("date_trunc('day', ?::date) = date_bucket", opts.TimeStamp),
+	}
+
+	if dateConstraint := opts.dateConstraint(); dateConstraint != nil {
+		constraints = append(constraints, dateConstraint)
 	}
 
 	builder := r.Builder().
 		Select("rank", "steam_id", "kills", "assists", "deaths", "postround_kills",
-			"postround_assists", "preround_healing", "healing", "drops", "near_full_charge_death",
-			"charges_uber", "charges_kritz", "charges_vacc", "charges_quickfix",
+			"postround_assists", "postround_deaths",
 			"damage", "damage_taken", "dominations", "dominated", "revenges", "revenged",
-			"airshots", "headshots", "headshot_kills", "backstabs", "backstab_kills",
-			"was_headshot", "was_backstabbed", "shots", "hits", "objects_built", "objects_destroyed",
-			"postround_deaths", "preround_healing", "postround_healing",
+			"airshots", "headshot_kills", "backstab_kills", "headshots", "backstabs",
+			"was_headshot", "was_backstabbed", "captures", "captures_blocked",
+			"preround_healing", "healing", "postround_healing", "drops", "near_full_charge_death",
+			"charges_uber", "charges_kritz", "charges_vacc", "charges_quickfix",
+			"shots", "hits", "objects_built", "objects_destroyed",
 			"heals", "healed", "crossbow_heals", "crossbow_healing", "heal_on_hit", "extinguishes", "building_healing",
 			"dropped_ubers", "reflects", "defenses", "direct_hits", "teleports", "push_distance",
 			"environmental_deaths", "environmental_kills",
@@ -318,12 +354,13 @@ func (r Repository) loadVariantView(ctx context.Context, statsBucketID uint32, o
 		var variantStat VariantStats
 		if err := rows.Scan(
 			&variantStat.Rank, &variantStat.SteamID, &variantStat.Kills, &variantStat.Assists, &variantStat.Deaths, &variantStat.PostroundKills,
-			&variantStat.PostroundAssists, &variantStat.PreroundHealing, &variantStat.Healing, &variantStat.Drops, &variantStat.NearFullChargeDeath,
-			&variantStat.ChargesUber, &variantStat.ChargesKritz, &variantStat.ChargesVacc, &variantStat.ChargesQuickfix,
+			&variantStat.PostroundAssists, &variantStat.PostroundDeaths,
 			&variantStat.Damage, &variantStat.DamageTaken, &variantStat.Dominations, &variantStat.Dominated, &variantStat.Revenges, &variantStat.Revenged,
-			&variantStat.Airshots, &variantStat.Headshots, &variantStat.HeadshotKills, &variantStat.Backstabs, &variantStat.BackstabKills,
-			&variantStat.WasHeadshot, &variantStat.WasBackstabbed, &variantStat.Shots, &variantStat.Hits, &variantStat.ObjectsBuilt, &variantStat.ObjectsDestroyed,
-			&variantStat.PostroundDeaths, &variantStat.PreroundHealing, &variantStat.PostroundHealing,
+			&variantStat.Airshots, &variantStat.HeadshotKills, &variantStat.BackstabKills, &variantStat.Headshots, &variantStat.Backstabs,
+			&variantStat.WasHeadshot, &variantStat.WasBackstabbed, &variantStat.Captures, &variantStat.CapturesBlocked,
+			&variantStat.PreroundHealing, &variantStat.Healing, &variantStat.PostroundHealing, &variantStat.Drops, &variantStat.NearFullChargeDeath,
+			&variantStat.ChargesUber, &variantStat.ChargesKritz, &variantStat.ChargesVacc, &variantStat.ChargesQuickfix,
+			&variantStat.Shots, &variantStat.Hits, &variantStat.ObjectsBuilt, &variantStat.ObjectsDestroyed,
 			&variantStat.Heals, &variantStat.Healed, &variantStat.CrossbowHeals, &variantStat.CrossbowHealing, &variantStat.HealOnHit, &variantStat.Extinguishes, &variantStat.BuildingHealing,
 			&variantStat.DroppedUbers, &variantStat.Reflects, &variantStat.Defenses, &variantStat.DirectHits, &variantStat.Teleports, &variantStat.PushDistance,
 			&variantStat.EnvironmentalDeaths, &variantStat.EnvironmentalKills,
@@ -674,11 +711,15 @@ func (r Repository) CreateMatch(ctx context.Context, serverID int32, demoID int3
 	}
 
 	if statsBucketID == nil {
-		bucket, errBucket := r.GetBucket(ctx, 1)
+		resolved, errBucket := r.bucketForServer(ctx, transaction, serverID)
 		if errBucket != nil {
+			if err := transaction.Rollback(ctx); err != nil {
+				slog.Error("Failed to rollback tx", slog.String("error", err.Error()))
+			}
+
 			return newID, errBucket
 		}
-		statsBucketID = &bucket.BucketID
+		statsBucketID = resolved
 	}
 
 	if _, errMatch := transaction.Exec(ctx, `
@@ -1280,6 +1321,30 @@ func (r Repository) GetBucket(ctx context.Context, statsBucketID int32) (*Bucket
 	}
 
 	return &bucket, nil
+}
+
+// bucketForServer resolves the stats bucket a new match should be filed
+// under: the owning server's configured bucket, falling back to bucket 1
+// (casual) when the server has none set. Previously every match was filed
+// under bucket 1 regardless of server configuration.
+func (r Repository) bucketForServer(ctx context.Context, transaction pgx.Tx, serverID int32) (*int32, error) {
+	var bucketID pgtype.Int4
+	if err := transaction.QueryRow(ctx, `SELECT stats_bucket_id FROM server WHERE server_id = $1`, serverID).Scan(&bucketID); err != nil {
+		return nil, database.Err(err)
+	}
+
+	if bucketID.Valid {
+		id := bucketID.Int32
+
+		return &id, nil
+	}
+
+	bucket, errBucket := r.GetBucket(ctx, 1)
+	if errBucket != nil {
+		return nil, errBucket
+	}
+
+	return &bucket.BucketID, nil
 }
 
 func (r Repository) CreateBucket(ctx context.Context, bucketName string) (*Bucket, error) {

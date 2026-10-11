@@ -34,8 +34,19 @@ func NewService(stats Stats, servers *servers.Servers, roleAuth *rpc.RoleAuth, a
 	authMiddleware.UserRoute(statsv1connect.StatsServiceMatchProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
 	authMiddleware.UserRoute(statsv1connect.StatsServiceBucketsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
 	authMiddleware.UserRoute(statsv1connect.StatsServiceQueryStatsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
+	authMiddleware.UserRoute(statsv1connect.StatsServiceRefreshStatsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_DEMO_ADMIN))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
+}
+
+func (s Service) RefreshStats(ctx context.Context, _ *emptypb.Empty) (*v1.RefreshStatsResponse, error) {
+	if err := s.stats.RefreshViews(ctx); err != nil {
+		slog.Error("Failed to refresh stats views", slog.String("error", err.Error()))
+
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	return &v1.RefreshStatsResponse{RefreshedViews: StatViews}, nil
 }
 
 func (s Service) MapList(ctx context.Context, _ *emptypb.Empty) (*v1.MapListResponse, error) {
@@ -197,6 +208,16 @@ func (s Service) QueryStats(ctx context.Context, request *v1.QueryStatsRequest) 
 				return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 			}
 			container.StatsVariant.Stats[idx] = toVariantStats(variantStats)
+		default:
+			overallStats, ok := statRow.(OverallStats)
+			if !ok {
+				return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+			}
+			container, ok := resp.GetStatContainer().(*v1.QueryStatsResponse_StatsOverall)
+			if !ok {
+				return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+			}
+			container.StatsOverall.Stats[idx] = toOverallStats(overallStats)
 		}
 	}
 
@@ -376,6 +397,12 @@ func createResp(opts Opts, request *v1.QueryStatsRequest, count uint64, size int
 				Stats: make([]*v1.VariantStats, size),
 			},
 		}
+	default:
+		resp.StatContainer = &v1.QueryStatsResponse_StatsOverall{
+			StatsOverall: &v1.OverallStatsContainer{
+				Stats: make([]*v1.OverallStats, size),
+			},
+		}
 	}
 
 	return resp
@@ -423,6 +450,90 @@ func toVariantStats(stats VariantStats) *v1.VariantStats {
 		CrossbowHealing:     &stats.CrossbowHealing,
 		HealOnHit:           &stats.HealOnHit,
 		Extinguishes:        &stats.Extinguishes,
+		BuildingHealing:     &stats.BuildingHealing,
+		DroppedUbers:        &stats.DroppedUbers,
+		Reflects:            &stats.Reflects,
+		Defenses:            &stats.Defenses,
+		DirectHits:          &stats.DirectHits,
+		Teleports:           &stats.Teleports,
+		PushDistance:        &stats.PushDistance,
+		EnvironmentalDeaths: &stats.EnvironmentalDeaths,
+		EnvironmentalKills:  &stats.EnvironmentalKills,
+		ObjectPlaced:        &stats.ObjectPlaced,
+		ObjectUpgraded:      &stats.ObjectUpgraded,
+		ObjectCarried:       &stats.ObjectCarried,
+		ObjectDropped:       &stats.ObjectDropped,
+		ObjectRemoved:       &stats.ObjectRemoved,
+		ObjectDetonated:     &stats.ObjectDetonated,
+		AmmoPacks:           &stats.AmmoPacks,
+		HealthPacks:         &stats.HealthPacks,
+		HealthPackHealing:   &stats.HealthPackHealing,
+		Shots:               &stats.Shots,
+		Hits:                &stats.Hits,
+		ObjectsBuilt:        &stats.ObjectsBuilt,
+		ObjectsDestroyed:    &stats.ObjectsDestroyed,
+		Captures:            &stats.Captures,
+		CapturesBlocked:     &stats.CapturesBlocked,
+	}
+}
+
+func toOverallStats(stats OverallStats) *v1.OverallStats {
+	return &v1.OverallStats{
+		Rank: &stats.Rank,
+		Player: &personv1.PersonDisplay{
+			SteamId: new(stats.SteamID.Int64()),
+			Name:    new(stats.SteamID.String()),
+		},
+		Points:              &stats.Points,
+		ConnectionCount:     &stats.ConnectionCount,
+		BonusPoints:         &stats.BonusPoints,
+		Kills:               &stats.Kills,
+		Assists:             &stats.Assists,
+		Deaths:              &stats.Deaths,
+		PostroundKills:      &stats.PostroundKills,
+		PostroundAssists:    &stats.PostroundAssists,
+		PostroundDeaths:     &stats.PostroundDeaths,
+		PreroundHealing:     &stats.PreroundHealing,
+		Healing:             &stats.Healing,
+		PostroundHealing:    &stats.PostroundHealing,
+		Drops:               &stats.Drops,
+		NearFullChargeDeath: &stats.NearFullChargeDeath,
+		ChargesUber:         &stats.ChargesUber,
+		ChargesKritz:        &stats.ChargesKritz,
+		ChargesVacc:         &stats.ChargesVacc,
+		ChargesQuickfix:     &stats.ChargesQuickfix,
+		Damage:              &stats.Damage,
+		DamageTaken:         &stats.DamageTaken,
+		Dominations:         &stats.Dominations,
+		Dominated:           &stats.Dominated,
+		Revenges:            &stats.Revenges,
+		Revenged:            &stats.Revenged,
+		Airshots:            &stats.Airshots,
+		Headshots:           &stats.Headshots,
+		HeadshotKills:       &stats.HeadshotKills,
+		Backstabs:           &stats.Backstabs,
+		BackstabKills:       &stats.BackstabKills,
+		WasHeadshot:         &stats.WasHeadshot,
+		WasBackstabbed:      &stats.WasBackstabbed,
+		Shots:               &stats.Shots,
+		Hits:                &stats.Hits,
+		ScoreboardKills:     &stats.ScoreboardKills,
+		ScoreboardAssists:   &stats.ScoreboardAssists,
+		ScoreboardDeaths:    &stats.ScoreboardDeaths,
+		ScoreboardHealing:   &stats.ScoreboardHealing,
+		Suicides:            &stats.Suicides,
+		Captures:            &stats.Captures,
+		CapturesBlocked:     &stats.CapturesBlocked,
+		ScoreboardDamage:    &stats.ScoreboardDamage,
+		Extinguishes:        &stats.Extinguishes,
+		Ignites:             &stats.Ignites,
+		ObjectsBuilt:        &stats.ObjectsBuilt,
+		ObjectsDestroyed:    &stats.ObjectsDestroyed,
+		Heals:               &stats.Heals,
+		Healed:              &stats.Healed,
+		CrossbowHeals:       &stats.CrossbowHeals,
+		CrossbowHealing:     &stats.CrossbowHealing,
+		HealOnHit:           &stats.HealOnHit,
 		BuildingHealing:     &stats.BuildingHealing,
 		DroppedUbers:        &stats.DroppedUbers,
 		Reflects:            &stats.Reflects,
