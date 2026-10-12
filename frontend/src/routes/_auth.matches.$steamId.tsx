@@ -1,7 +1,12 @@
 import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQuery } from "@connectrpc/connect-query";
+import HistoryIcon from "@mui/icons-material/History";
 import PageviewIcon from "@mui/icons-material/Pageview";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
@@ -16,6 +21,7 @@ import {
 import prettyMilliseconds from "pretty-ms";
 import { useCallback, useMemo } from "react";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
+import { PersonCell } from "../component/PersonCell.tsx";
 import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import {
@@ -28,9 +34,11 @@ import {
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { renderTableError } from "../error.tsx";
+import { profile } from "../rpc/person/v1/person-PersonService_connectquery.ts";
 import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import type { PlayerMatchHistory } from "../rpc/stats/v1/stats_pb.ts";
 import { matchesWithPlayer } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
+import { blu, red } from "../theme.ts";
 import { stringToColour } from "../util/colours.ts";
 import { renderTimestamp } from "../util/time.ts";
 
@@ -57,6 +65,8 @@ function ProfileMatchesPage() {
 
 	const { data: serverList, isLoading: isLoadingServers } = useQuery(servers);
 
+	const { data: profileData } = useQuery(profile, { steamId });
+
 	const { data, isLoading, isError, error } = useQuery(
 		matchesWithPlayer,
 		{ steamId },
@@ -67,6 +77,8 @@ function ProfileMatchesPage() {
 		const matchList = data?.matches ?? [];
 		return matchList;
 	}, [data]);
+
+	const player = profileData?.profile?.player;
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		(updater) => {
@@ -178,6 +190,24 @@ function ProfileMatchesPage() {
 				header: "Map",
 			}),
 
+			columnHelper.accessor("scoreRed", {
+				header: "Score",
+				grow: false,
+				enableSorting: false,
+				enableColumnFilter: false,
+				Cell: ({ row }) => (
+					<Typography variant={"body2"} sx={{ whiteSpace: "nowrap" }}>
+						<Box component={"span"} sx={{ color: red, fontWeight: 700 }}>
+							{row.original.scoreRed}
+						</Box>
+						{" – "}
+						<Box component={"span"} sx={{ color: blu, fontWeight: 700 }}>
+							{row.original.scoreBlu}
+						</Box>
+					</Typography>
+				),
+			}),
+
 			columnHelper.accessor("duration", {
 				enableColumnFilter: false,
 				enableSorting: false,
@@ -237,8 +267,37 @@ function ProfileMatchesPage() {
 	});
 	return (
 		<Grid container spacing={2}>
+			<Grid size={{ xs: 12 }}>
+				<Paper sx={{ padding: 2.5 }}>
+					<Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { sm: "center" } }}>
+						<Box sx={{ flexGrow: 1 }}>
+							<Typography variant="overline" color="textSecondary" sx={{ letterSpacing: 1.5 }}>
+								Player Match History
+							</Typography>
+							<Box sx={{ marginTop: 0.5 }}>
+								{player ? (
+									<PersonCell
+										steamId={player.steamId.toString()}
+										personaName={player.name}
+										avatarHash={player.avatarHash}
+									/>
+								) : (
+									<Typography variant="h5" sx={{ fontWeight: 700 }}>
+										{steamId}
+									</Typography>
+								)}
+							</Box>
+						</Box>
+						<Chip
+							label={`${matches.length} match${matches.length === 1 ? "" : "es"}`}
+							size="small"
+							variant="outlined"
+						/>
+					</Stack>
+				</Paper>
+			</Grid>
 			<Grid size={{ xs: 12, md: 12 }}>
-				<SortableTable table={table} title={"Match History"} />
+				<SortableTable table={table} title={"Match History"} iconLeft={<HistoryIcon />} />
 			</Grid>
 		</Grid>
 	);

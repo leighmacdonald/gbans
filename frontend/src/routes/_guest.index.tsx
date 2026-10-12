@@ -17,7 +17,7 @@ import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { ButtonLink } from "../component/ButtonLink.tsx";
 import { NewsView } from "../component/NewsView";
 import RouterLink from "../component/RouterLink.tsx";
@@ -37,7 +37,6 @@ export const Route = createFileRoute("/_guest/")({
 });
 
 function Index() {
-	const navigate = useNavigate();
 	const { appInfo } = Route.useRouteContext();
 	const { profile, hasPermission } = useAuth();
 	const showPlay = profile && profile.banId === 0 && appInfo.serversEnabled;
@@ -77,28 +76,24 @@ function Index() {
 						<Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
 							{showPlay && (
 								<Button
+									component={RouterLink}
 									startIcon={<StorageIcon />}
 									color={"success"}
 									variant={"contained"}
 									size={"large"}
-									onClick={async () => {
-										await navigate({ to: "/servers" });
-									}}
+									to={"/servers"}
 								>
 									Play Now!
 								</Button>
 							)}
 							{showAppeal && (
 								<Button
+									component={RouterLink}
 									startIcon={<SupportIcon />}
 									color={"success"}
 									variant={"contained"}
 									size={"large"}
-									onClick={async () => {
-										await navigate({
-											to: `/ban/${profile.banId}`,
-										});
-									}}
+									to={`/ban/${profile.banId}`}
 								>
 									Appeal Ban
 								</Button>

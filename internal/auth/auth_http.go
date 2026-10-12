@@ -28,6 +28,24 @@ type TokenGenerator interface {
 // Dotted non-IP hostnames keep a Domain cookie (existing production
 // behaviour); localhost and IP literals use host-only cookies because
 // browsers reject Domain cookies for them.
+// isLocalHost reports whether hostname is a loopback name or address. Only
+// there are Secure cookies optional (plain-http local dev); everywhere else
+// Secure is always set, even if the backend itself only sees plain http
+// behind a proxy that strips scheme headers.
+func isLocalHost(hostname string) bool {
+	name := strings.ToLower(strings.TrimSuffix(hostname, "."))
+
+	if name == "localhost" || strings.HasSuffix(name, ".localhost") {
+		return true
+	}
+
+	if ip := net.ParseIP(name); ip != nil {
+		return ip.IsLoopback()
+	}
+
+	return false
+}
+
 func sessionCookieDomain(req *http.Request) (string, bool) {
 	base, err := url.Parse(httphelper.RequestBaseURL(req))
 	if err != nil {
@@ -35,11 +53,17 @@ func sessionCookieDomain(req *http.Request) (string, bool) {
 	}
 
 	hostname := base.Hostname()
-	if net.ParseIP(hostname) != nil || !strings.Contains(hostname, ".") {
-		return "", strings.EqualFold(base.Scheme, "https")
+
+	secure := true
+	if isLocalHost(hostname) {
+		secure = strings.EqualFold(base.Scheme, "https")
 	}
 
-	return hostname, strings.EqualFold(base.Scheme, "https")
+	if net.ParseIP(hostname) != nil || !strings.Contains(hostname, ".") {
+		return "", secure
+	}
+
+	return hostname, secure
 }
 
 // newSessionCookie builds a session cookie scoped to the request's own host

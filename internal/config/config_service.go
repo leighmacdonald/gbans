@@ -2,7 +2,14 @@ package config
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log/slog"
+	"net/http"
 	"strings"
+	"sync"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
@@ -22,6 +29,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Service struct {
@@ -29,6 +37,10 @@ type Service struct {
 
 	config  *Configuration
 	version string
+
+	changelogMu      sync.Mutex
+	changelogCache   []*configv1.GithubRelease
+	changelogFetched time.Time
 }
 
 func NewService(conf *Configuration, version string, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
@@ -46,8 +58,126 @@ func NewService(conf *Configuration, version string, roleAuth *rpc.RoleAuth, aut
 	}
 }
 
+const (
+	// changelogRepoOwner/Name must match the releases linked in the footer.
+	changelogRepoOwner = "leighmacdonald"
+	changelogRepoName  = "gbans"
+	// changelogMaxReleases bounds the payload; the page renders newest first.
+	changelogMaxReleases = 10
+	// changelogCacheTTL keeps us far under GitHub's unauthenticated rate
+	// limits (60 req/hour) even with many viewers.
+	changelogCacheTTL = time.Minute * 30
+)
+
+type githubReleaseJSON struct {
+	ID          int64  `json:"id"`
+	TagName     string `json:"tag_name"`
+	Name        string `json:"name"`
+	Body        string `json:"body"`
+	Draft       bool   `json:"draft"`
+	Prerelease  bool   `json:"prerelease"`
+	CreatedAt   string `json:"created_at"`
+	PublishedAt string `json:"published_at"`
+}
+
+func fetchGithubReleases(owner string, repo string, limit int) ([]*configv1.GithubRelease, error) {
+	req, errReq := http.NewRequest(
+		http.MethodGet,
+		fmt.Sprintf("https://api.github.com/repos/%s/%s/releases?per_page=%d", owner, repo, limit),
+		nil,
+	)
+	if errReq != nil {
+		return nil, errReq
+	}
+
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", "gbans-changelog")
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+
+	client := &http.Client{Timeout: time.Second * 10}
+
+	resp, errResp := client.Do(req)
+	if errResp != nil {
+		return nil, errResp
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("github releases status: %d", resp.StatusCode) //nolint:err113
+	}
+
+	body, errBody := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if errBody != nil {
+		return nil, errBody
+	}
+
+	var raw []githubReleaseJSON
+	if errDecode := json.Unmarshal(body, &raw); errDecode != nil {
+		return nil, errDecode
+	}
+
+	releases := make([]*configv1.GithubRelease, 0, len(raw))
+	for _, item := range raw {
+		name := item.Name
+		if name == "" {
+			name = item.TagName
+		}
+
+		createdAt, errCreated := time.Parse(time.RFC3339, item.CreatedAt)
+		if errCreated != nil {
+			continue
+		}
+
+		publishedAt, errPublished := time.Parse(time.RFC3339, item.PublishedAt)
+		if errPublished != nil {
+			publishedAt = createdAt
+		}
+
+		id := int32(item.ID) //nolint:gosec
+
+		releases = append(
+			releases, &configv1.GithubRelease{
+				Id:          &id,
+				TagName:     &item.TagName,
+				Name:        &name,
+				Body:        &item.Body,
+				Draft:       &item.Draft,
+				Prerelease:  &item.Prerelease,
+				CreatedAt:   timestamppb.New(createdAt),
+				PublishedAt: timestamppb.New(publishedAt),
+			},
+		)
+	}
+
+	return releases, nil
+}
+
 func (r *Service) Changelog(_ context.Context, _ *emptypb.Empty) (*configv1.ChangelogResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, rpc.ErrInternal)
+	r.changelogMu.Lock()
+	defer r.changelogMu.Unlock()
+
+	if time.Since(r.changelogFetched) < changelogCacheTTL && r.changelogCache != nil {
+		return &configv1.ChangelogResponse{Changelog: r.changelogCache}, nil
+	}
+
+	releases, errFetch := fetchGithubReleases(changelogRepoOwner, changelogRepoName, changelogMaxReleases)
+	if errFetch != nil {
+		// Serve stale cache rather than breaking the page on transient
+		// GitHub outages.
+		if r.changelogCache != nil {
+			slog.Warn("Serving stale changelog cache", slog.String("error", errFetch.Error()))
+
+			return &configv1.ChangelogResponse{Changelog: r.changelogCache}, nil
+		}
+
+		return nil, connect.NewError(connect.CodeInternal, errFetch)
+	}
+
+	r.changelogCache = releases
+	r.changelogFetched = time.Now()
+
+	return &configv1.ChangelogResponse{Changelog: releases}, nil
 }
 
 func (r *Service) Info(_ context.Context, _ *emptypb.Empty) (*configv1.InfoResponse, error) {
