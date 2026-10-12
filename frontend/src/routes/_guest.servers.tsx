@@ -16,7 +16,7 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import L, { type LatLngLiteral } from "leaflet";
 import * as markerIcon from "leaflet/dist/images/marker-icon.png";
 import * as markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
@@ -24,6 +24,7 @@ import * as markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { createMRTColumnHelper, type MRT_ColumnDef, useMaterialReactTable } from "material-react-table";
 import { type ChangeEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
+import z from "zod/v4";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { Flag } from "../component/Flag.tsx";
 import { RangeSlider } from "../component/RangeSlider.tsx";
@@ -55,6 +56,22 @@ L.Icon.Default.mergeOptions({
 
 export const Route = createFileRoute("/_guest/servers")({
 	component: Servers,
+	validateSearch: z.object({
+		selectedRegion: z.string().optional().default("any"),
+		filterByRegion: z.boolean().optional().default(false),
+		showOpenOnly: z.boolean().optional().default(false),
+		customRange: z.number().optional().default(1500),
+	}),
+	search: {
+		middlewares: [
+			stripSearchParams({
+				selectedRegion: "any",
+				filterByRegion: false,
+				showOpenOnly: false,
+				customRange: 1500,
+			}),
+		],
+	},
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(context.appInfo.serversEnabled);
 	},
@@ -82,18 +99,58 @@ function RecenterMap() {
 }
 
 function Servers() {
+	const search = Route.useSearch();
+	const navigate = useNavigate();
 	const [pos, setPos] = useState<LatLngLiteral>({
 		lat: 0.0,
 		lng: 0.0,
 	});
-	const [customRange, setCustomRange] = useState<number>(500);
 	const [selectedServers, setSelectedServers] = useState<SafeServer[]>([]);
-	const [filterByRegion, setFilterByRegion] = useState<boolean>(false);
-	const [showOpenOnly, setShowOpenOnly] = useState<boolean>(false);
-	const [selectedRegion, setSelectedRegion] = useState<string>("any");
+	const { customRange, filterByRegion, showOpenOnly, selectedRegion } = search;
 	const { sendFlash } = useUserFlashCtx();
 	const { data, isLoading } = useQuery(state, {}, { refetchInterval: 5000 });
 	const regions = uniqCI(["any", ...(data?.servers || []).map((value) => value.region)]);
+
+	// Filter state lives in the URL so filtered views are shareable. Replace
+	// (rather than push) history entries so slider drags don't spam history.
+	const setFilterSearch = useCallback(
+		(patch: Partial<typeof search>) => {
+			navigate({
+				to: Route.fullPath,
+				search: (prev) => ({ ...prev, ...patch }),
+				replace: true,
+			});
+		},
+		[navigate],
+	);
+
+	const setCustomRange = useCallback(
+		(value: number) => {
+			setFilterSearch({ customRange: value });
+		},
+		[setFilterSearch],
+	);
+
+	const setFilterByRegion = useCallback(
+		(value: boolean) => {
+			setFilterSearch({ filterByRegion: value });
+		},
+		[setFilterSearch],
+	);
+
+	const setShowOpenOnly = useCallback(
+		(value: boolean) => {
+			setFilterSearch({ showOpenOnly: value });
+		},
+		[setFilterSearch],
+	);
+
+	const setSelectedRegion = useCallback(
+		(value: string) => {
+			setFilterSearch({ selectedRegion: value });
+		},
+		[setFilterSearch],
+	);
 
 	// Center the map (and the "you" marker) on the geoip position reported
 	// by the backend once it arrives.
@@ -118,41 +175,6 @@ function Servers() {
 	};
 
 	useEffect(() => {
-		const defaultState = {
-			showOpenOnly: false,
-			selectedRegion: "any",
-			filterByRegion: false,
-			customRange: 1500,
-		};
-		let state = defaultState;
-		try {
-			const val = localStorage.getItem("filters");
-			if (val) {
-				state = JSON.parse(val);
-			}
-		} catch (e) {
-			logErr(e);
-			return;
-		}
-		setShowOpenOnly(state?.showOpenOnly || defaultState.showOpenOnly);
-		setSelectedRegion(state?.selectedRegion !== "" ? state.selectedRegion : defaultState.selectedRegion);
-		setFilterByRegion(state?.filterByRegion || defaultState.filterByRegion);
-		setCustomRange(state?.customRange || defaultState.customRange);
-	}, []);
-
-	const saveFilterState = useCallback(() => {
-		localStorage.setItem(
-			"filters",
-			JSON.stringify({
-				showOpenOnly: showOpenOnly,
-				selectedRegion: selectedRegion,
-				filterByRegion: filterByRegion,
-				customRange: customRange,
-			}),
-		);
-	}, [customRange, filterByRegion, selectedRegion, showOpenOnly]);
-
-	useEffect(() => {
 		let s = (data?.servers ?? []).sort((a, b) => {
 			// Sort by position if we have a non-default position.
 			// otherwise, sort by server name
@@ -171,8 +193,7 @@ function Servers() {
 			s = s.filter((srv) => srv.distance < customRange);
 		}
 		setSelectedServers(s);
-		saveFilterState();
-	}, [selectedRegion, showOpenOnly, filterByRegion, customRange, saveFilterState, pos, data?.servers]);
+	}, [selectedRegion, showOpenOnly, filterByRegion, customRange, pos, data?.servers]);
 
 	const marks = [
 		{
