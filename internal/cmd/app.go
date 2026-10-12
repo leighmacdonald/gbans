@@ -545,7 +545,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 
 	topMux.Handle("/connect/", http.StripPrefix("/connect", mw.Wrap(apiHandler)))
 	topMux.Handle("/", router)
-	auth.RegisterExchangeHandler(topMux, userAuth, conf.ExternalURL)
+	auth.RegisterExchangeHandler(topMux, userAuth)
 
 	httpServer := httphelper.NewServer(conf.Addr(), topMux)
 

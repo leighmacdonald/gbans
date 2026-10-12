@@ -7,6 +7,7 @@ const ResetButton = lazy(() => import("../component/form/button/ResetButton.tsx"
 const SubmitButton = lazy(() => import("../component/form/button/SubmitButton.tsx"));
 const CheckboxField = lazy(() => import("../component/form/field/CheckboxField.tsx"));
 const DateTimeField = lazy(() => import("../component/form/field/DateTimeField.tsx"));
+const DatePickerField = lazy(() => import("../component/form/field/DatePickerField.tsx"));
 const MarkdownField = lazy(() => import("../component/form/field/MarkdownField.tsx"));
 const NumberField = lazy(() => import("../component/form/field/NumberField.tsx"));
 const SelectField = lazy(() => import("../component/form/field/SelectField.tsx"));
@@ -46,6 +47,7 @@ export const { useAppForm, withForm } = createFormHook({
 		SelectBanTypeField,
 		SelectAppealStateField,
 		DateTimeField,
+		DatePickerField,
 		SelectPermissionsField,
 		SelectReportStatusField,
 		SelectDemoStrategyField,

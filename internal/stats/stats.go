@@ -45,6 +45,8 @@ type VariantStats struct {
 	SteamID steamid.SteamID
 	Variant string
 
+	Personaname         string
+	AvatarHash          string
 	Kills               uint64
 	Assists             uint64
 	Deaths              uint64

@@ -34,6 +34,7 @@ func NewService(stats Stats, servers *servers.Servers, roleAuth *rpc.RoleAuth, a
 	authMiddleware.UserRoute(statsv1connect.StatsServiceMatchProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
 	authMiddleware.UserRoute(statsv1connect.StatsServiceBucketsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
 	authMiddleware.UserRoute(statsv1connect.StatsServiceQueryStatsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
+	authMiddleware.UserRoute(statsv1connect.StatsServiceWeaponListProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
 	authMiddleware.UserRoute(statsv1connect.StatsServiceRefreshStatsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_DEMO_ADMIN))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
@@ -161,6 +162,7 @@ func (s Service) Buckets(ctx context.Context, _ *emptypb.Empty) (*v1.BucketsResp
 		resp.Buckets[idx] = &v1.Bucket{
 			StatsBucketId: &buckets[idx].BucketID,
 			BucketName:    &buckets[idx].BucketName,
+			IsEnabled:     &buckets[idx].IsEnabled,
 		}
 	}
 
@@ -408,14 +410,26 @@ func createResp(opts Opts, request *v1.QueryStatsRequest, count uint64, size int
 	return resp
 }
 
+// displayPlayer builds the player display info, falling back to the raw
+// steam id when the person row is missing and carries no name.
+func displayPlayer(steamID steamid.SteamID, personaname string, avatarHash string) *personv1.PersonDisplay {
+	name := personaname
+	if name == "" {
+		name = steamID.String()
+	}
+
+	return &personv1.PersonDisplay{
+		SteamId:    new(steamID.Int64()),
+		Name:       new(name),
+		AvatarHash: new(avatarHash),
+	}
+}
+
 func toVariantStats(stats VariantStats) *v1.VariantStats {
 	return &v1.VariantStats{
-		Variant: &stats.Variant,
-		Rank:    &stats.Rank,
-		Player: &personv1.PersonDisplay{
-			SteamId: new(stats.SteamID.Int64()),
-			Name:    new(stats.SteamID.String()),
-		},
+		Variant:             &stats.Variant,
+		Rank:                &stats.Rank,
+		Player:              displayPlayer(stats.SteamID, stats.Personaname, stats.AvatarHash),
 		Kills:               &stats.Kills,
 		Assists:             &stats.Assists,
 		Deaths:              &stats.Deaths,
@@ -479,11 +493,8 @@ func toVariantStats(stats VariantStats) *v1.VariantStats {
 
 func toOverallStats(stats OverallStats) *v1.OverallStats {
 	return &v1.OverallStats{
-		Rank: &stats.Rank,
-		Player: &personv1.PersonDisplay{
-			SteamId: new(stats.SteamID.Int64()),
-			Name:    new(stats.SteamID.String()),
-		},
+		Rank:                &stats.Rank,
+		Player:              displayPlayer(stats.SteamID, stats.Personaname, stats.AvatarHash),
 		Points:              &stats.Points,
 		ConnectionCount:     &stats.ConnectionCount,
 		BonusPoints:         &stats.BonusPoints,

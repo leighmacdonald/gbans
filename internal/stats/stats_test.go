@@ -2,6 +2,7 @@ package stats_test
 
 import (
 	stdjson "encoding/json"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -64,6 +65,8 @@ func TestImport(t *testing.T) {
 // demoPlayerSums aggregates per-player totals across all rounds of a parsed
 // demo, mirroring how the summary views group by steam_id.
 type demoPlayerSums struct {
+	name              string
+	avatarHash        string
 	kills             uint64
 	deaths            uint64
 	points            uint64
@@ -82,7 +85,10 @@ func sumDemoPlayers(demo *demoparse.Demo) map[steamid.SteamID]*demoPlayerSums {
 			}
 			agg, ok := sums[sid]
 			if !ok {
-				agg = &demoPlayerSums{}
+				agg = &demoPlayerSums{
+					name:       player.Name,
+					avatarHash: fmt.Sprintf("avatar-%d", sid.Int64()),
+				}
 				sums[sid] = agg
 			}
 			agg.kills += uint64(player.Kills)
@@ -165,7 +171,7 @@ func TestGlobalStatsAcrossBucketsAndTime(t *testing.T) {
 				                    realname, timecreated, loccountrycode, locstatecode, loccityid)
 				 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 				 ON CONFLICT DO NOTHING`,
-				sid.Int64(), time.Now(), time.Now(), player.Name, "", 0, 0, "", 0, "", "", 0))
+				sid.Int64(), time.Now(), time.Now(), player.Name, fmt.Sprintf("avatar-%d", sid.Int64()), 0, 0, "", 0, "", "", 0))
 		}
 	}
 
@@ -198,11 +204,32 @@ func TestGlobalStatsAcrossBucketsAndTime(t *testing.T) {
 		}
 	}
 
+	topBy := func(metric func(*demoPlayerSums) uint64) map[steamid.SteamID]struct{} {
+		var best uint64
+		first := true
+		out := map[steamid.SteamID]struct{}{}
+		for sid, sums := range expected {
+			value := metric(sums)
+			if first || value > best {
+				best = value
+				out = map[steamid.SteamID]struct{}{sid: {}}
+				first = false
+			} else if value == best {
+				out[sid] = struct{}{}
+			}
+		}
+		return out
+	}
+	topKills := topBy(func(s *demoPlayerSums) uint64 { return s.kills })
+	topHealing := topBy(func(s *demoPlayerSums) uint64 { return s.healing })
+
 	assertBucket := func(rows map[steamid.SteamID]stats.OverallStats, multiplier uint64, msg string) {
 		require.Len(t, rows, len(expected), msg)
 		for sid, sums := range expected {
 			got, ok := rows[sid]
 			require.True(t, ok, "%s: missing player %s", msg, sid)
+			require.Equal(t, sums.name, got.Personaname, "%s: personaname %s", msg, sid)
+			require.Equal(t, sums.avatarHash, got.AvatarHash, "%s: avatarhash %s", msg, sid)
 			require.Equal(t, sums.kills*multiplier, got.Kills, "%s: kills %s", msg, sid)
 			require.Equal(t, sums.deaths*multiplier, got.Deaths, "%s: deaths %s", msg, sid)
 			require.Equal(t, sums.points*multiplier, got.Points, "%s: points %s", msg, sid)
@@ -242,6 +269,41 @@ func TestGlobalStatsAcrossBucketsAndTime(t *testing.T) {
 		queryOverall(t, repo, 2, stats.TimeBucketAlltime, day1),
 	} {
 		require.Equal(t, uint64(1), rows[topPlayer].Rank, "top player must rank 1")
+	}
+
+	// Kills and Healing leaderboards rank by their own metric, not points.
+	for _, tc := range []struct {
+		name    string
+		variant stats.Variant
+		tops    map[steamid.SteamID]struct{}
+	}{
+		{"kills", stats.VariantKills, topKills},
+		{"healing", stats.VariantHealing, topHealing},
+	} {
+		rows, _, errRank := repo.Query(ctx, stats.Opts{
+			StatsBucketID: 1, Variant: tc.variant, TimeBucket: stats.TimeBucketAlltime,
+		})
+		require.NoError(t, errRank)
+		require.NotEmpty(t, rows)
+		first, ok := rows[0].(stats.OverallStats)
+		require.True(t, ok)
+		require.Contains(t, tc.tops, first.SteamID, "%s leaderboard must crown a top player", tc.name)
+		require.Equal(t, uint64(1), first.Rank)
+	}
+
+	// Variant rows carry the same display info.
+	variantRows, _, errVariants := repo.Query(ctx, stats.Opts{
+		StatsBucketID: 1, Variant: stats.VariantClasses, VariantKey: "scout",
+		TimeBucket: stats.TimeBucketAlltime,
+	})
+	require.NoError(t, errVariants)
+	require.NotEmpty(t, variantRows)
+
+	for _, row := range variantRows {
+		variantStat, ok := row.(stats.VariantStats)
+		require.True(t, ok)
+		require.NotEmpty(t, variantStat.Personaname)
+		require.NotEmpty(t, variantStat.AvatarHash)
 	}
 }
 

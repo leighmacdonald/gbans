@@ -57,6 +57,34 @@ func Referral(r *http.Request) string {
 	return safeRedirectURL(referralURL)
 }
 
+// RequestBaseURL rebuilds the public base URL (scheme://host[:port]) for the
+// incoming request, honouring reverse-proxy headers. Auth flows (OpenID
+// verification, session cookies, exchange origin checks) must use this
+// instead of the static external URL: a single backend can serve several
+// hosts (local dev ports, LAN IPs, Cloudflare-fronted domains) and the
+// browser-visible URL is the only one signatures and cookies will match.
+func RequestBaseURL(r *http.Request) string {
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
+
+	if forwardedProto := r.Header.Get("X-Forwarded-Proto"); forwardedProto != "" {
+		scheme = strings.ToLower(strings.TrimSpace(strings.Split(forwardedProto, ",")[0]))
+	}
+
+	host := r.Host
+	if forwardedHost := r.Header.Get("X-Forwarded-Host"); forwardedHost != "" {
+		host = strings.TrimSpace(strings.Split(forwardedHost, ",")[0])
+	}
+
+	if host == "" {
+		host = "localhost"
+	}
+
+	return scheme + "://" + host
+}
+
 func safeRedirectURL(rawURL string) string {
 	if rawURL == "" {
 		return "/"

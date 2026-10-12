@@ -250,8 +250,17 @@ func (r Repository) loadOverallView(ctx context.Context, statsBucketID uint32, o
 		constraints = append(constraints, dateConstraint)
 	}
 
+	// Leaderboards rank by the selected stat, not always by points.
+	rankColumn := "rank"
+	switch opts.Variant {
+	case VariantKills:
+		rankColumn = "rank_kills"
+	case VariantHealing:
+		rankColumn = "rank_healing"
+	}
+
 	builder := r.Builder().
-		Select("rank", "steam_id", "points", "connection_count", "bonus_points", "kills", "assists", "deaths",
+		Select(rankColumn+" AS rank", "steam_id", "personaname", "avatarhash", "points", "connection_count", "bonus_points", "kills", "assists", "deaths",
 			"postround_kills", "postround_assists", "postround_deaths",
 			"preround_healing", "healing", "postround_healing", "drops", "near_full_charge_death",
 			"charges_uber", "charges_kritz", "charges_vacc", "charges_quickfix",
@@ -279,7 +288,7 @@ func (r Repository) loadOverallView(ctx context.Context, statsBucketID uint32, o
 	for rows.Next() {
 		var overallStat OverallStats
 		if err := rows.Scan(
-			&overallStat.Rank, &overallStat.SteamID, &overallStat.Points, &overallStat.ConnectionCount, &overallStat.BonusPoints, &overallStat.Kills, &overallStat.Assists, &overallStat.Deaths,
+			&overallStat.Rank, &overallStat.SteamID, &overallStat.Personaname, &overallStat.AvatarHash, &overallStat.Points, &overallStat.ConnectionCount, &overallStat.BonusPoints, &overallStat.Kills, &overallStat.Assists, &overallStat.Deaths,
 			&overallStat.PostroundKills, &overallStat.PostroundAssists, &overallStat.PostroundDeaths,
 			&overallStat.PreroundHealing, &overallStat.Healing, &overallStat.PostroundHealing, &overallStat.Drops, &overallStat.NearFullChargeDeath,
 			&overallStat.ChargesUber, &overallStat.ChargesKritz, &overallStat.ChargesVacc, &overallStat.ChargesQuickfix,
@@ -325,7 +334,7 @@ func (r Repository) loadVariantView(ctx context.Context, statsBucketID uint32, o
 	}
 
 	builder := r.Builder().
-		Select("rank", "steam_id", "kills", "assists", "deaths", "postround_kills",
+		Select("rank", "steam_id", "personaname", "avatarhash", "kills", "assists", "deaths", "postround_kills",
 			"postround_assists", "postround_deaths",
 			"damage", "damage_taken", "dominations", "dominated", "revenges", "revenged",
 			"airshots", "headshot_kills", "backstab_kills", "headshots", "backstabs",
@@ -353,7 +362,7 @@ func (r Repository) loadVariantView(ctx context.Context, statsBucketID uint32, o
 	for rows.Next() {
 		var variantStat VariantStats
 		if err := rows.Scan(
-			&variantStat.Rank, &variantStat.SteamID, &variantStat.Kills, &variantStat.Assists, &variantStat.Deaths, &variantStat.PostroundKills,
+			&variantStat.Rank, &variantStat.SteamID, &variantStat.Personaname, &variantStat.AvatarHash, &variantStat.Kills, &variantStat.Assists, &variantStat.Deaths, &variantStat.PostroundKills,
 			&variantStat.PostroundAssists, &variantStat.PostroundDeaths,
 			&variantStat.Damage, &variantStat.DamageTaken, &variantStat.Dominations, &variantStat.Dominated, &variantStat.Revenges, &variantStat.Revenged,
 			&variantStat.Airshots, &variantStat.HeadshotKills, &variantStat.BackstabKills, &variantStat.Headshots, &variantStat.Backstabs,

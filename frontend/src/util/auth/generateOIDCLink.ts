@@ -12,7 +12,10 @@ export const generateOIDCLink = (returnPath?: string): string => {
 		`?openid.ns=${encodeURIComponent("http://specs.openid.net/auth/2.0")}`,
 		"&openid.mode=checkid_setup",
 		`&openid.return_to=${encodeURIComponent(returnTo)}`,
-		`&openid.realm=${encodeURIComponent(`${window.location.protocol}//${window.location.hostname}`)}`,
+		// Realm must match return_to's host AND port (OpenID 2.0 §9.2): a realm
+		// without a port only covers the scheme default, so omitting :6007 etc.
+		// makes Steam reject the request with a realm mismatch.
+		`&openid.realm=${encodeURIComponent(`${window.location.protocol}//${returnUrl}`)}`,
 		`&openid.ns.sreg=${encodeURIComponent("http://openid.net/extensions/sreg/1.1")}`,
 		`&openid.claimed_id=${encodeURIComponent("http://specs.openid.net/auth/2.0/identifier_select")}`,
 		`&openid.identity=${encodeURIComponent("http://specs.openid.net/auth/2.0/identifier_select")}`,

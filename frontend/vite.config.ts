@@ -42,37 +42,37 @@ export default defineConfig({
 		proxy: {
 			"/connect": {
 				target: "http://gbans.localhost:6006",
-				changeOrigin: true,
+				changeOrigin: false,
 				secure: false,
 			},
 			"/discord/oauth": {
 				target: "http://gbans.localhost:6006",
-				changeOrigin: true,
+				changeOrigin: false,
 				secure: false,
 			},
 			"/patreon/oauth": {
 				target: "http://gbans.localhost:6006",
-				changeOrigin: true,
+				changeOrigin: false,
 				secure: false,
 			},
 			"/patreon/login": {
 				target: "http://gbans.localhost:6006",
-				changeOrigin: true,
+				changeOrigin: false,
 				secure: false,
 			},
 			"/api": {
 				target: "http://gbans.localhost:6006",
-				changeOrigin: true,
+				changeOrigin: false,
 				secure: false,
 			},
 			"/auth/callback": {
 				target: "http://gbans.localhost:6006",
-				changeOrigin: true,
+				changeOrigin: false,
 				secure: false,
 			},
 			"/asset": {
 				target: "http://gbans.localhost:6006",
-				changeOrigin: true,
+				changeOrigin: false,
 				secure: false,
 			},
 		},

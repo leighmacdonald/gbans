@@ -157,7 +157,7 @@ func (u *Authentication) ExchangeCode(code string) (string, bool) {
 	return u.exchange.Exchange(code)
 }
 
-func RegisterExchangeHandler(mux *http.ServeMux, auth *Authentication, externalURL string) {
+func RegisterExchangeHandler(mux *http.ServeMux, auth *Authentication) {
 	mux.HandleFunc("POST /api/auth/exchange", func(res http.ResponseWriter, req *http.Request) {
 		origin := req.Header.Get("Origin")
 		if origin == "" {
@@ -173,14 +173,14 @@ func RegisterExchangeHandler(mux *http.ServeMux, auth *Authentication, externalU
 			return
 		}
 
-		parsedExternal, errExternal := url.Parse(externalURL)
-		if errExternal != nil {
+		parsedRequest, errRequest := url.Parse(httphelper.RequestBaseURL(req))
+		if errRequest != nil {
 			httphelper.RespondJSON(res, http.StatusInternalServerError, map[string]string{"error": "server configuration error"})
 
 			return
 		}
 
-		if parsedOrigin.Hostname() != parsedExternal.Hostname() {
+		if !strings.EqualFold(parsedOrigin.Hostname(), parsedRequest.Hostname()) {
 			httphelper.RespondJSON(res, http.StatusForbidden, map[string]string{"error": "origin mismatch"})
 
 			return
@@ -202,16 +202,7 @@ func RegisterExchangeHandler(mux *http.ServeMux, auth *Authentication, externalU
 			return
 		}
 
-		http.SetCookie(res, &http.Cookie{ //nolint:gosec
-			Name:     JWTCookieName,
-			Value:    token,
-			MaxAge:   int(TokenDuration.Seconds()),
-			Path:     "/",
-			Domain:   parsedExternal.Hostname(),
-			Secure:   strings.HasPrefix(strings.ToLower(externalURL), "https://"),
-			HttpOnly: true,
-			SameSite: http.SameSiteStrictMode,
-		})
+		http.SetCookie(res, newSessionCookie(req, JWTCookieName, token, int(TokenDuration.Seconds())))
 
 		httphelper.RespondJSON(res, http.StatusOK, map[string]string{"token": token})
 	})
