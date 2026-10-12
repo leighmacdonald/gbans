@@ -1,6 +1,7 @@
 package httphelper
 
 import (
+	"encoding/json"
 	"net"
 	"net/http"
 	"net/netip"
@@ -73,6 +74,18 @@ func RequestBaseURL(r *http.Request) string {
 
 	if forwardedProto := r.Header.Get("X-Forwarded-Proto"); forwardedProto != "" {
 		scheme = strings.ToLower(strings.TrimSpace(strings.Split(forwardedProto, ",")[0]))
+	} else if visitor := r.Header.Get("CF-Visitor"); visitor != "" {
+		// Cloudflare Tunnel (cloudflared) reports the browser-facing scheme
+		// as JSON: {"scheme":"https"}. Without this the backend sees plain
+		// http and downgrades scheme-sensitive behaviour (Secure cookies,
+		// OpenID verification) even though the browser uses https.
+		var visitorInfo struct {
+			Scheme string `json:"scheme"`
+		}
+
+		if err := json.Unmarshal([]byte(visitor), &visitorInfo); err == nil && visitorInfo.Scheme != "" {
+			scheme = strings.ToLower(strings.TrimSpace(visitorInfo.Scheme))
+		}
 	}
 
 	host := r.Host
