@@ -171,7 +171,7 @@ func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
 			return
 		}
 
-		fetchedPerson, errPerson := h.persons.GetOrCreatePersonBySteamID(req.Context(), sid)
+		fetchedPerson, errPerson := h.persons.RefreshFromSteam(req.Context(), sid)
 		if errPerson != nil {
 			http.Redirect(res, req, referralURL, http.StatusFound) //nolint:gosec
 			slog.Error("Failed to create or load user profile", slog.String("error", errPerson.Error()))

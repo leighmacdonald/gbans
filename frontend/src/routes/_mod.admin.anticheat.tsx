@@ -30,6 +30,7 @@ import { stringToColour } from "../util/colours.ts";
 import { enumValues } from "../util/lists.ts";
 import { detectionString } from "../util/strings.ts";
 import { renderTimestamp } from "../util/time.ts";
+import { emptyOrNullString } from "../util/types.ts";
 
 const validateSearch = makeSchemaState("anticheatId");
 
@@ -106,7 +107,9 @@ function AdminAnticheat() {
 							to={Route.fullPath}
 							search={setColumnFilter(search, "steamId", row.original.steamId)}
 						>
-							{row.original.personaName ?? row.original.serverId}
+							{!emptyOrNullString(row.original.personaName)
+								? row.original.personaName
+								: row.original.steamId}
 						</RouterLink>
 					</PersonCell>
 				),

@@ -1,26 +1,15 @@
-import { create } from "@bufbuild/protobuf";
-import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
+import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { createClient } from "@connectrpc/connect";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { AuthContext } from "./contexts/AuthContext.tsx";
 import { StorageType, useStorage } from "./hooks/useSessionStorage.tsx";
-import { type PersonCore, PersonCoreSchema } from "./rpc/person/v1/person_core_pb.ts";
+import type { PersonCore } from "./rpc/person/v1/person_core_pb.ts";
 import { PersonService } from "./rpc/person/v1/person_pb.ts";
 import type { Permission } from "./rpc/roles/v1/roles_pb.ts";
 import { finalTransport } from "./transport.ts";
-import { logErr } from "./util/errors.ts";
-import { defaultAvatarHash } from "./util/strings.ts";
-import { parseDateTime } from "./util/time.ts";
-import type { Nullable } from "./util/types.ts";
+import { defaultProfile, type LocalStorageProfile, loadProfile, StorageKey } from "./util/profileStorage.ts";
 
-export enum StorageKey {
-	Profile = "profile",
-	Logout = "logout",
-}
-
-type LocalStorageProfile = Nullable<
-	Omit<Omit<PersonCore, "steamId">, "timeCreated"> & { steamId: string; timeCreated: Date }
->;
+export { loadProfile, StorageKey };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const [profile, setProfile] = useState<PersonCore>(loadProfile());
@@ -45,14 +34,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					setProfile(data.profile);
 				}
 			} catch {
-				// No valid cookie session
+				// No valid cookie session — drop any stale cached profile.
+				setProfile(defaultProfile);
+				deleteProfileValue();
 			}
 		};
 
 		if (profile.steamId === "") {
 			tryAuth();
 		}
-	}, [setProfileValue, profile.steamId]);
+	}, [setProfileValue, deleteProfileValue, profile.steamId]);
 
 	const login = useCallback(
 		async (_token: string) => {
@@ -86,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	};
 
 	const hasPermission = (permission: Permission) => {
-		return profile.permissions.includes(permission);
+		return (profile.permissions ?? []).includes(permission);
 	};
 
 	return (
@@ -103,39 +94,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		</AuthContext.Provider>
 	);
 }
-
-const defaultProfile = create(PersonCoreSchema, {
-	steamId: "",
-	permissions: [],
-	avatarHash: defaultAvatarHash,
-	name: "",
-	banId: 0,
-	discordId: "",
-	timeCreated: undefined,
-});
-
-const loadProfile = (): PersonCore => {
-	try {
-		const userData = localStorage.getItem(StorageKey.Profile);
-		if (!userData) {
-			return defaultProfile;
-		}
-
-		const raw: LocalStorageProfile = JSON.parse(userData);
-		if (!raw) {
-			return defaultProfile;
-		}
-
-		return create(PersonCoreSchema, {
-			...raw,
-			steamId: raw.steamId,
-			timeCreated: timestampFromDate(parseDateTime(raw.timeCreated)),
-		});
-	} catch (e) {
-		logErr(e);
-		return defaultProfile;
-	}
-};
 
 export type AuthContextProps = {
 	profile: PersonCore;

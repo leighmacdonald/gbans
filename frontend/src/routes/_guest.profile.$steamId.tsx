@@ -13,6 +13,7 @@ import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import Alert from "@mui/material/Alert";
 import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Collapse from "@mui/material/Collapse";
 import Grid from "@mui/material/Grid";
@@ -99,7 +100,7 @@ function LocalBanRow({ banId, siteName }: { banId: number; siteName: string }) {
 			<ListItemIcon sx={{ minWidth: 40 }}>
 				<GavelIcon color={"error"} />
 			</ListItemIcon>
-			<ListItemText primary={title} secondary={`${banTypeString(ban.banType)} · ${detail}`} />
+			<ListItemText primary={siteName} secondary={`${banTypeString(ban.banType)} · ${detail}`} />
 		</ListItem>
 	);
 }
@@ -174,7 +175,12 @@ function RecentMatches({ steamId }: { steamId: string }) {
 						to={"/matches/$steamId"}
 						params={{ steamId }}
 						variant={"text"}
-						sx={{ alignSelf: "flex-start", ml: 1, mb: 1 }}
+						sx={{
+							alignSelf: "flex-start",
+							ml: 1,
+							mb: 1,
+							color: (theme) => (theme.palette.mode === "dark" ? theme.palette.primary.dark : undefined),
+						}}
 					>
 						View Full History
 					</ButtonLink>
@@ -308,7 +314,29 @@ function ProfilePage() {
 										<Button
 											fullWidth
 											variant={"outlined"}
-											startIcon={<OpenInNewIcon fontSize={"small"} />}
+											sx={{
+												color: (theme) =>
+													theme.palette.mode === "dark"
+														? theme.palette.primary.dark
+														: undefined,
+												borderColor: (theme) =>
+													theme.palette.mode === "dark"
+														? theme.palette.primary.dark
+														: undefined,
+											}}
+											startIcon={
+												l.icon ? (
+													<Box
+														component={"img"}
+														src={l.icon}
+														alt={`${l.title} icon`}
+														sx={{ width: 20, height: 20 }}
+													/>
+												) : (
+													<OpenInNewIcon fontSize={"small"} />
+												)
+											}
+											endIcon={l.icon ? <OpenInNewIcon fontSize={"small"} /> : undefined}
 											href={l.url}
 											target={"_blank"}
 											rel={"noopener noreferrer"}

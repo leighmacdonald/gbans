@@ -52,7 +52,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: Admin }
 			sendFlash("success", "Created admin");
 		},
 		onError: (error) => {
-			sendError(error.message);
+			sendError(error);
 		},
 	});
 
@@ -63,7 +63,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: Admin }
 			sendFlash("success", "Edited admin");
 		},
 		onError: (error) => {
-			sendError(error.message);
+			sendError(error);
 		},
 	});
 

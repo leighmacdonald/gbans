@@ -49,7 +49,10 @@ const MDLink = ({ children, href, title }: MDLnkProps) => {
 };
 
 const mdRenderOpts: Options = {
-	disableParsingRawHTML: true,
+	// Stored wiki content contains inline HTML (e.g. <b>, <u>, <br />) which
+	// must be rendered, not shown as literal text. Wiki editing requires
+	// elevated permissions, so rendering moderator-provided markup is trusted.
+	disableParsingRawHTML: false,
 	overrides: {
 		// p: {
 		// 	props: {

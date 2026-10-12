@@ -83,3 +83,4 @@ import.sh
 importer
 *.sql.gz
 .worktreeinclude
+.tmp

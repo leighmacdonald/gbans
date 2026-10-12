@@ -160,10 +160,9 @@ func createPerson(t *testing.T, sid steamid.SteamID) personDomain.Core {
 	return fixture.CreateTestPerson(t.Context(), sid)
 }
 
-// setPersonName sets the person row name and avatar. Person profile data is not
-// persisted by GetOrCreatePersonBySteamID (person.updatePerson discards the
-// ApplySteamInfo result), so tests that assert on joined person names set them
-// explicitly.
+// setPersonName sets the person row name and avatar. Tests that assert on
+// joined person names set them explicitly so they don't depend on the
+// (fake) steam summary refresh.
 func setPersonName(t *testing.T, sid steamid.SteamID, name, avatar string) {
 	t.Helper()
 

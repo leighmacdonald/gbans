@@ -19,7 +19,7 @@ import { NotificationsProvider } from "../component/NotificationsProvider.tsx";
 import { TopBar } from "../component/TopBar.tsx";
 import { ColourModeContext } from "../contexts/ColourModeContext.tsx";
 import { UserFlashCtx } from "../contexts/UserFlashCtx.tsx";
-import { type ApiError, isApiError } from "../error.tsx";
+import { friendlyError } from "../error.tsx";
 import type { InfoResponse } from "../rpc/config/v1/config_pb.ts";
 import { createThemeByMode } from "../theme.ts";
 import { emptyOrNullString } from "../util/types.ts";
@@ -106,11 +106,8 @@ function Root() {
 			if (!error) {
 				return;
 			}
-			if (isApiError(error)) {
-				sendFlash("error", (error as ApiError).detail, (error as ApiError).title, true);
-			} else {
-				sendFlash("error", (error as Error).message, (error as Error).name, true);
-			}
+			const { heading, message } = friendlyError(error);
+			sendFlash("error", message, heading, true);
 
 			Sentry.captureException(error);
 		},
