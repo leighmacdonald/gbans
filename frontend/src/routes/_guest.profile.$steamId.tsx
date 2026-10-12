@@ -237,6 +237,8 @@ function FriendsCard({ steamIds }: { steamIds: string[] }) {
 function ProfilePage() {
 	const { steamId } = Route.useParams();
 	const { appInfo } = Route.useRouteContext();
+	const { hasPermission } = useAuth();
+	const canReadBans = hasPermission(Permission.BAN_READ);
 	const { data } = useQuery(profile, { steamId });
 
 	const friendIds = useMemo(() => {
@@ -291,14 +293,16 @@ function ProfilePage() {
 							<Alert
 								severity={"warning"}
 								action={
-									<ButtonLink
-										to={`/ban/$banId`}
-										params={{ banId: String(banId) }}
-										size={"small"}
-										color={"inherit"}
-									>
-										View Ban
-									</ButtonLink>
+									canReadBans ? (
+										<ButtonLink
+											to={`/ban/$banId`}
+											params={{ banId: String(banId) }}
+											size={"small"}
+											color={"inherit"}
+										>
+											View Ban
+										</ButtonLink>
+									) : undefined
 								}
 							>
 								This player is currently banned.
