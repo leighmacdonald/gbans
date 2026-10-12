@@ -263,6 +263,21 @@ func (u Networks) QueryConnectionHistory(ctx context.Context, opts ConnectionHis
 	return u.repository.QueryConnections(ctx, opts)
 }
 
+// LocationByIP resolves a public IP to coordinates using the imported geoip
+// database. Private, loopback and unresolvable addresses yield an error.
+func (u Networks) LocationByIP(ctx context.Context, address netip.Addr) (ip2location.LatLong, error) {
+	if !address.IsValid() || !address.IsGlobalUnicast() {
+		return ip2location.LatLong{}, ErrNetworkInvalidIP
+	}
+
+	record, err := u.repository.GetLocationRecord(ctx, address)
+	if err != nil {
+		return ip2location.LatLong{}, err
+	}
+
+	return record.LatLong, nil
+}
+
 func (u Networks) QueryNetwork(ctx context.Context, address netip.Addr) (Details, error) {
 	var details Details
 	if !address.IsValid() {

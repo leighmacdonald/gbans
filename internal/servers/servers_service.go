@@ -3,6 +3,7 @@ package servers
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net"
 	"sort"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/network"
 	networkv1 "github.com/leighmacdonald/gbans/internal/network/v1"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
@@ -23,11 +25,12 @@ import (
 type Service struct {
 	serversv1connect.UnimplementedServersServiceHandler
 
-	servers *Servers
+	servers   *Servers
+	locations *network.Networks
 }
 
-func NewServersService(servers *Servers, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := serversv1connect.NewServersServiceHandler(&Service{servers: servers}, option...)
+func NewServersService(servers *Servers, locations *network.Networks, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	pattern, handler := serversv1connect.NewServersServiceHandler(&Service{servers: servers, locations: locations}, option...)
 
 	authMiddleware.PublicRoute(serversv1connect.ServersServiceStateProcedure)
 	authMiddleware.UserRoute(serversv1connect.ServersServiceEditServerProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_WRITE))
@@ -38,21 +41,53 @@ func NewServersService(servers *Servers, roleAuth *rpc.RoleAuth, authMiddleware 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
-func getLatLong(ctx context.Context) (float64, float64) {
+func validLatLong(lat float64, lon float64) bool {
+	return lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 && !(lat == 0 && lon == 0)
+}
+
+// clientLatLong resolves the caller's coordinates for distance sorting and
+// map centering. It prefers Cloudflare's injected CF-IPLatitude /
+// CF-IPLongitude headers and falls back to a geoip database lookup of the
+// client IP (CF-Connecting-IP, X-Forwarded-For, X-Real-IP). Returns zeros
+// when no location can be determined.
+func (s Service) clientLatLong(ctx context.Context) (float64, float64) {
 	callInfo, ok := connect.CallInfoForHandlerContext(ctx)
 	if !ok {
 		return 0, 0
 	}
 
 	head := callInfo.RequestHeader()
-	lat, _ := strconv.ParseFloat(head.Get("CF-IPLatitude"), 64)
-	long, _ := strconv.ParseFloat(head.Get("CF-IPLongitude"), 64)
+	if lat, errLat := strconv.ParseFloat(head.Get("CF-IPLatitude"), 64); errLat == nil {
+		if lon, errLon := strconv.ParseFloat(head.Get("CF-IPLongitude"), 64); errLon == nil && validLatLong(lat, lon) {
+			return lat, lon
+		}
+	}
 
-	return lat, long
+	if s.locations == nil {
+		return 0, 0
+	}
+
+	clientIP, ok := httphelper.HeaderClientIP(head)
+	if !ok {
+		return 0, 0
+	}
+
+	location, errLocation := s.locations.LocationByIP(ctx, clientIP)
+	if errLocation != nil {
+		slog.Debug("Failed to geolocate client ip", slog.String("error", errLocation.Error()))
+
+		return 0, 0
+	}
+
+	if !validLatLong(float64(location.Latitude), float64(location.Longitude)) {
+		return 0, 0
+	}
+
+	return float64(location.Latitude), float64(location.Longitude)
 }
 
 func (s Service) State(ctx context.Context, _ *emptypb.Empty) (*v1.StateResponse, error) {
-	lat, lon := getLatLong(ctx)
+	lat, lon := s.clientLatLong(ctx)
 	servers := s.servers.Current()
 
 	for index, srv := range servers {
@@ -62,7 +97,12 @@ func (s Service) State(ctx context.Context, _ *emptypb.Empty) (*v1.StateResponse
 		return natural.Less(servers[i].Name, servers[j].Name)
 	})
 
-	resp := v1.StateResponse{}
+	resp := v1.StateResponse{
+		LatLong: &networkv1.LatLong{
+			Latitude:  new(float32(lat)),
+			Longitude: new(float32(lon)),
+		},
+	}
 	for _, current := range servers {
 		resp.Servers = append(resp.Servers, &v1.SafeServer{
 			ServerId:      &current.ServerID,
@@ -187,14 +227,15 @@ func toRPCServer(server Server) *v1.Server {
 			Latitude:  &server.Latitude,
 			Longitude: &server.Longitude,
 		},
-		LogSecret:          &server.LogSecret,
-		EnableStats:        &server.EnableStats,
-		TokenCreatedOn:     timestamppb.New(server.TokenCreatedOn),
-		CreatedOn:          timestamppb.New(server.CreatedOn),
-		UpdatedOn:          timestamppb.New(server.UpdatedOn),
-		DiscordSeedRoleIds: server.DiscordSeedRoleIDs,
-		Ip:                 new(server.IP.String()),
-		StatsBucketId:      server.StatsBucketID,
+		LogSecret:            &server.LogSecret,
+		EnableStats:          &server.EnableStats,
+		TokenCreatedOn:       timestamppb.New(server.TokenCreatedOn),
+		CreatedOn:            timestamppb.New(server.CreatedOn),
+		UpdatedOn:            timestamppb.New(server.UpdatedOn),
+		DiscordSeedRoleIds:   server.DiscordSeedRoleIDs,
+		DiscordSeedChannelId: new(server.DiscordSeedChannelID),
+		Ip:                   new(server.IP.String()),
+		StatsBucketId:        server.StatsBucketID,
 	}
 }
 

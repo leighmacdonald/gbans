@@ -6,6 +6,8 @@
 Players: {{ .PlayerCount }}/{{ .MaxPlayers }}
 
 `connect {{ .Connect }}`
+{{ if .Message }}
+> {{ .Message }}{{ end }}
 
 {{ range .Roles }}{{ if .}}<@&{{ . }}> {{end}}{{end}}
 {{end}}

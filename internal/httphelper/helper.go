@@ -1,7 +1,9 @@
 package httphelper
 
 import (
+	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"strings"
 	"time"
@@ -83,6 +85,42 @@ func RequestBaseURL(r *http.Request) string {
 	}
 
 	return scheme + "://" + host
+}
+
+// HeaderClientIP extracts the client IP from proxy headers only
+// (CF-Connecting-IP, X-Forwarded-For, X-Real-IP). Use it in handlers without
+// access to the connection's remote address (e.g. connect-go handlers).
+func HeaderClientIP(head http.Header) (netip.Addr, bool) {
+	for _, key := range []string{"CF-Connecting-IP", "X-Forwarded-For", "X-Real-IP"} {
+		if value := head.Get(key); value != "" {
+			// X-Forwarded-For is a comma-separated chain; the client is first.
+			if addr, err := netip.ParseAddr(strings.TrimSpace(strings.Split(value, ",")[0])); err == nil && addr.IsValid() {
+				return addr, true
+			}
+		}
+	}
+
+	return netip.Addr{}, false
+}
+
+// ClientIP extracts the real client IP, preferring Cloudflare's injected
+// CF-Connecting-IP header, then the leftmost X-Forwarded-For entry, then
+// X-Real-IP, and finally the connection's remote address. Returns false when
+// no usable address is found.
+func ClientIP(r *http.Request) (netip.Addr, bool) {
+	if addr, ok := HeaderClientIP(r.Header); ok {
+		return addr, true
+	}
+
+	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		if addr, errParse := netip.ParseAddr(strings.TrimSpace(host)); errParse == nil && addr.IsValid() {
+			return addr, true
+		}
+	} else if addr, errParse := netip.ParseAddr(strings.TrimSpace(r.RemoteAddr)); errParse == nil && addr.IsValid() {
+		return addr, true
+	}
+
+	return netip.Addr{}, false
 }
 
 func safeRedirectURL(rawURL string) string {
