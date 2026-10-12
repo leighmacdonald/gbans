@@ -24,6 +24,42 @@ type TokenGenerator interface {
 	ValidateUserToken(tokenStr string, fingerprint string) (steamid.SteamID, error)
 }
 
+// sessionCookieDomain scopes session cookies to the request's own host.
+// Dotted non-IP hostnames keep a Domain cookie (existing production
+// behaviour); localhost and IP literals use host-only cookies because
+// browsers reject Domain cookies for them.
+func sessionCookieDomain(req *http.Request) (string, bool) {
+	base, err := url.Parse(httphelper.RequestBaseURL(req))
+	if err != nil {
+		return "", false
+	}
+
+	hostname := base.Hostname()
+	if net.ParseIP(hostname) != nil || !strings.Contains(hostname, ".") {
+		return "", strings.EqualFold(base.Scheme, "https")
+	}
+
+	return hostname, strings.EqualFold(base.Scheme, "https")
+}
+
+// newSessionCookie builds a session cookie scoped to the request's own host
+// so login/logout work on every host the backend serves (local dev ports,
+// LAN IPs, proxied domains), not just the configured external URL.
+func newSessionCookie(req *http.Request, name string, value string, maxAge int) *http.Cookie {
+	domain, secure := sessionCookieDomain(req)
+
+	return &http.Cookie{ //nolint:gosec
+		Name:     name,
+		Value:    value,
+		MaxAge:   maxAge,
+		Path:     "/",
+		Domain:   domain,
+		Secure:   secure,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	}
+}
+
 // RoleAssigner assigns the default user role to steam IDs without role
 // assignments. Implemented by roles.Roles.
 type RoleAssigner interface {
@@ -68,7 +104,10 @@ func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
 
 		referralURL := httphelper.Referral(req)
 		conf := h.config.Config()
-		fullURL := conf.ExternalURL + req.URL.String()
+		// Verify against the browser-visible URL, not the static external
+		// URL: the signed return_to always points at the host the user
+		// actually used, which may differ per deployment/host.
+		fullURL := httphelper.RequestBaseURL(req) + req.URL.String()
 
 		if conf.Debug.SkipOpenIDValidation {
 			values, errParse := url.Parse(fullURL)
@@ -152,35 +191,8 @@ func (h *authHandler) onSteamOIDCCallback() http.HandlerFunc {
 		query.Set("next_url", referralURL)
 		parsedURL.RawQuery = query.Encode()
 
-		parsedExternal, errExternal := url.Parse(conf.ExternalURL)
-		if errExternal != nil {
-			http.Redirect(res, req, referralURL, http.StatusFound) //nolint:gosec
-			slog.Error("Failed to parse ext url", slog.String("error", errExternal.Error()))
-
-			return
-		}
-
-		http.SetCookie(res, &http.Cookie{ //nolint:gosec
-			Name:     FingerprintCookieName,
-			Value:    fingerprint,
-			MaxAge:   int(TokenDuration.Seconds()),
-			Path:     "/",
-			Domain:   parsedExternal.Hostname(),
-			Secure:   strings.HasPrefix(strings.ToLower(conf.ExternalURL), "https://"),
-			HttpOnly: true,
-			SameSite: http.SameSiteStrictMode,
-		})
-
-		http.SetCookie(res, &http.Cookie{ //nolint:gosec
-			Name:     JWTCookieName,
-			Value:    accessToken,
-			MaxAge:   int(TokenDuration.Seconds()),
-			Path:     "/",
-			Domain:   parsedExternal.Hostname(),
-			Secure:   strings.HasPrefix(strings.ToLower(conf.ExternalURL), "https://"),
-			HttpOnly: true,
-			SameSite: http.SameSiteStrictMode,
-		})
+		http.SetCookie(res, newSessionCookie(req, FingerprintCookieName, fingerprint, int(TokenDuration.Seconds())))
+		http.SetCookie(res, newSessionCookie(req, JWTCookieName, accessToken, int(TokenDuration.Seconds())))
 
 		http.Redirect(res, req, parsedURL.String(), http.StatusFound) //nolint:gosec
 
@@ -206,29 +218,8 @@ func (h *authHandler) onAPILogout() http.HandlerFunc {
 
 		fingerprint, errCookie := req.Cookie(FingerprintCookieName)
 		if errCookie == nil {
-			parsedExternal, errExternal := url.Parse(conf.ExternalURL)
-			if errExternal == nil {
-				http.SetCookie(res, &http.Cookie{ //nolint:gosec
-					Name:     FingerprintCookieName,
-					Value:    "",
-					MaxAge:   -1,
-					Path:     "/",
-					Domain:   parsedExternal.Hostname(),
-					Secure:   strings.HasPrefix(strings.ToLower(conf.ExternalURL), "https://"),
-					HttpOnly: true,
-					SameSite: http.SameSiteStrictMode,
-				})
-				http.SetCookie(res, &http.Cookie{ //nolint:gosec
-					Name:     JWTCookieName,
-					Value:    "",
-					MaxAge:   -1,
-					Path:     "/",
-					Domain:   parsedExternal.Hostname(),
-					Secure:   strings.HasPrefix(strings.ToLower(conf.ExternalURL), "https://"),
-					HttpOnly: true,
-					SameSite: http.SameSiteStrictMode,
-				})
-			}
+			http.SetCookie(res, newSessionCookie(req, FingerprintCookieName, "", -1))
+			http.SetCookie(res, newSessionCookie(req, JWTCookieName, "", -1))
 		}
 
 		authHeader := req.Header.Get("Authorization")

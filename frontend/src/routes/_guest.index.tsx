@@ -4,6 +4,7 @@ import ChatIcon from "@mui/icons-material/Chat";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import EventIcon from "@mui/icons-material/Event";
 import GavelIcon from "@mui/icons-material/Gavel";
+import LeaderboardIcon from "@mui/icons-material/Leaderboard";
 import MarkUnreadChatAltIcon from "@mui/icons-material/MarkUnreadChatAlt";
 import PieChartIcon from "@mui/icons-material/PieChart";
 import StorageIcon from "@mui/icons-material/Storage";
@@ -165,6 +166,17 @@ function Index() {
 							to={`/matches`}
 						>
 							Recent Matches
+						</ButtonLink>
+					)}
+					{appInfo.statsEnabled && hasPermission(Permission.STATS_READ) && (
+						<ButtonLink
+							startIcon={<LeaderboardIcon />}
+							fullWidth
+							color={"primary"}
+							variant={"contained"}
+							to={`/stats`}
+						>
+							Global Stats
 						</ButtonLink>
 					)}
 					{appInfo.discordEnabled && appInfo.linkId !== "" && (
