@@ -29,6 +29,7 @@ import { deleteAppealMessage, messages, reply } from "../rpc/ban/v1/appeal-Appea
 import { AppealState, BanReason, BanType } from "../rpc/ban/v1/ban_pb.ts";
 import { get } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
 import { Permission } from "../rpc/roles/v1/roles_pb.ts";
+import { isPermanentBan } from "../util/table.ts";
 import { renderTimeDistance, renderTimestamp } from "../util/time.ts";
 
 export const Route = createFileRoute("/_auth/ban/$banId")({
@@ -41,7 +42,7 @@ export const Route = createFileRoute("/_auth/ban/$banId")({
 function BanPage() {
 	const { hasPermission, profile } = useAuth();
 	const { banId } = Route.useParams();
-	const { sendFlash } = useUserFlashCtx();
+	const { sendFlash, sendError } = useUserFlashCtx();
 	const { appInfo } = Route.useRouteContext();
 	const queryClient = useQueryClient();
 
@@ -60,7 +61,7 @@ function BanPage() {
 			sendFlash("success", "Deleted message successfully");
 		},
 		onError: async (error: Error) => {
-			sendFlash("error", error.message);
+			sendError(error);
 		},
 	});
 
@@ -105,6 +106,11 @@ function BanPage() {
 	if (isLoadingMessages || isLoadingBan || !banData?.ban) {
 		return;
 	}
+
+	const isPermanent =
+		banData.ban.createdOn != null &&
+		banData.ban.validUntil != null &&
+		isPermanentBan(timestampDate(banData.ban.createdOn), timestampDate(banData.ban.validUntil));
 
 	return (
 		<Grid container spacing={2}>
@@ -227,15 +233,21 @@ function BanPage() {
 							<ListItem>
 								<ListItemText
 									primary={"Expires At"}
-									secondary={renderTimestamp(banData.ban.validUntil)}
+									secondary={isPermanent ? "Permanent" : renderTimestamp(banData.ban.validUntil)}
 								/>
 							</ListItem>
 							<ListItem>
 								<ListItemText
 									primary={"Expires"}
-									secondary={renderTimeDistance(
-										banData.ban.validUntil ? timestampDate(banData.ban.validUntil) : new Date(),
-									)}
+									secondary={
+										isPermanent
+											? "Never"
+											: renderTimeDistance(
+													banData.ban.validUntil
+														? timestampDate(banData.ban.validUntil)
+														: new Date(),
+												)
+									}
 								/>
 							</ListItem>
 							{hasPermission(Permission.BAN_WRITE) && (

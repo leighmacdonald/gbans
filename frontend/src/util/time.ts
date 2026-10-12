@@ -62,13 +62,19 @@ export const parseDateTime = (t: string | Date): Date => {
 export const renderTimestampDateTime = (ts?: Timestamp): string => {
 	if (!ts) return "";
 
-	return renderDate(timestampDate(ts));
+	const date = timestampDate(ts);
+	if (isEmptyDate(date)) return "";
+
+	return renderDate(date);
 };
 
 export const renderTimestamp = (ts?: Timestamp): string => {
 	if (!ts) return "";
 
-	return renderDateTime(timestampDate(ts));
+	const date = timestampDate(ts);
+	if (isEmptyDate(date)) return "";
+
+	return renderDateTime(date);
 };
 
 export const renderDateTime = (t: Date): string => {
@@ -84,6 +90,13 @@ export const renderTime = (t: Date): string => {
 };
 
 export const isValidSteamDate = (date: Date) => isAfter(new Date(2000, 0, 0), date);
+
+// isEmptyDate reports whether a date is missing/unknown. Zero and negative
+// timestamps (rendered as 1970/1969 dates) are never real dates in this
+// domain and must not be displayed.
+export const isEmptyDate = (date: Date): boolean => {
+	return Number.isNaN(date.getTime()) || date.getTime() <= 0;
+};
 
 export const renderTimeDistance = (t1: Date | string, t2?: Date | string): string => {
 	if (typeof t1 === "string") {

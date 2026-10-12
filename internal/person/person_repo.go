@@ -66,7 +66,9 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, uint64, er
 			"p.communityvisibilitystate", "p.profilestate", "p.personaname", "p.avatarhash", "p.personastate", "p.realname", "p.timecreated",
 			"p.loccountrycode", "p.locstatecode", "p.loccityid", "p.discord_id",
 			"p.community_banned", "p.vac_bans", "p.game_bans", "p.economy_ban", "p.days_since_last_ban",
-			"p.updated_on_steam", "p.muted", "coalesce(pt.patreon_id, '')").
+			"p.updated_on_steam", "p.muted", "coalesce(pt.patreon_id, '')",
+			// Newest non-deleted, unexpired ban, or 0 when the player has no active ban.
+			`COALESCE((SELECT b.ban_id FROM ban b WHERE b.target_id = p.steam_id AND b.deleted = false AND b.valid_until > now() ORDER BY b.ban_id DESC LIMIT 1), 0)::int AS active_ban_id`).
 		From("person p").
 		LeftJoin("auth_patreon pt USING (steam_id)")
 
@@ -141,9 +143,14 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, uint64, er
 				&person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
 				&person.LocCityID, &person.DiscordID, &person.CommunityBanned,
 				&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
-				&person.UpdatedOnSteam, &person.Muted, &person.PatreonID); errScan != nil {
+				&person.UpdatedOnSteam, &person.Muted, &person.PatreonID, &person.BanID); errScan != nil {
 			return nil, 0, errors.Join(errScan, database.ErrScanResult)
 		}
+
+		// Rows loaded from the database already exist, so they must not be
+		// treated as new. Otherwise Expired() is always true and every read
+		// triggers a steam refresh.
+		person.isNew = false
 
 		people = append(people, person)
 	}

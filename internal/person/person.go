@@ -202,6 +202,7 @@ func (p Person) Core() person.Core {
 		VacBans:     p.VACBans,
 		GameBans:    p.GameBans,
 		TimeCreated: p.CreatedOn,
+		BanID:       p.BanID,
 		Permissions: p.Permissions,
 	}
 }
@@ -479,6 +480,23 @@ func (u *Persons) GetPeople(ctx context.Context, filter Query) (People, uint64, 
 }
 
 func (u *Persons) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (person.Core, error) {
+	return u.getOrCreatePerson(ctx, sid64, false)
+}
+
+// RefreshFromSteam ensures the person exists and always refreshes the stored
+// profile summary from Steam, regardless of staleness. It is used on login so
+// the user's name, avatar and ban state are current. A Steam API failure is
+// logged and the cached profile is returned, so login never fails just
+// because Steam is unreachable.
+func (u *Persons) RefreshFromSteam(ctx context.Context, sid64 steamid.SteamID) (person.Core, error) {
+	return u.getOrCreatePerson(ctx, sid64, true)
+}
+
+func (u *Persons) getOrCreatePerson(
+	ctx context.Context,
+	sid64 steamid.SteamID,
+	forceRefresh bool,
+) (person.Core, error) {
 	fetchedPerson, errGetPerson := u.BySteamID(ctx, sid64)
 	if errGetPerson != nil && errors.Is(errGetPerson, ErrPlayerDoesNotExist) {
 		fetchedPerson = New(sid64)
@@ -487,7 +505,7 @@ func (u *Persons) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.
 		}
 	}
 
-	if fetchedPerson.Expired() {
+	if forceRefresh || fetchedPerson.Expired() {
 		if errUpdate := u.updatePerson(ctx, &fetchedPerson); errUpdate != nil {
 			slog.Error("Failed to update steam profile data", slog.String("steamid", sid64.String()),
 				slog.String("error", errUpdate.Error()))
@@ -503,6 +521,7 @@ func (u *Persons) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.
 		GameBans:    fetchedPerson.GameBans,
 		VacBans:     fetchedPerson.VACBans,
 		TimeCreated: time.Unix(fetchedPerson.TimeCreated, 0),
+		BanID:       fetchedPerson.BanID,
 	}, nil
 }
 
@@ -528,7 +547,7 @@ func (u *Persons) updatePerson(ctx context.Context, person *Person) error {
 		return ErrSteamUpdate
 	}
 
-	person.ApplySteamInfo(summaries[0], vacInfo[0])
+	*person = person.ApplySteamInfo(summaries[0], vacInfo[0])
 
 	return u.Save(ctx, person)
 }
@@ -568,6 +587,7 @@ func (u *Persons) GetPersonByDiscordID(ctx context.Context, discordID string) (p
 		VacBans:     fetchedPerson.VACBans,
 		TimeCreated: time.Unix(fetchedPerson.TimeCreated, 0),
 		DiscordID:   fetchedPerson.DiscordID,
+		BanID:       fetchedPerson.BanID,
 	}, nil
 }
 

@@ -1,5 +1,13 @@
 import { useEffect, useRef } from "react";
 import SteamID from "steamid";
+import backpacktfIcon from "../icons/sites/backpacktf.png";
+import demosIcon from "../icons/sites/demos.svg";
+import logsIcon from "../icons/sites/logs.png";
+import moretfIcon from "../icons/sites/moretf.png";
+import ozfortressIcon from "../icons/sites/ozfortress.png";
+import rglIcon from "../icons/sites/rgl.png";
+import steamIcon from "../icons/sites/steam.png";
+import trendsIcon from "../icons/sites/trends.png";
 
 export const to = (url: string) => {
 	window.open(url, "_self");
@@ -8,6 +16,8 @@ export const to = (url: string) => {
 export interface LinkProps {
 	title: string;
 	url: string;
+	// Bundled site icon. Absent when the site blocks automated fetching.
+	icon?: string;
 }
 
 export const useScrollToLocation = () => {
@@ -45,42 +55,46 @@ export const createExternalLinks = (steamIdStr: string): LinkProps[] => {
 		{
 			title: "Steam",
 			url: `https://steamcommunity.com/profiles/${steamId.getSteamID64()}`,
+			icon: steamIcon,
 		},
 		{
 			title: "RGL",
 			url: `https://rgl.gg/Public/PlayerProfile.aspx?p=${steamId.getSteamID64()}`,
-		},
-		{
-			title: "UGC",
-			url: `https://www.ugcleague.com/players_page.cfm?player_id=${steamId.getSteamID64()}`,
+			icon: rglIcon,
 		},
 		{
 			title: "OzFortress",
 			url: `https://ozfortress.com/users?q=${steamId.getSteamID64()}`,
+			icon: ozfortressIcon,
 		},
 		{
 			title: "logs.tf",
 			url: `https://logs.tf/profile/${steamId.getSteamID64()}`,
+			icon: logsIcon,
+		},
+		{
+			title: "more.tf",
+			url: `https://more.tf/profile/${steamId.getSteamID64()}`,
+			icon: moretfIcon,
 		},
 		{
 			title: "demos.tf",
 			url: `https://demos.tf/profiles/${steamId.getSteamID64()}`,
+			icon: demosIcon,
 		},
 		{
 			title: "backpack.tf",
 			url: `https://backpack.tf/profiles/${steamId.getSteamID64()}`,
+			icon: backpacktfIcon,
 		},
 		{
 			title: "trends.tf",
 			url: `https://trends.tf/player/${steamId.getSteamID64()}`,
+			icon: trendsIcon,
 		},
 		{
 			title: "steamid.uk",
 			url: `https://steamid.uk/profile/${steamId.getSteamID64()}`,
-		},
-		{
-			title: "SteamRep",
-			url: `https://steamrep.com/profiles/${steamId.getSteamID64()}`,
 		},
 	];
 };

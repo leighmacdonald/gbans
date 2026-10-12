@@ -48,6 +48,7 @@ import { enumValues } from "../util/lists.ts";
 import { toTitleCase } from "../util/strings.ts";
 import { isPermanentBan } from "../util/table.ts";
 import { renderTimestamp } from "../util/time.ts";
+import { emptyOrNullString } from "../util/types.ts";
 
 const columnHelper = createMRTColumnHelper<Ban>();
 const defaultOptions = createDefaultTableOptions<Ban>();
@@ -250,7 +251,9 @@ function AdminBans() {
 							to={Route.fullPath}
 							search={setColumnFilter(search, "targetId", row.original.targetId)}
 						>
-							{row.original.targetPersonaName ?? row.original.targetId}
+							{!emptyOrNullString(row.original.targetPersonaName)
+								? row.original.targetPersonaName
+								: row.original.targetId}
 						</RouterLink>
 					</PersonCell>
 				),

@@ -8,6 +8,7 @@ import { ErrorCode } from "../error.tsx";
 import { profile } from "../rpc/person/v1/person-PersonService_connectquery.ts";
 import { avatarHashToURL } from "../util/strings.ts";
 import { renderTimestamp } from "../util/time.ts";
+import { emptyOrNullString } from "../util/types.ts";
 import { ContainerWithHeader } from "./ContainerWithHeader";
 import { ErrorDetails } from "./ErrorDetails.tsx";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
@@ -42,11 +43,13 @@ export const ProfileInfoBox = ({ steamId }: { steamId: string }) => {
 					</Box>
 				</Grid>
 
-				<Grid size={{ xs: 12 }}>
-					<Typography variant={"body1"}>
-						Account Age: {renderTimestamp(data?.profile?.player?.timeCreated)}
-					</Typography>
-				</Grid>
+				{!emptyOrNullString(renderTimestamp(data?.profile?.player?.timeCreated)) && (
+					<Grid size={{ xs: 12 }}>
+						<Typography variant={"body1"}>
+							Account Age: {renderTimestamp(data?.profile?.player?.timeCreated)}
+						</Typography>
+					</Grid>
+				)}
 
 				{/*{!emptyOrNullString(data.player.loc_state_code) ||*/}
 				{/*	(!emptyOrNullString(profile.player.loc_country_code) && (*/}

@@ -325,6 +325,9 @@ const ReportCreateForm = (): JSX.Element => {
 					<Grid size={{ xs: 12 }}>
 						<form.AppField
 							name={"targetId"}
+							validators={{
+								onChange: z.string().min(1, "Steam ID is required"),
+							}}
 							children={(field) => {
 								return <field.SteamIDField disabled={Boolean(steamId)} label={"SteamID"} />;
 							}}

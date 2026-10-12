@@ -32,6 +32,8 @@ import { TableCellRelativeDateField } from "../component/table/TableCellRelative
 import { renderTableError } from "../error.tsx";
 import { type Person, QueryRequestSchema, VisibilityState } from "../rpc/person/v1/person_pb.ts";
 import { query } from "../rpc/person/v1/person-PersonService_connectquery.ts";
+import { isEmptyDate } from "../util/time.ts";
+import { emptyOrNullString } from "../util/types.ts";
 
 const defaultValues = makeSchemaDefaults({ defaultColumn: "createdOn" });
 const validateSearch = makeSchemaState("createdOn");
@@ -157,7 +159,9 @@ function AdminPeople() {
 								to={Route.fullPath}
 								search={setColumnFilter(search, "steamId", row.original.steamId)}
 							>
-								{row.original.personaName ?? row.original.steamId}
+								{!emptyOrNullString(row.original.personaName)
+									? row.original.personaName
+									: row.original.steamId}
 							</RouterLink>
 						</PersonCell>
 					);
@@ -191,7 +195,7 @@ function AdminPeople() {
 				grow: false,
 				Cell: ({ cell }) => {
 					const value = cell.getValue();
-					if (!value) {
+					if (!value || isEmptyDate(timestampDate(value))) {
 						return;
 					}
 
@@ -204,7 +208,7 @@ function AdminPeople() {
 				grow: false,
 				Cell: ({ cell }) => {
 					const value = cell.getValue();
-					if (!value) {
+					if (!value || isEmptyDate(timestampDate(value))) {
 						return;
 					}
 
