@@ -10,16 +10,20 @@ import PieChartIcon from "@mui/icons-material/PieChart";
 import StorageIcon from "@mui/icons-material/Storage";
 import SupportIcon from "@mui/icons-material/Support";
 import VideocamIcon from "@mui/icons-material/Videocam";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
+import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ButtonLink } from "../component/ButtonLink.tsx";
 import { NewsView } from "../component/NewsView";
 import RouterLink from "../component/RouterLink.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { Permission } from "../rpc/roles/v1/roles_pb.ts";
+import { blu, red, tf2Fonts } from "../theme.ts";
 
 export const Route = createFileRoute("/_guest/")({
 	component: Index,
@@ -36,162 +40,203 @@ function Index() {
 	const navigate = useNavigate();
 	const { appInfo } = Route.useRouteContext();
 	const { profile, hasPermission } = useAuth();
+	const showPlay = profile && profile.banId === 0 && appInfo.serversEnabled;
+	const showAppeal = profile && profile.banId !== 0 && appInfo.reportsEnabled;
 
 	return (
 		<Grid container spacing={2}>
+			<Grid size={{ xs: 12 }}>
+				<Paper sx={{ padding: 2.5, overflow: "hidden" }}>
+					<Box
+						sx={{
+							height: 4,
+							marginX: -2.5,
+							marginTop: -2.5,
+							marginBottom: 2,
+							background: `linear-gradient(90deg, ${blu} 0%, ${blu} 50%, ${red} 50%, ${red} 100%)`,
+						}}
+					/>
+					<Stack
+						direction={{ xs: "column", md: "row" }}
+						spacing={2}
+						sx={{ justifyContent: "space-between", alignItems: { md: "center" } }}
+					>
+						<Box>
+							<Typography variant="overline" color="textSecondary" sx={{ letterSpacing: 1.5 }}>
+								Welcome To
+							</Typography>
+							<Typography variant="h3" sx={{ ...tf2Fonts, fontWeight: 700, lineHeight: 1.1 }}>
+								{appInfo.siteName}
+							</Typography>
+							{appInfo.siteDescription && (
+								<Typography variant="body2" color="textSecondary" sx={{ marginTop: 1, maxWidth: 640 }}>
+									{appInfo.siteDescription}
+								</Typography>
+							)}
+						</Box>
+						<Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+							{showPlay && (
+								<Button
+									startIcon={<StorageIcon />}
+									color={"success"}
+									variant={"contained"}
+									size={"large"}
+									onClick={async () => {
+										await navigate({ to: "/servers" });
+									}}
+								>
+									Play Now!
+								</Button>
+							)}
+							{showAppeal && (
+								<Button
+									startIcon={<SupportIcon />}
+									color={"success"}
+									variant={"contained"}
+									size={"large"}
+									onClick={async () => {
+										await navigate({
+											to: `/ban/${profile.banId}`,
+										});
+									}}
+								>
+									Appeal Ban
+								</Button>
+							)}
+						</Stack>
+					</Stack>
+				</Paper>
+			</Grid>
 			<Grid size={{ xs: 12, sm: 12, md: 9 }}>
 				<NewsView itemsPerPage={3} assetURL={appInfo.assetUrl} />
 			</Grid>
 			<Grid size={{ xs: 12, sm: 12, md: 3 }}>
-				<Stack spacing={3}>
-					{profile && profile.banId === 0 && appInfo.serversEnabled && (
-						<Button
-							startIcon={<StorageIcon />}
-							fullWidth
-							color={"success"}
-							variant={"contained"}
-							onClick={async () => {
-								await navigate({ to: "/servers" });
-							}}
-						>
-							Play Now!
-						</Button>
-					)}
-					{profile && profile.banId !== 0 && appInfo.reportsEnabled && (
-						<Button
-							startIcon={<SupportIcon />}
-							fullWidth
-							color={"success"}
-							variant={"contained"}
-							onClick={async () => {
-								await navigate({
-									to: `/ban/${profile.banId}`,
-								});
-							}}
-						>
-							Appeal Ban
-						</Button>
-					)}
-					{appInfo.wikiEnabled && hasPermission(Permission.WIKI_READ) && (
-						<>
-							<Button
-								component={RouterLink}
-								startIcon={<GavelIcon />}
-								fullWidth
-								color={"primary"}
-								variant={"contained"}
-								to={`/wiki/Rules`}
-							>
-								Rules
-							</Button>
+				<Paper sx={{ padding: 2 }}>
+					<Typography variant="overline" color="textSecondary" sx={{ letterSpacing: 1.5 }}>
+						Quick Links
+					</Typography>
+					<Stack spacing={1.5} sx={{ marginTop: 1.5 }}>
+						{appInfo.wikiEnabled && hasPermission(Permission.WIKI_READ) && (
+							<>
+								<Button
+									component={RouterLink}
+									startIcon={<GavelIcon />}
+									fullWidth
+									color={"primary"}
+									variant={"contained"}
+									to={`/wiki/Rules`}
+								>
+									Rules
+								</Button>
 
+								<Button
+									component={RouterLink}
+									startIcon={<EventIcon />}
+									fullWidth
+									color={"primary"}
+									variant={"contained"}
+									to={"/wiki/Events"}
+								>
+									Events
+								</Button>
+							</>
+						)}
+						{appInfo.patreonEnabled && (
 							<Button
 								component={RouterLink}
-								startIcon={<EventIcon />}
+								startIcon={<AttachMoneyIcon />}
 								fullWidth
 								color={"primary"}
 								variant={"contained"}
-								to={"/wiki/Events"}
+								to={`/patreon`}
 							>
-								Events
+								Donate
 							</Button>
-						</>
-					)}
-					{appInfo.patreonEnabled && (
-						<Button
-							component={RouterLink}
-							startIcon={<AttachMoneyIcon />}
-							fullWidth
-							color={"primary"}
-							variant={"contained"}
-							to={`/patreon`}
-						>
-							Donate
-						</Button>
-					)}
-					{appInfo.contestsEnabled && hasPermission(Permission.CONTEST_READ) && (
-						<Button
-							component={RouterLink}
-							startIcon={<EmojiEventsIcon />}
-							fullWidth
-							color={"primary"}
-							variant={"contained"}
-							to={`/contests`}
-						>
-							Contests
-						</Button>
-					)}
-					{appInfo.mgeEnabled && (
-						<Button
-							component={RouterLink}
-							startIcon={<AdsClickIcon />}
-							fullWidth
-							color={"primary"}
-							variant={"contained"}
-							to={`/mge`}
-						>
-							MGE Rankings
-						</Button>
-					)}
-					{appInfo.chatlogsEnabled && hasPermission(Permission.CHATLOG_READ) && (
-						<Button
-							component={RouterLink}
-							startIcon={<ChatIcon />}
-							fullWidth
-							color={"primary"}
-							variant={"contained"}
-							to={`/chatlogs`}
-						>
-							Chat Logs
-						</Button>
-					)}
-					{appInfo.demosEnabled && hasPermission(Permission.DEMO_READ) && (
-						<Button
-							component={RouterLink}
-							startIcon={<VideocamIcon />}
-							fullWidth
-							color={"primary"}
-							variant={"contained"}
-							to={`/stv`}
-						>
-							SourceTV
-						</Button>
-					)}
-					{appInfo.statsEnabled && hasPermission(Permission.STATS_READ) && (
-						<ButtonLink
-							startIcon={<PieChartIcon />}
-							fullWidth
-							color={"primary"}
-							variant={"contained"}
-							to={`/matches`}
-						>
-							Recent Matches
-						</ButtonLink>
-					)}
-					{appInfo.statsEnabled && hasPermission(Permission.STATS_READ) && (
-						<ButtonLink
-							startIcon={<LeaderboardIcon />}
-							fullWidth
-							color={"primary"}
-							variant={"contained"}
-							to={`/stats`}
-						>
-							Global Stats
-						</ButtonLink>
-					)}
-					{appInfo.discordEnabled && appInfo.linkId !== "" && (
-						<Button
-							component={Link}
-							startIcon={<MarkUnreadChatAltIcon />}
-							fullWidth
-							sx={{ backgroundColor: "#5865F2" }}
-							variant={"contained"}
-							href={`https://discord.gg/${appInfo.linkId}`}
-						>
-							Join Discord
-						</Button>
-					)}
-				</Stack>
+						)}
+						{appInfo.contestsEnabled && hasPermission(Permission.CONTEST_READ) && (
+							<Button
+								component={RouterLink}
+								startIcon={<EmojiEventsIcon />}
+								fullWidth
+								color={"primary"}
+								variant={"contained"}
+								to={`/contests`}
+							>
+								Contests
+							</Button>
+						)}
+						{appInfo.mgeEnabled && (
+							<Button
+								component={RouterLink}
+								startIcon={<AdsClickIcon />}
+								fullWidth
+								color={"primary"}
+								variant={"contained"}
+								to={`/mge`}
+							>
+								MGE Rankings
+							</Button>
+						)}
+						{appInfo.chatlogsEnabled && hasPermission(Permission.CHATLOG_READ) && (
+							<Button
+								component={RouterLink}
+								startIcon={<ChatIcon />}
+								fullWidth
+								color={"primary"}
+								variant={"contained"}
+								to={`/chatlogs`}
+							>
+								Chat Logs
+							</Button>
+						)}
+						{appInfo.demosEnabled && hasPermission(Permission.DEMO_READ) && (
+							<Button
+								component={RouterLink}
+								startIcon={<VideocamIcon />}
+								fullWidth
+								color={"primary"}
+								variant={"contained"}
+								to={`/stv`}
+							>
+								SourceTV
+							</Button>
+						)}
+						{appInfo.statsEnabled && hasPermission(Permission.STATS_READ) && (
+							<ButtonLink
+								startIcon={<PieChartIcon />}
+								fullWidth
+								color={"primary"}
+								variant={"contained"}
+								to={`/matches`}
+							>
+								Recent Matches
+							</ButtonLink>
+						)}
+						{appInfo.statsEnabled && hasPermission(Permission.STATS_READ) && (
+							<ButtonLink
+								startIcon={<LeaderboardIcon />}
+								fullWidth
+								color={"primary"}
+								variant={"contained"}
+								to={`/stats`}
+							>
+								Global Stats
+							</ButtonLink>
+						)}
+						{appInfo.discordEnabled && appInfo.linkId !== "" && (
+							<Button
+								component={Link}
+								startIcon={<MarkUnreadChatAltIcon />}
+								fullWidth
+								sx={{ backgroundColor: "#5865F2" }}
+								variant={"contained"}
+								href={`https://discord.gg/${appInfo.linkId}`}
+							>
+								Join Discord
+							</Button>
+						)}
+					</Stack>
+				</Paper>
 			</Grid>
 		</Grid>
 	);
