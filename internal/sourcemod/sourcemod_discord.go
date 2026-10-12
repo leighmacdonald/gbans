@@ -416,7 +416,9 @@ func (h discordHandler) onSeed(ctx context.Context, session *discordgo.Session, 
 		return nil
 	}
 
-	if ok, errSeed := h.sourcemod.seedRequest(server.DiscordSeedRoleIDs, safeServer, interaction.Member.User.ID); !ok {
+	if ok, errSeed := h.sourcemod.seedRequest(
+		server.DiscordSeedRoleIDs, safeServer, interaction.Member.User.ID, data.String("message"), server.DiscordSeedChannelID,
+	); !ok {
 		discord.Error(session, interaction, errSeed)
 
 		return nil

@@ -59,6 +59,7 @@ func newRPCHarness(t *testing.T) *rpcHarness {
 		"seed-channel",
 		"log-channel",
 		"mod-role",
+		"public-log-channel",
 		serversCase,
 	)
 

@@ -92,8 +92,6 @@ func New(opts Opts) (*Discord, error) {
 	}
 
 	session.Identify.Intents |= discordgo.IntentsGuildMessages
-	session.Identify.Intents |= discordgo.IntentMessageContent
-	session.Identify.Intents |= discordgo.IntentGuildMembers
 	session.Identify.Intents |= discordgo.IntentGuildWebhooks
 
 	session.AddHandler(bot.onReady)

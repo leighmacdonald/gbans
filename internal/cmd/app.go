@@ -197,7 +197,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.forums = forum.New(forum.NewRepository(g.database), g.notifications, g.persons, "")
 	g.metrics = metrics.New(g.broadcaster)
 	g.news = news.New(news.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID())
-	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons, g.notifications, conf.Discord.SafeSeedChannelID(), conf.Discord.LogChannelID, conf.Discord.SafeModPingRoleID(), g.servers)
+	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons, g.notifications, conf.Discord.SafeSeedChannelID(), conf.Discord.LogChannelID, conf.Discord.SafeModPingRoleID(), conf.Discord.SafePublicLogChannelID(), g.servers)
 	g.wiki = wiki.New(wiki.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID(), conf.Discord.LogChannelID)
 	g.anticheat = anticheat.New(anticheat.NewRepository(g.database), conf.Anticheat, g.notifications, g.onAnticheatBan, g.persons)
 	g.votes = votes.New(votes.NewRepository(g.database), g.broadcaster, g.notifications,
@@ -478,7 +478,7 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware, roleAuth *rpc.RoleAuth
 		notification.NewService(g.notifications, roleAuth, authMiddleware, interceptors),
 		roles.NewService(g.roles, g.persons, roleAuth, authMiddleware, interceptors),
 		person.NewPersonService(g.persons, roleAuth, authMiddleware, interceptors),
-		servers.NewServersService(g.servers, roleAuth, authMiddleware, interceptors),
+		servers.NewServersService(g.servers, &g.networks, roleAuth, authMiddleware, interceptors),
 		demo.NewService(g.demos, roleAuth, authMiddleware, interceptors),
 		speedruns.NewService(g.speedruns, roleAuth, authMiddleware, interceptors),
 		sourcemod.NewPluginService(g.sourcemod, g.persons, g.servers, g.bans,
@@ -543,6 +543,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 
 	mw := authn.NewMiddleware(authMiddleware.Authenticate)
 
+	servers.RegisterConnectHandler(topMux, g.servers)
 	topMux.Handle("/connect/", http.StripPrefix("/connect", mw.Wrap(apiHandler)))
 	topMux.Handle("/", router)
 	auth.RegisterExchangeHandler(topMux, userAuth)

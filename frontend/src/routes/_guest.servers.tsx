@@ -23,7 +23,7 @@ import * as markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import * as markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { createMRTColumnHelper, type MRT_ColumnDef, useMaterialReactTable } from "material-react-table";
 import { type ChangeEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { MapContainer, TileLayer } from "react-leaflet";
+import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { Flag } from "../component/Flag.tsx";
 import { RangeSlider } from "../component/RangeSlider.tsx";
@@ -33,6 +33,7 @@ import { SortableTable } from "../component/table/SortableTable.tsx";
 import { UserPingRadius } from "../component/UserPingRadius.tsx";
 import { UserPositionMarker } from "../component/UserPositionMarker.tsx";
 import { MapStateCtx } from "../contexts/MapStateCtx.tsx";
+import { useMapStateCtx } from "../hooks/useMapStateCtx.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import type { SafeServer } from "../rpc/servers/v1/servers_pb.ts";
 import { state } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
@@ -65,6 +66,21 @@ export const Route = createFileRoute("/_guest/servers")({
 const columnHelper = createMRTColumnHelper<SafeServer>();
 const defaultOptions = createDefaultTableOptions<SafeServer>();
 
+// MapContainer only honours `center` on mount, so recenter explicitly when
+// the geoip position arrives.
+function RecenterMap() {
+	const map = useMap();
+	const { pos } = useMapStateCtx();
+
+	useEffect(() => {
+		if (pos.lat !== 0 || pos.lng !== 0) {
+			map.setView(pos, map.getZoom());
+		}
+	}, [map, pos]);
+
+	return null;
+}
+
 function Servers() {
 	const [pos, setPos] = useState<LatLngLiteral>({
 		lat: 0.0,
@@ -78,6 +94,16 @@ function Servers() {
 	const { sendFlash } = useUserFlashCtx();
 	const { data, isLoading } = useQuery(state, {}, { refetchInterval: 5000 });
 	const regions = uniqCI(["any", ...(data?.servers || []).map((value) => value.region)]);
+
+	// Center the map (and the "you" marker) on the geoip position reported
+	// by the backend once it arrives.
+	useEffect(() => {
+		const lat = data?.latLong?.latitude ?? 0;
+		const lng = data?.latLong?.longitude ?? 0;
+		if ((lat !== 0 || lng !== 0) && (lat !== pos.lat || lng !== pos.lng)) {
+			setPos({ lat, lng });
+		}
+	}, [data, pos]);
 
 	const onRegionsChange = (event: SelectChangeEvent) => {
 		setSelectedRegion(event.target.value);
@@ -320,6 +346,7 @@ function Servers() {
 						<UserPingRadius />
 						<ServerMarkers servers={selectedServers} />
 						<UserPositionMarker />
+						<RecenterMap />
 					</MapContainer>
 				</Paper>
 				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />}>

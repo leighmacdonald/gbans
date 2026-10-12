@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/netip"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -143,15 +144,16 @@ type ConfigEntry struct {
 	CfgValue string
 }
 
-func New(repository Repository, person person.Provider, notifier notification.Notifier, seedChannelID string, modPingChannelID string, modRoleID string, servers *servers.Servers) Sourcemod {
+func New(repository Repository, person person.Provider, notifier notification.Notifier, seedChannelID string, modPingChannelID string, modRoleID string, publicLogChannelID string, servers *servers.Servers) Sourcemod {
 	return Sourcemod{
-		seedChannelID:    seedChannelID,
-		modPingChannelID: modPingChannelID,
-		modRoleID:        modRoleID,
-		repository:       repository,
-		person:           person,
-		notifier:         notifier,
-		servers:          servers,
+		seedChannelID:      seedChannelID,
+		modPingChannelID:   modPingChannelID,
+		modRoleID:          modRoleID,
+		publicLogChannelID: publicLogChannelID,
+		repository:         repository,
+		person:             person,
+		notifier:           notifier,
+		servers:            servers,
 		seedQueue: &SeedQueue{
 			minTime: time.Second * 300,
 			servers: make(map[int32]seedRequest),
@@ -161,14 +163,15 @@ func New(repository Repository, person person.Provider, notifier notification.No
 }
 
 type Sourcemod struct {
-	seedChannelID    string
-	modPingChannelID string
-	modRoleID        string
-	repository       Repository
-	person           person.Provider
-	seedQueue        *SeedQueue
-	notifier         notification.Notifier
-	servers          *servers.Servers
+	seedChannelID      string
+	modPingChannelID   string
+	modRoleID          string
+	publicLogChannelID string
+	repository         Repository
+	person             person.Provider
+	seedQueue          *SeedQueue
+	notifier           notification.Notifier
+	servers            *servers.Servers
 }
 
 func (h Sourcemod) PingMod(_ context.Context, _ steamid.SteamID, name string, reason string, clientID int32, serverName string) error {
@@ -188,17 +191,74 @@ type seedRequestView struct {
 	Roles       []string
 	PlayerCount int32
 	MaxPlayers  int32
+	Message     string
+}
+
+// maxSeedMessageLength caps user-supplied seed messages so the alert embed
+// stays readable and within Discord component limits.
+const maxSeedMessageLength = 500
+
+// sanitizeSeedMessage neutralizes mention syntax so user text cannot ping
+// @everyone/@here or arbitrary users and roles. The zero-width space is
+// invisible in the rendered message.
+func sanitizeSeedMessage(message string) string {
+	message = strings.ReplaceAll(message, "@", "@\u200b")
+	if len(message) > maxSeedMessageLength {
+		message = message[:maxSeedMessageLength] + "…"
+	}
+
+	return message
+}
+
+// validDiscordChannelID reports whether id looks like a usable Discord channel
+// snowflake: non-empty ASCII digits. Anything else (empty, names, mentions)
+// is skipped during channel resolution.
+func validDiscordChannelID(id string) bool {
+	if id == "" {
+		return false
+	}
+
+	for _, r := range id {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+
+	return true
+}
+
+// resolveSeedChannelID picks where seed alerts go: the server's configured
+// channel when valid, else the global seed channel from sitewide settings,
+// else the public log channel as a last resort.
+func resolveSeedChannelID(serverChannelID string, seedChannelID string, publicLogChannelID string) string {
+	if validDiscordChannelID(serverChannelID) {
+		return serverChannelID
+	}
+
+	if validDiscordChannelID(seedChannelID) {
+		return seedChannelID
+	}
+
+	return publicLogChannelID
 }
 
 // seedRequest queues a seed request for the given server and user. It returns false with
 // ErrReqTooSoon when the user is still on cooldown, and false with another error when the
-// request could not be rendered or the server has no seed roles configured.
-func (h Sourcemod) seedRequest(roleIDs []string, server servers.SafeServer, userID string) (bool, error) {
+// request could not be rendered or the server has no seed roles configured. Alerts go to
+// the server's own seed channel, falling back to the global one when unset.
+func (h Sourcemod) seedRequest(
+	roleIDs []string,
+	server servers.SafeServer,
+	userID string,
+	message string,
+	seedChannelID string,
+) (bool, error) {
 	if !h.seedQueue.Allowed(server.ServerID, userID) {
 		return false, ErrReqTooSoon
 	}
 
 	if len(roleIDs) > 0 {
+		targetChannelID := resolveSeedChannelID(seedChannelID, h.seedChannelID, h.publicLogChannelID)
 		content, errContent := discord.RenderTemplate("seed_req", seedRequestView{
 			Name:        server.Name,
 			Short:       server.NameShort,
@@ -208,6 +268,7 @@ func (h Sourcemod) seedRequest(roleIDs []string, server servers.SafeServer, user
 			Roles:       roleIDs,
 			PlayerCount: server.Players,
 			MaxPlayers:  server.MaxPlayerDisplay(),
+			Message:     sanitizeSeedMessage(message),
 		})
 
 		if errContent != nil {
@@ -216,7 +277,7 @@ func (h Sourcemod) seedRequest(roleIDs []string, server servers.SafeServer, user
 			return false, errContent
 		}
 
-		go h.notifier.Send(notification.NewDiscord(h.seedChannelID, discord.NewMessage(
+		go h.notifier.Send(notification.NewDiscord(targetChannelID, discord.NewMessage(
 			discordgo.Container{
 				AccentColor: new(discord.ColourSuccess),
 				Components: []discordgo.MessageComponent{

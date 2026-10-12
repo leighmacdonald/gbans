@@ -288,7 +288,9 @@ func (s PluginService) SMSeed(ctx context.Context, req *v1.SMSeedRequest) (*v1.S
 		return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
 	}
 
-	if ok, errSeed := s.sourcemod.seedRequest(server.DiscordSeedRoleIDs, serverState, steamID.String()); !ok {
+	if ok, errSeed := s.sourcemod.seedRequest(
+		server.DiscordSeedRoleIDs, serverState, steamID.String(), "", server.DiscordSeedChannelID,
+	); !ok {
 		if errors.Is(errSeed, ErrReqTooSoon) {
 			// The plugin maps this error to HTTP 429 and tells the requesting player to wait.
 			return nil, connect.NewError(connect.CodeResourceExhausted, errSeed)
