@@ -1179,6 +1179,7 @@ type Discord struct {
 	SeedChannelId           *string                `protobuf:"bytes,19,opt,name=seed_channel_id,json=seedChannelId" json:"seed_channel_id,omitempty"`
 	WordFilterLogChannelId  *string                `protobuf:"bytes,20,opt,name=word_filter_log_channel_id,json=wordFilterLogChannelId" json:"word_filter_log_channel_id,omitempty"`
 	ChatLogChannelId        *string                `protobuf:"bytes,21,opt,name=chat_log_channel_id,json=chatLogChannelId" json:"chat_log_channel_id,omitempty"`
+	PublicLogChannelId      *string                `protobuf:"bytes,22,opt,name=public_log_channel_id,json=publicLogChannelId" json:"public_log_channel_id,omitempty"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -1356,6 +1357,13 @@ func (x *Discord) GetWordFilterLogChannelId() string {
 func (x *Discord) GetChatLogChannelId() string {
 	if x != nil && x.ChatLogChannelId != nil {
 		return *x.ChatLogChannelId
+	}
+	return ""
+}
+
+func (x *Discord) GetPublicLogChannelId() string {
+	if x != nil && x.PublicLogChannelId != nil {
+		return *x.PublicLogChannelId
 	}
 	return ""
 }
@@ -2776,7 +2784,7 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\n" +
 	"max_weight\x18\x06 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\tmaxWeight\x12+\n" +
 	"\rcheck_timeout\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fcheckTimeout\x12+\n" +
-	"\rmatch_timeout\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fmatchTimeout\"\xf3\a\n" +
+	"\rmatch_timeout\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fmatchTimeout\"\xa6\b\n" +
 	"\aDiscord\x12 \n" +
 	"\aenabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aenabled\x12'\n" +
 	"\vbot_enabled\x18\x02 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\n" +
@@ -2801,7 +2809,8 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x14anticheat_channel_id\x18\x12 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x12anticheatChannelId\x12.\n" +
 	"\x0fseed_channel_id\x18\x13 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rseedChannelId\x12B\n" +
 	"\x1aword_filter_log_channel_id\x18\x14 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x16wordFilterLogChannelId\x125\n" +
-	"\x13chat_log_channel_id\x18\x15 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10chatLogChannelId\"B\n" +
+	"\x13chat_log_channel_id\x18\x15 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10chatLogChannelId\x121\n" +
+	"\x15public_log_channel_id\x18\x16 \x01(\tR\x12publicLogChannelId\"B\n" +
 	"\tSourcemod\x125\n" +
 	"\x12center_projectiles\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x11centerProjectiles\"\xf3\x01\n" +
 	"\x03Log\x123\n" +

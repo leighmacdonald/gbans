@@ -219,6 +219,14 @@ func (c *Configuration) Write(ctx context.Context, config Config) error {
 		return err
 	}
 
+	// Reload the in-memory config so that Get/Info and all consumers observe
+	// the saved values immediately instead of after an app restart.
+	if err := c.reload(ctx); err != nil {
+		slog.Error("Failed to reload config after write", slog.String("error", err.Error()))
+
+		return err
+	}
+
 	return nil
 }
 

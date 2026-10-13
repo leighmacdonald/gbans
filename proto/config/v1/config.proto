@@ -154,6 +154,7 @@ message Discord {
   string seed_channel_id = 19 [(buf.validate.field).required = true];
   string word_filter_log_channel_id = 20 [(buf.validate.field).required = true];
   string chat_log_channel_id = 21 [(buf.validate.field).required = true];
+  string public_log_channel_id = 22;
 }
 
 message Sourcemod {

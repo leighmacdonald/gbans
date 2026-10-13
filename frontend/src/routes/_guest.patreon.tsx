@@ -1,4 +1,4 @@
-import { useQuery } from "@connectrpc/connect-query";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import PaymentIcon from "@mui/icons-material/Payment";
 import SearchIcon from "@mui/icons-material/Search";
 import SettingsInputComponentIcon from "@mui/icons-material/SettingsInputComponent";
@@ -13,10 +13,12 @@ import Typography from "@mui/material/Typography";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { z } from "zod/v4";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
+import { ErrorDetails } from "../component/ErrorDetails.tsx";
 import { ImageBox } from "../component/ImageBox.tsx";
 import { MarkDownRenderer } from "../component/MarkdownRenderer.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
-import { patronCampaigns } from "../rpc/patreon/v1/patreon-PatreonService_connectquery.ts";
+import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
+import { patronCampaigns, patronLogin } from "../rpc/patreon/v1/patreon-PatreonService_connectquery.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 
 const patreonSearchSchema = z.object({
@@ -38,48 +40,75 @@ export const Route = createFileRoute("/_guest/patreon")({
 function Patreon() {
 	const { isAuthenticated, profile } = useAuth();
 	const { appInfo } = Route.useRouteContext();
+	const { sendError } = useUserFlashCtx();
 	const theme = useTheme();
 
-	const { data, isLoading } = useQuery(patronCampaigns);
+	const { data, isLoading, isError, error } = useQuery(patronCampaigns);
+
+	const loginMutation = useMutation(patronLogin, {
+		onSuccess: (resp) => {
+			window.open(resp.url, "_self");
+		},
+		onError: sendError,
+	});
 
 	const followCallback = async () => {
-		// const result = await queryClient.fetchQuery({
-		// 	queryKey: ["callback"],
-		// 	queryFn: ({ signal }) => apiGetPatreonLogin(signal),
-		// });
-		// window.open(result.url, "_self");
+		loginMutation.mutate({});
 	};
+
+	const connectButton = (key: string) => (
+		<Button
+			key={key}
+			variant={"contained"}
+			color={"success"}
+			disabled={!isAuthenticated() || profile.patreonId !== "" || loginMutation.isPending}
+			onClick={followCallback}
+			startIcon={<SettingsInputComponentIcon />}
+		>
+			Connect Patreon
+		</Button>
+	);
 
 	if (!appInfo.patreonEnabled) {
 		return <Navigate to={"/"} />;
+	}
+
+	if (isError) {
+		return <ErrorDetails error={error} />;
 	}
 
 	if (isLoading) {
 		return;
 	}
 
+	const campaign = data?.campaigns?.[0];
+	const attributes = campaign?.attributes;
+
+	if (!campaign || !attributes) {
+		return (
+			<Grid container spacing={2}>
+				<Grid size={{ xs: 12 }}>
+					<ContainerWithHeaderAndButtons
+						title={"Patreon"}
+						iconLeft={<PaymentIcon />}
+						buttons={profile.patreonId ? [] : [connectButton("connect")]}
+					>
+						<Typography variant={"body1"} sx={{ padding: 2 }}>
+							Campaign information is not available yet. Please check back later.
+						</Typography>
+					</ContainerWithHeaderAndButtons>
+				</Grid>
+			</Grid>
+		);
+	}
+
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeaderAndButtons
-					title={`Patreon Campaign: ${data?.campaigns[0].attributes?.creationName}`}
+					title={`Patreon Campaign: ${attributes.creationName}`}
 					iconLeft={<PaymentIcon />}
-					buttons={
-						profile.patreonId
-							? []
-							: [
-									<Button
-										key={"connect"}
-										variant={"contained"}
-										color={"success"}
-										disabled={!isAuthenticated() || profile.patreonId !== ""}
-										onClick={followCallback}
-										startIcon={<SettingsInputComponentIcon />}
-									>
-										Connect Patreon
-									</Button>,
-								]
-					}
+					buttons={profile.patreonId ? [] : [connectButton("connect")]}
 				>
 					<Grid container>
 						<Grid size={{ xs: 12 }}>
@@ -89,19 +118,13 @@ function Patreon() {
 										height={"100%"}
 										width={"100%"}
 										alt={"Campaign background"}
-										src={String(data?.campaigns[0].attributes?.imageUrl)}
+										src={String(attributes.imageUrl)}
 									/>
 								</Paper>
 
-								<MarkDownRenderer
-									bodyMd={String(data?.campaigns[0].attributes?.summary)}
-									assetURL={appInfo.assetUrl}
-								/>
+								<MarkDownRenderer bodyMd={String(attributes.summary)} assetURL={appInfo.assetUrl} />
 
-								<MarkDownRenderer
-									bodyMd={String(data?.campaigns[0].attributes?.thanksMsg)}
-									assetURL={appInfo.assetUrl}
-								/>
+								<MarkDownRenderer bodyMd={String(attributes.thanksMsg)} assetURL={appInfo.assetUrl} />
 							</Stack>
 						</Grid>
 						<Grid size={{ xs: 12 }}>
@@ -139,7 +162,7 @@ function Patreon() {
 											backgroundColor: theme.palette.primary.light,
 										}}
 									>
-										{String(data?.campaigns[0].attributes?.patronCount)}
+										{String(attributes.patronCount)}
 									</Typography>
 								</Paper>
 							</Box>
@@ -155,7 +178,7 @@ function Patreon() {
 									variant={"contained"}
 									color={"success"}
 									startIcon={<SearchIcon />}
-									href={`${String(data?.campaigns[0].attributes?.url)}/membership`}
+									href={`${String(attributes.url)}/membership`}
 								>
 									View Membership Tiers
 								</Button>

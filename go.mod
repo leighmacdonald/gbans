@@ -9,7 +9,6 @@ require (
 	connectrpc.com/validate v0.7.0
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.2
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/austinbspencer/patreon-go-wrapper v1.0.2
 	github.com/bwmarrin/discordgo v0.29.1-0.20251116152328-dd9332c71198
 	github.com/dustin/go-humanize v1.1.0
 	github.com/gabriel-vasile/mimetype v1.4.15
@@ -51,7 +50,6 @@ require (
 	github.com/yohcop/openid-go v1.0.1
 	golang.org/x/crypto v0.57.0
 	golang.org/x/crypto/x509roots/fallback v0.0.0-20261005185213-c3db4df58582
-	golang.org/x/oauth2 v0.37.0
 	golang.org/x/sync v0.23.0
 	google.golang.org/protobuf v1.36.12
 )
@@ -76,7 +74,6 @@ require (
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/docker/docker v28.5.2+incompatible // indirect
 	github.com/docker/go-connections v0.8.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/ebitengine/purego v0.11.1 // indirect
@@ -86,7 +83,6 @@ require (
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
-	github.com/google/cel-go v0.31.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect

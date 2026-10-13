@@ -38,6 +38,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/news"
 	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/patreon"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/roles"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
@@ -81,6 +82,7 @@ type GBans struct {
 	networks       network.Networks
 	news           news.News
 	notifications  *notification.Notifications
+	patreonSvc     patreon.Patreon
 	persons        *person.Persons
 	reports        ban.Reports
 	roles          *roles.Roles
@@ -204,6 +206,7 @@ func (g *GBans) Init(ctx context.Context) error {
 		conf.Discord.SafeVoteLogChannelID(), g.persons)
 
 	g.speedruns = speedruns.NewSpeedruns(speedruns.NewSpeedrunRepository(g.database, g.persons), mapsSvc)
+	g.patreonSvc = patreon.NewPatreon(patreon.NewRepository(g.database), conf.Patreon)
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications)
 	g.mge = mge.NewMGE(mge.NewRepository(g.database))
@@ -406,6 +409,7 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	go g.banExpirations.Update(ctx)
 	go g.blocklists.Sync(ctx)
 	go g.demos.Cleanup(ctx)
+	go g.patreonSvc.Sync(ctx)
 
 	go func() {
 		if err := g.stats.StartRefreshHandler(ctx); err != nil {
@@ -423,6 +427,8 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	defer blocklistTicker.Stop()
 	demoTicker := time.NewTicker(15 * time.Minute)
 	defer demoTicker.Stop()
+	patreonTicker := time.NewTicker(time.Hour)
+	defer patreonTicker.Stop()
 
 	for {
 		select {
@@ -440,6 +446,8 @@ func (g *GBans) StartBackground(ctx context.Context) {
 			}()
 		case <-blocklistTicker.C:
 			go g.blocklists.Sync(ctx)
+		case <-patreonTicker.C:
+			go g.patreonSvc.Sync(ctx)
 		case <-demoTicker.C:
 			go g.demos.Cleanup(ctx)
 			go func() {
@@ -476,6 +484,7 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware, roleAuth *rpc.RoleAuth
 		network.NewNetworkService(g.networks, roleAuth, authMiddleware, interceptors),
 		news.NewService(g.news, roleAuth, authMiddleware, interceptors),
 		notification.NewService(g.notifications, roleAuth, authMiddleware, interceptors),
+		patreon.NewService(g.patreonSvc, authMiddleware, interceptors),
 		roles.NewService(g.roles, g.persons, roleAuth, authMiddleware, interceptors),
 		person.NewPersonService(g.persons, roleAuth, authMiddleware, interceptors),
 		servers.NewServersService(g.servers, &g.networks, roleAuth, authMiddleware, interceptors),
@@ -534,6 +543,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	asset.NewAssetHandler(mux, g.assets, g.roleAuth)
 	auth.NewAuthHandler(mux, userAuth, g.config, g.tfapiClient, g.notifications, authMiddleware, g.roles)
 	discordoauth.NewDiscordOAuthHandler(mux, g.config, g.persons, g.discordOAuth)
+	patreon.NewPatreonHandler(mux, g.patreonSvc)
 
 	mux.HandleFunc("GET /health", g.healthCheck)
 

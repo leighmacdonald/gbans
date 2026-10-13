@@ -15,6 +15,12 @@ type patreonHandler struct {
 	config Config
 }
 
+func NewPatreonHandler(mux *http.ServeMux, patreon Patreon) {
+	handler := patreonHandler{Patreon: patreon}
+
+	mux.HandleFunc("GET /patreon/oauth", handler.onOAuth())
+}
+
 func (h *patreonHandler) onLogout() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		currentUser, _ := session.CurrentUserProfile(req.Context())
@@ -63,7 +69,7 @@ func (h *patreonHandler) onOAuth() http.HandlerFunc {
 			slog.Debug("Successfully authenticated user over patreon")
 		}
 
-		http.Redirect(res, req, link.Raw("/patreon"), http.StatusPermanentRedirect)
+		http.Redirect(res, req, link.Raw("/patreon"), http.StatusTemporaryRedirect)
 	}
 }
 

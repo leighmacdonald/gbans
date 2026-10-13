@@ -10,13 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/austinbspencer/patreon-go-wrapper"
 	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/json"
 	"github.com/leighmacdonald/gbans/internal/oauth"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -53,9 +51,8 @@ type Credential struct {
 type Manager struct {
 	*Config
 
-	// patreonClient    *patreon.Client
 	patreonMu        *sync.RWMutex
-	patreonCampaigns patreon.Campaign
+	patreonCampaigns Campaign
 }
 
 func NewPatreonManager(config *Config) Manager {
@@ -65,86 +62,38 @@ func NewPatreonManager(config *Config) Manager {
 	}
 }
 
-// start https://www.patreon.com/portal/registration/register-clients
-func (p *Manager) createClient(ctx context.Context, accessToken string, refreshToken string) *patreon.Client {
-	oAuthConfig := oauth2.Config{
-		ClientID:     p.ClientID,
-		ClientSecret: p.ClientSecret,
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  patreon.AuthorizationURL,
-			TokenURL: patreon.AccessTokenURL,
-		},
-		Scopes: []string{"campaigns", "identity", "memberships"},
-	}
-
-	tok := &oauth2.Token{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		// Must be non-nil, otherwise token will not be expired
-		Expiry: time.Now().AddDate(1, 0, 0),
-	}
-
-	tc := oAuthConfig.Client(ctx, tok)
-
-	return patreon.NewClient(tc)
-}
-
-func (p *Manager) loadUser(client *patreon.Client) (*patreon.UserResponse, error) {
-	fieldOpts := patreon.WithFields("user", patreon.UserFields...)
-	campOpts := patreon.WithFields("campaign", patreon.CampaignFields...)
-	includeOpts := patreon.WithIncludes("campaign")
-
-	user, err := client.FetchIdentity(fieldOpts, campOpts, includeOpts)
-	if err != nil {
-		return nil, errors.Join(err, ErrQueryPatreon)
-	}
-
-	if user == nil {
-		return nil, ErrQueryPatreon
-	}
-
-	return user, nil
-}
-
 func (p *Manager) sync(ctx context.Context) {
 	if !p.Enabled {
 		return
 	}
 
-	client := p.createClient(ctx, p.CreatorAccessToken, p.CreatorRefreshToken)
-
-	user, errUser := p.loadUser(client)
-	if errUser != nil {
-		slog.Error("Failed to load patreon user", slog.String("error", errUser.Error()))
+	if p.CreatorAccessToken == "" {
+		slog.Debug("Skipping patreon sync, no creator access token configured")
 
 		return
 	}
 
-	if user == nil {
-		slog.Error("Failed to load user, nil result")
+	campaigns, errCampaigns := newClient(p.CreatorAccessToken).fetchCampaigns(ctx)
+	if errCampaigns != nil {
+		slog.Error("Failed to load patreon campaigns", slog.String("error", errCampaigns.Error()))
 
 		return
 	}
 
-	for _, item := range user.Included.Items {
-		res, ok := item.(*patreon.Campaign)
-		if !ok {
-			slog.Error("Got malformed campaign")
+	if len(campaigns) == 0 {
+		slog.Error("Failed to load patreon campaigns, empty result")
 
-			continue
-		}
-
-		p.patreonMu.Lock()
-		p.patreonCampaigns = *res
-		p.patreonMu.Unlock()
-
-		slog.Debug("Patreon campaign updated")
-
-		break
+		return
 	}
+
+	p.patreonMu.Lock()
+	p.patreonCampaigns = campaigns[0]
+	p.patreonMu.Unlock()
+
+	slog.Debug("Patreon campaign updated")
 }
 
-func (p *Manager) Campaigns() patreon.Campaign {
+func (p *Manager) Campaigns() Campaign {
 	p.patreonMu.RLock()
 	defer p.patreonMu.RUnlock()
 
@@ -231,16 +180,11 @@ func (p *Patreon) refreshToken(ctx context.Context, auth Credential) error {
 	creds.SteamID = auth.SteamID
 	creds.UpdatedOn = now
 
-	client := p.manager.createClient(ctx, creds.AccessToken, creds.RefreshToken)
-
-	user, errUser := p.manager.loadUser(client)
+	patreonID, errUser := newClient(creds.AccessToken).fetchIdentityUserID(ctx)
 	if errUser != nil {
 		return errUser
 	}
-	if user == nil {
-		return ErrQueryPatreon
-	}
-	creds.PatreonID = user.Data.ID
+	creds.PatreonID = patreonID
 
 	if errSave := p.repository.SaveTokens(ctx, creds); errSave != nil {
 		return errSave
@@ -259,14 +203,14 @@ func (p *Patreon) CreateOAuthRedirect(steamID steamid.SteamID) string {
 	values.Set("response_type", "code")
 	values.Set("redirect_uri", link.Raw("/patreon/oauth"))
 	values.Set("state", state)
-	values.Set("scope", "campaigns identity campaigns.members")
+	values.Set("scope", "identity campaigns")
 
 	authenticationURL.RawQuery = values.Encode()
 
 	return authenticationURL.String()
 }
 
-func (p *Patreon) Campaign() patreon.Campaign {
+func (p *Patreon) Campaign() Campaign {
 	return p.manager.Campaigns()
 }
 
@@ -315,16 +259,11 @@ func (p *Patreon) OnOauthLogin(ctx context.Context, state string, code string) e
 	creds.UpdatedOn = now
 	creds.SteamID = steamID
 
-	client := p.manager.createClient(ctx, creds.AccessToken, creds.RefreshToken)
-
-	user, errUser := p.manager.loadUser(client)
+	patreonID, errUser := newClient(creds.AccessToken).fetchIdentityUserID(ctx)
 	if errUser != nil {
 		return errUser
 	}
-	if user == nil {
-		return ErrQueryPatreon
-	}
-	creds.PatreonID = user.Data.ID
+	creds.PatreonID = patreonID
 
 	if errSave := p.repository.SaveTokens(ctx, creds); errSave != nil {
 		return errSave

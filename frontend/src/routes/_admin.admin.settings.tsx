@@ -125,8 +125,16 @@ function AdminSettings() {
 	const { data, isLoading, isError, error } = useQuery(get);
 
 	const mutation = useMutation(update, {
-		onSuccess: () => {
+		onSuccess: async () => {
 			sendFlash("success", "Settings saved successfully");
+			// Refetch so the form and any other consumers show the saved values.
+			await queryClient.invalidateQueries({
+				queryKey: createConnectQueryKey({
+					schema: ConfigService.method.get,
+					cardinality: "finite",
+					transport: finalTransport,
+				}),
+			});
 		},
 		onError: sendError,
 	});
@@ -1039,7 +1047,7 @@ function AdminSettings() {
 							<Grid size={{ xs: 12 }}>
 								<SubHeading>Public log channel ID.</SubHeading>
 								<form.AppField
-									name={"discord.logChannelId"}
+									name={"discord.publicLogChannelId"}
 									children={(field) => {
 										return <field.TextField label={"Public log channel ID"} />;
 									}}

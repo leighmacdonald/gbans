@@ -54,7 +54,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 			   general_speedruns_enabled, general_playerqueue_enabled, general_favicon, general_sentry_dsn, general_sentry_dsn_web,
 			   general_mge_enabled,
 
-		       filters_enabled, filters_dry, filters_ping_discord, filters_max_weight, filters_warning_timeout, filters_check_timeout, filters_match_timeout,
+		       filters_enabled, filters_dry, filters_ping_discord, filters_max_weight, filters_warning_timeout, filters_warning_limit, filters_check_timeout, filters_match_timeout,
 
 		       demo_cleanup_enabled, demo_cleanup_strategy, demo_cleanup_min_pct, demo_cleanup_mount, demo_count_limit, demo_parser_url,
 
@@ -112,7 +112,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 			&cfg.General.StatsEnabled, &cfg.General.ServersEnabled, &cfg.General.ReportsEnabled, &cfg.General.ChatlogsEnabled, &cfg.General.DemosEnabled, &cfg.General.SpeedrunsEnabled,
 			&cfg.General.PlayerqueueEnabled, &cfg.General.Favicon, &cfg.General.SentryDSN, &cfg.General.SentryDSNWeb,
 			&cfg.General.MGEEnabled,
-			&cfg.Filters.Enabled, &cfg.Filters.Dry, &cfg.Filters.PingDiscord, &cfg.Filters.MaxWeight, &cfg.Filters.WarningTimeout, &cfg.Filters.CheckTimeout, &cfg.Filters.MatchTimeout,
+			&cfg.Filters.Enabled, &cfg.Filters.Dry, &cfg.Filters.PingDiscord, &cfg.Filters.MaxWeight, &cfg.Filters.WarningTimeout, &cfg.Filters.WarningLimit, &cfg.Filters.CheckTimeout, &cfg.Filters.MatchTimeout,
 			&cfg.Demo.DemoCleanupEnabled, &cfg.Demo.DemoCleanupStrategy, &cfg.Demo.DemoCleanupMinPct, &cfg.Demo.DemoCleanupMount, &cfg.Demo.DemoCountLimit, &cfg.Demo.DemoParserURL,
 			&cfg.Patreon.Enabled, &cfg.Patreon.ClientID, &cfg.Patreon.ClientSecret, &cfg.Patreon.CreatorAccessToken, &cfg.Patreon.CreatorRefreshToken, &cfg.Patreon.IntegrationsEnabled,
 			&cfg.Discord.Enabled, &cfg.Discord.AppID, &cfg.Discord.AppSecret, &cfg.Discord.LinkID, &cfg.Discord.Token, &cfg.Discord.GuildID, &cfg.Discord.LogChannelID,
@@ -193,6 +193,7 @@ func (c *Repository) Write(ctx context.Context, config Config) error {
 			"filters_ping_discord":                config.Filters.PingDiscord,
 			"filters_max_weight":                  config.Filters.MaxWeight,
 			"filters_warning_timeout":             config.Filters.WarningTimeout,
+			"filters_warning_limit":               config.Filters.WarningLimit,
 			"filters_check_timeout":               config.Filters.CheckTimeout,
 			"filters_match_timeout":               config.Filters.MatchTimeout,
 			"demo_cleanup_enabled":                config.Demo.DemoCleanupEnabled,
