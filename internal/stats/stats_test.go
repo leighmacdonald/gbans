@@ -1,12 +1,15 @@
 package stats_test
 
 import (
+	"context"
 	stdjson "encoding/json"
 	"fmt"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/json"
 	"github.com/leighmacdonald/gbans/internal/maps"
 	"github.com/leighmacdonald/gbans/internal/stats"
@@ -91,19 +94,19 @@ func sumDemoPlayers(demo *demoparse.Demo) map[steamid.SteamID]*demoPlayerSums {
 				}
 				sums[sid] = agg
 			}
-			agg.kills += uint64(player.Kills)
-			agg.deaths += uint64(player.Deaths)
-			agg.points += uint64(player.Points)
-			agg.healing += uint64(player.Healing)
-			agg.postroundHealing += uint64(player.PostroundHealing)
-			agg.scoreboardHealing += uint64(player.ScoreboardHealing)
+			agg.kills += uint64(player.Kills)                         //nolint:gosec // parser counts are non-negative.
+			agg.deaths += uint64(player.Deaths)                       //nolint:gosec // parser counts are non-negative.
+			agg.points += uint64(player.Points)                       //nolint:gosec // parser counts are non-negative.
+			agg.healing += uint64(player.Healing)                     //nolint:gosec // parser counts are non-negative.
+			agg.postroundHealing += uint64(player.PostroundHealing)   //nolint:gosec // parser counts are non-negative.
+			agg.scoreboardHealing += uint64(player.ScoreboardHealing) //nolint:gosec // parser counts are non-negative.
 		}
 	}
 
 	return sums
 }
 
-func importDemoAt(t *testing.T, testFixture *tests.Fixture, st stats.Stats, serverID int32, demo *demoparse.Demo, start time.Time) {
+func importDemoAt(t *testing.T, testFixture *tests.Fixture, statSvc stats.Stats, serverID int32, demo *demoparse.Demo, start time.Time) {
 	t.Helper()
 	ctx := t.Context()
 
@@ -112,8 +115,42 @@ func importDemoAt(t *testing.T, testFixture *tests.Fixture, st stats.Stats, serv
 		`INSERT INTO demo (server_id, title, map_name, created_on) VALUES ($1, $2, $3, $4) RETURNING demo_id`,
 		serverID, demo.Filename, demo.Map, start).Scan(&demoID))
 
-	_, errImport := st.Import(ctx, serverID, demoID, demo, start)
+	_, errImport := statSvc.Import(ctx, serverID, demoID, demo, start)
 	require.NoError(t, errImport)
+}
+
+// fillerTestPlayers returns num deterministic valid filler players in a
+// dedicated steamid range, so synthetic test demos satisfy the MinPlayers
+// match-creation threshold without colliding with other tests.
+func fillerTestPlayers(num int, tickStart int, tickEnd int) ([]steamid.SteamID, []demoparse.PlayerSummary) {
+	ids := make([]steamid.SteamID, 0, num)
+	players := make([]demoparse.PlayerSummary, 0, num)
+
+	for i := range num {
+		sid := steamid.New(fmt.Sprintf("[U:1:%d]", 90000001+i))
+		ids = append(ids, sid)
+		players = append(players, demoparse.PlayerSummary{
+			Name: fmt.Sprintf("Filler%d", i), SteamID: string(sid.Steam3()),
+			Team: "red", TickStart: tickStart, TickEnd: tickEnd,
+		})
+	}
+
+	return ids, players
+}
+
+// insertTestPersons ensures person rows exist for every id (match tables
+// reference person via foreign key).
+func insertTestPersons(ctx context.Context, t *testing.T, db database.Database, persons map[steamid.SteamID]string) {
+	t.Helper()
+
+	for sid, name := range persons {
+		require.NoError(t, db.Exec(ctx,
+			`INSERT INTO person (steam_id, created_on, updated_on, personaname, avatarhash, profilestate, personastate,
+			                    realname, timecreated, loccountrycode, locstatecode, loccityid)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+			 ON CONFLICT DO NOTHING`,
+			sid.Int64(), time.Now(), time.Now(), name, "", 0, 0, "", 0, "", "", 0))
+	}
 }
 
 func queryOverall(t *testing.T, repo stats.Repository, bucket uint32, timeBucket stats.TimeBucket, stamp time.Time) map[steamid.SteamID]stats.OverallStats {
@@ -176,7 +213,7 @@ func TestGlobalStatsAcrossBucketsAndTime(t *testing.T) {
 	}
 
 	repo := stats.NewRepository(testFixture.Database)
-	st := stats.New(repo, maps.New(maps.NewRepository(testFixture.Database)))
+	statSvc := stats.New(repo, maps.New(maps.NewRepository(testFixture.Database)))
 
 	// Mon 2026-09-07, Tue 2026-09-08 (same ISO week, same month) and Sat
 	// 2026-08-15 (different week and month).
@@ -184,13 +221,13 @@ func TestGlobalStatsAcrossBucketsAndTime(t *testing.T) {
 	day2 := time.Date(2026, 9, 8, 12, 0, 0, 0, time.UTC)
 	day3 := time.Date(2026, 8, 15, 12, 0, 0, 0, time.UTC)
 
-	importDemoAt(t, testFixture, st, serverA.ServerID, &demo, day1)
-	importDemoAt(t, testFixture, st, serverA.ServerID, &demo, day2)
-	importDemoAt(t, testFixture, st, serverA.ServerID, &demo, day3)
-	importDemoAt(t, testFixture, st, serverB.ServerID, &demo, day1)
+	importDemoAt(t, testFixture, statSvc, serverA.ServerID, &demo, day1)
+	importDemoAt(t, testFixture, statSvc, serverA.ServerID, &demo, day2)
+	importDemoAt(t, testFixture, statSvc, serverA.ServerID, &demo, day3)
+	importDemoAt(t, testFixture, statSvc, serverB.ServerID, &demo, day1)
 
 	// Exercise the same path as the daily scheduler and admin RefreshStats RPC.
-	require.NoError(t, st.RefreshViews(ctx))
+	require.NoError(t, statSvc.RefreshViews(ctx))
 
 	expected := sumDemoPlayers(&demo)
 	require.NotEmpty(t, expected)
@@ -218,6 +255,7 @@ func TestGlobalStatsAcrossBucketsAndTime(t *testing.T) {
 				out[sid] = struct{}{}
 			}
 		}
+
 		return out
 	}
 	topKills := topBy(func(s *demoPlayerSums) uint64 { return s.kills })
@@ -252,13 +290,13 @@ func TestGlobalStatsAcrossBucketsAndTime(t *testing.T) {
 	assertBucket(queryOverall(t, repo, 1, stats.TimeBucketMonthly, day1), 2, "monthly bucket1 september")
 	assertBucket(queryOverall(t, repo, 1, stats.TimeBucketMonthly, day3), 1, "monthly bucket1 august")
 
-	// Yearly + alltime aggregate everything in the bucket.
+	// Yearly + all-time aggregate everything in the bucket.
 	assertBucket(queryOverall(t, repo, 1, stats.TimeBucketYearly, day1), 3, "yearly bucket1")
-	assertBucket(queryOverall(t, repo, 1, stats.TimeBucketAlltime, day1), 3, "alltime bucket1")
+	assertBucket(queryOverall(t, repo, 1, stats.TimeBucketAlltime, day1), 3, "all-time bucket1")
 
 	// Bucket isolation: serverB's import lives in bucket 2 only.
 	assertBucket(queryOverall(t, repo, 2, stats.TimeBucketDaily, day1), 1, "daily bucket2 day1")
-	assertBucket(queryOverall(t, repo, 2, stats.TimeBucketAlltime, day1), 1, "alltime bucket2")
+	assertBucket(queryOverall(t, repo, 2, stats.TimeBucketAlltime, day1), 1, "all-time bucket2")
 
 	// Ranks are partitioned per (bucket, period): each bucket crowns its own
 	// rank 1 for the same top player.
@@ -272,7 +310,7 @@ func TestGlobalStatsAcrossBucketsAndTime(t *testing.T) {
 	}
 
 	// Kills and Healing leaderboards rank by their own metric, not points.
-	for _, tc := range []struct {
+	for _, testCase := range []struct {
 		name    string
 		variant stats.Variant
 		tops    map[steamid.SteamID]struct{}
@@ -281,13 +319,13 @@ func TestGlobalStatsAcrossBucketsAndTime(t *testing.T) {
 		{"healing", stats.VariantHealing, topHealing},
 	} {
 		rows, _, errRank := repo.Query(ctx, stats.Opts{
-			StatsBucketID: 1, Variant: tc.variant, TimeBucket: stats.TimeBucketAlltime,
+			StatsBucketID: 1, Variant: testCase.variant, TimeBucket: stats.TimeBucketAlltime,
 		})
 		require.NoError(t, errRank)
 		require.NotEmpty(t, rows)
 		first, ok := rows[0].(stats.OverallStats)
 		require.True(t, ok)
-		require.Contains(t, tc.tops, first.SteamID, "%s leaderboard must crown a top player", tc.name)
+		require.Contains(t, testCase.tops, first.SteamID, "%s leaderboard must crown a top player", testCase.name)
 		require.Equal(t, uint64(1), first.Rank)
 	}
 
@@ -322,20 +360,16 @@ func TestImportNewParserStats(t *testing.T) {
 	victimID := steamid.New("[U:1:87654321]")
 	require.True(t, victimID.Valid())
 
-	for _, person := range []struct {
-		id   steamid.SteamID
-		name string
-	}{
-		{steamID, "NewStats"},
-		{victimID, "Victim"},
-	} {
-		require.NoError(t, testFixture.Database.Exec(ctx,
-			`INSERT INTO person (steam_id, created_on, updated_on, personaname, avatarhash, profilestate, personastate,
-			                    realname, timecreated, loccountrycode, locstatecode, loccityid)
-			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-			 ON CONFLICT DO NOTHING`,
-			person.id.Int64(), time.Now(), time.Now(), person.name, "", 0, 0, "", 0, "", "", 0))
+	fillerIDs, fillerPlayers := fillerTestPlayers(5, 1000, 5000)
+
+	persons := map[steamid.SteamID]string{
+		steamID:  "NewStats",
+		victimID: "Victim",
 	}
+	for i, id := range fillerIDs {
+		persons[id] = fmt.Sprintf("Filler%d", i)
+	}
+	insertTestPersons(ctx, t, testFixture.Database, persons)
 
 	var demoID int32
 	require.NoError(t, testFixture.Database.QueryRow(ctx,
@@ -387,7 +421,7 @@ func TestImportNewParserStats(t *testing.T) {
 				Winner: "red", Time: 300,
 				Mvps:    []string{string(steamID.Steam3())},
 				Winners: []string{string(steamID.Steam3())},
-				Players: []demoparse.PlayerSummary{player},
+				Players: append([]demoparse.PlayerSummary{player}, fillerPlayers...),
 			},
 		},
 		Events: []demoparse.MatchEvent{
@@ -421,9 +455,17 @@ func TestImportNewParserStats(t *testing.T) {
 
 	match, errMatch := repo.Match(ctx, *matchID)
 	require.NoError(t, errMatch)
-	require.Len(t, match.Players, 1)
+	require.Len(t, match.Players, 6)
 
-	got := match.Players[0]
+	var got stats.MatchOverallStatsRound
+	for _, player := range match.Players {
+		if player.SteamID.Equal(steamID) {
+			got = player
+
+			break
+		}
+	}
+	require.True(t, got.SteamID.Equal(steamID))
 	require.Equal(t, "NewStats", got.Personaname)
 	require.Equal(t, uint64(10), got.Kills)
 	require.Equal(t, uint64(500), got.Healing)
@@ -467,10 +509,15 @@ func TestImportNewParserStats(t *testing.T) {
 
 	require.Len(t, match.Kills, 2)
 	requireMatchKills(t, match, steamID, victimID)
+	requireNewParserStatsViews(ctx, t, testFixture.Database, repo, steamID)
+}
+
+func requireNewParserStatsViews(ctx context.Context, t *testing.T, db database.Database, repo stats.Repository, steamID steamid.SteamID) {
+	t.Helper()
 
 	// Exercise the allow-listed concurrent refresh path used by the daily job.
-	require.NoError(t, testFixture.Database.RefreshMaterializedView(ctx, "stats_summary_daily_overall_view"))
-	require.NoError(t, testFixture.Database.RefreshMaterializedView(ctx, "stats_summary_daily_variants_view"))
+	require.NoError(t, db.RefreshMaterializedView(ctx, "stats_summary_daily_overall_view"))
+	require.NoError(t, db.RefreshMaterializedView(ctx, "stats_summary_daily_variants_view"))
 
 	overallRows, _, errOverall := repo.Query(ctx, stats.Opts{
 		StatsBucketID: 1, TimeBucket: stats.TimeBucketDaily,
@@ -559,20 +606,17 @@ func TestImportKillRoundAndPositions(t *testing.T) {
 	require.True(t, killerID.Valid())
 	require.True(t, victimID.Valid())
 
-	for _, person := range []struct {
-		id   steamid.SteamID
-		name string
-	}{
-		{killerID, "Killer"},
-		{victimID, "Victim"},
-	} {
-		require.NoError(t, testFixture.Database.Exec(ctx,
-			`INSERT INTO person (steam_id, created_on, updated_on, personaname, avatarhash, profilestate, personastate,
-			                    realname, timecreated, loccountrycode, locstatecode, loccityid)
-			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-			 ON CONFLICT DO NOTHING`,
-			person.id.Int64(), time.Now(), time.Now(), person.name, "", 0, 0, "", 0, "", "", 0))
+	_, killerFillersRound1 := fillerTestPlayers(5, 1000, 1500)
+	_, killerFillersRound2 := fillerTestPlayers(5, 2000, 2500)
+
+	persons := map[steamid.SteamID]string{
+		killerID: "Killer",
+		victimID: "Victim",
 	}
+	for i, filler := range killerFillersRound1 {
+		persons[steamid.New(filler.SteamID)] = fmt.Sprintf("Filler%d", i)
+	}
+	insertTestPersons(ctx, t, testFixture.Database, persons)
 
 	var demoID int32
 	require.NoError(t, testFixture.Database.QueryRow(ctx,
@@ -586,21 +630,21 @@ func TestImportKillRoundAndPositions(t *testing.T) {
 		Rounds: []demoparse.RoundSummary{
 			{
 				Winner: "red", Time: 300,
-				Players: []demoparse.PlayerSummary{
+				Players: append([]demoparse.PlayerSummary{
 					{
 						Name: "Killer", SteamID: string(killerID.Steam3()), Team: "red",
 						TickStart: 1000, TickEnd: 1500,
 					},
-				},
+				}, killerFillersRound1...),
 			},
 			{
 				Winner: "blu", Time: 300,
-				Players: []demoparse.PlayerSummary{
+				Players: append([]demoparse.PlayerSummary{
 					{
 						Name: "Killer", SteamID: string(killerID.Steam3()), Team: "blu",
 						TickStart: 2000, TickEnd: 2500,
 					},
-				},
+				}, killerFillersRound2...),
 			},
 		},
 		Events: []demoparse.MatchEvent{
@@ -756,21 +800,17 @@ func TestImportMatchEvents(t *testing.T) {
 	require.True(t, victimID.Valid())
 	require.True(t, engineerID.Valid())
 
-	for _, person := range []struct {
-		id   steamid.SteamID
-		name string
-	}{
-		{killerID, "Killer"},
-		{victimID, "Victim"},
-		{engineerID, "Engineer"},
-	} {
-		require.NoError(t, testFixture.Database.Exec(ctx,
-			`INSERT INTO person (steam_id, created_on, updated_on, personaname, avatarhash, profilestate, personastate,
-			                    realname, timecreated, loccountrycode, locstatecode, loccityid)
-			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-			 ON CONFLICT DO NOTHING`,
-			person.id.Int64(), time.Now(), time.Now(), person.name, "", 0, 0, "", 0, "", "", 0))
+	fillerIDs, fillerPlayers := fillerTestPlayers(4, 1000, 5000)
+
+	persons := map[steamid.SteamID]string{
+		killerID:   "Killer",
+		victimID:   "Victim",
+		engineerID: "Engineer",
 	}
+	for i, id := range fillerIDs {
+		persons[id] = fmt.Sprintf("Filler%d", i)
+	}
+	insertTestPersons(ctx, t, testFixture.Database, persons)
 
 	var demoID int32
 	require.NoError(t, testFixture.Database.QueryRow(ctx,
@@ -784,7 +824,7 @@ func TestImportMatchEvents(t *testing.T) {
 		Rounds: []demoparse.RoundSummary{
 			{
 				Winner: "red", Time: 300,
-				Players: []demoparse.PlayerSummary{
+				Players: append([]demoparse.PlayerSummary{
 					{
 						Name: "Killer", SteamID: string(killerID.Steam3()), Team: "red",
 						TickStart: 1000, TickEnd: 5000,
@@ -793,7 +833,7 @@ func TestImportMatchEvents(t *testing.T) {
 						Name: "Engineer", SteamID: string(engineerID.Steam3()), Team: "red",
 						TickStart: 1000, TickEnd: 5000,
 					},
-				},
+				}, fillerPlayers...),
 			},
 		},
 		Events: []demoparse.MatchEvent{
@@ -843,33 +883,55 @@ func TestImportMatchEvents(t *testing.T) {
 	require.NoError(t, errImport)
 	require.NotNil(t, matchID)
 
-	rows, err := testFixture.Database.Query(ctx,
+	events := queryMatchEventTestRows(ctx, t, testFixture.Database, *matchID)
+	requireMatchEventRows(t, events, killerID, victimID, engineerID)
+
+	match, errMatch := repo.Match(ctx, *matchID)
+	require.NoError(t, errMatch)
+	require.Len(t, match.Kills, 1)
+	require.True(t, match.Kills[0].VictimSteamID.Equal(victimID))
+
+	byType := map[string]int{}
+	for _, event := range match.Events {
+		byType[event.Type]++
+	}
+	require.Equal(t, map[string]int{
+		"kill": 2, "building_built": 1, "capture_started": 1,
+		"killstreak_ended": 1, "setup_finished": 1,
+	}, byType)
+}
+
+// matchEventTestRow mirrors the match_event projection asserted below.
+type matchEventTestRow struct {
+	eventType string
+	tick      int
+	actor     *int64
+	target    *int64
+	weapon    *string
+	building  *string
+	x         *float64
+	y         *float64
+	z         *float64
+	details   string
+}
+
+func queryMatchEventTestRows(ctx context.Context, t *testing.T, db database.Database, matchID uuid.UUID) []matchEventTestRow {
+	t.Helper()
+
+	rows, err := db.Query(ctx,
 		`SELECT event_type, tick, actor_steam_id, target_steam_id, weapon, building,
 			ST_X(event_position), ST_Y(event_position), ST_Z(event_position),
 			details
 		FROM match_event
 		WHERE match_id = $1
 		ORDER BY tick`,
-		*matchID)
+		matchID)
 	require.NoError(t, err)
 	defer rows.Close()
 
-	type eventRow struct {
-		eventType string
-		tick      int
-		actor     *int64
-		target    *int64
-		weapon    *string
-		building  *string
-		x         *float64
-		y         *float64
-		z         *float64
-		details   string
-	}
-
-	var events []eventRow
+	var events []matchEventTestRow
 	for rows.Next() {
-		var event eventRow
+		var event matchEventTestRow
 		require.NoError(t, rows.Scan(
 			&event.eventType, &event.tick, &event.actor, &event.target,
 			&event.weapon, &event.building,
@@ -879,6 +941,13 @@ func TestImportMatchEvents(t *testing.T) {
 		events = append(events, event)
 	}
 	require.NoError(t, rows.Err())
+
+	return events
+}
+
+func requireMatchEventRows(t *testing.T, events []matchEventTestRow, killerID steamid.SteamID, victimID steamid.SteamID, engineerID steamid.SteamID) {
+	t.Helper()
+
 	require.Len(t, events, 6)
 
 	require.Equal(t, "kill", events[0].eventType)
@@ -903,7 +972,7 @@ func TestImportMatchEvents(t *testing.T) {
 		Owner    string `json:"owner"`
 		Building string `json:"building"`
 		Level    int    `json:"level"`
-		IsMini   bool   `json:"is_mini"`
+		IsMini   bool   `json:"is_mini"` //nolint:tagliatelle // mirrors parser snake_case JSON.
 		Pos      struct {
 			X float64 `json:"x"`
 			Y float64 `json:"y"`
@@ -922,9 +991,9 @@ func TestImportMatchEvents(t *testing.T) {
 
 	var captureDetails struct {
 		Cp      int      `json:"cp"`
-		CpName  string   `json:"cp_name"`
+		CpName  string   `json:"cp_name"` //nolint:tagliatelle // mirrors parser snake_case JSON.
 		Cappers []string `json:"cappers"`
-		CapTime float64  `json:"cap_time"`
+		CapTime float64  `json:"cap_time"` //nolint:tagliatelle // mirrors parser snake_case JSON.
 	}
 	require.NoError(t, stdjson.Unmarshal([]byte(events[2].details), &captureDetails))
 	require.Equal(t, 2, captureDetails.Cp)
@@ -944,20 +1013,6 @@ func TestImportMatchEvents(t *testing.T) {
 
 	require.Equal(t, "kill", events[5].eventType)
 	require.Nil(t, events[5].target)
-
-	match, errMatch := repo.Match(ctx, *matchID)
-	require.NoError(t, errMatch)
-	require.Len(t, match.Kills, 1)
-	require.True(t, match.Kills[0].VictimSteamID.Equal(victimID))
-
-	byType := map[string]int{}
-	for _, event := range match.Events {
-		byType[event.Type]++
-	}
-	require.Equal(t, map[string]int{
-		"kill": 2, "building_built": 1, "capture_started": 1,
-		"killstreak_ended": 1, "setup_finished": 1,
-	}, byType)
 }
 
 // TestImportSkipsUnknownMatchEvents ensures demos containing event types from
@@ -976,20 +1031,16 @@ func TestImportSkipsUnknownMatchEvents(t *testing.T) {
 	require.True(t, killerID.Valid())
 	require.True(t, victimID.Valid())
 
-	for _, person := range []struct {
-		id   steamid.SteamID
-		name string
-	}{
-		{killerID, "Killer"},
-		{victimID, "Victim"},
-	} {
-		require.NoError(t, testFixture.Database.Exec(ctx,
-			`INSERT INTO person (steam_id, created_on, updated_on, personaname, avatarhash, profilestate, personastate,
-			                    realname, timecreated, loccountrycode, locstatecode, loccityid)
-			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-			 ON CONFLICT DO NOTHING`,
-			person.id.Int64(), time.Now(), time.Now(), person.name, "", 0, 0, "", 0, "", "", 0))
+	fillerIDs, fillerPlayers := fillerTestPlayers(5, 1000, 5000)
+
+	persons := map[steamid.SteamID]string{
+		killerID: "Killer",
+		victimID: "Victim",
 	}
+	for i, id := range fillerIDs {
+		persons[id] = fmt.Sprintf("Filler%d", i)
+	}
+	insertTestPersons(ctx, t, testFixture.Database, persons)
 
 	var demoID int32
 	require.NoError(t, testFixture.Database.QueryRow(ctx,
@@ -1003,12 +1054,12 @@ func TestImportSkipsUnknownMatchEvents(t *testing.T) {
 		Rounds: []demoparse.RoundSummary{
 			{
 				Winner: "red", Time: 300,
-				Players: []demoparse.PlayerSummary{
+				Players: append([]demoparse.PlayerSummary{
 					{
 						Name: "Killer", SteamID: string(killerID.Steam3()), Team: "red",
 						TickStart: 1000, TickEnd: 5000,
 					},
-				},
+				}, fillerPlayers...),
 			},
 		},
 		Events: []demoparse.MatchEvent{
@@ -1034,4 +1085,74 @@ func TestImportSkipsUnknownMatchEvents(t *testing.T) {
 	require.NoError(t, testFixture.Database.QueryRow(ctx,
 		`SELECT count(*) FROM match_event WHERE match_id = $1`, *matchID).Scan(&count))
 	require.Equal(t, 1, count)
+}
+
+func validTestDemo(duration float64, numPlayers int) *demoparse.Demo {
+	_, players := fillerTestPlayers(numPlayers, 1000, 5000)
+
+	return &demoparse.Demo{
+		Filename: "validate.dem", DemoType: demoparse.HL2Demo,
+		Server: "test", Map: "cp_process_final", Game: "tf",
+		Duration: duration,
+		Rounds: []demoparse.RoundSummary{
+			{Winner: "red", Time: 300, Players: players},
+		},
+	}
+}
+
+func TestValidateDemo(t *testing.T) {
+	require.NoError(t, stats.ValidateDemo(validTestDemo(3600, 6)))
+	require.NoError(t, stats.ValidateDemo(validTestDemo(7200, 6)))
+	require.Equal(t, 6, stats.ValidPlayerCount(validTestDemo(3600, 6)))
+
+	tooFew := validTestDemo(3600, 5)
+	require.ErrorIs(t, stats.ValidateDemo(tooFew), stats.ErrMatchFiltered)
+	require.ErrorIs(t, stats.ValidateDemo(tooFew), stats.ErrNotEnoughPlayers)
+
+	tooLong := validTestDemo(7201, 6)
+	require.ErrorIs(t, stats.ValidateDemo(tooLong), stats.ErrMatchFiltered)
+	require.ErrorIs(t, stats.ValidateDemo(tooLong), stats.ErrMatchTooLong)
+
+	fake := validTestDemo(3600, 5)
+	fake.Rounds[0].Players = append(fake.Rounds[0].Players,
+		demoparse.PlayerSummary{Name: "BOT", SteamID: "BOT", Team: "red"},
+		demoparse.PlayerSummary{Name: "TV", SteamID: "[U:1:90000999]", Team: "red", IsHlTv: true},
+		demoparse.PlayerSummary{Name: "Replay", SteamID: "[U:1:90000998]", Team: "red", IsReplay: true},
+		demoparse.PlayerSummary{Name: "Fake", SteamID: "[U:1:90000997]", Team: "red", IsFakePlayer: true},
+	)
+	require.Equal(t, 5, stats.ValidPlayerCount(fake))
+	require.ErrorIs(t, stats.ValidateDemo(fake), stats.ErrNotEnoughPlayers)
+}
+
+func TestImportRejectsFilteredDemos(t *testing.T) {
+	testFixture := tests.NewFixture()
+	defer testFixture.Close()
+
+	ctx := t.Context()
+	server := testFixture.CreateTestServer(ctx)
+
+	repo := stats.NewRepository(testFixture.Database)
+	statSvc := stats.New(repo, maps.New(maps.NewRepository(testFixture.Database)))
+
+	newDemoID := func() int32 {
+		var demoID int32
+		require.NoError(t, testFixture.Database.QueryRow(ctx,
+			`INSERT INTO demo (server_id, title, map_name, created_on) VALUES ($1, $2, $3, $4) RETURNING demo_id`,
+			server.ServerID, "filtered.dem", "cp_process_final", time.Now()).Scan(&demoID))
+
+		return demoID
+	}
+
+	_, errFew := statSvc.Import(ctx, server.ServerID, newDemoID(), validTestDemo(3600, 5), time.Now())
+	require.ErrorIs(t, errFew, stats.ErrMatchFiltered)
+	require.ErrorIs(t, errFew, stats.ErrNotEnoughPlayers)
+
+	_, errLong := statSvc.Import(ctx, server.ServerID, newDemoID(), validTestDemo(7201, 6), time.Now())
+	require.ErrorIs(t, errLong, stats.ErrMatchFiltered)
+	require.ErrorIs(t, errLong, stats.ErrMatchTooLong)
+
+	var count int
+	require.NoError(t, testFixture.Database.QueryRow(ctx,
+		`SELECT count(*) FROM match`).Scan(&count))
+	require.Equal(t, 0, count)
 }

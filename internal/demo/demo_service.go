@@ -105,6 +105,10 @@ func (s Service) UploadDemo(ctx context.Context, req *v1.UploadDemoRequest) (*v1
 		Content:  req.GetContents(),
 	}, req.GetForce())
 	if errUpload != nil {
+		if errors.Is(errUpload, stats.ErrMatchFiltered) {
+			return nil, connect.NewError(connect.CodeFailedPrecondition, errUpload)
+		}
+
 		if errors.Is(errUpload, ErrDemoFilename) || errors.Is(errUpload, ErrServerValidate) ||
 			errors.Is(errUpload, asset.ErrAssetTooLarge) || errors.Is(errUpload, stats.ErrInvalidState) ||
 			errors.Is(errUpload, demoparse.ErrDemoSubmit) {

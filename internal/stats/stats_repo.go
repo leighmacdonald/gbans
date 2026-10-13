@@ -89,7 +89,7 @@ func (o Opts) view() string {
 }
 
 // dateConstraint restricts rows to the time-bucket period containing
-// TimeStamp. Alltime views carry no date_bucket and are never constrained,
+// TimeStamp. All-time views carry no date_bucket and are never constrained,
 // and a zero TimeStamp disables filtering (used by tests/backfills).
 func (o Opts) dateConstraint() sq.Sqlizer { //nolint:ireturn
 	if o.TimeStamp.IsZero() {
@@ -986,43 +986,105 @@ func pointWKT(pos *demoparse.Position) *string {
 func matchEventRowFromEvent(event demoparse.MatchEvent) (matchEventRow, error) {
 	row := matchEventRow{eventType: string(event.Type)}
 
-	marshal := func(payload any) ([]byte, error) {
-		if payload == nil {
-			return []byte("{}"), nil
-		}
-
-		return json.Marshal(payload)
+	payload, err := eventRowPayload(event, &row)
+	if err != nil {
+		return row, err
 	}
 
-	var (
-		payload any
-		err     error
-	)
+	details, err := marshalEventPayload(payload)
+	if err != nil {
+		return row, err
+	}
 
+	row.details = details
+
+	return row, nil
+}
+
+func marshalEventPayload(payload any) ([]byte, error) {
+	if payload == nil {
+		return []byte("{}"), nil
+	}
+
+	details, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("marshal match event payload: %w", err)
+	}
+
+	return details, nil
+}
+
+// eventRowPayload selects the storable payload for an event and records its
+// indexed columns on row. Unknown types are an error.
+func eventRowPayload(event demoparse.MatchEvent, row *matchEventRow) (any, error) {
 	switch event.Type {
 	case demoparse.MatchEventKill:
-		kill := event.Kill
-		if kill == nil {
-			kill = &demoparse.KillEvent{}
-		}
-		row.actor = eventSteamID(kill.Killer)
-		row.target = eventSteamID(kill.Victim)
-		row.weapon = optionalEventString(kill.Weapon)
-		row.killerPos = kill.KillerPos
-		row.victimPos = kill.VictimPos
-		payload = kill
+		return killEventPayload(event, row), nil
+	case demoparse.MatchEventCaptureStarted,
+		demoparse.MatchEventCapture,
+		demoparse.MatchEventCaptureBlocked,
+		demoparse.MatchEventCaptureBroken:
+		return captureEventPayload(event, row), nil
+	case demoparse.MatchEventBuildingBuilt,
+		demoparse.MatchEventBuildingDestroyed,
+		demoparse.MatchEventBuildingUpgraded,
+		demoparse.MatchEventBuildingCarried,
+		demoparse.MatchEventBuildingDropped,
+		demoparse.MatchEventBuildingRemoved,
+		demoparse.MatchEventBuildingDetonated,
+		demoparse.MatchEventSapperPlaced:
+		return buildingEventPayload(event, row), nil
+	case demoparse.MatchEventRoundStarted,
+		demoparse.MatchEventRoundWon,
+		demoparse.MatchEventStalemate,
+		demoparse.MatchEventGameOver,
+		demoparse.MatchEventSuddenDeathBegin,
+		demoparse.MatchEventSuddenDeathEnd,
+		demoparse.MatchEventOvertimeBegin,
+		demoparse.MatchEventOvertimeEnd,
+		demoparse.MatchEventSetupFinished:
+		return roundEventPayload(event), nil
+	case demoparse.MatchEventUberDropped,
+		demoparse.MatchEventUberDeployed,
+		demoparse.MatchEventFlagEvent,
+		demoparse.MatchEventFlagCaptured,
+		demoparse.MatchEventKillstreakEnded:
+		return uberFlagEventPayload(event, row), nil
+	default:
+		return nil, fmt.Errorf("%w: %q", ErrUnknownMatchEventType, event.Type)
+	}
+}
+
+func killEventPayload(event demoparse.MatchEvent, row *matchEventRow) *demoparse.KillEvent {
+	kill := event.Kill
+	if kill == nil {
+		kill = &demoparse.KillEvent{}
+	}
+	row.actor = eventSteamID(kill.Killer)
+	row.target = eventSteamID(kill.Victim)
+	row.weapon = optionalEventString(kill.Weapon)
+	row.killerPos = kill.KillerPos
+	row.victimPos = kill.VictimPos
+
+	return kill
+}
+
+func captureEventPayload(event demoparse.MatchEvent, row *matchEventRow) any {
+	switch event.Type {
 	case demoparse.MatchEventCaptureStarted:
-		cap := event.CaptureStarted
-		if cap == nil {
-			cap = &demoparse.CaptureStartedEvent{}
+		started := event.CaptureStarted
+		if started == nil {
+			started = &demoparse.CaptureStartedEvent{}
 		}
-		payload = cap
+
+		return started
 	case demoparse.MatchEventCapture:
-		cap := event.Capture
-		if cap == nil {
-			cap = &demoparse.CaptureEvent{}
+		capture := event.Capture
+		if capture == nil {
+			capture = &demoparse.CaptureEvent{}
 		}
-		payload = cap
+
+		return capture
 	case demoparse.MatchEventCaptureBlocked:
 		blocked := event.CaptureBlocked
 		if blocked == nil {
@@ -1030,13 +1092,20 @@ func matchEventRowFromEvent(event demoparse.MatchEvent) (matchEventRow, error) {
 		}
 		row.actor = eventSteamID(blocked.Blocker)
 		row.target = eventSteamID(blocked.Victim)
-		payload = blocked
-	case demoparse.MatchEventCaptureBroken:
+
+		return blocked
+	default:
 		broken := event.CaptureBroken
 		if broken == nil {
 			broken = &demoparse.CaptureBrokenEvent{}
 		}
-		payload = broken
+
+		return broken
+	}
+}
+
+func buildingEventPayload(event demoparse.MatchEvent, row *matchEventRow) any {
+	switch event.Type {
 	case demoparse.MatchEventBuildingBuilt:
 		built := event.BuildingBuilt
 		if built == nil {
@@ -1045,7 +1114,8 @@ func matchEventRowFromEvent(event demoparse.MatchEvent) (matchEventRow, error) {
 		row.actor = eventSteamID(built.Owner)
 		row.building = optionalEventBuilding(built.Building)
 		row.eventPos = &built.Pos
-		payload = built
+
+		return built
 	case demoparse.MatchEventBuildingDestroyed:
 		destroyed := event.BuildingDestroyed
 		if destroyed == nil {
@@ -1057,17 +1127,8 @@ func matchEventRowFromEvent(event demoparse.MatchEvent) (matchEventRow, error) {
 		row.weapon = optionalEventString(destroyed.Weapon)
 		row.building = optionalEventBuilding(destroyed.Building)
 		row.eventPos = destroyed.Pos
-		payload = destroyed
-	case demoparse.MatchEventBuildingUpgraded:
-		payload = lifecycleOrEmpty(event.BuildingUpgraded, &row)
-	case demoparse.MatchEventBuildingCarried:
-		payload = lifecycleOrEmpty(event.BuildingCarried, &row)
-	case demoparse.MatchEventBuildingDropped:
-		payload = lifecycleOrEmpty(event.BuildingDropped, &row)
-	case demoparse.MatchEventBuildingRemoved:
-		payload = lifecycleOrEmpty(event.BuildingRemoved, &row)
-	case demoparse.MatchEventBuildingDetonated:
-		payload = lifecycleOrEmpty(event.BuildingDetonated, &row)
+
+		return destroyed
 	case demoparse.MatchEventSapperPlaced:
 		sapper := event.SapperPlaced
 		if sapper == nil {
@@ -1076,37 +1137,65 @@ func matchEventRowFromEvent(event demoparse.MatchEvent) (matchEventRow, error) {
 		row.actor = eventSteamID(sapper.Spy)
 		row.target = eventSteamID(sapper.Owner)
 		row.building = optionalEventBuilding(sapper.Building)
-		payload = sapper
+
+		return sapper
+	default:
+		return buildingLifecyclePayload(event, row)
+	}
+}
+
+func buildingLifecyclePayload(event demoparse.MatchEvent, row *matchEventRow) *demoparse.BuildingLifecycleEvent {
+	var lifecycle *demoparse.BuildingLifecycleEvent
+
+	switch event.Type {
+	case demoparse.MatchEventBuildingUpgraded:
+		lifecycle = event.BuildingUpgraded
+	case demoparse.MatchEventBuildingCarried:
+		lifecycle = event.BuildingCarried
+	case demoparse.MatchEventBuildingDropped:
+		lifecycle = event.BuildingDropped
+	case demoparse.MatchEventBuildingRemoved:
+		lifecycle = event.BuildingRemoved
+	default:
+		lifecycle = event.BuildingDetonated
+	}
+
+	return lifecycleOrEmpty(lifecycle, row)
+}
+
+func roundEventPayload(event demoparse.MatchEvent) any {
+	switch event.Type {
 	case demoparse.MatchEventRoundStarted:
-		started := event.RoundStarted
-		if started == nil {
-			started = &demoparse.RoundStartedEvent{}
+		if event.RoundStarted == nil {
+			return &demoparse.RoundStartedEvent{}
 		}
-		payload = started
+
+		return event.RoundStarted
 	case demoparse.MatchEventRoundWon:
-		won := event.RoundWon
-		if won == nil {
-			won = &demoparse.RoundWonEvent{}
+		if event.RoundWon == nil {
+			return &demoparse.RoundWonEvent{}
 		}
-		payload = won
+
+		return event.RoundWon
 	case demoparse.MatchEventStalemate:
-		stalemate := event.Stalemate
-		if stalemate == nil {
-			stalemate = &demoparse.StalemateEvent{}
+		if event.Stalemate == nil {
+			return &demoparse.StalemateEvent{}
 		}
-		payload = stalemate
+
+		return event.Stalemate
 	case demoparse.MatchEventGameOver:
-		over := event.GameOver
-		if over == nil {
-			over = &demoparse.GameOverEvent{}
+		if event.GameOver == nil {
+			return &demoparse.GameOverEvent{}
 		}
-		payload = over
-	case demoparse.MatchEventSuddenDeathBegin,
-		demoparse.MatchEventSuddenDeathEnd,
-		demoparse.MatchEventOvertimeBegin,
-		demoparse.MatchEventOvertimeEnd,
-		demoparse.MatchEventSetupFinished:
-		payload = nil
+
+		return event.GameOver
+	default:
+		return nil
+	}
+}
+
+func uberFlagEventPayload(event demoparse.MatchEvent, row *matchEventRow) any {
+	switch event.Type {
 	case demoparse.MatchEventUberDropped:
 		dropped := event.UberDropped
 		if dropped == nil {
@@ -1114,7 +1203,8 @@ func matchEventRowFromEvent(event demoparse.MatchEvent) (matchEventRow, error) {
 		}
 		row.actor = eventSteamID(dropped.Attacker)
 		row.target = eventSteamID(dropped.Medic)
-		payload = dropped
+
+		return dropped
 	case demoparse.MatchEventUberDeployed:
 		deployed := event.UberDeployed
 		if deployed == nil {
@@ -1122,7 +1212,8 @@ func matchEventRowFromEvent(event demoparse.MatchEvent) (matchEventRow, error) {
 		}
 		row.actor = eventSteamID(deployed.Medic)
 		row.target = eventSteamID(deployed.Target)
-		payload = deployed
+
+		return deployed
 	case demoparse.MatchEventFlagEvent:
 		flag := event.FlagEvent
 		if flag == nil {
@@ -1130,31 +1221,24 @@ func matchEventRowFromEvent(event demoparse.MatchEvent) (matchEventRow, error) {
 		}
 		row.actor = eventSteamID(flag.Player)
 		row.target = eventSteamID(flag.Carrier)
-		payload = flag
+
+		return flag
 	case demoparse.MatchEventFlagCaptured:
-		captured := event.FlagCaptured
-		if captured == nil {
-			captured = &demoparse.FlagCapturedEvent{}
+		if event.FlagCaptured == nil {
+			return &demoparse.FlagCapturedEvent{}
 		}
-		payload = captured
-	case demoparse.MatchEventKillstreakEnded:
+
+		return event.FlagCaptured
+	default:
 		streak := event.KillstreakEnded
 		if streak == nil {
 			streak = &demoparse.KillstreakEndedEvent{}
 		}
 		row.actor = eventSteamID(streak.Killer)
 		row.target = eventSteamID(streak.Player)
-		payload = streak
-	default:
-		return row, fmt.Errorf("%w: %q", ErrUnknownMatchEventType, event.Type)
-	}
 
-	row.details, err = marshal(payload)
-	if err != nil {
-		return row, err
+		return streak
 	}
-
-	return row, nil
 }
 
 func lifecycleOrEmpty(lifecycle *demoparse.BuildingLifecycleEvent, row *matchEventRow) *demoparse.BuildingLifecycleEvent {

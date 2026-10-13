@@ -17,14 +17,20 @@ import (
 )
 
 const (
-	MinPlayers = 1
+	MinPlayers = 6
 	MinDuraion = 300
+	// MaxMatchDuration caps the demo header duration (seconds) accepted for
+	// match creation. Longer demos are idle/recordings, not real matches.
+	MaxMatchDuration = 2 * time.Hour
 )
 
 var (
-	ErrInvalidState  = errors.New("invalid demo state")
-	ErrInvalidBucket = errors.New("invalid stat bucket")
-	ErrJob           = errors.New("stat update job error")
+	ErrInvalidState     = errors.New("invalid demo state")
+	ErrInvalidBucket    = errors.New("invalid stat bucket")
+	ErrJob              = errors.New("stat update job error")
+	ErrMatchFiltered    = errors.New("match filtered")
+	ErrNotEnoughPlayers = errors.New("not enough players")
+	ErrMatchTooLong     = errors.New("match duration too long")
 )
 
 type Stats struct {
@@ -232,7 +238,7 @@ func (s Stats) StartRefreshHandler(ctx context.Context) error {
 // StatViews lists every materialized view backing QueryStats, refreshed by
 // the daily job. Keep in sync with database.validViewNames (minus
 // stats_weapons_view, which is only refreshed here for convenience).
-var StatViews = []string{
+var StatViews = []string{ //nolint:gochecknoglobals // registry of materialized views.
 	"stats_summary_daily_overall_view",
 	"stats_summary_daily_variants_view",
 	"stats_summary_weekly_overall_view",
@@ -241,8 +247,8 @@ var StatViews = []string{
 	"stats_summary_monthly_variants_view",
 	"stats_summary_yearly_overall_view",
 	"stats_summary_yearly_variants_view",
-	"stats_summary_alltime_overall_view",
-	"stats_summary_alltime_variants_view",
+	"stats_summary_alltime_overall_view",  //nolint:misspell // name must match the database view.
+	"stats_summary_alltime_variants_view", //nolint:misspell // name must match the database view.
 	"stats_weapons_view",
 }
 
@@ -297,6 +303,48 @@ func (s Stats) Matches(ctx context.Context, opts MatchesOpts) ([]Match, uint64, 
 	return s.repo.Matches(ctx, opts)
 }
 
+// ValidPlayerCount returns the number of distinct real player SteamIDs
+// referenced across all demo rounds, excluding BOTs, HLTV/SourceTV, replays
+// and other fake players.
+func ValidPlayerCount(demo *demoparse.Demo) int {
+	seen := map[steamid.SteamID]struct{}{}
+
+	for _, round := range demo.Rounds {
+		for _, player := range round.Players {
+			if player.IsFakePlayer || player.IsHlTv || player.IsReplay {
+				continue
+			}
+
+			sid := steamid.New(player.SteamID)
+			if !sid.Valid() {
+				continue
+			}
+
+			seen[sid] = struct{}{}
+		}
+	}
+
+	return len(seen)
+}
+
+// ValidateDemo rejects demos that should never produce a match: fewer than
+// MinPlayers distinct real players, or a header duration longer than
+// MaxMatchDuration. It performs no database access so demo ingestion can call
+// it before persisting anything.
+func ValidateDemo(demo *demoparse.Demo) error {
+	if numPlayers := ValidPlayerCount(demo); numPlayers < MinPlayers {
+		return fmt.Errorf("%w: %w: got %d players, need at least %d",
+			ErrMatchFiltered, ErrNotEnoughPlayers, numPlayers, MinPlayers)
+	}
+
+	if duration := time.Duration(demo.Duration * float64(time.Second)); duration > MaxMatchDuration {
+		return fmt.Errorf("%w: %w: got %s, max %s",
+			ErrMatchFiltered, ErrMatchTooLong, duration, MaxMatchDuration)
+	}
+
+	return nil
+}
+
 func (s Stats) Import(ctx context.Context, serverID int32, demoID int32, demo *demoparse.Demo, timeStart time.Time) (*uuid.UUID, error) {
 	if demo.DemoType != demoparse.HL2Demo {
 		return nil, fmt.Errorf("%w: invalid demo type", ErrInvalidState)
@@ -310,16 +358,12 @@ func (s Stats) Import(ctx context.Context, serverID int32, demoID int32, demo *d
 		return nil, fmt.Errorf("%w: invalid file name", ErrInvalidState)
 	}
 
-	if len(demo.SteamIDs()) < MinPlayers {
-		return nil, fmt.Errorf("%w: not enough players", ErrInvalidState)
-	}
-
 	if len(demo.Rounds) == 0 {
 		return nil, fmt.Errorf("%w not enough rounds", ErrInvalidState)
 	}
 
-	if len(demo.SteamIDs()) < MinPlayers {
-		return nil, fmt.Errorf("%w: not enough players", ErrInvalidState)
+	if err := ValidateDemo(demo); err != nil {
+		return nil, err
 	}
 
 	if demo.Map == "" {

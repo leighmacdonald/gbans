@@ -333,5 +333,12 @@ export const OverallTable = ({
 		},
 	});
 
-	return <SortableTable table={overallTable} title={"Overall Match Stats"} iconLeft={<BarChartIcon />} hidePagination={true} />;
+	return (
+		<SortableTable
+			table={overallTable}
+			title={"Overall Match Stats"}
+			iconLeft={<BarChartIcon />}
+			hidePagination={true}
+		/>
+	);
 };

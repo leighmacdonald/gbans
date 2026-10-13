@@ -27,7 +27,7 @@ func TestConnectRedirect(t *testing.T) {
 
 	t.Run("redirects to steam link", func(t *testing.T) {
 		rec := httptest.NewRecorder()
-		mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/connect/"+strconv.Itoa(int(saved.ServerID)), nil))
+		mux.ServeHTTP(rec, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/connect/"+strconv.Itoa(int(saved.ServerID)), nil))
 
 		resp := rec.Result()
 		defer resp.Body.Close()
@@ -38,7 +38,7 @@ func TestConnectRedirect(t *testing.T) {
 	t.Run("invalid ids 404", func(t *testing.T) {
 		for _, target := range []string{"/connect/0", "/connect/-5", "/connect/nope", "/connect/2147483647"} {
 			rec := httptest.NewRecorder()
-			mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, target, nil))
+			mux.ServeHTTP(rec, httptest.NewRequestWithContext(t.Context(), http.MethodGet, target, nil))
 			require.Equal(t, http.StatusNotFound, rec.Result().StatusCode, target)
 		}
 	})

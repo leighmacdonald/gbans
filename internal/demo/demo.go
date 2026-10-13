@@ -219,6 +219,14 @@ func (d Demos) createFromAsset(ctx context.Context, asset *asset.Asset, serverID
 		return nil, err
 	}
 
+	// Reject demos that can never produce a match before persisting anything,
+	// so filtered uploads leave no orphan demo row behind.
+	if createStats {
+		if errValidate := stats.ValidateDemo(parsedDemo); errValidate != nil {
+			return nil, errValidate
+		}
+	}
+
 	// TODO change this data shape as we have not needed this in a long time. Only keys the are used.
 	intStats := map[string]map[string]any{}
 

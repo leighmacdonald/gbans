@@ -512,6 +512,43 @@ func eventFromProto(event *demostatsv1.GameEvent) MatchEvent {
 		out.Type = MatchEventKill
 		kill := killFromProto(kind.Kill)
 		out.Kill = &kill
+	case *demostatsv1.GameEvent_CaptureStarted,
+		*demostatsv1.GameEvent_Capture,
+		*demostatsv1.GameEvent_CaptureBlocked,
+		*demostatsv1.GameEvent_CaptureBroken:
+		captureFromProto(event.GetKind(), &out)
+	case *demostatsv1.GameEvent_BuildingBuilt,
+		*demostatsv1.GameEvent_BuildingDestroyed,
+		*demostatsv1.GameEvent_BuildingUpgraded,
+		*demostatsv1.GameEvent_BuildingCarried,
+		*demostatsv1.GameEvent_BuildingDropped,
+		*demostatsv1.GameEvent_BuildingRemoved,
+		*demostatsv1.GameEvent_BuildingDetonated,
+		*demostatsv1.GameEvent_SapperPlaced:
+		buildingFromProto(event.GetKind(), &out)
+	case *demostatsv1.GameEvent_RoundStarted,
+		*demostatsv1.GameEvent_RoundWon,
+		*demostatsv1.GameEvent_Stalemate,
+		*demostatsv1.GameEvent_GameOver,
+		*demostatsv1.GameEvent_SuddenDeathBegin,
+		*demostatsv1.GameEvent_SuddenDeathEnd,
+		*demostatsv1.GameEvent_OvertimeBegin,
+		*demostatsv1.GameEvent_OvertimeEnd,
+		*demostatsv1.GameEvent_SetupFinished:
+		roundEventFromProto(event.GetKind(), &out)
+	case *demostatsv1.GameEvent_UberDropped,
+		*demostatsv1.GameEvent_UberDeployed,
+		*demostatsv1.GameEvent_FlagEvent,
+		*demostatsv1.GameEvent_FlagCaptured,
+		*demostatsv1.GameEvent_KillstreakEnded:
+		uberFlagFromProto(event.GetKind(), &out)
+	}
+
+	return out
+}
+
+func captureFromProto(kind any, out *MatchEvent) {
+	switch kind := kind.(type) {
 	case *demostatsv1.GameEvent_CaptureStarted:
 		out.Type = MatchEventCaptureStarted
 		out.CaptureStarted = &CaptureStartedEvent{
@@ -538,6 +575,11 @@ func eventFromProto(event *demostatsv1.GameEvent) MatchEvent {
 			Cp: int(kind.CaptureBroken.GetCp()), CpName: kind.CaptureBroken.GetCpName(),
 			TimeRemaining: float64(kind.CaptureBroken.GetTimeRemaining()),
 		}
+	}
+}
+
+func buildingFromProto(kind any, out *MatchEvent) {
+	switch kind := kind.(type) {
 	case *demostatsv1.GameEvent_BuildingBuilt:
 		out.Type = MatchEventBuildingBuilt
 		out.BuildingBuilt = &BuildingBuiltEvent{
@@ -553,6 +595,20 @@ func eventFromProto(event *demostatsv1.GameEvent) MatchEvent {
 			Building: buildingToString(kind.BuildingDestroyed.GetBuilding()),
 			Pos:      positionFromProto(kind.BuildingDestroyed.GetPos()),
 		}
+	case *demostatsv1.GameEvent_SapperPlaced:
+		out.Type = MatchEventSapperPlaced
+		out.SapperPlaced = &SapperPlacedEvent{
+			Spy: kind.SapperPlaced.GetSpy(), Owner: kind.SapperPlaced.GetOwner(),
+			Building:    buildingToString(kind.SapperPlaced.GetBuilding()),
+			SapperIndex: int(kind.SapperPlaced.GetSapperIndex()),
+		}
+	default:
+		buildingLifecycleFromProtoKind(kind, out)
+	}
+}
+
+func buildingLifecycleFromProtoKind(kind any, out *MatchEvent) {
+	switch kind := kind.(type) {
 	case *demostatsv1.GameEvent_BuildingUpgraded:
 		out.Type = MatchEventBuildingUpgraded
 		out.BuildingUpgraded = buildingLifecycleFromProto(kind.BuildingUpgraded)
@@ -568,13 +624,11 @@ func eventFromProto(event *demostatsv1.GameEvent) MatchEvent {
 	case *demostatsv1.GameEvent_BuildingDetonated:
 		out.Type = MatchEventBuildingDetonated
 		out.BuildingDetonated = buildingLifecycleFromProto(kind.BuildingDetonated)
-	case *demostatsv1.GameEvent_SapperPlaced:
-		out.Type = MatchEventSapperPlaced
-		out.SapperPlaced = &SapperPlacedEvent{
-			Spy: kind.SapperPlaced.GetSpy(), Owner: kind.SapperPlaced.GetOwner(),
-			Building:    buildingToString(kind.SapperPlaced.GetBuilding()),
-			SapperIndex: int(kind.SapperPlaced.GetSapperIndex()),
-		}
+	}
+}
+
+func roundEventFromProto(kind any, out *MatchEvent) {
+	switch kind := kind.(type) {
 	case *demostatsv1.GameEvent_RoundStarted:
 		out.Type = MatchEventRoundStarted
 		out.RoundStarted = &RoundStartedEvent{FullReset: kind.RoundStarted.GetFullReset()}
@@ -601,6 +655,11 @@ func eventFromProto(event *demostatsv1.GameEvent) MatchEvent {
 		out.Type = MatchEventOvertimeEnd
 	case *demostatsv1.GameEvent_SetupFinished:
 		out.Type = MatchEventSetupFinished
+	}
+}
+
+func uberFlagFromProto(kind any, out *MatchEvent) {
+	switch kind := kind.(type) {
 	case *demostatsv1.GameEvent_UberDropped:
 		out.Type = MatchEventUberDropped
 		out.UberDropped = &UberDroppedEvent{
@@ -631,8 +690,6 @@ func eventFromProto(event *demostatsv1.GameEvent) MatchEvent {
 			Killer: kind.KillstreakEnded.GetKiller(),
 		}
 	}
-
-	return out
 }
 
 func buildingLifecycleFromProto(lifecycle *demostatsv1.BuildingLifecycle) *BuildingLifecycleEvent {
@@ -649,37 +706,78 @@ func eventToProto(event MatchEvent) *demostatsv1.GameEvent {
 
 	switch event.Type {
 	case MatchEventKill:
-		if event.Kill == nil {
-			break
-		}
-		kill := event.Kill
-		out.Kind = &demostatsv1.GameEvent_Kill{Kill: &demostatsv1.KillEvent{
-			Tick: uint32(event.Tick), Killer: strPtr(kill.Killer), Victim: kill.Victim, Weapon: kill.Weapon, //nolint:gosec
-			KillerPos: positionToProto(kill.KillerPos), VictimPos: positionToProto(kill.VictimPos),
-			KillerAngles: eyeAnglesToProto(kill.KillerAngles), VictimAngles: eyeAnglesToProto(kill.VictimAngles),
-			IsFirstBlood: kill.IsFirstBlood, IsDomination: kill.IsDomination, IsRevenge: kill.IsRevenge,
-		}}
+		setKillKind(event, out)
+	case MatchEventCaptureStarted,
+		MatchEventCapture,
+		MatchEventCaptureBlocked,
+		MatchEventCaptureBroken:
+		setCaptureKind(event, out)
+	case MatchEventBuildingBuilt,
+		MatchEventBuildingDestroyed,
+		MatchEventBuildingUpgraded,
+		MatchEventBuildingCarried,
+		MatchEventBuildingDropped,
+		MatchEventBuildingRemoved,
+		MatchEventBuildingDetonated,
+		MatchEventSapperPlaced:
+		setBuildingKind(event, out)
+	case MatchEventRoundStarted,
+		MatchEventRoundWon,
+		MatchEventStalemate,
+		MatchEventGameOver,
+		MatchEventSuddenDeathBegin,
+		MatchEventSuddenDeathEnd,
+		MatchEventOvertimeBegin,
+		MatchEventOvertimeEnd,
+		MatchEventSetupFinished:
+		setRoundKind(event, out)
+	case MatchEventUberDropped,
+		MatchEventUberDeployed,
+		MatchEventFlagEvent,
+		MatchEventFlagCaptured,
+		MatchEventKillstreakEnded:
+		setUberFlagKind(event, out)
+	}
+
+	return out
+}
+
+func setKillKind(event MatchEvent, out *demostatsv1.GameEvent) {
+	if event.Kill == nil {
+		return
+	}
+	kill := event.Kill
+	out.Kind = &demostatsv1.GameEvent_Kill{Kill: &demostatsv1.KillEvent{
+		Tick: uint32(event.Tick), Killer: strPtr(kill.Killer), Victim: kill.Victim, Weapon: kill.Weapon, //nolint:gosec
+		KillerPos: positionToProto(kill.KillerPos), VictimPos: positionToProto(kill.VictimPos),
+		KillerAngles: eyeAnglesToProto(kill.KillerAngles), VictimAngles: eyeAnglesToProto(kill.VictimAngles),
+		IsFirstBlood: kill.IsFirstBlood, IsDomination: kill.IsDomination, IsRevenge: kill.IsRevenge,
+	}}
+}
+
+func setCaptureKind(event MatchEvent, out *demostatsv1.GameEvent) {
+	switch event.Type {
 	case MatchEventCaptureStarted:
 		if event.CaptureStarted == nil {
-			break
+			return
 		}
-		cap := event.CaptureStarted
+		started := event.CaptureStarted
 		out.Kind = &demostatsv1.GameEvent_CaptureStarted{CaptureStarted: &demostatsv1.PointCaptureStart{
-			Tick: uint32(event.Tick), Cp: uint32(cap.Cp), CpName: cap.CpName, Team: uint32(cap.Team), //nolint:gosec
-			CapTeam: uint32(cap.CapTeam), Cappers: cap.Cappers, CapTime: float32(cap.CapTime), //nolint:gosec
+			Tick: uint32(event.Tick), Cp: uint32(started.Cp), CpName: started.CpName, Team: uint32(started.Team), //nolint:gosec
+			CapTeam: uint32(started.CapTeam), Cappers: started.Cappers, CapTime: float32(started.CapTime), //nolint:gosec
 		}}
 	case MatchEventCapture:
 		if event.Capture == nil {
-			break
+			return
 		}
-		cap := event.Capture
+		capture := event.Capture
 		out.Kind = &demostatsv1.GameEvent_Capture{Capture: &demostatsv1.PointCapture{
-			Tick: uint32(event.Tick), Cp: uint32(cap.Cp), CpName: cap.CpName, Team: uint32(cap.Team), //nolint:gosec
-			CapTeam: uint32(cap.CapTeam), Cappers: cap.Cappers, //nolint:gosec
+			Tick: uint32(event.Tick), Cp: uint32(capture.Cp), CpName: capture.CpName, Team: uint32(capture.Team), //nolint:gosec
+			CapTeam: uint32(capture.CapTeam), Cappers: capture.Cappers, //nolint:gosec
 		}}
 	case MatchEventCaptureBlocked:
 		if event.CaptureBlocked == nil {
-			break
+			return
 		}
 		blocked := event.CaptureBlocked
 		out.Kind = &demostatsv1.GameEvent_CaptureBlocked{CaptureBlocked: &demostatsv1.CaptureBlocked{
@@ -688,16 +786,21 @@ func eventToProto(event MatchEvent) *demostatsv1.GameEvent {
 		}}
 	case MatchEventCaptureBroken:
 		if event.CaptureBroken == nil {
-			break
+			return
 		}
 		broken := event.CaptureBroken
 		out.Kind = &demostatsv1.GameEvent_CaptureBroken{CaptureBroken: &demostatsv1.CaptureBroken{
 			Tick: uint32(event.Tick), Cp: uint32(broken.Cp), CpName: broken.CpName, //nolint:gosec
 			TimeRemaining: float32(broken.TimeRemaining), //nolint:gosec
 		}}
+	}
+}
+
+func setBuildingKind(event MatchEvent, out *demostatsv1.GameEvent) {
+	switch event.Type {
 	case MatchEventBuildingBuilt:
 		if event.BuildingBuilt == nil {
-			break
+			return
 		}
 		built := event.BuildingBuilt
 		out.Kind = &demostatsv1.GameEvent_BuildingBuilt{BuildingBuilt: &demostatsv1.BuildingBuilt{
@@ -706,7 +809,7 @@ func eventToProto(event MatchEvent) *demostatsv1.GameEvent {
 		}}
 	case MatchEventBuildingDestroyed:
 		if event.BuildingDestroyed == nil {
-			break
+			return
 		}
 		destroyed := event.BuildingDestroyed
 		out.Kind = &demostatsv1.GameEvent_BuildingDestroyed{BuildingDestroyed: &demostatsv1.BuildingDestroyed{
@@ -726,23 +829,28 @@ func eventToProto(event MatchEvent) *demostatsv1.GameEvent {
 		out.Kind = &demostatsv1.GameEvent_BuildingDetonated{BuildingDetonated: buildingLifecycleToProto(event.Tick, event.BuildingDetonated)}
 	case MatchEventSapperPlaced:
 		if event.SapperPlaced == nil {
-			break
+			return
 		}
 		sapper := event.SapperPlaced
 		out.Kind = &demostatsv1.GameEvent_SapperPlaced{SapperPlaced: &demostatsv1.SapperPlaced{
 			Tick: uint32(event.Tick), Spy: strPtr(sapper.Spy), Owner: strPtr(sapper.Owner), //nolint:gosec
 			Building: buildingToEnum(sapper.Building), SapperIndex: uint32(sapper.SapperIndex), //nolint:gosec
 		}}
+	}
+}
+
+func setRoundKind(event MatchEvent, out *demostatsv1.GameEvent) {
+	switch event.Type {
 	case MatchEventRoundStarted:
 		if event.RoundStarted == nil {
-			break
+			return
 		}
 		out.Kind = &demostatsv1.GameEvent_RoundStarted{RoundStarted: &demostatsv1.RoundStarted{
 			Tick: uint32(event.Tick), FullReset: event.RoundStarted.FullReset, //nolint:gosec
 		}}
 	case MatchEventRoundWon:
 		if event.RoundWon == nil {
-			break
+			return
 		}
 		won := event.RoundWon
 		out.Kind = &demostatsv1.GameEvent_RoundWon{RoundWon: &demostatsv1.RoundWon{
@@ -751,14 +859,14 @@ func eventToProto(event MatchEvent) *demostatsv1.GameEvent {
 		}}
 	case MatchEventStalemate:
 		if event.Stalemate == nil {
-			break
+			return
 		}
 		out.Kind = &demostatsv1.GameEvent_Stalemate{Stalemate: &demostatsv1.Stalemate{
 			Tick: uint32(event.Tick), Reason: uint32(event.Stalemate.Reason), //nolint:gosec
 		}}
 	case MatchEventGameOver:
 		if event.GameOver == nil {
-			break
+			return
 		}
 		out.Kind = &demostatsv1.GameEvent_GameOver{GameOver: &demostatsv1.GameOver{
 			Tick: uint32(event.Tick), Reason: event.GameOver.Reason, //nolint:gosec
@@ -773,9 +881,14 @@ func eventToProto(event MatchEvent) *demostatsv1.GameEvent {
 		out.Kind = &demostatsv1.GameEvent_OvertimeEnd{OvertimeEnd: &demostatsv1.TickMarker{Tick: uint32(event.Tick)}} //nolint:gosec
 	case MatchEventSetupFinished:
 		out.Kind = &demostatsv1.GameEvent_SetupFinished{SetupFinished: &demostatsv1.TickMarker{Tick: uint32(event.Tick)}} //nolint:gosec
+	}
+}
+
+func setUberFlagKind(event MatchEvent, out *demostatsv1.GameEvent) {
+	switch event.Type {
 	case MatchEventUberDropped:
 		if event.UberDropped == nil {
-			break
+			return
 		}
 		dropped := event.UberDropped
 		out.Kind = &demostatsv1.GameEvent_UberDropped{UberDropped: &demostatsv1.UberDropped{
@@ -784,7 +897,7 @@ func eventToProto(event MatchEvent) *demostatsv1.GameEvent {
 		}}
 	case MatchEventUberDeployed:
 		if event.UberDeployed == nil {
-			break
+			return
 		}
 		deployed := event.UberDeployed
 		out.Kind = &demostatsv1.GameEvent_UberDeployed{UberDeployed: &demostatsv1.UberDeployed{
@@ -792,7 +905,7 @@ func eventToProto(event MatchEvent) *demostatsv1.GameEvent {
 		}}
 	case MatchEventFlagEvent:
 		if event.FlagEvent == nil {
-			break
+			return
 		}
 		flag := event.FlagEvent
 		out.Kind = &demostatsv1.GameEvent_FlagEvent{FlagEvent: &demostatsv1.FlagEvent{
@@ -801,7 +914,7 @@ func eventToProto(event MatchEvent) *demostatsv1.GameEvent {
 		}}
 	case MatchEventFlagCaptured:
 		if event.FlagCaptured == nil {
-			break
+			return
 		}
 		captured := event.FlagCaptured
 		out.Kind = &demostatsv1.GameEvent_FlagCaptured{FlagCaptured: &demostatsv1.FlagCaptured{
@@ -809,15 +922,13 @@ func eventToProto(event MatchEvent) *demostatsv1.GameEvent {
 		}}
 	case MatchEventKillstreakEnded:
 		if event.KillstreakEnded == nil {
-			break
+			return
 		}
 		streak := event.KillstreakEnded
 		out.Kind = &demostatsv1.GameEvent_KillstreakEnded{KillstreakEnded: &demostatsv1.KillstreakEnded{
 			Tick: uint32(event.Tick), Player: streak.Player, Streak: uint32(streak.Streak), Killer: strPtr(streak.Killer), //nolint:gosec
 		}}
 	}
-
-	return out
 }
 
 func buildingToEnum(building string) demostatsv1.BuildingType {

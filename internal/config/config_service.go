@@ -69,36 +69,37 @@ const (
 	changelogCacheTTL = time.Minute * 30
 )
 
+// githubReleaseJSON mirrors the GitHub releases API field names.
 type githubReleaseJSON struct {
 	ID          int64  `json:"id"`
-	TagName     string `json:"tag_name"`
+	TagName     string `json:"tag_name"` //nolint:tagliatelle // GitHub API snake_case.
 	Name        string `json:"name"`
 	Body        string `json:"body"`
 	Draft       bool   `json:"draft"`
 	Prerelease  bool   `json:"prerelease"`
-	CreatedAt   string `json:"created_at"`
-	PublishedAt string `json:"published_at"`
+	CreatedAt   string `json:"created_at"`   //nolint:tagliatelle // GitHub API snake_case.
+	PublishedAt string `json:"published_at"` //nolint:tagliatelle // GitHub API snake_case.
 }
 
-func fetchGithubReleases(owner string, repo string, limit int) ([]*configv1.GithubRelease, error) {
-	req, errReq := http.NewRequest(
+func fetchGithubReleases(ctx context.Context, owner string, repo string, limit int) ([]*configv1.GithubRelease, error) {
+	req, errReq := http.NewRequestWithContext(ctx,
 		http.MethodGet,
 		fmt.Sprintf("https://api.github.com/repos/%s/%s/releases?per_page=%d", owner, repo, limit),
 		nil,
 	)
 	if errReq != nil {
-		return nil, errReq
+		return nil, fmt.Errorf("create github releases request: %w", errReq)
 	}
 
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "gbans-changelog")
-	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+	req.Header.Set("X-Github-Api-Version", "2022-11-28")
 
 	client := &http.Client{Timeout: time.Second * 10}
 
 	resp, errResp := client.Do(req)
 	if errResp != nil {
-		return nil, errResp
+		return nil, fmt.Errorf("fetch github releases: %w", errResp)
 	}
 
 	defer resp.Body.Close()
@@ -109,12 +110,12 @@ func fetchGithubReleases(owner string, repo string, limit int) ([]*configv1.Gith
 
 	body, errBody := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if errBody != nil {
-		return nil, errBody
+		return nil, fmt.Errorf("read github releases body: %w", errBody)
 	}
 
 	var raw []githubReleaseJSON
 	if errDecode := json.Unmarshal(body, &raw); errDecode != nil {
-		return nil, errDecode
+		return nil, fmt.Errorf("decode github releases: %w", errDecode)
 	}
 
 	releases := make([]*configv1.GithubRelease, 0, len(raw))
@@ -153,7 +154,7 @@ func fetchGithubReleases(owner string, repo string, limit int) ([]*configv1.Gith
 	return releases, nil
 }
 
-func (r *Service) Changelog(_ context.Context, _ *emptypb.Empty) (*configv1.ChangelogResponse, error) {
+func (r *Service) Changelog(ctx context.Context, _ *emptypb.Empty) (*configv1.ChangelogResponse, error) {
 	r.changelogMu.Lock()
 	defer r.changelogMu.Unlock()
 
@@ -161,7 +162,7 @@ func (r *Service) Changelog(_ context.Context, _ *emptypb.Empty) (*configv1.Chan
 		return &configv1.ChangelogResponse{Changelog: r.changelogCache}, nil
 	}
 
-	releases, errFetch := fetchGithubReleases(changelogRepoOwner, changelogRepoName, changelogMaxReleases)
+	releases, errFetch := fetchGithubReleases(ctx, changelogRepoOwner, changelogRepoName, changelogMaxReleases)
 	if errFetch != nil {
 		// Serve stale cache rather than breaking the page on transient
 		// GitHub outages.
