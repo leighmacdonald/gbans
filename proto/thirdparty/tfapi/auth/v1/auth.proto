@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package tfapi.auth.v1;
+
+option go_package = "github.com/leighmacdonald/tf-api/internal/gen/tfapi/auth/v1;tfapiauthv1";
+
+// AuthService handles API key management for authenticated members.
+service AuthService {
+  // CreateAPIKey mints a new API key for the authenticated member.
+  rpc CreateAPIKey(CreateAPIKeyRequest) returns (CreateAPIKeyResponse);
+}
+
+message CreateAPIKeyRequest {}
+
+message CreateAPIKeyResponse {
+  string key = 1;
+}

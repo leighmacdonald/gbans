@@ -10,7 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/person/v1/personv1connect"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
-	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	steamv1 "github.com/leighmacdonald/gbans/internal/thirdparty/tfapi/steam/v1"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -234,14 +234,25 @@ func toPerson(core *Person) *v1.Person {
 	}
 }
 
-func toFriends(friendSet []thirdparty.SteamFriend) []*v1.SteamFriend {
+func toFriends(friendSet []*steamv1.SteamFriend) []*v1.SteamFriend {
 	friends := make([]*v1.SteamFriend, len(friendSet))
 	for idx, friend := range friendSet {
-		sid := steamid.New(friend.SteamId)
+		sid := steamid.New(friend.GetSteamId())
+
+		var friendSince *timestamppb.Timestamp
+		if friend.GetFriendSince() != nil {
+			friendSince = timestamppb.New(friend.GetFriendSince().AsTime())
+		}
+
+		var removedOn *timestamppb.Timestamp
+		if friend.GetRemovedOn() != nil {
+			removedOn = timestamppb.New(friend.GetRemovedOn().AsTime())
+		}
+
 		friends[idx] = &v1.SteamFriend{
-			FriendSince:  timestamppb.New(friend.FriendSince),
-			Relationship: &friend.Relationship,
-			RemovedOn:    timestamppb.New(friend.RemovedOn),
+			FriendSince:  friendSince,
+			Relationship: new(friend.GetRelationship()),
+			RemovedOn:    removedOn,
 			SteamId:      new(sid.Int64()),
 		}
 	}

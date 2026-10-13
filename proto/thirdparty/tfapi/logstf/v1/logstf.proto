@@ -1,0 +1,266 @@
+syntax = "proto3";
+
+package tfapi.logstf.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/leighmacdonald/tf-api/internal/gen/tfapi/logstf/v1;tfapilogstfv1";
+
+// LogsTFService exposes logs.tf match, player and chat data.
+service LogsTFService {
+  // Log returns the full details for a single match log.
+  rpc Log(LogRequest) returns (LogResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // PlayerSummary returns a player's aggregate match statistics.
+  rpc PlayerSummary(PlayerSummaryRequest) returns (PlayerSummaryResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // ChatQuery queries a player's (or the whole) chat history.
+  rpc ChatQuery(ChatQueryRequest) returns (ChatQueryResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // MatchList returns a player's list of matches.
+  rpc MatchList(MatchListRequest) returns (MatchListResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+}
+
+message LogRequest {
+  // The log id as provided by logs.tf.
+  int32 log_id = 1;
+}
+
+message ClassCountMap {
+  int32 scout = 1;
+  int32 soldier = 2;
+  int32 pyro = 3;
+  int32 demoman = 4;
+  int32 heavyweapons = 5;
+  int32 engineer = 6;
+  int32 medic = 7;
+  int32 spy = 8;
+  int32 sniper = 9;
+}
+
+message TeamOverall {
+  int32 score = 1;
+  int32 kills = 2;
+  int32 deaths = 3;
+  int64 damage = 4;
+  int32 charges = 5;
+  int32 drops = 6;
+  int32 first_caps = 7;
+  int32 caps = 8;
+}
+
+message Teams {
+  TeamOverall red = 1;
+  TeamOverall blu = 2;
+}
+
+message RoundPlayer {
+  string steam_id = 1;
+  int32 kills = 2;
+  int32 dmg = 3;
+}
+
+message Round {
+  int32 round = 1;
+  // Length of the round (seconds).
+  int32 length = 2;
+  int32 score_blu = 3;
+  int32 score_red = 4;
+  int32 kills_blu = 5;
+  int32 kills_red = 6;
+  int32 ubers_blu = 7;
+  int32 ubers_red = 8;
+  int32 damage_blu = 9;
+  int32 damage_red = 10;
+  string mid_fight = 11;
+  repeated RoundPlayer players = 12;
+}
+
+message PlayerClassWeapon {
+  string weapon = 1;
+  int32 kills = 2;
+  int32 damage = 3;
+  int32 shots = 4;
+  int32 hits = 5;
+  int32 accuracy = 6;
+}
+
+message PlayerClassStats {
+  string class = 1;
+  // Seconds spent on the class.
+  int32 played = 2;
+  int32 kills = 3;
+  int32 assists = 4;
+  int32 deaths = 5;
+  int32 damage = 6;
+  repeated PlayerClassWeapon weapons = 7;
+}
+
+message PlayerAlt {
+  string steam_id = 1;
+  string team = 2;
+  string name = 3;
+  int32 kills = 4;
+  int32 assists = 5;
+  int32 deaths = 6;
+  int64 damage = 7;
+  int32 dpm = 8;
+  double kad = 9;
+  double kd = 10;
+  int32 damage_taken = 11;
+  double dtm = 12;
+  int32 health_packs = 13;
+  int32 health_packs_healing = 14;
+  int32 backstabs = 15;
+  int32 headshots = 16;
+  int32 airshots = 17;
+  int32 caps = 18;
+  int32 healing_taken = 19;
+  repeated PlayerClassStats classes = 20;
+  ClassCountMap class_kills = 21;
+  ClassCountMap class_deaths = 22;
+  ClassCountMap class_assists = 23;
+}
+
+message Chat {
+  int32 log_id = 1;
+  string steam_id = 2;
+  string name = 3;
+  string message = 4;
+  // The date of the match, not the message specifically.
+  google.protobuf.Timestamp created_on = 5;
+  bool is_flagged = 6;
+}
+
+message MedicOverall {
+  string steam_id = 1;
+  int64 healing = 2;
+  double healing_per_min = 3;
+  int32 charges_kritz = 4;
+  int32 charges_quickfix = 5;
+  int32 charges_medigun = 6;
+  int32 charges_vacc = 7;
+  int32 drops = 8;
+  int32 avg_time_build = 9;
+  int32 avg_time_use = 10;
+  double avg_time_before_healing = 11;
+  int32 near_full_death = 12;
+  int32 avg_uber_len = 13;
+  int32 death_after_charge = 14;
+  int32 major_adv_lost = 15;
+  int32 biggest_adv_lost = 16;
+  map<string, int32> healspread = 17;
+}
+
+message KillStreak {
+  string steamid = 1;
+  int32 streak = 2;
+  // Seconds.
+  int32 time = 3;
+}
+
+message LogsTFMatch {
+  int32 log_id = 1;
+  int32 version = 2;
+  string title = 3;
+  string map = 4;
+  // Duration of the match (seconds).
+  int32 duration = 5;
+  int32 score_red = 6;
+  int32 score_blu = 7;
+  google.protobuf.Timestamp created_on = 8;
+  Teams teams = 9;
+  repeated Round rounds = 10;
+  repeated PlayerAlt players = 11;
+  repeated MedicOverall medics = 12;
+  repeated Chat chat = 13;
+  repeated KillStreak killstreaks = 14;
+}
+
+message LogResponse {
+  LogsTFMatch match = 1;
+}
+
+message PlayerSummaryRequest {
+  // Steam ID in any standard format.
+  string steam_id = 1;
+}
+
+message PlayerSummary {
+  int32 logs = 1;
+  double kills_avg = 2;
+  double assists_avg = 3;
+  double deaths_avg = 4;
+  double damage_avg = 5;
+  double dpm_avg = 6;
+  double kad_avg = 7;
+  double kd_avg = 8;
+  double damage_taken_avg = 9;
+  double dtm_avg = 10;
+  double health_packs_avg = 11;
+  double backstabs_avg = 12;
+  double headshots_avg = 13;
+  double airshots_avg = 14;
+  double caps_avg = 15;
+  double healing_taken_avg = 16;
+  int32 kills_sum = 17;
+  int32 assists_sum = 18;
+  int32 deaths_sum = 19;
+  int64 damage_sum = 20;
+  int32 damage_taken_sum = 21;
+  int32 health_packs_sum = 22;
+  int32 backstabs_sum = 23;
+  int32 headshots_sum = 24;
+  int32 airshots_sum = 25;
+  int32 caps_sum = 26;
+  int32 healing_taken_sum = 27;
+}
+
+message PlayerSummaryResponse {
+  PlayerSummary summary = 1;
+}
+
+message ChatQueryRequest {
+  string steam_id = 1;
+  string query = 2;
+  bool flagged_only = 3;
+  string name = 4;
+  int64 log_id = 5;
+  uint64 offset = 6;
+  uint64 limit = 7;
+  google.protobuf.Timestamp before = 8;
+  google.protobuf.Timestamp after = 9;
+}
+
+message ChatQueryResponse {
+  repeated Chat messages = 1;
+}
+
+message MatchListRequest {
+  // Steam ID in any standard format.
+  string steam_id = 1;
+}
+
+message MatchInfo {
+  int32 log_id = 1;
+  int32 version = 2;
+  string title = 3;
+  string map = 4;
+  // Duration of the match (seconds).
+  int32 duration = 5;
+  int32 score_red = 6;
+  int32 score_blu = 7;
+  google.protobuf.Timestamp created_on = 8;
+}
+
+message MatchListResponse {
+  repeated MatchInfo matches = 1;
+}

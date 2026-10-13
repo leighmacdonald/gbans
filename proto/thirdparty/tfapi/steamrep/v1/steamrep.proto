@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package tfapi.steamrep.v1;
+
+option go_package = "github.com/leighmacdonald/tf-api/internal/gen/tfapi/steamrep/v1;tfapisteamrepv1";
+
+// SteamRepService queries the steamrep reputation database.
+service SteamRepService {
+  // Query returns the steamrep entries for the provided players.
+  rpc Query(QueryRequest) returns (QueryResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+}
+
+message QueryRequest {
+  // Steam IDs in any standard format.
+  repeated string steam_ids = 1;
+}
+
+message SteamRepEntry {
+  string steam_id = 1;
+  bool banned = 2;
+  // List of reputation sources.
+  repeated string reputations = 3;
+}
+
+message QueryResponse {
+  repeated SteamRepEntry entries = 1;
+}

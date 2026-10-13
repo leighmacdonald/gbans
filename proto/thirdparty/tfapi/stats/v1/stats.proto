@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package tfapi.stats.v1;
+
+option go_package = "github.com/leighmacdonald/tf-api/internal/gen/tfapi/stats/v1;tfapistatsv1";
+
+// StatsService exposes aggregate statistics about the tracked data stores.
+service StatsService {
+  // Overall returns some basic stats for the underlying data stores and application.
+  rpc Overall(OverallRequest) returns (OverallResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+}
+
+message OverallRequest {}
+
+message OverallResponse {
+  int32 bd_list_entries_count = 1;
+  int32 bd_list_count = 2;
+  int32 logs_tf_count = 3;
+  int32 logs_tf_player_count = 4;
+  int32 logs_tf_chat_count = 5;
+  int32 leagues_count = 6;
+  int32 leagues_team_count = 7;
+  int32 maps_count = 8;
+  int32 players_count = 9;
+  int32 source_count = 10;
+  int32 avatar_count = 11;
+  int32 name_count = 12;
+  int32 friend_count = 13;
+  int32 vac_count = 14;
+  int32 game_ban_count = 15;
+  int32 community_ban_count = 16;
+  int32 ban_total_count = 17;
+  // Ban counts organized by site.
+  map<string, int32> ban_counts = 18;
+}

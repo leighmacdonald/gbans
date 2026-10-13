@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	steamv1 "github.com/leighmacdonald/gbans/internal/thirdparty/tfapi/steam/v1"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/sync/errgroup"
 )
@@ -21,10 +22,10 @@ var ErrSteamUpdate = errors.New("failed to update data from steam")
 
 // FetchPlayerBans batch fetches player bans in groups of 100.
 // TODO remove and just call client direct? Not sure if the batching is really required.
-func FetchPlayerBans(ctx context.Context, tfAPI thirdparty.APIProvider, steamIDs []steamid.SteamID) ([]thirdparty.SteamBan, error) {
+func FetchPlayerBans(ctx context.Context, tfAPI thirdparty.APIProvider, steamIDs []steamid.SteamID) ([]*steamv1.SteamBan, error) {
 	var (
 		waitGroup = &sync.WaitGroup{}
-		results   []thirdparty.SteamBan
+		results   []*steamv1.SteamBan
 		resultsMu = &sync.RWMutex{}
 		hasErr    = int32(0)
 	)
@@ -80,21 +81,21 @@ func UpdatePlayerSummary(ctx context.Context, personUpdate *Person, tfAPI thirdp
 		if len(summaries) == 0 {
 			return ErrInvalidResult
 		}
-		personUpdate.AvatarHash = summaries[0].AvatarHash
-		personUpdate.CommentPermission = int32(summaries[0].CommentPermission) //nolint:gosec
-		personUpdate.LastLogoff = new(time.Unix(summaries[0].LastLogoff, 0))
-		personUpdate.LocCityID = int32(summaries[0].LocCityId) //nolint:gosec
-		personUpdate.LocCountryCode = summaries[0].LocCountryCode
-		personUpdate.LocStateCode = summaries[0].LocStateCode
-		personUpdate.PersonaName = summaries[0].PersonaName
-		personUpdate.PersonaState = int32(summaries[0].PersonaState)           //nolint:gosec
-		personUpdate.PersonaStateFlags = int32(summaries[0].PersonaStateFlags) //nolint:gosec
-		personUpdate.PrimaryClanID = summaries[0].PrimaryClanId
-		personUpdate.ProfileState = int32(summaries[0].ProfileState) //nolint:gosec
-		personUpdate.ProfileURL = summaries[0].ProfileUrl
-		personUpdate.RealName = summaries[0].RealName
-		personUpdate.TimeCreated = summaries[0].TimeCreated
-		personUpdate.VisibilityState = int32(summaries[0].VisibilityState) //nolint:gosec
+		personUpdate.AvatarHash = summaries[0].GetAvatarHash()
+		personUpdate.CommentPermission = summaries[0].GetCommentPermission()
+		personUpdate.LastLogoff = new(time.Unix(int64(summaries[0].GetLastLogoff()), 0))
+		personUpdate.LocCityID = summaries[0].GetLocCityId()
+		personUpdate.LocCountryCode = summaries[0].GetLocCountryCode()
+		personUpdate.LocStateCode = summaries[0].GetLocStateCode()
+		personUpdate.PersonaName = summaries[0].GetPersonaName()
+		personUpdate.PersonaState = summaries[0].GetPersonaState()
+		personUpdate.PersonaStateFlags = summaries[0].GetPersonaStateFlags()
+		personUpdate.PrimaryClanID = summaries[0].GetPrimaryClanId()
+		personUpdate.ProfileState = summaries[0].GetProfileState()
+		personUpdate.ProfileURL = summaries[0].GetProfileUrl()
+		personUpdate.RealName = summaries[0].GetRealName()
+		personUpdate.TimeCreated = int64(summaries[0].GetTimeCreated())
+		personUpdate.VisibilityState = summaries[0].GetVisibilityState()
 
 		return nil
 	})
@@ -105,12 +106,12 @@ func UpdatePlayerSummary(ctx context.Context, personUpdate *Person, tfAPI thirdp
 			return errBans
 		}
 
-		personUpdate.CommunityBanned = vac[0].CommunityBanned
-		personUpdate.VACBans = int32(vac[0].NumberOfVacBans)   //nolint:gosec
-		personUpdate.GameBans = int32(vac[0].NumberOfGameBans) //nolint:gosec
-		personUpdate.EconomyBan = EconBanState(vac[0].EconomyBan)
-		personUpdate.CommunityBanned = vac[0].CommunityBanned
-		personUpdate.DaysSinceLastBan = int32(vac[0].DaysSinceLastBan) //nolint:gosec
+		personUpdate.CommunityBanned = vac[0].GetCommunityBanned()
+		personUpdate.VACBans = vac[0].GetNumberOfVacBans()
+		personUpdate.GameBans = vac[0].GetNumberOfGameBans()
+		personUpdate.EconomyBan = EconBanState(vac[0].GetEconomyBan())
+		personUpdate.CommunityBanned = vac[0].GetCommunityBanned()
+		personUpdate.DaysSinceLastBan = vac[0].GetDaysSinceLastBan()
 		personUpdate.UpdatedOnSteam = time.Now()
 
 		return nil

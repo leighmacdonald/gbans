@@ -1,0 +1,264 @@
+syntax = "proto3";
+
+package tfapi.steam.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/leighmacdonald/tf-api/internal/gen/tfapi/steam/v1;tfapisteamv1";
+
+// SteamService proxies player data sourced from the official Steam Web API.
+service SteamService {
+  // Bans returns the ban/probation status of the player's account.
+  rpc GetBans(GetBansRequest) returns (GetBansResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // GetSummary returns the player summary provided by the Steam Web API.
+  rpc GetSummary(GetSummaryRequest) returns (GetSummaryResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // GetFriends returns a user's list of friends. Only works if friends are public.
+  rpc GetFriends(GetFriendsRequest) returns (GetFriendsResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // GetGroup fetches details about a group and a list of its members.
+  rpc GetGroup(GetGroupRequest) returns (GetGroupResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // GetOwnedGames returns a list of a user's owned games.
+  rpc GetOwnedGames(GetOwnedGamesRequest) returns (GetOwnedGamesResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // GetSchemaItems fetches the schema items from Valve's GetSchemaItems endpoint.
+  rpc GetSchemaItems(GetSchemaItemsRequest) returns (GetSchemaItemsResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // ResolveId converts steamids between formats. Can also resolve vanity urls and names.
+  rpc ResolveId(ResolveIdRequest) returns (ResolveIdResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // Parse parses a text document for any steamid formats.
+  rpc Parse(ParseRequest) returns (ParseResponse);
+}
+
+// ----- Bans -----
+
+message GetBansRequest {
+  // Steam IDs in any standard format.
+  repeated string steam_ids = 1;
+}
+
+message SteamBan {
+  string steam_id = 1;
+  bool community_banned = 2;
+  bool vac_banned = 3;
+  int32 number_of_vac_bans = 4;
+  int32 days_since_last_ban = 5;
+  int32 number_of_game_bans = 6;
+  // One of "none", "probation", "banned".
+  string economy_ban = 7;
+}
+
+message GetBansResponse {
+  repeated SteamBan bans = 1;
+}
+
+// ----- Summary -----
+
+message GetSummaryRequest {
+  // Steam IDs in any standard format.
+  repeated string steam_ids = 1;
+}
+
+message PlayerSummary {
+  string steam_id = 1;
+  int32 visibility_state = 2;
+  int32 profile_state = 3;
+  string persona_name = 4;
+  string profile_url = 5;
+  string avatar_hash = 6;
+  int32 persona_state = 7;
+  string real_name = 8;
+  string primary_clan_id = 9;
+  int32 time_created = 10;
+  int32 persona_state_flags = 11;
+  string loc_country_code = 12;
+  string loc_state_code = 13;
+  int32 loc_city_id = 14;
+  int32 last_logoff = 15;
+  int32 comment_permission = 16;
+}
+
+message GetSummaryResponse {
+  repeated PlayerSummary summaries = 1;
+}
+
+// ----- Friends -----
+
+message GetFriendsRequest {
+  string steam_id = 1;
+}
+
+message SteamFriend {
+  string steam_id = 1;
+  string relationship = 2;
+  google.protobuf.Timestamp friend_since = 3;
+  google.protobuf.Timestamp removed_on = 4;
+}
+
+message GetFriendsResponse {
+  repeated SteamFriend friends = 1;
+}
+
+// ----- Group -----
+
+message GetGroupRequest {
+  // Group ID, 64-bit format only.
+  string group_id = 1;
+}
+
+message SteamGroupMember {
+  string steam_id = 1;
+  string group_id = 2;
+  string persona_name = 3;
+  google.protobuf.Timestamp created_on = 4;
+  google.protobuf.Timestamp updated_on = 5;
+}
+
+message SteamGroup {
+  string group_id = 1;
+  string group_name = 2;
+  string url = 3;
+  string headline = 4;
+  string summary = 5;
+  string avatar = 6;
+  google.protobuf.Timestamp created_on = 7;
+  google.protobuf.Timestamp updated_on = 8;
+  repeated SteamGroupMember members = 9;
+}
+
+message GetGroupResponse {
+  SteamGroup group = 1;
+}
+
+// ----- Owned games -----
+
+message GetOwnedGamesRequest {
+  // Steam IDs in any standard format.
+  repeated string steam_ids = 1;
+}
+
+message SteamGameOwnedPlayer {
+  string steam_id = 1;
+  int32 app_id = 2;
+  string name = 3;
+  string img_icon_url = 4;
+  string img_logo_url = 5;
+  int32 playtime_forever_minutes = 6;
+  int32 playtime_two_weeks = 7;
+  bool has_community_visible_stats = 8;
+}
+
+message OwnedGames {
+  repeated SteamGameOwnedPlayer players = 1;
+}
+
+message GetOwnedGamesResponse {
+  map<string, OwnedGames> games = 1;
+}
+
+// ----- Schema items -----
+
+message GetSchemaItemsRequest {}
+
+message SchemaItemCapabilities {
+  bool paintable = 1;
+  bool nameable = 2;
+  bool can_craft_if_purchased = 3;
+  bool can_gift_wrap = 4;
+  bool can_craft_count = 5;
+  bool can_craft_mark = 6;
+  bool can_be_restored = 7;
+  bool strange_parts = 8;
+  bool can_card_upgrade = 9;
+  bool can_strangify = 10;
+  bool can_killstreakify = 11;
+  bool can_consume = 12;
+}
+
+message SchemaItemStyle {
+  string name = 1;
+}
+
+message SchemaAttribute {
+  string name = 1;
+  string class = 2;
+  google.protobuf.Value value = 3;
+}
+
+message SchemaItem {
+  string name = 1;
+  int32 defindex = 2;
+  string item_class = 3;
+  string item_type_name = 4;
+  string item_name = 5;
+  string item_description = 6;
+  bool proper_name = 7;
+  string item_slot = 8;
+  string model_player = 9;
+  int32 item_quality = 10;
+  string image_inventory = 11;
+  int32 min_ilevel = 12;
+  int32 max_ilevel = 13;
+  string image_url = 14;
+  string image_url_large = 15;
+  string drop_type = 16;
+  string craft_class = 17;
+  string craft_material_type = 18;
+  SchemaItemCapabilities capabilities = 19;
+  repeated SchemaItemStyle styles = 20;
+  repeated string used_by_classes = 21;
+  repeated SchemaAttribute attributes = 22;
+}
+
+message GetSchemaItemsResponse {
+  repeated SchemaItem items = 1;
+}
+
+// ----- Resolve id -----
+
+message ResolveIdRequest {
+  // Steam ID in any standard format.
+  string steam_id = 1;
+}
+
+message ResolvedSteamId {
+  string steam64 = 1;
+  uint32 steam32 = 2;
+  string steam3 = 3;
+  string steam = 4;
+  string profile = 5;
+}
+
+message ResolveIdResponse {
+  ResolvedSteamId id = 1;
+}
+
+// ----- Parse -----
+
+message ParseRequest {
+  string text = 1;
+  string format = 2;
+  string type = 3;
+}
+
+message ParseResponse {
+  repeated string steam_ids = 1;
+}

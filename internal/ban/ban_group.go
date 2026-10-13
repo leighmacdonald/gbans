@@ -145,16 +145,16 @@ func (g *Memberships) updateGroupBanMembers(ctx context.Context) (map[steamid.St
 			return nil, errGroup
 		}
 
-		if len(group.Members) == 0 {
+		if len(group.GetMembers()) == 0 {
 			continue
 		}
 
-		members := make(steamid.Collection, len(group.Members))
-		for index, groupMember := range group.Members {
-			members[index] = steamid.New(groupMember.SteamId)
+		members := make(steamid.Collection, len(group.GetMembers()))
+		for index, groupMember := range group.GetMembers() {
+			members[index] = steamid.New(groupMember.GetSteamId())
 		}
 
-		grpID := steamid.New(group.GroupId)
+		grpID := steamid.New(group.GetGroupId())
 		memberList := NewMembersList(grpID.Int64(), members)
 		if errQuery := g.store.GetMembersList(localCtx, grpID.Int64(), &memberList); errQuery != nil {
 			if !errors.Is(errQuery, database.ErrNoResult) {

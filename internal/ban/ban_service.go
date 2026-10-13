@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"strconv"
+	"net/http"
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
@@ -24,18 +24,18 @@ import (
 type Service struct {
 	// banv1connect.UnimplementedBanServiceHandler
 
-	client   thirdparty.ClientWithResponsesInterface
+	tfAPI    *thirdparty.TFAPI
 	bans     Bans
 	roleAuth *rpc.RoleAuth
 }
 
 func NewBanService(bans Bans, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	client, errClient := thirdparty.NewClientWithResponses("https://tf-api.roto.lol")
-	if errClient != nil {
-		panic(errClient)
+	tfAPI, errTFAPI := thirdparty.NewTFAPI("https://tf-api.roto.lol", http.DefaultClient)
+	if errTFAPI != nil {
+		panic(errTFAPI)
 	}
 
-	pattern, handler := banv1connect.NewBanServiceHandler(Service{bans: bans, client: client, roleAuth: roleAuth}, option...)
+	pattern, handler := banv1connect.NewBanServiceHandler(Service{bans: bans, tfAPI: tfAPI, roleAuth: roleAuth}, option...)
 
 	authMiddleware.UserRoute(banv1connect.BanServiceQueryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_READ))
 	authMiddleware.UserRoute(banv1connect.BanServiceDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_WRITE))
@@ -147,26 +147,41 @@ func (s Service) Get(ctx context.Context, req *v1.GetRequest) (*v1.GetResponse, 
 func (s Service) QuerySourceBans(ctx context.Context, req *v1.QuerySourceBansRequest) (*v1.QuerySourceBansResponse, error) {
 	sid := req.GetSteamId()
 
-	queryResp, errResp := s.client.BansSearchWithResponse(ctx, &thirdparty.BansSearchParams{Steamids: strconv.FormatInt(sid, 10)})
-	if errResp != nil {
+	bans, errBans := s.tfAPI.BansSearch(ctx, steamid.Collection{steamid.New(sid)}, "", false)
+	if errBans != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
-	if queryResp.JSON200 == nil {
+
+	if len(bans) == 0 {
 		return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
 	}
 
-	resp := v1.QuerySourceBansResponse{Bans: make([]*v1.SourceBanRecord, len(*queryResp.JSON200))}
+	resp := v1.QuerySourceBansResponse{Bans: make([]*v1.SourceBanRecord, len(bans))}
 
-	for idx, ban := range *queryResp.JSON200 {
-		sid := steamid.New(ban.SteamId)
+	for idx, ban := range bans {
+		sid := steamid.New(ban.GetSteamId())
+
+		var duration *durationpb.Duration
+
+		createdOn := ban.GetCreatedOn()
+		expiresOn := ban.GetExpiresOn()
+		if createdOn != nil && expiresOn != nil {
+			duration = durationpb.New(expiresOn.AsTime().Sub(createdOn.AsTime()))
+		}
+
+		var createdOnTs *timestamppb.Timestamp
+		if createdOn != nil {
+			createdOnTs = timestamppb.New(createdOn.AsTime())
+		}
+
 		resp.Bans[idx] = &v1.SourceBanRecord{
-			SiteName:    &ban.SiteName,
-			PersonaName: &ban.Name,
+			SiteName:    new(ban.GetSiteName()),
+			PersonaName: new(ban.GetName()),
 			SteamId:     new(sid.Int64()),
-			Reason:      &ban.Reason,
-			Duration:    durationpb.New(ban.ExpiresOn.Sub(ban.CreatedOn)),
-			Permanent:   &ban.Permanent,
-			CreatedOn:   timestamppb.New(ban.CreatedOn),
+			Reason:      new(ban.GetReason()),
+			Duration:    duration,
+			Permanent:   new(ban.GetPermanent()),
+			CreatedOn:   createdOnTs,
 		}
 	}
 

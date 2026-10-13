@@ -11,8 +11,19 @@ lint:
   rpc_allow_google_protobuf_empty_requests: true
   rpc_allow_google_protobuf_empty_responses: true
   # Vendored from tf2_demostats v0.3.3, keep upstream enum names.
+  # Vendored from tf-api, keep upstream package paths so RPC procedure
+  # names match the server (/tfapi.<svc>.v1.<Service>/<Method>).
   ignore:
     - proto/demostats/v1/demostats.proto
+    - proto/thirdparty/tfapi/auth/v1/auth.proto
+    - proto/thirdparty/tfapi/bans/v1/bans.proto
+    - proto/thirdparty/tfapi/bd/v1/bd.proto
+    - proto/thirdparty/tfapi/leagues/v1/leagues.proto
+    - proto/thirdparty/tfapi/logstf/v1/logstf.proto
+    - proto/thirdparty/tfapi/meta/v1/meta.proto
+    - proto/thirdparty/tfapi/stats/v1/stats.proto
+    - proto/thirdparty/tfapi/steam/v1/steam.proto
+    - proto/thirdparty/tfapi/steamrep/v1/steamrep.proto
 breaking:
   use:
     - FILE
