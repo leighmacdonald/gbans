@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package tfapi.bans.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/leighmacdonald/tf-api/internal/gen/tfapi/bans/v1;tfapibansv1";
+
+// BansService queries the aggregated third-party ban data.
+service BansService {
+  // Search returns bans across all tracked sites for the provided players.
+  rpc Search(SearchRequest) returns (SearchResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+}
+
+message SearchRequest {
+  // Steam IDs in any standard format.
+  repeated string steam_ids = 1;
+  // Restrict results to a single site.
+  string site_name = 2;
+  // Exclude entries that have been lifted.
+  bool hide_unbanned = 3;
+}
+
+message Ban {
+  string steam_id = 1;
+  string site_name = 2;
+  string reason = 3;
+  google.protobuf.Timestamp created_on = 4;
+  // Null generally means permanent.
+  google.protobuf.Timestamp expires_on = 5;
+  bool permanent = 6;
+  string name = 7;
+  bool unbanned = 8;
+  string unban_reason = 9;
+}
+
+message SearchResponse {
+  repeated Ban bans = 1;
+}

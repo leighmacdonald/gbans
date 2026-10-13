@@ -44,8 +44,8 @@ func (g GroupMemberships) UpdateCache(ctx context.Context) error {
 		}
 
 		var list []int64
-		for _, member := range groupInfo.Members {
-			sid := steamid.New(member.SteamId)
+		for _, member := range groupInfo.GetMembers() {
+			sid := steamid.New(member.GetSteamId())
 			list = append(list, sid.Int64())
 		}
 

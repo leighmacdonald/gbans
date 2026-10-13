@@ -15,6 +15,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	steamv1 "github.com/leighmacdonald/gbans/internal/thirdparty/tfapi/steam/v1"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/sync/errgroup"
@@ -97,26 +98,26 @@ type Person struct {
 	Permissions []rolesv1.Permission
 }
 
-func (p Person) ApplySteamInfo(summary thirdparty.PlayerSummaryResponse, steamBan thirdparty.SteamBan) Person {
-	p.PersonaName = summary.PersonaName
-	p.AvatarHash = summary.AvatarHash
-	p.LocCityID = int32(summary.LocCityId) //nolint:gosec
-	p.LocCountryCode = summary.LocCountryCode
-	p.LastLogoff = new(time.Unix(summary.LastLogoff, 0))
-	p.LocStateCode = summary.LocStateCode
-	p.VisibilityState = int32(summary.VisibilityState)     //nolint:gosec
-	p.PersonaState = int32(summary.PersonaState)           //nolint:gosec
-	p.PersonaStateFlags = int32(summary.PersonaStateFlags) //nolint:gosec
-	p.PrimaryClanID = summary.PrimaryClanId
-	p.ProfileState = int32(summary.ProfileState) //nolint:gosec
-	p.RealName = summary.RealName
-	p.TimeCreated = summary.TimeCreated
-	p.CommentPermission = int32(summary.CommentPermission) //nolint:gosec
-	p.VACBans = int32(steamBan.NumberOfVacBans)            //nolint:gosec
-	p.GameBans = int32(steamBan.NumberOfGameBans)          //nolint:gosec
-	p.DaysSinceLastBan = int32(steamBan.DaysSinceLastBan)  //nolint:gosec
-	p.CommunityBanned = steamBan.CommunityBanned
-	p.EconomyBan = EconBanState(steamBan.EconomyBan) //nolint:gosec
+func (p Person) ApplySteamInfo(summary *steamv1.PlayerSummary, steamBan *steamv1.SteamBan) Person {
+	p.PersonaName = summary.GetPersonaName()
+	p.AvatarHash = summary.GetAvatarHash()
+	p.LocCityID = summary.GetLocCityId()
+	p.LocCountryCode = summary.GetLocCountryCode()
+	p.LastLogoff = new(time.Unix(int64(summary.GetLastLogoff()), 0))
+	p.LocStateCode = summary.GetLocStateCode()
+	p.VisibilityState = summary.GetVisibilityState()
+	p.PersonaState = summary.GetPersonaState()
+	p.PersonaStateFlags = summary.GetPersonaStateFlags()
+	p.PrimaryClanID = summary.GetPrimaryClanId()
+	p.ProfileState = summary.GetProfileState()
+	p.RealName = summary.GetRealName()
+	p.TimeCreated = int64(summary.GetTimeCreated())
+	p.CommentPermission = summary.GetCommentPermission()
+	p.VACBans = steamBan.GetNumberOfVacBans()
+	p.GameBans = steamBan.GetNumberOfGameBans()
+	p.DaysSinceLastBan = steamBan.GetDaysSinceLastBan()
+	p.CommunityBanned = steamBan.GetCommunityBanned()
+	p.EconomyBan = EconBanState(steamBan.GetEconomyBan()) //nolint:gosec
 	p.UpdatedOn = time.Now()
 	p.UpdatedOnSteam = time.Now()
 
@@ -209,7 +210,7 @@ func (p Person) Core() person.Core {
 
 type ProfileResponse struct {
 	Player   *Person
-	Friends  []thirdparty.SteamFriend
+	Friends  []*steamv1.SteamFriend
 	Settings Settings
 }
 
@@ -336,8 +337,8 @@ func (u *Persons) UpdateProfiles(ctx context.Context, _ pgx.Tx, people People) (
 	}
 
 	var (
-		banStates           []thirdparty.SteamBan
-		summaries           []thirdparty.PlayerSummaryResponse
+		banStates           []*steamv1.SteamBan
+		summaries           []*steamv1.PlayerSummary
 		steamIDs            = people.ToSteamIDCollection()
 		errGroup, cancelCtx = errgroup.WithContext(ctx)
 	)
@@ -374,40 +375,40 @@ func (u *Persons) UpdateProfiles(ctx context.Context, _ pgx.Tx, people People) (
 
 		for _, newSummary := range summaries {
 			summary := newSummary
-			if player.SteamID.String() != summary.SteamId {
+			if player.SteamID.String() != summary.GetSteamId() {
 				continue
 			}
 
-			player.AvatarHash = summary.AvatarHash
-			player.CommentPermission = int32(summary.CommentPermission) //nolint:gosec
-			player.LastLogoff = new(time.Unix(summary.LastLogoff, 0))
-			player.LocCityID = int32(summary.LocCityId) //nolint:gosec
-			player.LocCountryCode = summary.LocCountryCode
-			player.LocStateCode = summary.LocStateCode
-			player.PersonaName = summary.PersonaName
-			player.PersonaState = int32(summary.PersonaState)           //nolint:gosec
-			player.PersonaStateFlags = int32(summary.PersonaStateFlags) //nolint:gosec
-			player.PrimaryClanID = summary.PrimaryClanId
-			player.ProfileState = int32(summary.ProfileState) //nolint:gosec
-			player.ProfileURL = summary.ProfileUrl
-			player.RealName = summary.RealName
-			player.TimeCreated = summary.TimeCreated
-			player.VisibilityState = int32(summary.VisibilityState) //nolint:gosec
+			player.AvatarHash = summary.GetAvatarHash()
+			player.CommentPermission = summary.GetCommentPermission()
+			player.LastLogoff = new(time.Unix(int64(summary.GetLastLogoff()), 0))
+			player.LocCityID = summary.GetLocCityId()
+			player.LocCountryCode = summary.GetLocCountryCode()
+			player.LocStateCode = summary.GetLocStateCode()
+			player.PersonaName = summary.GetPersonaName()
+			player.PersonaState = summary.GetPersonaState()
+			player.PersonaStateFlags = summary.GetPersonaStateFlags()
+			player.PrimaryClanID = summary.GetPrimaryClanId()
+			player.ProfileState = summary.GetProfileState()
+			player.ProfileURL = summary.GetProfileUrl()
+			player.RealName = summary.GetRealName()
+			player.TimeCreated = int64(summary.GetTimeCreated())
+			player.VisibilityState = summary.GetVisibilityState()
 
 			break
 		}
 
 		for _, banState := range banStates {
-			if player.SteamID.String() != banState.SteamId {
+			if player.SteamID.String() != banState.GetSteamId() {
 				continue
 			}
 
-			player.CommunityBanned = banState.CommunityBanned
-			player.VACBans = int32(banState.NumberOfVacBans)   //nolint:gosec
-			player.GameBans = int32(banState.NumberOfGameBans) //nolint:gosec
-			player.EconomyBan = EconBanState(banState.EconomyBan)
-			player.CommunityBanned = banState.CommunityBanned
-			player.DaysSinceLastBan = int32(banState.DaysSinceLastBan) //nolint:gosec
+			player.CommunityBanned = banState.GetCommunityBanned()
+			player.VACBans = banState.GetNumberOfVacBans()
+			player.GameBans = banState.GetNumberOfGameBans()
+			player.EconomyBan = EconBanState(banState.GetEconomyBan())
+			player.CommunityBanned = banState.GetCommunityBanned()
+			player.DaysSinceLastBan = banState.GetDaysSinceLastBan()
 		}
 
 		if errSavePerson := u.repo.Save(ctx, &player); errSavePerson != nil {

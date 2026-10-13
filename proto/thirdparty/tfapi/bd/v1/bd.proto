@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package tfapi.bd.v1;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/leighmacdonald/tf-api/internal/gen/tfapi/bd/v1;tfapidbv1";
+
+// BDService searches and generates bot detector lists.
+service BDService {
+  // SearchLists searches the tracked bot detector lists for the provided players.
+  rpc SearchLists(SearchListsRequest) returns (SearchListsResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // Generate produces a bot detector list from the tracked ban data.
+  rpc Generate(GenerateRequest) returns (GenerateResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+}
+
+message SearchListsRequest {
+  // Steam IDs in any standard format.
+  repeated string steam_ids = 1;
+  // Restrict matches to these attributes.
+  repeated string attrs = 2;
+}
+
+message BDLastSeen {
+  string player_name = 1;
+  // Unix timestamp of the last sighting.
+  int64 time = 2;
+}
+
+message BDPlayer {
+  repeated string attributes = 1;
+  BDLastSeen last_seen = 2;
+  // The steamid as provided by the source list; may be a string or number.
+  google.protobuf.Value steamid = 3;
+  // Some sort of proof. Please note this is easily manipulatable.
+  repeated string proof = 4;
+}
+
+message BDSearchResult {
+  string list_name = 1;
+  BDPlayer match = 2;
+}
+
+message SearchListsResponse {
+  repeated BDSearchResult results = 1;
+}
+
+message GenerateRequest {
+  // The unique site name.
+  string site = 1;
+}
+
+message BDFileInfo {
+  repeated string authors = 1;
+  string description = 2;
+  string title = 3;
+  string update_url = 4;
+}
+
+message BDSchema {
+  // Location of the schema describing the response.
+  string schema = 1;
+  BDFileInfo file_info = 2;
+  repeated BDPlayer players = 3;
+}
+
+message GenerateResponse {
+  BDSchema schema = 1;
+}

@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package tfapi.meta.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/leighmacdonald/tf-api/internal/gen/tfapi/meta/v1;tfapimetav1";
+
+// MetaService merges several different data sources into a single profile.
+service MetaService {
+  // Profile fetches the meta profile which merges several different data sources.
+  rpc Profile(ProfileRequest) returns (ProfileResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // Sites returns a complete list of the sites used as data sources.
+  rpc Sites(SitesRequest) returns (SitesResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+}
+
+message ProfileRequest {
+  // Steam IDs in any standard format.
+  repeated string steam_ids = 1;
+}
+
+message Ban {
+  string steam_id = 1;
+  string site_name = 2;
+  string reason = 3;
+  google.protobuf.Timestamp created_on = 4;
+  google.protobuf.Timestamp expires_on = 5;
+  bool permanent = 6;
+  string name = 7;
+  bool unbanned = 8;
+  string unban_reason = 9;
+}
+
+message SteamFriend {
+  string steam_id = 1;
+  string relationship = 2;
+  google.protobuf.Timestamp friend_since = 3;
+  google.protobuf.Timestamp removed_on = 4;
+}
+
+message LeaguePlayerTeamHistory {
+  string league = 1;
+  string type = 2;
+  string season_name = 3;
+  string format = 4;
+  string region = 5;
+  string steam_id = 6;
+  string team_name = 7;
+  string division_name = 8;
+  int32 rank = 9;
+  string tag = 10;
+  string alias = 11;
+  bool leader = 12;
+  google.protobuf.Timestamp joined_team = 13;
+  google.protobuf.Timestamp left_team = 14;
+}
+
+message MetaProfile {
+  string steam_id = 1;
+  int32 community_visibility_state = 2;
+  int32 profile_state = 3;
+  string persona_name = 4;
+  string avatar_hash = 5;
+  string real_name = 6;
+  int32 time_created = 7;
+  bool community_banned = 8;
+  int32 number_of_vac_bans = 9;
+  int32 days_since_last_ban = 10;
+  int32 number_of_game_bans = 11;
+  string economy_ban = 12;
+  int32 logs_count = 13;
+  repeated Ban bans = 14;
+  repeated SteamFriend friends = 15;
+  repeated LeaguePlayerTeamHistory competitive_teams = 16;
+}
+
+message ProfileResponse {
+  repeated MetaProfile profiles = 1;
+}
+
+message SitesRequest {}
+
+message SiteInfo {
+  string name = 1;
+  string title = 2;
+  string type = 3;
+  string url = 4;
+}
+
+message SitesResponse {
+  repeated SiteInfo sites = 1;
+}
