@@ -223,7 +223,18 @@ func (r *Service) Get(context.Context, *emptypb.Empty) (*configv1.GetResponse, e
 }
 
 func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (*configv1.UpdateResponse, error) {
-	inCfg := request.GetConfig()
+	conf := configFromUpdate(request.GetConfig(), r.config.Config())
+	if errWrite := r.config.Write(ctx, conf); errWrite != nil {
+		return nil, connect.NewError(connect.CodeUnknown, errWrite)
+	}
+
+	return &configv1.UpdateResponse{Config: toConfig(conf)}, nil
+}
+
+// configFromUpdate maps the api representation onto the domain config.
+// PlayerqueueEnabled and CenterProjectiles are not managed through the api;
+// the current values are carried over so a save does not wipe them.
+func configFromUpdate(inCfg *configv1.Config, current Config) Config {
 	inGeneral := inCfg.GetGeneral()
 	inDebug := inCfg.GetDebug()
 	inAC := inCfg.GetAnticheat()
@@ -240,27 +251,28 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 
 	conf := Config{
 		General: &General{
-			SiteName:         inGeneral.GetSiteName(),
-			SiteDescription:  inGeneral.GetSiteDescription(),
-			Mode:             fromRunMode(inGeneral.GetMode()),
-			FileServeMode:    fromServeMode(inGeneral.GetFileServeMode()),
-			SrcdsLogAddr:     inGeneral.GetSrcdsLogAddr(),
-			AssetURL:         inGeneral.GetAssetUrl(),
-			Favicon:          inGeneral.GetFavicon(),
-			DefaultRoute:     inGeneral.GetDefaultRoute(),
-			NewsEnabled:      inGeneral.GetNewsEnabled(),
-			ForumsEnabled:    inGeneral.GetForumsEnabled(),
-			ContestsEnabled:  inGeneral.GetContestsEnabled(),
-			WikiEnabled:      inGeneral.GetWikiEnabled(),
-			StatsEnabled:     inGeneral.GetStatsEnabled(),
-			ServersEnabled:   inGeneral.GetServersEnabled(),
-			ReportsEnabled:   inGeneral.GetReportsEnabled(),
-			ChatlogsEnabled:  inGeneral.GetChatlogsEnabled(),
-			DemosEnabled:     inGeneral.GetDemosEnabled(),
-			SpeedrunsEnabled: inGeneral.GetSpeedrunsEnabled(),
-			MGEEnabled:       inGeneral.GetMgeEnabled(),
-			SentryDSN:        inGeneral.GetSentryDsn(),
-			SentryDSNWeb:     inGeneral.GetSentryDsnWeb(),
+			SiteName:           inGeneral.GetSiteName(),
+			SiteDescription:    inGeneral.GetSiteDescription(),
+			Mode:               fromRunMode(inGeneral.GetMode()),
+			FileServeMode:      fromServeMode(inGeneral.GetFileServeMode()),
+			SrcdsLogAddr:       inGeneral.GetSrcdsLogAddr(),
+			AssetURL:           inGeneral.GetAssetUrl(),
+			Favicon:            inGeneral.GetFavicon(),
+			DefaultRoute:       inGeneral.GetDefaultRoute(),
+			NewsEnabled:        inGeneral.GetNewsEnabled(),
+			ForumsEnabled:      inGeneral.GetForumsEnabled(),
+			ContestsEnabled:    inGeneral.GetContestsEnabled(),
+			WikiEnabled:        inGeneral.GetWikiEnabled(),
+			StatsEnabled:       inGeneral.GetStatsEnabled(),
+			ServersEnabled:     inGeneral.GetServersEnabled(),
+			ReportsEnabled:     inGeneral.GetReportsEnabled(),
+			ChatlogsEnabled:    inGeneral.GetChatlogsEnabled(),
+			DemosEnabled:       inGeneral.GetDemosEnabled(),
+			PlayerqueueEnabled: current.General.PlayerqueueEnabled,
+			SpeedrunsEnabled:   inGeneral.GetSpeedrunsEnabled(),
+			MGEEnabled:         inGeneral.GetMgeEnabled(),
+			SentryDSN:          inGeneral.GetSentryDsn(),
+			SentryDSNWeb:       inGeneral.GetSentryDsnWeb(),
 		},
 		Debug: &Debug{
 			SkipOpenIDValidation: inDebug.GetSkipOpenIdValidation(),
@@ -295,7 +307,7 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 			GuildID:                 inDiscord.GetGuildId(),
 			PublicLogChannelEnable:  inDiscord.GetPublicLogChannelEnable(),
 			LogChannelID:            inDiscord.GetLogChannelId(),
-			PublicLogChannelID:      inDiscord.GetPublicMatchLogChannelId(),
+			PublicLogChannelID:      inDiscord.GetPublicLogChannelId(),
 			PublicMatchLogChannelID: inDiscord.GetPublicMatchLogChannelId(),
 			VoteLogChannelID:        inDiscord.GetVoteLogChannelId(),
 			AppealLogChannelID:      inDiscord.GetAppealLogChannelId(),
@@ -309,7 +321,7 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 			ChatLogChannelID:        inDiscord.GetChatLogChannelId(),
 		},
 		Clientprefs: &sourcemod.Config{
-			CenterProjectiles: false,
+			CenterProjectiles: current.Clientprefs.CenterProjectiles,
 		},
 		Log: &log.Config{
 			Level:           fromLevel(inLog.GetLevel()),
@@ -369,11 +381,8 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 			MaxInvalidUserCmd:     inAC.GetMaxInvalidUserCmd(),
 		},
 	}
-	if errWrite := r.config.Write(ctx, conf); errWrite != nil {
-		return nil, connect.NewError(connect.CodeUnknown, errWrite)
-	}
 
-	return &configv1.UpdateResponse{Config: toConfig(conf)}, nil
+	return conf
 }
 
 func toConfig(conf Config) *configv1.Config {
@@ -408,10 +417,11 @@ func toConfig(conf Config) *configv1.Config {
 			AppId:                   &conf.Discord.AppID,
 			LinkId:                  &conf.Discord.LinkID,
 			GuildId:                 &conf.Discord.GuildID,
-			AppSecret:               &conf.Discord.AppID,
+			AppSecret:               &conf.Discord.AppSecret,
 			Token:                   &conf.Discord.Token,
 			PublicLogChannelEnable:  &conf.Discord.PublicLogChannelEnable,
 			LogChannelId:            &conf.Discord.LogChannelID,
+			PublicLogChannelId:      &conf.Discord.PublicLogChannelID,
 			PublicMatchLogChannelId: &conf.Discord.PublicMatchLogChannelID,
 			VoteLogChannelId:        &conf.Discord.VoteLogChannelID,
 			AppealLogChannelId:      &conf.Discord.AppealLogChannelID,
@@ -428,6 +438,9 @@ func toConfig(conf Config) *configv1.Config {
 			Enabled:             &conf.Patreon.Enabled,
 			IntegrationsEnabled: &conf.Patreon.IntegrationsEnabled,
 			ClientId:            &conf.Patreon.ClientID,
+			ClientSecret:        &conf.Patreon.ClientSecret,
+			CreatorAccessToken:  &conf.Patreon.CreatorAccessToken,
+			CreatorRefreshToken: &conf.Patreon.CreatorRefreshToken,
 		},
 		Debug: &configv1.Debug{
 			SkipOpenIdValidation: &conf.Debug.SkipOpenIDValidation,
@@ -461,11 +474,14 @@ func toConfig(conf Config) *configv1.Config {
 		GeoLocation: &configv1.GeoLocation{
 			Enabled:   &conf.GeoLocation.Enabled,
 			CachePath: &conf.GeoLocation.CachePath,
+			Token:     &conf.GeoLocation.Token,
 		},
 		Ssh: &configv1.SSH{
 			Enabled:         &conf.SSH.Enabled,
 			Username:        &conf.SSH.Username,
 			Port:            new(int32(conf.SSH.Port)),
+			PrivateKeyPath:  &conf.SSH.PrivateKeyPath,
+			Password:        &conf.SSH.Password,
 			HostKeyStrategy: new(configv1.HostKeyStrategy(conf.SSH.HostKeyStrategy)), //nolint:gosec
 			UpdateInterval:  new(conf.SSH.UpdateInterval),
 			Timeout:         new(conf.SSH.Timeout),
