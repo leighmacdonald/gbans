@@ -1,3 +1,4 @@
+//nolint:testpackage // exercises unexported seed helpers directly.
 package sourcemod
 
 import (
@@ -26,7 +27,7 @@ func TestResolveSeedChannelID(t *testing.T) {
 }
 
 func TestSanitizeSeedMessage(t *testing.T) {
-	require.Equal(t, "", sanitizeSeedMessage(""))
+	require.Empty(t, sanitizeSeedMessage(""))
 	require.Equal(t, "please seed", sanitizeSeedMessage("please seed"))
 
 	// Mention syntax must not survive: no pings via user text.
@@ -40,7 +41,7 @@ func TestSanitizeSeedMessage(t *testing.T) {
 	// Overlong messages are capped.
 	long := strings.Repeat("a", maxSeedMessageLength+100)
 	capped := sanitizeSeedMessage(long)
-	require.True(t, len([]rune(capped)) <= maxSeedMessageLength+1)
+	require.LessOrEqual(t, len([]rune(capped)), maxSeedMessageLength+1)
 	require.True(t, strings.HasSuffix(capped, "…"))
-	require.Equal(t, maxSeedMessageLength, len([]rune(strings.TrimSuffix(capped, "…"))))
+	require.Len(t, []rune(strings.TrimSuffix(capped, "…")), maxSeedMessageLength)
 }

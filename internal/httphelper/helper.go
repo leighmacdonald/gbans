@@ -51,8 +51,8 @@ func NewServer(listenAddr string, handler http.Handler) *http.Server {
 	return httpServer
 }
 
-func Referral(r *http.Request) string {
-	referralURL := r.URL.Query().Get("return_url")
+func Referral(req *http.Request) string {
+	referralURL := req.URL.Query().Get("return_url")
 	if referralURL == "" {
 		referralURL = "/"
 	}
@@ -66,15 +66,15 @@ func Referral(r *http.Request) string {
 // instead of the static external URL: a single backend can serve several
 // hosts (local dev ports, LAN IPs, Cloudflare-fronted domains) and the
 // browser-visible URL is the only one signatures and cookies will match.
-func RequestBaseURL(r *http.Request) string {
+func RequestBaseURL(req *http.Request) string {
 	scheme := "http"
-	if r.TLS != nil {
+	if req.TLS != nil {
 		scheme = "https"
 	}
 
-	if forwardedProto := r.Header.Get("X-Forwarded-Proto"); forwardedProto != "" {
+	if forwardedProto := req.Header.Get("X-Forwarded-Proto"); forwardedProto != "" {
 		scheme = strings.ToLower(strings.TrimSpace(strings.Split(forwardedProto, ",")[0]))
-	} else if visitor := r.Header.Get("CF-Visitor"); visitor != "" {
+	} else if visitor := req.Header.Get("Cf-Visitor"); visitor != "" {
 		// Cloudflare Tunnel (cloudflared) reports the browser-facing scheme
 		// as JSON: {"scheme":"https"}. Without this the backend sees plain
 		// http and downgrades scheme-sensitive behaviour (Secure cookies,
@@ -88,8 +88,8 @@ func RequestBaseURL(r *http.Request) string {
 		}
 	}
 
-	host := r.Host
-	if forwardedHost := r.Header.Get("X-Forwarded-Host"); forwardedHost != "" {
+	host := req.Host
+	if forwardedHost := req.Header.Get("X-Forwarded-Host"); forwardedHost != "" {
 		host = strings.TrimSpace(strings.Split(forwardedHost, ",")[0])
 	}
 
@@ -120,16 +120,16 @@ func HeaderClientIP(head http.Header) (netip.Addr, bool) {
 // CF-Connecting-IP header, then the leftmost X-Forwarded-For entry, then
 // X-Real-IP, and finally the connection's remote address. Returns false when
 // no usable address is found.
-func ClientIP(r *http.Request) (netip.Addr, bool) {
-	if addr, ok := HeaderClientIP(r.Header); ok {
+func ClientIP(req *http.Request) (netip.Addr, bool) {
+	if addr, ok := HeaderClientIP(req.Header); ok {
 		return addr, true
 	}
 
-	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+	if host, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
 		if addr, errParse := netip.ParseAddr(strings.TrimSpace(host)); errParse == nil && addr.IsValid() {
 			return addr, true
 		}
-	} else if addr, errParse := netip.ParseAddr(strings.TrimSpace(r.RemoteAddr)); errParse == nil && addr.IsValid() {
+	} else if addr, errParse := netip.ParseAddr(strings.TrimSpace(req.RemoteAddr)); errParse == nil && addr.IsValid() {
 		return addr, true
 	}
 

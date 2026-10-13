@@ -7,7 +7,6 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import Typography from "@mui/material/Typography";
 import type { SourceBanRecord } from "../rpc/ban/v1/ban_pb.ts";
 import { querySourceBans } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
 import { renderTimestamp } from "../util/time.ts";

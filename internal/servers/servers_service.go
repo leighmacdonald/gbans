@@ -51,8 +51,8 @@ func validLatLong(lat float64, lon float64) bool {
 // client IP (CF-Connecting-IP, X-Forwarded-For, X-Real-IP). Returns zeros
 // when no location can be determined.
 func (s Service) clientLatLong(ctx context.Context) (float64, float64) {
-	callInfo, ok := connect.CallInfoForHandlerContext(ctx)
-	if !ok {
+	callInfo, found := connect.CallInfoForHandlerContext(ctx)
+	if !found {
 		return 0, 0
 	}
 

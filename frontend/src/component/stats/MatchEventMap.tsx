@@ -204,6 +204,7 @@ export const MatchEventMap = ({ summary, mapName }: { summary: MatchView; mapNam
 	const scrubTick = tickFilter ?? maxTick;
 
 	// Reset the scrub position when switching matches.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: mapName intentionally retriggers the reset without being read.
 	useEffect(() => {
 		setTickFilter(null);
 	}, [mapName]);

@@ -1,3 +1,4 @@
+//nolint:testpackage // exercises the unexported filename normalizer directly.
 package demo
 
 import (

@@ -196,7 +196,7 @@ func banIDs(bans []ban.Ban) []int32 {
 }
 
 type capturingNotifier struct {
-	sync.Mutex //nolint:bytestring
+	sync.Mutex
 
 	payloads []notification.Payload
 }

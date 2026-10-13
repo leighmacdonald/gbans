@@ -472,72 +472,136 @@ func (e MatchEvent) SteamIDs() []string {
 
 	switch e.Type {
 	case MatchEventKill:
-		if e.Kill != nil {
-			add(e.Kill.Killer, e.Kill.Victim)
-		}
+		add(killSteamIDs(e.Kill)...)
 	case MatchEventCaptureStarted:
-		if e.CaptureStarted != nil {
-			add(e.CaptureStarted.Cappers...)
-		}
+		add(captureStartedSteamIDs(e.CaptureStarted)...)
 	case MatchEventCapture:
-		if e.Capture != nil {
-			add(e.Capture.Cappers...)
-		}
+		add(captureSteamIDs(e.Capture)...)
 	case MatchEventCaptureBlocked:
-		if e.CaptureBlocked != nil {
-			add(e.CaptureBlocked.Blocker, e.CaptureBlocked.Victim)
-		}
+		add(captureBlockedSteamIDs(e.CaptureBlocked)...)
 	case MatchEventBuildingBuilt:
-		if e.BuildingBuilt != nil {
-			add(e.BuildingBuilt.Owner)
-		}
+		add(buildingBuiltSteamIDs(e.BuildingBuilt)...)
 	case MatchEventBuildingDestroyed:
-		if e.BuildingDestroyed != nil {
-			add(e.BuildingDestroyed.Owner, e.BuildingDestroyed.Attacker, e.BuildingDestroyed.Assister)
-		}
+		add(buildingDestroyedSteamIDs(e.BuildingDestroyed)...)
 	case MatchEventBuildingUpgraded:
-		if e.BuildingUpgraded != nil {
-			add(e.BuildingUpgraded.Player)
-		}
+		add(buildingLifecycleSteamIDs(e.BuildingUpgraded)...)
 	case MatchEventBuildingCarried:
-		if e.BuildingCarried != nil {
-			add(e.BuildingCarried.Player)
-		}
+		add(buildingLifecycleSteamIDs(e.BuildingCarried)...)
 	case MatchEventBuildingDropped:
-		if e.BuildingDropped != nil {
-			add(e.BuildingDropped.Player)
-		}
+		add(buildingLifecycleSteamIDs(e.BuildingDropped)...)
 	case MatchEventBuildingRemoved:
-		if e.BuildingRemoved != nil {
-			add(e.BuildingRemoved.Player)
-		}
+		add(buildingLifecycleSteamIDs(e.BuildingRemoved)...)
 	case MatchEventBuildingDetonated:
-		if e.BuildingDetonated != nil {
-			add(e.BuildingDetonated.Player)
-		}
+		add(buildingLifecycleSteamIDs(e.BuildingDetonated)...)
 	case MatchEventSapperPlaced:
-		if e.SapperPlaced != nil {
-			add(e.SapperPlaced.Spy, e.SapperPlaced.Owner)
-		}
+		add(sapperPlacedSteamIDs(e.SapperPlaced)...)
 	case MatchEventUberDropped:
-		if e.UberDropped != nil {
-			add(e.UberDropped.Medic, e.UberDropped.Attacker)
-		}
+		add(uberDroppedSteamIDs(e.UberDropped)...)
 	case MatchEventUberDeployed:
-		if e.UberDeployed != nil {
-			add(e.UberDeployed.Medic, e.UberDeployed.Target)
-		}
+		add(uberDeployedSteamIDs(e.UberDeployed)...)
 	case MatchEventFlagEvent:
-		if e.FlagEvent != nil {
-			add(e.FlagEvent.Player, e.FlagEvent.Carrier)
-		}
+		add(flagEventSteamIDs(e.FlagEvent)...)
 	case MatchEventKillstreakEnded:
-		if e.KillstreakEnded != nil {
-			add(e.KillstreakEnded.Player, e.KillstreakEnded.Killer)
-		}
+		add(killstreakEndedSteamIDs(e.KillstreakEnded)...)
 	}
 
 	return out
+}
+
+func killSteamIDs(kill *KillEvent) []string {
+	if kill == nil {
+		return nil
+	}
+
+	return []string{kill.Killer, kill.Victim}
+}
+
+func captureStartedSteamIDs(started *CaptureStartedEvent) []string {
+	if started == nil {
+		return nil
+	}
+
+	return started.Cappers
+}
+
+func captureSteamIDs(capture *CaptureEvent) []string {
+	if capture == nil {
+		return nil
+	}
+
+	return capture.Cappers
+}
+
+func captureBlockedSteamIDs(blocked *CaptureBlockedEvent) []string {
+	if blocked == nil {
+		return nil
+	}
+
+	return []string{blocked.Blocker, blocked.Victim}
+}
+
+func buildingBuiltSteamIDs(built *BuildingBuiltEvent) []string {
+	if built == nil {
+		return nil
+	}
+
+	return []string{built.Owner}
+}
+
+func buildingDestroyedSteamIDs(destroyed *BuildingDestroyedEvent) []string {
+	if destroyed == nil {
+		return nil
+	}
+
+	return []string{destroyed.Owner, destroyed.Attacker, destroyed.Assister}
+}
+
+func buildingLifecycleSteamIDs(lifecycle *BuildingLifecycleEvent) []string {
+	if lifecycle == nil {
+		return nil
+	}
+
+	return []string{lifecycle.Player}
+}
+
+func sapperPlacedSteamIDs(sapper *SapperPlacedEvent) []string {
+	if sapper == nil {
+		return nil
+	}
+
+	return []string{sapper.Spy, sapper.Owner}
+}
+
+func uberDroppedSteamIDs(dropped *UberDroppedEvent) []string {
+	if dropped == nil {
+		return nil
+	}
+
+	return []string{dropped.Medic, dropped.Attacker}
+}
+
+func uberDeployedSteamIDs(deployed *UberDeployedEvent) []string {
+	if deployed == nil {
+		return nil
+	}
+
+	return []string{deployed.Medic, deployed.Target}
+}
+
+func flagEventSteamIDs(flag *FlagEvent) []string {
+	if flag == nil {
+		return nil
+	}
+
+	return []string{flag.Player, flag.Carrier}
+}
+
+func killstreakEndedSteamIDs(streak *KillstreakEndedEvent) []string {
+	if streak == nil {
+		return nil
+	}
+
+	return []string{streak.Player, streak.Killer}
 }
 
 type CaptureStartedEvent struct {

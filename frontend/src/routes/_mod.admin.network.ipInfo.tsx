@@ -17,7 +17,6 @@ import { TileLayer } from "react-leaflet/TileLayer";
 import "leaflet/dist/leaflet.css";
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQuery } from "@connectrpc/connect-query";
-import { useTheme } from "@mui/material";
 import { z } from "zod/v4";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
