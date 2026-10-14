@@ -48,6 +48,67 @@ func (f fakeParser) ParseDemo(_ context.Context, req *demostatsv1.ParseDemoReque
 	return resp, nil
 }
 
+// TestUploadTriggersCleanupEveryTenth ensures a demo cleanup run executes on
+// every 10th successful upload returning match results.
+func TestUploadTriggersCleanupEveryTenth(t *testing.T) {
+	demoFile, err := os.Open(filepath.Join("..", "stats", "testdata", "demo-1427611.json"))
+	require.NoError(t, err)
+
+	defer demoFile.Close()
+
+	parsed, err := json.Decode[demoparse.Demo](demoFile)
+	require.NoError(t, err)
+
+	_, handler := demostatsv1connect.NewDemoServiceHandler(fakeParser{demo: &parsed})
+	parser := httptest.NewServer(handler)
+
+	defer parser.Close()
+
+	ownerSID := steamid.New(fixture.Config.Config().Owner)
+	require.NoError(t, fixture.Persons.EnsurePerson(t.Context(), ownerSID))
+
+	var (
+		server  = fixture.CreateTestServer(t.Context())
+		assets  = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
+		filters = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database),
+			notification.NewDiscard(), fixture.Config.Config().Filters)
+		chatUC = chat.New(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters,
+			filters, fixture.Persons, notification.NewDiscard(), nil, "")
+		statsUC  = stats.New(stats.NewRepository(fixture.Database), maps.New(maps.NewRepository(fixture.Database)))
+		demoConf = &demo.Config{
+			DemoCleanupEnabled:  true,
+			DemoCleanupStrategy: demo.DemoStrategyCount,
+			DemoCountLimit:      0,
+			DemoParserURL:       parser.URL,
+		}
+		demos = demo.NewDemos(asset.BucketDemo, demo.NewRepository(fixture.Database),
+			assets, statsUC, chatUC, fixture.Persons, demoConf, ownerSID)
+	)
+
+	upload := demo.UploadedDemo{
+		Name:     "cleanup_counter.dem",
+		ServerID: server.ServerID,
+		Content:  []byte("cleanup counter demo upload"),
+	}
+
+	var demoID int32
+
+	for iteration := 1; iteration < 10; iteration++ {
+		uploaded, _, errUpload := demos.Upload(t.Context(), upload, false)
+		require.NoError(t, errUpload)
+		demoID = uploaded.DemoID
+
+		_, errGet := demos.GetDemoByID(t.Context(), demoID)
+		require.NoError(t, errGet, "demo should survive before the 10th upload (iteration %d)", iteration)
+	}
+
+	_, _, err = demos.Upload(t.Context(), upload, false)
+	require.NoError(t, err)
+
+	_, err = demos.GetDemoByID(t.Context(), demoID)
+	require.Error(t, err, "demo should have been cleaned up after the 10th upload")
+}
+
 // TestDemoUploadDeduplication ensures that uploading the same demo twice does not create
 // duplicate asset, demo, or stats entries.
 func TestDemoUploadDeduplication(t *testing.T) {

@@ -447,7 +447,8 @@ func (g *GBans) StartBackground(ctx context.Context) {
 		case <-blocklistTicker.C:
 			go g.blocklists.Sync(ctx)
 		case <-patreonTicker.C:
-			go g.patreonSvc.Sync(ctx)
+			// go g.patreonSvc.Sync(ctx)
+			slog.Warn("Patreon disabled")
 		case <-demoTicker.C:
 			go g.demos.Cleanup(ctx)
 			go func() {

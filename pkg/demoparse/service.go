@@ -7,12 +7,17 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
 
 	demostatsv1 "github.com/leighmacdonald/gbans/internal/demostats/v1"
 	"github.com/leighmacdonald/gbans/internal/demostats/v1/demostatsv1connect"
 )
 
 var ErrDemoSubmit = errors.New("could not submit demo file")
+
+// parseTimeout bounds a single demo parse. Without it a stuck parse pins
+// several copies of the full demo in memory indefinitely.
+const parseTimeout = 5 * time.Minute
 
 func SubmitFile(ctx context.Context, url string, path string) (*Demo, error) {
 	fileHandle, errDF := os.Open(path)
@@ -40,7 +45,10 @@ func Submit(ctx context.Context, url string, name string, reader io.Reader) (*De
 		return nil, errors.Join(errContent, ErrDemoSubmit)
 	}
 
-	client := demostatsv1connect.NewDemoServiceClient(http.DefaultClient, url)
+	client := demostatsv1connect.NewDemoServiceClient(&http.Client{Timeout: parseTimeout}, url)
+
+	ctx, cancel := context.WithTimeout(ctx, parseTimeout)
+	defer cancel()
 
 	resp, errCall := client.ParseDemo(ctx, &demostatsv1.ParseDemoRequest{
 		Demo:     content,

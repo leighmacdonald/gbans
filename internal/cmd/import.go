@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 	"path"
-	"runtime"
 	"strconv"
 	"sync"
 
@@ -26,10 +25,22 @@ func importCmd() *cobra.Command {
 	return cmd
 }
 
+// defaultImportWorkers caps concurrent demo imports. Each worker transiently
+// holds several copies of a full demo in memory (raw bytes, parse request,
+// parse response), so this is intentionally low.
+const defaultImportWorkers = 4
+
+// maxImportFileSize mirrors asset.maxDemoFileSize. Oversized files are
+// rejected during import anyway; skipping them upfront avoids streaming
+// gigabytes that can never be stored.
+const maxImportFileSize = 500000000
+
 func importDemoCmd() *cobra.Command {
 	var (
-		serverName string
-		force      bool
+		serverName         string
+		force              bool
+		workers            int
+		skipProfileRefresh bool
 	)
 
 	cmd := &cobra.Command{
@@ -57,7 +68,19 @@ func importDemoCmd() *cobra.Command {
 				return errSetup
 			}
 
+			if skipProfileRefresh {
+				app.persons.DisableProfileRefresh()
+			}
+
+			if workers < 1 {
+				workers = 1
+			}
+
 			importFn := func(arg string) error {
+				if info, errStat := os.Stat(arg); errStat == nil && !info.IsDir() && info.Size() > maxImportFileSize {
+					return fmt.Errorf("%w: file exceeds size limit: %s", demo.ErrDemoLoad, arg)
+				}
+
 				var serverID int32
 				parsedID, errID := strconv.ParseInt(arg, 10, 32)
 				if errID != nil {
@@ -84,7 +107,7 @@ func importDemoCmd() *cobra.Command {
 			for _, arg := range args {
 				if isDir(arg) {
 					var (
-						sem       = make(chan struct{}, runtime.NumCPU())
+						sem       = make(chan struct{}, workers)
 						waitGroup sync.WaitGroup
 					)
 
@@ -97,9 +120,9 @@ func importDemoCmd() *cobra.Command {
 							continue
 						}
 						waitGroup.Add(1)
+						sem <- struct{}{}
 						go func(filePath string, entryName string) {
 							defer waitGroup.Done()
-							sem <- struct{}{}
 							defer func() { <-sem }()
 
 							if err := importFn(path.Join(filePath, entryName)); err != nil && !errors.Is(err, database.ErrDuplicate) {
@@ -123,6 +146,8 @@ func importDemoCmd() *cobra.Command {
 
 	cmd.PersistentFlags().StringVarP(&serverName, "server", "s", "", "Shorthand name of the server (srv-1), or its numerical server id (6)")
 	cmd.PersistentFlags().BoolVarP(&force, "force", "f", false, "Force re-import of already imported demos")
+	cmd.PersistentFlags().IntVarP(&workers, "workers", "w", defaultImportWorkers, "Max concurrent demo imports")
+	cmd.PersistentFlags().BoolVar(&skipProfileRefresh, "skip-profile-refresh", false, "Skip refreshing player profile data from Steam during import")
 
 	return cmd
 }

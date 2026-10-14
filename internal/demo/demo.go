@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -41,6 +42,10 @@ var (
 )
 
 var demoFilenamePattern = regexp.MustCompile(`^(?:\d{8}-\d{6})-(?:workshop-[^.]+\.dem|[^.]+\.dem)$`)
+
+// cleanupEveryUploads is the number of successful demo uploads returning match
+// results after which a demo cleanup run executes.
+const cleanupEveryUploads = 10
 
 type Strategy string
 
@@ -123,6 +128,7 @@ type Demos struct {
 	chat        *chat.Chat
 	cleanupChan chan any
 	owner       steamid.SteamID
+	uploadCount *atomic.Uint64
 }
 
 type PersonCreator interface {
@@ -140,6 +146,7 @@ func NewDemos(bucket asset.Bucket, repository Repository, assets asset.Assets, s
 		cleanupChan: make(chan any),
 		owner:       owner,
 		person:      person,
+		uploadCount: &atomic.Uint64{},
 	}
 }
 
@@ -389,6 +396,8 @@ func (d Demos) Upload(ctx context.Context, demo UploadedDemo, force bool) (*File
 		return nil, uuid.Nil, errMatch
 	}
 
+	d.maybeCleanup(ctx)
+
 	return demoFile, matchID, nil
 }
 
@@ -572,6 +581,16 @@ func (d Demos) TruncateByCount(ctx context.Context, maxCount uint64) (int, int64
 	slog.Debug("Truncate by count completed", slog.Int("count", count), slog.String("total_size", humanize.Bytes(uint64(size)))) //nolint:gosec
 
 	return count, size, nil
+}
+
+func (d Demos) maybeCleanup(ctx context.Context) {
+	if d.uploadCount == nil {
+		return
+	}
+
+	if d.uploadCount.Add(1)%cleanupEveryUploads == 0 {
+		d.Cleanup(ctx)
+	}
 }
 
 func (d Demos) Cleanup(ctx context.Context) {

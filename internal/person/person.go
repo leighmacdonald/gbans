@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/netip"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -277,10 +278,18 @@ type SettingsUpdate struct {
 }
 
 type Persons struct {
-	repo           Repository
-	tfAPI          thirdparty.APIProvider
-	knownPersonsMu *sync.RWMutex
-	knownPersons   map[steamid.SteamID]bool
+	repo               Repository
+	tfAPI              thirdparty.APIProvider
+	knownPersonsMu     *sync.RWMutex
+	knownPersons       map[steamid.SteamID]bool
+	skipProfileRefresh atomic.Bool
+}
+
+// DisableProfileRefresh stops refreshing stored profile data from Steam when
+// a person is ensured or fetched. Bulk imports use this to avoid thousands of
+// serial Steam API round-trips; the data refreshes on the person's next login.
+func (u *Persons) DisableProfileRefresh() {
+	u.skipProfileRefresh.Store(true)
 }
 
 func NewPersons(repository Repository, tfAPI thirdparty.APIProvider) *Persons {
@@ -506,7 +515,7 @@ func (u *Persons) getOrCreatePerson(
 		}
 	}
 
-	if forceRefresh || fetchedPerson.Expired() {
+	if (forceRefresh || fetchedPerson.Expired()) && !u.skipProfileRefresh.Load() {
 		if errUpdate := u.updatePerson(ctx, &fetchedPerson); errUpdate != nil {
 			slog.Error("Failed to update steam profile data", slog.String("steamid", sid64.String()),
 				slog.String("error", errUpdate.Error()))
@@ -564,7 +573,7 @@ func (u *Persons) getFirst(ctx context.Context, query Query) (Person, error) {
 	}
 
 	player := people[0]
-	if player.Expired() {
+	if player.Expired() && !u.skipProfileRefresh.Load() {
 		if errGetProfile := UpdatePlayerSummary(ctx, &player, u.tfAPI); errGetProfile != nil {
 			slog.Warn("Failed to update player summary for expired player", slog.String("error", errGetProfile.Error()))
 		}

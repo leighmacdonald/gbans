@@ -686,13 +686,15 @@ func (x *RefreshStatsResponse) GetRefreshedViews() []string {
 }
 
 type QueryMatchesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filter        *v11.Filter            `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
-	StatsBucketId *uint32                `protobuf:"varint,2,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
-	ServerId      *int32                 `protobuf:"varint,3,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
-	MapId         *int32                 `protobuf:"varint,4,opt,name=map_id,json=mapId" json:"map_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Filter         *v11.Filter            `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
+	StatsBucketId  *uint32                `protobuf:"varint,2,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
+	ServerId       []int32                `protobuf:"varint,3,rep,packed,name=server_id,json=serverId" json:"server_id,omitempty"`
+	MapId          *int32                 `protobuf:"varint,4,opt,name=map_id,json=mapId" json:"map_id,omitempty"`
+	StartTimeStart *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=start_time_start,json=startTimeStart" json:"start_time_start,omitempty"`
+	StartTimeEnd   *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=start_time_end,json=startTimeEnd" json:"start_time_end,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *QueryMatchesRequest) Reset() {
@@ -739,11 +741,11 @@ func (x *QueryMatchesRequest) GetStatsBucketId() uint32 {
 	return 0
 }
 
-func (x *QueryMatchesRequest) GetServerId() int32 {
-	if x != nil && x.ServerId != nil {
-		return *x.ServerId
+func (x *QueryMatchesRequest) GetServerId() []int32 {
+	if x != nil {
+		return x.ServerId
 	}
-	return 0
+	return nil
 }
 
 func (x *QueryMatchesRequest) GetMapId() int32 {
@@ -751,6 +753,20 @@ func (x *QueryMatchesRequest) GetMapId() int32 {
 		return *x.MapId
 	}
 	return 0
+}
+
+func (x *QueryMatchesRequest) GetStartTimeStart() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartTimeStart
+	}
+	return nil
+}
+
+func (x *QueryMatchesRequest) GetStartTimeEnd() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartTimeEnd
+	}
+	return nil
 }
 
 type QueryMatchesResponse struct {
@@ -4092,12 +4108,14 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\x0fBucketsResponse\x12*\n" +
 	"\abuckets\x18\x01 \x03(\v2\x10.stats.v1.BucketR\abuckets\"?\n" +
 	"\x14RefreshStatsResponse\x12'\n" +
-	"\x0frefreshed_views\x18\x01 \x03(\tR\x0erefreshedViews\"\xad\x01\n" +
+	"\x0frefreshed_views\x18\x01 \x03(\tR\x0erefreshedViews\"\xb5\x02\n" +
 	"\x13QueryMatchesRequest\x121\n" +
 	"\x06filter\x18\x01 \x01(\v2\x19.database.query.v1.FilterR\x06filter\x12/\n" +
 	"\x0fstats_bucket_id\x18\x02 \x01(\rB\a\xbaH\x04*\x02 \x00R\rstatsBucketId\x12\x1b\n" +
-	"\tserver_id\x18\x03 \x01(\x05R\bserverId\x12\x15\n" +
-	"\x06map_id\x18\x04 \x01(\x05R\x05mapId\"c\n" +
+	"\tserver_id\x18\x03 \x03(\x05R\bserverId\x12\x15\n" +
+	"\x06map_id\x18\x04 \x01(\x05R\x05mapId\x12D\n" +
+	"\x10start_time_start\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x0estartTimeStart\x12@\n" +
+	"\x0estart_time_end\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\fstartTimeEnd\"c\n" +
 	"\x14QueryMatchesResponse\x12\x18\n" +
 	"\x05count\x18\x01 \x01(\x04B\x020\x01R\x05count\x121\n" +
 	"\amatches\x18\x02 \x03(\v2\x17.stats.v1.MatchOverviewR\amatches\"\xd1\x02\n" +
@@ -4572,55 +4590,57 @@ var file_stats_v1_stats_proto_depIdxs = []int32{
 	5,  // 3: stats.v1.MatchesWithPlayerResponse.matches:type_name -> stats.v1.PlayerMatchHistory
 	8,  // 4: stats.v1.BucketsResponse.buckets:type_name -> stats.v1.Bucket
 	32, // 5: stats.v1.QueryMatchesRequest.filter:type_name -> database.query.v1.Filter
-	21, // 6: stats.v1.QueryMatchesResponse.matches:type_name -> stats.v1.MatchOverview
-	32, // 7: stats.v1.QueryStatsRequest.filter:type_name -> database.query.v1.Filter
-	2,  // 8: stats.v1.QueryStatsRequest.time_bucket:type_name -> stats.v1.TimeBucket
-	1,  // 9: stats.v1.QueryStatsRequest.variant:type_name -> stats.v1.Variant
-	31, // 10: stats.v1.QueryStatsRequest.time:type_name -> google.protobuf.Timestamp
-	1,  // 11: stats.v1.QueryStatsResponse.variant:type_name -> stats.v1.Variant
-	18, // 12: stats.v1.QueryStatsResponse.stats_variant:type_name -> stats.v1.VariantStatsContainer
-	16, // 13: stats.v1.QueryStatsResponse.stats_overall:type_name -> stats.v1.OverallStatsContainer
-	33, // 14: stats.v1.OverallStats.player:type_name -> person.v1.PersonDisplay
-	15, // 15: stats.v1.OverallStatsContainer.stats:type_name -> stats.v1.OverallStats
-	33, // 16: stats.v1.VariantStats.player:type_name -> person.v1.PersonDisplay
-	17, // 17: stats.v1.VariantStatsContainer.stats:type_name -> stats.v1.VariantStats
-	23, // 18: stats.v1.MatchResponse.match:type_name -> stats.v1.Match
-	30, // 19: stats.v1.MatchOverview.map:type_name -> maps.v1.Map
-	31, // 20: stats.v1.MatchOverview.start_time:type_name -> google.protobuf.Timestamp
-	31, // 21: stats.v1.MatchOverview.created_on:type_name -> google.protobuf.Timestamp
-	21, // 22: stats.v1.Match.overview:type_name -> stats.v1.MatchOverview
-	26, // 23: stats.v1.Match.rounds:type_name -> stats.v1.Round
-	22, // 24: stats.v1.Match.chat_logs:type_name -> stats.v1.MatchChatLog
-	29, // 25: stats.v1.Match.players:type_name -> stats.v1.Match.PlayersEntry
-	25, // 26: stats.v1.Match.kills:type_name -> stats.v1.MatchKill
-	24, // 27: stats.v1.Match.events:type_name -> stats.v1.MatchEvent
-	0,  // 28: stats.v1.Round.winner:type_name -> stats.v1.Team
-	27, // 29: stats.v1.Round.players:type_name -> stats.v1.RoundPlayer
-	33, // 30: stats.v1.RoundPlayer.person:type_name -> person.v1.PersonDisplay
-	0,  // 31: stats.v1.RoundPlayer.team:type_name -> stats.v1.Team
-	28, // 32: stats.v1.RoundPlayer.variants:type_name -> stats.v1.RoundPlayerVariant
-	33, // 33: stats.v1.Match.PlayersEntry.value:type_name -> person.v1.PersonDisplay
-	19, // 34: stats.v1.StatsService.Match:input_type -> stats.v1.MatchRequest
-	11, // 35: stats.v1.StatsService.QueryMatches:input_type -> stats.v1.QueryMatchesRequest
-	3,  // 36: stats.v1.StatsService.MatchesWithPlayer:input_type -> stats.v1.MatchesWithPlayerRequest
-	13, // 37: stats.v1.StatsService.QueryStats:input_type -> stats.v1.QueryStatsRequest
-	34, // 38: stats.v1.StatsService.WeaponList:input_type -> google.protobuf.Empty
-	34, // 39: stats.v1.StatsService.MapList:input_type -> google.protobuf.Empty
-	34, // 40: stats.v1.StatsService.Buckets:input_type -> google.protobuf.Empty
-	34, // 41: stats.v1.StatsService.RefreshStats:input_type -> google.protobuf.Empty
-	20, // 42: stats.v1.StatsService.Match:output_type -> stats.v1.MatchResponse
-	12, // 43: stats.v1.StatsService.QueryMatches:output_type -> stats.v1.QueryMatchesResponse
-	6,  // 44: stats.v1.StatsService.MatchesWithPlayer:output_type -> stats.v1.MatchesWithPlayerResponse
-	14, // 45: stats.v1.StatsService.QueryStats:output_type -> stats.v1.QueryStatsResponse
-	7,  // 46: stats.v1.StatsService.WeaponList:output_type -> stats.v1.WeaponListResponse
-	4,  // 47: stats.v1.StatsService.MapList:output_type -> stats.v1.MapListResponse
-	9,  // 48: stats.v1.StatsService.Buckets:output_type -> stats.v1.BucketsResponse
-	10, // 49: stats.v1.StatsService.RefreshStats:output_type -> stats.v1.RefreshStatsResponse
-	42, // [42:50] is the sub-list for method output_type
-	34, // [34:42] is the sub-list for method input_type
-	34, // [34:34] is the sub-list for extension type_name
-	34, // [34:34] is the sub-list for extension extendee
-	0,  // [0:34] is the sub-list for field type_name
+	31, // 6: stats.v1.QueryMatchesRequest.start_time_start:type_name -> google.protobuf.Timestamp
+	31, // 7: stats.v1.QueryMatchesRequest.start_time_end:type_name -> google.protobuf.Timestamp
+	21, // 8: stats.v1.QueryMatchesResponse.matches:type_name -> stats.v1.MatchOverview
+	32, // 9: stats.v1.QueryStatsRequest.filter:type_name -> database.query.v1.Filter
+	2,  // 10: stats.v1.QueryStatsRequest.time_bucket:type_name -> stats.v1.TimeBucket
+	1,  // 11: stats.v1.QueryStatsRequest.variant:type_name -> stats.v1.Variant
+	31, // 12: stats.v1.QueryStatsRequest.time:type_name -> google.protobuf.Timestamp
+	1,  // 13: stats.v1.QueryStatsResponse.variant:type_name -> stats.v1.Variant
+	18, // 14: stats.v1.QueryStatsResponse.stats_variant:type_name -> stats.v1.VariantStatsContainer
+	16, // 15: stats.v1.QueryStatsResponse.stats_overall:type_name -> stats.v1.OverallStatsContainer
+	33, // 16: stats.v1.OverallStats.player:type_name -> person.v1.PersonDisplay
+	15, // 17: stats.v1.OverallStatsContainer.stats:type_name -> stats.v1.OverallStats
+	33, // 18: stats.v1.VariantStats.player:type_name -> person.v1.PersonDisplay
+	17, // 19: stats.v1.VariantStatsContainer.stats:type_name -> stats.v1.VariantStats
+	23, // 20: stats.v1.MatchResponse.match:type_name -> stats.v1.Match
+	30, // 21: stats.v1.MatchOverview.map:type_name -> maps.v1.Map
+	31, // 22: stats.v1.MatchOverview.start_time:type_name -> google.protobuf.Timestamp
+	31, // 23: stats.v1.MatchOverview.created_on:type_name -> google.protobuf.Timestamp
+	21, // 24: stats.v1.Match.overview:type_name -> stats.v1.MatchOverview
+	26, // 25: stats.v1.Match.rounds:type_name -> stats.v1.Round
+	22, // 26: stats.v1.Match.chat_logs:type_name -> stats.v1.MatchChatLog
+	29, // 27: stats.v1.Match.players:type_name -> stats.v1.Match.PlayersEntry
+	25, // 28: stats.v1.Match.kills:type_name -> stats.v1.MatchKill
+	24, // 29: stats.v1.Match.events:type_name -> stats.v1.MatchEvent
+	0,  // 30: stats.v1.Round.winner:type_name -> stats.v1.Team
+	27, // 31: stats.v1.Round.players:type_name -> stats.v1.RoundPlayer
+	33, // 32: stats.v1.RoundPlayer.person:type_name -> person.v1.PersonDisplay
+	0,  // 33: stats.v1.RoundPlayer.team:type_name -> stats.v1.Team
+	28, // 34: stats.v1.RoundPlayer.variants:type_name -> stats.v1.RoundPlayerVariant
+	33, // 35: stats.v1.Match.PlayersEntry.value:type_name -> person.v1.PersonDisplay
+	19, // 36: stats.v1.StatsService.Match:input_type -> stats.v1.MatchRequest
+	11, // 37: stats.v1.StatsService.QueryMatches:input_type -> stats.v1.QueryMatchesRequest
+	3,  // 38: stats.v1.StatsService.MatchesWithPlayer:input_type -> stats.v1.MatchesWithPlayerRequest
+	13, // 39: stats.v1.StatsService.QueryStats:input_type -> stats.v1.QueryStatsRequest
+	34, // 40: stats.v1.StatsService.WeaponList:input_type -> google.protobuf.Empty
+	34, // 41: stats.v1.StatsService.MapList:input_type -> google.protobuf.Empty
+	34, // 42: stats.v1.StatsService.Buckets:input_type -> google.protobuf.Empty
+	34, // 43: stats.v1.StatsService.RefreshStats:input_type -> google.protobuf.Empty
+	20, // 44: stats.v1.StatsService.Match:output_type -> stats.v1.MatchResponse
+	12, // 45: stats.v1.StatsService.QueryMatches:output_type -> stats.v1.QueryMatchesResponse
+	6,  // 46: stats.v1.StatsService.MatchesWithPlayer:output_type -> stats.v1.MatchesWithPlayerResponse
+	14, // 47: stats.v1.StatsService.QueryStats:output_type -> stats.v1.QueryStatsResponse
+	7,  // 48: stats.v1.StatsService.WeaponList:output_type -> stats.v1.WeaponListResponse
+	4,  // 49: stats.v1.StatsService.MapList:output_type -> stats.v1.MapListResponse
+	9,  // 50: stats.v1.StatsService.Buckets:output_type -> stats.v1.BucketsResponse
+	10, // 51: stats.v1.StatsService.RefreshStats:output_type -> stats.v1.RefreshStatsResponse
+	44, // [44:52] is the sub-list for method output_type
+	36, // [36:44] is the sub-list for method input_type
+	36, // [36:36] is the sub-list for extension type_name
+	36, // [36:36] is the sub-list for extension extendee
+	0,  // [0:36] is the sub-list for field type_name
 }
 
 func init() { file_stats_v1_stats_proto_init() }

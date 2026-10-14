@@ -126,8 +126,10 @@ enum TimeBucket {
 message QueryMatchesRequest {
   database.query.v1.Filter filter = 1;
   uint32 stats_bucket_id = 2 [(buf.validate.field).uint32.gt = 0];
-  int32 server_id = 3;
+  repeated int32 server_id = 3;
   int32 map_id = 4;
+  google.protobuf.Timestamp start_time_start = 5;
+  google.protobuf.Timestamp start_time_end = 6;
 }
 
 message QueryMatchesResponse {

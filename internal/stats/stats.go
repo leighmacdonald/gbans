@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"runtime"
+	"sync"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -260,19 +262,61 @@ func (s Stats) UpdateDailyViews(ctx context.Context) func() {
 	}
 }
 
-// RefreshViews refreshes every stats summary view synchronously. Used by the
-// daily scheduler and the admin RefreshStats RPC.
-func (s Stats) RefreshViews(ctx context.Context) error {
-	for _, viewName := range StatViews {
-		start := time.Now()
-		if err := s.repo.RefreshMaterializedView(ctx, viewName); err != nil {
-			return fmt.Errorf("refresh view %s: %w", viewName, err)
-		}
+// viewRefreshTimeout bounds a full refresh of every stats summary view.
+// Refreshing all views, including the alltime and yearly summaries, over a
+// large stats database can take many minutes, so this is deliberately
+// generous.
+const viewRefreshTimeout = 30 * time.Minute
 
-		slog.Debug("Refreshed stats view", slog.String("view", viewName), slog.Duration("duration", time.Since(start)))
+// RefreshViews refreshes every stats summary view, running the refreshes
+// concurrently with at most a few in flight at once. Used by the daily
+// scheduler and the admin RefreshStats RPC.
+func (s Stats) RefreshViews(ctx context.Context) error {
+	// Refreshing every view is long-running and must not be aborted if the
+	// caller's context is canceled (e.g. the RefreshStats RPC request context,
+	// which a client or proxy cancels when it stops waiting). Detach from that
+	// cancellation and bound the work with our own generous timeout so the
+	// views are always left fully refreshed.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), viewRefreshTimeout)
+	defer cancel()
+
+	// Refresh views in parallel, capped well below the core count to leave
+	// headroom for the rest of the server (and because the DB pool, not the
+	// CPU, is what ultimately limits how many refreshes can run at once).
+	workers := max(runtime.NumCPU()-2, 1)
+
+	sem := make(chan struct{}, workers)
+	var (
+		waitGroup sync.WaitGroup
+		errMu     sync.Mutex
+		firstErr  error
+	)
+
+	for _, viewName := range StatViews {
+		waitGroup.Add(1)
+		sem <- struct{}{}
+		go func(viewName string) {
+			defer waitGroup.Done()
+			defer func() { <-sem }()
+
+			start := time.Now()
+			if err := s.repo.RefreshMaterializedView(ctx, viewName); err != nil {
+				errMu.Lock()
+				if firstErr == nil {
+					firstErr = fmt.Errorf("refresh view %s: %w", viewName, err)
+				}
+				errMu.Unlock()
+
+				return
+			}
+
+			slog.Debug("Refreshed stats view", slog.String("view", viewName), slog.Duration("duration", time.Since(start)))
+		}(viewName)
 	}
 
-	return nil
+	waitGroup.Wait()
+
+	return firstErr
 }
 
 func (s Stats) Bucket(ctx context.Context, bucketID int32) (*Bucket, error) {
