@@ -146,11 +146,22 @@ func (r Repository) Matches(ctx context.Context, opts MatchesOpts) ([]Match, uin
 	if opts.mapID > 0 {
 		constraints = append(constraints, sq.Eq{"m.map_id": opts.mapID})
 	}
-	if opts.serverID > 0 {
-		constraints = append(constraints, sq.Eq{"m.server_id": opts.serverID})
+	if len(opts.serverIDs) > 0 {
+		constraints = append(constraints, sq.Eq{"m.server_id": opts.serverIDs})
 	}
 	if opts.statsBucketID > 0 {
 		constraints = append(constraints, sq.Eq{"s.stats_bucket_id": opts.statsBucketID})
+	}
+	if !opts.startTimeStart.IsZero() {
+		constraints = append(constraints, sq.GtOrEq{"m.start_time": opts.startTimeStart})
+	}
+	if !opts.startTimeEnd.IsZero() {
+		constraints = append(constraints, sq.LtOrEq{"m.start_time": opts.startTimeEnd})
+	}
+	// The bucket column is identified by its display name in the UI, but is
+	// stored and ordered by the bucket id.
+	if opts.OrderBy == "stats_bucket_name" {
+		opts.OrderBy = "stats_bucket_id"
 	}
 	builder = opts.ApplySafeOrder(opts.ApplyLimitOffsetDefault(builder), map[string][]string{
 		"m.": {"map_id", "stats_bucket_id", "duration_ms", "start_time"},
@@ -214,7 +225,7 @@ func (r Repository) WeaponList(ctx context.Context) ([]string, error) {
 }
 
 func (r Repository) Buckets(ctx context.Context) ([]Bucket, error) {
-	const query = `SELECT stats_bucket_id, bucket_name, is_enabled FROM stats_bucket`
+	const query = `SELECT stats_bucket_id, bucket_name, is_enabled, is_default FROM stats_bucket`
 
 	var buckets []Bucket
 	rows, errRows := r.Database.Query(ctx, query)
@@ -224,7 +235,7 @@ func (r Repository) Buckets(ctx context.Context) ([]Bucket, error) {
 
 	for rows.Next() {
 		var bucket Bucket
-		if err := rows.Scan(&bucket.BucketID, &bucket.BucketName, &bucket.IsEnabled); err != nil {
+		if err := rows.Scan(&bucket.BucketID, &bucket.BucketName, &bucket.IsEnabled, &bucket.IsDefault); err != nil {
 			return nil, database.Err(err)
 		}
 		buckets = append(buckets, bucket)
@@ -241,6 +252,50 @@ func NewRepository(database database.Database) Repository {
 	return Repository{Database: database}
 }
 
+// rankColumn returns the summary view column that ranks players for the
+// variant: leaderboards rank by the selected stat, not always by points.
+func (o Opts) rankColumn() string {
+	switch o.Variant {
+	case VariantKills:
+		return "rank_kills"
+	case VariantHealing:
+		return "rank_healing"
+	default:
+		return "rank"
+	}
+}
+
+// MyRank returns steamID's rank in the bucket, variant and time window
+// described by opts, or 0 when the player has no stats in that window.
+func (r Repository) MyRank(ctx context.Context, opts Opts, steamID steamid.SteamID) (uint64, error) {
+	constraints := sq.And{
+		sq.Eq{"stats_bucket_id": opts.StatsBucketID},
+		sq.Eq{"steam_id": steamID.Int64()},
+	}
+	if opts.Variant == VariantWeapons || opts.Variant == VariantClasses {
+		constraints = append(constraints, sq.Eq{"variant": opts.VariantKey})
+	}
+	if dateConstraint := opts.dateConstraint(); dateConstraint != nil {
+		constraints = append(constraints, dateConstraint)
+	}
+
+	var rank uint64
+	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
+		Select(opts.rankColumn()+" AS rank").
+		From(opts.view()).
+		Where(constraints))
+	if errRow != nil {
+		return 0, database.Err(errRow)
+	}
+	if err := row.Scan(&rank); errors.Is(err, pgx.ErrNoRows) {
+		return 0, nil
+	} else if err != nil {
+		return 0, database.Err(err)
+	}
+
+	return rank, nil
+}
+
 func (r Repository) loadOverallView(ctx context.Context, statsBucketID uint32, opts Opts) ([]any, uint64, error) {
 	constraints := sq.And{
 		sq.Eq{"stats_bucket_id": statsBucketID},
@@ -250,17 +305,8 @@ func (r Repository) loadOverallView(ctx context.Context, statsBucketID uint32, o
 		constraints = append(constraints, dateConstraint)
 	}
 
-	// Leaderboards rank by the selected stat, not always by points.
-	rankColumn := "rank"
-	switch opts.Variant {
-	case VariantKills:
-		rankColumn = "rank_kills"
-	case VariantHealing:
-		rankColumn = "rank_healing"
-	}
-
 	builder := r.Builder().
-		Select(rankColumn+" AS rank", "steam_id", "personaname", "avatarhash", "points", "connection_count", "bonus_points", "kills", "assists", "deaths",
+		Select(opts.rankColumn()+" AS rank", "steam_id", "personaname", "avatarhash", "points", "connection_count", "bonus_points", "kills", "assists", "deaths",
 			"postround_kills", "postround_assists", "postround_deaths",
 			"preround_healing", "healing", "postround_healing", "drops", "near_full_charge_death",
 			"charges_uber", "charges_kritz", "charges_vacc", "charges_quickfix",
@@ -584,7 +630,8 @@ func (r Repository) MatchesWithPlayer(ctx context.Context, steamID steamid.Steam
 		LEFT JOIN map mp USING(map_id)
 		LEFT JOIN stats_bucket s USING(stats_bucket_id)
 		LEFT JOIN server srv ON m.server_id = srv.server_id
-		WHERE p.steam_id = $1`
+		WHERE p.steam_id = $1
+		ORDER BY m.start_time DESC`
 	var matches []PlayerMatchHistory
 
 	rows, errRows := r.Database.Query(ctx, query, steamID.Int64())
@@ -1407,19 +1454,30 @@ func (r Repository) getEvents(ctx context.Context, match *Match) error {
 }
 
 func (r Repository) GetBucket(ctx context.Context, statsBucketID int32) (*Bucket, error) {
-	const query = "SELECT stats_bucket_id, bucket_name FROM stats_bucket WHERE stats_bucket_id = $1"
+	const query = "SELECT stats_bucket_id, bucket_name, is_enabled, is_default FROM stats_bucket WHERE stats_bucket_id = $1"
 	var bucket Bucket
-	if err := r.QueryRow(ctx, query, statsBucketID).Scan(&bucket.BucketID, &bucket.BucketName); err != nil {
+	if err := r.QueryRow(ctx, query, statsBucketID).Scan(&bucket.BucketID, &bucket.BucketName, &bucket.IsEnabled, &bucket.IsDefault); err != nil {
 		return nil, database.Err(err)
 	}
 
 	return &bucket, nil
 }
 
+// defaultBucketID returns the id of the bucket marked as default, or
+// database.ErrNoResult when no bucket is marked as such.
+func (r Repository) defaultBucketID(ctx context.Context, transaction pgx.Tx) (int32, error) {
+	var bucketID int32
+	if err := transaction.QueryRow(ctx, `SELECT stats_bucket_id FROM stats_bucket WHERE is_default LIMIT 1`).Scan(&bucketID); err != nil {
+		return 0, database.Err(err)
+	}
+
+	return bucketID, nil
+}
+
 // bucketForServer resolves the stats bucket a new match should be filed
-// under: the owning server's configured bucket, falling back to bucket 1
-// (casual) when the server has none set. Previously every match was filed
-// under bucket 1 regardless of server configuration.
+// under: the owning server's configured bucket, falling back to the default
+// bucket (casual) when the server has none set. Previously every match was
+// filed under bucket 1 regardless of server configuration.
 func (r Repository) bucketForServer(ctx context.Context, transaction pgx.Tx, serverID int32) (*int32, error) {
 	var bucketID pgtype.Int4
 	if err := transaction.QueryRow(ctx, `SELECT stats_bucket_id FROM server WHERE server_id = $1`, serverID).Scan(&bucketID); err != nil {
@@ -1432,12 +1490,12 @@ func (r Repository) bucketForServer(ctx context.Context, transaction pgx.Tx, ser
 		return &id, nil
 	}
 
-	bucket, errBucket := r.GetBucket(ctx, 1)
-	if errBucket != nil {
-		return nil, errBucket
+	defaultID, errDefault := r.defaultBucketID(ctx, transaction)
+	if errDefault != nil {
+		return nil, errDefault
 	}
 
-	return &bucket.BucketID, nil
+	return &defaultID, nil
 }
 
 func (r Repository) CreateBucket(ctx context.Context, bucketName string) (*Bucket, error) {

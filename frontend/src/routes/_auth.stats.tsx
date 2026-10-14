@@ -12,8 +12,8 @@ import Chip from "@mui/material/Chip";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import { alpha } from "@mui/material/styles";
 import MuiTextField from "@mui/material/TextField";
-
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/system/Grid";
 import type { DateView } from "@mui/x-date-pickers/models";
@@ -63,7 +63,7 @@ const defaultValues = { ...makeSchemaDefaults({ defaultColumn: "rank" }) };
 const validateSearch = z
 	.object({
 		timeBucket: z.enum(TimeBucket).optional().default(TimeBucket.ALLTIME),
-		statsBucketId: z.number().optional().default(1),
+		statsBucketId: z.number().optional(),
 		time: z.coerce.date().optional().default(subDays(new Date(), 1)),
 		variant: z.enum(Variant).optional().default(Variant.OVERALL_UNSPECIFIED),
 		variantKey: z.string().optional(),
@@ -99,7 +99,7 @@ function StatsComponent() {
 	const search = Route.useSearch();
 	const navigate = useNavigate();
 	const [selectedVariant, setSelectedVariant] = useState(search.variant ?? Variant.OVERALL_UNSPECIFIED);
-	const { hasPermission } = useAuth();
+	const { profile, hasPermission } = useAuth();
 	const { sendFlash } = useUserFlashCtx();
 	const queryClient = useQueryClient();
 
@@ -157,10 +157,16 @@ function StatsComponent() {
 
 	const { data: statBuckets, isLoading: isLoadingStatBuckets, isError: isErrorStatBuckets } = useQuery(buckets, {});
 
+	// No explicit bucket in the URL means the default bucket (casual).
+	const defaultBucketId = useMemo(() => {
+		return statBuckets?.buckets.find((bucket) => bucket.isDefault)?.statsBucketId;
+	}, [statBuckets]);
+	const effectiveBucketId = search.statsBucketId ?? defaultBucketId;
+
 	const qOpts = useMemo(() => {
 		const sort = search.sorting?.find((sort) => sort);
 		return create(QueryStatsRequestSchema, {
-			statsBucketId: search.statsBucketId ?? 1,
+			statsBucketId: effectiveBucketId ?? 1,
 			timeBucket: search.timeBucket ?? TimeBucket.ALLTIME,
 			time: timestampFromDate(search.time ?? subDays(new Date(), 1)),
 			variant: search.variant ?? Variant.OVERALL_UNSPECIFIED,
@@ -172,7 +178,7 @@ function StatsComponent() {
 				orderBy: sort ? sort.id : "rank",
 			}),
 		});
-	}, [search]);
+	}, [search, effectiveBucketId]);
 
 	const { data, isLoading, isError, error, isRefetching } = useQuery(queryStats, qOpts, {
 		enabled: !isLoadingStatBuckets && !isErrorStatBuckets && !isLoadingVariantKeys && !isErrorVariantKeys,
@@ -257,8 +263,8 @@ function StatsComponent() {
 	}, []);
 
 	const bucketName = useMemo(() => {
-		return statBuckets?.buckets.find((b) => b.statsBucketId === search.statsBucketId)?.bucketName ?? "All Groups";
-	}, [search.statsBucketId, statBuckets]);
+		return statBuckets?.buckets.find((b) => b.statsBucketId === effectiveBucketId)?.bucketName ?? "All Groups";
+	}, [effectiveBucketId, statBuckets]);
 
 	// Only enabled buckets are selectable; disabled ones (1ku/mge/dodgeball)
 	// stay queryable via direct links.
@@ -349,6 +355,12 @@ function StatsComponent() {
 
 	const playerCount = useMemo(() => {
 		return Number(data?.count ?? 0);
+	}, [data]);
+
+	// The backend resolves the rank against the full window, so it is shown
+	// even when the user's row is outside the loaded page.
+	const myRank = useMemo(() => {
+		return Number(data?.myRank ?? 0);
 	}, [data]);
 
 	const columns = useMemo(() => {
@@ -576,6 +588,17 @@ function StatsComponent() {
 		onColumnPinningChange,
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
+		muiTableBodyRowProps: ({ row }) =>
+			row.original.player?.steamId === profile.steamId
+				? {
+						// The sx function receives the theme object itself, not a
+						// { theme } wrapper.
+						sx: (theme) => ({
+							backgroundColor: alpha(theme.palette.primary.main, 0.18),
+							"&:hover": { backgroundColor: alpha(theme.palette.primary.main, 0.3) },
+						}),
+					}
+				: {},
 		muiToolbarAlertBannerProps: renderTableError(error),
 	});
 
@@ -584,13 +607,23 @@ function StatsComponent() {
 			await navigate({ to: "/stats", search: { ...search, ...value } });
 		},
 		defaultValues: {
-			statsBucketID: search.statsBucketId,
+			statsBucketID: effectiveBucketId,
 			variant: search.variant,
 			timeBucket: search.timeBucket,
 			time: search.time,
 			variantKey: search.variantKey,
 		},
 	});
+
+	// The default bucket (is_default, "casual") only resolves once the buckets
+	// query has loaded, which is after the form's initial values are set. Fill
+	// the dropdown with it then, unless the URL already pins an explicit bucket
+	// or the user has already chosen one.
+	useEffect(() => {
+		if (search.statsBucketId == null && defaultBucketId != null && form.state.values.statsBucketID == null) {
+			form.setFieldValue("statsBucketID", defaultBucketId);
+		}
+	}, [defaultBucketId, search.statsBucketId, form]);
 
 	if (isError) {
 		return <ErrorDetails error={error} />;
@@ -643,17 +676,37 @@ function StatsComponent() {
 									</Typography>
 								</Stack>
 							</Box>
-							{hasPermission(Permission.DEMO_ADMIN) && (
-								<Button
-									variant="outlined"
-									size="small"
-									disabled={refreshMutation.isPending}
-									onClick={() => refreshMutation.mutate({})}
-									sx={{ flexShrink: 0 }}
-								>
-									{refreshMutation.isPending ? "Refreshing…" : "Refresh Stats"}
-								</Button>
-							)}
+							<Stack
+								direction="row"
+								spacing={1.5}
+								sx={{ alignItems: "center", flexShrink: 0, justifyContent: "flex-end" }}
+							>
+								{myRank > 0 && (
+									<Box>
+										<Typography
+											variant="overline"
+											color="textSecondary"
+											sx={{ letterSpacing: 1.5 }}
+										>
+											Your Rank
+										</Typography>
+										<Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.1 }}>
+											#{myRank}
+										</Typography>
+									</Box>
+								)}
+								{hasPermission(Permission.DEMO_ADMIN) && (
+									<Button
+										variant="outlined"
+										size="small"
+										disabled={refreshMutation.isPending}
+										onClick={() => refreshMutation.mutate({})}
+										sx={{ flexShrink: 0 }}
+									>
+										{refreshMutation.isPending ? "Refreshing…" : "Refresh Stats"}
+									</Button>
+								)}
+							</Stack>
 						</Stack>
 						<Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
 							<Chip

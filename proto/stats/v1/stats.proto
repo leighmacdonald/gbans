@@ -94,6 +94,9 @@ message Bucket {
   int32 stats_bucket_id = 1;
   string bucket_name = 2;
   bool is_enabled = 3;
+  // is_default marks the bucket used for servers and matches without an
+  // explicit bucket. At most one bucket is the default.
+  bool is_default = 4;
 }
 
 message BucketsResponse {
@@ -162,6 +165,9 @@ message QueryStatsResponse {
     VariantStatsContainer stats_variant = 3;
     OverallStatsContainer stats_overall = 4;
   }
+  // my_rank is the rank of the requesting user in the queried bucket,
+  // variant and time window. 0 when the user has no stats in the window.
+  uint64 my_rank = 5;
 }
 
 // OverallStats is a single player's aggregated per-player (global) stats for

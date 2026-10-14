@@ -1,4 +1,4 @@
-import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
+import { type Timestamp, timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { formatDistance, parseISO, parseJSON } from "date-fns";
 import { format } from "date-fns/format";
 import { isAfter } from "date-fns/fp";
@@ -57,6 +57,24 @@ export const parseDateTime = (t: string | Date): Date => {
 	}
 
 	return parseISO(t);
+};
+
+/**
+ * Converts a user supplied date value (Date, ISO string or epoch ms) into a
+ * google.protobuf.Timestamp, returning undefined when the value is missing or
+ * not a valid date.
+ */
+export const dateToTimestamp = (t: Date | string | number | null | undefined): Timestamp | undefined => {
+	if (t === null || t === undefined || t === "") {
+		return undefined;
+	}
+
+	const date = t instanceof Date ? t : new Date(t);
+	if (Number.isNaN(date.getTime())) {
+		return undefined;
+	}
+
+	return timestampFromDate(date);
 };
 
 export const renderTimestampDateTime = (ts?: Timestamp): string => {

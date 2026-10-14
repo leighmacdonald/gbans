@@ -203,6 +203,15 @@ func (r *Repository) Query(ctx context.Context, filter Query) ([]Server, error) 
 
 // Save updates or creates the server data in the database.
 func (r *Repository) Save(ctx context.Context, server *Server) error {
+	if server.StatsBucketID == nil {
+		// A server without an explicit bucket is filed under the default
+		// bucket; a missing default leaves the server unbucketed.
+		var defaultID int32
+		if err := r.QueryRow(ctx, `SELECT stats_bucket_id FROM stats_bucket WHERE is_default LIMIT 1`).Scan(&defaultID); err == nil {
+			server.StatsBucketID = &defaultID
+		}
+	}
+
 	if server.ServerID > 0 {
 		const update = `
 			UPDATE server SET

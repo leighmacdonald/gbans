@@ -20,6 +20,9 @@ import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import {
 	createDefaultTableOptions,
+	filterValue,
+	filterValueNumber,
+	filterValueNumberArray,
 	makeRowActionsDefOptions,
 	makeSchemaDefaults,
 	makeSchemaState,
@@ -33,7 +36,7 @@ import type { MatchOverview } from "../rpc/stats/v1/stats_pb.ts";
 import { buckets, mapList, queryMatches } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
 import { toTitleCase } from "../util/strings.ts";
-import { renderTimestamp } from "../util/time.ts";
+import { dateToTimestamp, renderTimestamp } from "../util/time.ts";
 
 const validateSearch = makeSchemaState("startTime");
 const columnHelper = createMRTColumnHelper<MatchOverview>();
@@ -57,9 +60,30 @@ function MatchesIndexPage() {
 	const { data: mapResp, isLoading: isLoadingMaps } = useQuery(mapList);
 	const { data: bucketList, isLoading: isLoadingBuckets } = useQuery(buckets);
 	const { data: serverList, isLoading: isLoadingServers } = useQuery(servers);
+	const startTimeRange = filterValue("startTime", search.columnFilters) as [unknown, unknown] | undefined;
+
+	// No explicit bucket in the URL means the default bucket (casual). The
+	// bucket filter always resolves to a concrete group so the filter dropdown
+	// and the query agree on a single group.
+	const defaultBucketId = useMemo(() => {
+		return bucketList?.buckets.find((bucket) => bucket.isDefault)?.statsBucketId;
+	}, [bucketList]);
+	const effectiveColumnFilters = useMemo<MRT_ColumnFiltersState>(() => {
+		const filters = search.columnFilters ?? [];
+		if (defaultBucketId == null || filters.some((f) => f.id === "statsBucketName")) {
+			return filters;
+		}
+		return [...filters, { id: "statsBucketName", value: defaultBucketId }];
+	}, [search.columnFilters, defaultBucketId]);
+
 	const { data, isLoading, isError, error } = useQuery(
 		queryMatches,
 		{
+			statsBucketId: filterValueNumber("statsBucketName", effectiveColumnFilters),
+			serverId: filterValueNumberArray("serverId", search.columnFilters),
+			mapId: filterValueNumber("map.name", search.columnFilters),
+			startTimeStart: dateToTimestamp(startTimeRange?.[0]),
+			startTimeEnd: dateToTimestamp(startTimeRange?.[1]),
 			filter: {
 				limit: String(search.pagination?.pageSize ?? 25),
 				desc: search.sorting?.find((sort) => sort)?.desc ?? true,
@@ -103,6 +127,8 @@ function MatchesIndexPage() {
 				search: {
 					...search,
 					columnFilters: typeof updater === "function" ? updater(search.columnFilters ?? []) : updater,
+					// Filters change the result set, so return to the first page.
+					pagination: search.pagination ? { ...search.pagination, pageIndex: 0 } : undefined,
 				},
 			});
 		},
@@ -133,24 +159,21 @@ function MatchesIndexPage() {
 					label: toTitleCase(bucket.bucketName),
 					value: bucket.statsBucketId,
 				})),
-				filterFn: (row, _, filterValue) => {
-					return (
-						filterValue.length === 0 ||
-						bucketList?.buckets.find((f) => f.statsBucketId === row.original.statsBucketId)
-							?.statsBucketId === row.original.statsBucketId
-					);
-				},
 				grow: false,
 				header: "Bucket",
-				Cell: ({ cell }) => (
-					<Typography sx={{ color: stringToColour(cell.getValue() ?? "") }}>
+				Cell: ({ row, cell }) => (
+					<TextLink
+						to={"/matches"}
+						search={setColumnFilter(search, "statsBucketName", row.original.statsBucketId)}
+						sx={{ color: stringToColour(cell.getValue() ?? "") }}
+					>
 						{toTitleCase(cell.getValue())}
-					</Typography>
+					</TextLink>
 				),
 			}),
 			columnHelper.accessor("startTime", {
 				header: "Start Time",
-				filterVariant: "datetime",
+				filterVariant: "datetime-range",
 				grow: false,
 				Cell: ({ cell }) => (
 					<Tooltip
@@ -173,9 +196,6 @@ function MatchesIndexPage() {
 					label: server.serverNameLong,
 					value: server.serverId,
 				})),
-				filterFn: (row, _, filterValue) => {
-					return filterValue.length === 0 || filterValue.includes(row.original.serverId);
-				},
 				Cell: ({ row, cell }) => (
 					<Tooltip title={row.original.serverNameShort}>
 						<TextLink
@@ -199,9 +219,15 @@ function MatchesIndexPage() {
 					label: map.name,
 					value: map.mapId,
 				})),
-				// filterFn: (row, _, filterValue) => {
-				// 	return filterValue.length === 0 || Boolean(mapSet.find((f) => f.mapId === row.original.map?.mapId));
-				// },
+				Cell: ({ row, cell }) => (
+					<TextLink
+						to={"/matches"}
+						search={setColumnFilter(search, "map.name", row.original.map?.mapId)}
+						sx={{ color: stringToColour(String(cell.getValue() ?? "")) }}
+					>
+						{cell.getValue()}
+					</TextLink>
+				),
 			}),
 
 			columnHelper.accessor("duration", {
@@ -234,26 +260,11 @@ function MatchesIndexPage() {
 		state: {
 			isLoading,
 			showAlertBanner: isError,
-			columnFilters: search.columnFilters,
+			columnFilters: effectiveColumnFilters,
 			sorting: search.sorting,
 			pagination: search.pagination,
 		},
-		initialState: {
-			...defaultOptions.initialState,
-			columnVisibility: {
-				startTime: true,
-				sourceId: false,
-				targetId: true,
-				reason: true,
-				evadeOk: false,
-				deleted: false,
-				validUntil: true,
-				createdOn: true,
-				active: false,
-				reportId: true,
-				cidr: false,
-			},
-		},
+		initialState: defaultOptions.initialState,
 		muiToolbarAlertBannerProps: renderTableError(error),
 		enableRowActions: true,
 		renderRowActions: ({ row }) => (

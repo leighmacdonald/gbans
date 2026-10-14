@@ -74,9 +74,15 @@ func (s Service) MapList(ctx context.Context, _ *emptypb.Empty) (*v1.MapListResp
 func (s Service) QueryMatches(ctx context.Context, request *v1.QueryMatchesRequest) (*v1.QueryMatchesResponse, error) {
 	opts := MatchesOpts{
 		Filter:        rpc.FromRPC(request.GetFilter()),
-		serverID:      request.GetStatsBucketId(),
+		serverIDs:     request.GetServerId(),
 		statsBucketID: request.GetStatsBucketId(),
 		mapID:         request.GetMapId(),
+	}
+	if startTimeStart := request.GetStartTimeStart(); startTimeStart != nil {
+		opts.startTimeStart = startTimeStart.AsTime()
+	}
+	if startTimeEnd := request.GetStartTimeEnd(); startTimeEnd != nil {
+		opts.startTimeEnd = startTimeEnd.AsTime()
 	}
 
 	matches, count, errMatches := s.stats.Matches(ctx, opts)
@@ -163,6 +169,7 @@ func (s Service) Buckets(ctx context.Context, _ *emptypb.Empty) (*v1.BucketsResp
 			StatsBucketId: &buckets[idx].BucketID,
 			BucketName:    &buckets[idx].BucketName,
 			IsEnabled:     &buckets[idx].IsEnabled,
+			IsDefault:     &buckets[idx].IsDefault,
 		}
 	}
 
@@ -181,6 +188,19 @@ func (s Service) QueryStats(ctx context.Context, request *v1.QueryStatsRequest) 
 	statsBucketID := request.GetStatsBucketId()
 	stats, count, errStats := s.stats.Query(ctx, opts)
 	resp := createResp(opts, request, count, len(stats))
+	// The user's rank is looked up independently of the page of rows
+	// returned, so it is still set when they are outside the current page.
+	if user := rpc.UserInfoFromCtx(ctx); user != nil {
+		userSteamID := user.GetSteamID()
+		myRank, errMyRank := s.stats.MyRank(ctx, opts, userSteamID)
+		if errMyRank != nil {
+			slog.Error("Failed to load user rank",
+				slog.String("steamID", userSteamID.String()),
+				slog.String("error", errMyRank.Error()))
+		} else if myRank > 0 {
+			resp.MyRank = &myRank
+		}
+	}
 	if errStats != nil {
 		if errors.Is(errStats, database.ErrNoResult) {
 			return resp, nil

@@ -38,6 +38,14 @@ func TestServers(t *testing.T) {
 		require.Equal(t, newServer.Address, saved.Address)
 		require.Equal(t, newServer.Port, saved.Port)
 
+		// A server without an explicit bucket is filed under the default
+		// bucket.
+		require.NotNil(t, saved.StatsBucketID)
+		var defaultBucketID int32
+		require.NoError(t, fixture.Database.QueryRow(t.Context(),
+			`SELECT stats_bucket_id FROM stats_bucket WHERE is_default LIMIT 1`).Scan(&defaultBucketID))
+		require.Equal(t, defaultBucketID, *saved.StatsBucketID)
+
 		// Add a second server
 		otherServer, errSave := serversCase.Save(t.Context(), servers.NewServer(stringutil.SecureRandomString(10), stringutil.SecureRandomString(10)+".com", 27015))
 		require.NoError(t, errSave)

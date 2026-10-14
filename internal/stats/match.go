@@ -12,6 +12,7 @@ type Bucket struct {
 	BucketID   int32
 	BucketName string
 	IsEnabled  bool
+	IsDefault  bool
 }
 
 type PlayerMatchHistory struct {

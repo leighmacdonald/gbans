@@ -338,9 +338,11 @@ func (s Stats) MatchesWithPlayer(ctx context.Context, steamID steamid.SteamID) (
 type MatchesOpts struct {
 	query.Filter
 
-	serverID      uint32
-	statsBucketID uint32
-	mapID         int32
+	serverIDs      []int32
+	statsBucketID  uint32
+	mapID          int32
+	startTimeStart time.Time
+	startTimeEnd   time.Time
 }
 
 func (s Stats) Matches(ctx context.Context, opts MatchesOpts) ([]Match, uint64, error) {
@@ -439,4 +441,8 @@ func (s Stats) Query(ctx context.Context, opts Opts) ([]any, uint64, error) {
 	}
 
 	return s.repo.Query(ctx, opts)
+}
+
+func (s Stats) MyRank(ctx context.Context, opts Opts, steamID steamid.SteamID) (uint64, error) {
+	return s.repo.MyRank(ctx, opts, steamID)
 }

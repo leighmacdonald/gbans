@@ -4,19 +4,35 @@ import (
 	"context"
 	stdjson "encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
 
+<<<<<<< HEAD
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
+||||||| parent of 2394be33 (Fix row hilight)
+=======
+	"connectrpc.com/authn"
+	"github.com/gofrs/uuid/v5"
+	queryv1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
+>>>>>>> 2394be33 (Fix row hilight)
 	"github.com/leighmacdonald/gbans/internal/json"
 	"github.com/leighmacdonald/gbans/internal/maps"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
+	"github.com/leighmacdonald/gbans/internal/rpc"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/stats"
+	statsv1 "github.com/leighmacdonald/gbans/internal/stats/v1"
+	statsv1connect "github.com/leighmacdonald/gbans/internal/stats/v1/statsv1connect"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/pkg/demoparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestImport(t *testing.T) {
@@ -1087,6 +1103,7 @@ func TestImportSkipsUnknownMatchEvents(t *testing.T) {
 	require.Equal(t, 1, count)
 }
 
+<<<<<<< HEAD
 func validTestDemo(duration float64, numPlayers int) *demoparse.Demo {
 	_, players := fillerTestPlayers(numPlayers, 1000, 5000)
 
@@ -1155,4 +1172,419 @@ func TestImportRejectsFilteredDemos(t *testing.T) {
 	require.NoError(t, testFixture.Database.QueryRow(ctx,
 		`SELECT count(*) FROM match`).Scan(&count))
 	require.Equal(t, 0, count)
+||||||| parent of 2394be33 (Fix row hilight)
+=======
+type stubPermissionResolver struct{}
+
+func (stubPermissionResolver) PermissionsBySteamID(_ context.Context, _ steamid.SteamID) []rolesv1.Permission {
+	return nil
+}
+
+func newTestStatsClient(t *testing.T, fixture *tests.Fixture, user steamid.SteamID) (statsv1connect.StatsServiceClient, func()) {
+	t.Helper()
+
+	middleware := rpc.NewMiddleware("gbans-test", "test-cookie-secret", stubPermissionResolver{})
+	serversCase, errServers := servers.New(servers.NewRepository(fixture.Database), nil, "")
+	require.NoError(t, errServers)
+
+	svc := stats.NewService(
+		stats.New(stats.NewRepository(fixture.Database), maps.New(maps.NewRepository(fixture.Database))),
+		serversCase,
+		rpc.NewRoleAuth(stubPermissionResolver{}),
+		middleware,
+	)
+
+	mux := http.NewServeMux()
+	mux.Handle(svc.Pattern, svc.Handler)
+	server := httptest.NewServer(authn.NewMiddleware(func(_ context.Context, _ *http.Request) (any, error) {
+		return rpc.UserInfo{SteamID: user}, nil
+	}).Wrap(mux))
+
+	return statsv1connect.NewStatsServiceClient(server.Client(), server.URL), server.Close
+}
+
+func seedTestDemo(t *testing.T, fixture *tests.Fixture, serverID int32, title string) int32 {
+	t.Helper()
+
+	var demoID int32
+	require.NoError(t, fixture.Database.QueryRow(t.Context(),
+		`INSERT INTO demo (server_id, title, map_name, created_on) VALUES ($1, $2, $3, now()) RETURNING demo_id`,
+		serverID, title, "cp_filter_demo").Scan(&demoID))
+
+	return demoID
+}
+
+func seedTestMap(t *testing.T, fixture *tests.Fixture, name string) int32 {
+	t.Helper()
+
+	var mapID int32
+	require.NoError(t, fixture.Database.QueryRow(t.Context(),
+		`INSERT INTO map (map_name, updated_on, created_on) VALUES ($1, now(), now()) RETURNING map_id`,
+		name).Scan(&mapID))
+
+	return mapID
+}
+
+func seedTestMatch(t *testing.T, fixture *tests.Fixture, serverID, mapID, demoID, bucketID int32, start time.Time) {
+	t.Helper()
+
+	matchID, errMatch := uuid.NewV4()
+	require.NoError(t, errMatch)
+
+	require.NoError(t, fixture.Database.Exec(t.Context(), `
+		INSERT INTO match (
+			match_id, server_id, map_id, demo_id, stats_bucket_id, hostname,
+			score_red, score_blu, start_time, duration_ms, created_on
+		) VALUES ($1, $2, $3, $4, $5, $6, 1, 2, $7, 120000, now())`,
+		matchID, serverID, mapID, demoID, bucketID, "test-host", start))
+}
+
+// TestQueryMatches exercises the match history query end to end, covering the
+// server-side column filters and the bucket ordering fallback.
+func TestQueryMatches(t *testing.T) {
+	fixture := tests.NewFixture()
+	defer fixture.Close()
+
+	client, cleanup := newTestStatsClient(t, fixture, steamid.RandSID64())
+	defer cleanup()
+
+	ctx := t.Context()
+	serverA := fixture.CreateTestServer(ctx)
+	serverB := fixture.CreateTestServer(ctx)
+	mapA := seedTestMap(t, fixture, "cp_filter_a")
+	mapB := seedTestMap(t, fixture, "cp_filter_b")
+	demoA := seedTestDemo(t, fixture, serverA.ServerID, "filter-demo-a")
+	demoB := seedTestDemo(t, fixture, serverB.ServerID, "filter-demo-b")
+
+	base := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	// Buckets 1 (casual) and 2 (1ku) are seeded by the migrations.
+	seedTestMatch(t, fixture, serverA.ServerID, mapA, demoA, 1, base)
+	seedTestMatch(t, fixture, serverB.ServerID, mapA, demoA, 1, base.Add(time.Hour))
+	seedTestMatch(t, fixture, serverA.ServerID, mapB, demoA, 2, base.Add(2*time.Hour))
+	seedTestMatch(t, fixture, serverB.ServerID, mapB, demoB, 2, base.Add(3*time.Hour))
+
+	queryMatches := func(t *testing.T, request *statsv1.QueryMatchesRequest) *statsv1.QueryMatchesResponse {
+		t.Helper()
+
+		resp, err := client.QueryMatches(ctx, request)
+		require.NoError(t, err)
+
+		return resp
+	}
+
+	t.Run("no filters", func(t *testing.T) {
+		resp := queryMatches(t, &statsv1.QueryMatchesRequest{Filter: &queryv1.Filter{Limit: proto.Uint64(100)}})
+		require.Equal(t, uint64(4), resp.GetCount())
+		require.Len(t, resp.GetMatches(), 4)
+	})
+
+	t.Run("single server", func(t *testing.T) {
+		resp := queryMatches(t, &statsv1.QueryMatchesRequest{
+			ServerId: []int32{serverA.ServerID},
+			Filter:   &queryv1.Filter{Limit: proto.Uint64(100)},
+		})
+		require.Equal(t, uint64(2), resp.GetCount())
+		for _, match := range resp.GetMatches() {
+			require.Equal(t, serverA.ServerID, match.GetServerId())
+		}
+	})
+
+	t.Run("multiple servers", func(t *testing.T) {
+		resp := queryMatches(t, &statsv1.QueryMatchesRequest{
+			ServerId: []int32{serverA.ServerID, serverB.ServerID},
+			Filter:   &queryv1.Filter{Limit: proto.Uint64(100)},
+		})
+		require.Equal(t, uint64(4), resp.GetCount())
+	})
+
+	t.Run("map", func(t *testing.T) {
+		resp := queryMatches(t, &statsv1.QueryMatchesRequest{
+			MapId:  new(mapB),
+			Filter: &queryv1.Filter{Limit: proto.Uint64(100)},
+		})
+		require.Equal(t, uint64(2), resp.GetCount())
+		for _, match := range resp.GetMatches() {
+			require.Equal(t, mapB, match.GetMap().GetMapId())
+		}
+	})
+
+	t.Run("bucket", func(t *testing.T) {
+		resp := queryMatches(t, &statsv1.QueryMatchesRequest{
+			StatsBucketId: proto.Uint32(2),
+			Filter:        &queryv1.Filter{Limit: proto.Uint64(100)},
+		})
+		require.Equal(t, uint64(2), resp.GetCount())
+		for _, match := range resp.GetMatches() {
+			require.Equal(t, int32(2), match.GetStatsBucketId())
+		}
+	})
+
+	t.Run("start time after", func(t *testing.T) {
+		resp := queryMatches(t, &statsv1.QueryMatchesRequest{
+			StartTimeStart: timestamppb.New(base.Add(90 * time.Minute)),
+			Filter:         &queryv1.Filter{Limit: proto.Uint64(100)},
+		})
+		require.Equal(t, uint64(2), resp.GetCount())
+		for _, match := range resp.GetMatches() {
+			require.True(t, match.GetStartTime().AsTime().After(base.Add(90*time.Minute)))
+		}
+	})
+
+	t.Run("start time before", func(t *testing.T) {
+		resp := queryMatches(t, &statsv1.QueryMatchesRequest{
+			StartTimeEnd: timestamppb.New(base.Add(90 * time.Minute)),
+			Filter:       &queryv1.Filter{Limit: proto.Uint64(100)},
+		})
+		require.Equal(t, uint64(2), resp.GetCount())
+		for _, match := range resp.GetMatches() {
+			require.True(t, match.GetStartTime().AsTime().Before(base.Add(90*time.Minute)))
+		}
+	})
+
+	t.Run("start time range", func(t *testing.T) {
+		resp := queryMatches(t, &statsv1.QueryMatchesRequest{
+			StartTimeStart: timestamppb.New(base.Add(90 * time.Minute)),
+			StartTimeEnd:   timestamppb.New(base.Add(150 * time.Minute)),
+			Filter:         &queryv1.Filter{Limit: proto.Uint64(100)},
+		})
+		require.Equal(t, uint64(1), resp.GetCount())
+		require.Equal(t, mapB, resp.GetMatches()[0].GetMap().GetMapId())
+	})
+
+	t.Run("combined server and map", func(t *testing.T) {
+		resp := queryMatches(t, &statsv1.QueryMatchesRequest{
+			ServerId: []int32{serverA.ServerID},
+			MapId:    new(mapB),
+			Filter:   &queryv1.Filter{Limit: proto.Uint64(100)},
+		})
+		require.Equal(t, uint64(1), resp.GetCount())
+		require.Equal(t, mapB, resp.GetMatches()[0].GetMap().GetMapId())
+	})
+
+	t.Run("order by bucket name", func(t *testing.T) {
+		resp := queryMatches(t, &statsv1.QueryMatchesRequest{
+			Filter: &queryv1.Filter{
+				Limit:   proto.Uint64(100),
+				OrderBy: new("stats_bucket_name"),
+			},
+		})
+		require.Equal(t, uint64(4), resp.GetCount())
+		require.Equal(t, int32(1), resp.GetMatches()[0].GetStatsBucketId())
+		require.Equal(t, int32(2), resp.GetMatches()[3].GetStatsBucketId())
+	})
+}
+
+// TestQueryStatsMyRank ensures the requesting user's rank is resolved against
+// the full bucket window, not just the returned page, and stays 0 when the
+// user has no stats in the window.
+func TestQueryStatsMyRank(t *testing.T) {
+	fixture := tests.NewFixture()
+	defer fixture.Close()
+
+	ctx := t.Context()
+
+	demoJSON, err := os.Open("testdata/demo-1427611.json")
+	require.NoError(t, err)
+	demo, errDemo := json.Decode[demoparse.Demo](demoJSON)
+	require.NoError(t, errDemo)
+
+	server := fixture.CreateTestServer(ctx)
+
+	repo := stats.NewRepository(fixture.Database)
+	statsCase := stats.New(repo, maps.New(maps.NewRepository(fixture.Database)))
+
+	for _, round := range demo.Rounds {
+		for _, player := range round.Players {
+			sid := steamid.New(player.SteamID)
+			if !sid.Valid() {
+				continue
+			}
+			require.NoError(t, fixture.Database.Exec(ctx,
+				`INSERT INTO person (steam_id, created_on, updated_on, personaname, avatarhash, profilestate, personastate,
+				                    realname, timecreated, loccountrycode, locstatecode, loccityid)
+				 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+				 ON CONFLICT DO NOTHING`,
+				sid.Int64(), time.Now(), time.Now(), player.Name, fmt.Sprintf("avatar-%d", sid.Int64()), 0, 0, "", 0, "", "", 0))
+		}
+	}
+
+	importDemoAt(t, fixture, statsCase, server.ServerID, &demo, time.Now())
+	require.NoError(t, statsCase.RefreshViews(ctx))
+
+	playerSums := sumDemoPlayers(&demo)
+	require.NotEmpty(t, playerSums)
+	userSID := steamid.SteamID{}
+	for sid := range playerSums {
+		userSID = sid
+
+		break
+	}
+
+	opts := stats.Opts{StatsBucketID: 1}
+	expectedRows, _, errQuery := repo.Query(ctx, opts)
+	require.NoError(t, errQuery)
+
+	expectedRank := uint64(0)
+	for _, row := range expectedRows {
+		overall, ok := row.(stats.OverallStats)
+		if !ok || overall.SteamID != userSID {
+			continue
+		}
+		expectedRank = overall.Rank
+	}
+	require.Positive(t, expectedRank)
+
+	queryStats := func(t *testing.T, user steamid.SteamID) *statsv1.QueryStatsResponse {
+		t.Helper()
+
+		client, cleanup := newTestStatsClient(t, fixture, user)
+		t.Cleanup(cleanup)
+
+		resp, errResp := client.QueryStats(t.Context(), &statsv1.QueryStatsRequest{
+			StatsBucketId: new(uint32(1)),
+			// A single-row page: myRank must still be the full-window rank.
+			Filter: &queryv1.Filter{Limit: proto.Uint64(1)},
+		})
+		require.NoError(t, errResp)
+
+		return resp
+	}
+
+	t.Run("user with stats", func(t *testing.T) {
+		resp := queryStats(t, userSID)
+		require.Positive(t, resp.GetCount())
+		require.Equal(t, expectedRank, resp.GetMyRank())
+	})
+
+	t.Run("user without stats", func(t *testing.T) {
+		resp := queryStats(t, steamid.RandSID64())
+		require.Zero(t, resp.GetMyRank())
+	})
+}
+
+// TestDefaultBucket ensures exactly one bucket is marked as default and that
+// matches imported for a server without a bucket of its own are filed under
+// that bucket.
+func TestDefaultBucket(t *testing.T) {
+	testFixture := tests.NewFixture()
+	defer testFixture.Close()
+
+	repo := stats.NewRepository(testFixture.Database)
+	statsCase := stats.New(repo, maps.New(maps.NewRepository(testFixture.Database)))
+	ctx := t.Context()
+
+	buckets, errBuckets := statsCase.Buckets(ctx)
+	require.NoError(t, errBuckets)
+
+	var defaultBucket *stats.Bucket
+	for _, bucket := range buckets {
+		if !bucket.IsDefault {
+			continue
+		}
+		require.Nil(t, defaultBucket, "expected at most one default bucket")
+		defaultBucket = &bucket
+	}
+	require.NotNil(t, defaultBucket, "expected a default bucket to be configured")
+	require.Equal(t, "casual", defaultBucket.BucketName)
+
+	// Servers saved through the domain always get a bucket, so clear it to
+	// exercise the no-bucket fallback.
+	server := testFixture.CreateTestServer(ctx)
+	require.NoError(t, testFixture.Database.Exec(ctx,
+		`UPDATE server SET stats_bucket_id = NULL WHERE server_id = $1`, server.ServerID))
+
+	var demoID int32
+	require.NoError(t, testFixture.Database.QueryRow(ctx,
+		`INSERT INTO demo (server_id, title, map_name, created_on) VALUES ($1, $2, $3, now()) RETURNING demo_id`,
+		server.ServerID, "default-bucket.dem", "cp_badlands").Scan(&demoID))
+
+	playerID := steamid.RandSID64()
+	require.NoError(t, testFixture.Database.Exec(ctx,
+		`INSERT INTO person (steam_id, created_on, updated_on, personaname, avatarhash, profilestate, personastate,
+		                    realname, timecreated, loccountrycode, locstatecode, loccityid)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		 ON CONFLICT DO NOTHING`,
+		playerID.Int64(), time.Now(), time.Now(), "Player", "", 0, 0, "", 0, "", "", 0))
+
+	demo := &demoparse.Demo{
+		Filename: "default-bucket.dem", DemoType: demoparse.HL2Demo,
+		Server: "test", Map: "cp_badlands", Game: "tf",
+		Duration: 600, Ticks: 40000, Frames: 39900, Signon: 1000,
+		Rounds: []demoparse.RoundSummary{
+			{
+				Winner: "red", Time: 300,
+				Players: []demoparse.PlayerSummary{
+					{
+						Name: "Player", SteamID: string(playerID.Steam3()), Team: "red",
+						TickStart: 1000, TickEnd: 5000,
+					},
+				},
+			},
+		},
+	}
+
+	matchID, errImport := statsCase.Import(ctx, server.ServerID, demoID, demo, time.Now())
+	require.NoError(t, errImport)
+
+	var matchBucket int32
+	require.NoError(t, testFixture.Database.QueryRow(ctx,
+		`SELECT stats_bucket_id FROM match WHERE match_id = $1`, *matchID).Scan(&matchBucket))
+	require.Equal(t, defaultBucket.BucketID, matchBucket)
+}
+
+// TestMatchesWithPlayerOrdering ensures a player's match history is returned
+// ordered by match start time, newest first.
+func TestMatchesWithPlayerOrdering(t *testing.T) {
+	testFixture := tests.NewFixture()
+	defer testFixture.Close()
+
+	repo := stats.NewRepository(testFixture.Database)
+	statsCase := stats.New(repo, maps.New(maps.NewRepository(testFixture.Database)))
+	ctx := t.Context()
+
+	server := testFixture.CreateTestServer(ctx)
+
+	playerID := steamid.RandSID64()
+	require.NoError(t, testFixture.Database.Exec(ctx,
+		`INSERT INTO person (steam_id, created_on, updated_on, personaname, avatarhash, profilestate, personastate,
+		                    realname, timecreated, loccountrycode, locstatecode, loccityid)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		 ON CONFLICT DO NOTHING`,
+		playerID.Int64(), time.Now(), time.Now(), "Player", "", 0, 0, "", 0, "", "", 0))
+
+	base := time.Date(2026, 5, 1, 12, 0, 0, 0, time.UTC)
+	for idx, start := range []time.Time{base, base.Add(24 * time.Hour)} {
+		title := fmt.Sprintf("player-order-%d.dem", idx)
+		var demoID int32
+		require.NoError(t, testFixture.Database.QueryRow(ctx,
+			`INSERT INTO demo (server_id, title, map_name, created_on) VALUES ($1, $2, $3, now()) RETURNING demo_id`,
+			server.ServerID, title, "cp_order").Scan(&demoID))
+
+		demo := &demoparse.Demo{
+			Filename: title, DemoType: demoparse.HL2Demo,
+			Server: "test", Map: "cp_order", Game: "tf",
+			Duration: 600, Ticks: 40000, Frames: 39900, Signon: 1000,
+			Rounds: []demoparse.RoundSummary{
+				{
+					Winner: "red", Time: 300,
+					Players: []demoparse.PlayerSummary{
+						{
+							Name: "Player", SteamID: string(playerID.Steam3()), Team: "red",
+							TickStart: 1000, TickEnd: 5000,
+						},
+					},
+				},
+			},
+		}
+
+		_, errImport := statsCase.Import(ctx, server.ServerID, demoID, demo, start)
+		require.NoError(t, errImport)
+	}
+
+	matches, errMatches := statsCase.MatchesWithPlayer(ctx, playerID)
+	require.NoError(t, errMatches)
+	require.Len(t, matches, 2)
+	require.True(t, matches[0].StartTime.After(matches[1].StartTime),
+		"expected newest match first, got %s then %s", matches[0].StartTime, matches[1].StartTime)
+>>>>>>> 2394be33 (Fix row hilight)
 }
