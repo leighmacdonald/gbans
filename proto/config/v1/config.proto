@@ -45,6 +45,7 @@ message InfoResponse {
   bool speedruns_enabled = 22 [(buf.validate.field).required = true];
   bool forums_enabled = 23 [(buf.validate.field).required = true];
   bool mge_enabled = 24 [(buf.validate.field).required = true];
+  string banner_image = 25 [(buf.validate.field).required = true];
 }
 
 message GetResponse {
@@ -97,6 +98,7 @@ message General {
   bool mge_enabled = 19 [(buf.validate.field).required = true];
   string sentry_dsn = 20 [(buf.validate.field).required = true];
   string sentry_dsn_web = 21 [(buf.validate.field).required = true];
+  string banner_image = 22 [(buf.validate.field).required = true];
 }
 
 message Debug {

@@ -18,6 +18,10 @@ type Props<TData> = {
 export const SelectField = <TData,>(props: Props<TData>) => {
 	const field = useFieldContext<TData>();
 	const errors = useSelector(field.store, (state) => state.meta.errors);
+	// Subscribe to the value explicitly: without this, programmatic updates
+	// (form.setFieldValue, e.g. filling the default stats bucket once it
+	// loads) never re-render the select and the dropdown stays blank.
+	const value = useSelector(field.store, (state) => state.value);
 
 	return (
 		<FormControl fullWidth error={errors.length > 0}>
@@ -26,7 +30,7 @@ export const SelectField = <TData,>(props: Props<TData>) => {
 				disabled={props.disabled}
 				color={field.state.meta.isValid ? "success" : props.color}
 				onClick={props.onClick}
-				value={field.state.value}
+				value={value ?? (props.multiple ? [] : "")}
 				multiple={props.multiple}
 				id={`select-${props.name}`}
 				fullWidth

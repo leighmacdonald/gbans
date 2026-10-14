@@ -130,6 +130,7 @@ type General struct {
 	SrcdsLogAddr       string
 	AssetURL           string
 	Favicon            string
+	BannerImage        string
 	DefaultRoute       string
 	NewsEnabled        bool
 	ForumsEnabled      bool
@@ -153,6 +154,18 @@ func (c *General) FaviconURL() string {
 	}
 
 	return c.AssetURL + c.Favicon
+}
+
+func (c *General) BannerImageURL() string {
+	if c.BannerImage == "" {
+		return ""
+	}
+
+	if strings.HasPrefix(c.BannerImage, "http") {
+		return c.BannerImage
+	}
+
+	return c.AssetURL + c.BannerImage
 }
 
 type Debug struct {
