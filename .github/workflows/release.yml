@@ -26,9 +26,9 @@ jobs:
           key: go-mod-${{ hashFiles('**/go.sum') }}
           restore-keys: go-mod-
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/setup@v3
         with:
-          run_install: false
+          install: false
 
       - name: Setup nodejs
         uses: actions/setup-node@v7

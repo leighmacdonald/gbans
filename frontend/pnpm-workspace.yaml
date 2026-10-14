@@ -1,9 +1,11 @@
 packages:
   - .
 
-onlyBuiltDependencies:
-  - '@sentry/cli'
-  - '@swc/core'
-  - es5-ext
-  - esbuild
-  - pnpm
+allowBuilds:
+  '@sentry/cli': true
+  '@swc/core': true
+  es5-ext: true
+  esbuild: true
+  pnpm: true
+
+minimumReleaseAge: 0
