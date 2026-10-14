@@ -30,18 +30,11 @@ jobs:
 
       - uses: pnpm/setup@v3
         with:
-          install: false
-
-      - name: Setup nodejs
-        uses: actions/setup-node@v7
-        with:
-          node-version: "24.x"
-          cache: "pnpm"
-          cache-dependency-path: "frontend/pnpm-lock.yaml"
-
-      - name: Install modules
-        working-directory: ./frontend
-        run: pnpm install --frozen-lockfile --strict-peer-dependencies
+          version: 12
+          install: true
+          runtime: node
+          working-directory: frontend
+          require-lockfile: true
 
       - name: Setup Biome
         uses: biomejs/setup-biome@v2
@@ -101,21 +94,14 @@ jobs:
       GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
     steps:
       - uses: actions/checkout@v7
-
+      
       - uses: pnpm/setup@v3
         with:
-          install: false
-
-      - name: Setup nodejs
-        uses: actions/setup-node@v7
-        with:
-          node-version: "24.x"
-          cache: "pnpm"
-          cache-dependency-path: "frontend/pnpm-lock.yaml"
-
-      - name: Install modules
-        working-directory: ./frontend
-        run: pnpm install --frozen-lockfile --strict-peer-dependencies
+          version: 12
+          install: true
+          runtime: node
+          working-directory: frontend
+          require-lockfile: true
 
       - name: Frontend tests
         run: just test-frontend
