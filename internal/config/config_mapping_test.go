@@ -51,7 +51,7 @@ func testDomainConfig() Config {
 		},
 		Clientprefs: &sourcemod.Config{CenterProjectiles: true},
 		Log:         &log.Config{Level: log.Info, File: "/var/log/gbans.log", HTTPEnabled: true, HTTPOtelEnabled: true, HTTPLevel: log.Debug},
-		GeoLocation: &ip2location.Config{Enabled: true, CachePath: "/tmp/geo", Token: "geo-token"},
+		GeoLocation: &ip2location.Config{Enabled: true, CachePath: "/tmp/geo", Token: "geo-token", UpdateIntervalDays: 30},
 		Patreon: &patreon.Config{
 			Enabled: true, IntegrationsEnabled: true, ClientID: "patreon-id", ClientSecret: "patreon-secret",
 			CreatorAccessToken: "access-token", CreatorRefreshToken: "refresh-token",

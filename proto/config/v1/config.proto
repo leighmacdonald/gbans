@@ -188,6 +188,7 @@ message GeoLocation {
   bool enabled = 1 [(buf.validate.field).required = true];
   string cache_path = 2 [(buf.validate.field).required = true];
   string token = 3;
+  int32 update_interval_days = 4 [(buf.validate.field).required = true];
 }
 
 message Patreon {

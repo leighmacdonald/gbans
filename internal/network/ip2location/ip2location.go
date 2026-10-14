@@ -32,6 +32,9 @@ type Config struct {
 	Enabled   bool
 	CachePath string
 	Token     string
+	// UpdateIntervalDays is how often the built in tracker re-downloads and
+	// imports the databases. Zero disables automatic updates.
+	UpdateIntervalDays int
 }
 
 const downloadURL = "https://www.ip2location.com/download/?token=%s&file=%s"
@@ -57,6 +60,33 @@ const (
 	GeoDatabaseLocationFile6 DatabaseFile = "IP2LOCATION-LITE-DB5.IPV6.CSV"
 	GeoDatabaseProxyFile     DatabaseFile = "IP2PROXY-LITE-PX10.CSV"
 )
+
+// ImportedFiles are the database files loaded into the database by
+// Networks.RefreshLocationData.
+var ImportedFiles = []DatabaseFile{ //nolint:gochecknoglobals
+	GeoDatabaseLocationFile4,
+	GeoDatabaseASNFile4,
+	GeoDatabaseProxyFile,
+}
+
+// Stale reports whether any of the given database files is missing from the
+// cache or was last written more than olderThan ago.
+func Stale(cachePath string, olderThan time.Duration, files ...DatabaseFile) bool {
+	now := time.Now()
+
+	for _, file := range files {
+		info, errStat := os.Stat(filepath.Join(cachePath, string(file)))
+		if errStat != nil {
+			return true
+		}
+
+		if now.Sub(info.ModTime()) > olderThan {
+			return true
+		}
+	}
+
+	return false
+}
 
 var (
 	ErrCSVRow        = errors.New("failed to read asn csv row")
@@ -316,6 +346,7 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 
 	var (
 		exitErr   error
+		exitMu    sync.Mutex
 		waitGroup sync.WaitGroup
 	)
 
@@ -341,6 +372,10 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 
 			if errDownload := downloadDatabase(param); errDownload != nil {
 				slog.Error("Failed to download geo database", slog.String("error", errDownload.Error()))
+
+				exitMu.Lock()
+				exitErr = errors.Join(exitErr, fmt.Errorf("%s: %w", param.fileName, errDownload))
+				exitMu.Unlock()
 			}
 		}(param)
 	}

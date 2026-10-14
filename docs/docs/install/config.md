@@ -99,6 +99,15 @@ To enable discord connections, You must also set an oauth2 redirect (Oauth2 -> R
 To install the GeoLite2 databases, create an account on [IP2location Lite](https://lite.ip2location.com). After
 confirmation, you'll be given a download token for use in gbans.yaml.
 
+### Automatic updates
+
+gbans includes a built in tracker that re-downloads and imports the databases
+whenever the cached files are older than the configured interval, which
+defaults to 30 days. The interval (in days) can be changed in the admin
+settings under Geo Location, and setting it to `0` disables automatic
+updates. A refresh also runs on start if the databases have never been
+imported, so fresh installs need no manual steps.
+
 ### Via Web
 
 You can find a button to initiate a refresh of the database via the geo database admin gui at `https://example.com/admin/settings?section=geo_location`.

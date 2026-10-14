@@ -6,9 +6,12 @@ import (
 	"log/slog"
 	"net"
 	"net/netip"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/database"
@@ -25,6 +28,7 @@ var (
 	ErrNetworkLocationUnknown = errors.New("unknown location record")
 	ErrNetworkASNUnknown      = errors.New("unknown asn record")
 	ErrNetworkProxyUnknown    = errors.New("no proxy record")
+	ErrUpdateInProgress       = errors.New("location database update already in progress")
 )
 
 type Config struct {
@@ -129,6 +133,9 @@ type Networks struct {
 	geoConf    *ip2location.Config
 	repository Repository
 	eb         *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	// updating guards against concurrent location database refreshes from the
+	// auto updater, the admin ui and the cli.
+	updating *atomic.Bool
 }
 
 func NewNetworks(broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
@@ -139,6 +146,7 @@ func NewNetworks(broadcaster *broadcaster.Broadcaster[logparse.EventType, logpar
 		repository: repository,
 		eb:         broadcaster,
 		geoConf:    geoConf,
+		updating:   &atomic.Bool{},
 	}
 }
 
@@ -215,17 +223,82 @@ func (u Networks) importDatabase(ctx context.Context, dbName ip2location.Databas
 }
 
 func (u Networks) RefreshLocationData(ctx context.Context) error {
+	if u.updating != nil {
+		if !u.updating.CompareAndSwap(false, true) {
+			return ErrUpdateInProgress
+		}
+		defer u.updating.Store(false)
+	}
+
 	if errUpdate := ip2location.Update(ctx, u.geoConf.CachePath, u.geoConf.Token); errUpdate != nil {
 		return errUpdate
 	}
 
-	for _, dbName := range []ip2location.DatabaseFile{ip2location.GeoDatabaseLocationFile4, ip2location.GeoDatabaseASNFile4, ip2location.GeoDatabaseProxyFile} {
+	for _, dbName := range ip2location.ImportedFiles {
 		if err := u.importDatabase(ctx, dbName); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// StartGeoUpdater re-downloads and imports the ip2location databases whenever
+// the cached files are older than the configured update interval, so the geo
+// data stays current without relying on an external cron job. It checks once
+// on start (which also populates a fresh install) and then on an interval
+// ticker. A non-positive interval, missing token or disabled geolocation
+// leaves the function as a no-op, keeping `gbans refresh location` the manual
+// escape hatch.
+func (u Networks) StartGeoUpdater(ctx context.Context) {
+	if u.geoConf == nil || !u.geoConf.Enabled || u.geoConf.Token == "" || u.geoConf.UpdateIntervalDays <= 0 {
+		return
+	}
+
+	interval := time.Duration(u.geoConf.UpdateIntervalDays) * 24 * time.Hour
+	slog.Info("Starting geo location auto updater", slog.Duration("interval", interval))
+
+	run := func() {
+		if !ip2location.Stale(u.geoConf.CachePath, interval, ip2location.ImportedFiles...) {
+			slog.Debug("Geo location database is up to date")
+
+			return
+		}
+
+		if err := u.RefreshLocationData(ctx); err != nil {
+			slog.Error("Failed to auto update geo location database", slog.String("error", err.Error()))
+
+			// A failed run can leave freshly downloaded files behind that were
+			// never imported. Drop them so the next cycle treats the cache as
+			// stale again and retries the download and import.
+			if !errors.Is(err, ErrUpdateInProgress) {
+				for _, file := range ip2location.ImportedFiles {
+					if errRemove := os.Remove(filepath.Join(u.geoConf.CachePath, string(file))); errRemove != nil {
+						slog.Warn("Failed to remove stale geo database file",
+							slog.String("file", string(file)), slog.String("error", errRemove.Error()))
+					}
+				}
+			}
+
+			return
+		}
+
+		slog.Info("Geo location database auto update complete")
+	}
+
+	run()
+
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			run()
+		}
+	}
 }
 
 func (u Networks) GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (PersonConnections, error) {

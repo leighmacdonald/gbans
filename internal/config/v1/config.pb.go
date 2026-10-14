@@ -1505,12 +1505,13 @@ func (x *Log) GetHttpLevel() Level {
 }
 
 type GeoLocation struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Enabled       *bool                  `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
-	CachePath     *string                `protobuf:"bytes,2,opt,name=cache_path,json=cachePath" json:"cache_path,omitempty"`
-	Token         *string                `protobuf:"bytes,3,opt,name=token" json:"token,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Enabled            *bool                  `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
+	CachePath          *string                `protobuf:"bytes,2,opt,name=cache_path,json=cachePath" json:"cache_path,omitempty"`
+	Token              *string                `protobuf:"bytes,3,opt,name=token" json:"token,omitempty"`
+	UpdateIntervalDays *int32                 `protobuf:"varint,4,opt,name=update_interval_days,json=updateIntervalDays" json:"update_interval_days,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *GeoLocation) Reset() {
@@ -1562,6 +1563,13 @@ func (x *GeoLocation) GetToken() string {
 		return *x.Token
 	}
 	return ""
+}
+
+func (x *GeoLocation) GetUpdateIntervalDays() int32 {
+	if x != nil && x.UpdateIntervalDays != nil {
+		return *x.UpdateIntervalDays
+	}
+	return 0
 }
 
 type Patreon struct {
@@ -2837,12 +2845,13 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\fhttp_enabled\x18\x03 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\vhttpEnabled\x122\n" +
 	"\x11http_otel_enabled\x18\x04 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0fhttpOtelEnabled\x12<\n" +
 	"\n" +
-	"http_level\x18\x05 \x01(\x0e2\x10.config.v1.LevelB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\thttpLevel\"l\n" +
+	"http_level\x18\x05 \x01(\x0e2\x10.config.v1.LevelB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\thttpLevel\"\xa6\x01\n" +
 	"\vGeoLocation\x12 \n" +
 	"\aenabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aenabled\x12%\n" +
 	"\n" +
 	"cache_path\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tcachePath\x12\x14\n" +
-	"\x05token\x18\x03 \x01(\tR\x05token\"\x8e\x02\n" +
+	"\x05token\x18\x03 \x01(\tR\x05token\x128\n" +
+	"\x14update_interval_days\x18\x04 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x12updateIntervalDays\"\x8e\x02\n" +
 	"\aPatreon\x12 \n" +
 	"\aenabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aenabled\x129\n" +
 	"\x14integrations_enabled\x18\x02 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x13integrationsEnabled\x12\x1b\n" +

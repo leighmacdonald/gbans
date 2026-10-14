@@ -33,9 +33,10 @@ related to docker containers and setting `GOMAXPROCS` properly.
 
 :::
 
-[IP2Location](https://lite.ip2location.com/) updates are a fairly intensive process,
-so considerations should be taken as far as how and when to update the database
-to ensure it doesn't impact other things on the system.
+[IP2Location](https://lite.ip2location.com/) updates are a fairly intensive process.
+gbans runs a built in updater that refreshes the databases monthly by default;
+the interval can be tuned or disabled in the admin settings under Geo Location
+if you'd rather schedule updates yourself.
 
 ## Runtime requirements
 

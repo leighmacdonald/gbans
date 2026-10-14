@@ -1344,6 +1344,25 @@ function AdminSettings() {
 								/>
 							</Grid>
 							<Grid size={{ xs: 12 }}>
+								<SubHeading>
+									How often gbans automatically re-downloads and imports the geo databases. Setting
+									this to 0 disables automatic updates, in which case use the Update Database button
+									above (or `gbans refresh location`) manually.
+								</SubHeading>
+								<form.AppField
+									name={"geoLocation.updateIntervalDays"}
+									children={(field) => {
+										return (
+											<field.NumberField
+												label={"Auto update interval (days)"}
+												min={0}
+												max={365}
+											/>
+										);
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 12 }}>
 								<form.AppForm>
 									<ButtonGroup>
 										<form.ResetButton />
