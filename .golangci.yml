@@ -44,6 +44,7 @@ linters:
         - t *testing.T
         - T any
         - r *gin.Engine
+        - r *http.Request
         - r fixture.CreateRouter
         # test fixture handles in internal/ban tests
         - e *env

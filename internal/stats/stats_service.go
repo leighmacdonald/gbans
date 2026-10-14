@@ -47,7 +47,7 @@ func (s Service) RefreshStats(ctx context.Context, _ *emptypb.Empty) (*v1.Refres
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	return &v1.RefreshStatsResponse{RefreshedViews: StatViews}, nil
+	return &v1.RefreshStatsResponse{RefreshedViews: StatViews()}, nil
 }
 
 func (s Service) MapList(ctx context.Context, _ *emptypb.Empty) (*v1.MapListResponse, error) {

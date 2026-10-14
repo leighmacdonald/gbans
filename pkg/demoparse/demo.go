@@ -458,7 +458,7 @@ type MatchEvent struct {
 
 // SteamIDs returns the raw participant identifiers referenced by the event,
 // including multi-party roles such as capture cappers.
-func (e MatchEvent) SteamIDs() []string {
+func (e MatchEvent) SteamIDs() []string { //nolint:cyclop
 	var out []string
 
 	add := func(raw ...string) {

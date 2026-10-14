@@ -10,15 +10,10 @@ import (
 	"testing"
 	"time"
 
-<<<<<<< HEAD
-	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/database"
-||||||| parent of 2394be33 (Fix row hilight)
-=======
 	"connectrpc.com/authn"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/database"
 	queryv1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
->>>>>>> 2394be33 (Fix row hilight)
 	"github.com/leighmacdonald/gbans/internal/json"
 	"github.com/leighmacdonald/gbans/internal/maps"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
@@ -187,6 +182,27 @@ func queryOverall(t *testing.T, repo stats.Repository, bucket uint32, timeBucket
 	}
 
 	return out
+}
+
+// testPerson is a seeded person row for demo imports.
+type testPerson struct {
+	id   steamid.SteamID
+	name string
+}
+
+// seedTestPersons creates the person rows a demo import requires.
+func seedTestPersons(t *testing.T, testFixture *tests.Fixture, persons ...testPerson) {
+	t.Helper()
+	ctx := t.Context()
+
+	for _, person := range persons {
+		require.NoError(t, testFixture.Database.Exec(ctx,
+			`INSERT INTO person (steam_id, created_on, updated_on, personaname, avatarhash, profilestate, personastate,
+			                    realname, timecreated, loccountrycode, locstatecode, loccityid)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+			 ON CONFLICT DO NOTHING`,
+			person.id.Int64(), time.Now(), time.Now(), person.name, "", 0, 0, "", 0, "", "", 0))
+	}
 }
 
 // TestGlobalStatsAcrossBucketsAndTime imports the same match several times on
@@ -387,10 +403,7 @@ func TestImportNewParserStats(t *testing.T) {
 	}
 	insertTestPersons(ctx, t, testFixture.Database, persons)
 
-	var demoID int32
-	require.NoError(t, testFixture.Database.QueryRow(ctx,
-		`INSERT INTO demo (server_id, title, map_name, created_on) VALUES ($1, $2, $3, $4) RETURNING demo_id`,
-		server.ServerID, "new-stats.dem", "cp_process_final", time.Now()).Scan(&demoID))
+	demoID := seedTestDemo(t, testFixture, server.ServerID, "new-stats.dem", "cp_process_final")
 
 	player := demoparse.PlayerSummary{
 		Name: "NewStats", SteamID: string(steamID.Steam3()),
@@ -828,10 +841,7 @@ func TestImportMatchEvents(t *testing.T) {
 	}
 	insertTestPersons(ctx, t, testFixture.Database, persons)
 
-	var demoID int32
-	require.NoError(t, testFixture.Database.QueryRow(ctx,
-		`INSERT INTO demo (server_id, title, map_name, created_on) VALUES ($1, $2, $3, $4) RETURNING demo_id`,
-		server.ServerID, "match-events.dem", "cp_process_final", time.Now()).Scan(&demoID))
+	demoID := seedTestDemo(t, testFixture, server.ServerID, "match-events.dem", "cp_process_final")
 
 	demo := demoparse.Demo{
 		Filename: "match-events.dem", DemoType: demoparse.HL2Demo,
@@ -1103,7 +1113,6 @@ func TestImportSkipsUnknownMatchEvents(t *testing.T) {
 	require.Equal(t, 1, count)
 }
 
-<<<<<<< HEAD
 func validTestDemo(duration float64, numPlayers int) *demoparse.Demo {
 	_, players := fillerTestPlayers(numPlayers, 1000, 5000)
 
@@ -1172,8 +1181,8 @@ func TestImportRejectsFilteredDemos(t *testing.T) {
 	require.NoError(t, testFixture.Database.QueryRow(ctx,
 		`SELECT count(*) FROM match`).Scan(&count))
 	require.Equal(t, 0, count)
-||||||| parent of 2394be33 (Fix row hilight)
-=======
+}
+
 type stubPermissionResolver struct{}
 
 func (stubPermissionResolver) PermissionsBySteamID(_ context.Context, _ steamid.SteamID) []rolesv1.Permission {
@@ -1203,13 +1212,13 @@ func newTestStatsClient(t *testing.T, fixture *tests.Fixture, user steamid.Steam
 	return statsv1connect.NewStatsServiceClient(server.Client(), server.URL), server.Close
 }
 
-func seedTestDemo(t *testing.T, fixture *tests.Fixture, serverID int32, title string) int32 {
+func seedTestDemo(t *testing.T, fixture *tests.Fixture, serverID int32, title, mapName string) int32 {
 	t.Helper()
 
 	var demoID int32
 	require.NoError(t, fixture.Database.QueryRow(t.Context(),
 		`INSERT INTO demo (server_id, title, map_name, created_on) VALUES ($1, $2, $3, now()) RETURNING demo_id`,
-		serverID, title, "cp_filter_demo").Scan(&demoID))
+		serverID, title, mapName).Scan(&demoID))
 
 	return demoID
 }
@@ -1253,8 +1262,8 @@ func TestQueryMatches(t *testing.T) {
 	serverB := fixture.CreateTestServer(ctx)
 	mapA := seedTestMap(t, fixture, "cp_filter_a")
 	mapB := seedTestMap(t, fixture, "cp_filter_b")
-	demoA := seedTestDemo(t, fixture, serverA.ServerID, "filter-demo-a")
-	demoB := seedTestDemo(t, fixture, serverB.ServerID, "filter-demo-b")
+	demoA := seedTestDemo(t, fixture, serverA.ServerID, "filter-demo-a", "cp_filter_demo")
+	demoB := seedTestDemo(t, fixture, serverB.ServerID, "filter-demo-b", "cp_filter_demo")
 
 	base := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	// Buckets 1 (casual) and 2 (1ku) are seeded by the migrations.
@@ -1499,12 +1508,13 @@ func TestDefaultBucket(t *testing.T) {
 		server.ServerID, "default-bucket.dem", "cp_badlands").Scan(&demoID))
 
 	playerID := steamid.RandSID64()
-	require.NoError(t, testFixture.Database.Exec(ctx,
-		`INSERT INTO person (steam_id, created_on, updated_on, personaname, avatarhash, profilestate, personastate,
-		                    realname, timecreated, loccountrycode, locstatecode, loccityid)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-		 ON CONFLICT DO NOTHING`,
-		playerID.Int64(), time.Now(), time.Now(), "Player", "", 0, 0, "", 0, "", "", 0))
+	fillerIDs, fillerPlayers := fillerTestPlayers(5, 1000, 5000)
+
+	persons := map[steamid.SteamID]string{playerID: "Player"}
+	for _, fillerID := range fillerIDs {
+		persons[fillerID] = "Filler"
+	}
+	insertTestPersons(ctx, t, testFixture.Database, persons)
 
 	demo := &demoparse.Demo{
 		Filename: "default-bucket.dem", DemoType: demoparse.HL2Demo,
@@ -1513,12 +1523,12 @@ func TestDefaultBucket(t *testing.T) {
 		Rounds: []demoparse.RoundSummary{
 			{
 				Winner: "red", Time: 300,
-				Players: []demoparse.PlayerSummary{
+				Players: append([]demoparse.PlayerSummary{
 					{
 						Name: "Player", SteamID: string(playerID.Steam3()), Team: "red",
 						TickStart: 1000, TickEnd: 5000,
 					},
-				},
+				}, fillerPlayers...),
 			},
 		},
 	}
@@ -1545,12 +1555,13 @@ func TestMatchesWithPlayerOrdering(t *testing.T) {
 	server := testFixture.CreateTestServer(ctx)
 
 	playerID := steamid.RandSID64()
-	require.NoError(t, testFixture.Database.Exec(ctx,
-		`INSERT INTO person (steam_id, created_on, updated_on, personaname, avatarhash, profilestate, personastate,
-		                    realname, timecreated, loccountrycode, locstatecode, loccityid)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-		 ON CONFLICT DO NOTHING`,
-		playerID.Int64(), time.Now(), time.Now(), "Player", "", 0, 0, "", 0, "", "", 0))
+	fillerIDs, fillerPlayers := fillerTestPlayers(5, 1000, 5000)
+
+	persons := map[steamid.SteamID]string{playerID: "Player"}
+	for _, fillerID := range fillerIDs {
+		persons[fillerID] = "Filler"
+	}
+	insertTestPersons(ctx, t, testFixture.Database, persons)
 
 	base := time.Date(2026, 5, 1, 12, 0, 0, 0, time.UTC)
 	for idx, start := range []time.Time{base, base.Add(24 * time.Hour)} {
@@ -1567,12 +1578,12 @@ func TestMatchesWithPlayerOrdering(t *testing.T) {
 			Rounds: []demoparse.RoundSummary{
 				{
 					Winner: "red", Time: 300,
-					Players: []demoparse.PlayerSummary{
+					Players: append([]demoparse.PlayerSummary{
 						{
 							Name: "Player", SteamID: string(playerID.Steam3()), Team: "red",
 							TickStart: 1000, TickEnd: 5000,
 						},
-					},
+					}, fillerPlayers...),
 				},
 			},
 		}
@@ -1586,5 +1597,4 @@ func TestMatchesWithPlayerOrdering(t *testing.T) {
 	require.Len(t, matches, 2)
 	require.True(t, matches[0].StartTime.After(matches[1].StartTime),
 		"expected newest match first, got %s then %s", matches[0].StartTime, matches[1].StartTime)
->>>>>>> 2394be33 (Fix row hilight)
 }

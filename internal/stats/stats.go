@@ -240,18 +240,20 @@ func (s Stats) StartRefreshHandler(ctx context.Context) error {
 // StatViews lists every materialized view backing QueryStats, refreshed by
 // the daily job. Keep in sync with database.validViewNames (minus
 // stats_weapons_view, which is only refreshed here for convenience).
-var StatViews = []string{ //nolint:gochecknoglobals // registry of materialized views.
-	"stats_summary_daily_overall_view",
-	"stats_summary_daily_variants_view",
-	"stats_summary_weekly_overall_view",
-	"stats_summary_weekly_variants_view",
-	"stats_summary_monthly_overall_view",
-	"stats_summary_monthly_variants_view",
-	"stats_summary_yearly_overall_view",
-	"stats_summary_yearly_variants_view",
-	"stats_summary_alltime_overall_view",  //nolint:misspell // name must match the database view.
-	"stats_summary_alltime_variants_view", //nolint:misspell // name must match the database view.
-	"stats_weapons_view",
+func StatViews() []string {
+	return []string{
+		"stats_summary_daily_overall_view",
+		"stats_summary_daily_variants_view",
+		"stats_summary_weekly_overall_view",
+		"stats_summary_weekly_variants_view",
+		"stats_summary_monthly_overall_view",
+		"stats_summary_monthly_variants_view",
+		"stats_summary_yearly_overall_view",
+		"stats_summary_yearly_variants_view",
+		"stats_summary_alltime_overall_view",  //nolint:misspell // name must match the database view.
+		"stats_summary_alltime_variants_view", //nolint:misspell // name must match the database view.
+		"stats_weapons_view",
+	}
 }
 
 func (s Stats) UpdateDailyViews(ctx context.Context) func() {
@@ -263,7 +265,7 @@ func (s Stats) UpdateDailyViews(ctx context.Context) func() {
 }
 
 // viewRefreshTimeout bounds a full refresh of every stats summary view.
-// Refreshing all views, including the alltime and yearly summaries, over a
+// Refreshing all views, including the all-time and yearly summaries, over a
 // large stats database can take many minutes, so this is deliberately
 // generous.
 const viewRefreshTimeout = 30 * time.Minute
@@ -292,7 +294,7 @@ func (s Stats) RefreshViews(ctx context.Context) error {
 		firstErr  error
 	)
 
-	for _, viewName := range StatViews {
+	for _, viewName := range StatViews() {
 		waitGroup.Add(1)
 		sem <- struct{}{}
 		go func(viewName string) {

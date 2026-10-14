@@ -1030,7 +1030,7 @@ func pointWKT(pos *demoparse.Position) *string {
 // matchEventRowFromEvent projects a parsed match event onto its storable row.
 // Variant-specific payloads are preserved verbatim in details; positions use
 // the geometry columns.
-func matchEventRowFromEvent(event demoparse.MatchEvent) (matchEventRow, error) {
+func matchEventRowFromEvent(event demoparse.MatchEvent) (matchEventRow, error) { //nolint:cyclop,maintidx
 	row := matchEventRow{eventType: string(event.Type)}
 
 	payload, err := eventRowPayload(event, &row)

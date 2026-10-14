@@ -504,7 +504,7 @@ func killFromProto(kill *demostatsv1.KillEvent) KillEvent {
 // eventFromProto converts a v0.3.3 GameEvent oneof into the domain MatchEvent
 // model. Unknown or absent kinds produce a zero MatchEvent carrying only the
 // tick so the feed stays append-only and observable.
-func eventFromProto(event *demostatsv1.GameEvent) MatchEvent {
+func eventFromProto(event *demostatsv1.GameEvent) MatchEvent { //nolint:cyclop
 	out := MatchEvent{Tick: int(event.GetTick())}
 
 	switch kind := event.GetKind().(type) {
@@ -701,7 +701,7 @@ func buildingLifecycleFromProto(lifecycle *demostatsv1.BuildingLifecycle) *Build
 
 // eventToProto converts a domain MatchEvent back into a v0.3.3 GameEvent. It
 // is primarily used to serve fixture data from ConnectRPC test servers.
-func eventToProto(event MatchEvent) *demostatsv1.GameEvent {
+func eventToProto(event MatchEvent) *demostatsv1.GameEvent { //nolint:cyclop,maintidx
 	out := &demostatsv1.GameEvent{Tick: uint32(event.Tick)} //nolint:gosec
 
 	switch event.Type {
