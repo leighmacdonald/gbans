@@ -1598,3 +1598,112 @@ func TestMatchesWithPlayerOrdering(t *testing.T) {
 	require.True(t, matches[0].StartTime.After(matches[1].StartTime),
 		"expected newest match first, got %s then %s", matches[0].StartTime, matches[1].StartTime)
 }
+
+// insertTestBan creates a ban row directly. banType 2 is a steam ban, 1 is a
+// mute; validUntil in the past means expired.
+func insertTestBan(ctx context.Context, t *testing.T, db database.Database, target, source steamid.SteamID, banType int, validUntil time.Time) {
+	t.Helper()
+	require.NoError(t, db.Exec(ctx,
+		`INSERT INTO ban (target_id, source_id, ban_type, reason, reason_text, note, valid_until,
+		                 created_on, updated_on, origin, appeal_state, evade_ok)
+		 VALUES ($1, $2, $3, 3, 'cheating', 'test ban', $4, $5, $5, 0, 0, false)`,
+		target.Int64(), source.Int64(), banType, validUntil, time.Now()))
+}
+
+// TestBannedPlayersExcludedFromSummaryViews ensures players with an active
+// steam ban are filtered out of the stats summary views (and get rank 0),
+// while expired, unbanned (deleted) and muted players remain visible.
+func TestBannedPlayersExcludedFromSummaryViews(t *testing.T) {
+	testFixture := tests.NewFixture()
+	defer testFixture.Close()
+
+	ctx := t.Context()
+	server := testFixture.CreateTestServer(ctx)
+
+	bannedID := steamid.New("[U:1:60000001]")
+	expiredID := steamid.New("[U:1:60000002]")
+	unbannedID := steamid.New("[U:1:60000003]")
+	mutedID := steamid.New("[U:1:60000004]")
+	require.True(t, bannedID.Valid())
+	require.True(t, expiredID.Valid())
+	require.True(t, unbannedID.Valid())
+	require.True(t, mutedID.Valid())
+
+	fillerIDs, fillerPlayers := fillerTestPlayers(2, 1000, 5000)
+
+	persons := map[steamid.SteamID]string{
+		bannedID:   "Banned",
+		expiredID:  "Expired",
+		unbannedID: "Unbanned",
+		mutedID:    "Muted",
+	}
+	for i, id := range fillerIDs {
+		persons[id] = fmt.Sprintf("Filler%d", i)
+	}
+	insertTestPersons(ctx, t, testFixture.Database, persons)
+
+	demoID := seedTestDemo(t, testFixture, server.ServerID, "banned-filter.dem", "cp_process_final")
+
+	players := make([]demoparse.PlayerSummary, 0, 4+len(fillerPlayers))
+	players = append(players,
+		demoparse.PlayerSummary{Name: "Banned", SteamID: string(bannedID.Steam3()), Team: "red", TickStart: 1000, TickEnd: 5000, Kills: 30},
+		demoparse.PlayerSummary{Name: "Expired", SteamID: string(expiredID.Steam3()), Team: "red", TickStart: 1000, TickEnd: 5000, Kills: 5},
+		demoparse.PlayerSummary{Name: "Unbanned", SteamID: string(unbannedID.Steam3()), Team: "blu", TickStart: 1000, TickEnd: 5000, Kills: 5},
+		demoparse.PlayerSummary{Name: "Muted", SteamID: string(mutedID.Steam3()), Team: "blu", TickStart: 1000, TickEnd: 5000, Kills: 5},
+	)
+	players = append(players, fillerPlayers...)
+
+	demo := &demoparse.Demo{
+		Filename: "banned-filter.dem", DemoType: demoparse.HL2Demo,
+		Server: "test", Map: "cp_process_final", Game: "tf",
+		Duration: 600, Ticks: 40000, Frames: 39900, Signon: 1000,
+		Rounds: []demoparse.RoundSummary{
+			{Winner: "red", Time: 300, Players: players},
+		},
+	}
+
+	repo := stats.NewRepository(testFixture.Database)
+	statsCase := stats.New(repo, maps.New(maps.NewRepository(testFixture.Database)))
+
+	start := time.Now()
+	_, errImport := statsCase.Import(ctx, server.ServerID, demoID, demo, start)
+	require.NoError(t, errImport)
+	require.NoError(t, statsCase.RefreshViews(ctx))
+
+	// Sanity: all six players are visible before any bans exist.
+	require.Len(t, queryOverall(t, repo, 1, stats.TimeBucketAlltime, time.Time{}), 6)
+
+	source := fillerIDs[0]
+	insertTestBan(ctx, t, testFixture.Database, bannedID, source, 2, time.Now().Add(24*time.Hour))
+	insertTestBan(ctx, t, testFixture.Database, expiredID, source, 2, time.Now().Add(-24*time.Hour))
+	insertTestBan(ctx, t, testFixture.Database, unbannedID, source, 2, time.Now().Add(24*time.Hour))
+	require.NoError(t, testFixture.Database.Exec(ctx,
+		`UPDATE ban SET deleted = true WHERE target_id = $1`, unbannedID.Int64()))
+	insertTestBan(ctx, t, testFixture.Database, mutedID, source, 1, time.Now().Add(24*time.Hour))
+
+	require.NoError(t, statsCase.RefreshViews(ctx))
+
+	rows := queryOverall(t, repo, 1, stats.TimeBucketAlltime, time.Time{})
+	require.Len(t, rows, 5)
+	require.NotContains(t, rows, bannedID)
+	for _, sid := range []steamid.SteamID{expiredID, unbannedID, mutedID, fillerIDs[0], fillerIDs[1]} {
+		require.Contains(t, rows, sid)
+	}
+
+	rank, errRank := repo.MyRank(ctx, stats.Opts{StatsBucketID: 1, TimeBucket: stats.TimeBucketAlltime}, bannedID)
+	require.NoError(t, errRank)
+	require.Zero(t, rank)
+
+	cleanRank, errCleanRank := repo.MyRank(ctx, stats.Opts{StatsBucketID: 1, TimeBucket: stats.TimeBucketAlltime}, mutedID)
+	require.NoError(t, errCleanRank)
+	require.Positive(t, cleanRank)
+
+	// Expiring the active ban makes the player reappear on the next refresh.
+	require.NoError(t, testFixture.Database.Exec(ctx,
+		`UPDATE ban SET valid_until = now() - interval '1 hour' WHERE target_id = $1`, bannedID.Int64()))
+	require.NoError(t, statsCase.RefreshViews(ctx))
+
+	rows = queryOverall(t, repo, 1, stats.TimeBucketAlltime, time.Time{})
+	require.Len(t, rows, 6)
+	require.Contains(t, rows, bannedID)
+}
