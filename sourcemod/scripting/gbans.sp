@@ -40,6 +40,7 @@ void OnPluginStart() {
 
     RegConsoleCmd("gb_version", onCmdVersion, "Get gbans version");
     RegConsoleCmd("gb_help", onCmdHelp, "Get a list of gbans commands");
+    RegConsoleCmd("gb_admins", onCmdAdmins, "List admins and groups");
     RegConsoleCmd("gb_mod", onCmdMod, "Ping a moderator");
     RegConsoleCmd("mod", onCmdMod, "Ping a moderator");
     RegConsoleCmd("seed", onCmdSeed, "Send a seed request to discord");

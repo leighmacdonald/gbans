@@ -55,31 +55,59 @@ Action OnClientSayCommand(int clientId, const char[] command, const char[] args)
 
 public
 bool report(int sourceId, int targetId, GB_BanReason reason, const char[] reasonText) {
-    char sourceSid[50];
-    if (!GetClientAuthId(sourceId, AuthId_Steam3, sourceSid, sizeof sourceSid, true)) {
+    char sourceSid[32];
+    if (!GetClientAuthId(sourceId, AuthId_SteamID64, sourceSid, sizeof sourceSid)) {
         PrintToChat(sourceId, "Failed to get sourceId of user: %d", sourceId);
         resetReportStatus();
         return false;
     }
-    char targetSid[50];
-    if (!GetClientAuthId(targetId, AuthId_Steam3, targetSid, sizeof targetSid, true)) {
+    char targetSid[32];
+    if (!GetClientAuthId(targetId, AuthId_SteamID64, targetSid, sizeof targetSid)) {
         PrintToChat(sourceId, "Failed to get targetId of user: %d", targetId);
         resetReportStatus();
         return false;
     }
-    int  demoTick = -1;
-    char demoName[256];
-    if (SourceTV_GetDemoFileName(demoName, sizeof demoName)) {
-        demoTick = SourceTV_GetRecordingTick();
+
+    char reasonStr[64];
+    if (!BanReasonToApiString(reason, reasonStr, sizeof reasonStr)) {
+        PrintToChat(sourceId, "Invalid report reason");
+        resetReportStatus();
+        return false;
+    }
+
+    char description[512];
+    if (reason == custom) {
+        if (strlen(reasonText) < 10) {
+            PrintToChat(sourceId, "Report reason too short, must be at least 10 characters");
+            resetReportStatus();
+            return false;
+        }
+        strcopy(description, sizeof description, reasonText);
+    } else {
+        char reasonName[32];
+        if (!BanReasonDisplayName(reason, reasonName, sizeof reasonName)) {
+            PrintToChat(sourceId, "Invalid report reason");
+            resetReportStatus();
+            return false;
+        }
+        Format(description, sizeof description, "In-game report: %s", reasonName);
     }
 
     JSONObject obj = new JSONObject();
     obj.SetString("sourceId", sourceSid);
     obj.SetString("targetId", targetSid);
-    obj.SetInt("reason", view_as<int>(reason));
-    obj.SetString("reasonText", reasonText);
-    obj.SetString("demoName", demoName);
-    obj.SetInt("demoTick", demoTick);
+    obj.SetString("description", description);
+    obj.SetString("reason", reasonStr);
+    if (reason == custom) {
+        obj.SetString("reasonText", reasonText);
+    }
+
+    if (SourceTV_IsRecording()) {
+        int tick = SourceTV_GetRecordingTick();
+        if (tick >= 0) {
+            obj.SetInt("demoTick", tick);
+        }
+    }
 
     postHTTPRequest("/connect/ban.v1.ReportService/ReportCreate", obj, onReportRespReceived, sourceId);
 

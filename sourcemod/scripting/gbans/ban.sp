@@ -50,45 +50,70 @@ any Native_GB_BanClient(Handle plugin, int numParams) {
  */
 public
 bool ban(int sourceId, int targetId, GB_BanReason reason, int duration, int banType, const char[] note) {
-    char sourceSid[50];
-    if (sourceId > 0) {
-        if (!GetClientAuthId(sourceId, AuthId_Steam3, sourceSid, sizeof sourceSid, true)) {
-            ReplyToCommand(sourceId, "Failed to get sourceId of user: %d", sourceId);
-            return false;
-        }
+    if (strlen(note) < 10) {
+        ReplyToCommand(sourceId, "Ban note must be at least 10 characters");
+        return false;
     }
 
-    char targetSid[50];
-    if (!GetClientAuthId(targetId, AuthId_Steam3, targetSid, sizeof targetSid, true)) {
+    if (duration < 0) {
+        ReplyToCommand(sourceId, "Invalid duration, must be a positive integer or 0 for permanent");
+        return false;
+    }
+
+    char banTypeStr[32];
+    if (!BanTypeToApiString(banType, banTypeStr, sizeof banTypeStr)) {
+        ReplyToCommand(sourceId, "Invalid banType, must be 1 (mute/gag) or 2 (ban)");
+        return false;
+    }
+
+    char reasonStr[64];
+    if (!BanReasonToApiString(reason, reasonStr, sizeof reasonStr)) {
+        ReplyToCommand(sourceId, "Invalid ban reason");
+        return false;
+    }
+
+    char targetSid[32];
+    if (!GetClientAuthId(targetId, AuthId_SteamID64, targetSid, sizeof targetSid)) {
         ReplyToCommand(sourceId, "Failed to get targetId of user: %d", targetId);
         return false;
     }
 
-    char demoName[128];
-    int  tick = 0;
-
-    if (SourceTV_IsRecording()) {
-        if (!SourceTV_GetDemoFileName(demoName, sizeof demoName)) {
-            LogError("Could not read demo name");
+    char sourceSid[32];
+    bool hasSource = false;
+    if (sourceId > 0) {
+        if (!GetClientAuthId(sourceId, AuthId_SteamID64, sourceSid, sizeof sourceSid)) {
+            ReplyToCommand(sourceId, "Failed to get sourceId of user: %d", sourceId);
             return false;
         }
-
-        tick = SourceTV_GetRecordingTick();
+        hasSource = true;
     }
 
+    char validUntil[32];
+    FormatValidUntil(duration, validUntil, sizeof validUntil);
+
     JSONObject obj = new JSONObject();
-    obj.SetString("sourceId", sourceSid);
+    if (hasSource) {
+        obj.SetString("sourceId", sourceSid);
+    }
     obj.SetString("targetId", targetSid);
     obj.SetString("note", note);
-    obj.SetString("reasonText", "");
-    obj.SetInt("banType", banType);
-    obj.SetInt("reason", view_as<int>(reason));
-    obj.SetInt("duration", duration);
-    obj.SetInt("reportId", 0);
-    obj.SetString("demoName", demoName);
-    obj.SetInt("demoTick", tick);
+    obj.SetString("banType", banTypeStr);
+    obj.SetString("reason", reasonStr);
+    obj.SetString("origin", "ORIGIN_IN_GAME");
+    obj.SetString("validUntil", validUntil);
 
-    postHTTPRequest("/connect/ban.v1.BanService/Create", obj, onBanRespReceived);
+    if (reason == custom) {
+        obj.SetString("reasonText", note);
+    }
+
+    if (SourceTV_IsRecording()) {
+        int tick = SourceTV_GetRecordingTick();
+        if (tick >= 0) {
+            obj.SetInt("demoTick", tick);
+        }
+    }
+
+    postHTTPRequest("/connect/ban.v1.BanService/Create", obj, onBanRespReceived, sourceId);
 
     return true;
 }
@@ -99,6 +124,7 @@ void onBanRespReceived(HTTPResponse response, any clientId) {
             ReplyToCommand(clientId, "Duplicate ban");
             return;
         }
+        PrintRPCError(response);
         ReplyToCommand(clientId, "Unhandled error response");
         return;
     }

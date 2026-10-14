@@ -31,11 +31,152 @@ void PrintRPCError(HTTPResponse response) {
 public
 bool parseReason(const char[] reasonStr, GB_BanReason &reason) {
     int reasonInt = StringToInt(reasonStr, 10);
-    if (reasonInt <= 0 || reasonInt < view_as<int>(custom) || reasonInt > view_as<int>(itemDescriptions)) {
+    if (reasonInt <= 0 || reasonInt < view_as<int>(custom) || reasonInt > view_as<int>(Username)) {
         return false;
     }
     reason = view_as<GB_BanReason>(reasonInt);
     return true;
+}
+
+/**
+ * Maps a GB_BanReason to its ban.v1.BanReason protobuf enum name used by the
+ * ConnectRPC JSON mapping. Returns false for unknown values.
+ */
+stock bool BanReasonToApiString(GB_BanReason reason, char[] buffer, int maxlen) {
+    switch (reason) {
+    case custom: {
+        strcopy(buffer, maxlen, "BAN_REASON_CUSTOM");
+    }
+    case external: {
+        strcopy(buffer, maxlen, "BAN_REASON_EXTERNAL");
+    }
+    case cheating: {
+        strcopy(buffer, maxlen, "BAN_REASON_CHEATING");
+    }
+    case racism: {
+        strcopy(buffer, maxlen, "BAN_REASON_RACISM");
+    }
+    case harassment: {
+        strcopy(buffer, maxlen, "BAN_REASON_HARASSMENT");
+    }
+    case exploiting: {
+        strcopy(buffer, maxlen, "BAN_REASON_EXPLOITING");
+    }
+    case warningsExceeded: {
+        strcopy(buffer, maxlen, "BAN_REASON_WARNINGS_EXCEEDED");
+    }
+    case spam: {
+        strcopy(buffer, maxlen, "BAN_REASON_SPAM");
+    }
+    case languageUsed: {
+        strcopy(buffer, maxlen, "BAN_REASON_LANGUAGE");
+    }
+    case profile: {
+        strcopy(buffer, maxlen, "BAN_REASON_PROFILE");
+    }
+    case itemDescriptions: {
+        strcopy(buffer, maxlen, "BAN_REASON_ITEM_DESCRIPTIONS");
+    }
+    case botHost: {
+        strcopy(buffer, maxlen, "BAN_REASON_BOT_HOST");
+    }
+    case Evading: {
+        strcopy(buffer, maxlen, "BAN_REASON_EVADING");
+    }
+    case Username: {
+        strcopy(buffer, maxlen, "BAN_REASON_USERNAME");
+    }
+    default: {
+        return false;
+    }
+    }
+    return true;
+}
+
+/**
+ * Human readable name for a GB_BanReason, used for synthesized messages.
+ */
+stock bool BanReasonDisplayName(GB_BanReason reason, char[] buffer, int maxlen) {
+    switch (reason) {
+    case custom: {
+        strcopy(buffer, maxlen, "Custom");
+    }
+    case external: {
+        strcopy(buffer, maxlen, "External");
+    }
+    case cheating: {
+        strcopy(buffer, maxlen, "Cheating");
+    }
+    case racism: {
+        strcopy(buffer, maxlen, "Racism");
+    }
+    case harassment: {
+        strcopy(buffer, maxlen, "Harassment");
+    }
+    case exploiting: {
+        strcopy(buffer, maxlen, "Exploiting");
+    }
+    case warningsExceeded: {
+        strcopy(buffer, maxlen, "Warnings Exceeded");
+    }
+    case spam: {
+        strcopy(buffer, maxlen, "Spam");
+    }
+    case languageUsed: {
+        strcopy(buffer, maxlen, "Language");
+    }
+    case profile: {
+        strcopy(buffer, maxlen, "Profile");
+    }
+    case itemDescriptions: {
+        strcopy(buffer, maxlen, "Items/Descriptions");
+    }
+    case botHost: {
+        strcopy(buffer, maxlen, "Bot Host");
+    }
+    case Evading: {
+        strcopy(buffer, maxlen, "Evading");
+    }
+    case Username: {
+        strcopy(buffer, maxlen, "Username");
+    }
+    default: {
+        return false;
+    }
+    }
+    return true;
+}
+
+/**
+ * Maps a ban type (BSNoComm / BSBanned) to its ban.v1.BanType protobuf enum
+ * name used by the ConnectRPC JSON mapping. Returns false for unknown values.
+ */
+stock bool BanTypeToApiString(int banType, char[] buffer, int maxlen) {
+    if (banType == BSNoComm) {
+        strcopy(buffer, maxlen, "BAN_TYPE_NO_COMM");
+        return true;
+    }
+    if (banType == BSBanned) {
+        strcopy(buffer, maxlen, "BAN_TYPE_BANNED");
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Formats a ban duration (seconds, 0 = permanent) as the RFC3339 timestamp
+ * string expected for the valid_until field of ban.v1.CreateRequest.
+ * Permanent bans expire 10 years out so they read as permanent in the web UI.
+ */
+stock void FormatValidUntil(int durationSeconds, char[] buffer, int maxlen) {
+    int now = GetTime();
+    int expiry;
+    if (durationSeconds <= 0) {
+        expiry = now + 315360000;
+    } else {
+        expiry = now + durationSeconds;
+    }
+    FormatTime(buffer, maxlen, "%Y-%m-%dT%H:%M:%SZ", expiry);
 }
 
 void postHTTPRequest(const char[] path, JSON data, HTTPRequestCallback callback, any value = 0) {

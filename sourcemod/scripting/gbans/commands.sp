@@ -30,8 +30,8 @@ Action onCmdMod(int clientId, int argc) {
         GetCmdArg(i, buff, sizeof buff);
         StrCat(reason, sizeof reason, buff);
     }
-    char authId[50];
-    if (!GetClientAuthId(clientId, AuthId_Steam3, authId, sizeof authId, true)) {
+    char authId[32];
+    if (!GetClientAuthId(clientId, AuthId_SteamID64, authId, sizeof authId)) {
         ReplyToCommand(clientId, "Failed to get auth_id of user: %d", clientId);
         return Plugin_Continue;
     }
@@ -66,15 +66,14 @@ void onPingModRespReceived(HTTPResponse response, any clientId) {
 
 public
 Action onCmdSeed(int clientId, int argc) {
-    char authId[50];
-    if (!GetClientAuthId(clientId, AuthId_Steam3, authId, sizeof authId, true)) {
+    char authId[32];
+    if (!GetClientAuthId(clientId, AuthId_SteamID64, authId, sizeof authId)) {
         ReplyToCommand(clientId, "Failed to get auth_id of user: %d", clientId);
         return Plugin_Continue;
     }
 
     JSONObject obj = new JSONObject();
     obj.SetString("steamId", authId);
-    obj.SetInt("clientId", clientId);
 
     postHTTPRequest("/connect/sourcemod.v1.PluginService/SMSeed", obj, onCmdSeedReceived);
 
@@ -102,11 +101,13 @@ public
 Action onCmdHelp(int clientId, int argc) {
     onCmdVersion(clientId, argc);
     ReplyToCommand(clientId, "gb_admins -- List admins and groups");
-    ReplyToCommand(clientId, "gb_ban #user duration [reason]");
-    ReplyToCommand(clientId, "gb_ban_ip #user duration [reason]");
-    ReplyToCommand(clientId, "gb_kick #user [reason]");
-    ReplyToCommand(clientId, "gb_mute #user duration [reason]");
-    ReplyToCommand(clientId, "gb_mod reason");
+    ReplyToCommand(clientId, "gb_ban <target> <reason> <duration> <bantype> [note]");
+    ReplyToCommand(clientId, "gb_mod <reason> -- Ping a moderator");
+    ReplyToCommand(clientId, "seed -- Send a seed request to discord");
+    ReplyToCommand(clientId, "report -- Report a player");
+    ReplyToCommand(clientId, "gb_reload -- Reload admins");
+    ReplyToCommand(clientId, "gb_stv_record -- Start a SourceTV demo");
+    ReplyToCommand(clientId, "gb_stv_stoprecord -- Stop the current SourceTV demo");
     ReplyToCommand(clientId, "gb_version -- Show the current version");
     return Plugin_Handled;
 }
@@ -120,7 +121,7 @@ Action onAdminCmdBan(int clientId, int argc) {
     int          duration;
     int          bantype;
 
-    char usage[] = "Usage: %s <targetId> <reason> <duration> <bantype> <memo>";
+    char usage[] = "Usage: %s <target> <reason> <duration> <bantype> [note]";
 
     GetCmdArg(0, command, sizeof command);
 
@@ -139,7 +140,7 @@ Action onAdminCmdBan(int clientId, int argc) {
         return Plugin_Handled;
     }
 
-    if (reasonInt < view_as<int>(custom) || reasonInt > view_as<int>(itemDescriptions)) {
+    if (reasonInt < view_as<int>(custom) || reasonInt > view_as<int>(Username)) {
         reply(clientId, "Invalid reason value. Out of range.");
         return Plugin_Handled;
     }
@@ -151,16 +152,39 @@ Action onAdminCmdBan(int clientId, int argc) {
         return Plugin_Handled;
     }
 
+    if (duration < 0) {
+        reply(clientId, "Invalid duration, must be a positive integer or 0 for permanent");
+        return Plugin_Handled;
+    }
+
     if (!GetCmdArgIntEx(4, bantype)) {
         reply(clientId, "Failed to parse bantype");
         return Plugin_Handled;
     }
 
+    if (bantype != BSNoComm && bantype != BSBanned) {
+        reply(clientId, "Invalid bantype, must be 1 (mute/gag) or 2 (ban)");
+        return Plugin_Handled;
+    }
+
     LogMessage("args: %d", argc);
     if (argc > 4) {
-        GetCmdArg(5, memo, sizeof memo);
+        memo[0] = '\0';
+        char part[128];
+        for (int i = 5; i <= argc; i++) {
+            GetCmdArg(i, part, sizeof part);
+            if (i > 5) {
+                StrCat(memo, sizeof memo, " ");
+            }
+            StrCat(memo, sizeof memo, part);
+        }
     } else {
         Format(memo, sizeof memo, "in-game ban");
+    }
+
+    if (strlen(memo) < 10) {
+        reply(clientId, "Note must be at least 10 characters");
+        return Plugin_Handled;
     }
 
     LogMessage("Target: %s reason: %d duration: %d bantype: %d memo: %s", targetIdStr, reason, duration, bantype, memo);
