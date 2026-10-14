@@ -391,6 +391,7 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	go g.metrics.Start(ctx)
 	go g.votes.Start(ctx)
 	go g.networks.Start(ctx)
+	go g.networks.StartGeoUpdater(ctx)
 	go g.notifications.Sender(ctx)
 
 	go downloadManager(ctx, g.database, conf.SSH, g.demos, g.anticheat)

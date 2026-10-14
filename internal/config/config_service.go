@@ -334,9 +334,10 @@ func configFromUpdate(inCfg *configv1.Config, current Config) Config {
 			HTTPLevel:       fromLevel(inLog.GetHttpLevel()),
 		},
 		GeoLocation: &ip2location.Config{
-			Enabled:   inGeo.GetEnabled(),
-			CachePath: inGeo.GetCachePath(),
-			Token:     inGeo.GetToken(),
+			Enabled:            inGeo.GetEnabled(),
+			CachePath:          inGeo.GetCachePath(),
+			Token:              inGeo.GetToken(),
+			UpdateIntervalDays: int(inGeo.GetUpdateIntervalDays()), //nolint:gosec
 		},
 		Patreon: &patreon.Config{
 			Enabled:             inPatreon.GetEnabled(),
@@ -476,9 +477,10 @@ func toConfig(conf Config) *configv1.Config {
 			HttpLevel:       new(toLevel(conf.Log.HTTPLevel)),
 		},
 		GeoLocation: &configv1.GeoLocation{
-			Enabled:   &conf.GeoLocation.Enabled,
-			CachePath: &conf.GeoLocation.CachePath,
-			Token:     &conf.GeoLocation.Token,
+			Enabled:            &conf.GeoLocation.Enabled,
+			CachePath:          &conf.GeoLocation.CachePath,
+			Token:              &conf.GeoLocation.Token,
+			UpdateIntervalDays: new(int32(conf.GeoLocation.UpdateIntervalDays)), //nolint:gosec
 		},
 		Ssh: &configv1.SSH{
 			Enabled:         &conf.SSH.Enabled,

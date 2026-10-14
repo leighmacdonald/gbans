@@ -68,7 +68,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 
 		       logging_level, logging_file, logging_http_enabled, logging_http_otel_enabled, logging_http_level,
 
-		       ip2location_enabled, ip2location_cache_path, ip2location_token,
+		       ip2location_enabled, ip2location_cache_path, ip2location_token, ip2location_update_interval_days,
 
 		       debug_skip_open_id_validation, debug_add_rcon_log_address,
 
@@ -121,7 +121,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 			&cfg.Discord.BanLogChannelID, &cfg.Discord.ForumLogChannelID, &cfg.Discord.WordFilterLogChannelID, &cfg.Discord.KickLogChannelID,
 			&cfg.Discord.SeedChannelID, &cfg.Discord.ChatLogChannelID,
 			&cfg.Log.Level, &cfg.Log.File, &cfg.Log.HTTPEnabled, &cfg.Log.HTTPOtelEnabled, &cfg.Log.HTTPLevel,
-			&cfg.GeoLocation.Enabled, &cfg.GeoLocation.CachePath, &cfg.GeoLocation.Token,
+			&cfg.GeoLocation.Enabled, &cfg.GeoLocation.CachePath, &cfg.GeoLocation.Token, &cfg.GeoLocation.UpdateIntervalDays,
 			&cfg.Debug.SkipOpenIDValidation, &cfg.Debug.AddRCONLogAddress,
 			&cfg.LocalStore.PathRoot,
 			&cfg.SSH.Enabled, &cfg.SSH.Username, &cfg.SSH.Password, &cfg.SSH.Port, &cfg.SSH.PrivateKeyPath, &cfg.SSH.UpdateInterval,
@@ -239,6 +239,7 @@ func (c *Repository) Write(ctx context.Context, config Config) error {
 			"ip2location_enabled":                 config.GeoLocation.Enabled,
 			"ip2location_cache_path":              config.GeoLocation.CachePath,
 			"ip2location_token":                   config.GeoLocation.Token,
+			"ip2location_update_interval_days":    config.GeoLocation.UpdateIntervalDays,
 			"debug_skip_open_id_validation":       config.Debug.SkipOpenIDValidation,
 			"debug_add_rcon_log_address":          config.Debug.AddRCONLogAddress,
 			"local_store_path_root":               config.LocalStore.PathRoot,
