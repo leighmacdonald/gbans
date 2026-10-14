@@ -30,7 +30,6 @@ jobs:
 
       - uses: pnpm/setup@v3
         with:
-          version: 12
           install: true
           runtime: node
           working-directory: frontend
@@ -94,10 +93,9 @@ jobs:
       GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
     steps:
       - uses: actions/checkout@v7
-      
+
       - uses: pnpm/setup@v3
         with:
-          version: 12
           install: true
           runtime: node
           working-directory: frontend
