@@ -41,34 +41,58 @@ function Index() {
 	const { profile, hasPermission } = useAuth();
 	const showPlay = profile && profile.banId === 0 && appInfo.serversEnabled;
 	const showAppeal = profile && profile.banId !== 0 && appInfo.reportsEnabled;
+	const banner = appInfo.bannerImage === "" ? "/banner-default.webp" : appInfo.bannerImage;
 
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<Paper sx={{ padding: 2.5, overflow: "hidden" }}>
+				<Paper
+					sx={{
+						padding: 2.5,
+						overflow: "hidden",
+						position: "relative",
+						backgroundImage: `url(${banner})`,
+						backgroundSize: "cover",
+						backgroundPosition: "center 20%",
+					}}
+				>
+					<Box
+						sx={{
+							position: "absolute",
+							inset: 0,
+							background: "linear-gradient(to bottom, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.35))",
+						}}
+					/>
 					<Box
 						sx={{
 							height: 4,
 							marginX: -2.5,
 							marginTop: -2.5,
 							marginBottom: 2,
+							position: "relative",
 							background: `linear-gradient(90deg, ${blu} 0%, ${blu} 50%, ${red} 50%, ${red} 100%)`,
 						}}
 					/>
 					<Stack
 						direction={{ xs: "column", md: "row" }}
 						spacing={2}
-						sx={{ justifyContent: "space-between", alignItems: { md: "center" } }}
+						sx={{ justifyContent: "space-between", alignItems: { md: "center" }, position: "relative" }}
 					>
 						<Box>
-							<Typography variant="overline" color="textSecondary" sx={{ letterSpacing: 1.5 }}>
+							<Typography variant="overline" sx={{ letterSpacing: 1.5, color: "#fff", opacity: 0.85 }}>
 								Welcome To
 							</Typography>
-							<Typography variant="h3" sx={{ ...tf2Fonts, fontWeight: 700, lineHeight: 1.1 }}>
+							<Typography
+								variant="h3"
+								sx={{ ...tf2Fonts, fontWeight: 700, lineHeight: 1.1, color: "#fff" }}
+							>
 								{appInfo.siteName}
 							</Typography>
 							{appInfo.siteDescription && (
-								<Typography variant="body2" color="textSecondary" sx={{ marginTop: 1, maxWidth: 640 }}>
+								<Typography
+									variant="body2"
+									sx={{ marginTop: 1, maxWidth: 640, color: "#fff", opacity: 0.85 }}
+								>
 									{appInfo.siteDescription}
 								</Typography>
 							)}

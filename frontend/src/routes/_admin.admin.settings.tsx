@@ -146,9 +146,16 @@ function AdminSettings() {
 		defaultValues: data?.config,
 	});
 
-	const onSuccess = useCallback(
+	const onSuccessFavicon = useCallback(
 		async (asset: Asset) => {
 			form.setFieldValue("general.favicon", asset.assetId);
+		},
+		[form],
+	);
+
+	const onSuccessBanner = useCallback(
+		async (asset: Asset) => {
+			form.setFieldValue("general.bannerImage", asset.assetId);
 		},
 		[form],
 	);
@@ -198,6 +205,17 @@ function AdminSettings() {
 		const value = form.getFieldValue("general.favicon") as string;
 		if (emptyOrNullString(value)) {
 			return "";
+		}
+		if (value.startsWith("http")) {
+			return value as string;
+		}
+		return `/asset/${value}`;
+	}, [form]);
+
+	const bannerURL = useMemo(() => {
+		const value = form.getFieldValue("general.bannerImage") as string;
+		if (emptyOrNullString(value)) {
+			return "/banner-default.webp";
 		}
 		if (value.startsWith("http")) {
 			return value as string;
@@ -381,8 +399,25 @@ function AdminSettings() {
 										return <field.TextField label={"Favicon URL"} />;
 									}}
 								/>
-								<UploadButton onSuccess={onSuccess} />
+								<UploadButton onSuccess={onSuccessFavicon} />
 								<img src={faviconURL} width={64} height={64} alt={"favicon"} />
+							</Grid>
+
+							<Grid size={{ xs: 12 }}>
+								<SubHeading>Welcome Banner Image</SubHeading>
+								<form.AppField
+									name={"general.bannerImage"}
+									children={(field) => {
+										return <field.TextField label={"Banner Image URL"} />;
+									}}
+								/>
+								<UploadButton onSuccess={onSuccessBanner} />
+								<img src={bannerURL} width={256} alt={"banner"} />
+								<Typography variant={"body2"} color={"textSecondary"}>
+									Shown as the background of the homepage welcome heading. Accepts an asset id, an
+									external URL, or empty for the default 2Fort screenshot (© Valve Corporation, via
+									the official TF2 Wiki).
+								</Typography>
 							</Grid>
 
 							<Grid size={{ xs: 12 }}>

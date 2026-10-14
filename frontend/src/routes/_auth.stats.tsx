@@ -878,12 +878,11 @@ function StatsComponent() {
 									/>
 								</Box>
 							)}
-
-							<Box sx={{ display: "flex", alignItems: "flex-end", paddingBottom: 0.5 }}>
-								<form.AppForm>
-									<form.SubmitButton label="Show Me" />
-								</form.AppForm>
-							</Box>
+						</Stack>
+						<Stack direction={"row"} sx={{ justifyContent: "flex-end", marginTop: 2 }}>
+							<form.AppForm>
+								<form.SubmitButton label="Show Me" />
+							</form.AppForm>
 						</Stack>
 					</form>
 				</Paper>

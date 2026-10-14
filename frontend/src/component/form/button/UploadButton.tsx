@@ -13,9 +13,15 @@ type UploadButtonProps = {
 	label?: string;
 	onSuccess?: (file: Asset) => void;
 	icon?: React.ReactNode;
+	accept?: string;
 };
 
-export const UploadButton = ({ onSuccess, icon, label = "Upload files" }: UploadButtonProps) => {
+export const UploadButton = ({
+	onSuccess,
+	icon,
+	label = "Upload files",
+	accept = ".png,.jpg,.jpeg,.webp",
+}: UploadButtonProps) => {
 	const onChange = useCallback(
 		async (e: React.ChangeEvent<HTMLInputElement>) => {
 			if (!e.target.files || e.target.files.length === 0) {
@@ -54,7 +60,7 @@ export const UploadButton = ({ onSuccess, icon, label = "Upload files" }: Upload
 			startIcon={icon ?? <CloudUploadIcon />}
 		>
 			{label}
-			<VisuallyHiddenInput type="file" onChange={onChange} multiple accept=".png" />
+			<VisuallyHiddenInput type="file" onChange={onChange} multiple accept={accept} />
 		</Button>
 	);
 };
