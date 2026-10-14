@@ -8,32 +8,32 @@ permissions: {}
 
 jobs:
   sourcemod-plugin:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup SourcePawn Compiler
         uses: rumblefrog/setup-sp@master
         with:
-          version: "1.13.x"
+          version: "1.12.x"
 
       - name: Ensure plugin builds
         working-directory: ./sourcemod/scripting
         run: spcomp -i"./include/" gbans.sp -o ../plugins/gbans.smx
 
   lint-ts:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     env:
       GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v4
         with:
           run_install: false
 
       - name: Setup nodejs
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "24.x"
           cache: "pnpm"
@@ -56,13 +56,13 @@ jobs:
         run: just typecheck-frontend
 
   lint-golangci:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
-          go-version: "1.26.x"
+          go-version: "1.27.x"
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v8
@@ -72,13 +72,13 @@ jobs:
 
   backend-test:
     needs: [lint-golangci]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
-          go-version: "1.26.x"
+          go-version: "1.27.x"
 
       - name: Cache Go modules
         uses: actions/cache@v4
@@ -96,18 +96,18 @@ jobs:
 
   frontend-test:
     needs: [lint-ts]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     env:
       GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v4
         with:
           run_install: false
 
       - name: Setup nodejs
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "24.x"
           cache: "pnpm"
