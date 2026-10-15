@@ -78,7 +78,6 @@ const (
 	Permission_PERMISSION_SPEEDRUN_WRITE    Permission = 231
 	Permission_PERMISSION_STATS_READ        Permission = 240
 	Permission_PERMISSION_STEAMID_RESOLVE   Permission = 250
-	Permission_PERMISSION_WIKI_READ         Permission = 260
 	Permission_PERMISSION_WIKI_EDIT         Permission = 261
 	Permission_PERMISSION_VOTE_READ         Permission = 270
 	Permission_PERMISSION_WORDFILTER_READ   Permission = 280
@@ -163,7 +162,6 @@ var (
 		231:  "PERMISSION_SPEEDRUN_WRITE",
 		240:  "PERMISSION_STATS_READ",
 		250:  "PERMISSION_STEAMID_RESOLVE",
-		260:  "PERMISSION_WIKI_READ",
 		261:  "PERMISSION_WIKI_EDIT",
 		270:  "PERMISSION_VOTE_READ",
 		280:  "PERMISSION_WORDFILTER_READ",
@@ -243,7 +241,6 @@ var (
 		"PERMISSION_SPEEDRUN_WRITE":      231,
 		"PERMISSION_STATS_READ":          240,
 		"PERMISSION_STEAMID_RESOLVE":     250,
-		"PERMISSION_WIKI_READ":           260,
 		"PERMISSION_WIKI_EDIT":           261,
 		"PERMISSION_VOTE_READ":           270,
 		"PERMISSION_WORDFILTER_READ":     280,
@@ -1063,7 +1060,7 @@ const file_roles_v1_roles_proto_rawDesc = "" +
 	"\n" +
 	"updated_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x12!\n" +
 	"\n" +
-	"user_count\x18\x06 \x01(\x04B\x020\x01R\tuserCount*\xe5\x12\n" +
+	"user_count\x18\x06 \x01(\x04B\x020\x01R\tuserCount*\xca\x12\n" +
 	"\n" +
 	"Permission\x12\x1a\n" +
 	"\x16PERMISSION_UNSPECIFIED\x10\x00\x12\x1d\n" +
@@ -1118,7 +1115,6 @@ const file_roles_v1_roles_proto_rawDesc = "" +
 	"\x19PERMISSION_SPEEDRUN_WRITE\x10\xe7\x01\x12\x1a\n" +
 	"\x15PERMISSION_STATS_READ\x10\xf0\x01\x12\x1f\n" +
 	"\x1aPERMISSION_STEAMID_RESOLVE\x10\xfa\x01\x12\x19\n" +
-	"\x14PERMISSION_WIKI_READ\x10\x84\x02\x12\x19\n" +
 	"\x14PERMISSION_WIKI_EDIT\x10\x85\x02\x12\x19\n" +
 	"\x14PERMISSION_VOTE_READ\x10\x8e\x02\x12\x1f\n" +
 	"\x1aPERMISSION_WORDFILTER_READ\x10\x98\x02\x12 \n" +

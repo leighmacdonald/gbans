@@ -48,15 +48,15 @@ func (c *Repository) Config() Config {
 
 func (c *Repository) Read(ctx context.Context) (Config, error) {
 	const query = `
-		SELECT general_site_name, general_site_description, general_mode, general_file_serve_mode, general_srcds_log_addr, general_asset_url,
+		SELECT general_site_name, COALESCE(general_site_description, ''), general_mode, general_file_serve_mode, general_srcds_log_addr, general_asset_url,
 		       general_default_route, general_news_enabled, general_forums_enabled, general_contests_enabled, general_wiki_enabled,
 		       general_stats_enabled, general_servers_enabled, general_reports_enabled,general_chatlogs_enabled, general_demos_enabled,
-			   general_speedruns_enabled, general_playerqueue_enabled, general_favicon, general_sentry_dsn, general_sentry_dsn_web,
-			   general_mge_enabled, general_banner_image,
+			   general_speedruns_enabled, general_playerqueue_enabled, COALESCE(general_favicon, ''), COALESCE(general_sentry_dsn, ''), COALESCE(general_sentry_dsn_web, ''),
+			   COALESCE(general_mge_enabled, false), COALESCE(general_banner_image, ''),
 
 		       filters_enabled, filters_dry, filters_ping_discord, filters_max_weight, filters_warning_timeout, filters_warning_limit, filters_check_timeout, filters_match_timeout,
 
-		       demo_cleanup_enabled, demo_cleanup_strategy, demo_cleanup_min_pct, demo_cleanup_mount, demo_count_limit, demo_parser_url,
+		       demo_cleanup_enabled, demo_cleanup_strategy, demo_cleanup_min_pct, demo_cleanup_mount, demo_count_limit, COALESCE(demo_parser_url, 'http://localhost:8811/'),
 
 		       patreon_enabled, patreon_client_id, patreon_client_secret, patreon_creator_access_token, patreon_creator_refresh_token, patreon_integrations_enabled,
 
