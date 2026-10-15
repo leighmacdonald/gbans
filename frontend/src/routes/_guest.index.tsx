@@ -135,7 +135,7 @@ function Index() {
 						Quick Links
 					</Typography>
 					<Stack spacing={1.5} sx={{ marginTop: 1.5 }}>
-						{appInfo.wikiEnabled && hasPermission(Permission.WIKI_READ) && (
+						{appInfo.wikiEnabled && (
 							<>
 								<Button
 									component={RouterLink}
