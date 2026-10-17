@@ -14,14 +14,36 @@ import (
 func NewService(connection Connection, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := discordv1connect.NewDiscordServiceHandler(Service{connection: connection}, option...)
 	authMiddleware.UserRoute(discordv1connect.DiscordServiceSeedRoleIDsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CONFIG_WRITE))
+	authMiddleware.ServerRoute(discordv1connect.DiscordServiceSendMessageCrashProcedure, rpc.NewServerAuthenticator())
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
 
 type Service struct {
-	discordv1connect.UnimplementedDiscordServiceHandler
-
 	connection Connection
+}
+
+func (s Service) SendMessageAnticheatBan(_ context.Context, req *discordv1.SendMessageAnticheatBanRequest) (*emptypb.Empty, error) {
+	message := NewMessage(Heading("Cheater Banned: %s", req.GetSteamId()), Link("Profile", "https://steamcommunity.com/profiles/"+req.GetSteamId()), BodyText(req.GetReason()))
+	if errSend := s.connection.Send(s.connection.Config().SafeAnticheatChannelID(), message); errSend != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+func (s Service) SendMessageCrash(ctx context.Context, req *discordv1.SendMessageCrashRequest) (*emptypb.Empty, error) {
+	serverName := "unknown"
+	if server := rpc.ServerInfoFromCtx(ctx); server != nil {
+		serverName = server.ServerName
+	}
+
+	message := NewMessage(Heading("Server Crashed: %s", serverName), Link("Link", "https://crash.limetech.org/?id="+req.GetCrashId()), BodyText("oopsie, someone should probably fix this"))
+	if errSend := s.connection.Send(s.connection.Config().LogChannelID, message); errSend != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	return &emptypb.Empty{}, nil
 }
 
 func (s Service) SeedRoleIDs(_ context.Context, _ *emptypb.Empty) (*discordv1.SeedRoleIDsResponse, error) {

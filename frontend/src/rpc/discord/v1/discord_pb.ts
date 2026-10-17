@@ -12,7 +12,51 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file discord/v1/discord.proto.
  */
 export const file_discord_v1_discord: GenFile = /*@__PURE__*/
-  fileDesc("ChhkaXNjb3JkL3YxL2Rpc2NvcmQucHJvdG8SCmRpc2NvcmQudjEiNgoTU2VlZFJvbGVJRHNSZXNwb25zZRIfCgVyb2xlcxgBIAMoCzIQLmRpc2NvcmQudjEuUm9sZSLDAQoEUm9sZRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEg8KB21hbmFnZWQYAyABKAgSEwoLbWVudGlvbmFibGUYBCABKAgSDQoFaG9pc3QYBSABKAgSDQoFY29sb3IYBiABKAUSEAoIcG9zaXRpb24YByABKAUSFwoLcGVybWlzc2lvbnMYCCABKANCAjABEgwKBGljb24YCSABKAkSFQoNdW5pY29kZV9lbW9qaRgKIAEoCRINCgVmbGFncxgLIAEoBTJYCg5EaXNjb3JkU2VydmljZRJGCgtTZWVkUm9sZUlEcxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRofLmRpc2NvcmQudjEuU2VlZFJvbGVJRHNSZXNwb25zZUKmAQoOY29tLmRpc2NvcmQudjFCDERpc2NvcmRQcm90b1ABWj1naXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL2Rpc2NvcmQvdjE7ZGlzY29yZHYxogIDRFhYqgIKRGlzY29yZC5WMcoCCkRpc2NvcmRcVjHiAhZEaXNjb3JkXFYxXEdQQk1ldGFkYXRh6gILRGlzY29yZDo6VjFiCGVkaXRpb25zcOgH", [file_google_protobuf_empty]);
+  fileDesc("ChhkaXNjb3JkL3YxL2Rpc2NvcmQucHJvdG8SCmRpc2NvcmQudjEiUAoeU2VuZE1lc3NhZ2VBbnRpY2hlYXRCYW5SZXF1ZXN0EhAKCHN0ZWFtX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSDgoGcmVhc29uGAMgASgJIisKF1NlbmRNZXNzYWdlQ3Jhc2hSZXF1ZXN0EhAKCGNyYXNoX2lkGAEgASgJIjYKE1NlZWRSb2xlSURzUmVzcG9uc2USHwoFcm9sZXMYASADKAsyEC5kaXNjb3JkLnYxLlJvbGUiwwEKBFJvbGUSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIPCgdtYW5hZ2VkGAMgASgIEhMKC21lbnRpb25hYmxlGAQgASgIEg0KBWhvaXN0GAUgASgIEg0KBWNvbG9yGAYgASgFEhAKCHBvc2l0aW9uGAcgASgFEhcKC3Blcm1pc3Npb25zGAggASgDQgIwARIMCgRpY29uGAkgASgJEhUKDXVuaWNvZGVfZW1vamkYCiABKAkSDQoFZmxhZ3MYCyABKAUyiAIKDkRpc2NvcmRTZXJ2aWNlEkYKC1NlZWRSb2xlSURzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Gh8uZGlzY29yZC52MS5TZWVkUm9sZUlEc1Jlc3BvbnNlEl0KF1NlbmRNZXNzYWdlQW50aWNoZWF0QmFuEiouZGlzY29yZC52MS5TZW5kTWVzc2FnZUFudGljaGVhdEJhblJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkSTwoQU2VuZE1lc3NhZ2VDcmFzaBIjLmRpc2NvcmQudjEuU2VuZE1lc3NhZ2VDcmFzaFJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHlCpgEKDmNvbS5kaXNjb3JkLnYxQgxEaXNjb3JkUHJvdG9QAVo9Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9kaXNjb3JkL3YxO2Rpc2NvcmR2MaICA0RYWKoCCkRpc2NvcmQuVjHKAgpEaXNjb3JkXFYx4gIWRGlzY29yZFxWMVxHUEJNZXRhZGF0YeoCC0Rpc2NvcmQ6OlYxYghlZGl0aW9uc3DoBw", [file_google_protobuf_empty]);
+
+/**
+ * @generated from message discord.v1.SendMessageAnticheatBanRequest
+ */
+export type SendMessageAnticheatBanRequest = Message<"discord.v1.SendMessageAnticheatBanRequest"> & {
+  /**
+   * @generated from field: string steam_id = 1;
+   */
+  steamId: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string reason = 3;
+   */
+  reason: string;
+};
+
+/**
+ * Describes the message discord.v1.SendMessageAnticheatBanRequest.
+ * Use `create(SendMessageAnticheatBanRequestSchema)` to create a new message.
+ */
+export const SendMessageAnticheatBanRequestSchema: GenMessage<SendMessageAnticheatBanRequest> = /*@__PURE__*/
+  messageDesc(file_discord_v1_discord, 0);
+
+/**
+ * @generated from message discord.v1.SendMessageCrashRequest
+ */
+export type SendMessageCrashRequest = Message<"discord.v1.SendMessageCrashRequest"> & {
+  /**
+   * @generated from field: string crash_id = 1;
+   */
+  crashId: string;
+};
+
+/**
+ * Describes the message discord.v1.SendMessageCrashRequest.
+ * Use `create(SendMessageCrashRequestSchema)` to create a new message.
+ */
+export const SendMessageCrashRequestSchema: GenMessage<SendMessageCrashRequest> = /*@__PURE__*/
+  messageDesc(file_discord_v1_discord, 1);
 
 /**
  * @generated from message discord.v1.SeedRoleIDsResponse
@@ -29,7 +73,7 @@ export type SeedRoleIDsResponse = Message<"discord.v1.SeedRoleIDsResponse"> & {
  * Use `create(SeedRoleIDsResponseSchema)` to create a new message.
  */
 export const SeedRoleIDsResponseSchema: GenMessage<SeedRoleIDsResponse> = /*@__PURE__*/
-  messageDesc(file_discord_v1_discord, 0);
+  messageDesc(file_discord_v1_discord, 2);
 
 /**
  * @generated from message discord.v1.Role
@@ -96,7 +140,7 @@ export type Role = Message<"discord.v1.Role"> & {
  * Use `create(RoleSchema)` to create a new message.
  */
 export const RoleSchema: GenMessage<Role> = /*@__PURE__*/
-  messageDesc(file_discord_v1_discord, 1);
+  messageDesc(file_discord_v1_discord, 3);
 
 /**
  * @generated from service discord.v1.DiscordService
@@ -109,6 +153,22 @@ export const DiscordService: GenService<{
     methodKind: "unary";
     input: typeof EmptySchema;
     output: typeof SeedRoleIDsResponseSchema;
+  },
+  /**
+   * @generated from rpc discord.v1.DiscordService.SendMessageAnticheatBan
+   */
+  sendMessageAnticheatBan: {
+    methodKind: "unary";
+    input: typeof SendMessageAnticheatBanRequestSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc discord.v1.DiscordService.SendMessageCrash
+   */
+  sendMessageCrash: {
+    methodKind: "unary";
+    input: typeof SendMessageCrashRequestSchema;
+    output: typeof EmptySchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_discord_v1_discord, 0);

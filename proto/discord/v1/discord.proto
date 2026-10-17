@@ -6,6 +6,18 @@ import "google/protobuf/empty.proto";
 
 service DiscordService {
   rpc SeedRoleIDs(google.protobuf.Empty) returns (SeedRoleIDsResponse);
+  rpc SendMessageAnticheatBan(SendMessageAnticheatBanRequest) returns (google.protobuf.Empty);
+  rpc SendMessageCrash(SendMessageCrashRequest) returns (google.protobuf.Empty);
+}
+
+message SendMessageAnticheatBanRequest {
+  string steam_id = 1;
+  string name = 2;
+  string reason = 3;
+}
+
+message SendMessageCrashRequest {
+  string crash_id = 1;
 }
 
 message SeedRoleIDsResponse {

@@ -22,6 +22,110 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type SendMessageAnticheatBanRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SteamId       *string                `protobuf:"bytes,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	Name          *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	Reason        *string                `protobuf:"bytes,3,opt,name=reason" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendMessageAnticheatBanRequest) Reset() {
+	*x = SendMessageAnticheatBanRequest{}
+	mi := &file_discord_v1_discord_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendMessageAnticheatBanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendMessageAnticheatBanRequest) ProtoMessage() {}
+
+func (x *SendMessageAnticheatBanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_discord_v1_discord_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendMessageAnticheatBanRequest.ProtoReflect.Descriptor instead.
+func (*SendMessageAnticheatBanRequest) Descriptor() ([]byte, []int) {
+	return file_discord_v1_discord_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *SendMessageAnticheatBanRequest) GetSteamId() string {
+	if x != nil && x.SteamId != nil {
+		return *x.SteamId
+	}
+	return ""
+}
+
+func (x *SendMessageAnticheatBanRequest) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
+}
+
+func (x *SendMessageAnticheatBanRequest) GetReason() string {
+	if x != nil && x.Reason != nil {
+		return *x.Reason
+	}
+	return ""
+}
+
+type SendMessageCrashRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CrashId       *string                `protobuf:"bytes,1,opt,name=crash_id,json=crashId" json:"crash_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendMessageCrashRequest) Reset() {
+	*x = SendMessageCrashRequest{}
+	mi := &file_discord_v1_discord_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendMessageCrashRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendMessageCrashRequest) ProtoMessage() {}
+
+func (x *SendMessageCrashRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_discord_v1_discord_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendMessageCrashRequest.ProtoReflect.Descriptor instead.
+func (*SendMessageCrashRequest) Descriptor() ([]byte, []int) {
+	return file_discord_v1_discord_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *SendMessageCrashRequest) GetCrashId() string {
+	if x != nil && x.CrashId != nil {
+		return *x.CrashId
+	}
+	return ""
+}
+
 type SeedRoleIDsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Roles         []*Role                `protobuf:"bytes,1,rep,name=roles" json:"roles,omitempty"`
@@ -31,7 +135,7 @@ type SeedRoleIDsResponse struct {
 
 func (x *SeedRoleIDsResponse) Reset() {
 	*x = SeedRoleIDsResponse{}
-	mi := &file_discord_v1_discord_proto_msgTypes[0]
+	mi := &file_discord_v1_discord_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -43,7 +147,7 @@ func (x *SeedRoleIDsResponse) String() string {
 func (*SeedRoleIDsResponse) ProtoMessage() {}
 
 func (x *SeedRoleIDsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_discord_v1_discord_proto_msgTypes[0]
+	mi := &file_discord_v1_discord_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -56,7 +160,7 @@ func (x *SeedRoleIDsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SeedRoleIDsResponse.ProtoReflect.Descriptor instead.
 func (*SeedRoleIDsResponse) Descriptor() ([]byte, []int) {
-	return file_discord_v1_discord_proto_rawDescGZIP(), []int{0}
+	return file_discord_v1_discord_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *SeedRoleIDsResponse) GetRoles() []*Role {
@@ -85,7 +189,7 @@ type Role struct {
 
 func (x *Role) Reset() {
 	*x = Role{}
-	mi := &file_discord_v1_discord_proto_msgTypes[1]
+	mi := &file_discord_v1_discord_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -97,7 +201,7 @@ func (x *Role) String() string {
 func (*Role) ProtoMessage() {}
 
 func (x *Role) ProtoReflect() protoreflect.Message {
-	mi := &file_discord_v1_discord_proto_msgTypes[1]
+	mi := &file_discord_v1_discord_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -110,7 +214,7 @@ func (x *Role) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Role.ProtoReflect.Descriptor instead.
 func (*Role) Descriptor() ([]byte, []int) {
-	return file_discord_v1_discord_proto_rawDescGZIP(), []int{1}
+	return file_discord_v1_discord_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Role) GetId() string {
@@ -195,7 +299,13 @@ var File_discord_v1_discord_proto protoreflect.FileDescriptor
 const file_discord_v1_discord_proto_rawDesc = "" +
 	"\n" +
 	"\x18discord/v1/discord.proto\x12\n" +
-	"discord.v1\x1a\x1bgoogle/protobuf/empty.proto\"=\n" +
+	"discord.v1\x1a\x1bgoogle/protobuf/empty.proto\"g\n" +
+	"\x1eSendMessageAnticheatBanRequest\x12\x19\n" +
+	"\bsteam_id\x18\x01 \x01(\tR\asteamId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\"4\n" +
+	"\x17SendMessageCrashRequest\x12\x19\n" +
+	"\bcrash_id\x18\x01 \x01(\tR\acrashId\"=\n" +
 	"\x13SeedRoleIDsResponse\x12&\n" +
 	"\x05roles\x18\x01 \x03(\v2\x10.discord.v1.RoleR\x05roles\"\xa3\x02\n" +
 	"\x04Role\x12\x0e\n" +
@@ -210,9 +320,11 @@ const file_discord_v1_discord_proto_rawDesc = "" +
 	"\x04icon\x18\t \x01(\tR\x04icon\x12#\n" +
 	"\runicode_emoji\x18\n" +
 	" \x01(\tR\funicodeEmoji\x12\x14\n" +
-	"\x05flags\x18\v \x01(\x05R\x05flags2X\n" +
+	"\x05flags\x18\v \x01(\x05R\x05flags2\x88\x02\n" +
 	"\x0eDiscordService\x12F\n" +
-	"\vSeedRoleIDs\x12\x16.google.protobuf.Empty\x1a\x1f.discord.v1.SeedRoleIDsResponseB\xa6\x01\n" +
+	"\vSeedRoleIDs\x12\x16.google.protobuf.Empty\x1a\x1f.discord.v1.SeedRoleIDsResponse\x12]\n" +
+	"\x17SendMessageAnticheatBan\x12*.discord.v1.SendMessageAnticheatBanRequest\x1a\x16.google.protobuf.Empty\x12O\n" +
+	"\x10SendMessageCrash\x12#.discord.v1.SendMessageCrashRequest\x1a\x16.google.protobuf.EmptyB\xa6\x01\n" +
 	"\x0ecom.discord.v1B\fDiscordProtoP\x01Z=github.com/leighmacdonald/gbans/internal/discord/v1;discordv1\xa2\x02\x03DXX\xaa\x02\n" +
 	"Discord.V1\xca\x02\n" +
 	"Discord\\V1\xe2\x02\x16Discord\\V1\\GPBMetadata\xea\x02\vDiscord::V1b\beditionsp\xe8\a"
@@ -229,18 +341,24 @@ func file_discord_v1_discord_proto_rawDescGZIP() []byte {
 	return file_discord_v1_discord_proto_rawDescData
 }
 
-var file_discord_v1_discord_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_discord_v1_discord_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_discord_v1_discord_proto_goTypes = []any{
-	(*SeedRoleIDsResponse)(nil), // 0: discord.v1.SeedRoleIDsResponse
-	(*Role)(nil),                // 1: discord.v1.Role
-	(*emptypb.Empty)(nil),       // 2: google.protobuf.Empty
+	(*SendMessageAnticheatBanRequest)(nil), // 0: discord.v1.SendMessageAnticheatBanRequest
+	(*SendMessageCrashRequest)(nil),        // 1: discord.v1.SendMessageCrashRequest
+	(*SeedRoleIDsResponse)(nil),            // 2: discord.v1.SeedRoleIDsResponse
+	(*Role)(nil),                           // 3: discord.v1.Role
+	(*emptypb.Empty)(nil),                  // 4: google.protobuf.Empty
 }
 var file_discord_v1_discord_proto_depIdxs = []int32{
-	1, // 0: discord.v1.SeedRoleIDsResponse.roles:type_name -> discord.v1.Role
-	2, // 1: discord.v1.DiscordService.SeedRoleIDs:input_type -> google.protobuf.Empty
-	0, // 2: discord.v1.DiscordService.SeedRoleIDs:output_type -> discord.v1.SeedRoleIDsResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
+	3, // 0: discord.v1.SeedRoleIDsResponse.roles:type_name -> discord.v1.Role
+	4, // 1: discord.v1.DiscordService.SeedRoleIDs:input_type -> google.protobuf.Empty
+	0, // 2: discord.v1.DiscordService.SendMessageAnticheatBan:input_type -> discord.v1.SendMessageAnticheatBanRequest
+	1, // 3: discord.v1.DiscordService.SendMessageCrash:input_type -> discord.v1.SendMessageCrashRequest
+	2, // 4: discord.v1.DiscordService.SeedRoleIDs:output_type -> discord.v1.SeedRoleIDsResponse
+	4, // 5: discord.v1.DiscordService.SendMessageAnticheatBan:output_type -> google.protobuf.Empty
+	4, // 6: discord.v1.DiscordService.SendMessageCrash:output_type -> google.protobuf.Empty
+	4, // [4:7] is the sub-list for method output_type
+	1, // [1:4] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
@@ -257,7 +375,7 @@ func file_discord_v1_discord_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_discord_v1_discord_proto_rawDesc), len(file_discord_v1_discord_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

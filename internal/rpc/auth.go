@@ -142,7 +142,11 @@ func (m *Middleware) findProcedure(url *url.URL) (string, bool, bool) {
 		return "", false, false
 	}
 
-	return procedure, strings.Contains(procedure, "Plugin"), true
+	m.RLock()
+	_, isServerRoute := m.serverAllowList[procedure]
+	m.RUnlock()
+
+	return procedure, isServerRoute || strings.Contains(procedure, "Plugin"), true
 }
 
 // Authenticate extracts and validates authentication information from an incoming RPC request.

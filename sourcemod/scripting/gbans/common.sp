@@ -13,15 +13,28 @@ Print out a formatted ConnectRPC error messages to the error log.
 https://connectrpc.com/docs/web/errors/
 */
 void PrintRPCError(HTTPResponse response) {
+    LogError("Invalid response code: %d", response.Status);
+
+    if (response.Status == HTTPStatus_Invalid) {
+        return;
+    }
+
+    char contentType[128] = "unknown";
+    response.GetHeader("Content-Type", contentType, sizeof contentType);
+    if (StrContains(contentType, "json", false) == -1) {
+        LogError("Invalid response content type: %s", contentType);
+
+        return;
+    }
+
     char code[64];
     char message[1024];
 
-    LogError("Invalid response code: %d", response.Status);
     JSONObject err_obj = view_as<JSONObject>(response.Data);
     if (!err_obj.GetString("code", code, sizeof code)) {
         return;
     }
-    if (!err_obj.GetString("message", message, sizeof code)) {
+    if (!err_obj.GetString("message", message, sizeof message)) {
         return;
     }
 

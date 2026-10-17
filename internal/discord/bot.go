@@ -49,6 +49,7 @@ type Opts struct {
 }
 
 type Discord struct {
+	config             *Config
 	appID              string
 	guildID            string
 	session            *discordgo.Session
@@ -62,7 +63,7 @@ type Discord struct {
 	mutex *sync.RWMutex
 }
 
-func New(opts Opts) (*Discord, error) {
+func New(config *Config, opts Opts) (*Discord, error) {
 	if opts.AppID == "" {
 		return nil, fmt.Errorf("%w: invalid discord app id", ErrConfig)
 	}
@@ -100,8 +101,13 @@ func New(opts Opts) (*Discord, error) {
 	session.AddHandler(bot.onInteractionCreate)
 
 	bot.session = session
+	bot.config = config
 
 	return bot, nil
+}
+
+func (b *Discord) Config() *Config {
+	return b.config
 }
 
 func (b *Discord) Send(channelID string, payload *discordgo.MessageSend) error {
