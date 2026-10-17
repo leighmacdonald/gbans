@@ -21,8 +21,10 @@
 #include "gbans/commands.sp"
 #include "gbans/common.sp"
 #include "gbans/connect.sp"
+#include "gbans/crash.sp"
 #include "gbans/globals.sp"
 #include "gbans/report.sp"
+#include "gbans/stac.sp"
 #include "gbans/stv.sp"
 
 public
@@ -95,6 +97,13 @@ void OnPluginStart() {
     AutoExecConfig_ExecuteFile();
     AutoExecConfig_CleanFile();
 
+    // Setup log files for crash reporting back to gbans
+    BuildPath(Path_SM, g_accelerator_log_path, sizeof(g_accelerator_log_path), "/logs/accelerator.log");
+    BuildPath(Path_SM, g_crash_log_path, sizeof(g_crash_log_path), "/data/Stored_data.txt");
+
+    g_accelerator_log_handle = OpenFile(g_accelerator_log_path, "r", false);
+    g_crash_log_handle       = OpenFile(g_crash_log_path, "a+", false);
+
     // BuildPath(Path_SM, logFile, sizeof(logFile), "logs/gbans.log");
 
     if (gLateLoaded) {
@@ -160,6 +169,7 @@ void OnMapStart() { reloadAdmins(true); }
 public
 APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
     CreateNative("GB_BanClient", Native_GB_BanClient);
+    CreateNative("GB_BanClientAC", Native_GB_BanClientAC);
 
     gLateLoaded = late;
 

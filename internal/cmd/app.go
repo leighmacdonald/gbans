@@ -341,7 +341,7 @@ func (g *GBans) createAPIClient() (thirdparty.APIProvider, error) {
 
 func (g *GBans) mustCreateBot(conf *discord.Config) discord.Connection {
 	if conf.BotEnabled {
-		discordBot, errDiscord := discord.New(discord.Opts{
+		discordBot, errDiscord := discord.New(conf, discord.Opts{
 			Token:   conf.Token,
 			AppID:   conf.AppID,
 			GuildID: conf.GuildID,
@@ -353,7 +353,7 @@ func (g *GBans) mustCreateBot(conf *discord.Config) discord.Connection {
 		return discordBot
 	}
 
-	return discord.Discard{}
+	return discord.NewDiscard(conf)
 }
 
 func (g *GBans) startBot() {

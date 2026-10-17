@@ -8,3 +8,13 @@ import { DiscordService } from "./discord_pb";
  * @generated from rpc discord.v1.DiscordService.SeedRoleIDs
  */
 export const seedRoleIDs = DiscordService.method.seedRoleIDs;
+
+/**
+ * @generated from rpc discord.v1.DiscordService.SendMessageAnticheatBan
+ */
+export const sendMessageAnticheatBan = DiscordService.method.sendMessageAnticheatBan;
+
+/**
+ * @generated from rpc discord.v1.DiscordService.SendMessageCrash
+ */
+export const sendMessageCrash = DiscordService.method.sendMessageCrash;

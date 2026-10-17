@@ -32,6 +32,8 @@ type Connection interface {
 	// Close the bot session.
 	Close()
 
+	Config() *Config
+
 	// MustRegisterCommandHandler allows the caller to register discord slash commands.
 	// When using discord.CommandTypeModal, the responder must be defined. It will be called when responding
 	// to the modal data submission.
@@ -48,12 +50,17 @@ type Connection interface {
 	Roles() ([]*discordgo.Role, error)
 }
 
+func NewDiscard(config *Config) Connection {
+	return &Discard{config: config}
+}
+
 // Discard implements a dummy service that can be used when discord bot support is disabled or for testing.
-type Discard struct{}
+type Discard struct{ config *Config }
 
 func (d Discard) Send(_ string, _ *discordgo.MessageSend) error { return nil }
 func (d Discard) Start() error                                  { return nil }
 func (d Discard) Close()                                        {}
+func (d Discard) Config() *Config                               { return d.config }
 func (d Discard) MustRegisterCommandHandler(_ *discordgo.ApplicationCommand, _ Handler) {
 }
 func (d Discard) MustRegisterPrefixHandler(_ string, _ Handler) {}

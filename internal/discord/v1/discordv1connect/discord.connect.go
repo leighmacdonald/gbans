@@ -37,11 +37,19 @@ const (
 	// DiscordServiceSeedRoleIDsProcedure is the fully-qualified name of the DiscordService's
 	// SeedRoleIDs RPC.
 	DiscordServiceSeedRoleIDsProcedure = "/discord.v1.DiscordService/SeedRoleIDs"
+	// DiscordServiceSendMessageAnticheatBanProcedure is the fully-qualified name of the
+	// DiscordService's SendMessageAnticheatBan RPC.
+	DiscordServiceSendMessageAnticheatBanProcedure = "/discord.v1.DiscordService/SendMessageAnticheatBan"
+	// DiscordServiceSendMessageCrashProcedure is the fully-qualified name of the DiscordService's
+	// SendMessageCrash RPC.
+	DiscordServiceSendMessageCrashProcedure = "/discord.v1.DiscordService/SendMessageCrash"
 )
 
 // DiscordServiceClient is a client for the discord.v1.DiscordService service.
 type DiscordServiceClient interface {
 	SeedRoleIDs(context.Context, *emptypb.Empty) (*v1.SeedRoleIDsResponse, error)
+	SendMessageAnticheatBan(context.Context, *v1.SendMessageAnticheatBanRequest) (*emptypb.Empty, error)
+	SendMessageCrash(context.Context, *v1.SendMessageCrashRequest) (*emptypb.Empty, error)
 }
 
 // NewDiscordServiceClient constructs a client for the discord.v1.DiscordService service. By
@@ -61,12 +69,26 @@ func NewDiscordServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(discordServiceMethods.ByName("SeedRoleIDs")),
 			connect.WithClientOptions(opts...),
 		),
+		sendMessageAnticheatBan: connect.NewClient[v1.SendMessageAnticheatBanRequest, emptypb.Empty](
+			httpClient,
+			baseURL+DiscordServiceSendMessageAnticheatBanProcedure,
+			connect.WithSchema(discordServiceMethods.ByName("SendMessageAnticheatBan")),
+			connect.WithClientOptions(opts...),
+		),
+		sendMessageCrash: connect.NewClient[v1.SendMessageCrashRequest, emptypb.Empty](
+			httpClient,
+			baseURL+DiscordServiceSendMessageCrashProcedure,
+			connect.WithSchema(discordServiceMethods.ByName("SendMessageCrash")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // discordServiceClient implements DiscordServiceClient.
 type discordServiceClient struct {
-	seedRoleIDs *connect.Client[emptypb.Empty, v1.SeedRoleIDsResponse]
+	seedRoleIDs             *connect.Client[emptypb.Empty, v1.SeedRoleIDsResponse]
+	sendMessageAnticheatBan *connect.Client[v1.SendMessageAnticheatBanRequest, emptypb.Empty]
+	sendMessageCrash        *connect.Client[v1.SendMessageCrashRequest, emptypb.Empty]
 }
 
 // SeedRoleIDs calls discord.v1.DiscordService.SeedRoleIDs.
@@ -78,9 +100,29 @@ func (c *discordServiceClient) SeedRoleIDs(ctx context.Context, req *emptypb.Emp
 	return nil, err
 }
 
+// SendMessageAnticheatBan calls discord.v1.DiscordService.SendMessageAnticheatBan.
+func (c *discordServiceClient) SendMessageAnticheatBan(ctx context.Context, req *v1.SendMessageAnticheatBanRequest) (*emptypb.Empty, error) {
+	response, err := c.sendMessageAnticheatBan.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// SendMessageCrash calls discord.v1.DiscordService.SendMessageCrash.
+func (c *discordServiceClient) SendMessageCrash(ctx context.Context, req *v1.SendMessageCrashRequest) (*emptypb.Empty, error) {
+	response, err := c.sendMessageCrash.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // DiscordServiceHandler is an implementation of the discord.v1.DiscordService service.
 type DiscordServiceHandler interface {
 	SeedRoleIDs(context.Context, *emptypb.Empty) (*v1.SeedRoleIDsResponse, error)
+	SendMessageAnticheatBan(context.Context, *v1.SendMessageAnticheatBanRequest) (*emptypb.Empty, error)
+	SendMessageCrash(context.Context, *v1.SendMessageCrashRequest) (*emptypb.Empty, error)
 }
 
 // NewDiscordServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -96,10 +138,26 @@ func NewDiscordServiceHandler(svc DiscordServiceHandler, opts ...connect.Handler
 		connect.WithSchema(discordServiceMethods.ByName("SeedRoleIDs")),
 		connect.WithHandlerOptions(opts...),
 	)
+	discordServiceSendMessageAnticheatBanHandler := connect.NewUnaryHandlerSimple(
+		DiscordServiceSendMessageAnticheatBanProcedure,
+		svc.SendMessageAnticheatBan,
+		connect.WithSchema(discordServiceMethods.ByName("SendMessageAnticheatBan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	discordServiceSendMessageCrashHandler := connect.NewUnaryHandlerSimple(
+		DiscordServiceSendMessageCrashProcedure,
+		svc.SendMessageCrash,
+		connect.WithSchema(discordServiceMethods.ByName("SendMessageCrash")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/discord.v1.DiscordService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case DiscordServiceSeedRoleIDsProcedure:
 			discordServiceSeedRoleIDsHandler.ServeHTTP(w, r)
+		case DiscordServiceSendMessageAnticheatBanProcedure:
+			discordServiceSendMessageAnticheatBanHandler.ServeHTTP(w, r)
+		case DiscordServiceSendMessageCrashProcedure:
+			discordServiceSendMessageCrashHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -111,4 +169,12 @@ type UnimplementedDiscordServiceHandler struct{}
 
 func (UnimplementedDiscordServiceHandler) SeedRoleIDs(context.Context, *emptypb.Empty) (*v1.SeedRoleIDsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("discord.v1.DiscordService.SeedRoleIDs is not implemented"))
+}
+
+func (UnimplementedDiscordServiceHandler) SendMessageAnticheatBan(context.Context, *v1.SendMessageAnticheatBanRequest) (*emptypb.Empty, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("discord.v1.DiscordService.SendMessageAnticheatBan is not implemented"))
+}
+
+func (UnimplementedDiscordServiceHandler) SendMessageCrash(context.Context, *v1.SendMessageCrashRequest) (*emptypb.Empty, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("discord.v1.DiscordService.SendMessageCrash is not implemented"))
 }

@@ -34,6 +34,8 @@ void authenticateServer() {
     postHTTPRequest("/connect/sourcemod.v1.PluginService/SMAuthenticate", req, onAuthenticate);
 }
 
+bool g_has_authed = false;
+
 void onAuthenticate(HTTPResponse response, any value) {
     switch (response.Status) {
     case HTTPStatus_OK: {
@@ -43,13 +45,20 @@ void onAuthenticate(HTTPResponse response, any value) {
             return;
         }
         LogMessage("Authenticated server successfully");
-
-        reloadAdmins(true);
+        if (!g_has_authed) {
+            onAuthSuccess();
+        }
     }
     default: {
         PrintRPCError(response);
     }
     }
+}
+
+void onAuthSuccess() {
+    g_has_authed = true;
+    reloadAdmins(true);
+    checkCrashStatus();
 }
 
 void checkPlayer(int clientId) {
