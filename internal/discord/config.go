@@ -27,6 +27,11 @@ type Config struct {
 	SeedChannelID           string
 	WordFilterLogChannelID  string
 	ChatLogChannelID        string
+
+	// Unregister UnregisterOnClose when true, will unregister all the previously registered commands on shutdown.
+	UnregisterOnClose bool
+	// UserAgent defines a optional custom user agent.
+	UserAgent string
 }
 
 func (c *Config) SafePublicLogChannelID() string {
