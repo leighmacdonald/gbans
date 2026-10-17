@@ -35,19 +35,6 @@ const (
 // Handler is a handler for responding to slash command interactions.
 type Handler func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error
 
-type Opts struct {
-	// Token must be set to the discord bot toke, without any "Bot " prefix.
-	Token string
-	// AppID must be set to the bots application ID
-	AppID string
-	// GuildID should be set to the guildID of your main server. If unset, all commands are registered globally instead.
-	GuildID string
-	// Unregister UnregisterOnClose when true, will unregister all the previously registered commands on shutdown.
-	UnregisterOnClose bool
-	// UserAgent defines a optional custom user agent.
-	UserAgent string
-}
-
 type Discord struct {
 	config             *Config
 	appID              string
@@ -63,31 +50,31 @@ type Discord struct {
 	mutex *sync.RWMutex
 }
 
-func New(config *Config, opts Opts) (*Discord, error) {
-	if opts.AppID == "" {
+func New(config *Config) (*Discord, error) {
+	if config.AppID == "" {
 		return nil, fmt.Errorf("%w: invalid discord app id", ErrConfig)
 	}
 
-	if opts.Token == "" {
+	if config.Token == "" {
 		return nil, fmt.Errorf("%w: invalid discord token", ErrConfig)
 	}
 
 	bot := &Discord{
 		mutex:           &sync.RWMutex{},
-		appID:           opts.AppID,
-		guildID:         opts.GuildID,
-		unregister:      opts.UnregisterOnClose,
+		appID:           config.AppID,
+		guildID:         config.GuildID,
+		unregister:      config.UnregisterOnClose,
 		commandHandlers: make(map[string]Handler),
 		prefixHandlers:  make(map[string]Handler),
 	}
 
-	session, errSession := discordgo.New("Bot " + opts.Token)
+	session, errSession := discordgo.New("Bot " + config.Token)
 	if errSession != nil {
 		return nil, errors.Join(errSession, ErrConfig)
 	}
 
-	if opts.UserAgent != "" {
-		session.UserAgent = opts.UserAgent
+	if config.UserAgent != "" {
+		session.UserAgent = config.UserAgent
 	} else {
 		session.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
 	}
