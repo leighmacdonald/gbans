@@ -35,6 +35,9 @@ const defaultOptions = createDefaultTableOptions<Role>();
 
 export const Route = createFileRoute("/_admin/admin/roles")({
 	component: AdminRoles,
+	head: ({ match }) => ({
+		meta: match.context.meta({ title: "Roles", description: "Manage roles." }),
+	}),
 });
 
 function AdminRoles() {

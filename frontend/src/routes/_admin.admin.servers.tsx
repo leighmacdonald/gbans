@@ -51,7 +51,7 @@ export const Route = createFileRoute("/_admin/admin/servers")({
 	},
 	head: ({ match }) => {
 		return {
-			meta: [{ name: "description", content: "Server Editor" }, match.context.title("Edit Servers")],
+			meta: match.context.meta({ title: "Edit Servers", description: "Manage game servers." }),
 		};
 	},
 	component: AdminServers,

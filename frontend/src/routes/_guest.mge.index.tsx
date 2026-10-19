@@ -47,13 +47,7 @@ export const Route = createFileRoute("/_guest/mge/")({
 		ensureFeatureEnabled(context.appInfo.demosEnabled);
 	},
 	head: ({ match }) => ({
-		meta: [
-			{
-				name: "description",
-				content: "MGE Standings",
-			},
-			match.context.title("MGE Standings"),
-		],
+		meta: match.context.meta({ title: "MGE Standings", description: "MGE duel rankings and standings." }),
 	}),
 });
 

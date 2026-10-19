@@ -83,7 +83,7 @@ export const Route = createFileRoute("/_auth/stats")({
 		middlewares: [stripSearchParams(defaultValues)],
 	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Game Stats" }, match.context.title("Game Stats")],
+		meta: match.context.meta({ title: "Game Stats", description: "Global game statistics." }),
 	}),
 });
 

@@ -48,7 +48,7 @@ export const Route = createFileRoute("/_mod/admin/votes")({
 		middlewares: [stripSearchParams(defaultValues)],
 	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Votes" }, match.context.title("Votes")],
+		meta: match.context.meta({ title: "Votes", description: "Manage community votes." }),
 	}),
 });
 

@@ -52,7 +52,7 @@ export const Route = createFileRoute("/_auth/settings")({
 	component: ProfileSettings,
 	validateSearch: (search) => settingsSchema.parse(search),
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "User Settings" }, match.context.title("User Settings")],
+		meta: match.context.meta({ title: "User Settings", description: "Manage your account settings." }),
 	}),
 });
 

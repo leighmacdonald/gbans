@@ -34,7 +34,7 @@ const defaultOptions = createDefaultTableOptions<Filter>();
 export const Route = createFileRoute("/_mod/admin/filters")({
 	component: AdminFilters,
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Filtered Words" }, match.context.title("Filtered Words")],
+		meta: match.context.meta({ title: "Filtered Words", description: "Manage filtered words." }),
 	}),
 });
 

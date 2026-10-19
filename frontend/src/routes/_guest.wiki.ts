@@ -6,6 +6,6 @@ export const Route = createFileRoute("/_guest/wiki")({
 		ensureFeatureEnabled(context.appInfo.wikiEnabled);
 	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Wiki" }, match.context.title("Wiki")],
+		meta: match.context.meta({ title: "Wiki", description: "Community wiki." }),
 	}),
 });

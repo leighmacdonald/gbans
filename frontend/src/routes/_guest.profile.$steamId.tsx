@@ -49,8 +49,12 @@ import { isValidSteamDate } from "../util/time.ts";
 
 export const Route = createFileRoute("/_guest/profile/$steamId")({
 	component: ProfilePage,
-	head: () => ({
-		meta: [{ name: "description", content: "Player Profile" }],
+	head: ({ match }) => ({
+		meta: match.context.meta({
+			title: "Player Profile",
+			description: "Player profile, ban history, and match statistics.",
+			type: "profile",
+		}),
 	}),
 });
 

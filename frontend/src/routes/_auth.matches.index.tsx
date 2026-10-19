@@ -49,8 +49,8 @@ export const Route = createFileRoute("/_auth/matches/")({
 	search: {
 		middlewares: [stripSearchParams(defaultValues)],
 	},
-	head: () => ({
-		meta: [{ name: "description", content: "Match History" }],
+	head: ({ match }) => ({
+		meta: match.context.meta({ title: "Match History", description: "Recent match history." }),
 	}),
 });
 

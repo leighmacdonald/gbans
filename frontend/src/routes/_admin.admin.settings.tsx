@@ -88,7 +88,7 @@ export const Route = createFileRoute("/_admin/admin/settings")({
 		return conf.config;
 	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Edit Core System Settings" }, match.context.title("System Settings")],
+		meta: match.context.meta({ title: "System Settings", description: "Edit core system settings." }),
 	}),
 });
 

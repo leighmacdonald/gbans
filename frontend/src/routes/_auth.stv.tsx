@@ -54,13 +54,10 @@ export const Route = createFileRoute("/_auth/stv")({
 		ensureFeatureEnabled(context.appInfo.demosEnabled);
 	},
 	head: ({ match }) => ({
-		meta: [
-			{
-				name: "description",
-				content: "Search and download SourceTV recordings",
-			},
-			match.context.title("SourceTV"),
-		],
+		meta: match.context.meta({
+			title: "SourceTV",
+			description: "Search and download SourceTV recordings.",
+		}),
 	}),
 });
 

@@ -14,7 +14,7 @@ import { renderTimestamp } from "../util/time.ts";
 export const Route = createFileRoute("/_guest/changelog")({
 	component: Changelogs,
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Git Changelogs" }, match.context.title("Changelog")],
+		meta: match.context.meta({ title: "Changelog", description: "Recent updates and changes." }),
 	}),
 });
 

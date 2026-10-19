@@ -6,12 +6,9 @@ import { get } from "../rpc/wiki/v1/wiki-WikiService_connectquery.ts";
 
 export const Route = createFileRoute("/_guest/wiki/")({
 	component: WikiComponent,
-	head: ({ match }) => {
-		// TODO set title to slug
-		return {
-			meta: [{ name: "description", content: "Wiki" }, match.context.title("Wiki")],
-		};
-	},
+	head: ({ match }) => ({
+		meta: match.context.meta({ title: "Wiki", description: "Community wiki." }),
+	}),
 });
 
 function WikiComponent() {

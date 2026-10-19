@@ -47,7 +47,7 @@ export const Route = createFileRoute("/_mod/admin/people")({
 		middlewares: [stripSearchParams(defaultValues)],
 	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "People" }, match.context.title("People")],
+		meta: match.context.meta({ title: "People", description: "Manage people and players." }),
 	}),
 });
 

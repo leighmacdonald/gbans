@@ -45,7 +45,7 @@ export const Route = createFileRoute("/_mod/admin/reports")({
 		middlewares: [stripSearchParams(defaultValues)],
 	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Reports" }, match.context.title("Reports")],
+		meta: match.context.meta({ title: "Reports", description: "Manage player reports." }),
 	}),
 });
 

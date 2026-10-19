@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_guest/login/success")({
 	},
 	component: LoginSteamSuccess,
 	head: ({ match }) => ({
-		meta: [match.context.title("Login Successful")],
+		meta: match.context.meta({ title: "Login Successful", description: "You have signed in." }),
 	}),
 });
 
