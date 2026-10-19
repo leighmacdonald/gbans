@@ -24,6 +24,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/network/ip2location"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	"github.com/leighmacdonald/gbans/internal/patreon"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
@@ -43,11 +44,15 @@ type Service struct {
 	changelogFetched time.Time
 }
 
-func NewService(conf *Configuration, version string, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
+func NewService(conf *Configuration, version string, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
 	pattern, handler := configv1connect.NewConfigServiceHandler(&Service{
 		config:  conf,
 		version: version,
 	}, options...)
+
+	openGraph.Register("/admin/settings", opengraph.Static("System Settings", "Edit core system settings."))
+	openGraph.Register("/changelog", opengraph.Static("Changelog", "Recent updates and changes."))
+	openGraph.Register("/privacy-policy", opengraph.Static("Privacy Policy", "How we handle your data."))
 
 	authMiddleware.UserRoute(configv1connect.ConfigServiceGetProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CONFIG_READ))
 	authMiddleware.UserRoute(configv1connect.ConfigServiceUpdateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CONFIG_WRITE))

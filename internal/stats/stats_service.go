@@ -3,12 +3,15 @@ package stats
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
+	"net/http"
 
 	"connectrpc.com/connect"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	mapsv1 "github.com/leighmacdonald/gbans/internal/maps/v1"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
@@ -28,8 +31,16 @@ type Service struct {
 	servers *servers.Servers
 }
 
-func NewService(stats Stats, servers *servers.Servers, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := statsv1connect.NewStatsServiceHandler(Service{stats: stats, servers: servers}, option...)
+func NewService(stats Stats, servers *servers.Servers, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	svc := Service{stats: stats, servers: servers}
+
+	pattern, handler := statsv1connect.NewStatsServiceHandler(svc, option...)
+
+	openGraph.Register("/match/{match_id}", svc.openGraphMatch)
+	openGraph.Register("/matches", opengraph.Static("Match History", "Recent match history."))
+	openGraph.Register("/matches/{steam_id}",
+		opengraph.Static("Player Match History", "Match history for the player."))
+	openGraph.Register("/stats", opengraph.Static("Game Stats", "Global game statistics."))
 
 	authMiddleware.UserRoute(statsv1connect.StatsServiceMatchProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
 	authMiddleware.UserRoute(statsv1connect.StatsServiceBucketsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
@@ -786,4 +797,22 @@ func toTeam(team string) *v1.Team {
 	default:
 		return new(v1.Team_TEAM_UNASSIGNED_UNSPECIFIED)
 	}
+}
+
+func (s Service) openGraphMatch(ctx context.Context, _ *http.Request, params map[string]string) (opengraph.Tags, error) {
+	matchID, errParse := uuid.FromString(params["match_id"])
+	if errParse != nil {
+		return opengraph.Tags{}, fmt.Errorf("failed to parse match_id: %w", errParse)
+	}
+
+	match, errGetMatch := s.stats.Match(ctx, matchID)
+	if errGetMatch != nil {
+		return opengraph.Tags{}, errGetMatch
+	}
+
+	return opengraph.Tags{
+		Title:       "Match on " + match.MapName,
+		Description: fmt.Sprintf("Match details for %s played on %s.", match.MapName, match.ServerName),
+		Type:        "article",
+	}, nil
 }

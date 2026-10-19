@@ -13,6 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/network"
 	networkv1 "github.com/leighmacdonald/gbans/internal/network/v1"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/servers/v1"
@@ -29,8 +30,12 @@ type Service struct {
 	locations *network.Networks
 }
 
-func NewServersService(servers *Servers, locations *network.Networks, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewServersService(servers *Servers, locations *network.Networks, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := serversv1connect.NewServersServiceHandler(&Service{servers: servers, locations: locations}, option...)
+
+	openGraph.Register("/admin/servers", opengraph.Static("Edit Servers", "Manage game servers."))
+	openGraph.Register("/admin/serverlogs", opengraph.Static("Server Logs", "Browse server logs."))
+	openGraph.Register("/servers", opengraph.Static("Servers", "Browse and connect to active game servers."))
 
 	authMiddleware.PublicRoute(serversv1connect.ServersServiceStateProcedure)
 	authMiddleware.UserRoute(serversv1connect.ServersServiceEditServerProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_WRITE))

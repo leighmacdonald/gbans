@@ -10,6 +10,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/frontend"
 	"github.com/leighmacdonald/gbans/internal/log"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -32,12 +33,19 @@ type RouterOpts struct {
 	HTTPCORSEnabled   bool
 	DevMode           bool
 	CORSOrigins       []string
+	// OpenGraph, when set, injects opengraph tags into html responses served
+	// to known crawler bots.
+	OpenGraph *opengraph.Repository
 }
 
 func CreateRouter(opts RouterOpts) (*http.ServeMux, http.Handler, error) {
 	var middleware []func(http.Handler) http.Handler
 
 	middleware = append(middleware, recoveryHandler)
+
+	if opts.OpenGraph != nil {
+		middleware = append(middleware, opts.OpenGraph.Middleware)
+	}
 
 	if opts.HTTPLogEnabled {
 		middleware = append(middleware, useLogging(opts.LogLevel, opts.HTTPOtelEnabled))

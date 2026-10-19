@@ -18,6 +18,7 @@ import (
 	v1 "github.com/leighmacdonald/gbans/internal/contest/v1"
 	"github.com/leighmacdonald/gbans/internal/contest/v1/contestv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -32,8 +33,10 @@ type Service struct {
 	roleAuth *rpc.RoleAuth
 }
 
-func NewService(contests Contests, assets asset.Assets, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
+func NewService(contests Contests, assets asset.Assets, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
 	pattern, handler := contestv1connect.NewServiceHandler(Service{contests: contests, assets: assets, roleAuth: roleAuth}, options...)
+
+	openGraph.Register("/admin/contests", opengraph.Static("Contests", "Manage contests."))
 
 	authMiddleware.UserRoute(contestv1connect.ServiceContestsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CONTEST_READ))
 	authMiddleware.UserRoute(contestv1connect.ServiceContestProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CONTEST_READ))

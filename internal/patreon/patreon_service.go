@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	v1 "github.com/leighmacdonald/gbans/internal/patreon/v1"
 	"github.com/leighmacdonald/gbans/internal/patreon/v1/patreonv1connect"
 	"github.com/leighmacdonald/gbans/internal/rpc"
@@ -16,8 +17,10 @@ type Service struct {
 	patreon Patreon
 }
 
-func NewService(patreon Patreon, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
+func NewService(patreon Patreon, openGraph *opengraph.Repository, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
 	pattern, handler := patreonv1connect.NewPatreonServiceHandler(Service{patreon: patreon}, options...)
+
+	openGraph.Register("/patreon", opengraph.Static("Patreon", "Support the community on Patreon."))
 
 	authMiddleware.PublicRoute(patreonv1connect.PatreonServicePatronCampaignsProcedure)
 	authMiddleware.AuthedRoute(patreonv1connect.PatreonServicePatronLoginProcedure)

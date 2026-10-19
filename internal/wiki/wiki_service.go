@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/wiki/v1"
@@ -21,8 +24,15 @@ type Service struct {
 	roleAuth *rpc.RoleAuth
 }
 
-func NewService(wiki Wiki, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := wikiv1connect.NewWikiServiceHandler(Service{wiki: wiki, roleAuth: roleAuth}, option...)
+func NewService(wiki Wiki, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	svc := Service{wiki: wiki, roleAuth: roleAuth}
+
+	pattern, handler := wikiv1connect.NewWikiServiceHandler(svc, option...)
+
+	openGraph.Register("/wiki", func(context.Context, *http.Request, map[string]string) (opengraph.Tags, error) {
+		return opengraph.Tags{Title: "Wiki", Description: "Community wiki."}, nil
+	})
+	openGraph.Register("/wiki/{slug...}", svc.openGraphPage)
 
 	authMiddleware.PublicRoute(wikiv1connect.WikiServiceGetProcedure)
 	authMiddleware.UserRoute(wikiv1connect.WikiServiceUpdateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_WIKI_EDIT))
@@ -94,4 +104,67 @@ func (s Service) Update(ctx context.Context, request *v1.UpdateRequest) (*v1.Upd
 		CreatedOn:          timestamppb.New(updatedPage.CreatedOn),
 		UpdatedOn:          timestamppb.New(updatedPage.UpdatedOn),
 	}}, nil
+}
+
+func (s Service) openGraphPage(ctx context.Context, _ *http.Request, params map[string]string) (opengraph.Tags, error) {
+	slug := strings.Trim(params["slug"], "/")
+	if slug == "" {
+		return opengraph.Tags{}, rpc.ErrBadRequest
+	}
+
+	page, errGetPage := s.wiki.Page(ctx, slug)
+	if errGetPage != nil {
+		if errors.Is(errGetPage, database.ErrNoResult) {
+			return opengraph.Tags{
+				Title:       slug,
+				Description: "Wiki article.",
+				Type:        "article",
+			}, nil
+		}
+
+		return opengraph.Tags{}, errGetPage
+	}
+
+	// Permission gated pages are never resolved for crawlers, their contents
+	// are considered non public.
+	if page.RequiredPermission != rolesv1.Permission_PERMISSION_UNSPECIFIED {
+		return opengraph.Tags{
+			Title:       slug,
+			Description: "Wiki article.",
+			Type:        "article",
+		}, nil
+	}
+
+	return opengraph.Tags{
+		Title:       slug,
+		Description: excerpt(page.BodyMD, 160),
+		Type:        "article",
+	}, nil
+}
+
+// excerpt converts the markdown body to a single line summary of content,
+// stripping out the most common markdown formatting characters.
+func excerpt(body string, limit int) string {
+	cleaned := strings.Map(func(character rune) rune {
+		switch character {
+		case '\n', '\r', '\t':
+			return ' '
+		case '#', '*', '_', '`', '>', '[', ']':
+			return -1
+		default:
+			return character
+		}
+	}, body)
+
+	trimmed := strings.Join(strings.Fields(cleaned), " ")
+	if len(trimmed) <= limit {
+		return trimmed
+	}
+
+	cut := trimmed[:limit]
+	if idx := strings.LastIndex(cut, " "); idx > 0 {
+		cut = cut[:idx]
+	}
+
+	return strings.TrimRight(cut, " .,:;") + "..."
 }

@@ -6,6 +6,7 @@ import (
 	"connectrpc.com/connect"
 	v1 "github.com/leighmacdonald/gbans/internal/news/v1"
 	"github.com/leighmacdonald/gbans/internal/news/v1/newsv1connect"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -18,8 +19,10 @@ type Service struct {
 	news News
 }
 
-func NewService(news News, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(news News, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := newsv1connect.NewNewsServiceHandler(Service{news: news}, option...)
+
+	openGraph.Register("/admin/news", opengraph.Static("News", "Manage news articles."))
 
 	authMiddleware.UserRoute(newsv1connect.NewsServiceEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NEWS_WRITE))
 	authMiddleware.UserRoute(newsv1connect.NewsServiceCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NEWS_WRITE))

@@ -8,6 +8,7 @@ import (
 	banv1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	v1 "github.com/leighmacdonald/gbans/internal/chat/v1"
 	"github.com/leighmacdonald/gbans/internal/chat/v1/chatv1connect"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -22,8 +23,10 @@ type WordfilterService struct {
 	filters WordFilters
 }
 
-func NewWordfilterService(filters WordFilters, chat *Chat, config *Config, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
+func NewWordfilterService(filters WordFilters, chat *Chat, config *Config, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
 	pattern, handler := chatv1connect.NewWordfilterServiceHandler(WordfilterService{filters: filters, chat: chat, config: config}, options...)
+
+	openGraph.Register("/admin/filters", opengraph.Static("Filtered Words", "Manage filtered words."))
 
 	authMiddleware.UserRoute(chatv1connect.WordfilterServiceFiltersProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_WORDFILTER_READ))
 	authMiddleware.UserRoute(chatv1connect.WordfilterServiceWarningStateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_WORDFILTER_READ))

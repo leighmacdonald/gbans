@@ -13,6 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network/ip2location"
 	v1 "github.com/leighmacdonald/gbans/internal/network/v1"
 	"github.com/leighmacdonald/gbans/internal/network/v1/networkv1connect"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -25,8 +26,15 @@ type Service struct {
 	networks         Networks
 }
 
-func NewNetworkService(networks Networks, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewNetworkService(networks Networks, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := networkv1connect.NewNetworkServiceHandler(&Service{networks: networks}, option...)
+
+	openGraph.Register("/admin/network", opengraph.Static("Network History Tools", "Various network querying tools."))
+	openGraph.Register("/admin/network/cidrblocks",
+		opengraph.Static("CIDR Network Blocks", "Inspect CIDR network blocks."))
+	openGraph.Register("/admin/network/ipInfo", opengraph.Static("IP Info", "Look up IP address information."))
+	openGraph.Register("/admin/network/playersbyip",
+		opengraph.Static("Players By IP", "Find players by IP address."))
 
 	authMiddleware.UserRoute(networkv1connect.NetworkServiceQueryConnectionsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NETWORK_READ))
 	authMiddleware.UserRoute(networkv1connect.NetworkServiceQueryNetworkProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NETWORK_READ))

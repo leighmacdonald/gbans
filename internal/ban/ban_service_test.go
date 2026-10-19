@@ -16,6 +16,7 @@ import (
 	v1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	"github.com/leighmacdonald/gbans/internal/ban/v1/banv1connect"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/stretchr/testify/require"
@@ -38,9 +39,9 @@ func newRPCHarness(t *testing.T) *rpcHarness {
 
 	middleware := rpc.NewMiddleware("gbans-test", "test-cookie-secret", e.roleSvc)
 
-	banSvc := ban.NewBanService(e.bans, e.roleAuth, middleware)
-	appealSvc := ban.NewAppealService(e.appeals, e.roleAuth, middleware)
-	reportSvc := ban.NewReportService(e.reports, e.roleAuth, middleware)
+	banSvc := ban.NewBanService(e.bans, opengraph.NewRepository(opengraph.Options{}), e.roleAuth, middleware)
+	appealSvc := ban.NewAppealService(e.appeals, opengraph.NewRepository(opengraph.Options{}), e.roleAuth, middleware)
+	reportSvc := ban.NewReportService(e.reports, opengraph.NewRepository(opengraph.Options{}), e.roleAuth, middleware)
 	exportSvc := ban.NewExportService(e.bans, []string{"export-test-key"}, "gbans-test")
 
 	api := http.NewServeMux()

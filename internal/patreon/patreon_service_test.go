@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"connectrpc.com/authn"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	"github.com/leighmacdonald/gbans/internal/patreon"
 	"github.com/leighmacdonald/gbans/internal/patreon/v1/patreonv1connect"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
@@ -27,7 +28,7 @@ func newTestServer(t *testing.T, patreonSvc patreon.Patreon, authFunc func(conte
 	t.Helper()
 
 	middleware := rpc.NewMiddleware("gbans-test", "test-cookie-secret", stubResolver{})
-	svc := patreon.NewService(patreonSvc, middleware)
+	svc := patreon.NewService(patreonSvc, opengraph.NewRepository(opengraph.Options{}), middleware)
 
 	mux := http.NewServeMux()
 	mux.Handle(svc.Pattern, svc.Handler)

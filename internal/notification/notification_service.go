@@ -8,6 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	v1 "github.com/leighmacdonald/gbans/internal/notification/v1"
 	"github.com/leighmacdonald/gbans/internal/notification/v1/notificationv1connect"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -20,8 +21,10 @@ type Service struct {
 	notifications *Notifications
 }
 
-func NewService(notifications *Notifications, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(notifications *Notifications, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := notificationv1connect.NewNotificationServiceHandler(Service{notifications: notifications}, option...)
+
+	openGraph.Register("/notifications", opengraph.Static("Notifications", "User notifications."))
 
 	authMiddleware.UserRoute(notificationv1connect.NotificationServiceNotificationsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NOTIFICATIONS))
 	authMiddleware.UserRoute(notificationv1connect.NotificationServiceMarkReadProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_NOTIFICATIONS))
