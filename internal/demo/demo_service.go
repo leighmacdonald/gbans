@@ -9,6 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/asset"
 	v1 "github.com/leighmacdonald/gbans/internal/demo/v1"
 	"github.com/leighmacdonald/gbans/internal/demo/v1/demov1connect"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/stats"
@@ -23,8 +24,10 @@ type Service struct {
 	demos Demos
 }
 
-func NewService(demos Demos, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(demos Demos, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := demov1connect.NewDemoServiceHandler(&Service{demos: demos}, option...)
+
+	openGraph.Register("/stv", opengraph.Static("SourceTV", "Search and download SourceTV recordings."))
 
 	authMiddleware.UserRoute(demov1connect.DemoServiceGetDemoProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_DEMO_READ))
 	authMiddleware.UserRoute(demov1connect.DemoServiceGetDemosProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_DEMO_READ))

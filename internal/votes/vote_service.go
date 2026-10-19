@@ -8,6 +8,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/votes/v1"
@@ -21,8 +22,10 @@ type Service struct {
 	votes Votes
 }
 
-func NewService(votes Votes, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(votes Votes, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := votesv1connect.NewVotesServiceHandler(Service{votes: votes}, option...)
+
+	openGraph.Register("/admin/votes", opengraph.Static("Votes", "Manage community votes."))
 
 	authMiddleware.UserRoute(votesv1connect.VotesServiceQueryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_VOTE_READ))
 

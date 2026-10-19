@@ -4,15 +4,19 @@ import "errors"
 
 var ErrContentRoot = errors.New("failed to open content root")
 
+// jsRoutes defines the SPA routes served index.html for crawler bots and
+// browsers hard refreshing a deep link. The patterns use the same wildcard
+// syntax as the frontend client routes, ex. /profile/{steam_id}.
+//
 // nolint:gochecknoglobals
 var jsRoutes = []string{
-	"/servers", "/profile/:steam_id", "/bans", "/appeal", "/settings", "/report",
-	"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/bans", "/admin/reports", "/admin/news", "/admin/import", "/admin/filters",
-	"/404", "/logout", "/login/success", "/report/:report_id", "/wiki", "/wiki/*slug", "/log/:match_id",
-	"/logs/:steam_id", "/logs", "/ban/:ban_id", "/chatlogs", "/admin/appeals", "/login", "/pug", "/quickplay",
-	"/global_stats", "/stv", "/login/discord", "/notifications", "/admin/network", "/stats",
-	"/stats/weapon/:weapon_id", "/stats/player/:steam_id", "/privacy-policy", "/admin/contests",
-	"/contests", "/contests/:contest_id", "/forums", "/forums/:forum_id", "/forums/thread/:forum_thread_id",
-	"/admin/network/ip_hist", "/admin/network/players_by_ip", "/admin/network/ip_info", "/admin/network/cidr_blocks",
-	"/admin/votes", "/mge", "/mge/1v1", "/mge/2v2", "/admin/roles",
+	"/admin/anticheat", "/admin/appeals", "/admin/bans", "/admin/contests", "/admin/filters",
+	"/admin/network", "/admin/network/cidrblocks", "/admin/network/ipInfo", "/admin/network/playersbyip",
+	"/admin/news", "/admin/people", "/admin/reports", "/admin/roles", "/admin/serverlogs",
+	"/admin/servers", "/admin/settings", "/admin/votes", "/ban/{ban_id}", "/changelog",
+	"/chatlogs", "/forums", "/forums/{forum_id}", "/forums/thread/{forum_thread_id}", "/login",
+	"/login/success", "/logout", "/match/{match_id}", "/matches", "/matches/{steam_id}", "/mge",
+	"/mge/1v1", "/mge/2v2", "/notifications", "/page-not-found", "/patreon", "/permission",
+	"/privacy-policy", "/profile/{steam_id}", "/report", "/report/{report_id}", "/servers",
+	"/settings", "/stats", "/stv", "/wiki", "/wiki/{slug...}",
 }

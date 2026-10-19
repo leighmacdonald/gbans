@@ -9,6 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	v1 "github.com/leighmacdonald/gbans/internal/mge/v1"
 	"github.com/leighmacdonald/gbans/internal/mge/v1/mgev1connect"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -20,8 +21,12 @@ type Service struct {
 	mge MGE
 }
 
-func NewService(mge MGE, _ *rpc.RoleAuth, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
+func NewService(mge MGE, openGraph *opengraph.Repository, _ *rpc.RoleAuth, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
 	pattern, handler := mgev1connect.NewMGEServiceHandler(Service{mge: mge}, options...)
+
+	openGraph.Register("/mge", opengraph.Static("MGE Standings", "MGE duel rankings and standings."))
+	openGraph.Register("/mge/1v1", opengraph.Static("MGE 1v1", "MGE 1v1 match history and rankings."))
+	openGraph.Register("/mge/2v2", opengraph.Static("MGE 2v2", "MGE 2v2 match history and rankings."))
 
 	authMiddleware.PublicRoute(mgev1connect.MGEServiceGetRatingsOverallProcedure)
 	authMiddleware.PublicRoute(mgev1connect.MGEServiceGetHistoryProcedure)

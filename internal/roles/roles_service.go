@@ -7,6 +7,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/roles/v1/rolesv1connect"
 	"github.com/leighmacdonald/gbans/internal/rpc"
@@ -26,8 +27,10 @@ type Service struct {
 	persons PersonCreator
 }
 
-func NewService(roles *Roles, persons PersonCreator, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewService(roles *Roles, persons PersonCreator, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := rolesv1connect.NewRolesServiceHandler(Service{roles: roles, persons: persons}, option...)
+
+	openGraph.Register("/admin/roles", opengraph.Static("Roles", "Manage roles."))
 
 	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleListProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_READ))
 	authMiddleware.UserRoute(rolesv1connect.RolesServiceRoleBySteamIDProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ROLE_READ))

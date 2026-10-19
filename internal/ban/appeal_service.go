@@ -9,6 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban/v1/banv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -21,8 +22,10 @@ type AppealService struct {
 	appeals Appeals
 }
 
-func NewAppealService(appeals Appeals, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
+func NewAppealService(appeals Appeals, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, options ...connect.HandlerOption) rpc.Service {
 	pattern, handler := banv1connect.NewAppealServiceHandler(AppealService{appeals: appeals}, options...)
+
+	openGraph.Register("/admin/appeals", opengraph.Static("Appeals", "Manage player ban appeals."))
 
 	authMiddleware.UserRoute(banv1connect.AppealServiceAppealsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_APPEAL_READ))
 	authMiddleware.UserRoute(banv1connect.AppealServiceSetAppealStateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_APPEAL_ADMIN))

@@ -16,6 +16,7 @@ import (
 	queryv1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	"github.com/leighmacdonald/gbans/internal/json"
 	"github.com/leighmacdonald/gbans/internal/maps"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/servers"
@@ -1199,6 +1200,7 @@ func newTestStatsClient(t *testing.T, fixture *tests.Fixture, user steamid.Steam
 	svc := stats.NewService(
 		stats.New(stats.NewRepository(fixture.Database), maps.New(maps.NewRepository(fixture.Database))),
 		serversCase,
+		opengraph.NewRepository(opengraph.Options{}),
 		rpc.NewRoleAuth(stubPermissionResolver{}),
 		middleware,
 	)

@@ -3,13 +3,17 @@ package forum
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
+	"net/http"
+	"strconv"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/database"
 	v1 "github.com/leighmacdonald/gbans/internal/forum/v1"
 	"github.com/leighmacdonald/gbans/internal/forum/v1/forumv1connect"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -20,12 +24,21 @@ import (
 type Service struct {
 	// forumv1connect.UnimplementedForumServiceHandler
 
-	forums   Forums
-	roleAuth *rpc.RoleAuth
+	forums    Forums
+	openGraph *opengraph.Repository
+	roleAuth  *rpc.RoleAuth
 }
 
-func NewService(forums Forums, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := forumv1connect.NewForumServiceHandler(Service{forums: forums, roleAuth: roleAuth}, option...)
+func NewService(forums Forums, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	svc := Service{forums: forums, openGraph: openGraph, roleAuth: roleAuth}
+
+	pattern, handler := forumv1connect.NewForumServiceHandler(svc, option...)
+
+	openGraph.Register("/forums", func(context.Context, *http.Request, map[string]string) (opengraph.Tags, error) {
+		return opengraph.Tags{Title: "Forums", Description: "Community discussion forums."}, nil
+	})
+	openGraph.Register("/forums/{forum_id}", svc.openGraphForum)
+	openGraph.Register("/forums/thread/{forum_thread_id}", svc.openGraphThread)
 
 	authMiddleware.PublicRoute(forumv1connect.ForumServiceActiveUsersProcedure)
 	authMiddleware.PublicRoute(forumv1connect.ForumServiceOverviewProcedure)
@@ -569,4 +582,62 @@ func toCategory(cat Category) *v1.Category {
 	}
 
 	return &v1cat
+}
+
+func (s Service) openGraphForum(ctx context.Context, _ *http.Request, params map[string]string) (opengraph.Tags, error) {
+	forumID, errParse := strconv.ParseInt(params["forum_id"], 10, 32)
+	if errParse != nil {
+		return opengraph.Tags{}, fmt.Errorf("failed to parse forum_id: %w", errParse)
+	}
+
+	var targetForum Forum
+	if errGetForum := s.forums.Forum(ctx, int32(forumID), &targetForum); errGetForum != nil {
+		return opengraph.Tags{}, errGetForum
+	}
+
+	// Permission gated forum contents are never resolved for crawlers.
+	if targetForum.RequiredPermission != rolesv1.Permission_PERMISSION_UNSPECIFIED {
+		return opengraph.Tags{
+			Title:       fmt.Sprintf("Forum #%d", forumID),
+			Description: "Forum discussions.",
+		}, nil
+	}
+
+	return opengraph.Tags{
+		Title:       targetForum.Title,
+		Description: targetForum.Description,
+	}, nil
+}
+
+func (s Service) openGraphThread(ctx context.Context, _ *http.Request, params map[string]string) (opengraph.Tags, error) {
+	threadID, errParse := strconv.ParseInt(params["forum_thread_id"], 10, 32)
+	if errParse != nil {
+		return opengraph.Tags{}, fmt.Errorf("failed to parse forum_thread_id: %w", errParse)
+	}
+
+	var thread Thread
+	if errGetThread := s.forums.Thread(ctx, int32(threadID), &thread); errGetThread != nil {
+		return opengraph.Tags{}, errGetThread
+	}
+
+	// Threads inside permission gated forums are never resolved for crawlers,
+	// only their existence and id are considered public.
+	var parentForum Forum
+	if errGetForum := s.forums.Forum(ctx, thread.ForumID, &parentForum); errGetForum != nil {
+		return opengraph.Tags{}, errGetForum
+	}
+
+	if parentForum.RequiredPermission != rolesv1.Permission_PERMISSION_UNSPECIFIED {
+		return opengraph.Tags{
+			Title:       fmt.Sprintf("Thread #%d", threadID),
+			Description: "Forum thread discussion.",
+			Type:        "article",
+		}, nil
+	}
+
+	return opengraph.Tags{
+		Title:       thread.Title,
+		Description: fmt.Sprintf("Discussion thread started by %s.", thread.Personaname),
+		Type:        "article",
+	}, nil
 }

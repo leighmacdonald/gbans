@@ -38,6 +38,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/news"
 	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	"github.com/leighmacdonald/gbans/internal/patreon"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/roles"
@@ -82,6 +83,7 @@ type GBans struct {
 	networks       network.Networks
 	news           news.News
 	notifications  *notification.Notifications
+	openGraph      *opengraph.Repository
 	patreonSvc     patreon.Patreon
 	persons        *person.Persons
 	reports        ban.Reports
@@ -463,37 +465,37 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware, roleAuth *rpc.RoleAuth
 	conf := g.config.Config()
 
 	services := []rpc.Service{
-		anticheat.NewService(g.anticheat, roleAuth, authMiddleware, interceptors),
+		anticheat.NewService(g.anticheat, g.openGraph, roleAuth, authMiddleware, interceptors),
 		asset.NewService(g.assets, roleAuth, authMiddleware, interceptors),
-		auth.NewService(authMiddleware, interceptors),
-		ban.NewAppealService(g.appeals, roleAuth, authMiddleware, interceptors),
-		ban.NewBanService(g.bans, roleAuth, authMiddleware, interceptors),
+		auth.NewService(g.openGraph, authMiddleware, interceptors),
+		ban.NewAppealService(g.appeals, g.openGraph, roleAuth, authMiddleware, interceptors),
+		ban.NewBanService(g.bans, g.openGraph, roleAuth, authMiddleware, interceptors),
 		ban.NewExportService(g.bans, strings.Split(conf.Exports.AuthorizedKeys, ","), conf.General.SiteName),
-		ban.NewReportService(g.reports, roleAuth, authMiddleware, interceptors),
-		chat.NewService(g.chat, roleAuth, authMiddleware, interceptors),
-		chat.NewWordfilterService(g.wordFilters, g.chat, g.config.Config().Filters, roleAuth, authMiddleware, interceptors),
-		config.NewService(g.config, BuildVersion, roleAuth, authMiddleware, interceptors),
-		contest.NewService(g.contests, g.assets, roleAuth, authMiddleware, interceptors),
+		ban.NewReportService(g.reports, g.openGraph, roleAuth, authMiddleware, interceptors),
+		chat.NewService(g.chat, g.openGraph, roleAuth, authMiddleware, interceptors),
+		chat.NewWordfilterService(g.wordFilters, g.chat, g.config.Config().Filters, g.openGraph, roleAuth, authMiddleware, interceptors),
+		config.NewService(g.config, BuildVersion, g.openGraph, roleAuth, authMiddleware, interceptors),
+		contest.NewService(g.contests, g.assets, g.openGraph, roleAuth, authMiddleware, interceptors),
 		discord.NewService(g.bot, roleAuth, authMiddleware, interceptors),
 		discordoauth.NewService(g.discordOAuth, roleAuth, authMiddleware, interceptors),
-		forum.NewService(g.forums, roleAuth, authMiddleware, interceptors),
-		mge.NewService(g.mge, roleAuth, authMiddleware, interceptors),
+		forum.NewService(g.forums, g.openGraph, roleAuth, authMiddleware, interceptors),
+		mge.NewService(g.mge, g.openGraph, roleAuth, authMiddleware, interceptors),
 		blocklist.NewService(g.blocklists, roleAuth, authMiddleware, interceptors),
-		network.NewNetworkService(g.networks, roleAuth, authMiddleware, interceptors),
-		news.NewService(g.news, roleAuth, authMiddleware, interceptors),
-		notification.NewService(g.notifications, roleAuth, authMiddleware, interceptors),
-		patreon.NewService(g.patreonSvc, authMiddleware, interceptors),
-		roles.NewService(g.roles, g.persons, roleAuth, authMiddleware, interceptors),
-		person.NewPersonService(g.persons, roleAuth, authMiddleware, interceptors),
-		servers.NewServersService(g.servers, &g.networks, roleAuth, authMiddleware, interceptors),
-		demo.NewService(g.demos, roleAuth, authMiddleware, interceptors),
+		network.NewNetworkService(g.networks, g.openGraph, roleAuth, authMiddleware, interceptors),
+		news.NewService(g.news, g.openGraph, roleAuth, authMiddleware, interceptors),
+		notification.NewService(g.notifications, g.openGraph, roleAuth, authMiddleware, interceptors),
+		patreon.NewService(g.patreonSvc, g.openGraph, authMiddleware, interceptors),
+		roles.NewService(g.roles, g.persons, g.openGraph, roleAuth, authMiddleware, interceptors),
+		person.NewPersonService(g.persons, g.openGraph, roleAuth, authMiddleware, interceptors),
+		servers.NewServersService(g.servers, &g.networks, g.openGraph, roleAuth, authMiddleware, interceptors),
+		demo.NewService(g.demos, g.openGraph, roleAuth, authMiddleware, interceptors),
 		speedruns.NewService(g.speedruns, roleAuth, authMiddleware, interceptors),
 		sourcemod.NewPluginService(g.sourcemod, g.persons, g.servers, g.bans,
 			rpc.NewServerTokenGenerator(conf.General.SiteName, []byte(conf.HTTPCookieKey)), g.notifications, conf.Discord.LogChannelID, authMiddleware, interceptors),
 		sourcemod.NewSourcemodService(g.sourcemod, roleAuth, authMiddleware, interceptors),
-		stats.NewService(g.stats, g.servers, roleAuth, authMiddleware, interceptors),
-		votes.NewService(g.votes, roleAuth, authMiddleware, interceptors),
-		wiki.NewService(g.wiki, roleAuth, authMiddleware, interceptors),
+		stats.NewService(g.stats, g.servers, g.openGraph, roleAuth, authMiddleware, interceptors),
+		votes.NewService(g.votes, g.openGraph, roleAuth, authMiddleware, interceptors),
+		wiki.NewService(g.wiki, g.openGraph, roleAuth, authMiddleware, interceptors),
 	}
 
 	for _, service := range services {
@@ -508,6 +510,13 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	defer stop()
 
 	conf := g.config.Config()
+
+	g.openGraph = opengraph.NewRepository(opengraph.Options{
+		SiteName:        conf.General.SiteName,
+		SiteDescription: conf.General.SiteDescription,
+		BaseURL:         conf.ExternalURL,
+		Image:           conf.General.BannerImageURL(),
+	})
 
 	if conf.Discord.Enabled {
 		go g.startBot()
@@ -526,6 +535,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 		HTTPCORSEnabled:   conf.HTTPCORSEnabled,
 		CORSOrigins:       conf.HTTPCorsOrigins,
 		DevMode:           conf.General.Mode == config.DebugMode,
+		OpenGraph:         g.openGraph,
 	})
 	if err != nil {
 		slog.Error("Could not setup router", slog.String("error", err.Error()))

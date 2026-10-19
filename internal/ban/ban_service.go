@@ -12,6 +12,7 @@ import (
 	v1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	"github.com/leighmacdonald/gbans/internal/ban/v1/banv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
@@ -29,13 +30,16 @@ type Service struct {
 	roleAuth *rpc.RoleAuth
 }
 
-func NewBanService(bans Bans, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewBanService(bans Bans, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	tfAPI, errTFAPI := thirdparty.NewTFAPI("https://tf-api.roto.lol", http.DefaultClient)
 	if errTFAPI != nil {
 		panic(errTFAPI)
 	}
 
 	pattern, handler := banv1connect.NewBanServiceHandler(Service{bans: bans, tfAPI: tfAPI, roleAuth: roleAuth}, option...)
+
+	openGraph.Register("/admin/bans", opengraph.Static("Bans", "Manage player bans."))
+	openGraph.Register("/ban/{ban_id}", openGraphBanTags)
 
 	authMiddleware.UserRoute(banv1connect.BanServiceQueryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_READ))
 	authMiddleware.UserRoute(banv1connect.BanServiceDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_WRITE))

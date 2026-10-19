@@ -7,14 +7,17 @@ import (
 	"connectrpc.com/connect"
 	v1 "github.com/leighmacdonald/gbans/internal/anticheat/v1"
 	"github.com/leighmacdonald/gbans/internal/anticheat/v1/anticheatv1connect"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func NewService(anticheat AntiCheat, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, interceptor ...connect.HandlerOption) rpc.Service {
+func NewService(anticheat AntiCheat, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, interceptor ...connect.HandlerOption) rpc.Service {
 	pattern, handler := anticheatv1connect.NewAnticheatServiceHandler(Service{anticheat: anticheat}, interceptor...)
+
+	openGraph.Register("/admin/anticheat", opengraph.Static("Anti-Cheat Logs", "Browse anti-cheat violation logs."))
 
 	authMiddleware.UserRoute(anticheatv1connect.AnticheatServiceQueryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_ANTICHEAT_READ))
 

@@ -3,9 +3,11 @@ package person
 import (
 	"context"
 	"errors"
+	"net/http"
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	v1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	"github.com/leighmacdonald/gbans/internal/person/v1/personv1connect"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
@@ -23,8 +25,14 @@ type Service struct {
 	roleAuth *rpc.RoleAuth
 }
 
-func NewPersonService(persons *Persons, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
-	pattern, handler := personv1connect.NewPersonServiceHandler(Service{persons: persons, roleAuth: roleAuth}, option...)
+func NewPersonService(persons *Persons, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+	svc := Service{persons: persons, roleAuth: roleAuth}
+
+	pattern, handler := personv1connect.NewPersonServiceHandler(svc, option...)
+
+	openGraph.Register("/admin/people", opengraph.Static("People", "Manage people and players."))
+	openGraph.Register("/profile/{steam_id}", svc.openGraphProfile)
+	openGraph.Register("/settings", opengraph.Static("User Settings", "Manage your account settings."))
 
 	authMiddleware.AuthedRoute(personv1connect.PersonServiceProfileProcedure)
 	authMiddleware.AuthedRoute(personv1connect.PersonServiceCurrentProfileProcedure)
@@ -271,4 +279,22 @@ func toSettings(settings Settings) *v1.Settings {
 		CreatedOn:            timestamppb.New(settings.CreatedOn),
 		UpdatedOn:            timestamppb.New(settings.UpdatedOn),
 	}
+}
+
+func (s Service) openGraphProfile(ctx context.Context, _ *http.Request, params map[string]string) (opengraph.Tags, error) {
+	target := steamid.New(params["steam_id"])
+	if !target.Valid() {
+		return opengraph.Tags{}, ErrPlayerDoesNotExist
+	}
+
+	loadedPerson, errGetPerson := s.persons.BySteamID(ctx, target)
+	if errGetPerson != nil {
+		return opengraph.Tags{}, errGetPerson
+	}
+
+	return opengraph.Tags{
+		Title:       loadedPerson.PersonaName,
+		Description: "Player profile, ban history, and match statistics.",
+		Type:        "profile",
+	}, nil
 }

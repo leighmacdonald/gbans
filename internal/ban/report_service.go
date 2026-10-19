@@ -10,6 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban/v1/banv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
+	"github.com/leighmacdonald/gbans/internal/opengraph"
 	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
@@ -25,8 +26,12 @@ type ReportService struct {
 	roleAuth *rpc.RoleAuth
 }
 
-func NewReportService(reports Reports, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewReportService(reports Reports, openGraph *opengraph.Repository, roleAuth *rpc.RoleAuth, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := banv1connect.NewReportServiceHandler(ReportService{reports: reports, roleAuth: roleAuth}, option...)
+
+	openGraph.Register("/admin/reports", opengraph.Static("Reports", "Manage player reports."))
+	openGraph.Register("/report", opengraph.Static("Create Report", "Create a new player report."))
+	openGraph.Register("/report/{report_id}", openGraphReportTags)
 
 	authMiddleware.UserRoute(banv1connect.ReportServiceReportCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_CREATE))
 	authMiddleware.UserRoute(banv1connect.ReportServiceReportProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_READ))
