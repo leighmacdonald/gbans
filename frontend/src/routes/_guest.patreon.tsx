@@ -33,7 +33,7 @@ export const Route = createFileRoute("/_guest/patreon")({
 
 	validateSearch: (search) => patreonSearchSchema.parse(search),
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Patreon Campaigns" }, match.context.title("Patreon")],
+		meta: match.context.meta({ title: "Patreon", description: "Support the community on Patreon." }),
 	}),
 });
 

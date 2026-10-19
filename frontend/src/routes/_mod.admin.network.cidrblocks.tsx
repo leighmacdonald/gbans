@@ -7,7 +7,7 @@ import { SteamWhitelistTable } from "../component/table/SteamWhitelistTable.tsx"
 export const Route = createFileRoute("/_mod/admin/network/cidrblocks")({
 	component: AdminNetworkCIDRBlocks,
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "CIDR Network Blocks" }, match.context.title("CIDR Network Blocks")],
+		meta: match.context.meta({ title: "CIDR Network Blocks", description: "Inspect CIDR network blocks." }),
 	}),
 });
 

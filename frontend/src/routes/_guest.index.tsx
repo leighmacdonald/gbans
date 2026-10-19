@@ -28,11 +28,7 @@ import { blu, red, tf2Fonts } from "../theme.ts";
 export const Route = createFileRoute("/_guest/")({
 	component: Index,
 	head: ({ match }) => ({
-		meta: [
-			{ name: "og:description", content: match.context.appInfo.siteDescription },
-			{ name: "og:title", content: `Home - ${match.context.appInfo.siteName}` },
-			match.context.title("Home"),
-		],
+		meta: match.context.meta({ title: "Home" }),
 	}),
 });
 

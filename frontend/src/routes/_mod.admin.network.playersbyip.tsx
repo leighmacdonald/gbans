@@ -59,7 +59,7 @@ export const Route = createFileRoute("/_mod/admin/network/playersbyip")({
 		middlewares: [stripSearchParams(defaultValues)],
 	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Find players by IP address" }, match.context.title("Players By IP")],
+		meta: match.context.meta({ title: "Players By IP", description: "Find players by IP address." }),
 	}),
 });
 

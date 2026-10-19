@@ -9,6 +9,7 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import * as Sentry from "@sentry/react";
 import type { QueryClient } from "@tanstack/react-query";
+import type { MetaDescriptor } from "@tanstack/react-router";
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import type { AuthContextProps } from "../auth.tsx";
@@ -22,32 +23,21 @@ import { UserFlashCtx } from "../contexts/UserFlashCtx.tsx";
 import { friendlyError } from "../error.tsx";
 import type { InfoResponse } from "../rpc/config/v1/config_pb.ts";
 import { createThemeByMode } from "../theme.ts";
+import type { PageMetaOptions } from "../util/meta.ts";
 import { emptyOrNullString } from "../util/types.ts";
 
 type RouterContext = {
 	auth?: AuthContextProps;
 	queryClient: QueryClient;
 	appInfo: InfoResponse;
-	title: (title?: string) => { title: string };
+	meta: (opts?: PageMetaOptions) => MetaDescriptor[];
 };
 
 export const Route = createRootRouteWithContext<RouterContext>()({
 	component: Root,
 	head: ({ match }) => ({
-		links: [{ rel: "icon", href: match.context.appInfo.favicon ?? "/favicon.ico" }],
-		meta: [
-			match.context.title(),
-			{ name: "og:type", content: "website" },
-			{ name: "og:title", content: match.context.appInfo.siteName ?? "gbans" },
-			{ name: "og:image", content: match.context.appInfo.favicon ?? "" },
-			{ name: "og:url", content: window.location.href },
-			{
-				name: "og:description",
-				content:
-					match.context.appInfo.siteDescription ??
-					"gbans is a web application for managing Team Fortress 2 communities",
-			},
-		],
+		links: [{ rel: "icon", href: match.context.appInfo.favicon || "/favicon.ico" }],
+		meta: match.context.meta(),
 	}),
 });
 

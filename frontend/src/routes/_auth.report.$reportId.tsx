@@ -36,10 +36,10 @@ import { renderTimeDistance, renderTimestamp } from "../util/time.ts";
 export const Route = createFileRoute("/_auth/report/$reportId")({
 	component: ReportView,
 	head: ({ match }) => ({
-		meta: [
-			{ name: "description", content: "View a report" },
-			match.context.title(`Report #${match.params.reportId}`),
-		],
+		meta: match.context.meta({
+			title: `Report #${match.params.reportId}`,
+			description: "Player report details.",
+		}),
 	}),
 });
 

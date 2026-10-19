@@ -9,7 +9,7 @@ import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 export const Route = createFileRoute("/_guest/privacy-policy")({
 	component: PrivacyPolicy,
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Privacy Policy" }, match.context.title("Privacy Policy")],
+		meta: match.context.meta({ title: "Privacy Policy", description: "How we handle your data." }),
 	}),
 });
 

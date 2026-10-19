@@ -44,7 +44,7 @@ export const Route = createFileRoute("/_admin/admin/serverlogs")({
 	},
 	head: ({ match }) => {
 		return {
-			meta: [{ name: "description", content: "Server Logs" }, match.context.title("Server Logs")],
+			meta: match.context.meta({ title: "Server Logs", description: "Browse server logs." }),
 		};
 	},
 	component: AdminServerLogs,

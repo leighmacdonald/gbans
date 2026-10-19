@@ -25,7 +25,7 @@ const defaultOptions = createDefaultTableOptions<Contest>();
 export const Route = createFileRoute("/_mod/admin/contests")({
 	component: AdminContests,
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Contests" }, match.context.title("Contests")],
+		meta: match.context.meta({ title: "Contests", description: "Manage contests." }),
 	}),
 });
 

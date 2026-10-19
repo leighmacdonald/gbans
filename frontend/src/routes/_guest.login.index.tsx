@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_guest/login/")({
 	// 	return context.auth;
 	// },
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Login" }, match.context.title("Login")],
+		meta: match.context.meta({ title: "Login", description: "Sign in to your account." }),
 	}),
 });
 

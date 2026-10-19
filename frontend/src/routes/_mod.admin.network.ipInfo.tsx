@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_mod/admin/network/ipInfo")({
 	component: AdminNetworkInfo,
 	validateSearch: (search) => searchSchema.parse(search),
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "IP Info" }, match.context.title("IP Info")],
+		meta: match.context.meta({ title: "IP Info", description: "Look up IP address information." }),
 	}),
 });
 

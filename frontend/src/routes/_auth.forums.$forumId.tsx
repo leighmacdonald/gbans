@@ -55,10 +55,7 @@ export const Route = createFileRoute("/_auth/forums/$forumId")({
 	// 	return { forum, threads };
 	// },
 	head: ({ match }) => ({
-		meta: [
-			// { name: "description", content: loaderData?.forum.description },
-			match.context.title("Forum"),
-		],
+		meta: match.context.meta({ title: `Forum #${match.params.forumId}`, description: "Forum discussions." }),
 	}),
 	errorComponent: ({ error }) => {
 		if (error instanceof AppError) {

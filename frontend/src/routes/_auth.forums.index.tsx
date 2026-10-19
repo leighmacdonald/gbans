@@ -35,7 +35,7 @@ import { renderTimestamp } from "../util/time.ts";
 export const Route = createFileRoute("/_auth/forums/")({
 	component: ForumOverview,
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Forums" }, match.context.title("Forums")],
+		meta: match.context.meta({ title: "Forums", description: "Community forums." }),
 	}),
 });
 

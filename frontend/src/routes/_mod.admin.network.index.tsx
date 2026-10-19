@@ -9,10 +9,7 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/_mod/admin/network/")({
 	component: AdminNetwork,
 	head: ({ match }) => ({
-		meta: [
-			{ name: "description", content: "Various network querying tools" },
-			match.context.title("Network History Tools"),
-		],
+		meta: match.context.meta({ title: "Network History Tools", description: "Various network querying tools." }),
 	}),
 });
 

@@ -38,7 +38,7 @@ export const Route = createFileRoute("/_mod/admin/anticheat")({
 	component: AdminAnticheat,
 	validateSearch,
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Anti-Cheat Logs" }, match.context.title("Anti-Cheat Logs")],
+		meta: match.context.meta({ title: "Anti-Cheat Logs", description: "Browse anti-cheat violation logs." }),
 	}),
 });
 

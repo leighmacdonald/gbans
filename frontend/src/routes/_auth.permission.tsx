@@ -7,4 +7,10 @@ export const Route = createFileRoute("/_auth/permission")({
 		const err = new AppError(ErrorCode.PermissionDenied);
 		return <ErrorDetails error={err} />;
 	},
+	head: ({ match }) => ({
+		meta: match.context.meta({
+			title: "Permission Denied",
+			description: "You do not have permission to view this page.",
+		}),
+	}),
 });

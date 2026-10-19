@@ -40,13 +40,7 @@ export const Route = createFileRoute("/_guest/mge/2v2")({
 		middlewares: [stripSearchParams(defaultValues)],
 	},
 	head: ({ match }) => ({
-		meta: [
-			{
-				name: "description",
-				content: "MGE 2v2 Match History",
-			},
-			match.context.title("MGE 2v2 Match History"),
-		],
+		meta: match.context.meta({ title: "MGE 2v2", description: "MGE 2v2 match history and rankings." }),
 	}),
 });
 

@@ -70,7 +70,7 @@ export const Route = createFileRoute("/_auth/chatlogs")({
 		middlewares: [stripSearchParams(defaultValues)],
 	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Browse in-game chat logs" }, match.context.title("Chat Logs")],
+		meta: match.context.meta({ title: "Chat Logs", description: "Browse in-game chat logs." }),
 	}),
 });
 

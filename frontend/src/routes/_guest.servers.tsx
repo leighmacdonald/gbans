@@ -76,7 +76,7 @@ export const Route = createFileRoute("/_guest/servers")({
 		ensureFeatureEnabled(context.appInfo.serversEnabled);
 	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Server Browser" }, match.context.title("Servers")],
+		meta: match.context.meta({ title: "Servers", description: "Browse and connect to active game servers." }),
 	}),
 });
 

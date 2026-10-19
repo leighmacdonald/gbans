@@ -9,7 +9,7 @@ import { get } from "../rpc/wiki/v1/wiki-WikiService_connectquery.ts";
 export const Route = createFileRoute("/_guest/wiki/$slug")({
 	component: Component,
 	head: ({ match, params }) => ({
-		meta: [{ name: "description", content: "Wiki" }, match.context.title(params.slug)],
+		meta: match.context.meta({ title: params.slug, description: "Wiki article.", type: "article" }),
 	}),
 	errorComponent: ({ error }) => {
 		if (error instanceof AppError) {

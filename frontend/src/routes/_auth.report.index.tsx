@@ -51,7 +51,7 @@ export const Route = createFileRoute("/_auth/report/")({
 	component: ReportCreate,
 	validateSearch,
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Create a new player report" }, match.context.title("Create Report")],
+		meta: match.context.meta({ title: "Create Report", description: "Create a new player report." }),
 	}),
 });
 

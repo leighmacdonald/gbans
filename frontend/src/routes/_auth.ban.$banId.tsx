@@ -35,7 +35,10 @@ import { renderTimeDistance, renderTimestamp } from "../util/time.ts";
 export const Route = createFileRoute("/_auth/ban/$banId")({
 	component: BanPage,
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: match.context.appInfo.siteDescription }, match.context.title(`Ban`)],
+		meta: match.context.meta({
+			title: `Ban #${match.params.banId}`,
+			description: "Ban details and appeal information.",
+		}),
 	}),
 });
 

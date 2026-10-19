@@ -46,7 +46,11 @@ export const Route = createFileRoute("/_auth/forums/thread/$forumThreadId")({
 	component: ForumThreadPage,
 	validateSearch: (search) => forumThreadSearchSchema.parse(search),
 	head: ({ match }) => ({
-		meta: [match.context.title("Thread")],
+		meta: match.context.meta({
+			title: `Thread #${match.params.forumThreadId}`,
+			description: "Forum thread discussion.",
+			type: "article",
+		}),
 	}),
 });
 

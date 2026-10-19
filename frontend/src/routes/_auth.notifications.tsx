@@ -22,7 +22,7 @@ const defaultOptions = createDefaultTableOptions<UserNotification>();
 export const Route = createFileRoute("/_auth/notifications")({
 	component: NotificationsPage,
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "User Notifications" }, match.context.title("Notifications")],
+		meta: match.context.meta({ title: "Notifications", description: "User notifications." }),
 	}),
 });
 

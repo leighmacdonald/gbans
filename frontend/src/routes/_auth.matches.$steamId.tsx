@@ -53,8 +53,8 @@ export const Route = createFileRoute("/_auth/matches/$steamId")({
 	search: {
 		middlewares: [stripSearchParams(defaultValues)],
 	},
-	head: () => ({
-		meta: [{ name: "description", content: "Player Match History" }],
+	head: ({ match }) => ({
+		meta: match.context.meta({ title: "Player Match History", description: "Match history for the player." }),
 	}),
 });
 
