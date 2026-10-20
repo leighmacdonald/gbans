@@ -94,6 +94,11 @@ func toMessage(msg *QueryChatHistoryResult) *v1.Message {
 		assetID = new(msg.AssetID.String())
 	}
 
+	var matchID *string
+	if msg.MatchID != nil {
+		matchID = new(msg.MatchID.String())
+	}
+
 	return &v1.Message{
 		PersonMessageId:   &msg.PersonMessageID,
 		AssetId:           assetID,
@@ -102,7 +107,7 @@ func toMessage(msg *QueryChatHistoryResult) *v1.Message {
 		PersonaName:       &msg.PersonaName,
 		ServerName:        &msg.ServerName,
 		ServerId:          &msg.ServerID,
-		MatchId:           new(msg.MatchID.String()),
+		MatchId:           matchID,
 		DemoId:            msg.DemoID,
 		DemoTick:          msg.DemoTick,
 		Body:              &msg.Body,
