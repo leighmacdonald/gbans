@@ -463,7 +463,11 @@ func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, ser
 					slog.Error("Failed to create new demo asset", slog.String("error", errDemo.Error()))
 				}
 
-				continue
+				// Permanently rejected demos would otherwise be downloaded
+				// and rejected again on every cycle.
+				if !shouldRemoveRemoteDemo(errDemo) {
+					continue
+				}
 			}
 
 			if errDelete := client.Delete(ctx, demoPath); errDelete != nil {
@@ -477,6 +481,12 @@ func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, ser
 	}
 
 	return nil
+}
+
+// shouldRemoveRemoteDemo reports whether a demo failed ingestion for a reason
+// that will not change on retry.
+func shouldRemoveRemoteDemo(err error) bool {
+	return errors.Is(err, asset.ErrAssetTooLarge) || errors.Is(err, stats.ErrNotEnoughPlayers)
 }
 
 func (d Demos) oldest(ctx context.Context) (Info, error) {
