@@ -84,3 +84,4 @@ importer
 *.sql.gz
 .worktreeinclude
 .tmp
+*_stv

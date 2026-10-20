@@ -4,8 +4,9 @@ project_name: gbans
 
 before:
   hooks:
-    - just frontend
-    - just sourcemod
+    - just install-frontend
+    - just build-frontend
+    - just build-sourcemod
 
 dockers_v2:
   - dockerfile: "docker/Dockerfile"
@@ -58,7 +59,7 @@ archives:
       - README.md
       - gbans_example.yml
       - sourcemod/plugins/gbans.smx
-      - sourcemod/adminmenu_custom.txt
+      - sourcemod/configs/adminmenu_custom.txt
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .ProjectName }}_{{- title .Os }}_{{- .Version }}-
