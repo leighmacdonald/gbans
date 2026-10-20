@@ -298,7 +298,6 @@ func (s Service) loadMatch(ctx context.Context, matchID uuid.UUID) (*v1.Match, e
 	out := &v1.Match{
 		Overview: &v1.MatchOverview{
 			MatchId:         new(matchID.String()),
-			AssetId:         new(match.AssetID.String()),
 			ServerId:        &match.ServerID,
 			ServerName:      &server.Name,
 			ServerNameShort: &server.ShortName,
@@ -323,6 +322,10 @@ func (s Service) loadMatch(ctx context.Context, matchID uuid.UUID) (*v1.Match, e
 		ChatLogs: make([]*v1.MatchChatLog, len(match.ChatLogs)),
 		Kills:    make([]*v1.MatchKill, len(match.Kills)),
 		Events:   make([]*v1.MatchEvent, len(match.Events)),
+	}
+
+	if !match.AssetID.IsNil() {
+		out.Overview.AssetId = new(match.AssetID.String())
 	}
 
 	assembleRounds(out, match)

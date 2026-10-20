@@ -660,7 +660,7 @@ func (r Repository) getMatch(ctx context.Context, matchID uuid.UUID) (*Match, er
 			m.start_time, m.duration_ms, m.created_on, COALESCE(a.asset_id, '00000000-0000-0000-0000-000000000000')
 		FROM match m
 		LEFT JOIN demo d USING (demo_id)
-		LEFT JOIN asset a USING (asset_id)
+		LEFT JOIN asset a ON a.asset_id = d.asset_id AND NOT a.deleted
 		WHERE match_id = $1`
 
 	var match Match

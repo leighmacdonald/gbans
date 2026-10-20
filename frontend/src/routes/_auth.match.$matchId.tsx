@@ -137,7 +137,7 @@ function MatchPage() {
 							<Typography variant="body2" color="textSecondary" noWrap title={overview?.hostname}>
 								{overview?.hostname}
 							</Typography>
-							{overview?.assetId && (
+							{overview?.assetId ? (
 								<Button
 									variant="contained"
 									size="small"
@@ -147,7 +147,11 @@ function MatchPage() {
 								>
 									Download STV
 								</Button>
-							)}
+							) : overview?.demoId ? (
+								<Typography variant="body2" color="textSecondary" sx={{ flexShrink: 0 }}>
+									STV no longer available
+								</Typography>
+							) : null}
 						</Stack>
 					</Stack>
 				</Paper>

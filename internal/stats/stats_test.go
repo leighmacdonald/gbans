@@ -12,6 +12,7 @@ import (
 
 	"connectrpc.com/authn"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/database"
 	queryv1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	"github.com/leighmacdonald/gbans/internal/json"
@@ -1236,7 +1237,21 @@ func seedTestMap(t *testing.T, fixture *tests.Fixture, name string) int32 {
 	return mapID
 }
 
-func seedTestMatch(t *testing.T, fixture *tests.Fixture, serverID, mapID, demoID, bucketID int32, start time.Time) {
+func seedTestAsset(t *testing.T, fixture *tests.Fixture, authorID steamid.SteamID) uuid.UUID {
+	t.Helper()
+
+	assetID, errID := uuid.NewV4()
+	require.NoError(t, errID)
+
+	require.NoError(t, fixture.Database.Exec(t.Context(), `
+		INSERT INTO asset (asset_id, bucket, mime_type, size, name, hash, author_id, created_on, updated_on)
+		VALUES ($1, $2, $3, 1, $4, $5, $6, now(), now())`,
+		assetID, string(asset.BucketDemo), "application/octet-stream", "test.dem.zst", []byte{0}, authorID.Int64()))
+
+	return assetID
+}
+
+func seedTestMatch(t *testing.T, fixture *tests.Fixture, serverID, mapID, demoID, bucketID int32, start time.Time) uuid.UUID {
 	t.Helper()
 
 	matchID, errMatch := uuid.NewV4()
@@ -1248,6 +1263,8 @@ func seedTestMatch(t *testing.T, fixture *tests.Fixture, serverID, mapID, demoID
 			score_red, score_blu, start_time, duration_ms, created_on
 		) VALUES ($1, $2, $3, $4, $5, $6, 1, 2, $7, 120000, now())`,
 		matchID, serverID, mapID, demoID, bucketID, "test-host", start))
+
+	return matchID
 }
 
 // TestQueryMatches exercises the match history query end to end, covering the
@@ -1269,7 +1286,7 @@ func TestQueryMatches(t *testing.T) {
 
 	base := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	// Buckets 1 (casual) and 2 (1ku) are seeded by the migrations.
-	seedTestMatch(t, fixture, serverA.ServerID, mapA, demoA, 1, base)
+	firstMatchID := seedTestMatch(t, fixture, serverA.ServerID, mapA, demoA, 1, base)
 	seedTestMatch(t, fixture, serverB.ServerID, mapA, demoA, 1, base.Add(time.Hour))
 	seedTestMatch(t, fixture, serverA.ServerID, mapB, demoA, 2, base.Add(2*time.Hour))
 	seedTestMatch(t, fixture, serverB.ServerID, mapB, demoB, 2, base.Add(3*time.Hour))
@@ -1382,6 +1399,31 @@ func TestQueryMatches(t *testing.T) {
 		require.Equal(t, uint64(4), resp.GetCount())
 		require.Equal(t, int32(1), resp.GetMatches()[0].GetStatsBucketId())
 		require.Equal(t, int32(2), resp.GetMatches()[3].GetStatsBucketId())
+	})
+
+	t.Run("pruned demo asset", func(t *testing.T) {
+		ownerSID := steamid.New(fixture.Config.Config().Owner)
+		require.NoError(t, fixture.Persons.EnsurePerson(ctx, ownerSID))
+
+		assetID := seedTestAsset(t, fixture, ownerSID)
+		require.NoError(t, fixture.Database.Exec(ctx,
+			`UPDATE demo SET asset_id = $1 WHERE demo_id = $2`, assetID, demoA))
+
+		getOverview := func(t *testing.T) *statsv1.MatchOverview {
+			t.Helper()
+
+			resp, err := client.Match(ctx, &statsv1.MatchRequest{MatchId: new(firstMatchID.String())})
+			require.NoError(t, err)
+
+			return resp.GetMatch().GetOverview()
+		}
+
+		require.Equal(t, assetID.String(), getOverview(t).GetAssetId())
+
+		require.NoError(t, fixture.Database.Exec(ctx,
+			`UPDATE asset SET deleted = true WHERE asset_id = $1`, assetID))
+
+		require.Empty(t, getOverview(t).GetAssetId())
 	})
 }
 
