@@ -486,7 +486,9 @@ func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, ser
 // shouldRemoveRemoteDemo reports whether a demo failed ingestion for a reason
 // that will not change on retry.
 func shouldRemoveRemoteDemo(err error) bool {
-	return errors.Is(err, asset.ErrAssetTooLarge) || errors.Is(err, stats.ErrNotEnoughPlayers)
+	return errors.Is(err, asset.ErrAssetTooLarge) ||
+		errors.Is(err, stats.ErrNotEnoughPlayers) ||
+		errors.Is(err, stats.ErrMatchTooLong)
 }
 
 func (d Demos) oldest(ctx context.Context) (Info, error) {

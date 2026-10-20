@@ -30,6 +30,11 @@ func TestShouldRemoveRemoteDemo(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "match too long",
+			err:  fmt.Errorf("%w: %w", stats.ErrMatchFiltered, stats.ErrMatchTooLong),
+			want: true,
+		},
+		{
 			name: "joined cleanup error",
 			err:  errors.Join(asset.ErrDeleteAssetFile, fmt.Errorf("%w: %w", stats.ErrMatchFiltered, stats.ErrNotEnoughPlayers)),
 			want: true,
