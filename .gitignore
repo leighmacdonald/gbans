@@ -24,6 +24,7 @@ sourcemod/.vscode/
 !/internal/database/migrations/*.sql
 
 *.txt
+!sourcemod/configs/adminmenu_custom.txt
 /frontend/dist/
 /frontend/node_modules/
 /.cache/
