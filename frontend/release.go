@@ -9,7 +9,11 @@ import (
 	"net/http"
 )
 
-//go:embed dist/*
+// The all: prefix is required: TanStack Router emits lazy route chunks whose
+// names start with an underscore (ex. _guest.index-*.js) and the default
+// go:embed pattern silently excludes files beginning with "_" or ".".
+//
+//go:embed all:dist
 var embedFS embed.FS
 
 func AddRoutes(mux *http.ServeMux, _ string) error {
