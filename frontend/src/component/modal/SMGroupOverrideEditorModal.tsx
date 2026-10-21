@@ -39,6 +39,7 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
 		});
 
 		const form = useAppForm({
+			formId: `group-override-${group.groupId}-${override?.groupOverrideId ?? "create"}`,
 			onSubmit: async ({ value }) => {
 				if (override?.groupOverrideId) {
 					editMutation.mutate({ ...value, groupOverrideId: override.groupOverrideId });

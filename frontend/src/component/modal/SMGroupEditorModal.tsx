@@ -46,6 +46,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: Group }
 	});
 
 	const form = useAppForm({
+		formId: group?.groupId ? `sm-group-${group.groupId}` : "sm-group-create",
 		onSubmit: async ({ value }) => {
 			if (group?.groupId) {
 				editMutation.mutate({ groupId: group.groupId, ...value });

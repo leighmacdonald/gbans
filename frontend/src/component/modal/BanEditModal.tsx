@@ -1,6 +1,6 @@
 import { create } from "@bufbuild/protobuf";
-import { type Timestamp, timestampDate } from "@bufbuild/protobuf/wkt";
-import { useMutation, useQuery } from "@connectrpc/connect-query";
+import { type Timestamp, timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
+import { createConnectQueryKey, useMutation, useQuery, useTransport } from "@connectrpc/connect-query";
 import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import DirectionsRunIcon from "@mui/icons-material/DirectionsRun";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -11,14 +11,23 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
 import Typography from "@mui/material/Typography";
+import { useQueryClient } from "@tanstack/react-query";
 import { formatDuration, formatISO9075, isAfter } from "date-fns";
 import { intervalToDuration } from "date-fns/intervalToDuration";
 import { useMemo } from "react";
 import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import { AppealState, BanReason, BanType, type UpdateRequest, UpdateRequestSchema } from "../../rpc/ban/v1/ban_pb.ts";
+import {
+	AppealState,
+	BanReason,
+	BanService,
+	BanType,
+	type UpdateRequest,
+	UpdateRequestSchema,
+} from "../../rpc/ban/v1/ban_pb.ts";
 import { get, update } from "../../rpc/ban/v1/ban-BanService_connectquery.ts";
+import { type BanDuration, banExpirationFromDuration } from "../../util/ban.ts";
 import { enumValues } from "../../util/lists.ts";
 import { banTypeString } from "../../util/strings.ts";
 import { emptyOrNullString } from "../../util/types.ts";
@@ -32,29 +41,48 @@ export const BanEditModal = NiceModal.create(({ banId }: { banId: number }) => {
 
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const modal = useModal();
+	const queryClient = useQueryClient();
+	const transport = useTransport();
 
 	const mutation = useMutation(update, {
 		onSuccess: async (banRecord) => {
 			sendFlash("success", "Updated ban successfully");
-			modal.resolve(banRecord);
+			queryClient.invalidateQueries({
+				queryKey: createConnectQueryKey({
+					schema: BanService.method.get,
+					cardinality: "finite",
+					transport,
+					input: { banId },
+				}),
+			});
+			queryClient.invalidateQueries({
+				queryKey: createConnectQueryKey({
+					schema: BanService.method.query,
+					cardinality: "finite",
+					transport,
+					input: {},
+				}),
+			});
+			modal.resolve(banRecord.ban);
 			await modal.hide();
 		},
 		onError: sendError,
 	});
 
-	const defaultValues: Omit<UpdateRequest, "$typeName"> = {
+	const defaultValues: Omit<UpdateRequest, "$typeName" | "validUntil"> & { validUntil?: Date } = {
 		banType: record?.ban?.banType ?? BanType.BANNED,
 		reason: record?.ban?.reason ?? BanReason.CHEATING,
 		reasonText: record?.ban?.reasonText ?? "",
 		note: record?.ban?.note ?? "",
 		evadeOk: record?.ban?.evadeOk ?? false,
 		cidr: record?.ban?.cidr ?? "",
-		validUntil: record?.ban?.validUntil,
+		validUntil: record?.ban?.validUntil ? timestampDate(record.ban.validUntil) : undefined,
 		appealState: record?.ban?.appealState ?? AppealState.OPEN_UNSPECIFIED,
 		banId: banId,
 	};
 
 	const form = useAppForm({
+		formId: `ban-${banId}`,
 		onSubmit: async ({ value }) => {
 			mutation.mutate(
 				create(UpdateRequestSchema, {
@@ -63,14 +91,14 @@ export const BanEditModal = NiceModal.create(({ banId }: { banId: number }) => {
 					reasonText: emptyOrNullString(value.reasonText) ? undefined : value.reasonText,
 					note: emptyOrNullString(value.note) ? undefined : value.note,
 					evadeOk: value.evadeOk,
-					validUntil: value.validUntil ? value.validUntil : record?.ban?.validUntil,
+					validUntil: value.validUntil ? timestampFromDate(value.validUntil) : record?.ban?.validUntil,
 					cidr: emptyOrNullString(value.cidr) ? undefined : value.cidr,
 					banId: banId,
 					appealState: record?.ban?.appealState,
 				}),
 			);
 		},
-		defaultValues,
+		defaultValues: { ...defaultValues, duration: "custom" as BanDuration },
 	});
 
 	const isExpired = useMemo(() => {
@@ -182,7 +210,24 @@ export const BanEditModal = NiceModal.create(({ banId }: { banId: number }) => {
 								}}
 							/>
 						</Grid>
-						<Grid size={{ xs: 12 }}>
+						<Grid size={{ xs: 12, sm: 6 }}>
+							<form.AppField
+								name={"duration"}
+								children={(field) => {
+									return (
+										<field.SelectBanDurationField
+											handleChange={(duration) => {
+												const expiresAt = banExpirationFromDuration(duration);
+												if (expiresAt) {
+													form.setFieldValue("validUntil", expiresAt);
+												}
+											}}
+										/>
+									);
+								}}
+							/>
+						</Grid>
+						<Grid size={{ xs: 12, sm: 6 }}>
 							<form.AppField
 								name={"validUntil"}
 								children={(field) => {

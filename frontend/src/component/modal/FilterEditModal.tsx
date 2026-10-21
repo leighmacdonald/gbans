@@ -53,6 +53,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
 	});
 
 	const form = useAppForm({
+		formId: filter?.filterId ? `filter-${filter.filterId}` : "filter-create",
 		onSubmit: async (value) => {
 			if (filter) {
 				editMutation.mutate({ filter: { ...value.value, filterId: filter.filterId } });

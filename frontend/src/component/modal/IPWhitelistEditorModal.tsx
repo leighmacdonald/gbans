@@ -30,6 +30,7 @@ export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: C
 	});
 
 	const form = useAppForm({
+		formId: source?.cidrBlockWhitelistId ? `ip-whitelist-${source.cidrBlockWhitelistId}` : "ip-whitelist-create",
 		onSubmit: async ({ value }) => {
 			mutation.mutate(value);
 		},

@@ -32,6 +32,8 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 	});
 
 	const form = useAppForm({
+		formId:
+			contest?.contestId && contest.contestId !== EMPTY_UUID ? `contest-${contest.contestId}` : "contest-create",
 		onSubmit: async ({ value }) => {
 			mutation.mutate({ contest: value });
 		},

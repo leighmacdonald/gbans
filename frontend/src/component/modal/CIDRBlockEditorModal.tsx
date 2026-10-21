@@ -40,6 +40,7 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
 	});
 
 	const form = useAppForm({
+		formId: source?.cidrBlockSourceId ? `cidr-source-${source.cidrBlockSourceId}` : "cidr-source-create",
 		onSubmit: async ({ value }) => {
 			mutation.mutate(value);
 		},

@@ -27,6 +27,7 @@ export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups
 	});
 
 	const form = useAppForm({
+		formId: `group-immunity-${groups.map((g) => g.groupId).join("-")}`,
 		onSubmit: async ({ value }) => {
 			mutation.mutate({ groupId: value.group.groupId, otherId: value.other.groupId });
 		},

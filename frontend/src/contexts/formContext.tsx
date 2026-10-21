@@ -11,6 +11,7 @@ const DatePickerField = lazy(() => import("../component/form/field/DatePickerFie
 const MarkdownField = lazy(() => import("../component/form/field/MarkdownField.tsx"));
 const NumberField = lazy(() => import("../component/form/field/NumberField.tsx"));
 const SelectField = lazy(() => import("../component/form/field/SelectField.tsx"));
+const SelectBanDurationField = lazy(() => import("../component/form/field/SelectBanDurationField.tsx"));
 const SelectBanReasonField = lazy(() => import("../component/form/field/SelectBanReasonField.tsx"));
 const SelectBanTypeField = lazy(() => import("../component/form/field/SelectBanTypeField.tsx"));
 const SelectAppealStateField = lazy(() => import("../component/form/field/SelectAppealStateField.tsx"));
@@ -34,6 +35,11 @@ const SelectOverrideAccessField = lazy(() => import("../component/form/field/Sel
 
 export const { fieldContext, formContext, useFieldContext, useFormContext } = createFormHookContexts();
 
+// Modals that edit a specific entity must pass an entity-scoped formId (e.g.
+// `filter-${filter?.filterId ?? "create"}`). NiceModal reuses a mounted modal
+// instance if it is re-shown before the exit transition unmounts it, and
+// TanStack only re-applies defaultValues to untouched forms, so without a
+// distinct formId the previously opened entity's values would persist.
 export const { useAppForm, withForm } = createFormHook({
 	fieldContext,
 	formContext,
@@ -43,6 +49,7 @@ export const { useAppForm, withForm } = createFormHook({
 		NumberField,
 		SteamIDField,
 		SelectField,
+		SelectBanDurationField,
 		SelectBanReasonField,
 		SelectBanTypeField,
 		SelectAppealStateField,

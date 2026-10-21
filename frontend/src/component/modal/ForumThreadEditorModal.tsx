@@ -68,6 +68,7 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Th
 	});
 
 	const form = useAppForm({
+		formId: `thread-${thread.forumThreadId}`,
 		onSubmit: async ({ value }) => {
 			mutation.mutate({ ...value, forumThreadId: thread.forumThreadId });
 		},

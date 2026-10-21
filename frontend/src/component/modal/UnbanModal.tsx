@@ -42,6 +42,7 @@ export const UnbanModal = NiceModal.create(
 		});
 
 		const form = useAppForm({
+			formId: `unban-${banId}`,
 			onSubmit: async ({ value }) => {
 				mutation.mutate({ reason: value.unbanReason, banId });
 			},

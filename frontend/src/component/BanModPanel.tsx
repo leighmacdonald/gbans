@@ -28,7 +28,7 @@ import { ButtonLink } from "./ButtonLink.tsx";
 import { ContainerWithHeader } from "./ContainerWithHeader";
 import { ErrorDetails } from "./ErrorDetails.tsx";
 import { LoadingPlaceholder } from "./LoadingPlaceholder.tsx";
-import { BanCreateModal } from "./modal/BanCreateModal.tsx";
+import { BanEditModal } from "./modal/BanEditModal.tsx";
 import { UnbanModal } from "./modal/UnbanModal.tsx";
 
 const onSubmit = z.object({
@@ -57,8 +57,8 @@ export const BanModPanel = ({ banId }: { banId: number }) => {
 	}, [banId, data?.ban?.targetPersonaName]);
 
 	const onEditBan = useCallback(async () => {
-		await NiceModal.show(BanCreateModal, {});
-	}, []);
+		await NiceModal.show(BanEditModal, { banId });
+	}, [banId]);
 
 	const appealStateMutation = useMutation(update, {
 		onSuccess: () => {

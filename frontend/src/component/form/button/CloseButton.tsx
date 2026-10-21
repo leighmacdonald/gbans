@@ -16,7 +16,9 @@ type Props = {
 
 export const CloseButton = (props: Props) => {
 	const form = useFormContext();
-	const modal = useModal(ConfirmationModal);
+	// Must be the current modal's handle: useModal(ConfirmationModal) would
+	// hide the (unopened) confirmation dialog instead of this modal.
+	const modal = useModal();
 
 	const onClick = useCallback(async () => {
 		if (form.state.isDirty) {
