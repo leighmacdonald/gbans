@@ -210,6 +210,17 @@ func (s Service) QueryStats(ctx context.Context, request *v1.QueryStatsRequest) 
 				slog.String("error", errMyRank.Error()))
 		} else if myRank > 0 {
 			resp.MyRank = &myRank
+			// The exact row index lets clients page straight to the table
+			// page containing the user's row, which rank alone cannot do
+			// while players are tied.
+			myIndex, errMyIndex := s.stats.MyIndex(ctx, opts, userSteamID, myRank)
+			if errMyIndex != nil {
+				slog.Error("Failed to load user index",
+					slog.String("steamID", userSteamID.String()),
+					slog.String("error", errMyIndex.Error()))
+			} else {
+				resp.MyIndex = &myIndex
+			}
 		}
 	}
 	if errStats != nil {

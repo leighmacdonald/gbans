@@ -4,6 +4,14 @@ Stats are generated for many game events. They are summarized into atomic matche
 design goal is to have a cross between [logs.tf](https://logs.tf)
 and [hlstatsx:ce](https://github.com/A1mDev/hlstatsx-community-edition).
 
+## Game Stats page
+
+The `/stats` page (requires the `stats_read` permission) shows leaderboards per stats bucket for a chosen time
+window (day, week, month, year, or all time), overall or broken down by kills, healing, weapon, or class.
+
+When the signed-in player has stats in the selected window, their rank is shown in the page header. Clicking it
+jumps the leaderboard table to the page containing their row and briefly highlights it.
+
 ## Compared with hlstatsx:ce
 
 - Considerably better scaling performance:

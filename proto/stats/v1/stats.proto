@@ -168,6 +168,11 @@ message QueryStatsResponse {
   // my_rank is the rank of the requesting user in the queried bucket,
   // variant and time window. 0 when the user has no stats in the window.
   uint64 my_rank = 5;
+  // my_index is the 0-based position of the requesting user's row in the
+  // full result set, ordered by (rank, steam_id) the same way QueryStats
+  // returns rows. Clients can use it to jump directly to the table page
+  // containing the user's row. 0 when the user has no stats in the window.
+  uint64 my_index = 6;
 }
 
 // OverallStats is a single player's aggregated per-player (global) stats for

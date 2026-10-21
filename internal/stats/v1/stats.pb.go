@@ -926,7 +926,12 @@ type QueryStatsResponse struct {
 	StatContainer isQueryStatsResponse_StatContainer `protobuf_oneof:"stat_container"`
 	// my_rank is the rank of the requesting user in the queried bucket,
 	// variant and time window. 0 when the user has no stats in the window.
-	MyRank        *uint64 `protobuf:"varint,5,opt,name=my_rank,json=myRank" json:"my_rank,omitempty"`
+	MyRank *uint64 `protobuf:"varint,5,opt,name=my_rank,json=myRank" json:"my_rank,omitempty"`
+	// my_index is the 0-based position of the requesting user's row in the
+	// full result set, ordered by (rank, steam_id) the same way QueryStats
+	// returns rows. Clients can use it to jump directly to the table page
+	// containing the user's row. 0 when the user has no stats in the window.
+	MyIndex       *uint64 `protobuf:"varint,6,opt,name=my_index,json=myIndex" json:"my_index,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1003,6 +1008,13 @@ func (x *QueryStatsResponse) GetStatsOverall() *OverallStatsContainer {
 func (x *QueryStatsResponse) GetMyRank() uint64 {
 	if x != nil && x.MyRank != nil {
 		return *x.MyRank
+	}
+	return 0
+}
+
+func (x *QueryStatsResponse) GetMyIndex() uint64 {
+	if x != nil && x.MyIndex != nil {
+		return *x.MyIndex
 	}
 	return 0
 }
@@ -4150,13 +4162,14 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\avariant\x18\x04 \x01(\x0e2\x11.stats.v1.VariantB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\avariant\x12\x1f\n" +
 	"\vvariant_key\x18\x05 \x01(\tR\n" +
 	"variantKey\x126\n" +
-	"\x04time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\x04time\"\x9a\x02\n" +
+	"\x04time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\x04time\"\xb9\x02\n" +
 	"\x12QueryStatsResponse\x12+\n" +
 	"\avariant\x18\x01 \x01(\x0e2\x11.stats.v1.VariantR\avariant\x12\x18\n" +
 	"\x05count\x18\x02 \x01(\x04B\x020\x01R\x05count\x12F\n" +
 	"\rstats_variant\x18\x03 \x01(\v2\x1f.stats.v1.VariantStatsContainerH\x00R\fstatsVariant\x12F\n" +
 	"\rstats_overall\x18\x04 \x01(\v2\x1f.stats.v1.OverallStatsContainerH\x00R\fstatsOverall\x12\x1b\n" +
-	"\amy_rank\x18\x05 \x01(\x04B\x020\x01R\x06myRankB\x10\n" +
+	"\amy_rank\x18\x05 \x01(\x04B\x020\x01R\x06myRank\x12\x1d\n" +
+	"\bmy_index\x18\x06 \x01(\x04B\x020\x01R\amyIndexB\x10\n" +
 	"\x0estat_container\"\xdf\x15\n" +
 	"\fOverallStats\x12\x16\n" +
 	"\x04rank\x18\x01 \x01(\x04B\x020\x01R\x04rank\x120\n" +
