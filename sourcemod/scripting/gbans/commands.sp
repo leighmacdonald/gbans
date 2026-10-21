@@ -73,6 +73,10 @@ Action onCmdSeed(int clientId, int argc) {
         return Plugin_Continue;
     }
 
+    // Acknowledge the request up front so the player knows it was received; the
+    // final status is delivered from onCmdSeedReceived once the server responds.
+    ReplyToCommand(clientId, "Seed request submitted, waiting for confirmation...");
+
     JSONObject obj = new JSONObject();
     obj.SetString("steamId", authId);
 
@@ -82,19 +86,23 @@ Action onCmdSeed(int clientId, int argc) {
 }
 
 void onCmdSeedReceived(HTTPResponse response, any clientId) {
+    // Deliver the final status via chat. ReplyToCommand is only reliable from
+    // within a command handler, but this callback fires asynchronously once the
+    // server responds. PrintToChat is a safe no-op if the player disconnected
+    // while the request was in flight.
     switch (response.Status) {
     case HTTPStatus_TooManyRequests: {
-        ReplyToCommand(clientId, "Please wait before making new seed requests (5min cooldown)");
+        PrintToChat(clientId, "Please wait before making new seed requests (5min cooldown)");
         return;
     }
     case HTTPStatus_OK: {
-        ReplyToCommand(clientId, "Mods have been alerted, thanks!");
+        PrintToChat(clientId, "Mods have been alerted, thanks!");
         return;
     }
     case HTTPStatus_Unauthorized: {
         PrintRPCError(response);
         authenticateServer();
-        ReplyToCommand(clientId, "Server authentication expired, re-authenticating. Please try again shortly.");
+        PrintToChat(clientId, "Server authentication expired, re-authenticating. Please try again shortly.");
         return;
     }
     default: {
@@ -102,10 +110,9 @@ void onCmdSeedReceived(HTTPResponse response, any clientId) {
 
         char reason[256];
         if (GetRPCErrorMessage(response, reason, sizeof reason)) {
-            ReplyToCommand(clientId, "Seed request failed: %s", reason);
+            PrintToChat(clientId, "Seed request failed: %s", reason);
         } else {
-            ReplyToCommand(clientId, "Seed request failed (HTTP %d), check the server logs for details",
-                           response.Status);
+            PrintToChat(clientId, "Seed request failed (HTTP %d), check the server logs for details", response.Status);
         }
 
         return;

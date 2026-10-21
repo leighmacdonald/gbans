@@ -13,6 +13,7 @@ This covers functionality available through the gbans plugin as well as some rec
 | gb_reload  | ADMFLAG_ROOT | Reinitializes some parts of the plugin such as authentication password.              |
 | gb_version |              | Shows the current plugin version.                                                    |
 | report     |              | Report a user.                                                                       |
+| seed       |              | Send a seed request to discord, and reply to the player with the request status.     |
 
 ## Convars
 
