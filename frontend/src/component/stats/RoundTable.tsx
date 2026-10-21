@@ -13,6 +13,7 @@ import { useMemo } from "react";
 import { type RoundPlayer, Team } from "../../rpc/stats/v1/stats_pb.ts";
 import { blu, red } from "../../theme.ts";
 import { durationString } from "../../util/time.ts";
+import { CompactNumber } from "../CompactNumber.tsx";
 import { PersonCell } from "../PersonCell.tsx";
 import { shortHeader } from "../table/columnHeaders";
 import { createDefaultTableOptions } from "../table/options";
@@ -111,28 +112,56 @@ const RoundPlayersDetail = ({ players, durationMs }: { players: RoundPlayer[]; d
 									)}
 								</TableCell>
 								<TableCell>{p.team === Team.RED ? "RED" : p.team === Team.BLU ? "BLU" : "—"}</TableCell>
-								<TableCell align="right">{kills}</TableCell>
-								<TableCell align="right">{assists}</TableCell>
-								<TableCell align="right">{deaths}</TableCell>
-								<TableCell align="right">{damage.toLocaleString()}</TableCell>
 								<TableCell align="right">
-									{Math.round(damage / durationMins).toLocaleString()}
+									<CompactNumber value={kills} />
+								</TableCell>
+								<TableCell align="right">
+									<CompactNumber value={assists} />
+								</TableCell>
+								<TableCell align="right">
+									<CompactNumber value={deaths} />
+								</TableCell>
+								<TableCell align="right">
+									<CompactNumber value={damage} />
+								</TableCell>
+								<TableCell align="right">
+									<CompactNumber value={Math.round(damage / durationMins)} />
 								</TableCell>
 								<TableCell align="right">{fmt1dp((kills + assists) / Math.max(1, deaths))}</TableCell>
 								<TableCell align="right">{fmt1dp(kills / Math.max(1, deaths))}</TableCell>
-								<TableCell align="right">{damageTaken.toLocaleString()}</TableCell>
 								<TableCell align="right">
-									{Math.round(damageTaken / durationMins).toLocaleString()}
+									<CompactNumber value={damageTaken} />
 								</TableCell>
-								<TableCell align="right">{Number(p.healing).toLocaleString()}</TableCell>
-								<TableCell align="right">{chargesOf(p)}</TableCell>
-								<TableCell align="right">{Number(p.drops)}</TableCell>
-								<TableCell align="right">{Number(p.airshots)}</TableCell>
-								<TableCell align="right">{Number(p.backstabs)}</TableCell>
-								<TableCell align="right">{Number(p.headshots)}</TableCell>
-								<TableCell align="right">{Number(p.captures)}</TableCell>
-								<TableCell align="right">{Number(p.capturesBlocked)}</TableCell>
-								<TableCell align="right">{Number(p.points).toLocaleString()}</TableCell>
+								<TableCell align="right">
+									<CompactNumber value={Math.round(damageTaken / durationMins)} />
+								</TableCell>
+								<TableCell align="right">
+									<CompactNumber value={Number(p.healing)} />
+								</TableCell>
+								<TableCell align="right">
+									<CompactNumber value={chargesOf(p)} />
+								</TableCell>
+								<TableCell align="right">
+									<CompactNumber value={Number(p.drops)} />
+								</TableCell>
+								<TableCell align="right">
+									<CompactNumber value={Number(p.airshots)} />
+								</TableCell>
+								<TableCell align="right">
+									<CompactNumber value={Number(p.backstabs)} />
+								</TableCell>
+								<TableCell align="right">
+									<CompactNumber value={Number(p.headshots)} />
+								</TableCell>
+								<TableCell align="right">
+									<CompactNumber value={Number(p.captures)} />
+								</TableCell>
+								<TableCell align="right">
+									<CompactNumber value={Number(p.capturesBlocked)} />
+								</TableCell>
+								<TableCell align="right">
+									<CompactNumber value={Number(p.points)} />
+								</TableCell>
 							</TableRow>
 						);
 					})}
@@ -186,38 +215,42 @@ export const RoundTable = ({ data }: { data: MatchRound[] }) => {
 				enableSorting: false,
 				...shortHeader("BLU K", "BLU kills"),
 				size: 70,
+				Cell: ({ cell }) => <CompactNumber value={Number(cell.getValue())} />,
 			}),
 			roundColumnHelper.accessor("killsRed", {
 				grow: false,
 				enableSorting: false,
 				...shortHeader("RED K", "RED kills"),
 				size: 70,
+				Cell: ({ cell }) => <CompactNumber value={Number(cell.getValue())} />,
 			}),
 			roundColumnHelper.accessor("chargesBlu", {
 				grow: false,
 				enableSorting: false,
 				...shortHeader("BLU UC", "BLU ÜberCharges"),
 				size: 70,
+				Cell: ({ cell }) => <CompactNumber value={Number(cell.getValue())} />,
 			}),
 			roundColumnHelper.accessor("chargesRed", {
 				grow: false,
 				enableSorting: false,
 				...shortHeader("RED UC", "RED ÜberCharges"),
 				size: 70,
+				Cell: ({ cell }) => <CompactNumber value={Number(cell.getValue())} />,
 			}),
 			roundColumnHelper.accessor("damageBlu", {
 				grow: false,
 				enableSorting: false,
 				...shortHeader("BLU DA", "BLU damage dealt"),
 				size: 80,
-				Cell: ({ cell }) => Number(cell.getValue()).toLocaleString(),
+				Cell: ({ cell }) => <CompactNumber value={Number(cell.getValue())} />,
 			}),
 			roundColumnHelper.accessor("damageRed", {
 				grow: false,
 				enableSorting: false,
 				...shortHeader("RED DA", "RED damage dealt"),
 				size: 80,
-				Cell: ({ cell }) => Number(cell.getValue()).toLocaleString(),
+				Cell: ({ cell }) => <CompactNumber value={Number(cell.getValue())} />,
 			}),
 			roundColumnHelper.display({
 				id: "status",

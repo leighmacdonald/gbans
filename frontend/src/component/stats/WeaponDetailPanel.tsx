@@ -1,6 +1,7 @@
 import Typography from "@mui/material/Typography";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useMemo } from "react";
+import { CompactNumber } from "../CompactNumber";
 import { shortHeader } from "../table/columnHeaders";
 import { createDefaultTableOptions } from "../table/options";
 import { SortableTable } from "../table/SortableTable";
@@ -44,108 +45,129 @@ export const VariantDetailPanel = ({
 				...shortHeader("Kills", "Kills"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 
 			roundColumnHelper.accessor("assists", {
 				...shortHeader("Assists", "Assists"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("deaths", {
 				...shortHeader("Deaths", "Deaths"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("healing", {
 				...shortHeader("Healing", "Healing"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("damage", {
 				...shortHeader("Damage", "Damage dealt"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("damageTaken", {
 				...shortHeader("Damage Taken", "Damage taken"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("airshots", {
 				...shortHeader("AS", "Airshots"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("headshots", {
 				...shortHeader("HS (K)", "Headshots"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("headshotKills", {
 				...shortHeader("HSK", "Headshot kills"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("backstabs", {
 				grow: false,
 				...shortHeader("BS (K)", "Backstabs"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("backstabKills", {
 				...shortHeader("BSK", "Backstab kills"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("dominations", {
 				...shortHeader("DOM", "Dominations"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("dominated", {
 				...shortHeader("DOMD", "Times dominated"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("revenges", {
 				...shortHeader("Revenges", "Revenges"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("revenged", {
 				...shortHeader("Revenged", "Times revenged"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("drops", {
 				...shortHeader("Drops", "Charge drops"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("nearFullChargeDeath", {
 				...shortHeader("NFCD", "Deaths with near-full ÜberCharge"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("chargesUber", {
 				...shortHeader("Uber", "ÜberCharges"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("chargesKritz", {
 				...shortHeader("Kritz", "Kritzkrieg charges"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("chargesVacc", {
 				...shortHeader("Vacc", "Vaccinator charges"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			roundColumnHelper.accessor("chargesQuickfix", {
 				...shortHeader("Quickfix", "Quick-Fix charges"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 		],
 		[roundColumnHelper, isWeapons],

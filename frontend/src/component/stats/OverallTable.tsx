@@ -19,6 +19,7 @@ import classSpy from "../../icons/class_spy.png";
 import { Route } from "../../routes/_auth.match.$matchId";
 import { Team } from "../../rpc/stats/v1/stats_pb.ts";
 import { blu, red } from "../../theme.ts";
+import { CompactNumber } from "../CompactNumber";
 import { PersonCell } from "../PersonCell";
 import { shortHeader } from "../table/columnHeaders";
 import { createDefaultTableOptions, type OnChangeFn } from "../table/options";
@@ -174,31 +175,35 @@ export const OverallTable = ({
 				...shortHeader("K", "Kills"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			overallColumnHelper.accessor("assists", {
 				grow: false,
 				...shortHeader("A", "Assists"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			overallColumnHelper.accessor("deaths", {
 				grow: false,
 				...shortHeader("D", "Deaths"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			overallColumnHelper.accessor("damage", {
 				grow: false,
 				...shortHeader("DA", "Damage dealt"),
 				sortDescFirst: true,
 				size: 80,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			overallColumnHelper.accessor("damagePerMin", {
 				grow: false,
 				...shortHeader("DA/M", "Damage dealt per minute"),
 				sortDescFirst: true,
 				size: 80,
-				Cell: ({ cell }) => Math.round(cell.getValue<number>()).toLocaleString(),
+				Cell: ({ cell }) => <CompactNumber value={Math.round(cell.getValue<number>())} />,
 			}),
 			overallColumnHelper.accessor("kaPerD", {
 				grow: false,
@@ -219,67 +224,77 @@ export const OverallTable = ({
 				...shortHeader("DT", "Damage taken"),
 				sortDescFirst: true,
 				size: 80,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			overallColumnHelper.accessor("dtPerMin", {
 				grow: false,
 				...shortHeader("DT/M", "Damage taken per minute"),
 				sortDescFirst: true,
 				size: 80,
-				Cell: ({ cell }) => Math.round(cell.getValue<number>()).toLocaleString(),
+				Cell: ({ cell }) => <CompactNumber value={Math.round(cell.getValue<number>())} />,
 			}),
 			overallColumnHelper.accessor("healing", {
 				grow: false,
 				...shortHeader("HP", "Healing"),
 				sortDescFirst: true,
 				size: 80,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			overallColumnHelper.accessor("charges", {
 				grow: false,
 				...shortHeader("UC", "ÜberCharges (all types)"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			overallColumnHelper.accessor("drops", {
 				grow: false,
 				...shortHeader("Drops", "Charge drops"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			overallColumnHelper.accessor("as", {
 				grow: false,
 				...shortHeader("AS", "Airshots"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			overallColumnHelper.accessor("bs", {
 				grow: false,
 				...shortHeader("BS", "Backstabs"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			overallColumnHelper.accessor("hs", {
 				grow: false,
 				...shortHeader("HS", "Headshots"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			overallColumnHelper.accessor("cap", {
 				grow: false,
 				...shortHeader("CAP", "Point captures"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			overallColumnHelper.accessor("capturesBlocked", {
 				grow: false,
 				...shortHeader("Blocked", "Captures blocked"),
 				sortDescFirst: true,
 				size: 80,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 			overallColumnHelper.accessor("points", {
 				grow: false,
 				...shortHeader("P", "Scoreboard points"),
 				sortDescFirst: true,
 				size: colSize,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue<number>()} />,
 			}),
 		],
 		[],
