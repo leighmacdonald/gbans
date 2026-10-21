@@ -15,6 +15,7 @@ export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: Group[
 	const modal = useModal();
 
 	const form = useAppForm({
+		formId: `group-select-${groups.map((g) => g.groupId).join("-")}`,
 		onSubmit: async ({ value }) => {
 			const group = groups.find((v) => v.groupId === value.group.groupId);
 			if (group) {

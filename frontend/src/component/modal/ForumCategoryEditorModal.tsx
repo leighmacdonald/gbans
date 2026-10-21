@@ -40,6 +40,7 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
 	});
 
 	const form = useAppForm({
+		formId: category?.forumCategoryId ? `forum-category-${category.forumCategoryId}` : "forum-category-create",
 		onSubmit: async ({ value }) => {
 			if (category) {
 				editMutation.mutate({

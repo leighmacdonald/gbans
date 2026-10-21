@@ -125,7 +125,7 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 						<Grid size={{ xs: 12 }}>
 							<form.AppForm>
 								<ButtonGroup>
-									<form.CloseButton />
+									<form.CloseButton onClick={() => setEditMode(false)} />
 									<form.ResetButton />
 									<form.SubmitButton />
 								</ButtonGroup>

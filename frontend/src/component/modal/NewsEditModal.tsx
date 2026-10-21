@@ -37,6 +37,7 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: Article }) =
 	});
 
 	const form = useAppForm({
+		formId: entry?.newsId ? `news-${entry.newsId}` : "news-create",
 		onSubmit: async ({ value }) => {
 			if (entry?.newsId) {
 				editMutation.mutate(value);

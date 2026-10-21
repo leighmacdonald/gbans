@@ -51,6 +51,7 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
 	});
 
 	const form = useAppForm({
+		formId: override && override.overrideId > 0 ? `sm-override-${override.overrideId}` : "sm-override-create",
 		onSubmit: async ({ value }) => {
 			if (Number(override?.overrideId) > 0) {
 				editMutation.mutate({ overrideId: override.overrideId, ...value });

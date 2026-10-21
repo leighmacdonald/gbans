@@ -15,6 +15,7 @@ import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import { BanReason, BanService, BanType, CreateRequestSchema, Origin } from "../../rpc/ban/v1/ban_pb.ts";
 import { create as createBan } from "../../rpc/ban/v1/ban-BanService_connectquery.ts";
+import { type BanDuration, banExpirationFromDuration } from "../../util/ban.ts";
 import { enumValues } from "../../util/lists.ts";
 import { banTypeString } from "../../util/strings.ts";
 import { emptyOrNullString, zeroStringUndefined } from "../../util/types.ts";
@@ -67,10 +68,12 @@ export const BanCreateModal = NiceModal.create(({ reportId, steamId, demoId, dem
 		demoId: demoId,
 		demoTick: demoTick,
 		origin: Origin.REPORTED,
-		validUntil: new Date(),
+		duration: "2w" as BanDuration,
+		validUntil: banExpirationFromDuration("2w") ?? new Date(),
 	};
 
 	const form = useAppForm({
+		formId: `ban-create-${reportId ?? "none"}-${steamId ?? "none"}`,
 		onSubmit: async ({ value }) => {
 			const updateRequest = create(CreateRequestSchema, {
 				banType: value.banType,
@@ -179,7 +182,24 @@ export const BanCreateModal = NiceModal.create(({ reportId, steamId, demoId, dem
 								}}
 							/>
 						</Grid>
-						<Grid>
+						<Grid size={{ xs: 12, sm: 6 }}>
+							<form.AppField
+								name={"duration"}
+								children={(field) => {
+									return (
+										<field.SelectBanDurationField
+											handleChange={(duration) => {
+												const expiresAt = banExpirationFromDuration(duration);
+												if (expiresAt) {
+													form.setFieldValue("validUntil", expiresAt);
+												}
+											}}
+										/>
+									);
+								}}
+							/>
+						</Grid>
+						<Grid size={{ xs: 12, sm: 6 }}>
 							<form.AppField
 								name={"validUntil"}
 								children={(field) => {

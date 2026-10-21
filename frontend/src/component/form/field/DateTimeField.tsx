@@ -8,11 +8,12 @@ type Props = { helpText?: string } & DesktopDateTimePickerProps;
 export const DateTimeField = (props: Props) => {
 	const field = useFieldContext<Date>();
 	const errors = useSelector(field.store, (state) => state.meta.errors);
+	const value = useSelector(field.store, (state) => state.value);
 
 	return (
 		<DesktopDateTimePicker
 			{...props}
-			value={field.state.value}
+			value={value}
 			formatDensity={"spacious"}
 			onChange={(value) => {
 				field.handleChange(value as Date);

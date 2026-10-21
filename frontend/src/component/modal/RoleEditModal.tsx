@@ -32,6 +32,7 @@ export const RoleEditModal = NiceModal.create(({ role }: { role: Role }) => {
 	const defaultValues: Omit<RoleEditRequest, "$typeName"> = role;
 
 	const form = useAppForm({
+		formId: `role-${role.roleName}`,
 		onSubmit: async ({ value }) => {
 			mutation.mutate(
 				create(RoleEditRequestSchema, { ...value, roleName: value.roleName, permissions: value.permissions }),

@@ -54,6 +54,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 	});
 
 	const form = useAppForm({
+		formId: server ? `server-${server.serverId}` : "server-create",
 		onSubmit: async ({ value }) => {
 			mutation.mutate(
 				create(EditServerRequestSchema, {

@@ -35,6 +35,7 @@ export const ForumForumEditorModal = NiceModal.create(
 			: categories[0].forumCategoryId;
 
 		const form = useAppForm({
+			formId: forum?.forumId ? `forum-${forum.forumId}` : "forum-create",
 			onSubmit: async ({ value }) => {
 				mutation.mutate({ ...value, ordering: Number(value.ordering) });
 			},

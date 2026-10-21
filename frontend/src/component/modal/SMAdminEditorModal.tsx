@@ -68,6 +68,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: Admin }
 	});
 
 	const form = useAppForm({
+		formId: admin?.adminId ? `sm-admin-${admin.adminId}` : "sm-admin-create",
 		onSubmit: async ({ value }) => {
 			if (admin?.adminId) {
 				editMutation.mutate({
