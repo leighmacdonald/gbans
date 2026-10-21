@@ -198,7 +198,7 @@ func (b *Discord) CreateRole(name string) (string, error) {
 }
 
 func (b *Discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
-	slog.Debug("Logged in successfully", slog.String("name", session.State.User.Username),
+	slog.Info("Logged in successfully", slog.String("name", session.State.User.Username),
 		slog.String("discriminator", session.State.User.Discriminator))
 }
 

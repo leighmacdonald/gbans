@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	ErrReqTooSoon  = errors.New("⏱️ request is not available yet")
-	ErrNoSeedRoles = errors.New("no seed role ids configured for server")
+	ErrReqTooSoon   = errors.New("⏱️ request is not available yet")
+	ErrNoSeedRoles  = errors.New("no Discord seed roles are configured for this server")
+	ErrSeedDisabled = errors.New("seed requests require Discord integration to be enabled")
 )
 
 type seedRequest struct {

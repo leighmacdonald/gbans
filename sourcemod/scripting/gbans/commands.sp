@@ -50,14 +50,15 @@ Action onCmdMod(int clientId, int argc) {
     obj.SetString("reason", reason);
     obj.SetInt("clientId", clientId);
 
-    postHTTPRequest("/connect/sourcemod.v1.PluginService/SMPingMod", obj, onPingModRespReceived);
+    postHTTPRequest("/connect/sourcemod.v1.PluginService/SMPingMod", obj, onPingModRespReceived, clientId);
 
     return Plugin_Handled;
 }
 
 void onPingModRespReceived(HTTPResponse response, any clientId) {
     if (response.Status != HTTPStatus_OK) {
-        LogError("Invalid report response code: %d", response.Status);
+        PrintRPCError(response);
+        ReplyToCommand(clientId, "Failed to alert the moderators, please try again later");
 
         return;
     }
@@ -75,7 +76,7 @@ Action onCmdSeed(int clientId, int argc) {
     JSONObject obj = new JSONObject();
     obj.SetString("steamId", authId);
 
-    postHTTPRequest("/connect/sourcemod.v1.PluginService/SMSeed", obj, onCmdSeedReceived);
+    postHTTPRequest("/connect/sourcemod.v1.PluginService/SMSeed", obj, onCmdSeedReceived, clientId);
 
     return Plugin_Handled;
 }
@@ -90,8 +91,23 @@ void onCmdSeedReceived(HTTPResponse response, any clientId) {
         ReplyToCommand(clientId, "Mods have been alerted, thanks!");
         return;
     }
+    case HTTPStatus_Unauthorized: {
+        PrintRPCError(response);
+        authenticateServer();
+        ReplyToCommand(clientId, "Server authentication expired, re-authenticating. Please try again shortly.");
+        return;
+    }
     default: {
-        ReplyToCommand(clientId, "Got invalid response code :(");
+        PrintRPCError(response);
+
+        char reason[256];
+        if (GetRPCErrorMessage(response, reason, sizeof reason)) {
+            ReplyToCommand(clientId, "Seed request failed: %s", reason);
+        } else {
+            ReplyToCommand(clientId, "Seed request failed (HTTP %d), check the server logs for details",
+                           response.Status);
+        }
+
         return;
     }
     }

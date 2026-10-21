@@ -27,6 +27,10 @@ void PrintRPCError(HTTPResponse response) {
         return;
     }
 
+    if (response.Data == null) {
+        return;
+    }
+
     char code[64];
     char message[1024];
 
@@ -39,6 +43,27 @@ void PrintRPCError(HTTPResponse response) {
     }
 
     LogError("ConnectRPC Error code=%s message=%s", code, message);
+}
+
+/**
+ * Extracts the message from a ConnectRPC JSON error response.
+ *
+ * Returns false when the response is not a JSON encoded ConnectRPC error.
+ */
+stock bool GetRPCErrorMessage(HTTPResponse response, char[] message, int maxLen) {
+    if (response.Status == HTTPStatus_Invalid) {
+        return false;
+    }
+
+    char contentType[128] = "unknown";
+    response.GetHeader("Content-Type", contentType, sizeof contentType);
+    if (StrContains(contentType, "json", false) == -1 || response.Data == null) {
+        return false;
+    }
+
+    JSONObject err_obj = view_as<JSONObject>(response.Data);
+
+    return err_obj.GetString("message", message, maxLen);
 }
 
 public

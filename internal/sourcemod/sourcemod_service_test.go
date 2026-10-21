@@ -936,6 +936,12 @@ func TestPluginServiceSMSeed(t *testing.T) {
 	_, err = harness.pluginClient(t, seedToken).SMSeed(ctx, &sourcemodv1.SMSeedRequest{SteamId: &invalidSID})
 	requireCode(t, connect.CodeInvalidArgument, err)
 
+	// A server without seed roles gets a typed configuration error, and that
+	// failed attempt must not consume the player's cooldown.
+	noRolesToken := harness.serverToken(t)
+	_, err = harness.pluginClient(t, noRolesToken).SMSeed(ctx, &sourcemodv1.SMSeedRequest{SteamId: new(sid.String())})
+	requireCode(t, connect.CodeFailedPrecondition, err)
+
 	resp, err := harness.pluginClient(t, seedToken).SMSeed(ctx, &sourcemodv1.SMSeedRequest{SteamId: new(sid.String())})
 	require.NoError(t, err)
 	require.Equal(t, "Successfully sent request", resp.GetMessage())

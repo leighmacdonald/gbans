@@ -1,5 +1,5 @@
 import { timestampDate } from "@bufbuild/protobuf/wkt";
-import { useMutation, useQuery } from "@connectrpc/connect-query";
+import { createConnectQueryKey, useMutation, useQuery, useTransport } from "@connectrpc/connect-query";
 import DocumentScannerIcon from "@mui/icons-material/DocumentScanner";
 import InfoIcon from "@mui/icons-material/Info";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -17,7 +17,7 @@ import { z } from "zod/v4";
 import { AppealMessageView } from "../component/AppealMessageView.tsx";
 import { BanModPanel } from "../component/BanModPanel.tsx";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
-import { MarkdownField } from "../component/form/field/MarkdownField.tsx";
+import { MarkdownField, mdEditorRef } from "../component/form/field/MarkdownField.tsx";
 import { MarkDownRenderer } from "../component/MarkdownRenderer.tsx";
 import { ProfileInfoBox } from "../component/ProfileInfoBox.tsx";
 import { SourceBansList } from "../component/SourceBansList.tsx";
@@ -25,6 +25,7 @@ import { SteamIDList } from "../component/SteamIDList.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
+import { AppealService } from "../rpc/ban/v1/appeal_pb.ts";
 import { deleteAppealMessage, messages, reply } from "../rpc/ban/v1/appeal-AppealService_connectquery.ts";
 import { AppealState, BanReason, BanType } from "../rpc/ban/v1/ban_pb.ts";
 import { get } from "../rpc/ban/v1/ban-BanService_connectquery.ts";
@@ -48,19 +49,26 @@ function BanPage() {
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const { appInfo } = Route.useRouteContext();
 	const queryClient = useQueryClient();
+	const transport = useTransport();
+	const banIdNum = Number(banId);
 
-	const { data: banData, isLoading: isLoadingBan } = useQuery(get, { banId: Number(banId) });
-	const { data: banMessages, isLoading: isLoadingMessages } = useQuery(messages, { banId: Number(banId) });
-	// const banMutation = useMutation();
+	const messagesQueryKey = useMemo(
+		() =>
+			createConnectQueryKey({
+				schema: AppealService.method.messages,
+				transport,
+				input: { banId: banIdNum },
+				cardinality: "finite",
+			}),
+		[transport, banIdNum],
+	);
+
+	const { data: banData, isLoading: isLoadingBan } = useQuery(get, { banId: banIdNum });
+	const { data: banMessages, isLoading: isLoadingMessages } = useQuery(messages, { banId: banIdNum });
 
 	const deleteMessageMutation = useMutation(deleteAppealMessage, {
-		onSuccess: async (_, req) => {
-			queryClient.setQueryData(
-				["banMessages", { banId }],
-				banMessages?.messages?.filter((m) => {
-					return m.banMessageId !== req.banMessageId;
-				}),
-			);
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: messagesQueryKey });
 			sendFlash("success", "Deleted message successfully");
 		},
 		onError: async (error: Error) => {
@@ -82,24 +90,26 @@ function BanPage() {
 		[deleteMessageMutation.mutateAsync],
 	);
 
-	const replyMutation = useMutation(reply);
-	// 	mutationFn: async (values: { body_md: string }) => {
-	// 		if (!ban) {
-	// 			return;
-	// 		}
-	// 		const ac = new AbortController();
-	// 		const msg = await apiCreateBanMessage(ban?.ban_id, values.body_md, ac.signal);
-	//
-	// 		queryClient.setQueryData(["banMessages", { ban_id: ban.ban_id }], [...(banMessages?.messages ?? []), msg]);
-	// 		sendFlash("success", "Created a message successfully");
-	// 		mdEditorRef.current?.setMarkdown("");
-	// 		form.reset();
-	// 	},
-	// });
+	const replyMutation = useMutation(reply, {
+		onSuccess: (response) => {
+			const newMessage = response.message;
+			if (!newMessage || !banMessages) {
+				return;
+			}
+			queryClient.setQueryData(messagesQueryKey, {
+				...banMessages,
+				messages: [...banMessages.messages, newMessage],
+			});
+			sendFlash("success", "Created a message successfully");
+			mdEditorRef.current?.setMarkdown("");
+			form.reset();
+		},
+		onError: sendError,
+	});
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			replyMutation.mutate({ banId: Number(banId), bodyMd: value.bodyMd });
+			replyMutation.mutate({ banId: banIdNum, bodyMd: value.bodyMd });
 		},
 		defaultValues: {
 			bodyMd: "",
