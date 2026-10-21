@@ -37,6 +37,7 @@ import { getDemos } from "../rpc/demo/v1/demo-DemoService_connectquery.ts";
 import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
+import { serverSelectOptions } from "../util/servers.ts";
 import { humanFileSize } from "../util/strings.ts";
 
 const columnHelper = createMRTColumnHelper<Demo>();
@@ -123,10 +124,7 @@ function STV() {
 					return filterValue.length === 0 || filterValue.includes(row.original.serverId);
 				},
 				filterVariant: "multi-select",
-				filterSelectOptions: serversList?.servers.map((server) => ({
-					label: server.serverName,
-					value: server.serverId,
-				})),
+				filterSelectOptions: serverSelectOptions(serversList?.servers),
 				grow: false,
 				enableSorting: true,
 				enableColumnFilter: true,

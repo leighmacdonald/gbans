@@ -33,6 +33,7 @@ import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.t
 import { QueryRequestSchema, type VoteResult } from "../rpc/votes/v1/votes_pb.ts";
 import { query } from "../rpc/votes/v1/votes-VotesService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
+import { serverSelectOptions } from "../util/servers.ts";
 import { renderTimestamp } from "../util/time.ts";
 import { emptyOrNullString } from "../util/types.ts";
 
@@ -93,10 +94,7 @@ function AdminVotes() {
 				header: "Server",
 				grow: false,
 				filterVariant: "multi-select",
-				filterSelectOptions: serverList?.servers.map((server) => ({
-					label: server.serverName,
-					value: server.serverId,
-				})),
+				filterSelectOptions: serverSelectOptions(serverList?.servers),
 				// filterFn: (row, _, filterValue) => {
 				// 	return filterValue.length === 0 || filterValue.includes(row.original.server_id);
 				// },

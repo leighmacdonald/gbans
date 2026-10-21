@@ -26,6 +26,7 @@ import { SortableTable } from "../component/table/SortableTable.tsx";
 import type { ServerLog } from "../rpc/servers/v1/servers_pb.ts";
 import { queryLogs, servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
+import { serverSelectOptions } from "../util/servers.ts";
 import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<ServerLog>();
@@ -109,10 +110,7 @@ function AdminServerLogs() {
 				grow: false,
 				enableSorting: false,
 				filterVariant: "multi-select",
-				filterSelectOptions: (serverData.servers ?? []).map((server) => ({
-					label: server.serverName,
-					value: server.serverId,
-				})),
+				filterSelectOptions: serverSelectOptions(serverData.servers),
 				filterFn: (row, _, filterValue) => {
 					return filterValue.length === 0 || filterValue.includes(row.original.serverId);
 				},

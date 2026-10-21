@@ -28,6 +28,7 @@ import { query } from "../rpc/anticheat/v1/anticheat-AnticheatService_connectque
 import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
 import { enumValues } from "../util/lists.ts";
+import { serverSelectOptions } from "../util/servers.ts";
 import { detectionString } from "../util/strings.ts";
 import { renderTimestamp } from "../util/time.ts";
 import { emptyOrNullString } from "../util/types.ts";
@@ -67,10 +68,7 @@ function AdminAnticheat() {
 				grow: false,
 				enableColumnFilter: true,
 				filterVariant: "multi-select",
-				filterSelectOptions: serverList?.servers.map((server) => ({
-					label: server.serverName,
-					value: server.serverId,
-				})),
+				filterSelectOptions: serverSelectOptions(serverList?.servers),
 				filterFn: (row, _, filterValue) => {
 					return filterValue.length === 0 || filterValue.includes(row.original.serverId);
 				},

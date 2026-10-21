@@ -35,6 +35,7 @@ import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.t
 import type { MatchOverview } from "../rpc/stats/v1/stats_pb.ts";
 import { buckets, mapList, queryMatches } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
+import { sortServers } from "../util/servers.ts";
 import { toTitleCase } from "../util/strings.ts";
 import { dateToTimestamp, renderTimestamp } from "../util/time.ts";
 
@@ -192,7 +193,7 @@ function MatchesIndexPage() {
 				enableSorting: false,
 				size: 250,
 				filterVariant: "multi-select",
-				filterSelectOptions: serverList?.servers.map((server) => ({
+				filterSelectOptions: sortServers(serverList?.servers).map((server) => ({
 					label: server.serverNameLong,
 					value: server.serverId,
 				})),
