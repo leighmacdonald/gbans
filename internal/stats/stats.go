@@ -448,3 +448,7 @@ func (s Stats) Query(ctx context.Context, opts Opts) ([]any, uint64, error) {
 func (s Stats) MyRank(ctx context.Context, opts Opts, steamID steamid.SteamID) (uint64, error) {
 	return s.repo.MyRank(ctx, opts, steamID)
 }
+
+func (s Stats) MyIndex(ctx context.Context, opts Opts, steamID steamid.SteamID, rank uint64) (uint64, error) {
+	return s.repo.MyIndex(ctx, opts, steamID, rank)
+}

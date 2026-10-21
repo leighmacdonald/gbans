@@ -1477,13 +1477,28 @@ func TestQueryStatsMyRank(t *testing.T) {
 	expectedRows, _, errQuery := repo.Query(ctx, opts)
 	require.NoError(t, errQuery)
 
+	// Rows must be ordered by (rank, steam_id) so my_index is a stable
+	// position in the paged result set.
 	expectedRank := uint64(0)
-	for _, row := range expectedRows {
+	expectedIndex := uint64(0)
+	var prev stats.OverallStats
+	for idx, row := range expectedRows {
 		overall, ok := row.(stats.OverallStats)
-		if !ok || overall.SteamID != userSID {
+		require.True(t, ok)
+		if idx > 0 {
+			require.GreaterOrEqual(t, overall.Rank, prev.Rank)
+			if overall.Rank == prev.Rank {
+				require.Greater(t, overall.SteamID.Int64(), prev.SteamID.Int64(),
+					"tied ranks must be ordered by steam_id")
+			}
+		}
+		prev = overall
+
+		if overall.SteamID != userSID {
 			continue
 		}
 		expectedRank = overall.Rank
+		expectedIndex = uint64(idx)
 	}
 	require.Positive(t, expectedRank)
 
@@ -1507,11 +1522,141 @@ func TestQueryStatsMyRank(t *testing.T) {
 		resp := queryStats(t, userSID)
 		require.Positive(t, resp.GetCount())
 		require.Equal(t, expectedRank, resp.GetMyRank())
+		require.Equal(t, expectedIndex, resp.GetMyIndex())
 	})
 
 	t.Run("user without stats", func(t *testing.T) {
 		resp := queryStats(t, steamid.RandSID64())
 		require.Zero(t, resp.GetMyRank())
+		require.Zero(t, resp.GetMyIndex())
+	})
+}
+
+// TestQueryStatsMyIndexTies ensures players tied at the same rank page
+// deterministically (rank, then steam_id) and that my_index identifies the
+// exact position of the requesting user's row within the tied group.
+func TestQueryStatsMyIndexTies(t *testing.T) {
+	fixture := tests.NewFixture()
+	defer fixture.Close()
+
+	ctx := t.Context()
+	repo := stats.NewRepository(fixture.Database)
+	statsCase := stats.New(repo, maps.New(maps.NewRepository(fixture.Database)))
+
+	server := fixture.CreateTestServer(ctx)
+
+	// Three tied players in a dedicated steamid range, one player below them,
+	// and fillers to satisfy the MinPlayers import threshold.
+	aSID := steamid.New("[U:1:92000001]")
+	bSID := steamid.New("[U:1:92000002]")
+	cSID := steamid.New("[U:1:92000003]")
+	dSID := steamid.New("[U:1:92000004]")
+	fillerIDs, fillerPlayers := fillerTestPlayers(2, 1000, 5000)
+
+	persons := map[steamid.SteamID]string{
+		aSID: "Tie A", bSID: "Tie B", cSID: "Tie C", dSID: "Fourth",
+	}
+	for _, fillerID := range fillerIDs {
+		persons[fillerID] = "Filler"
+	}
+	insertTestPersons(ctx, t, fixture.Database, persons)
+
+	var demoID int32
+	require.NoError(t, fixture.Database.QueryRow(ctx,
+		`INSERT INTO demo (server_id, title, map_name, created_on) VALUES ($1, $2, $3, now()) RETURNING demo_id`,
+		server.ServerID, "ties.dem", "cp_ties").Scan(&demoID))
+
+	demo := &demoparse.Demo{
+		Filename: "ties.dem", DemoType: demoparse.HL2Demo,
+		Server: "test", Map: "cp_ties", Game: "tf",
+		Duration: 600, Ticks: 40000, Frames: 39900, Signon: 1000,
+		Rounds: []demoparse.RoundSummary{
+			{
+				Winner: "red", Time: 300,
+				Players: append([]demoparse.PlayerSummary{
+					{Name: "Tie A", SteamID: string(aSID.Steam3()), Team: "red", TickStart: 1000, TickEnd: 5000, Points: 10},
+					{Name: "Tie B", SteamID: string(bSID.Steam3()), Team: "red", TickStart: 1000, TickEnd: 5000, Points: 10},
+					{Name: "Tie C", SteamID: string(cSID.Steam3()), Team: "red", TickStart: 1000, TickEnd: 5000, Points: 10},
+					{Name: "Fourth", SteamID: string(dSID.Steam3()), Team: "blue", TickStart: 1000, TickEnd: 5000, Points: 5},
+				}, fillerPlayers...),
+			},
+		},
+	}
+
+	_, errImport := statsCase.Import(ctx, server.ServerID, demoID, demo, time.Now())
+	require.NoError(t, errImport)
+	require.NoError(t, statsCase.RefreshViews(ctx))
+
+	var bucketID uint32
+	buckets, errBuckets := statsCase.Buckets(ctx)
+	require.NoError(t, errBuckets)
+	for _, b := range buckets {
+		if b.IsDefault {
+			bucketID = uint32(b.BucketID) //nolint:gosec // bucket ids are positive.
+		}
+	}
+	require.NotZero(t, bucketID)
+
+	rows, _, errQuery := repo.Query(ctx, stats.Opts{StatsBucketID: bucketID})
+	require.NoError(t, errQuery)
+
+	// Tied players page by steam_id: A(0), B(1), C(2), D(3), fillers(4, 5).
+	require.Len(t, rows, 6)
+	expectedOrder := []steamid.SteamID{aSID, bSID, cSID, dSID}
+	for idx, want := range expectedOrder {
+		overall, ok := rows[idx].(stats.OverallStats)
+		require.True(t, ok)
+		require.Equal(t, want, overall.SteamID, "row %d must be ordered by (rank, steam_id)", idx)
+	}
+	topRow, okTop := rows[0].(stats.OverallStats)
+	require.True(t, okTop)
+	require.Equal(t, uint64(1), topRow.Rank)
+
+	fourthRow, okFourth := rows[3].(stats.OverallStats)
+	require.True(t, okFourth)
+	require.Equal(t, uint64(4), fourthRow.Rank)
+
+	queryStats := func(t *testing.T, user steamid.SteamID, offset uint64) *statsv1.QueryStatsResponse {
+		t.Helper()
+
+		client, cleanup := newTestStatsClient(t, fixture, user)
+		t.Cleanup(cleanup)
+
+		resp, errResp := client.QueryStats(t.Context(), &statsv1.QueryStatsRequest{
+			StatsBucketId: new(bucketID),
+			Filter:        &queryv1.Filter{Limit: proto.Uint64(1), Offset: new(offset)},
+		})
+		require.NoError(t, errResp)
+
+		return resp
+	}
+
+	t.Run("tied user index", func(t *testing.T) {
+		resp := queryStats(t, bSID, 0)
+		require.Equal(t, uint64(1), resp.GetMyRank())
+		require.Equal(t, uint64(1), resp.GetMyIndex())
+	})
+
+	t.Run("index matches paged row", func(t *testing.T) {
+		resp := queryStats(t, bSID, 1)
+		require.Equal(t, uint64(1), resp.GetMyIndex())
+
+		// The page at my_index must actually be the user's row.
+		stats := resp.GetStatsOverall().GetStats()
+		require.Len(t, stats, 1)
+		require.Equal(t, bSID.Int64(), stats[0].GetPlayer().GetSteamId())
+	})
+
+	t.Run("user below the tie", func(t *testing.T) {
+		resp := queryStats(t, dSID, 0)
+		require.Equal(t, uint64(4), resp.GetMyRank())
+		require.Equal(t, uint64(3), resp.GetMyIndex())
+	})
+
+	t.Run("user without stats", func(t *testing.T) {
+		resp := queryStats(t, steamid.RandSID64(), 0)
+		require.Zero(t, resp.GetMyRank())
+		require.Zero(t, resp.GetMyIndex())
 	})
 }
 

@@ -296,6 +296,36 @@ func (r Repository) MyRank(ctx context.Context, opts Opts, steamID steamid.Steam
 	return rank, nil
 }
 
+// MyIndex returns the 0-based position of steamID's row in the full result
+// set for the window described by opts, ordered by (rank, steam_id) exactly
+// as Query returns rows. It identifies the user's row even when players are
+// tied at the same rank. 0 when the user has no stats in the window.
+func (r Repository) MyIndex(ctx context.Context, opts Opts, steamID steamid.SteamID, rank uint64) (uint64, error) {
+	constraints := sq.And{
+		sq.Eq{"stats_bucket_id": opts.StatsBucketID},
+		// Rows sorting ahead of the user: strictly better rank, or the same
+		// rank with a lower steam_id (the deterministic tiebreaker).
+		sq.Or{
+			sq.Lt{opts.rankColumn(): rank},
+			sq.And{
+				sq.Eq{opts.rankColumn(): rank},
+				sq.Lt{"steam_id": steamID.Int64()},
+			},
+		},
+	}
+	if opts.Variant == VariantWeapons || opts.Variant == VariantClasses {
+		constraints = append(constraints, sq.Eq{"variant": opts.VariantKey})
+	}
+	if dateConstraint := opts.dateConstraint(); dateConstraint != nil {
+		constraints = append(constraints, dateConstraint)
+	}
+
+	return r.GetCount(ctx, r.Builder().
+		Select("count(*) as count").
+		From(opts.view()).
+		Where(constraints))
+}
+
 func (r Repository) loadOverallView(ctx context.Context, statsBucketID uint32, opts Opts) ([]any, uint64, error) {
 	constraints := sq.And{
 		sq.Eq{"stats_bucket_id": statsBucketID},
@@ -322,7 +352,9 @@ func (r Repository) loadOverallView(ctx context.Context, statsBucketID uint32, o
 			"ammo_packs", "health_packs", "health_pack_healing").
 		From(opts.view()).
 		Where(constraints)
-	builder = builder.OrderBy("rank ASC")
+	// steam_id is a deterministic tiebreaker so tied ranks (rank() shares a
+	// number across ties) always page in a stable order.
+	builder = builder.OrderBy("rank ASC", "steam_id ASC")
 	builder = opts.ApplyLimitOffset(builder, 10000)
 
 	rows, errRows := r.QueryBuilder(ctx, builder)
@@ -396,7 +428,9 @@ func (r Repository) loadVariantView(ctx context.Context, statsBucketID uint32, o
 		).
 		From(opts.view()).
 		Where(constraints)
-	builder = builder.OrderBy("rank ASC")
+	// steam_id is a deterministic tiebreaker so tied ranks (rank() shares a
+	// number across ties) always page in a stable order.
+	builder = builder.OrderBy("rank ASC", "steam_id ASC")
 	builder = opts.ApplyLimitOffset(builder, 10000)
 
 	rows, errRows := r.QueryBuilder(ctx, builder)

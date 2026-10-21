@@ -14,6 +14,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import { alpha } from "@mui/material/styles";
 import MuiTextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/system/Grid";
 import type { DateView } from "@mui/x-date-pickers/models";
@@ -28,7 +29,7 @@ import {
 	type MRT_SortingState,
 	useMaterialReactTable,
 } from "material-react-table";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import z from "zod/v4";
 import { CompactNumber } from "../component/CompactNumber.tsx";
 import { ErrorDetails } from "../component/ErrorDetails.tsx";
@@ -364,6 +365,52 @@ function StatsComponent() {
 		return Number(data?.myRank ?? 0);
 	}, [data]);
 
+	// myIndex is the user's exact 0-based row position in the full result
+	// set; rank alone cannot locate the page while players are tied.
+	const myIndex = useMemo(() => {
+		return Number(data?.myIndex ?? 0);
+	}, [data]);
+
+	// One-shot flag set when "Your Rank" is clicked: once the page containing
+	// the user's row has loaded, scroll the table into view and flash it.
+	const tableRef = useRef<HTMLDivElement>(null);
+	const [jumpToMe, setJumpToMe] = useState(false);
+	const [flashMe, setFlashMe] = useState(false);
+
+	const jumpToMyRow = useCallback(async () => {
+		const pageSize = search.pagination?.pageSize ?? 25;
+		// myIndex is exact; fall back to the rank-derived position when it is
+		// missing (only possible for an older backend, ties aside).
+		const index = myIndex > 0 ? myIndex : myRank - 1;
+		const maxPage = Math.max(0, Math.ceil(playerCount / pageSize) - 1);
+		const pageIndex = Math.min(Math.max(0, Math.floor(index / pageSize)), maxPage);
+		setJumpToMe(true);
+		if (pageIndex !== search.pagination?.pageIndex) {
+			await navigate({
+				to: Route.fullPath,
+				search: { ...search, pagination: { pageIndex, pageSize } },
+			});
+		}
+	}, [search, navigate, myIndex, myRank, playerCount]);
+
+	useEffect(() => {
+		if (!jumpToMe || !rows.some((row) => row.player?.steamId === profile.steamId)) {
+			return;
+		}
+		setJumpToMe(false);
+		tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+		setFlashMe(true);
+	}, [rows, jumpToMe, profile.steamId]);
+
+	// Kept separate so rows refetches cannot cancel the flash early.
+	useEffect(() => {
+		if (!flashMe) {
+			return;
+		}
+		const timer = setTimeout(() => setFlashMe(false), 3000);
+		return () => clearTimeout(timer);
+	}, [flashMe]);
+
 	const columns = useMemo(() => {
 		const isOverall = search.variant !== Variant.WEAPONS && search.variant !== Variant.CLASSES;
 		return [
@@ -615,7 +662,9 @@ function StatsComponent() {
 						// The sx function receives the theme object itself, not a
 						// { theme } wrapper.
 						sx: (theme) => ({
-							backgroundColor: alpha(theme.palette.primary.main, 0.18),
+							backgroundColor: alpha(theme.palette.primary.main, flashMe ? 0.4 : 0.18),
+							boxShadow: flashMe ? `inset 0 0 0 2px ${theme.palette.primary.main}` : undefined,
+							transition: "background-color 300ms ease, box-shadow 300ms ease",
 							"&:hover": { backgroundColor: alpha(theme.palette.primary.main, 0.3) },
 						}),
 					}
@@ -703,18 +752,36 @@ function StatsComponent() {
 								sx={{ alignItems: "center", flexShrink: 0, justifyContent: "flex-end" }}
 							>
 								{myRank > 0 && (
-									<Box>
-										<Typography
-											variant="overline"
-											color="textSecondary"
-											sx={{ letterSpacing: 1.5 }}
+									<Tooltip title="Jump to your row in the table">
+										<Button
+											variant="text"
+											onClick={jumpToMyRow}
+											sx={{
+												display: "flex",
+												flexDirection: "column",
+												alignItems: "flex-start",
+												gap: 0,
+												padding: "4px 12px",
+												"&:hover": { backgroundColor: "transparent", color: "primary.main" },
+											}}
 										>
-											Your Rank
-										</Typography>
-										<Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.1 }}>
-											#{myRank}
-										</Typography>
-									</Box>
+											<Typography
+												component="span"
+												variant="overline"
+												color="textSecondary"
+												sx={{ letterSpacing: 1.5 }}
+											>
+												Your Rank
+											</Typography>
+											<Typography
+												component="span"
+												variant="h5"
+												sx={{ fontWeight: 700, lineHeight: 1.1 }}
+											>
+												#{myRank}
+											</Typography>
+										</Button>
+									</Tooltip>
 								)}
 								{hasPermission(Permission.DEMO_ADMIN) && (
 									<Button
@@ -908,7 +975,7 @@ function StatsComponent() {
 					</form>
 				</Paper>
 			</Grid>
-			<Grid size={{ xs: 12 }}>
+			<Grid size={{ xs: 12 }} ref={tableRef}>
 				<SortableTable table={table} title={title} iconLeft={<EmojiEventsIcon />} />
 			</Grid>
 		</Grid>
