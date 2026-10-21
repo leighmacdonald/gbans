@@ -47,6 +47,7 @@ import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
+import { serverSelectOptions, sortServers } from "../util/servers.ts";
 import { renderTimestamp } from "../util/time.ts";
 import { emptyOrNullString } from "../util/types.ts";
 
@@ -85,7 +86,7 @@ function ChatLogs() {
 	const theme = useTheme();
 	const { hasPermission } = useAuth();
 	const serversSorted = useMemo(() => {
-		return serverList?.servers.toSorted((a, b) => a.serverName.localeCompare(b.serverName)) ?? [];
+		return sortServers(serverList?.servers);
 	}, [serverList]);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
@@ -138,10 +139,7 @@ function ChatLogs() {
 				size: 100,
 				enableSorting: false,
 				filterVariant: "multi-select",
-				filterSelectOptions: serversSorted.map((server) => ({
-					label: server.serverName,
-					value: server.serverId,
-				})),
+				filterSelectOptions: serverSelectOptions(serversSorted),
 				Cell: ({ row, cell }) => (
 					<Tooltip title={row.original.serverName}>
 						<TextLink

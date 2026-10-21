@@ -40,6 +40,7 @@ import type { PlayerMatchHistory } from "../rpc/stats/v1/stats_pb.ts";
 import { matchesWithPlayer } from "../rpc/stats/v1/stats-StatsService_connectquery.ts";
 import { blu, red } from "../theme.ts";
 import { stringToColour } from "../util/colours.ts";
+import { serverSelectOptions } from "../util/servers.ts";
 import { renderTimestamp } from "../util/time.ts";
 
 const validateSearch = makeSchemaState("createdOn");
@@ -162,10 +163,7 @@ function ProfileMatchesPage() {
 				grow: true,
 				enableSorting: false,
 				filterVariant: "multi-select",
-				filterSelectOptions: serverList?.servers.map((server) => ({
-					label: server.serverName,
-					value: server.serverId,
-				})),
+				filterSelectOptions: serverSelectOptions(serverList?.servers),
 				filterFn: (row, _, filterValue) => {
 					return filterValue.length === 0 || filterValue.includes(row.original.serverId);
 				},

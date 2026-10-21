@@ -36,6 +36,7 @@ import type { PersonConnection } from "../rpc/network/v1/network_pb.ts";
 import { queryConnections } from "../rpc/network/v1/network-NetworkService_connectquery.ts";
 import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { stringToColour } from "../util/colours.ts";
+import { serverSelectOptions } from "../util/servers.ts";
 
 // Workaround for leaflet not loading icons properly in react
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -145,10 +146,7 @@ function AdminNetworkPlayersByCIDR() {
 				grow: false,
 				enableSorting: false,
 				filterVariant: "multi-select",
-				filterSelectOptions: serversList?.servers.map((server) => ({
-					label: server.serverName,
-					value: server.serverId,
-				})),
+				filterSelectOptions: serverSelectOptions(serversList?.servers),
 				filterFn: (row, _, filterValue) => {
 					return filterValue.length === 0 || filterValue.includes(row.original.serverId);
 				},
@@ -251,7 +249,7 @@ function AdminNetworkPlayersByCIDR() {
 				Cell: ({ row }) => `${row.original.location?.latitude} / ${row.original.location?.longitude}`,
 			}),
 		],
-		[search, theme, serversList?.servers.map],
+		[search, theme, serversList?.servers],
 	);
 
 	const table = useMaterialReactTable({
