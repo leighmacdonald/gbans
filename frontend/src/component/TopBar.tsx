@@ -233,7 +233,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 				callback: onClickHandler("/admin/appeals"),
 			});
 		}
-		if (hasPermission(Permission.NEWS_READ)) {
+		if (hasPermission(Permission.NEWS_WRITE)) {
 			items.push({
 				label: "News",
 				leftIcon: <NewspaperIcon sx={colourOpts} />,
@@ -261,7 +261,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 				callback: onClickHandler("/admin/network/cidrblocks"),
 			});
 		}
-		if (hasPermission(Permission.CONTEST_READ)) {
+		if (hasPermission(Permission.CONTEST_ADMIN)) {
 			items.push({
 				leftIcon: <EmojiEventsIcon sx={colourOpts} />,
 				label: "Contests",
@@ -296,21 +296,21 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 				callback: onClickHandler("/admin/anticheat"),
 			});
 		}
-		if (hasPermission(Permission.SERVER_READ)) {
+		if (hasPermission(Permission.SERVER_WRITE)) {
 			items.push({
 				leftIcon: <SettingsIcon sx={colourOpts} />,
 				label: "Servers",
 				callback: onClickHandler("/admin/servers"),
 			});
 		}
-		if (hasPermission(Permission.SERVER_READ)) {
+		if (hasPermission(Permission.SERVER_WRITE)) {
 			items.push({
 				leftIcon: <ListIcon sx={colourOpts} />,
 				label: "Server Logs",
 				callback: onClickHandler("/admin/serverlogs"),
 			});
 		}
-		if (hasPermission(Permission.CONFIG_READ)) {
+		if (hasPermission(Permission.CONFIG_WRITE)) {
 			items.push({
 				leftIcon: <DeveloperBoardIcon sx={colourOpts} />,
 				label: "System Settings",
