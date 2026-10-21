@@ -296,6 +296,12 @@ func (s PluginService) SMSeed(ctx context.Context, req *v1.SMSeedRequest) (*v1.S
 			return nil, connect.NewError(connect.CodeResourceExhausted, errSeed)
 		}
 
+		if errors.Is(errSeed, ErrNoSeedRoles) || errors.Is(errSeed, ErrSeedDisabled) {
+			// These are configuration errors the server owner can fix, so surface
+			// the reason instead of collapsing it into a generic internal error.
+			return nil, connect.NewError(connect.CodeFailedPrecondition, errSeed)
+		}
+
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 

@@ -161,11 +161,7 @@ const UserReportHistory = () => {
 					value: status,
 				})),
 				filterFn: (row, _, filterValue) => {
-					return (
-						filterValue.length === 0 ||
-						filterValue.includes(ReportStatus.OPENED_UNSPECIFIED) ||
-						filterValue.includes(row.original.report?.reportStatus)
-					);
+					return filterValue.length === 0 || filterValue.includes(row.original.report?.reportStatus);
 				},
 				Cell: ({ cell }) => {
 					return (

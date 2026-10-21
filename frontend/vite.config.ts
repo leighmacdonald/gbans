@@ -7,7 +7,10 @@ import { bgWebPPlugin } from "./vite-bg-plugin.ts";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-	base: "",
+	// Asset URLs must be absolute: the SPA is served from deep links like
+	// /login/success, where relative paths would resolve to /login/assets/*
+	// and 404.
+	base: "/",
 	publicDir: "public",
 	optimizeDeps: {
 		include: ["@mui/icons-material"],

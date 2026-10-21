@@ -253,52 +253,56 @@ func (h Sourcemod) seedRequest(
 	message string,
 	seedChannelID string,
 ) (bool, error) {
+	if len(roleIDs) == 0 {
+		slog.Error("No seed roles configured", slog.String("server", server.NameShort))
+
+		return false, ErrNoSeedRoles
+	}
+
+	targetChannelID := resolveSeedChannelID(seedChannelID, h.seedChannelID, h.publicLogChannelID)
+	content, errContent := discord.RenderTemplate("seed_req", seedRequestView{
+		Name:        server.Name,
+		Short:       server.NameShort,
+		CC:          server.CC,
+		Connect:     server.Addr(),
+		Link:        server.Connect(),
+		Roles:       roleIDs,
+		PlayerCount: server.Players,
+		MaxPlayers:  server.MaxPlayerDisplay(),
+		Message:     sanitizeSeedMessage(message),
+	})
+
+	if errContent != nil {
+		slog.Error("Failed to render content", slog.String("error", errContent.Error()))
+
+		if errors.Is(errContent, discord.ErrTemplatesNotInitialized) {
+			return false, ErrSeedDisabled
+		}
+
+		return false, errContent
+	}
+
 	if !h.seedQueue.Allowed(server.ServerID, userID) {
 		return false, ErrReqTooSoon
 	}
 
-	if len(roleIDs) > 0 {
-		targetChannelID := resolveSeedChannelID(seedChannelID, h.seedChannelID, h.publicLogChannelID)
-		content, errContent := discord.RenderTemplate("seed_req", seedRequestView{
-			Name:        server.Name,
-			Short:       server.NameShort,
-			CC:          server.CC,
-			Connect:     server.Addr(),
-			Link:        server.Connect(),
-			Roles:       roleIDs,
-			PlayerCount: server.Players,
-			MaxPlayers:  server.MaxPlayerDisplay(),
-			Message:     sanitizeSeedMessage(message),
-		})
-
-		if errContent != nil {
-			slog.Error("Failed to render content", slog.String("error", errContent.Error()))
-
-			return false, errContent
-		}
-
-		go h.notifier.Send(notification.NewDiscord(targetChannelID, discord.NewMessage(
-			discordgo.Container{
-				AccentColor: new(discord.ColourSuccess),
-				Components: []discordgo.MessageComponent{
-					discordgo.TextDisplay{Content: content},
+	go h.notifier.Send(notification.NewDiscord(targetChannelID, discord.NewMessage(
+		discordgo.Container{
+			AccentColor: new(discord.ColourSuccess),
+			Components: []discordgo.MessageComponent{
+				discordgo.TextDisplay{Content: content},
+			},
+		}, discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Label: "Connect",
+					Style: discordgo.LinkButton,
+					URL:   server.Connect(),
 				},
-			}, discordgo.ActionsRow{
-				Components: []discordgo.MessageComponent{
-					discordgo.Button{
-						Label: "Connect",
-						Style: discordgo.LinkButton,
-						URL:   server.Connect(),
-					},
-				},
-			})))
+			},
+		})))
 
-		return true, nil
-	}
-
-	slog.Error("No seed roles configured", slog.String("server", server.NameShort))
-
-	return false, ErrNoSeedRoles
+	return true, nil
 }
 
 func (h Sourcemod) GetBanState(ctx context.Context, steamID steamid.SteamID, ipAddr netip.Addr) (PlayerBanState, string, error) {

@@ -122,11 +122,7 @@ function AdminAppeals() {
 					value: reason,
 				})),
 				filterFn: (row, _, filterValue) => {
-					return (
-						filterValue.length === 0 ||
-						filterValue.includes(AppealState.OPEN_UNSPECIFIED) ||
-						filterValue.includes(row.original.ban?.appealState)
-					);
+					return filterValue.length === 0 || filterValue.includes(row.original.ban?.appealState);
 				},
 				Cell: ({ cell }) => (
 					<TextLink
@@ -218,11 +214,7 @@ function AdminAppeals() {
 					value: reason,
 				})),
 				filterFn: (row, _, filterValue) => {
-					return (
-						filterValue.length === 0 ||
-						filterValue.includes(BanReason.UNSPECIFIED) ||
-						filterValue.includes(row.original.ban?.reason)
-					);
+					return filterValue.length === 0 || filterValue.includes(row.original.ban?.reason);
 				},
 				Cell: ({ cell }) => (
 					<TextLink to={Route.fullPath} search={setColumnFilter(search, "ban.reason", [cell.getValue()])}>

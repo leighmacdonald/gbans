@@ -216,11 +216,7 @@ function AdminReports() {
 				header: "Reason",
 				grow: false,
 				filterFn: (row, _, filterValue) => {
-					return (
-						filterValue.length === 0 ||
-						filterValue.includes(BanReason.UNSPECIFIED) ||
-						filterValue.includes(row.original.report?.reason)
-					);
+					return filterValue.length === 0 || filterValue.includes(row.original.report?.reason);
 				},
 				Cell: ({ cell }) => (
 					<TextLink to={Route.fullPath} search={setColumnFilter(search, "reason", [cell.getValue()])}>
