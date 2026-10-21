@@ -88,10 +88,13 @@ export const humanFileSize = (bytes: number, si = false, dp = 1) => {
 };
 
 export const humanCount = (count: number, dp: number = 1): string => {
+	if (!Number.isFinite(count)) {
+		return "0";
+	}
 	if (Math.abs(count) < 1000) {
 		return `${count}`;
 	}
-	return humanize(count, 1000, dp, ["K", "M", "B", "T", "Q"]);
+	return humanize(count, 1000, dp, ["k", "m", "b", "t", "q"]).replace(/\.0+(?=[kmbtq]$)/, "");
 };
 
 export const defaultFloatFmtPct = (value: number) => `${value.toFixed(2)}%`;

@@ -4,6 +4,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { Team } from "../../rpc/stats/v1/stats_pb.ts";
 import { blu, red, tf2Fonts } from "../../theme";
+import { CompactNumber } from "../CompactNumber.tsx";
 import type { TeamTotals } from "./match";
 
 const Stat = ({ label, value }: { label: string; value: number | string }) => (
@@ -12,7 +13,7 @@ const Stat = ({ label, value }: { label: string; value: number | string }) => (
 			{label}
 		</Typography>
 		<Typography variant="h6" sx={{ lineHeight: 1.2 }}>
-			{value.toLocaleString()}
+			{typeof value === "number" ? <CompactNumber value={value} /> : value}
 		</Typography>
 	</Box>
 );

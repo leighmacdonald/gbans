@@ -30,6 +30,7 @@ import {
 } from "material-react-table";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import z from "zod/v4";
+import { CompactNumber } from "../component/CompactNumber.tsx";
 import { ErrorDetails } from "../component/ErrorDetails.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import {
@@ -57,7 +58,7 @@ import { classList } from "../tf2.tsx";
 import { logErr } from "../util/errors.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { enumValues } from "../util/lists.ts";
-import { toTitleCase } from "../util/strings.ts";
+import { humanCount, toTitleCase } from "../util/strings.ts";
 
 const defaultValues = { ...makeSchemaDefaults({ defaultColumn: "rank" }) };
 const validateSearch = z
@@ -344,13 +345,13 @@ function StatsComponent() {
 			return "";
 		}
 		if (search.variant === Variant.HEALING) {
-			return `leads with ${leader.healing} healing`;
+			return `leads with ${humanCount(Number(leader.healing))} healing`;
 		}
-		const killsText = `leads with ${leader.kills} kills`;
+		const killsText = `leads with ${humanCount(Number(leader.kills))} kills`;
 		if (search.variant === Variant.WEAPONS || search.variant === Variant.CLASSES) {
 			return killsText;
 		}
-		return `${killsText} · ${(leader as OverallStats).points} points`;
+		return `${killsText} · ${humanCount(Number((leader as OverallStats).points))} points`;
 	}, [leader, search.variant]);
 
 	const playerCount = useMemo(() => {
@@ -400,6 +401,7 @@ function StatsComponent() {
 							grow: false,
 							enableSorting: false,
 							enableColumnFilter: false,
+							Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 						}),
 					]
 				: []),
@@ -410,6 +412,7 @@ function StatsComponent() {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 			}),
 
 			columnHelper.accessor("assists", {
@@ -418,6 +421,7 @@ function StatsComponent() {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 			}),
 
 			columnHelper.accessor("deaths", {
@@ -426,6 +430,7 @@ function StatsComponent() {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 			}),
 			columnHelper.accessor("damage", {
 				header: "Damage",
@@ -433,6 +438,7 @@ function StatsComponent() {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 			}),
 			columnHelper.accessor("damageTaken", {
 				header: "DT",
@@ -440,6 +446,7 @@ function StatsComponent() {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 			}),
 			columnHelper.accessor("healing", {
 				header: "Healing",
@@ -447,6 +454,7 @@ function StatsComponent() {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 			}),
 			columnHelper.accessor("dominations", {
 				header: "Doms",
@@ -454,6 +462,7 @@ function StatsComponent() {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 			}),
 			columnHelper.accessor("dominated", {
 				header: "Domd",
@@ -461,6 +470,7 @@ function StatsComponent() {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 			}),
 			columnHelper.accessor("airshots", {
 				header: "Airshots",
@@ -468,6 +478,7 @@ function StatsComponent() {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 			}),
 			columnHelper.accessor("headshots", {
 				header: "HS (K)",
@@ -477,7 +488,8 @@ function StatsComponent() {
 				enableColumnFilter: false,
 				Cell: ({ row }) => (
 					<Typography>
-						{row.original.headshots} ({row.original.headshotKills})
+						<CompactNumber value={row.original.headshots} /> (
+						<CompactNumber value={row.original.headshotKills} />)
 					</Typography>
 				),
 			}),
@@ -489,7 +501,8 @@ function StatsComponent() {
 				enableColumnFilter: false,
 				Cell: ({ row }) => (
 					<Typography>
-						{row.original.backstabs} ({row.original.backstabKills})
+						<CompactNumber value={row.original.backstabs} /> (
+						<CompactNumber value={row.original.backstabKills} />)
 					</Typography>
 				),
 			}),
@@ -500,6 +513,7 @@ function StatsComponent() {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 			}),
 			columnHelper.accessor("wasBackstabbed", {
 				header: "Was BS",
@@ -507,6 +521,7 @@ function StatsComponent() {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 			}),
 			columnHelper.accessor("drops", {
 				header: "Drops",
@@ -514,6 +529,7 @@ function StatsComponent() {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 			}),
 
 			columnHelper.accessor("nearFullChargeDeath", {
@@ -522,6 +538,7 @@ function StatsComponent() {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 			}),
 			columnHelper.accessor("chargesUber", {
 				header: "Ubers",
@@ -529,6 +546,7 @@ function StatsComponent() {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 			}),
 			columnHelper.accessor("chargesKritz", {
 				header: "Kritz",
@@ -536,6 +554,7 @@ function StatsComponent() {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 			}),
 			columnHelper.accessor("chargesVacc", {
 				header: "Vacc",
@@ -543,6 +562,7 @@ function StatsComponent() {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 			}),
 			columnHelper.accessor("chargesQuickfix", {
 				header: "Qf",
@@ -550,6 +570,7 @@ function StatsComponent() {
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: false,
+				Cell: ({ cell }) => <CompactNumber value={cell.getValue()} />,
 			}),
 		];
 	}, [search.variant]);
@@ -728,7 +749,7 @@ function StatsComponent() {
 							<Chip icon={<BarChartIcon />} label={variantLabel} size="small" variant="outlined" />
 							<Chip
 								icon={<EmojiEventsIcon />}
-								label={`${playerCount} player${playerCount === 1 ? "" : "s"}`}
+								label={`${humanCount(playerCount)} player${playerCount === 1 ? "" : "s"}`}
 								size="small"
 								variant="outlined"
 							/>
