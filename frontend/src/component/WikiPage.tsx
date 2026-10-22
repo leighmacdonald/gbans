@@ -1,5 +1,5 @@
 import { create } from "@bufbuild/protobuf";
-import { useMutation } from "@connectrpc/connect-query";
+import { createConnectQueryKey, useMutation, useTransport } from "@connectrpc/connect-query";
 import ArticleIcon from "@mui/icons-material/Article";
 import BuildIcon from "@mui/icons-material/Build";
 import EditIcon from "@mui/icons-material/Edit";
@@ -7,13 +7,14 @@ import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
+import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { z } from "zod/v4";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { Permission } from "../rpc/roles/v1/roles_pb.ts";
-import { type Wiki, WikiSchema } from "../rpc/wiki/v1/wiki_pb.ts";
+import { type Wiki, WikiSchema, WikiService } from "../rpc/wiki/v1/wiki_pb.ts";
 import { update } from "../rpc/wiki/v1/wiki-WikiService_connectquery.ts";
 import { enumValues } from "../util/lists.ts";
 import { ContainerWithHeaderAndButtons } from "./ContainerWithHeaderAndButtons.tsx";
@@ -25,6 +26,8 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 	const [currentPage, setCurrentPage] = useState<Wiki>(page);
 	const { hasPermission } = useAuth();
 	const { sendFlash, sendError } = useUserFlashCtx();
+	const queryClient = useQueryClient();
+	const transport = useTransport();
 
 	const buttons = useMemo(() => {
 		if (!hasPermission(Permission.WIKI_EDIT)) {
@@ -48,7 +51,17 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 
 	const mutation = useMutation(update, {
 		onSuccess: (savedPage) => {
-			//queryClient.setQueryData(["wiki", { slug }], savedPage);
+			// The page below renders from local state, but the route's `get` query
+			// still caches the stale page; invalidate it so navigating away and
+			// back serves the saved revision.
+			queryClient.invalidateQueries({
+				queryKey: createConnectQueryKey({
+					schema: WikiService.method.get,
+					cardinality: "finite",
+					transport,
+					input: { slug },
+				}),
+			});
 			setEditMode(false);
 			mdEditorRef.current?.setMarkdown("");
 			if (!savedPage.wiki) {
