@@ -120,6 +120,25 @@ void onCmdSeedReceived(HTTPResponse response, any clientId) {
     }
 }
 
+/**
+ * Every 10 minutes, advertise the /seed command to real players when the
+ * server is below gb_seed_promo_minplayers non-bot players.
+ */
+public
+Action Timer_CheckSeedPromo(Handle timer) {
+    if (GetRealClientCount() >= GetConVarInt(gb_seed_promo_minplayers)) {
+        return Plugin_Handled;
+    }
+
+    for (int i = 1; i <= MaxClients; i++) {
+        if (isValidClient(i)) {
+            PrintToChat(i, "[GB] The server is a little quiet. Use /seed in chat to find more players on our Discord!");
+        }
+    }
+
+    return Plugin_Handled;
+}
+
 public
 Action onCmdHelp(int clientId, int argc) {
     onCmdVersion(clientId, argc);
