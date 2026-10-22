@@ -87,6 +87,7 @@ linters:
         - .WithMessagef(
         - .WithStack(
         - river.JobCancel(
+        - connect.NewError(
       ignore-package-globs:
         - github.com/leighmacdonald/gbans/pkg/*
         - github.com/leighmacdonald/gbans/internal/*

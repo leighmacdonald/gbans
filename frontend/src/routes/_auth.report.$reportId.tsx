@@ -189,7 +189,7 @@ function ReportView() {
 							</Grid>
 						)}
 						<Grid size={{ xs: 6, md: 12 }}>
-							<SteamIDList steamId={reportResp?.report?.report?.sourceId ?? ""} />
+							<SteamIDList steamId={reportResp?.report?.report?.targetId ?? ""} />
 						</Grid>
 						<Grid size={{ xs: 6, md: 12 }}>{reportStatusView}</Grid>
 						<Grid size={{ xs: 6, md: 12 }}>
