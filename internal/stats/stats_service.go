@@ -223,6 +223,27 @@ func (s Service) QueryStats(ctx context.Context, request *v1.QueryStatsRequest) 
 			}
 		}
 	}
+	// The same independent lookup for an arbitrary player requested via
+	// steam_id (the stats page's "find player" form). It is unrelated to the
+	// requesting user and only set when a steam_id was actually requested.
+	if playerSteamID := steamid.New(request.GetSteamId()); request.GetSteamId() > 0 && playerSteamID.Valid() {
+		playerRank, errPlayerRank := s.stats.MyRank(ctx, opts, playerSteamID)
+		if errPlayerRank != nil {
+			slog.Error("Failed to load player rank",
+				slog.String("steamID", playerSteamID.String()),
+				slog.String("error", errPlayerRank.Error()))
+		} else if playerRank > 0 {
+			resp.PlayerRank = &playerRank
+			playerIndex, errPlayerIndex := s.stats.MyIndex(ctx, opts, playerSteamID, playerRank)
+			if errPlayerIndex != nil {
+				slog.Error("Failed to load player index",
+					slog.String("steamID", playerSteamID.String()),
+					slog.String("error", errPlayerIndex.Error()))
+			} else {
+				resp.PlayerIndex = &playerIndex
+			}
+		}
+	}
 	if errStats != nil {
 		if errors.Is(errStats, database.ErrNoResult) {
 			return resp, nil

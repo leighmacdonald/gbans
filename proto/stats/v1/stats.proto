@@ -156,6 +156,10 @@ message QueryStatsRequest {
   ];
   string variant_key = 5;
   google.protobuf.Timestamp time = 6 [(buf.validate.field).required = true /* (buf.validate.field).timestamp.lt_now = true */];
+  // steam_id optionally requests the rank and row index of the given player
+  // in the same bucket, variant and time window, reported via player_rank
+  // and player_index. Unset/zero performs no lookup.
+  int64 steam_id = 7 [(buf.validate.field).int64 = {gte: 76561197960265729}];
 }
 
 message QueryStatsResponse {
@@ -173,6 +177,17 @@ message QueryStatsResponse {
   // returns rows. Clients can use it to jump directly to the table page
   // containing the user's row. 0 when the user has no stats in the window.
   uint64 my_index = 6;
+  // player_rank is the rank of QueryStatsRequest.steam_id in the queried
+  // bucket, variant and time window, resolved independently of the page of
+  // rows returned. 0 when the player has no stats in the window, or when no
+  // steam_id was requested.
+  uint64 player_rank = 7;
+  // player_index is the 0-based position of QueryStatsRequest.steam_id's row
+  // in the full result set, ordered by (rank, steam_id) the same way
+  // QueryStats returns rows. Clients can use it to jump directly to the
+  // table page containing the player's row. 0 when the player has no stats
+  // in the window, or when no steam_id was requested.
+  uint64 player_index = 8;
 }
 
 // OverallStats is a single player's aggregated per-player (global) stats for
