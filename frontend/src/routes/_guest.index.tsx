@@ -168,7 +168,7 @@ function Index() {
 								Donate
 							</Button>
 						)}
-						{appInfo.contestsEnabled && hasPermission(Permission.CONTEST_READ) && (
+						{appInfo.contestsEnabled && (
 							<Button
 								component={RouterLink}
 								startIcon={<EmojiEventsIcon />}
@@ -192,7 +192,7 @@ function Index() {
 								MGE Rankings
 							</Button>
 						)}
-						{appInfo.chatlogsEnabled && hasPermission(Permission.CHATLOG_READ) && (
+						{appInfo.chatlogsEnabled && (
 							<Button
 								component={RouterLink}
 								startIcon={<ChatIcon />}
@@ -204,7 +204,7 @@ function Index() {
 								Chat Logs
 							</Button>
 						)}
-						{appInfo.demosEnabled && hasPermission(Permission.DEMO_READ) && (
+						{appInfo.demosEnabled && (
 							<Button
 								component={RouterLink}
 								startIcon={<VideocamIcon />}
@@ -216,7 +216,7 @@ function Index() {
 								SourceTV
 							</Button>
 						)}
-						{appInfo.statsEnabled && hasPermission(Permission.STATS_READ) && (
+						{appInfo.statsEnabled && (
 							<ButtonLink
 								startIcon={<PieChartIcon />}
 								fullWidth
@@ -227,7 +227,7 @@ function Index() {
 								Recent Matches
 							</ButtonLink>
 						)}
-						{appInfo.statsEnabled && hasPermission(Permission.STATS_READ) && (
+						{appInfo.statsEnabled && (
 							<ButtonLink
 								startIcon={<LeaderboardIcon />}
 								fullWidth
