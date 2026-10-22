@@ -35,7 +35,6 @@ require (
 	github.com/mmcdole/gofeed v1.5.0
 	github.com/prometheus/client_golang v1.25.0
 	github.com/ricochet2200/go-disk-usage/du v0.0.0-20210707232629-ac9918953285
-	github.com/rumblefrog/go-a2s v1.0.3
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/samber/slog-multi v1.8.0
 	github.com/sosodev/duration v1.4.0

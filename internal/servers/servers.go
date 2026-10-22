@@ -23,7 +23,6 @@ var (
 	ErrGetServer         = errors.New("failed to get server")
 	ErrExecRCON          = errors.New("failed to execute rcon command")
 	ErrResolveIP         = errors.New("failed to resolve address")
-	ErrA2S               = errors.New("a2s query failed")
 	ErrUpdateFreq        = errors.New("update freq must be >= 5s")
 	ErrStatusParse       = errors.New("failed to parse status response")
 	ErrMaxPlayerIntParse = errors.New("failed to cast max players value")
