@@ -407,11 +407,11 @@ func (s *Server) updateStatus(ctx context.Context) error {
 		}
 		status.Humans = players
 
-		bots, errBots := strconv.Atoi(matches[2])
+		botsParsed, errBots := strconv.ParseInt(matches[2], 10, 32)
 		if errBots != nil {
 			return ErrStatusParse
 		}
-		status.Bots = bots
+		status.Bots = int(int32(botsParsed))
 
 		maxPlayers, errMaxPlayers := strconv.Atoi(matches[3])
 		if errMaxPlayers != nil {
