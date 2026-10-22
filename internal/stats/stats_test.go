@@ -1547,6 +1547,135 @@ func TestQueryStatsMyRank(t *testing.T) {
 	})
 }
 
+// TestQueryStatsPlayerRank ensures a player requested via steam_id gets
+// player_rank/player_index resolved against the full bucket window,
+// independently of the requesting user, and stays 0 when the player has no
+// stats in the window.
+func TestQueryStatsPlayerRank(t *testing.T) {
+	fixture := tests.NewFixture()
+	defer fixture.Close()
+
+	ctx := t.Context()
+
+	demoJSON, err := os.Open("testdata/demo-1427611.json")
+	require.NoError(t, err)
+	demo, errDemo := json.Decode[demoparse.Demo](demoJSON)
+	require.NoError(t, errDemo)
+
+	server := fixture.CreateTestServer(ctx)
+
+	repo := stats.NewRepository(fixture.Database)
+	statsCase := stats.New(repo, maps.New(maps.NewRepository(fixture.Database)))
+
+	for _, round := range demo.Rounds {
+		for _, player := range round.Players {
+			sid := steamid.New(player.SteamID)
+			if !sid.Valid() {
+				continue
+			}
+			require.NoError(t, fixture.Database.Exec(ctx,
+				`INSERT INTO person (steam_id, created_on, updated_on, personaname, avatarhash, profilestate, personastate,
+				                    realname, timecreated, loccountrycode, locstatecode, loccityid)
+				 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+				 ON CONFLICT DO NOTHING`,
+				sid.Int64(), time.Now(), time.Now(), player.Name, fmt.Sprintf("avatar-%d", sid.Int64()), 0, 0, "", 0, "", "", 0))
+		}
+	}
+
+	importDemoAt(t, fixture, statsCase, server.ServerID, &demo, time.Now())
+	require.NoError(t, statsCase.RefreshViews(ctx))
+
+	playerSums := sumDemoPlayers(&demo)
+	require.NotEmpty(t, playerSums)
+
+	// Two distinct players: one signs the request, the other is searched.
+	var userSID, searchedSID steamid.SteamID
+	found := 0
+	for sid := range playerSums {
+		switch found {
+		case 0:
+			userSID = sid
+		case 1:
+			searchedSID = sid
+		}
+		found++
+	}
+	require.GreaterOrEqual(t, found, 2)
+
+	opts := stats.Opts{StatsBucketID: 1}
+	expectedRows, _, errQuery := repo.Query(ctx, opts)
+	require.NoError(t, errQuery)
+
+	rankAt := func(want steamid.SteamID) (uint64, uint64) {
+		for idx, row := range expectedRows {
+			overall, ok := row.(stats.OverallStats)
+			require.True(t, ok)
+			if overall.SteamID != want {
+				continue
+			}
+
+			return overall.Rank, uint64(idx)
+		}
+
+		return 0, 0
+	}
+
+	userRank, userIndex := rankAt(userSID)
+	searchedRank, searchedIndex := rankAt(searchedSID)
+	require.Positive(t, userRank)
+	require.Positive(t, searchedRank)
+
+	queryStats := func(t *testing.T, user steamid.SteamID, steamID *int64) *statsv1.QueryStatsResponse {
+		t.Helper()
+
+		client, cleanup := newTestStatsClient(t, fixture, user)
+		t.Cleanup(cleanup)
+
+		resp, errResp := client.QueryStats(t.Context(), &statsv1.QueryStatsRequest{
+			StatsBucketId: new(uint32(1)),
+			SteamId:       steamID,
+			// A single-row page: both ranks must be full-window values.
+			Filter: &queryv1.Filter{Limit: proto.Uint64(1)},
+		})
+		require.NoError(t, errResp)
+
+		return resp
+	}
+
+	searchedID := searchedSID.Int64()
+	userID := userSID.Int64()
+
+	t.Run("requested player independent of user", func(t *testing.T) {
+		resp := queryStats(t, userSID, &searchedID)
+		require.Equal(t, searchedRank, resp.GetPlayerRank())
+		require.Equal(t, searchedIndex, resp.GetPlayerIndex())
+		require.Equal(t, userRank, resp.GetMyRank())
+		require.Equal(t, userIndex, resp.GetMyIndex())
+	})
+
+	t.Run("requested player is the user", func(t *testing.T) {
+		resp := queryStats(t, userSID, &userID)
+		require.Equal(t, userRank, resp.GetPlayerRank())
+		require.Equal(t, userIndex, resp.GetPlayerIndex())
+	})
+
+	t.Run("no steam_id requested", func(t *testing.T) {
+		resp := queryStats(t, userSID, nil)
+		require.Zero(t, resp.GetPlayerRank())
+		require.Zero(t, resp.GetPlayerIndex())
+		require.Positive(t, resp.GetMyRank())
+	})
+
+	t.Run("player without stats", func(t *testing.T) {
+		unknown := steamid.RandSID64()
+		unknownID := unknown.Int64()
+		resp := queryStats(t, userSID, &unknownID)
+		require.Zero(t, resp.GetPlayerRank())
+		require.Zero(t, resp.GetPlayerIndex())
+		require.Equal(t, userRank, resp.GetMyRank())
+	})
+}
+
 // TestQueryStatsMyIndexTies ensures players tied at the same rank page
 // deterministically (rank, then steam_id) and that my_index identifies the
 // exact position of the requesting user's row within the tied group.

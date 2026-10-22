@@ -105,6 +105,24 @@ function StatsComponent() {
 	const { sendFlash } = useUserFlashCtx();
 	const queryClient = useQueryClient();
 
+	// The "Find Player" search: the canonical SteamID64 (as a string) of the
+	// player to locate in the current window. It is local state only — it
+	// drives the query and the jump/highlight, and is never written to the URL.
+	const [searchPlayer, setSearchPlayer] = useState("");
+	// Bumped on every explicit search (form submit or the rank chip) so
+	// re-searching the same player in the same window re-runs the one-shot
+	// jump below.
+	const [searchSeq, setSearchSeq] = useState(0);
+	// One-shot jump target: the SteamID of the row to scroll into view and
+	// flash once it is part of the loaded rows. Driven by both the "Your Rank"
+	// button and the player search.
+	const [jumpTarget, setJumpTarget] = useState<string | null>(null);
+	// The brief row flash after a successful jump.
+	const [flashRow, setFlashRow] = useState(false);
+	// The last (player, window, attempt) key the search has already handled,
+	// so the one-shot side effects fire exactly once per search.
+	const handledSearchRef = useRef("");
+
 	// The local selection drives the Filter By dropdown before submit; keep it
 	// in sync when the URL search params change (submit, back/forward).
 	useEffect(() => {
@@ -173,6 +191,7 @@ function StatsComponent() {
 			time: timestampFromDate(search.time ?? subDays(new Date(), 1)),
 			variant: search.variant ?? Variant.OVERALL_UNSPECIFIED,
 			variantKey: search.variantKey ?? "",
+			steamId: searchPlayer || undefined,
 			filter: create(FilterSchema, {
 				limit: String(search.pagination?.pageSize ?? 25),
 				desc: sort ? sort.desc : false,
@@ -180,7 +199,7 @@ function StatsComponent() {
 				orderBy: sort ? sort.id : "rank",
 			}),
 		});
-	}, [search, effectiveBucketId]);
+	}, [search, effectiveBucketId, searchPlayer]);
 
 	const { data, isLoading, isError, error, isRefetching } = useQuery(queryStats, qOpts, {
 		enabled: !isLoadingStatBuckets && !isErrorStatBuckets && !isLoadingVariantKeys && !isErrorVariantKeys,
@@ -371,11 +390,22 @@ function StatsComponent() {
 		return Number(data?.myIndex ?? 0);
 	}, [data]);
 
-	// One-shot flag set when "Your Rank" is clicked: once the page containing
-	// the user's row has loaded, scroll the table into view and flash it.
+	// The backend resolves the searched player's rank and row index against
+	// the full window, so both are known even when the player's row is outside
+	// the loaded page. 0 when the player has no stats in the window.
+	const playerRank = useMemo(() => {
+		return Number(data?.playerRank ?? 0);
+	}, [data]);
+
+	const playerIndex = useMemo(() => {
+		return Number(data?.playerIndex ?? 0);
+	}, [data]);
+
+	// The row that stays subtly highlighted: the searched player while a
+	// search is active, otherwise the signed-in user's row.
+	const highlightSteamId = searchPlayer || profile.steamId;
+
 	const tableRef = useRef<HTMLDivElement>(null);
-	const [jumpToMe, setJumpToMe] = useState(false);
-	const [flashMe, setFlashMe] = useState(false);
 
 	const jumpToMyRow = useCallback(async () => {
 		const pageSize = search.pagination?.pageSize ?? 25;
@@ -384,32 +414,98 @@ function StatsComponent() {
 		const index = myIndex > 0 ? myIndex : myRank - 1;
 		const maxPage = Math.max(0, Math.ceil(playerCount / pageSize) - 1);
 		const pageIndex = Math.min(Math.max(0, Math.floor(index / pageSize)), maxPage);
-		setJumpToMe(true);
+		setJumpTarget(profile.steamId);
 		if (pageIndex !== search.pagination?.pageIndex) {
 			await navigate({
 				to: Route.fullPath,
 				search: { ...search, pagination: { pageIndex, pageSize } },
 			});
 		}
-	}, [search, navigate, myIndex, myRank, playerCount]);
+	}, [search, navigate, myIndex, myRank, playerCount, profile.steamId]);
 
+	// One-shot: once the page containing the jump target's row has loaded,
+	// scroll the table into view and flash it.
 	useEffect(() => {
-		if (!jumpToMe || !rows.some((row) => row.player?.steamId === profile.steamId)) {
+		if (!jumpTarget || !rows.some((row) => row.player?.steamId === jumpTarget)) {
 			return;
 		}
-		setJumpToMe(false);
+		setJumpTarget(null);
 		tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-		setFlashMe(true);
-	}, [rows, jumpToMe, profile.steamId]);
+		setFlashRow(true);
+	}, [rows, jumpTarget]);
 
 	// Kept separate so rows refetches cannot cancel the flash early.
 	useEffect(() => {
-		if (!flashMe) {
+		if (!flashRow) {
 			return;
 		}
-		const timer = setTimeout(() => setFlashMe(false), 3000);
+		const timer = setTimeout(() => setFlashRow(false), 3000);
 		return () => clearTimeout(timer);
-	}, [flashMe]);
+	}, [flashRow]);
+
+	// Identifies the current stats window (bucket, range, date, variant) so
+	// the one-shot search effects re-arm when the user moves to a new window.
+	const windowKey = useMemo(() => {
+		return [
+			effectiveBucketId ?? 0,
+			search.timeBucket,
+			search.time?.toISOString() ?? "",
+			search.variant,
+			search.variantKey ?? "",
+		].join(":");
+	}, [effectiveBucketId, search.timeBucket, search.time, search.variant, search.variantKey]);
+
+	// Player search state machine: the response for the current window carries
+	// the searched player's full-window rank and row index. While a search is
+	// active, page straight to the player's row (when needed) and mark it for
+	// the scroll/flash above. `data` always belongs to the current request
+	// (the query key includes the window and the steam id), so a window
+	// change can never act on a stale response. searchSeq is part of the key
+	// so an explicit re-search (same player, same window) re-runs the jump.
+	useEffect(() => {
+		if (!searchPlayer || !data) {
+			return;
+		}
+		const key = `${searchPlayer}:${windowKey}:${searchSeq}`;
+		if (playerRank === 0) {
+			if (handledSearchRef.current !== key) {
+				handledSearchRef.current = key;
+				sendFlash("error", "This player has no stats in the selected window");
+			}
+			return;
+		}
+		if (handledSearchRef.current === key) {
+			return;
+		}
+		const pageSize = search.pagination?.pageSize ?? 25;
+		const maxPage = Math.max(0, Math.ceil(playerCount / pageSize) - 1);
+		const pageIndex = Math.min(Math.max(0, Math.floor(playerIndex / pageSize)), maxPage);
+		if (pageIndex !== (search.pagination?.pageIndex ?? 0)) {
+			// The page containing the player is not loaded yet; navigate there
+			// and let this effect re-run once that page's data arrives.
+			void navigate({
+				to: Route.fullPath,
+				search: { ...search, pagination: { pageIndex, pageSize } },
+			});
+			return;
+		}
+		if (rows.some((row) => row.player?.steamId === searchPlayer)) {
+			handledSearchRef.current = key;
+			setJumpTarget(searchPlayer);
+		}
+	}, [
+		data,
+		rows,
+		searchPlayer,
+		searchSeq,
+		windowKey,
+		playerRank,
+		playerIndex,
+		playerCount,
+		search,
+		navigate,
+		sendFlash,
+	]);
 
 	const columns = useMemo(() => {
 		const isOverall = search.variant !== Variant.WEAPONS && search.variant !== Variant.CLASSES;
@@ -657,13 +753,13 @@ function StatsComponent() {
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
 		muiTableBodyRowProps: ({ row }) =>
-			row.original.player?.steamId === profile.steamId
+			row.original.player?.steamId === highlightSteamId
 				? {
 						// The sx function receives the theme object itself, not a
 						// { theme } wrapper.
 						sx: (theme) => ({
-							backgroundColor: alpha(theme.palette.primary.main, flashMe ? 0.4 : 0.18),
-							boxShadow: flashMe ? `inset 0 0 0 2px ${theme.palette.primary.main}` : undefined,
+							backgroundColor: alpha(theme.palette.primary.main, flashRow ? 0.4 : 0.18),
+							boxShadow: flashRow ? `inset 0 0 0 2px ${theme.palette.primary.main}` : undefined,
 							transition: "background-color 300ms ease, box-shadow 300ms ease",
 							"&:hover": { backgroundColor: alpha(theme.palette.primary.main, 0.3) },
 						}),
@@ -674,7 +770,31 @@ function StatsComponent() {
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			await navigate({ to: "/stats", search: { ...search, ...value } });
+			// The player search is local-only state: it drives the query and
+			// the jump/highlight, but is never written to the URL.
+			const steamId = (value.steamId ?? "").trim();
+			if (steamId && !/^\d{17}$/.test(steamId)) {
+				// SteamIDField only settles on a canonical SteamID64 for valid
+				// ids; anything else was not resolved and cannot be searched.
+				sendFlash("error", "Could not resolve that Steam ID");
+			} else {
+				setSearchPlayer(steamId);
+				if (steamId) {
+					// A new search attempt; re-arms the one-shot jump above.
+					setSearchSeq((seq) => seq + 1);
+				}
+			}
+			await navigate({
+				to: "/stats",
+				search: {
+					...search,
+					statsBucketID: value.statsBucketID,
+					variant: value.variant,
+					timeBucket: value.timeBucket,
+					time: value.time,
+					variantKey: value.variantKey,
+				},
+			});
 		},
 		defaultValues: {
 			statsBucketID: effectiveBucketId,
@@ -682,6 +802,7 @@ function StatsComponent() {
 			timeBucket: search.timeBucket,
 			time: search.time,
 			variantKey: search.variantKey,
+			steamId: "",
 		},
 	});
 
@@ -779,6 +900,38 @@ function StatsComponent() {
 												sx={{ fontWeight: 700, lineHeight: 1.1 }}
 											>
 												#{myRank}
+											</Typography>
+										</Button>
+									</Tooltip>
+								)}
+								{searchPlayer && playerRank > 0 && (
+									<Tooltip title="Jump to the searched player's row in the table">
+										<Button
+											variant="text"
+											onClick={() => setSearchSeq((seq) => seq + 1)}
+											sx={{
+												display: "flex",
+												flexDirection: "column",
+												alignItems: "flex-start",
+												gap: 0,
+												padding: "4px 12px",
+												"&:hover": { backgroundColor: "transparent", color: "primary.main" },
+											}}
+										>
+											<Typography
+												component="span"
+												variant="overline"
+												color="textSecondary"
+												sx={{ letterSpacing: 1.5 }}
+											>
+												Player Rank
+											</Typography>
+											<Typography
+												component="span"
+												variant="h5"
+												sx={{ fontWeight: 700, lineHeight: 1.1 }}
+											>
+												#{playerRank}
 											</Typography>
 										</Button>
 									</Tooltip>
@@ -966,6 +1119,14 @@ function StatsComponent() {
 									/>
 								</Box>
 							)}
+							<Box sx={{ minWidth: 220, flex: "1 1 220px" }}>
+								<form.AppField
+									name={"steamId"}
+									children={(field) => {
+										return <field.SteamIDField label="Find Player" />;
+									}}
+								/>
+							</Box>
 						</Stack>
 						<Stack direction={"row"} sx={{ justifyContent: "flex-end", marginTop: 2 }}>
 							<form.AppForm>
