@@ -1,0 +1,16 @@
+{{define "match_imported"}}
+# Match Complete — {{ if .MapName }}{{ .MapName }}{{ else }}Unknown map{{ end }}
+
+**🔴 RED {{ .ScoreRed }} — {{ .ScoreBlu }} BLU 🔵** · {{ .Outcome }}
+
+{{ if .ServerName }}`{{ .ServerName }}` · {{ end }}{{ .Rounds }} rounds · {{ .PlayerCount }} players · {{ .Duration }} · {{ .StartTime | timeString }}
+Match ID: `{{ .MatchID }}`
+
+### 🔴 RED
+{{ if .RedPlayers }}{{ range .RedPlayers }}• [{{ .Name }}]({{ .SteamURL }}) — **{{ .Points }} pts** · {{ .Kills }} K / {{ .Assists }} A / {{ .Deaths }} D · {{ .Damage }} dmg
+{{ end }}{{ else }}_No players recorded_{{ end }}
+
+### 🔵 BLU
+{{ if .BluPlayers }}{{ range .BluPlayers }}• [{{ .Name }}]({{ .SteamURL }}) — **{{ .Points }} pts** · {{ .Kills }} K / {{ .Assists }} A / {{ .Deaths }} D · {{ .Damage }} dmg
+{{ end }}{{ else }}_No players recorded_{{ end }}
+{{end}}

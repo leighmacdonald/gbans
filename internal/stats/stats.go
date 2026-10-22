@@ -13,6 +13,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/maps"
+	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/pkg/demoparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -38,6 +39,21 @@ var (
 type Stats struct {
 	repo Repository
 	maps maps.Maps
+
+	notifier          notification.Notifier
+	matchLogChannelID string
+}
+
+// Option configures optional Stats dependencies.
+type Option func(*Stats)
+
+// WithMatchLogNotifications enables posting a summary to Discord after every
+// successfully imported match.
+func WithMatchLogNotifications(notifier notification.Notifier, channelID string) Option {
+	return func(s *Stats) {
+		s.notifier = notifier
+		s.matchLogChannelID = channelID
+	}
 }
 
 func (s Stats) Delete(ctx context.Context, demoID int32) error {
@@ -206,8 +222,14 @@ func (s Stats) Buckets(ctx context.Context) ([]Bucket, error) {
 	return s.repo.Buckets(ctx)
 }
 
-func New(repo Repository, maps maps.Maps) Stats {
-	return Stats{repo: repo, maps: maps}
+func New(repo Repository, maps maps.Maps, options ...Option) Stats {
+	stats := Stats{repo: repo, maps: maps}
+
+	for _, option := range options {
+		option(&stats)
+	}
+
+	return stats
 }
 
 func (s Stats) StartRefreshHandler(ctx context.Context) error {
@@ -432,6 +454,11 @@ func (s Stats) Import(ctx context.Context, serverID int32, demoID int32, demo *d
 	if errMatch != nil {
 		return nil, errMatch
 	}
+
+	if s.notifier != nil && s.matchLogChannelID != "" {
+		s.notifier.Send(notification.NewDiscord(s.matchLogChannelID, MatchMessage(*match)))
+	}
+
 	slog.Info("Got match", slog.String("match", match.Hostname))
 
 	return &matchID, nil
