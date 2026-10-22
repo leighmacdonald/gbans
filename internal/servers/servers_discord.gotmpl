@@ -1,9 +1,9 @@
 {{define "find"}}
     # Player(s) Found
     {{ range .Found }}
-        Name: {{ .Player.Player.Name }}
+        Name: {{ .Player.Name }}
         Server: {{ .Server.ShortName }}
-        SteamID: {{ .Player.Player.SID }}
+        SteamID: {{ .Player.SID }}
         Connect: connect {{ .Server.Addr }}
     {{ end }}
 {{end}}

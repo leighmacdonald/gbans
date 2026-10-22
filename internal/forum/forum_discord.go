@@ -77,12 +77,12 @@ type forumSaveView struct {
 }
 
 func discordForumSaved(forumMessage Forum) *discordgo.MessageSend {
-	content, err := discord.RenderTemplate("forum_forum_saved", forumSaveView{
+	content, err := discord.RenderTemplate("forum_saved", forumSaveView{
 		Forum:       forumMessage.Title,
 		Description: forumMessage.Description,
 	})
 	if err != nil {
-		slog.Error("Failed to render forum_forum_saved template", slog.String("error", err.Error()))
+		slog.Error("Failed to render forum_saved template", slog.String("error", err.Error()))
 	}
 
 	return discord.NewMessage(discord.BodyColouredText(discord.ColourSuccess, content))

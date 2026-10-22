@@ -61,6 +61,7 @@ type Message struct {
 	DemoTick          *int32
 	AssetID           uuid.UUID
 	Body              string
+	Team              bool
 	CreatedOn         time.Time
 	AutoFilterFlagged int32
 	MatchID           *uuid.UUID
@@ -145,7 +146,7 @@ func (u *Chat) handleEvent(ctx context.Context, evt logparse.ServerEvent) error 
 
 		connectMsg := "Player connected with username: " + connectEvent.Name
 
-		return u.handleMessage(ctx, evt, connectEvent.SourcePlayer, connectMsg, connectEvent.CreatedOn, reason.Username)
+		return u.handleMessage(ctx, evt, connectEvent.SourcePlayer, connectMsg, connectEvent.CreatedOn, false, reason.Username)
 	case logparse.Say:
 		fallthrough
 	case logparse.SayTeam:
@@ -154,7 +155,7 @@ func (u *Chat) handleEvent(ctx context.Context, evt logparse.ServerEvent) error 
 			return nil
 		}
 
-		return u.handleMessage(ctx, evt, sayEvent.SourcePlayer, sayEvent.Msg, sayEvent.CreatedOn, reason.Language)
+		return u.handleMessage(ctx, evt, sayEvent.SourcePlayer, sayEvent.Msg, sayEvent.CreatedOn, sayEvent.Team, reason.Language)
 	}
 
 	return nil
@@ -177,7 +178,7 @@ func (u *Chat) cleanupExpired() {
 	}
 }
 
-func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, person logparse.SourcePlayer, msg string, created time.Time, reason reason.Reason) error {
+func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, person logparse.SourcePlayer, msg string, created time.Time, team bool, reason reason.Reason) error {
 	if msg == "" {
 		return nil
 	}
@@ -192,6 +193,7 @@ func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, pers
 		PersonaName: strings.ToValidUTF8(person.Name, "_"),
 		ServerID:    evt.ServerID,
 		Body:        strings.ToValidUTF8(msg, "_"),
+		Team:        team,
 		CreatedOn:   created,
 		AvatarHash:  player.Avatarhash,
 	}

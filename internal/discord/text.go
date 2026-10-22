@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"regexp"
+	"strings"
 	"sync"
 	"text/template"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
+	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -78,11 +80,29 @@ func untilString(t time.Time) string {
 	return time.Until(t).Round(time.Second).String()
 }
 
+// permString renders a set of granular permissions as a comma separated list of
+// their names, skipping the zero value so empty/unset permissions read as "None".
+func permString(perms []rolesv1.Permission) string {
+	names := make([]string, 0, len(perms))
+	for _, p := range perms {
+		if p == rolesv1.Permission_PERMISSION_UNSPECIFIED {
+			continue
+		}
+		names = append(names, p.String())
+	}
+	if len(names) == 0 {
+		return "None"
+	}
+
+	return strings.Join(names, ", ")
+}
+
 func createFuncMap() template.FuncMap {
 	return template.FuncMap{
 		"linkPath":    link.Path,
 		"linkRaw":     link.Raw,
 		"sidString":   sidString,
+		"permString":  permString,
 		"timeString":  timeString,
 		"untilString": untilString,
 	}

@@ -9,7 +9,7 @@ Time Created: {{ .Player.GetTimeCreated.Format "2006-01-02" }}
 Vac Bans: {{ .Player.GetVACBans }}
 Game Bans: {{ .Player.GetGameBans }}
 
-Permissions: {{ .Player.Permissions.String }}
+Permissions: {{ permString .Player.Permissions }}
 
 {{if gt .Ban.BanID 0 }}
 ### {{if eq .Ban.BanType 2}}Ban{{ else }}Mute{{ end }} #{{ .Ban.BanID }}
@@ -57,8 +57,8 @@ Expires At: **{{ .ExpAt }}**
 
 {{define "report_new"}}
 Reason: **{{if .Report.ReasonText}}{{ .Report.ReasonText}}{{else}}{{.Report.Reason.String }}{{end}}**
-Target: **[{{ .Report.Subject.GetName }}]({{ .Report.Subject.Link }})** Steam ID: **{{ .Report.Subject.SteamID.String }}**
-Author: **[{{ .Report.Author.GetName }}]({{ .Report.Author.Link }})** Steam ID: **{{ .Report.Author.SteamID.String }}**
+Target: **[{{ .Report.Subject.GetName }}]({{ .Report.Subject | linkPath }})** Steam ID: **{{ .Report.Subject.GetSteamIDString }}**
+Author: **[{{ .Report.Author.GetName }}]({{ .Report.Author | linkPath }})** Steam ID: **{{ .Report.Author.GetSteamIDString }}**
 {{end}}
 
 {{define "report_message_new"}}
