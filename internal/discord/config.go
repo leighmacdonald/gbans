@@ -50,14 +50,6 @@ func (c *Config) SafeSeedChannelID() string {
 	return c.LogChannelID
 }
 
-func (c *Config) SafePublicMatchLogChannelID() string {
-	if c.PublicMatchLogChannelID != "" {
-		return c.PublicMatchLogChannelID
-	}
-
-	return c.LogChannelID
-}
-
 func (c *Config) SafeVoteLogChannelID() string {
 	if c.VoteLogChannelID != "" {
 		return c.VoteLogChannelID

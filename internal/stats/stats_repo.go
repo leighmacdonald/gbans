@@ -691,16 +691,19 @@ func (r Repository) getMatch(ctx context.Context, matchID uuid.UUID) (*Match, er
 	const query = `
 		SELECT
 			m.match_id, m.server_id, m.map_id, m.demo_id, m.stats_bucket_id, m.hostname, m.score_red, m.score_blu,
-			m.start_time, m.duration_ms, m.created_on, COALESCE(a.asset_id, '00000000-0000-0000-0000-000000000000')
+			m.start_time, m.duration_ms, m.created_on, COALESCE(a.asset_id, '00000000-0000-0000-0000-000000000000'),
+			COALESCE(mp.map_name, ''), COALESCE(srv.name, ''), COALESCE(srv.short_name, '')
 		FROM match m
 		LEFT JOIN demo d USING (demo_id)
 		LEFT JOIN asset a ON a.asset_id = d.asset_id AND NOT a.deleted
+		LEFT JOIN map mp ON mp.map_id = m.map_id
+		LEFT JOIN server srv ON srv.server_id = m.server_id
 		WHERE match_id = $1`
 
 	var match Match
 	if err := r.QueryRow(ctx, query, matchID).Scan(&match.MatchID, &match.ServerID, &match.MapID, &match.DemoID,
 		&match.StatsBucketID, &match.Hostname, &match.ScoreRed, &match.ScoreBlu, &match.StartTime, &match.DurationMs,
-		&match.CreatedOn, &match.AssetID); err != nil {
+		&match.CreatedOn, &match.AssetID, &match.MapName, &match.ServerName, &match.ServerNameShort); err != nil {
 		return nil, database.Err(err)
 	}
 
@@ -724,15 +727,6 @@ func (r Repository) getRounds(ctx context.Context, match *Match) error {
 		var round MatchRound
 		if err := rows.Scan(&round.RoundID, &round.Winner, &round.IsStalemate, &round.IsSuddenDeath, &round.DurationMs); err != nil {
 			return database.Err(err)
-		}
-
-		if round.Winner != "" {
-			switch round.Winner {
-			case "red":
-				match.ScoreRed++
-			case "blu":
-				match.ScoreBlu++
-			}
 		}
 
 		match.Rounds = append(match.Rounds, round)

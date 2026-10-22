@@ -41,6 +41,14 @@ Current supported formats, N being the count, eg: `10s` for 10 seconds:
 - `NM` months
 - `Ny` years
 
+## Automatic Match Summaries
+
+When a demo is imported and a match is created, gbans posts a summary of the result to the match log channel.
+The message includes the final score, map, server, duration, and the top three players from each team. Buttons
+link directly to the match page and the demo download when the STV is still available.
+
+The channel is controlled by `discord_public_match_log_channel_id`. No message is sent when it is not set.
+
 ## Command Reference
 
 ### /ban user_identifier duration \[reason\]

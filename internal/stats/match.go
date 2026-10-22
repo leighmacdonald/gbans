@@ -8,6 +8,10 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
+func (m Match) Path() string {
+	return "/match/" + m.MatchID.String()
+}
+
 type Bucket struct {
 	BucketID   int32
 	BucketName string

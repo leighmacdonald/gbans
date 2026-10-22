@@ -15,6 +15,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/database"
 	queryv1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/json"
 	"github.com/leighmacdonald/gbans/internal/maps"
 	"github.com/leighmacdonald/gbans/internal/opengraph"
@@ -72,10 +73,24 @@ func TestImport(t *testing.T) {
 		server.ServerID, demo.Filename, demo.Map, time.Now()).Scan(&demoID)
 	require.NoError(t, errDemo)
 
-	st := stats.New(stats.NewRepository(testFixture.Database), maps.New(maps.NewRepository(testFixture.Database)))
-	matchID, importErr := st.Import(ctx, server.ServerID, demoID, &demo, time.Now())
+	stats.RegisterDiscordCommands(discord.Discard{})
+
+	notifier := &captureNotifier{}
+	statSvc := stats.New(stats.NewRepository(testFixture.Database), maps.New(maps.NewRepository(testFixture.Database)),
+		stats.WithMatchLogNotifications(notifier, "match-log-channel"))
+	matchID, importErr := statSvc.Import(ctx, server.ServerID, demoID, &demo, time.Now())
 	require.NoError(t, importErr)
 	require.NotNil(t, matchID)
+
+	match, errMatch := statSvc.Match(ctx, *matchID)
+	require.NoError(t, errMatch)
+	require.EqualValues(t, demo.Scores().Red, match.ScoreRed)
+	require.EqualValues(t, demo.Scores().Blu, match.ScoreBlu)
+	require.NotEmpty(t, match.MapName)
+
+	require.Len(t, notifier.payloads, 1)
+	require.Equal(t, []string{"match-log-channel"}, notifier.payloads[0].DiscordChannels)
+	require.NotNil(t, notifier.payloads[0].MessageSend)
 }
 
 // demoPlayerSums aggregates per-player totals across all rounds of a parsed
