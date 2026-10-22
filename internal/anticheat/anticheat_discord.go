@@ -113,9 +113,11 @@ func ACPlayerLogs(_ person.Info, entries []Entry) []discordgo.MessageComponent {
 	content, err := discord.RenderTemplate("ac_logs", struct {
 		Detections map[logparse.Detection]int
 		Servers    map[string]int
+		Count      int
 	}{
 		Detections: detections,
 		Servers:    servers,
+		Count:      total,
 	})
 	if err != nil {
 		slog.Error("Failed to render template", slog.String("error", err.Error()))

@@ -23,7 +23,7 @@ type voteResultView struct {
 	TargetSID  string
 	Code       logparse.VoteCode
 	Success    bool
-	Server     int32
+	ServerID   int32
 }
 
 func VoteResultMessage(result Result, _ person.Core, target person.Core) *discordgo.MessageSend {
@@ -40,7 +40,7 @@ func VoteResultMessage(result Result, _ person.Core, target person.Core) *discor
 		TargetSID:  result.TargetID.String(),
 		Code:       result.Code,
 		Success:    result.Success,
-		Server:     result.ServerID,
+		ServerID:   result.ServerID,
 	})
 	if errBody != nil {
 		slog.Error("Failed to render vote result message", slog.String("error", errBody.Error()))

@@ -216,7 +216,13 @@ func (h discordHandler) onBanResponse(ctx context.Context, session *discordgo.Se
 		return discord.ErrCommandFailed
 	}
 
-	content, errContent := discord.RenderTemplate("ban_success", templateBody)
+	content, errContent := discord.RenderTemplate("ban_success", struct {
+		Mute bool
+		Link string
+	}{
+		Mute: createdBan.BanType == bantype.NoComm,
+		Link: link.Path(createdBan),
+	})
 	if errContent != nil {
 		return errContent
 	}

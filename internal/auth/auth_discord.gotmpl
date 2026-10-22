@@ -1,7 +1,7 @@
 {{define "login_info"}}
 SteamID: **{{ .Person.GetSteamID | sidString }}**
 Name: ** {{.Person.GetName }}**
-Permissions: **{{.Person.Permissions.String }}**
+Permissions: **{{ permString .Person.Permissions }}**
 Vac Bans: **{{.Person.VacBans }}**
 Game Bans: **{{.Person.GameBans }}**
 {{end}}

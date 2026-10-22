@@ -1,17 +1,17 @@
 module github.com/leighmacdonald/gbans
 
-go 1.27.2
+go 1.27.3
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260825204119-511051f7f437.2
 	connectrpc.com/authn v0.2.0
-	connectrpc.com/connect v1.21.0
+	connectrpc.com/connect v1.21.1
 	connectrpc.com/validate v0.9.0
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.2
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/bwmarrin/discordgo v0.29.1-0.20251116152328-dd9332c71198
 	github.com/dustin/go-humanize v1.1.0
-	github.com/gabriel-vasile/mimetype v1.4.15
+	github.com/gabriel-vasile/mimetype v1.4.16
 	github.com/getsentry/sentry-go v0.50.0
 	github.com/getsentry/sentry-go/slog v0.50.0
 	github.com/go-co-op/gocron/v2 v2.22.0
@@ -48,7 +48,7 @@ require (
 	github.com/viant/afs v1.30.0
 	github.com/yohcop/openid-go v1.0.1
 	golang.org/x/crypto v0.58.0
-	golang.org/x/crypto/x509roots/fallback v0.0.0-20261011195143-3b414e3e8284
+	golang.org/x/crypto/x509roots/fallback v0.0.0-20261020153306-9f2b28d4331a
 	golang.org/x/sync v0.24.0
 	google.golang.org/protobuf v1.36.12
 )
@@ -57,7 +57,7 @@ require (
 	buf.build/go/protovalidate v1.4.0 // indirect
 	cel.dev/cel-go v0.32.0 // indirect
 	cel.dev/expr v0.25.3 // indirect
-	connectrpc.com/connect/v2 v2.0.0 // indirect
+	connectrpc.com/connect/v2 v2.0.2 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20261013165250-51075c6ea6bc // indirect
 	github.com/JohannesKaufmann/dom v0.3.1 // indirect
@@ -75,7 +75,7 @@ require (
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/go-connections v0.8.2 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/ebitengine/purego v0.11.1 // indirect
+	github.com/ebitengine/purego v0.11.2 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/go-errors/errors v1.5.1 // indirect
@@ -135,11 +135,11 @@ require (
 	go.opentelemetry.io/otel/metric v1.47.0 // indirect
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/exp v0.0.0-20261013213113-2ab7f3cbc5fb // indirect
+	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e // indirect
 	golang.org/x/net v0.61.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20261012220534-4341edf3f941 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20261012220534-4341edf3f941 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20261019180522-ce908d29299b // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261019180522-ce908d29299b // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
