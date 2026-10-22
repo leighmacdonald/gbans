@@ -62,8 +62,8 @@ func (s Service) clientLatLong(ctx context.Context) (float64, float64) {
 	}
 
 	head := callInfo.RequestHeader()
-	if lat, errLat := strconv.ParseFloat(head.Get("CF-IPLatitude"), 64); errLat == nil {
-		if lon, errLon := strconv.ParseFloat(head.Get("CF-IPLongitude"), 64); errLon == nil && validLatLong(lat, lon) {
+	if lat, errLat := strconv.ParseFloat(head.Get("Cf-Iplatitude"), 64); errLat == nil {
+		if lon, errLon := strconv.ParseFloat(head.Get("Cf-Iplongitude"), 64); errLon == nil && validLatLong(lat, lon) {
 			return lat, lon
 		}
 	}
