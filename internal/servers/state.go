@@ -46,16 +46,8 @@ type state struct {
 
 	LastUpdate    time.Time
 	ReservedSlots int
-	Protocol      uint8
 	Hostname      string
 	Map           string
-	// Name of the folder containing the game files.
-	Folder   string
-	ServerOS string
-	// Full name of the game.
-	Game string
-	// Steam Application ID of game.
-	AppID uint16
 	// Number of players on the server.
 	PlayerCount int32
 	// Maximum number of players the server reports it can hold.
@@ -64,26 +56,13 @@ type state struct {
 	MaxPlayersVisible int32
 	// Number of bots on the server.
 	Bots int32
-	// Indicates whether the server requires a password
-	Password bool
-	// Specifies whether the server uses VAC
-	VAC bool
 	// Version of the game installed on the server.
 	Version string
-	// ServerStore's SteamID.
-	SteamID steamid.SteamID
-	// Tags that describe the game according to the server (for future use.)
-	Keywords []string
-	Edicts   []int
-	// The server's 64-bit GameID. If this is present, a more accurate AppID is present in the low 24 bits.
-	// The earlier AppID could have been truncated as it was forced into 16-bit storage.
-	GameID uint64 // Needed?
+	Edicts  []int
 	// STVIP is the public ip of the stv server
 	STVIP string
 	// Spectator port number for SourceTV.
 	STVPort uint16
-	// Name of the spectator server for SourceTV.
-	STVName string
 	// A collection of the comma delimited values of sv_tags
 	Tags    []string
 	Players []*Player
@@ -105,5 +84,4 @@ type Player struct {
 	State         string
 	IP            net.IP
 	Port          int
-	Score         int
 }

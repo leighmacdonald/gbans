@@ -18,7 +18,6 @@ import (
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v4/extra"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/rumblefrog/go-a2s"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -128,7 +127,6 @@ type Server struct {
 
 	lastMaxPlayersUpdate        time.Time
 	lastMaxVisiblePlayersUpdate time.Time
-	lastA2SUpdate               time.Time
 
 	// state holds all information we know about the current dynamic game state of the server.
 	state *state
@@ -389,75 +387,6 @@ func (s *Server) SteamLink() string {
 	return fmt.Sprintf("steam://run/440//+connect %s:%d", ipAddr.String(), s.Port)
 }
 
-func (s *Server) updateA2S() error {
-	s.lastA2SUpdate = time.Now()
-
-	s.RLock()
-	addr := fmt.Sprintf("%s:%d", s.Address, s.Port)
-	s.RUnlock()
-
-	client, errClient := a2s.NewClient(addr, a2s.TimeoutOption(serverQueryTimeout))
-	if errClient != nil {
-		return fmt.Errorf("%w: %w", ErrA2S, errClient)
-	}
-	defer func() {
-		if errClose := client.Close(); errClose != nil {
-			slog.Error("Failed to close a2s client", slog.String("error", errClose.Error()))
-		}
-	}()
-
-	serverInfo, errQuery := client.QueryInfo()
-	if errQuery != nil {
-		return fmt.Errorf("%w: %w", ErrA2S, errQuery)
-	}
-
-	serverPlayer, errPlayer := client.QueryPlayer()
-	if errPlayer != nil {
-		return fmt.Errorf("%w: %w", ErrA2S, errPlayer)
-	}
-
-	serverRules, errRules := client.QueryRules()
-	if errRules != nil {
-		return fmt.Errorf("%w: %w", ErrA2S, errRules)
-	}
-
-	s.Lock()
-	defer s.Unlock()
-
-	s.state.Protocol = serverInfo.Protocol
-	s.state.Folder = serverInfo.Folder
-	s.state.Game = serverInfo.Game
-	s.state.AppID = serverInfo.ID
-	s.state.Version = serverInfo.Version
-	s.state.VAC = serverInfo.VAC
-	s.state.Bots = int32(serverInfo.Bots)
-	s.state.ServerOS = serverInfo.ServerOS.String()
-	s.state.Password = !serverInfo.Visibility
-	s.state.PlayerCount = int32(serverInfo.Players)
-	if s.state.MaxPlayers == 0 {
-		s.state.MaxPlayers = int32(serverInfo.MaxPlayers)
-	}
-	if serverInfo.SourceTV != nil {
-		s.state.STVPort = serverInfo.SourceTV.Port
-		s.state.STVName = serverInfo.SourceTV.Name
-	}
-
-	for _, player := range serverPlayer.Players {
-		for _, p := range s.state.Players {
-			if p.Name == player.Name {
-				p.Score = int(player.Score)
-
-				break
-			}
-		}
-	}
-
-	s.state.Rules = serverRules.Rules
-	s.lastA2SUpdate = time.Now()
-
-	return nil
-}
-
 func (s *Server) updateStatus(ctx context.Context) error {
 	statusResp, errStatus := s.ExecF(ctx, "status")
 	if errStatus != nil {
@@ -501,8 +430,8 @@ func (s *Server) updateStatus(ctx context.Context) error {
 	s.Lock()
 	defer s.Unlock()
 
-	// s.state.PlayerCount = status.PlayersCount
-	// s.state.Bots = status.Bots
+	s.state.PlayerCount = int32(status.PlayersCount) //nolint:gosec
+	s.state.Bots = int32(status.Bots)                //nolint:gosec
 	players := make([]*Player, len(status.Players))
 	for index, player := range status.Players {
 		players[index] = &Player{
@@ -515,7 +444,6 @@ func (s *Server) updateStatus(ctx context.Context) error {
 			State:         player.State,
 			IP:            player.IP,
 			Port:          player.Port,
-			Score:         0,
 		}
 	}
 	s.state.Players = players
@@ -579,7 +507,6 @@ func (s *Server) updateState(ctx context.Context) {
 
 		return
 	}
-	lastA2SUpdate := s.lastA2SUpdate
 	lastPlayersUpdate := s.lastMaxVisiblePlayersUpdate
 	s.RUnlock()
 
@@ -591,17 +518,6 @@ func (s *Server) updateState(ctx context.Context) {
 				slog.String("server", s.ShortName))
 		}
 	})
-
-	if time.Since(lastA2SUpdate) > time.Minute {
-		waitGroup.Go(func() {
-			if err := s.updateA2S(); err != nil {
-				slog.Debug("Failed to update a2s", slog.String("error", err.Error()),
-					slog.String("server", s.ShortName))
-
-				return
-			}
-		})
-	}
 
 	if time.Since(lastPlayersUpdate) > time.Hour {
 		waitGroup.Go(func() {
