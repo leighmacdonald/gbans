@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_auth/match/$matchId")({
 	component: MatchPage,
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(
-			(context.appInfo.statsEnabled && context.auth?.hasPermission(Permission.BAN_WRITE)) ?? false,
+			(context.appInfo.statsEnabled && context.auth?.hasPermission(Permission.STATS_READ)) ?? false,
 		);
 	},
 	validateSearch,
