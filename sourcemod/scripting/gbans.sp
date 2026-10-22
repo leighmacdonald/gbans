@@ -73,6 +73,10 @@ void OnPluginStart() {
         "gb_hide_connections", "1", "Dont allow the use of autoteam command", FCVAR_NONE, true, 0.0, true, 1.0);
     gb_hide_connections = AutoExecConfig_CreateConVar(
         "gb_disable_autoteam", "1", "Dont show the disconnect message to users", FCVAR_NONE, true, 0.0, true, 1.0);
+    gb_seed_promo_minplayers = AutoExecConfig_CreateConVar(
+        "gb_seed_promo_minplayers", "20",
+        "Broadcast the /seed command when fewer than this many real players are online (0 disables)", FCVAR_NONE, true,
+        0.0);
 
     // STV settings
     gb_stv_enable =
@@ -146,6 +150,7 @@ void OnConfigsExecuted() {
     }
 
     CreateTimer(300.0, Timer_CheckStatus, _, TIMER_REPEAT);
+    CreateTimer(600.0, Timer_CheckSeedPromo, _, TIMER_REPEAT);
 
     authenticateServer();
 

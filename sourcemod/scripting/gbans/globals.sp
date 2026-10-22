@@ -13,6 +13,7 @@ ConVar gb_core_server_key;
 // In Game Tweaks
 ConVar gb_disable_autoteam;
 ConVar gb_hide_connections;
+ConVar gb_seed_promo_minplayers;
 // STV options
 ConVar gb_stv_enable;
 ConVar gb_auto_record;
