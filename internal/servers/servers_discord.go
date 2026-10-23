@@ -22,6 +22,12 @@ import (
 //go:embed servers_discord.gotmpl
 var templateBody []byte
 
+const (
+	// maxSelectMenuOptions is discord's limit on the number of options a select menu can hold.
+	maxSelectMenuOptions = 25
+	seedRolesCustomID    = "seed_roles_select"
+)
+
 type DiscordHandler struct {
 	persons       person.Provider
 	servers       *Servers
@@ -161,6 +167,15 @@ func RegisterDiscordCommands(service discord.Connection, persons person.Provider
 			},
 		},
 	}, handler.onServers)
+
+	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
+		Name:                     "seed_roles",
+		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
+		DefaultMemberPermissions: new(discord.UserPerms),
+		Description:              "Select the seed role(s) you would like to receive seed request notifications for",
+	}, handler.onSeedRoles)
+
+	service.MustRegisterPrefixHandler(seedRolesCustomID, handler.onSeedRolesSelect)
 }
 
 func (d DiscordHandler) onFind(ctx context.Context, session *discordgo.Session, interation *discordgo.InteractionCreate) error {
@@ -285,6 +300,145 @@ func (d DiscordHandler) onPSay(ctx context.Context, session *discordgo.Session, 
 
 func (d DiscordHandler) onServers(_ context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
 	return discord.Respond(session, interaction, discordServersMessage(d.servers.servers.sortRegion())...)
+}
+
+// onSeedRoles responds with a select menu of the seed roles configured on enabled servers.
+// Roles selected from the menu are added to the requesting user's own account.
+func (d DiscordHandler) onSeedRoles(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	options, errOptions := d.seedRoleOptions(ctx, session, interaction)
+	if errOptions != nil {
+		return errOptions
+	}
+
+	if len(options) == 0 {
+		return discord.SuccessMsg(session, interaction, "No seed roles are currently configured on enabled servers.")
+	}
+
+	minValues := 1
+
+	return discord.RespondPrivate(session, interaction, discordgo.Container{
+		Components: []discordgo.MessageComponent{
+			discordgo.TextDisplay{
+				Content: "Select the seed role(s) you would like to receive seed request notifications for:",
+			},
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.SelectMenu{
+						CustomID:    seedRolesCustomID,
+						Placeholder: "Select seed role(s)",
+						MinValues:   &minValues,
+						MaxValues:   len(options),
+						MenuType:    discordgo.StringSelectMenu,
+						Options:     options,
+					},
+				},
+			},
+		},
+	})
+}
+
+// onSeedRolesSelect handles the seed role select menu callback, adding the selected roles to the
+// requesting member's own discord account.
+func (d DiscordHandler) onSeedRolesSelect(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	values := interaction.MessageComponentData().Values
+	if len(values) == 0 {
+		return discord.ErrCommandInvalid
+	}
+
+	seedRoleIDs, errSeedRoles := d.servers.SeedRoleIDs(ctx)
+	if errSeedRoles != nil {
+		return errSeedRoles
+	}
+
+	allowed := make(map[string]struct{}, len(seedRoleIDs))
+	for _, roleID := range seedRoleIDs {
+		allowed[roleID] = struct{}{}
+	}
+
+	var (
+		errs    []error
+		granted []string
+	)
+
+	for _, value := range values {
+		if _, ok := allowed[value]; !ok {
+			// Role is no longer configured on an enabled server, eg: the server was disabled after the menu was rendered.
+			errs = append(errs, fmt.Errorf("%w: %s", ErrInvalidSeedRole, value))
+
+			continue
+		}
+
+		if errAdd := session.GuildMemberRoleAdd(interaction.GuildID, interaction.Member.User.ID, value); errAdd != nil {
+			errs = append(errs, fmt.Errorf("failed to add seed role %s: %w", value, errAdd))
+
+			continue
+		}
+
+		granted = append(granted, value)
+	}
+
+	if len(errs) > 0 {
+		return errors.Join(errs...)
+	}
+
+	mentions := make([]string, 0, len(granted))
+	for _, roleID := range granted {
+		mentions = append(mentions, "<@&"+roleID+">")
+	}
+
+	return discord.SuccessMsg(session, interaction,
+		"Seed role(s) added to your account: "+strings.Join(mentions, " "))
+}
+
+// seedRoleOptions builds the select menu options for the seed roles configured on enabled servers,
+// labelled with their guild role name. Role ids that no longer exist in the guild are skipped.
+func (d DiscordHandler) seedRoleOptions(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) ([]discordgo.SelectMenuOption, error) {
+	seedRoleIDs, errSeedRoles := d.servers.SeedRoleIDs(ctx)
+	if errSeedRoles != nil {
+		return nil, errSeedRoles
+	}
+
+	if len(seedRoleIDs) == 0 {
+		return nil, nil
+	}
+
+	guildRoles, errGuildRoles := session.GuildRoles(interaction.GuildID)
+	if errGuildRoles != nil {
+		return nil, errors.Join(errGuildRoles, discord.ErrRole)
+	}
+
+	return seedRoleMenuOptions(seedRoleIDs, guildRoles), nil
+}
+
+// seedRoleMenuOptions maps seed role ids to select menu options labelled with their guild role
+// name, skipping ids that no longer exist in the guild. The result is sorted by label and capped
+// at discord's 25 option limit.
+func seedRoleMenuOptions(seedRoleIDs []string, guildRoles []*discordgo.Role) []discordgo.SelectMenuOption {
+	byID := make(map[string]*discordgo.Role, len(guildRoles))
+	for _, role := range guildRoles {
+		byID[role.ID] = role
+	}
+
+	var options []discordgo.SelectMenuOption //nolint:prealloc
+	for _, roleID := range seedRoleIDs {
+		role, found := byID[roleID]
+		if !found {
+			slog.Warn("Seed role not found in guild", slog.String("role_id", roleID))
+
+			continue
+		}
+		options = append(options, discordgo.SelectMenuOption{Label: role.Name, Value: role.ID})
+	}
+
+	sort.SliceStable(options, func(i, j int) bool {
+		return options[i].Label < options[j].Label
+	})
+
+	if len(options) > maxSelectMenuOptions {
+		options = options[:maxSelectMenuOptions]
+	}
+
+	return options
 }
 
 func (d DiscordHandler) onPlayers(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
