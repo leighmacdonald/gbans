@@ -110,3 +110,14 @@ Sends a centered message to all players. This just calls the [sourcemod command]
 
 Sends a say-chat message to all players.  This just calls the [sourcemod command](https://wiki.alliedmods.net/Admin_Commands_(SourceMod))
 `sm_say`
+
+### /seed_roles
+
+Self-assign seed roles. Responds with a select menu listing the seed roles configured on
+currently enabled servers, and adds the selected roles to your own discord account. Selecting a
+role means you will be mentioned when a seed request is posted for a server that uses that role.
+Roles configured on disabled or deleted servers are not listed, and a role that no longer exists
+in the guild is skipped.
+
+Note: the bot's role must sit above the seed roles in the role hierarchy for the assignment to
+succeed.

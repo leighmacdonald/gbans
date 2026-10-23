@@ -29,6 +29,7 @@ var (
 	ErrMaxPlayerParse    = errors.New("failed to parse sv_visiblemaxplayers response")
 	ErrNotFound          = errors.New("server not found")
 	ErrServerDisabled    = errors.New("server is disabled")
+	ErrInvalidSeedRole   = errors.New("invalid seed role")
 )
 
 const (
@@ -353,6 +354,35 @@ func (s *Servers) SafeState(ctx context.Context, serverID int32) (SafeServer, er
 
 func (s *Servers) Servers(ctx context.Context, filter Query) ([]Server, error) {
 	return s.repo.Query(ctx, filter)
+}
+
+// SeedRoleIDs returns the union of the discord seed role ids configured across all enabled,
+// non-deleted servers. Duplicates are dropped, first seen wins.
+func (s *Servers) SeedRoleIDs(ctx context.Context) ([]string, error) {
+	srvs, errServers := s.Servers(ctx, Query{})
+	if errServers != nil {
+		return nil, errServers
+	}
+
+	var (
+		seen    = make(map[string]struct{})
+		roleIDs []string
+	)
+
+	for _, srv := range srvs {
+		for _, roleID := range srv.DiscordSeedRoleIDs {
+			if roleID == "" {
+				continue
+			}
+			if _, dup := seen[roleID]; dup {
+				continue
+			}
+			seen[roleID] = struct{}{}
+			roleIDs = append(roleIDs, roleID)
+		}
+	}
+
+	return roleIDs, nil
 }
 
 func (s *Servers) GetByName(ctx context.Context, serverName string) (Server, error) {
