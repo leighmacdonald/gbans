@@ -529,15 +529,22 @@ type ReportMessage struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	ReportId        *int32                 `protobuf:"varint,1,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
 	ReportMessageId *int32                 `protobuf:"varint,2,opt,name=report_message_id,json=reportMessageId" json:"report_message_id,omitempty"`
-	AuthorId        *int64                 `protobuf:"varint,3,opt,name=author_id,json=authorId" json:"author_id,omitempty"`
-	MessageMd       *string                `protobuf:"bytes,4,opt,name=message_md,json=messageMd" json:"message_md,omitempty"`
-	Deleted         *bool                  `protobuf:"varint,5,opt,name=deleted" json:"deleted,omitempty"`
-	CreatedOn       *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
-	UpdatedOn       *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
-	PersonaName     *string                `protobuf:"bytes,8,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
-	AvatarHash      *string                `protobuf:"bytes,9,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// author_id is zeroed when the message is anonymized for the viewer.
+	AuthorId    *int64                 `protobuf:"varint,3,opt,name=author_id,json=authorId" json:"author_id,omitempty"`
+	MessageMd   *string                `protobuf:"bytes,4,opt,name=message_md,json=messageMd" json:"message_md,omitempty"`
+	Deleted     *bool                  `protobuf:"varint,5,opt,name=deleted" json:"deleted,omitempty"`
+	CreatedOn   *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	UpdatedOn   *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
+	PersonaName *string                `protobuf:"bytes,8,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
+	AvatarHash  *string                `protobuf:"bytes,9,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
+	// anon_persona_name is the anonymized name the author is displayed under
+	// to non-moderators. Populated for moderator viewers so they can see what
+	// the message looks like publicly.
+	AnonPersonaName *string `protobuf:"bytes,10,opt,name=anon_persona_name,json=anonPersonaName" json:"anon_persona_name,omitempty"`
+	// anon_avatar_hash is the anonymized avatar displayed alongside anon_persona_name.
+	AnonAvatarHash *string `protobuf:"bytes,11,opt,name=anon_avatar_hash,json=anonAvatarHash" json:"anon_avatar_hash,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ReportMessage) Reset() {
@@ -629,6 +636,20 @@ func (x *ReportMessage) GetPersonaName() string {
 func (x *ReportMessage) GetAvatarHash() string {
 	if x != nil && x.AvatarHash != nil {
 		return *x.AvatarHash
+	}
+	return ""
+}
+
+func (x *ReportMessage) GetAnonPersonaName() string {
+	if x != nil && x.AnonPersonaName != nil {
+		return *x.AnonPersonaName
+	}
+	return ""
+}
+
+func (x *ReportMessage) GetAnonAvatarHash() string {
+	if x != nil && x.AnonAvatarHash != nil {
+		return *x.AnonAvatarHash
 	}
 	return ""
 }
@@ -1155,14 +1176,13 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"\treport_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\breportId\"J\n" +
 	"\x0eReportResponse\x128\n" +
-	"\x06report\x18\x01 \x01(\v2\x18.ban.v1.ReportWithAuthorB\x06\xbaH\x03\xc8\x01\x01R\x06report\"\xd4\x03\n" +
+	"\x06report\x18\x01 \x01(\v2\x18.ban.v1.ReportWithAuthorB\x06\xbaH\x03\xc8\x01\x01R\x06report\"\x9e\x04\n" +
 	"\rReportMessage\x12'\n" +
 	"\treport_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\breportId\x126\n" +
 	"\x11report_message_id\x18\x02 \x01(\x05B\n" +
-	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x0freportMessageId\x121\n" +
-	"\tauthor_id\x18\x03 \x01(\x03B\x14\xbaH\x0f\xc8\x01\x01\"\n" +
-	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\bauthorId\x12-\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x0freportMessageId\x12%\n" +
+	"\tauthor_id\x18\x03 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\bauthorId\x12-\n" +
 	"\n" +
 	"message_md\x18\x04 \x01(\tB\x0e\xbaH\v\xc8\x01\x01r\x06\x10\x01\x18І\x03R\tmessageMd\x12 \n" +
 	"\adeleted\x18\x05 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\adeleted\x12A\n" +
@@ -1172,7 +1192,10 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\x12/\n" +
 	"\fpersona_name\x18\b \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x02\x18 R\vpersonaName\x12'\n" +
 	"\vavatar_hash\x18\t \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"avatarHash\"\xf8\x04\n" +
+	"avatarHash\x12*\n" +
+	"\x11anon_persona_name\x18\n" +
+	" \x01(\tR\x0fanonPersonaName\x12(\n" +
+	"\x10anon_avatar_hash\x18\v \x01(\tR\x0eanonAvatarHash\"\xf8\x04\n" +
 	"\x06Report\x12'\n" +
 	"\treport_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\breportId\x121\n" +

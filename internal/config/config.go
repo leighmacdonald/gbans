@@ -147,6 +147,7 @@ type General struct {
 	DemosEnabled       bool
 	PlayerqueueEnabled bool
 	SpeedrunsEnabled   bool
+	AnonmodEnabled     bool
 	SentryDSN          string
 	SentryDSNWeb       string
 	MGEEnabled         bool
@@ -252,6 +253,17 @@ func (c *Configuration) Config() Config {
 	defer c.RUnlock()
 
 	return c.currentConfig
+}
+
+// AnonmodEnabled reports whether the anonymized moderator feature is
+// currently enabled.
+func (c *Configuration) AnonmodEnabled() bool {
+	conf := c.Config()
+
+	conf.General.RLock()
+	defer conf.General.RUnlock()
+
+	return conf.General.AnonmodEnabled
 }
 
 func (c *Configuration) reload(ctx context.Context) error {

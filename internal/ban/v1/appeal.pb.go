@@ -373,18 +373,25 @@ func (x *AppealOverview) GetTargetAvatarHash() string {
 }
 
 type AppealMessage struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	BanId         *int32                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
-	BanMessageId  *int64                 `protobuf:"varint,2,opt,name=ban_message_id,json=banMessageId" json:"ban_message_id,omitempty"`
-	AuthorId      *int64                 `protobuf:"varint,3,opt,name=author_id,json=authorId" json:"author_id,omitempty"`
-	MessageMd     *string                `protobuf:"bytes,4,opt,name=message_md,json=messageMd" json:"message_md,omitempty"`
-	Deleted       *bool                  `protobuf:"varint,5,opt,name=deleted" json:"deleted,omitempty"`
-	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
-	UpdatedOn     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
-	AvatarHash    *string                `protobuf:"bytes,8,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
-	PersonaName   *string                `protobuf:"bytes,9,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	BanId        *int32                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	BanMessageId *int64                 `protobuf:"varint,2,opt,name=ban_message_id,json=banMessageId" json:"ban_message_id,omitempty"`
+	// author_id is zeroed when the message is anonymized for the viewer.
+	AuthorId    *int64                 `protobuf:"varint,3,opt,name=author_id,json=authorId" json:"author_id,omitempty"`
+	MessageMd   *string                `protobuf:"bytes,4,opt,name=message_md,json=messageMd" json:"message_md,omitempty"`
+	Deleted     *bool                  `protobuf:"varint,5,opt,name=deleted" json:"deleted,omitempty"`
+	CreatedOn   *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	UpdatedOn   *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
+	AvatarHash  *string                `protobuf:"bytes,8,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
+	PersonaName *string                `protobuf:"bytes,9,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
+	// anon_persona_name is the anonymized name the author is displayed under
+	// to non-moderators. Populated for moderator viewers so they can see what
+	// the message looks like publicly.
+	AnonPersonaName *string `protobuf:"bytes,10,opt,name=anon_persona_name,json=anonPersonaName" json:"anon_persona_name,omitempty"`
+	// anon_avatar_hash is the anonymized avatar displayed alongside anon_persona_name.
+	AnonAvatarHash *string `protobuf:"bytes,11,opt,name=anon_avatar_hash,json=anonAvatarHash" json:"anon_avatar_hash,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *AppealMessage) Reset() {
@@ -476,6 +483,20 @@ func (x *AppealMessage) GetAvatarHash() string {
 func (x *AppealMessage) GetPersonaName() string {
 	if x != nil && x.PersonaName != nil {
 		return *x.PersonaName
+	}
+	return ""
+}
+
+func (x *AppealMessage) GetAnonPersonaName() string {
+	if x != nil && x.AnonPersonaName != nil {
+		return *x.AnonPersonaName
+	}
+	return ""
+}
+
+func (x *AppealMessage) GetAnonAvatarHash() string {
+	if x != nil && x.AnonAvatarHash != nil {
+		return *x.AnonAvatarHash
 	}
 	return ""
 }
@@ -741,13 +762,12 @@ const file_ban_v1_appeal_proto_rawDesc = "" +
 	"\x12source_avatar_hash\x18\x03 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x98\x01(R\x10sourceAvatarHash\x12:\n" +
 	"\x13target_persona_name\x18\x04 \x01(\tB\n" +
 	"\xbaH\a\xc8\x01\x01r\x02\x18 R\x11targetPersonaName\x129\n" +
-	"\x12target_avatar_hash\x18\x05 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x98\x01(R\x10targetAvatarHash\"\xcf\x03\n" +
+	"\x12target_avatar_hash\x18\x05 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x98\x01(R\x10targetAvatarHash\"\x99\x04\n" +
 	"\rAppealMessage\x12!\n" +
 	"\x06ban_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x05banId\x122\n" +
-	"\x0eban_message_id\x18\x02 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\fbanMessageId\x121\n" +
-	"\tauthor_id\x18\x03 \x01(\x03B\x14\xbaH\x0f\xc8\x01\x01\"\n" +
-	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\bauthorId\x12-\n" +
+	"\x0eban_message_id\x18\x02 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\fbanMessageId\x12%\n" +
+	"\tauthor_id\x18\x03 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\bauthorId\x12-\n" +
 	"\n" +
 	"message_md\x18\x04 \x01(\tB\x0e\xbaH\v\xc8\x01\x01r\x06\x10\x01\x18І\x03R\tmessageMd\x12 \n" +
 	"\adeleted\x18\x05 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\adeleted\x12A\n" +
@@ -757,7 +777,10 @@ const file_ban_v1_appeal_proto_rawDesc = "" +
 	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\x12,\n" +
 	"\vavatar_hash\x18\b \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x98\x01(R\n" +
 	"avatarHash\x12/\n" +
-	"\fpersona_name\x18\t \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x02\x18 R\vpersonaName\"Z\n" +
+	"\fpersona_name\x18\t \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x02\x18 R\vpersonaName\x12*\n" +
+	"\x11anon_persona_name\x18\n" +
+	" \x01(\tR\x0fanonPersonaName\x12(\n" +
+	"\x10anon_avatar_hash\x18\v \x01(\tR\x0eanonAvatarHash\"Z\n" +
 	"\fReplyRequest\x12!\n" +
 	"\x06ban_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x05banId\x12'\n" +

@@ -100,10 +100,8 @@ message ReportMessage {
     (buf.validate.field).required = true,
     (buf.validate.field).int32 = {gt: 0}
   ];
-  int64 author_id = 3 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).int64 = {gte: 76561197960265729}
-  ];
+  // author_id is zeroed when the message is anonymized for the viewer.
+  int64 author_id = 3 [(buf.validate.field).required = true];
   string message_md = 4 [
     (buf.validate.field).required = true,
     (buf.validate.field).string = {
@@ -122,6 +120,12 @@ message ReportMessage {
     }
   ];
   string avatar_hash = 9 [(buf.validate.field).required = true];
+  // anon_persona_name is the anonymized name the author is displayed under
+  // to non-moderators. Populated for moderator viewers so they can see what
+  // the message looks like publicly.
+  string anon_persona_name = 10;
+  // anon_avatar_hash is the anonymized avatar displayed alongside anon_persona_name.
+  string anon_avatar_hash = 11;
 }
 
 message Report {

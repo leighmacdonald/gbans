@@ -138,7 +138,7 @@ func (s ReportService) ReportMessages(ctx context.Context, req *v1.ReportMessage
 		return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
 	}
 
-	reportMessages, errGetReportMessages := s.reports.Messages(ctx, req.GetReportId())
+	reportMessages, errGetReportMessages := s.reports.Messages(ctx, req.GetReportId(), user)
 	if errGetReportMessages != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
@@ -191,6 +191,8 @@ func toReportMessage(msg ReportMessage) *v1.ReportMessage {
 		UpdatedOn:       timestamppb.New(msg.UpdatedOn),
 		PersonaName:     &msg.Personaname,
 		AvatarHash:      &msg.Avatarhash,
+		AnonPersonaName: new(msg.AnonPersonaname),
+		AnonAvatarHash:  new(msg.AnonAvatarhash),
 	}
 }
 
