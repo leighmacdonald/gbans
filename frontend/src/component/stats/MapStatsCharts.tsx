@@ -1,7 +1,14 @@
 import { Box, Typography } from "@mui/material";
 import { BarChart, LineChart } from "@mui/x-charts";
-import type { MapStat } from "../../rpc/stats/v1/stats_pb.ts";
-import { buildMapStatsTop, formatMetricValue, type MapStatsChartData, type MapStatsMetric } from "./mapStats.ts";
+import type { MapPrefixStat, MapStat } from "../../rpc/stats/v1/stats_pb.ts";
+import {
+	buildMapStatsPrefixChart,
+	buildMapStatsTop,
+	formatMetricValue,
+	type MapStatsChartData,
+	type MapStatsMetric,
+	mapStatsMetricLabel,
+} from "./mapStats.ts";
 
 const chartHeight = 380;
 
@@ -71,6 +78,51 @@ export const MapStatsTopChart = ({ topMaps }: { topMaps: MapStat[] }) => {
 					label: "Playtime",
 					data: entries.map((entry) => entry.value),
 					valueFormatter: (value: number) => `${value.toFixed(1)}h`,
+				},
+			]}
+			slotProps={{ legend: { hidden: true } }}
+		/>
+	);
+};
+
+// MapStatsPrefixChart renders the split across map type prefixes (cp_, pl_,
+// koth_, ...) as horizontal bars for the selected metric. Workshop maps are
+// already counted under their normalized prefix by the backend.
+export const MapStatsPrefixChart = ({ prefixes, metric }: { prefixes: MapPrefixStat[]; metric: MapStatsMetric }) => {
+	const data = buildMapStatsPrefixChart(prefixes, metric);
+	if (data.length === 0) {
+		return <EmptyChart height={240} />;
+	}
+
+	// MUI X renders band categories top-to-bottom, so reverse to put the
+	// biggest prefix first.
+	const entries = [...data].reverse();
+	const height = Math.max(240, entries.length * 36 + 60);
+
+	return (
+		<BarChart
+			height={height}
+			layout="horizontal"
+			margin={{ top: 8, right: 32, bottom: 16, left: 8 }}
+			xAxis={[
+				{
+					scaleType: "linear",
+					min: 0,
+					valueFormatter: (value: number) => formatMetricValue(value, metric),
+				},
+			]}
+			yAxis={[
+				{
+					scaleType: "band",
+					data: entries.map((entry) => entry.label),
+					tickLabelStyle: { fontSize: 12 },
+				},
+			]}
+			series={[
+				{
+					label: mapStatsMetricLabel(metric),
+					data: entries.map((entry) => entry.value),
+					valueFormatter: (value: number) => formatMetricValue(value, metric),
 				},
 			]}
 			slotProps={{ legend: { hidden: true } }}

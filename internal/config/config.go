@@ -43,6 +43,10 @@ var (
 	ErrReadConfig     = errors.New("failed to read config file")
 	ErrFormatConfig   = errors.New("config file format invalid")
 	ErrDecodeDuration = errors.New("failed to decode duration")
+
+	// steamKeyMu serializes steamid.SetKey, which updates a package-global in
+	// the steamid library; config reloads can happen concurrently.
+	steamKeyMu sync.Mutex //nolint:gochecknoglobals
 )
 
 // Static defines non-dynamic config values that cannot be changed during runtime. These
@@ -259,13 +263,17 @@ func (c *Configuration) reload(ctx context.Context) error {
 	config.Static = c.static
 
 	// Update the global base url.
-	link.BaseURL = config.ExternalURL
+	link.SetBaseURL(config.ExternalURL)
 
 	c.Lock()
 	c.currentConfig = config
 	c.Unlock()
 
-	if errSteam := steamid.SetKey(config.SteamKey); errSteam != nil {
+	steamKeyMu.Lock()
+	errSteam := steamid.SetKey(config.SteamKey)
+	steamKeyMu.Unlock()
+
+	if errSteam != nil {
 		return errors.Join(errSteam, ErrSteamAPIKey)
 	}
 

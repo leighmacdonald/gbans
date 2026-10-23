@@ -21,6 +21,7 @@ func TestMapStats(t *testing.T) {
 	ctx := t.Context()
 	seed := seedMapStats(t, testFixture)
 	mapA, mapB, mapC := seed.mapA, seed.mapB, seed.mapC
+	mapD, mapE, mapF := seed.mapD, seed.mapE, seed.mapF
 	day1, day2 := seed.day1, seed.day2
 
 	repo := stats.NewRepository(testFixture.Database)
@@ -33,17 +34,17 @@ func TestMapStats(t *testing.T) {
 			Filter:        query.Filter{OrderBy: "map_name"}, //nolint:modernize // embedded field type is required in a keyed literal.
 		})
 		require.NoError(t, err)
-		require.Equal(t, uint64(3), count)
+		require.Equal(t, uint64(6), count)
 		require.Equal(t, stats.MapStatsSummary{
-			MapsPlayed:      3,
-			MatchesPlayed:   4,
-			MatchesDecided:  2,
-			MatchesDrawn:    2,
-			TotalDurationMS: 18_000_000,
-			RoundsPlayed:    4,
+			MapsPlayed:      6,
+			MatchesPlayed:   7,
+			MatchesDecided:  4,
+			MatchesDrawn:    3,
+			TotalDurationMS: 25_200_000,
+			RoundsPlayed:    7,
 		}, summary)
 
-		require.Len(t, rows, 3)
+		require.Len(t, rows, 6)
 		require.Equal(t, mapA, rows[0].MapID)
 		require.Equal(t, "cp_map_a", rows[0].MapName)
 		require.Equal(t, uint64(2), rows[0].MatchesPlayed)
@@ -69,6 +70,18 @@ func TestMapStats(t *testing.T) {
 		require.Equal(t, mapC, rows[2].MapID)
 		require.Equal(t, uint64(1), rows[2].MatchesDrawn)
 		require.Equal(t, uint64(3), rows[2].UniquePlayers)
+
+		require.Equal(t, mapF, rows[3].MapID)
+		require.Equal(t, "custom", rows[3].MapName)
+		require.Equal(t, uint64(1), rows[3].MatchesDrawn)
+
+		require.Equal(t, mapD, rows[4].MapID)
+		require.Equal(t, "pl_map_d", rows[4].MapName)
+		require.Equal(t, uint64(1), rows[4].MatchesDecided)
+
+		require.Equal(t, mapE, rows[5].MapID)
+		require.Equal(t, "workshop/koth_map_e.ugc12345", rows[5].MapName)
+		require.Equal(t, uint64(1), rows[5].MatchesDecided)
 	})
 
 	t.Run("sort and paginate", func(t *testing.T) {
@@ -79,7 +92,7 @@ func TestMapStats(t *testing.T) {
 			Filter:        query.Filter{OrderBy: "total_duration_ms", Desc: true, Limit: 1, Offset: 1}, //nolint:modernize // embedded field type is required in a keyed literal.
 		})
 		require.NoError(t, err)
-		require.Equal(t, uint64(3), count)
+		require.Equal(t, uint64(6), count)
 		require.Len(t, rows, 1)
 		require.Equal(t, mapB, rows[0].MapID)
 	})
@@ -105,18 +118,19 @@ func TestMapStats(t *testing.T) {
 			End:           day2,
 		}, 10)
 		require.NoError(t, err)
-		require.Len(t, top, 3)
-		require.Equal(t, []int32{mapA, mapB, mapC}, []int32{top[0].MapID, top[1].MapID, top[2].MapID})
+		require.Len(t, top, 6)
+		require.Equal(t, []int32{mapA, mapB, mapE, mapD, mapC, mapF},
+			[]int32{top[0].MapID, top[1].MapID, top[2].MapID, top[3].MapID, top[4].MapID, top[5].MapID})
 	})
 
 	t.Run("all time", func(t *testing.T) {
 		rows, count, summary, err := repo.MapStats(ctx, stats.MapStatsOpts{StatsBucketID: 1})
 		require.NoError(t, err)
-		require.Equal(t, uint64(3), count)
-		require.Equal(t, uint64(5), summary.MatchesPlayed)
-		require.Equal(t, uint64(2), summary.MatchesDecided)
-		require.Equal(t, uint64(3), summary.MatchesDrawn)
-		require.Equal(t, uint64(19_800_000), summary.TotalDurationMS)
+		require.Equal(t, uint64(6), count)
+		require.Equal(t, uint64(8), summary.MatchesPlayed)
+		require.Equal(t, uint64(4), summary.MatchesDecided)
+		require.Equal(t, uint64(4), summary.MatchesDrawn)
+		require.Equal(t, uint64(27_000_000), summary.TotalDurationMS)
 
 		byMap := make(map[int32]stats.MapStat, len(rows))
 		for _, row := range rows {
@@ -126,6 +140,46 @@ func TestMapStats(t *testing.T) {
 		require.Equal(t, uint64(2), byMap[mapC].MatchesPlayed)
 		require.Equal(t, uint64(4), byMap[mapC].UniquePlayers)
 	})
+
+	testMapStatsHistory(t, repo, seed)
+
+	t.Run("prefixes", func(t *testing.T) {
+		prefixes, err := repo.MapStatsPrefixes(ctx, stats.MapStatsOpts{
+			StatsBucketID: 1,
+			Start:         day1,
+			End:           day2,
+		})
+		require.NoError(t, err)
+		// The workshop map counts under koth_ and the prefix-less map under
+		// other, ordered by total playtime descending.
+		require.Equal(t, []stats.MapPrefixStat{
+			{Prefix: "cp_", MapsPlayed: 3, MatchesPlayed: 4, MatchesDecided: 2, TotalDurationMS: 18_000_000},
+			{Prefix: "koth_", MapsPlayed: 1, MatchesPlayed: 1, MatchesDecided: 1, TotalDurationMS: 3_600_000},
+			{Prefix: "pl_", MapsPlayed: 1, MatchesPlayed: 1, MatchesDecided: 1, TotalDurationMS: 2_700_000},
+			{Prefix: "other", MapsPlayed: 1, MatchesPlayed: 1, TotalDurationMS: 900_000},
+		}, prefixes)
+
+		allTime, err := repo.MapStatsPrefixes(ctx, stats.MapStatsOpts{StatsBucketID: 1})
+		require.NoError(t, err)
+		byPrefix := make(map[string]stats.MapPrefixStat, len(allTime))
+		for _, prefix := range allTime {
+			byPrefix[prefix.Prefix] = prefix
+		}
+		require.Equal(t, uint64(5), byPrefix["cp_"].MatchesPlayed)
+		require.Equal(t, uint64(1), byPrefix["koth_"].MatchesPlayed)
+		require.Equal(t, uint64(1), byPrefix["pl_"].MapsPlayed)
+		require.Equal(t, uint64(1), byPrefix["other"].MapsPlayed)
+	})
+}
+
+// testMapStatsHistory verifies the bucketed time series queries. It runs as
+// subtests of TestMapStats so it can share the seeded fixture.
+func testMapStatsHistory(t *testing.T, repo stats.Repository, seed mapStatsSeed) {
+	t.Helper()
+	ctx := t.Context()
+	mapA, mapB, mapC := seed.mapA, seed.mapB, seed.mapC
+	mapD, mapE, mapF := seed.mapD, seed.mapE, seed.mapF
+	day1, day2 := seed.day1, seed.day2
 
 	t.Run("history daily", func(t *testing.T) {
 		series, err := repo.MapStatsHistory(ctx, stats.MapStatsHistoryOpts{
@@ -157,9 +211,12 @@ func TestMapStats(t *testing.T) {
 		require.Len(t, series[1].Points, 1)
 		require.Equal(t, uint64(5_400_000), series[1].Points[0].DurationMS)
 
-		require.Len(t, series[2].Points, 1)
-		require.Equal(t, uint64(1), series[2].Points[0].MatchesPlayed)
-		require.Equal(t, uint64(1_800_000), series[2].Points[0].DurationMS)
+		// Other now covers mapC, mapD, mapE and mapF.
+		require.Len(t, series[2].Points, 2)
+		require.Equal(t, uint64(2), series[2].Points[0].MatchesPlayed)
+		require.Equal(t, uint64(3_600_000), series[2].Points[0].DurationMS)
+		require.Equal(t, uint64(2), series[2].Points[1].MatchesPlayed)
+		require.Equal(t, uint64(5_400_000), series[2].Points[1].DurationMS)
 	})
 
 	t.Run("history weekly and monthly", func(t *testing.T) {
@@ -172,7 +229,7 @@ func TestMapStats(t *testing.T) {
 				TopN:          6,
 			})
 			require.NoError(t, err)
-			require.Len(t, series, 3, "topN >= map count produces no Other series for %s", bucket)
+			require.Len(t, series, 6, "topN >= map count produces no Other series for %s", bucket)
 
 			totalByMap := make(map[int32]uint64, len(series))
 			for _, s := range series {
@@ -183,6 +240,9 @@ func TestMapStats(t *testing.T) {
 			require.Equal(t, uint64(10_800_000), totalByMap[mapA])
 			require.Equal(t, uint64(5_400_000), totalByMap[mapB])
 			require.Equal(t, uint64(1_800_000), totalByMap[mapC])
+			require.Equal(t, uint64(2_700_000), totalByMap[mapD])
+			require.Equal(t, uint64(3_600_000), totalByMap[mapE])
+			require.Equal(t, uint64(900_000), totalByMap[mapF])
 		}
 	})
 
@@ -216,6 +276,9 @@ type mapStatsSeed struct {
 	mapA int32
 	mapB int32
 	mapC int32
+	mapD int32
+	mapE int32
+	mapF int32
 	day1 time.Time
 	day2 time.Time
 }
@@ -229,6 +292,11 @@ func seedMapStats(t *testing.T, testFixture *tests.Fixture) mapStatsSeed {
 	mapA := seedTestMap(t, testFixture, "cp_map_a")
 	mapB := seedTestMap(t, testFixture, "cp_map_b")
 	mapC := seedTestMap(t, testFixture, "cp_map_c")
+	// Other map type prefixes, including a workshop map (which stores its
+	// name with a workshop/ prefix and .ugc suffix) and a prefix-less map.
+	mapD := seedTestMap(t, testFixture, "pl_map_d")
+	mapE := seedTestMap(t, testFixture, "workshop/koth_map_e.ugc12345")
+	mapF := seedTestMap(t, testFixture, "custom")
 	demo := seedTestDemo(t, testFixture, server.ServerID, "map-stats-demo", "cp_map_a")
 
 	day1 := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
@@ -251,6 +319,9 @@ func seedMapStats(t *testing.T, testFixture *tests.Fixture) mapStatsSeed {
 	seedMapStatsMatch(t, testFixture, server.ServerID, mapB, demo, 1, day1, 13, 13, 5_400_000, playerA, playerC)
 	seedMapStatsMatch(t, testFixture, server.ServerID, mapA, demo, 1, day2, 7, 13, 7_200_000, playerB, playerC)
 	seedMapStatsMatch(t, testFixture, server.ServerID, mapC, demo, 1, day2, 5, 5, 1_800_000, playerA, playerB, playerC)
+	seedMapStatsMatch(t, testFixture, server.ServerID, mapD, demo, 1, day1, 9, 5, 2_700_000, playerA, playerB)
+	seedMapStatsMatch(t, testFixture, server.ServerID, mapE, demo, 1, day2, 11, 9, 3_600_000, playerC, playerD)
+	seedMapStatsMatch(t, testFixture, server.ServerID, mapF, demo, 1, day1, 1, 1, 900_000, playerA)
 
 	// Outside the tested range, used to prove range and all-time behaviour.
 	seedMapStatsMatch(t, testFixture, server.ServerID, mapC, demo, 1, outsideDay, 13, 13, 1_800_000, playerD)
@@ -266,7 +337,7 @@ func seedMapStats(t *testing.T, testFixture *tests.Fixture) mapStatsSeed {
 		require.NoError(t, testFixture.Database.RefreshMaterializedView(ctx, view))
 	}
 
-	return mapStatsSeed{mapA: mapA, mapB: mapB, mapC: mapC, day1: day1, day2: day2}
+	return mapStatsSeed{mapA: mapA, mapB: mapB, mapC: mapC, mapD: mapD, mapE: mapE, mapF: mapF, day1: day1, day2: day2}
 }
 
 // seedMapStatsMatch inserts a bare match row plus one round and one

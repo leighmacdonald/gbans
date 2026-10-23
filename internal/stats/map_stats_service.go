@@ -45,17 +45,30 @@ func (s Service) QueryMapStats(ctx context.Context, request *v1.QueryMapStatsReq
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
+	prefixes, errPrefixes := s.stats.MapStatsPrefixes(ctx, opts)
+	if errPrefixes != nil {
+		slog.Error("Failed to query map prefix stats",
+			slog.Uint64("statsBucketID", uint64(opts.StatsBucketID)),
+			slog.String("error", errPrefixes.Error()))
+
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
 	resp := &v1.QueryMapStatsResponse{
-		Count:   &count,
-		Summary: toMapStatsSummary(summary),
-		Maps:    make([]*v1.MapStat, len(rows)),
-		TopMaps: make([]*v1.MapStat, len(top)),
+		Count:    &count,
+		Summary:  toMapStatsSummary(summary),
+		Maps:     make([]*v1.MapStat, len(rows)),
+		TopMaps:  make([]*v1.MapStat, len(top)),
+		Prefixes: make([]*v1.MapPrefixStat, len(prefixes)),
 	}
 	for idx := range rows {
 		resp.Maps[idx] = toMapStat(rows[idx])
 	}
 	for idx := range top {
 		resp.TopMaps[idx] = toMapStat(top[idx])
+	}
+	for idx := range prefixes {
+		resp.Prefixes[idx] = toMapPrefixStat(prefixes[idx])
 	}
 
 	return resp, nil
@@ -126,6 +139,16 @@ func toMapStat(stat MapStat) *v1.MapStat {
 		CapturesBlocked:   &stat.CapturesBlocked,
 		FirstPlayedAt:     timestamppb.New(stat.FirstPlayedAt),
 		LastPlayedAt:      timestamppb.New(stat.LastPlayedAt),
+	}
+}
+
+func toMapPrefixStat(prefix MapPrefixStat) *v1.MapPrefixStat {
+	return &v1.MapPrefixStat{
+		Prefix:          &prefix.Prefix,
+		MapsPlayed:      &prefix.MapsPlayed,
+		MatchesPlayed:   &prefix.MatchesPlayed,
+		MatchesDecided:  &prefix.MatchesDecided,
+		TotalDurationMs: &prefix.TotalDurationMS,
 	}
 }
 

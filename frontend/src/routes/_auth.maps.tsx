@@ -27,7 +27,7 @@ import { ErrorDetails } from "../component/ErrorDetails.tsx";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { LoadingSpinner } from "../component/LoadingSpinner.tsx";
 import { RowActionContainer } from "../component/RowActionContainer.tsx";
-import { MapStatsTopChart, MapStatsTrendChart } from "../component/stats/MapStatsCharts.tsx";
+import { MapStatsPrefixChart, MapStatsTopChart, MapStatsTrendChart } from "../component/stats/MapStatsCharts.tsx";
 import {
 	buildMapStatsChart,
 	formatPlaytimeHours,
@@ -561,6 +561,18 @@ function MapsComponent() {
 						Top Maps · Playtime
 					</Typography>
 					{isLoading ? <LoadingSpinner /> : <MapStatsTopChart topMaps={data?.topMaps ?? []} />}
+				</Paper>
+			</Grid>
+			<Grid size={{ xs: 12 }}>
+				<Paper sx={{ padding: 2 }}>
+					<Typography variant="h6" sx={{ marginBottom: 1 }}>
+						Maps by Type · {mapStatsMetricLabel(search.metric)}
+					</Typography>
+					{isLoading ? (
+						<LoadingSpinner />
+					) : (
+						<MapStatsPrefixChart prefixes={data?.prefixes ?? []} metric={search.metric} />
+					)}
 				</Paper>
 			</Grid>
 			<Grid size={{ xs: 12 }}>

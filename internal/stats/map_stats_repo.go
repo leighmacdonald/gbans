@@ -31,6 +31,22 @@ var mapStatValidColumns = map[string][]string{
 	},
 }
 
+// mapStatsNormalizedMapNameExpr resolves a map name to its base name for
+// prefix grouping: workshop maps are stored with a workshop/ prefix and a
+// .ugc suffix (workshop/pl_foo.ugc123), which is stripped first.
+const mapStatsNormalizedMapNameExpr = `case
+	when m.map_name like 'workshop/%' then split_part(split_part(m.map_name, '/', 2), '.', 1)
+	else m.map_name
+	end`
+
+// mapStatsPrefixExpr resolves a map to its type prefix (cp_, pl_, koth_,
+// ...). Maps whose normalized name contains no underscore group under "other".
+const mapStatsPrefixExpr = `case
+	when position('_' in ` + mapStatsNormalizedMapNameExpr + `) > 0
+	then split_part(` + mapStatsNormalizedMapNameExpr + `, '_', 1) || '_'
+	else 'other'
+	end`
+
 func (r Repository) MapStats(ctx context.Context, opts MapStatsOpts) ([]MapStat, uint64, MapStatsSummary, error) {
 	rows, errRows := r.queryMapStatsRows(ctx, opts)
 	if errRows != nil {
@@ -55,6 +71,69 @@ func (r Repository) MapStatsTop(ctx context.Context, opts MapStatsOpts, limit ui
 	topOpts.Filter = query.Filter{OrderBy: "total_duration_ms", Desc: true, Limit: limit}
 
 	return r.queryMapStatsRows(ctx, topOpts)
+}
+
+// MapStatsPrefixes aggregates the maps of the requested range into one row
+// per map type prefix (cp_, pl_, koth_, ...), ordered by total playtime
+// descending. Workshop maps are counted under the prefix of their normalized
+// name; maps without a prefix group under "other".
+func (r Repository) MapStatsPrefixes(ctx context.Context, opts MapStatsOpts) ([]MapPrefixStat, error) {
+	selects := []string{
+		mapStatsPrefixExpr + " AS prefix",
+		"count(distinct v.map_id)::bigint AS maps_played",
+		"coalesce(sum(v.matches_played), 0)::bigint AS matches_played",
+		"coalesce(sum(v.matches_decided), 0)::bigint AS matches_decided",
+		"coalesce(sum(v.total_duration_ms), 0)::bigint AS total_duration_ms",
+	}
+
+	var builder sq.SelectBuilder
+	if opts.allTime() {
+		builder = r.Builder().
+			Select(selects...).
+			From("stats_map_alltime_view v"). //nolint:misspell // name must match the database view.
+			Join("map m ON m.map_id = v.map_id").
+			Where(sq.Eq{"v.stats_bucket_id": opts.StatsBucketID})
+	} else {
+		// The range aggregate pre-sums the daily view per map, so the outer
+		// grouping sees the same per-map grain as the all-time view.
+		builder = r.Builder().
+			Select(selects...).
+			FromSelect(r.mapStatsRangeAggregate(opts), "v").
+			Join("map m ON m.map_id = v.map_id")
+	}
+
+	if opts.Search != "" {
+		builder = builder.Where(sq.ILike{"m.map_name": "%" + opts.Search + "%"})
+	}
+
+	builder = builder.GroupBy("1").OrderBy("sum(v.total_duration_ms) DESC", "prefix")
+
+	rows, errRows := r.QueryBuilder(ctx, builder)
+	if errRows != nil {
+		return nil, database.Err(errRows)
+	}
+
+	var prefixes []MapPrefixStat
+	for rows.Next() {
+		var prefix MapPrefixStat
+		if err := rows.Scan(
+			&prefix.Prefix,
+			&prefix.MapsPlayed,
+			&prefix.MatchesPlayed,
+			&prefix.MatchesDecided,
+			&prefix.TotalDurationMS,
+		); err != nil {
+			return nil, database.Err(err)
+		}
+
+		prefixes = append(prefixes, prefix)
+	}
+
+	if rows.Err() != nil {
+		return nil, database.Err(rows.Err())
+	}
+
+	return prefixes, nil
 }
 
 func (r Repository) MapStatsHistory(ctx context.Context, opts MapStatsHistoryOpts) ([]MapStatsSeries, error) {
