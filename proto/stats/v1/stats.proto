@@ -155,11 +155,26 @@ message QueryMapStatsRequest {
   string search = 5 [(buf.validate.field).string.max_len = 256];
 }
 
+message MapPrefixStat {
+  // prefix is the map type prefix of the normalized map name, e.g. "cp_",
+  // "pl_", "koth_". Workshop maps are normalized to the underlying map name
+  // first (workshop/pl_foo.ugc123 becomes pl_foo). Maps without a prefix are
+  // grouped under "other".
+  string prefix = 1;
+  uint64 maps_played = 2;
+  uint64 matches_played = 3;
+  uint64 matches_decided = 4;
+  uint64 total_duration_ms = 5;
+}
+
 message QueryMapStatsResponse {
   uint64 count = 1;
   repeated MapStat maps = 2;
   MapStatsSummary summary = 3;
   repeated MapStat top_maps = 4;
+  // prefixes groups the maps of the same range, bucket and search scope by
+  // map type prefix, ordered by total duration descending.
+  repeated MapPrefixStat prefixes = 5;
 }
 
 message MapStatsPoint {

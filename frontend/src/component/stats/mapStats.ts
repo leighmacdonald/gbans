@@ -11,7 +11,7 @@ import {
 	subDays,
 	subYears,
 } from "date-fns";
-import type { MapStat, MapStatsSeries } from "../../rpc/stats/v1/stats_pb.ts";
+import type { MapPrefixStat, MapStat, MapStatsSeries } from "../../rpc/stats/v1/stats_pb.ts";
 import { TimeBucket } from "../../rpc/stats/v1/stats_pb.ts";
 
 export type MapStatsRange = "7d" | "30d" | "90d" | "1y" | "all";
@@ -185,3 +185,37 @@ export const buildMapStatsTop = (topMaps: MapStat[]): Array<{ label: string; val
 	topMaps
 		.map((map) => ({ label: map.mapName, value: msToHours(map.totalDurationMs) }))
 		.filter((entry) => entry.value > 0);
+
+export interface MapPrefixChartData {
+	label: string;
+	value: number;
+	matches: number;
+	maps: number;
+}
+
+const prefixMetricValue = (prefix: MapPrefixStat, metric: MapStatsMetric): number => {
+	switch (metric) {
+		case "duration":
+			return msToHours(prefix.totalDurationMs);
+		case "matches":
+			return Number(prefix.matchesPlayed);
+		case "decided":
+			return Number(prefix.matchesDecided);
+	}
+};
+
+/**
+ * Converts the RPC prefix stats into horizontal bar chart data for the
+ * selected metric. Entries with a zero value are dropped and the result is
+ * ordered by value (largest first), breaking ties alphabetically.
+ */
+export const buildMapStatsPrefixChart = (prefixes: MapPrefixStat[], metric: MapStatsMetric): MapPrefixChartData[] =>
+	prefixes
+		.map((prefix) => ({
+			label: prefix.prefix,
+			value: prefixMetricValue(prefix, metric),
+			matches: Number(prefix.matchesPlayed),
+			maps: Number(prefix.mapsPlayed),
+		}))
+		.filter((entry) => entry.value > 0)
+		.sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));

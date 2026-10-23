@@ -7,9 +7,16 @@ import { expect, test } from "vitest";
 // labels are deterministic regardless of where the suite runs.
 process.env.TZ = "UTC";
 
-import { MapStatSchema, MapStatsPointSchema, MapStatsSeriesSchema, TimeBucket } from "../../rpc/stats/v1/stats_pb.ts";
+import {
+	MapPrefixStatSchema,
+	MapStatSchema,
+	MapStatsPointSchema,
+	MapStatsSeriesSchema,
+	TimeBucket,
+} from "../../rpc/stats/v1/stats_pb.ts";
 import {
 	buildMapStatsChart,
+	buildMapStatsPrefixChart,
 	buildMapStatsTop,
 	formatMetricValue,
 	formatPlaytimeHours,
@@ -133,6 +140,111 @@ test("buildMapStatsTop converts playtime to hours and drops zero maps", () => {
 		{ label: "cp_badlands", value: 2 },
 		{ label: "cp_process", value: 1 },
 	]);
+});
+
+test("buildMapStatsPrefixChart converts playtime to hours, sorts and drops zero entries", () => {
+	const data = buildMapStatsPrefixChart(
+		[
+			create(MapPrefixStatSchema, {
+				prefix: "cp_",
+				mapsPlayed: "3",
+				matchesPlayed: "4",
+				matchesDecided: "2",
+				totalDurationMs: "18000000",
+			}),
+			create(MapPrefixStatSchema, {
+				prefix: "pl_",
+				mapsPlayed: "1",
+				matchesPlayed: "1",
+				matchesDecided: "1",
+				totalDurationMs: "2700000",
+			}),
+			create(MapPrefixStatSchema, {
+				prefix: "koth_",
+				mapsPlayed: "1",
+				matchesPlayed: "1",
+				matchesDecided: "1",
+				totalDurationMs: "3600000",
+			}),
+			create(MapPrefixStatSchema, {
+				prefix: "other",
+				mapsPlayed: "1",
+				matchesPlayed: "1",
+				matchesDecided: "0",
+				totalDurationMs: "0",
+			}),
+		],
+		"duration",
+	);
+
+	expect(data).toEqual([
+		{ label: "cp_", value: 5, matches: 4, maps: 3 },
+		{ label: "koth_", value: 1, matches: 1, maps: 1 },
+		{ label: "pl_", value: 0.75, matches: 1, maps: 1 },
+	]);
+});
+
+test("buildMapStatsPrefixChart follows the selected metric and breaks ties alphabetically", () => {
+	const data = buildMapStatsPrefixChart(
+		[
+			create(MapPrefixStatSchema, {
+				prefix: "pl_",
+				mapsPlayed: "1",
+				matchesPlayed: "1",
+				matchesDecided: "1",
+				totalDurationMs: "2700000",
+			}),
+			create(MapPrefixStatSchema, {
+				prefix: "cp_",
+				mapsPlayed: "3",
+				matchesPlayed: "4",
+				matchesDecided: "2",
+				totalDurationMs: "18000000",
+			}),
+			create(MapPrefixStatSchema, {
+				prefix: "other",
+				mapsPlayed: "1",
+				matchesPlayed: "1",
+				matchesDecided: "0",
+				totalDurationMs: "900000",
+			}),
+		],
+		"matches",
+	);
+
+	// Under "matches" the pl_/other tie (both 1) sorts alphabetically.
+	expect(data.map((entry) => entry.label)).toEqual(["cp_", "other", "pl_"]);
+	expect(data[0].value).toBe(4);
+
+	const decided = buildMapStatsPrefixChart(
+		[
+			create(MapPrefixStatSchema, {
+				prefix: "pl_",
+				mapsPlayed: "1",
+				matchesPlayed: "1",
+				matchesDecided: "1",
+				totalDurationMs: "2700000",
+			}),
+			create(MapPrefixStatSchema, {
+				prefix: "cp_",
+				mapsPlayed: "3",
+				matchesPlayed: "4",
+				matchesDecided: "2",
+				totalDurationMs: "18000000",
+			}),
+			create(MapPrefixStatSchema, {
+				prefix: "other",
+				mapsPlayed: "1",
+				matchesPlayed: "1",
+				matchesDecided: "0",
+				totalDurationMs: "900000",
+			}),
+		],
+		"decided",
+	);
+
+	// other has no decided matches, so it is dropped under the "decided" metric.
+	expect(decided.map((entry) => entry.label)).toEqual(["cp_", "pl_"]);
 });
 
 test("formatPlaytimeHours renders human playtime", () => {

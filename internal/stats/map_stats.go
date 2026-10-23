@@ -34,6 +34,18 @@ type MapStat struct {
 	LastPlayedAt      time.Time
 }
 
+// MapPrefixStat is the per-map-type-prefix aggregate for the /maps prefix
+// chart. Workshop maps are counted under the prefix of their normalized name
+// (workshop/pl_foo.ugc123 becomes pl_foo); maps without a prefix are counted
+// under "other".
+type MapPrefixStat struct {
+	Prefix          string
+	MapsPlayed      uint64
+	MatchesPlayed   uint64
+	MatchesDecided  uint64
+	TotalDurationMS uint64
+}
+
 // MapStatsSummary is the set of totals shown in the /maps summary cards.
 type MapStatsSummary struct {
 	MapsPlayed      uint64
@@ -92,6 +104,10 @@ func (s Stats) MapStats(ctx context.Context, opts MapStatsOpts) ([]MapStat, uint
 
 func (s Stats) MapStatsTop(ctx context.Context, opts MapStatsOpts, limit uint64) ([]MapStat, error) {
 	return s.repo.MapStatsTop(ctx, opts, limit)
+}
+
+func (s Stats) MapStatsPrefixes(ctx context.Context, opts MapStatsOpts) ([]MapPrefixStat, error) {
+	return s.repo.MapStatsPrefixes(ctx, opts)
 }
 
 func (s Stats) MapStatsHistory(ctx context.Context, opts MapStatsHistoryOpts) ([]MapStatsSeries, error) {
