@@ -1,11 +1,13 @@
 package sourcemod_test
 
 import (
+	"context"
 	"slices"
 	"testing"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/roles"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/internal/tests"
@@ -377,4 +379,83 @@ func TestCommandOverrides(t *testing.T) {
 	remaining, err := repo.Overrides(ctx)
 	require.NoError(t, err)
 	require.NotContains(t, remaining, byID)
+}
+
+// findGroupByName returns the group with the given name, or a zero value when
+// it is absent.
+func findGroupByName(groups []sourcemod.Groups, name string) sourcemod.Groups {
+	for _, group := range groups {
+		if group.Name == name {
+			return group
+		}
+	}
+
+	return sourcemod.Groups{}
+}
+
+func TestSourcemodPermissionRoles(t *testing.T) {
+	repo := sourcemod.NewRepository(fixture.Database)
+	ctx := t.Context()
+
+	roleRepo := roles.NewRepository(fixture.Database)
+
+	kick := []rolesv1.Permission{rolesv1.Permission_PERMISSION_SOURCEMOD_KICK}
+
+	groupRole := roles.Role{
+		RoleName:    "smoke-web-smod",
+		Permissions: []string{"PERMISSION_SOURCEMOD_KICK"},
+	}
+	require.NoError(t, roleRepo.Save(ctx, &groupRole))
+	t.Cleanup(func() {
+		_ = roleRepo.Delete(context.Background(), groupRole.RoleID)
+	})
+
+	webOnlyRole := roles.Role{
+		RoleName:    "smoke-web-only",
+		Permissions: []string{"PERMISSION_BAN_READ"},
+	}
+	require.NoError(t, roleRepo.Save(ctx, &webOnlyRole))
+	t.Cleanup(func() {
+		_ = roleRepo.Delete(context.Background(), webOnlyRole.RoleID)
+	})
+
+	t.Run("role with sourcemod permissions is a sourcemod group", func(t *testing.T) {
+		groups, err := repo.Groups(ctx)
+		require.NoError(t, err)
+
+		group := findGroupByName(groups, "smoke-web-smod")
+		require.NotZero(t, group.GroupID)
+		require.Equal(t, normalizePerms(kick...), group.Permissions)
+
+		byID, err := repo.GetGroupByID(ctx, group.GroupID)
+		require.NoError(t, err)
+		require.Equal(t, "smoke-web-smod", byID.Name)
+	})
+
+	t.Run("web-only role is not a sourcemod group", func(t *testing.T) {
+		groups, err := repo.Groups(ctx)
+		require.NoError(t, err)
+		require.Zero(t, findGroupByName(groups, "smoke-web-only").GroupID)
+
+		_, err = repo.GetGroupByID(ctx, webOnlyRole.RoleID)
+		require.ErrorIs(t, err, database.ErrNoResult)
+	})
+
+	t.Run("member of a permission role is a sourcemod admin", func(t *testing.T) {
+		sid := steamid.New(76561198000777010)
+		fixture.CreateTestPerson(ctx, sid)
+		require.NoError(t, roleRepo.Assign(ctx, sid, groupRole.RoleID))
+		t.Cleanup(func() {
+			_ = roleRepo.Unassign(context.Background(), sid, groupRole.RoleID)
+		})
+
+		admin, err := repo.GetAdminByID(ctx, sid.Int64())
+		require.NoError(t, err)
+		require.Len(t, admin.Groups, 1)
+		require.Equal(t, "smoke-web-smod", admin.Groups[0].Name)
+
+		admins, err := repo.Admins(ctx)
+		require.NoError(t, err)
+		require.Contains(t, admins, admin)
+	})
 }

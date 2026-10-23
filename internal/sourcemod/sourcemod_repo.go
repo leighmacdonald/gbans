@@ -81,7 +81,7 @@ func (r Repository) smRoles(ctx context.Context) ([]roleRow, error) {
 	rows, errRows := r.QueryBuilder(ctx, r.Builder().
 		Select("role_id", "role_name", "created_on", "updated_on").
 		From("roles").
-		Where(sq.Like{"role_name": smRolePrefix + "%"}).
+		Where(smRoleCondition("roles")).
 		OrderBy("role_id"))
 	if errRows != nil {
 		return nil, database.Err(errRows)
@@ -107,7 +107,7 @@ func (r Repository) smRoleByID(ctx context.Context, roleID int32) (roleRow, erro
 	dbRow, errRow := r.QueryRowBuilder(ctx, r.Builder().
 		Select("role_id", "role_name", "created_on", "updated_on").
 		From("roles").
-		Where(sq.And{sq.Eq{"role_id": roleID}, sq.Like{"role_name": smRolePrefix + "%"}}))
+		Where(sq.And{sq.Eq{"role_id": roleID}, smRoleCondition("roles")}))
 	if errRow != nil {
 		return roleRow{}, database.Err(errRow)
 	}
@@ -213,7 +213,7 @@ func (r Repository) roleMemberCounts(ctx context.Context) (map[int32]int, error)
 		Select("r.role_id", "count(ra.steam_id)").
 		From("roles r").
 		LeftJoin("role_assignments ra USING (role_id)").
-		Where(sq.Like{"r.role_name": smRolePrefix + "%"}).
+		Where(smRoleCondition("r")).
 		GroupBy("r.role_id"))
 	if errRows != nil {
 		return nil, database.Err(errRows)
@@ -566,7 +566,7 @@ func (r Repository) adminBases(ctx context.Context, steamIDs []int64) ([]adminBa
 		From("role_assignments ra").
 		Join("roles r USING (role_id)").
 		Join("person p ON p.steam_id = ra.steam_id").
-		Where(sq.Like{"r.role_name": smRolePrefix + "%"}).
+		Where(smRoleCondition("r")).
 		GroupBy("ra.steam_id", "p.personaname").
 		OrderBy("ra.steam_id")
 
