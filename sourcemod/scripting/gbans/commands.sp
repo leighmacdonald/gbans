@@ -132,7 +132,7 @@ Action Timer_CheckSeedPromo(Handle timer) {
 
     for (int i = 1; i <= MaxClients; i++) {
         if (isValidClient(i)) {
-            PrintToChat(i, "[GB] The server is a little quiet. Use /seed in chat to find more players on our Discord!");
+            PrintToChat(i, "The server is a little quiet. Use /seed in chat to find more players on our Discord!");
         }
     }
 

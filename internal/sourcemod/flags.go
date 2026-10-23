@@ -5,12 +5,33 @@ import (
 	"slices"
 	"strings"
 
+	sq "github.com/Masterminds/squirrel"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 )
 
-// smRolePrefix marks roles owned by the sourcemod package. Roles without the
-// prefix belong to the web role system and are never touched here.
+// smRolePrefix marks roles created by the sourcemod system. Roles in this
+// namespace are sourcemod roles even before they carry any sourcemod
+// permission; the prefix is stripped when the group name is served to the
+// web ui and game servers.
 const smRolePrefix = "sm-"
+
+// smRoleCondition matches every role owned by the sourcemod system: roles in
+// the sm- namespace, and any role granted a SOURCEMOD_* permission. The
+// permission arm means web roles carrying sourcemod flags are synced to game
+// servers as groups without needing the name prefix.
+func smRoleCondition(table string) sq.Or {
+	table += "."
+
+	return sq.Or{
+		sq.Like{table + "role_name": smRolePrefix + "%"},
+		sq.Expr(fmt.Sprintf(`EXISTS (
+			SELECT 1
+			FROM role_permissions AS rp
+			WHERE rp.role_id = %srole_id
+			  AND rp.permission::text LIKE 'PERMISSION\_SOURCEMOD\_%%'
+		)`, table)),
+	}
+}
 
 // normalizePermissions deduplicates and sorts a permission set so stored and
 // returned sets are deterministic.
