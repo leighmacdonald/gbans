@@ -41,10 +41,13 @@ func NewService(stats Stats, servers *servers.Servers, openGraph *opengraph.Repo
 	openGraph.Register("/matches/{steam_id}",
 		opengraph.Static("Player Match History", "Match history for the player."))
 	openGraph.Register("/stats", opengraph.Static("Game Stats", "Global game statistics."))
+	openGraph.Register("/maps", opengraph.Static("Map Stats", "Per-map statistics."))
 
 	authMiddleware.UserRoute(statsv1connect.StatsServiceMatchProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
 	authMiddleware.UserRoute(statsv1connect.StatsServiceBucketsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
 	authMiddleware.UserRoute(statsv1connect.StatsServiceQueryStatsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
+	authMiddleware.UserRoute(statsv1connect.StatsServiceQueryMapStatsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
+	authMiddleware.UserRoute(statsv1connect.StatsServiceQueryMapStatsHistoryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
 	authMiddleware.UserRoute(statsv1connect.StatsServiceWeaponListProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
 	authMiddleware.UserRoute(statsv1connect.StatsServiceRefreshStatsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_DEMO_ADMIN))
 

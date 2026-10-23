@@ -5,6 +5,7 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import EventIcon from "@mui/icons-material/Event";
 import GavelIcon from "@mui/icons-material/Gavel";
 import LeaderboardIcon from "@mui/icons-material/Leaderboard";
+import MapIcon from "@mui/icons-material/Map";
 import MarkUnreadChatAltIcon from "@mui/icons-material/MarkUnreadChatAlt";
 import PieChartIcon from "@mui/icons-material/PieChart";
 import StorageIcon from "@mui/icons-material/Storage";
@@ -236,6 +237,17 @@ function Index() {
 								to={`/stats`}
 							>
 								Global Stats
+							</ButtonLink>
+						)}
+						{appInfo.statsEnabled && (
+							<ButtonLink
+								startIcon={<MapIcon />}
+								fullWidth
+								color={"primary"}
+								variant={"contained"}
+								to={`/maps`}
+							>
+								Map Stats
 							</ButtonLink>
 						)}
 						{appInfo.discordEnabled && appInfo.linkId !== "" && (

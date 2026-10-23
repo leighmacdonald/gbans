@@ -48,6 +48,12 @@ service StatsService {
   rpc WeaponList(google.protobuf.Empty) returns (WeaponListResponse) {}
   rpc MapList(google.protobuf.Empty) returns (MapListResponse) {}
   rpc Buckets(google.protobuf.Empty) returns (BucketsResponse) {}
+  // QueryMapStats returns per-map aggregate statistics, summary totals and the
+  // top maps for a stats bucket over a time range.
+  rpc QueryMapStats(QueryMapStatsRequest) returns (QueryMapStatsResponse) {}
+  // QueryMapStatsHistory returns bucketed per-map series for charting playtime
+  // or match activity over a time range.
+  rpc QueryMapStatsHistory(QueryMapStatsHistoryRequest) returns (QueryMapStatsHistoryResponse) {}
   // RefreshStats recomputes all stats summary views on demand. Admin only.
   rpc RefreshStats(google.protobuf.Empty) returns (RefreshStatsResponse) {}
 }
@@ -101,6 +107,99 @@ message Bucket {
 
 message BucketsResponse {
   repeated Bucket buckets = 1;
+}
+
+message MapStat {
+  int32 map_id = 1;
+  string map_name = 2;
+  uint64 matches_played = 3;
+  uint64 matches_decided = 4;
+  uint64 matches_drawn = 5;
+  uint64 red_wins = 6;
+  uint64 blu_wins = 7;
+  uint64 total_duration_ms = 8;
+  uint64 rounds_played = 9;
+  uint64 stalemate_rounds = 10;
+  uint64 unique_players = 11;
+  uint64 player_appearances = 12;
+  uint64 kills = 13;
+  uint64 assists = 14;
+  uint64 deaths = 15;
+  uint64 damage = 16;
+  uint64 healing = 17;
+  uint64 captures = 18;
+  uint64 captures_blocked = 19;
+  google.protobuf.Timestamp first_played_at = 20;
+  google.protobuf.Timestamp last_played_at = 21;
+}
+
+message MapStatsSummary {
+  uint64 maps_played = 1;
+  uint64 matches_played = 2;
+  uint64 matches_decided = 3;
+  uint64 matches_drawn = 4;
+  uint64 total_duration_ms = 5;
+  uint64 rounds_played = 6;
+}
+
+message QueryMapStatsRequest {
+  uint32 stats_bucket_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).uint32.gt = 0
+  ];
+  // start and end bound the inclusive [start, end] date range. When start is
+  // unset the query covers all time and uses the all-time view.
+  google.protobuf.Timestamp start = 2;
+  google.protobuf.Timestamp end = 3;
+  database.query.v1.Filter filter = 4;
+  string search = 5 [(buf.validate.field).string.max_len = 256];
+}
+
+message QueryMapStatsResponse {
+  uint64 count = 1;
+  repeated MapStat maps = 2;
+  MapStatsSummary summary = 3;
+  repeated MapStat top_maps = 4;
+}
+
+message MapStatsPoint {
+  google.protobuf.Timestamp date_bucket = 1;
+  uint64 matches_played = 2;
+  uint64 matches_decided = 3;
+  uint64 duration_ms = 4;
+}
+
+message MapStatsSeries {
+  int32 map_id = 1;
+  string map_name = 2;
+  repeated MapStatsPoint points = 3;
+}
+
+message QueryMapStatsHistoryRequest {
+  uint32 stats_bucket_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).uint32.gt = 0
+  ];
+  // start and end bound the time series. When start is unset the series covers
+  // all time.
+  google.protobuf.Timestamp start = 2;
+  google.protobuf.Timestamp end = 3;
+  // time_bucket selects the grouping granularity. Only DAILY, WEEKLY and
+  // MONTHLY are valid here.
+  TimeBucket time_bucket = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  // top_n limits the number of named map series; remaining maps are combined
+  // into a single "Other" series. 0 defaults to 6.
+  uint32 top_n = 5 [(buf.validate.field).uint32.lte = 20];
+  // map_ids restricts the series to the given maps. When set, no "Other"
+  // series is produced.
+  repeated int32 map_ids = 6;
+}
+
+message QueryMapStatsHistoryResponse {
+  repeated MapStatsSeries series = 1;
 }
 
 message RefreshStatsResponse {

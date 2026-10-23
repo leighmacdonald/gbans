@@ -16,6 +16,7 @@ import { Route as ModRouteImport } from './routes/_mod'
 import { Route as AuthChatlogsRouteImport } from './routes/_auth.chatlogs'
 import { Route as AuthForumsRouteImport } from './routes/_auth.forums'
 import { Route as AuthLogoutRouteImport } from './routes/_auth.logout'
+import { Route as AuthMapsRouteImport } from './routes/_auth.maps'
 import { Route as AuthMatchesRouteImport } from './routes/_auth.matches'
 import { Route as AuthNotificationsRouteImport } from './routes/_auth.notifications'
 import { Route as AuthPageNotFoundRouteImport } from './routes/_auth.page-not-found'
@@ -95,6 +96,11 @@ const AuthForumsRoute = AuthForumsRouteImport.update({
 const AuthLogoutRoute = AuthLogoutRouteImport.update({
   id: '/logout',
   path: '/logout',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthMapsRoute = AuthMapsRouteImport.update({
+  id: '/maps',
+  path: '/maps',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthMatchesRoute = AuthMatchesRouteImport.update({
@@ -351,6 +357,7 @@ export interface FileRoutesByFullPath {
   '/chatlogs': typeof AuthChatlogsRoute
   '/forums': typeof AuthForumsRouteWithChildren
   '/logout': typeof AuthLogoutRoute
+  '/maps': typeof AuthMapsRoute
   '/matches': typeof AuthMatchesRouteWithChildren
   '/notifications': typeof AuthNotificationsRoute
   '/page-not-found': typeof AuthPageNotFoundRoute
@@ -404,6 +411,7 @@ export interface FileRoutesByTo {
   '/': typeof GuestIndexRoute
   '/chatlogs': typeof AuthChatlogsRoute
   '/logout': typeof AuthLogoutRoute
+  '/maps': typeof AuthMapsRoute
   '/notifications': typeof AuthNotificationsRoute
   '/page-not-found': typeof AuthPageNotFoundRoute
   '/permission': typeof AuthPermissionRoute
@@ -458,6 +466,7 @@ export interface FileRoutesById {
   '/_auth/chatlogs': typeof AuthChatlogsRoute
   '/_auth/forums': typeof AuthForumsRouteWithChildren
   '/_auth/logout': typeof AuthLogoutRoute
+  '/_auth/maps': typeof AuthMapsRoute
   '/_auth/matches': typeof AuthMatchesRouteWithChildren
   '/_auth/notifications': typeof AuthNotificationsRoute
   '/_auth/page-not-found': typeof AuthPageNotFoundRoute
@@ -515,6 +524,7 @@ export interface FileRouteTypes {
     | '/chatlogs'
     | '/forums'
     | '/logout'
+    | '/maps'
     | '/matches'
     | '/notifications'
     | '/page-not-found'
@@ -568,6 +578,7 @@ export interface FileRouteTypes {
     | '/'
     | '/chatlogs'
     | '/logout'
+    | '/maps'
     | '/notifications'
     | '/page-not-found'
     | '/permission'
@@ -621,6 +632,7 @@ export interface FileRouteTypes {
     | '/_auth/chatlogs'
     | '/_auth/forums'
     | '/_auth/logout'
+    | '/_auth/maps'
     | '/_auth/matches'
     | '/_auth/notifications'
     | '/_auth/page-not-found'
@@ -728,6 +740,13 @@ declare module '@tanstack/react-router' {
       path: '/logout'
       fullPath: '/logout'
       preLoaderRoute: typeof AuthLogoutRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/maps': {
+      id: '/_auth/maps'
+      path: '/maps'
+      fullPath: '/maps'
+      preLoaderRoute: typeof AuthMapsRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_auth/matches': {
@@ -1140,6 +1159,7 @@ interface AuthRouteChildren {
   AuthChatlogsRoute: typeof AuthChatlogsRoute
   AuthForumsRoute: typeof AuthForumsRouteWithChildren
   AuthLogoutRoute: typeof AuthLogoutRoute
+  AuthMapsRoute: typeof AuthMapsRoute
   AuthMatchesRoute: typeof AuthMatchesRouteWithChildren
   AuthNotificationsRoute: typeof AuthNotificationsRoute
   AuthPageNotFoundRoute: typeof AuthPageNotFoundRoute
@@ -1156,6 +1176,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthChatlogsRoute: AuthChatlogsRoute,
   AuthForumsRoute: AuthForumsRouteWithChildren,
   AuthLogoutRoute: AuthLogoutRoute,
+  AuthMapsRoute: AuthMapsRoute,
   AuthMatchesRoute: AuthMatchesRouteWithChildren,
   AuthNotificationsRoute: AuthNotificationsRoute,
   AuthPageNotFoundRoute: AuthPageNotFoundRoute,

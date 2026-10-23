@@ -34,6 +34,7 @@ import (
 )
 
 func TestImport(t *testing.T) {
+	t.Parallel()
 	testFixture := tests.NewFixture()
 	defer testFixture.Close()
 
@@ -226,6 +227,7 @@ func seedTestPersons(t *testing.T, testFixture *tests.Fixture, persons ...testPe
 // different servers (stats buckets) and match dates, then verifies the
 // summary views aggregate correctly per stats bucket and time bucket.
 func TestGlobalStatsAcrossBucketsAndTime(t *testing.T) {
+	t.Parallel()
 	testFixture := tests.NewFixture()
 	defer testFixture.Close()
 
@@ -397,6 +399,7 @@ func TestGlobalStatsAcrossBucketsAndTime(t *testing.T) {
 // TestImportNewParserStats ensures the stats added with the tf2_demostats
 // v0.3.x parser survive the full import, match read, and summary view paths.
 func TestImportNewParserStats(t *testing.T) {
+	t.Parallel()
 	testFixture := tests.NewFixture()
 	defer testFixture.Close()
 
@@ -641,6 +644,7 @@ func requireMatchKills(t *testing.T, match *stats.Match, steamID steamid.SteamID
 }
 
 func TestImportKillRoundAndPositions(t *testing.T) {
+	t.Parallel()
 	testFixture := tests.NewFixture()
 	defer testFixture.Close()
 
@@ -833,6 +837,7 @@ func TestImportKillRoundAndPositions(t *testing.T) {
 }
 
 func TestImportMatchEvents(t *testing.T) {
+	t.Parallel()
 	testFixture := tests.NewFixture()
 	defer testFixture.Close()
 
@@ -1063,6 +1068,7 @@ func requireMatchEventRows(t *testing.T, events []matchEventTestRow, killerID st
 // an internal server error on manual demo upload). Unknown events are
 // skipped while known events are still stored.
 func TestImportSkipsUnknownMatchEvents(t *testing.T) {
+	t.Parallel()
 	testFixture := tests.NewFixture()
 	defer testFixture.Close()
 
@@ -1168,6 +1174,7 @@ func TestValidateDemo(t *testing.T) {
 }
 
 func TestImportRejectsFilteredDemos(t *testing.T) {
+	t.Parallel()
 	testFixture := tests.NewFixture()
 	defer testFixture.Close()
 
@@ -1284,7 +1291,10 @@ func seedTestMatch(t *testing.T, fixture *tests.Fixture, serverID, mapID, demoID
 
 // TestQueryMatches exercises the match history query end to end, covering the
 // server-side column filters and the bucket ordering fallback.
+//
+//nolint:tparallel // subtests share the parent fixture and one prunes a demo asset the earlier subtests read
 func TestQueryMatches(t *testing.T) {
+	t.Parallel()
 	fixture := tests.NewFixture()
 	defer fixture.Close()
 
@@ -1445,7 +1455,10 @@ func TestQueryMatches(t *testing.T) {
 // TestQueryStatsMyRank ensures the requesting user's rank is resolved against
 // the full bucket window, not just the returned page, and stays 0 when the
 // user has no stats in the window.
+//
+//nolint:tparallel // subtests share the parent fixture and its seeded matches, so they must stay sequential
 func TestQueryStatsMyRank(t *testing.T) {
+	t.Parallel()
 	fixture := tests.NewFixture()
 	defer fixture.Close()
 
@@ -1551,7 +1564,10 @@ func TestQueryStatsMyRank(t *testing.T) {
 // player_rank/player_index resolved against the full bucket window,
 // independently of the requesting user, and stays 0 when the player has no
 // stats in the window.
+//
+//nolint:tparallel // subtests share the parent fixture and its seeded matches, so they must stay sequential
 func TestQueryStatsPlayerRank(t *testing.T) {
+	t.Parallel()
 	fixture := tests.NewFixture()
 	defer fixture.Close()
 
@@ -1679,7 +1695,10 @@ func TestQueryStatsPlayerRank(t *testing.T) {
 // TestQueryStatsMyIndexTies ensures players tied at the same rank page
 // deterministically (rank, then steam_id) and that my_index identifies the
 // exact position of the requesting user's row within the tied group.
+//
+//nolint:tparallel // subtests share the parent fixture and its imported demo, so they must stay sequential
 func TestQueryStatsMyIndexTies(t *testing.T) {
+	t.Parallel()
 	fixture := tests.NewFixture()
 	defer fixture.Close()
 
@@ -1808,6 +1827,7 @@ func TestQueryStatsMyIndexTies(t *testing.T) {
 // matches imported for a server without a bucket of its own are filed under
 // that bucket.
 func TestDefaultBucket(t *testing.T) {
+	t.Parallel()
 	testFixture := tests.NewFixture()
 	defer testFixture.Close()
 
@@ -1878,6 +1898,7 @@ func TestDefaultBucket(t *testing.T) {
 // TestMatchesWithPlayerOrdering ensures a player's match history is returned
 // ordered by match start time, newest first.
 func TestMatchesWithPlayerOrdering(t *testing.T) {
+	t.Parallel()
 	testFixture := tests.NewFixture()
 	defer testFixture.Close()
 
@@ -1947,6 +1968,7 @@ func insertTestBan(ctx context.Context, t *testing.T, db database.Database, targ
 // steam ban are filtered out of the stats summary views (and get rank 0),
 // while expired, unbanned (deleted) and muted players remain visible.
 func TestBannedPlayersExcludedFromSummaryViews(t *testing.T) {
+	t.Parallel()
 	testFixture := tests.NewFixture()
 	defer testFixture.Close()
 

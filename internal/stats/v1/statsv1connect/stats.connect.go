@@ -50,6 +50,12 @@ const (
 	StatsServiceMapListProcedure = "/stats.v1.StatsService/MapList"
 	// StatsServiceBucketsProcedure is the fully-qualified name of the StatsService's Buckets RPC.
 	StatsServiceBucketsProcedure = "/stats.v1.StatsService/Buckets"
+	// StatsServiceQueryMapStatsProcedure is the fully-qualified name of the StatsService's
+	// QueryMapStats RPC.
+	StatsServiceQueryMapStatsProcedure = "/stats.v1.StatsService/QueryMapStats"
+	// StatsServiceQueryMapStatsHistoryProcedure is the fully-qualified name of the StatsService's
+	// QueryMapStatsHistory RPC.
+	StatsServiceQueryMapStatsHistoryProcedure = "/stats.v1.StatsService/QueryMapStatsHistory"
 	// StatsServiceRefreshStatsProcedure is the fully-qualified name of the StatsService's RefreshStats
 	// RPC.
 	StatsServiceRefreshStatsProcedure = "/stats.v1.StatsService/RefreshStats"
@@ -86,6 +92,12 @@ type StatsServiceClient interface {
 	WeaponList(context.Context, *emptypb.Empty) (*v1.WeaponListResponse, error)
 	MapList(context.Context, *emptypb.Empty) (*v1.MapListResponse, error)
 	Buckets(context.Context, *emptypb.Empty) (*v1.BucketsResponse, error)
+	// QueryMapStats returns per-map aggregate statistics, summary totals and the
+	// top maps for a stats bucket over a time range.
+	QueryMapStats(context.Context, *v1.QueryMapStatsRequest) (*v1.QueryMapStatsResponse, error)
+	// QueryMapStatsHistory returns bucketed per-map series for charting playtime
+	// or match activity over a time range.
+	QueryMapStatsHistory(context.Context, *v1.QueryMapStatsHistoryRequest) (*v1.QueryMapStatsHistoryResponse, error)
 	// RefreshStats recomputes all stats summary views on demand. Admin only.
 	RefreshStats(context.Context, *emptypb.Empty) (*v1.RefreshStatsResponse, error)
 }
@@ -143,6 +155,18 @@ func NewStatsServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(statsServiceMethods.ByName("Buckets")),
 			connect.WithClientOptions(opts...),
 		),
+		queryMapStats: connect.NewClient[v1.QueryMapStatsRequest, v1.QueryMapStatsResponse](
+			httpClient,
+			baseURL+StatsServiceQueryMapStatsProcedure,
+			connect.WithSchema(statsServiceMethods.ByName("QueryMapStats")),
+			connect.WithClientOptions(opts...),
+		),
+		queryMapStatsHistory: connect.NewClient[v1.QueryMapStatsHistoryRequest, v1.QueryMapStatsHistoryResponse](
+			httpClient,
+			baseURL+StatsServiceQueryMapStatsHistoryProcedure,
+			connect.WithSchema(statsServiceMethods.ByName("QueryMapStatsHistory")),
+			connect.WithClientOptions(opts...),
+		),
 		refreshStats: connect.NewClient[emptypb.Empty, v1.RefreshStatsResponse](
 			httpClient,
 			baseURL+StatsServiceRefreshStatsProcedure,
@@ -154,14 +178,16 @@ func NewStatsServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 
 // statsServiceClient implements StatsServiceClient.
 type statsServiceClient struct {
-	match             *connect.Client[v1.MatchRequest, v1.MatchResponse]
-	queryMatches      *connect.Client[v1.QueryMatchesRequest, v1.QueryMatchesResponse]
-	matchesWithPlayer *connect.Client[v1.MatchesWithPlayerRequest, v1.MatchesWithPlayerResponse]
-	queryStats        *connect.Client[v1.QueryStatsRequest, v1.QueryStatsResponse]
-	weaponList        *connect.Client[emptypb.Empty, v1.WeaponListResponse]
-	mapList           *connect.Client[emptypb.Empty, v1.MapListResponse]
-	buckets           *connect.Client[emptypb.Empty, v1.BucketsResponse]
-	refreshStats      *connect.Client[emptypb.Empty, v1.RefreshStatsResponse]
+	match                *connect.Client[v1.MatchRequest, v1.MatchResponse]
+	queryMatches         *connect.Client[v1.QueryMatchesRequest, v1.QueryMatchesResponse]
+	matchesWithPlayer    *connect.Client[v1.MatchesWithPlayerRequest, v1.MatchesWithPlayerResponse]
+	queryStats           *connect.Client[v1.QueryStatsRequest, v1.QueryStatsResponse]
+	weaponList           *connect.Client[emptypb.Empty, v1.WeaponListResponse]
+	mapList              *connect.Client[emptypb.Empty, v1.MapListResponse]
+	buckets              *connect.Client[emptypb.Empty, v1.BucketsResponse]
+	queryMapStats        *connect.Client[v1.QueryMapStatsRequest, v1.QueryMapStatsResponse]
+	queryMapStatsHistory *connect.Client[v1.QueryMapStatsHistoryRequest, v1.QueryMapStatsHistoryResponse]
+	refreshStats         *connect.Client[emptypb.Empty, v1.RefreshStatsResponse]
 }
 
 // Match calls stats.v1.StatsService.Match.
@@ -227,6 +253,24 @@ func (c *statsServiceClient) Buckets(ctx context.Context, req *emptypb.Empty) (*
 	return nil, err
 }
 
+// QueryMapStats calls stats.v1.StatsService.QueryMapStats.
+func (c *statsServiceClient) QueryMapStats(ctx context.Context, req *v1.QueryMapStatsRequest) (*v1.QueryMapStatsResponse, error) {
+	response, err := c.queryMapStats.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// QueryMapStatsHistory calls stats.v1.StatsService.QueryMapStatsHistory.
+func (c *statsServiceClient) QueryMapStatsHistory(ctx context.Context, req *v1.QueryMapStatsHistoryRequest) (*v1.QueryMapStatsHistoryResponse, error) {
+	response, err := c.queryMapStatsHistory.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // RefreshStats calls stats.v1.StatsService.RefreshStats.
 func (c *statsServiceClient) RefreshStats(ctx context.Context, req *emptypb.Empty) (*v1.RefreshStatsResponse, error) {
 	response, err := c.refreshStats.CallUnary(ctx, connect.NewRequest(req))
@@ -267,6 +311,12 @@ type StatsServiceHandler interface {
 	WeaponList(context.Context, *emptypb.Empty) (*v1.WeaponListResponse, error)
 	MapList(context.Context, *emptypb.Empty) (*v1.MapListResponse, error)
 	Buckets(context.Context, *emptypb.Empty) (*v1.BucketsResponse, error)
+	// QueryMapStats returns per-map aggregate statistics, summary totals and the
+	// top maps for a stats bucket over a time range.
+	QueryMapStats(context.Context, *v1.QueryMapStatsRequest) (*v1.QueryMapStatsResponse, error)
+	// QueryMapStatsHistory returns bucketed per-map series for charting playtime
+	// or match activity over a time range.
+	QueryMapStatsHistory(context.Context, *v1.QueryMapStatsHistoryRequest) (*v1.QueryMapStatsHistoryResponse, error)
 	// RefreshStats recomputes all stats summary views on demand. Admin only.
 	RefreshStats(context.Context, *emptypb.Empty) (*v1.RefreshStatsResponse, error)
 }
@@ -320,6 +370,18 @@ func NewStatsServiceHandler(svc StatsServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(statsServiceMethods.ByName("Buckets")),
 		connect.WithHandlerOptions(opts...),
 	)
+	statsServiceQueryMapStatsHandler := connect.NewUnaryHandlerSimple(
+		StatsServiceQueryMapStatsProcedure,
+		svc.QueryMapStats,
+		connect.WithSchema(statsServiceMethods.ByName("QueryMapStats")),
+		connect.WithHandlerOptions(opts...),
+	)
+	statsServiceQueryMapStatsHistoryHandler := connect.NewUnaryHandlerSimple(
+		StatsServiceQueryMapStatsHistoryProcedure,
+		svc.QueryMapStatsHistory,
+		connect.WithSchema(statsServiceMethods.ByName("QueryMapStatsHistory")),
+		connect.WithHandlerOptions(opts...),
+	)
 	statsServiceRefreshStatsHandler := connect.NewUnaryHandlerSimple(
 		StatsServiceRefreshStatsProcedure,
 		svc.RefreshStats,
@@ -342,6 +404,10 @@ func NewStatsServiceHandler(svc StatsServiceHandler, opts ...connect.HandlerOpti
 			statsServiceMapListHandler.ServeHTTP(w, r)
 		case StatsServiceBucketsProcedure:
 			statsServiceBucketsHandler.ServeHTTP(w, r)
+		case StatsServiceQueryMapStatsProcedure:
+			statsServiceQueryMapStatsHandler.ServeHTTP(w, r)
+		case StatsServiceQueryMapStatsHistoryProcedure:
+			statsServiceQueryMapStatsHistoryHandler.ServeHTTP(w, r)
 		case StatsServiceRefreshStatsProcedure:
 			statsServiceRefreshStatsHandler.ServeHTTP(w, r)
 		default:
@@ -379,6 +445,14 @@ func (UnimplementedStatsServiceHandler) MapList(context.Context, *emptypb.Empty)
 
 func (UnimplementedStatsServiceHandler) Buckets(context.Context, *emptypb.Empty) (*v1.BucketsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.Buckets is not implemented"))
+}
+
+func (UnimplementedStatsServiceHandler) QueryMapStats(context.Context, *v1.QueryMapStatsRequest) (*v1.QueryMapStatsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.QueryMapStats is not implemented"))
+}
+
+func (UnimplementedStatsServiceHandler) QueryMapStatsHistory(context.Context, *v1.QueryMapStatsHistoryRequest) (*v1.QueryMapStatsHistoryResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.QueryMapStatsHistory is not implemented"))
 }
 
 func (UnimplementedStatsServiceHandler) RefreshStats(context.Context, *emptypb.Empty) (*v1.RefreshStatsResponse, error) {
