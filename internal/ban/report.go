@@ -126,6 +126,13 @@ type ReportMessage struct {
 	UpdatedOn       time.Time
 	Personaname     string
 	Avatarhash      string
+
+	// AnonPersonaname/AnonAvatarhash hold the per-issue anonymous persona
+	// assigned to the author. Populated for moderator viewers as a reference
+	// to what the message looks like to non-moderators, or used as the
+	// display identity itself when the message is anonymized.
+	AnonPersonaname string
+	AnonAvatarhash  string
 }
 
 func (m ReportMessage) Path() string {
@@ -156,6 +163,17 @@ type ReportMeta struct {
 	OpenNew     int
 }
 
+// reportModeratorPerms are the permissions that mark a user as a moderator
+// for reports: they see de-anonymized replies and the assigned aliases.
+// Note PERMISSION_REPORT_READ is deliberately excluded: the default "user"
+// role grants it to every player, so it cannot distinguish staff.
+//
+//nolint:gochecknoglobals // Static permission set.
+var reportModeratorPerms = []rolesv1.Permission{
+	rolesv1.Permission_PERMISSION_REPORT_WRITE,
+	rolesv1.Permission_PERMISSION_REPORT_ADMIN,
+}
+
 type Reports struct {
 	repository ReportRepository
 	persons    *person.Persons
@@ -164,10 +182,11 @@ type Reports struct {
 	notif      notification.Notifier
 	logChannel string
 	roleAuth   *rpc.RoleAuth
+	anonmod    Anonmod
 }
 
 func NewReports(repo ReportRepository, persons *person.Persons, demos demo.Demos, tfAPI thirdparty.APIProvider,
-	notif notification.Notifier, logChannel string, roleAuth *rpc.RoleAuth,
+	notif notification.Notifier, logChannel string, roleAuth *rpc.RoleAuth, anonmod Anonmod,
 ) Reports {
 	return Reports{
 		repository: repo,
@@ -177,6 +196,7 @@ func NewReports(repo ReportRepository, persons *person.Persons, demos demo.Demos
 		notif:      notif,
 		logChannel: logChannel,
 		roleAuth:   roleAuth,
+		anonmod:    anonmod,
 	}
 }
 
@@ -356,8 +376,60 @@ func (r Reports) ReportBySteamID(ctx context.Context, authorID steamid.SteamID, 
 	return r.repository.GetReportBySteamID(ctx, authorID, steamID)
 }
 
-func (r Reports) Messages(ctx context.Context, reportID int32) ([]ReportMessage, error) {
-	return r.repository.GetReportMessages(ctx, reportID)
+// Messages returns the messages for a report. When the anonymized moderator
+// feature is enabled, moderator authored messages are anonymized for
+// non-moderator viewers, while moderator viewers keep the real author and
+// are shown the assigned persona for reference.
+func (r Reports) Messages(ctx context.Context, reportID int32, viewer personDomain.BaseUser) ([]ReportMessage, error) {
+	messages, errMessages := r.repository.GetReportMessages(ctx, reportID)
+	if errMessages != nil {
+		return nil, errMessages
+	}
+
+	if !r.anonmod.Enabled() {
+		return messages, nil
+	}
+
+	viewerIsMod := r.roleAuth.HasPermissionForSteamID(ctx, viewer.GetSteamID(), reportModeratorPerms...)
+
+	modCache := make(map[steamid.SteamID]bool)
+	isModAuthor := func(author steamid.SteamID) bool {
+		if cached, ok := modCache[author]; ok {
+			return cached
+		}
+
+		isMod := r.roleAuth.HasPermissionForSteamID(ctx, author, reportModeratorPerms...)
+		modCache[author] = isMod
+
+		return isMod
+	}
+
+	for i := range messages {
+		msg := &messages[i]
+
+		if !msg.AuthorID.Valid() || !isModAuthor(msg.AuthorID) {
+			continue
+		}
+
+		identity, errIdentity := r.anonmod.Identity(ctx, AnonmodIssueTypeReport, reportID, msg.AuthorID)
+		if errIdentity != nil {
+			// Fail closed: a missing persona must never leak the real author.
+			return nil, errIdentity
+		}
+
+		if viewerIsMod {
+			msg.AnonPersonaname = identity.AnonName
+			msg.AnonAvatarhash = identity.AnonAvatarHash
+
+			continue
+		}
+
+		msg.AuthorID = steamid.SteamID{}
+		msg.Personaname = identity.AnonName
+		msg.Avatarhash = identity.AnonAvatarHash
+	}
+
+	return messages, nil
 }
 
 func (r Reports) MessageByID(ctx context.Context, reportMessageID int32) (ReportMessage, error) {
@@ -569,6 +641,14 @@ func (r Reports) CreateMessage(ctx context.Context, reportID int32, curUser pers
 	sid := curUser.GetSteamID()
 	slog.Info("New report message created",
 		slog.Int64("report_id", int64(reportID)), slog.String("steam_id", sid.String()))
+
+	// Moderators see the persona their reply is publicly displayed under.
+	if r.anonmod.Enabled() && r.roleAuth.HasPermissionForSteamID(ctx, sid, reportModeratorPerms...) {
+		if identity, errIdentity := r.anonmod.Identity(ctx, AnonmodIssueTypeReport, reportID, sid); errIdentity == nil {
+			msg.AnonPersonaname = identity.AnonName
+			msg.AnonAvatarhash = identity.AnonAvatarHash
+		}
+	}
 
 	return msg, nil
 }

@@ -566,6 +566,20 @@ function AdminSettings() {
 							</Grid>
 
 							<Grid size={{ xs: 12 }}>
+								<SubHeading>
+									Anonymizes moderator replies to reports and ban appeals. Non-moderators see each
+									reply under a random fake name and avatar (unique per issue and per moderator, with
+									no steam id). Moderators always see the real author, along with the assigned alias.
+								</SubHeading>
+								<form.AppField
+									name={"general.anonmodEnabled"}
+									children={(field) => {
+										return <field.CheckboxField label={"Enable anonymized moderators"} />;
+									}}
+								/>
+							</Grid>
+
+							<Grid size={{ xs: 12 }}>
 								<SubHeading>Enable showing the searchable chatlogs.</SubHeading>
 								<form.AppField
 									name={"general.chatlogsEnabled"}

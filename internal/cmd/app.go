@@ -191,8 +191,10 @@ func (g *GBans) Init(ctx context.Context) error {
 
 	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler, conf.Discord.SafeChatLogChannelID())
 	g.demos = demo.NewDemos(asset.BucketDemo, demo.NewRepository(g.database), g.assets, g.stats, g.chat, g.persons, conf.Demo, steamid.New(conf.Owner))
+	anonmod := ban.NewAnonmod(ban.NewAnonmodRepository(g.database), g.config)
+
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications,
-		conf.Discord.SafeAppealLogChannelID(), g.roleAuth)
+		conf.Discord.SafeAppealLogChannelID(), g.roleAuth, anonmod)
 
 	g.bans = ban.New(ban.NewRepository(g.database), g.persons, conf.Discord.SafeBanLogChannelID(),
 		conf.Discord.SafeKickLogChannelID(), steamid.New(conf.Owner), g.reports, g.notifications, g.servers, g.networks)
@@ -213,7 +215,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications)
 	g.mge = mge.NewMGE(mge.NewRepository(g.database))
-	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications, conf.Discord.SafeAppealLogChannelID(), g.roleAuth)
+	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications, conf.Discord.SafeAppealLogChannelID(), g.roleAuth, anonmod)
 
 	if conf.Discord.Enabled {
 		anticheat.RegisterDiscordCommands(g.bot, g.anticheat)

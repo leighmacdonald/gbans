@@ -220,6 +220,7 @@ func (r *Service) Info(_ context.Context, _ *emptypb.Empty) (*configv1.InfoRespo
 		DemosEnabled:     &conf.General.DemosEnabled,
 		SpeedrunsEnabled: &conf.General.SpeedrunsEnabled,
 		MgeEnabled:       &conf.General.MGEEnabled,
+		AnonmodEnabled:   &conf.General.AnonmodEnabled,
 	}
 
 	return &resp, nil
@@ -281,6 +282,7 @@ func configFromUpdate(inCfg *configv1.Config, current Config) Config {
 			MGEEnabled:         inGeneral.GetMgeEnabled(),
 			SentryDSN:          inGeneral.GetSentryDsn(),
 			SentryDSNWeb:       inGeneral.GetSentryDsnWeb(),
+			AnonmodEnabled:     inGeneral.GetAnonmodEnabled(),
 		},
 		Debug: &Debug{
 			SkipOpenIDValidation: inDebug.GetSkipOpenIdValidation(),
@@ -419,6 +421,7 @@ func toConfig(conf Config) *configv1.Config {
 			MgeEnabled:       &conf.General.MGEEnabled,
 			SentryDsn:        &conf.General.SentryDSN,
 			SentryDsnWeb:     &conf.General.SentryDSNWeb,
+			AnonmodEnabled:   &conf.General.AnonmodEnabled,
 		},
 		Discord: &configv1.Discord{
 			Enabled:                 &conf.Discord.Enabled,

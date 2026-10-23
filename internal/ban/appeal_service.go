@@ -128,14 +128,16 @@ func (s AppealService) DeleteAppealMessage(ctx context.Context, req *v1.DeleteAp
 
 func toAppealMessage(message AppealMessage) *v1.AppealMessage {
 	return &v1.AppealMessage{
-		BanId:        &message.BanID,
-		BanMessageId: &message.BanMessageID,
-		AuthorId:     new(message.AuthorID.Int64()),
-		MessageMd:    &message.MessageMD,
-		Deleted:      &message.Deleted,
-		CreatedOn:    timestamppb.New(message.CreatedOn),
-		UpdatedOn:    timestamppb.New(message.UpdatedOn),
-		AvatarHash:   &message.Avatarhash,
-		PersonaName:  &message.Personaname,
+		BanId:           &message.BanID,
+		BanMessageId:    &message.BanMessageID,
+		AuthorId:        new(message.AuthorID.Int64()),
+		MessageMd:       &message.MessageMD,
+		Deleted:         &message.Deleted,
+		CreatedOn:       timestamppb.New(message.CreatedOn),
+		UpdatedOn:       timestamppb.New(message.UpdatedOn),
+		AvatarHash:      &message.Avatarhash,
+		PersonaName:     &message.Personaname,
+		AnonPersonaName: new(message.AnonPersonaname),
+		AnonAvatarHash:  new(message.AnonAvatarhash),
 	}
 }

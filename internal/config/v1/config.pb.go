@@ -383,6 +383,7 @@ type InfoResponse struct {
 	ForumsEnabled    *bool                  `protobuf:"varint,23,opt,name=forums_enabled,json=forumsEnabled" json:"forums_enabled,omitempty"`
 	MgeEnabled       *bool                  `protobuf:"varint,24,opt,name=mge_enabled,json=mgeEnabled" json:"mge_enabled,omitempty"`
 	BannerImage      *string                `protobuf:"bytes,25,opt,name=banner_image,json=bannerImage" json:"banner_image,omitempty"`
+	AnonmodEnabled   *bool                  `protobuf:"varint,26,opt,name=anonmod_enabled,json=anonmodEnabled" json:"anonmod_enabled,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -592,6 +593,13 @@ func (x *InfoResponse) GetBannerImage() string {
 	return ""
 }
 
+func (x *InfoResponse) GetAnonmodEnabled() bool {
+	if x != nil && x.AnonmodEnabled != nil {
+		return *x.AnonmodEnabled
+	}
+	return false
+}
+
 type GetResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Config        *Config                `protobuf:"bytes,1,opt,name=config" json:"config,omitempty"`
@@ -748,6 +756,7 @@ type General struct {
 	SentryDsn        *string                `protobuf:"bytes,20,opt,name=sentry_dsn,json=sentryDsn" json:"sentry_dsn,omitempty"`
 	SentryDsnWeb     *string                `protobuf:"bytes,21,opt,name=sentry_dsn_web,json=sentryDsnWeb" json:"sentry_dsn_web,omitempty"`
 	BannerImage      *string                `protobuf:"bytes,22,opt,name=banner_image,json=bannerImage" json:"banner_image,omitempty"`
+	AnonmodEnabled   *bool                  `protobuf:"varint,23,opt,name=anonmod_enabled,json=anonmodEnabled" json:"anonmod_enabled,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -934,6 +943,13 @@ func (x *General) GetBannerImage() string {
 		return *x.BannerImage
 	}
 	return ""
+}
+
+func (x *General) GetAnonmodEnabled() bool {
+	if x != nil && x.AnonmodEnabled != nil {
+		return *x.AnonmodEnabled
+	}
+	return false
 }
 
 type Debug struct {
@@ -2727,7 +2743,7 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\n" +
 	"\x16config/v1/config.proto\x12\tconfig.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"S\n" +
 	"\x11ChangelogResponse\x12>\n" +
-	"\tchangelog\x18\x01 \x03(\v2\x18.config.v1.GithubReleaseB\x06\xbaH\x03\xc8\x01\x01R\tchangelog\"\xfd\b\n" +
+	"\tchangelog\x18\x01 \x03(\v2\x18.config.v1.GithubReleaseB\x06\xbaH\x03\xc8\x01\x01R\tchangelog\"\xae\t\n" +
 	"\fInfoResponse\x12#\n" +
 	"\tsite_name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bsiteName\x121\n" +
 	"\x10site_description\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0fsiteDescription\x12#\n" +
@@ -2756,13 +2772,14 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x0eforums_enabled\x18\x17 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\rforumsEnabled\x12'\n" +
 	"\vmge_enabled\x18\x18 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"mgeEnabled\x12)\n" +
-	"\fbanner_image\x18\x19 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vbannerImage\"@\n" +
+	"\fbanner_image\x18\x19 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vbannerImage\x12/\n" +
+	"\x0fanonmod_enabled\x18\x1a \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0eanonmodEnabled\"@\n" +
 	"\vGetResponse\x121\n" +
 	"\x06config\x18\x01 \x01(\v2\x11.config.v1.ConfigB\x06\xbaH\x03\xc8\x01\x01R\x06config\"B\n" +
 	"\rUpdateRequest\x121\n" +
 	"\x06config\x18\x01 \x01(\v2\x11.config.v1.ConfigB\x06\xbaH\x03\xc8\x01\x01R\x06config\"C\n" +
 	"\x0eUpdateResponse\x121\n" +
-	"\x06config\x18\x01 \x01(\v2\x11.config.v1.ConfigB\x06\xbaH\x03\xc8\x01\x01R\x06config\"\x8c\b\n" +
+	"\x06config\x18\x01 \x01(\v2\x11.config.v1.ConfigB\x06\xbaH\x03\xc8\x01\x01R\x06config\"\xbd\b\n" +
 	"\aGeneral\x12#\n" +
 	"\tsite_name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bsiteName\x121\n" +
 	"\x10site_description\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0fsiteDescription\x123\n" +
@@ -2788,7 +2805,8 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\n" +
 	"sentry_dsn\x18\x14 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tsentryDsn\x12,\n" +
 	"\x0esentry_dsn_web\x18\x15 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fsentryDsnWeb\x12)\n" +
-	"\fbanner_image\x18\x16 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vbannerImage\"\x7f\n" +
+	"\fbanner_image\x18\x16 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vbannerImage\x12/\n" +
+	"\x0fanonmod_enabled\x18\x17 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x0eanonmodEnabled\"\x7f\n" +
 	"\x05Debug\x12=\n" +
 	"\x17skip_open_id_validation\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x14skipOpenIdValidation\x127\n" +
 	"\x14add_rcon_log_address\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x11addRconLogAddress\"\xa8\x02\n" +

@@ -12,6 +12,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import { useTheme } from "@mui/material/styles";
+import Typography from "@mui/material/Typography";
 import { formatDistance } from "date-fns";
 import { type MouseEvent, useState } from "react";
 import { z } from "zod/v4";
@@ -130,6 +131,25 @@ export const AppealMessageView = ({ message, onDelete, assetURL }: AppealMessage
 					title={message.personaName}
 					subheader={d1}
 				/>
+
+				{message.anonPersonaName !== "" && (
+					<Box
+						sx={{
+							display: "flex",
+							alignItems: "center",
+							gap: 1,
+							paddingX: 2,
+							paddingBottom: 1,
+						}}
+					>
+						<Avatar sx={{ width: 20, height: 20 }} src={avatarHashToURL(message.anonAvatarHash)}>
+							?
+						</Avatar>
+						<Typography variant="caption" color="text.secondary">
+							Appears publicly as <strong>{message.anonPersonaName}</strong>
+						</Typography>
+					</Box>
+				)}
 
 				<MarkDownRenderer bodyMd={message.messageMd} assetURL={assetURL} />
 

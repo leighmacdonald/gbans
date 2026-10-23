@@ -52,7 +52,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 		       general_default_route, general_news_enabled, general_forums_enabled, general_contests_enabled, general_wiki_enabled,
 		       general_stats_enabled, general_servers_enabled, general_reports_enabled,general_chatlogs_enabled, general_demos_enabled,
 			   general_speedruns_enabled, general_playerqueue_enabled, COALESCE(general_favicon, ''), COALESCE(general_sentry_dsn, ''), COALESCE(general_sentry_dsn_web, ''),
-			   COALESCE(general_mge_enabled, false), COALESCE(general_banner_image, ''),
+			   COALESCE(general_mge_enabled, false), COALESCE(general_banner_image, ''), COALESCE(general_anonmod_enabled, false),
 
 		       filters_enabled, filters_dry, filters_ping_discord, filters_max_weight, filters_warning_timeout, filters_warning_limit, filters_check_timeout, filters_match_timeout,
 
@@ -111,7 +111,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 			&cfg.General.DefaultRoute, &cfg.General.NewsEnabled, &cfg.General.ForumsEnabled, &cfg.General.ContestsEnabled, &cfg.General.WikiEnabled,
 			&cfg.General.StatsEnabled, &cfg.General.ServersEnabled, &cfg.General.ReportsEnabled, &cfg.General.ChatlogsEnabled, &cfg.General.DemosEnabled, &cfg.General.SpeedrunsEnabled,
 			&cfg.General.PlayerqueueEnabled, &cfg.General.Favicon, &cfg.General.SentryDSN, &cfg.General.SentryDSNWeb,
-			&cfg.General.MGEEnabled, &cfg.General.BannerImage,
+			&cfg.General.MGEEnabled, &cfg.General.BannerImage, &cfg.General.AnonmodEnabled,
 			&cfg.Filters.Enabled, &cfg.Filters.Dry, &cfg.Filters.PingDiscord, &cfg.Filters.MaxWeight, &cfg.Filters.WarningTimeout, &cfg.Filters.WarningLimit, &cfg.Filters.CheckTimeout, &cfg.Filters.MatchTimeout,
 			&cfg.Demo.DemoCleanupEnabled, &cfg.Demo.DemoCleanupStrategy, &cfg.Demo.DemoCleanupMinPct, &cfg.Demo.DemoCleanupMount, &cfg.Demo.DemoCountLimit, &cfg.Demo.DemoParserURL,
 			&cfg.Patreon.Enabled, &cfg.Patreon.ClientID, &cfg.Patreon.ClientSecret, &cfg.Patreon.CreatorAccessToken, &cfg.Patreon.CreatorRefreshToken, &cfg.Patreon.IntegrationsEnabled,
@@ -189,6 +189,7 @@ func (c *Repository) Write(ctx context.Context, config Config) error {
 			"general_sentry_dsn_web":              config.General.SentryDSNWeb,
 			"general_mge_enabled":                 config.General.MGEEnabled,
 			"general_banner_image":                config.General.BannerImage,
+			"general_anonmod_enabled":             config.General.AnonmodEnabled,
 			"filters_enabled":                     config.Filters.Enabled,
 			"filters_dry":                         config.Filters.Dry,
 			"filters_ping_discord":                config.Filters.PingDiscord,

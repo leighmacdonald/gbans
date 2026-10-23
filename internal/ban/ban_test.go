@@ -90,10 +90,12 @@ func newEnv(t *testing.T, opts ...envOpt) *env {
 	demos := demo.NewDemos(asset.BucketDemo, demo.NewRepository(fixture.Database),
 		assets, statsCase, chatCase, fixture.Persons, fixture.Config.Config().Demo, tests.OwnerSID)
 
+	anonmod := ban.NewAnonmod(ban.NewAnonmodRepository(fixture.Database), fixture.Config)
+
 	reportRepo := ban.NewReportRepository(fixture.Database)
 	reports := ban.NewReports(reportRepo,
 		person.NewPersons(person.NewRepository(fixture.Database, true), fixture.TFApi),
-		demos, fixture.TFApi, cfg.notif, "", roleAuth)
+		demos, fixture.TFApi, cfg.notif, "", roleAuth, anonmod)
 
 	serversCase, errServers := servers.New(servers.NewRepository(fixture.Database), nil, "")
 	require.NoError(t, errServers)
@@ -108,7 +110,7 @@ func newEnv(t *testing.T, opts ...envOpt) *env {
 		owner, reports, cfg.notif, serversCase, cfg.ipProvider)
 
 	appealRepo := ban.NewAppealRepository(fixture.Database)
-	appeals := ban.NewAppeals(appealRepo, bans, fixture.Persons, cfg.notif, fixture.Config.Config().Discord.BanLogChannelID, roleAuth)
+	appeals := ban.NewAppeals(appealRepo, bans, fixture.Persons, cfg.notif, fixture.Config.Config().Discord.BanLogChannelID, roleAuth, anonmod)
 
 	return &env{
 		bans:       bans,
