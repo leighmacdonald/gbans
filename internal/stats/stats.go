@@ -274,6 +274,9 @@ func StatViews() []string {
 		"stats_summary_yearly_variants_view",
 		"stats_summary_alltime_overall_view",  //nolint:misspell // name must match the database view.
 		"stats_summary_alltime_variants_view", //nolint:misspell // name must match the database view.
+		"stats_map_daily_view",
+		"stats_map_daily_player_view",
+		"stats_map_alltime_view", //nolint:misspell // name must match the database view.
 		"stats_weapons_view",
 	}
 }

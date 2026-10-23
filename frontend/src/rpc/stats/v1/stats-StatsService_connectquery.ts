@@ -68,6 +68,22 @@ export const mapList = StatsService.method.mapList;
 export const buckets = StatsService.method.buckets;
 
 /**
+ * QueryMapStats returns per-map aggregate statistics, summary totals and the
+ * top maps for a stats bucket over a time range.
+ *
+ * @generated from rpc stats.v1.StatsService.QueryMapStats
+ */
+export const queryMapStats = StatsService.method.queryMapStats;
+
+/**
+ * QueryMapStatsHistory returns bucketed per-map series for charting playtime
+ * or match activity over a time range.
+ *
+ * @generated from rpc stats.v1.StatsService.QueryMapStatsHistory
+ */
+export const queryMapStatsHistory = StatsService.method.queryMapStatsHistory;
+
+/**
  * RefreshStats recomputes all stats summary views on demand. Admin only.
  *
  * @generated from rpc stats.v1.StatsService.RefreshStats

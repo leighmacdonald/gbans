@@ -75,7 +75,7 @@ const validateSearch = z
 export const Route = createFileRoute("/_auth/stats")({
 	component: StatsComponent,
 	beforeLoad: ({ context }) => {
-		ensureFeatureEnabled(context.appInfo.chatlogsEnabled);
+		ensureFeatureEnabled(context.appInfo.statsEnabled);
 		if (!context.auth?.hasPermission(Permission.STATS_READ)) {
 			throw redirect({ to: "/permission" });
 		}
