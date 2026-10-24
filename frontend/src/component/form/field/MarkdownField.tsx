@@ -3,8 +3,10 @@ import { createClient } from "@connectrpc/connect";
 import { createConnectQueryKey } from "@connectrpc/connect-query";
 import {
 	AdmonitionDirectiveDescriptor,
+	BlockTypeSelect,
 	BoldItalicUnderlineToggles,
 	CodeToggle,
+	CreateLink,
 	codeBlockPlugin,
 	directivesPlugin,
 	frontmatterPlugin,
@@ -38,8 +40,10 @@ import { finalTransport, queryClient } from "../../../transport.ts";
 import { logErr } from "../../../util/errors.ts";
 import { assetURL } from "../../../util/strings.ts";
 import { renderHelpText } from "./renderHelpText.ts";
-import "./MarkdownField.css";
+// The mdxeditor stylesheet must load before ours: both target the same elements
+// with equal specificity, so ours needs to win the cascade to theme the editor.
 import "@mdxeditor/editor/style.css";
+import "./MarkdownField.css";
 
 export type MDBodyFieldProps = {
 	fileUpload?: boolean;
@@ -111,13 +115,22 @@ export const MarkdownField = (props: MDBodyFieldProps) => {
 	}, [errors]);
 
 	const toolbarStyle = useMemo(() => {
-		const rules = [`.mdxeditor-toolbar { background-color: ${theme.palette.primary.main} !important; }`];
+		const primary = theme.palette.primary;
+		const rules = [
+			`.mdxeditor-toolbar { background-color: ${primary.main} !important; }`,
+			// The block-type (heading) dropdown is portaled outside the toolbar,
+			// so give it the same background as the toolbar with white text to
+			// match the toolbar buttons, instead of the editor's base page bg.
+			`.mdxeditor-toolbar [role="combobox"] { color: #fff !important; }`,
+			`.mdxeditor-select-content { background-color: ${primary.main} !important; color: #fff !important; }`,
+			`.mdxeditor-select-content [data-highlighted], .mdxeditor-select-content [data-state="checked"] { background-color: ${primary.dark} !important; color: #fff !important; }`,
+		];
 		if (theme.mode === "light") {
 			const tc = theme.palette.primary.contrastText;
 			rules.push(
 				`.mdxeditor-toolbar button:not([data-disabled]) { color: ${tc} !important; }`,
 				`.mdxeditor-toolbar button:not([data-disabled]) svg { color: ${tc} !important; }`,
-				`.mdxeditor-toolbar button:hover:not([data-disabled]) { background-color: ${theme.palette.primary.dark} !important; }`,
+				`.mdxeditor-toolbar button:hover:not([data-disabled]) { background-color: ${primary.dark} !important; }`,
 			);
 		}
 
@@ -139,8 +152,10 @@ export const MarkdownField = (props: MDBodyFieldProps) => {
 						toolbarContents: () => (
 							<Stack direction={"row"}>
 								<UndoRedo />
+								<BlockTypeSelect />
 								<BoldItalicUnderlineToggles />
 								<CodeToggle />
+								<CreateLink />
 								<InsertImage />
 								<InsertTable />
 								<InsertThematicBreak />
