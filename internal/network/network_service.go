@@ -7,6 +7,7 @@ import (
 	"net/netip"
 	"strconv"
 	"sync/atomic"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/database"
@@ -18,6 +19,10 @@ import (
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+// dbUpdateTimeout bounds a full geo database download and import. The RPC
+// returns immediately, so the work must not inherit the request's cancellation.
+const dbUpdateTimeout = time.Hour
 
 type Service struct {
 	// networkv1connect.UnimplementedNetworkServiceHandler
@@ -91,15 +96,19 @@ func (s *Service) QueryNetwork(ctx context.Context, req *v1.QueryNetworkRequest)
 }
 
 func (s *Service) UpdateDB(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
-	if !s.updateInProgress.Load() {
-		go func() {
-			s.updateInProgress.Store(true)
+	if s.updateInProgress.CompareAndSwap(false, true) {
+		// The RPC returns immediately, which cancels the request-scoped ctx. The
+		// download/import must outlive the response, so detach from that
+		// cancellation and apply our own upper bound instead.
+		updateCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), dbUpdateTimeout)
 
-			if err := s.networks.RefreshLocationData(ctx); err != nil {
+		go func() {
+			defer cancel()
+			defer s.updateInProgress.Store(false)
+
+			if err := s.networks.RefreshLocationData(updateCtx); err != nil {
 				slog.Error("Failed to update location data", slog.String("error", err.Error()))
 			}
-
-			s.updateInProgress.Store(false)
 		}()
 
 		return &emptypb.Empty{}, nil
