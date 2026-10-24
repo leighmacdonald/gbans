@@ -177,9 +177,6 @@ public
 int MenuHandler_Target(Menu menu, MenuAction action, int clientId, int selectedId) {
     if (action == MenuAction_Cancel) {
         resetReportStatus();
-        CloseHandle(menu);
-    } else if (action == MenuAction_End) {
-        CloseHandle(menu);
     } else if (action == MenuAction_Select) {
         int  userId, targetId;
         char sTargetUserID[30];
@@ -204,9 +201,6 @@ public
 int MenuHandler_Reason(Menu menu, MenuAction action, int clientId, int selectedId) {
     if (action == MenuAction_Cancel) {
         resetReportStatus();
-        CloseHandle(menu);
-    } else if (action == MenuAction_End) {
-        CloseHandle(menu);
     } else if (action == MenuAction_Select) {
         char sInfo[64];
         GetMenuItem(menu, selectedId, sInfo, sizeof sInfo);
