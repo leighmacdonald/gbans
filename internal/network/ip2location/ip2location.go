@@ -43,9 +43,7 @@ type databaseName string
 
 const (
 	geoDatabaseASN4      databaseName = "DBASNLITE"
-	geoDatabaseASN6      databaseName = "DBASNLITEIPV6"
 	geoDatabaseLocation4 databaseName = "DB5LITECSV"
-	geoDatabaseLocation6 databaseName = "DB5LITECSVIPV6"
 
 	// No ipv6 for proxy.
 	geoDatabaseProxy databaseName = "PX10LITECSV"
@@ -55,9 +53,7 @@ type DatabaseFile string
 
 const (
 	GeoDatabaseASNFile4      DatabaseFile = "IP2LOCATION-LITE-ASN.CSV"
-	GeoDatabaseASNFile6      DatabaseFile = "IP2LOCATION-LITE-ASN.IPV6.CSV"
 	GeoDatabaseLocationFile4 DatabaseFile = "IP2LOCATION-LITE-DB5.CSV"
-	GeoDatabaseLocationFile6 DatabaseFile = "IP2LOCATION-LITE-DB5.IPV6.CSV"
 	GeoDatabaseProxyFile     DatabaseFile = "IP2PROXY-LITE-PX10.CSV"
 )
 
@@ -67,6 +63,15 @@ var ImportedFiles = []DatabaseFile{ //nolint:gochecknoglobals
 	GeoDatabaseLocationFile4,
 	GeoDatabaseASNFile4,
 	GeoDatabaseProxyFile,
+}
+
+// downloadCodes maps each imported cache file to the ip2location download code
+// used to fetch it. IPv6 datasets are intentionally not downloaded: the
+// location tables use ip4r and no IPv6 records are imported.
+var downloadCodes = map[DatabaseFile]databaseName{ //nolint:gochecknoglobals
+	GeoDatabaseLocationFile4: geoDatabaseLocation4,
+	GeoDatabaseASNFile4:      geoDatabaseASN4,
+	GeoDatabaseProxyFile:     geoDatabaseProxy,
 }
 
 // Stale reports whether any of the given database files is missing from the
@@ -300,24 +305,39 @@ type Location struct {
 
 var (
 	ErrCreateRequest = errors.New("failed to create request")
-	ErrDownload      = errors.New("failed to downloaded geoip db")
+	ErrDownload      = errors.New("failed to download geoip db")
 	ErrResponse      = errors.New("failed to read response body")
-	ErrClose         = errors.New("failed to close response body")
+	ErrDatabase      = errors.New("unknown geo database file")
 )
 
-// Update will fetch a new geoip database from maxmind and install it, uncompressed,
-// into the configured geodb_path defined in the configuration file.
+// Update fetches the latest versions of the imported ip2location databases and
+// extracts them into outputPath.
 func Update(ctx context.Context, outputPath string, apiKey string) error {
+	if apiKey == "" {
+		return ErrAPIKey
+	}
+
 	type dlParam struct {
 		dbName   databaseName
 		fileName DatabaseFile
 	}
 
-	downloadDatabase := func(params dlParam) error {
-		client := &http.Client{
-			Timeout: time.Minute * 5,
+	params := make([]dlParam, 0, len(ImportedFiles))
+
+	for _, fileName := range ImportedFiles {
+		dbName, ok := downloadCodes[fileName]
+		if !ok {
+			return fmt.Errorf("%w: %s", ErrDatabase, fileName)
 		}
 
+		params = append(params, dlParam{dbName: dbName, fileName: fileName})
+	}
+
+	client := &http.Client{
+		Timeout: time.Minute * 5,
+	}
+
+	downloadDatabase := func(params dlParam) error {
 		req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf(downloadURL, apiKey, params.dbName), nil)
 		if reqErr != nil {
 			return errors.Join(reqErr, ErrCreateRequest)
@@ -328,20 +348,20 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 			return errors.Join(errGet, ErrDownload)
 		}
 
+		defer func() { _ = resp.Body.Close() }()
+
+		// ip2location serves an HTML error page for unavailable databases or
+		// invalid tokens. Check the status first so we don't try to unzip it.
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("%w: unexpected HTTP status %s for %s", ErrDownload, resp.Status, params.dbName)
+		}
+
 		body, errReadAll := io.ReadAll(resp.Body)
 		if errReadAll != nil {
 			return errors.Join(errReadAll, ErrResponse)
 		}
 
-		if errCloseBody := resp.Body.Close(); errCloseBody != nil {
-			return errors.Join(errCloseBody, ErrClose)
-		}
-
 		return extractZip(body, outputPath, string(params.fileName))
-	}
-
-	if apiKey == "" {
-		return ErrAPIKey
 	}
 
 	var (
@@ -350,13 +370,7 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 		waitGroup sync.WaitGroup
 	)
 
-	for _, param := range []dlParam{
-		{dbName: geoDatabaseASN4, fileName: GeoDatabaseASNFile4},
-		{dbName: geoDatabaseASN6, fileName: GeoDatabaseASNFile6},
-		{dbName: geoDatabaseLocation4, fileName: GeoDatabaseLocationFile4},
-		{dbName: geoDatabaseLocation6, fileName: GeoDatabaseLocationFile6},
-		{dbName: geoDatabaseProxy, fileName: GeoDatabaseProxyFile},
-	} {
+	for _, param := range params {
 		waitGroup.Add(1)
 
 		go func(param dlParam) {
