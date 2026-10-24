@@ -13,13 +13,15 @@ import type { Permission } from "../../roles/v1/roles_pb";
 import { file_roles_v1_roles } from "../../roles/v1/roles_pb";
 import type { Group, OverrideType } from "./sourcemod_pb";
 import { file_sourcemod_v1_sourcemod } from "./sourcemod_pb";
+import type { TimeBucket } from "../../stats/v1/stats_pb";
+import { file_stats_v1_stats } from "../../stats/v1/stats_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file sourcemod/v1/plugin.proto.
  */
 export const file_sourcemod_v1_plugin: GenFile = /*@__PURE__*/
-  fileDesc("Chlzb3VyY2Vtb2QvdjEvcGx1Z2luLnByb3RvEgxzb3VyY2Vtb2QudjEiVQoQU01QaW5nTW9kUmVxdWVzdBIQCghzdGVhbV9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEg4KBnJlYXNvbhgDIAEoCRIRCgljbGllbnRfaWQYBCABKAUiEwoRU01QaW5nTW9kUmVzcG9uc2UiNwoVU01BdXRoZW50aWNhdGVSZXF1ZXN0Eh4KCHBhc3N3b3JkGAEgASgJQgy6SAnIAQFyBBAIGBQiMwoWU01BdXRoZW50aWNhdGVSZXNwb25zZRIZCgV0b2tlbhgBIAEoCUIKukgHyAEBcgIQASItCg1TTVNlZWRSZXF1ZXN0EhwKCHN0ZWFtX2lkGAEgASgJQgq6SAfIAQFyAhABIikKDlNNU2VlZFJlc3BvbnNlEhcKB21lc3NhZ2UYASABKAlCBrpIA8gBASKXAQoKU01PdmVycmlkZRI+Cg1vdmVycmlkZV90eXBlGAEgASgOMhouc291cmNlbW9kLnYxLk92ZXJyaWRlVHlwZUILukgIyAEBggECEAESGAoEbmFtZRgCIAEoCUIKukgHyAEBcgIQARIpCgtwZXJtaXNzaW9ucxgEIAMoDjIULnJvbGVzLnYxLlBlcm1pc3Npb25KBAgDEAQiSgoTU01PdmVycmlkZXNSZXNwb25zZRIzCglvdmVycmlkZXMYASADKAsyGC5zb3VyY2Vtb2QudjEuU01PdmVycmlkZUIGukgDyAEBIoUBCg5TTUNoZWNrUmVxdWVzdBIcCghzdGVhbV9pZBgBIAEoCUIKukgHyAEBcgIQARIhCgljbGllbnRfaWQYAiABKAVCDrpIC8gBARoGGP//AygAEhYKAmlwGAMgASgJQgq6SAfIAQFyAngBEhoKBG5hbWUYBCABKAlCDLpICcgBAXIEEAEYICJsCg9TTUNoZWNrUmVzcG9uc2USGQoJY2xpZW50X2lkGAEgASgFQga6SAPIAQESKQoIYmFuX3R5cGUYAiABKA4yDy5iYW4udjEuQmFuVHlwZUIGukgDyAEBEhMKA21zZxgDIAEoCUIGukgDyAEBIkkKD1NNR3JvdXBJbW11bml0eRIaCgpncm91cF9uYW1lGAEgASgJQga6SAPIAQESGgoKb3RoZXJfbmFtZRgCIAEoCUIGukgDyAEBInoKEFNNR3JvdXBzUmVzcG9uc2USKwoGZ3JvdXBzGAEgAygLMhMuc291cmNlbW9kLnYxLkdyb3VwQga6SAPIAQESOQoKaW1tdW5pdGllcxgCIAMoCzIdLnNvdXJjZW1vZC52MS5TTUdyb3VwSW1tdW5pdHlCBrpIA8gBASJ2Cg9TTVVzZXJzUmVzcG9uc2USKwoFdXNlcnMYASADKAsyFC5zb3VyY2Vtb2QudjEuU01Vc2VyQga6SAPIAQESNgoLdXNlcl9ncm91cHMYAiADKAsyGS5zb3VyY2Vtb2QudjEuU01Vc2VyR3JvdXBCBrpIA8gBASLjAQoGU01Vc2VyEhgKAmlkGAEgASgDQgwwAbpIB8gBASICIAASLAoJYXV0aF90eXBlGAIgASgJQhm6SBbIAQFyEVIFc3RlYW1SBG5hbWVSAmlwEhgKCGlkZW50aXR5GAMgASgJQga6SAPIAQESEAoIcGFzc3dvcmQYBCABKAkSFAoEbmFtZRgGIAEoCUIGukgDyAEBEh4KCGltbXVuaXR5GAcgASgFQgy6SAnIAQEaBBhkKAASKQoLcGVybWlzc2lvbnMYCCADKA4yFC5yb2xlcy52MS5QZXJtaXNzaW9uSgQIBRAGIk0KC1NNVXNlckdyb3VwEh4KCGFkbWluX2lkGAEgASgDQgwwAbpIB8gBASICIAASHgoKZ3JvdXBfbmFtZRgCIAEoCUIKukgHyAEBcgIQATKcBAoNUGx1Z2luU2VydmljZRJdCg5TTUF1dGhlbnRpY2F0ZRIjLnNvdXJjZW1vZC52MS5TTUF1dGhlbnRpY2F0ZVJlcXVlc3QaJC5zb3VyY2Vtb2QudjEuU01BdXRoZW50aWNhdGVSZXNwb25zZSIAEkgKB1NNQ2hlY2sSHC5zb3VyY2Vtb2QudjEuU01DaGVja1JlcXVlc3QaHS5zb3VyY2Vtb2QudjEuU01DaGVja1Jlc3BvbnNlIgASSgoLU01PdmVycmlkZXMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaIS5zb3VyY2Vtb2QudjEuU01PdmVycmlkZXNSZXNwb25zZSIAEkIKB1NNVXNlcnMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHS5zb3VyY2Vtb2QudjEuU01Vc2Vyc1Jlc3BvbnNlIgASRAoIU01Hcm91cHMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHi5zb3VyY2Vtb2QudjEuU01Hcm91cHNSZXNwb25zZSIAEkUKBlNNU2VlZBIbLnNvdXJjZW1vZC52MS5TTVNlZWRSZXF1ZXN0Ghwuc291cmNlbW9kLnYxLlNNU2VlZFJlc3BvbnNlIgASRQoJU01QaW5nTW9kEh4uc291cmNlbW9kLnYxLlNNUGluZ01vZFJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiAEKzAQoQY29tLnNvdXJjZW1vZC52MUILUGx1Z2luUHJvdG9QAVpBZ2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9zb3VyY2Vtb2QvdjE7c291cmNlbW9kdjGiAgNTWFiqAgxTb3VyY2Vtb2QuVjHKAgxTb3VyY2Vtb2RcVjHiAhhTb3VyY2Vtb2RcVjFcR1BCTWV0YWRhdGHqAg1Tb3VyY2Vtb2Q6OlYxYghlZGl0aW9uc3DoBw", [file_ban_v1_ban, file_buf_validate_validate, file_google_protobuf_empty, file_roles_v1_roles, file_sourcemod_v1_sourcemod]);
+  fileDesc("Chlzb3VyY2Vtb2QvdjEvcGx1Z2luLnByb3RvEgxzb3VyY2Vtb2QudjEiVQoQU01QaW5nTW9kUmVxdWVzdBIQCghzdGVhbV9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEg4KBnJlYXNvbhgDIAEoCRIRCgljbGllbnRfaWQYBCABKAUiEwoRU01QaW5nTW9kUmVzcG9uc2UiNwoVU01BdXRoZW50aWNhdGVSZXF1ZXN0Eh4KCHBhc3N3b3JkGAEgASgJQgy6SAnIAQFyBBAIGBQiMwoWU01BdXRoZW50aWNhdGVSZXNwb25zZRIZCgV0b2tlbhgBIAEoCUIKukgHyAEBcgIQASItCg1TTVNlZWRSZXF1ZXN0EhwKCHN0ZWFtX2lkGAEgASgJQgq6SAfIAQFyAhABIikKDlNNU2VlZFJlc3BvbnNlEhcKB21lc3NhZ2UYASABKAlCBrpIA8gBASKXAQoKU01PdmVycmlkZRI+Cg1vdmVycmlkZV90eXBlGAEgASgOMhouc291cmNlbW9kLnYxLk92ZXJyaWRlVHlwZUILukgIyAEBggECEAESGAoEbmFtZRgCIAEoCUIKukgHyAEBcgIQARIpCgtwZXJtaXNzaW9ucxgEIAMoDjIULnJvbGVzLnYxLlBlcm1pc3Npb25KBAgDEAQiSgoTU01PdmVycmlkZXNSZXNwb25zZRIzCglvdmVycmlkZXMYASADKAsyGC5zb3VyY2Vtb2QudjEuU01PdmVycmlkZUIGukgDyAEBIoUBCg5TTUNoZWNrUmVxdWVzdBIcCghzdGVhbV9pZBgBIAEoCUIKukgHyAEBcgIQARIhCgljbGllbnRfaWQYAiABKAVCDrpIC8gBARoGGP//AygAEhYKAmlwGAMgASgJQgq6SAfIAQFyAngBEhoKBG5hbWUYBCABKAlCDLpICcgBAXIEEAEYICJsCg9TTUNoZWNrUmVzcG9uc2USGQoJY2xpZW50X2lkGAEgASgFQga6SAPIAQESKQoIYmFuX3R5cGUYAiABKA4yDy5iYW4udjEuQmFuVHlwZUIGukgDyAEBEhMKA21zZxgDIAEoCUIGukgDyAEBIkkKD1NNR3JvdXBJbW11bml0eRIaCgpncm91cF9uYW1lGAEgASgJQga6SAPIAQESGgoKb3RoZXJfbmFtZRgCIAEoCUIGukgDyAEBInoKEFNNR3JvdXBzUmVzcG9uc2USKwoGZ3JvdXBzGAEgAygLMhMuc291cmNlbW9kLnYxLkdyb3VwQga6SAPIAQESOQoKaW1tdW5pdGllcxgCIAMoCzIdLnNvdXJjZW1vZC52MS5TTUdyb3VwSW1tdW5pdHlCBrpIA8gBASJ2Cg9TTVVzZXJzUmVzcG9uc2USKwoFdXNlcnMYASADKAsyFC5zb3VyY2Vtb2QudjEuU01Vc2VyQga6SAPIAQESNgoLdXNlcl9ncm91cHMYAiADKAsyGS5zb3VyY2Vtb2QudjEuU01Vc2VyR3JvdXBCBrpIA8gBASLjAQoGU01Vc2VyEhgKAmlkGAEgASgDQgwwAbpIB8gBASICIAASLAoJYXV0aF90eXBlGAIgASgJQhm6SBbIAQFyEVIFc3RlYW1SBG5hbWVSAmlwEhgKCGlkZW50aXR5GAMgASgJQga6SAPIAQESEAoIcGFzc3dvcmQYBCABKAkSFAoEbmFtZRgGIAEoCUIGukgDyAEBEh4KCGltbXVuaXR5GAcgASgFQgy6SAnIAQEaBBhkKAASKQoLcGVybWlzc2lvbnMYCCADKA4yFC5yb2xlcy52MS5QZXJtaXNzaW9uSgQIBRAGIk0KC1NNVXNlckdyb3VwEh4KCGFkbWluX2lkGAEgASgDQgwwAbpIB8gBASICIAASHgoKZ3JvdXBfbmFtZRgCIAEoCUIKukgHyAEBcgIQASI0ChRTTVBsYXllclN0YXRzUmVxdWVzdBIcCghzdGVhbV9pZBgBIAEoCUIKukgHyAEBcgIQASJyChNTTVBsYXllclN0YXRzQnVja2V0EjYKC3RpbWVfYnVja2V0GAEgASgOMhQuc3RhdHMudjEuVGltZUJ1Y2tldEILukgIyAEBggECEAESEAoEcmFuaxgCIAEoBEICMAESEQoFa2lsbHMYAyABKARCAjABIocBChVTTVBsYXllclN0YXRzUmVzcG9uc2USOgoHYnVja2V0cxgBIAMoCzIhLnNvdXJjZW1vZC52MS5TTVBsYXllclN0YXRzQnVja2V0Qga6SAPIAQESFwoPc3RhdHNfYnVja2V0X2lkGAIgASgNEhkKEXN0YXRzX2J1Y2tldF9uYW1lGAMgASgJMvgECg1QbHVnaW5TZXJ2aWNlEl0KDlNNQXV0aGVudGljYXRlEiMuc291cmNlbW9kLnYxLlNNQXV0aGVudGljYXRlUmVxdWVzdBokLnNvdXJjZW1vZC52MS5TTUF1dGhlbnRpY2F0ZVJlc3BvbnNlIgASSAoHU01DaGVjaxIcLnNvdXJjZW1vZC52MS5TTUNoZWNrUmVxdWVzdBodLnNvdXJjZW1vZC52MS5TTUNoZWNrUmVzcG9uc2UiABJKCgtTTU92ZXJyaWRlcxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRohLnNvdXJjZW1vZC52MS5TTU92ZXJyaWRlc1Jlc3BvbnNlIgASQgoHU01Vc2VycxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRodLnNvdXJjZW1vZC52MS5TTVVzZXJzUmVzcG9uc2UiABJECghTTUdyb3VwcxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoeLnNvdXJjZW1vZC52MS5TTUdyb3Vwc1Jlc3BvbnNlIgASRQoGU01TZWVkEhsuc291cmNlbW9kLnYxLlNNU2VlZFJlcXVlc3QaHC5zb3VyY2Vtb2QudjEuU01TZWVkUmVzcG9uc2UiABJFCglTTVBpbmdNb2QSHi5zb3VyY2Vtb2QudjEuU01QaW5nTW9kUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEloKDVNNUGxheWVyU3RhdHMSIi5zb3VyY2Vtb2QudjEuU01QbGF5ZXJTdGF0c1JlcXVlc3QaIy5zb3VyY2Vtb2QudjEuU01QbGF5ZXJTdGF0c1Jlc3BvbnNlIgBCswEKEGNvbS5zb3VyY2Vtb2QudjFCC1BsdWdpblByb3RvUAFaQWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvc291cmNlbW9kL3YxO3NvdXJjZW1vZHYxogIDU1hYqgIMU291cmNlbW9kLlYxygIMU291cmNlbW9kXFYx4gIYU291cmNlbW9kXFYxXEdQQk1ldGFkYXRh6gINU291cmNlbW9kOjpWMWIIZWRpdGlvbnNw6Ac", [file_ban_v1_ban, file_buf_validate_validate, file_google_protobuf_empty, file_roles_v1_roles, file_sourcemod_v1_sourcemod, file_stats_v1_stats]);
 
 /**
  * @generated from message sourcemod.v1.SMPingModRequest
@@ -377,6 +379,87 @@ export const SMUserGroupSchema: GenMessage<SMUserGroup> = /*@__PURE__*/
   messageDesc(file_sourcemod_v1_plugin, 14);
 
 /**
+ * @generated from message sourcemod.v1.SMPlayerStatsRequest
+ */
+export type SMPlayerStatsRequest = Message<"sourcemod.v1.SMPlayerStatsRequest"> & {
+  /**
+   * @generated from field: string steam_id = 1;
+   */
+  steamId: string;
+};
+
+/**
+ * Describes the message sourcemod.v1.SMPlayerStatsRequest.
+ * Use `create(SMPlayerStatsRequestSchema)` to create a new message.
+ */
+export const SMPlayerStatsRequestSchema: GenMessage<SMPlayerStatsRequest> = /*@__PURE__*/
+  messageDesc(file_sourcemod_v1_plugin, 15);
+
+/**
+ * SMPlayerStatsBucket holds a single player's rank and kills for one time
+ * bucket within the default stats bucket.
+ *
+ * @generated from message sourcemod.v1.SMPlayerStatsBucket
+ */
+export type SMPlayerStatsBucket = Message<"sourcemod.v1.SMPlayerStatsBucket"> & {
+  /**
+   * @generated from field: stats.v1.TimeBucket time_bucket = 1;
+   */
+  timeBucket: TimeBucket;
+
+  /**
+   * rank is the player's position in the kills leaderboard for this window,
+   * 0 when they do not meet the leaderboard's minimum sample size.
+   *
+   * @generated from field: uint64 rank = 2 [jstype = JS_STRING];
+   */
+  rank: string;
+
+  /**
+   * kills is the player's total kills in this window.
+   *
+   * @generated from field: uint64 kills = 3 [jstype = JS_STRING];
+   */
+  kills: string;
+};
+
+/**
+ * Describes the message sourcemod.v1.SMPlayerStatsBucket.
+ * Use `create(SMPlayerStatsBucketSchema)` to create a new message.
+ */
+export const SMPlayerStatsBucketSchema: GenMessage<SMPlayerStatsBucket> = /*@__PURE__*/
+  messageDesc(file_sourcemod_v1_plugin, 16);
+
+/**
+ * @generated from message sourcemod.v1.SMPlayerStatsResponse
+ */
+export type SMPlayerStatsResponse = Message<"sourcemod.v1.SMPlayerStatsResponse"> & {
+  /**
+   * @generated from field: repeated sourcemod.v1.SMPlayerStatsBucket buckets = 1;
+   */
+  buckets: SMPlayerStatsBucket[];
+
+  /**
+   * The stats bucket (game mode) the window stats were taken from.
+   *
+   * @generated from field: uint32 stats_bucket_id = 2;
+   */
+  statsBucketId: number;
+
+  /**
+   * @generated from field: string stats_bucket_name = 3;
+   */
+  statsBucketName: string;
+};
+
+/**
+ * Describes the message sourcemod.v1.SMPlayerStatsResponse.
+ * Use `create(SMPlayerStatsResponseSchema)` to create a new message.
+ */
+export const SMPlayerStatsResponseSchema: GenMessage<SMPlayerStatsResponse> = /*@__PURE__*/
+  messageDesc(file_sourcemod_v1_plugin, 17);
+
+/**
  * Provides the API used to communicate with the game servers.
  *
  * @generated from service sourcemod.v1.PluginService
@@ -439,6 +522,18 @@ export const PluginService: GenService<{
     methodKind: "unary";
     input: typeof SMPingModRequestSchema;
     output: typeof EmptySchema;
+  },
+  /**
+   * SMPlayerStats returns the player's rank and kills for every time bucket in
+   * the default stats bucket. Rate limited to one request per player every
+   * five minutes.
+   *
+   * @generated from rpc sourcemod.v1.PluginService.SMPlayerStats
+   */
+  sMPlayerStats: {
+    methodKind: "unary";
+    input: typeof SMPlayerStatsRequestSchema;
+    output: typeof SMPlayerStatsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_sourcemod_v1_plugin, 0);

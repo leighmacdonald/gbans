@@ -17,11 +17,28 @@ import (
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/sourcemod/v1"
 	"github.com/leighmacdonald/gbans/internal/sourcemod/v1/sourcemodv1connect"
+	"github.com/leighmacdonald/gbans/internal/stats"
+	statsv1 "github.com/leighmacdonald/gbans/internal/stats/v1"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-var errTooOften = errors.New("you must wait before trying to mod ping again")
+var (
+	errTooOften      = errors.New("you must wait before trying to mod ping again")
+	errStatsTooOften = errors.New("you must wait before viewing your stats again")
+)
+
+// playerStatsTimeBuckets is the fixed set of time windows the in-game /stats
+// command reports, from shortest to longest.
+func playerStatsTimeBuckets() []stats.TimeBucket {
+	return []stats.TimeBucket{
+		stats.TimeBucketDaily,
+		stats.TimeBucketWeekly,
+		stats.TimeBucketMonthly,
+		stats.TimeBucketYearly,
+		stats.TimeBucketAlltime,
+	}
+}
 
 type TokenGeneratorFn func(serverID int32, serverName string) (string, error)
 
@@ -33,24 +50,32 @@ type PluginService struct {
 	serverAuth              rpc.ServerAuthenticator
 	tokenGenerator          TokenGeneratorFn
 	evades                  EvadeChecker
+	stats                   stats.Stats
 	logChannelID            string
 	pingHistory             map[steamid.SteamID]time.Time
 	pingHistoryMu           *sync.Mutex
 	minPingModRetryInterval time.Duration
+	statsHistory            map[steamid.SteamID]time.Time
+	statsHistoryMu          *sync.Mutex
+	minStatsRetryInterval   time.Duration
 }
 
-func NewPluginService(sourcemod Sourcemod, persons *person.Persons, serverAuthenticator rpc.ServerAuthenticator, evades EvadeChecker, tokenGenerator TokenGeneratorFn, notifier notification.Notifier, logChannelID string, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
+func NewPluginService(sourcemod Sourcemod, persons *person.Persons, serverAuthenticator rpc.ServerAuthenticator, evades EvadeChecker, stats stats.Stats, tokenGenerator TokenGeneratorFn, notifier notification.Notifier, logChannelID string, authMiddleware *rpc.Middleware, option ...connect.HandlerOption) rpc.Service {
 	pattern, handler := sourcemodv1connect.NewPluginServiceHandler(PluginService{
 		sourcemod:               sourcemod,
 		persons:                 persons,
 		tokenGenerator:          tokenGenerator,
 		notifier:                notifier,
 		evades:                  evades,
+		stats:                   stats,
 		logChannelID:            logChannelID,
 		serverAuth:              serverAuthenticator,
 		pingHistory:             map[steamid.SteamID]time.Time{},
 		pingHistoryMu:           &sync.Mutex{},
 		minPingModRetryInterval: time.Minute * 5,
+		statsHistory:            map[steamid.SteamID]time.Time{},
+		statsHistoryMu:          &sync.Mutex{},
+		minStatsRetryInterval:   time.Minute * 5,
 	}, option...)
 
 	serverAuth := rpc.NewServerAuthenticator()
@@ -61,6 +86,7 @@ func NewPluginService(sourcemod Sourcemod, persons *person.Persons, serverAuthen
 	authMiddleware.ServerRoute(sourcemodv1connect.PluginServiceSMGroupsProcedure, serverAuth)
 	authMiddleware.ServerRoute(sourcemodv1connect.PluginServiceSMSeedProcedure, serverAuth)
 	authMiddleware.ServerRoute(sourcemodv1connect.PluginServiceSMPingModProcedure, serverAuth)
+	authMiddleware.ServerRoute(sourcemodv1connect.PluginServiceSMPlayerStatsProcedure, serverAuth)
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -306,4 +332,111 @@ func (s PluginService) SMSeed(ctx context.Context, req *v1.SMSeedRequest) (*v1.S
 	}
 
 	return &v1.SMSeedResponse{Message: new("Successfully sent request")}, nil
+}
+
+// SMPlayerStats returns a player's kills and kills-leaderboard rank for every
+// time window in the default stats bucket, for the in-game /stats menu. Each
+// player may call it at most once every five minutes.
+func (s PluginService) SMPlayerStats(ctx context.Context, req *v1.SMPlayerStatsRequest) (*v1.SMPlayerStatsResponse, error) {
+	steamID := steamid.New(req.GetSteamId())
+	if !steamID.Valid() {
+		return nil, connect.NewError(connect.CodeInvalidArgument, rpc.ErrBadRequest)
+	}
+
+	s.statsHistoryMu.Lock()
+	lastTry, ok := s.statsHistory[steamID]
+	if ok && time.Since(lastTry) < s.minStatsRetryInterval {
+		s.statsHistoryMu.Unlock()
+
+		return nil, connect.NewError(connect.CodeResourceExhausted, errStatsTooOften)
+	}
+
+	buckets, errBuckets := s.stats.Buckets(ctx)
+	if errBuckets != nil {
+		s.statsHistoryMu.Unlock()
+		slog.Error("Failed to load stats buckets", slog.String("error", errBuckets.Error()))
+
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	defaultBucket := defaultStatsBucket(buckets)
+	if defaultBucket == nil {
+		s.statsHistoryMu.Unlock()
+		slog.Error("No default or enabled stats bucket configured")
+
+		return nil, connect.NewError(connect.CodeFailedPrecondition, rpc.ErrInternal)
+	}
+
+	timeBuckets := playerStatsTimeBuckets()
+	resp := &v1.SMPlayerStatsResponse{
+		StatsBucketId:   new(uint32(defaultBucket.BucketID)), //nolint:gosec // bucket ids are positive.
+		StatsBucketName: &defaultBucket.BucketName,
+		Buckets:         make([]*v1.SMPlayerStatsBucket, 0, len(timeBuckets)),
+	}
+
+	now := time.Now()
+	for _, timeBucket := range timeBuckets {
+		rank, kills, errRank := s.stats.PlayerKillsAndRank(ctx, stats.Opts{
+			StatsBucketID: uint32(defaultBucket.BucketID), //nolint:gosec // bucket ids are positive.
+			Variant:       stats.VariantKills,
+			TimeBucket:    timeBucket,
+			TimeStamp:     now,
+		}, steamID)
+		if errRank != nil {
+			s.statsHistoryMu.Unlock()
+			slog.Error("Failed to load player stats",
+				slog.String("steamID", steamID.String()),
+				slog.String("timeBucket", timeBucket.String()),
+				slog.String("error", errRank.Error()))
+
+			return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+		}
+
+		resp.Buckets = append(resp.Buckets, &v1.SMPlayerStatsBucket{
+			TimeBucket: new(toTimeBucket(timeBucket)),
+			Rank:       new(rank),
+			Kills:      new(kills),
+		})
+	}
+
+	// Only record a successful lookup so a transient backend failure does not
+	// lock the player out for the whole cooldown window.
+	s.statsHistory[steamID] = time.Now()
+	s.statsHistoryMu.Unlock()
+
+	return resp, nil
+}
+
+// defaultStatsBucket returns the default stats bucket, falling back to the
+// first enabled bucket, or nil when neither exists.
+func defaultStatsBucket(buckets []stats.Bucket) *stats.Bucket {
+	for idx := range buckets {
+		if buckets[idx].IsDefault {
+			return &buckets[idx]
+		}
+	}
+
+	for idx := range buckets {
+		if buckets[idx].IsEnabled {
+			return &buckets[idx]
+		}
+	}
+
+	return nil
+}
+
+// toTimeBucket maps the internal stats time bucket to its wire enum value.
+func toTimeBucket(tb stats.TimeBucket) statsv1.TimeBucket {
+	switch tb {
+	case stats.TimeBucketDaily:
+		return statsv1.TimeBucket_TIME_BUCKET_DAILY
+	case stats.TimeBucketWeekly:
+		return statsv1.TimeBucket_TIME_BUCKET_WEEKLY
+	case stats.TimeBucketMonthly:
+		return statsv1.TimeBucket_TIME_BUCKET_MONTHLY
+	case stats.TimeBucketYearly:
+		return statsv1.TimeBucket_TIME_BUCKET_YEARLY
+	default:
+		return statsv1.TimeBucket_TIME_BUCKET_ALLTIME //nolint:misspell // must match the generated enum name.
+	}
 }

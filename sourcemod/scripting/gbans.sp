@@ -25,6 +25,7 @@
 #include "gbans/globals.sp"
 #include "gbans/report.sp"
 #include "gbans/stac.sp"
+#include "gbans/stats.sp"
 #include "gbans/stv.sp"
 
 public
@@ -48,6 +49,7 @@ void OnPluginStart() {
     RegConsoleCmd("seed", onCmdSeed, "Send a seed request to discord");
 
     RegConsoleCmd("report", onCmdReport, "Report a player");
+    RegConsoleCmd("stats", onCmdStats, "View your current stats");
     RegConsoleCmd("autoteam", onCmdAutoTeamAction);
 
     RegAdminCmd("gb_ban", onAdminCmdBan, ADMFLAG_BAN);

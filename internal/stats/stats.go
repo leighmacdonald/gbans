@@ -489,3 +489,10 @@ func (s Stats) MyRank(ctx context.Context, opts Opts, steamID steamid.SteamID) (
 func (s Stats) MyIndex(ctx context.Context, opts Opts, steamID steamid.SteamID, rank uint64) (uint64, error) {
 	return s.repo.MyIndex(ctx, opts, steamID, rank)
 }
+
+// PlayerKillsAndRank returns steamID's kills and their kills-leaderboard rank
+// for the window described by opts. The rank is 0 when the player does not
+// meet the leaderboard's minimum sample size.
+func (s Stats) PlayerKillsAndRank(ctx context.Context, opts Opts, steamID steamid.SteamID) (uint64, uint64, error) {
+	return s.repo.PlayerKillsAndRank(ctx, opts, steamID)
+}
