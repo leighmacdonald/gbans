@@ -189,11 +189,18 @@ function Servers() {
 		if (showOpenOnly) {
 			s = s.filter((srv) => (srv?.players || 0) < (srv?.maxPlayers || 32));
 		}
-		if (filterByRegion && customRange && customRange > 0) {
-			s = s.filter((srv) => srv.distance < customRange);
-		}
 		setSelectedServers(s);
-	}, [selectedRegion, showOpenOnly, filterByRegion, customRange, pos, data?.servers]);
+	}, [selectedRegion, showOpenOnly, filterByRegion, pos, data?.servers]);
+
+	// The range filter only limits the server list, the map keeps showing every
+	// matching server so the filtered-out locations remain visible in context.
+	const tableServers = useMemo(() => {
+		if (filterByRegion && customRange > 0) {
+			return selectedServers.filter((srv) => srv.distance < customRange);
+		}
+
+		return selectedServers;
+	}, [selectedServers, filterByRegion, customRange]);
 
 	const marks = [
 		{
@@ -215,8 +222,8 @@ function Servers() {
 	];
 
 	const metaServers = useMemo(() => {
-		return selectedServers.map((s) => ({ ...s, copy: "", connect: "" }));
-	}, [selectedServers]);
+		return tableServers.map((s) => ({ ...s, copy: "", connect: "" }));
+	}, [tableServers]);
 
 	const columns = useMemo(
 		() =>
