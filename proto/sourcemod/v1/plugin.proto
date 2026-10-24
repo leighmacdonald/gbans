@@ -7,6 +7,7 @@ import "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
 import "roles/v1/roles.proto";
 import "sourcemod/v1/sourcemod.proto";
+import "stats/v1/stats.proto";
 
 // Provides the API used to communicate with the game servers.
 service PluginService {
@@ -18,6 +19,10 @@ service PluginService {
   rpc SMGroups(google.protobuf.Empty) returns (SMGroupsResponse) {}
   rpc SMSeed(SMSeedRequest) returns (SMSeedResponse) {}
   rpc SMPingMod(SMPingModRequest) returns (google.protobuf.Empty) {}
+  // SMPlayerStats returns the player's rank and kills for every time bucket in
+  // the default stats bucket. Rate limited to one request per player every
+  // five minutes.
+  rpc SMPlayerStats(SMPlayerStatsRequest) returns (SMPlayerStatsResponse) {}
 }
 
 message SMPingModRequest {
@@ -154,4 +159,32 @@ message SMUserGroup {
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1
   ];
+}
+
+message SMPlayerStatsRequest {
+  string steam_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
+// SMPlayerStatsBucket holds a single player's rank and kills for one time
+// bucket within the default stats bucket.
+message SMPlayerStatsBucket {
+  stats.v1.TimeBucket time_bucket = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  // rank is the player's position in the kills leaderboard for this window,
+  // 0 when they do not meet the leaderboard's minimum sample size.
+  uint64 rank = 2;
+  // kills is the player's total kills in this window.
+  uint64 kills = 3;
+}
+
+message SMPlayerStatsResponse {
+  repeated SMPlayerStatsBucket buckets = 1 [(buf.validate.field).required = true];
+  // The stats bucket (game mode) the window stats were taken from.
+  uint32 stats_bucket_id = 2;
+  string stats_bucket_name = 3;
 }

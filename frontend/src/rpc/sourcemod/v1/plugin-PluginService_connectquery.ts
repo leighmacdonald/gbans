@@ -40,3 +40,12 @@ export const sMSeed = PluginService.method.sMSeed;
  * @generated from rpc sourcemod.v1.PluginService.SMPingMod
  */
 export const sMPingMod = PluginService.method.sMPingMod;
+
+/**
+ * SMPlayerStats returns the player's rank and kills for every time bucket in
+ * the default stats bucket. Rate limited to one request per player every
+ * five minutes.
+ *
+ * @generated from rpc sourcemod.v1.PluginService.SMPlayerStats
+ */
+export const sMPlayerStats = PluginService.method.sMPlayerStats;

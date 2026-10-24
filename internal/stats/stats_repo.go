@@ -342,6 +342,52 @@ func (r Repository) MyIndex(ctx context.Context, opts Opts, steamID steamid.Stea
 		Where(constraints))
 }
 
+// PlayerKillsAndRank returns steamID's kills and their kills-leaderboard rank
+// for the window described by opts. opts.Variant must be VariantKills. The
+// rank is 0 when the player has fewer than MinKills kills in the window, even
+// though kills itself is always reported.
+func (r Repository) PlayerKillsAndRank(ctx context.Context, opts Opts, steamID steamid.SteamID) (uint64, uint64, error) {
+	var (
+		rank  uint64
+		kills uint64
+	)
+
+	constraints := sq.And{
+		sq.Eq{"stats_bucket_id": opts.StatsBucketID},
+		sq.Eq{"steam_id": steamID.Int64()},
+	}
+	if opts.Variant == VariantWeapons || opts.Variant == VariantClasses {
+		constraints = append(constraints, sq.Eq{"variant": opts.VariantKey})
+	}
+	if dateConstraint := opts.dateConstraint(); dateConstraint != nil {
+		constraints = append(constraints, dateConstraint)
+	}
+
+	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
+		Select(opts.rankColumn()+" AS rank", "kills").
+		From(opts.view()).
+		Where(constraints))
+	if errRow != nil {
+		return 0, 0, database.Err(errRow)
+	}
+	if err := row.Scan(&rank, &kills); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, 0, nil
+		}
+
+		return 0, 0, database.Err(err)
+	}
+
+	// The rank only has standing once the player clears the leaderboard's
+	// minimum sample size; below it they are unranked though their kills are
+	// still reported.
+	if kills < MinKills {
+		rank = 0
+	}
+
+	return rank, kills, nil
+}
+
 func (r Repository) loadOverallView(ctx context.Context, statsBucketID uint32, opts Opts) ([]any, uint64, error) {
 	constraints := sq.And{
 		sq.Eq{"stats_bucket_id": statsBucketID},

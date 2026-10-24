@@ -50,6 +50,9 @@ const (
 	PluginServiceSMSeedProcedure = "/sourcemod.v1.PluginService/SMSeed"
 	// PluginServiceSMPingModProcedure is the fully-qualified name of the PluginService's SMPingMod RPC.
 	PluginServiceSMPingModProcedure = "/sourcemod.v1.PluginService/SMPingMod"
+	// PluginServiceSMPlayerStatsProcedure is the fully-qualified name of the PluginService's
+	// SMPlayerStats RPC.
+	PluginServiceSMPlayerStatsProcedure = "/sourcemod.v1.PluginService/SMPlayerStats"
 )
 
 // PluginServiceClient is a client for the sourcemod.v1.PluginService service.
@@ -62,6 +65,10 @@ type PluginServiceClient interface {
 	SMGroups(context.Context, *emptypb.Empty) (*v1.SMGroupsResponse, error)
 	SMSeed(context.Context, *v1.SMSeedRequest) (*v1.SMSeedResponse, error)
 	SMPingMod(context.Context, *v1.SMPingModRequest) (*emptypb.Empty, error)
+	// SMPlayerStats returns the player's rank and kills for every time bucket in
+	// the default stats bucket. Rate limited to one request per player every
+	// five minutes.
+	SMPlayerStats(context.Context, *v1.SMPlayerStatsRequest) (*v1.SMPlayerStatsResponse, error)
 }
 
 // NewPluginServiceClient constructs a client for the sourcemod.v1.PluginService service. By
@@ -117,6 +124,12 @@ func NewPluginServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(pluginServiceMethods.ByName("SMPingMod")),
 			connect.WithClientOptions(opts...),
 		),
+		sMPlayerStats: connect.NewClient[v1.SMPlayerStatsRequest, v1.SMPlayerStatsResponse](
+			httpClient,
+			baseURL+PluginServiceSMPlayerStatsProcedure,
+			connect.WithSchema(pluginServiceMethods.ByName("SMPlayerStats")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -129,6 +142,7 @@ type pluginServiceClient struct {
 	sMGroups       *connect.Client[emptypb.Empty, v1.SMGroupsResponse]
 	sMSeed         *connect.Client[v1.SMSeedRequest, v1.SMSeedResponse]
 	sMPingMod      *connect.Client[v1.SMPingModRequest, emptypb.Empty]
+	sMPlayerStats  *connect.Client[v1.SMPlayerStatsRequest, v1.SMPlayerStatsResponse]
 }
 
 // SMAuthenticate calls sourcemod.v1.PluginService.SMAuthenticate.
@@ -194,6 +208,15 @@ func (c *pluginServiceClient) SMPingMod(ctx context.Context, req *v1.SMPingModRe
 	return nil, err
 }
 
+// SMPlayerStats calls sourcemod.v1.PluginService.SMPlayerStats.
+func (c *pluginServiceClient) SMPlayerStats(ctx context.Context, req *v1.SMPlayerStatsRequest) (*v1.SMPlayerStatsResponse, error) {
+	response, err := c.sMPlayerStats.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // PluginServiceHandler is an implementation of the sourcemod.v1.PluginService service.
 type PluginServiceHandler interface {
 	// Sourcemod plugin surface
@@ -204,6 +227,10 @@ type PluginServiceHandler interface {
 	SMGroups(context.Context, *emptypb.Empty) (*v1.SMGroupsResponse, error)
 	SMSeed(context.Context, *v1.SMSeedRequest) (*v1.SMSeedResponse, error)
 	SMPingMod(context.Context, *v1.SMPingModRequest) (*emptypb.Empty, error)
+	// SMPlayerStats returns the player's rank and kills for every time bucket in
+	// the default stats bucket. Rate limited to one request per player every
+	// five minutes.
+	SMPlayerStats(context.Context, *v1.SMPlayerStatsRequest) (*v1.SMPlayerStatsResponse, error)
 }
 
 // NewPluginServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -255,6 +282,12 @@ func NewPluginServiceHandler(svc PluginServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(pluginServiceMethods.ByName("SMPingMod")),
 		connect.WithHandlerOptions(opts...),
 	)
+	pluginServiceSMPlayerStatsHandler := connect.NewUnaryHandlerSimple(
+		PluginServiceSMPlayerStatsProcedure,
+		svc.SMPlayerStats,
+		connect.WithSchema(pluginServiceMethods.ByName("SMPlayerStats")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/sourcemod.v1.PluginService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PluginServiceSMAuthenticateProcedure:
@@ -271,6 +304,8 @@ func NewPluginServiceHandler(svc PluginServiceHandler, opts ...connect.HandlerOp
 			pluginServiceSMSeedHandler.ServeHTTP(w, r)
 		case PluginServiceSMPingModProcedure:
 			pluginServiceSMPingModHandler.ServeHTTP(w, r)
+		case PluginServiceSMPlayerStatsProcedure:
+			pluginServiceSMPlayerStatsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -306,4 +341,8 @@ func (UnimplementedPluginServiceHandler) SMSeed(context.Context, *v1.SMSeedReque
 
 func (UnimplementedPluginServiceHandler) SMPingMod(context.Context, *v1.SMPingModRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.PluginService.SMPingMod is not implemented"))
+}
+
+func (UnimplementedPluginServiceHandler) SMPlayerStats(context.Context, *v1.SMPlayerStatsRequest) (*v1.SMPlayerStatsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.PluginService.SMPlayerStats is not implemented"))
 }

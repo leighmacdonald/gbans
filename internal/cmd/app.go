@@ -494,7 +494,7 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware, roleAuth *rpc.RoleAuth
 		servers.NewServersService(g.servers, &g.networks, g.openGraph, roleAuth, authMiddleware, interceptors),
 		demo.NewService(g.demos, g.openGraph, roleAuth, authMiddleware, interceptors),
 		speedruns.NewService(g.speedruns, roleAuth, authMiddleware, interceptors),
-		sourcemod.NewPluginService(g.sourcemod, g.persons, g.servers, g.bans,
+		sourcemod.NewPluginService(g.sourcemod, g.persons, g.servers, g.bans, g.stats,
 			rpc.NewServerTokenGenerator(conf.General.SiteName, []byte(conf.HTTPCookieKey)), g.notifications, conf.Discord.LogChannelID, authMiddleware, interceptors),
 		sourcemod.NewSourcemodService(g.sourcemod, roleAuth, authMiddleware, interceptors),
 		stats.NewService(g.stats, g.servers, g.openGraph, roleAuth, authMiddleware, interceptors),

@@ -154,6 +154,7 @@ Action onCmdHelp(int clientId, int argc) {
     ReplyToCommand(clientId, "gb_mod <reason> -- Ping a moderator");
     ReplyToCommand(clientId, "seed -- Send a seed request to discord");
     ReplyToCommand(clientId, "report -- Report a player");
+    ReplyToCommand(clientId, "stats -- View your current stats");
     ReplyToCommand(clientId, "gb_reload -- Reload admins");
     ReplyToCommand(clientId, "gb_stv_record -- Start a SourceTV demo");
     ReplyToCommand(clientId, "gb_stv_stoprecord -- Stop the current SourceTV demo");

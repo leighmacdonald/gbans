@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -15,6 +16,8 @@ import (
 	banv1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
+	"github.com/leighmacdonald/gbans/internal/json"
+	"github.com/leighmacdonald/gbans/internal/maps"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/roles"
@@ -24,7 +27,10 @@ import (
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	sourcemodv1 "github.com/leighmacdonald/gbans/internal/sourcemod/v1"
 	"github.com/leighmacdonald/gbans/internal/sourcemod/v1/sourcemodv1connect"
+	"github.com/leighmacdonald/gbans/internal/stats"
+	statsv1 "github.com/leighmacdonald/gbans/internal/stats/v1"
 	"github.com/leighmacdonald/gbans/internal/tests"
+	"github.com/leighmacdonald/gbans/pkg/demoparse"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/stretchr/testify/require"
@@ -37,6 +43,7 @@ type rpcHarness struct {
 	sm      sourcemod.Sourcemod
 	servers *servers.Servers
 	bans    ban.Bans
+	stats   stats.Stats
 	roleSvc *roles.Roles
 	mw      *rpc.Middleware
 	server  *httptest.Server
@@ -77,12 +84,15 @@ func newRPCHarness(t *testing.T) *rpcHarness {
 		tests.EmptyIPProvider{},
 	)
 
+	statsCase := stats.New(stats.NewRepository(fixture.Database), maps.New(maps.NewRepository(fixture.Database)))
+
 	webSvc := sourcemod.NewSourcemodService(smSvc, roleAuth, middleware)
 	pluginSvc := sourcemod.NewPluginService(
 		smSvc,
 		person.NewPersons(person.NewRepository(fixture.Database, true), fixture.TFApi),
 		serversCase,
 		bansCase,
+		statsCase,
 		rpc.NewServerTokenGenerator("gbans-test", []byte("test-cookie-secret")),
 		notification.NewDiscard(),
 		"log-channel",
@@ -104,7 +114,7 @@ func newRPCHarness(t *testing.T) *rpcHarness {
 	t.Cleanup(server.Close)
 
 	return &rpcHarness{
-		sm: smSvc, servers: serversCase, bans: bansCase, roleSvc: roleSvc, mw: middleware, server: server,
+		sm: smSvc, servers: serversCase, bans: bansCase, stats: statsCase, roleSvc: roleSvc, mw: middleware, server: server,
 	}
 }
 
@@ -949,4 +959,113 @@ func TestPluginServiceSMSeed(t *testing.T) {
 	// The seed queue rate limits the same user across all servers.
 	_, err = harness.pluginClient(t, seedToken).SMSeed(ctx, &sourcemodv1.SMSeedRequest{SteamId: new(sid.String())})
 	requireCode(t, connect.CodeResourceExhausted, err)
+}
+
+// TestPluginServiceSMPlayerStats covers the in-game /stats lookup: the
+// response shape, the kills and kills-leaderboard rank per time window, and
+// the per-player five-minute cooldown.
+func TestPluginServiceSMPlayerStats(t *testing.T) {
+	harness := newRPCHarness(t)
+	ctx := t.Context()
+
+	demoJSON, err := os.Open("../stats/testdata/demo-1427611.json")
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, demoJSON.Close()) })
+
+	demo, errDemo := json.Decode[demoparse.Demo](demoJSON)
+	require.NoError(t, errDemo)
+
+	// Per-player total kills across the demo's rounds, the same aggregation
+	// the summary views use.
+	killsByPlayer := map[steamid.SteamID]uint64{}
+	for _, round := range demo.Rounds {
+		for _, player := range round.Players {
+			sid := steamid.New(player.SteamID)
+			if !sid.Valid() {
+				continue
+			}
+			fixture.CreateTestPerson(ctx, sid)
+			killsByPlayer[sid] += uint64(player.Kills) //nolint:gosec // parser counts are non-negative.
+		}
+	}
+
+	// Import the demo "now" so it falls inside every time window at once.
+	server := fixture.CreateTestServer(ctx)
+	var demoID int32
+	require.NoError(t, fixture.Database.QueryRow(ctx,
+		`INSERT INTO demo (server_id, title, map_name, created_on) VALUES ($1, $2, $3, $4) RETURNING demo_id`,
+		server.ServerID, demo.Filename, demo.Map, time.Now()).Scan(&demoID))
+
+	_, errImport := harness.stats.Import(ctx, server.ServerID, demoID, &demo, time.Now())
+	require.NoError(t, errImport)
+	require.NoError(t, harness.stats.RefreshViews(ctx))
+
+	var topPlayer steamid.SteamID
+	var topKills uint64
+	for sid, kills := range killsByPlayer {
+		if kills > topKills {
+			topKills = kills
+			topPlayer = sid
+		}
+	}
+	require.GreaterOrEqual(t, topKills, uint64(stats.MinKills))
+
+	t.Run("unauthenticated", func(t *testing.T) {
+		_, err := harness.anonPluginClient().SMPlayerStats(ctx, &sourcemodv1.SMPlayerStatsRequest{SteamId: new(topPlayer.String())})
+		requireCode(t, connect.CodeUnauthenticated, err)
+	})
+
+	token := harness.serverToken(t)
+
+	t.Run("invalid steam id", func(t *testing.T) {
+		invalidSID := "not-a-steamid"
+		_, err := harness.pluginClient(t, token).SMPlayerStats(ctx, &sourcemodv1.SMPlayerStatsRequest{SteamId: &invalidSID})
+		requireCode(t, connect.CodeInvalidArgument, err)
+	})
+
+	t.Run("windows and rank", func(t *testing.T) {
+		resp, errResp := harness.pluginClient(t, token).SMPlayerStats(ctx, &sourcemodv1.SMPlayerStatsRequest{SteamId: new(topPlayer.String())})
+		require.NoError(t, errResp)
+
+		require.Equal(t, uint32(1), resp.GetStatsBucketId())
+		require.Equal(t, "casual", resp.GetStatsBucketName())
+
+		wantBuckets := []statsv1.TimeBucket{
+			statsv1.TimeBucket_TIME_BUCKET_DAILY,
+			statsv1.TimeBucket_TIME_BUCKET_WEEKLY,
+			statsv1.TimeBucket_TIME_BUCKET_MONTHLY,
+			statsv1.TimeBucket_TIME_BUCKET_YEARLY,
+			//nolint:misspell // must match the generated enum name.
+			statsv1.TimeBucket_TIME_BUCKET_ALLTIME,
+		}
+		require.Len(t, resp.GetBuckets(), len(wantBuckets))
+		for idx, want := range wantBuckets {
+			bucket := resp.GetBuckets()[idx]
+			require.Equal(t, want, bucket.GetTimeBucket(), "bucket %d", idx)
+			// The top-kills player leads the kills leaderboard in every window
+			// of the seeded match, and tied leaders share rank 1.
+			require.Equal(t, uint64(1), bucket.GetRank(), "rank %s", want)
+			require.Equal(t, topKills, bucket.GetKills(), "kills %s", want)
+		}
+	})
+
+	t.Run("cooldown", func(t *testing.T) {
+		_, err := harness.pluginClient(t, token).SMPlayerStats(ctx, &sourcemodv1.SMPlayerStatsRequest{SteamId: new(topPlayer.String())})
+		requireCode(t, connect.CodeResourceExhausted, err)
+	})
+
+	t.Run("player without stats", func(t *testing.T) {
+		// A different player so the cooldown from the earlier subtest does not
+		// interfere.
+		idleSID := steamid.RandSID64()
+		fixture.CreateTestPerson(ctx, idleSID)
+
+		resp, errResp := harness.pluginClient(t, token).SMPlayerStats(ctx, &sourcemodv1.SMPlayerStatsRequest{SteamId: new(idleSID.String())})
+		require.NoError(t, errResp)
+
+		for _, bucket := range resp.GetBuckets() {
+			require.Zero(t, bucket.GetRank())
+			require.Zero(t, bucket.GetKills())
+		}
+	})
 }

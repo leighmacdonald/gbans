@@ -10,6 +10,7 @@ import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	v11 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	v1 "github.com/leighmacdonald/gbans/internal/roles/v1"
+	v12 "github.com/leighmacdonald/gbans/internal/stats/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -839,11 +840,181 @@ func (x *SMUserGroup) GetGroupName() string {
 	return ""
 }
 
+type SMPlayerStatsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SteamId       *string                `protobuf:"bytes,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SMPlayerStatsRequest) Reset() {
+	*x = SMPlayerStatsRequest{}
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SMPlayerStatsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SMPlayerStatsRequest) ProtoMessage() {}
+
+func (x *SMPlayerStatsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SMPlayerStatsRequest.ProtoReflect.Descriptor instead.
+func (*SMPlayerStatsRequest) Descriptor() ([]byte, []int) {
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *SMPlayerStatsRequest) GetSteamId() string {
+	if x != nil && x.SteamId != nil {
+		return *x.SteamId
+	}
+	return ""
+}
+
+// SMPlayerStatsBucket holds a single player's rank and kills for one time
+// bucket within the default stats bucket.
+type SMPlayerStatsBucket struct {
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	TimeBucket *v12.TimeBucket        `protobuf:"varint,1,opt,name=time_bucket,json=timeBucket,enum=stats.v1.TimeBucket" json:"time_bucket,omitempty"`
+	// rank is the player's position in the kills leaderboard for this window,
+	// 0 when they do not meet the leaderboard's minimum sample size.
+	Rank *uint64 `protobuf:"varint,2,opt,name=rank" json:"rank,omitempty"`
+	// kills is the player's total kills in this window.
+	Kills         *uint64 `protobuf:"varint,3,opt,name=kills" json:"kills,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SMPlayerStatsBucket) Reset() {
+	*x = SMPlayerStatsBucket{}
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SMPlayerStatsBucket) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SMPlayerStatsBucket) ProtoMessage() {}
+
+func (x *SMPlayerStatsBucket) ProtoReflect() protoreflect.Message {
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SMPlayerStatsBucket.ProtoReflect.Descriptor instead.
+func (*SMPlayerStatsBucket) Descriptor() ([]byte, []int) {
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *SMPlayerStatsBucket) GetTimeBucket() v12.TimeBucket {
+	if x != nil && x.TimeBucket != nil {
+		return *x.TimeBucket
+	}
+	return v12.TimeBucket(0)
+}
+
+func (x *SMPlayerStatsBucket) GetRank() uint64 {
+	if x != nil && x.Rank != nil {
+		return *x.Rank
+	}
+	return 0
+}
+
+func (x *SMPlayerStatsBucket) GetKills() uint64 {
+	if x != nil && x.Kills != nil {
+		return *x.Kills
+	}
+	return 0
+}
+
+type SMPlayerStatsResponse struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Buckets []*SMPlayerStatsBucket `protobuf:"bytes,1,rep,name=buckets" json:"buckets,omitempty"`
+	// The stats bucket (game mode) the window stats were taken from.
+	StatsBucketId   *uint32 `protobuf:"varint,2,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
+	StatsBucketName *string `protobuf:"bytes,3,opt,name=stats_bucket_name,json=statsBucketName" json:"stats_bucket_name,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *SMPlayerStatsResponse) Reset() {
+	*x = SMPlayerStatsResponse{}
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SMPlayerStatsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SMPlayerStatsResponse) ProtoMessage() {}
+
+func (x *SMPlayerStatsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SMPlayerStatsResponse.ProtoReflect.Descriptor instead.
+func (*SMPlayerStatsResponse) Descriptor() ([]byte, []int) {
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *SMPlayerStatsResponse) GetBuckets() []*SMPlayerStatsBucket {
+	if x != nil {
+		return x.Buckets
+	}
+	return nil
+}
+
+func (x *SMPlayerStatsResponse) GetStatsBucketId() uint32 {
+	if x != nil && x.StatsBucketId != nil {
+		return *x.StatsBucketId
+	}
+	return 0
+}
+
+func (x *SMPlayerStatsResponse) GetStatsBucketName() string {
+	if x != nil && x.StatsBucketName != nil {
+		return *x.StatsBucketName
+	}
+	return ""
+}
+
 var File_sourcemod_v1_plugin_proto protoreflect.FileDescriptor
 
 const file_sourcemod_v1_plugin_proto_rawDesc = "" +
 	"\n" +
-	"\x19sourcemod/v1/plugin.proto\x12\fsourcemod.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x14roles/v1/roles.proto\x1a\x1csourcemod/v1/sourcemod.proto\"v\n" +
+	"\x19sourcemod/v1/plugin.proto\x12\fsourcemod.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x14roles/v1/roles.proto\x1a\x1csourcemod/v1/sourcemod.proto\x1a\x14stats/v1/stats.proto\"v\n" +
 	"\x10SMPingModRequest\x12\x19\n" +
 	"\bsteam_id\x18\x01 \x01(\tR\asteamId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
@@ -905,7 +1076,19 @@ const file_sourcemod_v1_plugin_proto_rawDesc = "" +
 	"\badmin_id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\aadminId\x12)\n" +
 	"\n" +
 	"group_name\x18\x02 \x01(\tB\n" +
-	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\tgroupName2\x9c\x04\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\tgroupName\"=\n" +
+	"\x14SMPlayerStatsRequest\x12%\n" +
+	"\bsteam_id\x18\x01 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\asteamId\"\x8b\x01\n" +
+	"\x13SMPlayerStatsBucket\x12B\n" +
+	"\vtime_bucket\x18\x01 \x01(\x0e2\x14.stats.v1.TimeBucketB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\n" +
+	"timeBucket\x12\x16\n" +
+	"\x04rank\x18\x02 \x01(\x04B\x020\x01R\x04rank\x12\x18\n" +
+	"\x05kills\x18\x03 \x01(\x04B\x020\x01R\x05kills\"\xb0\x01\n" +
+	"\x15SMPlayerStatsResponse\x12C\n" +
+	"\abuckets\x18\x01 \x03(\v2!.sourcemod.v1.SMPlayerStatsBucketB\x06\xbaH\x03\xc8\x01\x01R\abuckets\x12&\n" +
+	"\x0fstats_bucket_id\x18\x02 \x01(\rR\rstatsBucketId\x12*\n" +
+	"\x11stats_bucket_name\x18\x03 \x01(\tR\x0fstatsBucketName2\xf8\x04\n" +
 	"\rPluginService\x12]\n" +
 	"\x0eSMAuthenticate\x12#.sourcemod.v1.SMAuthenticateRequest\x1a$.sourcemod.v1.SMAuthenticateResponse\"\x00\x12H\n" +
 	"\aSMCheck\x12\x1c.sourcemod.v1.SMCheckRequest\x1a\x1d.sourcemod.v1.SMCheckResponse\"\x00\x12J\n" +
@@ -913,7 +1096,8 @@ const file_sourcemod_v1_plugin_proto_rawDesc = "" +
 	"\aSMUsers\x12\x16.google.protobuf.Empty\x1a\x1d.sourcemod.v1.SMUsersResponse\"\x00\x12D\n" +
 	"\bSMGroups\x12\x16.google.protobuf.Empty\x1a\x1e.sourcemod.v1.SMGroupsResponse\"\x00\x12E\n" +
 	"\x06SMSeed\x12\x1b.sourcemod.v1.SMSeedRequest\x1a\x1c.sourcemod.v1.SMSeedResponse\"\x00\x12E\n" +
-	"\tSMPingMod\x12\x1e.sourcemod.v1.SMPingModRequest\x1a\x16.google.protobuf.Empty\"\x00B\xb3\x01\n" +
+	"\tSMPingMod\x12\x1e.sourcemod.v1.SMPingModRequest\x1a\x16.google.protobuf.Empty\"\x00\x12Z\n" +
+	"\rSMPlayerStats\x12\".sourcemod.v1.SMPlayerStatsRequest\x1a#.sourcemod.v1.SMPlayerStatsResponse\"\x00B\xb3\x01\n" +
 	"\x10com.sourcemod.v1B\vPluginProtoP\x01ZAgithub.com/leighmacdonald/gbans/internal/sourcemod/v1;sourcemodv1\xa2\x02\x03SXX\xaa\x02\fSourcemod.V1\xca\x02\fSourcemod\\V1\xe2\x02\x18Sourcemod\\V1\\GPBMetadata\xea\x02\rSourcemod::V1b\beditionsp\xe8\a"
 
 var (
@@ -928,7 +1112,7 @@ func file_sourcemod_v1_plugin_proto_rawDescGZIP() []byte {
 	return file_sourcemod_v1_plugin_proto_rawDescData
 }
 
-var file_sourcemod_v1_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_sourcemod_v1_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_sourcemod_v1_plugin_proto_goTypes = []any{
 	(*SMPingModRequest)(nil),       // 0: sourcemod.v1.SMPingModRequest
 	(*SMPingModResponse)(nil),      // 1: sourcemod.v1.SMPingModResponse
@@ -945,41 +1129,49 @@ var file_sourcemod_v1_plugin_proto_goTypes = []any{
 	(*SMUsersResponse)(nil),        // 12: sourcemod.v1.SMUsersResponse
 	(*SMUser)(nil),                 // 13: sourcemod.v1.SMUser
 	(*SMUserGroup)(nil),            // 14: sourcemod.v1.SMUserGroup
-	(OverrideType)(0),              // 15: sourcemod.v1.OverrideType
-	(v1.Permission)(0),             // 16: roles.v1.Permission
-	(v11.BanType)(0),               // 17: ban.v1.BanType
-	(*Group)(nil),                  // 18: sourcemod.v1.Group
-	(*emptypb.Empty)(nil),          // 19: google.protobuf.Empty
+	(*SMPlayerStatsRequest)(nil),   // 15: sourcemod.v1.SMPlayerStatsRequest
+	(*SMPlayerStatsBucket)(nil),    // 16: sourcemod.v1.SMPlayerStatsBucket
+	(*SMPlayerStatsResponse)(nil),  // 17: sourcemod.v1.SMPlayerStatsResponse
+	(OverrideType)(0),              // 18: sourcemod.v1.OverrideType
+	(v1.Permission)(0),             // 19: roles.v1.Permission
+	(v11.BanType)(0),               // 20: ban.v1.BanType
+	(*Group)(nil),                  // 21: sourcemod.v1.Group
+	(v12.TimeBucket)(0),            // 22: stats.v1.TimeBucket
+	(*emptypb.Empty)(nil),          // 23: google.protobuf.Empty
 }
 var file_sourcemod_v1_plugin_proto_depIdxs = []int32{
-	15, // 0: sourcemod.v1.SMOverride.override_type:type_name -> sourcemod.v1.OverrideType
-	16, // 1: sourcemod.v1.SMOverride.permissions:type_name -> roles.v1.Permission
+	18, // 0: sourcemod.v1.SMOverride.override_type:type_name -> sourcemod.v1.OverrideType
+	19, // 1: sourcemod.v1.SMOverride.permissions:type_name -> roles.v1.Permission
 	6,  // 2: sourcemod.v1.SMOverridesResponse.overrides:type_name -> sourcemod.v1.SMOverride
-	17, // 3: sourcemod.v1.SMCheckResponse.ban_type:type_name -> ban.v1.BanType
-	18, // 4: sourcemod.v1.SMGroupsResponse.groups:type_name -> sourcemod.v1.Group
+	20, // 3: sourcemod.v1.SMCheckResponse.ban_type:type_name -> ban.v1.BanType
+	21, // 4: sourcemod.v1.SMGroupsResponse.groups:type_name -> sourcemod.v1.Group
 	10, // 5: sourcemod.v1.SMGroupsResponse.immunities:type_name -> sourcemod.v1.SMGroupImmunity
 	13, // 6: sourcemod.v1.SMUsersResponse.users:type_name -> sourcemod.v1.SMUser
 	14, // 7: sourcemod.v1.SMUsersResponse.user_groups:type_name -> sourcemod.v1.SMUserGroup
-	16, // 8: sourcemod.v1.SMUser.permissions:type_name -> roles.v1.Permission
-	2,  // 9: sourcemod.v1.PluginService.SMAuthenticate:input_type -> sourcemod.v1.SMAuthenticateRequest
-	8,  // 10: sourcemod.v1.PluginService.SMCheck:input_type -> sourcemod.v1.SMCheckRequest
-	19, // 11: sourcemod.v1.PluginService.SMOverrides:input_type -> google.protobuf.Empty
-	19, // 12: sourcemod.v1.PluginService.SMUsers:input_type -> google.protobuf.Empty
-	19, // 13: sourcemod.v1.PluginService.SMGroups:input_type -> google.protobuf.Empty
-	4,  // 14: sourcemod.v1.PluginService.SMSeed:input_type -> sourcemod.v1.SMSeedRequest
-	0,  // 15: sourcemod.v1.PluginService.SMPingMod:input_type -> sourcemod.v1.SMPingModRequest
-	3,  // 16: sourcemod.v1.PluginService.SMAuthenticate:output_type -> sourcemod.v1.SMAuthenticateResponse
-	9,  // 17: sourcemod.v1.PluginService.SMCheck:output_type -> sourcemod.v1.SMCheckResponse
-	7,  // 18: sourcemod.v1.PluginService.SMOverrides:output_type -> sourcemod.v1.SMOverridesResponse
-	12, // 19: sourcemod.v1.PluginService.SMUsers:output_type -> sourcemod.v1.SMUsersResponse
-	11, // 20: sourcemod.v1.PluginService.SMGroups:output_type -> sourcemod.v1.SMGroupsResponse
-	5,  // 21: sourcemod.v1.PluginService.SMSeed:output_type -> sourcemod.v1.SMSeedResponse
-	19, // 22: sourcemod.v1.PluginService.SMPingMod:output_type -> google.protobuf.Empty
-	16, // [16:23] is the sub-list for method output_type
-	9,  // [9:16] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	19, // 8: sourcemod.v1.SMUser.permissions:type_name -> roles.v1.Permission
+	22, // 9: sourcemod.v1.SMPlayerStatsBucket.time_bucket:type_name -> stats.v1.TimeBucket
+	16, // 10: sourcemod.v1.SMPlayerStatsResponse.buckets:type_name -> sourcemod.v1.SMPlayerStatsBucket
+	2,  // 11: sourcemod.v1.PluginService.SMAuthenticate:input_type -> sourcemod.v1.SMAuthenticateRequest
+	8,  // 12: sourcemod.v1.PluginService.SMCheck:input_type -> sourcemod.v1.SMCheckRequest
+	23, // 13: sourcemod.v1.PluginService.SMOverrides:input_type -> google.protobuf.Empty
+	23, // 14: sourcemod.v1.PluginService.SMUsers:input_type -> google.protobuf.Empty
+	23, // 15: sourcemod.v1.PluginService.SMGroups:input_type -> google.protobuf.Empty
+	4,  // 16: sourcemod.v1.PluginService.SMSeed:input_type -> sourcemod.v1.SMSeedRequest
+	0,  // 17: sourcemod.v1.PluginService.SMPingMod:input_type -> sourcemod.v1.SMPingModRequest
+	15, // 18: sourcemod.v1.PluginService.SMPlayerStats:input_type -> sourcemod.v1.SMPlayerStatsRequest
+	3,  // 19: sourcemod.v1.PluginService.SMAuthenticate:output_type -> sourcemod.v1.SMAuthenticateResponse
+	9,  // 20: sourcemod.v1.PluginService.SMCheck:output_type -> sourcemod.v1.SMCheckResponse
+	7,  // 21: sourcemod.v1.PluginService.SMOverrides:output_type -> sourcemod.v1.SMOverridesResponse
+	12, // 22: sourcemod.v1.PluginService.SMUsers:output_type -> sourcemod.v1.SMUsersResponse
+	11, // 23: sourcemod.v1.PluginService.SMGroups:output_type -> sourcemod.v1.SMGroupsResponse
+	5,  // 24: sourcemod.v1.PluginService.SMSeed:output_type -> sourcemod.v1.SMSeedResponse
+	23, // 25: sourcemod.v1.PluginService.SMPingMod:output_type -> google.protobuf.Empty
+	17, // 26: sourcemod.v1.PluginService.SMPlayerStats:output_type -> sourcemod.v1.SMPlayerStatsResponse
+	19, // [19:27] is the sub-list for method output_type
+	11, // [11:19] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_sourcemod_v1_plugin_proto_init() }
@@ -994,7 +1186,7 @@ func file_sourcemod_v1_plugin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sourcemod_v1_plugin_proto_rawDesc), len(file_sourcemod_v1_plugin_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   15,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
