@@ -265,12 +265,25 @@ func (o Opts) rankColumn() string {
 	}
 }
 
+// eligibilityConstraint returns the minimum stat requirement for the selected
+// leaderboard. Every view except healing requires a minimum kill count; the
+// healing view instead requires a minimum amount of healing. This keeps
+// low-sample-size players off the boards.
+func (o Opts) eligibilityConstraint() sq.Sqlizer {
+	if o.Variant == VariantHealing {
+		return sq.GtOrEq{"healing": MinHealing}
+	}
+
+	return sq.GtOrEq{"kills": MinKills}
+}
+
 // MyRank returns steamID's rank in the bucket, variant and time window
 // described by opts, or 0 when the player has no stats in that window.
 func (r Repository) MyRank(ctx context.Context, opts Opts, steamID steamid.SteamID) (uint64, error) {
 	constraints := sq.And{
 		sq.Eq{"stats_bucket_id": opts.StatsBucketID},
 		sq.Eq{"steam_id": steamID.Int64()},
+		opts.eligibilityConstraint(),
 	}
 	if opts.Variant == VariantWeapons || opts.Variant == VariantClasses {
 		constraints = append(constraints, sq.Eq{"variant": opts.VariantKey})
@@ -303,6 +316,9 @@ func (r Repository) MyRank(ctx context.Context, opts Opts, steamID steamid.Steam
 func (r Repository) MyIndex(ctx context.Context, opts Opts, steamID steamid.SteamID, rank uint64) (uint64, error) {
 	constraints := sq.And{
 		sq.Eq{"stats_bucket_id": opts.StatsBucketID},
+		// Only players meeting the leaderboard's minimum sample size can
+		// appear ahead of, or tie with, the user.
+		opts.eligibilityConstraint(),
 		// Rows sorting ahead of the user: strictly better rank, or the same
 		// rank with a lower steam_id (the deterministic tiebreaker).
 		sq.Or{
@@ -329,6 +345,7 @@ func (r Repository) MyIndex(ctx context.Context, opts Opts, steamID steamid.Stea
 func (r Repository) loadOverallView(ctx context.Context, statsBucketID uint32, opts Opts) ([]any, uint64, error) {
 	constraints := sq.And{
 		sq.Eq{"stats_bucket_id": statsBucketID},
+		opts.eligibilityConstraint(),
 	}
 
 	if dateConstraint := opts.dateConstraint(); dateConstraint != nil {
@@ -405,6 +422,7 @@ func (r Repository) loadVariantView(ctx context.Context, statsBucketID uint32, o
 	constraints := sq.And{
 		sq.Eq{"stats_bucket_id": statsBucketID},
 		sq.Eq{"variant": opts.VariantKey},
+		opts.eligibilityConstraint(),
 	}
 
 	if dateConstraint := opts.dateConstraint(); dateConstraint != nil {

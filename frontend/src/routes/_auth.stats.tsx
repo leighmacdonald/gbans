@@ -357,7 +357,10 @@ function StatsComponent() {
 	}, [data]);
 
 	const leader = useMemo(() => {
-		return rows.find((row) => row.rank === "1");
+		// Rows are ordered by (rank, steam_id), so the head of the first page
+		// is the best-ranked player. Rank 1 can be absent from the filtered
+		// leaderboard when the top player has not met the view's minimum.
+		return rows[0];
 	}, [rows]);
 
 	const leaderText = useMemo(() => {

@@ -9,6 +9,10 @@ and [hlstatsx:ce](https://github.com/A1mDev/hlstatsx-community-edition).
 The `/stats` page (requires the `stats_read` permission) shows leaderboards per stats bucket for a chosen time
 window (day, week, month, year, or all time), overall or broken down by kills, healing, weapon, or class.
 
+Leaderboards only include players that meet a minimum activity threshold: a player needs at least 5 kills to
+appear on any view except healing, which requires at least 1000 healing. Ranks are still resolved against the
+full window, so a player below the threshold has no rank on that leaderboard.
+
 When the signed-in player has stats in the selected window, their rank is shown in the page header. Clicking it
 jumps the leaderboard table to the page containing their row and briefly highlights it.
 
