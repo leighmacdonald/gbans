@@ -6,8 +6,10 @@ import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import UndoIcon from "@mui/icons-material/Undo";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
+import Switch from "@mui/material/Switch";
 import { useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -21,7 +23,8 @@ import {
 	type MRT_SortingState,
 	useMaterialReactTable,
 } from "material-react-table";
-import { useCallback, useMemo } from "react";
+import { type ChangeEvent, useCallback, useMemo } from "react";
+import z from "zod/v4";
 import { BanCreateModal } from "../component/modal/BanCreateModal.tsx";
 import { BanEditModal } from "../component/modal/BanEditModal.tsx";
 import { UnbanModal } from "../component/modal/UnbanModal.tsx";
@@ -53,13 +56,13 @@ import { emptyOrNullString } from "../util/types.ts";
 const columnHelper = createMRTColumnHelper<Ban>();
 const defaultOptions = createDefaultTableOptions<Ban>();
 const defaultValues = makeSchemaDefaults({ defaultColumn: "banId" });
-const validateSearch = makeSchemaState("banId");
+const validateSearch = makeSchemaState("banId").extend({ deleted: z.boolean().default(false) });
 
 export const Route = createFileRoute("/_mod/admin/bans")({
 	component: AdminBans,
 	validateSearch,
 	search: {
-		middlewares: [stripSearchParams(defaultValues)],
+		middlewares: [stripSearchParams({ ...defaultValues, deleted: false })],
 	},
 	head: ({ match }) => ({
 		meta: match.context.meta({ title: "Bans", description: "Manage player bans." }),
@@ -73,7 +76,8 @@ function AdminBans() {
 	const { sendFlash } = useUserFlashCtx();
 	const navigate = useNavigate();
 
-	const { data, isLoading, isError, error } = useQuery(query, {});
+	const showDeleted = search.deleted;
+	const { data, isLoading, isError, error } = useQuery(query, { deleted: showDeleted });
 
 	const onNewBanSteam = useCallback(async () => {
 		try {
@@ -156,6 +160,19 @@ function AdminBans() {
 							? updater(search.pagination)
 							: updater
 						: undefined,
+				},
+			});
+		},
+		[search, navigate],
+	);
+
+	const onShowDeletedChanged = useCallback(
+		(e: ChangeEvent<HTMLInputElement>) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					deleted: e.target.checked,
 				},
 			});
 		},
@@ -428,6 +445,13 @@ function AdminBans() {
 							>
 								<AddIcon />
 							</IconButton>
+						</Tooltip>,
+						<Tooltip key="show-deleted" title="Include bans that have been deleted or unbanned">
+							<FormControlLabel
+								control={<Switch checked={showDeleted} onChange={onShowDeletedChanged} />}
+								label="Deleted"
+								sx={{ color: "primary.contrastText", my: 0 }}
+							/>
 						</Tooltip>,
 					]}
 				/>
