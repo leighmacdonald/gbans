@@ -313,10 +313,21 @@ func TestGlobalStatsAcrossBucketsAndTime(t *testing.T) {
 	topHealing := topBy(func(s *demoPlayerSums) uint64 { return s.healing })
 
 	assertBucket := func(rows map[steamid.SteamID]stats.OverallStats, multiplier uint64, msg string) {
-		require.Len(t, rows, len(expected), msg)
+		var eligible int
+		for _, sums := range expected {
+			if sums.kills >= stats.MinKills {
+				eligible++
+			}
+		}
+		require.Len(t, rows, eligible, msg)
 		for sid, sums := range expected {
-			got, ok := rows[sid]
-			require.True(t, ok, "%s: missing player %s", msg, sid)
+			got, found := rows[sid]
+			if sums.kills < stats.MinKills {
+				require.False(t, found, "%s: player below the minimum kills must be excluded %s", msg, sid)
+
+				continue
+			}
+			require.True(t, found, "%s: missing player %s", msg, sid)
 			require.Equal(t, sums.name, got.Personaname, "%s: personaname %s", msg, sid)
 			require.Equal(t, sums.avatarHash, got.AvatarHash, "%s: avatarhash %s", msg, sid)
 			require.Equal(t, sums.kills*multiplier, got.Kills, "%s: kills %s", msg, sid)
@@ -378,6 +389,19 @@ func TestGlobalStatsAcrossBucketsAndTime(t *testing.T) {
 		require.True(t, ok)
 		require.Contains(t, testCase.tops, first.SteamID, "%s leaderboard must crown a top player", testCase.name)
 		require.Equal(t, uint64(1), first.Rank)
+
+		// Every ranked player must meet the view's minimum stat threshold.
+		for _, row := range rows {
+			overall, okRow := row.(stats.OverallStats)
+			require.True(t, okRow)
+			if testCase.variant == stats.VariantHealing {
+				require.GreaterOrEqual(t, overall.Healing, uint64(stats.MinHealing),
+					"healing leaderboard must only include players above the healing minimum")
+			} else {
+				require.GreaterOrEqual(t, overall.Kills, uint64(stats.MinKills),
+					"kills leaderboard must only include players above the kills minimum")
+			}
+		}
 	}
 
 	// Variant rows carry the same display info.
@@ -1494,12 +1518,18 @@ func TestQueryStatsMyRank(t *testing.T) {
 
 	playerSums := sumDemoPlayers(&demo)
 	require.NotEmpty(t, playerSums)
+	// The leaderboard only ranks players meeting the minimum kill count, so
+	// pick a user that is eligible for the default (overall) view.
 	userSID := steamid.SteamID{}
-	for sid := range playerSums {
+	for sid, sums := range playerSums {
+		if sums.kills < stats.MinKills {
+			continue
+		}
 		userSID = sid
 
 		break
 	}
+	require.True(t, userSID.Valid())
 
 	opts := stats.Opts{StatsBucketID: 1}
 	expectedRows, _, errQuery := repo.Query(ctx, opts)
@@ -1604,10 +1634,14 @@ func TestQueryStatsPlayerRank(t *testing.T) {
 	playerSums := sumDemoPlayers(&demo)
 	require.NotEmpty(t, playerSums)
 
-	// Two distinct players: one signs the request, the other is searched.
+	// Two distinct eligible players: one signs the request, the other is
+	// searched. Players below the leaderboard's minimum kills have no rank.
 	var userSID, searchedSID steamid.SteamID
 	found := 0
-	for sid := range playerSums {
+	for sid, sums := range playerSums {
+		if sums.kills < stats.MinKills {
+			continue
+		}
 		switch found {
 		case 0:
 			userSID = sid
@@ -1709,12 +1743,16 @@ func TestQueryStatsMyIndexTies(t *testing.T) {
 	server := fixture.CreateTestServer(ctx)
 
 	// Three tied players in a dedicated steamid range, one player below them,
-	// and fillers to satisfy the MinPlayers import threshold.
+	// and fillers to satisfy the MinPlayers import threshold. Everyone gets
+	// the minimum kill count so they are eligible for the leaderboard.
 	aSID := steamid.New("[U:1:92000001]")
 	bSID := steamid.New("[U:1:92000002]")
 	cSID := steamid.New("[U:1:92000003]")
 	dSID := steamid.New("[U:1:92000004]")
 	fillerIDs, fillerPlayers := fillerTestPlayers(2, 1000, 5000)
+	for idx := range fillerPlayers {
+		fillerPlayers[idx].Kills = stats.MinKills
+	}
 
 	persons := map[steamid.SteamID]string{
 		aSID: "Tie A", bSID: "Tie B", cSID: "Tie C", dSID: "Fourth",
@@ -1737,10 +1775,10 @@ func TestQueryStatsMyIndexTies(t *testing.T) {
 			{
 				Winner: "red", Time: 300,
 				Players: append([]demoparse.PlayerSummary{
-					{Name: "Tie A", SteamID: string(aSID.Steam3()), Team: "red", TickStart: 1000, TickEnd: 5000, Points: 10},
-					{Name: "Tie B", SteamID: string(bSID.Steam3()), Team: "red", TickStart: 1000, TickEnd: 5000, Points: 10},
-					{Name: "Tie C", SteamID: string(cSID.Steam3()), Team: "red", TickStart: 1000, TickEnd: 5000, Points: 10},
-					{Name: "Fourth", SteamID: string(dSID.Steam3()), Team: "blue", TickStart: 1000, TickEnd: 5000, Points: 5},
+					{Name: "Tie A", SteamID: string(aSID.Steam3()), Team: "red", TickStart: 1000, TickEnd: 5000, Kills: stats.MinKills, Points: 10},
+					{Name: "Tie B", SteamID: string(bSID.Steam3()), Team: "red", TickStart: 1000, TickEnd: 5000, Kills: stats.MinKills, Points: 10},
+					{Name: "Tie C", SteamID: string(cSID.Steam3()), Team: "red", TickStart: 1000, TickEnd: 5000, Kills: stats.MinKills, Points: 10},
+					{Name: "Fourth", SteamID: string(dSID.Steam3()), Team: "blue", TickStart: 1000, TickEnd: 5000, Kills: stats.MinKills, Points: 5},
 				}, fillerPlayers...),
 			},
 		},
@@ -1985,6 +2023,9 @@ func TestBannedPlayersExcludedFromSummaryViews(t *testing.T) {
 	require.True(t, mutedID.Valid())
 
 	fillerIDs, fillerPlayers := fillerTestPlayers(2, 1000, 5000)
+	for idx := range fillerPlayers {
+		fillerPlayers[idx].Kills = stats.MinKills
+	}
 
 	persons := map[steamid.SteamID]string{
 		bannedID:   "Banned",

@@ -22,6 +22,13 @@ import (
 const (
 	MinPlayers = 6
 	MinDuraion = 300
+	// MinKills is the minimum number of kills a player must have to appear on
+	// any leaderboard other than healing. This keeps low-sample-size players
+	// off the boards.
+	MinKills = 5
+	// MinHealing is the minimum amount of healing a player must have to appear
+	// on the healing leaderboard.
+	MinHealing = 1000
 	// MaxMatchDuration caps the demo header duration (seconds) accepted for
 	// match creation. Longer demos are idle/recordings, not real matches.
 	MaxMatchDuration = 2 * time.Hour
