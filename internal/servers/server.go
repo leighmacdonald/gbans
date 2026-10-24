@@ -24,6 +24,7 @@ import (
 var (
 	maxPlayersRx = regexp.MustCompile(`^"sv_visiblemaxplayers" = "(\d{1,2})"\s`)
 	playersRx    = regexp.MustCompile(`players\s: (\d+)\s+humans,\s+(\d+)\s+bots\s\((\d+)\s+max`)
+	sourceTVRx   = regexp.MustCompile(`(?m)^sourcetv\s*:`)
 )
 
 func sanitizeRCONArg(arg string) string {
@@ -387,44 +388,67 @@ func (s *Server) SteamLink() string {
 	return fmt.Sprintf("steam://run/440//+connect %s:%d", ipAddr.String(), s.Port)
 }
 
+// parseStatusResponse parses the `status` command output. Bots are not included in the parsed
+// player list, so the totals reported by the status header are used for the player count.
+func parseStatusResponse(statusResp string) (Status, error) {
+	pStatus, errParse := extra.ParseStatus(statusResp, true)
+	if errParse != nil {
+		return Status{}, errors.Join(errParse, ErrStatusParse)
+	}
+
+	status := Status{Status: pStatus}
+
+	matches := playersRx.FindStringSubmatch(statusResp)
+	if len(matches) == 0 {
+		return status, nil
+	}
+
+	humans, errHumans := strconv.Atoi(matches[1])
+	if errHumans != nil {
+		return Status{}, ErrStatusParse
+	}
+
+	status.Humans = humans
+
+	botsParsed, errBots := strconv.ParseInt(matches[2], 10, 32)
+	if errBots != nil {
+		return Status{}, ErrStatusParse
+	}
+
+	status.Bots = int(int32(botsParsed))
+
+	maxPlayers, errMaxPlayers := strconv.Atoi(matches[3])
+	if errMaxPlayers != nil {
+		return Status{}, ErrStatusParse
+	}
+
+	status.PlayersMax = maxPlayers
+
+	if sourceTVRx.MatchString(statusResp) {
+		// SourceTV occupies one of the client slots and is reported as a bot, it is not a player.
+		if status.Bots > 0 {
+			status.Bots--
+		}
+
+		if status.PlayersMax > 0 {
+			status.PlayersMax--
+		}
+	}
+
+	status.PlayersCount = status.Humans + status.Bots
+
+	return status, nil
+}
+
 func (s *Server) updateStatus(ctx context.Context) error {
 	statusResp, errStatus := s.ExecF(ctx, "status")
 	if errStatus != nil {
 		return errStatus
 	}
 
-	pStatus, errParse := extra.ParseStatus(statusResp, true)
+	status, errParse := parseStatusResponse(statusResp)
 	if errParse != nil {
-		return errors.Join(errParse, ErrStatusParse)
-	}
-
-	status := Status{Status: pStatus}
-	matches := playersRx.FindStringSubmatch(statusResp)
-	if len(matches) > 0 {
-		players, errPlayers := strconv.Atoi(matches[1])
-		if errPlayers != nil {
-			return ErrStatusParse
-		}
-		status.Humans = players
-
-		botsParsed, errBots := strconv.ParseInt(matches[2], 10, 32)
-		if errBots != nil {
-			return ErrStatusParse
-		}
-		status.Bots = int(int32(botsParsed))
-
-		maxPlayers, errMaxPlayers := strconv.Atoi(matches[3])
-		if errMaxPlayers != nil {
-			return ErrStatusParse
-		}
-
-		if maxPlayers%2 != 0 {
-			// Assume that if we have an uneven player count that it's a SourceTV instance and ignore it.
-			status.Bots--
-			maxPlayers--
-		}
-
-		status.PlayersMax = maxPlayers
+		return errParse
 	}
 
 	s.Lock()
