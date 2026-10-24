@@ -77,6 +77,23 @@
 	border-radius: 0 !important;
 }
 
+/* The block-type select trigger should look like the other toolbar buttons
+ * instead of a solid var(--basePageBg) box on the colored toolbar. The
+ * dropdown itself is themed to match the toolbar in MarkdownField.tsx. */
+.mdxeditor-toolbar [role="combobox"] {
+	background-color: transparent;
+}
+
+/* In light mode the default table cell border (var(--baseBgActive), a pale
+ * cream) is nearly invisible on the beige editor background, so use the app's
+ * toolbar blue for a darker, bluer grid. mdxeditor's cell selectors use high
+ * specificity, so the override needs !important. */
+.light-editor table td,
+.light-editor table th {
+	/* biome-ignore lint/complexity/noImportantStyles: overrides mdxeditor table cell borders */
+	border-color: #395c78 !important;
+}
+
 .mdxeditor-root-contenteditable-dark {
 	background-color: #452c22;
 }
