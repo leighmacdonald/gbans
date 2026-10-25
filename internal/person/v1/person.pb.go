@@ -363,14 +363,17 @@ func (x *CurrentProfileResponse) GetProfile() *PersonCore {
 }
 
 type ClientPref struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	CookieId      *int32                 `protobuf:"varint,1,opt,name=cookie_id,json=cookieId" json:"cookie_id,omitempty"`
-	Name          *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
-	Description   *string                `protobuf:"bytes,3,opt,name=description" json:"description,omitempty"`
-	Access        *int32                 `protobuf:"varint,4,opt,name=access" json:"access,omitempty"`
-	Type          *ClientPrefType        `protobuf:"varint,5,opt,name=type,enum=person.v1.ClientPrefType" json:"type,omitempty"`
-	Value         *string                `protobuf:"bytes,6,opt,name=value" json:"value,omitempty"`
-	Editable      *bool                  `protobuf:"varint,7,opt,name=editable" json:"editable,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	CookieId    *int32                 `protobuf:"varint,1,opt,name=cookie_id,json=cookieId" json:"cookie_id,omitempty"`
+	Name        *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	Description *string                `protobuf:"bytes,3,opt,name=description" json:"description,omitempty"`
+	Access      *int32                 `protobuf:"varint,4,opt,name=access" json:"access,omitempty"`
+	Type        *ClientPrefType        `protobuf:"varint,5,opt,name=type,enum=person.v1.ClientPrefType" json:"type,omitempty"`
+	Value       *string                `protobuf:"bytes,6,opt,name=value" json:"value,omitempty"`
+	Editable    *bool                  `protobuf:"varint,7,opt,name=editable" json:"editable,omitempty"`
+	// Inclusive range for numeric clientprefs. Unset means no bound.
+	Min           *int32 `protobuf:"varint,8,opt,name=min" json:"min,omitempty"`
+	Max           *int32 `protobuf:"varint,9,opt,name=max" json:"max,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -452,6 +455,20 @@ func (x *ClientPref) GetEditable() bool {
 		return *x.Editable
 	}
 	return false
+}
+
+func (x *ClientPref) GetMin() int32 {
+	if x != nil && x.Min != nil {
+		return *x.Min
+	}
+	return 0
+}
+
+func (x *ClientPref) GetMax() int32 {
+	if x != nil && x.Max != nil {
+		return *x.Max
+	}
+	return 0
 }
 
 type Settings struct {
@@ -1349,7 +1366,7 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"avatarHash\x12/\n" +
 	"\fpersona_name\x18\x03 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x02\x18 R\vpersonaName\"Q\n" +
 	"\x16CurrentProfileResponse\x127\n" +
-	"\aprofile\x18\x01 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\aprofile\"\x84\x02\n" +
+	"\aprofile\x18\x01 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\aprofile\"\xa8\x02\n" +
 	"\n" +
 	"ClientPref\x12\x1b\n" +
 	"\tcookie_id\x18\x01 \x01(\x05R\bcookieId\x12 \n" +
@@ -1358,7 +1375,9 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"\x06access\x18\x04 \x01(\x05B\t\xbaH\x06\x1a\x04\x18\x02(\x00R\x06access\x127\n" +
 	"\x04type\x18\x05 \x01(\x0e2\x19.person.v1.ClientPrefTypeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04type\x12\x1d\n" +
 	"\x05value\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x18dR\x05value\x12\x1a\n" +
-	"\beditable\x18\a \x01(\bR\beditable\"\xd2\x03\n" +
+	"\beditable\x18\a \x01(\bR\beditable\x12\x10\n" +
+	"\x03min\x18\b \x01(\x05R\x03min\x12\x10\n" +
+	"\x03max\x18\t \x01(\x05R\x03max\"\xd2\x03\n" +
 	"\bSettings\x126\n" +
 	"\x12person_settings_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x10personSettingsId\x12/\n" +
 	"\bsteam_id\x18\x02 \x01(\x03B\x14\xbaH\x0f\xc8\x01\x01\"\n" +

@@ -23,16 +23,17 @@ import (
 )
 
 var (
-	ErrPlayerDoesNotExist     = errors.New("player does not exist")
-	ErrDiscordAlreadyLinked   = errors.New("discord account is already linked")
-	ErrSteamAPIArgLimit       = errors.New("steam api support a max of 100 steam ids")
-	ErrFetchSteamBans         = errors.New("failed to fetch ban status from steam api")
-	ErrSteamAPISummaries      = errors.New("failed to fetch player summaries")
-	ErrSteamAPI               = errors.New("steam api requests have errors")
-	ErrUpdatePerson           = errors.New("failed to save updated person profile")
-	ErrNilPerson              = errors.New("nil person")
-	ErrClientPrefValueTooLong = errors.New("clientpref value exceeds maximum length")
-	ErrClientPrefInvalidValue = errors.New("clientpref value is invalid for its type")
+	ErrPlayerDoesNotExist        = errors.New("player does not exist")
+	ErrDiscordAlreadyLinked      = errors.New("discord account is already linked")
+	ErrSteamAPIArgLimit          = errors.New("steam api support a max of 100 steam ids")
+	ErrFetchSteamBans            = errors.New("failed to fetch ban status from steam api")
+	ErrSteamAPISummaries         = errors.New("failed to fetch player summaries")
+	ErrSteamAPI                  = errors.New("steam api requests have errors")
+	ErrUpdatePerson              = errors.New("failed to save updated person profile")
+	ErrNilPerson                 = errors.New("nil person")
+	ErrClientPrefValueTooLong    = errors.New("clientpref value exceeds maximum length")
+	ErrClientPrefInvalidValue    = errors.New("clientpref value is invalid for its type")
+	ErrClientPrefValueOutOfRange = errors.New("clientpref value is out of range")
 )
 
 type SteamMember interface {
@@ -286,6 +287,8 @@ const (
 )
 
 // ClientPref is a SourceMod clientpref and the current player's cached value.
+// Min and Max are the inclusive range enforced on numeric values; zero means
+// no bound on that side.
 type ClientPref struct {
 	CookieID    int32
 	Name        string
@@ -293,6 +296,8 @@ type ClientPref struct {
 	Access      int32
 	Type        ClientPrefType
 	Value       string
+	Min         int32
+	Max         int32
 }
 
 // Editable reports whether the logged-in user may change this cookie. Only
@@ -310,6 +315,17 @@ func clientPrefType(name string) ClientPrefType {
 		return ClientPrefTypeNumber
 	default:
 		return ClientPrefTypeText
+	}
+}
+
+// clientPrefBounds returns the inclusive min and max for a numeric
+// clientpref. Zero means no bound on that side.
+func clientPrefBounds(name string) (int32, int32) {
+	switch name {
+	case "fov_override":
+		return 20, 130
+	default:
+		return 0, 0
 	}
 }
 
