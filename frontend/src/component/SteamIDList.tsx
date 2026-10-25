@@ -22,7 +22,7 @@ export const SteamIDList = ({ steamId }: { steamId: string }) => {
 				{[
 					[sid.getSteamID64(), "steam64"],
 					[sid.getSteam3RenderedID(), "steam3"],
-					[sid.getSteam2RenderedID(true), "steam2"],
+					[sid.getSteam2RenderedID(false), "steam2"],
 				].map((s) => {
 					return (
 						<ListItem
