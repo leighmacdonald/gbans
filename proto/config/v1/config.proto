@@ -161,10 +161,6 @@ message Discord {
   string public_log_channel_id = 22;
 }
 
-message Sourcemod {
-  bool center_projectiles = 1 [(buf.validate.field).required = true];
-}
-
 enum Level {
   LEVEL_ERROR_UNSPECIFIED = 0;
   LEVEL_WARNING = 1;
@@ -262,17 +258,12 @@ message Anticheat {
   int32 max_cheat_cvar = 12 [(buf.validate.field).required = true];
 }
 
-message Clientprefs {
-  bool center_projectiles = 1 [(buf.validate.field).required = true];
-}
-
 message Config {
   General general = 1;
   Debug debug = 2;
   Demo demo = 3;
   Filters filters = 4;
   Discord discord = 5;
-  // Clientprefs client_prefs = 6;
   Log log = 7;
   GeoLocation geo_location = 8;
   Patreon patreon = 9;

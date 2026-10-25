@@ -16,7 +16,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network/ip2location"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/patreon"
-	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/stretchr/testify/require"
 )
 
@@ -49,7 +48,6 @@ func testDomainConfig() Config {
 			ModPingRoleID: "ping-role", AnticheatChannelID: "anticheat-channel", SeedChannelID: "seed-channel",
 			WordFilterLogChannelID: "filter-log-channel", ChatLogChannelID: "chat-log-channel",
 		},
-		Clientprefs: &sourcemod.Config{CenterProjectiles: true},
 		Log:         &log.Config{Level: log.Info, File: "/var/log/gbans.log", HTTPEnabled: true, HTTPOtelEnabled: true, HTTPLevel: log.Debug},
 		GeoLocation: &ip2location.Config{Enabled: true, CachePath: "/tmp/geo", Token: "geo-token", UpdateIntervalDays: 30},
 		Patreon: &patreon.Config{
@@ -78,8 +76,7 @@ func TestConfigMappingRoundTrip(t *testing.T) {
 	// Domain -> api -> domain must preserve every field so that saving the
 	// settings form can never wipe or corrupt values.
 	mapped := configFromUpdate(toConfig(original), Config{
-		General:     &General{},
-		Clientprefs: &sourcemod.Config{CenterProjectiles: true},
+		General: &General{},
 	})
 
 	require.Equal(t, original.General.SiteName, mapped.General.SiteName)
@@ -123,8 +120,7 @@ func TestConfigMappingRoundTrip(t *testing.T) {
 	require.Equal(t, original.Discord, mapped.Discord)
 
 	// Fields not managed through the api must be carried over, not zeroed.
-	current := Config{General: &General{PlayerqueueEnabled: true}, Clientprefs: &sourcemod.Config{CenterProjectiles: true}}
+	current := Config{General: &General{PlayerqueueEnabled: true}}
 	preserved := configFromUpdate(&configv1.Config{}, current)
 	require.True(t, preserved.General.PlayerqueueEnabled)
-	require.True(t, preserved.Clientprefs.CenterProjectiles)
 }

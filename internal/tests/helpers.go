@@ -19,7 +19,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network/ip2location"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/patreon"
-	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/testcontainers/testcontainers-go"
@@ -200,7 +199,6 @@ func TestConfig(ctx context.Context, dsn string) (*config.Configuration, error) 
 		Discord: &discord.Config{
 			Enabled: false,
 		},
-		Clientprefs: &sourcemod.Config{},
 		Log: &log.Config{
 			HTTPEnabled: false,
 			Level:       "error",

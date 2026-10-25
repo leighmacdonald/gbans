@@ -58,7 +58,7 @@ func NewFixture() *Fixture {
 		Config:    conf,
 		DSN:       testDB.dsn,
 		Persons: person.NewPersons(
-			person.NewRepository(databaseConn, conf.Config().Clientprefs.CenterProjectiles),
+			person.NewRepository(databaseConn, conf.Config().ClientprefsEnabled),
 			api),
 		Close: func() {
 			termCtx, termCancel := context.WithTimeout(context.Background(), time.Second*30)
@@ -103,7 +103,7 @@ $do$;`
 }
 
 func (f Fixture) CreateTestPerson(ctx context.Context, steamID steamid.SteamID) personDomain.Core {
-	people := person.NewPersons(person.NewRepository(f.Database, f.Config.Config().Clientprefs.CenterProjectiles), f.TFApi)
+	people := person.NewPersons(person.NewRepository(f.Database, f.Config.Config().ClientprefsEnabled), f.TFApi)
 	player, errPerson := people.GetOrCreatePersonBySteamID(ctx, steamID)
 	if errPerson != nil {
 		panic(errPerson)

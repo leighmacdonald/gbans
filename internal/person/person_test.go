@@ -45,11 +45,9 @@ func TestPerson(t *testing.T) {
 	require.NoError(t, errSettings)
 	require.False(t, defaultSettings.MatchNotifications)
 
-	yes := true
 	updateValues := person.SettingsUpdate{
 		StatsHidden:        true,
 		MatchNotifications: true,
-		CenterProjectiles:  &yes,
 	}
 
 	_, errUpdate := personCase.SavePersonSettings(t.Context(), fetched, updateValues)
@@ -58,8 +56,6 @@ func TestPerson(t *testing.T) {
 	settings, errSettingsUpdate := personCase.GetPersonSettings(t.Context(), fetched.SteamID)
 	require.NoError(t, errSettingsUpdate)
 
-	// TODO fix
-	// require.EqualValues(t, updateValues.CenterProjectiles, settings.CenterProjectiles)
 	require.Equal(t, updateValues.StatsHidden, settings.StatsHidden)
 	require.Equal(t, updateValues.MatchNotifications, settings.MatchNotifications)
 

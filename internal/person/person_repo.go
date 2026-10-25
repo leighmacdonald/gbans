@@ -5,10 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -16,11 +19,11 @@ import (
 type Repository struct {
 	database.Database
 
-	centerProjectiles bool
+	clientPrefsEnabled bool
 }
 
-func NewRepository(database database.Database, centerProjectiles bool) Repository {
-	return Repository{Database: database, centerProjectiles: centerProjectiles}
+func NewRepository(database database.Database, clientPrefsEnabled bool) Repository {
+	return Repository{Database: database, clientPrefsEnabled: clientPrefsEnabled}
 }
 
 func (r *Repository) DropPerson(ctx context.Context, steamID steamid.SteamID) error {
@@ -193,69 +196,131 @@ func (r *Repository) Settings(ctx context.Context, steamID steamid.SteamID) (Set
 		return settings, database.Err(errScan)
 	}
 
-	if r.centerProjectiles {
-		rows, errRow := r.QueryBuilder(ctx, r.Builder().
-			Select("name", "value").
-			From("sm_cookie_cache").
-			Join("sm_cookies ON cookie_id=id").
-			Where(sq.And{
-				sq.Eq{"player": steamID.Steam(false)},
-				sq.Eq{"name": "tf2centerprojectiles"},
-			}))
-		if errRow != nil {
-			return settings, database.Err(errRow)
-		}
-
-		defer rows.Close()
-
-		for rows.Next() {
-			key := ""
-			value := ""
-
-			if errScan := rows.Scan(&key, &value); errScan != nil {
-				return settings, database.Err(errScan)
-			}
-
-			if key == "tf2centerprojectiles" {
-				settings.CenterProjectiles = new(value == "1")
-			}
-		}
-	}
-
 	return settings, nil
 }
 
-// Format booleans for storage as a sourcemod Clientpref.
-func boolToStringDigit(b bool) string {
-	if b {
-		return "1"
+func (r *Repository) ClientPrefs(ctx context.Context, steamID steamid.SteamID) ([]ClientPref, error) {
+	if !r.clientPrefsEnabled {
+		return []ClientPref{}, nil
 	}
 
-	return "0"
+	rows, errQuery := r.QueryBuilder(ctx, r.Builder().
+		Select("c.id", "c.name", "COALESCE(c.description, '')", "COALESCE(c.access, 0)", "COALESCE(cc.value, '')").
+		From("sm_cookies c").
+		LeftJoin("sm_cookie_cache cc ON cc.cookie_id = c.id AND cc.player = ?", steamID.Steam(false)).
+		Where("COALESCE(c.access, 0) <> 2").
+		OrderBy("c.id"))
+	if errQuery != nil {
+		return nil, database.Err(errQuery)
+	}
+
+	defer rows.Close()
+
+	prefs := make([]ClientPref, 0)
+
+	for rows.Next() {
+		var pref ClientPref
+		if errScan := rows.Scan(&pref.CookieID, &pref.Name, &pref.Description, &pref.Access, &pref.Value); errScan != nil {
+			return nil, database.Err(errScan)
+		}
+
+		pref.Type = clientPrefType(pref.Name)
+		prefs = append(prefs, pref)
+	}
+
+	if errRows := rows.Err(); errRows != nil {
+		return nil, database.Err(errRows)
+	}
+
+	return prefs, nil
+}
+
+func (r *Repository) SaveClientPrefs(ctx context.Context, steamID steamid.SteamID, values map[string]string) error {
+	if !r.clientPrefsEnabled || len(values) == 0 {
+		return nil
+	}
+
+	if !steamID.Valid() {
+		return steamid.ErrDecodeSID
+	}
+
+	const (
+		deleteQuery = `
+DELETE FROM sm_cookie_cache cc
+USING sm_cookies c
+WHERE cc.cookie_id = c.id
+  AND cc.player = $1
+  AND c.name = $2
+  AND COALESCE(c.access, 0) = 0`
+
+		upsertQuery = `
+INSERT INTO sm_cookie_cache (player, cookie_id, value, timestamp)
+SELECT $1, c.id, $2, CAST(EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) AS integer)
+FROM sm_cookies c
+WHERE c.name = $3
+  AND COALESCE(c.access, 0) = 0
+ON CONFLICT (player, cookie_id)
+DO UPDATE SET value = EXCLUDED.value, timestamp = EXCLUDED.timestamp`
+	)
+
+	return r.WrapTx(ctx, func(tx pgx.Tx) error {
+		for name, value := range values {
+			if utf8.RuneCountInString(value) > 100 {
+				return ErrClientPrefValueTooLong
+			}
+
+			if errValue := validateClientPrefValue(name, value); errValue != nil {
+				return errValue
+			}
+
+			player := steamID.Steam(false)
+			if value == "" {
+				if _, errDelete := tx.Exec(ctx, deleteQuery, player, name); errDelete != nil {
+					return errDelete //nolint:wrapcheck
+				}
+
+				continue
+			}
+
+			if _, errUpsert := tx.Exec(ctx, upsertQuery, player, value, name); errUpsert != nil {
+				return errUpsert //nolint:wrapcheck
+			}
+		}
+
+		return nil
+	})
+}
+
+func validateClientPrefValue(name string, value string) error {
+	if value == "" {
+		return nil
+	}
+
+	switch clientPrefType(name) {
+	case ClientPrefTypeBoolean:
+		if value != "0" && value != "1" {
+			return ErrClientPrefInvalidValue
+		}
+	case ClientPrefTypeNumber:
+		if _, errNumber := strconv.Atoi(value); errNumber != nil {
+			return ErrClientPrefInvalidValue
+		}
+	}
+
+	return nil
 }
 
 func (r *Repository) SaveSettings(ctx context.Context, settings *Settings) error {
-	const (
-		query = `
-    INSERT INTO sm_cookie_cache (player, cookie_id, value, timestamp)
-    VALUES ($1, (select id from sm_cookies where name='tf2centerprojectiles'), $2, cast(extract(epoch from current_timestamp) as integer))
-    ON CONFLICT (player, cookie_id)
-    DO UPDATE SET value = EXCLUDED.value, timestamp = EXCLUDED.timestamp
-    RETURNING value;`
-	)
-
 	if !settings.SteamID.Valid() {
 		return steamid.ErrDecodeSID
 	}
 
 	settings.UpdatedOn = time.Now()
 
-	var errSiteSettings error
-
 	if settings.PersonSettingsID == 0 {
 		settings.CreatedOn = settings.UpdatedOn
 
-		errSiteSettings = database.Err(r.ExecInsertBuilderWithReturnValue(ctx, r.Builder().
+		return database.Err(r.ExecInsertBuilderWithReturnValue(ctx, r.Builder().
 			Insert("person_settings").
 			SetMap(map[string]any{
 				"steam_id":               settings.SteamID.Int64(),
@@ -268,28 +333,16 @@ func (r *Repository) SaveSettings(ctx context.Context, settings *Settings) error
 			}).
 			Suffix("RETURNING person_settings_id"),
 			&settings.PersonSettingsID))
-	} else {
-		errSiteSettings = database.Err(r.ExecUpdateBuilder(ctx, r.Builder().
-			Update("person_settings").
-			SetMap(map[string]any{
-				"forum_signature":        settings.ForumSignature,
-				"forum_profile_messages": settings.ForumProfileMessages,
-				"stats_hidden":           settings.StatsHidden,
-				"match_notifications":    settings.MatchNotifications,
-				"updated_on":             settings.UpdatedOn,
-			}).
-			Where(sq.Eq{"steam_id": settings.SteamID.Int64()})))
 	}
 
-	value := ""
-
-	var errGameSettings error
-	if r.centerProjectiles && settings.CenterProjectiles != nil {
-		// TODO test this
-		_ = database.Err(r.QueryRow(ctx, query,
-			settings.SteamID.Steam(false),
-			boolToStringDigit(*settings.CenterProjectiles)).Scan(&value))
-	}
-
-	return errors.Join(errSiteSettings, errGameSettings)
+	return database.Err(r.ExecUpdateBuilder(ctx, r.Builder().
+		Update("person_settings").
+		SetMap(map[string]any{
+			"forum_signature":        settings.ForumSignature,
+			"forum_profile_messages": settings.ForumProfileMessages,
+			"stats_hidden":           settings.StatsHidden,
+			"match_notifications":    settings.MatchNotifications,
+			"updated_on":             settings.UpdatedOn,
+		}).
+		Where(sq.Eq{"steam_id": settings.SteamID.Int64()})))
 }

@@ -23,14 +23,16 @@ import (
 )
 
 var (
-	ErrPlayerDoesNotExist   = errors.New("player does not exist")
-	ErrDiscordAlreadyLinked = errors.New("discord account is already linked")
-	ErrSteamAPIArgLimit     = errors.New("steam api support a max of 100 steam ids")
-	ErrFetchSteamBans       = errors.New("failed to fetch ban status from steam api")
-	ErrSteamAPISummaries    = errors.New("failed to fetch player summaries")
-	ErrSteamAPI             = errors.New("steam api requests have errors")
-	ErrUpdatePerson         = errors.New("failed to save updated person profile")
-	ErrNilPerson            = errors.New("nil person")
+	ErrPlayerDoesNotExist     = errors.New("player does not exist")
+	ErrDiscordAlreadyLinked   = errors.New("discord account is already linked")
+	ErrSteamAPIArgLimit       = errors.New("steam api support a max of 100 steam ids")
+	ErrFetchSteamBans         = errors.New("failed to fetch ban status from steam api")
+	ErrSteamAPISummaries      = errors.New("failed to fetch player summaries")
+	ErrSteamAPI               = errors.New("steam api requests have errors")
+	ErrUpdatePerson           = errors.New("failed to save updated person profile")
+	ErrNilPerson              = errors.New("nil person")
+	ErrClientPrefValueTooLong = errors.New("clientpref value exceeds maximum length")
+	ErrClientPrefInvalidValue = errors.New("clientpref value is invalid for its type")
 )
 
 type SteamMember interface {
@@ -263,10 +265,6 @@ type Settings struct {
 	StatsHidden          bool
 	MatchNotifications   bool
 
-	// This key will be absent to indicate that this feature
-	// is disabled (and UI should not be shown to the user).
-	CenterProjectiles *bool
-
 	CreatedOn time.Time
 	UpdatedOn time.Time
 }
@@ -276,7 +274,43 @@ type SettingsUpdate struct {
 	ForumProfileMessages bool
 	StatsHidden          bool
 	MatchNotifications   bool
-	CenterProjectiles    *bool
+}
+
+// ClientPrefType controls the editor rendered for a SourceMod clientpref.
+type ClientPrefType int
+
+const (
+	ClientPrefTypeText ClientPrefType = iota
+	ClientPrefTypeBoolean
+	ClientPrefTypeNumber
+)
+
+// ClientPref is a SourceMod clientpref and the current player's cached value.
+type ClientPref struct {
+	CookieID    int32
+	Name        string
+	Description string
+	Access      int32
+	Type        ClientPrefType
+	Value       string
+}
+
+// Editable reports whether the logged-in user may change this cookie. Only
+// public cookies are editable; protected cookies are read-only and private
+// ones are never returned.
+func (c ClientPref) Editable() bool {
+	return c.Access == 0
+}
+
+func clientPrefType(name string) ClientPrefType {
+	switch name {
+	case "no_motd", "random_team", "random_class", "remember_class", "tf2centerprojectiles", "tfdb_speedhud_pref":
+		return ClientPrefTypeBoolean
+	case "fov_override":
+		return ClientPrefTypeNumber
+	default:
+		return ClientPrefTypeText
+	}
 }
 
 type Persons struct {
@@ -637,13 +671,24 @@ func (u *Persons) SavePersonSettings(ctx context.Context, user person.BaseUser, 
 	settings.StatsHidden = update.StatsHidden
 	settings.MatchNotifications = update.MatchNotifications
 	settings.ForumSignature = stringutil.SanitizeUGC(update.ForumSignature)
-	settings.CenterProjectiles = update.CenterProjectiles
 
 	if errSave := u.repo.SaveSettings(ctx, &settings); errSave != nil {
 		return settings, errSave
 	}
 
 	return settings, nil
+}
+
+func (u *Persons) ClientPrefsEnabled() bool {
+	return u.repo.clientPrefsEnabled
+}
+
+func (u *Persons) GetPersonClientPrefs(ctx context.Context, steamID steamid.SteamID) ([]ClientPref, error) {
+	return u.repo.ClientPrefs(ctx, steamID)
+}
+
+func (u *Persons) SavePersonClientPrefs(ctx context.Context, steamID steamid.SteamID, values map[string]string) error {
+	return u.repo.SaveClientPrefs(ctx, steamID, values)
 }
 
 func (u *Persons) EnsurePerson(ctx context.Context, steamID steamid.SteamID) error {
