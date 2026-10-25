@@ -165,13 +165,14 @@ func (s *Servers) Broadcast(ctx context.Context, cmd string, args ...any) {
 }
 
 func (s *Servers) FindPlayers(opts FindOpts) []FindResult {
+	s.serversMu.RLock()
+	defer s.serversMu.RUnlock()
+
 	return s.servers.find(opts)
 }
 
 func (s *Servers) FindPlayer(opts FindOpts) (FindResult, bool) {
-	s.serversMu.RLock()
-	defer s.serversMu.RUnlock()
-	results := s.servers.find(opts)
+	results := s.FindPlayers(opts)
 	if len(results) == 0 {
 		return FindResult{}, false
 	}
@@ -250,7 +251,7 @@ func (s *Servers) updateStates(ctx context.Context) error {
 	s.servers = valid
 	s.serversMu.Unlock()
 
-	for _, server := range s.servers {
+	for _, server := range valid {
 		waitGroup.Go(func() {
 			server.updateState(ctx)
 			successful.Add(1)
@@ -259,7 +260,7 @@ func (s *Servers) updateStates(ctx context.Context) error {
 
 	waitGroup.Wait()
 
-	if fail := len(s.servers) - int(successful.Load()); fail > 0 {
+	if fail := len(valid) - int(successful.Load()); fail > 0 {
 		slog.Debug("RCON update cycle complete",
 			slog.Int("success", int(successful.Load())),
 			slog.Int("existing", int(existing.Load())),
