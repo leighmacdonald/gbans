@@ -155,6 +155,11 @@ void printBucketToChat(int clientId, int bucketIndex) {
         return;
     }
 
+    char playerName[64];
+    if (!GetClientName(clientId, playerName, sizeof playerName)) {
+        strcopy(playerName, sizeof playerName, "Player");
+    }
+
     char name[32];
     if (!timeBucketDisplayName(gStatsBucket[clientId][bucketIndex], name, sizeof name)) {
         strcopy(name, sizeof name, "stats");
@@ -164,17 +169,18 @@ void printBucketToChat(int clientId, int bucketIndex) {
     int kills = gStatsKills[clientId][bucketIndex];
 
     if (rank > 0) {
-        PrintToChat(clientId, "[Stats] Your %s: Rank #%d with %d kills", name, rank, kills);
+        PrintToChat(clientId, "[Stats] %s (%s): Rank #%d with %d kills", playerName, name, rank, kills);
     } else {
-        PrintToChat(clientId, "[Stats] Your %s: Unranked with %d kills", name, kills);
+        PrintToChat(clientId, "[Stats] %s (%s): Unranked with %d kills", playerName, name, kills);
     }
 }
 
-// readJsonUint64 reads a protobuf uint64 field, which the ConnectRPC JSON
-// encoding emits as a decimal string.
+// readJsonUint64 reads a protobuf uint64 field. ConnectRPC's JSON encoding
+// emits uint64 as a decimal string, and ripext's GetInt64 decodes to 0 for a
+// JSON string, so the value is read as a string and parsed instead.
 stock int readJsonUint64(JSONObject obj, const char[] key) {
     char buf[32];
-    if (!obj.GetInt64(key, buf, sizeof buf)) {
+    if (!obj.GetString(key, buf, sizeof buf)) {
         return 0;
     }
     return StringToInt(buf);

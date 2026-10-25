@@ -334,9 +334,10 @@ func (s PluginService) SMSeed(ctx context.Context, req *v1.SMSeedRequest) (*v1.S
 	return &v1.SMSeedResponse{Message: new("Successfully sent request")}, nil
 }
 
-// SMPlayerStats returns a player's kills and kills-leaderboard rank for every
-// time window in the default stats bucket, for the in-game /stats menu. Each
-// player may call it at most once every five minutes.
+// SMPlayerStats returns a player's overall (points) rank and kills for every
+// time window in the default stats bucket, for the in-game /stats menu. The
+// rank matches the website's default overall leaderboard so the two agree.
+// Each player may call it at most once every five minutes.
 func (s PluginService) SMPlayerStats(ctx context.Context, req *v1.SMPlayerStatsRequest) (*v1.SMPlayerStatsResponse, error) {
 	steamID := steamid.New(req.GetSteamId())
 	if !steamID.Valid() {
@@ -376,9 +377,12 @@ func (s PluginService) SMPlayerStats(ctx context.Context, req *v1.SMPlayerStatsR
 
 	now := time.Now()
 	for _, timeBucket := range timeBuckets {
+		// VariantOverallUnspecified ranks by points, the same column the
+		// website's default overall leaderboard shows, so the in-game rank
+		// matches the frontend for the same player and window.
 		rank, kills, errRank := s.stats.PlayerKillsAndRank(ctx, stats.Opts{
 			StatsBucketID: uint32(defaultBucket.BucketID), //nolint:gosec // bucket ids are positive.
-			Variant:       stats.VariantKills,
+			Variant:       stats.VariantOverallUnspecified,
 			TimeBucket:    timeBucket,
 			TimeStamp:     now,
 		}, steamID)

@@ -175,8 +175,9 @@ message SMPlayerStatsBucket {
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
   ];
-  // rank is the player's position in the kills leaderboard for this window,
-  // 0 when they do not meet the leaderboard's minimum sample size.
+  // rank is the player's position in the overall (points) leaderboard for this
+  // window, matching the website's default overall view; 0 when they do not
+  // meet the leaderboard's minimum sample size.
   uint64 rank = 2;
   // kills is the player's total kills in this window.
   uint64 kills = 3;

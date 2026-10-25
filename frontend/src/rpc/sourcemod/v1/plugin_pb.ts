@@ -408,8 +408,9 @@ export type SMPlayerStatsBucket = Message<"sourcemod.v1.SMPlayerStatsBucket"> & 
   timeBucket: TimeBucket;
 
   /**
-   * rank is the player's position in the kills leaderboard for this window,
-   * 0 when they do not meet the leaderboard's minimum sample size.
+   * rank is the player's position in the overall (points) leaderboard for this
+   * window, matching the website's default overall view; 0 when they do not
+   * meet the leaderboard's minimum sample size.
    *
    * @generated from field: uint64 rank = 2 [jstype = JS_STRING];
    */
