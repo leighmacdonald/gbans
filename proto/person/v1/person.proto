@@ -55,6 +55,32 @@ message CurrentProfileResponse {
   PersonCore profile = 1 [(buf.validate.field).required = true];
 }
 
+enum ClientPrefType {
+  CLIENT_PREF_TYPE_UNSPECIFIED = 0;
+  CLIENT_PREF_TYPE_BOOLEAN = 1;
+  CLIENT_PREF_TYPE_NUMBER = 2;
+  CLIENT_PREF_TYPE_TEXT = 3;
+}
+
+message ClientPref {
+  int32 cookie_id = 1;
+  string name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 30
+    }
+  ];
+  string description = 3;
+  int32 access = 4 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 2
+  }];
+  ClientPrefType type = 5 [(buf.validate.field).enum.defined_only = true];
+  string value = 6 [(buf.validate.field).string.max_len = 100];
+  bool editable = 7;
+}
+
 message Settings {
   int64 person_settings_id = 1 [(buf.validate.field).required = true];
   int64 steam_id = 2 [
@@ -64,7 +90,8 @@ message Settings {
   string forum_signature = 3 [(buf.validate.field).required = true];
   bool forum_profile_messages = 4 [(buf.validate.field).required = true];
   bool stats_hidden = 5 [(buf.validate.field).required = true];
-  bool center_projectiles = 6 [(buf.validate.field).required = true];
+  reserved 6;
+  reserved "center_projectiles";
   google.protobuf.Timestamp created_on = 7 [(buf.validate.field).required = true];
   google.protobuf.Timestamp updated_on = 8 [(buf.validate.field).required = true];
   bool match_notifications = 9 [(buf.validate.field).required = true];
@@ -74,8 +101,10 @@ message EditProfileSettingsRequest {
   string forum_signature = 1 [(buf.validate.field).required = true];
   bool forum_profile_messages = 2 [(buf.validate.field).required = true];
   bool stats_hidden = 3 [(buf.validate.field).required = true];
-  bool center_projectiles = 4 [(buf.validate.field).required = true];
+  reserved 4;
+  reserved "center_projectiles";
   bool match_notifications = 5 [(buf.validate.field).required = true];
+  map<string, string> client_prefs = 6;
 }
 
 message Profile {
@@ -93,10 +122,14 @@ message SteamFriend {
 
 message ProfileSettingsResponse {
   Settings settings = 1 [(buf.validate.field).required = true];
+  bool client_prefs_enabled = 2;
+  repeated ClientPref client_prefs = 3;
 }
 
 message EditProfileSettingsResponse {
   Settings settings = 1 [(buf.validate.field).required = true];
+  bool client_prefs_enabled = 2;
+  repeated ClientPref client_prefs = 3;
 }
 
 message QueryRequest {

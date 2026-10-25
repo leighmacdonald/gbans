@@ -121,7 +121,6 @@ func (s Service) EditProfileSettings(ctx context.Context, req *v1.EditProfileSet
 		ForumProfileMessages: req.GetForumProfileMessages(),
 		StatsHidden:          req.GetStatsHidden(),
 		MatchNotifications:   req.GetMatchNotifications(),
-		CenterProjectiles:    req.CenterProjectiles,
 	})
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
@@ -163,7 +162,6 @@ func toUserSettings(settings Settings) *v1.Settings {
 		ForumSignature:       &settings.ForumSignature,
 		ForumProfileMessages: &settings.ForumProfileMessages,
 		StatsHidden:          &settings.StatsHidden,
-		CenterProjectiles:    settings.CenterProjectiles,
 		MatchNotifications:   &settings.MatchNotifications,
 		CreatedOn:            timestamppb.New(settings.CreatedOn),
 		UpdatedOn:            timestamppb.New(settings.UpdatedOn),
@@ -279,7 +277,6 @@ func toSettings(settings Settings) *v1.Settings {
 		ForumProfileMessages: &settings.ForumProfileMessages,
 		StatsHidden:          &settings.StatsHidden,
 		MatchNotifications:   &settings.MatchNotifications,
-		CenterProjectiles:    settings.CenterProjectiles,
 		CreatedOn:            timestamppb.New(settings.CreatedOn),
 		UpdatedOn:            timestamppb.New(settings.UpdatedOn),
 	}

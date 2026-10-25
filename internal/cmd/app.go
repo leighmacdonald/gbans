@@ -154,7 +154,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	}
 	g.tfapiClient = tfapiClient
 
-	g.persons = person.NewPersons(person.NewRepository(g.database, conf.Clientprefs.CenterProjectiles), g.tfapiClient)
+	g.persons = person.NewPersons(person.NewRepository(g.database, conf.ClientprefsEnabled), g.tfapiClient)
 	g.roles = roles.NewRoles(roles.NewRepository(g.database), steamid.New(conf.Owner))
 	g.roleAuth = rpc.NewRoleAuth(g.roles)
 	g.bot = g.mustCreateBot(conf.Discord)

@@ -35,12 +35,6 @@ var (
 	ErrUnknownPermission = errors.New("unknown permission")
 )
 
-type Config struct {
-	sync.RWMutex
-
-	CenterProjectiles bool `mapstructure:"center_projectiles"`
-}
-
 type BanSource string
 
 const (

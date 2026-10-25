@@ -30,7 +30,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network/ip2location"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/patreon"
-	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/mitchellh/go-homedir"
@@ -52,22 +51,22 @@ var (
 // Static defines non-dynamic config values that cannot be changed during runtime. These
 // are loaded via the config file.
 type Static struct {
-	Owner               string            `mapstructure:"owner" json:"-"`
-	SteamKey            string            `mapstructure:"steam_key" json:"-"`
-	ExternalURL         string            `mapstructure:"external_url" json:"-"`
-	HTTPHost            string            `mapstructure:"http_host" json:"-"`
-	HTTPPort            uint16            `mapstructure:"http_port" json:"-"`
-	HTTPStaticPath      string            `mapstructure:"http_static_path" json:"-"`
-	HTTPCookieKey       string            `mapstructure:"http_cookie_key" json:"-"`
-	HTTPClientTimeout   int               `mapstructure:"http_client_timeout" json:"-"`
-	HTTPCORSEnabled     bool              `mapstructure:"http_cors_enabled"  json:"-"`
-	HTTPCorsOrigins     []string          `mapstructure:"http_cors_origins" json:"-"`
-	DatabaseDSN         string            `mapstructure:"database_dsn" json:"-"`
-	DatabaseAutoMigrate bool              `mapstructure:"database_auto_migrate" json:"-"`
-	DatabaseLogQueries  bool              `mapstructure:"database_log_queries" json:"-"`
-	PrometheusEnabled   bool              `mapstructure:"prometheus_enabled" json:"-"`
-	PProfEnabled        bool              `mapstructure:"pprof_enabled" json:"-"`
-	Clientprefs         *sourcemod.Config `mapstructure:"clientprefs" json:"-"`
+	Owner               string   `mapstructure:"owner" json:"-"`
+	SteamKey            string   `mapstructure:"steam_key" json:"-"`
+	ExternalURL         string   `mapstructure:"external_url" json:"-"`
+	HTTPHost            string   `mapstructure:"http_host" json:"-"`
+	HTTPPort            uint16   `mapstructure:"http_port" json:"-"`
+	HTTPStaticPath      string   `mapstructure:"http_static_path" json:"-"`
+	HTTPCookieKey       string   `mapstructure:"http_cookie_key" json:"-"`
+	HTTPClientTimeout   int      `mapstructure:"http_client_timeout" json:"-"`
+	HTTPCORSEnabled     bool     `mapstructure:"http_cors_enabled"  json:"-"`
+	HTTPCorsOrigins     []string `mapstructure:"http_cors_origins" json:"-"`
+	DatabaseDSN         string   `mapstructure:"database_dsn" json:"-"`
+	DatabaseAutoMigrate bool     `mapstructure:"database_auto_migrate" json:"-"`
+	DatabaseLogQueries  bool     `mapstructure:"database_log_queries" json:"-"`
+	PrometheusEnabled   bool     `mapstructure:"prometheus_enabled" json:"-"`
+	PProfEnabled        bool     `mapstructure:"pprof_enabled" json:"-"`
+	ClientprefsEnabled  bool     `mapstructure:"clientprefs_enabled" json:"-"`
 }
 
 // Addr returns the address in host:port format.
@@ -191,10 +190,6 @@ type Configuration struct {
 }
 
 func NewConfiguration(ctx context.Context, static Static, repository Repo) (*Configuration, error) {
-	if static.Clientprefs == nil {
-		static.Clientprefs = &sourcemod.Config{}
-	}
-
 	conf := &Configuration{
 		static:     static,
 		repository: repository,
@@ -504,6 +499,7 @@ func setDefaultConfigValues() {
 		"database_log_queries":  false,
 		"prometheus_enabled":    false,
 		"pprof_enabled":         false,
+		"clientprefs_enabled":   true,
 	}
 
 	for configKey, value := range defaultConfig {

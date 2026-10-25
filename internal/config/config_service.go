@@ -28,7 +28,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/patreon"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
 	"github.com/leighmacdonald/gbans/internal/rpc"
-	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -240,8 +239,8 @@ func (r *Service) Update(ctx context.Context, request *configv1.UpdateRequest) (
 }
 
 // configFromUpdate maps the api representation onto the domain config.
-// PlayerqueueEnabled and CenterProjectiles are not managed through the api;
-// the current values are carried over so a save does not wipe them.
+// PlayerqueueEnabled is not managed through the api; the current value is
+// carried over so a save does not wipe it.
 func configFromUpdate(inCfg *configv1.Config, current Config) Config {
 	inGeneral := inCfg.GetGeneral()
 	inDebug := inCfg.GetDebug()
@@ -329,9 +328,6 @@ func configFromUpdate(inCfg *configv1.Config, current Config) Config {
 			SeedChannelID:           inDiscord.GetSeedChannelId(),
 			WordFilterLogChannelID:  inDiscord.GetWordFilterLogChannelId(),
 			ChatLogChannelID:        inDiscord.GetChatLogChannelId(),
-		},
-		Clientprefs: &sourcemod.Config{
-			CenterProjectiles: current.Clientprefs.CenterProjectiles,
 		},
 		Log: &log.Config{
 			Level:           fromLevel(inLog.GetLevel()),
