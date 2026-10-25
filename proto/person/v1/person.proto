@@ -67,6 +67,7 @@ message Settings {
   bool center_projectiles = 6 [(buf.validate.field).required = true];
   google.protobuf.Timestamp created_on = 7 [(buf.validate.field).required = true];
   google.protobuf.Timestamp updated_on = 8 [(buf.validate.field).required = true];
+  bool match_notifications = 9 [(buf.validate.field).required = true];
 }
 
 message EditProfileSettingsRequest {
@@ -74,6 +75,7 @@ message EditProfileSettingsRequest {
   bool forum_profile_messages = 2 [(buf.validate.field).required = true];
   bool stats_hidden = 3 [(buf.validate.field).required = true];
   bool center_projectiles = 4 [(buf.validate.field).required = true];
+  bool match_notifications = 5 [(buf.validate.field).required = true];
 }
 
 message Profile {

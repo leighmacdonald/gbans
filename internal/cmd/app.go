@@ -187,7 +187,8 @@ func (g *GBans) Init(ctx context.Context) error {
 	mapsSvc := maps.New(maps.NewRepository(g.database))
 
 	g.stats = stats.New(stats.NewRepository(g.database), mapsSvc,
-		stats.WithMatchLogNotifications(g.notifications, conf.Discord.PublicMatchLogChannelID))
+		stats.WithMatchLogNotifications(g.notifications, conf.Discord.PublicMatchLogChannelID),
+		stats.WithMatchPlayerNotifications(stats.NewMatchPlayerNotifier(g.servers, g.persons)))
 
 	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler, conf.Discord.SafeChatLogChannelID())
 	g.demos = demo.NewDemos(asset.BucketDemo, demo.NewRepository(g.database), g.assets, g.stats, g.chat, g.persons, conf.Demo, steamid.New(conf.Owner))

@@ -320,6 +320,7 @@ type Settings struct {
 	CenterProjectiles    *bool                  `protobuf:"varint,6,opt,name=center_projectiles,json=centerProjectiles" json:"center_projectiles,omitempty"`
 	CreatedOn            *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
 	UpdatedOn            *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
+	MatchNotifications   *bool                  `protobuf:"varint,9,opt,name=match_notifications,json=matchNotifications" json:"match_notifications,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -410,12 +411,20 @@ func (x *Settings) GetUpdatedOn() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Settings) GetMatchNotifications() bool {
+	if x != nil && x.MatchNotifications != nil {
+		return *x.MatchNotifications
+	}
+	return false
+}
+
 type EditProfileSettingsRequest struct {
 	state                protoimpl.MessageState `protogen:"open.v1"`
 	ForumSignature       *string                `protobuf:"bytes,1,opt,name=forum_signature,json=forumSignature" json:"forum_signature,omitempty"`
 	ForumProfileMessages *bool                  `protobuf:"varint,2,opt,name=forum_profile_messages,json=forumProfileMessages" json:"forum_profile_messages,omitempty"`
 	StatsHidden          *bool                  `protobuf:"varint,3,opt,name=stats_hidden,json=statsHidden" json:"stats_hidden,omitempty"`
 	CenterProjectiles    *bool                  `protobuf:"varint,4,opt,name=center_projectiles,json=centerProjectiles" json:"center_projectiles,omitempty"`
+	MatchNotifications   *bool                  `protobuf:"varint,5,opt,name=match_notifications,json=matchNotifications" json:"match_notifications,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -474,6 +483,13 @@ func (x *EditProfileSettingsRequest) GetStatsHidden() bool {
 func (x *EditProfileSettingsRequest) GetCenterProjectiles() bool {
 	if x != nil && x.CenterProjectiles != nil {
 		return *x.CenterProjectiles
+	}
+	return false
+}
+
+func (x *EditProfileSettingsRequest) GetMatchNotifications() bool {
+	if x != nil && x.MatchNotifications != nil {
+		return *x.MatchNotifications
 	}
 	return false
 }
@@ -1165,7 +1181,7 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"avatarHash\x12/\n" +
 	"\fpersona_name\x18\x03 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x02\x18 R\vpersonaName\"Q\n" +
 	"\x16CurrentProfileResponse\x127\n" +
-	"\aprofile\x18\x01 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\aprofile\"\xca\x03\n" +
+	"\aprofile\x18\x01 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\aprofile\"\x83\x04\n" +
 	"\bSettings\x126\n" +
 	"\x12person_settings_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x10personSettingsId\x12/\n" +
 	"\bsteam_id\x18\x02 \x01(\x03B\x14\xbaH\x0f\xc8\x01\x01\"\n" +
@@ -1177,12 +1193,14 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"\n" +
 	"created_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\x12A\n" +
 	"\n" +
-	"updated_on\x18\b \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\"\xed\x01\n" +
+	"updated_on\x18\b \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedOn\x127\n" +
+	"\x13match_notifications\x18\t \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x12matchNotifications\"\xa6\x02\n" +
 	"\x1aEditProfileSettingsRequest\x12/\n" +
 	"\x0fforum_signature\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0eforumSignature\x12<\n" +
 	"\x16forum_profile_messages\x18\x02 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x14forumProfileMessages\x12)\n" +
 	"\fstats_hidden\x18\x03 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\vstatsHidden\x125\n" +
-	"\x12center_projectiles\x18\x04 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x11centerProjectiles\"\xab\x01\n" +
+	"\x12center_projectiles\x18\x04 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x11centerProjectiles\x127\n" +
+	"\x13match_notifications\x18\x05 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\x12matchNotifications\"\xab\x01\n" +
 	"\aProfile\x125\n" +
 	"\x06player\x18\x01 \x01(\v2\x15.person.v1.PersonCoreB\x06\xbaH\x03\xc8\x01\x01R\x06player\x120\n" +
 	"\afriends\x18\x02 \x03(\v2\x16.person.v1.SteamFriendR\afriends\x127\n" +

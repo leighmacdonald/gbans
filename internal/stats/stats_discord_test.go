@@ -1,6 +1,7 @@
 package stats_test
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -21,6 +22,14 @@ type captureNotifier struct {
 
 func (c *captureNotifier) Send(payload notification.Payload) {
 	c.payloads = append(c.payloads, payload)
+}
+
+type captureMatchNotifier struct {
+	matches []*stats.Match
+}
+
+func (c *captureMatchNotifier) NotifyMatch(_ context.Context, match *stats.Match) {
+	c.matches = append(c.matches, match)
 }
 
 func TestMatchMessage(t *testing.T) {

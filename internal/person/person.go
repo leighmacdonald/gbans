@@ -261,6 +261,7 @@ type Settings struct {
 	ForumSignature       string
 	ForumProfileMessages bool
 	StatsHidden          bool
+	MatchNotifications   bool
 
 	// This key will be absent to indicate that this feature
 	// is disabled (and UI should not be shown to the user).
@@ -274,6 +275,7 @@ type SettingsUpdate struct {
 	ForumSignature       string
 	ForumProfileMessages bool
 	StatsHidden          bool
+	MatchNotifications   bool
 	CenterProjectiles    *bool
 }
 
@@ -633,6 +635,7 @@ func (u *Persons) SavePersonSettings(ctx context.Context, user person.BaseUser, 
 
 	settings.ForumProfileMessages = update.ForumProfileMessages
 	settings.StatsHidden = update.StatsHidden
+	settings.MatchNotifications = update.MatchNotifications
 	settings.ForumSignature = stringutil.SanitizeUGC(update.ForumSignature)
 	settings.CenterProjectiles = update.CenterProjectiles
 

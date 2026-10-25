@@ -77,8 +77,10 @@ func TestImport(t *testing.T) {
 	stats.RegisterDiscordCommands(discord.Discard{})
 
 	notifier := &captureNotifier{}
+	matchNotifier := &captureMatchNotifier{}
 	statSvc := stats.New(stats.NewRepository(testFixture.Database), maps.New(maps.NewRepository(testFixture.Database)),
-		stats.WithMatchLogNotifications(notifier, "match-log-channel"))
+		stats.WithMatchLogNotifications(notifier, "match-log-channel"),
+		stats.WithMatchPlayerNotifications(matchNotifier))
 	matchID, importErr := statSvc.Import(ctx, server.ServerID, demoID, &demo, time.Now())
 	require.NoError(t, importErr)
 	require.NotNil(t, matchID)
@@ -92,6 +94,9 @@ func TestImport(t *testing.T) {
 	require.Len(t, notifier.payloads, 1)
 	require.Equal(t, []string{"match-log-channel"}, notifier.payloads[0].DiscordChannels)
 	require.NotNil(t, notifier.payloads[0].MessageSend)
+
+	require.Len(t, matchNotifier.matches, 1)
+	require.Equal(t, *matchID, matchNotifier.matches[0].MatchID)
 }
 
 // demoPlayerSums aggregates per-player totals across all rounds of a parsed
