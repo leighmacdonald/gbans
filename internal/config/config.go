@@ -52,21 +52,22 @@ var (
 // Static defines non-dynamic config values that cannot be changed during runtime. These
 // are loaded via the config file.
 type Static struct {
-	Owner               string   `mapstructure:"owner" json:"-"`
-	SteamKey            string   `mapstructure:"steam_key" json:"-"`
-	ExternalURL         string   `mapstructure:"external_url" json:"-"`
-	HTTPHost            string   `mapstructure:"http_host" json:"-"`
-	HTTPPort            uint16   `mapstructure:"http_port" json:"-"`
-	HTTPStaticPath      string   `mapstructure:"http_static_path" json:"-"`
-	HTTPCookieKey       string   `mapstructure:"http_cookie_key" json:"-"`
-	HTTPClientTimeout   int      `mapstructure:"http_client_timeout" json:"-"`
-	HTTPCORSEnabled     bool     `mapstructure:"http_cors_enabled"  json:"-"`
-	HTTPCorsOrigins     []string `mapstructure:"http_cors_origins" json:"-"`
-	DatabaseDSN         string   `mapstructure:"database_dsn" json:"-"`
-	DatabaseAutoMigrate bool     `mapstructure:"database_auto_migrate" json:"-"`
-	DatabaseLogQueries  bool     `mapstructure:"database_log_queries" json:"-"`
-	PrometheusEnabled   bool     `mapstructure:"prometheus_enabled" json:"-"`
-	PProfEnabled        bool     `mapstructure:"pprof_enabled" json:"-"`
+	Owner               string            `mapstructure:"owner" json:"-"`
+	SteamKey            string            `mapstructure:"steam_key" json:"-"`
+	ExternalURL         string            `mapstructure:"external_url" json:"-"`
+	HTTPHost            string            `mapstructure:"http_host" json:"-"`
+	HTTPPort            uint16            `mapstructure:"http_port" json:"-"`
+	HTTPStaticPath      string            `mapstructure:"http_static_path" json:"-"`
+	HTTPCookieKey       string            `mapstructure:"http_cookie_key" json:"-"`
+	HTTPClientTimeout   int               `mapstructure:"http_client_timeout" json:"-"`
+	HTTPCORSEnabled     bool              `mapstructure:"http_cors_enabled"  json:"-"`
+	HTTPCorsOrigins     []string          `mapstructure:"http_cors_origins" json:"-"`
+	DatabaseDSN         string            `mapstructure:"database_dsn" json:"-"`
+	DatabaseAutoMigrate bool              `mapstructure:"database_auto_migrate" json:"-"`
+	DatabaseLogQueries  bool              `mapstructure:"database_log_queries" json:"-"`
+	PrometheusEnabled   bool              `mapstructure:"prometheus_enabled" json:"-"`
+	PProfEnabled        bool              `mapstructure:"pprof_enabled" json:"-"`
+	Clientprefs         *sourcemod.Config `mapstructure:"clientprefs" json:"-"`
 }
 
 // Addr returns the address in host:port format.
@@ -87,7 +88,6 @@ type Config struct {
 	Demo        *demo.Config
 	Filters     *chat.Config
 	Discord     *discord.Config
-	Clientprefs *sourcemod.Config
 	Log         *log.Config
 	GeoLocation *ip2location.Config
 	Patreon     *patreon.Config
@@ -191,6 +191,10 @@ type Configuration struct {
 }
 
 func NewConfiguration(ctx context.Context, static Static, repository Repo) (*Configuration, error) {
+	if static.Clientprefs == nil {
+		static.Clientprefs = &sourcemod.Config{}
+	}
+
 	conf := &Configuration{
 		static:     static,
 		repository: repository,
@@ -200,7 +204,6 @@ func NewConfiguration(ctx context.Context, static Static, repository Repo) (*Con
 			Debug:       &Debug{},
 			Filters:     &chat.Config{},
 			Discord:     &discord.Config{},
-			Clientprefs: &sourcemod.Config{},
 			Demo:        &demo.Config{},
 			Log:         &log.Config{},
 			GeoLocation: &ip2location.Config{},
