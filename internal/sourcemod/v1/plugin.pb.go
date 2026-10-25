@@ -889,8 +889,9 @@ func (x *SMPlayerStatsRequest) GetSteamId() string {
 type SMPlayerStatsBucket struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
 	TimeBucket *v12.TimeBucket        `protobuf:"varint,1,opt,name=time_bucket,json=timeBucket,enum=stats.v1.TimeBucket" json:"time_bucket,omitempty"`
-	// rank is the player's position in the kills leaderboard for this window,
-	// 0 when they do not meet the leaderboard's minimum sample size.
+	// rank is the player's position in the overall (points) leaderboard for this
+	// window, matching the website's default overall view; 0 when they do not
+	// meet the leaderboard's minimum sample size.
 	Rank *uint64 `protobuf:"varint,2,opt,name=rank" json:"rank,omitempty"`
 	// kills is the player's total kills in this window.
 	Kills         *uint64 `protobuf:"varint,3,opt,name=kills" json:"kills,omitempty"`

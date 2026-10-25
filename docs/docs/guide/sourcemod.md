@@ -14,8 +14,9 @@ This covers functionality available through the gbans plugin as well as some rec
 | gb_version |              | Shows the current plugin version.                                                    |
 | report     |              | Report a user.                                                                       |
 | seed       |              | Send a seed request to discord, and reply to the player with the request status.     |
-| stats      |              | Opens a menu of your kills and kills-leaderboard rank for each time window (today,   |
-|            |              | week, month, year and all time). Limited to one use per player every five minutes.   |
+| stats      |              | Opens a menu of your overall rank (matching the website's default overall view) and  |
+|            |              | kills for each time window (today, week, month, year and all time). Limited to one   |
+|            |              | use per player every five minutes.                                                   |
 
 ## Convars
 

@@ -342,8 +342,9 @@ func (r Repository) MyIndex(ctx context.Context, opts Opts, steamID steamid.Stea
 		Where(constraints))
 }
 
-// PlayerKillsAndRank returns steamID's kills and their kills-leaderboard rank
-// for the window described by opts. opts.Variant must be VariantKills. The
+// PlayerKillsAndRank returns steamID's kills and their rank for the window
+// described by opts, ranked by the variant's rank column: the overall/points
+// rank for VariantOverallUnspecified, the kills rank for VariantKills. The
 // rank is 0 when the player has fewer than MinKills kills in the window, even
 // though kills itself is always reported.
 func (r Repository) PlayerKillsAndRank(ctx context.Context, opts Opts, steamID steamid.SteamID) (uint64, uint64, error) {

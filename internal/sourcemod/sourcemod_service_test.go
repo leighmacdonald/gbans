@@ -962,7 +962,7 @@ func TestPluginServiceSMSeed(t *testing.T) {
 }
 
 // TestPluginServiceSMPlayerStats covers the in-game /stats lookup: the
-// response shape, the kills and kills-leaderboard rank per time window, and
+// response shape, the overall (points) rank and kills per time window, and
 // the per-player five-minute cooldown.
 func TestPluginServiceSMPlayerStats(t *testing.T) {
 	harness := newRPCHarness(t)
@@ -975,9 +975,10 @@ func TestPluginServiceSMPlayerStats(t *testing.T) {
 	demo, errDemo := json.Decode[demoparse.Demo](demoJSON)
 	require.NoError(t, errDemo)
 
-	// Per-player total kills across the demo's rounds, the same aggregation
-	// the summary views use.
+	// Per-player total kills and points across the demo's rounds, the same
+	// aggregation the summary views use.
 	killsByPlayer := map[steamid.SteamID]uint64{}
+	pointsByPlayer := map[steamid.SteamID]uint64{}
 	for _, round := range demo.Rounds {
 		for _, player := range round.Players {
 			sid := steamid.New(player.SteamID)
@@ -985,7 +986,8 @@ func TestPluginServiceSMPlayerStats(t *testing.T) {
 				continue
 			}
 			fixture.CreateTestPerson(ctx, sid)
-			killsByPlayer[sid] += uint64(player.Kills) //nolint:gosec // parser counts are non-negative.
+			killsByPlayer[sid] += uint64(player.Kills)   //nolint:gosec // parser counts are non-negative.
+			pointsByPlayer[sid] += uint64(player.Points) //nolint:gosec // parser counts are non-negative.
 		}
 	}
 
@@ -1000,14 +1002,17 @@ func TestPluginServiceSMPlayerStats(t *testing.T) {
 	require.NoError(t, errImport)
 	require.NoError(t, harness.stats.RefreshViews(ctx))
 
+	// The top-points player leads the overall (points) leaderboard in every
+	// window of the seeded match; tied leaders share rank 1.
 	var topPlayer steamid.SteamID
-	var topKills uint64
-	for sid, kills := range killsByPlayer {
-		if kills > topKills {
-			topKills = kills
+	var topPoints uint64
+	for sid, points := range pointsByPlayer {
+		if points > topPoints {
+			topPoints = points
 			topPlayer = sid
 		}
 	}
+	topKills := killsByPlayer[topPlayer]
 	require.GreaterOrEqual(t, topKills, uint64(stats.MinKills))
 
 	t.Run("unauthenticated", func(t *testing.T) {
@@ -1042,8 +1047,8 @@ func TestPluginServiceSMPlayerStats(t *testing.T) {
 		for idx, want := range wantBuckets {
 			bucket := resp.GetBuckets()[idx]
 			require.Equal(t, want, bucket.GetTimeBucket(), "bucket %d", idx)
-			// The top-kills player leads the kills leaderboard in every window
-			// of the seeded match, and tied leaders share rank 1.
+			// The top-points player leads the overall leaderboard in every
+			// window of the seeded match, and tied leaders share rank 1.
 			require.Equal(t, uint64(1), bucket.GetRank(), "rank %s", want)
 			require.Equal(t, topKills, bucket.GetKills(), "kills %s", want)
 		}
