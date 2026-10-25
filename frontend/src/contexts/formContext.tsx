@@ -26,6 +26,7 @@ const SelectPermissionsField = lazy(() => import("../component/form/field/Select
 const SelectDiscordRolesField = lazy(() => import("../component/form/field/SelectDiscordRolesField.tsx"));
 const SteamIDField = lazy(() => import("../component/form/field/SteamIDField.tsx"));
 const TextField = lazy(() => import("../component/form/field/TextField.tsx"));
+const TriStateField = lazy(() => import("../component/form/field/TriStateField.tsx"));
 const SelectBucketField = lazy(() => import("../component/form/field/SelectBucketField.tsx"));
 const SelectSelectStringField = lazy(() => import("../component/form/field/SelectStringField.tsx"));
 const SelectOverrideTypeField = lazy(() => import("../component/form/field/SelectOverrideTypeField.tsx"));
@@ -71,6 +72,7 @@ export const { useAppForm, withForm } = createFormHook({
 		SelectForumCategoryField,
 		SelectOverrideAccessField,
 		TextField,
+		TriStateField,
 	},
 	formComponents: {
 		SubmitButton,

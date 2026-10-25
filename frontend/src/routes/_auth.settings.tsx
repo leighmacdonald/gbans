@@ -36,7 +36,8 @@ import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { DiscordOAuthService } from "../rpc/discord/oauth/v1/discord_pb.ts";
 import { profile as profileQuery } from "../rpc/discord/oauth/v1/discord-DiscordOAuthService_connectquery.ts";
 import { PatreonService } from "../rpc/patreon/v1/patreon_pb.ts";
-import type { Settings } from "../rpc/person/v1/person_pb.ts";
+import type { ClientPref, Settings } from "../rpc/person/v1/person_pb.ts";
+import { ClientPrefType } from "../rpc/person/v1/person_pb.ts";
 import { editProfileSettings, profileSettings } from "../rpc/person/v1/person-PersonService_connectquery.ts";
 import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { finalTransport } from "../transport.ts";
@@ -90,13 +91,13 @@ function ProfileSettings() {
 	};
 
 	const onSave = useCallback(
-		async (settings: Settings) => {
+		async (settings: Settings, clientPrefs: Record<string, string>) => {
 			return await mutation.mutateAsync({
 				forumProfileMessages: settings.forumProfileMessages,
 				forumSignature: settings.forumSignature,
 				statsHidden: settings.statsHidden,
-				centerProjectiles: settings.centerProjectiles,
 				matchNotifications: settings.matchNotifications,
+				clientPrefs,
 			});
 		},
 		[mutation.mutateAsync],
@@ -146,7 +147,13 @@ function ProfileSettings() {
 					</Stack>
 				</Grid>
 				<GeneralSection tab={tab} settings={data?.settings} onSave={onSave} />
-				<GameplaySection tab={tab} settings={data?.settings} onSave={onSave} />
+				<GameplaySection
+					tab={tab}
+					settings={data?.settings}
+					clientPrefsEnabled={data?.clientPrefsEnabled}
+					clientPrefs={data?.clientPrefs}
+					onSave={onSave}
+				/>
 				{hasPermission(Permission.FORUM_EDIT) && (
 					<ForumSection tab={tab} settings={data?.settings} onSave={onSave} />
 				)}
@@ -168,7 +175,7 @@ const GeneralSection = ({
 }: {
 	tab: userSettingTabs;
 	settings: Settings;
-	onSave: (s: Settings) => void;
+	onSave: (s: Settings, prefs: Record<string, string>) => void;
 }) => {
 	const [notifPerms, setNotifPerms] = useState(Notification.permission);
 
@@ -178,7 +185,7 @@ const GeneralSection = ({
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			onSave({ ...settings, ...value });
+			onSave({ ...settings, ...value }, {});
 		},
 		defaultValues: {
 			statsHidden: settings.statsHidden,
@@ -315,23 +322,83 @@ const GeneralSection = ({
 	);
 };
 
+// Clientpref values live in the sourcemod cookie cache as strings: booleans
+// are "1"/"0" and an empty value removes the override so the server default
+// applies.
+const boolWireToForm = (value: string) => (value === "1" ? "on" : value === "0" ? "off" : "default");
+const boolFormToWire = (value: string) => (value === "on" ? "1" : value === "off" ? "0" : "");
+
+const clientPrefLabel = (pref: ClientPref) => {
+	if (pref.description) {
+		return pref.description;
+	}
+
+	return pref.name.replaceAll("_", " ").replace(/^\w/, (c) => c.toUpperCase());
+};
+
+const clientPrefHint = (pref: ClientPref) => {
+	if (!pref.editable) {
+		return "This setting is read-only.";
+	}
+
+	if (pref.type === ClientPrefType.BOOLEAN) {
+		return "Default leaves the choice to the server.";
+	}
+
+	return "Leave empty to use the server default.";
+};
+
+const clientPrefValidator = (pref: ClientPref) => {
+	if (pref.type === ClientPrefType.BOOLEAN) {
+		return z.enum(["on", "default", "off"]);
+	}
+
+	if (pref.type === ClientPrefType.NUMBER) {
+		return z.string().refine((v) => v === "" || /^\d+$/.test(v), "Enter a whole number");
+	}
+
+	return z.string().max(100);
+};
+
 const GameplaySection = ({
 	tab,
 	settings,
+	clientPrefsEnabled,
+	clientPrefs,
 	onSave,
 }: {
 	tab: userSettingTabs;
 	settings: Settings;
-	onSave: (s: Settings) => void;
+	clientPrefsEnabled: boolean;
+	clientPrefs: ClientPref[];
+	onSave: (s: Settings, prefs: Record<string, string>) => void;
 }) => {
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			onSave({ ...settings, ...value });
+			const prefs: Record<string, string> = {};
+			for (const pref of clientPrefs) {
+				const v = value[pref.name] ?? "";
+				prefs[pref.name] = pref.type === ClientPrefType.BOOLEAN ? boolFormToWire(v) : v;
+			}
+			onSave(settings, prefs);
 		},
-		defaultValues: {
-			centerProjectiles: settings.centerProjectiles,
-		},
+		defaultValues: Object.fromEntries(
+			clientPrefs.map((p) => [p.name, p.type === ClientPrefType.BOOLEAN ? boolWireToForm(p.value) : p.value]),
+		),
 	});
+
+	if (!clientPrefsEnabled) {
+		return (
+			<TabSection
+				tab={"game"}
+				currentTab={tab}
+				label={"Gameplay"}
+				description={"Configure your in-game clientprefs"}
+			>
+				<Typography>In-game clientprefs are disabled on this server.</Typography>
+			</TabSection>
+		);
+	}
 
 	return (
 		<TabSection tab={"game"} currentTab={tab} label={"Gameplay"} description={"Configure your in-game clientprefs"}>
@@ -343,15 +410,37 @@ const GameplaySection = ({
 				}}
 			>
 				<Grid container spacing={2}>
-					<Grid size={{ xs: 12 }}>
-						<form.AppField
-							name={"centerProjectiles"}
-							children={(field) => {
-								return <field.CheckboxField label={"Use center projectiles"} />;
-							}}
-						/>
-						<SubHeading>Applies to all projectile weapons</SubHeading>
-					</Grid>
+					{clientPrefs.map((pref) => {
+						return (
+							<Grid key={pref.name} size={{ xs: 12 }}>
+								<form.AppField
+									name={pref.name}
+									validators={{
+										onChange: clientPrefValidator(pref),
+									}}
+									children={(field) => {
+										if (pref.type === ClientPrefType.BOOLEAN) {
+											return (
+												<field.TriStateField
+													label={clientPrefLabel(pref)}
+													disabled={!pref.editable}
+												/>
+											);
+										}
+
+										return (
+											<field.TextField
+												label={clientPrefLabel(pref)}
+												disabled={!pref.editable}
+												maxLength={100}
+											/>
+										);
+									}}
+								/>
+								<SubHeading>{clientPrefHint(pref)}</SubHeading>
+							</Grid>
+						);
+					})}
 
 					<Grid size={{ xs: 12 }}>
 						<form.AppForm>
@@ -374,11 +463,11 @@ const ForumSection = ({
 }: {
 	tab: userSettingTabs;
 	settings: Settings;
-	onSave: (s: Settings) => void;
+	onSave: (s: Settings, prefs: Record<string, string>) => void;
 }) => {
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			onSave({ ...settings, ...value });
+			onSave({ ...settings, ...value }, {});
 		},
 		defaultValues: {
 			forumSignature: settings.forumSignature,
@@ -449,7 +538,7 @@ const ConnectionsSection = ({
 }: {
 	tab: userSettingTabs;
 	settings: Settings;
-	onSave: (s: Settings) => void;
+	onSave: (s: Settings, prefs: Record<string, string>) => void;
 	patreonId: string;
 }) => {
 	const queryClient = useQueryClient();

@@ -91,7 +91,6 @@ message Settings {
   bool forum_profile_messages = 4 [(buf.validate.field).required = true];
   bool stats_hidden = 5 [(buf.validate.field).required = true];
   reserved 6;
-  reserved "center_projectiles";
   google.protobuf.Timestamp created_on = 7 [(buf.validate.field).required = true];
   google.protobuf.Timestamp updated_on = 8 [(buf.validate.field).required = true];
   bool match_notifications = 9 [(buf.validate.field).required = true];
@@ -102,7 +101,6 @@ message EditProfileSettingsRequest {
   bool forum_profile_messages = 2 [(buf.validate.field).required = true];
   bool stats_hidden = 3 [(buf.validate.field).required = true];
   reserved 4;
-  reserved "center_projectiles";
   bool match_notifications = 5 [(buf.validate.field).required = true];
   map<string, string> client_prefs = 6;
 }
