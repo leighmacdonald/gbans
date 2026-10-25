@@ -96,6 +96,10 @@ func TestClientPrefs(t *testing.T) {
 	require.NotContains(t, byName, "latest_class")
 	require.Equal(t, person.ClientPrefTypeBoolean, byName["tfdb_speedhud_pref"].Type)
 	require.Equal(t, person.ClientPrefTypeNumber, byName["fov_override"].Type)
+	require.Equal(t, int32(20), byName["fov_override"].Min)
+	require.Equal(t, int32(130), byName["fov_override"].Max)
+	require.Zero(t, byName["tfdb_speedhud_pref"].Min)
+	require.Zero(t, byName["tfdb_speedhud_pref"].Max)
 	require.True(t, byName["tfdb_speedhud_pref"].Editable())
 	require.True(t, byName["fov_override"].Editable())
 	require.False(t, byName["no_motd"].Editable())
@@ -141,6 +145,17 @@ func TestClientPrefs(t *testing.T) {
 
 	require.ErrorIs(t, repo.SaveClientPrefs(t.Context(), sid,
 		map[string]string{"fov_override": "abc"}), person.ErrClientPrefInvalidValue)
+
+	// Numeric values must be within the pref's inclusive bounds.
+	for _, outOfRange := range []string{"19", "131"} {
+		require.ErrorIs(t, repo.SaveClientPrefs(t.Context(), sid,
+			map[string]string{"fov_override": outOfRange}), person.ErrClientPrefValueOutOfRange)
+	}
+
+	for _, inRange := range []string{"20", "130"} {
+		require.NoError(t, repo.SaveClientPrefs(t.Context(), sid,
+			map[string]string{"fov_override": inRange}))
+	}
 
 	longValue := stringutil.SecureRandomString(101)
 	require.ErrorIs(t, repo.SaveClientPrefs(t.Context(), sid,

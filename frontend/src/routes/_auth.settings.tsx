@@ -345,6 +345,10 @@ const clientPrefHint = (pref: ClientPref) => {
 		return "Default leaves the choice to the server.";
 	}
 
+	if (pref.type === ClientPrefType.NUMBER && pref.min > 0 && pref.max > 0) {
+		return `Allowed values are ${pref.min} to ${pref.max}. Leave empty to use the server default.`;
+	}
+
 	return "Leave empty to use the server default.";
 };
 
@@ -354,7 +358,20 @@ const clientPrefValidator = (pref: ClientPref) => {
 	}
 
 	if (pref.type === ClientPrefType.NUMBER) {
-		return z.string().refine((v) => v === "" || /^\d+$/.test(v), "Enter a whole number");
+		const message =
+			pref.min > 0 && pref.max > 0
+				? `Enter a whole number between ${pref.min} and ${pref.max}`
+				: "Enter a whole number";
+
+		return z.string().refine((v) => {
+			if (v === "" || !/^\d+$/.test(v)) {
+				return false;
+			}
+
+			const n = Number(v);
+
+			return (pref.min === 0 || n >= pref.min) && (pref.max === 0 || n <= pref.max);
+		}, message);
 	}
 
 	return z.string().max(100);

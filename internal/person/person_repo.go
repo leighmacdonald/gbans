@@ -225,6 +225,7 @@ func (r *Repository) ClientPrefs(ctx context.Context, steamID steamid.SteamID) (
 		}
 
 		pref.Type = clientPrefType(pref.Name)
+		pref.Min, pref.Max = clientPrefBounds(pref.Name)
 		prefs = append(prefs, pref)
 	}
 
@@ -302,8 +303,13 @@ func validateClientPrefValue(name string, value string) error {
 			return ErrClientPrefInvalidValue
 		}
 	case ClientPrefTypeNumber:
-		if _, errNumber := strconv.Atoi(value); errNumber != nil {
+		number, errNumber := strconv.Atoi(value)
+		if errNumber != nil {
 			return ErrClientPrefInvalidValue
+		}
+
+		if minValue, maxValue := clientPrefBounds(name); (minValue > 0 && number < int(minValue)) || (maxValue > 0 && number > int(maxValue)) {
+			return fmt.Errorf("%w: must be between %d and %d", ErrClientPrefValueOutOfRange, minValue, maxValue)
 		}
 	}
 

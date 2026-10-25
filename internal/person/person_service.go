@@ -205,7 +205,7 @@ func toClientPrefs(prefs []ClientPref) []*v1.ClientPref {
 			prefType = v1.ClientPrefType_CLIENT_PREF_TYPE_TEXT
 		}
 
-		out = append(out, &v1.ClientPref{
+		clientPref := &v1.ClientPref{
 			CookieId:    new(pref.CookieID),
 			Name:        new(pref.Name),
 			Description: new(pref.Description),
@@ -213,7 +213,17 @@ func toClientPrefs(prefs []ClientPref) []*v1.ClientPref {
 			Type:        prefType.Enum(),
 			Value:       new(pref.Value),
 			Editable:    new(pref.Editable()),
-		})
+		}
+
+		if pref.Min != 0 {
+			clientPref.Min = new(pref.Min)
+		}
+
+		if pref.Max != 0 {
+			clientPref.Max = new(pref.Max)
+		}
+
+		out = append(out, clientPref)
 	}
 
 	return out
