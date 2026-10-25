@@ -87,6 +87,7 @@ function ProfileSettings() {
 				forumProfileMessages: settings.forumProfileMessages,
 				forumSignature: settings.forumSignature,
 				statsHidden: settings.statsHidden,
+				matchNotifications: settings.matchNotifications,
 			});
 		},
 		[mutation.mutateAsync],
@@ -148,6 +149,7 @@ function ProfileSettings() {
 
 type GeneralProps = {
 	statsHidden: boolean;
+	matchNotifications: boolean;
 };
 
 const GeneralSection = ({
@@ -171,6 +173,7 @@ const GeneralSection = ({
 		},
 		defaultValues: {
 			statsHidden: settings.statsHidden,
+			matchNotifications: settings.matchNotifications,
 		} as GeneralProps,
 	});
 
@@ -270,6 +273,24 @@ const GeneralSection = ({
 							}}
 						/>
 						<SubHeading>It is still viewable by yourself.</SubHeading>
+					</Grid>
+
+					<Grid size={{ xs: 12 }}>
+						<form.AppField
+							name={"matchNotifications"}
+							validators={{
+								onChange: z.boolean(),
+							}}
+							children={(field) => {
+								return (
+									<field.CheckboxField label={"Notify me in-game when my match results are ready"} />
+								);
+							}}
+						/>
+						<SubHeading>
+							Sends a private message with a link to the match after it has been imported. Only sent while
+							you are still connected to one of the servers.
+						</SubHeading>
 					</Grid>
 
 					<Grid size={{ xs: 12 }}>

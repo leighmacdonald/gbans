@@ -49,6 +49,13 @@ type Stats struct {
 
 	notifier          notification.Notifier
 	matchLogChannelID string
+	matchNotifier     MatchNotifier
+}
+
+// MatchNotifier delivers in-game notifications to match participants after a
+// match is successfully imported.
+type MatchNotifier interface {
+	NotifyMatch(ctx context.Context, match *Match)
 }
 
 // Option configures optional Stats dependencies.
@@ -60,6 +67,14 @@ func WithMatchLogNotifications(notifier notification.Notifier, channelID string)
 	return func(s *Stats) {
 		s.notifier = notifier
 		s.matchLogChannelID = channelID
+	}
+}
+
+// WithMatchPlayerNotifications enables sending in-game notifications to match
+// participants who opted in and are still connected to one of the servers.
+func WithMatchPlayerNotifications(notifier MatchNotifier) Option {
+	return func(s *Stats) {
+		s.matchNotifier = notifier
 	}
 }
 
@@ -467,6 +482,10 @@ func (s Stats) Import(ctx context.Context, serverID int32, demoID int32, demo *d
 
 	if s.notifier != nil && s.matchLogChannelID != "" {
 		s.notifier.Send(notification.NewDiscord(s.matchLogChannelID, MatchMessage(*match)))
+	}
+
+	if s.matchNotifier != nil {
+		s.matchNotifier.NotifyMatch(ctx, match)
 	}
 
 	slog.Info("Got match", slog.String("match", match.Hostname))

@@ -171,7 +171,7 @@ func (r *Repository) Settings(ctx context.Context, steamID steamid.SteamID) (Set
 
 	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
 		Select("person_settings_id", "forum_signature", "forum_profile_messages",
-			"stats_hidden", "created_on", "updated_on").
+			"stats_hidden", "match_notifications", "created_on", "updated_on").
 		From("person_settings").
 		Where(sq.Eq{"steam_id": steamID.Int64()}))
 
@@ -182,7 +182,8 @@ func (r *Repository) Settings(ctx context.Context, steamID steamid.SteamID) (Set
 	settings.SteamID = steamID
 
 	if errScan := row.Scan(&settings.PersonSettingsID, &settings.ForumSignature,
-		&settings.ForumProfileMessages, &settings.StatsHidden, &settings.CreatedOn, &settings.UpdatedOn); errScan != nil {
+		&settings.ForumProfileMessages, &settings.StatsHidden, &settings.MatchNotifications,
+		&settings.CreatedOn, &settings.UpdatedOn); errScan != nil {
 		if errors.Is(database.Err(errScan), database.ErrNoResult) {
 			settings.ForumProfileMessages = true
 
@@ -261,6 +262,7 @@ func (r *Repository) SaveSettings(ctx context.Context, settings *Settings) error
 				"forum_signature":        settings.ForumSignature,
 				"forum_profile_messages": settings.ForumProfileMessages,
 				"stats_hidden":           settings.StatsHidden,
+				"match_notifications":    settings.MatchNotifications,
 				"created_on":             settings.CreatedOn,
 				"updated_on":             settings.UpdatedOn,
 			}).
@@ -273,6 +275,7 @@ func (r *Repository) SaveSettings(ctx context.Context, settings *Settings) error
 				"forum_signature":        settings.ForumSignature,
 				"forum_profile_messages": settings.ForumProfileMessages,
 				"stats_hidden":           settings.StatsHidden,
+				"match_notifications":    settings.MatchNotifications,
 				"updated_on":             settings.UpdatedOn,
 			}).
 			Where(sq.Eq{"steam_id": settings.SteamID.Int64()})))
