@@ -68,20 +68,26 @@ console. With a message like below on successful authentication with the server.
 
 ## Clientprefs
 
-Clientprefs are in-game settings that players can toggle from the Gameplay tab of their profile
-settings page.
+Clientprefs are in-game settings that players manage from the Gameplay tab of their profile
+settings page. A player's choice is written to their sourcemod cookie cache and applied by
+sourcemod on connect.
 
 ```yaml
-# When enabled, the player's "Use center projectiles" choice is written to
-# their sourcemod cookie cache (tf2centerprojectiles) and applied by
-# sourcemod on connect.
-clientprefs:
-  center_projectiles: true
+# Enables the in-game clientprefs section of the profile settings page.
+clientprefs_enabled: true
 ```
 
-These values are only read from `gbans.yml`. They cannot be changed through the admin web app and
-require a service restart to take effect. When `center_projectiles` is disabled (the default) the
-setting is still shown to players, but their choice is not persisted to the cookie cache.
+This value is only read from `gbans.yml`. It cannot be changed through the admin web app and
+requires a service restart to take effect. When disabled the Gameplay tab is shown but no
+clientprefs are listed or saved.
+
+The settings available to players come from the `sm_cookies` table. Access levels control what a
+player can do with each cookie:
+
+- **Public** cookies are editable by the player. Boolean options are three-state (on, off, or
+  default, which removes the player's override).
+- **Protected** cookies are shown to the player read-only.
+- **Private** cookies are never exposed to players.
 
 ## Discord
 

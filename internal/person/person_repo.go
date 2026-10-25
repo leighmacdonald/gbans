@@ -263,7 +263,7 @@ ON CONFLICT (player, cookie_id)
 DO UPDATE SET value = EXCLUDED.value, timestamp = EXCLUDED.timestamp`
 	)
 
-	return r.WrapTx(ctx, func(tx pgx.Tx) error {
+	return r.WrapTx(ctx, func(transaction pgx.Tx) error {
 		for name, value := range values {
 			if utf8.RuneCountInString(value) > 100 {
 				return ErrClientPrefValueTooLong
@@ -275,14 +275,14 @@ DO UPDATE SET value = EXCLUDED.value, timestamp = EXCLUDED.timestamp`
 
 			player := steamID.Steam(false)
 			if value == "" {
-				if _, errDelete := tx.Exec(ctx, deleteQuery, player, name); errDelete != nil {
+				if _, errDelete := transaction.Exec(ctx, deleteQuery, player, name); errDelete != nil {
 					return errDelete //nolint:wrapcheck
 				}
 
 				continue
 			}
 
-			if _, errUpsert := tx.Exec(ctx, upsertQuery, player, value, name); errUpsert != nil {
+			if _, errUpsert := transaction.Exec(ctx, upsertQuery, player, value, name); errUpsert != nil {
 				return errUpsert //nolint:wrapcheck
 			}
 		}

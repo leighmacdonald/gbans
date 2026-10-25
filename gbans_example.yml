@@ -56,14 +56,11 @@ http_cookie_key: change_me
 # Enabled prometheus exports at /metrics
 # prometheus_enabled: false
 
-# Clientprefs are in-game settings a player can toggle from the Gameplay tab
-# of their profile settings page. When center_projectiles is enabled, the
-# player's choice is written to their sourcemod cookie cache
-# (tf2centerprojectiles) and applied by sourcemod on connect. When disabled
-# (the default) the setting is shown to players but their choice is not
-# persisted to the cookie cache.
-# clientprefs:
-#   center_projectiles: true
+# Clientprefs are in-game settings a player manages from the Gameplay tab of
+# their profile settings page. Their choices are written to the sourcemod
+# cookie cache and applied by sourcemod on connect. When disabled, no
+# clientprefs are listed or saved (enabled by default).
+# clientprefs_enabled: true
 
 # Enabled pprof support. See: https://pkg.go.dev/net/http/pprof#Handler
 # pprof_enabled: false

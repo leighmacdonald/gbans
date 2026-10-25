@@ -111,11 +111,25 @@ func (s Service) ProfileSettings(ctx context.Context, _ *emptypb.Empty) (*v1.Pro
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	return &v1.ProfileSettingsResponse{Settings: toUserSettings(settings)}, nil
+	clientPrefs, err := s.persons.GetPersonClientPrefs(ctx, user.GetSteamID())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	return &v1.ProfileSettingsResponse{
+		Settings:           toUserSettings(settings),
+		ClientPrefsEnabled: new(s.persons.ClientPrefsEnabled()),
+		ClientPrefs:        toClientPrefs(clientPrefs),
+	}, nil
 }
 
 func (s Service) EditProfileSettings(ctx context.Context, req *v1.EditProfileSettingsRequest) (*v1.EditProfileSettingsResponse, error) {
 	user := rpc.UserInfoFromCtx(ctx)
+
+	if errSave := s.persons.SavePersonClientPrefs(ctx, user.GetSteamID(), req.GetClientPrefs()); errSave != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errSave)
+	}
+
 	settings, err := s.persons.SavePersonSettings(ctx, user, SettingsUpdate{
 		ForumSignature:       req.GetForumSignature(),
 		ForumProfileMessages: req.GetForumProfileMessages(),
@@ -126,7 +140,16 @@ func (s Service) EditProfileSettings(ctx context.Context, req *v1.EditProfileSet
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
-	return &v1.EditProfileSettingsResponse{Settings: toUserSettings(settings)}, nil
+	clientPrefs, err := s.persons.GetPersonClientPrefs(ctx, user.GetSteamID())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	return &v1.EditProfileSettingsResponse{
+		Settings:           toUserSettings(settings),
+		ClientPrefsEnabled: new(s.persons.ClientPrefsEnabled()),
+		ClientPrefs:        toClientPrefs(clientPrefs),
+	}, nil
 }
 
 func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResponse, error) {
@@ -166,6 +189,34 @@ func toUserSettings(settings Settings) *v1.Settings {
 		CreatedOn:            timestamppb.New(settings.CreatedOn),
 		UpdatedOn:            timestamppb.New(settings.UpdatedOn),
 	}
+}
+
+func toClientPrefs(prefs []ClientPref) []*v1.ClientPref {
+	out := make([]*v1.ClientPref, 0, len(prefs))
+
+	for _, pref := range prefs {
+		prefType := v1.ClientPrefType_CLIENT_PREF_TYPE_UNSPECIFIED
+		switch pref.Type {
+		case ClientPrefTypeBoolean:
+			prefType = v1.ClientPrefType_CLIENT_PREF_TYPE_BOOLEAN
+		case ClientPrefTypeNumber:
+			prefType = v1.ClientPrefType_CLIENT_PREF_TYPE_NUMBER
+		case ClientPrefTypeText:
+			prefType = v1.ClientPrefType_CLIENT_PREF_TYPE_TEXT
+		}
+
+		out = append(out, &v1.ClientPref{
+			CookieId:    new(pref.CookieID),
+			Name:        new(pref.Name),
+			Description: new(pref.Description),
+			Access:      new(pref.Access),
+			Type:        prefType.Enum(),
+			Value:       new(pref.Value),
+			Editable:    new(pref.Editable()),
+		})
+	}
+
+	return out
 }
 
 func toPersonCore(core *Person) *v1.PersonCore {

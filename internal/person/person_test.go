@@ -71,6 +71,101 @@ func TestPerson(t *testing.T) {
 	require.Equal(t, fetched.DiscordID, steamID.DiscordID)
 }
 
+func TestClientPrefs(t *testing.T) {
+	const setupQuery = `
+		INSERT INTO sm_cookies (name, description, access) VALUES
+			('tfdb_speedhud_pref', 'Toggle for the Dodgeball Speed HUD', 0),
+			('fov_override', 'FOV', 0),
+			('no_motd', 'No MOTD', 1),
+			('latest_class', 'Latest class', 2);`
+	require.NoError(t, fixture.Database.Exec(t.Context(), setupQuery))
+
+	sid := steamid.RandSID64()
+	repo := person.NewRepository(fixture.Database, true)
+
+	prefs, err := repo.ClientPrefs(t.Context(), sid)
+	require.NoError(t, err)
+	require.Len(t, prefs, 3)
+
+	byName := make(map[string]person.ClientPref)
+	for _, p := range prefs {
+		byName[p.Name] = p
+	}
+
+	// Private cookies are never returned, protected ones are read-only.
+	require.NotContains(t, byName, "latest_class")
+	require.Equal(t, person.ClientPrefTypeBoolean, byName["tfdb_speedhud_pref"].Type)
+	require.Equal(t, person.ClientPrefTypeNumber, byName["fov_override"].Type)
+	require.True(t, byName["tfdb_speedhud_pref"].Editable())
+	require.True(t, byName["fov_override"].Editable())
+	require.False(t, byName["no_motd"].Editable())
+
+	// Public values are persisted; protected and private names are ignored.
+	require.NoError(t, repo.SaveClientPrefs(t.Context(), sid, map[string]string{
+		"tfdb_speedhud_pref": "1",
+		"fov_override":       "110",
+		"no_motd":            "1",
+		"latest_class":       "1",
+	}))
+
+	prefs, err = repo.ClientPrefs(t.Context(), sid)
+	require.NoError(t, err)
+	byName = make(map[string]person.ClientPref)
+	for _, p := range prefs {
+		byName[p.Name] = p
+	}
+
+	require.Equal(t, "1", byName["tfdb_speedhud_pref"].Value)
+	require.Equal(t, "110", byName["fov_override"].Value)
+	require.Empty(t, byName["no_motd"].Value)
+
+	// An empty value removes the player's override.
+	require.NoError(t, repo.SaveClientPrefs(t.Context(), sid, map[string]string{
+		"fov_override": "",
+	}))
+
+	prefs, err = repo.ClientPrefs(t.Context(), sid)
+	require.NoError(t, err)
+	byName = make(map[string]person.ClientPref)
+	for _, p := range prefs {
+		byName[p.Name] = p
+	}
+
+	require.Empty(t, byName["fov_override"].Value)
+
+	// Values are validated against the cookie's type.
+	for _, invalid := range []string{"true", "2", "1.5"} {
+		require.ErrorIs(t, repo.SaveClientPrefs(t.Context(), sid,
+			map[string]string{"tfdb_speedhud_pref": invalid}), person.ErrClientPrefInvalidValue)
+	}
+
+	require.ErrorIs(t, repo.SaveClientPrefs(t.Context(), sid,
+		map[string]string{"fov_override": "abc"}), person.ErrClientPrefInvalidValue)
+
+	longValue := stringutil.SecureRandomString(101)
+	require.ErrorIs(t, repo.SaveClientPrefs(t.Context(), sid,
+		map[string]string{"fov_override": longValue}), person.ErrClientPrefValueTooLong)
+
+	// Disabled repositories expose nothing and accept nothing.
+	disabled := person.NewRepository(fixture.Database, false)
+	disabledPrefs, err := disabled.ClientPrefs(t.Context(), sid)
+	require.NoError(t, err)
+	require.Empty(t, disabledPrefs)
+
+	require.NoError(t, disabled.SaveClientPrefs(t.Context(), sid, map[string]string{
+		"tfdb_speedhud_pref": "0",
+	}))
+
+	prefs, err = repo.ClientPrefs(t.Context(), sid)
+	require.NoError(t, err)
+	byName = make(map[string]person.ClientPref)
+	for _, p := range prefs {
+		byName[p.Name] = p
+	}
+
+	require.Equal(t, "1", byName["tfdb_speedhud_pref"].Value)
+}
+
 func TestRefreshFromSteam(t *testing.T) {
 	personCase := person.NewPersons(person.NewRepository(fixture.Database, true), fixture.TFApi)
 
