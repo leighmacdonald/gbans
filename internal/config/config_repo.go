@@ -18,7 +18,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network/ip2location"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/patreon"
-	"github.com/leighmacdonald/gbans/internal/sourcemod"
 )
 
 type Repo interface {
@@ -92,7 +91,6 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 			Debug:       &Debug{},
 			Filters:     &chat.Config{},
 			Discord:     &discord.Config{},
-			Clientprefs: &sourcemod.Config{},
 			Demo:        &demo.Config{},
 			Log:         &log.Config{},
 			GeoLocation: &ip2location.Config{},

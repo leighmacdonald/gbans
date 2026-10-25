@@ -66,6 +66,23 @@ This config file should be places in `tf/addons/sourcemod/configs/gbans.cfg`.
 The server gbans server is running you should now be able to see the `[GB]` message logs in the
 console. With a message like below on successful authentication with the server.
 
+## Clientprefs
+
+Clientprefs are in-game settings that players can toggle from the Gameplay tab of their profile
+settings page.
+
+```yaml
+# When enabled, the player's "Use center projectiles" choice is written to
+# their sourcemod cookie cache (tf2centerprojectiles) and applied by
+# sourcemod on connect.
+clientprefs:
+  center_projectiles: true
+```
+
+These values are only read from `gbans.yml`. They cannot be changed through the admin web app and
+require a service restart to take effect. When `center_projectiles` is disabled (the default) the
+setting is still shown to players, but their choice is not persisted to the cookie cache.
+
 ## Discord
 
 To use discord you need to [create a discord application](https://discord.com/developers/applications). You will need

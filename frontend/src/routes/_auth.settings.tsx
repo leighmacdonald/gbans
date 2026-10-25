@@ -1,5 +1,5 @@
 import { createClient } from "@connectrpc/connect";
-import { createConnectQueryKey, useMutation, useQuery } from "@connectrpc/connect-query";
+import { createConnectQueryKey, useMutation, useQuery, useTransport } from "@connectrpc/connect-query";
 import { useModal } from "@ebay/nice-modal-react";
 import CableIcon from "@mui/icons-material/Cable";
 import ConstructionIcon from "@mui/icons-material/Construction";
@@ -26,7 +26,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import { z } from "zod/v4";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
-import { mdEditorRef } from "../component/form/field/MarkdownField.tsx";
 import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { SubHeading } from "../component/SubHeading.tsx";
 import { TabButton } from "../component/TabButton.tsx";
@@ -67,10 +66,19 @@ function ProfileSettings() {
 	const navigate = useNavigate();
 
 	const { data, isLoading } = useQuery(profileSettings);
+	const queryClient = useQueryClient();
+	const transport = useTransport();
 
 	const mutation = useMutation(editProfileSettings, {
-		onSuccess: async () => {
-			mdEditorRef.current?.setMarkdown("");
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: createConnectQueryKey({
+					schema: profileSettings,
+					cardinality: "finite",
+					transport,
+					input: {},
+				}),
+			});
 			sendFlash("success", "Updated Settings");
 		},
 		onError: sendError,
@@ -87,6 +95,7 @@ function ProfileSettings() {
 				forumProfileMessages: settings.forumProfileMessages,
 				forumSignature: settings.forumSignature,
 				statsHidden: settings.statsHidden,
+				centerProjectiles: settings.centerProjectiles,
 				matchNotifications: settings.matchNotifications,
 			});
 		},
@@ -320,7 +329,7 @@ const GameplaySection = ({
 			onSave({ ...settings, ...value });
 		},
 		defaultValues: {
-			centerProjectiles: false,
+			centerProjectiles: settings.centerProjectiles,
 		},
 	});
 

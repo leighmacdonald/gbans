@@ -163,6 +163,7 @@ func toUserSettings(settings Settings) *v1.Settings {
 		ForumSignature:       &settings.ForumSignature,
 		ForumProfileMessages: &settings.ForumProfileMessages,
 		StatsHidden:          &settings.StatsHidden,
+		CenterProjectiles:    settings.CenterProjectiles,
 		MatchNotifications:   &settings.MatchNotifications,
 		CreatedOn:            timestamppb.New(settings.CreatedOn),
 		UpdatedOn:            timestamppb.New(settings.UpdatedOn),
