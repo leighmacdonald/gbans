@@ -2,8 +2,8 @@
 
 Here you will find an outline of the various available discord bot commands you can use.
 
-This of course assumes you have discord integration enabled. See [INSTALL.md](../install/install) for details on
-how to enable it.
+This of course assumes you have discord integration enabled. See the [installation guide](../install) for details
+on how to enable it.
 
 ## Overview
 
