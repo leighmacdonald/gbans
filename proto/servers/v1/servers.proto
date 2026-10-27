@@ -14,6 +14,7 @@ service ServersService {
   rpc DeleteServer(DeleteServerRequest) returns (google.protobuf.Empty);
   rpc ServersAdmin(google.protobuf.Empty) returns (ServersAdminResponse);
   rpc QueryLogs(QueryLogsRequest) returns (QueryLogsResponse) {}
+  rpc StreamLogs(StreamLogsRequest) returns (stream StreamLogsResponse) {}
 }
 
 message QueryLogsRequest {
@@ -42,6 +43,110 @@ message ServerLog {
 message QueryLogsResponse {
   repeated ServerLog logs = 1;
   int32 count = 2;
+}
+
+message StreamLogsRequest {
+  int32 server_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  // Maximum number of buffered lines sent before going live. 0 sends the whole buffer.
+  int32 history_limit = 2 [(buf.validate.field).int32.gte = 0];
+}
+
+message StreamLogsResponse {
+  int32 server_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  string server_name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  LogEventType event_type = 3;
+  string body = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  google.protobuf.Timestamp created_on = 5 [(buf.validate.field).required = true];
+}
+
+// LogEventType mirrors the classification of a parsed srcds log line.
+enum LogEventType {
+  LOG_EVENT_TYPE_UNSPECIFIED = 0;
+  LOG_EVENT_TYPE_UNKNOWN = 1;
+
+  // Live player actions.
+  LOG_EVENT_TYPE_SAY = 10;
+  LOG_EVENT_TYPE_SAY_TEAM = 11;
+  LOG_EVENT_TYPE_KILLED = 12;
+  LOG_EVENT_TYPE_KILL_ASSIST = 13;
+  LOG_EVENT_TYPE_SUICIDE = 14;
+  LOG_EVENT_TYPE_SHOT_FIRED = 15;
+  LOG_EVENT_TYPE_SHOT_HIT = 16;
+  LOG_EVENT_TYPE_DAMAGE = 17;
+  LOG_EVENT_TYPE_DOMINATION = 18;
+  LOG_EVENT_TYPE_REVENGE = 19;
+  LOG_EVENT_TYPE_PICKUP = 20;
+  LOG_EVENT_TYPE_EMPTY_UBER = 21;
+  LOG_EVENT_TYPE_MEDIC_DEATH = 22;
+  LOG_EVENT_TYPE_MEDIC_DEATH_EX = 23;
+  LOG_EVENT_TYPE_LOST_UBER_ADVANTAGE = 24;
+  LOG_EVENT_TYPE_CHARGE_READY = 25;
+  LOG_EVENT_TYPE_CHARGE_DEPLOYED = 26;
+  LOG_EVENT_TYPE_CHARGE_ENDED = 27;
+  LOG_EVENT_TYPE_HEALED = 28;
+  LOG_EVENT_TYPE_EXTINGUISHED = 29;
+  LOG_EVENT_TYPE_BUILT_OBJECT = 30;
+  LOG_EVENT_TYPE_CARRY_OBJECT = 31;
+  LOG_EVENT_TYPE_KILLED_OBJECT = 32;
+  LOG_EVENT_TYPE_DETONATED_OBJECT = 33;
+  LOG_EVENT_TYPE_DROP_OBJECT = 34;
+  LOG_EVENT_TYPE_FIRST_HEAL_AFTER_SPAWN = 35;
+  LOG_EVENT_TYPE_CAPTURE_BLOCKED = 36;
+  LOG_EVENT_TYPE_POINT_CAPTURED = 48;
+  LOG_EVENT_TYPE_JOINED_TEAM = 49;
+  LOG_EVENT_TYPE_CHANGE_CLASS = 50;
+  LOG_EVENT_TYPE_SPAWNED_AS = 51;
+  LOG_EVENT_TYPE_JARATE_ATTACK = 52;
+  LOG_EVENT_TYPE_MILK_ATTACK = 53;
+  LOG_EVENT_TYPE_GAS_ATTACK = 54;
+  LOG_EVENT_TYPE_KILLED_CUSTOM = 55;
+
+  // World events not attached to specific players.
+  LOG_EVENT_TYPE_W_ROUND_OVERTIME = 100;
+  LOG_EVENT_TYPE_W_ROUND_START = 101;
+  LOG_EVENT_TYPE_W_ROUND_WIN = 102;
+  LOG_EVENT_TYPE_W_ROUND_LEN = 103;
+  LOG_EVENT_TYPE_W_TEAM_SCORE = 104;
+  LOG_EVENT_TYPE_W_TEAM_FINAL_SCORE = 105;
+  LOG_EVENT_TYPE_W_GAME_OVER = 106;
+  LOG_EVENT_TYPE_W_PAUSED = 107;
+  LOG_EVENT_TYPE_W_RESUMED = 108;
+  LOG_EVENT_TYPE_W_MINI_ROUND_WIN = 110;
+  LOG_EVENT_TYPE_W_MINI_ROUND_LEN = 111;
+  LOG_EVENT_TYPE_W_MINI_ROUND_SELECTED = 112;
+  LOG_EVENT_TYPE_W_MINI_ROUND_START = 113;
+  LOG_EVENT_TYPE_W_ROUND_SETUP_BEGIN = 114;
+  LOG_EVENT_TYPE_W_INTERMISSION_WIN_LIMIT = 115;
+
+  // Metadata.
+  LOG_EVENT_TYPE_LOG_START = 1000;
+  LOG_EVENT_TYPE_LOG_STOP = 1001;
+  LOG_EVENT_TYPE_CVAR = 1002;
+  LOG_EVENT_TYPE_RCON = 1003;
+  LOG_EVENT_TYPE_CONNECTED = 1004;
+  LOG_EVENT_TYPE_DISCONNECTED = 1005;
+  LOG_EVENT_TYPE_VALIDATED = 1006;
+  LOG_EVENT_TYPE_ENTERED = 1007;
+  LOG_EVENT_TYPE_MAP_LOAD = 1008;
+  LOG_EVENT_TYPE_SERVER_CONFIG_EXEC = 1009;
+  LOG_EVENT_TYPE_STEAM_AUTH = 1010;
+  LOG_EVENT_TYPE_MAP_STARTED = 1011;
+
+  LOG_EVENT_TYPE_VOTE_DETAILS = 1100;
+  LOG_EVENT_TYPE_VOTE_SUCCESS = 1101;
+  LOG_EVENT_TYPE_VOTE_FAILED = 1102;
 }
 
 message SafeServer {

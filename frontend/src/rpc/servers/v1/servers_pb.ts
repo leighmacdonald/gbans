@@ -2,8 +2,8 @@
 // @generated from file servers/v1/servers.proto (package servers.v1, edition 2023)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file servers/v1/servers.proto.
  */
 export const file_servers_v1_servers: GenFile = /*@__PURE__*/
-  fileDesc("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IkYKD1NlcnZlcnNSZXNwb25zZRIzCgdzZXJ2ZXJzGAEgAygLMhouc2VydmVycy52MS5TZXJ2ZXJJbmZvU2FmZUIGukgDyAEBIj8KEUVkaXRTZXJ2ZXJSZXF1ZXN0EioKBnNlcnZlchgBIAEoCzISLnNlcnZlcnMudjEuU2VydmVyQga6SAPIAQEiQAoSRWRpdFNlcnZlclJlc3BvbnNlEioKBnNlcnZlchgBIAEoCzISLnNlcnZlcnMudjEuU2VydmVyQga6SAPIAQEiNAoTRGVsZXRlU2VydmVyUmVxdWVzdBIdCglzZXJ2ZXJfaWQYASABKAVCCrpIB8gBARoCIAAiQwoUU2VydmVyc0FkbWluUmVzcG9uc2USKwoHc2VydmVycxgBIAMoCzISLnNlcnZlcnMudjEuU2VydmVyQga6SAPIAQEyuAMKDlNlcnZlcnNTZXJ2aWNlEjoKBVN0YXRlEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Ghkuc2VydmVycy52MS5TdGF0ZVJlc3BvbnNlEj4KB1NlcnZlcnMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaGy5zZXJ2ZXJzLnYxLlNlcnZlcnNSZXNwb25zZRJLCgpFZGl0U2VydmVyEh0uc2VydmVycy52MS5FZGl0U2VydmVyUmVxdWVzdBoeLnNlcnZlcnMudjEuRWRpdFNlcnZlclJlc3BvbnNlEkcKDERlbGV0ZVNlcnZlchIfLnNlcnZlcnMudjEuRGVsZXRlU2VydmVyUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRJICgxTZXJ2ZXJzQWRtaW4SFi5nb29nbGUucHJvdG9idWYuRW1wdHkaIC5zZXJ2ZXJzLnYxLlNlcnZlcnNBZG1pblJlc3BvbnNlEkoKCVF1ZXJ5TG9ncxIcLnNlcnZlcnMudjEuUXVlcnlMb2dzUmVxdWVzdBodLnNlcnZlcnMudjEuUXVlcnlMb2dzUmVzcG9uc2UiAEKmAQoOY29tLnNlcnZlcnMudjFCDFNlcnZlcnNQcm90b1ABWj1naXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3NlcnZlcnMvdjE7c2VydmVyc3YxogIDU1hYqgIKU2VydmVycy5WMcoCClNlcnZlcnNcVjHiAhZTZXJ2ZXJzXFYxXEdQQk1ldGFkYXRh6gILU2VydmVyczo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp, file_network_v1_network]);
+  fileDesc("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AygJEhMKAmlwGBYgASgJQge6SARyAngBEhcKD3N0YXRzX2J1Y2tldF9pZBgXIAEoBSJvCg1TdGF0ZVJlc3BvbnNlEi8KB3NlcnZlcnMYASADKAsyFi5zZXJ2ZXJzLnYxLlNhZmVTZXJ2ZXJCBrpIA8gBARItCghsYXRfbG9uZxgCIAEoCzITLm5ldHdvcmsudjEuTGF0TG9uZ0IGukgDyAEBIoYBCg5TZXJ2ZXJJbmZvU2FmZRIkChBzZXJ2ZXJfbmFtZV9sb25nGAEgASgJQgq6SAfIAQFyAhABEh8KC3NlcnZlcl9uYW1lGAIgASgJQgq6SAfIAQFyAhABEh0KCXNlcnZlcl9pZBgDIAEoBUIKukgHyAEBGgIgABIOCgZjb2xvdXIYBCABKAkiRgoPU2VydmVyc1Jlc3BvbnNlEjMKB3NlcnZlcnMYASADKAsyGi5zZXJ2ZXJzLnYxLlNlcnZlckluZm9TYWZlQga6SAPIAQEiPwoRRWRpdFNlcnZlclJlcXVlc3QSKgoGc2VydmVyGAEgASgLMhIuc2VydmVycy52MS5TZXJ2ZXJCBrpIA8gBASJAChJFZGl0U2VydmVyUmVzcG9uc2USKgoGc2VydmVyGAEgASgLMhIuc2VydmVycy52MS5TZXJ2ZXJCBrpIA8gBASI0ChNEZWxldGVTZXJ2ZXJSZXF1ZXN0Eh0KCXNlcnZlcl9pZBgBIAEoBUIKukgHyAEBGgIgACJDChRTZXJ2ZXJzQWRtaW5SZXNwb25zZRIrCgdzZXJ2ZXJzGAEgAygLMhIuc2VydmVycy52MS5TZXJ2ZXJCBrpIA8gBASqhEQoMTG9nRXZlbnRUeXBlEh4KGkxPR19FVkVOVF9UWVBFX1VOU1BFQ0lGSUVEEAASGgoWTE9HX0VWRU5UX1RZUEVfVU5LTk9XThABEhYKEkxPR19FVkVOVF9UWVBFX1NBWRAKEhsKF0xPR19FVkVOVF9UWVBFX1NBWV9URUFNEAsSGQoVTE9HX0VWRU5UX1RZUEVfS0lMTEVEEAwSHgoaTE9HX0VWRU5UX1RZUEVfS0lMTF9BU1NJU1QQDRIaChZMT0dfRVZFTlRfVFlQRV9TVUlDSURFEA4SHQoZTE9HX0VWRU5UX1RZUEVfU0hPVF9GSVJFRBAPEhsKF0xPR19FVkVOVF9UWVBFX1NIT1RfSElUEBASGQoVTE9HX0VWRU5UX1RZUEVfREFNQUdFEBESHQoZTE9HX0VWRU5UX1RZUEVfRE9NSU5BVElPThASEhoKFkxPR19FVkVOVF9UWVBFX1JFVkVOR0UQExIZChVMT0dfRVZFTlRfVFlQRV9QSUNLVVAQFBIdChlMT0dfRVZFTlRfVFlQRV9FTVBUWV9VQkVSEBUSHgoaTE9HX0VWRU5UX1RZUEVfTUVESUNfREVBVEgQFhIhCh1MT0dfRVZFTlRfVFlQRV9NRURJQ19ERUFUSF9FWBAXEiYKIkxPR19FVkVOVF9UWVBFX0xPU1RfVUJFUl9BRFZBTlRBR0UQGBIfChtMT0dfRVZFTlRfVFlQRV9DSEFSR0VfUkVBRFkQGRIiCh5MT0dfRVZFTlRfVFlQRV9DSEFSR0VfREVQTE9ZRUQQGhIfChtMT0dfRVZFTlRfVFlQRV9DSEFSR0VfRU5ERUQQGxIZChVMT0dfRVZFTlRfVFlQRV9IRUFMRUQQHBIfChtMT0dfRVZFTlRfVFlQRV9FWFRJTkdVSVNIRUQQHRIfChtMT0dfRVZFTlRfVFlQRV9CVUlMVF9PQkpFQ1QQHhIfChtMT0dfRVZFTlRfVFlQRV9DQVJSWV9PQkpFQ1QQHxIgChxMT0dfRVZFTlRfVFlQRV9LSUxMRURfT0JKRUNUECASIwofTE9HX0VWRU5UX1RZUEVfREVUT05BVEVEX09CSkVDVBAhEh4KGkxPR19FVkVOVF9UWVBFX0RST1BfT0JKRUNUECISKQolTE9HX0VWRU5UX1RZUEVfRklSU1RfSEVBTF9BRlRFUl9TUEFXThAjEiIKHkxPR19FVkVOVF9UWVBFX0NBUFRVUkVfQkxPQ0tFRBAkEiEKHUxPR19FVkVOVF9UWVBFX1BPSU5UX0NBUFRVUkVEEDASHgoaTE9HX0VWRU5UX1RZUEVfSk9JTkVEX1RFQU0QMRIfChtMT0dfRVZFTlRfVFlQRV9DSEFOR0VfQ0xBU1MQMhIdChlMT0dfRVZFTlRfVFlQRV9TUEFXTkVEX0FTEDMSIAocTE9HX0VWRU5UX1RZUEVfSkFSQVRFX0FUVEFDSxA0Eh4KGkxPR19FVkVOVF9UWVBFX01JTEtfQVRUQUNLEDUSHQoZTE9HX0VWRU5UX1RZUEVfR0FTX0FUVEFDSxA2EiAKHExPR19FVkVOVF9UWVBFX0tJTExFRF9DVVNUT00QNxIjCh9MT0dfRVZFTlRfVFlQRV9XX1JPVU5EX09WRVJUSU1FEGQSIAocTE9HX0VWRU5UX1RZUEVfV19ST1VORF9TVEFSVBBlEh4KGkxPR19FVkVOVF9UWVBFX1dfUk9VTkRfV0lOEGYSHgoaTE9HX0VWRU5UX1RZUEVfV19ST1VORF9MRU4QZxIfChtMT0dfRVZFTlRfVFlQRV9XX1RFQU1fU0NPUkUQaBIlCiFMT0dfRVZFTlRfVFlQRV9XX1RFQU1fRklOQUxfU0NPUkUQaRIeChpMT0dfRVZFTlRfVFlQRV9XX0dBTUVfT1ZFUhBqEhsKF0xPR19FVkVOVF9UWVBFX1dfUEFVU0VEEGsSHAoYTE9HX0VWRU5UX1RZUEVfV19SRVNVTUVEEGwSIwofTE9HX0VWRU5UX1RZUEVfV19NSU5JX1JPVU5EX1dJThBuEiMKH0xPR19FVkVOVF9UWVBFX1dfTUlOSV9ST1VORF9MRU4QbxIoCiRMT0dfRVZFTlRfVFlQRV9XX01JTklfUk9VTkRfU0VMRUNURUQQcBIlCiFMT0dfRVZFTlRfVFlQRV9XX01JTklfUk9VTkRfU1RBUlQQcRImCiJMT0dfRVZFTlRfVFlQRV9XX1JPVU5EX1NFVFVQX0JFR0lOEHISKwonTE9HX0VWRU5UX1RZUEVfV19JTlRFUk1JU1NJT05fV0lOX0xJTUlUEHMSHQoYTE9HX0VWRU5UX1RZUEVfTE9HX1NUQVJUEOgHEhwKF0xPR19FVkVOVF9UWVBFX0xPR19TVE9QEOkHEhgKE0xPR19FVkVOVF9UWVBFX0NWQVIQ6gcSGAoTTE9HX0VWRU5UX1RZUEVfUkNPThDrBxIdChhMT0dfRVZFTlRfVFlQRV9DT05ORUNURUQQ7AcSIAobTE9HX0VWRU5UX1RZUEVfRElTQ09OTkVDVEVEEO0HEh0KGExPR19FVkVOVF9UWVBFX1ZBTElEQVRFRBDuBxIbChZMT0dfRVZFTlRfVFlQRV9FTlRFUkVEEO8HEhwKF0xPR19FVkVOVF9UWVBFX01BUF9MT0FEEPAHEiYKIUxPR19FVkVOVF9UWVBFX1NFUlZFUl9DT05GSUdfRVhFQxDxBxIeChlMT0dfRVZFTlRfVFlQRV9TVEVBTV9BVVRIEPIHEh8KGkxPR19FVkVOVF9UWVBFX01BUF9TVEFSVEVEEPMHEiAKG0xPR19FVkVOVF9UWVBFX1ZPVEVfREVUQUlMUxDMCBIgChtMT0dfRVZFTlRfVFlQRV9WT1RFX1NVQ0NFU1MQzQgSHwoaTE9HX0VWRU5UX1RZUEVfVk9URV9GQUlMRUQQzggyiQQKDlNlcnZlcnNTZXJ2aWNlEjoKBVN0YXRlEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Ghkuc2VydmVycy52MS5TdGF0ZVJlc3BvbnNlEj4KB1NlcnZlcnMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaGy5zZXJ2ZXJzLnYxLlNlcnZlcnNSZXNwb25zZRJLCgpFZGl0U2VydmVyEh0uc2VydmVycy52MS5FZGl0U2VydmVyUmVxdWVzdBoeLnNlcnZlcnMudjEuRWRpdFNlcnZlclJlc3BvbnNlEkcKDERlbGV0ZVNlcnZlchIfLnNlcnZlcnMudjEuRGVsZXRlU2VydmVyUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRJICgxTZXJ2ZXJzQWRtaW4SFi5nb29nbGUucHJvdG9idWYuRW1wdHkaIC5zZXJ2ZXJzLnYxLlNlcnZlcnNBZG1pblJlc3BvbnNlEkoKCVF1ZXJ5TG9ncxIcLnNlcnZlcnMudjEuUXVlcnlMb2dzUmVxdWVzdBodLnNlcnZlcnMudjEuUXVlcnlMb2dzUmVzcG9uc2UiABJPCgpTdHJlYW1Mb2dzEh0uc2VydmVycy52MS5TdHJlYW1Mb2dzUmVxdWVzdBoeLnNlcnZlcnMudjEuU3RyZWFtTG9nc1Jlc3BvbnNlIgAwAUKmAQoOY29tLnNlcnZlcnMudjFCDFNlcnZlcnNQcm90b1ABWj1naXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3NlcnZlcnMvdjE7c2VydmVyc3YxogIDU1hYqgIKU2VydmVycy5WMcoCClNlcnZlcnNcVjHiAhZTZXJ2ZXJzXFYxXEdQQk1ldGFkYXRh6gILU2VydmVyczo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate, file_google_protobuf_empty, file_google_protobuf_timestamp, file_network_v1_network]);
 
 /**
  * @generated from message servers.v1.QueryLogsRequest
@@ -87,6 +87,67 @@ export type QueryLogsResponse = Message<"servers.v1.QueryLogsResponse"> & {
  */
 export const QueryLogsResponseSchema: GenMessage<QueryLogsResponse> = /*@__PURE__*/
   messageDesc(file_servers_v1_servers, 2);
+
+/**
+ * @generated from message servers.v1.StreamLogsRequest
+ */
+export type StreamLogsRequest = Message<"servers.v1.StreamLogsRequest"> & {
+  /**
+   * @generated from field: int32 server_id = 1;
+   */
+  serverId: number;
+
+  /**
+   * Maximum number of buffered lines sent before going live. 0 sends the whole buffer.
+   *
+   * @generated from field: int32 history_limit = 2;
+   */
+  historyLimit: number;
+};
+
+/**
+ * Describes the message servers.v1.StreamLogsRequest.
+ * Use `create(StreamLogsRequestSchema)` to create a new message.
+ */
+export const StreamLogsRequestSchema: GenMessage<StreamLogsRequest> = /*@__PURE__*/
+  messageDesc(file_servers_v1_servers, 3);
+
+/**
+ * @generated from message servers.v1.StreamLogsResponse
+ */
+export type StreamLogsResponse = Message<"servers.v1.StreamLogsResponse"> & {
+  /**
+   * @generated from field: int32 server_id = 1;
+   */
+  serverId: number;
+
+  /**
+   * @generated from field: string server_name = 2;
+   */
+  serverName: string;
+
+  /**
+   * @generated from field: servers.v1.LogEventType event_type = 3;
+   */
+  eventType: LogEventType;
+
+  /**
+   * @generated from field: string body = 4;
+   */
+  body: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 5;
+   */
+  createdOn?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message servers.v1.StreamLogsResponse.
+ * Use `create(StreamLogsResponseSchema)` to create a new message.
+ */
+export const StreamLogsResponseSchema: GenMessage<StreamLogsResponse> = /*@__PURE__*/
+  messageDesc(file_servers_v1_servers, 4);
 
 /**
  * @generated from message servers.v1.SafeServer
@@ -188,7 +249,7 @@ export type SafeServer = Message<"servers.v1.SafeServer"> & {
  * Use `create(SafeServerSchema)` to create a new message.
  */
 export const SafeServerSchema: GenMessage<SafeServer> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 3);
+  messageDesc(file_servers_v1_servers, 5);
 
 /**
  * @generated from message servers.v1.Server
@@ -315,7 +376,7 @@ export type Server = Message<"servers.v1.Server"> & {
  * Use `create(ServerSchema)` to create a new message.
  */
 export const ServerSchema: GenMessage<Server> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 4);
+  messageDesc(file_servers_v1_servers, 6);
 
 /**
  * @generated from message servers.v1.StateResponse
@@ -337,7 +398,7 @@ export type StateResponse = Message<"servers.v1.StateResponse"> & {
  * Use `create(StateResponseSchema)` to create a new message.
  */
 export const StateResponseSchema: GenMessage<StateResponse> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 5);
+  messageDesc(file_servers_v1_servers, 7);
 
 /**
  * @generated from message servers.v1.ServerInfoSafe
@@ -369,7 +430,7 @@ export type ServerInfoSafe = Message<"servers.v1.ServerInfoSafe"> & {
  * Use `create(ServerInfoSafeSchema)` to create a new message.
  */
 export const ServerInfoSafeSchema: GenMessage<ServerInfoSafe> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 6);
+  messageDesc(file_servers_v1_servers, 8);
 
 /**
  * @generated from message servers.v1.ServersResponse
@@ -386,7 +447,7 @@ export type ServersResponse = Message<"servers.v1.ServersResponse"> & {
  * Use `create(ServersResponseSchema)` to create a new message.
  */
 export const ServersResponseSchema: GenMessage<ServersResponse> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 7);
+  messageDesc(file_servers_v1_servers, 9);
 
 /**
  * @generated from message servers.v1.EditServerRequest
@@ -403,7 +464,7 @@ export type EditServerRequest = Message<"servers.v1.EditServerRequest"> & {
  * Use `create(EditServerRequestSchema)` to create a new message.
  */
 export const EditServerRequestSchema: GenMessage<EditServerRequest> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 8);
+  messageDesc(file_servers_v1_servers, 10);
 
 /**
  * @generated from message servers.v1.EditServerResponse
@@ -420,7 +481,7 @@ export type EditServerResponse = Message<"servers.v1.EditServerResponse"> & {
  * Use `create(EditServerResponseSchema)` to create a new message.
  */
 export const EditServerResponseSchema: GenMessage<EditServerResponse> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 9);
+  messageDesc(file_servers_v1_servers, 11);
 
 /**
  * @generated from message servers.v1.DeleteServerRequest
@@ -437,7 +498,7 @@ export type DeleteServerRequest = Message<"servers.v1.DeleteServerRequest"> & {
  * Use `create(DeleteServerRequestSchema)` to create a new message.
  */
 export const DeleteServerRequestSchema: GenMessage<DeleteServerRequest> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 10);
+  messageDesc(file_servers_v1_servers, 12);
 
 /**
  * @generated from message servers.v1.ServersAdminResponse
@@ -454,7 +515,361 @@ export type ServersAdminResponse = Message<"servers.v1.ServersAdminResponse"> & 
  * Use `create(ServersAdminResponseSchema)` to create a new message.
  */
 export const ServersAdminResponseSchema: GenMessage<ServersAdminResponse> = /*@__PURE__*/
-  messageDesc(file_servers_v1_servers, 11);
+  messageDesc(file_servers_v1_servers, 13);
+
+/**
+ * LogEventType mirrors the classification of a parsed srcds log line.
+ *
+ * @generated from enum servers.v1.LogEventType
+ */
+export enum LogEventType {
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_UNKNOWN = 1;
+   */
+  UNKNOWN = 1,
+
+  /**
+   * Live player actions.
+   *
+   * @generated from enum value: LOG_EVENT_TYPE_SAY = 10;
+   */
+  SAY = 10,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_SAY_TEAM = 11;
+   */
+  SAY_TEAM = 11,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_KILLED = 12;
+   */
+  KILLED = 12,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_KILL_ASSIST = 13;
+   */
+  KILL_ASSIST = 13,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_SUICIDE = 14;
+   */
+  SUICIDE = 14,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_SHOT_FIRED = 15;
+   */
+  SHOT_FIRED = 15,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_SHOT_HIT = 16;
+   */
+  SHOT_HIT = 16,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_DAMAGE = 17;
+   */
+  DAMAGE = 17,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_DOMINATION = 18;
+   */
+  DOMINATION = 18,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_REVENGE = 19;
+   */
+  REVENGE = 19,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_PICKUP = 20;
+   */
+  PICKUP = 20,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_EMPTY_UBER = 21;
+   */
+  EMPTY_UBER = 21,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_MEDIC_DEATH = 22;
+   */
+  MEDIC_DEATH = 22,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_MEDIC_DEATH_EX = 23;
+   */
+  MEDIC_DEATH_EX = 23,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_LOST_UBER_ADVANTAGE = 24;
+   */
+  LOST_UBER_ADVANTAGE = 24,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_CHARGE_READY = 25;
+   */
+  CHARGE_READY = 25,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_CHARGE_DEPLOYED = 26;
+   */
+  CHARGE_DEPLOYED = 26,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_CHARGE_ENDED = 27;
+   */
+  CHARGE_ENDED = 27,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_HEALED = 28;
+   */
+  HEALED = 28,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_EXTINGUISHED = 29;
+   */
+  EXTINGUISHED = 29,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_BUILT_OBJECT = 30;
+   */
+  BUILT_OBJECT = 30,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_CARRY_OBJECT = 31;
+   */
+  CARRY_OBJECT = 31,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_KILLED_OBJECT = 32;
+   */
+  KILLED_OBJECT = 32,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_DETONATED_OBJECT = 33;
+   */
+  DETONATED_OBJECT = 33,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_DROP_OBJECT = 34;
+   */
+  DROP_OBJECT = 34,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_FIRST_HEAL_AFTER_SPAWN = 35;
+   */
+  FIRST_HEAL_AFTER_SPAWN = 35,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_CAPTURE_BLOCKED = 36;
+   */
+  CAPTURE_BLOCKED = 36,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_POINT_CAPTURED = 48;
+   */
+  POINT_CAPTURED = 48,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_JOINED_TEAM = 49;
+   */
+  JOINED_TEAM = 49,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_CHANGE_CLASS = 50;
+   */
+  CHANGE_CLASS = 50,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_SPAWNED_AS = 51;
+   */
+  SPAWNED_AS = 51,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_JARATE_ATTACK = 52;
+   */
+  JARATE_ATTACK = 52,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_MILK_ATTACK = 53;
+   */
+  MILK_ATTACK = 53,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_GAS_ATTACK = 54;
+   */
+  GAS_ATTACK = 54,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_KILLED_CUSTOM = 55;
+   */
+  KILLED_CUSTOM = 55,
+
+  /**
+   * World events not attached to specific players.
+   *
+   * @generated from enum value: LOG_EVENT_TYPE_W_ROUND_OVERTIME = 100;
+   */
+  W_ROUND_OVERTIME = 100,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_W_ROUND_START = 101;
+   */
+  W_ROUND_START = 101,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_W_ROUND_WIN = 102;
+   */
+  W_ROUND_WIN = 102,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_W_ROUND_LEN = 103;
+   */
+  W_ROUND_LEN = 103,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_W_TEAM_SCORE = 104;
+   */
+  W_TEAM_SCORE = 104,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_W_TEAM_FINAL_SCORE = 105;
+   */
+  W_TEAM_FINAL_SCORE = 105,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_W_GAME_OVER = 106;
+   */
+  W_GAME_OVER = 106,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_W_PAUSED = 107;
+   */
+  W_PAUSED = 107,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_W_RESUMED = 108;
+   */
+  W_RESUMED = 108,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_W_MINI_ROUND_WIN = 110;
+   */
+  W_MINI_ROUND_WIN = 110,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_W_MINI_ROUND_LEN = 111;
+   */
+  W_MINI_ROUND_LEN = 111,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_W_MINI_ROUND_SELECTED = 112;
+   */
+  W_MINI_ROUND_SELECTED = 112,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_W_MINI_ROUND_START = 113;
+   */
+  W_MINI_ROUND_START = 113,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_W_ROUND_SETUP_BEGIN = 114;
+   */
+  W_ROUND_SETUP_BEGIN = 114,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_W_INTERMISSION_WIN_LIMIT = 115;
+   */
+  W_INTERMISSION_WIN_LIMIT = 115,
+
+  /**
+   * Metadata.
+   *
+   * @generated from enum value: LOG_EVENT_TYPE_LOG_START = 1000;
+   */
+  LOG_START = 1000,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_LOG_STOP = 1001;
+   */
+  LOG_STOP = 1001,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_CVAR = 1002;
+   */
+  CVAR = 1002,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_RCON = 1003;
+   */
+  RCON = 1003,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_CONNECTED = 1004;
+   */
+  CONNECTED = 1004,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_DISCONNECTED = 1005;
+   */
+  DISCONNECTED = 1005,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_VALIDATED = 1006;
+   */
+  VALIDATED = 1006,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_ENTERED = 1007;
+   */
+  ENTERED = 1007,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_MAP_LOAD = 1008;
+   */
+  MAP_LOAD = 1008,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_SERVER_CONFIG_EXEC = 1009;
+   */
+  SERVER_CONFIG_EXEC = 1009,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_STEAM_AUTH = 1010;
+   */
+  STEAM_AUTH = 1010,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_MAP_STARTED = 1011;
+   */
+  MAP_STARTED = 1011,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_VOTE_DETAILS = 1100;
+   */
+  VOTE_DETAILS = 1100,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_VOTE_SUCCESS = 1101;
+   */
+  VOTE_SUCCESS = 1101,
+
+  /**
+   * @generated from enum value: LOG_EVENT_TYPE_VOTE_FAILED = 1102;
+   */
+  VOTE_FAILED = 1102,
+}
+
+/**
+ * Describes the enum servers.v1.LogEventType.
+ */
+export const LogEventTypeSchema: GenEnum<LogEventType> = /*@__PURE__*/
+  enumDesc(file_servers_v1_servers, 0);
 
 /**
  * @generated from service servers.v1.ServersService
@@ -507,6 +922,14 @@ export const ServersService: GenService<{
     methodKind: "unary";
     input: typeof QueryLogsRequestSchema;
     output: typeof QueryLogsResponseSchema;
+  },
+  /**
+   * @generated from rpc servers.v1.ServersService.StreamLogs
+   */
+  streamLogs: {
+    methodKind: "server_streaming";
+    input: typeof StreamLogsRequestSchema;
+    output: typeof StreamLogsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_servers_v1_servers, 0);
