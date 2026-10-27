@@ -22,14 +22,11 @@ extensions.
 
 ## Features
 
-- **Bans & mutes** — Steam, IP/CIDR, ASN, group and friend bans with whitelisting,
-  plus support for [tf2_bot_detector](https://github.com/PazerOP/tf2_bot_detector)
-  player lists and Valve's `banip` config.
+- **Bans & mutes** — Steam, IP/CIDR, ASN, group and whitelisting.
 - **Moderation** — player reports, ban appeals, chat and connection logs, word
   filters and Discord log channels.
 - **SourceMod plugin** — server authentication, ban enforcement, admin, group and
-  override synchronisation (SQL admins compatible), in-game menus and player
-  clientprefs.
+  override synchronisation, in-game menus and player clientprefs.
 - **Stats** — player and weapon statistics generated from match demos with
   [tf2_demostats](https://github.com/leighmacdonald/tf2_demostats).
 - **SourceTV** — automatic demo recording, storage and download from the web UI.
@@ -80,7 +77,7 @@ The backend, frontend and SourceMod plugin can be built with
 [just](https://github.com/casey/just):
 
 ```shell
-just db        # start postgres (with PostGIS & ip4r) in docker
+just db        # start postgres in docker
 just dev       # database + backend + frontend watchers (zellij)
 just run       # run the backend only
 just check     # linters, static analysis and type checks
@@ -96,80 +93,3 @@ for the full setup.
 ## License
 
 gbans is released under the [MIT license](LICENSE).
-
-## Contributors
-<!-- markdownlint-disable -->
-<!-- readme: contributors -start -->
-<table>
- <tbody>
-  <tr>
-            <td align="center">
-                <a href="https://github.com/leighmacdonald">
-                    <img src="https://avatars.githubusercontent.com/u/591973?v=4" width="100;" alt="leighmacdonald"/>
-                    <br />
-                    <sub><b>Leigh MacDonald</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/Gcommer">
-                    <img src="https://avatars.githubusercontent.com/u/243352?v=4" width="100;" alt="Gcommer"/>
-                    <br />
-                    <sub><b>Gcommer</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/crescentrose">
-                    <img src="https://avatars.githubusercontent.com/u/9057156?v=4" width="100;" alt="crescentrose"/>
-                    <br />
-                    <sub><b>Ivan</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/Mircoxi">
-                    <img src="https://avatars.githubusercontent.com/u/95107897?v=4" width="100;" alt="Mircoxi"/>
-                    <br />
-                    <sub><b>Mircoxi</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/Tolfx">
-                    <img src="https://avatars.githubusercontent.com/u/57797792?v=4" width="100;" alt="Tolfx"/>
-                    <br />
-                    <sub><b>Matthew</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/Naleksuh">
-                    <img src="https://avatars.githubusercontent.com/u/24828999?v=4" width="100;" alt="Naleksuh"/>
-                    <br />
-                    <sub><b>Naleksuh</b></sub>
-                </a>
-            </td>
-  </tr>
-  <tr>
-            <td align="center">
-                <a href="https://github.com/camp3r101">
-                    <img src="https://avatars.githubusercontent.com/u/10223311?v=4" width="100;" alt="camp3r101"/>
-                    <br />
-                    <sub><b>camp3r101</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/jack-avery">
-                    <img src="https://avatars.githubusercontent.com/u/47289484?v=4" width="100;" alt="jack-avery"/>
-                    <br />
-                    <sub><b>Jack Avery</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/tdurieux">
-                    <img src="https://avatars.githubusercontent.com/u/5577568?v=4" width="100;" alt="tdurieux"/>
-                    <br />
-                    <sub><b>Thomas Durieux</b></sub>
-                </a>
-            </td>
-  </tr>
- <tbody>
-</table>
-<!-- readme: contributors -end -->
-<!-- markdownlint-restore -->
