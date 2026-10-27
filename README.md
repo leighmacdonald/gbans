@@ -1,132 +1,101 @@
 # gbans
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Test, Build & Publish](https://github.com/leighmacdonald/gbans/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/leighmacdonald/gbans/actions/workflows/build.yml)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/f06234b0551a49cc8ac111d7b77827b2)](https://www.codacy.com/manual/leighmacdonald/gbans?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=leighmacdonald/gbans&amp;utm_campaign=Badge_Grade)
-[![Go Report Card](https://goreportcard.com/badge/github.com/leighmacdonald/gbans)](https://goreportcard.com/report/github.com/leighmacdonald/gbans)
-[![GoDoc](https://godoc.org/github.com/leighmacdonald/gbans?status.svg)](https://pkg.go.dev/github.com/leighmacdonald/gbans)
-![Lines of Code](https://tokei.rs/b1/github/leighmacdonald/gbans)
+[![Test](https://github.com/leighmacdonald/gbans/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/leighmacdonald/gbans/actions/workflows/test.yml)
+[![CodeQL](https://github.com/leighmacdonald/gbans/actions/workflows/codeql.yml/badge.svg?branch=master)](https://github.com/leighmacdonald/gbans/actions/workflows/codeql.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/leighmacdonald/gbans.svg)](https://pkg.go.dev/github.com/leighmacdonald/gbans)
 [![Discord chat](https://img.shields.io/discord/704508824320475218)](https://discord.gg/YEWed3wY3F)
 
-gbans is a centralized game administration system for Team Fortress 2 that
-incorporates a global ban system similar to
-[sourcebans++](https://github.com/sbpp/sourcebans-pp/) as well as some additional
-basic community tools like news, forums & wikis.
-The project was initially only intended to be a more modern & secure replacement
-for sourcebans, but has evolved to handle broader community aspects.
+gbans is a centralized administration system for Team Fortress 2 communities. It
+provides a global ban system similar to
+[SourceBans++](https://github.com/sbpp/sourcebans-pp/), along with the tooling
+needed to run a set of game servers day-to-day: reports and appeals, chat logs,
+player stats, SourceTV demos, forums, a wiki and Discord integration.
 
-## Stability / Usage Notice
+The project consists of a Go backend/API, a React web frontend (embedded into
+the server binary), a SourceMod plugin and a PostgreSQL database using the
+[PostGIS](https://postgis.net/) and [ip4r](https://github.com/RhodiumToad/ip4r)
+extensions.
 
-While we currently are [dogfooding](https://en.wikipedia.org/wiki/Eating_your_own_dog_food)
-the project on a community with around 50 servers, I would not recommend
-non-developers use the project yet. It's still in fairly major development mode
-and large sections are still incomplete or function but very rough.
-
-Before we tag a 1.0.0 release, we will write some proper user-facing documentation.
-You can however look at the currently incomplete [docs](https://leighmacdonald.github.io/gbans/docs/INTRO).
+> **Status:** gbans is in active development and still pre-1.0. It is used in
+> production, but some features are incomplete and internal APIs may change.
 
 ## Features
 
-- [ ] General
-  - [x] Multi server support
-  - [x] Global bans & mutes
-  - [x] [Docker support](https://ghcr.io/leighmacdonald/gbans:latest)
-- [ ] Import/Export of gbans databases
-  - [ ] Backend linking of gbans services to enable use of other operators lists in real-time.
-  - [x] [tf2_bot_detector](https://github.com/PazerOP/tf2_bot_detector) compatible player list exports.
-- [x] Game support, support for other games would be possible, but is not currently planned.
-  - [x] Team Fortress 2
-- [ ] Blocking lists & types
-  - [x] Valves source server banip config
-  - [ ] Existing sourcebans database
-  - [x] [CIDR/IP](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing) bans
-  - [x] [tf2_bot_detector](https://github.com/PazerOP/tf2_bot_detector/blob/master/staging/cfg/playerlist.official.json)
-  - [x] Arbitrary 3rd party CIDR block lists, Proxy/VPN/Datacenter bans
-  - [ ] [FireHOL](https://github.com/firehol/blocklist-ipsets) databases
-- [x] Database support
-  - [x] Postgresql w/[PostGIS](https://postgis.net/) & [ip4r](https://github.com/RhodiumToad/ip4r) extensions
-- [x] Centralized UDP based logging
-  - [x] Message History
-  - [x] Connection History
-- [ ] Match Histories
-  - [ ] Stats
-    - [x] Overall
-    - [x] Per Weapon
-    - [ ] Per Maps
-    - [ ] Per Server
-    - [ ] Per Timeframe
-    - [ ] Daily position changes
-    - [ ] Charts
-  - [ ] "Skill" based scrambles using historical match data
-- [ ] SourceMod Plugin
-  - [x] Game server authentication
-  - [x] Restrict banned players from connecting
-  - [x] Restrict muted/gagged players on join
-  - [x] Dynamically load admins/mods/reserved slots from gbans
-  - [x] Sourcemod admins-sql-* plugin compatibility.
-  - [x] STV Recording with auto truncating methods to cleanup old demos
-  - [ ] `/gb_ban <player_id|steam_id> duration Reason` Ban a user
-  - [ ] `/gb_unban` Unban a previously banned user
-  - [ ] `/gb_kick` Kick a user
-  - [x] `/gb_mod or /mod <message>` Call for a mod on discord
-- [x] Markdown formatting support for all multiline inputs with image uploading
-- [x] Community Forum System
-  - [x] Categories
-  - [x] Forums
-  - [x] Private / Restricted forums
-  - [x] Signatures
-  - [x] Active user display
-  - [x] Advanced markdown editor interface
-- [ ] User Interfaces
-  - [ ] CLI
-  - [x] Discord
-  - [x] Web
-    - Public / Authenticated
-      - [x] Server Browser
-      - [x] News
-      - [x] Wiki
-      - [x] User reports
-      - [x] Ban Appeals
-      - [x] SourceTV Downloads
-      - [x] In-Game chat logs
-      - [x] Server browser
-    - Mods
-      - [x] Edit Word Filters
-      - [x] Ban player by steam/net/asn/group
-      - [x] Current Reports
-      - [x] Current Appeals
-      - [x] Edit News
-      - [x] Edit contests
-      - [x] In-Game Vote logging
-      - [x] Networking Queries
-        - [x] Player IP History
-        - [x] Players Sharing IPs
-        - [x] Query IP information: Location/ASN/Proxy/Map
-      - [x] External CIDR block lists editor
-    - Admins
-      - [x] Edit Servers
-      - [x] Edit game moderator/admin permissions. Admins/Groups/Command overrides/Group immunities.
+- **Bans & mutes** — Steam, IP/CIDR, ASN, group and friend bans with whitelisting,
+  plus support for [tf2_bot_detector](https://github.com/PazerOP/tf2_bot_detector)
+  player lists and Valve's `banip` config.
+- **Moderation** — player reports, ban appeals, chat and connection logs, word
+  filters and Discord log channels.
+- **SourceMod plugin** — server authentication, ban enforcement, admin, group and
+  override synchronisation (SQL admins compatible), in-game menus and player
+  clientprefs.
+- **Stats** — player and weapon statistics generated from match demos with
+  [tf2_demostats](https://github.com/leighmacdonald/tf2_demostats).
+- **SourceTV** — automatic demo recording, storage and download from the web UI.
+- **Community** — news, forums and a wiki, all managed from the web UI.
+- **Web UI** — server browser, ban management and admin screens for SourceMod
+  admins, groups and permissions.
 
-## Docker
+More detail on each of these is available in the [documentation](#documentation).
 
-Docker is recommended to run gbans. You can find the official docker images on
-[ghcr.io](https://github.com/leighmacdonald/gbans/pkgs/container/gbans).
+## Quick start
 
-Assuming you have created your config file and have a database setup you can run
-it using something
-like:
+Everything is compiled into a single binary; the only external dependency is
+PostgreSQL with the PostGIS and ip4r extensions. Docker is the recommended way
+to run gbans:
 
-    docker run -it --rm -v `$(pwd)`/gbans.yml:/app/gbans.yml:ro ghcr.io/leighmacdonald/gbans:latest
+```shell
+cp gbans_example.yml gbans.yml   # set the database DSN, owner, steam key, etc.
+docker run -d --restart unless-stopped \
+  -p 6006:6006 \
+  -v "$(pwd)/gbans.yml:/app/gbans.yml:ro" \
+  --name gbans \
+  ghcr.io/leighmacdonald/gbans:latest
+```
 
-For local development, a helper script provisions a PostgreSQL container with the
-required PostGIS, ip4r & hypopg extensions:
-
-    just db
+See the [installation guide](https://leighmacdonald.github.io/gbans/docs/install/install)
+for requirements, database setup and reverse proxy configuration, and the
+[configuration reference](https://leighmacdonald.github.io/gbans/docs/install/config)
+for a description of every setting.
 
 ## Documentation
 
-For installation, configuration and usage instruction, developer notes, please
-see the [docs](https://leighmacdonald.github.io/gbans/docs/INTRO).
+- **Operators** — [installation](https://leighmacdonald.github.io/gbans/docs/install/install),
+  [configuration](https://leighmacdonald.github.io/gbans/docs/install/config),
+  [SourceMod plugin](https://leighmacdonald.github.io/gbans/docs/guide/sourcemod),
+  [bans](https://leighmacdonald.github.io/gbans/docs/guide/bans),
+  [moderation](https://leighmacdonald.github.io/gbans/docs/guide/moderation),
+  [Discord](https://leighmacdonald.github.io/gbans/docs/guide/discord),
+  [stats](https://leighmacdonald.github.io/gbans/docs/guide/stats),
+  [SourceTV](https://leighmacdonald.github.io/gbans/docs/guide/sourcetv) and
+  [SDR](https://leighmacdonald.github.io/gbans/docs/guide/sdr).
+- **Developers** — [development environment](https://leighmacdonald.github.io/gbans/docs/devel/devel),
+  [building](https://leighmacdonald.github.io/gbans/docs/devel/build) and
+  [updating the documentation](https://leighmacdonald.github.io/gbans/docs/devel/docs).
+
+## Development
+
+The backend, frontend and SourceMod plugin can be built with
+[just](https://github.com/casey/just):
+
+```shell
+just db        # start postgres (with PostGIS & ip4r) in docker
+just dev       # database + backend + frontend watchers (zellij)
+just run       # run the backend only
+just check     # linters, static analysis and type checks
+just test      # backend and frontend test suites
+just generate  # regenerate code from the protobuf definitions
+```
+
+Requirements are Go 1.27+, Node.js 18.17+ with pnpm, and SourceMod 1.12+ to
+compile the plugin. See the
+[development guide](https://leighmacdonald.github.io/gbans/docs/devel/devel)
+for the full setup.
+
+## License
+
+gbans is released under the [MIT license](LICENSE).
 
 ## Contributors
 <!-- markdownlint-disable -->
