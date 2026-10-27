@@ -25,6 +25,251 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// LogEventType mirrors the classification of a parsed srcds log line.
+type LogEventType int32
+
+const (
+	LogEventType_LOG_EVENT_TYPE_UNSPECIFIED LogEventType = 0
+	LogEventType_LOG_EVENT_TYPE_UNKNOWN     LogEventType = 1
+	// Live player actions.
+	LogEventType_LOG_EVENT_TYPE_SAY                    LogEventType = 10
+	LogEventType_LOG_EVENT_TYPE_SAY_TEAM               LogEventType = 11
+	LogEventType_LOG_EVENT_TYPE_KILLED                 LogEventType = 12
+	LogEventType_LOG_EVENT_TYPE_KILL_ASSIST            LogEventType = 13
+	LogEventType_LOG_EVENT_TYPE_SUICIDE                LogEventType = 14
+	LogEventType_LOG_EVENT_TYPE_SHOT_FIRED             LogEventType = 15
+	LogEventType_LOG_EVENT_TYPE_SHOT_HIT               LogEventType = 16
+	LogEventType_LOG_EVENT_TYPE_DAMAGE                 LogEventType = 17
+	LogEventType_LOG_EVENT_TYPE_DOMINATION             LogEventType = 18
+	LogEventType_LOG_EVENT_TYPE_REVENGE                LogEventType = 19
+	LogEventType_LOG_EVENT_TYPE_PICKUP                 LogEventType = 20
+	LogEventType_LOG_EVENT_TYPE_EMPTY_UBER             LogEventType = 21
+	LogEventType_LOG_EVENT_TYPE_MEDIC_DEATH            LogEventType = 22
+	LogEventType_LOG_EVENT_TYPE_MEDIC_DEATH_EX         LogEventType = 23
+	LogEventType_LOG_EVENT_TYPE_LOST_UBER_ADVANTAGE    LogEventType = 24
+	LogEventType_LOG_EVENT_TYPE_CHARGE_READY           LogEventType = 25
+	LogEventType_LOG_EVENT_TYPE_CHARGE_DEPLOYED        LogEventType = 26
+	LogEventType_LOG_EVENT_TYPE_CHARGE_ENDED           LogEventType = 27
+	LogEventType_LOG_EVENT_TYPE_HEALED                 LogEventType = 28
+	LogEventType_LOG_EVENT_TYPE_EXTINGUISHED           LogEventType = 29
+	LogEventType_LOG_EVENT_TYPE_BUILT_OBJECT           LogEventType = 30
+	LogEventType_LOG_EVENT_TYPE_CARRY_OBJECT           LogEventType = 31
+	LogEventType_LOG_EVENT_TYPE_KILLED_OBJECT          LogEventType = 32
+	LogEventType_LOG_EVENT_TYPE_DETONATED_OBJECT       LogEventType = 33
+	LogEventType_LOG_EVENT_TYPE_DROP_OBJECT            LogEventType = 34
+	LogEventType_LOG_EVENT_TYPE_FIRST_HEAL_AFTER_SPAWN LogEventType = 35
+	LogEventType_LOG_EVENT_TYPE_CAPTURE_BLOCKED        LogEventType = 36
+	LogEventType_LOG_EVENT_TYPE_POINT_CAPTURED         LogEventType = 48
+	LogEventType_LOG_EVENT_TYPE_JOINED_TEAM            LogEventType = 49
+	LogEventType_LOG_EVENT_TYPE_CHANGE_CLASS           LogEventType = 50
+	LogEventType_LOG_EVENT_TYPE_SPAWNED_AS             LogEventType = 51
+	LogEventType_LOG_EVENT_TYPE_JARATE_ATTACK          LogEventType = 52
+	LogEventType_LOG_EVENT_TYPE_MILK_ATTACK            LogEventType = 53
+	LogEventType_LOG_EVENT_TYPE_GAS_ATTACK             LogEventType = 54
+	LogEventType_LOG_EVENT_TYPE_KILLED_CUSTOM          LogEventType = 55
+	// World events not attached to specific players.
+	LogEventType_LOG_EVENT_TYPE_W_ROUND_OVERTIME         LogEventType = 100
+	LogEventType_LOG_EVENT_TYPE_W_ROUND_START            LogEventType = 101
+	LogEventType_LOG_EVENT_TYPE_W_ROUND_WIN              LogEventType = 102
+	LogEventType_LOG_EVENT_TYPE_W_ROUND_LEN              LogEventType = 103
+	LogEventType_LOG_EVENT_TYPE_W_TEAM_SCORE             LogEventType = 104
+	LogEventType_LOG_EVENT_TYPE_W_TEAM_FINAL_SCORE       LogEventType = 105
+	LogEventType_LOG_EVENT_TYPE_W_GAME_OVER              LogEventType = 106
+	LogEventType_LOG_EVENT_TYPE_W_PAUSED                 LogEventType = 107
+	LogEventType_LOG_EVENT_TYPE_W_RESUMED                LogEventType = 108
+	LogEventType_LOG_EVENT_TYPE_W_MINI_ROUND_WIN         LogEventType = 110
+	LogEventType_LOG_EVENT_TYPE_W_MINI_ROUND_LEN         LogEventType = 111
+	LogEventType_LOG_EVENT_TYPE_W_MINI_ROUND_SELECTED    LogEventType = 112
+	LogEventType_LOG_EVENT_TYPE_W_MINI_ROUND_START       LogEventType = 113
+	LogEventType_LOG_EVENT_TYPE_W_ROUND_SETUP_BEGIN      LogEventType = 114
+	LogEventType_LOG_EVENT_TYPE_W_INTERMISSION_WIN_LIMIT LogEventType = 115
+	// Metadata.
+	LogEventType_LOG_EVENT_TYPE_LOG_START          LogEventType = 1000
+	LogEventType_LOG_EVENT_TYPE_LOG_STOP           LogEventType = 1001
+	LogEventType_LOG_EVENT_TYPE_CVAR               LogEventType = 1002
+	LogEventType_LOG_EVENT_TYPE_RCON               LogEventType = 1003
+	LogEventType_LOG_EVENT_TYPE_CONNECTED          LogEventType = 1004
+	LogEventType_LOG_EVENT_TYPE_DISCONNECTED       LogEventType = 1005
+	LogEventType_LOG_EVENT_TYPE_VALIDATED          LogEventType = 1006
+	LogEventType_LOG_EVENT_TYPE_ENTERED            LogEventType = 1007
+	LogEventType_LOG_EVENT_TYPE_MAP_LOAD           LogEventType = 1008
+	LogEventType_LOG_EVENT_TYPE_SERVER_CONFIG_EXEC LogEventType = 1009
+	LogEventType_LOG_EVENT_TYPE_STEAM_AUTH         LogEventType = 1010
+	LogEventType_LOG_EVENT_TYPE_MAP_STARTED        LogEventType = 1011
+	LogEventType_LOG_EVENT_TYPE_VOTE_DETAILS       LogEventType = 1100
+	LogEventType_LOG_EVENT_TYPE_VOTE_SUCCESS       LogEventType = 1101
+	LogEventType_LOG_EVENT_TYPE_VOTE_FAILED        LogEventType = 1102
+)
+
+// Enum value maps for LogEventType.
+var (
+	LogEventType_name = map[int32]string{
+		0:    "LOG_EVENT_TYPE_UNSPECIFIED",
+		1:    "LOG_EVENT_TYPE_UNKNOWN",
+		10:   "LOG_EVENT_TYPE_SAY",
+		11:   "LOG_EVENT_TYPE_SAY_TEAM",
+		12:   "LOG_EVENT_TYPE_KILLED",
+		13:   "LOG_EVENT_TYPE_KILL_ASSIST",
+		14:   "LOG_EVENT_TYPE_SUICIDE",
+		15:   "LOG_EVENT_TYPE_SHOT_FIRED",
+		16:   "LOG_EVENT_TYPE_SHOT_HIT",
+		17:   "LOG_EVENT_TYPE_DAMAGE",
+		18:   "LOG_EVENT_TYPE_DOMINATION",
+		19:   "LOG_EVENT_TYPE_REVENGE",
+		20:   "LOG_EVENT_TYPE_PICKUP",
+		21:   "LOG_EVENT_TYPE_EMPTY_UBER",
+		22:   "LOG_EVENT_TYPE_MEDIC_DEATH",
+		23:   "LOG_EVENT_TYPE_MEDIC_DEATH_EX",
+		24:   "LOG_EVENT_TYPE_LOST_UBER_ADVANTAGE",
+		25:   "LOG_EVENT_TYPE_CHARGE_READY",
+		26:   "LOG_EVENT_TYPE_CHARGE_DEPLOYED",
+		27:   "LOG_EVENT_TYPE_CHARGE_ENDED",
+		28:   "LOG_EVENT_TYPE_HEALED",
+		29:   "LOG_EVENT_TYPE_EXTINGUISHED",
+		30:   "LOG_EVENT_TYPE_BUILT_OBJECT",
+		31:   "LOG_EVENT_TYPE_CARRY_OBJECT",
+		32:   "LOG_EVENT_TYPE_KILLED_OBJECT",
+		33:   "LOG_EVENT_TYPE_DETONATED_OBJECT",
+		34:   "LOG_EVENT_TYPE_DROP_OBJECT",
+		35:   "LOG_EVENT_TYPE_FIRST_HEAL_AFTER_SPAWN",
+		36:   "LOG_EVENT_TYPE_CAPTURE_BLOCKED",
+		48:   "LOG_EVENT_TYPE_POINT_CAPTURED",
+		49:   "LOG_EVENT_TYPE_JOINED_TEAM",
+		50:   "LOG_EVENT_TYPE_CHANGE_CLASS",
+		51:   "LOG_EVENT_TYPE_SPAWNED_AS",
+		52:   "LOG_EVENT_TYPE_JARATE_ATTACK",
+		53:   "LOG_EVENT_TYPE_MILK_ATTACK",
+		54:   "LOG_EVENT_TYPE_GAS_ATTACK",
+		55:   "LOG_EVENT_TYPE_KILLED_CUSTOM",
+		100:  "LOG_EVENT_TYPE_W_ROUND_OVERTIME",
+		101:  "LOG_EVENT_TYPE_W_ROUND_START",
+		102:  "LOG_EVENT_TYPE_W_ROUND_WIN",
+		103:  "LOG_EVENT_TYPE_W_ROUND_LEN",
+		104:  "LOG_EVENT_TYPE_W_TEAM_SCORE",
+		105:  "LOG_EVENT_TYPE_W_TEAM_FINAL_SCORE",
+		106:  "LOG_EVENT_TYPE_W_GAME_OVER",
+		107:  "LOG_EVENT_TYPE_W_PAUSED",
+		108:  "LOG_EVENT_TYPE_W_RESUMED",
+		110:  "LOG_EVENT_TYPE_W_MINI_ROUND_WIN",
+		111:  "LOG_EVENT_TYPE_W_MINI_ROUND_LEN",
+		112:  "LOG_EVENT_TYPE_W_MINI_ROUND_SELECTED",
+		113:  "LOG_EVENT_TYPE_W_MINI_ROUND_START",
+		114:  "LOG_EVENT_TYPE_W_ROUND_SETUP_BEGIN",
+		115:  "LOG_EVENT_TYPE_W_INTERMISSION_WIN_LIMIT",
+		1000: "LOG_EVENT_TYPE_LOG_START",
+		1001: "LOG_EVENT_TYPE_LOG_STOP",
+		1002: "LOG_EVENT_TYPE_CVAR",
+		1003: "LOG_EVENT_TYPE_RCON",
+		1004: "LOG_EVENT_TYPE_CONNECTED",
+		1005: "LOG_EVENT_TYPE_DISCONNECTED",
+		1006: "LOG_EVENT_TYPE_VALIDATED",
+		1007: "LOG_EVENT_TYPE_ENTERED",
+		1008: "LOG_EVENT_TYPE_MAP_LOAD",
+		1009: "LOG_EVENT_TYPE_SERVER_CONFIG_EXEC",
+		1010: "LOG_EVENT_TYPE_STEAM_AUTH",
+		1011: "LOG_EVENT_TYPE_MAP_STARTED",
+		1100: "LOG_EVENT_TYPE_VOTE_DETAILS",
+		1101: "LOG_EVENT_TYPE_VOTE_SUCCESS",
+		1102: "LOG_EVENT_TYPE_VOTE_FAILED",
+	}
+	LogEventType_value = map[string]int32{
+		"LOG_EVENT_TYPE_UNSPECIFIED":              0,
+		"LOG_EVENT_TYPE_UNKNOWN":                  1,
+		"LOG_EVENT_TYPE_SAY":                      10,
+		"LOG_EVENT_TYPE_SAY_TEAM":                 11,
+		"LOG_EVENT_TYPE_KILLED":                   12,
+		"LOG_EVENT_TYPE_KILL_ASSIST":              13,
+		"LOG_EVENT_TYPE_SUICIDE":                  14,
+		"LOG_EVENT_TYPE_SHOT_FIRED":               15,
+		"LOG_EVENT_TYPE_SHOT_HIT":                 16,
+		"LOG_EVENT_TYPE_DAMAGE":                   17,
+		"LOG_EVENT_TYPE_DOMINATION":               18,
+		"LOG_EVENT_TYPE_REVENGE":                  19,
+		"LOG_EVENT_TYPE_PICKUP":                   20,
+		"LOG_EVENT_TYPE_EMPTY_UBER":               21,
+		"LOG_EVENT_TYPE_MEDIC_DEATH":              22,
+		"LOG_EVENT_TYPE_MEDIC_DEATH_EX":           23,
+		"LOG_EVENT_TYPE_LOST_UBER_ADVANTAGE":      24,
+		"LOG_EVENT_TYPE_CHARGE_READY":             25,
+		"LOG_EVENT_TYPE_CHARGE_DEPLOYED":          26,
+		"LOG_EVENT_TYPE_CHARGE_ENDED":             27,
+		"LOG_EVENT_TYPE_HEALED":                   28,
+		"LOG_EVENT_TYPE_EXTINGUISHED":             29,
+		"LOG_EVENT_TYPE_BUILT_OBJECT":             30,
+		"LOG_EVENT_TYPE_CARRY_OBJECT":             31,
+		"LOG_EVENT_TYPE_KILLED_OBJECT":            32,
+		"LOG_EVENT_TYPE_DETONATED_OBJECT":         33,
+		"LOG_EVENT_TYPE_DROP_OBJECT":              34,
+		"LOG_EVENT_TYPE_FIRST_HEAL_AFTER_SPAWN":   35,
+		"LOG_EVENT_TYPE_CAPTURE_BLOCKED":          36,
+		"LOG_EVENT_TYPE_POINT_CAPTURED":           48,
+		"LOG_EVENT_TYPE_JOINED_TEAM":              49,
+		"LOG_EVENT_TYPE_CHANGE_CLASS":             50,
+		"LOG_EVENT_TYPE_SPAWNED_AS":               51,
+		"LOG_EVENT_TYPE_JARATE_ATTACK":            52,
+		"LOG_EVENT_TYPE_MILK_ATTACK":              53,
+		"LOG_EVENT_TYPE_GAS_ATTACK":               54,
+		"LOG_EVENT_TYPE_KILLED_CUSTOM":            55,
+		"LOG_EVENT_TYPE_W_ROUND_OVERTIME":         100,
+		"LOG_EVENT_TYPE_W_ROUND_START":            101,
+		"LOG_EVENT_TYPE_W_ROUND_WIN":              102,
+		"LOG_EVENT_TYPE_W_ROUND_LEN":              103,
+		"LOG_EVENT_TYPE_W_TEAM_SCORE":             104,
+		"LOG_EVENT_TYPE_W_TEAM_FINAL_SCORE":       105,
+		"LOG_EVENT_TYPE_W_GAME_OVER":              106,
+		"LOG_EVENT_TYPE_W_PAUSED":                 107,
+		"LOG_EVENT_TYPE_W_RESUMED":                108,
+		"LOG_EVENT_TYPE_W_MINI_ROUND_WIN":         110,
+		"LOG_EVENT_TYPE_W_MINI_ROUND_LEN":         111,
+		"LOG_EVENT_TYPE_W_MINI_ROUND_SELECTED":    112,
+		"LOG_EVENT_TYPE_W_MINI_ROUND_START":       113,
+		"LOG_EVENT_TYPE_W_ROUND_SETUP_BEGIN":      114,
+		"LOG_EVENT_TYPE_W_INTERMISSION_WIN_LIMIT": 115,
+		"LOG_EVENT_TYPE_LOG_START":                1000,
+		"LOG_EVENT_TYPE_LOG_STOP":                 1001,
+		"LOG_EVENT_TYPE_CVAR":                     1002,
+		"LOG_EVENT_TYPE_RCON":                     1003,
+		"LOG_EVENT_TYPE_CONNECTED":                1004,
+		"LOG_EVENT_TYPE_DISCONNECTED":             1005,
+		"LOG_EVENT_TYPE_VALIDATED":                1006,
+		"LOG_EVENT_TYPE_ENTERED":                  1007,
+		"LOG_EVENT_TYPE_MAP_LOAD":                 1008,
+		"LOG_EVENT_TYPE_SERVER_CONFIG_EXEC":       1009,
+		"LOG_EVENT_TYPE_STEAM_AUTH":               1010,
+		"LOG_EVENT_TYPE_MAP_STARTED":              1011,
+		"LOG_EVENT_TYPE_VOTE_DETAILS":             1100,
+		"LOG_EVENT_TYPE_VOTE_SUCCESS":             1101,
+		"LOG_EVENT_TYPE_VOTE_FAILED":              1102,
+	}
+)
+
+func (x LogEventType) Enum() *LogEventType {
+	p := new(LogEventType)
+	*p = x
+	return p
+}
+
+func (x LogEventType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (LogEventType) Descriptor() protoreflect.EnumDescriptor {
+	return file_servers_v1_servers_proto_enumTypes[0].Descriptor()
+}
+
+func (LogEventType) Type() protoreflect.EnumType {
+	return &file_servers_v1_servers_proto_enumTypes[0]
+}
+
+func (x LogEventType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use LogEventType.Descriptor instead.
+func (LogEventType) EnumDescriptor() ([]byte, []int) {
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{0}
+}
+
 type QueryLogsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ServerId      []int32                `protobuf:"varint,1,rep,packed,name=server_id,json=serverId" json:"server_id,omitempty"`
@@ -189,6 +434,135 @@ func (x *QueryLogsResponse) GetCount() int32 {
 	return 0
 }
 
+type StreamLogsRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	ServerId *int32                 `protobuf:"varint,1,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
+	// Maximum number of buffered lines sent before going live. 0 sends the whole buffer.
+	HistoryLimit  *int32 `protobuf:"varint,2,opt,name=history_limit,json=historyLimit" json:"history_limit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StreamLogsRequest) Reset() {
+	*x = StreamLogsRequest{}
+	mi := &file_servers_v1_servers_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StreamLogsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StreamLogsRequest) ProtoMessage() {}
+
+func (x *StreamLogsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_servers_v1_servers_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StreamLogsRequest.ProtoReflect.Descriptor instead.
+func (*StreamLogsRequest) Descriptor() ([]byte, []int) {
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *StreamLogsRequest) GetServerId() int32 {
+	if x != nil && x.ServerId != nil {
+		return *x.ServerId
+	}
+	return 0
+}
+
+func (x *StreamLogsRequest) GetHistoryLimit() int32 {
+	if x != nil && x.HistoryLimit != nil {
+		return *x.HistoryLimit
+	}
+	return 0
+}
+
+type StreamLogsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ServerId      *int32                 `protobuf:"varint,1,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
+	ServerName    *string                `protobuf:"bytes,2,opt,name=server_name,json=serverName" json:"server_name,omitempty"`
+	EventType     *LogEventType          `protobuf:"varint,3,opt,name=event_type,json=eventType,enum=servers.v1.LogEventType" json:"event_type,omitempty"`
+	Body          *string                `protobuf:"bytes,4,opt,name=body" json:"body,omitempty"`
+	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StreamLogsResponse) Reset() {
+	*x = StreamLogsResponse{}
+	mi := &file_servers_v1_servers_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StreamLogsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StreamLogsResponse) ProtoMessage() {}
+
+func (x *StreamLogsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_servers_v1_servers_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StreamLogsResponse.ProtoReflect.Descriptor instead.
+func (*StreamLogsResponse) Descriptor() ([]byte, []int) {
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *StreamLogsResponse) GetServerId() int32 {
+	if x != nil && x.ServerId != nil {
+		return *x.ServerId
+	}
+	return 0
+}
+
+func (x *StreamLogsResponse) GetServerName() string {
+	if x != nil && x.ServerName != nil {
+		return *x.ServerName
+	}
+	return ""
+}
+
+func (x *StreamLogsResponse) GetEventType() LogEventType {
+	if x != nil && x.EventType != nil {
+		return *x.EventType
+	}
+	return LogEventType_LOG_EVENT_TYPE_UNSPECIFIED
+}
+
+func (x *StreamLogsResponse) GetBody() string {
+	if x != nil && x.Body != nil {
+		return *x.Body
+	}
+	return ""
+}
+
+func (x *StreamLogsResponse) GetCreatedOn() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedOn
+	}
+	return nil
+}
+
 type SafeServer struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ServerId      *int32                 `protobuf:"varint,1,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
@@ -215,7 +589,7 @@ type SafeServer struct {
 
 func (x *SafeServer) Reset() {
 	*x = SafeServer{}
-	mi := &file_servers_v1_servers_proto_msgTypes[3]
+	mi := &file_servers_v1_servers_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -227,7 +601,7 @@ func (x *SafeServer) String() string {
 func (*SafeServer) ProtoMessage() {}
 
 func (x *SafeServer) ProtoReflect() protoreflect.Message {
-	mi := &file_servers_v1_servers_proto_msgTypes[3]
+	mi := &file_servers_v1_servers_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -240,7 +614,7 @@ func (x *SafeServer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SafeServer.ProtoReflect.Descriptor instead.
 func (*SafeServer) Descriptor() ([]byte, []int) {
-	return file_servers_v1_servers_proto_rawDescGZIP(), []int{3}
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SafeServer) GetServerId() int32 {
@@ -400,7 +774,7 @@ type Server struct {
 
 func (x *Server) Reset() {
 	*x = Server{}
-	mi := &file_servers_v1_servers_proto_msgTypes[4]
+	mi := &file_servers_v1_servers_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -412,7 +786,7 @@ func (x *Server) String() string {
 func (*Server) ProtoMessage() {}
 
 func (x *Server) ProtoReflect() protoreflect.Message {
-	mi := &file_servers_v1_servers_proto_msgTypes[4]
+	mi := &file_servers_v1_servers_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -425,7 +799,7 @@ func (x *Server) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server.ProtoReflect.Descriptor instead.
 func (*Server) Descriptor() ([]byte, []int) {
-	return file_servers_v1_servers_proto_rawDescGZIP(), []int{4}
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Server) GetServerId() int32 {
@@ -599,7 +973,7 @@ type StateResponse struct {
 
 func (x *StateResponse) Reset() {
 	*x = StateResponse{}
-	mi := &file_servers_v1_servers_proto_msgTypes[5]
+	mi := &file_servers_v1_servers_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -611,7 +985,7 @@ func (x *StateResponse) String() string {
 func (*StateResponse) ProtoMessage() {}
 
 func (x *StateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_servers_v1_servers_proto_msgTypes[5]
+	mi := &file_servers_v1_servers_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -624,7 +998,7 @@ func (x *StateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StateResponse.ProtoReflect.Descriptor instead.
 func (*StateResponse) Descriptor() ([]byte, []int) {
-	return file_servers_v1_servers_proto_rawDescGZIP(), []int{5}
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *StateResponse) GetServers() []*SafeServer {
@@ -653,7 +1027,7 @@ type ServerInfoSafe struct {
 
 func (x *ServerInfoSafe) Reset() {
 	*x = ServerInfoSafe{}
-	mi := &file_servers_v1_servers_proto_msgTypes[6]
+	mi := &file_servers_v1_servers_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -665,7 +1039,7 @@ func (x *ServerInfoSafe) String() string {
 func (*ServerInfoSafe) ProtoMessage() {}
 
 func (x *ServerInfoSafe) ProtoReflect() protoreflect.Message {
-	mi := &file_servers_v1_servers_proto_msgTypes[6]
+	mi := &file_servers_v1_servers_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -678,7 +1052,7 @@ func (x *ServerInfoSafe) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServerInfoSafe.ProtoReflect.Descriptor instead.
 func (*ServerInfoSafe) Descriptor() ([]byte, []int) {
-	return file_servers_v1_servers_proto_rawDescGZIP(), []int{6}
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ServerInfoSafe) GetServerNameLong() string {
@@ -718,7 +1092,7 @@ type ServersResponse struct {
 
 func (x *ServersResponse) Reset() {
 	*x = ServersResponse{}
-	mi := &file_servers_v1_servers_proto_msgTypes[7]
+	mi := &file_servers_v1_servers_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -730,7 +1104,7 @@ func (x *ServersResponse) String() string {
 func (*ServersResponse) ProtoMessage() {}
 
 func (x *ServersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_servers_v1_servers_proto_msgTypes[7]
+	mi := &file_servers_v1_servers_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -743,7 +1117,7 @@ func (x *ServersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServersResponse.ProtoReflect.Descriptor instead.
 func (*ServersResponse) Descriptor() ([]byte, []int) {
-	return file_servers_v1_servers_proto_rawDescGZIP(), []int{7}
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ServersResponse) GetServers() []*ServerInfoSafe {
@@ -762,7 +1136,7 @@ type EditServerRequest struct {
 
 func (x *EditServerRequest) Reset() {
 	*x = EditServerRequest{}
-	mi := &file_servers_v1_servers_proto_msgTypes[8]
+	mi := &file_servers_v1_servers_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -774,7 +1148,7 @@ func (x *EditServerRequest) String() string {
 func (*EditServerRequest) ProtoMessage() {}
 
 func (x *EditServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_servers_v1_servers_proto_msgTypes[8]
+	mi := &file_servers_v1_servers_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -787,7 +1161,7 @@ func (x *EditServerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditServerRequest.ProtoReflect.Descriptor instead.
 func (*EditServerRequest) Descriptor() ([]byte, []int) {
-	return file_servers_v1_servers_proto_rawDescGZIP(), []int{8}
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *EditServerRequest) GetServer() *Server {
@@ -806,7 +1180,7 @@ type EditServerResponse struct {
 
 func (x *EditServerResponse) Reset() {
 	*x = EditServerResponse{}
-	mi := &file_servers_v1_servers_proto_msgTypes[9]
+	mi := &file_servers_v1_servers_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -818,7 +1192,7 @@ func (x *EditServerResponse) String() string {
 func (*EditServerResponse) ProtoMessage() {}
 
 func (x *EditServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_servers_v1_servers_proto_msgTypes[9]
+	mi := &file_servers_v1_servers_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -831,7 +1205,7 @@ func (x *EditServerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditServerResponse.ProtoReflect.Descriptor instead.
 func (*EditServerResponse) Descriptor() ([]byte, []int) {
-	return file_servers_v1_servers_proto_rawDescGZIP(), []int{9}
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *EditServerResponse) GetServer() *Server {
@@ -850,7 +1224,7 @@ type DeleteServerRequest struct {
 
 func (x *DeleteServerRequest) Reset() {
 	*x = DeleteServerRequest{}
-	mi := &file_servers_v1_servers_proto_msgTypes[10]
+	mi := &file_servers_v1_servers_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -862,7 +1236,7 @@ func (x *DeleteServerRequest) String() string {
 func (*DeleteServerRequest) ProtoMessage() {}
 
 func (x *DeleteServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_servers_v1_servers_proto_msgTypes[10]
+	mi := &file_servers_v1_servers_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -875,7 +1249,7 @@ func (x *DeleteServerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteServerRequest.ProtoReflect.Descriptor instead.
 func (*DeleteServerRequest) Descriptor() ([]byte, []int) {
-	return file_servers_v1_servers_proto_rawDescGZIP(), []int{10}
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DeleteServerRequest) GetServerId() int32 {
@@ -894,7 +1268,7 @@ type ServersAdminResponse struct {
 
 func (x *ServersAdminResponse) Reset() {
 	*x = ServersAdminResponse{}
-	mi := &file_servers_v1_servers_proto_msgTypes[11]
+	mi := &file_servers_v1_servers_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -906,7 +1280,7 @@ func (x *ServersAdminResponse) String() string {
 func (*ServersAdminResponse) ProtoMessage() {}
 
 func (x *ServersAdminResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_servers_v1_servers_proto_msgTypes[11]
+	mi := &file_servers_v1_servers_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -919,7 +1293,7 @@ func (x *ServersAdminResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServersAdminResponse.ProtoReflect.Descriptor instead.
 func (*ServersAdminResponse) Descriptor() ([]byte, []int) {
-	return file_servers_v1_servers_proto_rawDescGZIP(), []int{11}
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ServersAdminResponse) GetServers() []*Server {
@@ -949,7 +1323,23 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\"T\n" +
 	"\x11QueryLogsResponse\x12)\n" +
 	"\x04logs\x18\x01 \x03(\v2\x15.servers.v1.ServerLogR\x04logs\x12\x14\n" +
-	"\x05count\x18\x02 \x01(\x05R\x05count\"\x8f\x05\n" +
+	"\x05count\x18\x02 \x01(\x05R\x05count\"j\n" +
+	"\x11StreamLogsRequest\x12'\n" +
+	"\tserver_id\x18\x01 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\bserverId\x12,\n" +
+	"\rhistory_limit\x18\x02 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\fhistoryLimit\"\x86\x02\n" +
+	"\x12StreamLogsResponse\x12'\n" +
+	"\tserver_id\x18\x01 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\bserverId\x12+\n" +
+	"\vserver_name\x18\x02 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\n" +
+	"serverName\x127\n" +
+	"\n" +
+	"event_type\x18\x03 \x01(\x0e2\x18.servers.v1.LogEventTypeR\teventType\x12\x1e\n" +
+	"\x04body\x18\x04 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04body\x12A\n" +
+	"\n" +
+	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\"\x8f\x05\n" +
 	"\n" +
 	"SafeServer\x12'\n" +
 	"\tserver_id\x18\x01 \x01(\x05B\n" +
@@ -1039,7 +1429,76 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"\tserver_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\bserverId\"L\n" +
 	"\x14ServersAdminResponse\x124\n" +
-	"\aservers\x18\x01 \x03(\v2\x12.servers.v1.ServerB\x06\xbaH\x03\xc8\x01\x01R\aservers2\xb8\x03\n" +
+	"\aservers\x18\x01 \x03(\v2\x12.servers.v1.ServerB\x06\xbaH\x03\xc8\x01\x01R\aservers*\xa1\x11\n" +
+	"\fLogEventType\x12\x1e\n" +
+	"\x1aLOG_EVENT_TYPE_UNSPECIFIED\x10\x00\x12\x1a\n" +
+	"\x16LOG_EVENT_TYPE_UNKNOWN\x10\x01\x12\x16\n" +
+	"\x12LOG_EVENT_TYPE_SAY\x10\n" +
+	"\x12\x1b\n" +
+	"\x17LOG_EVENT_TYPE_SAY_TEAM\x10\v\x12\x19\n" +
+	"\x15LOG_EVENT_TYPE_KILLED\x10\f\x12\x1e\n" +
+	"\x1aLOG_EVENT_TYPE_KILL_ASSIST\x10\r\x12\x1a\n" +
+	"\x16LOG_EVENT_TYPE_SUICIDE\x10\x0e\x12\x1d\n" +
+	"\x19LOG_EVENT_TYPE_SHOT_FIRED\x10\x0f\x12\x1b\n" +
+	"\x17LOG_EVENT_TYPE_SHOT_HIT\x10\x10\x12\x19\n" +
+	"\x15LOG_EVENT_TYPE_DAMAGE\x10\x11\x12\x1d\n" +
+	"\x19LOG_EVENT_TYPE_DOMINATION\x10\x12\x12\x1a\n" +
+	"\x16LOG_EVENT_TYPE_REVENGE\x10\x13\x12\x19\n" +
+	"\x15LOG_EVENT_TYPE_PICKUP\x10\x14\x12\x1d\n" +
+	"\x19LOG_EVENT_TYPE_EMPTY_UBER\x10\x15\x12\x1e\n" +
+	"\x1aLOG_EVENT_TYPE_MEDIC_DEATH\x10\x16\x12!\n" +
+	"\x1dLOG_EVENT_TYPE_MEDIC_DEATH_EX\x10\x17\x12&\n" +
+	"\"LOG_EVENT_TYPE_LOST_UBER_ADVANTAGE\x10\x18\x12\x1f\n" +
+	"\x1bLOG_EVENT_TYPE_CHARGE_READY\x10\x19\x12\"\n" +
+	"\x1eLOG_EVENT_TYPE_CHARGE_DEPLOYED\x10\x1a\x12\x1f\n" +
+	"\x1bLOG_EVENT_TYPE_CHARGE_ENDED\x10\x1b\x12\x19\n" +
+	"\x15LOG_EVENT_TYPE_HEALED\x10\x1c\x12\x1f\n" +
+	"\x1bLOG_EVENT_TYPE_EXTINGUISHED\x10\x1d\x12\x1f\n" +
+	"\x1bLOG_EVENT_TYPE_BUILT_OBJECT\x10\x1e\x12\x1f\n" +
+	"\x1bLOG_EVENT_TYPE_CARRY_OBJECT\x10\x1f\x12 \n" +
+	"\x1cLOG_EVENT_TYPE_KILLED_OBJECT\x10 \x12#\n" +
+	"\x1fLOG_EVENT_TYPE_DETONATED_OBJECT\x10!\x12\x1e\n" +
+	"\x1aLOG_EVENT_TYPE_DROP_OBJECT\x10\"\x12)\n" +
+	"%LOG_EVENT_TYPE_FIRST_HEAL_AFTER_SPAWN\x10#\x12\"\n" +
+	"\x1eLOG_EVENT_TYPE_CAPTURE_BLOCKED\x10$\x12!\n" +
+	"\x1dLOG_EVENT_TYPE_POINT_CAPTURED\x100\x12\x1e\n" +
+	"\x1aLOG_EVENT_TYPE_JOINED_TEAM\x101\x12\x1f\n" +
+	"\x1bLOG_EVENT_TYPE_CHANGE_CLASS\x102\x12\x1d\n" +
+	"\x19LOG_EVENT_TYPE_SPAWNED_AS\x103\x12 \n" +
+	"\x1cLOG_EVENT_TYPE_JARATE_ATTACK\x104\x12\x1e\n" +
+	"\x1aLOG_EVENT_TYPE_MILK_ATTACK\x105\x12\x1d\n" +
+	"\x19LOG_EVENT_TYPE_GAS_ATTACK\x106\x12 \n" +
+	"\x1cLOG_EVENT_TYPE_KILLED_CUSTOM\x107\x12#\n" +
+	"\x1fLOG_EVENT_TYPE_W_ROUND_OVERTIME\x10d\x12 \n" +
+	"\x1cLOG_EVENT_TYPE_W_ROUND_START\x10e\x12\x1e\n" +
+	"\x1aLOG_EVENT_TYPE_W_ROUND_WIN\x10f\x12\x1e\n" +
+	"\x1aLOG_EVENT_TYPE_W_ROUND_LEN\x10g\x12\x1f\n" +
+	"\x1bLOG_EVENT_TYPE_W_TEAM_SCORE\x10h\x12%\n" +
+	"!LOG_EVENT_TYPE_W_TEAM_FINAL_SCORE\x10i\x12\x1e\n" +
+	"\x1aLOG_EVENT_TYPE_W_GAME_OVER\x10j\x12\x1b\n" +
+	"\x17LOG_EVENT_TYPE_W_PAUSED\x10k\x12\x1c\n" +
+	"\x18LOG_EVENT_TYPE_W_RESUMED\x10l\x12#\n" +
+	"\x1fLOG_EVENT_TYPE_W_MINI_ROUND_WIN\x10n\x12#\n" +
+	"\x1fLOG_EVENT_TYPE_W_MINI_ROUND_LEN\x10o\x12(\n" +
+	"$LOG_EVENT_TYPE_W_MINI_ROUND_SELECTED\x10p\x12%\n" +
+	"!LOG_EVENT_TYPE_W_MINI_ROUND_START\x10q\x12&\n" +
+	"\"LOG_EVENT_TYPE_W_ROUND_SETUP_BEGIN\x10r\x12+\n" +
+	"'LOG_EVENT_TYPE_W_INTERMISSION_WIN_LIMIT\x10s\x12\x1d\n" +
+	"\x18LOG_EVENT_TYPE_LOG_START\x10\xe8\a\x12\x1c\n" +
+	"\x17LOG_EVENT_TYPE_LOG_STOP\x10\xe9\a\x12\x18\n" +
+	"\x13LOG_EVENT_TYPE_CVAR\x10\xea\a\x12\x18\n" +
+	"\x13LOG_EVENT_TYPE_RCON\x10\xeb\a\x12\x1d\n" +
+	"\x18LOG_EVENT_TYPE_CONNECTED\x10\xec\a\x12 \n" +
+	"\x1bLOG_EVENT_TYPE_DISCONNECTED\x10\xed\a\x12\x1d\n" +
+	"\x18LOG_EVENT_TYPE_VALIDATED\x10\xee\a\x12\x1b\n" +
+	"\x16LOG_EVENT_TYPE_ENTERED\x10\xef\a\x12\x1c\n" +
+	"\x17LOG_EVENT_TYPE_MAP_LOAD\x10\xf0\a\x12&\n" +
+	"!LOG_EVENT_TYPE_SERVER_CONFIG_EXEC\x10\xf1\a\x12\x1e\n" +
+	"\x19LOG_EVENT_TYPE_STEAM_AUTH\x10\xf2\a\x12\x1f\n" +
+	"\x1aLOG_EVENT_TYPE_MAP_STARTED\x10\xf3\a\x12 \n" +
+	"\x1bLOG_EVENT_TYPE_VOTE_DETAILS\x10\xcc\b\x12 \n" +
+	"\x1bLOG_EVENT_TYPE_VOTE_SUCCESS\x10\xcd\b\x12\x1f\n" +
+	"\x1aLOG_EVENT_TYPE_VOTE_FAILED\x10\xce\b2\x89\x04\n" +
 	"\x0eServersService\x12:\n" +
 	"\x05State\x12\x16.google.protobuf.Empty\x1a\x19.servers.v1.StateResponse\x12>\n" +
 	"\aServers\x12\x16.google.protobuf.Empty\x1a\x1b.servers.v1.ServersResponse\x12K\n" +
@@ -1047,7 +1506,9 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"EditServer\x12\x1d.servers.v1.EditServerRequest\x1a\x1e.servers.v1.EditServerResponse\x12G\n" +
 	"\fDeleteServer\x12\x1f.servers.v1.DeleteServerRequest\x1a\x16.google.protobuf.Empty\x12H\n" +
 	"\fServersAdmin\x12\x16.google.protobuf.Empty\x1a .servers.v1.ServersAdminResponse\x12J\n" +
-	"\tQueryLogs\x12\x1c.servers.v1.QueryLogsRequest\x1a\x1d.servers.v1.QueryLogsResponse\"\x00B\xa6\x01\n" +
+	"\tQueryLogs\x12\x1c.servers.v1.QueryLogsRequest\x1a\x1d.servers.v1.QueryLogsResponse\"\x00\x12O\n" +
+	"\n" +
+	"StreamLogs\x12\x1d.servers.v1.StreamLogsRequest\x1a\x1e.servers.v1.StreamLogsResponse\"\x000\x01B\xa6\x01\n" +
 	"\x0ecom.servers.v1B\fServersProtoP\x01Z=github.com/leighmacdonald/gbans/internal/servers/v1;serversv1\xa2\x02\x03SXX\xaa\x02\n" +
 	"Servers.V1\xca\x02\n" +
 	"Servers\\V1\xe2\x02\x16Servers\\V1\\GPBMetadata\xea\x02\vServers::V1b\beditionsp\xe8\a"
@@ -1064,55 +1525,63 @@ func file_servers_v1_servers_proto_rawDescGZIP() []byte {
 	return file_servers_v1_servers_proto_rawDescData
 }
 
-var file_servers_v1_servers_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_servers_v1_servers_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_servers_v1_servers_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_servers_v1_servers_proto_goTypes = []any{
-	(*QueryLogsRequest)(nil),      // 0: servers.v1.QueryLogsRequest
-	(*ServerLog)(nil),             // 1: servers.v1.ServerLog
-	(*QueryLogsResponse)(nil),     // 2: servers.v1.QueryLogsResponse
-	(*SafeServer)(nil),            // 3: servers.v1.SafeServer
-	(*Server)(nil),                // 4: servers.v1.Server
-	(*StateResponse)(nil),         // 5: servers.v1.StateResponse
-	(*ServerInfoSafe)(nil),        // 6: servers.v1.ServerInfoSafe
-	(*ServersResponse)(nil),       // 7: servers.v1.ServersResponse
-	(*EditServerRequest)(nil),     // 8: servers.v1.EditServerRequest
-	(*EditServerResponse)(nil),    // 9: servers.v1.EditServerResponse
-	(*DeleteServerRequest)(nil),   // 10: servers.v1.DeleteServerRequest
-	(*ServersAdminResponse)(nil),  // 11: servers.v1.ServersAdminResponse
-	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
-	(*v1.LatLong)(nil),            // 13: network.v1.LatLong
-	(*emptypb.Empty)(nil),         // 14: google.protobuf.Empty
+	(LogEventType)(0),             // 0: servers.v1.LogEventType
+	(*QueryLogsRequest)(nil),      // 1: servers.v1.QueryLogsRequest
+	(*ServerLog)(nil),             // 2: servers.v1.ServerLog
+	(*QueryLogsResponse)(nil),     // 3: servers.v1.QueryLogsResponse
+	(*StreamLogsRequest)(nil),     // 4: servers.v1.StreamLogsRequest
+	(*StreamLogsResponse)(nil),    // 5: servers.v1.StreamLogsResponse
+	(*SafeServer)(nil),            // 6: servers.v1.SafeServer
+	(*Server)(nil),                // 7: servers.v1.Server
+	(*StateResponse)(nil),         // 8: servers.v1.StateResponse
+	(*ServerInfoSafe)(nil),        // 9: servers.v1.ServerInfoSafe
+	(*ServersResponse)(nil),       // 10: servers.v1.ServersResponse
+	(*EditServerRequest)(nil),     // 11: servers.v1.EditServerRequest
+	(*EditServerResponse)(nil),    // 12: servers.v1.EditServerResponse
+	(*DeleteServerRequest)(nil),   // 13: servers.v1.DeleteServerRequest
+	(*ServersAdminResponse)(nil),  // 14: servers.v1.ServersAdminResponse
+	(*timestamppb.Timestamp)(nil), // 15: google.protobuf.Timestamp
+	(*v1.LatLong)(nil),            // 16: network.v1.LatLong
+	(*emptypb.Empty)(nil),         // 17: google.protobuf.Empty
 }
 var file_servers_v1_servers_proto_depIdxs = []int32{
-	12, // 0: servers.v1.ServerLog.created_on:type_name -> google.protobuf.Timestamp
-	1,  // 1: servers.v1.QueryLogsResponse.logs:type_name -> servers.v1.ServerLog
-	13, // 2: servers.v1.SafeServer.lat_long:type_name -> network.v1.LatLong
-	13, // 3: servers.v1.Server.lat_long:type_name -> network.v1.LatLong
-	12, // 4: servers.v1.Server.token_created_on:type_name -> google.protobuf.Timestamp
-	12, // 5: servers.v1.Server.created_on:type_name -> google.protobuf.Timestamp
-	12, // 6: servers.v1.Server.updated_on:type_name -> google.protobuf.Timestamp
-	3,  // 7: servers.v1.StateResponse.servers:type_name -> servers.v1.SafeServer
-	13, // 8: servers.v1.StateResponse.lat_long:type_name -> network.v1.LatLong
-	6,  // 9: servers.v1.ServersResponse.servers:type_name -> servers.v1.ServerInfoSafe
-	4,  // 10: servers.v1.EditServerRequest.server:type_name -> servers.v1.Server
-	4,  // 11: servers.v1.EditServerResponse.server:type_name -> servers.v1.Server
-	4,  // 12: servers.v1.ServersAdminResponse.servers:type_name -> servers.v1.Server
-	14, // 13: servers.v1.ServersService.State:input_type -> google.protobuf.Empty
-	14, // 14: servers.v1.ServersService.Servers:input_type -> google.protobuf.Empty
-	8,  // 15: servers.v1.ServersService.EditServer:input_type -> servers.v1.EditServerRequest
-	10, // 16: servers.v1.ServersService.DeleteServer:input_type -> servers.v1.DeleteServerRequest
-	14, // 17: servers.v1.ServersService.ServersAdmin:input_type -> google.protobuf.Empty
-	0,  // 18: servers.v1.ServersService.QueryLogs:input_type -> servers.v1.QueryLogsRequest
-	5,  // 19: servers.v1.ServersService.State:output_type -> servers.v1.StateResponse
-	7,  // 20: servers.v1.ServersService.Servers:output_type -> servers.v1.ServersResponse
-	9,  // 21: servers.v1.ServersService.EditServer:output_type -> servers.v1.EditServerResponse
-	14, // 22: servers.v1.ServersService.DeleteServer:output_type -> google.protobuf.Empty
-	11, // 23: servers.v1.ServersService.ServersAdmin:output_type -> servers.v1.ServersAdminResponse
-	2,  // 24: servers.v1.ServersService.QueryLogs:output_type -> servers.v1.QueryLogsResponse
-	19, // [19:25] is the sub-list for method output_type
-	13, // [13:19] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	15, // 0: servers.v1.ServerLog.created_on:type_name -> google.protobuf.Timestamp
+	2,  // 1: servers.v1.QueryLogsResponse.logs:type_name -> servers.v1.ServerLog
+	0,  // 2: servers.v1.StreamLogsResponse.event_type:type_name -> servers.v1.LogEventType
+	15, // 3: servers.v1.StreamLogsResponse.created_on:type_name -> google.protobuf.Timestamp
+	16, // 4: servers.v1.SafeServer.lat_long:type_name -> network.v1.LatLong
+	16, // 5: servers.v1.Server.lat_long:type_name -> network.v1.LatLong
+	15, // 6: servers.v1.Server.token_created_on:type_name -> google.protobuf.Timestamp
+	15, // 7: servers.v1.Server.created_on:type_name -> google.protobuf.Timestamp
+	15, // 8: servers.v1.Server.updated_on:type_name -> google.protobuf.Timestamp
+	6,  // 9: servers.v1.StateResponse.servers:type_name -> servers.v1.SafeServer
+	16, // 10: servers.v1.StateResponse.lat_long:type_name -> network.v1.LatLong
+	9,  // 11: servers.v1.ServersResponse.servers:type_name -> servers.v1.ServerInfoSafe
+	7,  // 12: servers.v1.EditServerRequest.server:type_name -> servers.v1.Server
+	7,  // 13: servers.v1.EditServerResponse.server:type_name -> servers.v1.Server
+	7,  // 14: servers.v1.ServersAdminResponse.servers:type_name -> servers.v1.Server
+	17, // 15: servers.v1.ServersService.State:input_type -> google.protobuf.Empty
+	17, // 16: servers.v1.ServersService.Servers:input_type -> google.protobuf.Empty
+	11, // 17: servers.v1.ServersService.EditServer:input_type -> servers.v1.EditServerRequest
+	13, // 18: servers.v1.ServersService.DeleteServer:input_type -> servers.v1.DeleteServerRequest
+	17, // 19: servers.v1.ServersService.ServersAdmin:input_type -> google.protobuf.Empty
+	1,  // 20: servers.v1.ServersService.QueryLogs:input_type -> servers.v1.QueryLogsRequest
+	4,  // 21: servers.v1.ServersService.StreamLogs:input_type -> servers.v1.StreamLogsRequest
+	8,  // 22: servers.v1.ServersService.State:output_type -> servers.v1.StateResponse
+	10, // 23: servers.v1.ServersService.Servers:output_type -> servers.v1.ServersResponse
+	12, // 24: servers.v1.ServersService.EditServer:output_type -> servers.v1.EditServerResponse
+	17, // 25: servers.v1.ServersService.DeleteServer:output_type -> google.protobuf.Empty
+	14, // 26: servers.v1.ServersService.ServersAdmin:output_type -> servers.v1.ServersAdminResponse
+	3,  // 27: servers.v1.ServersService.QueryLogs:output_type -> servers.v1.QueryLogsResponse
+	5,  // 28: servers.v1.ServersService.StreamLogs:output_type -> servers.v1.StreamLogsResponse
+	22, // [22:29] is the sub-list for method output_type
+	15, // [15:22] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_servers_v1_servers_proto_init() }
@@ -1125,13 +1594,14 @@ func file_servers_v1_servers_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_servers_v1_servers_proto_rawDesc), len(file_servers_v1_servers_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   12,
+			NumEnums:      1,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_servers_v1_servers_proto_goTypes,
 		DependencyIndexes: file_servers_v1_servers_proto_depIdxs,
+		EnumInfos:         file_servers_v1_servers_proto_enumTypes,
 		MessageInfos:      file_servers_v1_servers_proto_msgTypes,
 	}.Build()
 	File_servers_v1_servers_proto = out.File

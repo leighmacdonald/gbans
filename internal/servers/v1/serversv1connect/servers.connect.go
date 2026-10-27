@@ -50,6 +50,9 @@ const (
 	// ServersServiceQueryLogsProcedure is the fully-qualified name of the ServersService's QueryLogs
 	// RPC.
 	ServersServiceQueryLogsProcedure = "/servers.v1.ServersService/QueryLogs"
+	// ServersServiceStreamLogsProcedure is the fully-qualified name of the ServersService's StreamLogs
+	// RPC.
+	ServersServiceStreamLogsProcedure = "/servers.v1.ServersService/StreamLogs"
 )
 
 // ServersServiceClient is a client for the servers.v1.ServersService service.
@@ -60,6 +63,7 @@ type ServersServiceClient interface {
 	DeleteServer(context.Context, *v1.DeleteServerRequest) (*emptypb.Empty, error)
 	ServersAdmin(context.Context, *emptypb.Empty) (*v1.ServersAdminResponse, error)
 	QueryLogs(context.Context, *v1.QueryLogsRequest) (*v1.QueryLogsResponse, error)
+	StreamLogs(context.Context, *v1.StreamLogsRequest) (*connect.ServerStreamForClient[v1.StreamLogsResponse], error)
 }
 
 // NewServersServiceClient constructs a client for the servers.v1.ServersService service. By
@@ -109,6 +113,12 @@ func NewServersServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(serversServiceMethods.ByName("QueryLogs")),
 			connect.WithClientOptions(opts...),
 		),
+		streamLogs: connect.NewClient[v1.StreamLogsRequest, v1.StreamLogsResponse](
+			httpClient,
+			baseURL+ServersServiceStreamLogsProcedure,
+			connect.WithSchema(serversServiceMethods.ByName("StreamLogs")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -120,6 +130,7 @@ type serversServiceClient struct {
 	deleteServer *connect.Client[v1.DeleteServerRequest, emptypb.Empty]
 	serversAdmin *connect.Client[emptypb.Empty, v1.ServersAdminResponse]
 	queryLogs    *connect.Client[v1.QueryLogsRequest, v1.QueryLogsResponse]
+	streamLogs   *connect.Client[v1.StreamLogsRequest, v1.StreamLogsResponse]
 }
 
 // State calls servers.v1.ServersService.State.
@@ -176,6 +187,11 @@ func (c *serversServiceClient) QueryLogs(ctx context.Context, req *v1.QueryLogsR
 	return nil, err
 }
 
+// StreamLogs calls servers.v1.ServersService.StreamLogs.
+func (c *serversServiceClient) StreamLogs(ctx context.Context, req *v1.StreamLogsRequest) (*connect.ServerStreamForClient[v1.StreamLogsResponse], error) {
+	return c.streamLogs.CallServerStream(ctx, connect.NewRequest(req))
+}
+
 // ServersServiceHandler is an implementation of the servers.v1.ServersService service.
 type ServersServiceHandler interface {
 	State(context.Context, *emptypb.Empty) (*v1.StateResponse, error)
@@ -184,6 +200,7 @@ type ServersServiceHandler interface {
 	DeleteServer(context.Context, *v1.DeleteServerRequest) (*emptypb.Empty, error)
 	ServersAdmin(context.Context, *emptypb.Empty) (*v1.ServersAdminResponse, error)
 	QueryLogs(context.Context, *v1.QueryLogsRequest) (*v1.QueryLogsResponse, error)
+	StreamLogs(context.Context, *v1.StreamLogsRequest, *connect.ServerStream[v1.StreamLogsResponse]) error
 }
 
 // NewServersServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -229,6 +246,12 @@ func NewServersServiceHandler(svc ServersServiceHandler, opts ...connect.Handler
 		connect.WithSchema(serversServiceMethods.ByName("QueryLogs")),
 		connect.WithHandlerOptions(opts...),
 	)
+	serversServiceStreamLogsHandler := connect.NewServerStreamHandlerSimple(
+		ServersServiceStreamLogsProcedure,
+		svc.StreamLogs,
+		connect.WithSchema(serversServiceMethods.ByName("StreamLogs")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/servers.v1.ServersService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ServersServiceStateProcedure:
@@ -243,6 +266,8 @@ func NewServersServiceHandler(svc ServersServiceHandler, opts ...connect.Handler
 			serversServiceServersAdminHandler.ServeHTTP(w, r)
 		case ServersServiceQueryLogsProcedure:
 			serversServiceQueryLogsHandler.ServeHTTP(w, r)
+		case ServersServiceStreamLogsProcedure:
+			serversServiceStreamLogsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -274,4 +299,8 @@ func (UnimplementedServersServiceHandler) ServersAdmin(context.Context, *emptypb
 
 func (UnimplementedServersServiceHandler) QueryLogs(context.Context, *v1.QueryLogsRequest) (*v1.QueryLogsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("servers.v1.ServersService.QueryLogs is not implemented"))
+}
+
+func (UnimplementedServersServiceHandler) StreamLogs(context.Context, *v1.StreamLogsRequest, *connect.ServerStream[v1.StreamLogsResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("servers.v1.ServersService.StreamLogs is not implemented"))
 }

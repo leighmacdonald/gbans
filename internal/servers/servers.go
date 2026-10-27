@@ -94,6 +94,7 @@ type Servers struct {
 	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 	logAddr     string
 	logRecorder *LogEventRecorder
+	logBuffer   *LogBuffer
 }
 
 func New(repository Repository, broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent], logAddr string) (*Servers, error) {
@@ -105,14 +106,21 @@ func New(repository Repository, broadcaster *broadcaster.Broadcaster[logparse.Ev
 		broadcaster: broadcaster,
 		logAddr:     logAddr,
 		logRecorder: newLogEventRecorder(repository),
+		logBuffer:   NewLogBuffer(),
 	}
 
 	return servers, nil
 }
 
 func (s *Servers) onLogEvent(_ logparse.EventType, event logparse.ServerEvent) {
+	s.logBuffer.Push(event.ServerID, event)
 	s.broadcaster.Emit(event.EventType, event)
 	s.logRecorder.send(event)
+}
+
+// LogBuffer exposes the in-memory per-server log line buffer.
+func (s *Servers) LogBuffer() *LogBuffer {
+	return s.logBuffer
 }
 
 func (s *Servers) QueryLogs(ctx context.Context, opts QueryLogOpts) ([]ServerLog, int64, error) {

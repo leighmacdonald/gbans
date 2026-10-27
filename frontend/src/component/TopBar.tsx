@@ -303,7 +303,7 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 				callback: onClickHandler("/admin/servers"),
 			});
 		}
-		if (hasPermission(Permission.SERVER_WRITE)) {
+		if (hasPermission(Permission.SERVER_READ)) {
 			items.push({
 				leftIcon: <ListIcon sx={colourOpts} />,
 				label: "Server Logs",

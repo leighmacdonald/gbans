@@ -380,14 +380,19 @@ func (g *GBans) setupSentry() {
 	}
 }
 
-func (g *GBans) StartBackground(ctx context.Context) {
+func (g *GBans) setLogAddress(ctx context.Context) {
 	conf := g.config.Config()
+	slog.Debug("Updating server logaddress", slog.String("address", conf.General.SrcdsLogAddr))
 
-	if conf.Debug.AddRCONLogAddress != "" {
+	if conf.General.SrcdsLogAddr != "" {
 		g.servers.Each(func(server *servers.Server) error {
 			return server.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
 		})
 	}
+}
+
+func (g *GBans) StartBackground(ctx context.Context) {
+	conf := g.config.Config()
 
 	go g.chat.Start(ctx, g.broadcaster)
 	go g.forums.Start(ctx)
@@ -434,10 +439,15 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	patreonTicker := time.NewTicker(time.Hour)
 	defer patreonTicker.Stop()
 
+	logAddrTicker := time.NewTicker(time.Hour)
+	defer logAddrTicker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			go g.setLogAddress(ctx)
+		case <-logAddrTicker.C:
+			go g.memberships.Update(ctx)
 		case <-membershipsTicker.C:
 			go g.memberships.Update(ctx)
 		case <-expirationsTicker.C:

@@ -42,6 +42,7 @@ func NewServersService(servers *Servers, locations *network.Networks, openGraph 
 	authMiddleware.UserRoute(serversv1connect.ServersServiceDeleteServerProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_WRITE))
 	authMiddleware.UserRoute(serversv1connect.ServersServiceServersAdminProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_READ))
 	authMiddleware.UserRoute(serversv1connect.ServersServiceQueryLogsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_READ))
+	authMiddleware.UserRoute(serversv1connect.ServersServiceStreamLogsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_READ))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -256,4 +257,73 @@ func (s Service) ServersAdmin(ctx context.Context, _ *emptypb.Empty) (*v1.Server
 	}
 
 	return &resp, nil
+}
+
+// StreamLogs sends the server's buffered log history and then streams live log
+// lines until the client disconnects.
+func (s Service) StreamLogs(ctx context.Context, req *v1.StreamLogsRequest, stream *connect.ServerStream[v1.StreamLogsResponse]) error {
+	serverID := req.GetServerId()
+	server, errServer := s.servers.Server(ctx, serverID)
+	if errServer != nil {
+		return connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
+	}
+
+	buffer := s.servers.LogBuffer()
+	sub := make(chan BufferedLog, 512)
+	buffer.Consume(serverID, sub)
+	defer buffer.Unregister(sub)
+
+	// The snapshot is taken after subscribing, so lines pushed in between are
+	// present in both. The seq watermark dedupes them and keeps the stream in
+	// order across the history/live boundary.
+	snap := buffer.Snapshot(serverID)
+
+	var watermark uint64
+	if len(snap) > 0 {
+		watermark = snap[len(snap)-1].Seq
+	}
+	if limit := int(req.GetHistoryLimit()); limit > 0 && len(snap) > limit {
+		snap = snap[len(snap)-limit:]
+	}
+
+	send := func(line BufferedLog) error {
+		return stream.Send(line.toStreamLogsResponse(serverID, server.ShortName))
+	}
+
+	for _, line := range snap {
+		if errSend := send(line); errSend != nil {
+			return nil
+		}
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case line, ok := <-sub:
+			if !ok {
+				return nil
+			}
+			if line.Seq <= watermark {
+				continue
+			}
+			watermark = line.Seq
+			if errSend := send(line); errSend != nil {
+				return nil
+			}
+		}
+	}
+}
+
+func (l BufferedLog) toStreamLogsResponse(serverID int32, serverName string) *v1.StreamLogsResponse {
+	//nolint:gosec // logparse.EventType values are bounded well below int32 range
+	eventType := v1.LogEventType(int32(l.EventType))
+
+	return &v1.StreamLogsResponse{
+		ServerId:   &serverID,
+		ServerName: &serverName,
+		EventType:  &eventType,
+		Body:       &l.Raw,
+		CreatedOn:  timestamppb.New(l.CreatedOn),
+	}
 }
