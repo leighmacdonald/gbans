@@ -7,9 +7,7 @@
 [![Discord chat](https://img.shields.io/discord/704508824320475218)](https://discord.gg/YEWed3wY3F)
 
 gbans is a centralized administration system for Team Fortress 2 communities. It
-provides a global ban system similar to
-[SourceBans++](https://github.com/sbpp/sourcebans-pp/), along with the tooling
-needed to run a set of game servers day-to-day: reports and appeals, chat logs,
+provides the tooling needed to run a set of game servers day-to-day: reports and appeals, chat logs,
 player stats, SourceTV demos, forums, a wiki and Discord integration.
 
 The project consists of a Go backend/API, a React web frontend (embedded into
