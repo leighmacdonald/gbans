@@ -16,7 +16,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
-import type { SxProps, Theme } from "@mui/material/styles";
+import { type SxProps, type Theme, useTheme } from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -50,27 +50,29 @@ const MONO_FONT = 'ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Li
 // the name is everything before the first tag.
 const playerNameFromToken = (text: string) => text.slice(1, -1).split("<")[0];
 
-// Per-token colors layered on top of the line's category color, so names,
-// quoted values and numbers stand out without losing the type signal.
-const TOKEN_STYLES: Partial<Record<LogTokenKind, CSSProperties>> = {
-	timestamp: { color: "#6e7681" },
-	player: { color: "#7ee787", fontWeight: 600 },
-	quoted: { color: "#79c0ff" },
-	steamid: { color: "#6e7681" },
-	address: { color: "#6e7681" },
-	number: { color: "#ffa657" },
-	keyword: { fontWeight: 600 },
-};
+// Per-token colours layered on top of the line's category colour, so names,
+// quoted values and numbers stand out without losing the type signal. Drawn
+// from the active theme palette so the highlighting follows the selected mode.
+const buildTokenStyles = (theme: Theme): Partial<Record<LogTokenKind, CSSProperties>> => {
+	const dark = theme.palette.mode === "dark";
+	// The theme's white is the site cream, which reads as tan on the dark
+	// terminal panel, so the terminal uses true white for its timestamps,
+	// identifiers and keywords in dark mode.
+	const dim = dark ? "#ffffff" : theme.palette.text.disabled;
+	const keyword: CSSProperties = { fontWeight: 600 };
+	if (dark) {
+		keyword.color = "#ffffff";
+	}
 
-// Player references carrying a resolvable SteamID are clickable and open the
-// player's quick-link menu.
-const playerTokenStyle: SxProps<Theme> = {
-	...TOKEN_STYLES.player,
-	display: "inline",
-	cursor: "pointer",
-	"&:hover": {
-		textDecoration: "underline",
-	},
+	return {
+		timestamp: { color: dim },
+		player: { color: dark ? theme.palette.success.main : theme.palette.success.dark, fontWeight: 600 },
+		quoted: { color: dark ? theme.palette.info.main : theme.palette.info.dark },
+		steamid: { color: dim },
+		address: { color: dim },
+		number: { color: dark ? theme.palette.warning.main : theme.palette.warning.dark },
+		keyword,
+	};
 };
 
 interface LogTerminalProps {
@@ -83,6 +85,23 @@ export const LogTerminal = ({ servers, serverId, onServerChange }: LogTerminalPr
 	const client = useMemo(() => createClient(ServersService, finalTransport), []);
 	const { hasPermission } = useAuth();
 	const { sendError } = useUserFlashCtx();
+	const theme = useTheme();
+
+	const tokenStyles = useMemo(() => buildTokenStyles(theme), [theme]);
+
+	// Player references carrying a resolvable SteamID are clickable and open
+	// the player's quick-link menu.
+	const playerTokenStyle: SxProps<Theme> = useMemo(
+		() => ({
+			...tokenStyles.player,
+			display: "inline",
+			cursor: "pointer",
+			"&:hover": {
+				textDecoration: "underline",
+			},
+		}),
+		[tokenStyles],
+	);
 
 	const [lines, setLines] = useState<StreamLogsResponse[]>([]);
 	const [paused, setPaused] = useState(false);
@@ -100,6 +119,7 @@ export const LogTerminal = ({ servers, serverId, onServerChange }: LogTerminalPr
 	const autoScrollRef = useRef(autoScroll);
 	const renderPending = useRef(false);
 	const scrollRef = useRef<HTMLDivElement>(null);
+	const programmaticScroll = useRef(false);
 
 	useEffect(() => {
 		pausedRef.current = paused;
@@ -112,7 +132,17 @@ export const LogTerminal = ({ servers, serverId, onServerChange }: LogTerminalPr
 	const scrollToBottom = useCallback(() => {
 		const el = scrollRef.current;
 		if (el) {
+			// Mark the resulting scroll event so handleScroll does not treat
+			// our own scroll as the user reading history and switch
+			// auto-follow off. The flag is cleared on the next frame; the
+			// scroll event is dispatched within the current frame, so this
+			// also covers the case where the position does not change and
+			// no event fires at all.
+			programmaticScroll.current = true;
 			el.scrollTop = el.scrollHeight;
+			requestAnimationFrame(() => {
+				programmaticScroll.current = false;
+			});
 		}
 	}, []);
 
@@ -161,7 +191,7 @@ export const LogTerminal = ({ servers, serverId, onServerChange }: LogTerminalPr
 			);
 		}
 		return (
-			<span key={index} style={TOKEN_STYLES[token.kind]}>
+			<span key={index} style={tokenStyles[token.kind]}>
 				{token.text}
 			</span>
 		);
@@ -224,6 +254,10 @@ export const LogTerminal = ({ servers, serverId, onServerChange }: LogTerminalPr
 	const handleScroll = () => {
 		const el = scrollRef.current;
 		if (!el) {
+			return;
+		}
+		if (programmaticScroll.current) {
+			programmaticScroll.current = false;
 			return;
 		}
 		const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
@@ -312,6 +346,7 @@ export const LogTerminal = ({ servers, serverId, onServerChange }: LogTerminalPr
 					<Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
 						{LOG_CATEGORIES.map((category) => {
 							const active = activeCategories.includes(category.id);
+							const colour = categoryColour(theme, category.id);
 							return (
 								<Tooltip
 									key={category.id}
@@ -322,9 +357,9 @@ export const LogTerminal = ({ servers, serverId, onServerChange }: LogTerminalPr
 										size="small"
 										onClick={() => toggleCategory(category.id)}
 										sx={{
-											border: `1px solid ${category.colour}`,
-											color: active ? "#0d1117" : category.colour,
-											backgroundColor: active ? category.colour : "transparent",
+											border: `1px solid ${colour}`,
+											color: active ? theme.palette.getContrastText(colour) : colour,
+											backgroundColor: active ? colour : "transparent",
 											opacity: active ? 1 : 0.55,
 										}}
 									/>
@@ -350,7 +385,8 @@ export const LogTerminal = ({ servers, serverId, onServerChange }: LogTerminalPr
 				onScroll={handleScroll}
 				sx={{
 					overflow: "auto",
-					backgroundColor: "#0d1117",
+					backgroundColor: theme.palette.background.paper,
+					border: `1px solid ${theme.palette.divider}`,
 					borderRadius: 1,
 					height: "calc(100vh - 400px)",
 					minHeight: 400,
@@ -360,7 +396,7 @@ export const LogTerminal = ({ servers, serverId, onServerChange }: LogTerminalPr
 			>
 				{visibleLines.length === 0 ? (
 					<Box sx={{ p: 2 }}>
-						<Typography variant="body2" sx={{ color: "#5c6773" }}>
+						<Typography variant="body2" sx={{ color: theme.palette.text.disabled }}>
 							Waiting for log output…
 						</Typography>
 					</Box>
@@ -390,7 +426,7 @@ export const LogTerminal = ({ servers, serverId, onServerChange }: LogTerminalPr
 									<Typography
 										component="span"
 										sx={{
-											color: categoryColour(categoryForLogType(line.eventType)),
+											color: categoryColour(theme, categoryForLogType(line.eventType)),
 											fontSize: 13,
 											fontFamily: "inherit",
 											lineHeight: `${ROW_HEIGHT}px`,

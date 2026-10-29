@@ -1,3 +1,4 @@
+import type { Theme } from "@mui/material";
 import { LogEventType } from "../rpc/servers/v1/servers_pb.ts";
 
 export type LogCategory = "chat" | "kills" | "damage" | "players" | "world" | "server" | "votes" | "other";
@@ -5,18 +6,17 @@ export type LogCategory = "chat" | "kills" | "damage" | "players" | "world" | "s
 export interface LogCategoryDef {
 	id: LogCategory;
 	label: string;
-	colour: string;
 }
 
 export const LOG_CATEGORIES: LogCategoryDef[] = [
-	{ id: "chat", label: "Chat", colour: "#4fc3f7" },
-	{ id: "kills", label: "Kills", colour: "#ef5350" },
-	{ id: "damage", label: "Damage", colour: "#ffa726" },
-	{ id: "players", label: "Players", colour: "#66bb6a" },
-	{ id: "world", label: "World", colour: "#ab47bc" },
-	{ id: "server", label: "Server", colour: "#90a4ae" },
-	{ id: "votes", label: "Votes", colour: "#fdd835" },
-	{ id: "other", label: "Other", colour: "#78909c" },
+	{ id: "chat", label: "Chat" },
+	{ id: "kills", label: "Kills" },
+	{ id: "damage", label: "Damage" },
+	{ id: "players", label: "Players" },
+	{ id: "world", label: "World" },
+	{ id: "server", label: "Server" },
+	{ id: "votes", label: "Votes" },
+	{ id: "other", label: "Other" },
 ];
 
 const categoryByType: Partial<Record<LogEventType, LogCategory>> = {
@@ -95,5 +95,19 @@ const categoryByType: Partial<Record<LogEventType, LogCategory>> = {
 
 export const categoryForLogType = (eventType: LogEventType): LogCategory => categoryByType[eventType] ?? "other";
 
-export const categoryColour = (category: LogCategory): string =>
-	LOG_CATEGORIES.find((c) => c.id === category)?.colour ?? LOG_CATEGORIES[LOG_CATEGORIES.length - 1].colour;
+// Each category is mapped to a semantic palette channel of the active theme.
+// Dark mode prefers the more vibrant main variant (the light variants look
+// washed out on the dark panel) unless its main variant lacks contrast, and
+// light mode prefers the darker variants for contrast on the light panel.
+const categoryPalette: Record<LogCategory, (palette: Theme["palette"]) => string> = {
+	chat: (palette) => (palette.mode === "dark" ? palette.info.main : palette.info.dark),
+	kills: (palette) => (palette.mode === "dark" ? palette.error.main : palette.error.dark),
+	damage: (palette) => (palette.mode === "dark" ? palette.warning.main : palette.warning.dark),
+	players: (palette) => (palette.mode === "dark" ? palette.success.main : palette.success.dark),
+	world: (palette) => (palette.mode === "dark" ? palette.secondary.light : palette.secondary.dark),
+	server: (palette) => palette.text.secondary,
+	votes: (palette) => (palette.mode === "dark" ? palette.warning.light : palette.warning.main),
+	other: (palette) => (palette.mode === "dark" ? palette.common.white : palette.text.disabled),
+};
+
+export const categoryColour = (theme: Theme, category: LogCategory): string => categoryPalette[category](theme.palette);
