@@ -53,6 +53,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/sosodev/duration"
 )
@@ -384,15 +385,54 @@ func (g *GBans) setLogAddress(ctx context.Context) {
 	conf := g.config.Config()
 	slog.Debug("Updating server logaddress", slog.String("address", conf.General.SrcdsLogAddr))
 
+	enabledServers, errServers := g.servers.Servers(ctx, servers.Query{
+		IncludeDisabled: false,
+	})
+
+	if errServers != nil {
+		return
+	}
+
+	// logaddress entries are in-memory in srcds and lost when a server restarts,
+	// so this is re-run periodically in StartBackground.
 	if conf.General.SrcdsLogAddr != "" {
+		for _, current := range enabledServers {
+			conn, errConn := rcon.Dial(ctx, current.Addr(), current.RCON, time.Second*10)
+			if errConn != nil {
+				continue
+			}
+			defer log.Closer(conn)
+
+			_, errExec := conn.Exec("logaddress_add " + conf.General.SrcdsLogAddr)
+			if errExec != nil {
+				continue
+			}
+		}
+	}
+
+	if conf.Debug.AddRCONLogAddress != "" {
 		g.servers.Each(func(server *servers.Server) error {
-			return server.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
+			for _, enabled := range enabledServers {
+				if enabled.ServerID == server.ServerID {
+					if err := server.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress); err != nil {
+						slog.Error("Failed to add debug logaddress",
+							slog.String("server", server.ShortName),
+							slog.String("error", err.Error()))
+					}
+
+					return nil
+				}
+			}
+
+			return nil
 		})
 	}
 }
 
 func (g *GBans) StartBackground(ctx context.Context) {
 	conf := g.config.Config()
+
+	go g.setLogAddress(ctx)
 
 	go g.chat.Start(ctx, g.broadcaster)
 	go g.forums.Start(ctx)
@@ -445,9 +485,9 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			go g.setLogAddress(ctx)
+			return
 		case <-logAddrTicker.C:
-			go g.memberships.Update(ctx)
+			go g.setLogAddress(ctx)
 		case <-membershipsTicker.C:
 			go g.memberships.Update(ctx)
 		case <-expirationsTicker.C:

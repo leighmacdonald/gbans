@@ -15,6 +15,7 @@ service ServersService {
   rpc ServersAdmin(google.protobuf.Empty) returns (ServersAdminResponse);
   rpc QueryLogs(QueryLogsRequest) returns (QueryLogsResponse) {}
   rpc StreamLogs(StreamLogsRequest) returns (stream StreamLogsResponse) {}
+  rpc ExecCommand(ExecCommandRequest) returns (ExecCommandResponse) {}
 }
 
 message QueryLogsRequest {
@@ -69,6 +70,23 @@ message StreamLogsResponse {
     (buf.validate.field).string.min_len = 1
   ];
   google.protobuf.Timestamp created_on = 5 [(buf.validate.field).required = true];
+}
+
+message ExecCommandRequest {
+  int32 server_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  // 255 matches the Source engine console input limit.
+  string command = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 255
+  ];
+}
+
+message ExecCommandResponse {
+  string response = 1 [(buf.validate.field).required = true];
 }
 
 // LogEventType mirrors the classification of a parsed srcds log line.

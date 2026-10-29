@@ -22,7 +22,15 @@ log lines is also kept in the database (purged after 24 hours).
   were skipped.
 - **Auto-scroll** — keeps the view pinned to the newest line. It disables itself automatically when you scroll up
   to review older output, and can be re-enabled with the button.
-- **Colored output** — each message category has its own color, making it easy to spot chat, kills, world events
-  and server metadata at a glance.
+- **Colored output** — each message category has its own color, and player names, quoted values, timestamps and
+  numbers are highlighted within lines, making it easy to spot chat, kills, world events and server metadata at a
+  glance.
+- **Player quick links** — player references such as `"Hacksaw<12><[U:1:68745073]><Red>"` are clickable. Clicking
+  one opens a menu to filter the stream to that player, open their local profile or Steam profile, copy their
+  SteamID 64, or jump straight to their chat logs, SourceTV history, connection history, ban history and report
+  history (permission dependent).
+- **RCON console** — users with the `PERMISSION_SERVER_WRITE` permission see an input box below the terminal to
+  send an RCON command (e.g. `sm_listme`, `changelevel cp_badlands`) to the selected server. The command output,
+  if any, is shown under the input.
 
 The page requires the `PERMISSION_SERVER_READ` permission.
