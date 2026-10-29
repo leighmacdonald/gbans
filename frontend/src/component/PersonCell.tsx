@@ -1,29 +1,13 @@
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import ChatIcon from "@mui/icons-material/Chat";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import NoAccountsIcon from "@mui/icons-material/NoAccounts";
-import PublicIcon from "@mui/icons-material/Public";
-import ReportIcon from "@mui/icons-material/Report";
-import VideocamIcon from "@mui/icons-material/Videocam";
-import WifiFindIcon from "@mui/icons-material/WifiFind";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
 import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
 import { useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
-import { useNavigate } from "@tanstack/react-router";
-import React, { type MouseEventHandler, type PropsWithChildren, useCallback, useMemo, useState } from "react";
-import SteamID from "steamid";
-import { useAuth } from "../hooks/useAuth.ts";
-import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { Permission } from "../rpc/roles/v1/roles_pb.ts";
+import React, { type MouseEventHandler, type PropsWithChildren, useCallback, useState } from "react";
 import { avatarHashToURL } from "../util/strings.ts";
 import { emptyOrNullString } from "../util/types.ts";
-import { MenuItemLink } from "./MenuItemLink.tsx";
+import { PlayerLinksMenu } from "./PlayerLinksMenu.tsx";
 import { TextLink } from "./TextLink.tsx";
 
 export type PersonCellProps = {
@@ -34,12 +18,9 @@ export type PersonCellProps = {
 } & PropsWithChildren;
 
 const PersonCellInner = ({ steamId, avatarHash, personaName, onClick, children }: PersonCellProps) => {
-	const { hasPermission } = useAuth();
+	const theme = useTheme();
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const open = Boolean(anchorEl);
-	const { sendFlash } = useUserFlashCtx();
-	const navigate = useNavigate();
-	const theme = useTheme();
 
 	const handleClick = (event: React.MouseEvent<HTMLElement>) => {
 		setAnchorEl(event.currentTarget);
@@ -48,119 +29,6 @@ const PersonCellInner = ({ steamId, avatarHash, personaName, onClick, children }
 	const handleClose = useCallback(() => {
 		setAnchorEl(null);
 	}, []);
-
-	const copySteamID = useCallback(
-		async (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
-			event.preventDefault();
-			event.stopPropagation();
-			const sid = new SteamID(String(steamId));
-			await navigator.clipboard.writeText(sid.toString());
-			handleClose();
-			sendFlash("success", `Copied to clipboard: ${sid.toString()}`);
-		},
-		[steamId, sendFlash, handleClose],
-	);
-
-	const menu = useMemo(() => {
-		const items = [
-			<MenuItemLink to={`/profile/$steamId`} params={{ steamId: String(steamId) }} key={20}>
-				<ListItemIcon>
-					<AccountCircleIcon fontSize="small" color={"primary"} />
-				</ListItemIcon>
-				Local Profile
-			</MenuItemLink>,
-
-			<MenuItem
-				onClick={async () => {
-					await navigate({ href: `https://steamcommunity.com/profiles/${steamId}` });
-				}}
-				key={30}
-			>
-				<ListItemIcon>
-					<PublicIcon fontSize="small" color={"primary"} />
-				</ListItemIcon>
-				Steam Profile
-			</MenuItem>,
-			<MenuItem onClick={copySteamID} key={40}>
-				<ListItemIcon>
-					<ContentCopyIcon fontSize="small" color={"primary"} />
-				</ListItemIcon>
-				Copy SteamID 64
-			</MenuItem>,
-		];
-		if (hasPermission(Permission.CHATLOG_READ)) {
-			items.push(
-				<MenuItemLink
-					to={`/chatlogs`}
-					search={{ columnFilters: [{ id: "steamId", value: String(steamId) }] }}
-					key={50}
-				>
-					<ListItemIcon>
-						<ChatIcon fontSize="small" color={"primary"} />
-					</ListItemIcon>
-					Chat Logs
-				</MenuItemLink>,
-			);
-		}
-		if (hasPermission(Permission.DEMO_READ)) {
-			items.push(
-				<MenuItemLink
-					to={`/stv`}
-					search={{ columnFilters: [{ id: "stats", value: String(steamId) }] }}
-					key={60}
-				>
-					<ListItemIcon>
-						<VideocamIcon fontSize="small" color={"primary"} />
-					</ListItemIcon>
-					SourceTV History
-				</MenuItemLink>,
-			);
-		}
-		if (hasPermission(Permission.NETWORK_READ)) {
-			items.push(
-				<MenuItemLink
-					to={"/admin/network/playersbyip"}
-					search={{ columnFilters: [{ id: "steamId", value: String(steamId) }] }}
-					key={70}
-				>
-					<ListItemIcon>
-						<WifiFindIcon fontSize="small" color={"primary"} />
-					</ListItemIcon>
-					Connection History
-				</MenuItemLink>,
-			);
-		}
-		if (hasPermission(Permission.BAN_CREATE)) {
-			items.push(
-				<MenuItemLink
-					to={"/admin/bans"}
-					search={{ columnFilters: [{ id: "targetId", value: String(steamId) }] }}
-					key={80}
-				>
-					<ListItemIcon>
-						<NoAccountsIcon fontSize="small" color={"primary"} />
-					</ListItemIcon>
-					Ban History
-				</MenuItemLink>,
-			);
-		}
-		if (hasPermission(Permission.REPORT_ADMIN)) {
-			items.push(
-				<MenuItemLink
-					to={"/admin/reports"}
-					search={{ columnFilters: [{ id: "targetId", value: String(steamId) }] }}
-					key={90}
-				>
-					<ListItemIcon>
-						<ReportIcon fontSize="small" color={"primary"} />
-					</ListItemIcon>
-					Report History
-				</MenuItemLink>,
-			);
-		}
-
-		return items;
-	}, [copySteamID, hasPermission, steamId, navigate]);
 
 	return (
 		<>
@@ -248,26 +116,12 @@ const PersonCellInner = ({ steamId, avatarHash, personaName, onClick, children }
 				transformOrigin={{ horizontal: "left", vertical: "top" }}
 				anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
 			>
-				<Box
-					sx={{
-						display: "flex",
-						alignItems: "center",
-						padding: 2,
-						gap: 1,
-						backgroundColor: "primary.main",
-						color: "primary.contrastText",
-					}}
-				>
-					<Avatar src={avatarHashToURL(avatarHash)} />
-					<Typography
-						sx={{
-							fontWeight: 700,
-						}}
-					>
-						{String(personaName ?? steamId)}
-					</Typography>
-				</Box>
-				{menu}
+				<PlayerLinksMenu
+					steamId={String(steamId)}
+					personaName={personaName}
+					avatarHash={avatarHash}
+					onAction={handleClose}
+				/>
 			</Menu>
 		</>
 	);

@@ -33,3 +33,8 @@ export const serversAdmin = ServersService.method.serversAdmin;
  * @generated from rpc servers.v1.ServersService.QueryLogs
  */
 export const queryLogs = ServersService.method.queryLogs;
+
+/**
+ * @generated from rpc servers.v1.ServersService.ExecCommand
+ */
+export const execCommand = ServersService.method.execCommand;

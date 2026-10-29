@@ -7,6 +7,7 @@ import (
 	"net"
 	"sort"
 	"strconv"
+	"strings"
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/database"
@@ -43,6 +44,7 @@ func NewServersService(servers *Servers, locations *network.Networks, openGraph 
 	authMiddleware.UserRoute(serversv1connect.ServersServiceServersAdminProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_READ))
 	authMiddleware.UserRoute(serversv1connect.ServersServiceQueryLogsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_READ))
 	authMiddleware.UserRoute(serversv1connect.ServersServiceStreamLogsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_READ))
+	authMiddleware.UserRoute(serversv1connect.ServersServiceExecCommandProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_WRITE))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -257,6 +259,39 @@ func (s Service) ServersAdmin(ctx context.Context, _ *emptypb.Empty) (*v1.Server
 	}
 
 	return &resp, nil
+}
+
+// ExecCommand executes an RCON command against the server and returns the
+// raw console output.
+func (s Service) ExecCommand(ctx context.Context, req *v1.ExecCommandRequest) (*v1.ExecCommandResponse, error) {
+	server, errServer := s.servers.Server(ctx, req.GetServerId())
+	if errServer != nil {
+		return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
+	}
+
+	command := strings.TrimSpace(req.GetCommand())
+	resp, errExec := server.Exec(ctx, command)
+	if errExec != nil {
+		if errors.Is(errExec, ErrServerDisabled) {
+			return nil, connect.NewError(connect.CodeFailedPrecondition, ErrServerDisabled)
+		}
+
+		slog.Error("Failed to execute rcon command",
+			slog.Int("server_id", int(server.ServerID)),
+			slog.String("server", server.ShortName),
+			slog.String("command", command),
+			slog.String("error", errExec.Error()))
+
+		return nil, connect.NewError(connect.CodeUnavailable, errExec)
+	}
+
+	slog.Info("Executed rcon command",
+		slog.Int("server_id", int(server.ServerID)),
+		slog.String("server", server.ShortName),
+		slog.String("command", command),
+		slog.String("user", rpc.UserInfoFromCtx(ctx).SteamID.String()))
+
+	return &v1.ExecCommandResponse{Response: &resp}, nil
 }
 
 // StreamLogs sends the server's buffered log history and then streams live log

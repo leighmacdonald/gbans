@@ -53,6 +53,9 @@ const (
 	// ServersServiceStreamLogsProcedure is the fully-qualified name of the ServersService's StreamLogs
 	// RPC.
 	ServersServiceStreamLogsProcedure = "/servers.v1.ServersService/StreamLogs"
+	// ServersServiceExecCommandProcedure is the fully-qualified name of the ServersService's
+	// ExecCommand RPC.
+	ServersServiceExecCommandProcedure = "/servers.v1.ServersService/ExecCommand"
 )
 
 // ServersServiceClient is a client for the servers.v1.ServersService service.
@@ -64,6 +67,7 @@ type ServersServiceClient interface {
 	ServersAdmin(context.Context, *emptypb.Empty) (*v1.ServersAdminResponse, error)
 	QueryLogs(context.Context, *v1.QueryLogsRequest) (*v1.QueryLogsResponse, error)
 	StreamLogs(context.Context, *v1.StreamLogsRequest) (*connect.ServerStreamForClient[v1.StreamLogsResponse], error)
+	ExecCommand(context.Context, *v1.ExecCommandRequest) (*v1.ExecCommandResponse, error)
 }
 
 // NewServersServiceClient constructs a client for the servers.v1.ServersService service. By
@@ -119,6 +123,12 @@ func NewServersServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(serversServiceMethods.ByName("StreamLogs")),
 			connect.WithClientOptions(opts...),
 		),
+		execCommand: connect.NewClient[v1.ExecCommandRequest, v1.ExecCommandResponse](
+			httpClient,
+			baseURL+ServersServiceExecCommandProcedure,
+			connect.WithSchema(serversServiceMethods.ByName("ExecCommand")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -131,6 +141,7 @@ type serversServiceClient struct {
 	serversAdmin *connect.Client[emptypb.Empty, v1.ServersAdminResponse]
 	queryLogs    *connect.Client[v1.QueryLogsRequest, v1.QueryLogsResponse]
 	streamLogs   *connect.Client[v1.StreamLogsRequest, v1.StreamLogsResponse]
+	execCommand  *connect.Client[v1.ExecCommandRequest, v1.ExecCommandResponse]
 }
 
 // State calls servers.v1.ServersService.State.
@@ -192,6 +203,15 @@ func (c *serversServiceClient) StreamLogs(ctx context.Context, req *v1.StreamLog
 	return c.streamLogs.CallServerStream(ctx, connect.NewRequest(req))
 }
 
+// ExecCommand calls servers.v1.ServersService.ExecCommand.
+func (c *serversServiceClient) ExecCommand(ctx context.Context, req *v1.ExecCommandRequest) (*v1.ExecCommandResponse, error) {
+	response, err := c.execCommand.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ServersServiceHandler is an implementation of the servers.v1.ServersService service.
 type ServersServiceHandler interface {
 	State(context.Context, *emptypb.Empty) (*v1.StateResponse, error)
@@ -201,6 +221,7 @@ type ServersServiceHandler interface {
 	ServersAdmin(context.Context, *emptypb.Empty) (*v1.ServersAdminResponse, error)
 	QueryLogs(context.Context, *v1.QueryLogsRequest) (*v1.QueryLogsResponse, error)
 	StreamLogs(context.Context, *v1.StreamLogsRequest, *connect.ServerStream[v1.StreamLogsResponse]) error
+	ExecCommand(context.Context, *v1.ExecCommandRequest) (*v1.ExecCommandResponse, error)
 }
 
 // NewServersServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -252,6 +273,12 @@ func NewServersServiceHandler(svc ServersServiceHandler, opts ...connect.Handler
 		connect.WithSchema(serversServiceMethods.ByName("StreamLogs")),
 		connect.WithHandlerOptions(opts...),
 	)
+	serversServiceExecCommandHandler := connect.NewUnaryHandlerSimple(
+		ServersServiceExecCommandProcedure,
+		svc.ExecCommand,
+		connect.WithSchema(serversServiceMethods.ByName("ExecCommand")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/servers.v1.ServersService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ServersServiceStateProcedure:
@@ -268,6 +295,8 @@ func NewServersServiceHandler(svc ServersServiceHandler, opts ...connect.Handler
 			serversServiceQueryLogsHandler.ServeHTTP(w, r)
 		case ServersServiceStreamLogsProcedure:
 			serversServiceStreamLogsHandler.ServeHTTP(w, r)
+		case ServersServiceExecCommandProcedure:
+			serversServiceExecCommandHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -303,4 +332,8 @@ func (UnimplementedServersServiceHandler) QueryLogs(context.Context, *v1.QueryLo
 
 func (UnimplementedServersServiceHandler) StreamLogs(context.Context, *v1.StreamLogsRequest, *connect.ServerStream[v1.StreamLogsResponse]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("servers.v1.ServersService.StreamLogs is not implemented"))
+}
+
+func (UnimplementedServersServiceHandler) ExecCommand(context.Context, *v1.ExecCommandRequest) (*v1.ExecCommandResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("servers.v1.ServersService.ExecCommand is not implemented"))
 }

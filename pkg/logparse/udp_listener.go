@@ -146,7 +146,7 @@ func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 						continue
 					}
 
-					slog.Debug("UDP Log", slog.String("msg", line[idx:readLen-2]), slog.String("server", serverName))
+					// slog.Debug("UDP Log", slog.String("msg", line[idx:readLen-2]), slog.String("server", serverName))
 
 					msgIngressChan <- newMsg{body: line[idx : readLen-2], serverID: serverID, serverName: serverName}
 
