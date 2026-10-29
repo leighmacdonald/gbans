@@ -16,6 +16,7 @@ service ServersService {
   rpc QueryLogs(QueryLogsRequest) returns (QueryLogsResponse) {}
   rpc StreamLogs(StreamLogsRequest) returns (stream StreamLogsResponse) {}
   rpc ExecCommand(ExecCommandRequest) returns (ExecCommandResponse) {}
+  rpc ClearLogs(ClearLogsRequest) returns (google.protobuf.Empty) {}
 }
 
 message QueryLogsRequest {
@@ -87,6 +88,13 @@ message ExecCommandRequest {
 
 message ExecCommandResponse {
   string response = 1 [(buf.validate.field).required = true];
+}
+
+message ClearLogsRequest {
+  int32 server_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
 }
 
 // LogEventType mirrors the classification of a parsed srcds log line.

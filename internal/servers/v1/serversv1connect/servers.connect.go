@@ -56,6 +56,9 @@ const (
 	// ServersServiceExecCommandProcedure is the fully-qualified name of the ServersService's
 	// ExecCommand RPC.
 	ServersServiceExecCommandProcedure = "/servers.v1.ServersService/ExecCommand"
+	// ServersServiceClearLogsProcedure is the fully-qualified name of the ServersService's ClearLogs
+	// RPC.
+	ServersServiceClearLogsProcedure = "/servers.v1.ServersService/ClearLogs"
 )
 
 // ServersServiceClient is a client for the servers.v1.ServersService service.
@@ -68,6 +71,7 @@ type ServersServiceClient interface {
 	QueryLogs(context.Context, *v1.QueryLogsRequest) (*v1.QueryLogsResponse, error)
 	StreamLogs(context.Context, *v1.StreamLogsRequest) (*connect.ServerStreamForClient[v1.StreamLogsResponse], error)
 	ExecCommand(context.Context, *v1.ExecCommandRequest) (*v1.ExecCommandResponse, error)
+	ClearLogs(context.Context, *v1.ClearLogsRequest) (*emptypb.Empty, error)
 }
 
 // NewServersServiceClient constructs a client for the servers.v1.ServersService service. By
@@ -129,6 +133,12 @@ func NewServersServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(serversServiceMethods.ByName("ExecCommand")),
 			connect.WithClientOptions(opts...),
 		),
+		clearLogs: connect.NewClient[v1.ClearLogsRequest, emptypb.Empty](
+			httpClient,
+			baseURL+ServersServiceClearLogsProcedure,
+			connect.WithSchema(serversServiceMethods.ByName("ClearLogs")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -142,6 +152,7 @@ type serversServiceClient struct {
 	queryLogs    *connect.Client[v1.QueryLogsRequest, v1.QueryLogsResponse]
 	streamLogs   *connect.Client[v1.StreamLogsRequest, v1.StreamLogsResponse]
 	execCommand  *connect.Client[v1.ExecCommandRequest, v1.ExecCommandResponse]
+	clearLogs    *connect.Client[v1.ClearLogsRequest, emptypb.Empty]
 }
 
 // State calls servers.v1.ServersService.State.
@@ -212,6 +223,15 @@ func (c *serversServiceClient) ExecCommand(ctx context.Context, req *v1.ExecComm
 	return nil, err
 }
 
+// ClearLogs calls servers.v1.ServersService.ClearLogs.
+func (c *serversServiceClient) ClearLogs(ctx context.Context, req *v1.ClearLogsRequest) (*emptypb.Empty, error) {
+	response, err := c.clearLogs.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ServersServiceHandler is an implementation of the servers.v1.ServersService service.
 type ServersServiceHandler interface {
 	State(context.Context, *emptypb.Empty) (*v1.StateResponse, error)
@@ -222,6 +242,7 @@ type ServersServiceHandler interface {
 	QueryLogs(context.Context, *v1.QueryLogsRequest) (*v1.QueryLogsResponse, error)
 	StreamLogs(context.Context, *v1.StreamLogsRequest, *connect.ServerStream[v1.StreamLogsResponse]) error
 	ExecCommand(context.Context, *v1.ExecCommandRequest) (*v1.ExecCommandResponse, error)
+	ClearLogs(context.Context, *v1.ClearLogsRequest) (*emptypb.Empty, error)
 }
 
 // NewServersServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -279,6 +300,12 @@ func NewServersServiceHandler(svc ServersServiceHandler, opts ...connect.Handler
 		connect.WithSchema(serversServiceMethods.ByName("ExecCommand")),
 		connect.WithHandlerOptions(opts...),
 	)
+	serversServiceClearLogsHandler := connect.NewUnaryHandlerSimple(
+		ServersServiceClearLogsProcedure,
+		svc.ClearLogs,
+		connect.WithSchema(serversServiceMethods.ByName("ClearLogs")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/servers.v1.ServersService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ServersServiceStateProcedure:
@@ -297,6 +324,8 @@ func NewServersServiceHandler(svc ServersServiceHandler, opts ...connect.Handler
 			serversServiceStreamLogsHandler.ServeHTTP(w, r)
 		case ServersServiceExecCommandProcedure:
 			serversServiceExecCommandHandler.ServeHTTP(w, r)
+		case ServersServiceClearLogsProcedure:
+			serversServiceClearLogsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -336,4 +365,8 @@ func (UnimplementedServersServiceHandler) StreamLogs(context.Context, *v1.Stream
 
 func (UnimplementedServersServiceHandler) ExecCommand(context.Context, *v1.ExecCommandRequest) (*v1.ExecCommandResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("servers.v1.ServersService.ExecCommand is not implemented"))
+}
+
+func (UnimplementedServersServiceHandler) ClearLogs(context.Context, *v1.ClearLogsRequest) (*emptypb.Empty, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("servers.v1.ServersService.ClearLogs is not implemented"))
 }

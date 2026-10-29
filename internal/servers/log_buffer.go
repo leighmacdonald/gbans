@@ -100,6 +100,25 @@ func (b *LogBuffer) Push(serverID int32, event logparse.ServerEvent) {
 	b.mu.Unlock()
 }
 
+// Clear empties the buffered history for the server. The ring's sequence
+// counter keeps incrementing so active stream subscribers, whose watermarks
+// sit at earlier sequence numbers, keep receiving new lines.
+func (b *LogBuffer) Clear(serverID int32) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	ring, found := b.rings[serverID]
+	if !found {
+		return
+	}
+
+	for i := range ring.lines {
+		ring.lines[i] = BufferedLog{}
+	}
+	ring.head = 0
+	ring.size = 0
+}
+
 // Snapshot returns a copy of the buffered lines for the server in chronological order.
 func (b *LogBuffer) Snapshot(serverID int32) []BufferedLog {
 	b.mu.Lock()
