@@ -45,6 +45,7 @@ func NewServersService(servers *Servers, locations *network.Networks, openGraph 
 	authMiddleware.UserRoute(serversv1connect.ServersServiceQueryLogsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_READ))
 	authMiddleware.UserRoute(serversv1connect.ServersServiceStreamLogsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_READ))
 	authMiddleware.UserRoute(serversv1connect.ServersServiceExecCommandProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_WRITE))
+	authMiddleware.UserRoute(serversv1connect.ServersServiceClearLogsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_WRITE))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -292,6 +293,24 @@ func (s Service) ExecCommand(ctx context.Context, req *v1.ExecCommandRequest) (*
 		slog.String("user", rpc.UserInfoFromCtx(ctx).SteamID.String()))
 
 	return &v1.ExecCommandResponse{Response: &resp}, nil
+}
+
+// ClearLogs empties the server's in-memory log buffer. Connected stream
+// subscribers keep receiving new live lines afterwards.
+func (s Service) ClearLogs(ctx context.Context, req *v1.ClearLogsRequest) (*emptypb.Empty, error) {
+	server, errServer := s.servers.Server(ctx, req.GetServerId())
+	if errServer != nil {
+		return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
+	}
+
+	s.servers.LogBuffer().Clear(req.GetServerId())
+
+	slog.Info("Cleared server log buffer",
+		slog.Int("server_id", int(req.GetServerId())),
+		slog.String("server", server.ShortName),
+		slog.String("user", rpc.UserInfoFromCtx(ctx).SteamID.String()))
+
+	return &emptypb.Empty{}, nil
 }
 
 // StreamLogs sends the server's buffered log history and then streams live log

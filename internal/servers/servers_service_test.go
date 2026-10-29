@@ -356,3 +356,53 @@ func TestServersServiceExecCommand(t *testing.T) {
 		require.Equal(t, connect.CodeUnauthenticated, connectErr.Code())
 	})
 }
+
+func TestServersServiceClearLogs(t *testing.T) {
+	serverCase, err := servers.New(servers.NewRepository(fixture.Database),
+		broadcaster.New[logparse.EventType, logparse.ServerEvent](), "")
+	require.NoError(t, err)
+
+	saved, err := serverCase.Save(t.Context(), servers.NewServer("clear-logs", "127.0.0.1", 27015))
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, serverCase.Delete(context.Background(), saved.ServerID))
+	})
+
+	for n := 1; n <= 5; n++ {
+		serverCase.LogBuffer().Push(saved.ServerID, makeEvent(saved.ServerID, n))
+	}
+	require.Len(t, serverCase.LogBuffer().Snapshot(saved.ServerID), 5)
+
+	t.Run("clears the buffered lines", func(t *testing.T) {
+		client := newPermissionClient(t, serverCase, []rolesv1.Permission{rolesv1.Permission_PERMISSION_SERVER_WRITE})
+		_, errClear := client.ClearLogs(t.Context(), &v1.ClearLogsRequest{ServerId: &saved.ServerID})
+		require.NoError(t, errClear)
+		require.Empty(t, serverCase.LogBuffer().Snapshot(saved.ServerID))
+
+		// The sequence counter must not reset, or active stream subscribers
+		// would skip every line pushed after the clear.
+		serverCase.LogBuffer().Push(saved.ServerID, makeEvent(saved.ServerID, 6))
+		snap := serverCase.LogBuffer().Snapshot(saved.ServerID)
+		require.Len(t, snap, 1)
+		require.Equal(t, uint64(6), snap[0].Seq)
+	})
+
+	t.Run("unknown server is not found", func(t *testing.T) {
+		client := newPermissionClient(t, serverCase, []rolesv1.Permission{rolesv1.Permission_PERMISSION_SERVER_WRITE})
+		missing := int32(999999)
+		_, errClear := client.ClearLogs(t.Context(), &v1.ClearLogsRequest{ServerId: &missing})
+
+		var connectErr *connect.Error
+		require.ErrorAs(t, errClear, &connectErr)
+		require.Equal(t, connect.CodeNotFound, connectErr.Code())
+	})
+
+	t.Run("requires the server write permission", func(t *testing.T) {
+		readOnlyClient := newPermissionClient(t, serverCase, []rolesv1.Permission{rolesv1.Permission_PERMISSION_SERVER_READ})
+		_, errClear := readOnlyClient.ClearLogs(t.Context(), &v1.ClearLogsRequest{ServerId: &saved.ServerID})
+
+		var connectErr *connect.Error
+		require.ErrorAs(t, errClear, &connectErr)
+		require.Equal(t, connect.CodeUnauthenticated, connectErr.Code())
+	})
+}

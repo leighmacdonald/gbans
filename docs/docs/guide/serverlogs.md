@@ -22,6 +22,9 @@ log lines is also kept in the database (purged after 24 hours).
   were skipped.
 - **Auto-scroll** — keeps the view pinned to the newest line. It disables itself automatically when you scroll up
   to review older output, and can be re-enabled with the button.
+- **Clear logs** — users with the `PERMISSION_SERVER_WRITE` permission see a button that empties the selected
+  server's in-memory buffer. The live stream keeps flowing afterwards; only the already-buffered history is
+  removed.
 - **Colored output** — each message category has its own color, and player names, quoted values, timestamps and
   numbers are highlighted within lines, making it easy to spot chat, kills, world events and server metadata at a
   glance.

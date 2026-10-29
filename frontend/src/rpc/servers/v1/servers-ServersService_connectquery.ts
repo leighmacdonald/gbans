@@ -38,3 +38,8 @@ export const queryLogs = ServersService.method.queryLogs;
  * @generated from rpc servers.v1.ServersService.ExecCommand
  */
 export const execCommand = ServersService.method.execCommand;
+
+/**
+ * @generated from rpc servers.v1.ServersService.ClearLogs
+ */
+export const clearLogs = ServersService.method.clearLogs;

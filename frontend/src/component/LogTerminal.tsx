@@ -1,5 +1,6 @@
 import { createClient } from "@connectrpc/connect";
 import { useMutation } from "@connectrpc/connect-query";
+import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -36,7 +37,7 @@ import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { type ServerInfoSafe, ServersService, type StreamLogsResponse } from "../rpc/servers/v1/servers_pb.ts";
-import { execCommand } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
+import { clearLogs, execCommand } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { finalTransport } from "../transport.ts";
 import { type LogToken, type LogTokenKind, tokenizeLogLine } from "../util/logHighlight.ts";
 import { categoryColour, categoryForLogType, LOG_CATEGORIES, type LogCategory } from "../util/logTypes.ts";
@@ -84,7 +85,7 @@ interface LogTerminalProps {
 export const LogTerminal = ({ servers, serverId, onServerChange }: LogTerminalProps) => {
 	const client = useMemo(() => createClient(ServersService, finalTransport), []);
 	const { hasPermission } = useAuth();
-	const { sendError } = useUserFlashCtx();
+	const { sendFlash, sendError } = useUserFlashCtx();
 	const theme = useTheme();
 
 	const tokenStyles = useMemo(() => buildTokenStyles(theme), [theme]);
@@ -178,6 +179,16 @@ export const LogTerminal = ({ servers, serverId, onServerChange }: LogTerminalPr
 
 		execCommandMutation.mutate({ serverId, command: trimmed });
 	};
+
+	const clearLogsMutation = useMutation(clearLogs, {
+		onSuccess: () => {
+			linesRef.current = [];
+			setLines([]);
+			setDropped(0);
+			sendFlash("success", "Cleared the server's log buffer");
+		},
+		onError: sendError,
+	});
 
 	const renderToken = (token: LogToken, index: number) => {
 		if (token.kind === "player" && token.steamId) {
@@ -376,6 +387,17 @@ export const LogTerminal = ({ servers, serverId, onServerChange }: LogTerminalPr
 								<VerticalAlignBottomIcon />
 							</IconButton>
 						</Tooltip>
+						{hasPermission(Permission.SERVER_WRITE) && (
+							<Tooltip title="Clear the server's buffered logs">
+								<IconButton
+									onClick={() => clearLogsMutation.mutate({ serverId })}
+									disabled={clearLogsMutation.isPending}
+									color="error"
+								>
+									<DeleteSweepIcon />
+								</IconButton>
+							</Tooltip>
+						)}
 					</Stack>
 				</Stack>
 			</ContainerWithHeader>
