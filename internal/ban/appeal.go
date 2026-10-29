@@ -173,7 +173,9 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.BaseUser,
 		return AppealMessage{}, httphelper.ErrInvalidParameter
 	}
 
-	if !u.roleAuth.HasPermissionForSteamID(ctx, curUser.GetSteamID(), rolesv1.Permission_PERMISSION_BAN_CREATE) && !ban.TargetID.Equal(curUser.GetSteamID()) {
+	// APPEAL_WRITE (not BAN_CREATE, which the default user role holds for
+	// every player) or being the ban target may post on the appeal thread.
+	if !u.roleAuth.HasPermissionForSteamID(ctx, curUser.GetSteamID(), rolesv1.Permission_PERMISSION_APPEAL_WRITE) && !ban.TargetID.Equal(curUser.GetSteamID()) {
 		return AppealMessage{}, rpc.ErrPermission
 	}
 

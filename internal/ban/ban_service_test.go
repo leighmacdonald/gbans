@@ -126,13 +126,6 @@ func (h *rpcHarness) newPlainUser(t *testing.T) personDomain.Core {
 	return createPerson(t, steamid.RandSID64())
 }
 
-// ownerPerson returns the person for the fixture owner steam id.
-func (h *rpcHarness) ownerPerson(t *testing.T) personDomain.Core {
-	t.Helper()
-
-	return createPerson(t, h.env.owner)
-}
-
 // newRPCUserWithPerms creates a person assigned a fresh role carrying only the given permission names.
 func (h *rpcHarness) newRPCUserWithPerms(t *testing.T, perms ...string) personDomain.Core {
 	t.Helper()
@@ -241,29 +234,26 @@ func TestBanService_Get(t *testing.T) {
 		require.Equal(t, created.BanID, resp.GetBan().GetBanId())
 	})
 
-	t.Run("target can get", func(t *testing.T) {
+	// The target holds no moderator permissions, mirroring a banned player
+	// loading their own appeal page.
+	t.Run("banned target can get their own ban", func(t *testing.T) {
 		t.Parallel()
 
-		// The Get route requires BAN_READ in the auth middleware, so the
-		// target needs it to even reach the domain level target check.
-		ownTarget := h.newRPCUserWithPerms(t, "PERMISSION_BAN_READ")
-		ownBan := h.newBan(t, ownTarget.SteamID)
-
-		client := h.banClient(t, ownTarget)
-		resp, err := client.Get(t.Context(), &v1.GetRequest{BanId: &ownBan.BanID})
+		client := h.banClient(t, target)
+		resp, err := client.Get(t.Context(), &v1.GetRequest{BanId: &created.BanID})
 		require.NoError(t, err)
-		require.Equal(t, ownBan.BanID, resp.GetBan().GetBanId())
+		require.Equal(t, created.BanID, resp.GetBan().GetBanId())
 	})
 
-	// The Get procedure requires BAN_READ in the auth middleware, so users
-	// without it are rejected before the domain level target check runs.
+	// Users without BAN_READ who are not the ban target are denied by the
+	// handler once past the auth middleware.
 	t.Run("stranger is denied", func(t *testing.T) {
 		t.Parallel()
 
 		client := h.banClient(t, h.newPlainUser(t))
 
 		_, err := client.Get(t.Context(), &v1.GetRequest{BanId: &created.BanID})
-		requireCode(t, connect.CodeUnauthenticated, err)
+		requireCode(t, connect.CodePermissionDenied, err)
 	})
 
 	t.Run("unknown ban is not found", func(t *testing.T) {
@@ -542,9 +532,9 @@ func TestAppealService_Reply(t *testing.T) {
 		closed.AppealState = ban.Denied
 		require.NoError(t, harness.env.bans.Save(t.Context(), &closed))
 
-		// CreateBanMessage requires BAN_CREATE or being the target before the
-		// APPEAL_ADMIN check on closed appeals.
-		admin := harness.newRPCUserWithPerms(t, "PERMISSION_APPEAL_ADMIN", "PERMISSION_APPEAL_WRITE", "PERMISSION_BAN_CREATE")
+		// CreateBanMessage requires APPEAL_WRITE or being the target before
+		// the APPEAL_ADMIN check on closed appeals.
+		admin := harness.newRPCUserWithPerms(t, "PERMISSION_APPEAL_ADMIN", "PERMISSION_APPEAL_WRITE")
 		client := harness.appealClient(t, admin)
 
 		_, err := client.Reply(t.Context(), &v1.ReplyRequest{
@@ -554,7 +544,30 @@ func TestAppealService_Reply(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("plain user is denied", func(t *testing.T) {
+	t.Run("banned target can reply to their own open appeal", func(t *testing.T) {
+		t.Parallel()
+
+		banned := harness.newPlainUser(t)
+		ownBan := harness.newBan(t, banned.SteamID)
+
+		client := harness.appealClient(t, banned)
+
+		resp, err := client.Reply(t.Context(), &v1.ReplyRequest{
+			BanId:  &ownBan.BanID,
+			BodyMd: new("I did not cheat"),
+		})
+		require.NoError(t, err)
+		require.Positive(t, resp.GetMessage().GetBanMessageId())
+
+		messages, err := harness.env.appealRepo.Messages(t.Context(), ownBan.BanID)
+		require.NoError(t, err)
+		require.Len(t, messages, 1)
+		require.Equal(t, banned.SteamID, messages[0].AuthorID)
+	})
+
+	// Plain users hold the auto-assigned user role (including BAN_CREATE),
+	// which must not let them post on someone else's appeal.
+	t.Run("stranger cannot reply to someone else's appeal", func(t *testing.T) {
 		t.Parallel()
 
 		client := harness.appealClient(t, harness.newPlainUser(t))
@@ -563,7 +576,7 @@ func TestAppealService_Reply(t *testing.T) {
 			BanId:  &created.BanID,
 			BodyMd: new("I did not cheat"),
 		})
-		requireCode(t, connect.CodeUnauthenticated, err)
+		requireCode(t, connect.CodePermissionDenied, err)
 	})
 }
 
@@ -572,9 +585,10 @@ func TestAppealService_Messages(t *testing.T) {
 
 	h := newRPCHarness(t)
 	mod := h.newRPCUser(t)
-	created := h.newBan(t, h.newPlainUser(t).SteamID)
+	target := h.newPlainUser(t)
+	created := h.newBan(t, target.SteamID)
 
-	resp, err := h.env.appeals.CreateBanMessage(t.Context(), h.ownerPerson(t), created.BanID, "original appeal")
+	resp, err := h.env.appeals.CreateBanMessage(t.Context(), target, created.BanID, "original appeal")
 	require.NoError(t, err)
 	require.Positive(t, resp.BanMessageID)
 
@@ -589,13 +603,24 @@ func TestAppealService_Messages(t *testing.T) {
 		require.Equal(t, "original appeal", resp.GetMessages()[0].GetMessageMd())
 	})
 
-	t.Run("plain user is denied", func(t *testing.T) {
+	t.Run("banned target can read their own appeal messages", func(t *testing.T) {
+		t.Parallel()
+
+		client := h.appealClient(t, target)
+
+		resp, err := client.Messages(t.Context(), &v1.MessagesRequest{BanId: &created.BanID})
+		require.NoError(t, err)
+		require.Len(t, resp.GetMessages(), 1)
+		require.Equal(t, "original appeal", resp.GetMessages()[0].GetMessageMd())
+	})
+
+	t.Run("stranger is denied", func(t *testing.T) {
 		t.Parallel()
 
 		client := h.appealClient(t, h.newPlainUser(t))
 
 		_, err := client.Messages(t.Context(), &v1.MessagesRequest{BanId: &created.BanID})
-		requireCode(t, connect.CodeUnauthenticated, err)
+		requireCode(t, connect.CodePermissionDenied, err)
 	})
 }
 
@@ -604,9 +629,10 @@ func TestAppealService_Appeals(t *testing.T) {
 
 	h := newRPCHarness(t)
 	mod := h.newRPCUser(t)
-	created := h.newBan(t, h.newPlainUser(t).SteamID)
+	target := h.newPlainUser(t)
+	created := h.newBan(t, target.SteamID)
 
-	_, err := h.env.appeals.CreateBanMessage(t.Context(), h.ownerPerson(t), created.BanID, "original appeal")
+	_, err := h.env.appeals.CreateBanMessage(t.Context(), target, created.BanID, "original appeal")
 	require.NoError(t, err)
 
 	t.Run("moderator can list", func(t *testing.T) {
@@ -640,12 +666,29 @@ func TestAppealService_EditAppealMessage(t *testing.T) {
 
 	h := newRPCHarness(t)
 	mod := h.newRPCUser(t)
-	created := h.newBan(t, h.newPlainUser(t).SteamID)
+	target := h.newPlainUser(t)
+	created := h.newBan(t, target.SteamID)
 
-	msg, err := h.env.appeals.CreateBanMessage(t.Context(), h.ownerPerson(t), created.BanID, "original appeal")
+	msg, err := h.env.appeals.CreateBanMessage(t.Context(), target, created.BanID, "original appeal")
 	require.NoError(t, err)
 
 	admin := h.newRPCUserWithPerms(t, "PERMISSION_APPEAL_ADMIN", "PERMISSION_APPEAL_WRITE")
+
+	t.Run("author can edit their own message", func(t *testing.T) {
+		t.Parallel()
+
+		ownMsg, err := h.env.appeals.CreateBanMessage(t.Context(), target, created.BanID, "self appeal")
+		require.NoError(t, err)
+
+		client := h.appealClient(t, target)
+
+		resp, err := client.EditAppealMessage(t.Context(), &v1.EditAppealMessageRequest{
+			BanMessageId: &ownMsg.BanMessageID,
+			BodyMd:       new("self edited appeal"),
+		})
+		require.NoError(t, err)
+		require.Equal(t, "self edited appeal", resp.GetMessage().GetMessageMd())
+	})
 
 	t.Run("appeal admin edits", func(t *testing.T) {
 		t.Parallel()
@@ -665,7 +708,7 @@ func TestAppealService_EditAppealMessage(t *testing.T) {
 
 		client := h.appealClient(t, admin)
 
-		ownMsg, err := h.env.appeals.CreateBanMessage(t.Context(), h.ownerPerson(t), created.BanID, "duplicate check")
+		ownMsg, err := h.env.appeals.CreateBanMessage(t.Context(), target, created.BanID, "duplicate check")
 		require.NoError(t, err)
 
 		_, err = client.EditAppealMessage(t.Context(), &v1.EditAppealMessageRequest{
@@ -705,12 +748,29 @@ func TestAppealService_DeleteAppealMessage(t *testing.T) {
 
 	h := newRPCHarness(t)
 	mod := h.newRPCUser(t)
-	created := h.newBan(t, h.newPlainUser(t).SteamID)
+	target := h.newPlainUser(t)
+	created := h.newBan(t, target.SteamID)
 
-	msg, err := h.env.appeals.CreateBanMessage(t.Context(), h.ownerPerson(t), created.BanID, "original appeal")
+	msg, err := h.env.appeals.CreateBanMessage(t.Context(), target, created.BanID, "original appeal")
 	require.NoError(t, err)
 
 	admin := h.newRPCUserWithPerms(t, "PERMISSION_APPEAL_ADMIN", "PERMISSION_APPEAL_WRITE")
+
+	t.Run("author can delete their own message", func(t *testing.T) {
+		t.Parallel()
+
+		ownMsg, err := h.env.appeals.CreateBanMessage(t.Context(), target, created.BanID, "self appeal")
+		require.NoError(t, err)
+
+		client := h.appealClient(t, target)
+
+		_, err = client.DeleteAppealMessage(t.Context(), &v1.DeleteAppealMessageRequest{BanMessageId: &ownMsg.BanMessageID})
+		require.NoError(t, err)
+
+		fetched, err := h.env.appealRepo.MessageByID(t.Context(), ownMsg.BanMessageID)
+		require.NoError(t, err)
+		require.True(t, fetched.Deleted)
+	})
 
 	t.Run("appeal admin deletes", func(t *testing.T) {
 		t.Parallel()
@@ -730,7 +790,7 @@ func TestAppealService_DeleteAppealMessage(t *testing.T) {
 	t.Run("non admin is denied", func(t *testing.T) {
 		t.Parallel()
 
-		msg2, err := h.env.appeals.CreateBanMessage(t.Context(), h.ownerPerson(t), created.BanID, "second appeal")
+		msg2, err := h.env.appeals.CreateBanMessage(t.Context(), target, created.BanID, "second appeal")
 		require.NoError(t, err)
 
 		client := h.appealClient(t, mod)

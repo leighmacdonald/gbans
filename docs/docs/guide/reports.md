@@ -20,6 +20,13 @@ A banned player can appeal their ban. The **Appeal** item (or the ban page
 an appeal by replying on the thread; staff respond in the same thread and can change the
 ban's state.
 
+:::tip
+Appealing requires no moderator role: a banned player can open their own ban page, read
+the thread, post their appeal, and edit or delete their own messages. Staff need the
+appeal write permission to reply on an open appeal, and the appeal admin permission to
+reply on a closed appeal or change the ban's state.
+:::
+
 Appeals are managed from **Admin → Ban Appeals**. Only Steam-based bans can be appealed;
 IP/CIDR, ASN and group bans are treated as permanent.
 

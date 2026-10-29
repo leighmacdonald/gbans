@@ -78,7 +78,7 @@ function BanPage() {
 
 	const canPost = useMemo(() => {
 		return (
-			hasPermission(Permission.BAN_WRITE) ||
+			hasPermission(Permission.APPEAL_WRITE) ||
 			(banData?.ban?.appealState === AppealState.OPEN_UNSPECIFIED && banData.ban?.targetId === profile.steamId)
 		);
 	}, [banData?.ban, hasPermission, profile.steamId]);

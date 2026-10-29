@@ -29,10 +29,14 @@ func NewAppealService(appeals Appeals, openGraph *opengraph.Repository, roleAuth
 
 	authMiddleware.UserRoute(banv1connect.AppealServiceAppealsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_APPEAL_READ))
 	authMiddleware.UserRoute(banv1connect.AppealServiceSetAppealStateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_APPEAL_ADMIN))
-	authMiddleware.UserRoute(banv1connect.AppealServiceMessagesProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_APPEAL_READ))
-	authMiddleware.UserRoute(banv1connect.AppealServiceReplyProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_APPEAL_WRITE))
-	authMiddleware.UserRoute(banv1connect.AppealServiceEditAppealMessageProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_APPEAL_WRITE))
-	authMiddleware.UserRoute(banv1connect.AppealServiceDeleteAppealMessageProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_APPEAL_WRITE))
+	// Any authenticated user; the domain layer enforces the real checks
+	// (APPEAL_READ/APPEAL_WRITE or being the ban target, APPEAL_ADMIN or
+	// being the message author) so a banned player can view and reply on
+	// their own appeal without moderator permissions.
+	authMiddleware.AuthedRoute(banv1connect.AppealServiceMessagesProcedure)
+	authMiddleware.AuthedRoute(banv1connect.AppealServiceReplyProcedure)
+	authMiddleware.AuthedRoute(banv1connect.AppealServiceEditAppealMessageProcedure)
+	authMiddleware.AuthedRoute(banv1connect.AppealServiceDeleteAppealMessageProcedure)
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -65,8 +69,14 @@ func (s AppealService) Messages(ctx context.Context, req *v1.MessagesRequest) (*
 	user := rpc.UserInfoFromCtx(ctx)
 
 	banMessages, errGetBanMessages := s.appeals.Messages(ctx, user, req.GetBanId())
-	if errGetBanMessages != nil && !errors.Is(errGetBanMessages, httphelper.ErrNotFound) {
-		return nil, connect.NewError(connect.CodeInternal, errGetBanMessages)
+	if errGetBanMessages != nil {
+		if errors.Is(errGetBanMessages, rpc.ErrPermission) {
+			return nil, connect.NewError(connect.CodePermissionDenied, rpc.ErrPermission)
+		}
+
+		if !errors.Is(errGetBanMessages, httphelper.ErrNotFound) {
+			return nil, connect.NewError(connect.CodeInternal, errGetBanMessages)
+		}
 	}
 
 	resp := v1.MessagesResponse{Messages: make([]*v1.AppealMessage, len(banMessages))}

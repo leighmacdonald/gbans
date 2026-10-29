@@ -79,6 +79,29 @@ func TestAppeals_CreateBanMessage(t *testing.T) {
 		_ = author
 	})
 
+	t.Run("user with only BAN_CREATE is denied on someone else's appeal", func(t *testing.T) {
+		t.Parallel()
+
+		e := newEnv(t)
+		ctx := t.Context()
+
+		source, target, other := steamid.RandSID64(), steamid.RandSID64(), steamid.RandSID64()
+		createPerson(t, source)
+		createPerson(t, target)
+		otherPerson := createPerson(t, other)
+		// The default user role grants BAN_CREATE to every player; it must
+		// not be enough to post on another player's appeal thread.
+		e.createAndGrantRole(t, other, "PERMISSION_BAN_CREATE")
+
+		created := e.saveRawBan(t, &ban.Ban{
+			SourceID: source, TargetID: target, ValidUntil: time.Now().Add(time.Hour),
+			BanType: bantype.Banned, Reason: reason.Cheating,
+		})
+
+		_, err := e.appeals.CreateBanMessage(ctx, otherPerson, created.BanID, "let me explain")
+		require.ErrorIs(t, err, rpc.ErrPermission)
+	})
+
 	t.Run("invalid ban id is rejected", func(t *testing.T) {
 		t.Parallel()
 
@@ -151,9 +174,9 @@ func TestAppeals_CreateBanMessage(t *testing.T) {
 		createPerson(t, source)
 		createPerson(t, target)
 		adminPerson := createPerson(t, admin)
-		// CreateBanMessage requires BAN_CREATE or being the target before the
-		// APPEAL_ADMIN check on closed appeals.
-		e.createAndGrantRole(t, admin, "PERMISSION_APPEAL_ADMIN", "PERMISSION_BAN_CREATE")
+		// CreateBanMessage requires APPEAL_WRITE or being the target before
+		// the APPEAL_ADMIN check on closed appeals.
+		e.createAndGrantRole(t, admin, "PERMISSION_APPEAL_ADMIN", "PERMISSION_APPEAL_WRITE")
 
 		created := e.saveRawBan(t, &ban.Ban{
 			SourceID: source, TargetID: target, ValidUntil: time.Now().Add(time.Hour),
@@ -178,8 +201,8 @@ func TestAppeals_CreateBanMessage(t *testing.T) {
 		createPerson(t, source)
 		createPerson(t, target)
 		adminPerson := createPerson(t, admin)
-		// CreateBanMessage requires BAN_CREATE or being the target.
-		e.createAndGrantRole(t, admin, "PERMISSION_APPEAL_ADMIN", "PERMISSION_BAN_CREATE")
+		// CreateBanMessage requires APPEAL_WRITE or being the target.
+		e.createAndGrantRole(t, admin, "PERMISSION_APPEAL_WRITE")
 
 		created := e.saveRawBan(t, &ban.Ban{
 			SourceID: source, TargetID: target, ValidUntil: time.Now().Add(time.Hour),

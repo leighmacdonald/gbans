@@ -225,9 +225,9 @@ func TestAnonmod_AppealMessages(t *testing.T) {
 
 	mod1 := steamid.RandSID64()
 	createPerson(t, mod1)
-	// BAN_CREATE is the posting permission check; APPEAL_READ marks the user
-	// as a moderator for the anonymization views.
-	e.createAndGrantRole(t, mod1, "PERMISSION_BAN_CREATE", "PERMISSION_APPEAL_READ")
+	// APPEAL_WRITE is the posting permission check; APPEAL_READ marks the
+	// user as a moderator for the anonymization views.
+	e.createAndGrantRole(t, mod1, "PERMISSION_APPEAL_WRITE", "PERMISSION_APPEAL_READ")
 	mod1Person := createPerson(t, mod1)
 
 	created := e.saveRawBan(t, &ban.Ban{

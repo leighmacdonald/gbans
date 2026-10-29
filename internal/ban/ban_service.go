@@ -43,7 +43,9 @@ func NewBanService(bans Bans, openGraph *opengraph.Repository, roleAuth *rpc.Rol
 
 	authMiddleware.UserRoute(banv1connect.BanServiceQueryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_READ))
 	authMiddleware.UserRoute(banv1connect.BanServiceDeleteProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_WRITE))
-	authMiddleware.UserRoute(banv1connect.BanServiceGetProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_READ))
+	// Any authenticated user; the handler enforces BAN_READ or being the
+	// ban target so a banned player can load their own ban and appeal.
+	authMiddleware.AuthedRoute(banv1connect.BanServiceGetProcedure)
 	authMiddleware.UserRoute(banv1connect.BanServiceQuerySourceBansProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_READ))
 	authMiddleware.UserRoute(banv1connect.BanServiceUpdateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_WRITE))
 	authMiddleware.UserRoute(banv1connect.BanServiceCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_CREATE))
