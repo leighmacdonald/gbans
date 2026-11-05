@@ -102,6 +102,31 @@ func (h *rpcHarness) reportClient(t *testing.T, person personDomain.Core) banv1c
 	return banv1connect.NewReportServiceClient(h.server.Client(), h.server.URL, h.clientOptions(t, person)...)
 }
 
+// serverClientOption authenticates as a registered game server, matching the
+// SourceMod plugin's authentication flow (a bearer token with no fingerprint
+// cookie).
+func (h *rpcHarness) serverClientOption(t *testing.T) connect.ClientOption {
+	t.Helper()
+
+	generator := rpc.NewServerTokenGenerator("gbans-test", []byte("test-cookie-secret"))
+	token, err := generator(1, "test-server")
+	require.NoError(t, err)
+
+	return authClientOption(token, "")
+}
+
+func (h *rpcHarness) serverBanClient(t *testing.T) banv1connect.BanServiceClient {
+	t.Helper()
+
+	return banv1connect.NewBanServiceClient(h.server.Client(), h.server.URL, h.serverClientOption(t))
+}
+
+func (h *rpcHarness) serverReportClient(t *testing.T) banv1connect.ReportServiceClient {
+	t.Helper()
+
+	return banv1connect.NewReportServiceClient(h.server.Client(), h.server.URL, h.serverClientOption(t))
+}
+
 func (h *rpcHarness) exportClient(t *testing.T, person personDomain.Core) banv1connect.ExportServiceClient {
 	t.Helper()
 
@@ -304,6 +329,52 @@ func TestBanService_Create(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, mod.SteamID, fetched.SourceID)
 		require.Equal(t, target.SteamID, fetched.TargetID)
+	})
+
+	t.Run("server creates with explicit source", func(t *testing.T) {
+		t.Parallel()
+
+		client := h.serverBanClient(t)
+		serverTarget := h.newPlainUser(t)
+		source := h.newPlainUser(t)
+
+		resp, err := client.Create(t.Context(), &v1.CreateRequest{
+			SourceId:   new(source.SteamID.Int64()),
+			TargetId:   new(serverTarget.SteamID.Int64()),
+			Note:       new("server initiated ban"),
+			BanType:    new(v1.BanType_BAN_TYPE_BANNED),
+			Reason:     new(v1.BanReason_BAN_REASON_CHEATING),
+			ValidUntil: timestamppb.New(time.Now().Add(24 * time.Hour)),
+			Origin:     new(v1.Origin_ORIGIN_IN_GAME),
+		})
+		require.NoError(t, err)
+		require.Positive(t, resp.GetBan().GetBanId())
+
+		fetched, err := h.env.bans.QueryOne(t.Context(), ban.QueryOpts{BanID: resp.GetBan().GetBanId()})
+		require.NoError(t, err)
+		require.Equal(t, source.SteamID, fetched.SourceID)
+		require.Equal(t, serverTarget.SteamID, fetched.TargetID)
+	})
+
+	t.Run("server without source uses owner", func(t *testing.T) {
+		t.Parallel()
+
+		client := h.serverBanClient(t)
+		serverTarget := h.newPlainUser(t)
+
+		resp, err := client.Create(t.Context(), &v1.CreateRequest{
+			TargetId:   new(serverTarget.SteamID.Int64()),
+			Note:       new("anticheat ban without source"),
+			BanType:    new(v1.BanType_BAN_TYPE_BANNED),
+			Reason:     new(v1.BanReason_BAN_REASON_CHEATING),
+			ValidUntil: timestamppb.New(time.Now().Add(24 * time.Hour)),
+			Origin:     new(v1.Origin_ORIGIN_IN_GAME),
+		})
+		require.NoError(t, err)
+
+		fetched, err := h.env.bans.QueryOne(t.Context(), ban.QueryOpts{BanID: resp.GetBan().GetBanId()})
+		require.NoError(t, err)
+		require.Equal(t, h.env.owner, fetched.SourceID)
 	})
 
 	t.Run("custom reason without text is invalid", func(t *testing.T) {
@@ -834,6 +905,28 @@ func TestReportService_ReportCreate(t *testing.T) {
 		require.Equal(t, user.SteamID, fetched.SourceID)
 		require.Equal(t, target.SteamID, fetched.TargetID)
 		require.Equal(t, ban.Opened, fetched.ReportStatus)
+	})
+
+	t.Run("server creates with explicit source", func(t *testing.T) {
+		t.Parallel()
+
+		client := h.serverReportClient(t)
+		serverTarget := h.newPlainUser(t)
+		source := h.newPlainUser(t)
+
+		resp, err := client.ReportCreate(t.Context(), &v1.ReportCreateRequest{
+			SourceId:    new(source.SteamID.Int64()),
+			TargetId:    new(serverTarget.SteamID.Int64()),
+			Description: new("aimbotting on dust"),
+			Reason:      new(v1.BanReason_BAN_REASON_CHEATING),
+		})
+		require.NoError(t, err)
+		require.Positive(t, resp.GetReport().GetReport().GetReportId())
+
+		fetched, err := h.env.reportRepo.GetReport(t.Context(), resp.GetReport().GetReport().GetReportId())
+		require.NoError(t, err)
+		require.Equal(t, source.SteamID, fetched.SourceID)
+		require.Equal(t, serverTarget.SteamID, fetched.TargetID)
 	})
 
 	t.Run("duplicate is rejected", func(t *testing.T) {

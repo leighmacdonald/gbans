@@ -48,7 +48,8 @@ func NewBanService(bans Bans, openGraph *opengraph.Repository, roleAuth *rpc.Rol
 	authMiddleware.AuthedRoute(banv1connect.BanServiceGetProcedure)
 	authMiddleware.UserRoute(banv1connect.BanServiceQuerySourceBansProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_READ))
 	authMiddleware.UserRoute(banv1connect.BanServiceUpdateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_WRITE))
-	authMiddleware.UserRoute(banv1connect.BanServiceCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_CREATE))
+	authMiddleware.ServerUserRoute(banv1connect.BanServiceCreateProcedure,
+		rpc.NewServerAuthenticator(), roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_CREATE))
 	authMiddleware.UserRoute(banv1connect.BanServiceGetBanByReportIDProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_READ))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
@@ -195,9 +196,18 @@ func (s Service) QuerySourceBans(ctx context.Context, req *v1.QuerySourceBansReq
 }
 
 func (s Service) Create(ctx context.Context, req *v1.CreateRequest) (*v1.CreateResponse, error) {
-	user := rpc.UserInfoFromCtx(ctx)
+	// User requests cannot forge the source. Server requests come from the
+	// SourceMod plugin, which supplies the acting admin; anticheat bans have no
+	// in-game source and fall back to the configured owner.
+	sourceID := steamid.New(req.GetSourceId())
+	if user := rpc.UserInfoFromCtx(ctx); user != nil {
+		sourceID = user.SteamID
+	} else if !sourceID.Valid() {
+		sourceID = s.bans.owner
+	}
+
 	opts := Opts{
-		SourceID:   user.SteamID,
+		SourceID:   sourceID,
 		TargetID:   steamid.New(req.GetTargetId()),
 		Origin:     Origin(req.GetOrigin()),
 		Reason:     reason.Reason(req.GetReason()),

@@ -53,7 +53,7 @@ assets are embedded into the binary to make deployment as trivial as possible.
 The following extensions must be installed for gbans to work, see their
 documentation for up-to-date installation instructions:
 
-- [sm-ripext](https://github.com/ErikMinekus/sm-ripext) Provides HTTP(S) client functionality
+- [SteamWorks](https://github.com/alliedmodders/SM-SteamWorks) Provides HTTP(S) client functionality
 - [sm-json](https://github.com/clugg/sm-json) `Required for development only` Provides JSON encoding/decoding.
 - [Connect](https://github.com/asherkin/connect) Provides `OnClientPreConnectEx`
 - [SourceTVManager](https://github.com/peace-maker/sourcetvmanager) Interface to interact with the SourceTV server from

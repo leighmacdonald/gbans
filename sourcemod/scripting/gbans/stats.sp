@@ -4,8 +4,6 @@
 
 #include "common.sp"
 #include "globals.sp"
-#include "ripext/http"
-#include "ripext/json"
 
 // STATS_MAX_BUCKETS bounds the per-client stats cache; the backend currently
 // reports one entry per time bucket (daily, weekly, monthly, yearly, alltime).
@@ -46,7 +44,7 @@ Action onCmdStats(int clientId, int argc) {
         return Plugin_Continue;
     }
 
-    JSONObject obj = new JSONObject();
+    JSON_Object obj = new JSON_Object();
     obj.SetString("steamId", authId);
 
     postHTTPRequest("/connect/sourcemod.v1.PluginService/SMPlayerStats", obj, onStatsRespReceived, clientId);
@@ -54,48 +52,55 @@ Action onCmdStats(int clientId, int argc) {
     return Plugin_Handled;
 }
 
-void onStatsRespReceived(HTTPResponse response, any value) {
+void onStatsRespReceived(Handle request, bool failure, bool successful, EHTTPStatusCode status, any value, any unused) {
     int clientId = view_as<int>(value);
     if (!isValidClient(clientId)) {
+        delete request;
         return;
     }
 
-    switch (response.Status) {
-    case HTTPStatus_TooManyRequests: {
+    switch (status) {
+    case k_EHTTPStatusCode429TooManyRequests: {
+        delete request;
         PrintToChat(clientId, "[Stats] You can only use /stats once every 5 minutes");
         return;
     }
-    case HTTPStatus_Unauthorized: {
-        PrintRPCError(response);
+    case k_EHTTPStatusCode401Unauthorized: {
+        PrintRPCError(request, failure, status);
+        delete request;
         authenticateServer();
         PrintToChat(clientId, "[Stats] Server authentication expired, re-authenticating. Please try again shortly.");
         return;
     }
-    case HTTPStatus_OK: {
-        showStatsMenu(clientId, view_as<JSONObject>(response.Data));
+    case k_EHTTPStatusCode200OK: {
+        JSON_Object data = GetResponseJSON(request);
+        if (data == null) {
+            delete request;
+            PrintToChat(clientId, "[Stats] Failed to load your stats, please try again later");
+            return;
+        }
+
+        showStatsMenu(clientId, data);
+        json_cleanup_and_delete(data);
+        delete request;
         return;
     }
     default: {
-        PrintRPCError(response);
+        PrintRPCError(request, failure, status);
+        delete request;
         PrintToChat(clientId, "[Stats] Failed to load your stats, please try again later");
         return;
     }
     }
 }
 
-void showStatsMenu(int clientId, JSONObject data) {
+void showStatsMenu(int clientId, JSON_Object data) {
     if (clientId < 1 || clientId >= STATS_MAX_CLIENTS) {
         return;
     }
 
-    JSONArray buckets;
-    if (data.HasKey("buckets")) {
-        buckets = view_as<JSONArray>(data.Get("buckets"));
-    } else {
-        buckets = new JSONArray();
-    }
-
-    int count = buckets.Length;
+    JSON_Array buckets = view_as<JSON_Array>(data.GetObject("buckets"));
+    int        count   = buckets != null ? buckets.Length : 0;
     if (count > STATS_MAX_BUCKETS) {
         count = STATS_MAX_BUCKETS;
     }
@@ -112,7 +117,10 @@ void showStatsMenu(int clientId, JSONObject data) {
     char itemText[128];
     char itemValue[8];
     for (int i = 0; i < count; i++) {
-        JSONObject bucket = view_as<JSONObject>(buckets.Get(i));
+        JSON_Object bucket = buckets.GetObject(i);
+        if (bucket == null) {
+            continue;
+        }
 
         if (!bucket.GetString("timeBucket", bucketStr, sizeof bucketStr)) {
             bucketStr[0] = '\0';
@@ -176,9 +184,9 @@ void printBucketToChat(int clientId, int bucketIndex) {
 }
 
 // readJsonUint64 reads a protobuf uint64 field. ConnectRPC's JSON encoding
-// emits uint64 as a decimal string, and ripext's GetInt64 decodes to 0 for a
-// JSON string, so the value is read as a string and parsed instead.
-stock int readJsonUint64(JSONObject obj, const char[] key) {
+// emits uint64 as a decimal string, so the value is read as a string and
+// parsed instead.
+stock int readJsonUint64(JSON_Object obj, const char[] key) {
     char buf[32];
     if (!obj.GetString(key, buf, sizeof buf)) {
         return 0;

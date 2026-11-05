@@ -84,6 +84,7 @@ type Middleware struct {
 	permissionLoader RolePermissionsResolver
 	userAllowList    map[string]UserRouteAuthFn
 	serverAllowList  map[string]ServerRouteAuthFn
+	dualAllowList    map[string]struct{}
 	publicAllowList  map[string]struct{}
 }
 
@@ -97,6 +98,7 @@ func NewMiddleware(siteName string, cookie string, permissionLoader RolePermissi
 		permissionLoader: permissionLoader,
 		userAllowList:    map[string]UserRouteAuthFn{},
 		serverAllowList:  map[string]ServerRouteAuthFn{},
+		dualAllowList:    map[string]struct{}{},
 		publicAllowList:  map[string]struct{}{},
 	}
 }
@@ -136,6 +138,19 @@ func (m *Middleware) ServerRoute(procedure string, authFunc ServerRouteAuthFn) {
 	m.Unlock()
 }
 
+// ServerUserRoute registers a procedure that accepts either a server token or a
+// user token. User tokens are identified by the fingerprint cookie that is
+// validated as part of user authentication; server tokens are used otherwise.
+// This allows the SourceMod plugin and the web UI to share procedures whose
+// behavior differs based on the authenticated principal. Thread-safe.
+func (m *Middleware) ServerUserRoute(procedure string, serverAuthFunc ServerRouteAuthFn, userAuthFunc UserRouteAuthFn) {
+	m.Lock()
+	m.serverAllowList[procedure] = serverAuthFunc
+	m.userAllowList[procedure] = userAuthFunc
+	m.dualAllowList[procedure] = struct{}{}
+	m.Unlock()
+}
+
 func (m *Middleware) findProcedure(url *url.URL) (string, bool, bool) {
 	procedure, found := authn.InferProcedure(url)
 	if !found {
@@ -147,6 +162,14 @@ func (m *Middleware) findProcedure(url *url.URL) (string, bool, bool) {
 	m.RUnlock()
 
 	return procedure, isServerRoute || strings.Contains(procedure, "Plugin"), true
+}
+
+func (m *Middleware) isDualRoute(procedure string) bool {
+	m.RLock()
+	_, isDual := m.dualAllowList[procedure]
+	m.RUnlock()
+
+	return isDual
 }
 
 // Authenticate extracts and validates authentication information from an incoming RPC request.
@@ -161,6 +184,15 @@ func (m *Middleware) Authenticate(ctx context.Context, req *http.Request) (any, 
 	}
 
 	if isServer {
+		// Dual routes accept both principals. User requests always carry the
+		// fingerprint cookie required by authUser, so its presence distinguishes
+		// a browser session from a server-to-server call.
+		if m.isDualRoute(procedure) {
+			if _, err := req.Cookie(FingerprintCookieName); err == nil {
+				return m.authUser(ctx, req, procedure)
+			}
+		}
+
 		return m.authServer(ctx, req, procedure)
 	}
 
