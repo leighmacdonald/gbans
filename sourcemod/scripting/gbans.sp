@@ -2,13 +2,14 @@
 #pragma tabsize 4
 #pragma newdecls required
 
+#include <SteamWorks>
 #include <admin>
 #include <adminmenu>
 #include <afk_manager>
 #include <autoexecconfig>
 #include <basecomm>
 #include <gbans>
-#include <ripext>
+#include <json>
 #include <sdktools>
 #include <sourcemod>
 #include <sourcetvmanager>

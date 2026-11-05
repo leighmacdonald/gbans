@@ -33,7 +33,8 @@ func NewReportService(reports Reports, openGraph *opengraph.Repository, roleAuth
 	openGraph.Register("/report", opengraph.Static("Create Report", "Create a new player report."))
 	openGraph.Register("/report/{report_id}", openGraphReportTags)
 
-	authMiddleware.UserRoute(banv1connect.ReportServiceReportCreateProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_CREATE))
+	authMiddleware.ServerUserRoute(banv1connect.ReportServiceReportCreateProcedure,
+		rpc.NewServerAuthenticator(), roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_CREATE))
 	authMiddleware.UserRoute(banv1connect.ReportServiceReportProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_READ))
 	authMiddleware.UserRoute(banv1connect.ReportServiceReportStatusEditProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_WRITE))
 	authMiddleware.UserRoute(banv1connect.ReportServiceUserReportsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_REPORT_CREATE))
@@ -47,9 +48,17 @@ func NewReportService(reports Reports, openGraph *opengraph.Repository, roleAuth
 }
 
 func (s ReportService) ReportCreate(ctx context.Context, req *v1.ReportCreateRequest) (*v1.ReportCreateResponse, error) {
-	user := rpc.UserInfoFromCtx(ctx)
-	report, errReportSave := s.reports.Save(ctx, user, RequestReportCreate{
-		SourceID:        user.GetSteamID(),
+	// A logged-in user cannot forge the reporter. The SourceMod plugin
+	// authenticates as a server and supplies the reporting player explicitly.
+	sourceID := steamid.New(req.GetSourceId())
+	var actor person.BaseUser = person.Core{SteamID: sourceID}
+	if user := rpc.UserInfoFromCtx(ctx); user != nil {
+		sourceID = user.SteamID
+		actor = *user
+	}
+
+	report, errReportSave := s.reports.Save(ctx, actor, RequestReportCreate{
+		SourceID:        sourceID,
 		TargetID:        steamid.New(req.GetTargetId()),
 		Description:     req.GetDescription(),
 		Reason:          reason.Reason(req.GetReason()),
