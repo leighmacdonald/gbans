@@ -9,6 +9,39 @@ import "google/protobuf/timestamp.proto";
 service ChatService {
   rpc Query(QueryRequest) returns (QueryResponse) {}
   rpc QueryContext(QueryContextRequest) returns (QueryContextResponse) {}
+  rpc StreamChat(StreamChatRequest) returns (stream StreamChatResponse) {}
+}
+
+message StreamChatRequest {
+  // Empty means chat from all servers.
+  repeated int32 server_ids = 1 [(buf.validate.field).repeated.unique = true];
+  // Maximum number of buffered messages replayed before the live stream starts. 0 uses the default.
+  int32 history_limit = 2 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 1000
+  }];
+}
+
+message StreamChatResponse {
+  uint64 seq = 1;
+  int64 steam_id = 2 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+  string avatar_hash = 3;
+  string persona_name = 4 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 128
+  }];
+  int32 server_id = 5 [(buf.validate.field).int32.gt = 0];
+  string server_name = 6;
+  string body = 7 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 4096
+  }];
+  bool is_team = 8;
+  google.protobuf.Timestamp created_on = 9;
+  // Keepalive pings are emitted periodically so intermediaries (reverse proxies,
+  // Cloudflare) do not drop the stream while no chat is being sent. Clients must
+  // ignore any message where this is true.
+  bool keepalive = 10;
 }
 
 message QueryContextRequest {

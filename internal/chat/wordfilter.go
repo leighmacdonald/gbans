@@ -199,6 +199,9 @@ func (w *WordFilters) Check(message string) []Filter {
 	var found []Filter
 
 	for _, filter := range w.wordFilters {
+		if !filter.IsEnabled {
+			continue
+		}
 		for _, word := range words {
 			if filter.Match(word) {
 				found = append(found, filter)
@@ -236,6 +239,7 @@ func (w *WordFilters) Edit(ctx context.Context, user person.Info, filterID int64
 	existingFilter.Action = filter.Action
 	existingFilter.Duration = filter.Duration
 	existingFilter.Weight = filter.Weight
+	existingFilter.TriggerCount = filter.TriggerCount
 
 	if errSave := w.repository.SaveFilter(ctx, &existingFilter); errSave != nil {
 		return Filter{}, errSave

@@ -39,13 +39,16 @@ func NewServer(listenAddr string, handler http.Handler) *http.Server {
 	protocols.SetHTTP1(true)
 	protocols.SetUnencryptedHTTP2(true)
 
+	// No WriteTimeout/ReadTimeout: both are whole-response/whole-request deadlines in
+	// net/http, which kills long-lived streaming RPCs (StreamChat) after a fixed period.
+	// Handlers that need bounded I/O must set their own deadlines. ReadHeaderTimeout
+	// still guards against slowloris.
 	httpServer := &http.Server{
-		Addr:           listenAddr,
-		Handler:        handler,
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   120 * time.Second,
-		MaxHeaderBytes: 1 << 20,
-		Protocols:      protocols,
+		Addr:              listenAddr,
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,
+		MaxHeaderBytes:    1 << 20,
+		Protocols:         protocols,
 	}
 
 	return httpServer

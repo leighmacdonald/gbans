@@ -15,7 +15,99 @@ import type { Message as Message$1 } from "@bufbuild/protobuf";
  * Describes the file chat/v1/chat.proto.
  */
 export const file_chat_v1_chat: GenFile = /*@__PURE__*/
-  fileDesc("ChJjaGF0L3YxL2NoYXQucHJvdG8SB2NoYXQudjEiXgoTUXVlcnlDb250ZXh0UmVxdWVzdBInChFwZXJzb25fbWVzc2FnZV9pZBgBIAEoA0IMMAG6SAfIAQEiAiAAEh4KB3BhZGRpbmcYAiABKAVCDbpICsgBARoFEPoBIAAiQgoUUXVlcnlDb250ZXh0UmVzcG9uc2USKgoIbWVzc2FnZXMYASADKAsyEC5jaGF0LnYxLk1lc3NhZ2VCBrpIA8gBASL/AQoMUXVlcnlSZXF1ZXN0EikKBmZpbHRlchgBIAEoCzIZLmRhdGFiYXNlLnF1ZXJ5LnYxLkZpbHRlchINCgVxdWVyeRgCIAEoCRIcCgpzZXJ2ZXJfaWRzGAMgAygFQgi6SAWSAQIYARIuCgpkYXRlX3N0YXJ0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIsCghkYXRlX2VuZBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFAoMZmxhZ2dlZF9vbmx5GAYgASgIEiMKCHN0ZWFtX2lkGAcgASgDQhEwAbpIDCIKKIGAgICQgICIASI7Cg1RdWVyeVJlc3BvbnNlEioKCG1lc3NhZ2VzGAEgAygLMhAuY2hhdC52MS5NZXNzYWdlQga6SAPIAQEiuwMKB01lc3NhZ2USJwoRcGVyc29uX21lc3NhZ2VfaWQYASABKANCDDABukgHyAEBIgIgABIaCghtYXRjaF9pZBgCIAEoCUIIukgFcgOwAQESJgoIc3RlYW1faWQYAyABKANCFDABukgPyAEBIgoogYCAgJCAgIgBEiAKC2F2YXRhcl9oYXNoGAQgASgJQgu6SAjIAQFyA5gBKBIiCgxwZXJzb25hX25hbWUYBSABKAlCDLpICcgBAXIEEAIYIBIbCgtzZXJ2ZXJfbmFtZRgGIAEoCUIGukgDyAEBEh0KCXNlcnZlcl9pZBgHIAEoBUIKukgHyAEBGgIgABIbCgRib2R5GAggASgJQg26SArIAQFyBRABGIABEjYKCmNyZWF0ZWRfb24YCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESIwoTYXV0b19maWx0ZXJfZmxhZ2dlZBgKIAEoBUIGukgDyAEBEhgKB2RlbW9faWQYCyABKAVCB7pIBBoCIAASEQoJZGVtb190aWNrGAwgASgFEhoKCGFzc2V0X2lkGA0gASgJQgi6SAVyA7ABATKWAQoLQ2hhdFNlcnZpY2USOAoFUXVlcnkSFS5jaGF0LnYxLlF1ZXJ5UmVxdWVzdBoWLmNoYXQudjEuUXVlcnlSZXNwb25zZSIAEk0KDFF1ZXJ5Q29udGV4dBIcLmNoYXQudjEuUXVlcnlDb250ZXh0UmVxdWVzdBodLmNoYXQudjEuUXVlcnlDb250ZXh0UmVzcG9uc2UiAEKOAQoLY29tLmNoYXQudjFCCUNoYXRQcm90b1ABWjdnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL2NoYXQvdjE7Y2hhdHYxogIDQ1hYqgIHQ2hhdC5WMcoCB0NoYXRcVjHiAhNDaGF0XFYxXEdQQk1ldGFkYXRh6gIIQ2hhdDo6VjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_timestamp]);
+  fileDesc("ChJjaGF0L3YxL2NoYXQucHJvdG8SB2NoYXQudjEiVAoRU3RyZWFtQ2hhdFJlcXVlc3QSHAoKc2VydmVyX2lkcxgBIAMoBUIIukgFkgECGAESIQoNaGlzdG9yeV9saW1pdBgCIAEoBUIKukgHGgUY6AcoACKgAgoSU3RyZWFtQ2hhdFJlc3BvbnNlEg8KA3NlcRgBIAEoBEICMAESIwoIc3RlYW1faWQYAiABKANCETABukgMIgoogYCAgJCAgIgBEhMKC2F2YXRhcl9oYXNoGAMgASgJEiAKDHBlcnNvbmFfbmFtZRgEIAEoCUIKukgHcgUQARiAARIaCglzZXJ2ZXJfaWQYBSABKAVCB7pIBBoCIAASEwoLc2VydmVyX25hbWUYBiABKAkSGAoEYm9keRgHIAEoCUIKukgHcgUQARiAIBIPCgdpc190ZWFtGAggASgIEi4KCmNyZWF0ZWRfb24YCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCWtlZXBhbGl2ZRgKIAEoCCJeChNRdWVyeUNvbnRleHRSZXF1ZXN0EicKEXBlcnNvbl9tZXNzYWdlX2lkGAEgASgDQgwwAbpIB8gBASICIAASHgoHcGFkZGluZxgCIAEoBUINukgKyAEBGgUQ+gEgACJCChRRdWVyeUNvbnRleHRSZXNwb25zZRIqCghtZXNzYWdlcxgBIAMoCzIQLmNoYXQudjEuTWVzc2FnZUIGukgDyAEBIv8BCgxRdWVyeVJlcXVlc3QSKQoGZmlsdGVyGAEgASgLMhkuZGF0YWJhc2UucXVlcnkudjEuRmlsdGVyEg0KBXF1ZXJ5GAIgASgJEhwKCnNlcnZlcl9pZHMYAyADKAVCCLpIBZIBAhgBEi4KCmRhdGVfc3RhcnQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiwKCGRhdGVfZW5kGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIUCgxmbGFnZ2VkX29ubHkYBiABKAgSIwoIc3RlYW1faWQYByABKANCETABukgMIgoogYCAgJCAgIgBIjsKDVF1ZXJ5UmVzcG9uc2USKgoIbWVzc2FnZXMYASADKAsyEC5jaGF0LnYxLk1lc3NhZ2VCBrpIA8gBASK7AwoHTWVzc2FnZRInChFwZXJzb25fbWVzc2FnZV9pZBgBIAEoA0IMMAG6SAfIAQEiAiAAEhoKCG1hdGNoX2lkGAIgASgJQgi6SAVyA7ABARImCghzdGVhbV9pZBgDIAEoA0IUMAG6SA/IAQEiCiiBgICAkICAiAESIAoLYXZhdGFyX2hhc2gYBCABKAlCC7pICMgBAXIDmAEoEiIKDHBlcnNvbmFfbmFtZRgFIAEoCUIMukgJyAEBcgQQAhggEhsKC3NlcnZlcl9uYW1lGAYgASgJQga6SAPIAQESHQoJc2VydmVyX2lkGAcgASgFQgq6SAfIAQEaAiAAEhsKBGJvZHkYCCABKAlCDbpICsgBAXIFEAEYgAESNgoKY3JlYXRlZF9vbhgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARIjChNhdXRvX2ZpbHRlcl9mbGFnZ2VkGAogASgFQga6SAPIAQESGAoHZGVtb19pZBgLIAEoBUIHukgEGgIgABIRCglkZW1vX3RpY2sYDCABKAUSGgoIYXNzZXRfaWQYDSABKAlCCLpIBXIDsAEBMuEBCgtDaGF0U2VydmljZRI4CgVRdWVyeRIVLmNoYXQudjEuUXVlcnlSZXF1ZXN0GhYuY2hhdC52MS5RdWVyeVJlc3BvbnNlIgASTQoMUXVlcnlDb250ZXh0EhwuY2hhdC52MS5RdWVyeUNvbnRleHRSZXF1ZXN0Gh0uY2hhdC52MS5RdWVyeUNvbnRleHRSZXNwb25zZSIAEkkKClN0cmVhbUNoYXQSGi5jaGF0LnYxLlN0cmVhbUNoYXRSZXF1ZXN0GhsuY2hhdC52MS5TdHJlYW1DaGF0UmVzcG9uc2UiADABQo4BCgtjb20uY2hhdC52MUIJQ2hhdFByb3RvUAFaN2dpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvY2hhdC92MTtjaGF0djGiAgNDWFiqAgdDaGF0LlYxygIHQ2hhdFxWMeICE0NoYXRcVjFcR1BCTWV0YWRhdGHqAghDaGF0OjpWMWIIZWRpdGlvbnNw6Ac", [file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_timestamp]);
+
+/**
+ * @generated from message chat.v1.StreamChatRequest
+ */
+export type StreamChatRequest = Message$1<"chat.v1.StreamChatRequest"> & {
+  /**
+   * Empty means chat from all servers.
+   *
+   * @generated from field: repeated int32 server_ids = 1;
+   */
+  serverIds: number[];
+
+  /**
+   * Maximum number of buffered messages replayed before the live stream starts. 0 uses the default.
+   *
+   * @generated from field: int32 history_limit = 2;
+   */
+  historyLimit: number;
+};
+
+/**
+ * Describes the message chat.v1.StreamChatRequest.
+ * Use `create(StreamChatRequestSchema)` to create a new message.
+ */
+export const StreamChatRequestSchema: GenMessage<StreamChatRequest> = /*@__PURE__*/
+  messageDesc(file_chat_v1_chat, 0);
+
+/**
+ * @generated from message chat.v1.StreamChatResponse
+ */
+export type StreamChatResponse = Message$1<"chat.v1.StreamChatResponse"> & {
+  /**
+   * @generated from field: uint64 seq = 1 [jstype = JS_STRING];
+   */
+  seq: string;
+
+  /**
+   * @generated from field: int64 steam_id = 2 [jstype = JS_STRING];
+   */
+  steamId: string;
+
+  /**
+   * @generated from field: string avatar_hash = 3;
+   */
+  avatarHash: string;
+
+  /**
+   * @generated from field: string persona_name = 4;
+   */
+  personaName: string;
+
+  /**
+   * @generated from field: int32 server_id = 5;
+   */
+  serverId: number;
+
+  /**
+   * @generated from field: string server_name = 6;
+   */
+  serverName: string;
+
+  /**
+   * @generated from field: string body = 7;
+   */
+  body: string;
+
+  /**
+   * @generated from field: bool is_team = 8;
+   */
+  isTeam: boolean;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 9;
+   */
+  createdOn?: Timestamp | undefined;
+
+  /**
+   * Keepalive pings are emitted periodically so intermediaries (reverse proxies,
+   * Cloudflare) do not drop the stream while no chat is being sent. Clients must
+   * ignore any message where this is true.
+   *
+   * @generated from field: bool keepalive = 10;
+   */
+  keepalive: boolean;
+};
+
+/**
+ * Describes the message chat.v1.StreamChatResponse.
+ * Use `create(StreamChatResponseSchema)` to create a new message.
+ */
+export const StreamChatResponseSchema: GenMessage<StreamChatResponse> = /*@__PURE__*/
+  messageDesc(file_chat_v1_chat, 1);
 
 /**
  * @generated from message chat.v1.QueryContextRequest
@@ -37,7 +129,7 @@ export type QueryContextRequest = Message$1<"chat.v1.QueryContextRequest"> & {
  * Use `create(QueryContextRequestSchema)` to create a new message.
  */
 export const QueryContextRequestSchema: GenMessage<QueryContextRequest> = /*@__PURE__*/
-  messageDesc(file_chat_v1_chat, 0);
+  messageDesc(file_chat_v1_chat, 2);
 
 /**
  * @generated from message chat.v1.QueryContextResponse
@@ -54,7 +146,7 @@ export type QueryContextResponse = Message$1<"chat.v1.QueryContextResponse"> & {
  * Use `create(QueryContextResponseSchema)` to create a new message.
  */
 export const QueryContextResponseSchema: GenMessage<QueryContextResponse> = /*@__PURE__*/
-  messageDesc(file_chat_v1_chat, 1);
+  messageDesc(file_chat_v1_chat, 3);
 
 /**
  * @generated from message chat.v1.QueryRequest
@@ -101,7 +193,7 @@ export type QueryRequest = Message$1<"chat.v1.QueryRequest"> & {
  * Use `create(QueryRequestSchema)` to create a new message.
  */
 export const QueryRequestSchema: GenMessage<QueryRequest> = /*@__PURE__*/
-  messageDesc(file_chat_v1_chat, 2);
+  messageDesc(file_chat_v1_chat, 4);
 
 /**
  * @generated from message chat.v1.QueryResponse
@@ -118,7 +210,7 @@ export type QueryResponse = Message$1<"chat.v1.QueryResponse"> & {
  * Use `create(QueryResponseSchema)` to create a new message.
  */
 export const QueryResponseSchema: GenMessage<QueryResponse> = /*@__PURE__*/
-  messageDesc(file_chat_v1_chat, 3);
+  messageDesc(file_chat_v1_chat, 5);
 
 /**
  * @generated from message chat.v1.Message
@@ -195,7 +287,7 @@ export type Message = Message$1<"chat.v1.Message"> & {
  * Use `create(MessageSchema)` to create a new message.
  */
 export const MessageSchema: GenMessage<Message> = /*@__PURE__*/
-  messageDesc(file_chat_v1_chat, 4);
+  messageDesc(file_chat_v1_chat, 6);
 
 /**
  * @generated from service chat.v1.ChatService
@@ -216,6 +308,14 @@ export const ChatService: GenService<{
     methodKind: "unary";
     input: typeof QueryContextRequestSchema;
     output: typeof QueryContextResponseSchema;
+  },
+  /**
+   * @generated from rpc chat.v1.ChatService.StreamChat
+   */
+  streamChat: {
+    methodKind: "server_streaming";
+    input: typeof StreamChatRequestSchema;
+    output: typeof StreamChatResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_chat_v1_chat, 0);

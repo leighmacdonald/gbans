@@ -73,7 +73,7 @@ func TestUploadTriggersCleanupEveryTenth(t *testing.T) {
 		filters = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database),
 			notification.NewDiscard(), fixture.Config.Config().Filters)
 		chatUC = chat.New(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters,
-			filters, fixture.Persons, notification.NewDiscard(), nil, "")
+			filters, fixture.Persons, notification.NewDiscard(), nil, "", tests.OwnerSID)
 		statsUC  = stats.New(stats.NewRepository(fixture.Database), maps.New(maps.NewRepository(fixture.Database)))
 		demoConf = &demo.Config{
 			DemoCleanupEnabled:  true,
@@ -135,7 +135,7 @@ func TestDemoUploadDeduplication(t *testing.T) {
 		filters = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database),
 			notification.NewDiscard(), fixture.Config.Config().Filters)
 		chatUC = chat.New(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters,
-			filters, fixture.Persons, notification.NewDiscard(), nil, "")
+			filters, fixture.Persons, notification.NewDiscard(), nil, "", tests.OwnerSID)
 		statsUC = stats.New(stats.NewRepository(fixture.Database), maps.New(maps.NewRepository(fixture.Database)))
 		demos   = demo.NewDemos(asset.BucketDemo, demo.NewRepository(fixture.Database),
 			assets, statsUC, chatUC, fixture.Persons, fixture.Config.Config().Demo, ownerSID)
@@ -210,7 +210,7 @@ func TestUploadDemo(t *testing.T) {
 		filters = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database),
 			notification.NewDiscard(), fixture.Config.Config().Filters)
 		chatUC = chat.New(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters,
-			filters, fixture.Persons, notification.NewDiscard(), nil, "")
+			filters, fixture.Persons, notification.NewDiscard(), nil, "", tests.OwnerSID)
 		statsUC = stats.New(stats.NewRepository(fixture.Database), maps.New(maps.NewRepository(fixture.Database)))
 		demos   = demo.NewDemos(asset.BucketDemo, demo.NewRepository(fixture.Database),
 			assets, statsUC, chatUC, fixture.Persons, fixture.Config.Config().Demo, ownerSID)

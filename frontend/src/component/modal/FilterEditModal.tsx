@@ -13,6 +13,7 @@ import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import { type Filter, FilterAction } from "../../rpc/chat/v1/wordfilter_pb.ts";
 import { filterCreate, filterEdit } from "../../rpc/chat/v1/wordfilter-WordfilterService_connectquery.ts";
+import { filterActionLabel } from "../../util/filterAction.ts";
 import { enumValues } from "../../util/lists.ts";
 import { Heading } from "../Heading";
 
@@ -108,7 +109,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
 											renderItem={(fa) => {
 												return (
 													<MenuItem value={fa} key={`fa-${fa}`}>
-														{FilterAction[fa]}
+														{filterActionLabel(fa)}
 													</MenuItem>
 												);
 											}}
