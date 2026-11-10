@@ -24,6 +24,179 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type StreamChatRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Empty means chat from all servers.
+	ServerIds []int32 `protobuf:"varint,1,rep,packed,name=server_ids,json=serverIds" json:"server_ids,omitempty"`
+	// Maximum number of buffered messages replayed before the live stream starts. 0 uses the default.
+	HistoryLimit  *int32 `protobuf:"varint,2,opt,name=history_limit,json=historyLimit" json:"history_limit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StreamChatRequest) Reset() {
+	*x = StreamChatRequest{}
+	mi := &file_chat_v1_chat_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StreamChatRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StreamChatRequest) ProtoMessage() {}
+
+func (x *StreamChatRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_chat_v1_chat_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StreamChatRequest.ProtoReflect.Descriptor instead.
+func (*StreamChatRequest) Descriptor() ([]byte, []int) {
+	return file_chat_v1_chat_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *StreamChatRequest) GetServerIds() []int32 {
+	if x != nil {
+		return x.ServerIds
+	}
+	return nil
+}
+
+func (x *StreamChatRequest) GetHistoryLimit() int32 {
+	if x != nil && x.HistoryLimit != nil {
+		return *x.HistoryLimit
+	}
+	return 0
+}
+
+type StreamChatResponse struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Seq         *uint64                `protobuf:"varint,1,opt,name=seq" json:"seq,omitempty"`
+	SteamId     *int64                 `protobuf:"varint,2,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	AvatarHash  *string                `protobuf:"bytes,3,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
+	PersonaName *string                `protobuf:"bytes,4,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
+	ServerId    *int32                 `protobuf:"varint,5,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
+	ServerName  *string                `protobuf:"bytes,6,opt,name=server_name,json=serverName" json:"server_name,omitempty"`
+	Body        *string                `protobuf:"bytes,7,opt,name=body" json:"body,omitempty"`
+	IsTeam      *bool                  `protobuf:"varint,8,opt,name=is_team,json=isTeam" json:"is_team,omitempty"`
+	CreatedOn   *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	// Keepalive pings are emitted periodically so intermediaries (reverse proxies,
+	// Cloudflare) do not drop the stream while no chat is being sent. Clients must
+	// ignore any message where this is true.
+	Keepalive     *bool `protobuf:"varint,10,opt,name=keepalive" json:"keepalive,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StreamChatResponse) Reset() {
+	*x = StreamChatResponse{}
+	mi := &file_chat_v1_chat_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StreamChatResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StreamChatResponse) ProtoMessage() {}
+
+func (x *StreamChatResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_chat_v1_chat_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StreamChatResponse.ProtoReflect.Descriptor instead.
+func (*StreamChatResponse) Descriptor() ([]byte, []int) {
+	return file_chat_v1_chat_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *StreamChatResponse) GetSeq() uint64 {
+	if x != nil && x.Seq != nil {
+		return *x.Seq
+	}
+	return 0
+}
+
+func (x *StreamChatResponse) GetSteamId() int64 {
+	if x != nil && x.SteamId != nil {
+		return *x.SteamId
+	}
+	return 0
+}
+
+func (x *StreamChatResponse) GetAvatarHash() string {
+	if x != nil && x.AvatarHash != nil {
+		return *x.AvatarHash
+	}
+	return ""
+}
+
+func (x *StreamChatResponse) GetPersonaName() string {
+	if x != nil && x.PersonaName != nil {
+		return *x.PersonaName
+	}
+	return ""
+}
+
+func (x *StreamChatResponse) GetServerId() int32 {
+	if x != nil && x.ServerId != nil {
+		return *x.ServerId
+	}
+	return 0
+}
+
+func (x *StreamChatResponse) GetServerName() string {
+	if x != nil && x.ServerName != nil {
+		return *x.ServerName
+	}
+	return ""
+}
+
+func (x *StreamChatResponse) GetBody() string {
+	if x != nil && x.Body != nil {
+		return *x.Body
+	}
+	return ""
+}
+
+func (x *StreamChatResponse) GetIsTeam() bool {
+	if x != nil && x.IsTeam != nil {
+		return *x.IsTeam
+	}
+	return false
+}
+
+func (x *StreamChatResponse) GetCreatedOn() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedOn
+	}
+	return nil
+}
+
+func (x *StreamChatResponse) GetKeepalive() bool {
+	if x != nil && x.Keepalive != nil {
+		return *x.Keepalive
+	}
+	return false
+}
+
 type QueryContextRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	PersonMessageId *int64                 `protobuf:"varint,1,opt,name=person_message_id,json=personMessageId" json:"person_message_id,omitempty"`
@@ -34,7 +207,7 @@ type QueryContextRequest struct {
 
 func (x *QueryContextRequest) Reset() {
 	*x = QueryContextRequest{}
-	mi := &file_chat_v1_chat_proto_msgTypes[0]
+	mi := &file_chat_v1_chat_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -46,7 +219,7 @@ func (x *QueryContextRequest) String() string {
 func (*QueryContextRequest) ProtoMessage() {}
 
 func (x *QueryContextRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_v1_chat_proto_msgTypes[0]
+	mi := &file_chat_v1_chat_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -59,7 +232,7 @@ func (x *QueryContextRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryContextRequest.ProtoReflect.Descriptor instead.
 func (*QueryContextRequest) Descriptor() ([]byte, []int) {
-	return file_chat_v1_chat_proto_rawDescGZIP(), []int{0}
+	return file_chat_v1_chat_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *QueryContextRequest) GetPersonMessageId() int64 {
@@ -85,7 +258,7 @@ type QueryContextResponse struct {
 
 func (x *QueryContextResponse) Reset() {
 	*x = QueryContextResponse{}
-	mi := &file_chat_v1_chat_proto_msgTypes[1]
+	mi := &file_chat_v1_chat_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -97,7 +270,7 @@ func (x *QueryContextResponse) String() string {
 func (*QueryContextResponse) ProtoMessage() {}
 
 func (x *QueryContextResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_v1_chat_proto_msgTypes[1]
+	mi := &file_chat_v1_chat_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -110,7 +283,7 @@ func (x *QueryContextResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryContextResponse.ProtoReflect.Descriptor instead.
 func (*QueryContextResponse) Descriptor() ([]byte, []int) {
-	return file_chat_v1_chat_proto_rawDescGZIP(), []int{1}
+	return file_chat_v1_chat_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *QueryContextResponse) GetMessages() []*Message {
@@ -135,7 +308,7 @@ type QueryRequest struct {
 
 func (x *QueryRequest) Reset() {
 	*x = QueryRequest{}
-	mi := &file_chat_v1_chat_proto_msgTypes[2]
+	mi := &file_chat_v1_chat_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -147,7 +320,7 @@ func (x *QueryRequest) String() string {
 func (*QueryRequest) ProtoMessage() {}
 
 func (x *QueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_v1_chat_proto_msgTypes[2]
+	mi := &file_chat_v1_chat_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -160,7 +333,7 @@ func (x *QueryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryRequest.ProtoReflect.Descriptor instead.
 func (*QueryRequest) Descriptor() ([]byte, []int) {
-	return file_chat_v1_chat_proto_rawDescGZIP(), []int{2}
+	return file_chat_v1_chat_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *QueryRequest) GetFilter() *v1.Filter {
@@ -221,7 +394,7 @@ type QueryResponse struct {
 
 func (x *QueryResponse) Reset() {
 	*x = QueryResponse{}
-	mi := &file_chat_v1_chat_proto_msgTypes[3]
+	mi := &file_chat_v1_chat_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -233,7 +406,7 @@ func (x *QueryResponse) String() string {
 func (*QueryResponse) ProtoMessage() {}
 
 func (x *QueryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_v1_chat_proto_msgTypes[3]
+	mi := &file_chat_v1_chat_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -246,7 +419,7 @@ func (x *QueryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryResponse.ProtoReflect.Descriptor instead.
 func (*QueryResponse) Descriptor() ([]byte, []int) {
-	return file_chat_v1_chat_proto_rawDescGZIP(), []int{3}
+	return file_chat_v1_chat_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *QueryResponse) GetMessages() []*Message {
@@ -277,7 +450,7 @@ type Message struct {
 
 func (x *Message) Reset() {
 	*x = Message{}
-	mi := &file_chat_v1_chat_proto_msgTypes[4]
+	mi := &file_chat_v1_chat_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -289,7 +462,7 @@ func (x *Message) String() string {
 func (*Message) ProtoMessage() {}
 
 func (x *Message) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_v1_chat_proto_msgTypes[4]
+	mi := &file_chat_v1_chat_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -302,7 +475,7 @@ func (x *Message) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Message.ProtoReflect.Descriptor instead.
 func (*Message) Descriptor() ([]byte, []int) {
-	return file_chat_v1_chat_proto_rawDescGZIP(), []int{4}
+	return file_chat_v1_chat_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Message) GetPersonMessageId() int64 {
@@ -400,7 +573,30 @@ var File_chat_v1_chat_proto protoreflect.FileDescriptor
 
 const file_chat_v1_chat_proto_rawDesc = "" +
 	"\n" +
-	"\x12chat/v1/chat.proto\x12\achat.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"x\n" +
+	"\x12chat/v1/chat.proto\x12\achat.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"m\n" +
+	"\x11StreamChatRequest\x12'\n" +
+	"\n" +
+	"server_ids\x18\x01 \x03(\x05B\b\xbaH\x05\x92\x01\x02\x18\x01R\tserverIds\x12/\n" +
+	"\rhistory_limit\x18\x02 \x01(\x05B\n" +
+	"\xbaH\a\x1a\x05\x18\xe8\a(\x00R\fhistoryLimit\"\x81\x03\n" +
+	"\x12StreamChatResponse\x12\x14\n" +
+	"\x03seq\x18\x01 \x01(\x04B\x020\x01R\x03seq\x12,\n" +
+	"\bsteam_id\x18\x02 \x01(\x03B\x11\xbaH\f\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\x12\x1f\n" +
+	"\vavatar_hash\x18\x03 \x01(\tR\n" +
+	"avatarHash\x12-\n" +
+	"\fpersona_name\x18\x04 \x01(\tB\n" +
+	"\xbaH\ar\x05\x10\x01\x18\x80\x01R\vpersonaName\x12$\n" +
+	"\tserver_id\x18\x05 \x01(\x05B\a\xbaH\x04\x1a\x02 \x00R\bserverId\x12\x1f\n" +
+	"\vserver_name\x18\x06 \x01(\tR\n" +
+	"serverName\x12\x1e\n" +
+	"\x04body\x18\a \x01(\tB\n" +
+	"\xbaH\ar\x05\x10\x01\x18\x80 R\x04body\x12\x17\n" +
+	"\ais_team\x18\b \x01(\bR\x06isTeam\x129\n" +
+	"\n" +
+	"created_on\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x12\x1c\n" +
+	"\tkeepalive\x18\n" +
+	" \x01(\bR\tkeepalive\"x\n" +
 	"\x13QueryContextRequest\x128\n" +
 	"\x11person_message_id\x18\x01 \x01(\x03B\f\xbaH\a\xc8\x01\x01\"\x02 \x000\x01R\x0fpersonMessageId\x12'\n" +
 	"\apadding\x18\x02 \x01(\x05B\r\xbaH\n" +
@@ -440,10 +636,12 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	" \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11autoFilterFlagged\x12 \n" +
 	"\ademo_id\x18\v \x01(\x05B\a\xbaH\x04\x1a\x02 \x00R\x06demoId\x12\x1b\n" +
 	"\tdemo_tick\x18\f \x01(\x05R\bdemoTick\x12#\n" +
-	"\basset_id\x18\r \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\aassetId2\x96\x01\n" +
+	"\basset_id\x18\r \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\aassetId2\xe1\x01\n" +
 	"\vChatService\x128\n" +
 	"\x05Query\x12\x15.chat.v1.QueryRequest\x1a\x16.chat.v1.QueryResponse\"\x00\x12M\n" +
-	"\fQueryContext\x12\x1c.chat.v1.QueryContextRequest\x1a\x1d.chat.v1.QueryContextResponse\"\x00B\x8e\x01\n" +
+	"\fQueryContext\x12\x1c.chat.v1.QueryContextRequest\x1a\x1d.chat.v1.QueryContextResponse\"\x00\x12I\n" +
+	"\n" +
+	"StreamChat\x12\x1a.chat.v1.StreamChatRequest\x1a\x1b.chat.v1.StreamChatResponse\"\x000\x01B\x8e\x01\n" +
 	"\vcom.chat.v1B\tChatProtoP\x01Z7github.com/leighmacdonald/gbans/internal/chat/v1;chatv1\xa2\x02\x03CXX\xaa\x02\aChat.V1\xca\x02\aChat\\V1\xe2\x02\x13Chat\\V1\\GPBMetadata\xea\x02\bChat::V1b\beditionsp\xe8\a"
 
 var (
@@ -458,32 +656,37 @@ func file_chat_v1_chat_proto_rawDescGZIP() []byte {
 	return file_chat_v1_chat_proto_rawDescData
 }
 
-var file_chat_v1_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_chat_v1_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_chat_v1_chat_proto_goTypes = []any{
-	(*QueryContextRequest)(nil),   // 0: chat.v1.QueryContextRequest
-	(*QueryContextResponse)(nil),  // 1: chat.v1.QueryContextResponse
-	(*QueryRequest)(nil),          // 2: chat.v1.QueryRequest
-	(*QueryResponse)(nil),         // 3: chat.v1.QueryResponse
-	(*Message)(nil),               // 4: chat.v1.Message
-	(*v1.Filter)(nil),             // 5: database.query.v1.Filter
-	(*timestamppb.Timestamp)(nil), // 6: google.protobuf.Timestamp
+	(*StreamChatRequest)(nil),     // 0: chat.v1.StreamChatRequest
+	(*StreamChatResponse)(nil),    // 1: chat.v1.StreamChatResponse
+	(*QueryContextRequest)(nil),   // 2: chat.v1.QueryContextRequest
+	(*QueryContextResponse)(nil),  // 3: chat.v1.QueryContextResponse
+	(*QueryRequest)(nil),          // 4: chat.v1.QueryRequest
+	(*QueryResponse)(nil),         // 5: chat.v1.QueryResponse
+	(*Message)(nil),               // 6: chat.v1.Message
+	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
+	(*v1.Filter)(nil),             // 8: database.query.v1.Filter
 }
 var file_chat_v1_chat_proto_depIdxs = []int32{
-	4, // 0: chat.v1.QueryContextResponse.messages:type_name -> chat.v1.Message
-	5, // 1: chat.v1.QueryRequest.filter:type_name -> database.query.v1.Filter
-	6, // 2: chat.v1.QueryRequest.date_start:type_name -> google.protobuf.Timestamp
-	6, // 3: chat.v1.QueryRequest.date_end:type_name -> google.protobuf.Timestamp
-	4, // 4: chat.v1.QueryResponse.messages:type_name -> chat.v1.Message
-	6, // 5: chat.v1.Message.created_on:type_name -> google.protobuf.Timestamp
-	2, // 6: chat.v1.ChatService.Query:input_type -> chat.v1.QueryRequest
-	0, // 7: chat.v1.ChatService.QueryContext:input_type -> chat.v1.QueryContextRequest
-	3, // 8: chat.v1.ChatService.Query:output_type -> chat.v1.QueryResponse
-	1, // 9: chat.v1.ChatService.QueryContext:output_type -> chat.v1.QueryContextResponse
-	8, // [8:10] is the sub-list for method output_type
-	6, // [6:8] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	7,  // 0: chat.v1.StreamChatResponse.created_on:type_name -> google.protobuf.Timestamp
+	6,  // 1: chat.v1.QueryContextResponse.messages:type_name -> chat.v1.Message
+	8,  // 2: chat.v1.QueryRequest.filter:type_name -> database.query.v1.Filter
+	7,  // 3: chat.v1.QueryRequest.date_start:type_name -> google.protobuf.Timestamp
+	7,  // 4: chat.v1.QueryRequest.date_end:type_name -> google.protobuf.Timestamp
+	6,  // 5: chat.v1.QueryResponse.messages:type_name -> chat.v1.Message
+	7,  // 6: chat.v1.Message.created_on:type_name -> google.protobuf.Timestamp
+	4,  // 7: chat.v1.ChatService.Query:input_type -> chat.v1.QueryRequest
+	2,  // 8: chat.v1.ChatService.QueryContext:input_type -> chat.v1.QueryContextRequest
+	0,  // 9: chat.v1.ChatService.StreamChat:input_type -> chat.v1.StreamChatRequest
+	5,  // 10: chat.v1.ChatService.Query:output_type -> chat.v1.QueryResponse
+	3,  // 11: chat.v1.ChatService.QueryContext:output_type -> chat.v1.QueryContextResponse
+	1,  // 12: chat.v1.ChatService.StreamChat:output_type -> chat.v1.StreamChatResponse
+	10, // [10:13] is the sub-list for method output_type
+	7,  // [7:10] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_chat_v1_chat_proto_init() }
@@ -497,7 +700,7 @@ func file_chat_v1_chat_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_chat_v1_chat_proto_rawDesc), len(file_chat_v1_chat_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

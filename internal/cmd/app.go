@@ -191,7 +191,8 @@ func (g *GBans) Init(ctx context.Context) error {
 		stats.WithMatchLogNotifications(g.notifications, conf.Discord.PublicMatchLogChannelID),
 		stats.WithMatchPlayerNotifications(stats.NewMatchPlayerNotifier(g.servers, g.persons)))
 
-	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler, conf.Discord.SafeChatLogChannelID())
+	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler,
+		conf.Discord.SafeChatLogChannelID(), steamid.New(conf.Owner))
 	g.demos = demo.NewDemos(asset.BucketDemo, demo.NewRepository(g.database), g.assets, g.stats, g.chat, g.persons, conf.Demo, steamid.New(conf.Owner))
 	anonmod := ban.NewAnonmod(ban.NewAnonmodRepository(g.database), g.config)
 
@@ -321,7 +322,7 @@ func (g *GBans) chatHandler(ctx context.Context, exceeded bool, newWarning chat.
 		slog.String("sid64", newWarning.UserMessage.SteamID.String()),
 		slog.Int("weight", int(newWarning.CurrentTotal)))
 
-	return nil
+	return g.onChatBan(ctx, newWarning)
 }
 
 func (g *GBans) createConfig(ctx context.Context) (*config.Configuration, error) {
@@ -772,17 +773,10 @@ func (g *GBans) onChatBan(ctx context.Context, warning chat.NewUserWarning) erro
 		return errBan
 	}
 
-	admin, err := g.persons.GetOrCreatePersonBySteamID(ctx, steamid.New(g.config.Config().Owner))
-	if err != nil {
-		return err
-	}
-
-	_, errSave := g.wordFilters.Edit(ctx, admin, warning.MatchedFilter.FilterID, warning.MatchedFilter)
-	if errSave != nil {
-		return errSave
-	}
-
-	if !g.config.Config().Filters.PingDiscord {
+	// The filter trigger count is already persisted by chat.saveWarning before the
+	// exceed handler runs, so no further filter edit is needed here.
+	// Kick actions have no ban valid-until, so only mute/ban events get a log notice.
+	if !g.config.Config().Filters.PingDiscord || warning.MatchedFilter.Action == chat.FilterActionKick {
 		return nil
 	}
 

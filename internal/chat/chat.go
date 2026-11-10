@@ -80,6 +80,7 @@ type Chat struct {
 
 	repository    Repository
 	wordFilters   WordFilters
+	buffer        *Buffer
 	persons       person.Provider
 	notifications notification.Notifier
 	warningMu     *sync.RWMutex
@@ -96,12 +97,14 @@ type Chat struct {
 }
 
 func New(repo Repository, config *Config, filters WordFilters,
-	persons person.Provider, notifications notification.Notifier, actionHandler ExceedHandler, logChannelID string,
+	persons person.Provider, notifications notification.Notifier, actionHandler ExceedHandler,
+	logChannelID string, owner steamid.SteamID,
 ) *Chat {
 	return &Chat{
 		Config:        config,
 		repository:    repo,
 		wordFilters:   filters,
+		buffer:        NewBuffer(),
 		notifications: notifications,
 		persons:       persons,
 		logChannelID:  logChannelID,
@@ -110,6 +113,11 @@ func New(repo Repository, config *Config, filters WordFilters,
 		matchTimeout:  time.Duration(config.MatchTimeout) * time.Second,
 		exceedHandler: actionHandler,
 		checkTimeout:  time.Duration(config.CheckTimeout) * time.Second,
+		WarningChan:   make(chan NewUserWarning, 64),
+		maxWeight:     config.MaxWeight,
+		dry:           config.Dry,
+		pingDiscord:   config.PingDiscord,
+		owner:         owner,
 	}
 }
 
@@ -122,16 +130,31 @@ func (u *Chat) Start(ctx context.Context, events *broadcaster.Broadcaster[logpar
 		return
 	}
 
+	go u.processWarnings(ctx)
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-cleanupTicker.C:
-			u.cleanupExpired()
+			u.check(time.Now())
 		case evt := <-eventChan:
 			if errEvent := u.handleEvent(ctx, evt); errEvent != nil {
 				slog.Error("Failed to handle chat event", slog.String("error", errEvent.Error()))
 			}
+		}
+	}
+}
+
+// processWarnings consumes word filter matches, accumulating warning weight per player
+// until the configured max weight is exceeded and an action is taken.
+func (u *Chat) processWarnings(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case newWarn := <-u.WarningChan:
+			u.trigger(ctx, newWarn)
 		}
 	}
 }
@@ -161,23 +184,6 @@ func (u *Chat) handleEvent(ctx context.Context, evt logparse.ServerEvent) error 
 	return nil
 }
 
-func (u *Chat) cleanupExpired() {
-	u.warningMu.Lock()
-	defer u.warningMu.Unlock()
-
-	for steamID := range u.warnings {
-		for warnIdx, warning := range u.warnings[steamID] {
-			if time.Since(warning.CreatedOn) > u.matchTimeout {
-				if len(u.warnings[steamID]) > 1 {
-					u.warnings[steamID] = append(u.warnings[steamID][:warnIdx], u.warnings[steamID][warnIdx+1])
-				} else {
-					delete(u.warnings, steamID)
-				}
-			}
-		}
-	}
-}
-
 func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, person logparse.SourcePlayer, msg string, created time.Time, team bool, reason reason.Reason) error {
 	if msg == "" {
 		return nil
@@ -198,24 +204,36 @@ func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, pers
 		AvatarHash:  player.Avatarhash,
 	}
 
+	switch evt.EventType {
+	case logparse.Say, logparse.SayTeam:
+		u.buffer.Push(BufferedChatMessage{
+			SteamID:     userMsg.SteamID,
+			AvatarHash:  userMsg.AvatarHash,
+			PersonaName: userMsg.PersonaName,
+			ServerID:    userMsg.ServerID,
+			ServerName:  evt.ServerName,
+			Body:        userMsg.Body,
+			Team:        userMsg.Team,
+			CreatedOn:   userMsg.CreatedOn,
+		})
+	}
+
 	u.notifications.Send(notification.NewDiscord(u.logChannelID, discord.NewMessage(
 		discord.RenderText("chat_message", map[string]any{
 			"Msg":    userMsg,
 			"Player": player,
 		}))))
 
-	// Stores from demos instead
-	// if errChat := u.AddChatHistory(ctx, &userMsg); errChat != nil {
-	// 	return errChat
-	// }
+	// Chat history is stored from demo imports instead, so filter matches for live
+	// messages are recorded once the matching demo is processed (gbans refresh filters).
+
+	if !u.Enabled {
+		return nil
+	}
 
 	matchedFilter := u.wordFilters.Check(userMsg.Body)
 	if len(matchedFilter) == 0 {
 		return nil
-	}
-
-	if errSaveMatch := u.wordFilters.AddMessageFilterMatch(ctx, userMsg.PersonMessageID, matchedFilter[0].FilterID); errSaveMatch != nil {
-		slog.Error("Failed to save message findMatch status", slog.String("error", errSaveMatch.Error()))
 	}
 
 	matchResult := matchedFilter[0]
@@ -240,7 +258,6 @@ func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, pers
 }
 
 func (u *Chat) saveWarning(ctx context.Context, newWarning NewUserWarning) error {
-	newWarning.MatchedFilter.TriggerCount++
 	admin, errAdmin := u.persons.GetOrCreatePersonBySteamID(ctx, u.owner)
 	if errAdmin != nil {
 		return errAdmin
@@ -307,17 +324,14 @@ func (u *Chat) trigger(ctx context.Context, newWarn NewUserWarning) {
 		u.warnings[newWarn.UserMessage.SteamID] = []UserWarning{}
 	}
 
-	var (
-		currentWeight = newWarn.MatchedFilter.Weight
-		count         int
-	)
-
+	var currentWeight int32
 	for _, existing := range u.warnings[newWarn.UserMessage.SteamID] {
 		currentWeight += existing.MatchedFilter.Weight
-		count++
 	}
 
-	newWarn.CurrentTotal = currentWeight + newWarn.MatchedFilter.Weight
+	currentWeight += newWarn.MatchedFilter.Weight
+
+	newWarn.CurrentTotal = currentWeight
 	newWarn.MatchedFilter.TriggerCount++
 
 	u.warnings[newWarn.UserMessage.SteamID] = append(u.warnings[newWarn.UserMessage.SteamID], newWarn.UserWarning)

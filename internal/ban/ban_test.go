@@ -85,7 +85,7 @@ func newEnv(t *testing.T, opts ...envOpt) *env {
 
 	assets := asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
 	filters := chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database), notification.NewDiscard(), fixture.Config.Config().Filters)
-	chatCase := chat.New(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters, filters, fixture.Persons, notification.NewDiscard(), nil, "")
+	chatCase := chat.New(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters, filters, fixture.Persons, notification.NewDiscard(), nil, "", tests.OwnerSID)
 	statsCase := stats.New(stats.NewRepository(fixture.Database), maps.New(maps.NewRepository(fixture.Database)))
 	demos := demo.NewDemos(asset.BucketDemo, demo.NewRepository(fixture.Database),
 		assets, statsCase, chatCase, fixture.Persons, fixture.Config.Config().Demo, tests.OwnerSID)

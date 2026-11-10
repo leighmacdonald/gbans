@@ -38,12 +38,15 @@ const (
 	// ChatServiceQueryContextProcedure is the fully-qualified name of the ChatService's QueryContext
 	// RPC.
 	ChatServiceQueryContextProcedure = "/chat.v1.ChatService/QueryContext"
+	// ChatServiceStreamChatProcedure is the fully-qualified name of the ChatService's StreamChat RPC.
+	ChatServiceStreamChatProcedure = "/chat.v1.ChatService/StreamChat"
 )
 
 // ChatServiceClient is a client for the chat.v1.ChatService service.
 type ChatServiceClient interface {
 	Query(context.Context, *v1.QueryRequest) (*v1.QueryResponse, error)
 	QueryContext(context.Context, *v1.QueryContextRequest) (*v1.QueryContextResponse, error)
+	StreamChat(context.Context, *v1.StreamChatRequest) (*connect.ServerStreamForClient[v1.StreamChatResponse], error)
 }
 
 // NewChatServiceClient constructs a client for the chat.v1.ChatService service. By default, it uses
@@ -69,6 +72,12 @@ func NewChatServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(chatServiceMethods.ByName("QueryContext")),
 			connect.WithClientOptions(opts...),
 		),
+		streamChat: connect.NewClient[v1.StreamChatRequest, v1.StreamChatResponse](
+			httpClient,
+			baseURL+ChatServiceStreamChatProcedure,
+			connect.WithSchema(chatServiceMethods.ByName("StreamChat")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -76,6 +85,7 @@ func NewChatServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 type chatServiceClient struct {
 	query        *connect.Client[v1.QueryRequest, v1.QueryResponse]
 	queryContext *connect.Client[v1.QueryContextRequest, v1.QueryContextResponse]
+	streamChat   *connect.Client[v1.StreamChatRequest, v1.StreamChatResponse]
 }
 
 // Query calls chat.v1.ChatService.Query.
@@ -96,10 +106,16 @@ func (c *chatServiceClient) QueryContext(ctx context.Context, req *v1.QueryConte
 	return nil, err
 }
 
+// StreamChat calls chat.v1.ChatService.StreamChat.
+func (c *chatServiceClient) StreamChat(ctx context.Context, req *v1.StreamChatRequest) (*connect.ServerStreamForClient[v1.StreamChatResponse], error) {
+	return c.streamChat.CallServerStream(ctx, connect.NewRequest(req))
+}
+
 // ChatServiceHandler is an implementation of the chat.v1.ChatService service.
 type ChatServiceHandler interface {
 	Query(context.Context, *v1.QueryRequest) (*v1.QueryResponse, error)
 	QueryContext(context.Context, *v1.QueryContextRequest) (*v1.QueryContextResponse, error)
+	StreamChat(context.Context, *v1.StreamChatRequest, *connect.ServerStream[v1.StreamChatResponse]) error
 }
 
 // NewChatServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -121,12 +137,20 @@ func NewChatServiceHandler(svc ChatServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(chatServiceMethods.ByName("QueryContext")),
 		connect.WithHandlerOptions(opts...),
 	)
+	chatServiceStreamChatHandler := connect.NewServerStreamHandlerSimple(
+		ChatServiceStreamChatProcedure,
+		svc.StreamChat,
+		connect.WithSchema(chatServiceMethods.ByName("StreamChat")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/chat.v1.ChatService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ChatServiceQueryProcedure:
 			chatServiceQueryHandler.ServeHTTP(w, r)
 		case ChatServiceQueryContextProcedure:
 			chatServiceQueryContextHandler.ServeHTTP(w, r)
+		case ChatServiceStreamChatProcedure:
+			chatServiceStreamChatHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -142,4 +166,8 @@ func (UnimplementedChatServiceHandler) Query(context.Context, *v1.QueryRequest) 
 
 func (UnimplementedChatServiceHandler) QueryContext(context.Context, *v1.QueryContextRequest) (*v1.QueryContextResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("chat.v1.ChatService.QueryContext is not implemented"))
+}
+
+func (UnimplementedChatServiceHandler) StreamChat(context.Context, *v1.StreamChatRequest, *connect.ServerStream[v1.StreamChatResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("chat.v1.ChatService.StreamChat is not implemented"))
 }

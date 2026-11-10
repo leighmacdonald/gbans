@@ -1,17 +1,21 @@
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
+import ChatIcon from "@mui/icons-material/Chat";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import InfoIcon from "@mui/icons-material/Info";
+import Alert from "@mui/material/Alert";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
+import Link from "@mui/material/Link";
 import TableCell from "@mui/material/TableCell";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { createFileRoute } from "@tanstack/react-router";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
+import { ChatFeed } from "../component/ChatFeed.tsx";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { FilterEditModal } from "../component/modal/FilterEditModal.tsx";
@@ -22,10 +26,14 @@ import { createDefaultTableOptions, makeRowActionsDefOptions } from "../componen
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellSmall } from "../component/table/TableCellSmall.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { BanType } from "../rpc/ban/v1/ban_pb.ts";
 import { type Filter, FilterAction, type UserWarning } from "../rpc/chat/v1/wordfilter_pb.ts";
 import { filterDelete, filters, warningState } from "../rpc/chat/v1/wordfilter-WordfilterService_connectquery.ts";
+import { get as getConfig } from "../rpc/config/v1/config-ConfigService_connectquery.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
+import { servers } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
+import { filterActionLabel } from "../util/filterAction.ts";
 import { renderTimestamp } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<Filter>();
@@ -41,8 +49,12 @@ export const Route = createFileRoute("/_mod/admin/filters")({
 function AdminFilters() {
 	const { queryClient } = Route.useRouteContext();
 	const { sendFlash, sendError } = useUserFlashCtx();
+	const { hasPermission } = useAuth();
 
 	const { data, isLoading, isError } = useQuery(filters);
+	const { data: configData } = useQuery(getConfig, {});
+	const { data: serverData } = useQuery(servers);
+	const canViewChat = hasPermission(Permission.CHATLOG_READ);
 
 	const onCreate = useCallback(async () => {
 		try {
@@ -135,10 +147,11 @@ function AdminFilters() {
 				meta: { tooltip: "What action to take?" },
 				grow: false,
 				filterSelectOptions: [
-					{ label: "Mute", value: BanType.NO_COMM },
-					{ label: "Ban", value: BanType.BANNED },
+					{ label: "Kick", value: FilterAction.KICK_UNSPECIFIED },
+					{ label: "Mute", value: FilterAction.MUTE },
+					{ label: "Ban", value: FilterAction.BAN },
 				],
-				Cell: ({ cell }) => FilterAction[cell.getValue()],
+				Cell: ({ cell }) => filterActionLabel(cell.getValue()),
 			}),
 			columnHelper.accessor("duration", {
 				header: "Duration",
@@ -210,6 +223,24 @@ function AdminFilters() {
 
 	return (
 		<Grid container spacing={2}>
+			{configData?.config?.filters?.enabled === false && (
+				<Grid size={{ xs: 12 }}>
+					<Alert severity="warning">
+						Word filters are currently disabled, so chat logs and usernames are not being checked.{" "}
+						<Link component={"a"} href={"/admin/settings?tab=filters"} target="_blank">
+							Enable them in Settings → Word Filters
+						</Link>{" "}
+						to start enforcing.
+					</Alert>
+				</Grid>
+			)}
+			{canViewChat && (
+				<Grid size={{ xs: 12 }}>
+					<ContainerWithHeader title={"Live Chat"} iconLeft={<ChatIcon />} padding={2}>
+						<ChatFeed servers={serverData?.servers ?? []} />
+					</ContainerWithHeader>
+				</Grid>
+			)}
 			<Grid size={{ xs: 12 }}>
 				<SortableTable
 					table={table}
@@ -255,7 +286,7 @@ export const WarningStateTable = () => {
 				<Typography variant={"h6"}>Matched {f.isRegex ? "Regex" : "Text"}</Typography>
 				<Typography variant={"body1"}>{pat}</Typography>
 				<Typography variant={"body1"}>Weight: {f.weight}</Typography>
-				<Typography variant={"body1"}>Action: {FilterAction[f.action]}</Typography>
+				<Typography variant={"body1"}>Action: {filterActionLabel(f.action)}</Typography>
 			</>
 		);
 	}, []);
@@ -283,13 +314,13 @@ export const WarningStateTable = () => {
 				Cell: ({ cell }) => (
 					<TableCellSmall>
 						<Typography>
-							{typeof cell.getValue() === "undefined" ? "" : FilterAction[cell.getValue()]}
+							{typeof cell.getValue() === "undefined" ? "" : filterActionLabel(cell.getValue())}
 						</Typography>
 					</TableCellSmall>
 				),
 			}),
 			columnHelperWarn.accessor("matched", {
-				header: "Duration",
+				header: "Matched",
 				Cell: ({ row, cell }) => (
 					<TableCell>
 						<Tooltip title={renderFilter(row.original as unknown as Filter)}>
@@ -321,7 +352,7 @@ export const WarningStateTable = () => {
 		},
 		initialState: {
 			...defaultOptionsWarn.initialState,
-			sorting: [{ id: "updatedOn", desc: true }],
+			sorting: [{ id: "createdOn", desc: true }],
 			columnVisibility: {
 				sourceId: false,
 				targetId: true,
