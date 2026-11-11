@@ -37,6 +37,14 @@ const (
 	DefaultStatusUpdateFreq = time.Second * 20
 	serverQueryTimeout      = time.Second * 5
 	dnsResolveTimeout       = time.Second * 5
+
+	// logSecretCacheTTL bounds how long a server's log secret and resolved
+	// address are trusted without re-reading them from the database.
+	logSecretCacheTTL = time.Minute
+	// logSecretMissTTL limits repeated database lookups for unknown secrets.
+	logSecretMissTTL = 10 * time.Second
+	// maxSecretCacheEntries caps the cache against floods of random secrets.
+	maxSecretCacheEntries = 4096
 )
 
 type SayType int
@@ -95,6 +103,19 @@ type Servers struct {
 	logAddr     string
 	logRecorder *LogEventRecorder
 	logBuffer   *LogBuffer
+
+	secretMu    *sync.RWMutex
+	secretCache map[int64]secretAuthEntry
+}
+
+// secretAuthEntry caches the result of authenticating a srcds log secret. A
+// zero serverID marks a negative entry so floods of unknown secrets do not
+// query the database for every packet.
+type secretAuthEntry struct {
+	serverID   int32
+	serverName string
+	ip         net.IP
+	expiresAt  time.Time
 }
 
 func New(repository Repository, broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent], logAddr string) (*Servers, error) {
@@ -107,6 +128,8 @@ func New(repository Repository, broadcaster *broadcaster.Broadcaster[logparse.Ev
 		logAddr:     logAddr,
 		logRecorder: newLogEventRecorder(repository),
 		logBuffer:   NewLogBuffer(),
+		secretMu:    &sync.RWMutex{},
+		secretCache: make(map[int64]secretAuthEntry),
 	}
 
 	return servers, nil
@@ -128,20 +151,88 @@ func (s *Servers) QueryLogs(ctx context.Context, opts QueryLogOpts) ([]ServerLog
 }
 
 func (s *Servers) secretAuth(ctx context.Context, secret int64, ipAddr net.IP) (int32, string, error) {
-	server, err := s.repo.ServerByLogSecret(ctx, secret)
-	if err != nil {
-		return 0, "", fmt.Errorf("%w: invalid log_secret", err)
-	}
-	if server.AddressInternal != "" {
-		addr := resolveIP(ctx, server.AddressInternal)
-		if addr.String() != ipAddr.String() {
-			return 0, "", fmt.Errorf("%w: invalid source ip (int)", ErrNotFound)
+	entry, cached := s.cachedSecretAuth(secret)
+	if !cached {
+		server, err := s.repo.ServerByLogSecret(ctx, secret)
+		if err != nil {
+			s.storeSecretAuth(secret, secretAuthEntry{expiresAt: time.Now().Add(logSecretMissTTL)})
+
+			return 0, "", fmt.Errorf("%w: invalid log_secret", err)
 		}
-	} else if resolveIP(ctx, server.Address).String() != server.Address {
-		return 0, "", fmt.Errorf("%w: invalid source ip (ext)", ErrNotFound)
+
+		entry = secretAuthEntry{
+			serverID:   server.ServerID,
+			serverName: server.ShortName,
+			ip:         resolveServerIP(ctx, server),
+			expiresAt:  time.Now().Add(logSecretCacheTTL),
+		}
+
+		s.storeSecretAuth(secret, entry)
 	}
 
-	return server.ServerID, server.ShortName, nil
+	if entry.serverID == 0 {
+		return 0, "", fmt.Errorf("%w: invalid log_secret", ErrNotFound)
+	}
+
+	if entry.ip == nil || !entry.ip.Equal(ipAddr) {
+		return 0, "", fmt.Errorf("%w: invalid source ip", ErrNotFound)
+	}
+
+	return entry.serverID, entry.serverName, nil
+}
+
+func (s *Servers) cachedSecretAuth(secret int64) (secretAuthEntry, bool) {
+	s.secretMu.RLock()
+	entry, ok := s.secretCache[secret]
+	s.secretMu.RUnlock()
+
+	if !ok || time.Now().After(entry.expiresAt) {
+		return secretAuthEntry{}, false
+	}
+
+	return entry, true
+}
+
+func (s *Servers) storeSecretAuth(secret int64, entry secretAuthEntry) {
+	s.secretMu.Lock()
+	defer s.secretMu.Unlock()
+
+	if len(s.secretCache) >= maxSecretCacheEntries {
+		now := time.Now()
+		for key, cached := range s.secretCache {
+			if now.After(cached.expiresAt) {
+				delete(s.secretCache, key)
+			}
+		}
+
+		if len(s.secretCache) >= maxSecretCacheEntries {
+			clear(s.secretCache)
+		}
+	}
+
+	s.secretCache[secret] = entry
+}
+
+func (s *Servers) invalidateSecretCache() {
+	s.secretMu.Lock()
+	defer s.secretMu.Unlock()
+
+	clear(s.secretCache)
+}
+
+// resolveServerIP returns the address log packets are expected to originate
+// from. The internal/VPN address takes precedence when configured. Resolution
+// happens once per cache entry instead of once per log packet.
+func resolveServerIP(ctx context.Context, server Server) net.IP {
+	addr := server.Address
+	if server.AddressInternal != "" {
+		addr = server.AddressInternal
+	}
+
+	resolveCtx, cancel := context.WithTimeout(ctx, dnsResolveTimeout)
+	defer cancel()
+
+	return resolveIP(resolveCtx, addr)
 }
 
 func (s *Servers) Current() []SafeServer {
@@ -297,6 +388,8 @@ func (s *Servers) Delete(ctx context.Context, serverID int32) error {
 		return err
 	}
 
+	s.invalidateSecretCache()
+
 	return nil
 }
 
@@ -429,6 +522,8 @@ func (s *Servers) Save(ctx context.Context, server Server) (Server, error) {
 	if err := s.repo.Save(ctx, &server); err != nil {
 		return Server{}, err
 	}
+
+	s.invalidateSecretCache()
 
 	return s.Server(ctx, server.ServerID)
 }
