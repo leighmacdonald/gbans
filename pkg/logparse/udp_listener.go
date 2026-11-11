@@ -58,9 +58,9 @@ type ServerIDMap struct {
 	ServerName string
 }
 
-// Start initiates the udp network log read loop. DNS names are used to
-// map the server logs to the internal known server id. The DNS is updated
-// every 60 minutes so that it remains up to date.
+// Start initiates the udp network log read loop. Every packet is authenticated
+// through the configured PacketAuthenticator before its payload is parsed and
+// delivered to the event handler.
 func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 	type newMsg struct {
 		body       string
