@@ -5,18 +5,19 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"runtime"
 	"sync"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
 	"github.com/gofrs/uuid/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/maps"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/pkg/demoparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"golang.org/x/sync/semaphore"
 )
 
 const (
@@ -317,11 +318,77 @@ func (s Stats) UpdateDailyViews(ctx context.Context) func() {
 // generous.
 const viewRefreshTimeout = 30 * time.Minute
 
-// RefreshViews refreshes every stats summary view, running the refreshes
-// concurrently with at most a few in flight at once. Used by the daily
-// scheduler and the admin RefreshStats RPC.
+// The process-wide refresh semaphore. REFRESH MATERIALIZED VIEW CONCURRENTLY
+// pins a pool connection for the whole statement, so the cap below is derived
+// from the pool size: the refreshes may occupy at most half of it, leaving the
+// rest for API traffic. The semaphore is shared by every RefreshViews call
+// (daily cron job, admin RefreshStats RPC) so overlapping invocations cannot
+// stack their concurrent refreshes.
+//
+//nolint:gochecknoglobals // process-wide state shared by every refresh caller.
+var (
+	viewRefreshMu    sync.Mutex
+	viewRefreshSem   *semaphore.Weighted
+	viewRefreshLimit int64
+)
+
+// viewRefreshConcurrency returns the maximum number of view refreshes allowed
+// to run concurrently across the whole process, derived from the database
+// pool size.
+func viewRefreshConcurrency(pool *pgxpool.Pool) int64 {
+	limit := int64(1)
+	if pool != nil {
+		limit = int64(pool.Config().MaxConns) / 2
+	}
+	if limit < 1 {
+		limit = 1
+	}
+
+	return limit
+}
+
+// acquireViewRefreshSlots reserves slots on the process-wide refresh
+// semaphore for every view in one acquisition, so a concurrent RefreshViews
+// invocation blocks until this one finishes instead of interleaving with it.
+func acquireViewRefreshSlots(ctx context.Context, pool *pgxpool.Pool, viewCount int64) (func(), error) {
+	limit := viewRefreshConcurrency(pool)
+
+	viewRefreshMu.Lock()
+	if viewRefreshSem == nil || viewRefreshLimit < limit {
+		viewRefreshSem = semaphore.NewWeighted(limit)
+		viewRefreshLimit = limit
+	}
+	sem := viewRefreshSem
+	viewRefreshMu.Unlock()
+
+	perCall := min(limit, viewCount)
+
+	if err := sem.Acquire(ctx, perCall); err != nil {
+		return nil, fmt.Errorf("acquiring stats view refresh slots: %w", err)
+	}
+
+	return func() { sem.Release(perCall) }, nil
+}
+
+// RefreshViews refreshes every stats summary view concurrently. The number of
+// concurrent REFRESH MATERIALIZED VIEW statements is capped by the database
+// pool size (see acquireViewRefreshSlots) so API traffic is never starved.
+// Used by the daily scheduler and the admin RefreshStats RPC.
 func (s Stats) RefreshViews(ctx context.Context) error {
-	// Refreshing every view is long-running and must not be aborted if the
+	views := StatViews()
+
+	// Wait for refresh slots under the caller's context: a RefreshStats
+	// request issued while another refresh is running blocks here until the
+	// in-flight refresh finishes, but if the client stops waiting (or the app
+	// is shutting down) we abandon the wait instead of holding the request
+	// open for up to viewRefreshTimeout.
+	release, errSlots := acquireViewRefreshSlots(ctx, s.repo.Pool(), int64(len(views))) //nolint:gosec
+	if errSlots != nil {
+		return errSlots
+	}
+	defer release()
+
+	// The refresh itself is long-running and must not be aborted if the
 	// caller's context is canceled (e.g. the RefreshStats RPC request context,
 	// which a client or proxy cancels when it stops waiting). Detach from that
 	// cancellation and bound the work with our own generous timeout so the
@@ -329,24 +396,16 @@ func (s Stats) RefreshViews(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), viewRefreshTimeout)
 	defer cancel()
 
-	// Refresh views in parallel, capped well below the core count to leave
-	// headroom for the rest of the server (and because the DB pool, not the
-	// CPU, is what ultimately limits how many refreshes can run at once).
-	workers := max(runtime.NumCPU()-2, 1)
-
-	sem := make(chan struct{}, workers)
 	var (
 		waitGroup sync.WaitGroup
 		errMu     sync.Mutex
 		firstErr  error
 	)
 
-	for _, viewName := range StatViews() {
+	for _, viewName := range views {
 		waitGroup.Add(1)
-		sem <- struct{}{}
 		go func(viewName string) {
 			defer waitGroup.Done()
-			defer func() { <-sem }()
 
 			start := time.Now()
 			if err := s.repo.RefreshMaterializedView(ctx, viewName); err != nil {
