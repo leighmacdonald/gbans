@@ -51,6 +51,7 @@ func (m *MessageProvider) Next(ctx context.Context, count uint64) ([]slur.Messag
 
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	var res []slur.Message
 	for rows.Next() {
@@ -191,6 +192,7 @@ func (r Repository) loadDemoInfo(ctx context.Context, results []*QueryChatHistor
 	if errRows != nil {
 		return errRows
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var assetID uuid.UUID

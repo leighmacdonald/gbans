@@ -16,6 +16,7 @@ func (r Repository) All(ctx context.Context) ([]Map, error) {
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var m Map

@@ -26,6 +26,7 @@ func (r Repository) OldAuths(ctx context.Context) ([]Credential, error) {
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	var credentials []Credential
 

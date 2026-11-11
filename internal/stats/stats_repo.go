@@ -170,6 +170,7 @@ func (r Repository) Matches(ctx context.Context, opts MatchesOpts) ([]Match, uin
 	if errRows != nil {
 		return nil, 0, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	var matches []Match
 	for rows.Next() {
@@ -210,6 +211,7 @@ func (r Repository) WeaponList(ctx context.Context) ([]string, error) {
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	var weapons []string
 	for rows.Next() {
@@ -232,6 +234,7 @@ func (r Repository) Buckets(ctx context.Context) ([]Bucket, error) {
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var bucket Bucket
@@ -425,6 +428,7 @@ func (r Repository) loadOverallView(ctx context.Context, statsBucketID uint32, o
 	if errRows != nil {
 		return nil, 0, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	var variantStats []any
 	for rows.Next() {
@@ -502,6 +506,7 @@ func (r Repository) loadVariantView(ctx context.Context, statsBucketID uint32, o
 	if errRows != nil {
 		return nil, 0, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	var variantStats []any
 	for rows.Next() {
@@ -596,6 +601,7 @@ func (r Repository) getChat(ctx context.Context, match *Match) error {
 	if errRows != nil {
 		return database.Err(errRows)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var chatLog MatchChatLog
@@ -639,6 +645,7 @@ func (r Repository) getRoundPlayers(ctx context.Context, match *Match) error {
 	if errRows != nil {
 		return database.Err(errRows)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var mrp MatchOverallStatsRound
@@ -691,6 +698,7 @@ func (r Repository) getRoundPlayersVariants(ctx context.Context, match *Match) e
 	if errRows != nil {
 		return database.Err(errRows)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var mrws MatchVariantStatsRound
@@ -737,6 +745,7 @@ func (r Repository) MatchesWithPlayer(ctx context.Context, steamID steamid.Steam
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var match PlayerMatchHistory
@@ -787,6 +796,7 @@ func (r Repository) getRounds(ctx context.Context, match *Match) error {
 	if errRows != nil {
 		return database.Err(errRows)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var round MatchRound
@@ -1448,6 +1458,7 @@ func (r Repository) getKills(ctx context.Context, match *Match) error {
 	if errRows != nil {
 		return database.Err(errRows)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var (
@@ -1527,6 +1538,7 @@ func (r Repository) getEvents(ctx context.Context, match *Match) error {
 	if errRows != nil {
 		return database.Err(errRows)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var (

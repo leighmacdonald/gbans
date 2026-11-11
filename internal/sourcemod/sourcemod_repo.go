@@ -86,6 +86,7 @@ func (r Repository) smRoles(ctx context.Context) ([]roleRow, error) {
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	var roleRows []roleRow
 
@@ -157,6 +158,7 @@ func (r Repository) rolePermissions(ctx context.Context, roleIDs []int32) (map[i
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var (
@@ -218,6 +220,7 @@ func (r Repository) roleMemberCounts(ctx context.Context) (map[int32]int, error)
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var (
@@ -267,6 +270,7 @@ func (r Repository) roleAssignments(ctx context.Context, steamIDs []int64, roleI
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var (
@@ -316,6 +320,7 @@ func (r Repository) personalRoles(ctx context.Context, steamIDs []int64) (map[in
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var (
@@ -578,6 +583,7 @@ func (r Repository) adminBases(ctx context.Context, steamIDs []int64) ([]adminBa
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	var bases []adminBase
 
@@ -987,6 +993,7 @@ func (r Repository) groupImmunities(ctx context.Context, immunityID *int32) ([]G
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	type immunityRow struct {
 		ID        int32
@@ -1127,6 +1134,7 @@ func (r Repository) GroupOverrides(ctx context.Context, group Groups) ([]GroupOv
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	var overrides []GroupOverrides
 
@@ -1157,6 +1165,7 @@ func (r Repository) overridePermissions(ctx context.Context, overrideIDs []int32
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var (
@@ -1282,6 +1291,7 @@ func (r Repository) Overrides(ctx context.Context) ([]Overrides, error) {
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	var overrides []Overrides
 
