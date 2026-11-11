@@ -112,6 +112,7 @@ func (r Repository) MapStatsPrefixes(ctx context.Context, opts MapStatsOpts) ([]
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	var prefixes []MapPrefixStat
 	for rows.Next() {
@@ -173,6 +174,7 @@ func (r Repository) MapStatsHistory(ctx context.Context, opts MapStatsHistoryOpt
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	var historyRows []mapStatsHistoryRow
 	for rows.Next() {
@@ -198,6 +200,7 @@ func (r Repository) queryMapStatsRows(ctx context.Context, opts MapStatsOpts) ([
 	if errRows != nil {
 		return nil, database.Err(errRows)
 	}
+	defer rows.Close()
 
 	var stats []MapStat
 	for rows.Next() {

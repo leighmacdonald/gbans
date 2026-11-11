@@ -86,3 +86,4 @@ importer
 .worktreeinclude
 .tmp
 *_stv
+/*.md
