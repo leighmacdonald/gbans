@@ -23,7 +23,6 @@ import { ButtonLink } from "../component/ButtonLink.tsx";
 import { NewsView } from "../component/NewsView";
 import RouterLink from "../component/RouterLink.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
-import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import { blu, red, tf2Fonts } from "../theme.ts";
 
 export const Route = createFileRoute("/_guest/")({
@@ -35,7 +34,7 @@ export const Route = createFileRoute("/_guest/")({
 
 function Index() {
 	const { appInfo } = Route.useRouteContext();
-	const { profile, hasPermission } = useAuth();
+	const { profile } = useAuth();
 	const showPlay = profile && profile.banId === 0 && appInfo.serversEnabled;
 	const showAppeal = profile && profile.banId !== 0 && appInfo.reportsEnabled;
 	const banner = appInfo.bannerImage === "" ? "/banner-default.webp" : appInfo.bannerImage;
