@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"slices"
 	"sync"
 	"time"
@@ -18,6 +19,21 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	rolesv1 "github.com/leighmacdonald/gbans/internal/roles/v1"
+)
+
+const (
+	// DefaultMaxConns is the size of the shared database pool when the DSN
+	// does not explicitly set pool_max_conns. pgxpool's own default is
+	// max(4, NumCPU), which would silently grow with the host's CPU count
+	// (and can exceed the database's max_connections on large machines), so
+	// a fixed default is pinned here instead. Operators can still override
+	// it per-DSN via pool_max_conns.
+	DefaultMaxConns int32 = 16
+	// queryAcquireTimeout bounds how long a query waits for a free pooled
+	// connection before failing. A saturated pool then surfaces as a quick
+	// error instead of requests (or background workers) queueing
+	// indefinitely behind it.
+	queryAcquireTimeout = 30 * time.Second
 )
 
 var (
@@ -155,6 +171,139 @@ func (db *PgStore) Pool() *pgxpool.Pool {
 	return db.conn
 }
 
+// acquireConn grabs a pooled connection for a single statement, failing fast
+// (queryAcquireTimeout) when the pool is saturated instead of blocking the
+// caller indefinitely.
+func (db *PgStore) acquireConn(ctx context.Context) (*pgxpool.Conn, error) {
+	acquireCtx, cancel := context.WithTimeout(ctx, queryAcquireTimeout)
+	defer cancel()
+
+	conn, err := db.conn.Acquire(acquireCtx)
+	if err != nil {
+		return nil, fmt.Errorf("acquiring database connection: %w", err)
+	}
+
+	return conn, nil
+}
+
+// poolRows releases its pooled connection when the rows are closed, or
+// automatically once they are exhausted or a read fails — mirroring
+// pgxpool's own poolRows, so callers that never call Close do not leak a
+// connection.
+type poolRows struct {
+	pgx.Rows
+
+	release func()
+}
+
+func (r *poolRows) Next() bool {
+	next := r.Rows.Next()
+	if !next {
+		r.Close()
+	}
+
+	return next
+}
+
+func (r *poolRows) Scan(dest ...any) error {
+	err := r.Rows.Scan(dest...)
+	if err != nil {
+		r.Close()
+	}
+
+	return err //nolint:wrapcheck
+}
+
+func (r *poolRows) Values() ([]any, error) {
+	values, errValues := r.Rows.Values()
+	if errValues != nil {
+		r.Close()
+	}
+
+	return values, errValues //nolint:wrapcheck
+}
+
+func (r *poolRows) Close() {
+	r.Rows.Close()
+	r.release()
+}
+
+// poolRow releases its pooled connection when the row is scanned.
+type poolRow struct {
+	pgx.Row
+
+	release func()
+}
+
+func (r *poolRow) Scan(dest ...any) error {
+	panicked := true
+	defer func() {
+		if panicked {
+			r.release()
+		}
+	}()
+
+	err := r.Row.Scan(dest...)
+	panicked = false
+	r.release()
+
+	return err //nolint:wrapcheck
+}
+
+// poolTx releases its pooled connection when the transaction ends.
+type poolTx struct {
+	pgx.Tx
+
+	release func()
+}
+
+func (t *poolTx) Commit(ctx context.Context) error {
+	err := t.Tx.Commit(ctx)
+	t.release()
+
+	return err //nolint:wrapcheck
+}
+
+func (t *poolTx) Rollback(ctx context.Context) error {
+	err := t.Tx.Rollback(ctx)
+	t.release()
+
+	return err //nolint:wrapcheck
+}
+
+// poolBatchResults releases its pooled connection when the batch results are
+// closed.
+type poolBatchResults struct {
+	pgx.BatchResults
+
+	release func()
+}
+
+func (b *poolBatchResults) Close() error {
+	err := b.BatchResults.Close()
+	b.release()
+
+	return err //nolint:wrapcheck
+}
+
+// errorRow is a pgx.Row whose Scan always returns err (used when acquiring
+// the underlying connection fails).
+type errorRow struct{ err error }
+
+func (r errorRow) Scan(...any) error { return r.err }
+
+// errorBatchResults is a pgx.BatchResults that always returns err (used when
+// acquiring the underlying connection fails).
+type errorBatchResults struct{ err error }
+
+func (b errorBatchResults) Exec() (pgconn.CommandTag, error) { return pgconn.CommandTag{}, b.err }
+func (b errorBatchResults) Query() (pgx.Rows, error)         { return nil, b.err }
+func (b errorBatchResults) QueryRow() pgx.Row {
+	//nolint:staticcheck // keyed literal: errorBatchResults is not convertible to errorRow
+	return errorRow{err: b.err}
+}
+func (b errorBatchResults) Close() error { return b.err }
+
 func (db *PgStore) RefreshMaterializedView(ctx context.Context, viewName string) error {
 	timeStart := time.Now()
 	if !slices.Contains(db.validViewNames, viewName) {
@@ -170,6 +319,17 @@ func (db *PgStore) RefreshMaterializedView(ctx context.Context, viewName string)
 	return nil
 }
 
+// dsnSetsPoolParam reports whether dsn sets the given pgxpool DSN parameter
+// (e.g. pool_max_conns), meaning the operator explicitly chose the value.
+func dsnSetsPoolParam(dsn, param string) bool {
+	u, err := url.Parse(dsn)
+	if err != nil {
+		return false
+	}
+
+	return u.Query().Get(param) != ""
+}
+
 // Connect sets up underlying required services.
 func (db *PgStore) Connect(ctx context.Context) error {
 	cfg, errConfig := pgxpool.ParseConfig(db.dsn)
@@ -177,8 +337,12 @@ func (db *PgStore) Connect(ctx context.Context) error {
 		return fmt.Errorf("unable to parse db config/dsn: %w", errConfig)
 	}
 
-	if cfg.MaxConns == 0 {
-		cfg.MaxConns = 8
+	// pgxpool.ParseConfig already defaults MaxConns to max(4, NumCPU) when
+	// the DSN does not set pool_max_conns, so an "is it zero?" check here
+	// would never fire. Pin the documented default instead, but keep the
+	// operator's explicit DSN value when one was given.
+	if !dsnSetsPoolParam(db.dsn, "pool_max_conns") {
+		cfg.MaxConns = DefaultMaxConns
 	}
 
 	cfg.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
@@ -214,7 +378,12 @@ func (db *PgStore) Connect(ctx context.Context) error {
 }
 
 func (db *PgStore) SendBatch(ctx context.Context, batch *pgx.Batch) pgx.BatchResults { //nolint:ireturn
-	return db.conn.SendBatch(ctx, batch)
+	conn, err := db.acquireConn(ctx)
+	if err != nil {
+		return errorBatchResults{err: err}
+	}
+
+	return &poolBatchResults{BatchResults: conn.SendBatch(ctx, batch), release: conn.Release}
 }
 
 func (db *PgStore) Builder() sq.StatementBuilderType {
@@ -223,7 +392,19 @@ func (db *PgStore) Builder() sq.StatementBuilderType {
 
 //nolint:ireturn
 func (db *PgStore) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
-	return db.conn.Query(ctx, query, args...) //nolint:wrapcheck
+	conn, err := db.acquireConn(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, errQuery := conn.Query(ctx, query, args...)
+	if errQuery != nil {
+		conn.Release()
+
+		return nil, errQuery //nolint:wrapcheck
+	}
+
+	return &poolRows{Rows: rows, release: conn.Release}, nil
 }
 
 func (db *PgStore) QueryBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Rows, error) { //nolint:ireturn
@@ -238,7 +419,12 @@ func (db *PgStore) QueryBuilder(ctx context.Context, builder sq.SelectBuilder) (
 }
 
 func (db *PgStore) QueryRow(ctx context.Context, query string, args ...any) pgx.Row { //nolint:ireturn
-	return db.conn.QueryRow(ctx, query, args...)
+	conn, err := db.acquireConn(ctx)
+	if err != nil {
+		return errorRow{err: err}
+	}
+
+	return &poolRow{Row: conn.QueryRow(ctx, query, args...), release: conn.Release}
 }
 
 func (db *PgStore) QueryRowBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Row, error) { //nolint:ireturn
@@ -247,14 +433,19 @@ func (db *PgStore) QueryRowBuilder(ctx context.Context, builder sq.SelectBuilder
 		return nil, errQuery //nolint:wrapcheck
 	}
 
-	return db.conn.QueryRow(ctx, query, args...), nil
+	return db.QueryRow(ctx, query, args...), nil
 }
 
 func (db *PgStore) Exec(ctx context.Context, query string, args ...any) error {
-	var err error
-	_, err = db.conn.Exec(ctx, query, args...)
+	conn, err := db.acquireConn(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Release()
 
-	return err //nolint:wrapcheck
+	_, errExec := conn.Exec(ctx, query, args...)
+
+	return errExec //nolint:wrapcheck
 }
 
 func (db *PgStore) ExecInsertBuilder(ctx context.Context, builder sq.InsertBuilder) error {
@@ -300,11 +491,35 @@ func (db *PgStore) ExecInsertBuilderWithReturnValue(ctx context.Context, builder
 }
 
 func (db *PgStore) Begin(ctx context.Context) (pgx.Tx, error) { //nolint:ireturn
-	return db.conn.Begin(ctx) //nolint:wrapcheck
+	conn, err := db.acquireConn(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	transaction, errTx := conn.Begin(ctx)
+	if errTx != nil {
+		conn.Release()
+
+		return nil, errTx //nolint:wrapcheck
+	}
+
+	return &poolTx{Tx: transaction, release: conn.Release}, nil
 }
 
 func (db *PgStore) BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error) { //nolint:ireturn
-	return db.conn.BeginTx(ctx, txOptions) //nolint:wrapcheck
+	conn, err := db.acquireConn(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	transaction, errTx := conn.BeginTx(ctx, txOptions)
+	if errTx != nil {
+		conn.Release()
+
+		return nil, errTx //nolint:wrapcheck
+	}
+
+	return &poolTx{Tx: transaction, release: conn.Release}, nil
 }
 
 // Close will close the underlying database connection if it exists.

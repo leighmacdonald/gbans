@@ -48,6 +48,8 @@ http_cookie_key: change_me
 
 # Database connection string
 # Format: postgresql://<user>:<pass>@<host>:<port>/<database>
+# The connection pool defaults to 16 connections; override it with the
+# pool_max_conns DSN parameter (e.g. ".../gbans?pool_max_conns=32").
 # database_dsn: "postgresql://gbans:gbans@localhost:5432/gbans"
 
 # Show all database queries

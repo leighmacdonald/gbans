@@ -33,6 +33,15 @@ database_dsn: "postgresql://gbans:gbans@192.168.0.200:5432/gbans"
 database_log_queries: false
 ```
 
+The database connection pool defaults to **16 connections**. Everything in gbans (API requests,
+background workers, stats refresh) shares this pool, so raise it if you run a large number of
+servers or expect heavy traffic — but keep it comfortably below your database's `max_connections`
+(100 by default). Override the pool size with the `pool_max_conns` DSN parameter:
+
+```yaml
+database_dsn: "postgresql://gbans:gbans@192.168.0.200:5432/gbans?pool_max_conns=32"
+```
+
 ## systemd service
 
 If you are not using docker, it's recommended to create a [systemd .service](https://freedesktop.org/software/systemd/man/systemd.service.html)
