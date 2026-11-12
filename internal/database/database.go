@@ -303,6 +303,7 @@ func (b errorBatchResults) QueryRow() pgx.Row {
 	return errorRow{err: b.err}
 }
 func (b errorBatchResults) Close() error { return b.err }
+func (b errorBatchResults) Tx() pgx.Tx   { return nil }
 
 func (db *PgStore) RefreshMaterializedView(ctx context.Context, viewName string) error {
 	timeStart := time.Now()

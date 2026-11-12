@@ -34,6 +34,16 @@ const ts = (iso: string) =>
 const point = (iso: string, values: { durationMs?: string; matchesPlayed?: string; matchesDecided?: string } = {}) =>
 	create(MapStatsPointSchema, { dateBucket: ts(iso), ...values });
 
+// Window bounds are optional for the "all" range; rolling ranges must always
+// resolve them.
+const requiredDate = (date: Date | undefined): Date => {
+	if (!date) {
+		throw new Error("expected a resolved window date");
+	}
+
+	return date;
+};
+
 const series = (mapId: number, mapName: string, points: ReturnType<typeof point>[]) =>
 	create(MapStatsSeriesSchema, { mapId, mapName, points });
 
@@ -42,16 +52,16 @@ test("mapStatsWindow resolves rolling ranges", () => {
 
 	const w7 = mapStatsWindow("7d", now);
 	expect(w7.group).toBe(TimeBucket.DAILY);
-	expect(format(w7.start!, "yyyy-MM-dd")).toBe("2026-04-09");
-	expect(format(w7.end!, "yyyy-MM-dd HH:mm:ss")).toBe("2026-04-15 23:59:59");
+	expect(format(requiredDate(w7.start), "yyyy-MM-dd")).toBe("2026-04-09");
+	expect(format(requiredDate(w7.end), "yyyy-MM-dd HH:mm:ss")).toBe("2026-04-15 23:59:59");
 
 	const w90 = mapStatsWindow("90d", now);
 	expect(w90.group).toBe(TimeBucket.DAILY);
-	expect(format(w90.start!, "yyyy-MM-dd")).toBe("2026-01-16");
+	expect(format(requiredDate(w90.start), "yyyy-MM-dd")).toBe("2026-01-16");
 
 	const w1y = mapStatsWindow("1y", now);
 	expect(w1y.group).toBe(TimeBucket.WEEKLY);
-	expect(format(w1y.start!, "yyyy-MM-dd")).toBe("2025-04-15");
+	expect(format(requiredDate(w1y.start), "yyyy-MM-dd")).toBe("2025-04-15");
 
 	const wAll = mapStatsWindow("all", now);
 	expect(wAll.group).toBe(TimeBucket.MONTHLY);
