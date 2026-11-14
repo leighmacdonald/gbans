@@ -27,6 +27,30 @@ The search is not part of the page URL — it only affects the current page unti
 clear the field. If the player has no stats in the selected window, an error is shown instead. Changing the
 stats group, time window, or stat type re-runs the search against the new window.
 
+## Stat Buckets
+
+Buckets group matches by game mode (for example `casual` and `1ku`) so their statistics are not skewed by mixing
+modes. They are managed from the **Stats** tab on the admin system settings page.
+
+Admins can:
+
+- **Create** a bucket by giving it a unique name (up to 64 characters). New buckets are enabled by default.
+- **Delete** a bucket. Deletion is blocked while the bucket still has matches or servers assigned to it, and the
+  default bucket can never be deleted.
+- **Enable/disable** a bucket. Disabled buckets are hidden from selection for new matches, but their historical
+  statistics are kept. The default bucket cannot be disabled.
+
+Buckets can only be modified by users with the `config_write` permission; viewing them only requires `stats_read`.
+
+## Stats refresh schedule
+
+The aggregated stats views (daily, weekly, monthly, yearly and all-time summaries, plus per-map views) are refreshed
+by a background cron job. The schedule is configured from the same **Stats** settings tab as a standard 5-field cron
+expression (minute, hour, day of month, month, day of week), evaluated in the server's local time. The default is
+`5 0 * * *`, which refreshes the views daily at 00:05.
+
+Changes take effect within about 30 seconds of saving; no restart is required.
+
 ## Compared with hlstatsx:ce
 
 - Considerably better scaling performance:

@@ -651,6 +651,190 @@ func (x *BucketsResponse) GetBuckets() []*Bucket {
 	return nil
 }
 
+type CreateBucketRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BucketName    *string                `protobuf:"bytes,1,opt,name=bucket_name,json=bucketName" json:"bucket_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateBucketRequest) Reset() {
+	*x = CreateBucketRequest{}
+	mi := &file_stats_v1_stats_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateBucketRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateBucketRequest) ProtoMessage() {}
+
+func (x *CreateBucketRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateBucketRequest.ProtoReflect.Descriptor instead.
+func (*CreateBucketRequest) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CreateBucketRequest) GetBucketName() string {
+	if x != nil && x.BucketName != nil {
+		return *x.BucketName
+	}
+	return ""
+}
+
+type CreateBucketResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Bucket        *Bucket                `protobuf:"bytes,1,opt,name=bucket" json:"bucket,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateBucketResponse) Reset() {
+	*x = CreateBucketResponse{}
+	mi := &file_stats_v1_stats_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateBucketResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateBucketResponse) ProtoMessage() {}
+
+func (x *CreateBucketResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateBucketResponse.ProtoReflect.Descriptor instead.
+func (*CreateBucketResponse) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *CreateBucketResponse) GetBucket() *Bucket {
+	if x != nil {
+		return x.Bucket
+	}
+	return nil
+}
+
+type DeleteBucketRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StatsBucketId *int32                 `protobuf:"varint,1,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteBucketRequest) Reset() {
+	*x = DeleteBucketRequest{}
+	mi := &file_stats_v1_stats_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteBucketRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteBucketRequest) ProtoMessage() {}
+
+func (x *DeleteBucketRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteBucketRequest.ProtoReflect.Descriptor instead.
+func (*DeleteBucketRequest) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *DeleteBucketRequest) GetStatsBucketId() int32 {
+	if x != nil && x.StatsBucketId != nil {
+		return *x.StatsBucketId
+	}
+	return 0
+}
+
+type SetBucketEnabledRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StatsBucketId *int32                 `protobuf:"varint,1,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
+	IsEnabled     *bool                  `protobuf:"varint,2,opt,name=is_enabled,json=isEnabled" json:"is_enabled,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetBucketEnabledRequest) Reset() {
+	*x = SetBucketEnabledRequest{}
+	mi := &file_stats_v1_stats_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetBucketEnabledRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetBucketEnabledRequest) ProtoMessage() {}
+
+func (x *SetBucketEnabledRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetBucketEnabledRequest.ProtoReflect.Descriptor instead.
+func (*SetBucketEnabledRequest) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *SetBucketEnabledRequest) GetStatsBucketId() int32 {
+	if x != nil && x.StatsBucketId != nil {
+		return *x.StatsBucketId
+	}
+	return 0
+}
+
+func (x *SetBucketEnabledRequest) GetIsEnabled() bool {
+	if x != nil && x.IsEnabled != nil {
+		return *x.IsEnabled
+	}
+	return false
+}
+
 type MapStat struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	MapId             *int32                 `protobuf:"varint,1,opt,name=map_id,json=mapId" json:"map_id,omitempty"`
@@ -680,7 +864,7 @@ type MapStat struct {
 
 func (x *MapStat) Reset() {
 	*x = MapStat{}
-	mi := &file_stats_v1_stats_proto_msgTypes[7]
+	mi := &file_stats_v1_stats_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -692,7 +876,7 @@ func (x *MapStat) String() string {
 func (*MapStat) ProtoMessage() {}
 
 func (x *MapStat) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[7]
+	mi := &file_stats_v1_stats_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -705,7 +889,7 @@ func (x *MapStat) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MapStat.ProtoReflect.Descriptor instead.
 func (*MapStat) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{7}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *MapStat) GetMapId() int32 {
@@ -869,7 +1053,7 @@ type MapStatsSummary struct {
 
 func (x *MapStatsSummary) Reset() {
 	*x = MapStatsSummary{}
-	mi := &file_stats_v1_stats_proto_msgTypes[8]
+	mi := &file_stats_v1_stats_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -881,7 +1065,7 @@ func (x *MapStatsSummary) String() string {
 func (*MapStatsSummary) ProtoMessage() {}
 
 func (x *MapStatsSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[8]
+	mi := &file_stats_v1_stats_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -894,7 +1078,7 @@ func (x *MapStatsSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MapStatsSummary.ProtoReflect.Descriptor instead.
 func (*MapStatsSummary) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{8}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *MapStatsSummary) GetMapsPlayed() uint64 {
@@ -954,7 +1138,7 @@ type QueryMapStatsRequest struct {
 
 func (x *QueryMapStatsRequest) Reset() {
 	*x = QueryMapStatsRequest{}
-	mi := &file_stats_v1_stats_proto_msgTypes[9]
+	mi := &file_stats_v1_stats_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -966,7 +1150,7 @@ func (x *QueryMapStatsRequest) String() string {
 func (*QueryMapStatsRequest) ProtoMessage() {}
 
 func (x *QueryMapStatsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[9]
+	mi := &file_stats_v1_stats_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -979,7 +1163,7 @@ func (x *QueryMapStatsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryMapStatsRequest.ProtoReflect.Descriptor instead.
 func (*QueryMapStatsRequest) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{9}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *QueryMapStatsRequest) GetStatsBucketId() uint32 {
@@ -1034,7 +1218,7 @@ type MapPrefixStat struct {
 
 func (x *MapPrefixStat) Reset() {
 	*x = MapPrefixStat{}
-	mi := &file_stats_v1_stats_proto_msgTypes[10]
+	mi := &file_stats_v1_stats_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1046,7 +1230,7 @@ func (x *MapPrefixStat) String() string {
 func (*MapPrefixStat) ProtoMessage() {}
 
 func (x *MapPrefixStat) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[10]
+	mi := &file_stats_v1_stats_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1059,7 +1243,7 @@ func (x *MapPrefixStat) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MapPrefixStat.ProtoReflect.Descriptor instead.
 func (*MapPrefixStat) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{10}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *MapPrefixStat) GetPrefix() string {
@@ -1112,7 +1296,7 @@ type QueryMapStatsResponse struct {
 
 func (x *QueryMapStatsResponse) Reset() {
 	*x = QueryMapStatsResponse{}
-	mi := &file_stats_v1_stats_proto_msgTypes[11]
+	mi := &file_stats_v1_stats_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1124,7 +1308,7 @@ func (x *QueryMapStatsResponse) String() string {
 func (*QueryMapStatsResponse) ProtoMessage() {}
 
 func (x *QueryMapStatsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[11]
+	mi := &file_stats_v1_stats_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1137,7 +1321,7 @@ func (x *QueryMapStatsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryMapStatsResponse.ProtoReflect.Descriptor instead.
 func (*QueryMapStatsResponse) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{11}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *QueryMapStatsResponse) GetCount() uint64 {
@@ -1187,7 +1371,7 @@ type MapStatsPoint struct {
 
 func (x *MapStatsPoint) Reset() {
 	*x = MapStatsPoint{}
-	mi := &file_stats_v1_stats_proto_msgTypes[12]
+	mi := &file_stats_v1_stats_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1199,7 +1383,7 @@ func (x *MapStatsPoint) String() string {
 func (*MapStatsPoint) ProtoMessage() {}
 
 func (x *MapStatsPoint) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[12]
+	mi := &file_stats_v1_stats_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1212,7 +1396,7 @@ func (x *MapStatsPoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MapStatsPoint.ProtoReflect.Descriptor instead.
 func (*MapStatsPoint) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{12}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *MapStatsPoint) GetDateBucket() *timestamppb.Timestamp {
@@ -1254,7 +1438,7 @@ type MapStatsSeries struct {
 
 func (x *MapStatsSeries) Reset() {
 	*x = MapStatsSeries{}
-	mi := &file_stats_v1_stats_proto_msgTypes[13]
+	mi := &file_stats_v1_stats_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1266,7 +1450,7 @@ func (x *MapStatsSeries) String() string {
 func (*MapStatsSeries) ProtoMessage() {}
 
 func (x *MapStatsSeries) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[13]
+	mi := &file_stats_v1_stats_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1279,7 +1463,7 @@ func (x *MapStatsSeries) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MapStatsSeries.ProtoReflect.Descriptor instead.
 func (*MapStatsSeries) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{13}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *MapStatsSeries) GetMapId() int32 {
@@ -1325,7 +1509,7 @@ type QueryMapStatsHistoryRequest struct {
 
 func (x *QueryMapStatsHistoryRequest) Reset() {
 	*x = QueryMapStatsHistoryRequest{}
-	mi := &file_stats_v1_stats_proto_msgTypes[14]
+	mi := &file_stats_v1_stats_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1337,7 +1521,7 @@ func (x *QueryMapStatsHistoryRequest) String() string {
 func (*QueryMapStatsHistoryRequest) ProtoMessage() {}
 
 func (x *QueryMapStatsHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[14]
+	mi := &file_stats_v1_stats_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1350,7 +1534,7 @@ func (x *QueryMapStatsHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryMapStatsHistoryRequest.ProtoReflect.Descriptor instead.
 func (*QueryMapStatsHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{14}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *QueryMapStatsHistoryRequest) GetStatsBucketId() uint32 {
@@ -1404,7 +1588,7 @@ type QueryMapStatsHistoryResponse struct {
 
 func (x *QueryMapStatsHistoryResponse) Reset() {
 	*x = QueryMapStatsHistoryResponse{}
-	mi := &file_stats_v1_stats_proto_msgTypes[15]
+	mi := &file_stats_v1_stats_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1416,7 +1600,7 @@ func (x *QueryMapStatsHistoryResponse) String() string {
 func (*QueryMapStatsHistoryResponse) ProtoMessage() {}
 
 func (x *QueryMapStatsHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[15]
+	mi := &file_stats_v1_stats_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1429,7 +1613,7 @@ func (x *QueryMapStatsHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryMapStatsHistoryResponse.ProtoReflect.Descriptor instead.
 func (*QueryMapStatsHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{15}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *QueryMapStatsHistoryResponse) GetSeries() []*MapStatsSeries {
@@ -1448,7 +1632,7 @@ type RefreshStatsResponse struct {
 
 func (x *RefreshStatsResponse) Reset() {
 	*x = RefreshStatsResponse{}
-	mi := &file_stats_v1_stats_proto_msgTypes[16]
+	mi := &file_stats_v1_stats_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1460,7 +1644,7 @@ func (x *RefreshStatsResponse) String() string {
 func (*RefreshStatsResponse) ProtoMessage() {}
 
 func (x *RefreshStatsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[16]
+	mi := &file_stats_v1_stats_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1473,7 +1657,7 @@ func (x *RefreshStatsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefreshStatsResponse.ProtoReflect.Descriptor instead.
 func (*RefreshStatsResponse) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{16}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *RefreshStatsResponse) GetRefreshedViews() []string {
@@ -1497,7 +1681,7 @@ type QueryMatchesRequest struct {
 
 func (x *QueryMatchesRequest) Reset() {
 	*x = QueryMatchesRequest{}
-	mi := &file_stats_v1_stats_proto_msgTypes[17]
+	mi := &file_stats_v1_stats_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1509,7 +1693,7 @@ func (x *QueryMatchesRequest) String() string {
 func (*QueryMatchesRequest) ProtoMessage() {}
 
 func (x *QueryMatchesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[17]
+	mi := &file_stats_v1_stats_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1522,7 +1706,7 @@ func (x *QueryMatchesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryMatchesRequest.ProtoReflect.Descriptor instead.
 func (*QueryMatchesRequest) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{17}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *QueryMatchesRequest) GetFilter() *v11.Filter {
@@ -1577,7 +1761,7 @@ type QueryMatchesResponse struct {
 
 func (x *QueryMatchesResponse) Reset() {
 	*x = QueryMatchesResponse{}
-	mi := &file_stats_v1_stats_proto_msgTypes[18]
+	mi := &file_stats_v1_stats_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1589,7 +1773,7 @@ func (x *QueryMatchesResponse) String() string {
 func (*QueryMatchesResponse) ProtoMessage() {}
 
 func (x *QueryMatchesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[18]
+	mi := &file_stats_v1_stats_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1602,7 +1786,7 @@ func (x *QueryMatchesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryMatchesResponse.ProtoReflect.Descriptor instead.
 func (*QueryMatchesResponse) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{18}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *QueryMatchesResponse) GetCount() uint64 {
@@ -1637,7 +1821,7 @@ type QueryStatsRequest struct {
 
 func (x *QueryStatsRequest) Reset() {
 	*x = QueryStatsRequest{}
-	mi := &file_stats_v1_stats_proto_msgTypes[19]
+	mi := &file_stats_v1_stats_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1649,7 +1833,7 @@ func (x *QueryStatsRequest) String() string {
 func (*QueryStatsRequest) ProtoMessage() {}
 
 func (x *QueryStatsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[19]
+	mi := &file_stats_v1_stats_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1662,7 +1846,7 @@ func (x *QueryStatsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryStatsRequest.ProtoReflect.Descriptor instead.
 func (*QueryStatsRequest) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{19}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *QueryStatsRequest) GetFilter() *v11.Filter {
@@ -1748,7 +1932,7 @@ type QueryStatsResponse struct {
 
 func (x *QueryStatsResponse) Reset() {
 	*x = QueryStatsResponse{}
-	mi := &file_stats_v1_stats_proto_msgTypes[20]
+	mi := &file_stats_v1_stats_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1760,7 +1944,7 @@ func (x *QueryStatsResponse) String() string {
 func (*QueryStatsResponse) ProtoMessage() {}
 
 func (x *QueryStatsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[20]
+	mi := &file_stats_v1_stats_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1773,7 +1957,7 @@ func (x *QueryStatsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryStatsResponse.ProtoReflect.Descriptor instead.
 func (*QueryStatsResponse) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{20}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *QueryStatsResponse) GetVariant() Variant {
@@ -1939,7 +2123,7 @@ type OverallStats struct {
 
 func (x *OverallStats) Reset() {
 	*x = OverallStats{}
-	mi := &file_stats_v1_stats_proto_msgTypes[21]
+	mi := &file_stats_v1_stats_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1951,7 +2135,7 @@ func (x *OverallStats) String() string {
 func (*OverallStats) ProtoMessage() {}
 
 func (x *OverallStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[21]
+	mi := &file_stats_v1_stats_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1964,7 +2148,7 @@ func (x *OverallStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OverallStats.ProtoReflect.Descriptor instead.
 func (*OverallStats) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{21}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *OverallStats) GetRank() uint64 {
@@ -2466,7 +2650,7 @@ type OverallStatsContainer struct {
 
 func (x *OverallStatsContainer) Reset() {
 	*x = OverallStatsContainer{}
-	mi := &file_stats_v1_stats_proto_msgTypes[22]
+	mi := &file_stats_v1_stats_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2478,7 +2662,7 @@ func (x *OverallStatsContainer) String() string {
 func (*OverallStatsContainer) ProtoMessage() {}
 
 func (x *OverallStatsContainer) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[22]
+	mi := &file_stats_v1_stats_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2491,7 +2675,7 @@ func (x *OverallStatsContainer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OverallStatsContainer.ProtoReflect.Descriptor instead.
 func (*OverallStatsContainer) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{22}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *OverallStatsContainer) GetStats() []*OverallStats {
@@ -2570,7 +2754,7 @@ type VariantStats struct {
 
 func (x *VariantStats) Reset() {
 	*x = VariantStats{}
-	mi := &file_stats_v1_stats_proto_msgTypes[23]
+	mi := &file_stats_v1_stats_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2582,7 +2766,7 @@ func (x *VariantStats) String() string {
 func (*VariantStats) ProtoMessage() {}
 
 func (x *VariantStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[23]
+	mi := &file_stats_v1_stats_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2595,7 +2779,7 @@ func (x *VariantStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VariantStats.ProtoReflect.Descriptor instead.
 func (*VariantStats) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{23}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *VariantStats) GetVariant() string {
@@ -3034,7 +3218,7 @@ type VariantStatsContainer struct {
 
 func (x *VariantStatsContainer) Reset() {
 	*x = VariantStatsContainer{}
-	mi := &file_stats_v1_stats_proto_msgTypes[24]
+	mi := &file_stats_v1_stats_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3046,7 +3230,7 @@ func (x *VariantStatsContainer) String() string {
 func (*VariantStatsContainer) ProtoMessage() {}
 
 func (x *VariantStatsContainer) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[24]
+	mi := &file_stats_v1_stats_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3059,7 +3243,7 @@ func (x *VariantStatsContainer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VariantStatsContainer.ProtoReflect.Descriptor instead.
 func (*VariantStatsContainer) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{24}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *VariantStatsContainer) GetStats() []*VariantStats {
@@ -3078,7 +3262,7 @@ type MatchRequest struct {
 
 func (x *MatchRequest) Reset() {
 	*x = MatchRequest{}
-	mi := &file_stats_v1_stats_proto_msgTypes[25]
+	mi := &file_stats_v1_stats_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3090,7 +3274,7 @@ func (x *MatchRequest) String() string {
 func (*MatchRequest) ProtoMessage() {}
 
 func (x *MatchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[25]
+	mi := &file_stats_v1_stats_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3103,7 +3287,7 @@ func (x *MatchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchRequest.ProtoReflect.Descriptor instead.
 func (*MatchRequest) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{25}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *MatchRequest) GetMatchId() string {
@@ -3122,7 +3306,7 @@ type MatchResponse struct {
 
 func (x *MatchResponse) Reset() {
 	*x = MatchResponse{}
-	mi := &file_stats_v1_stats_proto_msgTypes[26]
+	mi := &file_stats_v1_stats_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3134,7 +3318,7 @@ func (x *MatchResponse) String() string {
 func (*MatchResponse) ProtoMessage() {}
 
 func (x *MatchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[26]
+	mi := &file_stats_v1_stats_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3147,7 +3331,7 @@ func (x *MatchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchResponse.ProtoReflect.Descriptor instead.
 func (*MatchResponse) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{26}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *MatchResponse) GetMatch() *Match {
@@ -3180,7 +3364,7 @@ type MatchOverview struct {
 
 func (x *MatchOverview) Reset() {
 	*x = MatchOverview{}
-	mi := &file_stats_v1_stats_proto_msgTypes[27]
+	mi := &file_stats_v1_stats_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3192,7 +3376,7 @@ func (x *MatchOverview) String() string {
 func (*MatchOverview) ProtoMessage() {}
 
 func (x *MatchOverview) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[27]
+	mi := &file_stats_v1_stats_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3205,7 +3389,7 @@ func (x *MatchOverview) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchOverview.ProtoReflect.Descriptor instead.
 func (*MatchOverview) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{27}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *MatchOverview) GetMatchId() string {
@@ -3326,7 +3510,7 @@ type MatchChatLog struct {
 
 func (x *MatchChatLog) Reset() {
 	*x = MatchChatLog{}
-	mi := &file_stats_v1_stats_proto_msgTypes[28]
+	mi := &file_stats_v1_stats_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3338,7 +3522,7 @@ func (x *MatchChatLog) String() string {
 func (*MatchChatLog) ProtoMessage() {}
 
 func (x *MatchChatLog) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[28]
+	mi := &file_stats_v1_stats_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3351,7 +3535,7 @@ func (x *MatchChatLog) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchChatLog.ProtoReflect.Descriptor instead.
 func (*MatchChatLog) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{28}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *MatchChatLog) GetPersonMessageId() int64 {
@@ -3403,7 +3587,7 @@ type Match struct {
 
 func (x *Match) Reset() {
 	*x = Match{}
-	mi := &file_stats_v1_stats_proto_msgTypes[29]
+	mi := &file_stats_v1_stats_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3415,7 +3599,7 @@ func (x *Match) String() string {
 func (*Match) ProtoMessage() {}
 
 func (x *Match) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[29]
+	mi := &file_stats_v1_stats_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3428,7 +3612,7 @@ func (x *Match) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Match.ProtoReflect.Descriptor instead.
 func (*Match) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{29}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *Match) GetOverview() *MatchOverview {
@@ -3491,7 +3675,7 @@ type MatchEvent struct {
 
 func (x *MatchEvent) Reset() {
 	*x = MatchEvent{}
-	mi := &file_stats_v1_stats_proto_msgTypes[30]
+	mi := &file_stats_v1_stats_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3503,7 +3687,7 @@ func (x *MatchEvent) String() string {
 func (*MatchEvent) ProtoMessage() {}
 
 func (x *MatchEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[30]
+	mi := &file_stats_v1_stats_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3516,7 +3700,7 @@ func (x *MatchEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchEvent.ProtoReflect.Descriptor instead.
 func (*MatchEvent) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{30}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *MatchEvent) GetMatchEventId() int64 {
@@ -3598,7 +3782,7 @@ type MatchKill struct {
 
 func (x *MatchKill) Reset() {
 	*x = MatchKill{}
-	mi := &file_stats_v1_stats_proto_msgTypes[31]
+	mi := &file_stats_v1_stats_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3610,7 +3794,7 @@ func (x *MatchKill) String() string {
 func (*MatchKill) ProtoMessage() {}
 
 func (x *MatchKill) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[31]
+	mi := &file_stats_v1_stats_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3623,7 +3807,7 @@ func (x *MatchKill) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MatchKill.ProtoReflect.Descriptor instead.
 func (*MatchKill) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{31}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *MatchKill) GetMatchKillId() int64 {
@@ -3745,7 +3929,7 @@ type Round struct {
 
 func (x *Round) Reset() {
 	*x = Round{}
-	mi := &file_stats_v1_stats_proto_msgTypes[32]
+	mi := &file_stats_v1_stats_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3757,7 +3941,7 @@ func (x *Round) String() string {
 func (*Round) ProtoMessage() {}
 
 func (x *Round) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[32]
+	mi := &file_stats_v1_stats_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3770,7 +3954,7 @@ func (x *Round) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Round.ProtoReflect.Descriptor instead.
 func (*Round) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{32}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *Round) GetRoundId() uint32 {
@@ -3897,7 +4081,7 @@ type RoundPlayer struct {
 
 func (x *RoundPlayer) Reset() {
 	*x = RoundPlayer{}
-	mi := &file_stats_v1_stats_proto_msgTypes[33]
+	mi := &file_stats_v1_stats_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3909,7 +4093,7 @@ func (x *RoundPlayer) String() string {
 func (*RoundPlayer) ProtoMessage() {}
 
 func (x *RoundPlayer) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[33]
+	mi := &file_stats_v1_stats_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3922,7 +4106,7 @@ func (x *RoundPlayer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoundPlayer.ProtoReflect.Descriptor instead.
 func (*RoundPlayer) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{33}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *RoundPlayer) GetRoundId() uint32 {
@@ -4506,7 +4690,7 @@ type RoundPlayerVariant struct {
 
 func (x *RoundPlayerVariant) Reset() {
 	*x = RoundPlayerVariant{}
-	mi := &file_stats_v1_stats_proto_msgTypes[34]
+	mi := &file_stats_v1_stats_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4518,7 +4702,7 @@ func (x *RoundPlayerVariant) String() string {
 func (*RoundPlayerVariant) ProtoMessage() {}
 
 func (x *RoundPlayerVariant) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_v1_stats_proto_msgTypes[34]
+	mi := &file_stats_v1_stats_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4531,7 +4715,7 @@ func (x *RoundPlayerVariant) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoundPlayerVariant.ProtoReflect.Descriptor instead.
 func (*RoundPlayerVariant) Descriptor() ([]byte, []int) {
-	return file_stats_v1_stats_proto_rawDescGZIP(), []int{34}
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *RoundPlayerVariant) GetVariant() string {
@@ -4964,7 +5148,18 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\n" +
 	"is_default\x18\x04 \x01(\bR\tisDefault\"=\n" +
 	"\x0fBucketsResponse\x12*\n" +
-	"\abuckets\x18\x01 \x03(\v2\x10.stats.v1.BucketR\abuckets\"\xc3\x06\n" +
+	"\abuckets\x18\x01 \x03(\v2\x10.stats.v1.BucketR\abuckets\"A\n" +
+	"\x13CreateBucketRequest\x12*\n" +
+	"\vbucket_name\x18\x01 \x01(\tB\t\xbaH\x06r\x04\x10\x01\x18@R\n" +
+	"bucketName\"H\n" +
+	"\x14CreateBucketResponse\x120\n" +
+	"\x06bucket\x18\x01 \x01(\v2\x10.stats.v1.BucketB\x06\xbaH\x03\xc8\x01\x01R\x06bucket\"F\n" +
+	"\x13DeleteBucketRequest\x12/\n" +
+	"\x0fstats_bucket_id\x18\x01 \x01(\x05B\a\xbaH\x04\x1a\x02 \x00R\rstatsBucketId\"q\n" +
+	"\x17SetBucketEnabledRequest\x12/\n" +
+	"\x0fstats_bucket_id\x18\x01 \x01(\x05B\a\xbaH\x04\x1a\x02 \x00R\rstatsBucketId\x12%\n" +
+	"\n" +
+	"is_enabled\x18\x02 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\tisEnabled\"\xc3\x06\n" +
 	"\aMapStat\x12\x15\n" +
 	"\x06map_id\x18\x01 \x01(\x05R\x05mapId\x12\x19\n" +
 	"\bmap_name\x18\x02 \x01(\tR\amapName\x12)\n" +
@@ -5455,7 +5650,7 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\x12TIME_BUCKET_WEEKLY\x10\a\x12\x17\n" +
 	"\x13TIME_BUCKET_MONTHLY\x10\x1f\x12\x17\n" +
 	"\x12TIME_BUCKET_YEARLY\x10\xed\x02\x12\x19\n" +
-	"\x13TIME_BUCKET_ALLTIME\x10\x9f\x8d\x062\x93\x06\n" +
+	"\x13TIME_BUCKET_ALLTIME\x10\x9f\x8d\x062\xfe\a\n" +
 	"\fStatsService\x12:\n" +
 	"\x05Match\x12\x16.stats.v1.MatchRequest\x1a\x17.stats.v1.MatchResponse\"\x00\x12O\n" +
 	"\fQueryMatches\x12\x1d.stats.v1.QueryMatchesRequest\x1a\x1e.stats.v1.QueryMatchesResponse\"\x00\x12^\n" +
@@ -5465,7 +5660,10 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\n" +
 	"WeaponList\x12\x16.google.protobuf.Empty\x1a\x1c.stats.v1.WeaponListResponse\"\x00\x12>\n" +
 	"\aMapList\x12\x16.google.protobuf.Empty\x1a\x19.stats.v1.MapListResponse\"\x00\x12>\n" +
-	"\aBuckets\x12\x16.google.protobuf.Empty\x1a\x19.stats.v1.BucketsResponse\"\x00\x12R\n" +
+	"\aBuckets\x12\x16.google.protobuf.Empty\x1a\x19.stats.v1.BucketsResponse\"\x00\x12O\n" +
+	"\fCreateBucket\x12\x1d.stats.v1.CreateBucketRequest\x1a\x1e.stats.v1.CreateBucketResponse\"\x00\x12G\n" +
+	"\fDeleteBucket\x12\x1d.stats.v1.DeleteBucketRequest\x1a\x16.google.protobuf.Empty\"\x00\x12O\n" +
+	"\x10SetBucketEnabled\x12!.stats.v1.SetBucketEnabledRequest\x1a\x16.google.protobuf.Empty\"\x00\x12R\n" +
 	"\rQueryMapStats\x12\x1e.stats.v1.QueryMapStatsRequest\x1a\x1f.stats.v1.QueryMapStatsResponse\"\x00\x12g\n" +
 	"\x14QueryMapStatsHistory\x12%.stats.v1.QueryMapStatsHistoryRequest\x1a&.stats.v1.QueryMapStatsHistoryResponse\"\x00\x12H\n" +
 	"\fRefreshStats\x12\x16.google.protobuf.Empty\x1a\x1e.stats.v1.RefreshStatsResponse\"\x00B\x96\x01\n" +
@@ -5485,7 +5683,7 @@ func file_stats_v1_stats_proto_rawDescGZIP() []byte {
 }
 
 var file_stats_v1_stats_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_stats_v1_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
+var file_stats_v1_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 40)
 var file_stats_v1_stats_proto_goTypes = []any{
 	(Team)(0),                            // 0: stats.v1.Team
 	(Variant)(0),                         // 1: stats.v1.Variant
@@ -5497,118 +5695,129 @@ var file_stats_v1_stats_proto_goTypes = []any{
 	(*WeaponListResponse)(nil),           // 7: stats.v1.WeaponListResponse
 	(*Bucket)(nil),                       // 8: stats.v1.Bucket
 	(*BucketsResponse)(nil),              // 9: stats.v1.BucketsResponse
-	(*MapStat)(nil),                      // 10: stats.v1.MapStat
-	(*MapStatsSummary)(nil),              // 11: stats.v1.MapStatsSummary
-	(*QueryMapStatsRequest)(nil),         // 12: stats.v1.QueryMapStatsRequest
-	(*MapPrefixStat)(nil),                // 13: stats.v1.MapPrefixStat
-	(*QueryMapStatsResponse)(nil),        // 14: stats.v1.QueryMapStatsResponse
-	(*MapStatsPoint)(nil),                // 15: stats.v1.MapStatsPoint
-	(*MapStatsSeries)(nil),               // 16: stats.v1.MapStatsSeries
-	(*QueryMapStatsHistoryRequest)(nil),  // 17: stats.v1.QueryMapStatsHistoryRequest
-	(*QueryMapStatsHistoryResponse)(nil), // 18: stats.v1.QueryMapStatsHistoryResponse
-	(*RefreshStatsResponse)(nil),         // 19: stats.v1.RefreshStatsResponse
-	(*QueryMatchesRequest)(nil),          // 20: stats.v1.QueryMatchesRequest
-	(*QueryMatchesResponse)(nil),         // 21: stats.v1.QueryMatchesResponse
-	(*QueryStatsRequest)(nil),            // 22: stats.v1.QueryStatsRequest
-	(*QueryStatsResponse)(nil),           // 23: stats.v1.QueryStatsResponse
-	(*OverallStats)(nil),                 // 24: stats.v1.OverallStats
-	(*OverallStatsContainer)(nil),        // 25: stats.v1.OverallStatsContainer
-	(*VariantStats)(nil),                 // 26: stats.v1.VariantStats
-	(*VariantStatsContainer)(nil),        // 27: stats.v1.VariantStatsContainer
-	(*MatchRequest)(nil),                 // 28: stats.v1.MatchRequest
-	(*MatchResponse)(nil),                // 29: stats.v1.MatchResponse
-	(*MatchOverview)(nil),                // 30: stats.v1.MatchOverview
-	(*MatchChatLog)(nil),                 // 31: stats.v1.MatchChatLog
-	(*Match)(nil),                        // 32: stats.v1.Match
-	(*MatchEvent)(nil),                   // 33: stats.v1.MatchEvent
-	(*MatchKill)(nil),                    // 34: stats.v1.MatchKill
-	(*Round)(nil),                        // 35: stats.v1.Round
-	(*RoundPlayer)(nil),                  // 36: stats.v1.RoundPlayer
-	(*RoundPlayerVariant)(nil),           // 37: stats.v1.RoundPlayerVariant
-	nil,                                  // 38: stats.v1.Match.PlayersEntry
-	(*v1.Map)(nil),                       // 39: maps.v1.Map
-	(*timestamppb.Timestamp)(nil),        // 40: google.protobuf.Timestamp
-	(*v11.Filter)(nil),                   // 41: database.query.v1.Filter
-	(*v12.PersonDisplay)(nil),            // 42: person.v1.PersonDisplay
-	(*emptypb.Empty)(nil),                // 43: google.protobuf.Empty
+	(*CreateBucketRequest)(nil),          // 10: stats.v1.CreateBucketRequest
+	(*CreateBucketResponse)(nil),         // 11: stats.v1.CreateBucketResponse
+	(*DeleteBucketRequest)(nil),          // 12: stats.v1.DeleteBucketRequest
+	(*SetBucketEnabledRequest)(nil),      // 13: stats.v1.SetBucketEnabledRequest
+	(*MapStat)(nil),                      // 14: stats.v1.MapStat
+	(*MapStatsSummary)(nil),              // 15: stats.v1.MapStatsSummary
+	(*QueryMapStatsRequest)(nil),         // 16: stats.v1.QueryMapStatsRequest
+	(*MapPrefixStat)(nil),                // 17: stats.v1.MapPrefixStat
+	(*QueryMapStatsResponse)(nil),        // 18: stats.v1.QueryMapStatsResponse
+	(*MapStatsPoint)(nil),                // 19: stats.v1.MapStatsPoint
+	(*MapStatsSeries)(nil),               // 20: stats.v1.MapStatsSeries
+	(*QueryMapStatsHistoryRequest)(nil),  // 21: stats.v1.QueryMapStatsHistoryRequest
+	(*QueryMapStatsHistoryResponse)(nil), // 22: stats.v1.QueryMapStatsHistoryResponse
+	(*RefreshStatsResponse)(nil),         // 23: stats.v1.RefreshStatsResponse
+	(*QueryMatchesRequest)(nil),          // 24: stats.v1.QueryMatchesRequest
+	(*QueryMatchesResponse)(nil),         // 25: stats.v1.QueryMatchesResponse
+	(*QueryStatsRequest)(nil),            // 26: stats.v1.QueryStatsRequest
+	(*QueryStatsResponse)(nil),           // 27: stats.v1.QueryStatsResponse
+	(*OverallStats)(nil),                 // 28: stats.v1.OverallStats
+	(*OverallStatsContainer)(nil),        // 29: stats.v1.OverallStatsContainer
+	(*VariantStats)(nil),                 // 30: stats.v1.VariantStats
+	(*VariantStatsContainer)(nil),        // 31: stats.v1.VariantStatsContainer
+	(*MatchRequest)(nil),                 // 32: stats.v1.MatchRequest
+	(*MatchResponse)(nil),                // 33: stats.v1.MatchResponse
+	(*MatchOverview)(nil),                // 34: stats.v1.MatchOverview
+	(*MatchChatLog)(nil),                 // 35: stats.v1.MatchChatLog
+	(*Match)(nil),                        // 36: stats.v1.Match
+	(*MatchEvent)(nil),                   // 37: stats.v1.MatchEvent
+	(*MatchKill)(nil),                    // 38: stats.v1.MatchKill
+	(*Round)(nil),                        // 39: stats.v1.Round
+	(*RoundPlayer)(nil),                  // 40: stats.v1.RoundPlayer
+	(*RoundPlayerVariant)(nil),           // 41: stats.v1.RoundPlayerVariant
+	nil,                                  // 42: stats.v1.Match.PlayersEntry
+	(*v1.Map)(nil),                       // 43: maps.v1.Map
+	(*timestamppb.Timestamp)(nil),        // 44: google.protobuf.Timestamp
+	(*v11.Filter)(nil),                   // 45: database.query.v1.Filter
+	(*v12.PersonDisplay)(nil),            // 46: person.v1.PersonDisplay
+	(*emptypb.Empty)(nil),                // 47: google.protobuf.Empty
 }
 var file_stats_v1_stats_proto_depIdxs = []int32{
-	39, // 0: stats.v1.MapListResponse.maps:type_name -> maps.v1.Map
-	40, // 1: stats.v1.PlayerMatchHistory.created_on:type_name -> google.protobuf.Timestamp
-	40, // 2: stats.v1.PlayerMatchHistory.start_time:type_name -> google.protobuf.Timestamp
+	43, // 0: stats.v1.MapListResponse.maps:type_name -> maps.v1.Map
+	44, // 1: stats.v1.PlayerMatchHistory.created_on:type_name -> google.protobuf.Timestamp
+	44, // 2: stats.v1.PlayerMatchHistory.start_time:type_name -> google.protobuf.Timestamp
 	5,  // 3: stats.v1.MatchesWithPlayerResponse.matches:type_name -> stats.v1.PlayerMatchHistory
 	8,  // 4: stats.v1.BucketsResponse.buckets:type_name -> stats.v1.Bucket
-	40, // 5: stats.v1.MapStat.first_played_at:type_name -> google.protobuf.Timestamp
-	40, // 6: stats.v1.MapStat.last_played_at:type_name -> google.protobuf.Timestamp
-	40, // 7: stats.v1.QueryMapStatsRequest.start:type_name -> google.protobuf.Timestamp
-	40, // 8: stats.v1.QueryMapStatsRequest.end:type_name -> google.protobuf.Timestamp
-	41, // 9: stats.v1.QueryMapStatsRequest.filter:type_name -> database.query.v1.Filter
-	10, // 10: stats.v1.QueryMapStatsResponse.maps:type_name -> stats.v1.MapStat
-	11, // 11: stats.v1.QueryMapStatsResponse.summary:type_name -> stats.v1.MapStatsSummary
-	10, // 12: stats.v1.QueryMapStatsResponse.top_maps:type_name -> stats.v1.MapStat
-	13, // 13: stats.v1.QueryMapStatsResponse.prefixes:type_name -> stats.v1.MapPrefixStat
-	40, // 14: stats.v1.MapStatsPoint.date_bucket:type_name -> google.protobuf.Timestamp
-	15, // 15: stats.v1.MapStatsSeries.points:type_name -> stats.v1.MapStatsPoint
-	40, // 16: stats.v1.QueryMapStatsHistoryRequest.start:type_name -> google.protobuf.Timestamp
-	40, // 17: stats.v1.QueryMapStatsHistoryRequest.end:type_name -> google.protobuf.Timestamp
-	2,  // 18: stats.v1.QueryMapStatsHistoryRequest.time_bucket:type_name -> stats.v1.TimeBucket
-	16, // 19: stats.v1.QueryMapStatsHistoryResponse.series:type_name -> stats.v1.MapStatsSeries
-	41, // 20: stats.v1.QueryMatchesRequest.filter:type_name -> database.query.v1.Filter
-	40, // 21: stats.v1.QueryMatchesRequest.start_time_start:type_name -> google.protobuf.Timestamp
-	40, // 22: stats.v1.QueryMatchesRequest.start_time_end:type_name -> google.protobuf.Timestamp
-	30, // 23: stats.v1.QueryMatchesResponse.matches:type_name -> stats.v1.MatchOverview
-	41, // 24: stats.v1.QueryStatsRequest.filter:type_name -> database.query.v1.Filter
-	2,  // 25: stats.v1.QueryStatsRequest.time_bucket:type_name -> stats.v1.TimeBucket
-	1,  // 26: stats.v1.QueryStatsRequest.variant:type_name -> stats.v1.Variant
-	40, // 27: stats.v1.QueryStatsRequest.time:type_name -> google.protobuf.Timestamp
-	1,  // 28: stats.v1.QueryStatsResponse.variant:type_name -> stats.v1.Variant
-	27, // 29: stats.v1.QueryStatsResponse.stats_variant:type_name -> stats.v1.VariantStatsContainer
-	25, // 30: stats.v1.QueryStatsResponse.stats_overall:type_name -> stats.v1.OverallStatsContainer
-	42, // 31: stats.v1.OverallStats.player:type_name -> person.v1.PersonDisplay
-	24, // 32: stats.v1.OverallStatsContainer.stats:type_name -> stats.v1.OverallStats
-	42, // 33: stats.v1.VariantStats.player:type_name -> person.v1.PersonDisplay
-	26, // 34: stats.v1.VariantStatsContainer.stats:type_name -> stats.v1.VariantStats
-	32, // 35: stats.v1.MatchResponse.match:type_name -> stats.v1.Match
-	39, // 36: stats.v1.MatchOverview.map:type_name -> maps.v1.Map
-	40, // 37: stats.v1.MatchOverview.start_time:type_name -> google.protobuf.Timestamp
-	40, // 38: stats.v1.MatchOverview.created_on:type_name -> google.protobuf.Timestamp
-	30, // 39: stats.v1.Match.overview:type_name -> stats.v1.MatchOverview
-	35, // 40: stats.v1.Match.rounds:type_name -> stats.v1.Round
-	31, // 41: stats.v1.Match.chat_logs:type_name -> stats.v1.MatchChatLog
-	38, // 42: stats.v1.Match.players:type_name -> stats.v1.Match.PlayersEntry
-	34, // 43: stats.v1.Match.kills:type_name -> stats.v1.MatchKill
-	33, // 44: stats.v1.Match.events:type_name -> stats.v1.MatchEvent
-	0,  // 45: stats.v1.Round.winner:type_name -> stats.v1.Team
-	36, // 46: stats.v1.Round.players:type_name -> stats.v1.RoundPlayer
-	42, // 47: stats.v1.RoundPlayer.person:type_name -> person.v1.PersonDisplay
-	0,  // 48: stats.v1.RoundPlayer.team:type_name -> stats.v1.Team
-	37, // 49: stats.v1.RoundPlayer.variants:type_name -> stats.v1.RoundPlayerVariant
-	42, // 50: stats.v1.Match.PlayersEntry.value:type_name -> person.v1.PersonDisplay
-	28, // 51: stats.v1.StatsService.Match:input_type -> stats.v1.MatchRequest
-	20, // 52: stats.v1.StatsService.QueryMatches:input_type -> stats.v1.QueryMatchesRequest
-	3,  // 53: stats.v1.StatsService.MatchesWithPlayer:input_type -> stats.v1.MatchesWithPlayerRequest
-	22, // 54: stats.v1.StatsService.QueryStats:input_type -> stats.v1.QueryStatsRequest
-	43, // 55: stats.v1.StatsService.WeaponList:input_type -> google.protobuf.Empty
-	43, // 56: stats.v1.StatsService.MapList:input_type -> google.protobuf.Empty
-	43, // 57: stats.v1.StatsService.Buckets:input_type -> google.protobuf.Empty
-	12, // 58: stats.v1.StatsService.QueryMapStats:input_type -> stats.v1.QueryMapStatsRequest
-	17, // 59: stats.v1.StatsService.QueryMapStatsHistory:input_type -> stats.v1.QueryMapStatsHistoryRequest
-	43, // 60: stats.v1.StatsService.RefreshStats:input_type -> google.protobuf.Empty
-	29, // 61: stats.v1.StatsService.Match:output_type -> stats.v1.MatchResponse
-	21, // 62: stats.v1.StatsService.QueryMatches:output_type -> stats.v1.QueryMatchesResponse
-	6,  // 63: stats.v1.StatsService.MatchesWithPlayer:output_type -> stats.v1.MatchesWithPlayerResponse
-	23, // 64: stats.v1.StatsService.QueryStats:output_type -> stats.v1.QueryStatsResponse
-	7,  // 65: stats.v1.StatsService.WeaponList:output_type -> stats.v1.WeaponListResponse
-	4,  // 66: stats.v1.StatsService.MapList:output_type -> stats.v1.MapListResponse
-	9,  // 67: stats.v1.StatsService.Buckets:output_type -> stats.v1.BucketsResponse
-	14, // 68: stats.v1.StatsService.QueryMapStats:output_type -> stats.v1.QueryMapStatsResponse
-	18, // 69: stats.v1.StatsService.QueryMapStatsHistory:output_type -> stats.v1.QueryMapStatsHistoryResponse
-	19, // 70: stats.v1.StatsService.RefreshStats:output_type -> stats.v1.RefreshStatsResponse
-	61, // [61:71] is the sub-list for method output_type
-	51, // [51:61] is the sub-list for method input_type
-	51, // [51:51] is the sub-list for extension type_name
-	51, // [51:51] is the sub-list for extension extendee
-	0,  // [0:51] is the sub-list for field type_name
+	8,  // 5: stats.v1.CreateBucketResponse.bucket:type_name -> stats.v1.Bucket
+	44, // 6: stats.v1.MapStat.first_played_at:type_name -> google.protobuf.Timestamp
+	44, // 7: stats.v1.MapStat.last_played_at:type_name -> google.protobuf.Timestamp
+	44, // 8: stats.v1.QueryMapStatsRequest.start:type_name -> google.protobuf.Timestamp
+	44, // 9: stats.v1.QueryMapStatsRequest.end:type_name -> google.protobuf.Timestamp
+	45, // 10: stats.v1.QueryMapStatsRequest.filter:type_name -> database.query.v1.Filter
+	14, // 11: stats.v1.QueryMapStatsResponse.maps:type_name -> stats.v1.MapStat
+	15, // 12: stats.v1.QueryMapStatsResponse.summary:type_name -> stats.v1.MapStatsSummary
+	14, // 13: stats.v1.QueryMapStatsResponse.top_maps:type_name -> stats.v1.MapStat
+	17, // 14: stats.v1.QueryMapStatsResponse.prefixes:type_name -> stats.v1.MapPrefixStat
+	44, // 15: stats.v1.MapStatsPoint.date_bucket:type_name -> google.protobuf.Timestamp
+	19, // 16: stats.v1.MapStatsSeries.points:type_name -> stats.v1.MapStatsPoint
+	44, // 17: stats.v1.QueryMapStatsHistoryRequest.start:type_name -> google.protobuf.Timestamp
+	44, // 18: stats.v1.QueryMapStatsHistoryRequest.end:type_name -> google.protobuf.Timestamp
+	2,  // 19: stats.v1.QueryMapStatsHistoryRequest.time_bucket:type_name -> stats.v1.TimeBucket
+	20, // 20: stats.v1.QueryMapStatsHistoryResponse.series:type_name -> stats.v1.MapStatsSeries
+	45, // 21: stats.v1.QueryMatchesRequest.filter:type_name -> database.query.v1.Filter
+	44, // 22: stats.v1.QueryMatchesRequest.start_time_start:type_name -> google.protobuf.Timestamp
+	44, // 23: stats.v1.QueryMatchesRequest.start_time_end:type_name -> google.protobuf.Timestamp
+	34, // 24: stats.v1.QueryMatchesResponse.matches:type_name -> stats.v1.MatchOverview
+	45, // 25: stats.v1.QueryStatsRequest.filter:type_name -> database.query.v1.Filter
+	2,  // 26: stats.v1.QueryStatsRequest.time_bucket:type_name -> stats.v1.TimeBucket
+	1,  // 27: stats.v1.QueryStatsRequest.variant:type_name -> stats.v1.Variant
+	44, // 28: stats.v1.QueryStatsRequest.time:type_name -> google.protobuf.Timestamp
+	1,  // 29: stats.v1.QueryStatsResponse.variant:type_name -> stats.v1.Variant
+	31, // 30: stats.v1.QueryStatsResponse.stats_variant:type_name -> stats.v1.VariantStatsContainer
+	29, // 31: stats.v1.QueryStatsResponse.stats_overall:type_name -> stats.v1.OverallStatsContainer
+	46, // 32: stats.v1.OverallStats.player:type_name -> person.v1.PersonDisplay
+	28, // 33: stats.v1.OverallStatsContainer.stats:type_name -> stats.v1.OverallStats
+	46, // 34: stats.v1.VariantStats.player:type_name -> person.v1.PersonDisplay
+	30, // 35: stats.v1.VariantStatsContainer.stats:type_name -> stats.v1.VariantStats
+	36, // 36: stats.v1.MatchResponse.match:type_name -> stats.v1.Match
+	43, // 37: stats.v1.MatchOverview.map:type_name -> maps.v1.Map
+	44, // 38: stats.v1.MatchOverview.start_time:type_name -> google.protobuf.Timestamp
+	44, // 39: stats.v1.MatchOverview.created_on:type_name -> google.protobuf.Timestamp
+	34, // 40: stats.v1.Match.overview:type_name -> stats.v1.MatchOverview
+	39, // 41: stats.v1.Match.rounds:type_name -> stats.v1.Round
+	35, // 42: stats.v1.Match.chat_logs:type_name -> stats.v1.MatchChatLog
+	42, // 43: stats.v1.Match.players:type_name -> stats.v1.Match.PlayersEntry
+	38, // 44: stats.v1.Match.kills:type_name -> stats.v1.MatchKill
+	37, // 45: stats.v1.Match.events:type_name -> stats.v1.MatchEvent
+	0,  // 46: stats.v1.Round.winner:type_name -> stats.v1.Team
+	40, // 47: stats.v1.Round.players:type_name -> stats.v1.RoundPlayer
+	46, // 48: stats.v1.RoundPlayer.person:type_name -> person.v1.PersonDisplay
+	0,  // 49: stats.v1.RoundPlayer.team:type_name -> stats.v1.Team
+	41, // 50: stats.v1.RoundPlayer.variants:type_name -> stats.v1.RoundPlayerVariant
+	46, // 51: stats.v1.Match.PlayersEntry.value:type_name -> person.v1.PersonDisplay
+	32, // 52: stats.v1.StatsService.Match:input_type -> stats.v1.MatchRequest
+	24, // 53: stats.v1.StatsService.QueryMatches:input_type -> stats.v1.QueryMatchesRequest
+	3,  // 54: stats.v1.StatsService.MatchesWithPlayer:input_type -> stats.v1.MatchesWithPlayerRequest
+	26, // 55: stats.v1.StatsService.QueryStats:input_type -> stats.v1.QueryStatsRequest
+	47, // 56: stats.v1.StatsService.WeaponList:input_type -> google.protobuf.Empty
+	47, // 57: stats.v1.StatsService.MapList:input_type -> google.protobuf.Empty
+	47, // 58: stats.v1.StatsService.Buckets:input_type -> google.protobuf.Empty
+	10, // 59: stats.v1.StatsService.CreateBucket:input_type -> stats.v1.CreateBucketRequest
+	12, // 60: stats.v1.StatsService.DeleteBucket:input_type -> stats.v1.DeleteBucketRequest
+	13, // 61: stats.v1.StatsService.SetBucketEnabled:input_type -> stats.v1.SetBucketEnabledRequest
+	16, // 62: stats.v1.StatsService.QueryMapStats:input_type -> stats.v1.QueryMapStatsRequest
+	21, // 63: stats.v1.StatsService.QueryMapStatsHistory:input_type -> stats.v1.QueryMapStatsHistoryRequest
+	47, // 64: stats.v1.StatsService.RefreshStats:input_type -> google.protobuf.Empty
+	33, // 65: stats.v1.StatsService.Match:output_type -> stats.v1.MatchResponse
+	25, // 66: stats.v1.StatsService.QueryMatches:output_type -> stats.v1.QueryMatchesResponse
+	6,  // 67: stats.v1.StatsService.MatchesWithPlayer:output_type -> stats.v1.MatchesWithPlayerResponse
+	27, // 68: stats.v1.StatsService.QueryStats:output_type -> stats.v1.QueryStatsResponse
+	7,  // 69: stats.v1.StatsService.WeaponList:output_type -> stats.v1.WeaponListResponse
+	4,  // 70: stats.v1.StatsService.MapList:output_type -> stats.v1.MapListResponse
+	9,  // 71: stats.v1.StatsService.Buckets:output_type -> stats.v1.BucketsResponse
+	11, // 72: stats.v1.StatsService.CreateBucket:output_type -> stats.v1.CreateBucketResponse
+	47, // 73: stats.v1.StatsService.DeleteBucket:output_type -> google.protobuf.Empty
+	47, // 74: stats.v1.StatsService.SetBucketEnabled:output_type -> google.protobuf.Empty
+	18, // 75: stats.v1.StatsService.QueryMapStats:output_type -> stats.v1.QueryMapStatsResponse
+	22, // 76: stats.v1.StatsService.QueryMapStatsHistory:output_type -> stats.v1.QueryMapStatsHistoryResponse
+	23, // 77: stats.v1.StatsService.RefreshStats:output_type -> stats.v1.RefreshStatsResponse
+	65, // [65:78] is the sub-list for method output_type
+	52, // [52:65] is the sub-list for method input_type
+	52, // [52:52] is the sub-list for extension type_name
+	52, // [52:52] is the sub-list for extension extendee
+	0,  // [0:52] is the sub-list for field type_name
 }
 
 func init() { file_stats_v1_stats_proto_init() }
@@ -5616,7 +5825,7 @@ func file_stats_v1_stats_proto_init() {
 	if File_stats_v1_stats_proto != nil {
 		return
 	}
-	file_stats_v1_stats_proto_msgTypes[20].OneofWrappers = []any{
+	file_stats_v1_stats_proto_msgTypes[24].OneofWrappers = []any{
 		(*QueryStatsResponse_StatsVariant)(nil),
 		(*QueryStatsResponse_StatsOverall)(nil),
 	}
@@ -5626,7 +5835,7 @@ func file_stats_v1_stats_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stats_v1_stats_proto_rawDesc), len(file_stats_v1_stats_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   36,
+			NumMessages:   40,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

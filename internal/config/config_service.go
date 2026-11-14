@@ -255,6 +255,15 @@ func configFromUpdate(inCfg *configv1.Config, current Config) Config {
 	inGeo := inCfg.GetGeoLocation()
 	inLog := inCfg.GetLog()
 	inFilters := inCfg.GetFilters()
+	inStats := inCfg.GetStats()
+
+	statsConfig := &Stats{}
+	if current.Stats != nil {
+		*statsConfig = *current.Stats
+	}
+	if inStats != nil {
+		statsConfig.RefreshSchedule = inStats.GetRefreshSchedule()
+	}
 
 	conf := Config{
 		General: &General{
@@ -387,6 +396,7 @@ func configFromUpdate(inCfg *configv1.Config, current Config) Config {
 			MaxOOBVar:             inAC.GetMaxOobVar(),
 			MaxInvalidUserCmd:     inAC.GetMaxInvalidUserCmd(),
 		},
+		Stats: statsConfig,
 	}
 
 	return conf
@@ -522,6 +532,9 @@ func toConfig(conf Config) *configv1.Config {
 			MaxOobVar:             new(conf.Anticheat.MaxOOBVar),
 			MaxInvalidUserCmd:     new(conf.Anticheat.MaxInvalidUserCmd),
 			MaxCheatCvar:          new(conf.Anticheat.MaxCheatCvar),
+		},
+		Stats: &configv1.Stats{
+			RefreshSchedule: new(conf.StatsRefreshSchedule()),
 		},
 	}
 }

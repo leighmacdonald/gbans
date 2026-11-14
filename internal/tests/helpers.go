@@ -215,5 +215,8 @@ func TestConfig(ctx context.Context, dsn string) (*config.Configuration, error) 
 		},
 		LocalStore: &asset.Config{},
 		Exports:    &ban.Config{},
+		Stats: &config.Stats{
+			RefreshSchedule: "5 0 * * *",
+		},
 	}))
 }
