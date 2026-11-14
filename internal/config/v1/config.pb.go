@@ -1788,6 +1788,52 @@ func (x *Network) GetSdrEnabled() bool {
 	return false
 }
 
+type Stats struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// refresh_schedule is a 5-field cron expression controlling when the stats
+	// materialized views are refreshed.
+	RefreshSchedule *string `protobuf:"bytes,1,opt,name=refresh_schedule,json=refreshSchedule" json:"refresh_schedule,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *Stats) Reset() {
+	*x = Stats{}
+	mi := &file_config_v1_config_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Stats) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Stats) ProtoMessage() {}
+
+func (x *Stats) ProtoReflect() protoreflect.Message {
+	mi := &file_config_v1_config_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Stats.ProtoReflect.Descriptor instead.
+func (*Stats) Descriptor() ([]byte, []int) {
+	return file_config_v1_config_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *Stats) GetRefreshSchedule() string {
+	if x != nil && x.RefreshSchedule != nil {
+		return *x.RefreshSchedule
+	}
+	return ""
+}
+
 type LocalStore struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PathRoot      *string                `protobuf:"bytes,1,opt,name=path_root,json=pathRoot" json:"path_root,omitempty"`
@@ -1797,7 +1843,7 @@ type LocalStore struct {
 
 func (x *LocalStore) Reset() {
 	*x = LocalStore{}
-	mi := &file_config_v1_config_proto_msgTypes[15]
+	mi := &file_config_v1_config_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1809,7 +1855,7 @@ func (x *LocalStore) String() string {
 func (*LocalStore) ProtoMessage() {}
 
 func (x *LocalStore) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[15]
+	mi := &file_config_v1_config_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1822,7 +1868,7 @@ func (x *LocalStore) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LocalStore.ProtoReflect.Descriptor instead.
 func (*LocalStore) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{15}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *LocalStore) GetPathRoot() string {
@@ -1843,7 +1889,7 @@ type Exports struct {
 
 func (x *Exports) Reset() {
 	*x = Exports{}
-	mi := &file_config_v1_config_proto_msgTypes[16]
+	mi := &file_config_v1_config_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1855,7 +1901,7 @@ func (x *Exports) String() string {
 func (*Exports) ProtoMessage() {}
 
 func (x *Exports) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[16]
+	mi := &file_config_v1_config_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1868,7 +1914,7 @@ func (x *Exports) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Exports.ProtoReflect.Descriptor instead.
 func (*Exports) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{16}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *Exports) GetBdEnabled() bool {
@@ -1912,7 +1958,7 @@ type Anticheat struct {
 
 func (x *Anticheat) Reset() {
 	*x = Anticheat{}
-	mi := &file_config_v1_config_proto_msgTypes[17]
+	mi := &file_config_v1_config_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1924,7 +1970,7 @@ func (x *Anticheat) String() string {
 func (*Anticheat) ProtoMessage() {}
 
 func (x *Anticheat) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[17]
+	mi := &file_config_v1_config_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1937,7 +1983,7 @@ func (x *Anticheat) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Anticheat.ProtoReflect.Descriptor instead.
 func (*Anticheat) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{17}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *Anticheat) GetEnabled() bool {
@@ -2039,13 +2085,14 @@ type Config struct {
 	LocalStore    *LocalStore            `protobuf:"bytes,12,opt,name=local_store,json=localStore" json:"local_store,omitempty"`
 	Exports       *Exports               `protobuf:"bytes,13,opt,name=exports" json:"exports,omitempty"`
 	Anticheat     *Anticheat             `protobuf:"bytes,14,opt,name=anticheat" json:"anticheat,omitempty"`
+	Stats         *Stats                 `protobuf:"bytes,15,opt,name=stats" json:"stats,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Config) Reset() {
 	*x = Config{}
-	mi := &file_config_v1_config_proto_msgTypes[18]
+	mi := &file_config_v1_config_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2057,7 +2104,7 @@ func (x *Config) String() string {
 func (*Config) ProtoMessage() {}
 
 func (x *Config) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[18]
+	mi := &file_config_v1_config_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2070,7 +2117,7 @@ func (x *Config) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Config.ProtoReflect.Descriptor instead.
 func (*Config) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{18}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *Config) GetGeneral() *General {
@@ -2164,6 +2211,13 @@ func (x *Config) GetAnticheat() *Anticheat {
 	return nil
 }
 
+func (x *Config) GetStats() *Stats {
+	if x != nil {
+		return x.Stats
+	}
+	return nil
+}
+
 type GithubRelease struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	Url             *string                `protobuf:"bytes,1,opt,name=url" json:"url,omitempty"`
@@ -2188,7 +2242,7 @@ type GithubRelease struct {
 
 func (x *GithubRelease) Reset() {
 	*x = GithubRelease{}
-	mi := &file_config_v1_config_proto_msgTypes[19]
+	mi := &file_config_v1_config_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2200,7 +2254,7 @@ func (x *GithubRelease) String() string {
 func (*GithubRelease) ProtoMessage() {}
 
 func (x *GithubRelease) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[19]
+	mi := &file_config_v1_config_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2213,7 +2267,7 @@ func (x *GithubRelease) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GithubRelease.ProtoReflect.Descriptor instead.
 func (*GithubRelease) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{19}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *GithubRelease) GetUrl() string {
@@ -2354,7 +2408,7 @@ type GithubRelease_Author struct {
 
 func (x *GithubRelease_Author) Reset() {
 	*x = GithubRelease_Author{}
-	mi := &file_config_v1_config_proto_msgTypes[20]
+	mi := &file_config_v1_config_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2366,7 +2420,7 @@ func (x *GithubRelease_Author) String() string {
 func (*GithubRelease_Author) ProtoMessage() {}
 
 func (x *GithubRelease_Author) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[20]
+	mi := &file_config_v1_config_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2379,7 +2433,7 @@ func (x *GithubRelease_Author) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GithubRelease_Author.ProtoReflect.Descriptor instead.
 func (*GithubRelease_Author) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{19, 0}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{20, 0}
 }
 
 func (x *GithubRelease_Author) GetLogin() string {
@@ -2529,7 +2583,7 @@ type GithubRelease_Asset struct {
 
 func (x *GithubRelease_Asset) Reset() {
 	*x = GithubRelease_Asset{}
-	mi := &file_config_v1_config_proto_msgTypes[21]
+	mi := &file_config_v1_config_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2541,7 +2595,7 @@ func (x *GithubRelease_Asset) String() string {
 func (*GithubRelease_Asset) ProtoMessage() {}
 
 func (x *GithubRelease_Asset) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[21]
+	mi := &file_config_v1_config_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2554,7 +2608,7 @@ func (x *GithubRelease_Asset) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GithubRelease_Asset.ProtoReflect.Descriptor instead.
 func (*GithubRelease_Asset) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{19, 1}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{20, 1}
 }
 
 func (x *GithubRelease_Asset) GetUrl() string {
@@ -2800,7 +2854,10 @@ const file_config_v1_config_proto_rawDesc = "" +
 	" \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vstacPathFmt\"2\n" +
 	"\aNetwork\x12'\n" +
 	"\vsdr_enabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"sdrEnabled\"1\n" +
+	"sdrEnabled\">\n" +
+	"\x05Stats\x125\n" +
+	"\x10refresh_schedule\x18\x01 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x0frefreshSchedule\"1\n" +
 	"\n" +
 	"LocalStore\x12#\n" +
 	"\tpath_root\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bpathRoot\"\x8e\x01\n" +
@@ -2824,7 +2881,7 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\vmax_oob_var\x18\n" +
 	" \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\tmaxOobVar\x127\n" +
 	"\x14max_invalid_user_cmd\x18\v \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11maxInvalidUserCmd\x12,\n" +
-	"\x0emax_cheat_cvar\x18\f \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fmaxCheatCvar\"\xd4\x04\n" +
+	"\x0emax_cheat_cvar\x18\f \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fmaxCheatCvar\"\xfc\x04\n" +
 	"\x06Config\x12,\n" +
 	"\ageneral\x18\x01 \x01(\v2\x12.config.v1.GeneralR\ageneral\x12&\n" +
 	"\x05debug\x18\x02 \x01(\v2\x10.config.v1.DebugR\x05debug\x12#\n" +
@@ -2840,7 +2897,8 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\vlocal_store\x18\f \x01(\v2\x15.config.v1.LocalStoreR\n" +
 	"localStore\x12,\n" +
 	"\aexports\x18\r \x01(\v2\x12.config.v1.ExportsR\aexports\x122\n" +
-	"\tanticheat\x18\x0e \x01(\v2\x14.config.v1.AnticheatR\tanticheat\"\x9f\f\n" +
+	"\tanticheat\x18\x0e \x01(\v2\x14.config.v1.AnticheatR\tanticheat\x12&\n" +
+	"\x05stats\x18\x0f \x01(\v2\x10.config.v1.StatsR\x05stats\"\x9f\f\n" +
 	"\rGithubRelease\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\x19\n" +
 	"\bhtml_url\x18\x02 \x01(\tR\ahtmlUrl\x12\x1b\n" +
@@ -2951,7 +3009,7 @@ func file_config_v1_config_proto_rawDescGZIP() []byte {
 }
 
 var file_config_v1_config_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
-var file_config_v1_config_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_config_v1_config_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_config_v1_config_proto_goTypes = []any{
 	(RunMode)(0),                  // 0: config.v1.RunMode
 	(FileServeMode)(0),            // 1: config.v1.FileServeMode
@@ -2974,21 +3032,22 @@ var file_config_v1_config_proto_goTypes = []any{
 	(*Patreon)(nil),               // 18: config.v1.Patreon
 	(*SSH)(nil),                   // 19: config.v1.SSH
 	(*Network)(nil),               // 20: config.v1.Network
-	(*LocalStore)(nil),            // 21: config.v1.LocalStore
-	(*Exports)(nil),               // 22: config.v1.Exports
-	(*Anticheat)(nil),             // 23: config.v1.Anticheat
-	(*Config)(nil),                // 24: config.v1.Config
-	(*GithubRelease)(nil),         // 25: config.v1.GithubRelease
-	(*GithubRelease_Author)(nil),  // 26: config.v1.GithubRelease.Author
-	(*GithubRelease_Asset)(nil),   // 27: config.v1.GithubRelease.Asset
-	(*timestamppb.Timestamp)(nil), // 28: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),         // 29: google.protobuf.Empty
+	(*Stats)(nil),                 // 21: config.v1.Stats
+	(*LocalStore)(nil),            // 22: config.v1.LocalStore
+	(*Exports)(nil),               // 23: config.v1.Exports
+	(*Anticheat)(nil),             // 24: config.v1.Anticheat
+	(*Config)(nil),                // 25: config.v1.Config
+	(*GithubRelease)(nil),         // 26: config.v1.GithubRelease
+	(*GithubRelease_Author)(nil),  // 27: config.v1.GithubRelease.Author
+	(*GithubRelease_Asset)(nil),   // 28: config.v1.GithubRelease.Asset
+	(*timestamppb.Timestamp)(nil), // 29: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),         // 30: google.protobuf.Empty
 }
 var file_config_v1_config_proto_depIdxs = []int32{
-	25, // 0: config.v1.ChangelogResponse.changelog:type_name -> config.v1.GithubRelease
-	24, // 1: config.v1.GetResponse.config:type_name -> config.v1.Config
-	24, // 2: config.v1.UpdateRequest.config:type_name -> config.v1.Config
-	24, // 3: config.v1.UpdateResponse.config:type_name -> config.v1.Config
+	26, // 0: config.v1.ChangelogResponse.changelog:type_name -> config.v1.GithubRelease
+	25, // 1: config.v1.GetResponse.config:type_name -> config.v1.Config
+	25, // 2: config.v1.UpdateRequest.config:type_name -> config.v1.Config
+	25, // 3: config.v1.UpdateResponse.config:type_name -> config.v1.Config
 	0,  // 4: config.v1.General.mode:type_name -> config.v1.RunMode
 	1,  // 5: config.v1.General.file_serve_mode:type_name -> config.v1.FileServeMode
 	2,  // 6: config.v1.Demo.strategy:type_name -> config.v1.DemoStrategy
@@ -3006,28 +3065,29 @@ var file_config_v1_config_proto_depIdxs = []int32{
 	18, // 18: config.v1.Config.patreon:type_name -> config.v1.Patreon
 	19, // 19: config.v1.Config.ssh:type_name -> config.v1.SSH
 	20, // 20: config.v1.Config.network:type_name -> config.v1.Network
-	21, // 21: config.v1.Config.local_store:type_name -> config.v1.LocalStore
-	22, // 22: config.v1.Config.exports:type_name -> config.v1.Exports
-	23, // 23: config.v1.Config.anticheat:type_name -> config.v1.Anticheat
-	28, // 24: config.v1.GithubRelease.created_at:type_name -> google.protobuf.Timestamp
-	28, // 25: config.v1.GithubRelease.published_at:type_name -> google.protobuf.Timestamp
-	26, // 26: config.v1.GithubRelease.author:type_name -> config.v1.GithubRelease.Author
-	28, // 27: config.v1.GithubRelease.Asset.created_at:type_name -> google.protobuf.Timestamp
-	28, // 28: config.v1.GithubRelease.Asset.updated_at:type_name -> google.protobuf.Timestamp
-	26, // 29: config.v1.GithubRelease.Asset.uploader:type_name -> config.v1.GithubRelease.Author
-	29, // 30: config.v1.ConfigService.Info:input_type -> google.protobuf.Empty
-	29, // 31: config.v1.ConfigService.Get:input_type -> google.protobuf.Empty
-	9,  // 32: config.v1.ConfigService.Update:input_type -> config.v1.UpdateRequest
-	29, // 33: config.v1.ConfigService.Changelog:input_type -> google.protobuf.Empty
-	7,  // 34: config.v1.ConfigService.Info:output_type -> config.v1.InfoResponse
-	8,  // 35: config.v1.ConfigService.Get:output_type -> config.v1.GetResponse
-	10, // 36: config.v1.ConfigService.Update:output_type -> config.v1.UpdateResponse
-	6,  // 37: config.v1.ConfigService.Changelog:output_type -> config.v1.ChangelogResponse
-	34, // [34:38] is the sub-list for method output_type
-	30, // [30:34] is the sub-list for method input_type
-	30, // [30:30] is the sub-list for extension type_name
-	30, // [30:30] is the sub-list for extension extendee
-	0,  // [0:30] is the sub-list for field type_name
+	22, // 21: config.v1.Config.local_store:type_name -> config.v1.LocalStore
+	23, // 22: config.v1.Config.exports:type_name -> config.v1.Exports
+	24, // 23: config.v1.Config.anticheat:type_name -> config.v1.Anticheat
+	21, // 24: config.v1.Config.stats:type_name -> config.v1.Stats
+	29, // 25: config.v1.GithubRelease.created_at:type_name -> google.protobuf.Timestamp
+	29, // 26: config.v1.GithubRelease.published_at:type_name -> google.protobuf.Timestamp
+	27, // 27: config.v1.GithubRelease.author:type_name -> config.v1.GithubRelease.Author
+	29, // 28: config.v1.GithubRelease.Asset.created_at:type_name -> google.protobuf.Timestamp
+	29, // 29: config.v1.GithubRelease.Asset.updated_at:type_name -> google.protobuf.Timestamp
+	27, // 30: config.v1.GithubRelease.Asset.uploader:type_name -> config.v1.GithubRelease.Author
+	30, // 31: config.v1.ConfigService.Info:input_type -> google.protobuf.Empty
+	30, // 32: config.v1.ConfigService.Get:input_type -> google.protobuf.Empty
+	9,  // 33: config.v1.ConfigService.Update:input_type -> config.v1.UpdateRequest
+	30, // 34: config.v1.ConfigService.Changelog:input_type -> google.protobuf.Empty
+	7,  // 35: config.v1.ConfigService.Info:output_type -> config.v1.InfoResponse
+	8,  // 36: config.v1.ConfigService.Get:output_type -> config.v1.GetResponse
+	10, // 37: config.v1.ConfigService.Update:output_type -> config.v1.UpdateResponse
+	6,  // 38: config.v1.ConfigService.Changelog:output_type -> config.v1.ChangelogResponse
+	35, // [35:39] is the sub-list for method output_type
+	31, // [31:35] is the sub-list for method input_type
+	31, // [31:31] is the sub-list for extension type_name
+	31, // [31:31] is the sub-list for extension extendee
+	0,  // [0:31] is the sub-list for field type_name
 }
 
 func init() { file_config_v1_config_proto_init() }
@@ -3041,7 +3101,7 @@ func file_config_v1_config_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_config_v1_config_proto_rawDesc), len(file_config_v1_config_proto_rawDesc)),
 			NumEnums:      6,
-			NumMessages:   22,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

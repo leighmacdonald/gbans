@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"connectrpc.com/authn"
+	"connectrpc.com/connect"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/database"
@@ -30,6 +31,7 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -1936,6 +1938,126 @@ func TestDefaultBucket(t *testing.T) {
 	require.NoError(t, testFixture.Database.QueryRow(ctx,
 		`SELECT stats_bucket_id FROM match WHERE match_id = $1`, *matchID).Scan(&matchBucket))
 	require.Equal(t, defaultBucket.BucketID, matchBucket)
+}
+
+func TestStatsBucketManagement(t *testing.T) {
+	t.Parallel()
+	testFixture := tests.NewFixture()
+	defer testFixture.Close()
+
+	client, cleanup := newTestStatsClient(t, testFixture, steamid.RandSID64())
+	defer cleanup()
+
+	ctx := t.Context()
+
+	created, errCreate := client.CreateBucket(ctx, &statsv1.CreateBucketRequest{BucketName: new("arena")})
+	require.NoError(t, errCreate)
+	require.Equal(t, "arena", created.GetBucket().GetBucketName())
+	require.True(t, created.GetBucket().GetIsEnabled())
+	require.False(t, created.GetBucket().GetIsDefault())
+
+	bucketID := created.GetBucket().GetStatsBucketId()
+
+	_, errDuplicate := client.CreateBucket(ctx, &statsv1.CreateBucketRequest{BucketName: new("arena")})
+	require.Error(t, errDuplicate)
+	require.Equal(t, connect.CodeAlreadyExists, connect.CodeOf(errDuplicate))
+
+	_, errEmpty := client.CreateBucket(ctx, &statsv1.CreateBucketRequest{BucketName: new("  ")})
+	require.Error(t, errEmpty)
+	require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(errEmpty))
+
+	bucketEnabled := func() bool {
+		t.Helper()
+
+		resp, errBuckets := client.Buckets(ctx, &emptypb.Empty{})
+		require.NoError(t, errBuckets)
+
+		for _, bucket := range resp.GetBuckets() {
+			if bucket.GetStatsBucketId() == bucketID {
+				return bucket.GetIsEnabled()
+			}
+		}
+
+		t.Fatal("created bucket not found")
+
+		return false
+	}
+
+	_, errDisable := client.SetBucketEnabled(ctx, &statsv1.SetBucketEnabledRequest{
+		StatsBucketId: new(bucketID),
+		IsEnabled:     new(false),
+	})
+	require.NoError(t, errDisable)
+	require.False(t, bucketEnabled())
+
+	_, errEnable := client.SetBucketEnabled(ctx, &statsv1.SetBucketEnabledRequest{
+		StatsBucketId: new(bucketID),
+		IsEnabled:     new(true),
+	})
+	require.NoError(t, errEnable)
+	require.True(t, bucketEnabled())
+
+	buckets, errBuckets := client.Buckets(ctx, &emptypb.Empty{})
+	require.NoError(t, errBuckets)
+
+	var defaultBucketID int32
+	for _, bucket := range buckets.GetBuckets() {
+		if bucket.GetIsDefault() {
+			defaultBucketID = bucket.GetStatsBucketId()
+
+			break
+		}
+	}
+	require.NotZero(t, defaultBucketID)
+
+	_, errDeleteDefault := client.DeleteBucket(ctx, &statsv1.DeleteBucketRequest{
+		StatsBucketId: new(defaultBucketID),
+	})
+	require.Error(t, errDeleteDefault)
+	require.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(errDeleteDefault))
+
+	_, errDisableDefault := client.SetBucketEnabled(ctx, &statsv1.SetBucketEnabledRequest{
+		StatsBucketId: new(defaultBucketID),
+		IsEnabled:     new(false),
+	})
+	require.Error(t, errDisableDefault)
+	require.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(errDisableDefault))
+
+	server := testFixture.CreateTestServer(ctx)
+	mapID := seedTestMap(t, testFixture, "cp_bucket_admin")
+	demoID := seedTestDemo(t, testFixture, server.ServerID, "bucket-admin.dem", "cp_bucket_admin")
+	matchID := seedTestMatch(t, testFixture, server.ServerID, mapID, demoID, bucketID, time.Now())
+
+	_, errDeleteInUse := client.DeleteBucket(ctx, &statsv1.DeleteBucketRequest{
+		StatsBucketId: new(bucketID),
+	})
+	require.Error(t, errDeleteInUse)
+	require.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(errDeleteInUse))
+
+	require.NoError(t, testFixture.Database.Exec(ctx, `DELETE FROM match WHERE match_id = $1`, matchID))
+
+	require.NoError(t, testFixture.Database.Exec(ctx,
+		`UPDATE server SET stats_bucket_id = $1 WHERE server_id = $2`, bucketID, server.ServerID))
+
+	_, errDeleteServerInUse := client.DeleteBucket(ctx, &statsv1.DeleteBucketRequest{
+		StatsBucketId: new(bucketID),
+	})
+	require.Error(t, errDeleteServerInUse)
+	require.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(errDeleteServerInUse))
+
+	require.NoError(t, testFixture.Database.Exec(ctx,
+		`UPDATE server SET stats_bucket_id = $1 WHERE server_id = $2`, defaultBucketID, server.ServerID))
+
+	_, errDelete := client.DeleteBucket(ctx, &statsv1.DeleteBucketRequest{
+		StatsBucketId: new(bucketID),
+	})
+	require.NoError(t, errDelete)
+
+	buckets, errBuckets = client.Buckets(ctx, &emptypb.Empty{})
+	require.NoError(t, errBuckets)
+	for _, bucket := range buckets.GetBuckets() {
+		require.NotEqual(t, bucketID, bucket.GetStatsBucketId())
+	}
 }
 
 // TestMatchesWithPlayerOrdering ensures a player's match history is returned

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 
@@ -33,11 +34,16 @@ const (
 	// MaxMatchDuration caps the demo header duration (seconds) accepted for
 	// match creation. Longer demos are idle/recordings, not real matches.
 	MaxMatchDuration = 2 * time.Hour
+	// DefaultRefreshSchedule refreshes the stats materialized views daily at
+	// 00:05 server time.
+	DefaultRefreshSchedule = "5 0 * * *"
 )
 
 var (
 	ErrInvalidState     = errors.New("invalid demo state")
 	ErrInvalidBucket    = errors.New("invalid stat bucket")
+	ErrDefaultBucket    = errors.New("the default stats bucket cannot be modified")
+	ErrBucketInUse      = errors.New("stats bucket is still in use")
 	ErrJob              = errors.New("stat update job error")
 	ErrMatchFiltered    = errors.New("match filtered")
 	ErrNotEnoughPlayers = errors.New("not enough players")
@@ -51,6 +57,7 @@ type Stats struct {
 	notifier          notification.Notifier
 	matchLogChannelID string
 	matchNotifier     MatchNotifier
+	refreshSchedule   func() string
 }
 
 // MatchNotifier delivers in-game notifications to match participants after a
@@ -76,6 +83,15 @@ func WithMatchLogNotifications(notifier notification.Notifier, channelID string)
 func WithMatchPlayerNotifications(notifier MatchNotifier) Option {
 	return func(s *Stats) {
 		s.matchNotifier = notifier
+	}
+}
+
+// WithRefreshSchedule makes the materialized-view refresh cron expression
+// dynamic. The provider is read periodically so admin changes take effect
+// without restarting the process.
+func WithRefreshSchedule(schedule func() string) Option {
+	return func(s *Stats) {
+		s.refreshSchedule = schedule
 	}
 }
 
@@ -245,6 +261,31 @@ func (s Stats) Buckets(ctx context.Context) ([]Bucket, error) {
 	return s.repo.Buckets(ctx)
 }
 
+func (s Stats) CreateBucket(ctx context.Context, bucketName string) (*Bucket, error) {
+	bucketName = strings.TrimSpace(bucketName)
+	if bucketName == "" || len(bucketName) > 64 {
+		return nil, ErrInvalidBucket
+	}
+
+	return s.repo.CreateBucket(ctx, bucketName)
+}
+
+func (s Stats) DeleteBucket(ctx context.Context, bucketID int32) error {
+	if bucketID <= 0 {
+		return ErrInvalidBucket
+	}
+
+	return s.repo.DeleteBucket(ctx, bucketID)
+}
+
+func (s Stats) SetBucketEnabled(ctx context.Context, bucketID int32, enabled bool) error {
+	if bucketID <= 0 {
+		return ErrInvalidBucket
+	}
+
+	return s.repo.SetBucketEnabled(ctx, bucketID, enabled)
+}
+
 func New(repo Repository, maps maps.Maps, options ...Option) Stats {
 	stats := Stats{repo: repo, maps: maps}
 
@@ -260,26 +301,69 @@ func (s Stats) StartRefreshHandler(ctx context.Context) error {
 	if err != nil {
 		return errors.Join(err, ErrJob)
 	}
-	// 00:00
-	// scheduler.NewJob(gocron.CronJob("0 0 * * *", false), gocron.NewTask(s.updateAlltimeViews(ctx)))
-	// 00:05
-	if _, err := scheduler.NewJob(gocron.CronJob("5 0 * * *", false), gocron.NewTask(s.UpdateDailyViews(ctx))); err != nil {
+
+	schedule := s.refreshScheduleValue()
+
+	job, err := scheduler.NewJob(gocron.CronJob(schedule, false), gocron.NewTask(s.UpdateDailyViews(ctx)))
+	if err != nil {
 		return errors.Join(err, ErrJob)
 	}
-	// Sunday 00:00
-	// scheduler.NewJob(gocron.CronJob("0 0 * * 0", false), gocron.NewTask(s.updateDailyViews(ctx)))
-	// 1st of month 00:00
-	// scheduler.NewJob(gocron.CronJob("0 0 1 * *", false), gocron.NewTask(s.updateDailyViews(ctx)))
 
 	scheduler.Start()
 
-	<-ctx.Done()
+	slog.Info("Started stats refresh scheduler", slog.String("schedule", schedule))
 
-	if errShutdown := scheduler.Shutdown(); errShutdown != nil {
-		return errors.Join(errShutdown, ErrJob)
+	rescheduleTicker := time.NewTicker(30 * time.Second)
+	defer rescheduleTicker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			if errShutdown := scheduler.Shutdown(); errShutdown != nil {
+				return errors.Join(errShutdown, ErrJob)
+			}
+
+			return nil
+		case <-rescheduleTicker.C:
+			nextSchedule := s.refreshScheduleValue()
+			if nextSchedule == schedule {
+				continue
+			}
+
+			updatedJob, errUpdate := scheduler.Update(
+				job.ID(),
+				gocron.CronJob(nextSchedule, false),
+				gocron.NewTask(s.UpdateDailyViews(ctx)),
+			)
+			if errUpdate != nil {
+				slog.Error("Failed to reschedule stats refresh",
+					slog.String("schedule", nextSchedule),
+					slog.String("error", errUpdate.Error()))
+
+				continue
+			}
+
+			job = updatedJob
+			schedule = nextSchedule
+
+			slog.Info("Rescheduled stats refresh", slog.String("schedule", schedule))
+		}
+	}
+}
+
+// refreshScheduleValue returns the configured cron expression, falling back to
+// the default when no provider is configured or the value is empty.
+func (s Stats) refreshScheduleValue() string {
+	if s.refreshSchedule == nil {
+		return DefaultRefreshSchedule
 	}
 
-	return nil
+	schedule := strings.TrimSpace(s.refreshSchedule())
+	if schedule == "" {
+		return DefaultRefreshSchedule
+	}
+
+	return schedule
 }
 
 // StatViews lists every materialized view backing QueryStats, refreshed by

@@ -50,6 +50,15 @@ const (
 	StatsServiceMapListProcedure = "/stats.v1.StatsService/MapList"
 	// StatsServiceBucketsProcedure is the fully-qualified name of the StatsService's Buckets RPC.
 	StatsServiceBucketsProcedure = "/stats.v1.StatsService/Buckets"
+	// StatsServiceCreateBucketProcedure is the fully-qualified name of the StatsService's CreateBucket
+	// RPC.
+	StatsServiceCreateBucketProcedure = "/stats.v1.StatsService/CreateBucket"
+	// StatsServiceDeleteBucketProcedure is the fully-qualified name of the StatsService's DeleteBucket
+	// RPC.
+	StatsServiceDeleteBucketProcedure = "/stats.v1.StatsService/DeleteBucket"
+	// StatsServiceSetBucketEnabledProcedure is the fully-qualified name of the StatsService's
+	// SetBucketEnabled RPC.
+	StatsServiceSetBucketEnabledProcedure = "/stats.v1.StatsService/SetBucketEnabled"
 	// StatsServiceQueryMapStatsProcedure is the fully-qualified name of the StatsService's
 	// QueryMapStats RPC.
 	StatsServiceQueryMapStatsProcedure = "/stats.v1.StatsService/QueryMapStats"
@@ -70,28 +79,36 @@ type StatsServiceClient interface {
 	// Query all matches belonging to a player
 	MatchesWithPlayer(context.Context, *v1.MatchesWithPlayerRequest) (*v1.MatchesWithPlayerResponse, error)
 	// Query
-	//   - Known buckets. Each leaf defines how the stats are grouped and queried.
-	//     (Bukets)
+	// - Known buckets. Each leaf defines how the stats are grouped and queried.
+	//   (Bukets)
 	//   - Bucket (mvm)
-	//   - ...
+	//     - ...
 	//   - Bucket (casual)
 	//     (TimeBuckets)
-	//   - Yearly
-	//   - Monthly
-	//   - Alltime
-	//     (Overall buckets)
-	//   - Kills
-	//   - Healing
-	//   - Weapons
-	//     (Variant Buckets)
-	//   - Variant: scattergun
-	//   - Classes
-	//     (Variant Buckets)
-	//   - Variant: soldier
+	//     - Yearly
+	//     - Monthly
+	//     - Alltime
+	//       (Overall buckets)
+	//       - Kills
+	//       - Healing
+	//       - Weapons
+	//         (Variant Buckets)
+	//         - Variant: scattergun
+	//       - Classes
+	//         (Variant Buckets)
+	//         - Variant: soldier
 	QueryStats(context.Context, *v1.QueryStatsRequest) (*v1.QueryStatsResponse, error)
 	WeaponList(context.Context, *emptypb.Empty) (*v1.WeaponListResponse, error)
 	MapList(context.Context, *emptypb.Empty) (*v1.MapListResponse, error)
 	Buckets(context.Context, *emptypb.Empty) (*v1.BucketsResponse, error)
+	// CreateBucket creates a stats bucket. Admin only.
+	CreateBucket(context.Context, *v1.CreateBucketRequest) (*v1.CreateBucketResponse, error)
+	// DeleteBucket removes an unused stats bucket. The default bucket and
+	// buckets referenced by matches or servers cannot be deleted. Admin only.
+	DeleteBucket(context.Context, *v1.DeleteBucketRequest) (*emptypb.Empty, error)
+	// SetBucketEnabled enables or disables a stats bucket. The default bucket
+	// cannot be disabled. Admin only.
+	SetBucketEnabled(context.Context, *v1.SetBucketEnabledRequest) (*emptypb.Empty, error)
 	// QueryMapStats returns per-map aggregate statistics, summary totals and the
 	// top maps for a stats bucket over a time range.
 	QueryMapStats(context.Context, *v1.QueryMapStatsRequest) (*v1.QueryMapStatsResponse, error)
@@ -155,6 +172,24 @@ func NewStatsServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(statsServiceMethods.ByName("Buckets")),
 			connect.WithClientOptions(opts...),
 		),
+		createBucket: connect.NewClient[v1.CreateBucketRequest, v1.CreateBucketResponse](
+			httpClient,
+			baseURL+StatsServiceCreateBucketProcedure,
+			connect.WithSchema(statsServiceMethods.ByName("CreateBucket")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteBucket: connect.NewClient[v1.DeleteBucketRequest, emptypb.Empty](
+			httpClient,
+			baseURL+StatsServiceDeleteBucketProcedure,
+			connect.WithSchema(statsServiceMethods.ByName("DeleteBucket")),
+			connect.WithClientOptions(opts...),
+		),
+		setBucketEnabled: connect.NewClient[v1.SetBucketEnabledRequest, emptypb.Empty](
+			httpClient,
+			baseURL+StatsServiceSetBucketEnabledProcedure,
+			connect.WithSchema(statsServiceMethods.ByName("SetBucketEnabled")),
+			connect.WithClientOptions(opts...),
+		),
 		queryMapStats: connect.NewClient[v1.QueryMapStatsRequest, v1.QueryMapStatsResponse](
 			httpClient,
 			baseURL+StatsServiceQueryMapStatsProcedure,
@@ -185,6 +220,9 @@ type statsServiceClient struct {
 	weaponList           *connect.Client[emptypb.Empty, v1.WeaponListResponse]
 	mapList              *connect.Client[emptypb.Empty, v1.MapListResponse]
 	buckets              *connect.Client[emptypb.Empty, v1.BucketsResponse]
+	createBucket         *connect.Client[v1.CreateBucketRequest, v1.CreateBucketResponse]
+	deleteBucket         *connect.Client[v1.DeleteBucketRequest, emptypb.Empty]
+	setBucketEnabled     *connect.Client[v1.SetBucketEnabledRequest, emptypb.Empty]
 	queryMapStats        *connect.Client[v1.QueryMapStatsRequest, v1.QueryMapStatsResponse]
 	queryMapStatsHistory *connect.Client[v1.QueryMapStatsHistoryRequest, v1.QueryMapStatsHistoryResponse]
 	refreshStats         *connect.Client[emptypb.Empty, v1.RefreshStatsResponse]
@@ -253,6 +291,33 @@ func (c *statsServiceClient) Buckets(ctx context.Context, req *emptypb.Empty) (*
 	return nil, err
 }
 
+// CreateBucket calls stats.v1.StatsService.CreateBucket.
+func (c *statsServiceClient) CreateBucket(ctx context.Context, req *v1.CreateBucketRequest) (*v1.CreateBucketResponse, error) {
+	response, err := c.createBucket.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// DeleteBucket calls stats.v1.StatsService.DeleteBucket.
+func (c *statsServiceClient) DeleteBucket(ctx context.Context, req *v1.DeleteBucketRequest) (*emptypb.Empty, error) {
+	response, err := c.deleteBucket.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// SetBucketEnabled calls stats.v1.StatsService.SetBucketEnabled.
+func (c *statsServiceClient) SetBucketEnabled(ctx context.Context, req *v1.SetBucketEnabledRequest) (*emptypb.Empty, error) {
+	response, err := c.setBucketEnabled.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // QueryMapStats calls stats.v1.StatsService.QueryMapStats.
 func (c *statsServiceClient) QueryMapStats(ctx context.Context, req *v1.QueryMapStatsRequest) (*v1.QueryMapStatsResponse, error) {
 	response, err := c.queryMapStats.CallUnary(ctx, connect.NewRequest(req))
@@ -289,28 +354,36 @@ type StatsServiceHandler interface {
 	// Query all matches belonging to a player
 	MatchesWithPlayer(context.Context, *v1.MatchesWithPlayerRequest) (*v1.MatchesWithPlayerResponse, error)
 	// Query
-	//   - Known buckets. Each leaf defines how the stats are grouped and queried.
-	//     (Bukets)
+	// - Known buckets. Each leaf defines how the stats are grouped and queried.
+	//   (Bukets)
 	//   - Bucket (mvm)
-	//   - ...
+	//     - ...
 	//   - Bucket (casual)
 	//     (TimeBuckets)
-	//   - Yearly
-	//   - Monthly
-	//   - Alltime
-	//     (Overall buckets)
-	//   - Kills
-	//   - Healing
-	//   - Weapons
-	//     (Variant Buckets)
-	//   - Variant: scattergun
-	//   - Classes
-	//     (Variant Buckets)
-	//   - Variant: soldier
+	//     - Yearly
+	//     - Monthly
+	//     - Alltime
+	//       (Overall buckets)
+	//       - Kills
+	//       - Healing
+	//       - Weapons
+	//         (Variant Buckets)
+	//         - Variant: scattergun
+	//       - Classes
+	//         (Variant Buckets)
+	//         - Variant: soldier
 	QueryStats(context.Context, *v1.QueryStatsRequest) (*v1.QueryStatsResponse, error)
 	WeaponList(context.Context, *emptypb.Empty) (*v1.WeaponListResponse, error)
 	MapList(context.Context, *emptypb.Empty) (*v1.MapListResponse, error)
 	Buckets(context.Context, *emptypb.Empty) (*v1.BucketsResponse, error)
+	// CreateBucket creates a stats bucket. Admin only.
+	CreateBucket(context.Context, *v1.CreateBucketRequest) (*v1.CreateBucketResponse, error)
+	// DeleteBucket removes an unused stats bucket. The default bucket and
+	// buckets referenced by matches or servers cannot be deleted. Admin only.
+	DeleteBucket(context.Context, *v1.DeleteBucketRequest) (*emptypb.Empty, error)
+	// SetBucketEnabled enables or disables a stats bucket. The default bucket
+	// cannot be disabled. Admin only.
+	SetBucketEnabled(context.Context, *v1.SetBucketEnabledRequest) (*emptypb.Empty, error)
 	// QueryMapStats returns per-map aggregate statistics, summary totals and the
 	// top maps for a stats bucket over a time range.
 	QueryMapStats(context.Context, *v1.QueryMapStatsRequest) (*v1.QueryMapStatsResponse, error)
@@ -370,6 +443,24 @@ func NewStatsServiceHandler(svc StatsServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(statsServiceMethods.ByName("Buckets")),
 		connect.WithHandlerOptions(opts...),
 	)
+	statsServiceCreateBucketHandler := connect.NewUnaryHandlerSimple(
+		StatsServiceCreateBucketProcedure,
+		svc.CreateBucket,
+		connect.WithSchema(statsServiceMethods.ByName("CreateBucket")),
+		connect.WithHandlerOptions(opts...),
+	)
+	statsServiceDeleteBucketHandler := connect.NewUnaryHandlerSimple(
+		StatsServiceDeleteBucketProcedure,
+		svc.DeleteBucket,
+		connect.WithSchema(statsServiceMethods.ByName("DeleteBucket")),
+		connect.WithHandlerOptions(opts...),
+	)
+	statsServiceSetBucketEnabledHandler := connect.NewUnaryHandlerSimple(
+		StatsServiceSetBucketEnabledProcedure,
+		svc.SetBucketEnabled,
+		connect.WithSchema(statsServiceMethods.ByName("SetBucketEnabled")),
+		connect.WithHandlerOptions(opts...),
+	)
 	statsServiceQueryMapStatsHandler := connect.NewUnaryHandlerSimple(
 		StatsServiceQueryMapStatsProcedure,
 		svc.QueryMapStats,
@@ -404,6 +495,12 @@ func NewStatsServiceHandler(svc StatsServiceHandler, opts ...connect.HandlerOpti
 			statsServiceMapListHandler.ServeHTTP(w, r)
 		case StatsServiceBucketsProcedure:
 			statsServiceBucketsHandler.ServeHTTP(w, r)
+		case StatsServiceCreateBucketProcedure:
+			statsServiceCreateBucketHandler.ServeHTTP(w, r)
+		case StatsServiceDeleteBucketProcedure:
+			statsServiceDeleteBucketHandler.ServeHTTP(w, r)
+		case StatsServiceSetBucketEnabledProcedure:
+			statsServiceSetBucketEnabledHandler.ServeHTTP(w, r)
 		case StatsServiceQueryMapStatsProcedure:
 			statsServiceQueryMapStatsHandler.ServeHTTP(w, r)
 		case StatsServiceQueryMapStatsHistoryProcedure:
@@ -445,6 +542,18 @@ func (UnimplementedStatsServiceHandler) MapList(context.Context, *emptypb.Empty)
 
 func (UnimplementedStatsServiceHandler) Buckets(context.Context, *emptypb.Empty) (*v1.BucketsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.Buckets is not implemented"))
+}
+
+func (UnimplementedStatsServiceHandler) CreateBucket(context.Context, *v1.CreateBucketRequest) (*v1.CreateBucketResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.CreateBucket is not implemented"))
+}
+
+func (UnimplementedStatsServiceHandler) DeleteBucket(context.Context, *v1.DeleteBucketRequest) (*emptypb.Empty, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.DeleteBucket is not implemented"))
+}
+
+func (UnimplementedStatsServiceHandler) SetBucketEnabled(context.Context, *v1.SetBucketEnabledRequest) (*emptypb.Empty, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.SetBucketEnabled is not implemented"))
 }
 
 func (UnimplementedStatsServiceHandler) QueryMapStats(context.Context, *v1.QueryMapStatsRequest) (*v1.QueryMapStatsResponse, error) {

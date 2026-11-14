@@ -224,6 +224,15 @@ message Network {
   bool sdr_enabled = 1 [(buf.validate.field).required = true];
 }
 
+message Stats {
+  // refresh_schedule is a 5-field cron expression controlling when the stats
+  // materialized views are refreshed.
+  string refresh_schedule = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
 message LocalStore {
   string path_root = 1 [(buf.validate.field).required = true];
 }
@@ -272,6 +281,7 @@ message Config {
   LocalStore local_store = 12;
   Exports exports = 13;
   Anticheat anticheat = 14;
+  Stats stats = 15;
 }
 
 message GithubRelease {

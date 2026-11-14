@@ -33,6 +33,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/mitchellh/go-homedir"
+	"github.com/robfig/cron/v3"
 	"github.com/spf13/viper"
 )
 
@@ -95,6 +96,26 @@ type Config struct {
 	LocalStore  *asset.Config
 	Exports     *ban.Config
 	Anticheat   *anticheat.Config
+	Stats       *Stats
+}
+
+const defaultStatsRefreshSchedule = "5 0 * * *"
+
+// Stats holds statistics subsystem settings that are editable at runtime.
+type Stats struct {
+	// RefreshSchedule is a 5-field cron expression controlling when the stats
+	// materialized views are refreshed.
+	RefreshSchedule string
+}
+
+// StatsRefreshSchedule returns the configured materialized-view refresh cron
+// expression, or an empty string when no stats configuration is present.
+func (c Config) StatsRefreshSchedule() string {
+	if c.Stats == nil {
+		return ""
+	}
+
+	return c.Stats.RefreshSchedule
 }
 
 func (c Config) ExtURLRaw(path string, args ...any) string {
@@ -208,6 +229,7 @@ func NewConfiguration(ctx context.Context, static Static, repository Repo) (*Con
 			LocalStore:  &asset.Config{},
 			Exports:     &ban.Config{},
 			Anticheat:   &anticheat.Config{},
+			Stats:       &Stats{RefreshSchedule: defaultStatsRefreshSchedule},
 		},
 	}
 
@@ -225,6 +247,10 @@ func NewConfiguration(ctx context.Context, static Static, repository Repo) (*Con
 }
 
 func (c *Configuration) Write(ctx context.Context, config Config) error {
+	if err := validateStatsRefreshSchedule(config.StatsRefreshSchedule()); err != nil {
+		return err
+	}
+
 	if !strings.HasSuffix(config.General.AssetURL, "/") {
 		config.General.AssetURL += "/"
 	}
@@ -251,6 +277,13 @@ func (c *Configuration) Config() Config {
 	defer c.RUnlock()
 
 	return c.currentConfig
+}
+
+// StatsRefreshSchedule returns the cron expression used to refresh the stats
+// materialized views. It is safe to call from the stats scheduler while the
+// configuration is reloaded.
+func (c *Configuration) StatsRefreshSchedule() string {
+	return c.Config().StatsRefreshSchedule()
 }
 
 // AnonmodEnabled reports whether the anonymized moderator feature is
@@ -442,6 +475,22 @@ func getGithubReleases(ctx context.Context) ([]GithubRelease, error) {
 	}
 
 	return releases, nil
+}
+
+// validateStatsRefreshSchedule ensures the admin-saved cron expression parses
+// as a standard 5-field expression. gocron schedules the refresh job with
+// cron.ParseStandard, so validating with the same parser guarantees the value
+// will be accepted when the job is (re)registered.
+func validateStatsRefreshSchedule(schedule string) error {
+	if schedule = strings.TrimSpace(schedule); schedule == "" {
+		return fmt.Errorf("%w: stats refresh schedule cannot be empty", ErrInvalidConfig)
+	}
+
+	if _, err := cron.ParseStandard(schedule); err != nil {
+		return fmt.Errorf("%w: stats refresh schedule: %w", ErrInvalidConfig, err)
+	}
+
+	return nil
 }
 
 // decodeDuration automatically parses the string duration type (1s,1m,1h,etc.) into a real time.Duration type.

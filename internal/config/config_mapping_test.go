@@ -67,6 +67,7 @@ func testDomainConfig() Config {
 			MaxBhop: 40, MaxFakeAng: 5, MaxCmdNum: 100, MaxTooManyConnections: 10, MaxCheatCvar: 5,
 			MaxOOBVar: 5, MaxInvalidUserCmd: 5,
 		},
+		Stats: &Stats{RefreshSchedule: "15 3 * * *"},
 	}
 }
 
@@ -112,6 +113,7 @@ func TestConfigMappingRoundTrip(t *testing.T) {
 	require.Equal(t, original.LocalStore, mapped.LocalStore)
 	require.Equal(t, original.Exports, mapped.Exports)
 	require.Equal(t, original.Anticheat, mapped.Anticheat)
+	require.Equal(t, original.Stats, mapped.Stats)
 
 	// Regression: the secret was mapped from the app id, destroying it on save.
 	require.Equal(t, "app-secret", mapped.Discord.AppSecret)

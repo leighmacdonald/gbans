@@ -68,6 +68,29 @@ export const mapList = StatsService.method.mapList;
 export const buckets = StatsService.method.buckets;
 
 /**
+ * CreateBucket creates a stats bucket. Admin only.
+ *
+ * @generated from rpc stats.v1.StatsService.CreateBucket
+ */
+export const createBucket = StatsService.method.createBucket;
+
+/**
+ * DeleteBucket removes an unused stats bucket. The default bucket and
+ * buckets referenced by matches or servers cannot be deleted. Admin only.
+ *
+ * @generated from rpc stats.v1.StatsService.DeleteBucket
+ */
+export const deleteBucket = StatsService.method.deleteBucket;
+
+/**
+ * SetBucketEnabled enables or disables a stats bucket. The default bucket
+ * cannot be disabled. Admin only.
+ *
+ * @generated from rpc stats.v1.StatsService.SetBucketEnabled
+ */
+export const setBucketEnabled = StatsService.method.setBucketEnabled;
+
+/**
  * QueryMapStats returns per-map aggregate statistics, summary totals and the
  * top maps for a stats bucket over a time range.
  *

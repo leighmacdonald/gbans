@@ -12,7 +12,9 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
@@ -1604,13 +1606,64 @@ func (r Repository) bucketForServer(ctx context.Context, transaction pgx.Tx, ser
 }
 
 func (r Repository) CreateBucket(ctx context.Context, bucketName string) (*Bucket, error) {
-	const query = "INSERT INTO stats_bucket (bucket_name) VALUES ($1) RETURNING stats_bucket_id"
-	bucket := Bucket{BucketName: bucketName}
-	if err := r.QueryRow(ctx, query, bucketName).Scan(&bucket.BucketID); err != nil {
+	const query = "INSERT INTO stats_bucket (bucket_name) VALUES ($1) RETURNING stats_bucket_id, bucket_name, is_enabled, is_default"
+
+	var bucket Bucket
+	if err := r.QueryRow(ctx, query, bucketName).Scan(
+		&bucket.BucketID, &bucket.BucketName, &bucket.IsEnabled, &bucket.IsDefault,
+	); err != nil {
 		return nil, database.Err(err)
 	}
 
 	return &bucket, nil
+}
+
+// bucketIsDefault reports whether the bucket exists and is the default bucket.
+func (r Repository) bucketIsDefault(ctx context.Context, bucketID int32) (bool, error) {
+	var isDefault bool
+	if err := r.QueryRow(ctx,
+		`SELECT is_default FROM stats_bucket WHERE stats_bucket_id = $1`, bucketID).Scan(&isDefault); err != nil {
+		return false, database.Err(err)
+	}
+
+	return isDefault, nil
+}
+
+func (r Repository) DeleteBucket(ctx context.Context, bucketID int32) error {
+	isDefault, errBucket := r.bucketIsDefault(ctx, bucketID)
+	if errBucket != nil {
+		return errBucket
+	}
+
+	if isDefault {
+		return ErrDefaultBucket
+	}
+
+	if err := r.Exec(ctx, `DELETE FROM stats_bucket WHERE stats_bucket_id = $1`, bucketID); err != nil {
+		// match.stats_bucket_id is ON DELETE RESTRICT (23001) while
+		// server.stats_bucket_id uses the default NO ACTION (23503).
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok &&
+			(pgErr.Code == pgerrcode.RestrictViolation || pgErr.Code == pgerrcode.ForeignKeyViolation) {
+			return ErrBucketInUse
+		}
+
+		return database.Err(err)
+	}
+
+	return nil
+}
+
+func (r Repository) SetBucketEnabled(ctx context.Context, bucketID int32, enabled bool) error {
+	isDefault, errBucket := r.bucketIsDefault(ctx, bucketID)
+	if errBucket != nil {
+		return errBucket
+	}
+
+	if isDefault && !enabled {
+		return ErrDefaultBucket
+	}
+
+	return database.Err(r.Exec(ctx, `UPDATE stats_bucket SET is_enabled = $1 WHERE stats_bucket_id = $2`, enabled, bucketID))
 }
 
 func (r Repository) SaveBucket(ctx context.Context, bucket Bucket) error {

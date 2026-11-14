@@ -45,6 +45,9 @@ func NewService(stats Stats, servers *servers.Servers, openGraph *opengraph.Repo
 
 	authMiddleware.UserRoute(statsv1connect.StatsServiceMatchProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
 	authMiddleware.UserRoute(statsv1connect.StatsServiceBucketsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
+	authMiddleware.UserRoute(statsv1connect.StatsServiceCreateBucketProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CONFIG_WRITE))
+	authMiddleware.UserRoute(statsv1connect.StatsServiceDeleteBucketProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CONFIG_WRITE))
+	authMiddleware.UserRoute(statsv1connect.StatsServiceSetBucketEnabledProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_CONFIG_WRITE))
 	authMiddleware.UserRoute(statsv1connect.StatsServiceQueryStatsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
 	authMiddleware.UserRoute(statsv1connect.StatsServiceQueryMapStatsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
 	authMiddleware.UserRoute(statsv1connect.StatsServiceQueryMapStatsHistoryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
@@ -179,15 +182,92 @@ func (s Service) Buckets(ctx context.Context, _ *emptypb.Empty) (*v1.BucketsResp
 	}
 	resp := &v1.BucketsResponse{Buckets: make([]*v1.Bucket, len(buckets))}
 	for idx := range buckets {
-		resp.Buckets[idx] = &v1.Bucket{
-			StatsBucketId: &buckets[idx].BucketID,
-			BucketName:    &buckets[idx].BucketName,
-			IsEnabled:     &buckets[idx].IsEnabled,
-			IsDefault:     &buckets[idx].IsDefault,
-		}
+		resp.Buckets[idx] = toProtoBucket(buckets[idx])
 	}
 
 	return resp, nil
+}
+
+var (
+	errBucketExists       = errors.New("a stats bucket with that name already exists")
+	errBucketNotFound     = errors.New("stats bucket does not exist")
+	errDefaultBucketDel   = errors.New("the default stats bucket cannot be deleted")
+	errDefaultBucketDisab = errors.New("the default stats bucket cannot be disabled")
+)
+
+func (s Service) CreateBucket(ctx context.Context, request *v1.CreateBucketRequest) (*v1.CreateBucketResponse, error) {
+	bucket, errBucket := s.stats.CreateBucket(ctx, request.GetBucketName())
+	if errBucket != nil {
+		switch {
+		case errors.Is(errBucket, database.ErrDuplicate):
+			return nil, connect.NewError(connect.CodeAlreadyExists, errBucketExists)
+		case errors.Is(errBucket, ErrInvalidBucket):
+			return nil, connect.NewError(connect.CodeInvalidArgument, errBucket)
+		default:
+			slog.Error("Failed to create stats bucket",
+				slog.String("name", request.GetBucketName()),
+				slog.String("error", errBucket.Error()))
+
+			return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+		}
+	}
+
+	return &v1.CreateBucketResponse{Bucket: toProtoBucket(*bucket)}, nil
+}
+
+func (s Service) DeleteBucket(ctx context.Context, request *v1.DeleteBucketRequest) (*emptypb.Empty, error) {
+	errDelete := s.stats.DeleteBucket(ctx, request.GetStatsBucketId())
+	if errDelete != nil {
+		switch {
+		case errors.Is(errDelete, database.ErrNoResult):
+			return nil, connect.NewError(connect.CodeNotFound, errBucketNotFound)
+		case errors.Is(errDelete, ErrDefaultBucket):
+			return nil, connect.NewError(connect.CodeFailedPrecondition, errDefaultBucketDel)
+		case errors.Is(errDelete, ErrBucketInUse):
+			return nil, connect.NewError(connect.CodeFailedPrecondition, ErrBucketInUse)
+		case errors.Is(errDelete, ErrInvalidBucket):
+			return nil, connect.NewError(connect.CodeInvalidArgument, errDelete)
+		default:
+			slog.Error("Failed to delete stats bucket",
+				slog.Int("bucketID", int(request.GetStatsBucketId())),
+				slog.String("error", errDelete.Error()))
+
+			return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+		}
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+func (s Service) SetBucketEnabled(ctx context.Context, request *v1.SetBucketEnabledRequest) (*emptypb.Empty, error) {
+	errUpdate := s.stats.SetBucketEnabled(ctx, request.GetStatsBucketId(), request.GetIsEnabled())
+	if errUpdate != nil {
+		switch {
+		case errors.Is(errUpdate, database.ErrNoResult):
+			return nil, connect.NewError(connect.CodeNotFound, errBucketNotFound)
+		case errors.Is(errUpdate, ErrDefaultBucket):
+			return nil, connect.NewError(connect.CodeFailedPrecondition, errDefaultBucketDisab)
+		case errors.Is(errUpdate, ErrInvalidBucket):
+			return nil, connect.NewError(connect.CodeInvalidArgument, errUpdate)
+		default:
+			slog.Error("Failed to update stats bucket",
+				slog.Int("bucketID", int(request.GetStatsBucketId())),
+				slog.String("error", errUpdate.Error()))
+
+			return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+		}
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+func toProtoBucket(bucket Bucket) *v1.Bucket {
+	return &v1.Bucket{
+		StatsBucketId: &bucket.BucketID,
+		BucketName:    &bucket.BucketName,
+		IsEnabled:     &bucket.IsEnabled,
+		IsDefault:     &bucket.IsDefault,
+	}
 }
 
 func (s Service) QueryStats(ctx context.Context, request *v1.QueryStatsRequest) (*v1.QueryStatsResponse, error) {

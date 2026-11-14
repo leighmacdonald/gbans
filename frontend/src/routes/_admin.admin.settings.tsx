@@ -11,6 +11,7 @@ import GradingIcon from "@mui/icons-material/Grading";
 import HeadsetMicIcon from "@mui/icons-material/HeadsetMic";
 import LanIcon from "@mui/icons-material/Lan";
 import PaymentIcon from "@mui/icons-material/Payment";
+import QueryStatsIcon from "@mui/icons-material/QueryStats";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ShareIcon from "@mui/icons-material/Share";
 import TravelExploreIcon from "@mui/icons-material/TravelExplore";
@@ -34,6 +35,7 @@ import { UploadButton } from "../component/form/button/UploadButton.tsx";
 import { CheckboxField } from "../component/form/field/CheckboxField.tsx";
 import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { SubHeading } from "../component/SubHeading.tsx";
+import { StatBucketsAdmin } from "../component/stats/StatBucketsAdmin.tsx";
 import { TabButton } from "../component/TabButton.tsx";
 import { TabSection } from "../component/TabSection.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
@@ -65,6 +67,7 @@ const settingsSchema = z.object({
 			"network",
 			"ssh",
 			"exports",
+			"stats",
 		])
 		.optional()
 		.default("general"),
@@ -105,7 +108,8 @@ type tabs =
 	| "network"
 	| "localStore"
 	| "ssh"
-	| "exports";
+	| "exports"
+	| "stats";
 
 const ConfigContainer = ({ children }: { children: ReactNode[] }) => {
 	return (
@@ -341,6 +345,13 @@ function AdminSettings() {
 							currentTab={tab}
 							label={"Exports"}
 						/>
+						<TabButton
+							tab={"stats"}
+							onClick={onTabClick}
+							icon={<QueryStatsIcon />}
+							currentTab={tab}
+							label={"Stats"}
+						/>
 
 						<Typography
 							sx={{
@@ -534,16 +545,6 @@ function AdminSettings() {
 								/>
 							</Grid>
 							<Grid size={{ xs: 12 }}>
-								<SubHeading>Process demos and calculate game stats.</SubHeading>
-								<form.AppField
-									name={"general.statsEnabled"}
-									children={(field) => {
-										return <field.CheckboxField label={"Enable Game Stats"} />;
-									}}
-								/>
-							</Grid>
-
-							<Grid size={{ xs: 12 }}>
 								<SubHeading>
 									Enables the server status page showing the current map and player counts.
 								</SubHeading>
@@ -595,16 +596,6 @@ function AdminSettings() {
 									name={"general.mgeEnabled"}
 									children={(field) => {
 										return <field.CheckboxField label={"Enable mge rankings"} />;
-									}}
-								/>
-							</Grid>
-
-							<Grid size={{ xs: 12 }}>
-								<SubHeading>Compile and show stats accumulated from demos.</SubHeading>
-								<form.AppField
-									name={"general.statsEnabled"}
-									children={(field) => {
-										return <field.CheckboxField label={"Enable stat tracking"} />;
 									}}
 								/>
 							</Grid>
@@ -1863,6 +1854,62 @@ function AdminSettings() {
 							</Grid>
 						</ConfigContainer>
 					</form>
+				</TabSection>
+				<TabSection
+					tab={"stats"}
+					currentTab={tab}
+					label={"Stats"}
+					description={"Configure stat buckets and the materialized view refresh schedule"}
+				>
+					<form
+						onSubmit={async (e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							await form.handleSubmit();
+						}}
+					>
+						<ConfigContainer>
+							<Grid size={{ xs: 12 }}>
+								<SubHeading>Process demos and calculate game stats.</SubHeading>
+								<form.AppField
+									name={"general.statsEnabled"}
+									children={(field) => {
+										return <field.CheckboxField label={"Enable Game Stats"} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 12 }}>
+								<Typography variant={"h4"}>Refresh Schedule</Typography>
+								<Typography variant={"body2"} color={"textSecondary"}>
+									A 5-field cron expression (minute, hour, day of month, month, day of week) that
+									controls when the aggregated stats views are refreshed. Defaults to{" "}
+									<kbd>5 0 * * *</kbd>, which refreshes daily at 00:05 server local time. Changes
+									apply without restarting the app.
+								</Typography>
+							</Grid>
+							<Grid size={{ xs: 12 }}>
+								<form.AppField
+									name={"stats.refreshSchedule"}
+									children={(field) => {
+										return <field.TextField label={"Cron schedule"} placeholder={"5 0 * * *"} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 12 }}>
+								<form.AppForm>
+									<ButtonGroup>
+										<form.ResetButton />
+										<form.SubmitButton />
+									</ButtonGroup>
+								</form.AppForm>
+							</Grid>
+						</ConfigContainer>
+					</form>
+					<ConfigContainer>
+						<Grid size={{ xs: 12 }}>
+							<StatBucketsAdmin />
+						</Grid>
+					</ConfigContainer>
 				</TabSection>
 			</Grid>
 		</ContainerWithHeaderAndButtons>

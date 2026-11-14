@@ -48,6 +48,14 @@ service StatsService {
   rpc WeaponList(google.protobuf.Empty) returns (WeaponListResponse) {}
   rpc MapList(google.protobuf.Empty) returns (MapListResponse) {}
   rpc Buckets(google.protobuf.Empty) returns (BucketsResponse) {}
+  // CreateBucket creates a stats bucket. Admin only.
+  rpc CreateBucket(CreateBucketRequest) returns (CreateBucketResponse) {}
+  // DeleteBucket removes an unused stats bucket. The default bucket and
+  // buckets referenced by matches or servers cannot be deleted. Admin only.
+  rpc DeleteBucket(DeleteBucketRequest) returns (google.protobuf.Empty) {}
+  // SetBucketEnabled enables or disables a stats bucket. The default bucket
+  // cannot be disabled. Admin only.
+  rpc SetBucketEnabled(SetBucketEnabledRequest) returns (google.protobuf.Empty) {}
   // QueryMapStats returns per-map aggregate statistics, summary totals and the
   // top maps for a stats bucket over a time range.
   rpc QueryMapStats(QueryMapStatsRequest) returns (QueryMapStatsResponse) {}
@@ -107,6 +115,26 @@ message Bucket {
 
 message BucketsResponse {
   repeated Bucket buckets = 1;
+}
+
+message CreateBucketRequest {
+  string bucket_name = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+  }];
+}
+
+message CreateBucketResponse {
+  Bucket bucket = 1 [(buf.validate.field).required = true];
+}
+
+message DeleteBucketRequest {
+  int32 stats_bucket_id = 1 [(buf.validate.field).int32.gt = 0];
+}
+
+message SetBucketEnabledRequest {
+  int32 stats_bucket_id = 1 [(buf.validate.field).int32.gt = 0];
+  bool is_enabled = 2 [(buf.validate.field).required = true];
 }
 
 message MapStat {

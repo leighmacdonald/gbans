@@ -103,7 +103,7 @@ void onCmdSeedReceived(Handle request, bool failure, bool successful, EHTTPStatu
     }
     case k_EHTTPStatusCode200OK: {
         delete request;
-        PrintToChat(clientId, "Mods have been alerted, thanks!");
+        PrintToChat(clientId, "Seed request sent successfully");
         return;
     }
     case k_EHTTPStatusCode401Unauthorized: {
