@@ -142,10 +142,13 @@ void SourceTV_OnStopRecording(int instance, const char[] filename, int recording
 void initDirectory(const char[] sDir) {
     char sPieces[32][PLATFORM_MAX_PATH];
     char sPath[PLATFORM_MAX_PATH];
+    char sNext[PLATFORM_MAX_PATH];
     int  iNumPieces = ExplodeString(sDir, "/", sPieces, sizeof sPieces, sizeof sPieces[]);
 
     for (int i = 0; i < iNumPieces; i++) {
-        Format(sPath, sizeof sPath, "%s/%s", sPath, sPieces[i]);
+        Format(sNext, sizeof sNext, "%s/%s", sPath, sPieces[i]);
+        strcopy(sPath, sizeof sPath, sNext);
+
         if (!DirExists(sPath)) {
             CreateDirectory(sPath, 509);
         }
