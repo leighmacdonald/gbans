@@ -25,6 +25,9 @@ ConVar gb_stv_finishmap;
 ConVar gb_stv_path;
 ConVar gb_stv_path_complete;
 
+Handle gTimerCheckStatus;
+Handle gTimerCheckSeedPromo;
+
 // Reports command
 int          gReportSourceId         = -1;
 int          gReportTargetId         = -1;

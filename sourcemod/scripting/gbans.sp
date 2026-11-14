@@ -107,6 +107,9 @@ void OnPluginStart() {
     AutoExecConfig_ExecuteFile();
     AutoExecConfig_CleanFile();
 
+    gTimerCheckStatus    = CreateTimer(300.0, Timer_CheckStatus, _, TIMER_REPEAT);
+    gTimerCheckSeedPromo = CreateTimer(600.0, Timer_CheckSeedPromo, _, TIMER_REPEAT);
+
     // Setup log files for crash reporting back to gbans
     BuildPath(Path_SM, g_accelerator_log_path, sizeof(g_accelerator_log_path), "/logs/accelerator.log");
     BuildPath(Path_SM, g_crash_log_path, sizeof(g_crash_log_path), "/data/Stored_data.txt");
@@ -155,9 +158,6 @@ void OnConfigsExecuted() {
         initDirectory(sPathComplete);
     }
 
-    CreateTimer(300.0, Timer_CheckStatus, _, TIMER_REPEAT);
-    CreateTimer(600.0, Timer_CheckSeedPromo, _, TIMER_REPEAT);
-
     authenticateServer();
 
     StopRecord();
@@ -178,6 +178,16 @@ public
 void OnMapStart() {
     reloadAdmins(true);
     gSeedPromoSent = false;
+}
+
+public
+void OnPluginEnd() {
+    if (gTimerCheckStatus != null) {
+        KillTimer(gTimerCheckStatus);
+    }
+    if (gTimerCheckSeedPromo != null) {
+        KillTimer(gTimerCheckSeedPromo);
+    }
 }
 
 public
