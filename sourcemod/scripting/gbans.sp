@@ -110,6 +110,12 @@ void OnPluginStart() {
     gTimerCheckStatus    = CreateTimer(300.0, Timer_CheckStatus, _, TIMER_REPEAT);
     gTimerCheckSeedPromo = CreateTimer(600.0, Timer_CheckSeedPromo, _, TIMER_REPEAT);
 
+    gb_stv_minplayers.AddChangeHook(OnConVarChanged);
+    gb_stv_ignorebots.AddChangeHook(OnConVarChanged);
+    gb_stv_timestart.AddChangeHook(OnConVarChanged);
+    gb_stv_timestop.AddChangeHook(OnConVarChanged);
+    gb_stv_path.AddChangeHook(OnConVarChanged);
+
     // Setup log files for crash reporting back to gbans
     BuildPath(Path_SM, g_accelerator_log_path, sizeof(g_accelerator_log_path), "/logs/accelerator.log");
     BuildPath(Path_SM, g_crash_log_path, sizeof(g_crash_log_path), "/data/Stored_data.txt");
@@ -139,12 +145,6 @@ stock void AccountForLateLoading() {
 
 public
 void OnConfigsExecuted() {
-    gb_stv_minplayers.AddChangeHook(OnConVarChanged);
-    gb_stv_ignorebots.AddChangeHook(OnConVarChanged);
-    gb_stv_timestart.AddChangeHook(OnConVarChanged);
-    gb_stv_timestop.AddChangeHook(OnConVarChanged);
-    gb_stv_path.AddChangeHook(OnConVarChanged);
-
     char sPath[PLATFORM_MAX_PATH];
 
     gb_stv_path.GetString(sPath, sizeof sPath);
