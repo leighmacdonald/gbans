@@ -34,6 +34,7 @@ int          gReportTargetId         = -1;
 bool         gReportWaitingForReason = false;
 GB_BanReason gReportTargetReason;
 int          gReportStartedAtTime = -1;
+Handle       gReportTimeoutTimer;
 
 bool gIsRecording = false;
 bool gIsManual    = false;
