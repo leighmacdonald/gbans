@@ -124,6 +124,11 @@ void SourceTV_OnStopRecording(int instance, const char[] filename, int recording
     GetConVarString(gb_stv_path_complete, outPath, sizeof outPath);
 
     int iNumPieces = ExplodeString(filename, "/", sPieces, sizeof sPieces, sizeof sPieces[]);
+    if (iNumPieces < 1) {
+        LogError("Failed to parse completed demo filename \"%s\"", filename);
+
+        return;
+    }
 
     Format(outPath, sizeof outPath, "%s/%s", outPath, sPieces[iNumPieces - 1]);
 
