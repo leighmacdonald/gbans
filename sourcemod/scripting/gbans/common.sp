@@ -257,8 +257,12 @@ stock void FormatValidUntil(int durationSeconds, char[] buffer, int maxlen) {
  *
  * The request JSON object is owned by this function and freed before it
  * returns.
+ *
+ * Returns false if the request could not be created or sent. In that case the
+ * callback never runs, so the caller is responsible for resetting any state it
+ * set up in anticipation of the response.
  */
-void postHTTPRequest(const char[] path, JSON_Object data, SteamWorksHTTPRequestCompleted callback, any value = 0) {
+bool postHTTPRequest(const char[] path, JSON_Object data, SteamWorksHTTPRequestCompleted callback, any value = 0) {
     char url[1024];
     makeURL(path, url, sizeof url);
 
@@ -267,7 +271,7 @@ void postHTTPRequest(const char[] path, JSON_Object data, SteamWorksHTTPRequestC
         LogError("Failed to create HTTP request to %s", url);
         json_cleanup_and_delete(data);
 
-        return;
+        return false;
     }
 
     if (gToken[0] != '\0') {
@@ -279,6 +283,7 @@ void postHTTPRequest(const char[] path, JSON_Object data, SteamWorksHTTPRequestC
     int bodyLen = data.EncodeSize();
     char[] body = new char[bodyLen];
     data.Encode(body, bodyLen);
+    json_cleanup_and_delete(data);
 
     SteamWorks_SetHTTPRequestRawPostBody(request, "application/json", body, strlen(body));
     SteamWorks_SetHTTPRequestContextValue(request, value, 0);
@@ -288,9 +293,11 @@ void postHTTPRequest(const char[] path, JSON_Object data, SteamWorksHTTPRequestC
     if (!SteamWorks_SendHTTPRequest(request)) {
         LogError("Failed to send HTTP request to %s", url);
         delete request;
+
+        return false;
     }
 
-    json_cleanup_and_delete(data);
+    return true;
 }
 
 stock void makeURL(const char[] path, char[] outURL, int maxLen) {

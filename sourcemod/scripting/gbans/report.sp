@@ -109,7 +109,12 @@ bool report(int sourceId, int targetId, GB_BanReason reason, const char[] reason
         }
     }
 
-    postHTTPRequest("/connect/ban.v1.ReportService/ReportCreate", obj, onReportRespReceived, sourceId);
+    if (!postHTTPRequest("/connect/ban.v1.ReportService/ReportCreate", obj, onReportRespReceived, sourceId)) {
+        PrintToChat(sourceId, "[Report] Failed to send the report to gbans, please try again later");
+        resetReportStatus();
+
+        return false;
+    }
 
     return true;
 }
