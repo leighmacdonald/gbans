@@ -57,8 +57,7 @@ void resetReportStatus() {
 
 public
 Action OnClientSayCommand(int clientId, const char[] command, const char[] args) {
-    if (!gReportWaitingForReason || clientId != gReportSourceId && gReportSourceId == -1
-        || gReportTargetReason != custom) {
+    if (!gReportWaitingForReason || clientId != gReportSourceId || gReportTargetReason != custom) {
         return Plugin_Continue;
     } else if (StrEqual(args, "cancel", false)) {
         PrintToChat(gReportSourceId, "Report cancelled");
