@@ -144,12 +144,12 @@ void onCheckResp(Handle request, bool failure, bool successful, EHTTPStatusCode 
 
         return;
     } else if (StrEqual(banType, "BAN_TYPE_BANNED")) {
-        KickClient(clientId, msg);
+        KickClient(clientId, "%s", msg);
         LogAction(0, clientId, "Kicked \"%L\" for an unfinished ban.", clientId);
 
         return;
     } else if (StrEqual(banType, "BAN_TYPE_NETWORK")) {
-        KickClient(clientId, msg);
+        KickClient(clientId, "%s", msg);
         LogAction(0, clientId, "Kicked \"%L\" for a network block.", clientId);
 
         return;
