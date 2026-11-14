@@ -89,10 +89,10 @@ void checkPlayer(int clientId) {
     obj.SetString("ip", ip);
     obj.SetString("name", name);
 
-    postHTTPRequest("/connect/sourcemod.v1.PluginService/SMCheck", obj, onCheckResp);
+    postHTTPRequest("/connect/sourcemod.v1.PluginService/SMCheck", obj, onCheckResp, GetClientUserId(clientId));
 }
 
-void onCheckResp(Handle request, bool failure, bool successful, EHTTPStatusCode status, any value1, any value2) {
+void onCheckResp(Handle request, bool failure, bool successful, EHTTPStatusCode status, any userId, any value2) {
     if (status != k_EHTTPStatusCode200OK) {
         PrintRPCError(request, failure, status);
         delete request;
@@ -100,16 +100,24 @@ void onCheckResp(Handle request, bool failure, bool successful, EHTTPStatusCode 
         return;
     }
 
-    JSON_Object data = GetResponseJSON(request);
-    if (data == null || !data.HasKey("clientId")) {
-        LogError("No client id in check resp");
-        json_cleanup_and_delete(data);
+    // The response echoes the client index that was sent with the request, but
+    // that slot may have been reused by another player while the request was
+    // in flight. Resolving the user id is the only reliable way back to the
+    // client that was checked.
+    int clientId = GetClientOfUserId(view_as<int>(userId));
+    if (!isValidClient(clientId)) {
         delete request;
 
         return;
     }
 
-    int clientId = data.GetInt("clientId");
+    JSON_Object data = GetResponseJSON(request);
+    if (data == null) {
+        LogError("Failed to parse check response");
+        delete request;
+
+        return;
+    }
 
     char banType[48];
     if (!data.GetString("banType", banType, sizeof banType)) {
