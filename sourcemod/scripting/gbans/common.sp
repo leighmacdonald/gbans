@@ -337,8 +337,8 @@ stock int GetAllClientCount() {
 
 stock void reply(int clientId, const char[] message) {
     if (clientId > 0) {
-        ReplyToCommand(clientId, message);
+        ReplyToCommand(clientId, "%s", message);
     } else {
-        LogMessage(message);
+        LogMessage("%s", message);
     }
 }
