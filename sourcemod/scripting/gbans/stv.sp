@@ -110,10 +110,16 @@ void StartRecord() {
 }
 
 void StopRecord() {
-    if (GetConVarBool(gb_stv_enable)) {
-        ServerCommand("tv_stoprecord");
-        gIsRecording = false;
+    if (!gIsRecording) {
+        return;
     }
+
+    gIsRecording = false;
+
+    // gb_stv_enable only gates starting a recording. Always stop one that is
+    // already running, otherwise disabling the convar mid-recording leaves the
+    // flag set forever and auto-recording never restarts.
+    ServerCommand("tv_stoprecord");
 }
 
 public
