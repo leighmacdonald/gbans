@@ -245,7 +245,6 @@ type CreateRequest struct {
 	Title         *string                `protobuf:"bytes,1,opt,name=title" json:"title,omitempty"`
 	BodyMd        *string                `protobuf:"bytes,2,opt,name=body_md,json=bodyMd" json:"body_md,omitempty"`
 	IsPublished   *bool                  `protobuf:"varint,3,opt,name=is_published,json=isPublished" json:"is_published,omitempty"`
-	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -299,13 +298,6 @@ func (x *CreateRequest) GetIsPublished() bool {
 		return *x.IsPublished
 	}
 	return false
-}
-
-func (x *CreateRequest) GetCreatedOn() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CreatedOn
-	}
-	return nil
 }
 
 type CreateResponse struct {
@@ -402,7 +394,6 @@ type EditRequest struct {
 	Title         *string                `protobuf:"bytes,2,opt,name=title" json:"title,omitempty"`
 	BodyMd        *string                `protobuf:"bytes,3,opt,name=body_md,json=bodyMd" json:"body_md,omitempty"`
 	IsPublished   *bool                  `protobuf:"varint,4,opt,name=is_published,json=isPublished" json:"is_published,omitempty"`
-	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -463,13 +454,6 @@ func (x *EditRequest) GetIsPublished() bool {
 		return *x.IsPublished
 	}
 	return false
-}
-
-func (x *EditRequest) GetCreatedOn() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CreatedOn
-	}
-	return nil
 }
 
 type EditResponse struct {
@@ -538,27 +522,23 @@ const file_news_v1_news_proto_rawDesc = "" +
 	"\anews_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x06newsId\"-\n" +
 	"\rLatestRequest\x12\x1c\n" +
-	"\x05limit\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05limit\"\xcb\x01\n" +
+	"\x05limit\x18\x01 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x05limit\"\x8e\x01\n" +
 	"\rCreateRequest\x12#\n" +
 	"\x05title\x18\x01 \x01(\tB\r\xbaH\n" +
 	"\xc8\x01\x01r\x05\x10\x05\x18\x80\x02R\x05title\x12'\n" +
 	"\abody_md\x18\x02 \x01(\tB\x0e\xbaH\v\xc8\x01\x01r\x06\x10\x05\x18\xa0\x8d\x06R\x06bodyMd\x12)\n" +
-	"\fis_published\x18\x03 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\visPublished\x12A\n" +
-	"\n" +
-	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedOn\"D\n" +
+	"\fis_published\x18\x03 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\visPublishedJ\x04\b\x04\x10\x05\"D\n" +
 	"\x0eCreateResponse\x122\n" +
 	"\aarticle\x18\x01 \x01(\v2\x10.news.v1.ArticleB\x06\xbaH\x03\xc8\x01\x01R\aarticle\"D\n" +
 	"\x0eLatestResponse\x122\n" +
-	"\aarticle\x18\x01 \x03(\v2\x10.news.v1.ArticleB\x06\xbaH\x03\xc8\x01\x01R\aarticle\"\xde\x01\n" +
+	"\aarticle\x18\x01 \x03(\v2\x10.news.v1.ArticleB\x06\xbaH\x03\xc8\x01\x01R\aarticle\"\xa9\x01\n" +
 	"\vEditRequest\x12#\n" +
 	"\anews_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\x06newsId\x12#\n" +
 	"\x05title\x18\x02 \x01(\tB\r\xbaH\n" +
 	"\xc8\x01\x01r\x05\x10\x05\x18\x80\x02R\x05title\x12'\n" +
 	"\abody_md\x18\x03 \x01(\tB\x0e\xbaH\v\xc8\x01\x01r\x06\x10\x05\x18\xa0\x8d\x06R\x06bodyMd\x12!\n" +
-	"\fis_published\x18\x04 \x01(\bR\visPublished\x129\n" +
-	"\n" +
-	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\"B\n" +
+	"\fis_published\x18\x04 \x01(\bR\visPublishedJ\x04\b\x05\x10\x06\"B\n" +
 	"\fEditResponse\x122\n" +
 	"\aarticle\x18\x01 \x01(\v2\x10.news.v1.ArticleB\x06\xbaH\x03\xc8\x01\x01R\aarticle2\xb1\x02\n" +
 	"\vNewsService\x12;\n" +
@@ -599,26 +579,24 @@ var file_news_v1_news_proto_depIdxs = []int32{
 	1,  // 0: news.v1.AllResponse.articles:type_name -> news.v1.Article
 	9,  // 1: news.v1.Article.created_on:type_name -> google.protobuf.Timestamp
 	9,  // 2: news.v1.Article.updated_on:type_name -> google.protobuf.Timestamp
-	9,  // 3: news.v1.CreateRequest.created_on:type_name -> google.protobuf.Timestamp
-	1,  // 4: news.v1.CreateResponse.article:type_name -> news.v1.Article
-	1,  // 5: news.v1.LatestResponse.article:type_name -> news.v1.Article
-	9,  // 6: news.v1.EditRequest.created_on:type_name -> google.protobuf.Timestamp
-	1,  // 7: news.v1.EditResponse.article:type_name -> news.v1.Article
-	3,  // 8: news.v1.NewsService.Latest:input_type -> news.v1.LatestRequest
-	7,  // 9: news.v1.NewsService.Edit:input_type -> news.v1.EditRequest
-	4,  // 10: news.v1.NewsService.Create:input_type -> news.v1.CreateRequest
-	2,  // 11: news.v1.NewsService.Delete:input_type -> news.v1.DeleteRequest
-	10, // 12: news.v1.NewsService.All:input_type -> google.protobuf.Empty
-	6,  // 13: news.v1.NewsService.Latest:output_type -> news.v1.LatestResponse
-	8,  // 14: news.v1.NewsService.Edit:output_type -> news.v1.EditResponse
-	5,  // 15: news.v1.NewsService.Create:output_type -> news.v1.CreateResponse
-	10, // 16: news.v1.NewsService.Delete:output_type -> google.protobuf.Empty
-	0,  // 17: news.v1.NewsService.All:output_type -> news.v1.AllResponse
-	13, // [13:18] is the sub-list for method output_type
-	8,  // [8:13] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	1,  // 3: news.v1.CreateResponse.article:type_name -> news.v1.Article
+	1,  // 4: news.v1.LatestResponse.article:type_name -> news.v1.Article
+	1,  // 5: news.v1.EditResponse.article:type_name -> news.v1.Article
+	3,  // 6: news.v1.NewsService.Latest:input_type -> news.v1.LatestRequest
+	7,  // 7: news.v1.NewsService.Edit:input_type -> news.v1.EditRequest
+	4,  // 8: news.v1.NewsService.Create:input_type -> news.v1.CreateRequest
+	2,  // 9: news.v1.NewsService.Delete:input_type -> news.v1.DeleteRequest
+	10, // 10: news.v1.NewsService.All:input_type -> google.protobuf.Empty
+	6,  // 11: news.v1.NewsService.Latest:output_type -> news.v1.LatestResponse
+	8,  // 12: news.v1.NewsService.Edit:output_type -> news.v1.EditResponse
+	5,  // 13: news.v1.NewsService.Create:output_type -> news.v1.CreateResponse
+	10, // 14: news.v1.NewsService.Delete:output_type -> google.protobuf.Empty
+	0,  // 15: news.v1.NewsService.All:output_type -> news.v1.AllResponse
+	11, // [11:16] is the sub-list for method output_type
+	6,  // [6:11] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_news_v1_news_proto_init() }

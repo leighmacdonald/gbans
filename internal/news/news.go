@@ -49,7 +49,13 @@ func (u News) Save(ctx context.Context, entry *Article) error {
 		return httphelper.ErrTooShort
 	}
 
-	isNew := entry.NewsID > 0
+	isNew := entry.NewsID == 0
+	if isNew {
+		now := time.Now()
+		entry.CreatedOn = now
+		entry.UpdatedOn = now
+	}
+
 	if err := u.repository.Save(ctx, entry); err != nil {
 		return err
 	}

@@ -712,8 +712,6 @@ func (g *GBans) firstTimeSetup(ctx context.Context) error {
 		Title:       "Welcome to gbans",
 		BodyMD:      "This is an *example* **news** entry.",
 		IsPublished: true,
-		CreatedOn:   time.Now(),
-		UpdatedOn:   time.Now(),
 	}
 
 	if errSave := g.news.Save(ctx, &article); errSave != nil {

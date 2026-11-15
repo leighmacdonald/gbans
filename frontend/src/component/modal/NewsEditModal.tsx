@@ -40,7 +40,7 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: Article }) =
 		formId: entry?.newsId ? `news-${entry.newsId}` : "news-create",
 		onSubmit: async ({ value }) => {
 			if (entry?.newsId) {
-				editMutation.mutate(value);
+				editMutation.mutate({ ...value, newsId: entry.newsId });
 			} else {
 				createMutation.mutate(value);
 			}

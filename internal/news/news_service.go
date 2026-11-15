@@ -59,25 +59,19 @@ func (s Service) Edit(ctx context.Context, req *v1.EditRequest) (*v1.EditRespons
 		Title:       req.GetTitle(),
 		BodyMD:      req.GetBodyMd(),
 		IsPublished: req.GetIsPublished(),
-		CreatedOn:   req.GetCreatedOn().AsTime(),
-		UpdatedOn:   req.GetCreatedOn().AsTime(),
 	}
 	if errEntry := s.news.Save(ctx, entry); errEntry != nil {
 		return nil, connect.NewError(connect.CodeInternal, errEntry)
 	}
 
-	resp := &v1.EditResponse{
-		Article: &v1.Article{
-			NewsId:      &entry.NewsID,
-			Title:       &entry.Title,
-			BodyMd:      &entry.BodyMD,
-			IsPublished: &entry.IsPublished,
-			CreatedOn:   timestamppb.New(entry.CreatedOn),
-			UpdatedOn:   timestamppb.New(entry.UpdatedOn),
-		},
+	// The update preserves created_on and stamps updated_on itself, so read
+	// the persisted row back for the response timestamps.
+	fetched := Article{}
+	if errFetched := s.news.GetNewsByID(ctx, int(req.GetNewsId()), &fetched); errFetched != nil {
+		return nil, connect.NewError(connect.CodeInternal, errFetched)
 	}
 
-	return resp, nil
+	return &v1.EditResponse{Article: toArticle(&fetched)}, nil
 }
 
 func toArticle(entry *Article) *v1.Article {
@@ -96,18 +90,12 @@ func (s Service) Create(ctx context.Context, req *v1.CreateRequest) (*v1.CreateR
 		Title:       req.GetTitle(),
 		BodyMD:      req.GetBodyMd(),
 		IsPublished: req.GetIsPublished(),
-		CreatedOn:   req.GetCreatedOn().AsTime(),
-		UpdatedOn:   req.GetCreatedOn().AsTime(),
 	}
 	if errEntry := s.news.Save(ctx, entry); errEntry != nil {
 		return nil, connect.NewError(connect.CodeInternal, errEntry)
 	}
 
-	resp := &v1.CreateResponse{
-		Article: toArticle(entry),
-	}
-
-	return resp, nil
+	return &v1.CreateResponse{Article: toArticle(entry)}, nil
 }
 
 func (s Service) Delete(ctx context.Context, req *v1.DeleteRequest) (*emptypb.Empty, error) {

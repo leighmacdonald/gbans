@@ -20,6 +20,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		StorageType.Local,
 	);
 
+	// Validate against the session cookie once on mount, even when a profile
+	// is cached: a cached profile with a dead cookie would otherwise render a
+	// logged-in UI whose requests all 401 (e.g. silently empty admin tables).
+	// A failed check clears the cache. login() re-fetches after a successful
+	// Steam redirect, and a logout from any tab reloads the page, so
+	// mount-time validation is enough.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: run once on mount; the captured callbacks only use stable state setters and the constant storage interface
 	useEffect(() => {
 		const tryAuth = async () => {
 			try {
@@ -40,10 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			}
 		};
 
-		if (profile.steamId === "") {
-			tryAuth();
-		}
-	}, [setProfileValue, deleteProfileValue, profile.steamId]);
+		tryAuth();
+	}, []);
 
 	const login = useCallback(
 		async (_token: string) => {
