@@ -109,6 +109,47 @@ func (b *Discord) Send(channelID string, payload *discordgo.MessageSend) error {
 	return nil
 }
 
+func (b *Discord) SendWithID(channelID string, payload *discordgo.MessageSend) (string, error) {
+	if !b.running.Load() || b.session == nil {
+		return "", nil
+	}
+
+	message, errSend := b.session.ChannelMessageSendComplex(channelID, payload)
+	if errSend != nil {
+		return "", errors.Join(errSend, ErrCommandSend)
+	}
+
+	return message.ID, nil
+}
+
+func (b *Discord) EditMessage(channelID, messageID string, payload *discordgo.MessageSend) error {
+	if !b.running.Load() || b.session == nil || payload == nil {
+		return nil
+	}
+
+	edit := discordgo.NewMessageEdit(channelID, messageID)
+	edit.Flags = discordgo.MessageFlagsIsComponentsV2
+	edit.Components = &payload.Components
+
+	if _, errEdit := b.session.ChannelMessageEditComplex(edit); errEdit != nil {
+		return errors.Join(errEdit, ErrCommandSend)
+	}
+
+	return nil
+}
+
+func (b *Discord) DeleteMessage(channelID, messageID string) error {
+	if !b.running.Load() || b.session == nil {
+		return nil
+	}
+
+	if errDelete := b.session.ChannelMessageDelete(channelID, messageID); errDelete != nil {
+		return errors.Join(errDelete, ErrCommandSend)
+	}
+
+	return nil
+}
+
 func (b *Discord) Start() error {
 	if b.running.Load() {
 		return nil

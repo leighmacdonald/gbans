@@ -26,6 +26,16 @@ type Connection interface {
 	// Send handles sending messages to a channel.
 	Send(channelID string, message *discordgo.MessageSend) error
 
+	// SendWithID handles sending messages to a channel and returns the id of
+	// the created message. An empty id is returned when the bot is not running.
+	SendWithID(channelID string, message *discordgo.MessageSend) (string, error)
+
+	// EditMessage replaces the content of an existing channel message in place.
+	EditMessage(channelID, messageID string, message *discordgo.MessageSend) error
+
+	// DeleteMessage deletes a message from a channel.
+	DeleteMessage(channelID, messageID string) error
+
 	// Start initiates the bot service. This is a blocking call.
 	Start() error
 
@@ -58,9 +68,14 @@ func NewDiscard(config *Config) Connection {
 type Discard struct{ config *Config }
 
 func (d Discard) Send(_ string, _ *discordgo.MessageSend) error { return nil }
-func (d Discard) Start() error                                  { return nil }
-func (d Discard) Close()                                        {}
-func (d Discard) Config() *Config                               { return d.config }
+func (d Discard) SendWithID(_ string, _ *discordgo.MessageSend) (string, error) {
+	return "", nil
+}
+func (d Discard) EditMessage(_ string, _ string, _ *discordgo.MessageSend) error { return nil }
+func (d Discard) DeleteMessage(_ string, _ string) error                         { return nil }
+func (d Discard) Start() error                                                   { return nil }
+func (d Discard) Close()                                                         {}
+func (d Discard) Config() *Config                                                { return d.config }
 func (d Discard) MustRegisterCommandHandler(_ *discordgo.ApplicationCommand, _ Handler) {
 }
 func (d Discard) MustRegisterPrefixHandler(_ string, _ Handler) {}

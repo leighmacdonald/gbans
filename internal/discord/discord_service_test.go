@@ -36,8 +36,17 @@ func (r *recordingConnection) Send(channelID string, message *discordgo.MessageS
 
 	return nil
 }
-func (r *recordingConnection) Start() error { return nil }
-func (r *recordingConnection) Close()       {}
+
+func (r *recordingConnection) SendWithID(_ string, _ *discordgo.MessageSend) (string, error) {
+	return "", nil
+}
+
+func (r *recordingConnection) EditMessage(_ string, _ string, _ *discordgo.MessageSend) error {
+	return nil
+}
+func (r *recordingConnection) DeleteMessage(_ string, _ string) error { return nil }
+func (r *recordingConnection) Start() error                           { return nil }
+func (r *recordingConnection) Close()                                 {}
 func (r *recordingConnection) Config() *discord.Config {
 	return r.config
 }
