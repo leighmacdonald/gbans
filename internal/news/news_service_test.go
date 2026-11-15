@@ -1,6 +1,7 @@
 package news_test
 
 import (
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -9,8 +10,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/news"
-	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/tests"
+	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,7 +27,7 @@ func TestMain(m *testing.M) {
 func TestSaveStampsServerTimestamps(t *testing.T) {
 	t.Parallel()
 
-	svc := news.New(news.NewRepository(fixture.Database), notification.NullNotifier{}, "")
+	svc := news.New(news.NewRepository(fixture.Database), discord.NewDiscard(&discord.Config{}), "")
 	ctx := t.Context()
 
 	before := time.Now()
@@ -56,67 +57,168 @@ func TestSaveStampsServerTimestamps(t *testing.T) {
 	require.NoError(t, svc.DropNewsArticle(ctx, entry.NewsID))
 }
 
-type capturingNotifier struct {
+type postedMessage struct {
+	channelID string
+	message   *discordgo.MessageSend
+}
+
+type targetedMessage struct {
+	channelID string
+	messageID string
+	message   *discordgo.MessageSend
+}
+
+// recordingDiscord implements discord.Connection, recording channel
+// interactions for assertions. With returnIDs false, SendWithID models a bot
+// that is not running (it never returns a message id).
+type recordingDiscord struct {
 	sync.Mutex
 
-	payloads []notification.Payload
+	returnIDs bool
+	nextID    int64
+
+	posts   []postedMessage
+	edits   []targetedMessage
+	deletes []targetedMessage
 }
 
-func (c *capturingNotifier) Send(payload notification.Payload) {
-	c.Lock()
-	defer c.Unlock()
+func (r *recordingDiscord) Send(_ string, _ *discordgo.MessageSend) error { return nil }
 
-	c.payloads = append(c.payloads, payload)
+func (r *recordingDiscord) SendWithID(channelID string, message *discordgo.MessageSend) (string, error) {
+	r.Lock()
+	defer r.Unlock()
+
+	if !r.returnIDs {
+		return "", nil
+	}
+
+	r.nextID++
+	id := strconv.FormatInt(r.nextID, 10)
+	r.posts = append(r.posts, postedMessage{channelID: channelID, message: message})
+
+	return id, nil
 }
 
-func (c *capturingNotifier) list() []notification.Payload {
-	c.Lock()
-	defer c.Unlock()
+func (r *recordingDiscord) EditMessage(channelID, messageID string, message *discordgo.MessageSend) error {
+	r.Lock()
+	defer r.Unlock()
 
-	out := make([]notification.Payload, len(c.payloads))
-	copy(out, c.payloads)
+	r.edits = append(r.edits, targetedMessage{channelID: channelID, messageID: messageID, message: message})
 
-	return out
+	return nil
 }
 
-func containsHeading(payloads []notification.Payload, heading string) bool {
-	for _, payload := range payloads {
-		if payload.MessageSend == nil {
-			continue
-		}
+func (r *recordingDiscord) DeleteMessage(channelID, messageID string) error {
+	r.Lock()
+	defer r.Unlock()
 
-		for _, component := range payload.MessageSend.Components {
-			if display, ok := component.(discordgo.TextDisplay); ok && strings.Contains(display.Content, heading) {
-				return true
-			}
+	r.deletes = append(r.deletes, targetedMessage{channelID: channelID, messageID: messageID})
+
+	return nil
+}
+
+func (r *recordingDiscord) Start() error { return nil }
+func (r *recordingDiscord) Close()       {}
+func (r *recordingDiscord) Config() *discord.Config {
+	return &discord.Config{}
+}
+
+func (r *recordingDiscord) MustRegisterCommandHandler(_ *discordgo.ApplicationCommand, _ discord.Handler) {
+}
+func (r *recordingDiscord) MustRegisterPrefixHandler(_ string, _ discord.Handler) {}
+func (r *recordingDiscord) CreateRole(_ string) (string, error)                   { return "", nil }
+func (r *recordingDiscord) Roles() ([]*discordgo.Role, error)                     { return nil, nil }
+
+func messageHasHeading(message *discordgo.MessageSend, heading string) bool {
+	if message == nil {
+		return false
+	}
+	for _, component := range message.Components {
+		if display, ok := component.(discordgo.TextDisplay); ok && strings.Contains(display.Content, heading) {
+			return true
 		}
 	}
 
 	return false
 }
 
-func TestSaveNotificationHeadings(t *testing.T) {
+func TestSaveTracksDiscordMessage(t *testing.T) {
 	t.Parallel()
 
-	news.RegisterDiscordCommands(discord.NewDiscard(&discord.Config{}))
+	conn := &recordingDiscord{returnIDs: true}
+	news.RegisterDiscordCommands(conn)
 
-	notifier := &capturingNotifier{}
-	svc := news.New(news.NewRepository(fixture.Database), notifier, "test-channel")
+	svc := news.New(news.NewRepository(fixture.Database), conn, "news-channel")
 	ctx := t.Context()
 
-	entry := &news.Article{Title: "Notification test", BodyMD: "Body long enough for notification", IsPublished: true}
+	title := stringutil.SecureRandomString(12)
+	entry := &news.Article{Title: title, BodyMD: stringutil.SecureRandomString(40), IsPublished: true}
 	require.NoError(t, svc.Save(ctx, entry))
 
-	require.Eventually(t, func() bool {
-		return containsHeading(notifier.list(), "News posted")
-	}, time.Second*2, time.Millisecond*10)
+	require.Len(t, conn.posts, 1)
+	require.Equal(t, "news-channel", conn.posts[0].channelID)
+	require.True(t, messageHasHeading(conn.posts[0].message, "News posted"))
 
-	entry.Title = "Notification test (edited)"
+	checked := news.Article{}
+	require.NoError(t, svc.GetNewsByID(ctx, int(entry.NewsID), &checked))
+	require.Equal(t, int64(1), checked.DiscordMessageID)
+
+	// Editing the article must update the tracked message in place, not post
+	// a duplicate.
+	entry.Title = title + " (edited)"
+	entry.BodyMD = stringutil.SecureRandomString(40)
 	require.NoError(t, svc.Save(ctx, entry))
 
-	require.Eventually(t, func() bool {
-		return containsHeading(notifier.list(), "News edited")
-	}, time.Second*2, time.Millisecond*10)
+	require.Len(t, conn.posts, 1, "edit must not post a new discord message")
+	require.Len(t, conn.edits, 1)
+	require.Equal(t, "news-channel", conn.edits[0].channelID)
+	require.Equal(t, "1", conn.edits[0].messageID)
+	require.True(t, messageHasHeading(conn.edits[0].message, "News edited"))
 
+	require.NoError(t, svc.GetNewsByID(ctx, int(entry.NewsID), &checked))
+	require.Equal(t, int64(1), checked.DiscordMessageID, "tracked id must survive edits")
+
+	// Deleting the article deletes the tracked discord message.
 	require.NoError(t, svc.DropNewsArticle(ctx, entry.NewsID))
+
+	require.Len(t, conn.deletes, 1)
+	require.Equal(t, "news-channel", conn.deletes[0].channelID)
+	require.Equal(t, "1", conn.deletes[0].messageID)
+}
+
+func TestSavePostsNewDiscordMessageWhenUntracked(t *testing.T) {
+	t.Parallel()
+
+	news.RegisterDiscordCommands(nil)
+	ctx := t.Context()
+
+	// Simulate an article whose original post tracked no message id (the bot
+	// was down when it posted): the first connection never returns an id.
+	down := &recordingDiscord{}
+	downSvc := news.New(news.NewRepository(fixture.Database), down, "news-channel")
+
+	title := stringutil.SecureRandomString(12)
+	entry := &news.Article{Title: title, BodyMD: stringutil.SecureRandomString(40), IsPublished: true}
+	require.NoError(t, downSvc.Save(ctx, entry))
+
+	checked := news.Article{}
+	require.NoError(t, downSvc.GetNewsByID(ctx, int(entry.NewsID), &checked))
+	require.Zero(t, checked.DiscordMessageID)
+
+	// Once the bot is back, editing must post a fresh message and track it.
+	restored := &recordingDiscord{returnIDs: true}
+	restoredSvc := news.New(news.NewRepository(fixture.Database), restored, "news-channel")
+
+	entry.Title = title + " (edited)"
+	entry.BodyMD = stringutil.SecureRandomString(40)
+	require.NoError(t, restoredSvc.Save(ctx, entry))
+
+	require.Len(t, restored.posts, 1)
+	require.True(t, messageHasHeading(restored.posts[0].message, "News edited"))
+	require.Empty(t, restored.edits)
+
+	require.NoError(t, restoredSvc.GetNewsByID(ctx, int(entry.NewsID), &checked))
+	require.Equal(t, int64(1), checked.DiscordMessageID)
+
+	require.NoError(t, restoredSvc.DropNewsArticle(ctx, entry.NewsID))
 }

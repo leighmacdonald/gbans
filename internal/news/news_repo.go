@@ -77,14 +77,15 @@ func (r Repository) GetNewsLatestArticle(ctx context.Context, includeUnpublished
 func (r Repository) GetNewsByID(ctx context.Context, newsID int, entry *Article) error {
 	query, args, errQueryArgs := r.db.
 		Builder().
-		Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
+		Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on",
+			"COALESCE(discord_message_id, 0) as discord_message_id").
 		From("news").Where(sq.Eq{"news_id": newsID}).ToSql()
 	if errQueryArgs != nil {
 		return database.Err(errQueryArgs)
 	}
 
 	if errQuery := r.db.QueryRow(ctx, query, args...).Scan(&entry.NewsID, &entry.Title, &entry.BodyMD, &entry.IsPublished,
-		&entry.CreatedOn, &entry.UpdatedOn); errQuery != nil {
+		&entry.CreatedOn, &entry.UpdatedOn, &entry.DiscordMessageID); errQuery != nil {
 		return database.Err(errQuery)
 	}
 
@@ -128,6 +129,14 @@ func (r Repository) updateNewsArticle(ctx context.Context, entry *Article) error
 		Set("is_published", entry.IsPublished).
 		Set("updated_on", time.Now()).
 		Where(sq.Eq{"news_id": entry.NewsID})))
+}
+
+func (r Repository) SetDiscordMessageID(ctx context.Context, newsID int32, messageID int64) error {
+	return database.Err(r.db.ExecUpdateBuilder(ctx, r.db.
+		Builder().
+		Update("news").
+		Set("discord_message_id", messageID).
+		Where(sq.Eq{"news_id": newsID})))
 }
 
 func (r Repository) DropNewsArticle(ctx context.Context, newsID int32) error {
