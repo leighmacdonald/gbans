@@ -373,7 +373,7 @@ void onRebuildUsers(Handle request, bool failure, bool successful, EHTTPStatusCo
     json_cleanup_and_delete(usersObj);
     delete request;
 
-    LogMessage("Loaded %d users into %d groups", numUsers, numUserGroups);
+    LogMessage("Loaded %d users, %d group links", numUsers, numUserGroups);
 
     if (!RebuildOverrides()) {
         gQueuedAdminUpdate = false;
