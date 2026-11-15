@@ -176,7 +176,7 @@ void OnMapEnd() {
 
 public
 void OnMapStart() {
-    reloadAdmins(true);
+    reloadAdmins(false);
     gSeedPromoSent = false;
 }
 

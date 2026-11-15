@@ -7,6 +7,12 @@
 // Set once the current token has been used to trigger the post-auth setup.
 bool g_has_authed = false;
 
+// Admin data only changes on the website, not on map boundaries, so the map
+// start refresh is throttled to avoid three HTTP requests and a full cache
+// rebuild on every single map load.
+const adminReloadInterval = 900;
+int gLastAdminReloadAt    = 0;
+
 public
 Action onAdminCmdReload(int clientId, int argc) {
     // Drop the cached token so a rotated gb_core_server_key takes effect, and
@@ -26,7 +32,15 @@ Action onAdminCmdReload(int clientId, int argc) {
 }
 
 public
-void reloadAdmins(bool force) { ServerCommand("sm_reloadadmins"); }
+void reloadAdmins(bool force) {
+    int now = GetTime();
+    if (!force && gLastAdminReloadAt > 0 && now - gLastAdminReloadAt < adminReloadInterval) {
+        return;
+    }
+
+    gLastAdminReloadAt = now;
+    ServerCommand("sm_reloadadmins");
+}
 
 public
 void OnClientPostAdminCheck(int clientId) {
