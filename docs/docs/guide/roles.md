@@ -14,6 +14,12 @@ permissions each role grants, assign roles to players, and see who has each role
 Permissions gate both the navigation (which pages a user sees) and the API (which actions
 a user is allowed to perform).
 
+The built-in **admin** role is seeded with every permission, including the SourceMod flag
+set. Because of that it is also synced to your servers as an `admin` group with full flags
+and immunity 100, so anyone holding the role (the site owner, by default) is a root admin
+in game too. Strip the SourceMod permissions from the role if you would rather manage
+in-game rights through dedicated SourceMod roles.
+
 ## SourceMod overrides
 
 The same page surfaces SourceMod **Command Overrides** and **Group Immunity**:

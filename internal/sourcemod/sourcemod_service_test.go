@@ -259,7 +259,10 @@ func TestSourcemodServiceAuth(t *testing.T) {
 
 	groups, err := harness.webClient(t, person).Groups(ctx, &emptypb.Empty{})
 	require.NoError(t, err)
-	require.Empty(t, groups.GetGroups())
+
+	// The seeded admin role carries the full sourcemod permission set, so it
+	// is always served as a group on a fresh install.
+	require.NotNil(t, findGroup(groups.GetGroups(), "admin"))
 
 	// Read permission alone must not allow write operations.
 	_, err = harness.webClient(t, person).DeleteImmunity(ctx, &sourcemodv1.DeleteImmunityRequest{ImmunityId: &missingImmunityID})
