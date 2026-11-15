@@ -123,10 +123,8 @@ void onCmdSeedReceived(Handle request, bool failure, bool successful, EHTTPStatu
         return;
     }
     default: {
-        PrintRPCError(request, failure, status);
-
         char reason[256];
-        if (GetRPCErrorMessage(request, status, reason, sizeof reason)) {
+        if (LogRPCErrorAndGetMessage(request, failure, status, reason, sizeof reason)) {
             delete request;
             PrintToChat(clientId, "Seed request failed: %s", reason);
         } else {
