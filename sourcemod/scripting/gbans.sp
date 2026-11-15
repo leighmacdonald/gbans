@@ -188,6 +188,15 @@ void OnPluginEnd() {
     if (gTimerCheckSeedPromo != null) {
         KillTimer(gTimerCheckSeedPromo);
     }
+
+    if (g_accelerator_log_handle != null) {
+        CloseHandle(g_accelerator_log_handle);
+        g_accelerator_log_handle = null;
+    }
+    if (g_crash_log_handle != null) {
+        CloseHandle(g_crash_log_handle);
+        g_crash_log_handle = null;
+    }
 }
 
 public
