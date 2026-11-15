@@ -63,12 +63,24 @@ func (u News) Save(ctx context.Context, entry *Article) error {
 		return err
 	}
 
-	if !entry.IsPublished {
+	if isNew {
+		// New unpublished articles never post to discord.
+		if entry.IsPublished {
+			u.postToDiscord(ctx, entry, newNewsMessage(entry.BodyMD, entry.Title))
+		}
+
 		return nil
 	}
 
-	if isNew {
-		u.postToDiscord(ctx, entry, newNewsMessage(entry.BodyMD, entry.Title))
+	// The article already exists, so look up its tracked discord message to
+	// keep the channel in sync with the published state.
+	current := Article{}
+	if err := u.repository.GetNewsByID(ctx, int(entry.NewsID), &current); err != nil {
+		return err
+	}
+
+	if !entry.IsPublished {
+		u.unpublishFromDiscord(ctx, current)
 
 		return nil
 	}
@@ -76,11 +88,6 @@ func (u News) Save(ctx context.Context, entry *Article) error {
 	// Edits update the tracked discord message in place so the channel mirrors
 	// the article. Rows without a tracked id (articles posted before tracking
 	// existed, or whose original post failed) get a fresh message instead.
-	current := Article{}
-	if err := u.repository.GetNewsByID(ctx, int(entry.NewsID), &current); err != nil {
-		return err
-	}
-
 	if current.DiscordMessageID == 0 {
 		u.postToDiscord(ctx, entry, editNewsMessages(entry.BodyMD, entry.Title))
 
@@ -98,6 +105,47 @@ func (u News) Save(ctx context.Context, entry *Article) error {
 			slog.Int("news_id", int(entry.NewsID)),
 			slog.String("message_id", messageID),
 			slog.String("error", errEdit.Error()))
+	}
+
+	return nil
+}
+
+// unpublishFromDiscord deletes the tracked discord message for an article
+// that was unpublished, clearing the tracked id on success so a later
+// republish posts a fresh message. On failure the id is kept so a retry can
+// clean up.
+func (u News) unpublishFromDiscord(ctx context.Context, current Article) {
+	if current.DiscordMessageID == 0 {
+		return
+	}
+
+	if errDelete := u.deleteTrackedDiscordMessage(ctx, current); errDelete != nil {
+		return
+	}
+
+	if errClear := u.repository.SetDiscordMessageID(ctx, current.NewsID, 0); errClear != nil {
+		slog.Error("Failed to clear news discord message id",
+			slog.Int("news_id", int(current.NewsID)),
+			slog.String("error", errClear.Error()))
+	}
+}
+
+// deleteTrackedDiscordMessage deletes the discord message tracked for the
+// article, if any. Failures are logged, not returned as fatal: an outage must
+// not block site-side news changes.
+func (u News) deleteTrackedDiscordMessage(_ context.Context, current Article) error {
+	if u.logChannelID == "" || current.DiscordMessageID == 0 {
+		return nil
+	}
+
+	messageID := strconv.FormatInt(current.DiscordMessageID, 10)
+	if errDelete := u.discord.DeleteMessage(u.logChannelID, messageID); errDelete != nil {
+		slog.Error("Failed to delete news discord message",
+			slog.Int("news_id", int(current.NewsID)),
+			slog.String("message_id", messageID),
+			slog.String("error", errDelete.Error()))
+
+		return errDelete
 	}
 
 	return nil
@@ -143,18 +191,10 @@ func (u News) postToDiscord(ctx context.Context, entry *Article, message *discor
 }
 
 func (u News) DropNewsArticle(ctx context.Context, newsID int32) error {
-	if u.logChannelID != "" {
-		current := Article{}
-		if errFetch := u.repository.GetNewsByID(ctx, int(newsID), &current); errFetch == nil &&
-			current.DiscordMessageID != 0 {
-			messageID := strconv.FormatInt(current.DiscordMessageID, 10)
-			if errDelete := u.discord.DeleteMessage(u.logChannelID, messageID); errDelete != nil {
-				slog.Error("Failed to delete news discord message",
-					slog.Int("news_id", int(newsID)),
-					slog.String("message_id", messageID),
-					slog.String("error", errDelete.Error()))
-			}
-		}
+	current := Article{}
+	if errFetch := u.repository.GetNewsByID(ctx, int(newsID), &current); errFetch == nil {
+		// Failure is already logged by deleteTrackedDiscordMessage.
+		_ = u.deleteTrackedDiscordMessage(ctx, current)
 	}
 
 	if err := u.repository.DropNewsArticle(ctx, newsID); err != nil {
