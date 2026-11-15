@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@connectrpc/connect-query";
+import { createConnectQueryKey, useMutation, useQuery, useTransport } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -51,29 +51,38 @@ export const Route = createFileRoute("/_mod/admin/news")({
 function AdminNews() {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
+	const transport = useTransport();
 	const search = Route.useSearch();
 
 	const { data, isLoading, isError } = useQuery(all);
 
 	const { sendFlash, sendError } = useUserFlashCtx();
 
+	const invalidateNews = useCallback(() => {
+		queryClient.invalidateQueries({
+			queryKey: createConnectQueryKey({
+				schema: all,
+				cardinality: "finite",
+				transport,
+				input: {},
+			}),
+		});
+	}, [queryClient, transport]);
+
 	const onCreate = useCallback(async () => {
 		try {
-			const newEntry = await NiceModal.show(NewsEditModal);
-			queryClient.setQueryData(["newsList"], [...(data?.articles ?? []), newEntry]);
+			await NiceModal.show(NewsEditModal);
 			sendFlash("success", `Entry created successfully`);
+			invalidateNews();
 		} catch (e) {
 			sendFlash("error", `Error trying to create entry: ${e}`);
 		}
-	}, [data, queryClient, sendFlash]);
+	}, [invalidateNews, sendFlash]);
 
 	const deleteMutation = useMutation(delete$, {
-		onSuccess: (_, req) => {
-			queryClient.setQueryData(
-				["newsList"],
-				(data?.articles ?? []).filter((e) => e.newsId !== req.newsId),
-			);
+		onSuccess: () => {
 			sendFlash("success", `Entry deleted successfully`);
+			invalidateNews();
 		},
 		onError: sendError,
 	});
@@ -99,19 +108,16 @@ function AdminNews() {
 	const onEdit = useCallback(
 		async (entry: Article) => {
 			try {
-				const editedEntry = (await NiceModal.show(NewsEditModal, {
+				await NiceModal.show(NewsEditModal, {
 					entry: entry,
-				})) as Article;
-				queryClient.setQueryData(
-					["newsList"],
-					(data?.articles ?? []).map((e) => (e.newsId === editedEntry.newsId ? editedEntry : e)),
-				);
+				});
 				sendFlash("success", `Entry updated successfully`);
+				invalidateNews();
 			} catch (e) {
 				sendFlash("error", `Error trying to update entry: ${e}`);
 			}
 		},
-		[queryClient, sendFlash, data],
+		[invalidateNews, sendFlash],
 	);
 
 	const columns = useMemo(() => {

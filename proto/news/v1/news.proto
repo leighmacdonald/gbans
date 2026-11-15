@@ -69,7 +69,8 @@ message CreateRequest {
     }
   ];
   bool is_published = 3 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp created_on = 4 [(buf.validate.field).required = true];
+  // The server stamps created_on/updated_on itself; clients must not set them.
+  reserved 4;
 }
 message CreateResponse {
   Article article = 1 [(buf.validate.field).required = true];
@@ -99,7 +100,8 @@ message EditRequest {
     }
   ];
   bool is_published = 4;
-  google.protobuf.Timestamp created_on = 5;
+  // created_on is preserved from the original insert; clients must not set it.
+  reserved 5;
 }
 
 message EditResponse {
