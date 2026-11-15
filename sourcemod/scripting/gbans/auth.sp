@@ -4,9 +4,23 @@
 
 #include "common.sp"
 
+// Set once the current token has been used to trigger the post-auth setup.
+bool g_has_authed = false;
+
 public
 Action onAdminCmdReload(int clientId, int argc) {
-    reloadAdmins(true);
+    // Drop the cached token so a rotated gb_core_server_key takes effect, and
+    // force the admin cache rebuild that runs after a successful auth.
+    gToken[0]    = '\0';
+    g_has_authed = false;
+
+    if (!authenticateServer()) {
+        reply(clientId, "[GB] Failed to send the authentication request to gbans");
+
+        return Plugin_Handled;
+    }
+
+    reply(clientId, "[GB] Re-authenticating with gbans");
 
     return Plugin_Handled;
 }
@@ -24,17 +38,15 @@ void OnClientPostAdminCheck(int clientId) {
 }
 
 public
-void authenticateServer() {
+bool authenticateServer() {
     char passwd[40];
     gb_core_server_key.GetString(passwd, sizeof passwd);
 
     JSON_Object req = new JSON_Object();
     req.SetString("password", passwd);
 
-    postHTTPRequest("/connect/sourcemod.v1.PluginService/SMAuthenticate", req, onAuthenticate);
+    return postHTTPRequest("/connect/sourcemod.v1.PluginService/SMAuthenticate", req, onAuthenticate);
 }
-
-bool g_has_authed = false;
 
 void onAuthenticate(Handle request, bool failure, bool successful, EHTTPStatusCode status, any value1, any value2) {
     switch (status) {
