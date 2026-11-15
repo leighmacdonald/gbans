@@ -186,6 +186,72 @@ func TestSaveTracksDiscordMessage(t *testing.T) {
 	require.Equal(t, "1", conn.deletes[0].messageID)
 }
 
+func TestSaveDeletesDiscordMessageWhenUnpublished(t *testing.T) {
+	t.Parallel()
+
+	conn := &recordingDiscord{returnIDs: true}
+	svc := news.New(news.NewRepository(fixture.Database), conn, "news-channel")
+	ctx := t.Context()
+
+	title := stringutil.SecureRandomString(12)
+	entry := &news.Article{Title: title, BodyMD: stringutil.SecureRandomString(40), IsPublished: true}
+	require.NoError(t, svc.Save(ctx, entry))
+
+	checked := news.Article{}
+	require.NoError(t, svc.GetNewsByID(ctx, int(entry.NewsID), &checked))
+	require.Equal(t, int64(1), checked.DiscordMessageID)
+
+	// Unpublishing must delete the tracked discord message and clear the id.
+	entry.IsPublished = false
+	require.NoError(t, svc.Save(ctx, entry))
+
+	require.Empty(t, conn.edits)
+	require.Len(t, conn.deletes, 1)
+	require.Equal(t, "news-channel", conn.deletes[0].channelID)
+	require.Equal(t, "1", conn.deletes[0].messageID)
+
+	require.NoError(t, svc.GetNewsByID(ctx, int(entry.NewsID), &checked))
+	require.Zero(t, checked.DiscordMessageID, "tracked id must be cleared after a successful delete")
+
+	// Saving the still-unpublished article again must not delete again.
+	require.NoError(t, svc.Save(ctx, entry))
+	require.Len(t, conn.deletes, 1)
+
+	// Republishing posts a fresh message and tracks it.
+	entry.IsPublished = true
+	require.NoError(t, svc.Save(ctx, entry))
+
+	require.Len(t, conn.posts, 2, "republish must post a fresh discord message")
+	require.Empty(t, conn.edits)
+
+	require.NoError(t, svc.GetNewsByID(ctx, int(entry.NewsID), &checked))
+	require.Equal(t, int64(2), checked.DiscordMessageID)
+
+	require.NoError(t, svc.DropNewsArticle(ctx, entry.NewsID))
+	require.Len(t, conn.deletes, 2)
+	require.Equal(t, "2", conn.deletes[1].messageID)
+}
+
+func TestSaveUnpublishedNewArticlePostsNothing(t *testing.T) {
+	t.Parallel()
+
+	conn := &recordingDiscord{returnIDs: true}
+	svc := news.New(news.NewRepository(fixture.Database), conn, "news-channel")
+	ctx := t.Context()
+
+	entry := &news.Article{
+		Title: stringutil.SecureRandomString(12), BodyMD: stringutil.SecureRandomString(40),
+		IsPublished: false,
+	}
+	require.NoError(t, svc.Save(ctx, entry))
+
+	require.Empty(t, conn.posts)
+	require.Empty(t, conn.edits)
+	require.Empty(t, conn.deletes)
+
+	require.NoError(t, svc.DropNewsArticle(ctx, entry.NewsID))
+}
+
 func TestSavePostsNewDiscordMessageWhenUntracked(t *testing.T) {
 	t.Parallel()
 
