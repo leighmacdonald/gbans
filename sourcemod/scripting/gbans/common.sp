@@ -267,7 +267,7 @@ bool postHTTPRequest(const char[] path, JSON_Object data, SteamWorksHTTPRequestC
     makeURL(path, url, sizeof url);
 
     Handle request = SteamWorks_CreateHTTPRequest(k_EHTTPMethodPOST, url);
-    if (request == INVALID_HANDLE) {
+    if (request == null || request == INVALID_HANDLE) {
         LogError("Failed to create HTTP request to %s", url);
         json_cleanup_and_delete(data);
 
