@@ -162,6 +162,7 @@ from
         (cast('PERMISSION_ANTICHEAT_READ' as permission)),
         (cast('PERMISSION_APPEAL_READ' as permission)),
         (cast('PERMISSION_APPEAL_WRITE' as permission)),
+        (cast('PERMISSION_APPEAL_ADMIN' as permission)),
         (cast('PERMISSION_ASSET_CREATE' as permission)),
         (cast('PERMISSION_ASSET_DELETE' as permission)),
         (cast('PERMISSION_BAN_READ' as permission)),
@@ -178,6 +179,7 @@ from
         (cast('PERMISSION_CONTEST_READ' as permission)),
         (cast('PERMISSION_CONTEST_WRITE' as permission)),
         (cast('PERMISSION_CONTEST_DELETE' as permission)),
+        (cast('PERMISSION_CONTEST_ADMIN' as permission)),
         (cast('PERMISSION_CURRENT_PROFILE' as permission)),
         (
           cast('PERMISSION_CURRENT_SETTINGS' as permission)
@@ -220,6 +222,51 @@ from
         ),
         (
           cast('PERMISSION_WORDFILTER_DELETE' as permission)
+        ),
+        (
+          cast('PERMISSION_SOURCEMOD_RESERVED' as permission)
+        ),
+        (
+          cast('PERMISSION_SOURCEMOD_GENERIC' as permission)
+        ),
+        (cast('PERMISSION_SOURCEMOD_KICK' as permission)),
+        (cast('PERMISSION_SOURCEMOD_BAN' as permission)),
+        (
+          cast('PERMISSION_SOURCEMOD_UNBAN' as permission)
+        ),
+        (cast('PERMISSION_SOURCEMOD_SLAY' as permission)),
+        (
+          cast('PERMISSION_SOURCEMOD_CHANGEMAP' as permission)
+        ),
+        (cast('PERMISSION_SOURCEMOD_CVAR' as permission)),
+        (cast('PERMISSION_SOURCEMOD_CFG' as permission)),
+        (cast('PERMISSION_SOURCEMOD_CHAT' as permission)),
+        (cast('PERMISSION_SOURCEMOD_VOTE' as permission)),
+        (
+          cast('PERMISSION_SOURCEMOD_PASSWORD' as permission)
+        ),
+        (cast('PERMISSION_SOURCEMOD_RCON' as permission)),
+        (
+          cast('PERMISSION_SOURCEMOD_CHEATS' as permission)
+        ),
+        (cast('PERMISSION_SOURCEMOD_ROOT' as permission)),
+        (
+          cast('PERMISSION_SOURCEMOD_CUSTOM_1' as permission)
+        ),
+        (
+          cast('PERMISSION_SOURCEMOD_CUSTOM_2' as permission)
+        ),
+        (
+          cast('PERMISSION_SOURCEMOD_CUSTOM_3' as permission)
+        ),
+        (
+          cast('PERMISSION_SOURCEMOD_CUSTOM_4' as permission)
+        ),
+        (
+          cast('PERMISSION_SOURCEMOD_CUSTOM_5' as permission)
+        ),
+        (
+          cast('PERMISSION_SOURCEMOD_CUSTOM_6' as permission)
         )
     )
     as v (permission)
