@@ -36,13 +36,22 @@ func (r *Repository) InsertLogs(ctx context.Context, events []logparse.ServerEve
 	return nil
 }
 
-func (r *Repository) purgeLogs(ctx context.Context) error {
+// PurgeLogs deletes server log lines older than the latest 10000 per server.
+func (r *Repository) PurgeLogs(ctx context.Context) error {
 	servers, errServers := r.Query(ctx, Query{IncludeDisabled: true, IncludeDeleted: true})
 	if errServers != nil {
 		return errServers
 	}
 
-	const purgeQuery = "DELETE FROM server_logs WHERE server_id = $1 ORDER BY created_on DESC OFFSET 10000"
+	// Keep the latest 10000 log lines per server, delete everything older.
+	const purgeQuery = `DELETE FROM server_logs
+	WHERE server_id = $1
+		AND server_log_id NOT IN (
+			SELECT server_log_id FROM server_logs
+			WHERE server_id = $1
+			ORDER BY created_on DESC
+			LIMIT 10000
+		)`
 
 	for _, server := range servers {
 		if err := r.Exec(ctx, purgeQuery, server.ServerID); err != nil {
