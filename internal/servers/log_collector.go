@@ -31,7 +31,7 @@ func (l *LogEventRecorder) start(ctx context.Context) {
 			l.flush(ctx)
 			l.logs = nil
 		case <-purgeTicker.C:
-			if err := l.repo.purgeLogs(ctx); err != nil {
+			if err := l.repo.PurgeLogs(ctx); err != nil {
 				slog.Error("Failed to purge server logs", slog.String("error", err.Error()))
 			}
 		case <-ctx.Done():
