@@ -188,13 +188,13 @@ export const referencePointStyle = (point: ReferencePoint): ReferenceMarkerStyle
 };
 
 export const overviewUrls = (mapName: string): { image: string; worldFile: string } => ({
-	image: `/maps/${mapName}_overview.png`,
-	worldFile: `/maps/${mapName}_overview.pgw`,
+	image: `/mapdata/${mapName}_overview.png`,
+	worldFile: `/mapdata/${mapName}_overview.pgw`,
 });
 
 export const referenceUrls = (mapName: string): { primary: string; fallback: string } => ({
-	primary: `/maps/${mapName}_reference.geojson`,
-	fallback: `/maps/${mapName}_reference.json`,
+	primary: `/mapdata/${mapName}_reference.geojson`,
+	fallback: `/mapdata/${mapName}_reference.json`,
 });
 
 export const fetchReferenceFile = async (urls: {
