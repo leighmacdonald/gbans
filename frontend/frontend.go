@@ -16,7 +16,7 @@ var jsRoutes = []string{
 	"/admin/servers", "/admin/settings", "/admin/votes", "/ban/{ban_id}", "/changelog",
 	"/chatlogs", "/forums", "/forums/{forum_id}", "/forums/thread/{forum_thread_id}", "/login",
 	"/login/success", "/logout", "/match/{match_id}", "/matches", "/matches/{steam_id}", "/mge",
-	"/mge/1v1", "/mge/2v2", "/notifications", "/page-not-found", "/patreon", "/permission",
+	"/mge/1v1", "/mge/2v2", "/maps", "/notifications", "/page-not-found", "/patreon", "/permission",
 	"/privacy-policy", "/profile/{steam_id}", "/report", "/report/{report_id}", "/servers",
 	"/settings", "/stats", "/stv", "/wiki", "/wiki/{slug...}",
 }

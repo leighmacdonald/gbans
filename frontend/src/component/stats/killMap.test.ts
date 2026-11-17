@@ -88,15 +88,15 @@ test("the overview viewport contains the image plus a buffer", () => {
 
 test("overviewUrls follows the <map>_overview naming", () => {
 	expect(overviewUrls("pl_upward")).toEqual({
-		image: "/maps/pl_upward_overview.png",
-		worldFile: "/maps/pl_upward_overview.pgw",
+		image: "/mapdata/pl_upward_overview.png",
+		worldFile: "/mapdata/pl_upward_overview.pgw",
 	});
 });
 
 test("referenceUrls prefers the GeoJSON reference and falls back to JSON", () => {
 	expect(referenceUrls("pl_upward")).toEqual({
-		primary: "/maps/pl_upward_reference.geojson",
-		fallback: "/maps/pl_upward_reference.json",
+		primary: "/mapdata/pl_upward_reference.geojson",
+		fallback: "/mapdata/pl_upward_reference.json",
 	});
 });
 
