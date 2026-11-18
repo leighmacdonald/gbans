@@ -268,6 +268,9 @@ func configFromUpdate(inCfg *configv1.Config, current Config) Config {
 		if algorithm := inStats.GetRatingAlgorithm(); algorithm != "" {
 			statsConfig.RatingAlgorithm = algorithm
 		}
+		if balancer := inStats.GetBalanceAlgorithm(); balancer != "" {
+			statsConfig.BalanceAlgorithm = balancer
+		}
 	}
 
 	conf := Config{
@@ -539,8 +542,9 @@ func toConfig(conf Config) *configv1.Config {
 			MaxCheatCvar:          new(conf.Anticheat.MaxCheatCvar),
 		},
 		Stats: &configv1.Stats{
-			RefreshSchedule: new(conf.StatsRefreshSchedule()),
-			RatingAlgorithm: new(conf.RatingAlgorithm()),
+			RefreshSchedule:  new(conf.StatsRefreshSchedule()),
+			RatingAlgorithm:  new(conf.RatingAlgorithm()),
+			BalanceAlgorithm: new(conf.BalanceAlgorithm()),
 		},
 	}
 }

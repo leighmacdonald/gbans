@@ -275,6 +275,50 @@ func (r Repository) PlayerRating(ctx context.Context, steamID steamid.SteamID, s
 	return rating, nil
 }
 
+// RatingsForSteamIDs loads the current ratings of the requested players in one
+// query. Unrated players are simply absent from the result, which lets callers
+// supply their own default skill.
+func (r Repository) RatingsForSteamIDs(
+	ctx context.Context,
+	statsBucketID int32,
+	steamIDs []steamid.SteamID,
+) (map[steamid.SteamID]Rating, error) {
+	result := make(map[steamid.SteamID]Rating, len(steamIDs))
+	if len(steamIDs) == 0 {
+		return result, nil
+	}
+
+	ids := make([]int64, len(steamIDs))
+	for idx, id := range steamIDs {
+		ids[idx] = id.Int64()
+	}
+
+	rows, err := r.Database.Query(ctx, `
+		SELECT `+ratingViewColumns+`
+		FROM stats_player_rating_view
+		WHERE stats_bucket_id = $1 AND steam_id = ANY($2)`, statsBucketID, ids)
+	if err != nil {
+		return nil, database.Err(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var rating Rating
+		if errScan := rows.Scan(
+			&rating.StatsBucketID, &rating.SteamID, &rating.Personaname, &rating.AvatarHash,
+			&rating.MatchesPlayed, &rating.Wins, &rating.Losses, &rating.Draws, &rating.Mu, &rating.Sigma,
+			&rating.Rating, &rating.RatingSigma, &rating.RatingConservative, &rating.Rank, &rating.Provisional,
+			&rating.LastMatchAt, &rating.CalculatedOn,
+		); errScan != nil {
+			return nil, database.Err(errScan)
+		}
+
+		result[rating.SteamID] = rating
+	}
+
+	return result, database.Err(rows.Err())
+}
+
 // PlayerRatingHistory returns a player's rating snapshots, newest first.
 func (r Repository) PlayerRatingHistory(ctx context.Context, steamID steamid.SteamID, statsBucketID int32, limit int) ([]RatingHistoryEntry, error) {
 	rows, err := r.Database.Query(ctx, `

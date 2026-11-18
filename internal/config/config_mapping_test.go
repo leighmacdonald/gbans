@@ -67,7 +67,11 @@ func testDomainConfig() Config {
 			MaxBhop: 40, MaxFakeAng: 5, MaxCmdNum: 100, MaxTooManyConnections: 10, MaxCheatCvar: 5,
 			MaxOOBVar: 5, MaxInvalidUserCmd: 5,
 		},
-		Stats: &Stats{RefreshSchedule: "15 3 * * *", RatingAlgorithm: "elo"},
+		Stats: &Stats{
+			RefreshSchedule:  "15 3 * * *",
+			RatingAlgorithm:  "elo",
+			BalanceAlgorithm: "gosper",
+		},
 	}
 }
 
@@ -133,4 +137,12 @@ func TestRatingAlgorithmDefault(t *testing.T) {
 	require.Equal(t, DefaultRatingAlgorithm, Config{}.RatingAlgorithm())
 	require.Equal(t, DefaultRatingAlgorithm, Config{Stats: &Stats{}}.RatingAlgorithm())
 	require.Equal(t, "elo", Config{Stats: &Stats{RatingAlgorithm: "elo"}}.RatingAlgorithm())
+}
+
+func TestBalanceAlgorithmDefault(t *testing.T) {
+	t.Parallel()
+
+	require.Equal(t, DefaultBalanceAlgorithm, Config{}.BalanceAlgorithm())
+	require.Equal(t, DefaultBalanceAlgorithm, Config{Stats: &Stats{}}.BalanceAlgorithm())
+	require.Equal(t, "gosper", Config{Stats: &Stats{BalanceAlgorithm: "gosper"}}.BalanceAlgorithm())
 }

@@ -23,6 +23,9 @@ service PluginService {
   // the default stats bucket. Rate limited to one request per player every
   // five minutes.
   rpc SMPlayerStats(SMPlayerStatsRequest) returns (SMPlayerStatsResponse) {}
+  // SMBalanceTeams returns a balanced split of the submitted players using
+  // their internal skill rating from the default stats bucket.
+  rpc SMBalanceTeams(SMBalanceTeamsRequest) returns (SMBalanceTeamsResponse) {}
 }
 
 message SMPingModRequest {
@@ -188,4 +191,23 @@ message SMPlayerStatsResponse {
   // The stats bucket (game mode) the window stats were taken from.
   uint32 stats_bucket_id = 2;
   string stats_bucket_name = 3;
+}
+
+message SMBalanceTeamsRequest {
+  // SteamID64 of every real player to include. Spectators and unassigned
+  // players are included too; bots and SourceTV must be excluded by the caller.
+  repeated uint64 steam_ids = 1;
+  // Maximum pool size for the exact solver. Zero uses the balancer's default.
+  int32 max_exact = 2;
+}
+
+message SMBalanceTeamsResponse {
+  // SteamID64s assigned to each team, in descending rating order. Together
+  // they contain every submitted player; waiting is normally empty.
+  repeated uint64 red_steam_ids = 1;
+  repeated uint64 blu_steam_ids = 2;
+  repeated uint64 waiting_steam_ids = 3;
+  double imbalance = 4;
+  string algorithm = 5;
+  string balancer = 6;
 }

@@ -30,13 +30,78 @@ type TeamBalancer interface {
 	BestSplit(ratings []Skill, maxExact int) (TeamSplit, error)
 }
 
+// AlternatingBalancer is the default balancer. It sorts players by rating and
+// assigns them red/blue/red/blue in descending order. It is fast and
+// predictable; an odd last player is left in Waiting for the service to place.
+type AlternatingBalancer struct{}
+
+func (AlternatingBalancer) Name() string {
+	return BalanceAlgorithmAlternating
+}
+
+func (AlternatingBalancer) BestSplit(ratings []Skill, _ int) (TeamSplit, error) {
+	order := rankedIndices(ratings)
+	split := TeamSplit{Red: make([]int, 0, (len(order)+1)/2), Blu: make([]int, 0, len(order)/2)}
+
+	for idx, player := range order {
+		if idx%2 == 0 {
+			split.Red = append(split.Red, player)
+		} else {
+			split.Blu = append(split.Blu, player)
+		}
+	}
+
+	// An unpaired last player is benched so the two teams stay equal; the
+	// service reassigns them to the smaller team before returning results.
+	if len(split.Red) > len(split.Blu) {
+		split.Waiting = split.Red[len(split.Red)-1:]
+		split.Red = split.Red[:len(split.Red)-1]
+	}
+
+	split.Imbalance = math.Abs(splitSum(ratings, split.Red) - splitSum(ratings, split.Blu))
+
+	return split, nil
+}
+
+// SerpentineBalancer assigns players in a snake draft (red/blue/blue/red)
+// after sorting by rating. It evens out the teams more than simple alternating
+// while staying O(n log n).
+type SerpentineBalancer struct{}
+
+func (SerpentineBalancer) Name() string {
+	return BalanceAlgorithmSerpentine
+}
+
+func (SerpentineBalancer) BestSplit(ratings []Skill, _ int) (TeamSplit, error) {
+	order := rankedIndices(ratings)
+	split := TeamSplit{Red: make([]int, 0, (len(order)+1)/2), Blu: make([]int, 0, len(order)/2)}
+
+	for idx, player := range order {
+		switch idx % 4 {
+		case 0, 3:
+			split.Red = append(split.Red, player)
+		default:
+			split.Blu = append(split.Blu, player)
+		}
+	}
+
+	if len(split.Red) > len(split.Blu) {
+		split.Waiting = split.Red[len(split.Red)-1:]
+		split.Red = split.Red[:len(split.Red)-1]
+	}
+
+	split.Imbalance = math.Abs(splitSum(ratings, split.Red) - splitSum(ratings, split.Blu))
+
+	return split, nil
+}
+
 // GosperBalancer uses Gosper's hack to enumerate k-subsets exactly. The
 // highest-rated player is anchored to one team, which halves the search space
 // without discarding any optimal split.
 type GosperBalancer struct{}
 
 func (GosperBalancer) Name() string {
-	return "gosper"
+	return BalanceAlgorithmGosper
 }
 
 func (GosperBalancer) BestSplit(ratings []Skill, maxExact int) (TeamSplit, error) {

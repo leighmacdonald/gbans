@@ -54,6 +54,7 @@ type Stats struct {
 	repo       Repository
 	maps       maps.Maps
 	calculator RatingCalculator
+	balancer   TeamBalancer
 
 	notifier          notification.Notifier
 	matchLogChannelID string
@@ -103,6 +104,16 @@ func WithRatingCalculator(calculator RatingCalculator) Option {
 	return func(s *Stats) {
 		if calculator != nil {
 			s.calculator = calculator
+		}
+	}
+}
+
+// WithTeamBalancer replaces the default alternating balancer with an
+// alternative implementation.
+func WithTeamBalancer(balancer TeamBalancer) Option {
+	return func(s *Stats) {
+		if balancer != nil {
+			s.balancer = balancer
 		}
 	}
 }
@@ -299,7 +310,7 @@ func (s Stats) SetBucketEnabled(ctx context.Context, bucketID int32, enabled boo
 }
 
 func New(repo Repository, maps maps.Maps, options ...Option) Stats {
-	stats := Stats{repo: repo, maps: maps, calculator: TrueSkillCalculator{}}
+	stats := Stats{repo: repo, maps: maps, calculator: TrueSkillCalculator{}, balancer: AlternatingBalancer{}}
 
 	for _, option := range options {
 		option(&stats)

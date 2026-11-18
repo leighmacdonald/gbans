@@ -192,11 +192,17 @@ func (g *GBans) Init(ctx context.Context) error {
 		return errRatingCalc
 	}
 
+	teamBalancer, errBalancer := stats.NewTeamBalancer(g.config.BalanceAlgorithm())
+	if errBalancer != nil {
+		return errBalancer
+	}
+
 	g.stats = stats.New(stats.NewRepository(g.database), mapsSvc,
 		stats.WithMatchLogNotifications(g.notifications, conf.Discord.PublicMatchLogChannelID),
 		stats.WithMatchPlayerNotifications(stats.NewMatchPlayerNotifier(g.servers, g.persons)),
 		stats.WithRefreshSchedule(g.config.StatsRefreshSchedule),
-		stats.WithRatingCalculator(ratingCalc))
+		stats.WithRatingCalculator(ratingCalc),
+		stats.WithTeamBalancer(teamBalancer))
 
 	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler,
 		conf.Discord.SafeChatLogChannelID(), steamid.New(conf.Owner))
