@@ -22,18 +22,22 @@ func (EloCalculator) Name() string {
 	return RatingAlgorithmElo
 }
 
+func (EloCalculator) HistoryWindow() int {
+	return 0
+}
+
 func (EloCalculator) NewPlayerSkill() Skill {
 	return Skill{Mu: EloInitialRating, Sigma: 0}
 }
 
-func (EloCalculator) UpdateMatch(red, blu []Skill, outcome RatingOutcome) ([]Skill, []Skill) {
-	updatedRed := cloneSkills(red)
-	updatedBlu := cloneSkills(blu)
+func (EloCalculator) UpdateMatch(red, blu []PlayerRatingState, outcome RatingOutcome) ([]MatchUpdate, []MatchUpdate) {
+	redSkills := playerSkills(red)
+	bluSkills := playerSkills(blu)
 	if len(red) == 0 || len(blu) == 0 {
-		return updatedRed, updatedBlu
+		return toMatchUpdates(cloneSkills(redSkills), 0.5), toMatchUpdates(cloneSkills(bluSkills), 0.5)
 	}
 
-	redExpected := eloExpectedScore(teamAverage(red), teamAverage(blu))
+	redExpected := eloExpectedScore(teamAverage(redSkills), teamAverage(bluSkills))
 	var redActual float64
 	switch outcome {
 	case RatingWin:
@@ -43,7 +47,7 @@ func (EloCalculator) UpdateMatch(red, blu []Skill, outcome RatingOutcome) ([]Ski
 	case RatingLoss:
 		redActual = 0
 	default:
-		return updatedRed, updatedBlu
+		return toMatchUpdates(redSkills, redExpected), toMatchUpdates(bluSkills, 1-redExpected)
 	}
 
 	// Each team's total adjustment is K * (actual - expected); dividing by the
@@ -51,21 +55,23 @@ func (EloCalculator) UpdateMatch(red, blu []Skill, outcome RatingOutcome) ([]Ski
 	redDelta := EloKFactor * (redActual - redExpected) / float64(len(red))
 	bluDelta := EloKFactor * ((1 - redActual) - (1 - redExpected)) / float64(len(blu))
 
-	for idx := range updatedRed {
-		updatedRed[idx].Mu += redDelta
+	newRed := make([]Skill, len(redSkills))
+	for idx, skill := range redSkills {
+		newRed[idx] = Skill{Mu: skill.Mu + redDelta, Sigma: skill.Sigma}
 	}
 
-	for idx := range updatedBlu {
-		updatedBlu[idx].Mu += bluDelta
+	newBlu := make([]Skill, len(bluSkills))
+	for idx, skill := range bluSkills {
+		newBlu[idx] = Skill{Mu: skill.Mu + bluDelta, Sigma: skill.Sigma}
 	}
 
-	return updatedRed, updatedBlu
+	return toMatchUpdates(newRed, redExpected), toMatchUpdates(newBlu, 1-redExpected)
 }
 
-func (EloCalculator) Display(skill Skill) DisplayRating {
-	rating := int(math.Round(skill.Mu))
+func (EloCalculator) Display(ctx RatingContext) DisplayRating {
+	rating := int(math.Round(ctx.Skill.Mu))
 
-	return DisplayRating{Rating: rating, Sigma: 0, Conservative: rating}
+	return DisplayRating{Rating: rating, Sigma: 0, Conservative: rating, Visible: true}
 }
 
 func (EloCalculator) WinProbability(red, blu []Skill) float64 {
@@ -87,4 +93,13 @@ func teamAverage(team []Skill) float64 {
 	}
 
 	return total / float64(len(team))
+}
+
+func playerSkills(states []PlayerRatingState) []Skill {
+	skills := make([]Skill, len(states))
+	for idx, state := range states {
+		skills[idx] = state.Skill
+	}
+
+	return skills
 }

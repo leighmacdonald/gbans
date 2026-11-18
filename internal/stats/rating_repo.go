@@ -23,6 +23,7 @@ type ratedOutcomeRow struct {
 	BluRounds     int
 	LastRedRound  int
 	LastBluRound  int
+	Rounds        int
 }
 
 // PlayerRating is a player's persisted rating within a stats bucket.
@@ -33,6 +34,7 @@ type PlayerRating struct {
 	Sigma         float64
 	Display       DisplayRating
 	MatchesPlayed int
+	RoundsPlayed  int
 	Wins          int
 	Losses        int
 	Draws         int
@@ -49,8 +51,10 @@ type RatingHistory struct {
 	MatchStartTime time.Time
 	Mu             float64
 	Sigma          float64
+	Expected       float64
 	Outcome        RatingOutcome
 	MatchesPlayed  int
+	Rounds         int
 }
 
 // Rating is the public, display-scaled rating of a player.
@@ -80,8 +84,10 @@ type RatingHistoryEntry struct {
 	MatchStartTime time.Time
 	Mu             float64
 	Sigma          float64
+	Expected       float64
 	Outcome        RatingOutcome
 	MatchesPlayed  int
+	Rounds         int
 }
 
 // RatingLeaderboardOpts controls the ranked player listing.
@@ -106,7 +112,8 @@ func (r Repository) ratedMatchOutcomes(ctx context.Context) ([]ratedOutcomeRow, 
 			count(*) FILTER (WHERE rp.team::text = 'red') AS red_rounds,
 			count(*) FILTER (WHERE rp.team::text = 'blu') AS blu_rounds,
 			coalesce(max(rp.round_id) FILTER (WHERE rp.team::text = 'red'), 0) AS last_red_round,
-			coalesce(max(rp.round_id) FILTER (WHERE rp.team::text = 'blu'), 0) AS last_blu_round
+			coalesce(max(rp.round_id) FILTER (WHERE rp.team::text = 'blu'), 0) AS last_blu_round,
+			count(*) AS rounds
 		FROM match m
 		JOIN match_round mr ON mr.match_id = m.match_id
 		JOIN match_round_player rp ON rp.round_id = mr.round_id
@@ -138,6 +145,7 @@ func (r Repository) ratedMatchOutcomes(ctx context.Context) ([]ratedOutcomeRow, 
 			&outcome.BluRounds,
 			&outcome.LastRedRound,
 			&outcome.LastBluRound,
+			&outcome.Rounds,
 		); errScan != nil {
 			return nil, database.Err(errScan)
 		}
@@ -168,6 +176,9 @@ func (r Repository) ReplaceRatings(ctx context.Context, ratings []PlayerRating, 
 					rating.Display.Rating,
 					rating.Display.Sigma,
 					rating.Display.Conservative,
+					rating.RoundsPlayed,
+					rating.Display.Visible,
+					rating.Display.Stale,
 					rating.MatchesPlayed,
 					rating.Wins,
 					rating.Losses,
@@ -182,7 +193,8 @@ func (r Repository) ReplaceRatings(ctx context.Context, ratings []PlayerRating, 
 				pgx.Identifier{"player_rating"},
 				[]string{
 					"steam_id", "stats_bucket_id", "mu", "sigma",
-					"rating", "rating_sigma", "rating_conservative", "matches_played",
+					"rating", "rating_sigma", "rating_conservative",
+					"rounds_played", "visible", "stale", "matches_played",
 					"wins", "losses", "draws", "last_match_id", "last_match_at", "calculated_on",
 				},
 				pgx.CopyFromRows(ratingRows),
@@ -201,8 +213,10 @@ func (r Repository) ReplaceRatings(ctx context.Context, ratings []PlayerRating, 
 					entry.MatchStartTime,
 					entry.Mu,
 					entry.Sigma,
+					entry.Expected,
 					int16(entry.Outcome),
 					entry.MatchesPlayed,
+					entry.Rounds,
 				})
 			}
 
@@ -210,7 +224,7 @@ func (r Repository) ReplaceRatings(ctx context.Context, ratings []PlayerRating, 
 				pgx.Identifier{"player_rating_history"},
 				[]string{
 					"steam_id", "stats_bucket_id", "match_id", "match_start_time",
-					"mu", "sigma", "outcome", "matches_played",
+					"mu", "sigma", "expected", "outcome", "matches_played", "rounds",
 				},
 				pgx.CopyFromRows(historyRows),
 			); err != nil {
@@ -264,7 +278,7 @@ func (r Repository) PlayerRating(ctx context.Context, steamID steamid.SteamID, s
 // PlayerRatingHistory returns a player's rating snapshots, newest first.
 func (r Repository) PlayerRatingHistory(ctx context.Context, steamID steamid.SteamID, statsBucketID int32, limit int) ([]RatingHistoryEntry, error) {
 	rows, err := r.Database.Query(ctx, `
-		SELECT match_id, match_start_time, mu, sigma, outcome, matches_played
+		SELECT match_id, match_start_time, mu, sigma, expected, outcome, matches_played, rounds
 		FROM player_rating_history
 		WHERE steam_id = $1 AND stats_bucket_id = $2
 		ORDER BY match_start_time DESC, match_id DESC
@@ -278,7 +292,8 @@ func (r Repository) PlayerRatingHistory(ctx context.Context, steamID steamid.Ste
 	for rows.Next() {
 		var entry RatingHistoryEntry
 		if errScan := rows.Scan(
-			&entry.MatchID, &entry.MatchStartTime, &entry.Mu, &entry.Sigma, &entry.Outcome, &entry.MatchesPlayed,
+			&entry.MatchID, &entry.MatchStartTime, &entry.Mu, &entry.Sigma,
+			&entry.Expected, &entry.Outcome, &entry.MatchesPlayed, &entry.Rounds,
 		); errScan != nil {
 			return nil, database.Err(errScan)
 		}
@@ -295,7 +310,7 @@ func (r Repository) RatingLeaderboard(ctx context.Context, opts RatingLeaderboar
 	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
 		Select("count(*)").
 		From("stats_player_rating_view").
-		Where("stats_bucket_id = ? AND matches_played >= ?", opts.StatsBucketID, ProvisionalMatchCount))
+		Where("stats_bucket_id = ? AND provisional = false", opts.StatsBucketID))
 	if errRow != nil {
 		return nil, 0, database.Err(errRow)
 	}
@@ -308,10 +323,10 @@ func (r Repository) RatingLeaderboard(ctx context.Context, opts RatingLeaderboar
 	rows, err := r.Database.Query(ctx, `
 		SELECT `+ratingViewColumns+`
 		FROM stats_player_rating_view
-		WHERE stats_bucket_id = $1 AND matches_played >= $2
+		WHERE stats_bucket_id = $1 AND provisional = false
 		ORDER BY mu DESC, steam_id
-		LIMIT $3 OFFSET $4`,
-		opts.StatsBucketID, ProvisionalMatchCount, opts.Limit, opts.Offset)
+		LIMIT $2 OFFSET $3`,
+		opts.StatsBucketID, opts.Limit, opts.Offset)
 	if err != nil {
 		return nil, 0, database.Err(err)
 	}

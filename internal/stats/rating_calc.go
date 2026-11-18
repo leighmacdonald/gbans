@@ -22,11 +22,13 @@ type ratingKey struct {
 type ratingAccumulator struct {
 	skill       Skill
 	matches     int
+	rounds      int
 	wins        int
 	losses      int
 	draws       int
 	lastMatchID uuid.UUID
 	lastMatchAt time.Time
+	history     []RatingObservation
 }
 
 // RecalculateRatings rebuilds every player rating from scratch by replaying
@@ -64,6 +66,7 @@ func replayRatings(rows []ratedOutcomeRow, calculator RatingCalculator) ([]Playe
 	history := make([]RatingHistory, 0, len(rows))
 	calculatedOn := time.Now().UTC()
 	initial := calculator.NewPlayerSkill()
+	window := calculator.HistoryWindow()
 
 	for start := 0; start < len(rows); {
 		match := rows[start]
@@ -77,13 +80,13 @@ func replayRatings(rows []ratedOutcomeRow, calculator RatingCalculator) ([]Playe
 		if len(redIDs) > 0 && len(bluIDs) > 0 {
 			outcome := ratingOutcomeFor(match)
 			newRed, newBlu := calculator.UpdateMatch(
-				skillsFor(states, match.StatsBucketID, redIDs, initial),
-				skillsFor(states, match.StatsBucketID, bluIDs, initial),
+				statesFor(states, match.StatsBucketID, redIDs, initial, window),
+				statesFor(states, match.StatsBucketID, bluIDs, initial, window),
 				outcome)
 
 			redOutcome, bluOutcome := teamOutcomes(outcome)
-			recordMatch(states, match, redIDs, newRed, redOutcome, initial, &history)
-			recordMatch(states, match, bluIDs, newBlu, bluOutcome, initial, &history)
+			recordMatch(states, match, redIDs, newRed, redOutcome, initial, window, &history)
+			recordMatch(states, match, bluIDs, newBlu, bluOutcome, initial, window, &history)
 		}
 
 		start = end
@@ -96,8 +99,15 @@ func replayRatings(rows []ratedOutcomeRow, calculator RatingCalculator) ([]Playe
 			StatsBucketID: key.StatsBucketID,
 			Mu:            state.skill.Mu,
 			Sigma:         state.skill.Sigma,
-			Display:       calculator.Display(state.skill),
+			Display: calculator.Display(RatingContext{
+				Skill:       state.skill,
+				Matches:     state.matches,
+				Rounds:      state.rounds,
+				LastMatchAt: state.lastMatchAt,
+				Now:         calculatedOn,
+			}),
 			MatchesPlayed: state.matches,
+			RoundsPlayed:  state.rounds,
 			Wins:          state.wins,
 			Losses:        state.losses,
 			Draws:         state.draws,
@@ -166,35 +176,62 @@ func teamOutcomes(outcome RatingOutcome) (RatingOutcome, RatingOutcome) {
 	}
 }
 
-// skillsFor returns the current skill of each player, defaulting new players
-// to the calculator's initial skill.
-func skillsFor(states map[ratingKey]*ratingAccumulator, bucketID int32, ids []steamid.SteamID, initial Skill) []Skill {
-	skills := make([]Skill, len(ids))
-	for idx, steamID := range ids {
-		key := ratingKey{StatsBucketID: bucketID, SteamID: steamID}
-		if state, exists := states[key]; exists {
-			skills[idx] = state.skill
-		} else {
-			skills[idx] = initial
+// statesFor builds the per-player context for one match. The history window is
+// the most recent observations of that player, oldest first.
+func statesFor(
+	states map[ratingKey]*ratingAccumulator,
+	bucketID int32,
+	ids []steamid.SteamID,
+	initial Skill,
+	window int,
+) []PlayerRatingState {
+	result := make([]PlayerRatingState, len(ids))
+	for idx, id := range ids {
+		result[idx] = PlayerRatingState{
+			SteamID: id,
+			Skill:   initial,
 		}
+
+		state, exists := states[ratingKey{StatsBucketID: bucketID, SteamID: id}]
+		if !exists {
+			continue
+		}
+
+		result[idx].Skill = state.skill
+		result[idx].Matches = state.matches
+		result[idx].Rounds = state.rounds
+		result[idx].History = historyWindow(state.history, window)
 	}
 
-	return skills
+	return result
 }
 
-// recordMatch stores the post-match skill of each player and appends their
-// history snapshot.
+func historyWindow(history []RatingObservation, window int) []RatingObservation {
+	if window <= 0 || len(history) == 0 {
+		return nil
+	}
+
+	if len(history) > window {
+		return history[len(history)-window:]
+	}
+
+	return slices.Clone(history)
+}
+
+// recordMatch stores the post-match skill of each player, appends their
+// history snapshot and records the pre-match expectation for future windows.
 func recordMatch(
 	states map[ratingKey]*ratingAccumulator,
 	match ratedOutcomeRow,
 	ids []steamid.SteamID,
-	skills []Skill,
+	updates []MatchUpdate,
 	outcome RatingOutcome,
 	initial Skill,
+	window int,
 	history *[]RatingHistory,
 ) {
-	for idx, steamID := range ids {
-		key := ratingKey{StatsBucketID: match.StatsBucketID, SteamID: steamID}
+	for idx, id := range ids {
+		key := ratingKey{StatsBucketID: match.StatsBucketID, SteamID: id}
 
 		state, exists := states[key]
 		if !exists {
@@ -202,10 +239,23 @@ func recordMatch(
 			states[key] = state
 		}
 
-		state.skill = skills[idx]
+		previous := state.skill.Mu
+		state.skill = updates[idx].Skill
 		state.matches++
+		state.rounds += match.Rounds
 		state.lastMatchID = match.MatchID
 		state.lastMatchAt = match.StartTime
+
+		if window > 0 {
+			state.history = append(state.history, RatingObservation{
+				Rating:   previous,
+				Expected: updates[idx].Expected,
+				Outcome:  outcome,
+			})
+			if len(state.history) > window {
+				state.history = state.history[len(state.history)-window:]
+			}
+		}
 
 		switch outcome {
 		case RatingWin:
@@ -217,14 +267,16 @@ func recordMatch(
 		}
 
 		*history = append(*history, RatingHistory{
-			SteamID:        steamID,
+			SteamID:        id,
 			StatsBucketID:  match.StatsBucketID,
 			MatchID:        match.MatchID,
 			MatchStartTime: match.StartTime,
 			Mu:             state.skill.Mu,
 			Sigma:          state.skill.Sigma,
+			Expected:       updates[idx].Expected,
 			Outcome:        outcome,
 			MatchesPlayed:  state.matches,
+			Rounds:         state.rounds,
 		})
 	}
 }
