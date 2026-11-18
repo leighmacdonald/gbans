@@ -99,13 +99,22 @@ type Config struct {
 	Stats       *Stats
 }
 
-const defaultStatsRefreshSchedule = "5 0 * * *"
+const (
+	defaultStatsRefreshSchedule = "5 0 * * *"
+	// DefaultRatingAlgorithm is the skill calculation used when no algorithm
+	// has been configured.
+	DefaultRatingAlgorithm = "trueskill"
+)
 
 // Stats holds statistics subsystem settings that are editable at runtime.
 type Stats struct {
 	// RefreshSchedule is a 5-field cron expression controlling when the stats
 	// materialized views are refreshed.
 	RefreshSchedule string
+	// RatingAlgorithm selects the skill calculation implementation. Changing
+	// it requires a restart and rebases every player's rating on the next
+	// stats refresh.
+	RatingAlgorithm string
 }
 
 // StatsRefreshSchedule returns the configured materialized-view refresh cron
@@ -116,6 +125,16 @@ func (c Config) StatsRefreshSchedule() string {
 	}
 
 	return c.Stats.RefreshSchedule
+}
+
+// RatingAlgorithm returns the configured rating algorithm, falling back to the
+// default for configs written before the setting existed.
+func (c Config) RatingAlgorithm() string {
+	if c.Stats == nil || strings.TrimSpace(c.Stats.RatingAlgorithm) == "" {
+		return DefaultRatingAlgorithm
+	}
+
+	return c.Stats.RatingAlgorithm
 }
 
 func (c Config) ExtURLRaw(path string, args ...any) string {
@@ -229,7 +248,7 @@ func NewConfiguration(ctx context.Context, static Static, repository Repo) (*Con
 			LocalStore:  &asset.Config{},
 			Exports:     &ban.Config{},
 			Anticheat:   &anticheat.Config{},
-			Stats:       &Stats{RefreshSchedule: defaultStatsRefreshSchedule},
+			Stats:       &Stats{RefreshSchedule: defaultStatsRefreshSchedule, RatingAlgorithm: DefaultRatingAlgorithm},
 		},
 	}
 
@@ -284,6 +303,11 @@ func (c *Configuration) Config() Config {
 // configuration is reloaded.
 func (c *Configuration) StatsRefreshSchedule() string {
 	return c.Config().StatsRefreshSchedule()
+}
+
+// RatingAlgorithm returns the configured skill calculation algorithm.
+func (c *Configuration) RatingAlgorithm() string {
+	return c.Config().RatingAlgorithm()
 }
 
 // AnonmodEnabled reports whether the anonymized moderator feature is

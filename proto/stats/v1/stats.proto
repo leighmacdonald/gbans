@@ -64,6 +64,16 @@ service StatsService {
   rpc QueryMapStatsHistory(QueryMapStatsHistoryRequest) returns (QueryMapStatsHistoryResponse) {}
   // RefreshStats recomputes all stats summary views on demand. Admin only.
   rpc RefreshStats(google.protobuf.Empty) returns (RefreshStatsResponse) {}
+  // PlayerRating returns a player's current skill rating within a stats
+  // bucket. Ratings are derived from match win/loss only and are rebuilt by
+  // the daily stats refresh.
+  rpc PlayerRating(PlayerRatingRequest) returns (PlayerRatingResponse) {}
+  // PlayerRatingHistory returns a player's post-match rating snapshots,
+  // newest first.
+  rpc PlayerRatingHistory(PlayerRatingHistoryRequest) returns (PlayerRatingHistoryResponse) {}
+  // RatingLeaderboard returns the highest rated players in a stats bucket.
+  // Provisional players are excluded because they have no rank yet.
+  rpc RatingLeaderboard(RatingLeaderboardRequest) returns (RatingLeaderboardResponse) {}
 }
 
 message MatchesWithPlayerRequest {
@@ -697,4 +707,82 @@ message RoundPlayerVariant {
   uint64 ammo_packs = 53;
   uint64 health_packs = 54;
   uint64 health_pack_healing = 55;
+}
+
+// RatingOutcome is the result of a rated match from the player's perspective.
+enum RatingOutcome {
+  RATING_OUTCOME_DRAW_UNSPECIFIED = 0;
+  RATING_OUTCOME_WIN = 1;
+  RATING_OUTCOME_LOSS = 2;
+}
+
+message PlayerRatingRequest {
+  int64 steam_id = 1 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+  // stats_bucket_id selects the game mode. 0 uses the default bucket.
+  int32 stats_bucket_id = 2 [(buf.validate.field).int32 = {gte: 0}];
+}
+
+// PlayerRating is a player's current rating within a stats bucket.
+message PlayerRating {
+  person.v1.PersonDisplay player = 1 [(buf.validate.field).required = true];
+  int32 stats_bucket_id = 2;
+  // rating is the display rating. Provisional players report the default
+  // rating until they have played enough matches to be ranked.
+  int32 rating = 3;
+  // rating_sigma is the display-scale uncertainty. 0 when provisional.
+  int32 rating_sigma = 4;
+  // rating_conservative is the lower confidence bound of the rating. 0 when
+  // provisional.
+  int32 rating_conservative = 5;
+  // rank is the player's position within the bucket, 0 when provisional.
+  int32 rank = 6;
+  bool provisional = 7;
+  uint32 matches_played = 8;
+  uint32 wins = 9;
+  uint32 losses = 10;
+  uint32 draws = 11;
+  // mu and sigma are the underlying TrueSkill estimate.
+  double mu = 12;
+  double sigma = 13;
+  google.protobuf.Timestamp last_match_at = 14;
+}
+
+message PlayerRatingResponse {
+  PlayerRating rating = 1;
+}
+
+message PlayerRatingHistoryRequest {
+  int64 steam_id = 1 [(buf.validate.field).int64 = {gte: 76561197960265729}];
+  // stats_bucket_id selects the game mode. 0 uses the default bucket.
+  int32 stats_bucket_id = 2 [(buf.validate.field).int32 = {gte: 0}];
+  // limit caps the number of returned snapshots. 0 defaults to 100.
+  uint32 limit = 3 [(buf.validate.field).uint32 = {lte: 1000}];
+}
+
+message RatingHistoryEntry {
+  string match_id = 1;
+  google.protobuf.Timestamp match_start_time = 2;
+  int32 rating = 3;
+  int32 rating_sigma = 4;
+  RatingOutcome outcome = 5;
+  // matches_played is the cumulative rated match count after this match.
+  uint32 matches_played = 6;
+}
+
+message PlayerRatingHistoryResponse {
+  repeated RatingHistoryEntry entries = 1;
+}
+
+message RatingLeaderboardRequest {
+  // stats_bucket_id selects the game mode. 0 uses the default bucket.
+  int32 stats_bucket_id = 1 [(buf.validate.field).int32 = {gte: 0}];
+  uint32 limit = 2 [(buf.validate.field).uint32 = {lte: 100}];
+  uint32 offset = 3;
+}
+
+message RatingLeaderboardResponse {
+  repeated PlayerRating ratings = 1;
+  uint64 count = 2;
+  // calculated_on is when the rating set was last recomputed.
+  google.protobuf.Timestamp calculated_on = 3;
 }

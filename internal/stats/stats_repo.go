@@ -1676,44 +1676,45 @@ func (r Repository) SaveBucket(ctx context.Context, bucket Bucket) error {
 }
 
 func playerTeamMap(demo *demoparse.Demo) map[string]string {
-	// Find the last team the player played on and use that as their final team.
+	// The parser only reports players that were on a team when a round ended,
+	// so walk backwards until the player appears in a round-end winners or
+	// losers list. Treating everyone absent from the winners list as a loser
+	// incorrectly assigns dead players, late joiners and spectators to the
+	// losing team.
 	playerTeams := map[string]string{}
+
 	for _, steamID := range demo.SteamIDs() {
 		steam3 := string(steamID.Steam3())
-		found := false
+
 		for roundIdx := range slices.Backward(demo.Rounds) {
-			for _, player := range demo.Rounds[roundIdx].Players {
-				if player.SteamID == steam3 {
-					if demo.Rounds[roundIdx].Winner == "" {
-						continue
-					}
-					redWinner := toTfTeam(demo.Rounds[roundIdx].Winner) == "red"
-					if redWinner {
-						if slices.Contains(demo.Rounds[roundIdx].Winners, steam3) {
-							playerTeams[steam3] = "red"
-						} else {
-							playerTeams[steam3] = "blu"
-						}
-					} else {
-						if slices.Contains(demo.Rounds[roundIdx].Winners, steam3) {
-							playerTeams[steam3] = "blu"
-						} else {
-							playerTeams[steam3] = "red"
-						}
-					}
-
-					found = true
-
-					break
-				}
+			round := demo.Rounds[roundIdx]
+			winner := toTfTeam(round.Winner)
+			if winner != "red" && winner != "blu" {
+				continue
 			}
-			if found {
-				break
+
+			switch {
+			case slices.Contains(round.Winners, steam3):
+				playerTeams[steam3] = winner
+			case slices.Contains(round.Losers, steam3):
+				playerTeams[steam3] = oppositeTeam(winner)
+			default:
+				continue
 			}
+
+			break
 		}
 	}
 
 	return playerTeams
+}
+
+func oppositeTeam(team string) string {
+	if team == "red" {
+		return "blu"
+	}
+
+	return "red"
 }
 
 func toTfTeam(team string) string {

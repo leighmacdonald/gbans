@@ -67,7 +67,7 @@ func testDomainConfig() Config {
 			MaxBhop: 40, MaxFakeAng: 5, MaxCmdNum: 100, MaxTooManyConnections: 10, MaxCheatCvar: 5,
 			MaxOOBVar: 5, MaxInvalidUserCmd: 5,
 		},
-		Stats: &Stats{RefreshSchedule: "15 3 * * *"},
+		Stats: &Stats{RefreshSchedule: "15 3 * * *", RatingAlgorithm: "elo"},
 	}
 }
 
@@ -125,4 +125,12 @@ func TestConfigMappingRoundTrip(t *testing.T) {
 	current := Config{General: &General{PlayerqueueEnabled: true}}
 	preserved := configFromUpdate(&configv1.Config{}, current)
 	require.True(t, preserved.General.PlayerqueueEnabled)
+}
+
+func TestRatingAlgorithmDefault(t *testing.T) {
+	t.Parallel()
+
+	require.Equal(t, DefaultRatingAlgorithm, Config{}.RatingAlgorithm())
+	require.Equal(t, DefaultRatingAlgorithm, Config{Stats: &Stats{}}.RatingAlgorithm())
+	require.Equal(t, "elo", Config{Stats: &Stats{RatingAlgorithm: "elo"}}.RatingAlgorithm())
 }

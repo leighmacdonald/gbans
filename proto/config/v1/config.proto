@@ -231,6 +231,10 @@ message Stats {
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1
   ];
+
+  // rating_algorithm selects the skill calculation used for player ratings.
+  // Changing it requires a restart and rebases every rating on the next refresh.
+  string rating_algorithm = 2;
 }
 
 message LocalStore {

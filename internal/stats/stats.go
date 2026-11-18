@@ -51,8 +51,9 @@ var (
 )
 
 type Stats struct {
-	repo Repository
-	maps maps.Maps
+	repo       Repository
+	maps       maps.Maps
+	calculator RatingCalculator
 
 	notifier          notification.Notifier
 	matchLogChannelID string
@@ -92,6 +93,17 @@ func WithMatchPlayerNotifications(notifier MatchNotifier) Option {
 func WithRefreshSchedule(schedule func() string) Option {
 	return func(s *Stats) {
 		s.refreshSchedule = schedule
+	}
+}
+
+// WithRatingCalculator replaces the default TrueSkill calculator with an
+// alternative implementation. Because ratings are rebuilt from scratch on
+// every refresh, switching calculators re-bases every player's rating.
+func WithRatingCalculator(calculator RatingCalculator) Option {
+	return func(s *Stats) {
+		if calculator != nil {
+			s.calculator = calculator
+		}
 	}
 }
 
@@ -287,7 +299,7 @@ func (s Stats) SetBucketEnabled(ctx context.Context, bucketID int32, enabled boo
 }
 
 func New(repo Repository, maps maps.Maps, options ...Option) Stats {
-	stats := Stats{repo: repo, maps: maps}
+	stats := Stats{repo: repo, maps: maps, calculator: TrueSkillCalculator{}}
 
 	for _, option := range options {
 		option(&stats)
@@ -312,6 +324,10 @@ func (s Stats) StartRefreshHandler(ctx context.Context) error {
 	scheduler.Start()
 
 	slog.Info("Started stats refresh scheduler", slog.String("schedule", schedule))
+
+	// A fresh deployment has no ratings until the first scheduled refresh.
+	// Build them in the background so balancing has data immediately.
+	go s.bootstrapRatings(ctx)
 
 	rescheduleTicker := time.NewTicker(30 * time.Second)
 	defer rescheduleTicker.Stop()
@@ -351,6 +367,27 @@ func (s Stats) StartRefreshHandler(ctx context.Context) error {
 	}
 }
 
+// bootstrapRatings runs a full refresh when no ratings exist yet, so a fresh
+// deployment does not wait for the nightly job.
+func (s Stats) bootstrapRatings(ctx context.Context) {
+	count, errCount := s.repo.RatingCount(ctx)
+	if errCount != nil {
+		slog.Error("Failed to check player ratings", slog.String("error", errCount.Error()))
+
+		return
+	}
+
+	if count > 0 {
+		return
+	}
+
+	slog.Info("No player ratings found, building them now")
+
+	if err := s.RefreshViews(ctx); err != nil {
+		slog.Error("Failed to build player ratings", slog.String("error", err.Error()))
+	}
+}
+
 // refreshScheduleValue returns the configured cron expression, falling back to
 // the default when no provider is configured or the value is empty.
 func (s Stats) refreshScheduleValue() string {
@@ -385,6 +422,7 @@ func StatViews() []string {
 		"stats_map_daily_player_view",
 		"stats_map_alltime_view", //nolint:misspell // name must match the database view.
 		"stats_weapons_view",
+		"stats_player_rating_view",
 	}
 }
 
@@ -485,6 +523,15 @@ func (s Stats) RefreshViews(ctx context.Context) error {
 		errMu     sync.Mutex
 		firstErr  error
 	)
+
+	// Ratings are path dependent and cannot be expressed as an aggregate, so
+	// they are rebuilt with a chronological replay before the views exposing
+	// them are refreshed. A failure here must not block the other views.
+	if err := s.RecalculateRatings(ctx); err != nil {
+		slog.Error("Failed to recalculate player ratings", slog.String("error", err.Error()))
+
+		firstErr = fmt.Errorf("recalculate player ratings: %w", err)
+	}
 
 	for _, viewName := range views {
 		waitGroup.Add(1)

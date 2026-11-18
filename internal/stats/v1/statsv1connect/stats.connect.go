@@ -68,6 +68,15 @@ const (
 	// StatsServiceRefreshStatsProcedure is the fully-qualified name of the StatsService's RefreshStats
 	// RPC.
 	StatsServiceRefreshStatsProcedure = "/stats.v1.StatsService/RefreshStats"
+	// StatsServicePlayerRatingProcedure is the fully-qualified name of the StatsService's PlayerRating
+	// RPC.
+	StatsServicePlayerRatingProcedure = "/stats.v1.StatsService/PlayerRating"
+	// StatsServicePlayerRatingHistoryProcedure is the fully-qualified name of the StatsService's
+	// PlayerRatingHistory RPC.
+	StatsServicePlayerRatingHistoryProcedure = "/stats.v1.StatsService/PlayerRatingHistory"
+	// StatsServiceRatingLeaderboardProcedure is the fully-qualified name of the StatsService's
+	// RatingLeaderboard RPC.
+	StatsServiceRatingLeaderboardProcedure = "/stats.v1.StatsService/RatingLeaderboard"
 )
 
 // StatsServiceClient is a client for the stats.v1.StatsService service.
@@ -117,6 +126,16 @@ type StatsServiceClient interface {
 	QueryMapStatsHistory(context.Context, *v1.QueryMapStatsHistoryRequest) (*v1.QueryMapStatsHistoryResponse, error)
 	// RefreshStats recomputes all stats summary views on demand. Admin only.
 	RefreshStats(context.Context, *emptypb.Empty) (*v1.RefreshStatsResponse, error)
+	// PlayerRating returns a player's current skill rating within a stats
+	// bucket. Ratings are derived from match win/loss only and are rebuilt by
+	// the daily stats refresh.
+	PlayerRating(context.Context, *v1.PlayerRatingRequest) (*v1.PlayerRatingResponse, error)
+	// PlayerRatingHistory returns a player's post-match rating snapshots,
+	// newest first.
+	PlayerRatingHistory(context.Context, *v1.PlayerRatingHistoryRequest) (*v1.PlayerRatingHistoryResponse, error)
+	// RatingLeaderboard returns the highest rated players in a stats bucket.
+	// Provisional players are excluded because they have no rank yet.
+	RatingLeaderboard(context.Context, *v1.RatingLeaderboardRequest) (*v1.RatingLeaderboardResponse, error)
 }
 
 // NewStatsServiceClient constructs a client for the stats.v1.StatsService service. By default, it
@@ -208,6 +227,24 @@ func NewStatsServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(statsServiceMethods.ByName("RefreshStats")),
 			connect.WithClientOptions(opts...),
 		),
+		playerRating: connect.NewClient[v1.PlayerRatingRequest, v1.PlayerRatingResponse](
+			httpClient,
+			baseURL+StatsServicePlayerRatingProcedure,
+			connect.WithSchema(statsServiceMethods.ByName("PlayerRating")),
+			connect.WithClientOptions(opts...),
+		),
+		playerRatingHistory: connect.NewClient[v1.PlayerRatingHistoryRequest, v1.PlayerRatingHistoryResponse](
+			httpClient,
+			baseURL+StatsServicePlayerRatingHistoryProcedure,
+			connect.WithSchema(statsServiceMethods.ByName("PlayerRatingHistory")),
+			connect.WithClientOptions(opts...),
+		),
+		ratingLeaderboard: connect.NewClient[v1.RatingLeaderboardRequest, v1.RatingLeaderboardResponse](
+			httpClient,
+			baseURL+StatsServiceRatingLeaderboardProcedure,
+			connect.WithSchema(statsServiceMethods.ByName("RatingLeaderboard")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -226,6 +263,9 @@ type statsServiceClient struct {
 	queryMapStats        *connect.Client[v1.QueryMapStatsRequest, v1.QueryMapStatsResponse]
 	queryMapStatsHistory *connect.Client[v1.QueryMapStatsHistoryRequest, v1.QueryMapStatsHistoryResponse]
 	refreshStats         *connect.Client[emptypb.Empty, v1.RefreshStatsResponse]
+	playerRating         *connect.Client[v1.PlayerRatingRequest, v1.PlayerRatingResponse]
+	playerRatingHistory  *connect.Client[v1.PlayerRatingHistoryRequest, v1.PlayerRatingHistoryResponse]
+	ratingLeaderboard    *connect.Client[v1.RatingLeaderboardRequest, v1.RatingLeaderboardResponse]
 }
 
 // Match calls stats.v1.StatsService.Match.
@@ -345,6 +385,33 @@ func (c *statsServiceClient) RefreshStats(ctx context.Context, req *emptypb.Empt
 	return nil, err
 }
 
+// PlayerRating calls stats.v1.StatsService.PlayerRating.
+func (c *statsServiceClient) PlayerRating(ctx context.Context, req *v1.PlayerRatingRequest) (*v1.PlayerRatingResponse, error) {
+	response, err := c.playerRating.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// PlayerRatingHistory calls stats.v1.StatsService.PlayerRatingHistory.
+func (c *statsServiceClient) PlayerRatingHistory(ctx context.Context, req *v1.PlayerRatingHistoryRequest) (*v1.PlayerRatingHistoryResponse, error) {
+	response, err := c.playerRatingHistory.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// RatingLeaderboard calls stats.v1.StatsService.RatingLeaderboard.
+func (c *statsServiceClient) RatingLeaderboard(ctx context.Context, req *v1.RatingLeaderboardRequest) (*v1.RatingLeaderboardResponse, error) {
+	response, err := c.ratingLeaderboard.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // StatsServiceHandler is an implementation of the stats.v1.StatsService service.
 type StatsServiceHandler interface {
 	// Query a single match
@@ -392,6 +459,16 @@ type StatsServiceHandler interface {
 	QueryMapStatsHistory(context.Context, *v1.QueryMapStatsHistoryRequest) (*v1.QueryMapStatsHistoryResponse, error)
 	// RefreshStats recomputes all stats summary views on demand. Admin only.
 	RefreshStats(context.Context, *emptypb.Empty) (*v1.RefreshStatsResponse, error)
+	// PlayerRating returns a player's current skill rating within a stats
+	// bucket. Ratings are derived from match win/loss only and are rebuilt by
+	// the daily stats refresh.
+	PlayerRating(context.Context, *v1.PlayerRatingRequest) (*v1.PlayerRatingResponse, error)
+	// PlayerRatingHistory returns a player's post-match rating snapshots,
+	// newest first.
+	PlayerRatingHistory(context.Context, *v1.PlayerRatingHistoryRequest) (*v1.PlayerRatingHistoryResponse, error)
+	// RatingLeaderboard returns the highest rated players in a stats bucket.
+	// Provisional players are excluded because they have no rank yet.
+	RatingLeaderboard(context.Context, *v1.RatingLeaderboardRequest) (*v1.RatingLeaderboardResponse, error)
 }
 
 // NewStatsServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -479,6 +556,24 @@ func NewStatsServiceHandler(svc StatsServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(statsServiceMethods.ByName("RefreshStats")),
 		connect.WithHandlerOptions(opts...),
 	)
+	statsServicePlayerRatingHandler := connect.NewUnaryHandlerSimple(
+		StatsServicePlayerRatingProcedure,
+		svc.PlayerRating,
+		connect.WithSchema(statsServiceMethods.ByName("PlayerRating")),
+		connect.WithHandlerOptions(opts...),
+	)
+	statsServicePlayerRatingHistoryHandler := connect.NewUnaryHandlerSimple(
+		StatsServicePlayerRatingHistoryProcedure,
+		svc.PlayerRatingHistory,
+		connect.WithSchema(statsServiceMethods.ByName("PlayerRatingHistory")),
+		connect.WithHandlerOptions(opts...),
+	)
+	statsServiceRatingLeaderboardHandler := connect.NewUnaryHandlerSimple(
+		StatsServiceRatingLeaderboardProcedure,
+		svc.RatingLeaderboard,
+		connect.WithSchema(statsServiceMethods.ByName("RatingLeaderboard")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/stats.v1.StatsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case StatsServiceMatchProcedure:
@@ -507,6 +602,12 @@ func NewStatsServiceHandler(svc StatsServiceHandler, opts ...connect.HandlerOpti
 			statsServiceQueryMapStatsHistoryHandler.ServeHTTP(w, r)
 		case StatsServiceRefreshStatsProcedure:
 			statsServiceRefreshStatsHandler.ServeHTTP(w, r)
+		case StatsServicePlayerRatingProcedure:
+			statsServicePlayerRatingHandler.ServeHTTP(w, r)
+		case StatsServicePlayerRatingHistoryProcedure:
+			statsServicePlayerRatingHistoryHandler.ServeHTTP(w, r)
+		case StatsServiceRatingLeaderboardProcedure:
+			statsServiceRatingLeaderboardHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -566,4 +667,16 @@ func (UnimplementedStatsServiceHandler) QueryMapStatsHistory(context.Context, *v
 
 func (UnimplementedStatsServiceHandler) RefreshStats(context.Context, *emptypb.Empty) (*v1.RefreshStatsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.RefreshStats is not implemented"))
+}
+
+func (UnimplementedStatsServiceHandler) PlayerRating(context.Context, *v1.PlayerRatingRequest) (*v1.PlayerRatingResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.PlayerRating is not implemented"))
+}
+
+func (UnimplementedStatsServiceHandler) PlayerRatingHistory(context.Context, *v1.PlayerRatingHistoryRequest) (*v1.PlayerRatingHistoryResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.PlayerRatingHistory is not implemented"))
+}
+
+func (UnimplementedStatsServiceHandler) RatingLeaderboard(context.Context, *v1.RatingLeaderboardRequest) (*v1.RatingLeaderboardResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stats.v1.StatsService.RatingLeaderboard is not implemented"))
 }

@@ -112,3 +112,28 @@ export const queryMapStatsHistory = StatsService.method.queryMapStatsHistory;
  * @generated from rpc stats.v1.StatsService.RefreshStats
  */
 export const refreshStats = StatsService.method.refreshStats;
+
+/**
+ * PlayerRating returns a player's current skill rating within a stats
+ * bucket. Ratings are derived from match win/loss only and are rebuilt by
+ * the daily stats refresh.
+ *
+ * @generated from rpc stats.v1.StatsService.PlayerRating
+ */
+export const playerRating = StatsService.method.playerRating;
+
+/**
+ * PlayerRatingHistory returns a player's post-match rating snapshots,
+ * newest first.
+ *
+ * @generated from rpc stats.v1.StatsService.PlayerRatingHistory
+ */
+export const playerRatingHistory = StatsService.method.playerRatingHistory;
+
+/**
+ * RatingLeaderboard returns the highest rated players in a stats bucket.
+ * Provisional players are excluded because they have no rank yet.
+ *
+ * @generated from rpc stats.v1.StatsService.RatingLeaderboard
+ */
+export const ratingLeaderboard = StatsService.method.ratingLeaderboard;

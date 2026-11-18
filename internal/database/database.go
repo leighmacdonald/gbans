@@ -141,6 +141,7 @@ func New(dsn string, autoMigrate bool, logQueries bool) *PgStore {
 			"stats_map_daily_player_view",
 			"stats_map_alltime_view", //nolint:misspell // name must match the database view.
 			"stats_weapons_view",
+			"stats_player_rating_view",
 		},
 	}
 }

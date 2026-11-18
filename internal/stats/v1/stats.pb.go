@@ -194,6 +194,56 @@ func (TimeBucket) EnumDescriptor() ([]byte, []int) {
 	return file_stats_v1_stats_proto_rawDescGZIP(), []int{2}
 }
 
+// RatingOutcome is the result of a rated match from the player's perspective.
+type RatingOutcome int32
+
+const (
+	RatingOutcome_RATING_OUTCOME_DRAW_UNSPECIFIED RatingOutcome = 0
+	RatingOutcome_RATING_OUTCOME_WIN              RatingOutcome = 1
+	RatingOutcome_RATING_OUTCOME_LOSS             RatingOutcome = 2
+)
+
+// Enum value maps for RatingOutcome.
+var (
+	RatingOutcome_name = map[int32]string{
+		0: "RATING_OUTCOME_DRAW_UNSPECIFIED",
+		1: "RATING_OUTCOME_WIN",
+		2: "RATING_OUTCOME_LOSS",
+	}
+	RatingOutcome_value = map[string]int32{
+		"RATING_OUTCOME_DRAW_UNSPECIFIED": 0,
+		"RATING_OUTCOME_WIN":              1,
+		"RATING_OUTCOME_LOSS":             2,
+	}
+)
+
+func (x RatingOutcome) Enum() *RatingOutcome {
+	p := new(RatingOutcome)
+	*p = x
+	return p
+}
+
+func (x RatingOutcome) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RatingOutcome) Descriptor() protoreflect.EnumDescriptor {
+	return file_stats_v1_stats_proto_enumTypes[3].Descriptor()
+}
+
+func (RatingOutcome) Type() protoreflect.EnumType {
+	return &file_stats_v1_stats_proto_enumTypes[3]
+}
+
+func (x RatingOutcome) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RatingOutcome.Descriptor instead.
+func (RatingOutcome) EnumDescriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{3}
+}
+
 type MatchesWithPlayerRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SteamId       *int64                 `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
@@ -5103,6 +5153,572 @@ func (x *RoundPlayerVariant) GetHealthPackHealing() uint64 {
 	return 0
 }
 
+type PlayerRatingRequest struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	SteamId *int64                 `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	// stats_bucket_id selects the game mode. 0 uses the default bucket.
+	StatsBucketId *int32 `protobuf:"varint,2,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PlayerRatingRequest) Reset() {
+	*x = PlayerRatingRequest{}
+	mi := &file_stats_v1_stats_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PlayerRatingRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlayerRatingRequest) ProtoMessage() {}
+
+func (x *PlayerRatingRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PlayerRatingRequest.ProtoReflect.Descriptor instead.
+func (*PlayerRatingRequest) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *PlayerRatingRequest) GetSteamId() int64 {
+	if x != nil && x.SteamId != nil {
+		return *x.SteamId
+	}
+	return 0
+}
+
+func (x *PlayerRatingRequest) GetStatsBucketId() int32 {
+	if x != nil && x.StatsBucketId != nil {
+		return *x.StatsBucketId
+	}
+	return 0
+}
+
+// PlayerRating is a player's current rating within a stats bucket.
+type PlayerRating struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Player        *v12.PersonDisplay     `protobuf:"bytes,1,opt,name=player" json:"player,omitempty"`
+	StatsBucketId *int32                 `protobuf:"varint,2,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
+	// rating is the display rating. Provisional players report the default
+	// rating until they have played enough matches to be ranked.
+	Rating *int32 `protobuf:"varint,3,opt,name=rating" json:"rating,omitempty"`
+	// rating_sigma is the display-scale uncertainty. 0 when provisional.
+	RatingSigma *int32 `protobuf:"varint,4,opt,name=rating_sigma,json=ratingSigma" json:"rating_sigma,omitempty"`
+	// rating_conservative is the lower confidence bound of the rating. 0 when
+	// provisional.
+	RatingConservative *int32 `protobuf:"varint,5,opt,name=rating_conservative,json=ratingConservative" json:"rating_conservative,omitempty"`
+	// rank is the player's position within the bucket, 0 when provisional.
+	Rank          *int32  `protobuf:"varint,6,opt,name=rank" json:"rank,omitempty"`
+	Provisional   *bool   `protobuf:"varint,7,opt,name=provisional" json:"provisional,omitempty"`
+	MatchesPlayed *uint32 `protobuf:"varint,8,opt,name=matches_played,json=matchesPlayed" json:"matches_played,omitempty"`
+	Wins          *uint32 `protobuf:"varint,9,opt,name=wins" json:"wins,omitempty"`
+	Losses        *uint32 `protobuf:"varint,10,opt,name=losses" json:"losses,omitempty"`
+	Draws         *uint32 `protobuf:"varint,11,opt,name=draws" json:"draws,omitempty"`
+	// mu and sigma are the underlying TrueSkill estimate.
+	Mu            *float64               `protobuf:"fixed64,12,opt,name=mu" json:"mu,omitempty"`
+	Sigma         *float64               `protobuf:"fixed64,13,opt,name=sigma" json:"sigma,omitempty"`
+	LastMatchAt   *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=last_match_at,json=lastMatchAt" json:"last_match_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PlayerRating) Reset() {
+	*x = PlayerRating{}
+	mi := &file_stats_v1_stats_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PlayerRating) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlayerRating) ProtoMessage() {}
+
+func (x *PlayerRating) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PlayerRating.ProtoReflect.Descriptor instead.
+func (*PlayerRating) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *PlayerRating) GetPlayer() *v12.PersonDisplay {
+	if x != nil {
+		return x.Player
+	}
+	return nil
+}
+
+func (x *PlayerRating) GetStatsBucketId() int32 {
+	if x != nil && x.StatsBucketId != nil {
+		return *x.StatsBucketId
+	}
+	return 0
+}
+
+func (x *PlayerRating) GetRating() int32 {
+	if x != nil && x.Rating != nil {
+		return *x.Rating
+	}
+	return 0
+}
+
+func (x *PlayerRating) GetRatingSigma() int32 {
+	if x != nil && x.RatingSigma != nil {
+		return *x.RatingSigma
+	}
+	return 0
+}
+
+func (x *PlayerRating) GetRatingConservative() int32 {
+	if x != nil && x.RatingConservative != nil {
+		return *x.RatingConservative
+	}
+	return 0
+}
+
+func (x *PlayerRating) GetRank() int32 {
+	if x != nil && x.Rank != nil {
+		return *x.Rank
+	}
+	return 0
+}
+
+func (x *PlayerRating) GetProvisional() bool {
+	if x != nil && x.Provisional != nil {
+		return *x.Provisional
+	}
+	return false
+}
+
+func (x *PlayerRating) GetMatchesPlayed() uint32 {
+	if x != nil && x.MatchesPlayed != nil {
+		return *x.MatchesPlayed
+	}
+	return 0
+}
+
+func (x *PlayerRating) GetWins() uint32 {
+	if x != nil && x.Wins != nil {
+		return *x.Wins
+	}
+	return 0
+}
+
+func (x *PlayerRating) GetLosses() uint32 {
+	if x != nil && x.Losses != nil {
+		return *x.Losses
+	}
+	return 0
+}
+
+func (x *PlayerRating) GetDraws() uint32 {
+	if x != nil && x.Draws != nil {
+		return *x.Draws
+	}
+	return 0
+}
+
+func (x *PlayerRating) GetMu() float64 {
+	if x != nil && x.Mu != nil {
+		return *x.Mu
+	}
+	return 0
+}
+
+func (x *PlayerRating) GetSigma() float64 {
+	if x != nil && x.Sigma != nil {
+		return *x.Sigma
+	}
+	return 0
+}
+
+func (x *PlayerRating) GetLastMatchAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastMatchAt
+	}
+	return nil
+}
+
+type PlayerRatingResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Rating        *PlayerRating          `protobuf:"bytes,1,opt,name=rating" json:"rating,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PlayerRatingResponse) Reset() {
+	*x = PlayerRatingResponse{}
+	mi := &file_stats_v1_stats_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PlayerRatingResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlayerRatingResponse) ProtoMessage() {}
+
+func (x *PlayerRatingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PlayerRatingResponse.ProtoReflect.Descriptor instead.
+func (*PlayerRatingResponse) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *PlayerRatingResponse) GetRating() *PlayerRating {
+	if x != nil {
+		return x.Rating
+	}
+	return nil
+}
+
+type PlayerRatingHistoryRequest struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	SteamId *int64                 `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	// stats_bucket_id selects the game mode. 0 uses the default bucket.
+	StatsBucketId *int32 `protobuf:"varint,2,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
+	// limit caps the number of returned snapshots. 0 defaults to 100.
+	Limit         *uint32 `protobuf:"varint,3,opt,name=limit" json:"limit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PlayerRatingHistoryRequest) Reset() {
+	*x = PlayerRatingHistoryRequest{}
+	mi := &file_stats_v1_stats_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PlayerRatingHistoryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlayerRatingHistoryRequest) ProtoMessage() {}
+
+func (x *PlayerRatingHistoryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PlayerRatingHistoryRequest.ProtoReflect.Descriptor instead.
+func (*PlayerRatingHistoryRequest) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *PlayerRatingHistoryRequest) GetSteamId() int64 {
+	if x != nil && x.SteamId != nil {
+		return *x.SteamId
+	}
+	return 0
+}
+
+func (x *PlayerRatingHistoryRequest) GetStatsBucketId() int32 {
+	if x != nil && x.StatsBucketId != nil {
+		return *x.StatsBucketId
+	}
+	return 0
+}
+
+func (x *PlayerRatingHistoryRequest) GetLimit() uint32 {
+	if x != nil && x.Limit != nil {
+		return *x.Limit
+	}
+	return 0
+}
+
+type RatingHistoryEntry struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	MatchId        *string                `protobuf:"bytes,1,opt,name=match_id,json=matchId" json:"match_id,omitempty"`
+	MatchStartTime *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=match_start_time,json=matchStartTime" json:"match_start_time,omitempty"`
+	Rating         *int32                 `protobuf:"varint,3,opt,name=rating" json:"rating,omitempty"`
+	RatingSigma    *int32                 `protobuf:"varint,4,opt,name=rating_sigma,json=ratingSigma" json:"rating_sigma,omitempty"`
+	Outcome        *RatingOutcome         `protobuf:"varint,5,opt,name=outcome,enum=stats.v1.RatingOutcome" json:"outcome,omitempty"`
+	// matches_played is the cumulative rated match count after this match.
+	MatchesPlayed *uint32 `protobuf:"varint,6,opt,name=matches_played,json=matchesPlayed" json:"matches_played,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RatingHistoryEntry) Reset() {
+	*x = RatingHistoryEntry{}
+	mi := &file_stats_v1_stats_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RatingHistoryEntry) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RatingHistoryEntry) ProtoMessage() {}
+
+func (x *RatingHistoryEntry) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[43]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RatingHistoryEntry.ProtoReflect.Descriptor instead.
+func (*RatingHistoryEntry) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{43}
+}
+
+func (x *RatingHistoryEntry) GetMatchId() string {
+	if x != nil && x.MatchId != nil {
+		return *x.MatchId
+	}
+	return ""
+}
+
+func (x *RatingHistoryEntry) GetMatchStartTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.MatchStartTime
+	}
+	return nil
+}
+
+func (x *RatingHistoryEntry) GetRating() int32 {
+	if x != nil && x.Rating != nil {
+		return *x.Rating
+	}
+	return 0
+}
+
+func (x *RatingHistoryEntry) GetRatingSigma() int32 {
+	if x != nil && x.RatingSigma != nil {
+		return *x.RatingSigma
+	}
+	return 0
+}
+
+func (x *RatingHistoryEntry) GetOutcome() RatingOutcome {
+	if x != nil && x.Outcome != nil {
+		return *x.Outcome
+	}
+	return RatingOutcome_RATING_OUTCOME_DRAW_UNSPECIFIED
+}
+
+func (x *RatingHistoryEntry) GetMatchesPlayed() uint32 {
+	if x != nil && x.MatchesPlayed != nil {
+		return *x.MatchesPlayed
+	}
+	return 0
+}
+
+type PlayerRatingHistoryResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Entries       []*RatingHistoryEntry  `protobuf:"bytes,1,rep,name=entries" json:"entries,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PlayerRatingHistoryResponse) Reset() {
+	*x = PlayerRatingHistoryResponse{}
+	mi := &file_stats_v1_stats_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PlayerRatingHistoryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlayerRatingHistoryResponse) ProtoMessage() {}
+
+func (x *PlayerRatingHistoryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PlayerRatingHistoryResponse.ProtoReflect.Descriptor instead.
+func (*PlayerRatingHistoryResponse) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *PlayerRatingHistoryResponse) GetEntries() []*RatingHistoryEntry {
+	if x != nil {
+		return x.Entries
+	}
+	return nil
+}
+
+type RatingLeaderboardRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// stats_bucket_id selects the game mode. 0 uses the default bucket.
+	StatsBucketId *int32  `protobuf:"varint,1,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
+	Limit         *uint32 `protobuf:"varint,2,opt,name=limit" json:"limit,omitempty"`
+	Offset        *uint32 `protobuf:"varint,3,opt,name=offset" json:"offset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RatingLeaderboardRequest) Reset() {
+	*x = RatingLeaderboardRequest{}
+	mi := &file_stats_v1_stats_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RatingLeaderboardRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RatingLeaderboardRequest) ProtoMessage() {}
+
+func (x *RatingLeaderboardRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RatingLeaderboardRequest.ProtoReflect.Descriptor instead.
+func (*RatingLeaderboardRequest) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{45}
+}
+
+func (x *RatingLeaderboardRequest) GetStatsBucketId() int32 {
+	if x != nil && x.StatsBucketId != nil {
+		return *x.StatsBucketId
+	}
+	return 0
+}
+
+func (x *RatingLeaderboardRequest) GetLimit() uint32 {
+	if x != nil && x.Limit != nil {
+		return *x.Limit
+	}
+	return 0
+}
+
+func (x *RatingLeaderboardRequest) GetOffset() uint32 {
+	if x != nil && x.Offset != nil {
+		return *x.Offset
+	}
+	return 0
+}
+
+type RatingLeaderboardResponse struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Ratings []*PlayerRating        `protobuf:"bytes,1,rep,name=ratings" json:"ratings,omitempty"`
+	Count   *uint64                `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
+	// calculated_on is when the rating set was last recomputed.
+	CalculatedOn  *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=calculated_on,json=calculatedOn" json:"calculated_on,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RatingLeaderboardResponse) Reset() {
+	*x = RatingLeaderboardResponse{}
+	mi := &file_stats_v1_stats_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RatingLeaderboardResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RatingLeaderboardResponse) ProtoMessage() {}
+
+func (x *RatingLeaderboardResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stats_v1_stats_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RatingLeaderboardResponse.ProtoReflect.Descriptor instead.
+func (*RatingLeaderboardResponse) Descriptor() ([]byte, []int) {
+	return file_stats_v1_stats_proto_rawDescGZIP(), []int{46}
+}
+
+func (x *RatingLeaderboardResponse) GetRatings() []*PlayerRating {
+	if x != nil {
+		return x.Ratings
+	}
+	return nil
+}
+
+func (x *RatingLeaderboardResponse) GetCount() uint64 {
+	if x != nil && x.Count != nil {
+		return *x.Count
+	}
+	return 0
+}
+
+func (x *RatingLeaderboardResponse) GetCalculatedOn() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CalculatedOn
+	}
+	return nil
+}
+
 var File_stats_v1_stats_proto protoreflect.FileDescriptor
 
 const file_stats_v1_stats_proto_rawDesc = "" +
@@ -5631,7 +6247,51 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\n" +
 	"ammo_packs\x185 \x01(\x04B\x020\x01R\tammoPacks\x12%\n" +
 	"\fhealth_packs\x186 \x01(\x04B\x020\x01R\vhealthPacks\x122\n" +
-	"\x13health_pack_healing\x187 \x01(\x04B\x020\x01R\x11healthPackHealing*R\n" +
+	"\x13health_pack_healing\x187 \x01(\x04B\x020\x01R\x11healthPackHealing\"t\n" +
+	"\x13PlayerRatingRequest\x12,\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\x11\xbaH\f\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\x12/\n" +
+	"\x0fstats_bucket_id\x18\x02 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\rstatsBucketId\"\xe1\x03\n" +
+	"\fPlayerRating\x128\n" +
+	"\x06player\x18\x01 \x01(\v2\x18.person.v1.PersonDisplayB\x06\xbaH\x03\xc8\x01\x01R\x06player\x12&\n" +
+	"\x0fstats_bucket_id\x18\x02 \x01(\x05R\rstatsBucketId\x12\x16\n" +
+	"\x06rating\x18\x03 \x01(\x05R\x06rating\x12!\n" +
+	"\frating_sigma\x18\x04 \x01(\x05R\vratingSigma\x12/\n" +
+	"\x13rating_conservative\x18\x05 \x01(\x05R\x12ratingConservative\x12\x12\n" +
+	"\x04rank\x18\x06 \x01(\x05R\x04rank\x12 \n" +
+	"\vprovisional\x18\a \x01(\bR\vprovisional\x12%\n" +
+	"\x0ematches_played\x18\b \x01(\rR\rmatchesPlayed\x12\x12\n" +
+	"\x04wins\x18\t \x01(\rR\x04wins\x12\x16\n" +
+	"\x06losses\x18\n" +
+	" \x01(\rR\x06losses\x12\x14\n" +
+	"\x05draws\x18\v \x01(\rR\x05draws\x12\x0e\n" +
+	"\x02mu\x18\f \x01(\x01R\x02mu\x12\x14\n" +
+	"\x05sigma\x18\r \x01(\x01R\x05sigma\x12>\n" +
+	"\rlast_match_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\vlastMatchAt\"F\n" +
+	"\x14PlayerRatingResponse\x12.\n" +
+	"\x06rating\x18\x01 \x01(\v2\x16.stats.v1.PlayerRatingR\x06rating\"\x9b\x01\n" +
+	"\x1aPlayerRatingHistoryRequest\x12,\n" +
+	"\bsteam_id\x18\x01 \x01(\x03B\x11\xbaH\f\"\n" +
+	"(\x81\x80\x80\x80\x90\x80\x80\x88\x010\x01R\asteamId\x12/\n" +
+	"\x0fstats_bucket_id\x18\x02 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\rstatsBucketId\x12\x1e\n" +
+	"\x05limit\x18\x03 \x01(\rB\b\xbaH\x05*\x03\x18\xe8\aR\x05limit\"\x8a\x02\n" +
+	"\x12RatingHistoryEntry\x12\x19\n" +
+	"\bmatch_id\x18\x01 \x01(\tR\amatchId\x12D\n" +
+	"\x10match_start_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x0ematchStartTime\x12\x16\n" +
+	"\x06rating\x18\x03 \x01(\x05R\x06rating\x12!\n" +
+	"\frating_sigma\x18\x04 \x01(\x05R\vratingSigma\x121\n" +
+	"\aoutcome\x18\x05 \x01(\x0e2\x17.stats.v1.RatingOutcomeR\aoutcome\x12%\n" +
+	"\x0ematches_played\x18\x06 \x01(\rR\rmatchesPlayed\"U\n" +
+	"\x1bPlayerRatingHistoryResponse\x126\n" +
+	"\aentries\x18\x01 \x03(\v2\x1c.stats.v1.RatingHistoryEntryR\aentries\"\x82\x01\n" +
+	"\x18RatingLeaderboardRequest\x12/\n" +
+	"\x0fstats_bucket_id\x18\x01 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\rstatsBucketId\x12\x1d\n" +
+	"\x05limit\x18\x02 \x01(\rB\a\xbaH\x04*\x02\x18dR\x05limit\x12\x16\n" +
+	"\x06offset\x18\x03 \x01(\rR\x06offset\"\xa8\x01\n" +
+	"\x19RatingLeaderboardResponse\x120\n" +
+	"\aratings\x18\x01 \x03(\v2\x16.stats.v1.PlayerRatingR\aratings\x12\x18\n" +
+	"\x05count\x18\x02 \x01(\x04B\x020\x01R\x05count\x12?\n" +
+	"\rcalculated_on\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\fcalculatedOn*R\n" +
 	"\x04Team\x12\x1f\n" +
 	"\x1bTEAM_UNASSIGNED_UNSPECIFIED\x10\x00\x12\r\n" +
 	"\tTEAM_SPEC\x10\x01\x12\f\n" +
@@ -5650,7 +6310,12 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\x12TIME_BUCKET_WEEKLY\x10\a\x12\x17\n" +
 	"\x13TIME_BUCKET_MONTHLY\x10\x1f\x12\x17\n" +
 	"\x12TIME_BUCKET_YEARLY\x10\xed\x02\x12\x19\n" +
-	"\x13TIME_BUCKET_ALLTIME\x10\x9f\x8d\x062\xfe\a\n" +
+	"\x13TIME_BUCKET_ALLTIME\x10\x9f\x8d\x06*e\n" +
+	"\rRatingOutcome\x12#\n" +
+	"\x1fRATING_OUTCOME_DRAW_UNSPECIFIED\x10\x00\x12\x16\n" +
+	"\x12RATING_OUTCOME_WIN\x10\x01\x12\x17\n" +
+	"\x13RATING_OUTCOME_LOSS\x10\x022\x95\n" +
+	"\n" +
 	"\fStatsService\x12:\n" +
 	"\x05Match\x12\x16.stats.v1.MatchRequest\x1a\x17.stats.v1.MatchResponse\"\x00\x12O\n" +
 	"\fQueryMatches\x12\x1d.stats.v1.QueryMatchesRequest\x1a\x1e.stats.v1.QueryMatchesResponse\"\x00\x12^\n" +
@@ -5666,7 +6331,10 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\x10SetBucketEnabled\x12!.stats.v1.SetBucketEnabledRequest\x1a\x16.google.protobuf.Empty\"\x00\x12R\n" +
 	"\rQueryMapStats\x12\x1e.stats.v1.QueryMapStatsRequest\x1a\x1f.stats.v1.QueryMapStatsResponse\"\x00\x12g\n" +
 	"\x14QueryMapStatsHistory\x12%.stats.v1.QueryMapStatsHistoryRequest\x1a&.stats.v1.QueryMapStatsHistoryResponse\"\x00\x12H\n" +
-	"\fRefreshStats\x12\x16.google.protobuf.Empty\x1a\x1e.stats.v1.RefreshStatsResponse\"\x00B\x96\x01\n" +
+	"\fRefreshStats\x12\x16.google.protobuf.Empty\x1a\x1e.stats.v1.RefreshStatsResponse\"\x00\x12O\n" +
+	"\fPlayerRating\x12\x1d.stats.v1.PlayerRatingRequest\x1a\x1e.stats.v1.PlayerRatingResponse\"\x00\x12d\n" +
+	"\x13PlayerRatingHistory\x12$.stats.v1.PlayerRatingHistoryRequest\x1a%.stats.v1.PlayerRatingHistoryResponse\"\x00\x12^\n" +
+	"\x11RatingLeaderboard\x12\".stats.v1.RatingLeaderboardRequest\x1a#.stats.v1.RatingLeaderboardResponse\"\x00B\x96\x01\n" +
 	"\fcom.stats.v1B\n" +
 	"StatsProtoP\x01Z9github.com/leighmacdonald/gbans/internal/stats/v1;statsv1\xa2\x02\x03SXX\xaa\x02\bStats.V1\xca\x02\bStats\\V1\xe2\x02\x14Stats\\V1\\GPBMetadata\xea\x02\tStats::V1b\beditionsp\xe8\a"
 
@@ -5682,142 +6350,165 @@ func file_stats_v1_stats_proto_rawDescGZIP() []byte {
 	return file_stats_v1_stats_proto_rawDescData
 }
 
-var file_stats_v1_stats_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_stats_v1_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 40)
+var file_stats_v1_stats_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_stats_v1_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 48)
 var file_stats_v1_stats_proto_goTypes = []any{
 	(Team)(0),                            // 0: stats.v1.Team
 	(Variant)(0),                         // 1: stats.v1.Variant
 	(TimeBucket)(0),                      // 2: stats.v1.TimeBucket
-	(*MatchesWithPlayerRequest)(nil),     // 3: stats.v1.MatchesWithPlayerRequest
-	(*MapListResponse)(nil),              // 4: stats.v1.MapListResponse
-	(*PlayerMatchHistory)(nil),           // 5: stats.v1.PlayerMatchHistory
-	(*MatchesWithPlayerResponse)(nil),    // 6: stats.v1.MatchesWithPlayerResponse
-	(*WeaponListResponse)(nil),           // 7: stats.v1.WeaponListResponse
-	(*Bucket)(nil),                       // 8: stats.v1.Bucket
-	(*BucketsResponse)(nil),              // 9: stats.v1.BucketsResponse
-	(*CreateBucketRequest)(nil),          // 10: stats.v1.CreateBucketRequest
-	(*CreateBucketResponse)(nil),         // 11: stats.v1.CreateBucketResponse
-	(*DeleteBucketRequest)(nil),          // 12: stats.v1.DeleteBucketRequest
-	(*SetBucketEnabledRequest)(nil),      // 13: stats.v1.SetBucketEnabledRequest
-	(*MapStat)(nil),                      // 14: stats.v1.MapStat
-	(*MapStatsSummary)(nil),              // 15: stats.v1.MapStatsSummary
-	(*QueryMapStatsRequest)(nil),         // 16: stats.v1.QueryMapStatsRequest
-	(*MapPrefixStat)(nil),                // 17: stats.v1.MapPrefixStat
-	(*QueryMapStatsResponse)(nil),        // 18: stats.v1.QueryMapStatsResponse
-	(*MapStatsPoint)(nil),                // 19: stats.v1.MapStatsPoint
-	(*MapStatsSeries)(nil),               // 20: stats.v1.MapStatsSeries
-	(*QueryMapStatsHistoryRequest)(nil),  // 21: stats.v1.QueryMapStatsHistoryRequest
-	(*QueryMapStatsHistoryResponse)(nil), // 22: stats.v1.QueryMapStatsHistoryResponse
-	(*RefreshStatsResponse)(nil),         // 23: stats.v1.RefreshStatsResponse
-	(*QueryMatchesRequest)(nil),          // 24: stats.v1.QueryMatchesRequest
-	(*QueryMatchesResponse)(nil),         // 25: stats.v1.QueryMatchesResponse
-	(*QueryStatsRequest)(nil),            // 26: stats.v1.QueryStatsRequest
-	(*QueryStatsResponse)(nil),           // 27: stats.v1.QueryStatsResponse
-	(*OverallStats)(nil),                 // 28: stats.v1.OverallStats
-	(*OverallStatsContainer)(nil),        // 29: stats.v1.OverallStatsContainer
-	(*VariantStats)(nil),                 // 30: stats.v1.VariantStats
-	(*VariantStatsContainer)(nil),        // 31: stats.v1.VariantStatsContainer
-	(*MatchRequest)(nil),                 // 32: stats.v1.MatchRequest
-	(*MatchResponse)(nil),                // 33: stats.v1.MatchResponse
-	(*MatchOverview)(nil),                // 34: stats.v1.MatchOverview
-	(*MatchChatLog)(nil),                 // 35: stats.v1.MatchChatLog
-	(*Match)(nil),                        // 36: stats.v1.Match
-	(*MatchEvent)(nil),                   // 37: stats.v1.MatchEvent
-	(*MatchKill)(nil),                    // 38: stats.v1.MatchKill
-	(*Round)(nil),                        // 39: stats.v1.Round
-	(*RoundPlayer)(nil),                  // 40: stats.v1.RoundPlayer
-	(*RoundPlayerVariant)(nil),           // 41: stats.v1.RoundPlayerVariant
-	nil,                                  // 42: stats.v1.Match.PlayersEntry
-	(*v1.Map)(nil),                       // 43: maps.v1.Map
-	(*timestamppb.Timestamp)(nil),        // 44: google.protobuf.Timestamp
-	(*v11.Filter)(nil),                   // 45: database.query.v1.Filter
-	(*v12.PersonDisplay)(nil),            // 46: person.v1.PersonDisplay
-	(*emptypb.Empty)(nil),                // 47: google.protobuf.Empty
+	(RatingOutcome)(0),                   // 3: stats.v1.RatingOutcome
+	(*MatchesWithPlayerRequest)(nil),     // 4: stats.v1.MatchesWithPlayerRequest
+	(*MapListResponse)(nil),              // 5: stats.v1.MapListResponse
+	(*PlayerMatchHistory)(nil),           // 6: stats.v1.PlayerMatchHistory
+	(*MatchesWithPlayerResponse)(nil),    // 7: stats.v1.MatchesWithPlayerResponse
+	(*WeaponListResponse)(nil),           // 8: stats.v1.WeaponListResponse
+	(*Bucket)(nil),                       // 9: stats.v1.Bucket
+	(*BucketsResponse)(nil),              // 10: stats.v1.BucketsResponse
+	(*CreateBucketRequest)(nil),          // 11: stats.v1.CreateBucketRequest
+	(*CreateBucketResponse)(nil),         // 12: stats.v1.CreateBucketResponse
+	(*DeleteBucketRequest)(nil),          // 13: stats.v1.DeleteBucketRequest
+	(*SetBucketEnabledRequest)(nil),      // 14: stats.v1.SetBucketEnabledRequest
+	(*MapStat)(nil),                      // 15: stats.v1.MapStat
+	(*MapStatsSummary)(nil),              // 16: stats.v1.MapStatsSummary
+	(*QueryMapStatsRequest)(nil),         // 17: stats.v1.QueryMapStatsRequest
+	(*MapPrefixStat)(nil),                // 18: stats.v1.MapPrefixStat
+	(*QueryMapStatsResponse)(nil),        // 19: stats.v1.QueryMapStatsResponse
+	(*MapStatsPoint)(nil),                // 20: stats.v1.MapStatsPoint
+	(*MapStatsSeries)(nil),               // 21: stats.v1.MapStatsSeries
+	(*QueryMapStatsHistoryRequest)(nil),  // 22: stats.v1.QueryMapStatsHistoryRequest
+	(*QueryMapStatsHistoryResponse)(nil), // 23: stats.v1.QueryMapStatsHistoryResponse
+	(*RefreshStatsResponse)(nil),         // 24: stats.v1.RefreshStatsResponse
+	(*QueryMatchesRequest)(nil),          // 25: stats.v1.QueryMatchesRequest
+	(*QueryMatchesResponse)(nil),         // 26: stats.v1.QueryMatchesResponse
+	(*QueryStatsRequest)(nil),            // 27: stats.v1.QueryStatsRequest
+	(*QueryStatsResponse)(nil),           // 28: stats.v1.QueryStatsResponse
+	(*OverallStats)(nil),                 // 29: stats.v1.OverallStats
+	(*OverallStatsContainer)(nil),        // 30: stats.v1.OverallStatsContainer
+	(*VariantStats)(nil),                 // 31: stats.v1.VariantStats
+	(*VariantStatsContainer)(nil),        // 32: stats.v1.VariantStatsContainer
+	(*MatchRequest)(nil),                 // 33: stats.v1.MatchRequest
+	(*MatchResponse)(nil),                // 34: stats.v1.MatchResponse
+	(*MatchOverview)(nil),                // 35: stats.v1.MatchOverview
+	(*MatchChatLog)(nil),                 // 36: stats.v1.MatchChatLog
+	(*Match)(nil),                        // 37: stats.v1.Match
+	(*MatchEvent)(nil),                   // 38: stats.v1.MatchEvent
+	(*MatchKill)(nil),                    // 39: stats.v1.MatchKill
+	(*Round)(nil),                        // 40: stats.v1.Round
+	(*RoundPlayer)(nil),                  // 41: stats.v1.RoundPlayer
+	(*RoundPlayerVariant)(nil),           // 42: stats.v1.RoundPlayerVariant
+	(*PlayerRatingRequest)(nil),          // 43: stats.v1.PlayerRatingRequest
+	(*PlayerRating)(nil),                 // 44: stats.v1.PlayerRating
+	(*PlayerRatingResponse)(nil),         // 45: stats.v1.PlayerRatingResponse
+	(*PlayerRatingHistoryRequest)(nil),   // 46: stats.v1.PlayerRatingHistoryRequest
+	(*RatingHistoryEntry)(nil),           // 47: stats.v1.RatingHistoryEntry
+	(*PlayerRatingHistoryResponse)(nil),  // 48: stats.v1.PlayerRatingHistoryResponse
+	(*RatingLeaderboardRequest)(nil),     // 49: stats.v1.RatingLeaderboardRequest
+	(*RatingLeaderboardResponse)(nil),    // 50: stats.v1.RatingLeaderboardResponse
+	nil,                                  // 51: stats.v1.Match.PlayersEntry
+	(*v1.Map)(nil),                       // 52: maps.v1.Map
+	(*timestamppb.Timestamp)(nil),        // 53: google.protobuf.Timestamp
+	(*v11.Filter)(nil),                   // 54: database.query.v1.Filter
+	(*v12.PersonDisplay)(nil),            // 55: person.v1.PersonDisplay
+	(*emptypb.Empty)(nil),                // 56: google.protobuf.Empty
 }
 var file_stats_v1_stats_proto_depIdxs = []int32{
-	43, // 0: stats.v1.MapListResponse.maps:type_name -> maps.v1.Map
-	44, // 1: stats.v1.PlayerMatchHistory.created_on:type_name -> google.protobuf.Timestamp
-	44, // 2: stats.v1.PlayerMatchHistory.start_time:type_name -> google.protobuf.Timestamp
-	5,  // 3: stats.v1.MatchesWithPlayerResponse.matches:type_name -> stats.v1.PlayerMatchHistory
-	8,  // 4: stats.v1.BucketsResponse.buckets:type_name -> stats.v1.Bucket
-	8,  // 5: stats.v1.CreateBucketResponse.bucket:type_name -> stats.v1.Bucket
-	44, // 6: stats.v1.MapStat.first_played_at:type_name -> google.protobuf.Timestamp
-	44, // 7: stats.v1.MapStat.last_played_at:type_name -> google.protobuf.Timestamp
-	44, // 8: stats.v1.QueryMapStatsRequest.start:type_name -> google.protobuf.Timestamp
-	44, // 9: stats.v1.QueryMapStatsRequest.end:type_name -> google.protobuf.Timestamp
-	45, // 10: stats.v1.QueryMapStatsRequest.filter:type_name -> database.query.v1.Filter
-	14, // 11: stats.v1.QueryMapStatsResponse.maps:type_name -> stats.v1.MapStat
-	15, // 12: stats.v1.QueryMapStatsResponse.summary:type_name -> stats.v1.MapStatsSummary
-	14, // 13: stats.v1.QueryMapStatsResponse.top_maps:type_name -> stats.v1.MapStat
-	17, // 14: stats.v1.QueryMapStatsResponse.prefixes:type_name -> stats.v1.MapPrefixStat
-	44, // 15: stats.v1.MapStatsPoint.date_bucket:type_name -> google.protobuf.Timestamp
-	19, // 16: stats.v1.MapStatsSeries.points:type_name -> stats.v1.MapStatsPoint
-	44, // 17: stats.v1.QueryMapStatsHistoryRequest.start:type_name -> google.protobuf.Timestamp
-	44, // 18: stats.v1.QueryMapStatsHistoryRequest.end:type_name -> google.protobuf.Timestamp
+	52, // 0: stats.v1.MapListResponse.maps:type_name -> maps.v1.Map
+	53, // 1: stats.v1.PlayerMatchHistory.created_on:type_name -> google.protobuf.Timestamp
+	53, // 2: stats.v1.PlayerMatchHistory.start_time:type_name -> google.protobuf.Timestamp
+	6,  // 3: stats.v1.MatchesWithPlayerResponse.matches:type_name -> stats.v1.PlayerMatchHistory
+	9,  // 4: stats.v1.BucketsResponse.buckets:type_name -> stats.v1.Bucket
+	9,  // 5: stats.v1.CreateBucketResponse.bucket:type_name -> stats.v1.Bucket
+	53, // 6: stats.v1.MapStat.first_played_at:type_name -> google.protobuf.Timestamp
+	53, // 7: stats.v1.MapStat.last_played_at:type_name -> google.protobuf.Timestamp
+	53, // 8: stats.v1.QueryMapStatsRequest.start:type_name -> google.protobuf.Timestamp
+	53, // 9: stats.v1.QueryMapStatsRequest.end:type_name -> google.protobuf.Timestamp
+	54, // 10: stats.v1.QueryMapStatsRequest.filter:type_name -> database.query.v1.Filter
+	15, // 11: stats.v1.QueryMapStatsResponse.maps:type_name -> stats.v1.MapStat
+	16, // 12: stats.v1.QueryMapStatsResponse.summary:type_name -> stats.v1.MapStatsSummary
+	15, // 13: stats.v1.QueryMapStatsResponse.top_maps:type_name -> stats.v1.MapStat
+	18, // 14: stats.v1.QueryMapStatsResponse.prefixes:type_name -> stats.v1.MapPrefixStat
+	53, // 15: stats.v1.MapStatsPoint.date_bucket:type_name -> google.protobuf.Timestamp
+	20, // 16: stats.v1.MapStatsSeries.points:type_name -> stats.v1.MapStatsPoint
+	53, // 17: stats.v1.QueryMapStatsHistoryRequest.start:type_name -> google.protobuf.Timestamp
+	53, // 18: stats.v1.QueryMapStatsHistoryRequest.end:type_name -> google.protobuf.Timestamp
 	2,  // 19: stats.v1.QueryMapStatsHistoryRequest.time_bucket:type_name -> stats.v1.TimeBucket
-	20, // 20: stats.v1.QueryMapStatsHistoryResponse.series:type_name -> stats.v1.MapStatsSeries
-	45, // 21: stats.v1.QueryMatchesRequest.filter:type_name -> database.query.v1.Filter
-	44, // 22: stats.v1.QueryMatchesRequest.start_time_start:type_name -> google.protobuf.Timestamp
-	44, // 23: stats.v1.QueryMatchesRequest.start_time_end:type_name -> google.protobuf.Timestamp
-	34, // 24: stats.v1.QueryMatchesResponse.matches:type_name -> stats.v1.MatchOverview
-	45, // 25: stats.v1.QueryStatsRequest.filter:type_name -> database.query.v1.Filter
+	21, // 20: stats.v1.QueryMapStatsHistoryResponse.series:type_name -> stats.v1.MapStatsSeries
+	54, // 21: stats.v1.QueryMatchesRequest.filter:type_name -> database.query.v1.Filter
+	53, // 22: stats.v1.QueryMatchesRequest.start_time_start:type_name -> google.protobuf.Timestamp
+	53, // 23: stats.v1.QueryMatchesRequest.start_time_end:type_name -> google.protobuf.Timestamp
+	35, // 24: stats.v1.QueryMatchesResponse.matches:type_name -> stats.v1.MatchOverview
+	54, // 25: stats.v1.QueryStatsRequest.filter:type_name -> database.query.v1.Filter
 	2,  // 26: stats.v1.QueryStatsRequest.time_bucket:type_name -> stats.v1.TimeBucket
 	1,  // 27: stats.v1.QueryStatsRequest.variant:type_name -> stats.v1.Variant
-	44, // 28: stats.v1.QueryStatsRequest.time:type_name -> google.protobuf.Timestamp
+	53, // 28: stats.v1.QueryStatsRequest.time:type_name -> google.protobuf.Timestamp
 	1,  // 29: stats.v1.QueryStatsResponse.variant:type_name -> stats.v1.Variant
-	31, // 30: stats.v1.QueryStatsResponse.stats_variant:type_name -> stats.v1.VariantStatsContainer
-	29, // 31: stats.v1.QueryStatsResponse.stats_overall:type_name -> stats.v1.OverallStatsContainer
-	46, // 32: stats.v1.OverallStats.player:type_name -> person.v1.PersonDisplay
-	28, // 33: stats.v1.OverallStatsContainer.stats:type_name -> stats.v1.OverallStats
-	46, // 34: stats.v1.VariantStats.player:type_name -> person.v1.PersonDisplay
-	30, // 35: stats.v1.VariantStatsContainer.stats:type_name -> stats.v1.VariantStats
-	36, // 36: stats.v1.MatchResponse.match:type_name -> stats.v1.Match
-	43, // 37: stats.v1.MatchOverview.map:type_name -> maps.v1.Map
-	44, // 38: stats.v1.MatchOverview.start_time:type_name -> google.protobuf.Timestamp
-	44, // 39: stats.v1.MatchOverview.created_on:type_name -> google.protobuf.Timestamp
-	34, // 40: stats.v1.Match.overview:type_name -> stats.v1.MatchOverview
-	39, // 41: stats.v1.Match.rounds:type_name -> stats.v1.Round
-	35, // 42: stats.v1.Match.chat_logs:type_name -> stats.v1.MatchChatLog
-	42, // 43: stats.v1.Match.players:type_name -> stats.v1.Match.PlayersEntry
-	38, // 44: stats.v1.Match.kills:type_name -> stats.v1.MatchKill
-	37, // 45: stats.v1.Match.events:type_name -> stats.v1.MatchEvent
+	32, // 30: stats.v1.QueryStatsResponse.stats_variant:type_name -> stats.v1.VariantStatsContainer
+	30, // 31: stats.v1.QueryStatsResponse.stats_overall:type_name -> stats.v1.OverallStatsContainer
+	55, // 32: stats.v1.OverallStats.player:type_name -> person.v1.PersonDisplay
+	29, // 33: stats.v1.OverallStatsContainer.stats:type_name -> stats.v1.OverallStats
+	55, // 34: stats.v1.VariantStats.player:type_name -> person.v1.PersonDisplay
+	31, // 35: stats.v1.VariantStatsContainer.stats:type_name -> stats.v1.VariantStats
+	37, // 36: stats.v1.MatchResponse.match:type_name -> stats.v1.Match
+	52, // 37: stats.v1.MatchOverview.map:type_name -> maps.v1.Map
+	53, // 38: stats.v1.MatchOverview.start_time:type_name -> google.protobuf.Timestamp
+	53, // 39: stats.v1.MatchOverview.created_on:type_name -> google.protobuf.Timestamp
+	35, // 40: stats.v1.Match.overview:type_name -> stats.v1.MatchOverview
+	40, // 41: stats.v1.Match.rounds:type_name -> stats.v1.Round
+	36, // 42: stats.v1.Match.chat_logs:type_name -> stats.v1.MatchChatLog
+	51, // 43: stats.v1.Match.players:type_name -> stats.v1.Match.PlayersEntry
+	39, // 44: stats.v1.Match.kills:type_name -> stats.v1.MatchKill
+	38, // 45: stats.v1.Match.events:type_name -> stats.v1.MatchEvent
 	0,  // 46: stats.v1.Round.winner:type_name -> stats.v1.Team
-	40, // 47: stats.v1.Round.players:type_name -> stats.v1.RoundPlayer
-	46, // 48: stats.v1.RoundPlayer.person:type_name -> person.v1.PersonDisplay
+	41, // 47: stats.v1.Round.players:type_name -> stats.v1.RoundPlayer
+	55, // 48: stats.v1.RoundPlayer.person:type_name -> person.v1.PersonDisplay
 	0,  // 49: stats.v1.RoundPlayer.team:type_name -> stats.v1.Team
-	41, // 50: stats.v1.RoundPlayer.variants:type_name -> stats.v1.RoundPlayerVariant
-	46, // 51: stats.v1.Match.PlayersEntry.value:type_name -> person.v1.PersonDisplay
-	32, // 52: stats.v1.StatsService.Match:input_type -> stats.v1.MatchRequest
-	24, // 53: stats.v1.StatsService.QueryMatches:input_type -> stats.v1.QueryMatchesRequest
-	3,  // 54: stats.v1.StatsService.MatchesWithPlayer:input_type -> stats.v1.MatchesWithPlayerRequest
-	26, // 55: stats.v1.StatsService.QueryStats:input_type -> stats.v1.QueryStatsRequest
-	47, // 56: stats.v1.StatsService.WeaponList:input_type -> google.protobuf.Empty
-	47, // 57: stats.v1.StatsService.MapList:input_type -> google.protobuf.Empty
-	47, // 58: stats.v1.StatsService.Buckets:input_type -> google.protobuf.Empty
-	10, // 59: stats.v1.StatsService.CreateBucket:input_type -> stats.v1.CreateBucketRequest
-	12, // 60: stats.v1.StatsService.DeleteBucket:input_type -> stats.v1.DeleteBucketRequest
-	13, // 61: stats.v1.StatsService.SetBucketEnabled:input_type -> stats.v1.SetBucketEnabledRequest
-	16, // 62: stats.v1.StatsService.QueryMapStats:input_type -> stats.v1.QueryMapStatsRequest
-	21, // 63: stats.v1.StatsService.QueryMapStatsHistory:input_type -> stats.v1.QueryMapStatsHistoryRequest
-	47, // 64: stats.v1.StatsService.RefreshStats:input_type -> google.protobuf.Empty
-	33, // 65: stats.v1.StatsService.Match:output_type -> stats.v1.MatchResponse
-	25, // 66: stats.v1.StatsService.QueryMatches:output_type -> stats.v1.QueryMatchesResponse
-	6,  // 67: stats.v1.StatsService.MatchesWithPlayer:output_type -> stats.v1.MatchesWithPlayerResponse
-	27, // 68: stats.v1.StatsService.QueryStats:output_type -> stats.v1.QueryStatsResponse
-	7,  // 69: stats.v1.StatsService.WeaponList:output_type -> stats.v1.WeaponListResponse
-	4,  // 70: stats.v1.StatsService.MapList:output_type -> stats.v1.MapListResponse
-	9,  // 71: stats.v1.StatsService.Buckets:output_type -> stats.v1.BucketsResponse
-	11, // 72: stats.v1.StatsService.CreateBucket:output_type -> stats.v1.CreateBucketResponse
-	47, // 73: stats.v1.StatsService.DeleteBucket:output_type -> google.protobuf.Empty
-	47, // 74: stats.v1.StatsService.SetBucketEnabled:output_type -> google.protobuf.Empty
-	18, // 75: stats.v1.StatsService.QueryMapStats:output_type -> stats.v1.QueryMapStatsResponse
-	22, // 76: stats.v1.StatsService.QueryMapStatsHistory:output_type -> stats.v1.QueryMapStatsHistoryResponse
-	23, // 77: stats.v1.StatsService.RefreshStats:output_type -> stats.v1.RefreshStatsResponse
-	65, // [65:78] is the sub-list for method output_type
-	52, // [52:65] is the sub-list for method input_type
-	52, // [52:52] is the sub-list for extension type_name
-	52, // [52:52] is the sub-list for extension extendee
-	0,  // [0:52] is the sub-list for field type_name
+	42, // 50: stats.v1.RoundPlayer.variants:type_name -> stats.v1.RoundPlayerVariant
+	55, // 51: stats.v1.PlayerRating.player:type_name -> person.v1.PersonDisplay
+	53, // 52: stats.v1.PlayerRating.last_match_at:type_name -> google.protobuf.Timestamp
+	44, // 53: stats.v1.PlayerRatingResponse.rating:type_name -> stats.v1.PlayerRating
+	53, // 54: stats.v1.RatingHistoryEntry.match_start_time:type_name -> google.protobuf.Timestamp
+	3,  // 55: stats.v1.RatingHistoryEntry.outcome:type_name -> stats.v1.RatingOutcome
+	47, // 56: stats.v1.PlayerRatingHistoryResponse.entries:type_name -> stats.v1.RatingHistoryEntry
+	44, // 57: stats.v1.RatingLeaderboardResponse.ratings:type_name -> stats.v1.PlayerRating
+	53, // 58: stats.v1.RatingLeaderboardResponse.calculated_on:type_name -> google.protobuf.Timestamp
+	55, // 59: stats.v1.Match.PlayersEntry.value:type_name -> person.v1.PersonDisplay
+	33, // 60: stats.v1.StatsService.Match:input_type -> stats.v1.MatchRequest
+	25, // 61: stats.v1.StatsService.QueryMatches:input_type -> stats.v1.QueryMatchesRequest
+	4,  // 62: stats.v1.StatsService.MatchesWithPlayer:input_type -> stats.v1.MatchesWithPlayerRequest
+	27, // 63: stats.v1.StatsService.QueryStats:input_type -> stats.v1.QueryStatsRequest
+	56, // 64: stats.v1.StatsService.WeaponList:input_type -> google.protobuf.Empty
+	56, // 65: stats.v1.StatsService.MapList:input_type -> google.protobuf.Empty
+	56, // 66: stats.v1.StatsService.Buckets:input_type -> google.protobuf.Empty
+	11, // 67: stats.v1.StatsService.CreateBucket:input_type -> stats.v1.CreateBucketRequest
+	13, // 68: stats.v1.StatsService.DeleteBucket:input_type -> stats.v1.DeleteBucketRequest
+	14, // 69: stats.v1.StatsService.SetBucketEnabled:input_type -> stats.v1.SetBucketEnabledRequest
+	17, // 70: stats.v1.StatsService.QueryMapStats:input_type -> stats.v1.QueryMapStatsRequest
+	22, // 71: stats.v1.StatsService.QueryMapStatsHistory:input_type -> stats.v1.QueryMapStatsHistoryRequest
+	56, // 72: stats.v1.StatsService.RefreshStats:input_type -> google.protobuf.Empty
+	43, // 73: stats.v1.StatsService.PlayerRating:input_type -> stats.v1.PlayerRatingRequest
+	46, // 74: stats.v1.StatsService.PlayerRatingHistory:input_type -> stats.v1.PlayerRatingHistoryRequest
+	49, // 75: stats.v1.StatsService.RatingLeaderboard:input_type -> stats.v1.RatingLeaderboardRequest
+	34, // 76: stats.v1.StatsService.Match:output_type -> stats.v1.MatchResponse
+	26, // 77: stats.v1.StatsService.QueryMatches:output_type -> stats.v1.QueryMatchesResponse
+	7,  // 78: stats.v1.StatsService.MatchesWithPlayer:output_type -> stats.v1.MatchesWithPlayerResponse
+	28, // 79: stats.v1.StatsService.QueryStats:output_type -> stats.v1.QueryStatsResponse
+	8,  // 80: stats.v1.StatsService.WeaponList:output_type -> stats.v1.WeaponListResponse
+	5,  // 81: stats.v1.StatsService.MapList:output_type -> stats.v1.MapListResponse
+	10, // 82: stats.v1.StatsService.Buckets:output_type -> stats.v1.BucketsResponse
+	12, // 83: stats.v1.StatsService.CreateBucket:output_type -> stats.v1.CreateBucketResponse
+	56, // 84: stats.v1.StatsService.DeleteBucket:output_type -> google.protobuf.Empty
+	56, // 85: stats.v1.StatsService.SetBucketEnabled:output_type -> google.protobuf.Empty
+	19, // 86: stats.v1.StatsService.QueryMapStats:output_type -> stats.v1.QueryMapStatsResponse
+	23, // 87: stats.v1.StatsService.QueryMapStatsHistory:output_type -> stats.v1.QueryMapStatsHistoryResponse
+	24, // 88: stats.v1.StatsService.RefreshStats:output_type -> stats.v1.RefreshStatsResponse
+	45, // 89: stats.v1.StatsService.PlayerRating:output_type -> stats.v1.PlayerRatingResponse
+	48, // 90: stats.v1.StatsService.PlayerRatingHistory:output_type -> stats.v1.PlayerRatingHistoryResponse
+	50, // 91: stats.v1.StatsService.RatingLeaderboard:output_type -> stats.v1.RatingLeaderboardResponse
+	76, // [76:92] is the sub-list for method output_type
+	60, // [60:76] is the sub-list for method input_type
+	60, // [60:60] is the sub-list for extension type_name
+	60, // [60:60] is the sub-list for extension extendee
+	0,  // [0:60] is the sub-list for field type_name
 }
 
 func init() { file_stats_v1_stats_proto_init() }
@@ -5834,8 +6525,8 @@ func file_stats_v1_stats_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stats_v1_stats_proto_rawDesc), len(file_stats_v1_stats_proto_rawDesc)),
-			NumEnums:      3,
-			NumMessages:   40,
+			NumEnums:      4,
+			NumMessages:   48,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
