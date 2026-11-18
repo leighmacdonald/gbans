@@ -29,6 +29,7 @@ func ratingRow(
 		SteamID:       steamID,
 		RedRounds:     0,
 		BluRounds:     0,
+		Rounds:        rounds,
 	}
 
 	if team == "red" {
@@ -275,19 +276,23 @@ func (c stepCalculator) Name() string {
 	return "step"
 }
 
+func (stepCalculator) HistoryWindow() int {
+	return 0
+}
+
 func (c stepCalculator) NewPlayerSkill() Skill {
 	return Skill{Mu: 0, Sigma: 1}
 }
 
-func (c stepCalculator) Display(skill Skill) DisplayRating {
-	return DisplayRating{Rating: int(skill.Mu), Conservative: int(skill.Mu)}
+func (c stepCalculator) UpdateMatch(red, blu []PlayerRatingState, outcome RatingOutcome) ([]MatchUpdate, []MatchUpdate) {
+	redSkills := playerSkills(red)
+	bluSkills := playerSkills(blu)
+	newRed, newBlu := c.updateSkills(redSkills, bluSkills, outcome)
+
+	return toMatchUpdates(newRed, 0.5), toMatchUpdates(newBlu, 0.5)
 }
 
-func (stepCalculator) WinProbability(_, _ []Skill) float64 {
-	return 0.5
-}
-
-func (c stepCalculator) UpdateMatch(red, blu []Skill, outcome RatingOutcome) ([]Skill, []Skill) {
+func (c stepCalculator) updateSkills(red, blu []Skill, outcome RatingOutcome) ([]Skill, []Skill) {
 	newRed := make([]Skill, len(red))
 	newBlu := make([]Skill, len(blu))
 	copy(newRed, red)
@@ -312,6 +317,14 @@ func (c stepCalculator) UpdateMatch(red, blu []Skill, outcome RatingOutcome) ([]
 	}
 
 	return newRed, newBlu
+}
+
+func (c stepCalculator) Display(ctx RatingContext) DisplayRating {
+	return DisplayRating{Rating: int(ctx.Skill.Mu), Conservative: int(ctx.Skill.Mu), Visible: true}
+}
+
+func (stepCalculator) WinProbability(_, _ []Skill) float64 {
+	return 0.5
 }
 
 func TestReplayRatingsWithCustomCalculator(t *testing.T) {

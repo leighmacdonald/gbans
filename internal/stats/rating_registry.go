@@ -10,6 +10,7 @@ import (
 const (
 	RatingAlgorithmTrueSkill = "trueskill"
 	RatingAlgorithmElo       = "elo"
+	RatingAlgorithmSynElo    = "synelo"
 	// DefaultRatingAlgorithm is used when no algorithm is configured.
 	DefaultRatingAlgorithm = RatingAlgorithmTrueSkill
 )
@@ -27,8 +28,10 @@ func NewRatingCalculator(name string) (RatingCalculator, error) {
 		return TrueSkillCalculator{}, nil
 	case RatingAlgorithmElo:
 		return EloCalculator{}, nil
+	case RatingAlgorithmSynElo:
+		return SynEloCalculator{}, nil
 	default:
-		return nil, fmt.Errorf("%w: %q (supported: %s, %s)",
-			ErrUnknownRatingAlgorithm, name, RatingAlgorithmTrueSkill, RatingAlgorithmElo)
+		return nil, fmt.Errorf("%w: %q (supported: %s, %s, %s)",
+			ErrUnknownRatingAlgorithm, name, RatingAlgorithmTrueSkill, RatingAlgorithmElo, RatingAlgorithmSynElo)
 	}
 }

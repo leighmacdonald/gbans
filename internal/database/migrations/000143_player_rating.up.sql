@@ -29,6 +29,10 @@ create table if not exists player_rating (
   rating_sigma         integer not null,
   rating_conservative  integer not null,
   matches_played       integer not null,
+  rounds_played        integer not null,
+  -- Visibility and staleness are decided by the configured calculator.
+  visible              boolean not null,
+  stale                boolean not null,
   wins                 integer not null,
   losses               integer not null,
   draws                integer not null,
@@ -52,8 +56,10 @@ create table if not exists player_rating_history (
   match_start_time timestamptz not null,
   mu               double precision not null,
   sigma            double precision not null,
+  expected         double precision not null default 0.5,
   outcome          smallint not null check (outcome in (-1, 0, 1)),
   matches_played   integer not null,
+  rounds           integer not null default 0,
   primary key (steam_id, stats_bucket_id, match_id)
 );
 
@@ -62,9 +68,9 @@ create index if not exists player_rating_history_player_time_idx
 create index if not exists player_rating_history_match_idx
   on player_rating_history (match_id);
 
--- Current rating per player and bucket. Provisional players (fewer than 5
--- rated matches) are exposed at the default rating and are not ranked, but
--- keep their real mu/sigma so the true value is available once they qualify.
+-- Current rating per player and bucket. Visibility, staleness and the public
+-- scale are all produced by the configured calculator and persisted on the
+-- row, so the view does not encode any algorithm-specific policy.
 create materialized view stats_player_rating_view as
 select
   r.stats_bucket_id,
@@ -72,26 +78,18 @@ select
   coalesce(p.personaname, '') as personaname,
   coalesce(p.avatarhash, '') as avatarhash,
   r.matches_played,
+  r.rounds_played,
   r.wins,
   r.losses,
   r.draws,
   r.mu,
   r.sigma,
-  case
-    when r.matches_played >= 5 then r.rating
-    else 1000
-  end as rating,
-  case
-    when r.matches_played >= 5 then r.rating_sigma
-  end as rating_sigma,
-  case
-    when r.matches_played >= 5 then r.rating_conservative
-  end as rating_conservative,
-  case
-    when r.matches_played >= 5 then rk.rank
-    else 0
-  end as rank,
-  r.matches_played < 5 as provisional,
+  r.rating,
+  r.rating_sigma,
+  r.rating_conservative,
+  case when r.visible then rk.rank else 0 end as rank,
+  not r.visible as provisional,
+  r.stale,
   r.last_match_at,
   r.calculated_on
 from
@@ -103,7 +101,7 @@ from
       steam_id,
       rank() over (partition by stats_bucket_id order by mu desc) as rank
     from player_rating
-    where matches_played >= 5
+    where visible
   ) rk using (stats_bucket_id, steam_id)
 where not exists (
   select 1 from ban b

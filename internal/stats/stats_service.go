@@ -1033,7 +1033,12 @@ func (s Service) PlayerRatingHistory(ctx context.Context, request *v1.PlayerRati
 	resp := &v1.PlayerRatingHistoryResponse{Entries: make([]*v1.RatingHistoryEntry, len(entries))}
 	for idx, entry := range entries {
 		outcome := toRatingOutcome(entry.Outcome)
-		display := s.stats.calculator.Display(Skill{Mu: entry.Mu, Sigma: entry.Sigma})
+		display := s.stats.calculator.Display(RatingContext{
+			Skill:       Skill{Mu: entry.Mu, Sigma: entry.Sigma},
+			Matches:     entry.MatchesPlayed,
+			Rounds:      entry.Rounds,
+			LastMatchAt: entry.MatchStartTime,
+		})
 		resp.Entries[idx] = &v1.RatingHistoryEntry{
 			MatchId:        new(entry.MatchID.String()),
 			MatchStartTime: timestamppb.New(entry.MatchStartTime),

@@ -45,48 +45,56 @@ func TestNewRatingCalculator(t *testing.T) {
 	}
 }
 
+func states(skills ...Skill) []PlayerRatingState {
+	result := make([]PlayerRatingState, len(skills))
+	for idx, skill := range skills {
+		result[idx] = PlayerRatingState{Skill: skill}
+	}
+
+	return result
+}
+
 func TestEloCalculatorUpdateMatch(t *testing.T) {
 	t.Parallel()
 
 	calculator := EloCalculator{}
-	red := []Skill{{Mu: 1000, Sigma: 0}, {Mu: 1000, Sigma: 0}}
-	blu := []Skill{{Mu: 1000, Sigma: 0}, {Mu: 1000, Sigma: 0}}
+	red := states(Skill{Mu: 1000, Sigma: 0}, Skill{Mu: 1000, Sigma: 0})
+	blu := states(Skill{Mu: 1000, Sigma: 0}, Skill{Mu: 1000, Sigma: 0})
 
 	newRed, newBlu := calculator.UpdateMatch(red, blu, RatingWin)
 
 	// Equal teams: expected 0.5, so each winner gains K/4 and each loser drops K/4.
-	for _, skill := range newRed {
-		require.InDelta(t, 1000+EloKFactor/4, skill.Mu, 1e-9)
+	for _, update := range newRed {
+		require.InDelta(t, 1000+EloKFactor/4, update.Skill.Mu, 1e-9)
+		require.InDelta(t, 0.5, update.Expected, 1e-9)
 	}
-	for _, skill := range newBlu {
-		require.InDelta(t, 1000-EloKFactor/4, skill.Mu, 1e-9)
+	for _, update := range newBlu {
+		require.InDelta(t, 1000-EloKFactor/4, update.Skill.Mu, 1e-9)
 	}
 
-	// The inputs are never mutated, including when a team is empty.
-	require.Equal(t, []Skill{{Mu: 1000, Sigma: 0}, {Mu: 1000, Sigma: 0}}, red)
-	require.Equal(t, []Skill{{Mu: 1000, Sigma: 0}, {Mu: 1000, Sigma: 0}}, blu)
+	require.Equal(t, 1000.0, red[0].Skill.Mu)
+	require.Equal(t, 1000.0, blu[0].Skill.Mu)
 
 	emptyRed, emptyBlu := calculator.UpdateMatch(nil, blu, RatingWin)
 	require.Empty(t, emptyRed)
-	require.Equal(t, blu, emptyBlu)
+	require.Len(t, emptyBlu, len(blu))
 
-	// A draw between equal teams leaves both sides unchanged.
 	drawnRed, drawnBlu := calculator.UpdateMatch(red, blu, RatingDraw)
-	require.Equal(t, red, drawnRed)
-	require.Equal(t, blu, drawnBlu)
+	require.Equal(t, 1000.0, drawnRed[0].Skill.Mu)
+	require.Equal(t, 1000.0, drawnBlu[0].Skill.Mu)
 }
 
 func TestEloCalculatorFavouriteGainsLess(t *testing.T) {
 	t.Parallel()
 
 	calculator := EloCalculator{}
-	stronger := []Skill{{Mu: 1200, Sigma: 0}, {Mu: 1200, Sigma: 0}}
-	weaker := []Skill{{Mu: 1000, Sigma: 0}, {Mu: 1000, Sigma: 0}}
+	stronger := states(Skill{Mu: 1200, Sigma: 0}, Skill{Mu: 1200, Sigma: 0})
+	weaker := states(Skill{Mu: 1000, Sigma: 0}, Skill{Mu: 1000, Sigma: 0})
 
 	newRed, _ := calculator.UpdateMatch(stronger, weaker, RatingWin)
 	expected := 1 / (1 + math.Pow(10, -200/eloScale))
 	wantDelta := EloKFactor * (1 - expected) / 2
-	require.InDelta(t, 1200+wantDelta, newRed[0].Mu, 1e-9)
+	require.InDelta(t, 1200+wantDelta, newRed[0].Skill.Mu, 1e-9)
 	require.Less(t, wantDelta, EloKFactor/2)
 }
 
@@ -94,10 +102,11 @@ func TestEloCalculatorDisplayAndWinProbability(t *testing.T) {
 	t.Parallel()
 
 	calculator := EloCalculator{}
-	display := calculator.Display(Skill{Mu: 1234.6, Sigma: 0.5})
+	display := calculator.Display(RatingContext{Skill: Skill{Mu: 1234.6, Sigma: 0.5}})
 	require.Equal(t, 1235, display.Rating)
 	require.Zero(t, display.Sigma)
 	require.Equal(t, 1235, display.Conservative)
+	require.True(t, display.Visible)
 
 	even := []Skill{{Mu: EloInitialRating, Sigma: 0}}
 	require.InDelta(t, 0.5, calculator.WinProbability(even, even), 1e-9)

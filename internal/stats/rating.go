@@ -81,14 +81,6 @@ func PredictedWinProbability(red, blu []Skill) float64 {
 	return TrueSkillCalculator{}.WinProbability(red, blu)
 }
 
-// DisplayRating is the public, display-scaled form of a Skill. Each calculator
-// owns this conversion so alternatives are not tied to the TrueSkill scale.
-type DisplayRating struct {
-	Rating       int
-	Sigma        int
-	Conservative int
-}
-
 // RatingCalculator computes per-player skill estimates from two-team match
 // outcomes. The default implementation is TrueSkillCalculator.
 //
@@ -96,22 +88,27 @@ type DisplayRating struct {
 // must produce identical results, because ratings are rebuilt from scratch on
 // every refresh. Skill is the canonical persisted representation, so a
 // calculator must map its native state onto mu/sigma and keep it stable across
-// refreshes. Display controls the public scale, which is persisted alongside
-// the skill so SQL views do not depend on a specific algorithm.
+// refreshes. Display controls the public scale and visibility, which are
+// persisted alongside the skill so SQL views do not depend on a specific
+// algorithm.
 type RatingCalculator interface {
 	// Name uniquely identifies the algorithm in configuration.
 	Name() string
+
+	// HistoryWindow is the number of past observations a calculator needs.
+	// Returning zero avoids building history windows for stateless algorithms.
+	HistoryWindow() int
 
 	// NewPlayerSkill returns the skill of a player with no rated matches yet.
 	NewPlayerSkill() Skill
 
 	// UpdateMatch applies one match outcome to the skills of both teams and
-	// returns the updated skills. outcome is from the red team's perspective.
-	// The input slices must not be mutated.
-	UpdateMatch(red, blu []Skill, outcome RatingOutcome) (newRed, newBlu []Skill)
+	// returns each player's updated skill and the pre-match expected score.
+	// outcome is from the red team's perspective. Inputs must not be mutated.
+	UpdateMatch(red, blu []PlayerRatingState, outcome RatingOutcome) (newRed, newBlu []MatchUpdate)
 
-	// Display converts a skill estimate to the public rating scale.
-	Display(skill Skill) DisplayRating
+	// Display converts a skill estimate and its context to the public form.
+	Display(ctx RatingContext) DisplayRating
 
 	// WinProbability returns the probability that the red team wins.
 	WinProbability(red, blu []Skill) float64
@@ -125,20 +122,51 @@ func (TrueSkillCalculator) Name() string {
 	return RatingAlgorithmTrueSkill
 }
 
+func (TrueSkillCalculator) HistoryWindow() int {
+	return 0
+}
+
 func (TrueSkillCalculator) NewPlayerSkill() Skill {
 	return Skill{Mu: RatingMu, Sigma: RatingSigma}
 }
 
-func (TrueSkillCalculator) UpdateMatch(red, blu []Skill, outcome RatingOutcome) ([]Skill, []Skill) {
-	return updateTeamRatings(red, blu, outcome)
+func (TrueSkillCalculator) UpdateMatch(red, blu []PlayerRatingState, outcome RatingOutcome) ([]MatchUpdate, []MatchUpdate) {
+	redSkills := make([]Skill, len(red))
+	bluSkills := make([]Skill, len(blu))
+	for idx, player := range red {
+		redSkills[idx] = player.Skill
+	}
+	for idx, player := range blu {
+		bluSkills[idx] = player.Skill
+	}
+
+	expectedRed := TrueSkillCalculator{}.WinProbability(redSkills, bluSkills)
+	newRed, newBlu := updateTeamRatings(redSkills, bluSkills, outcome)
+
+	return toMatchUpdates(newRed, expectedRed), toMatchUpdates(newBlu, 1-expectedRed)
 }
 
-func (TrueSkillCalculator) Display(skill Skill) DisplayRating {
-	return DisplayRating{
-		Rating:       RatingDisplay(skill.Mu),
-		Sigma:        RatingDisplaySigma(skill.Sigma),
-		Conservative: RatingDisplayConservative(skill.Mu, skill.Sigma),
+func (TrueSkillCalculator) Display(ctx RatingContext) DisplayRating {
+	visible := ctx.Matches >= ProvisionalMatchCount
+	if !visible {
+		return DisplayRating{Visible: false, Rating: DefaultRating}
 	}
+
+	return DisplayRating{
+		Rating:       RatingDisplay(ctx.Skill.Mu),
+		Sigma:        RatingDisplaySigma(ctx.Skill.Sigma),
+		Conservative: RatingDisplayConservative(ctx.Skill.Mu, ctx.Skill.Sigma),
+		Visible:      true,
+	}
+}
+
+func toMatchUpdates(skills []Skill, expected float64) []MatchUpdate {
+	updates := make([]MatchUpdate, len(skills))
+	for idx, skill := range skills {
+		updates[idx] = MatchUpdate{Skill: skill, Expected: expected}
+	}
+
+	return updates
 }
 
 func (TrueSkillCalculator) WinProbability(red, blu []Skill) float64 {
