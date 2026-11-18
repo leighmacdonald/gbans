@@ -187,10 +187,16 @@ func (g *GBans) Init(ctx context.Context) error {
 
 	mapsSvc := maps.New(maps.NewRepository(g.database))
 
+	ratingCalc, errRatingCalc := stats.NewRatingCalculator(g.config.RatingAlgorithm())
+	if errRatingCalc != nil {
+		return errRatingCalc
+	}
+
 	g.stats = stats.New(stats.NewRepository(g.database), mapsSvc,
 		stats.WithMatchLogNotifications(g.notifications, conf.Discord.PublicMatchLogChannelID),
 		stats.WithMatchPlayerNotifications(stats.NewMatchPlayerNotifier(g.servers, g.persons)),
-		stats.WithRefreshSchedule(g.config.StatsRefreshSchedule))
+		stats.WithRefreshSchedule(g.config.StatsRefreshSchedule),
+		stats.WithRatingCalculator(ratingCalc))
 
 	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler,
 		conf.Discord.SafeChatLogChannelID(), steamid.New(conf.Owner))

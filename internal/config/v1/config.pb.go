@@ -1793,6 +1793,9 @@ type Stats struct {
 	// refresh_schedule is a 5-field cron expression controlling when the stats
 	// materialized views are refreshed.
 	RefreshSchedule *string `protobuf:"bytes,1,opt,name=refresh_schedule,json=refreshSchedule" json:"refresh_schedule,omitempty"`
+	// rating_algorithm selects the skill calculation used for player ratings.
+	// Changing it requires a restart and rebases every rating on the next refresh.
+	RatingAlgorithm *string `protobuf:"bytes,2,opt,name=rating_algorithm,json=ratingAlgorithm" json:"rating_algorithm,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -1830,6 +1833,13 @@ func (*Stats) Descriptor() ([]byte, []int) {
 func (x *Stats) GetRefreshSchedule() string {
 	if x != nil && x.RefreshSchedule != nil {
 		return *x.RefreshSchedule
+	}
+	return ""
+}
+
+func (x *Stats) GetRatingAlgorithm() string {
+	if x != nil && x.RatingAlgorithm != nil {
+		return *x.RatingAlgorithm
 	}
 	return ""
 }
@@ -2854,10 +2864,11 @@ const file_config_v1_config_proto_rawDesc = "" +
 	" \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vstacPathFmt\"2\n" +
 	"\aNetwork\x12'\n" +
 	"\vsdr_enabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"sdrEnabled\">\n" +
+	"sdrEnabled\"i\n" +
 	"\x05Stats\x125\n" +
 	"\x10refresh_schedule\x18\x01 \x01(\tB\n" +
-	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x0frefreshSchedule\"1\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x0frefreshSchedule\x12)\n" +
+	"\x10rating_algorithm\x18\x02 \x01(\tR\x0fratingAlgorithm\"1\n" +
 	"\n" +
 	"LocalStore\x12#\n" +
 	"\tpath_root\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bpathRoot\"\x8e\x01\n" +

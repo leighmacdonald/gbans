@@ -263,6 +263,11 @@ func configFromUpdate(inCfg *configv1.Config, current Config) Config {
 	}
 	if inStats != nil {
 		statsConfig.RefreshSchedule = inStats.GetRefreshSchedule()
+		// Older clients do not send this field; keep the current value so a
+		// save from them does not silently replace the configured algorithm.
+		if algorithm := inStats.GetRatingAlgorithm(); algorithm != "" {
+			statsConfig.RatingAlgorithm = algorithm
+		}
 	}
 
 	conf := Config{
@@ -535,6 +540,7 @@ func toConfig(conf Config) *configv1.Config {
 		},
 		Stats: &configv1.Stats{
 			RefreshSchedule: new(conf.StatsRefreshSchedule()),
+			RatingAlgorithm: new(conf.RatingAlgorithm()),
 		},
 	}
 }

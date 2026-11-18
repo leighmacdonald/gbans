@@ -1859,7 +1859,7 @@ function AdminSettings() {
 					tab={"stats"}
 					currentTab={tab}
 					label={"Stats"}
-					description={"Configure stat buckets and the materialized view refresh schedule"}
+					description={"Configure stat buckets, the refresh schedule and the rating algorithm"}
 				>
 					<form
 						onSubmit={async (e) => {
@@ -1892,6 +1892,34 @@ function AdminSettings() {
 									name={"stats.refreshSchedule"}
 									children={(field) => {
 										return <field.TextField label={"Cron schedule"} placeholder={"5 0 * * *"} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 12 }}>
+								<Typography variant={"h4"}>Rating Algorithm</Typography>
+								<Typography variant={"body2"} color={"textSecondary"}>
+									Skill calculation used for player ratings. Trueskill is the default; Elo is a
+									simpler alternative without an uncertainty estimate. Changing this requires a
+									restart and rebases every player's rating on the next stats refresh.
+								</Typography>
+							</Grid>
+							<Grid size={{ xs: 12 }}>
+								<form.AppField
+									name={"stats.ratingAlgorithm"}
+									children={(field) => {
+										return (
+											<field.SelectField
+												label={"Algorithm"}
+												items={["trueskill", "elo"]}
+												renderItem={(item) => {
+													return (
+														<MenuItem key={item} value={item}>
+															{item}
+														</MenuItem>
+													);
+												}}
+											/>
+										);
 									}}
 								/>
 							</Grid>

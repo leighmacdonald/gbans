@@ -53,6 +53,9 @@ func NewService(stats Stats, servers *servers.Servers, openGraph *opengraph.Repo
 	authMiddleware.UserRoute(statsv1connect.StatsServiceQueryMapStatsHistoryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
 	authMiddleware.UserRoute(statsv1connect.StatsServiceWeaponListProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
 	authMiddleware.UserRoute(statsv1connect.StatsServiceRefreshStatsProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_DEMO_ADMIN))
+	authMiddleware.UserRoute(statsv1connect.StatsServicePlayerRatingProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
+	authMiddleware.UserRoute(statsv1connect.StatsServicePlayerRatingHistoryProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
+	authMiddleware.UserRoute(statsv1connect.StatsServiceRatingLeaderboardProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_STATS_READ))
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -933,4 +936,152 @@ func (s Service) openGraphMatch(ctx context.Context, _ *http.Request, params map
 		Description: fmt.Sprintf("Match details for %s played on %s.", match.MapName, match.ServerName),
 		Type:        "article",
 	}, nil
+}
+
+// resolvedBucketID maps a request bucket to a concrete bucket, using the
+// default bucket when the request leaves it unset.
+func (s Service) resolvedBucketID(ctx context.Context, requested int32) (int32, error) {
+	if requested > 0 {
+		return requested, nil
+	}
+
+	return s.stats.repo.DefaultBucketID(ctx)
+}
+
+// toPlayerRating converts a stored rating into its public representation.
+func toPlayerRating(rating Rating) *v1.PlayerRating {
+	resp := &v1.PlayerRating{
+		Player:        displayPlayer(rating.SteamID, rating.Personaname, rating.AvatarHash),
+		StatsBucketId: new(rating.StatsBucketID),
+		// Display ratings are small by construction and always fit in int32.
+		Rating:             new(int32(rating.Rating)),             //nolint:gosec
+		RatingSigma:        new(int32(rating.RatingSigma)),        //nolint:gosec
+		RatingConservative: new(int32(rating.RatingConservative)), //nolint:gosec
+		Rank:               new(int32(rating.Rank)),               //nolint:gosec // rank is bounded by the player count.
+		Provisional:        new(rating.Provisional),
+		MatchesPlayed:      new(uint32(rating.MatchesPlayed)), //nolint:gosec // non-negative count.
+		Wins:               new(uint32(rating.Wins)),          //nolint:gosec // non-negative count.
+		Losses:             new(uint32(rating.Losses)),        //nolint:gosec // non-negative count.
+		Draws:              new(uint32(rating.Draws)),         //nolint:gosec // non-negative count.
+		Mu:                 new(rating.Mu),
+		Sigma:              new(rating.Sigma),
+	}
+	if !rating.LastMatchAt.IsZero() {
+		resp.LastMatchAt = timestamppb.New(rating.LastMatchAt)
+	}
+
+	return resp
+}
+
+func (s Service) PlayerRating(ctx context.Context, request *v1.PlayerRatingRequest) (*v1.PlayerRatingResponse, error) {
+	bucketID, errBucket := s.resolvedBucketID(ctx, request.GetStatsBucketId())
+	if errBucket != nil {
+		slog.Error("Failed to resolve stats bucket", slog.String("error", errBucket.Error()))
+
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	rating, errRating := s.stats.repo.PlayerRating(ctx, steamid.New(request.GetSteamId()), bucketID)
+	if errRating != nil {
+		if errors.Is(errRating, database.ErrNoResult) {
+			return nil, connect.NewError(connect.CodeNotFound, rpc.ErrNotFound)
+		}
+
+		slog.Error("Failed to load player rating", slog.String("error", errRating.Error()))
+
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	return &v1.PlayerRatingResponse{Rating: toPlayerRating(rating)}, nil
+}
+
+// historyLimit bounds the rating history query, defaulting when unset.
+func historyLimit(requested uint32) int {
+	if requested == 0 {
+		return 100
+	}
+
+	return int(min(requested, 1000))
+}
+
+func toRatingOutcome(outcome RatingOutcome) v1.RatingOutcome {
+	switch outcome {
+	case RatingWin:
+		return v1.RatingOutcome_RATING_OUTCOME_WIN
+	case RatingLoss:
+		return v1.RatingOutcome_RATING_OUTCOME_LOSS
+	default:
+		return v1.RatingOutcome_RATING_OUTCOME_DRAW_UNSPECIFIED
+	}
+}
+
+func (s Service) PlayerRatingHistory(ctx context.Context, request *v1.PlayerRatingHistoryRequest) (*v1.PlayerRatingHistoryResponse, error) {
+	bucketID, errBucket := s.resolvedBucketID(ctx, request.GetStatsBucketId())
+	if errBucket != nil {
+		slog.Error("Failed to resolve stats bucket", slog.String("error", errBucket.Error()))
+
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	entries, errHistory := s.stats.repo.PlayerRatingHistory(ctx, steamid.New(request.GetSteamId()), bucketID, historyLimit(request.GetLimit()))
+	if errHistory != nil {
+		slog.Error("Failed to load rating history", slog.String("error", errHistory.Error()))
+
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	resp := &v1.PlayerRatingHistoryResponse{Entries: make([]*v1.RatingHistoryEntry, len(entries))}
+	for idx, entry := range entries {
+		outcome := toRatingOutcome(entry.Outcome)
+		display := s.stats.calculator.Display(Skill{Mu: entry.Mu, Sigma: entry.Sigma})
+		resp.Entries[idx] = &v1.RatingHistoryEntry{
+			MatchId:        new(entry.MatchID.String()),
+			MatchStartTime: timestamppb.New(entry.MatchStartTime),
+			Rating:         new(int32(display.Rating)), //nolint:gosec
+			RatingSigma:    new(int32(display.Sigma)),  //nolint:gosec
+			Outcome:        &outcome,
+			MatchesPlayed:  new(uint32(entry.MatchesPlayed)), //nolint:gosec // non-negative count.
+		}
+	}
+
+	return resp, nil
+}
+
+func (s Service) RatingLeaderboard(ctx context.Context, request *v1.RatingLeaderboardRequest) (*v1.RatingLeaderboardResponse, error) {
+	bucketID, errBucket := s.resolvedBucketID(ctx, request.GetStatsBucketId())
+	if errBucket != nil {
+		slog.Error("Failed to resolve stats bucket", slog.String("error", errBucket.Error()))
+
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	limit := int(request.GetLimit())
+	if limit == 0 {
+		limit = 50
+	}
+
+	ratings, count, errRatings := s.stats.repo.RatingLeaderboard(ctx, RatingLeaderboardOpts{
+		StatsBucketID: bucketID,
+		Limit:         limit,
+		Offset:        int(request.GetOffset()),
+	})
+	if errRatings != nil {
+		slog.Error("Failed to load rating leaderboard", slog.String("error", errRatings.Error()))
+
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	resp := &v1.RatingLeaderboardResponse{
+		Ratings: make([]*v1.PlayerRating, len(ratings)),
+		Count:   &count,
+	}
+	for idx, rating := range ratings {
+		resp.Ratings[idx] = toPlayerRating(rating)
+	}
+
+	if len(ratings) > 0 && !ratings[0].CalculatedOn.IsZero() {
+		resp.CalculatedOn = timestamppb.New(ratings[0].CalculatedOn)
+	}
+
+	return resp, nil
 }
