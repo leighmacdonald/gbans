@@ -54,13 +54,11 @@ any Native_GB_ScrambleTeams(Handle plugin, int numParams) {
         return 0;
     }
 
-    Function callback = view_as<Function>(GetNativeCell(3));
+    Function callback = GetNativeFunction(3);
     int      maxExact = numParams >= 4 ? GetNativeCell(4) : 32;
 
-    ArrayList context = new ArrayList();
-    context.Push(view_as<int>(callback));
-    context.Push(0); // Real player count, filled in below.
-
+    int        userIds[SCRAMBLE_MAX_PLAYERS];
+    char       authIds[SCRAMBLE_MAX_PLAYERS][32];
     JSON_Array steamIds = new JSON_Array();
     int        count    = 0;
 
@@ -79,9 +77,7 @@ any Native_GB_ScrambleTeams(Handle plugin, int numParams) {
 
         bool duplicate = false;
         for (int other = 0; other < count; other++) {
-            char existing[32];
-            context.GetString(3 + 2 * other, existing, sizeof existing);
-            if (strcmp(existing, authId) == 0) {
+            if (strcmp(authIds[other], authId) == 0) {
                 duplicate = true;
                 break;
             }
@@ -90,30 +86,32 @@ any Native_GB_ScrambleTeams(Handle plugin, int numParams) {
             continue;
         }
 
-        // Layout: [0] callback, [1] count, then user id + steam id per player.
-        context.Push(GetClientUserId(client));
-        context.PushString(authId);
+        userIds[count] = GetClientUserId(client);
+        strcopy(authIds[count], sizeof authIds[], authId);
         steamIds.PushString(authId);
         count++;
     }
-    context.Set(1, count);
+
+    // The callback is stored in a typed data pack so it survives the async
+    // HTTP round-trip without coercing functions to primitive cells.
+    Handle context = CreateDataPack();
+    WritePackFunction(context, callback);
+    WritePackCell(context, count);
+    for (int idx = 0; idx < count; idx++) {
+        WritePackCell(context, userIds[idx]);
+        WritePackString(context, authIds[idx]);
+    }
 
     if (count == 0) {
-        int noClients[SCRAMBLE_MAX_PLAYERS];
-        invokeScrambleCallback(callback, false, noClients, 0, noClients, 0, noClients, 0,
-                               "No valid players were supplied for the scramble");
+        finishScramble(context, false, "No valid players were supplied for the scramble");
         delete steamIds;
-        delete context;
         return 0;
     }
 
     if (gToken[0] == '\0') {
-        int noClients[SCRAMBLE_MAX_PLAYERS];
-        invokeScrambleCallback(callback, false, noClients, 0, noClients, 0, noClients, 0,
-                               "Server is not authenticated with gbans yet");
+        finishScramble(context, false, "Server is not authenticated with gbans yet");
         authenticateServer();
         delete steamIds;
-        delete context;
         return 0;
     }
 
@@ -122,22 +120,16 @@ any Native_GB_ScrambleTeams(Handle plugin, int numParams) {
     body.SetInt("maxExact", maxExact);
 
     if (!postHTTPRequest("/connect/sourcemod.v1.PluginService/SMBalanceTeams", body, onBalanceTeamsResp, context)) {
-        int noClients[SCRAMBLE_MAX_PLAYERS];
-        invokeScrambleCallback(callback, false, noClients, 0, noClients, 0, noClients, 0,
-                               "Failed to contact the gbans backend");
-        delete context;
+        finishScramble(context, false, "Failed to contact the gbans backend");
     }
 
     return 0;
 }
 
 void onBalanceTeamsResp(Handle request, bool failure, bool successful, EHTTPStatusCode status, any value, any unused) {
-    ArrayList context  = view_as<ArrayList>(value);
-    Function  callback = view_as<Function>(context.Get(0));
+    Handle context = view_as<Handle>(value);
 
-    int  none[SCRAMBLE_MAX_PLAYERS];
     char error[256] = "";
-
     if (failure || status != k_EHTTPStatusCode200OK) {
         if (status == k_EHTTPStatusCode401Unauthorized) {
             authenticateServer();
@@ -147,16 +139,14 @@ void onBalanceTeamsResp(Handle request, bool failure, bool successful, EHTTPStat
             strcopy(error, sizeof error, "Backend rejected the scramble request");
         }
 
-        invokeScrambleCallback(callback, false, none, 0, none, 0, none, 0, error);
-        delete context;
+        finishScramble(context, false, error);
         delete request;
         return;
     }
 
     JSON_Object data = GetResponseJSON(request);
     if (data == null) {
-        invokeScrambleCallback(callback, false, none, 0, none, 0, none, 0, "Invalid response from backend");
-        delete context;
+        finishScramble(context, false, "Invalid response from backend");
         delete request;
         return;
     }
@@ -178,6 +168,8 @@ void onBalanceTeamsResp(Handle request, bool failure, bool successful, EHTTPStat
         applyScrambleTeam(waitingClients[idx], SCRAMBLE_TEAM_SPEC);
     }
 
+    resetScrambleContext(context);
+    Function callback = ReadPackFunction(context);
     invokeScrambleCallback(callback, true, redClients, redCount, bluClients, bluCount, waitingClients, waitingCount,
                            error);
 
@@ -190,13 +182,15 @@ void onBalanceTeamsResp(Handle request, bool failure, bool successful, EHTTPStat
  * Resolves the SteamID64s of one response team back to the client user ids
  * collected when the request was made. Disconnected players are skipped.
  */
-int collectTeamClients(ArrayList context, JSON_Object data, const char[] field, int[] clients, int maxClients) {
+int collectTeamClients(Handle context, JSON_Object data, const char[] field, int[] clients, int maxClients) {
     JSON_Array ids = view_as<JSON_Array>(data.GetObject(field));
     if (ids == null) {
         return 0;
     }
 
-    int count = context.Get(1);
+    resetScrambleContext(context);
+    int count = ReadPackCell(context);
+
     int found = 0;
     for (int idx = 0; idx < ids.Length && found < maxClients; idx++) {
         char wanted[32];
@@ -205,21 +199,40 @@ int collectTeamClients(ArrayList context, JSON_Object data, const char[] field, 
         }
 
         for (int other = 0; other < count; other++) {
+            int  userId = ReadPackCell(context);
             char existing[32];
-            context.GetString(3 + 2 * other, existing, sizeof existing);
+            ReadPackString(context, existing, sizeof existing);
+
             if (strcmp(existing, wanted) != 0) {
                 continue;
             }
 
-            int client = GetClientOfUserId(context.Get(2 + 2 * other));
+            int client = GetClientOfUserId(userId);
             if (isValidClient(client)) {
                 clients[found++] = client;
             }
             break;
         }
+
+        // Restart the player scan for the next SteamID64.
+        resetScrambleContext(context);
     }
 
     return found;
+}
+
+void resetScrambleContext(Handle context) {
+    ResetPack(context);
+    ReadPackFunction(context);
+}
+
+void finishScramble(Handle context, bool success, const char[] error) {
+    int none[SCRAMBLE_MAX_PLAYERS];
+
+    resetScrambleContext(context);
+    Function callback = ReadPackFunction(context);
+    invokeScrambleCallback(callback, success, none, 0, none, 0, none, 0, error);
+    delete context;
 }
 
 void applyScrambleTeam(int client, int team) {
