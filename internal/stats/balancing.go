@@ -80,38 +80,63 @@ func gosperBestSplit(ratings []Skill, order []int) TeamSplit {
 	best := TeamSplit{Imbalance: math.Inf(1)}
 
 	for teamSize := len(order) / 2; teamSize >= 2; teamSize-- {
-		if teamSize > available {
+		if 2*teamSize-1 > available {
 			continue
 		}
 
-		var subset uint = (uint(1) << teamSize) - 1
-		limit := uint(1) << available
-		for subset < limit {
-			red := []int{order[0]}
-			blu := make([]int, 0, teamSize)
-			for idx := 0; idx < available; idx++ {
-				if subset&(uint(1)<<idx) != 0 {
-					blu = append(blu, order[idx+1])
-				} else {
-					red = append(red, order[idx+1])
+		outer := (uint(1) << (2*teamSize - 1)) - 1
+		outerLimit := uint(1) << available
+		for outer < outerLimit {
+			active := setBitIndices(outer, 1)
+
+			inner := (uint(1) << teamSize) - 1
+			innerLimit := uint(1) << len(active)
+			for inner < innerLimit {
+				red := []int{order[0]}
+				blu := make([]int, 0, teamSize)
+				for idx, player := range active {
+					if inner&(uint(1)<<idx) != 0 {
+						blu = append(blu, player)
+					} else {
+						red = append(red, player)
+					}
 				}
+
+				imbalance := math.Abs(splitSum(ratings, red) - splitSum(ratings, blu))
+				if imbalance < best.Imbalance {
+					best = TeamSplit{Red: red, Blu: blu, Imbalance: imbalance}
+					if imbalance == 0 {
+						return bestWithWaiting(best, order)
+					}
+				}
+
+				inner = gosperNext(inner)
 			}
 
-			imbalance := math.Abs(splitSum(ratings, red) - splitSum(ratings, blu))
-			if imbalance < best.Imbalance {
-				best = TeamSplit{Red: red, Blu: blu, Imbalance: imbalance}
-				if imbalance == 0 {
-					return best
-				}
-			}
-
-			subset = gosperNext(subset)
+			outer = gosperNext(outer)
 		}
 	}
 
-	fillWaiting(&best, order)
+	return bestWithWaiting(best, order)
+}
 
-	return best
+func bestWithWaiting(split TeamSplit, order []int) TeamSplit {
+	fillWaiting(&split, order)
+
+	return split
+}
+
+// setBitIndices returns the sorted indices of the set bits of value, offset by
+// start. The anchored player (index zero) is excluded from the enumeration.
+func setBitIndices(value uint, start int) []int {
+	var indices []int
+	for idx := range bits.UintSize {
+		if value&(uint(1)<<idx) != 0 {
+			indices = append(indices, idx+start)
+		}
+	}
+
+	return indices
 }
 
 // gosperNext advances a bitmask to the next k-subset of the same cardinality.

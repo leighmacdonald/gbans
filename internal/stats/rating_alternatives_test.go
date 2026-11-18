@@ -24,6 +24,7 @@ func TestNewRatingCalculator(t *testing.T) {
 		{name: "trueskill", configured: RatingAlgorithmTrueSkill, wantName: RatingAlgorithmTrueSkill},
 		{name: "case and whitespace insensitive", configured: "  ELO ", wantName: RatingAlgorithmElo},
 		{name: "elo", configured: RatingAlgorithmElo, wantName: RatingAlgorithmElo},
+		{name: "synelo", configured: RatingAlgorithmSynElo, wantName: RatingAlgorithmSynElo},
 		{name: "unknown", configured: "glicko", wantErr: true},
 	}
 
@@ -72,16 +73,16 @@ func TestEloCalculatorUpdateMatch(t *testing.T) {
 		require.InDelta(t, 1000-EloKFactor/4, update.Skill.Mu, 1e-9)
 	}
 
-	require.Equal(t, 1000.0, red[0].Skill.Mu)
-	require.Equal(t, 1000.0, blu[0].Skill.Mu)
+	require.InDelta(t, 1000.0, red[0].Skill.Mu, 1e-9)
+	require.InDelta(t, 1000.0, blu[0].Skill.Mu, 1e-9)
 
 	emptyRed, emptyBlu := calculator.UpdateMatch(nil, blu, RatingWin)
 	require.Empty(t, emptyRed)
 	require.Len(t, emptyBlu, len(blu))
 
 	drawnRed, drawnBlu := calculator.UpdateMatch(red, blu, RatingDraw)
-	require.Equal(t, 1000.0, drawnRed[0].Skill.Mu)
-	require.Equal(t, 1000.0, drawnBlu[0].Skill.Mu)
+	require.InDelta(t, 1000.0, drawnRed[0].Skill.Mu, 1e-9)
+	require.InDelta(t, 1000.0, drawnBlu[0].Skill.Mu, 1e-9)
 }
 
 func TestEloCalculatorFavouriteGainsLess(t *testing.T) {

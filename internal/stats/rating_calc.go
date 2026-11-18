@@ -186,13 +186,13 @@ func statesFor(
 	window int,
 ) []PlayerRatingState {
 	result := make([]PlayerRatingState, len(ids))
-	for idx, id := range ids {
+	for idx, steamID := range ids {
 		result[idx] = PlayerRatingState{
-			SteamID: id,
+			SteamID: steamID,
 			Skill:   initial,
 		}
 
-		state, exists := states[ratingKey{StatsBucketID: bucketID, SteamID: id}]
+		state, exists := states[ratingKey{StatsBucketID: bucketID, SteamID: steamID}]
 		if !exists {
 			continue
 		}
@@ -230,8 +230,8 @@ func recordMatch(
 	window int,
 	history *[]RatingHistory,
 ) {
-	for idx, id := range ids {
-		key := ratingKey{StatsBucketID: match.StatsBucketID, SteamID: id}
+	for idx, steamID := range ids {
+		key := ratingKey{StatsBucketID: match.StatsBucketID, SteamID: steamID}
 
 		state, exists := states[key]
 		if !exists {
@@ -267,7 +267,7 @@ func recordMatch(
 		}
 
 		*history = append(*history, RatingHistory{
-			SteamID:        id,
+			SteamID:        steamID,
 			StatsBucketID:  match.StatsBucketID,
 			MatchID:        match.MatchID,
 			MatchStartTime: match.StartTime,

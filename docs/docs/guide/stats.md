@@ -70,11 +70,19 @@ The calculation is pluggable through the `RatingCalculator` interface. Choose an
 
 - `trueskill` (default): two-team TrueSkill/Bayesian updates with draw support and per-match skill drift.
 - `elo`: classic team Elo starting at 1000 with a K-factor of 32. Fewer moving parts, but no uncertainty estimate.
+- `synelo`: team Elo with a dynamic K-factor derived from each player's convergence over their last 500 rated events,
+  a Gaussian compression term, a rating floor of 100 and a 50-round shadow period during which the rating stays
+  hidden. This is the algorithm described in [issue #696](https://github.com/leighmacdonald/gbans/issues/696);
+  it also ships a Gosper-based exact team-split solver (`GosperBalancer`) with a greedy fallback for large pools.
 
 Changing the algorithm **requires a restart** because the rating service is constructed at startup. The next stats
 refresh rebuilds every rating with the new algorithm, so switching rebases all players; existing rating history is
-replaced as part of the same replay. Display values are calculated by the selected algorithm and persisted with each
-rating, so the leaderboard view always uses the correct scale for the algorithm that produced it.
+replaced as part of the same replay. Each calculator owns its display scale and its visibility/staleness policy,
+which are persisted with the rating; the leaderboard view contains no algorithm-specific rules.
+
+Calculators that need per-player history (such as SynElo) receive each player's identity, rating and a bounded window
+of past ratings, expected scores and outcomes. Those expectations and the round count are stored in the rating
+history alongside the usual result.
 
 Ratings are rebuilt from scratch on every stats refresh by replaying every rated match in chronological order, so
 late-imported demos and deleted matches are handled automatically. The current rating is exposed by
