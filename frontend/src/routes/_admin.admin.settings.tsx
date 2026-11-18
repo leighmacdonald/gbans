@@ -1898,8 +1898,9 @@ function AdminSettings() {
 							<Grid size={{ xs: 12 }}>
 								<Typography variant={"h4"}>Rating Algorithm</Typography>
 								<Typography variant={"body2"} color={"textSecondary"}>
-									Skill calculation used for player ratings. Trueskill is the default; Elo is a
-									simpler alternative without an uncertainty estimate. Changing this requires a
+									Skill calculation used for player ratings. Trueskill is the default. Elo is a
+									simpler alternative without an uncertainty estimate, and SynElo adds a dynamic
+									K-factor, a shadow period and balanced-team solving. Changing this requires a
 									restart and rebases every player's rating on the next stats refresh.
 								</Typography>
 							</Grid>
@@ -1910,7 +1911,7 @@ function AdminSettings() {
 										return (
 											<field.SelectField
 												label={"Algorithm"}
-												items={["trueskill", "elo"]}
+												items={["trueskill", "elo", "synelo"]}
 												renderItem={(item) => {
 													return (
 														<MenuItem key={item} value={item}>

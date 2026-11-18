@@ -64,8 +64,8 @@ func (SynEloCalculator) UpdateMatch(red, blu []PlayerRatingState, outcome Rating
 	redExpected := synEloWinProbability(teamSum(redSkills), teamSum(bluSkills), theta)
 	redActual := synEloActualScore(outcome)
 
-	return synEloTeamUpdate(red, redExpected, redActual, theta),
-		synEloTeamUpdate(blu, 1-redExpected, 1-redActual, theta)
+	return synEloTeamUpdate(red, redExpected, redActual),
+		synEloTeamUpdate(blu, 1-redExpected, 1-redActual)
 }
 
 func (SynEloCalculator) Display(ctx RatingContext) DisplayRating {
@@ -96,13 +96,14 @@ func (SynEloCalculator) WinProbability(red, blu []Skill) float64 {
 	return synEloWinProbability(teamSum(red), teamSum(blu), theta)
 }
 
-func synEloTeamUpdate(team []PlayerRatingState, expected, actual, theta float64) []MatchUpdate {
+func synEloTeamUpdate(team []PlayerRatingState, expected, actual float64) []MatchUpdate {
 	updates := make([]MatchUpdate, len(team))
 	for idx, player := range team {
 		// F3: convergence from the player's rolling window.
 		convergence := synEloConvergence(player.History)
 		// F4: Gaussian compression around the starting rating.
-		compression := math.Exp(-math.Pow(player.Skill.Mu-SynEloRatingStart, 2) / (2 * SynEloSigma * SynEloSigma))
+		distance := player.Skill.Mu - SynEloRatingStart
+		compression := math.Exp(-(distance * distance) / (2 * SynEloSigma * SynEloSigma))
 		// F5: dynamic K-factor.
 		kFactor := SynEloKMin + (SynEloKMax-SynEloKMin)*convergence*compression
 		updated := math.Max(SynEloRatingFloor, player.Skill.Mu+kFactor*(actual-expected))
@@ -143,7 +144,8 @@ func synEloConvergence(history []RatingObservation) float64 {
 	mean := (oldSum + newSum) / float64(len(history))
 	var variance float64
 	for _, observation := range history {
-		variance += math.Pow(observation.Rating-mean, 2)
+		delta := observation.Rating - mean
+		variance += delta * delta
 	}
 	volatility := math.Sqrt(variance/float64(len(history))) / SynEloKMax
 
