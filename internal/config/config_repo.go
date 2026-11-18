@@ -82,7 +82,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 		       anticheat_max_fake_ang, anticheat_max_cmd_num, anticheat_max_too_many_connections, anticheat_max_cheat_cvar,
 		       anticheat_max_oob_var, anticheat_max_invalid_user_cmd, discord_anticheat_channel_id,
 
-		       network_sdr_enabled, stats_refresh_schedule, stats_rating_algorithm
+		       network_sdr_enabled, stats_refresh_schedule, stats_rating_algorithm, stats_balance_algorithm
 		 FROM config`
 
 	var (
@@ -132,6 +132,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 			&cfg.Network.SDREnabled,
 			&cfg.Stats.RefreshSchedule,
 			&cfg.Stats.RatingAlgorithm,
+			&cfg.Stats.BalanceAlgorithm,
 		)
 	if err != nil {
 		return cfg, database.Err(err)
@@ -273,5 +274,6 @@ func (c *Repository) Write(ctx context.Context, config Config) error {
 			"network_sdr_enabled":                 config.Network.SDREnabled,
 			"stats_refresh_schedule":              config.StatsRefreshSchedule(),
 			"stats_rating_algorithm":              config.RatingAlgorithm(),
+			"stats_balance_algorithm":             config.BalanceAlgorithm(),
 		})))
 }

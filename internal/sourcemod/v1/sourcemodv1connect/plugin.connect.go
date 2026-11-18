@@ -53,6 +53,9 @@ const (
 	// PluginServiceSMPlayerStatsProcedure is the fully-qualified name of the PluginService's
 	// SMPlayerStats RPC.
 	PluginServiceSMPlayerStatsProcedure = "/sourcemod.v1.PluginService/SMPlayerStats"
+	// PluginServiceSMBalanceTeamsProcedure is the fully-qualified name of the PluginService's
+	// SMBalanceTeams RPC.
+	PluginServiceSMBalanceTeamsProcedure = "/sourcemod.v1.PluginService/SMBalanceTeams"
 )
 
 // PluginServiceClient is a client for the sourcemod.v1.PluginService service.
@@ -69,6 +72,9 @@ type PluginServiceClient interface {
 	// the default stats bucket. Rate limited to one request per player every
 	// five minutes.
 	SMPlayerStats(context.Context, *v1.SMPlayerStatsRequest) (*v1.SMPlayerStatsResponse, error)
+	// SMBalanceTeams returns a balanced split of the submitted players using
+	// their internal skill rating from the default stats bucket.
+	SMBalanceTeams(context.Context, *v1.SMBalanceTeamsRequest) (*v1.SMBalanceTeamsResponse, error)
 }
 
 // NewPluginServiceClient constructs a client for the sourcemod.v1.PluginService service. By
@@ -130,6 +136,12 @@ func NewPluginServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(pluginServiceMethods.ByName("SMPlayerStats")),
 			connect.WithClientOptions(opts...),
 		),
+		sMBalanceTeams: connect.NewClient[v1.SMBalanceTeamsRequest, v1.SMBalanceTeamsResponse](
+			httpClient,
+			baseURL+PluginServiceSMBalanceTeamsProcedure,
+			connect.WithSchema(pluginServiceMethods.ByName("SMBalanceTeams")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -143,6 +155,7 @@ type pluginServiceClient struct {
 	sMSeed         *connect.Client[v1.SMSeedRequest, v1.SMSeedResponse]
 	sMPingMod      *connect.Client[v1.SMPingModRequest, emptypb.Empty]
 	sMPlayerStats  *connect.Client[v1.SMPlayerStatsRequest, v1.SMPlayerStatsResponse]
+	sMBalanceTeams *connect.Client[v1.SMBalanceTeamsRequest, v1.SMBalanceTeamsResponse]
 }
 
 // SMAuthenticate calls sourcemod.v1.PluginService.SMAuthenticate.
@@ -217,6 +230,15 @@ func (c *pluginServiceClient) SMPlayerStats(ctx context.Context, req *v1.SMPlaye
 	return nil, err
 }
 
+// SMBalanceTeams calls sourcemod.v1.PluginService.SMBalanceTeams.
+func (c *pluginServiceClient) SMBalanceTeams(ctx context.Context, req *v1.SMBalanceTeamsRequest) (*v1.SMBalanceTeamsResponse, error) {
+	response, err := c.sMBalanceTeams.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // PluginServiceHandler is an implementation of the sourcemod.v1.PluginService service.
 type PluginServiceHandler interface {
 	// Sourcemod plugin surface
@@ -231,6 +253,9 @@ type PluginServiceHandler interface {
 	// the default stats bucket. Rate limited to one request per player every
 	// five minutes.
 	SMPlayerStats(context.Context, *v1.SMPlayerStatsRequest) (*v1.SMPlayerStatsResponse, error)
+	// SMBalanceTeams returns a balanced split of the submitted players using
+	// their internal skill rating from the default stats bucket.
+	SMBalanceTeams(context.Context, *v1.SMBalanceTeamsRequest) (*v1.SMBalanceTeamsResponse, error)
 }
 
 // NewPluginServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -288,6 +313,12 @@ func NewPluginServiceHandler(svc PluginServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(pluginServiceMethods.ByName("SMPlayerStats")),
 		connect.WithHandlerOptions(opts...),
 	)
+	pluginServiceSMBalanceTeamsHandler := connect.NewUnaryHandlerSimple(
+		PluginServiceSMBalanceTeamsProcedure,
+		svc.SMBalanceTeams,
+		connect.WithSchema(pluginServiceMethods.ByName("SMBalanceTeams")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/sourcemod.v1.PluginService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PluginServiceSMAuthenticateProcedure:
@@ -306,6 +337,8 @@ func NewPluginServiceHandler(svc PluginServiceHandler, opts ...connect.HandlerOp
 			pluginServiceSMPingModHandler.ServeHTTP(w, r)
 		case PluginServiceSMPlayerStatsProcedure:
 			pluginServiceSMPlayerStatsHandler.ServeHTTP(w, r)
+		case PluginServiceSMBalanceTeamsProcedure:
+			pluginServiceSMBalanceTeamsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -345,4 +378,8 @@ func (UnimplementedPluginServiceHandler) SMPingMod(context.Context, *v1.SMPingMo
 
 func (UnimplementedPluginServiceHandler) SMPlayerStats(context.Context, *v1.SMPlayerStatsRequest) (*v1.SMPlayerStatsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.PluginService.SMPlayerStats is not implemented"))
+}
+
+func (UnimplementedPluginServiceHandler) SMBalanceTeams(context.Context, *v1.SMBalanceTeamsRequest) (*v1.SMBalanceTeamsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.PluginService.SMBalanceTeams is not implemented"))
 }

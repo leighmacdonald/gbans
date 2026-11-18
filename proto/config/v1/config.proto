@@ -235,6 +235,10 @@ message Stats {
   // rating_algorithm selects the skill calculation used for player ratings.
   // Changing it requires a restart and rebases every rating on the next refresh.
   string rating_algorithm = 2;
+
+  // balance_algorithm selects the team balancing implementation. Changing it
+  // requires a restart.
+  string balance_algorithm = 3;
 }
 
 message LocalStore {

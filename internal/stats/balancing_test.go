@@ -92,6 +92,64 @@ func TestGosperNext(t *testing.T) {
 	require.GreaterOrEqual(t, value, uint(0b1000))
 }
 
+func TestAlternatingBalancer(t *testing.T) {
+	t.Parallel()
+
+	ratings := []Skill{{Mu: 100}, {Mu: 90}, {Mu: 80}, {Mu: 70}, {Mu: 60}}
+	split, errSplit := (AlternatingBalancer{}).BestSplit(ratings, 0)
+	require.NoError(t, errSplit)
+	require.Equal(t, []int{0, 2}, split.Red)
+	require.Equal(t, []int{1, 3}, split.Blu)
+	require.Equal(t, []int{4}, split.Waiting)
+	require.Equal(t, BalanceAlgorithmAlternating, AlternatingBalancer{}.Name())
+}
+
+func TestSerpentineBalancer(t *testing.T) {
+	t.Parallel()
+
+	ratings := []Skill{{Mu: 100}, {Mu: 90}, {Mu: 80}, {Mu: 70}, {Mu: 60}, {Mu: 50}}
+	split, errSplit := (SerpentineBalancer{}).BestSplit(ratings, 0)
+	require.NoError(t, errSplit)
+	require.Equal(t, []int{0, 3, 4}, split.Red)
+	require.Equal(t, []int{1, 2, 5}, split.Blu)
+	require.Empty(t, split.Waiting)
+	require.Equal(t, BalanceAlgorithmSerpentine, SerpentineBalancer{}.Name())
+}
+
+func TestNewTeamBalancer(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		configured string
+		wantName   string
+		wantErr    bool
+	}{
+		{name: "empty selects default", configured: "", wantName: BalanceAlgorithmAlternating},
+		{name: "alternating", configured: BalanceAlgorithmAlternating, wantName: BalanceAlgorithmAlternating},
+		{name: "serpentine", configured: " SERPENTINE ", wantName: BalanceAlgorithmSerpentine},
+		{name: "gosper", configured: BalanceAlgorithmGosper, wantName: BalanceAlgorithmGosper},
+		{name: "unknown", configured: "random", wantErr: true},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			balancer, errBalancer := NewTeamBalancer(test.configured)
+			if test.wantErr {
+				require.ErrorIs(t, errBalancer, ErrUnknownTeamBalancer)
+				require.Nil(t, balancer)
+
+				return
+			}
+
+			require.NoError(t, errBalancer)
+			require.Equal(t, test.wantName, balancer.Name())
+		})
+	}
+}
+
 func mathAbs(value float64) float64 {
 	if value < 0 {
 		return -value

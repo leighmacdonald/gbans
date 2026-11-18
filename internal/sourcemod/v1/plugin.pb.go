@@ -1011,6 +1011,147 @@ func (x *SMPlayerStatsResponse) GetStatsBucketName() string {
 	return ""
 }
 
+type SMBalanceTeamsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// SteamID64 of every real player to include. Spectators and unassigned
+	// players are included too; bots and SourceTV must be excluded by the caller.
+	SteamIds []uint64 `protobuf:"varint,1,rep,packed,name=steam_ids,json=steamIds" json:"steam_ids,omitempty"`
+	// Maximum pool size for the exact solver. Zero uses the balancer's default.
+	MaxExact      *int32 `protobuf:"varint,2,opt,name=max_exact,json=maxExact" json:"max_exact,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SMBalanceTeamsRequest) Reset() {
+	*x = SMBalanceTeamsRequest{}
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SMBalanceTeamsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SMBalanceTeamsRequest) ProtoMessage() {}
+
+func (x *SMBalanceTeamsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SMBalanceTeamsRequest.ProtoReflect.Descriptor instead.
+func (*SMBalanceTeamsRequest) Descriptor() ([]byte, []int) {
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *SMBalanceTeamsRequest) GetSteamIds() []uint64 {
+	if x != nil {
+		return x.SteamIds
+	}
+	return nil
+}
+
+func (x *SMBalanceTeamsRequest) GetMaxExact() int32 {
+	if x != nil && x.MaxExact != nil {
+		return *x.MaxExact
+	}
+	return 0
+}
+
+type SMBalanceTeamsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// SteamID64s assigned to each team, in descending rating order. Together
+	// they contain every submitted player; waiting is normally empty.
+	RedSteamIds     []uint64 `protobuf:"varint,1,rep,packed,name=red_steam_ids,json=redSteamIds" json:"red_steam_ids,omitempty"`
+	BluSteamIds     []uint64 `protobuf:"varint,2,rep,packed,name=blu_steam_ids,json=bluSteamIds" json:"blu_steam_ids,omitempty"`
+	WaitingSteamIds []uint64 `protobuf:"varint,3,rep,packed,name=waiting_steam_ids,json=waitingSteamIds" json:"waiting_steam_ids,omitempty"`
+	Imbalance       *float64 `protobuf:"fixed64,4,opt,name=imbalance" json:"imbalance,omitempty"`
+	Algorithm       *string  `protobuf:"bytes,5,opt,name=algorithm" json:"algorithm,omitempty"`
+	Balancer        *string  `protobuf:"bytes,6,opt,name=balancer" json:"balancer,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *SMBalanceTeamsResponse) Reset() {
+	*x = SMBalanceTeamsResponse{}
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SMBalanceTeamsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SMBalanceTeamsResponse) ProtoMessage() {}
+
+func (x *SMBalanceTeamsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sourcemod_v1_plugin_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SMBalanceTeamsResponse.ProtoReflect.Descriptor instead.
+func (*SMBalanceTeamsResponse) Descriptor() ([]byte, []int) {
+	return file_sourcemod_v1_plugin_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *SMBalanceTeamsResponse) GetRedSteamIds() []uint64 {
+	if x != nil {
+		return x.RedSteamIds
+	}
+	return nil
+}
+
+func (x *SMBalanceTeamsResponse) GetBluSteamIds() []uint64 {
+	if x != nil {
+		return x.BluSteamIds
+	}
+	return nil
+}
+
+func (x *SMBalanceTeamsResponse) GetWaitingSteamIds() []uint64 {
+	if x != nil {
+		return x.WaitingSteamIds
+	}
+	return nil
+}
+
+func (x *SMBalanceTeamsResponse) GetImbalance() float64 {
+	if x != nil && x.Imbalance != nil {
+		return *x.Imbalance
+	}
+	return 0
+}
+
+func (x *SMBalanceTeamsResponse) GetAlgorithm() string {
+	if x != nil && x.Algorithm != nil {
+		return *x.Algorithm
+	}
+	return ""
+}
+
+func (x *SMBalanceTeamsResponse) GetBalancer() string {
+	if x != nil && x.Balancer != nil {
+		return *x.Balancer
+	}
+	return ""
+}
+
 var File_sourcemod_v1_plugin_proto protoreflect.FileDescriptor
 
 const file_sourcemod_v1_plugin_proto_rawDesc = "" +
@@ -1089,7 +1230,17 @@ const file_sourcemod_v1_plugin_proto_rawDesc = "" +
 	"\x15SMPlayerStatsResponse\x12C\n" +
 	"\abuckets\x18\x01 \x03(\v2!.sourcemod.v1.SMPlayerStatsBucketB\x06\xbaH\x03\xc8\x01\x01R\abuckets\x12&\n" +
 	"\x0fstats_bucket_id\x18\x02 \x01(\rR\rstatsBucketId\x12*\n" +
-	"\x11stats_bucket_name\x18\x03 \x01(\tR\x0fstatsBucketName2\xf8\x04\n" +
+	"\x11stats_bucket_name\x18\x03 \x01(\tR\x0fstatsBucketName\"U\n" +
+	"\x15SMBalanceTeamsRequest\x12\x1f\n" +
+	"\tsteam_ids\x18\x01 \x03(\x04B\x020\x01R\bsteamIds\x12\x1b\n" +
+	"\tmax_exact\x18\x02 \x01(\x05R\bmaxExact\"\xf0\x01\n" +
+	"\x16SMBalanceTeamsResponse\x12&\n" +
+	"\rred_steam_ids\x18\x01 \x03(\x04B\x020\x01R\vredSteamIds\x12&\n" +
+	"\rblu_steam_ids\x18\x02 \x03(\x04B\x020\x01R\vbluSteamIds\x12.\n" +
+	"\x11waiting_steam_ids\x18\x03 \x03(\x04B\x020\x01R\x0fwaitingSteamIds\x12\x1c\n" +
+	"\timbalance\x18\x04 \x01(\x01R\timbalance\x12\x1c\n" +
+	"\talgorithm\x18\x05 \x01(\tR\talgorithm\x12\x1a\n" +
+	"\bbalancer\x18\x06 \x01(\tR\bbalancer2\xd7\x05\n" +
 	"\rPluginService\x12]\n" +
 	"\x0eSMAuthenticate\x12#.sourcemod.v1.SMAuthenticateRequest\x1a$.sourcemod.v1.SMAuthenticateResponse\"\x00\x12H\n" +
 	"\aSMCheck\x12\x1c.sourcemod.v1.SMCheckRequest\x1a\x1d.sourcemod.v1.SMCheckResponse\"\x00\x12J\n" +
@@ -1098,7 +1249,8 @@ const file_sourcemod_v1_plugin_proto_rawDesc = "" +
 	"\bSMGroups\x12\x16.google.protobuf.Empty\x1a\x1e.sourcemod.v1.SMGroupsResponse\"\x00\x12E\n" +
 	"\x06SMSeed\x12\x1b.sourcemod.v1.SMSeedRequest\x1a\x1c.sourcemod.v1.SMSeedResponse\"\x00\x12E\n" +
 	"\tSMPingMod\x12\x1e.sourcemod.v1.SMPingModRequest\x1a\x16.google.protobuf.Empty\"\x00\x12Z\n" +
-	"\rSMPlayerStats\x12\".sourcemod.v1.SMPlayerStatsRequest\x1a#.sourcemod.v1.SMPlayerStatsResponse\"\x00B\xb3\x01\n" +
+	"\rSMPlayerStats\x12\".sourcemod.v1.SMPlayerStatsRequest\x1a#.sourcemod.v1.SMPlayerStatsResponse\"\x00\x12]\n" +
+	"\x0eSMBalanceTeams\x12#.sourcemod.v1.SMBalanceTeamsRequest\x1a$.sourcemod.v1.SMBalanceTeamsResponse\"\x00B\xb3\x01\n" +
 	"\x10com.sourcemod.v1B\vPluginProtoP\x01ZAgithub.com/leighmacdonald/gbans/internal/sourcemod/v1;sourcemodv1\xa2\x02\x03SXX\xaa\x02\fSourcemod.V1\xca\x02\fSourcemod\\V1\xe2\x02\x18Sourcemod\\V1\\GPBMetadata\xea\x02\rSourcemod::V1b\beditionsp\xe8\a"
 
 var (
@@ -1113,7 +1265,7 @@ func file_sourcemod_v1_plugin_proto_rawDescGZIP() []byte {
 	return file_sourcemod_v1_plugin_proto_rawDescData
 }
 
-var file_sourcemod_v1_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_sourcemod_v1_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_sourcemod_v1_plugin_proto_goTypes = []any{
 	(*SMPingModRequest)(nil),       // 0: sourcemod.v1.SMPingModRequest
 	(*SMPingModResponse)(nil),      // 1: sourcemod.v1.SMPingModResponse
@@ -1133,43 +1285,47 @@ var file_sourcemod_v1_plugin_proto_goTypes = []any{
 	(*SMPlayerStatsRequest)(nil),   // 15: sourcemod.v1.SMPlayerStatsRequest
 	(*SMPlayerStatsBucket)(nil),    // 16: sourcemod.v1.SMPlayerStatsBucket
 	(*SMPlayerStatsResponse)(nil),  // 17: sourcemod.v1.SMPlayerStatsResponse
-	(OverrideType)(0),              // 18: sourcemod.v1.OverrideType
-	(v1.Permission)(0),             // 19: roles.v1.Permission
-	(v11.BanType)(0),               // 20: ban.v1.BanType
-	(*Group)(nil),                  // 21: sourcemod.v1.Group
-	(v12.TimeBucket)(0),            // 22: stats.v1.TimeBucket
-	(*emptypb.Empty)(nil),          // 23: google.protobuf.Empty
+	(*SMBalanceTeamsRequest)(nil),  // 18: sourcemod.v1.SMBalanceTeamsRequest
+	(*SMBalanceTeamsResponse)(nil), // 19: sourcemod.v1.SMBalanceTeamsResponse
+	(OverrideType)(0),              // 20: sourcemod.v1.OverrideType
+	(v1.Permission)(0),             // 21: roles.v1.Permission
+	(v11.BanType)(0),               // 22: ban.v1.BanType
+	(*Group)(nil),                  // 23: sourcemod.v1.Group
+	(v12.TimeBucket)(0),            // 24: stats.v1.TimeBucket
+	(*emptypb.Empty)(nil),          // 25: google.protobuf.Empty
 }
 var file_sourcemod_v1_plugin_proto_depIdxs = []int32{
-	18, // 0: sourcemod.v1.SMOverride.override_type:type_name -> sourcemod.v1.OverrideType
-	19, // 1: sourcemod.v1.SMOverride.permissions:type_name -> roles.v1.Permission
+	20, // 0: sourcemod.v1.SMOverride.override_type:type_name -> sourcemod.v1.OverrideType
+	21, // 1: sourcemod.v1.SMOverride.permissions:type_name -> roles.v1.Permission
 	6,  // 2: sourcemod.v1.SMOverridesResponse.overrides:type_name -> sourcemod.v1.SMOverride
-	20, // 3: sourcemod.v1.SMCheckResponse.ban_type:type_name -> ban.v1.BanType
-	21, // 4: sourcemod.v1.SMGroupsResponse.groups:type_name -> sourcemod.v1.Group
+	22, // 3: sourcemod.v1.SMCheckResponse.ban_type:type_name -> ban.v1.BanType
+	23, // 4: sourcemod.v1.SMGroupsResponse.groups:type_name -> sourcemod.v1.Group
 	10, // 5: sourcemod.v1.SMGroupsResponse.immunities:type_name -> sourcemod.v1.SMGroupImmunity
 	13, // 6: sourcemod.v1.SMUsersResponse.users:type_name -> sourcemod.v1.SMUser
 	14, // 7: sourcemod.v1.SMUsersResponse.user_groups:type_name -> sourcemod.v1.SMUserGroup
-	19, // 8: sourcemod.v1.SMUser.permissions:type_name -> roles.v1.Permission
-	22, // 9: sourcemod.v1.SMPlayerStatsBucket.time_bucket:type_name -> stats.v1.TimeBucket
+	21, // 8: sourcemod.v1.SMUser.permissions:type_name -> roles.v1.Permission
+	24, // 9: sourcemod.v1.SMPlayerStatsBucket.time_bucket:type_name -> stats.v1.TimeBucket
 	16, // 10: sourcemod.v1.SMPlayerStatsResponse.buckets:type_name -> sourcemod.v1.SMPlayerStatsBucket
 	2,  // 11: sourcemod.v1.PluginService.SMAuthenticate:input_type -> sourcemod.v1.SMAuthenticateRequest
 	8,  // 12: sourcemod.v1.PluginService.SMCheck:input_type -> sourcemod.v1.SMCheckRequest
-	23, // 13: sourcemod.v1.PluginService.SMOverrides:input_type -> google.protobuf.Empty
-	23, // 14: sourcemod.v1.PluginService.SMUsers:input_type -> google.protobuf.Empty
-	23, // 15: sourcemod.v1.PluginService.SMGroups:input_type -> google.protobuf.Empty
+	25, // 13: sourcemod.v1.PluginService.SMOverrides:input_type -> google.protobuf.Empty
+	25, // 14: sourcemod.v1.PluginService.SMUsers:input_type -> google.protobuf.Empty
+	25, // 15: sourcemod.v1.PluginService.SMGroups:input_type -> google.protobuf.Empty
 	4,  // 16: sourcemod.v1.PluginService.SMSeed:input_type -> sourcemod.v1.SMSeedRequest
 	0,  // 17: sourcemod.v1.PluginService.SMPingMod:input_type -> sourcemod.v1.SMPingModRequest
 	15, // 18: sourcemod.v1.PluginService.SMPlayerStats:input_type -> sourcemod.v1.SMPlayerStatsRequest
-	3,  // 19: sourcemod.v1.PluginService.SMAuthenticate:output_type -> sourcemod.v1.SMAuthenticateResponse
-	9,  // 20: sourcemod.v1.PluginService.SMCheck:output_type -> sourcemod.v1.SMCheckResponse
-	7,  // 21: sourcemod.v1.PluginService.SMOverrides:output_type -> sourcemod.v1.SMOverridesResponse
-	12, // 22: sourcemod.v1.PluginService.SMUsers:output_type -> sourcemod.v1.SMUsersResponse
-	11, // 23: sourcemod.v1.PluginService.SMGroups:output_type -> sourcemod.v1.SMGroupsResponse
-	5,  // 24: sourcemod.v1.PluginService.SMSeed:output_type -> sourcemod.v1.SMSeedResponse
-	23, // 25: sourcemod.v1.PluginService.SMPingMod:output_type -> google.protobuf.Empty
-	17, // 26: sourcemod.v1.PluginService.SMPlayerStats:output_type -> sourcemod.v1.SMPlayerStatsResponse
-	19, // [19:27] is the sub-list for method output_type
-	11, // [11:19] is the sub-list for method input_type
+	18, // 19: sourcemod.v1.PluginService.SMBalanceTeams:input_type -> sourcemod.v1.SMBalanceTeamsRequest
+	3,  // 20: sourcemod.v1.PluginService.SMAuthenticate:output_type -> sourcemod.v1.SMAuthenticateResponse
+	9,  // 21: sourcemod.v1.PluginService.SMCheck:output_type -> sourcemod.v1.SMCheckResponse
+	7,  // 22: sourcemod.v1.PluginService.SMOverrides:output_type -> sourcemod.v1.SMOverridesResponse
+	12, // 23: sourcemod.v1.PluginService.SMUsers:output_type -> sourcemod.v1.SMUsersResponse
+	11, // 24: sourcemod.v1.PluginService.SMGroups:output_type -> sourcemod.v1.SMGroupsResponse
+	5,  // 25: sourcemod.v1.PluginService.SMSeed:output_type -> sourcemod.v1.SMSeedResponse
+	25, // 26: sourcemod.v1.PluginService.SMPingMod:output_type -> google.protobuf.Empty
+	17, // 27: sourcemod.v1.PluginService.SMPlayerStats:output_type -> sourcemod.v1.SMPlayerStatsResponse
+	19, // 28: sourcemod.v1.PluginService.SMBalanceTeams:output_type -> sourcemod.v1.SMBalanceTeamsResponse
+	20, // [20:29] is the sub-list for method output_type
+	11, // [11:20] is the sub-list for method input_type
 	11, // [11:11] is the sub-list for extension type_name
 	11, // [11:11] is the sub-list for extension extendee
 	0,  // [0:11] is the sub-list for field type_name
@@ -1187,7 +1343,7 @@ func file_sourcemod_v1_plugin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sourcemod_v1_plugin_proto_rawDesc), len(file_sourcemod_v1_plugin_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   18,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -1796,8 +1796,11 @@ type Stats struct {
 	// rating_algorithm selects the skill calculation used for player ratings.
 	// Changing it requires a restart and rebases every rating on the next refresh.
 	RatingAlgorithm *string `protobuf:"bytes,2,opt,name=rating_algorithm,json=ratingAlgorithm" json:"rating_algorithm,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// balance_algorithm selects the team balancing implementation. Changing it
+	// requires a restart.
+	BalanceAlgorithm *string `protobuf:"bytes,3,opt,name=balance_algorithm,json=balanceAlgorithm" json:"balance_algorithm,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *Stats) Reset() {
@@ -1840,6 +1843,13 @@ func (x *Stats) GetRefreshSchedule() string {
 func (x *Stats) GetRatingAlgorithm() string {
 	if x != nil && x.RatingAlgorithm != nil {
 		return *x.RatingAlgorithm
+	}
+	return ""
+}
+
+func (x *Stats) GetBalanceAlgorithm() string {
+	if x != nil && x.BalanceAlgorithm != nil {
+		return *x.BalanceAlgorithm
 	}
 	return ""
 }
@@ -2864,11 +2874,12 @@ const file_config_v1_config_proto_rawDesc = "" +
 	" \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vstacPathFmt\"2\n" +
 	"\aNetwork\x12'\n" +
 	"\vsdr_enabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"sdrEnabled\"i\n" +
+	"sdrEnabled\"\x96\x01\n" +
 	"\x05Stats\x125\n" +
 	"\x10refresh_schedule\x18\x01 \x01(\tB\n" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x0frefreshSchedule\x12)\n" +
-	"\x10rating_algorithm\x18\x02 \x01(\tR\x0fratingAlgorithm\"1\n" +
+	"\x10rating_algorithm\x18\x02 \x01(\tR\x0fratingAlgorithm\x12+\n" +
+	"\x11balance_algorithm\x18\x03 \x01(\tR\x10balanceAlgorithm\"1\n" +
 	"\n" +
 	"LocalStore\x12#\n" +
 	"\tpath_root\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bpathRoot\"\x8e\x01\n" +

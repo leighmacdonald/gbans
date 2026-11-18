@@ -104,6 +104,9 @@ const (
 	// DefaultRatingAlgorithm is the skill calculation used when no algorithm
 	// has been configured.
 	DefaultRatingAlgorithm = "trueskill"
+	// DefaultBalanceAlgorithm is the team balancer used when no algorithm has
+	// been configured.
+	DefaultBalanceAlgorithm = "alternating"
 )
 
 // Stats holds statistics subsystem settings that are editable at runtime.
@@ -115,6 +118,9 @@ type Stats struct {
 	// it requires a restart and rebases every player's rating on the next
 	// stats refresh.
 	RatingAlgorithm string
+	// BalanceAlgorithm selects the team balancing implementation. Changing it
+	// requires a restart.
+	BalanceAlgorithm string
 }
 
 // StatsRefreshSchedule returns the configured materialized-view refresh cron
@@ -135,6 +141,16 @@ func (c Config) RatingAlgorithm() string {
 	}
 
 	return c.Stats.RatingAlgorithm
+}
+
+// BalanceAlgorithm returns the configured team balancer, falling back to the
+// default for configs written before the setting existed.
+func (c Config) BalanceAlgorithm() string {
+	if c.Stats == nil || strings.TrimSpace(c.Stats.BalanceAlgorithm) == "" {
+		return DefaultBalanceAlgorithm
+	}
+
+	return c.Stats.BalanceAlgorithm
 }
 
 func (c Config) ExtURLRaw(path string, args ...any) string {
@@ -248,7 +264,11 @@ func NewConfiguration(ctx context.Context, static Static, repository Repo) (*Con
 			LocalStore:  &asset.Config{},
 			Exports:     &ban.Config{},
 			Anticheat:   &anticheat.Config{},
-			Stats:       &Stats{RefreshSchedule: defaultStatsRefreshSchedule, RatingAlgorithm: DefaultRatingAlgorithm},
+			Stats: &Stats{
+				RefreshSchedule:  defaultStatsRefreshSchedule,
+				RatingAlgorithm:  DefaultRatingAlgorithm,
+				BalanceAlgorithm: DefaultBalanceAlgorithm,
+			},
 		},
 	}
 
@@ -308,6 +328,11 @@ func (c *Configuration) StatsRefreshSchedule() string {
 // RatingAlgorithm returns the configured skill calculation algorithm.
 func (c *Configuration) RatingAlgorithm() string {
 	return c.Config().RatingAlgorithm()
+}
+
+// BalanceAlgorithm returns the configured team balancing algorithm.
+func (c *Configuration) BalanceAlgorithm() string {
+	return c.Config().BalanceAlgorithm()
 }
 
 // AnonmodEnabled reports whether the anonymized moderator feature is

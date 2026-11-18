@@ -72,8 +72,7 @@ The calculation is pluggable through the `RatingCalculator` interface. Choose an
 - `elo`: classic team Elo starting at 1000 with a K-factor of 32. Fewer moving parts, but no uncertainty estimate.
 - `synelo`: team Elo with a dynamic K-factor derived from each player's convergence over their last 500 rated events,
   a Gaussian compression term, a rating floor of 100 and a 50-round shadow period during which the rating stays
-  hidden. This is the algorithm described in [issue #696](https://github.com/leighmacdonald/gbans/issues/696);
-  it also ships a Gosper-based exact team-split solver (`GosperBalancer`) with a greedy fallback for large pools.
+  hidden. This is the algorithm described in [issue #696](https://github.com/leighmacdonald/gbans/issues/696).
 
 Changing the algorithm **requires a restart** because the rating service is constructed at startup. The next stats
 refresh rebuilds every rating with the new algorithm, so switching rebases all players; existing rating history is
@@ -88,6 +87,23 @@ Ratings are rebuilt from scratch on every stats refresh by replaying every rated
 late-imported demos and deleted matches are handled automatically. The current rating is exposed by
 `StatsService.PlayerRating`, rating-over-time snapshots by `StatsService.PlayerRatingHistory`, and the per-bucket
 ranking by `StatsService.RatingLeaderboard`. All three require the `stats_read` permission.
+
+### Team balancing
+
+Ratings are also used to split players into balanced teams. The **Balancer** selector in the admin **Stats** settings
+tab chooses the implementation; changing it requires a restart.
+
+- `alternating` (default): sorts players by rating and assigns them red/blue/red/blue from strongest to weakest. Fast
+  and predictable.
+- `serpentine`: uses a snake draft (red/blue/blue/red) so the strongest players are spread more evenly.
+- `gosper`: searches for the split with the smallest rating difference using Gosper's hack for pools up to a
+  configurable size, with a greedy swap fallback for larger pools.
+
+The game server calls `GB_ScrambleTeams` from `gbans.inc`, passing the client indexes to include. The plugin filters
+out bots, SourceTV, replay clients and players without a valid SteamID64, then sends the remaining players to the
+backend. Spectators and unassigned players are included. The backend resolves the stats bucket and balancer itself,
+looks up each player's internal rating (`mu`, using the calculator's starting value for unrated players), and returns
+the teams. The gbans plugin then applies the team changes and invokes the caller's callback with the result.
 
 ## Stats refresh schedule
 

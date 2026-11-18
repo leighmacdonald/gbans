@@ -87,6 +87,7 @@ func NewPluginService(sourcemod Sourcemod, persons *person.Persons, serverAuthen
 	authMiddleware.ServerRoute(sourcemodv1connect.PluginServiceSMSeedProcedure, serverAuth)
 	authMiddleware.ServerRoute(sourcemodv1connect.PluginServiceSMPingModProcedure, serverAuth)
 	authMiddleware.ServerRoute(sourcemodv1connect.PluginServiceSMPlayerStatsProcedure, serverAuth)
+	authMiddleware.ServerRoute(sourcemodv1connect.PluginServiceSMBalanceTeamsProcedure, serverAuth)
 
 	return rpc.Service{Pattern: pattern, Handler: handler}
 }
@@ -409,6 +410,67 @@ func (s PluginService) SMPlayerStats(ctx context.Context, req *v1.SMPlayerStatsR
 	s.statsHistoryMu.Unlock()
 
 	return resp, nil
+}
+
+// SMBalanceTeams returns a balanced split of the submitted real players. The
+// stats bucket and the configured balancer are both resolved on the backend;
+// callers only submit SteamID64s.
+func (s PluginService) SMBalanceTeams(
+	ctx context.Context,
+	req *v1.SMBalanceTeamsRequest,
+) (*v1.SMBalanceTeamsResponse, error) {
+	if len(req.GetSteamIds()) == 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, rpc.ErrBadRequest)
+	}
+
+	if len(req.GetSteamIds()) > stats.MaxBalancePlayers {
+		return nil, connect.NewError(connect.CodeInvalidArgument, stats.ErrTooManyBalancePlayers)
+	}
+
+	ids := make([]steamid.SteamID, 0, len(req.GetSteamIds()))
+	for _, raw := range req.GetSteamIds() {
+		id := steamid.New(int64(raw)) //nolint:gosec // SteamID64 values are uint64 on the wire.
+		if id.Valid() {
+			ids = append(ids, id)
+		}
+	}
+
+	if len(ids) == 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, rpc.ErrBadRequest)
+	}
+
+	result, errBalance := s.stats.BalanceTeams(ctx, ids, int(req.GetMaxExact()))
+	if errBalance != nil {
+		slog.Error("Failed to balance teams", slog.String("error", errBalance.Error()))
+
+		switch {
+		case errors.Is(errBalance, stats.ErrTooManyPlayers),
+			errors.Is(errBalance, stats.ErrTooManyBalancePlayers):
+			return nil, connect.NewError(connect.CodeInvalidArgument, errBalance)
+		case errors.Is(errBalance, database.ErrNoResult):
+			return nil, connect.NewError(connect.CodeFailedPrecondition, rpc.ErrInternal)
+		default:
+			return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+		}
+	}
+
+	return &v1.SMBalanceTeamsResponse{
+		RedSteamIds:     steamIDsToUint64(result.Red),
+		BluSteamIds:     steamIDsToUint64(result.Blu),
+		WaitingSteamIds: steamIDsToUint64(result.Waiting),
+		Imbalance:       new(result.Imbalance),
+		Algorithm:       new(result.Algorithm),
+		Balancer:        new(result.Balancer),
+	}, nil
+}
+
+func steamIDsToUint64(ids []steamid.SteamID) []uint64 {
+	result := make([]uint64, len(ids))
+	for idx, id := range ids {
+		result[idx] = uint64(id.Int64()) //nolint:gosec // valid SteamID64 is always positive.
+	}
+
+	return result
 }
 
 // defaultStatsBucket returns the default stats bucket, falling back to the

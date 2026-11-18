@@ -49,3 +49,11 @@ export const sMPingMod = PluginService.method.sMPingMod;
  * @generated from rpc sourcemod.v1.PluginService.SMPlayerStats
  */
 export const sMPlayerStats = PluginService.method.sMPlayerStats;
+
+/**
+ * SMBalanceTeams returns a balanced split of the submitted players using
+ * their internal skill rating from the default stats bucket.
+ *
+ * @generated from rpc sourcemod.v1.PluginService.SMBalanceTeams
+ */
+export const sMBalanceTeams = PluginService.method.sMBalanceTeams;

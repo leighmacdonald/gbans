@@ -73,6 +73,63 @@ const settingsSchema = z.object({
 		.default("general"),
 });
 
+const RATING_DOCS_URL = "https://github.com/leighmacdonald/gbans/blob/master/docs/docs/guide/stats.md";
+const SYNELO_ISSUE_URL = "https://github.com/leighmacdonald/gbans/issues/696";
+
+const RATING_ALGORITHMS = [
+	{
+		name: "trueskill",
+		label: "TrueSkill (default)",
+		description:
+			"Bayesian two-team ratings with uncertainty (mu/sigma), draw support and per-match skill drift. Players stay unranked until 5 rated matches.",
+		links: [{ href: `${RATING_DOCS_URL}#choosing-a-rating-algorithm`, label: "Rating algorithm docs" }],
+	},
+	{
+		name: "elo",
+		label: "Elo",
+		description:
+			"Classic team Elo starting at 1000 with a fixed K-factor of 32. Simple and predictable, but no uncertainty estimate or provisional period.",
+		links: [{ href: `${RATING_DOCS_URL}#choosing-a-rating-algorithm`, label: "Rating algorithm docs" }],
+	},
+	{
+		name: "synelo",
+		label: "SynElo",
+		description:
+			"Team Elo with a dynamic K-factor based on a 500-event convergence window, Gaussian compression, a rating floor of 100 and a 50-round shadow period.",
+		links: [
+			{ href: `${RATING_DOCS_URL}#choosing-a-rating-algorithm`, label: "Rating algorithm docs" },
+			{ href: SYNELO_ISSUE_URL, label: "SynElo design (issue #696)" },
+		],
+	},
+] as const;
+
+const BALANCERS = [
+	{
+		name: "alternating",
+		label: "Alternating (default)",
+		description:
+			"Sorts players by rating and assigns red/blue/red/blue from strongest to weakest. Fast and predictable.",
+		links: [{ href: `${RATING_DOCS_URL}#team-balancing`, label: "Team balancing docs" }],
+	},
+	{
+		name: "serpentine",
+		label: "Serpentine",
+		description:
+			"Snake draft order (red/blue/blue/red) spreads the strongest players more evenly than simple alternating.",
+		links: [{ href: `${RATING_DOCS_URL}#team-balancing`, label: "Team balancing docs" }],
+	},
+	{
+		name: "gosper",
+		label: "Gosper",
+		description:
+			"Exhaustively searches for the split with the smallest rating difference using Gosper's hack, with a greedy swap fallback for large pools.",
+		links: [
+			{ href: `${RATING_DOCS_URL}#team-balancing`, label: "Team balancing docs" },
+			{ href: SYNELO_ISSUE_URL, label: "Balancing design (issue #696)" },
+		],
+	},
+] as const;
+
 export const Route = createFileRoute("/_admin/admin/settings")({
 	component: AdminSettings,
 	validateSearch: (search) => settingsSchema.parse(search),
@@ -1908,17 +1965,105 @@ function AdminSettings() {
 								<form.AppField
 									name={"stats.ratingAlgorithm"}
 									children={(field) => {
+										const info =
+											RATING_ALGORITHMS.find((item) => item.name === field.state.value) ??
+											RATING_ALGORITHMS[0];
+
 										return (
 											<field.SelectField
 												label={"Algorithm"}
-												items={["trueskill", "elo", "synelo"]}
+												items={RATING_ALGORITHMS.map((item) => item.name)}
 												renderItem={(item) => {
+													const option =
+														RATING_ALGORITHMS.find(
+															(candidate) => candidate.name === item,
+														) ?? RATING_ALGORITHMS[0];
+
 													return (
 														<MenuItem key={item} value={item}>
-															{item}
+															<Stack>
+																<Typography variant={"body2"}>
+																	{option.label}
+																</Typography>
+																<Typography variant={"caption"} color={"textSecondary"}>
+																	{option.description}
+																</Typography>
+															</Stack>
 														</MenuItem>
 													);
 												}}
+												helperText={
+													<Stack direction={"row"} spacing={2} flexWrap={"wrap"}>
+														{info.links.map((link) => (
+															<Link
+																key={link.href}
+																href={link.href}
+																target={"_blank"}
+																rel={"noopener noreferrer"}
+																variant={"caption"}
+															>
+																{link.label}
+															</Link>
+														))}
+													</Stack>
+												}
+											/>
+										);
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 12 }}>
+								<Typography variant={"h4"}>Balancer</Typography>
+								<Typography variant={"body2"} color={"textSecondary"}>
+									Algorithm used to split players into balanced teams for scrambles. Alternating is
+									the default; serpentine improves parity, and gosper searches exhaustively for the
+									best split up to a configurable pool size. Changing this requires a restart.
+								</Typography>
+							</Grid>
+							<Grid size={{ xs: 12 }}>
+								<form.AppField
+									name={"stats.balanceAlgorithm"}
+									children={(field) => {
+										const info =
+											BALANCERS.find((item) => item.name === field.state.value) ?? BALANCERS[0];
+
+										return (
+											<field.SelectField
+												label={"Balancer"}
+												items={BALANCERS.map((item) => item.name)}
+												renderItem={(item) => {
+													const option =
+														BALANCERS.find((candidate) => candidate.name === item) ??
+														BALANCERS[0];
+
+													return (
+														<MenuItem key={item} value={item}>
+															<Stack>
+																<Typography variant={"body2"}>
+																	{option.label}
+																</Typography>
+																<Typography variant={"caption"} color={"textSecondary"}>
+																	{option.description}
+																</Typography>
+															</Stack>
+														</MenuItem>
+													);
+												}}
+												helperText={
+													<Stack direction={"row"} spacing={2} flexWrap={"wrap"}>
+														{info.links.map((link) => (
+															<Link
+																key={link.href}
+																href={link.href}
+																target={"_blank"}
+																rel={"noopener noreferrer"}
+																variant={"caption"}
+															>
+																{link.label}
+															</Link>
+														))}
+													</Stack>
+												}
 											/>
 										);
 									}}
