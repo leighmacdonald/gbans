@@ -41,6 +41,10 @@ func (qf Filter) ApplySafeOrder(builder sq.SelectBuilder, validColumns map[strin
 		}
 	}
 
+	if !isValid {
+		qf.OrderBy = fallback
+	}
+
 	if qf.Desc {
 		builder = builder.OrderBy(qf.OrderBy + " DESC")
 	} else {

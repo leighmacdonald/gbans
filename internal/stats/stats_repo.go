@@ -160,13 +160,24 @@ func (r Repository) Matches(ctx context.Context, opts MatchesOpts) ([]Match, uin
 	if !opts.startTimeEnd.IsZero() {
 		constraints = append(constraints, sq.LtOrEq{"m.start_time": opts.startTimeEnd})
 	}
-	// The bucket column is identified by its display name in the UI, but is
-	// stored and ordered by the bucket id.
-	if opts.OrderBy == "stats_bucket_name" {
+	// Order columns come from UI column ids, which do not always match the
+	// database column names.
+	switch opts.OrderBy {
+	case "stats_bucket_name":
 		opts.OrderBy = "stats_bucket_id"
+	case "duration", "total_duration_ms":
+		opts.OrderBy = "duration_ms"
+	case "map.name", "map_name":
+		opts.OrderBy = "map_name"
+	case "server_name":
+		opts.OrderBy = "name"
+	case "server_name_short":
+		opts.OrderBy = "short_name"
 	}
 	builder = opts.ApplySafeOrder(opts.ApplyLimitOffsetDefault(builder), map[string][]string{
-		"m.": {"map_id", "stats_bucket_id", "duration_ms", "start_time"},
+		"m.":   {"map_id", "server_id", "stats_bucket_id", "duration_ms", "start_time"},
+		"mp.":  {"map_name"},
+		"srv.": {"name", "short_name"},
 	}, "m.start_time")
 	rows, errRows := r.QueryBuilder(ctx, opts.ApplyLimitOffset(builder, 100).Where(constraints))
 	if errRows != nil {

@@ -1457,6 +1457,18 @@ func TestQueryMatches(t *testing.T) {
 		require.Equal(t, int32(2), resp.GetMatches()[3].GetStatsBucketId())
 	})
 
+	t.Run("order by duration alias", func(t *testing.T) {
+		resp := queryMatches(t, &statsv1.QueryMatchesRequest{
+			Filter: &queryv1.Filter{
+				Limit:   proto.Uint64(100),
+				OrderBy: new("totalDurationMs"),
+				Desc:    new(true),
+			},
+		})
+		require.Equal(t, uint64(4), resp.GetCount())
+		require.Len(t, resp.GetMatches(), 4)
+	})
+
 	t.Run("pruned demo asset", func(t *testing.T) {
 		ownerSID := steamid.New(fixture.Config.Config().Owner)
 		require.NoError(t, fixture.Persons.EnsurePerson(ctx, ownerSID))
