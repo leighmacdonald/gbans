@@ -75,6 +75,9 @@ void OnPluginStart() {
         "gb_core_server_key", "", "GBans server key used to authenticate with the service", FCVAR_NONE);
 
     // In Game Tweaks
+    gb_net_chan_limit_active = AutoExecConfig_CreateConVar(
+        "gb_net_chan_limit_active", "192",
+        "net_chan_limit_msec value after a player connects. Negative disables hibernation handling", FCVAR_NONE);
     gb_disable_autoteam = AutoExecConfig_CreateConVar(
         "gb_disable_autoteam", "1", "Dont allow the use of autoteam command", FCVAR_NONE, true, 0.0, true, 1.0);
     gb_hide_connections = AutoExecConfig_CreateConVar(
@@ -99,6 +102,9 @@ void OnPluginStart() {
                                                    "Hour in the day to stop recording (0-23, -1 disables)", FCVAR_NONE);
     gb_stv_finishmap = AutoExecConfig_CreateConVar(
         "gb_stv_finishmap", "1", "If 1, continue recording until the map ends", FCVAR_NONE, true, 0.0, true, 1.0);
+    gb_stv_chat_forward  = AutoExecConfig_CreateConVar("gb_stv_chat_forward", "1",
+                                                       "Print SourceTV spectator chat messages to in-game players",
+                                                       FCVAR_NONE, true, 0.0, true, 1.0);
     gb_stv_path          = AutoExecConfig_CreateConVar("gb_stv_path", "stv_demos/active",
                                                        "Path to store currently recording demos", FCVAR_NONE);
     gb_stv_path_complete = AutoExecConfig_CreateConVar("gb_stv_path_complete", "stv_demos/complete",
