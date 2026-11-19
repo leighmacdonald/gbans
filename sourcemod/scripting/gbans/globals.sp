@@ -11,6 +11,7 @@ ConVar gb_core_host;
 ConVar gb_core_port;
 ConVar gb_core_server_key;
 // In Game Tweaks
+ConVar gb_net_chan_limit_active;
 ConVar gb_disable_autoteam;
 ConVar gb_hide_connections;
 ConVar gb_seed_promo_minplayers;
@@ -22,6 +23,7 @@ ConVar gb_stv_ignorebots;
 ConVar gb_stv_timestart;
 ConVar gb_stv_timestop;
 ConVar gb_stv_finishmap;
+ConVar gb_stv_chat_forward;
 ConVar gb_stv_path;
 ConVar gb_stv_path_complete;
 
