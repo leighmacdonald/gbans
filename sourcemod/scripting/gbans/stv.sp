@@ -149,8 +149,8 @@ void SourceTV_OnStopRecording(int instance, const char[] filename, int recording
  * Only allow SourceMod admins with kick privileges to watch SourceTV. This
  * runs once the spectator is in game so their SteamID is available for the
  * admin lookup; unauthorized spectators are kicked immediately.
- * 
- * This exists because sometimes on slower systems the first user connecting 
+ *
+ * This exists because sometimes on slower systems the first user connecting
  * when coming out of hiberation can be kicked due to net_chan_limit_msec
  * getting triggered while doing the warmup phase.
  */
