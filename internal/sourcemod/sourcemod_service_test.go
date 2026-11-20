@@ -966,7 +966,7 @@ func TestPluginServiceSMSeed(t *testing.T) {
 
 // TestPluginServiceSMPlayerStats covers the in-game /stats lookup: the
 // response shape, the overall (points) rank and kills per time window, and
-// the per-player five-minute cooldown.
+// the per-player five-second cooldown.
 func TestPluginServiceSMPlayerStats(t *testing.T) {
 	harness := newRPCHarness(t)
 	ctx := t.Context()
@@ -982,6 +982,7 @@ func TestPluginServiceSMPlayerStats(t *testing.T) {
 	// aggregation the summary views use.
 	killsByPlayer := map[steamid.SteamID]uint64{}
 	pointsByPlayer := map[steamid.SteamID]uint64{}
+	assistsByPlayer := map[steamid.SteamID]uint64{}
 	for _, round := range demo.Rounds {
 		for _, player := range round.Players {
 			sid := steamid.New(player.SteamID)
@@ -989,19 +990,22 @@ func TestPluginServiceSMPlayerStats(t *testing.T) {
 				continue
 			}
 			fixture.CreateTestPerson(ctx, sid)
-			killsByPlayer[sid] += uint64(player.Kills)   //nolint:gosec // parser counts are non-negative.
-			pointsByPlayer[sid] += uint64(player.Points) //nolint:gosec // parser counts are non-negative.
+			killsByPlayer[sid] += uint64(player.Kills)     //nolint:gosec // parser counts are non-negative.
+			pointsByPlayer[sid] += uint64(player.Points)   //nolint:gosec // parser counts are non-negative.
+			assistsByPlayer[sid] += uint64(player.Assists) //nolint:gosec // parser counts are non-negative.
 		}
 	}
 
-	// Import the demo "now" so it falls inside every time window at once.
+	// Import the demo for yesterday so it falls inside every time window,
+	// including the daily window used by the in-game /stats output.
+	playedAt := time.Now().AddDate(0, 0, -1)
 	server := fixture.CreateTestServer(ctx)
 	var demoID int32
 	require.NoError(t, fixture.Database.QueryRow(ctx,
 		`INSERT INTO demo (server_id, title, map_name, created_on) VALUES ($1, $2, $3, $4) RETURNING demo_id`,
-		server.ServerID, demo.Filename, demo.Map, time.Now()).Scan(&demoID))
+		server.ServerID, demo.Filename, demo.Map, playedAt).Scan(&demoID))
 
-	_, errImport := harness.stats.Import(ctx, server.ServerID, demoID, &demo, time.Now())
+	_, errImport := harness.stats.Import(ctx, server.ServerID, demoID, &demo, playedAt)
 	require.NoError(t, errImport)
 	require.NoError(t, harness.stats.RefreshViews(ctx))
 
@@ -1016,6 +1020,7 @@ func TestPluginServiceSMPlayerStats(t *testing.T) {
 		}
 	}
 	topKills := killsByPlayer[topPlayer]
+	topAssists := assistsByPlayer[topPlayer]
 	require.GreaterOrEqual(t, topKills, uint64(stats.MinKills))
 
 	t.Run("unauthenticated", func(t *testing.T) {
@@ -1053,7 +1058,9 @@ func TestPluginServiceSMPlayerStats(t *testing.T) {
 			// The top-points player leads the overall leaderboard in every
 			// window of the seeded match, and tied leaders share rank 1.
 			require.Equal(t, uint64(1), bucket.GetRank(), "rank %s", want)
+			require.Equal(t, topPoints, bucket.GetPoints(), "points %s", want)
 			require.Equal(t, topKills, bucket.GetKills(), "kills %s", want)
+			require.Equal(t, topAssists, bucket.GetAssists(), "assists %s", want)
 		}
 	})
 

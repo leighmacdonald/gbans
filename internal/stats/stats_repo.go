@@ -358,16 +358,21 @@ func (r Repository) MyIndex(ctx context.Context, opts Opts, steamID steamid.Stea
 		Where(constraints))
 }
 
-// PlayerKillsAndRank returns steamID's kills and their rank for the window
-// described by opts, ranked by the variant's rank column: the overall/points
-// rank for VariantOverallUnspecified, the kills rank for VariantKills. The
-// rank is 0 when the player has fewer than MinKills kills in the window, even
-// though kills itself is always reported.
-func (r Repository) PlayerKillsAndRank(ctx context.Context, opts Opts, steamID steamid.SteamID) (uint64, uint64, error) {
-	var (
-		rank  uint64
-		kills uint64
-	)
+// PlayerStatsRow is a player's rank and core counters for one time window.
+type PlayerStatsRow struct {
+	Rank    uint64
+	Kills   uint64
+	Points  uint64
+	Assists uint64
+}
+
+// PlayerStats returns steamID's stats and rank for the window described by
+// opts, ranked by the variant's rank column: the overall/points rank for
+// VariantOverallUnspecified, the kills rank for VariantKills. The rank is 0
+// when the player has fewer than MinKills kills in the window, even though the
+// counters are always reported.
+func (r Repository) PlayerStats(ctx context.Context, opts Opts, steamID steamid.SteamID) (PlayerStatsRow, error) {
+	var result PlayerStatsRow
 
 	constraints := sq.And{
 		sq.Eq{"stats_bucket_id": opts.StatsBucketID},
@@ -381,28 +386,28 @@ func (r Repository) PlayerKillsAndRank(ctx context.Context, opts Opts, steamID s
 	}
 
 	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
-		Select(opts.rankColumn()+" AS rank", "kills").
+		Select(opts.rankColumn()+" AS rank", "kills", "points", "assists").
 		From(opts.view()).
 		Where(constraints))
 	if errRow != nil {
-		return 0, 0, database.Err(errRow)
+		return result, database.Err(errRow)
 	}
-	if err := row.Scan(&rank, &kills); err != nil {
+	if err := row.Scan(&result.Rank, &result.Kills, &result.Points, &result.Assists); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return 0, 0, nil
+			return result, nil
 		}
 
-		return 0, 0, database.Err(err)
+		return result, database.Err(err)
 	}
 
 	// The rank only has standing once the player clears the leaderboard's
-	// minimum sample size; below it they are unranked though their kills are
+	// minimum sample size; below it they are unranked though the counters are
 	// still reported.
-	if kills < MinKills {
-		rank = 0
+	if result.Kills < MinKills {
+		result.Rank = 0
 	}
 
-	return rank, kills, nil
+	return result, nil
 }
 
 func (r Repository) loadOverallView(ctx context.Context, statsBucketID uint32, opts Opts) ([]any, uint64, error) {
