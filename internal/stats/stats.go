@@ -710,9 +710,9 @@ func (s Stats) MyIndex(ctx context.Context, opts Opts, steamID steamid.SteamID, 
 	return s.repo.MyIndex(ctx, opts, steamID, rank)
 }
 
-// PlayerKillsAndRank returns steamID's kills and their rank (per the variant's
-// rank column) for the window described by opts. The rank is 0 when the player
-// does not meet the leaderboard's minimum sample size.
-func (s Stats) PlayerKillsAndRank(ctx context.Context, opts Opts, steamID steamid.SteamID) (uint64, uint64, error) {
-	return s.repo.PlayerKillsAndRank(ctx, opts, steamID)
+// PlayerStats returns steamID's rank and core counters for the window
+// described by opts. The rank is 0 when the player does not meet the
+// leaderboard's minimum sample size.
+func (s Stats) PlayerStats(ctx context.Context, opts Opts, steamID steamid.SteamID) (PlayerStatsRow, error) {
+	return s.repo.PlayerStats(ctx, opts, steamID)
 }

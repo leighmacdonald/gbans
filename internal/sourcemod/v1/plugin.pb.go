@@ -884,7 +884,7 @@ func (x *SMPlayerStatsRequest) GetSteamId() string {
 	return ""
 }
 
-// SMPlayerStatsBucket holds a single player's rank and kills for one time
+// SMPlayerStatsBucket holds a single player's rank and core stats for one time
 // bucket within the default stats bucket.
 type SMPlayerStatsBucket struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
@@ -894,7 +894,11 @@ type SMPlayerStatsBucket struct {
 	// meet the leaderboard's minimum sample size.
 	Rank *uint64 `protobuf:"varint,2,opt,name=rank" json:"rank,omitempty"`
 	// kills is the player's total kills in this window.
-	Kills         *uint64 `protobuf:"varint,3,opt,name=kills" json:"kills,omitempty"`
+	Kills *uint64 `protobuf:"varint,3,opt,name=kills" json:"kills,omitempty"`
+	// points is the player's total points in this window.
+	Points *uint64 `protobuf:"varint,4,opt,name=points" json:"points,omitempty"`
+	// assists is the player's total assists in this window.
+	Assists       *uint64 `protobuf:"varint,5,opt,name=assists" json:"assists,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -946,6 +950,20 @@ func (x *SMPlayerStatsBucket) GetRank() uint64 {
 func (x *SMPlayerStatsBucket) GetKills() uint64 {
 	if x != nil && x.Kills != nil {
 		return *x.Kills
+	}
+	return 0
+}
+
+func (x *SMPlayerStatsBucket) GetPoints() uint64 {
+	if x != nil && x.Points != nil {
+		return *x.Points
+	}
+	return 0
+}
+
+func (x *SMPlayerStatsBucket) GetAssists() uint64 {
+	if x != nil && x.Assists != nil {
+		return *x.Assists
 	}
 	return 0
 }
@@ -1221,12 +1239,14 @@ const file_sourcemod_v1_plugin_proto_rawDesc = "" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\tgroupName\"=\n" +
 	"\x14SMPlayerStatsRequest\x12%\n" +
 	"\bsteam_id\x18\x01 \x01(\tB\n" +
-	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\asteamId\"\x8b\x01\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\asteamId\"\xc5\x01\n" +
 	"\x13SMPlayerStatsBucket\x12B\n" +
 	"\vtime_bucket\x18\x01 \x01(\x0e2\x14.stats.v1.TimeBucketB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\n" +
 	"timeBucket\x12\x16\n" +
 	"\x04rank\x18\x02 \x01(\x04B\x020\x01R\x04rank\x12\x18\n" +
-	"\x05kills\x18\x03 \x01(\x04B\x020\x01R\x05kills\"\xb0\x01\n" +
+	"\x05kills\x18\x03 \x01(\x04B\x020\x01R\x05kills\x12\x1a\n" +
+	"\x06points\x18\x04 \x01(\x04B\x020\x01R\x06points\x12\x1c\n" +
+	"\aassists\x18\x05 \x01(\x04B\x020\x01R\aassists\"\xb0\x01\n" +
 	"\x15SMPlayerStatsResponse\x12C\n" +
 	"\abuckets\x18\x01 \x03(\v2!.sourcemod.v1.SMPlayerStatsBucketB\x06\xbaH\x03\xc8\x01\x01R\abuckets\x12&\n" +
 	"\x0fstats_bucket_id\x18\x02 \x01(\rR\rstatsBucketId\x12*\n" +

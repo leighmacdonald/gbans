@@ -15,8 +15,8 @@ This covers functionality available through the gbans plugin as well as some rec
 | report     |              | Report a user.                                                                       |
 | seed       |              | Send a seed request to discord, and reply to the player with the request status.     |
 | stats      |              | Opens a menu of your overall rank (matching the website's default overall view) and  |
-|            |              | kills for each time window (today, week, month, year and all time). Limited to one   |
-|            |              | use per player every five minutes.                                                   |
+|            |              | points, kills and assists for each time window (yesterday, week, month, year and     |
+|            |              | all time). Limited to one use per player every five seconds.                         |
 
 ## Convars
 

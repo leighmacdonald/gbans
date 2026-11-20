@@ -75,7 +75,7 @@ func NewPluginService(sourcemod Sourcemod, persons *person.Persons, serverAuthen
 		minPingModRetryInterval: time.Minute * 5,
 		statsHistory:            map[steamid.SteamID]time.Time{},
 		statsHistoryMu:          &sync.Mutex{},
-		minStatsRetryInterval:   time.Minute * 5,
+		minStatsRetryInterval:   time.Second * 5,
 	}, option...)
 
 	serverAuth := rpc.NewServerAuthenticator()
@@ -338,7 +338,7 @@ func (s PluginService) SMSeed(ctx context.Context, req *v1.SMSeedRequest) (*v1.S
 // SMPlayerStats returns a player's overall (points) rank and kills for every
 // time window in the default stats bucket, for the in-game /stats menu. The
 // rank matches the website's default overall leaderboard so the two agree.
-// Each player may call it at most once every five minutes.
+// Each player may call it at most once every five seconds.
 func (s PluginService) SMPlayerStats(ctx context.Context, req *v1.SMPlayerStatsRequest) (*v1.SMPlayerStatsResponse, error) {
 	steamID := steamid.New(req.GetSteamId())
 	if !steamID.Valid() {
@@ -378,29 +378,39 @@ func (s PluginService) SMPlayerStats(ctx context.Context, req *v1.SMPlayerStatsR
 
 	now := time.Now()
 	for _, timeBucket := range timeBuckets {
+		// The in-game /stats menu reports the previous full day rather than
+		// the current, still-in-progress one. Longer windows keep the current
+		// timestamp so they describe the periods the player is actually in.
+		timestamp := now
+		if timeBucket == stats.TimeBucketDaily {
+			timestamp = now.AddDate(0, 0, -1)
+		}
+
 		// VariantOverallUnspecified ranks by points, the same column the
 		// website's default overall leaderboard shows, so the in-game rank
 		// matches the frontend for the same player and window.
-		rank, kills, errRank := s.stats.PlayerKillsAndRank(ctx, stats.Opts{
+		playerStats, errStats := s.stats.PlayerStats(ctx, stats.Opts{
 			StatsBucketID: uint32(defaultBucket.BucketID), //nolint:gosec // bucket ids are positive.
 			Variant:       stats.VariantOverallUnspecified,
 			TimeBucket:    timeBucket,
-			TimeStamp:     now,
+			TimeStamp:     timestamp,
 		}, steamID)
-		if errRank != nil {
+		if errStats != nil {
 			s.statsHistoryMu.Unlock()
 			slog.Error("Failed to load player stats",
 				slog.String("steamID", steamID.String()),
 				slog.String("timeBucket", timeBucket.String()),
-				slog.String("error", errRank.Error()))
+				slog.String("error", errStats.Error()))
 
 			return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 		}
 
 		resp.Buckets = append(resp.Buckets, &v1.SMPlayerStatsBucket{
 			TimeBucket: new(toTimeBucket(timeBucket)),
-			Rank:       new(rank),
-			Kills:      new(kills),
+			Rank:       new(playerStats.Rank),
+			Kills:      new(playerStats.Kills),
+			Points:     new(playerStats.Points),
+			Assists:    new(playerStats.Assists),
 		})
 	}
 

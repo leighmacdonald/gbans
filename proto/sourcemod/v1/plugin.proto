@@ -171,7 +171,7 @@ message SMPlayerStatsRequest {
   ];
 }
 
-// SMPlayerStatsBucket holds a single player's rank and kills for one time
+// SMPlayerStatsBucket holds a single player's rank and core stats for one time
 // bucket within the default stats bucket.
 message SMPlayerStatsBucket {
   stats.v1.TimeBucket time_bucket = 1 [
@@ -184,6 +184,10 @@ message SMPlayerStatsBucket {
   uint64 rank = 2;
   // kills is the player's total kills in this window.
   uint64 kills = 3;
+  // points is the player's total points in this window.
+  uint64 points = 4;
+  // assists is the player's total assists in this window.
+  uint64 assists = 5;
 }
 
 message SMPlayerStatsResponse {

@@ -13,17 +13,19 @@
 #define STATS_MAX_CLIENTS 65
 
 // Per-client cache of the /stats menu contents. The backend returns every
-// time bucket in a single response; each bucket's rank and kills are stashed
-// here when the menu is built so a selection can be printed to chat without a
-// second round-trip to gbans.
+// time bucket in a single response; each bucket's rank and counters are
+// stashed here when the menu is built so a selection can be printed to chat
+// without a second round-trip to gbans.
 int  gStatsRank[STATS_MAX_CLIENTS][STATS_MAX_BUCKETS];
 int  gStatsKills[STATS_MAX_CLIENTS][STATS_MAX_BUCKETS];
+int  gStatsPoints[STATS_MAX_CLIENTS][STATS_MAX_BUCKETS];
+int  gStatsAssists[STATS_MAX_CLIENTS][STATS_MAX_BUCKETS];
 char gStatsBucket[STATS_MAX_CLIENTS][STATS_MAX_BUCKETS][32];
 
 /**
  * /stats opens a menu of the player's stats, one option per time bucket
- * showing that window's rank and kills. The backend rate limits each player to
- * a single lookup every five minutes and answers with HTTP 429 while cooling
+ * showing that window's rank, points, kills and assists. The backend rate limits each player to
+ * a single lookup every five seconds and answers with HTTP 429 while cooling
  * down.
  */
 public
@@ -33,7 +35,7 @@ Action onCmdStats(int clientId, int argc) {
     }
 
     if (gToken[0] == '\0') {
-        ReplyToCommand(clientId, "[GB] Not authenticated with gbans yet, try again later");
+        ReplyToCommand(clientId, "[GB] Try again later");
         authenticateServer();
         return Plugin_Handled;
     }
@@ -62,7 +64,7 @@ void onStatsRespReceived(Handle request, bool failure, bool successful, EHTTPSta
     switch (status) {
     case k_EHTTPStatusCode429TooManyRequests: {
         delete request;
-        PrintToChat(clientId, "[Stats] You can only use /stats once every 5 minutes");
+        PrintToChat(clientId, "[Stats] You can only use /stats once every 5 seconds");
         return;
     }
     case k_EHTTPStatusCode401Unauthorized: {
@@ -125,15 +127,19 @@ void showStatsMenu(int clientId, JSON_Object data) {
         if (!bucket.GetString("timeBucket", bucketStr, sizeof bucketStr)) {
             bucketStr[0] = '\0';
         }
-        int rank  = readJsonUint64(bucket, "rank");
-        int kills = readJsonUint64(bucket, "kills");
+        int rank    = readJsonUint64(bucket, "rank");
+        int kills   = readJsonUint64(bucket, "kills");
+        int points  = readJsonUint64(bucket, "points");
+        int assists = readJsonUint64(bucket, "assists");
 
         strcopy(gStatsBucket[clientId][i], sizeof gStatsBucket[clientId][i], bucketStr);
-        gStatsRank[clientId][i]  = rank;
-        gStatsKills[clientId][i] = kills;
+        gStatsRank[clientId][i]    = rank;
+        gStatsKills[clientId][i]   = kills;
+        gStatsPoints[clientId][i]  = points;
+        gStatsAssists[clientId][i] = assists;
 
         Format(itemValue, sizeof itemValue, "%d", i);
-        formatBucketItem(itemText, sizeof itemText, bucketStr, rank, kills);
+        formatBucketItem(itemText, sizeof itemText, bucketStr, rank, points, kills, assists);
         menu.AddItem(itemValue, itemText);
     }
 
@@ -173,13 +179,17 @@ void printBucketToChat(int clientId, int bucketIndex) {
         strcopy(name, sizeof name, "stats");
     }
 
-    int rank  = gStatsRank[clientId][bucketIndex];
-    int kills = gStatsKills[clientId][bucketIndex];
+    int rank    = gStatsRank[clientId][bucketIndex];
+    int points  = gStatsPoints[clientId][bucketIndex];
+    int kills   = gStatsKills[clientId][bucketIndex];
+    int assists = gStatsAssists[clientId][bucketIndex];
 
     if (rank > 0) {
-        PrintToChat(clientId, "[Stats] %s (%s): Rank #%d with %d kills", playerName, name, rank, kills);
+        PrintToChat(clientId, "[Stats] %s (%s): Rank #%d - %d points, %d kills, %d assists", playerName, name, rank,
+                    points, kills, assists);
     } else {
-        PrintToChat(clientId, "[Stats] %s (%s): Unranked with %d kills", playerName, name, kills);
+        PrintToChat(clientId, "[Stats] %s (%s): Unranked - %d points, %d kills, %d assists", playerName, name, points,
+                    kills, assists);
     }
 }
 
@@ -197,7 +207,7 @@ stock int readJsonUint64(JSON_Object obj, const char[] key) {
 // timeBucketDisplayName maps the wire time-bucket enum name to a friendly label.
 stock bool timeBucketDisplayName(const char[] bucket, char[] out, int outLen) {
     if (StrEqual(bucket, "TIME_BUCKET_DAILY")) {
-        strcopy(out, outLen, "today");
+        strcopy(out, outLen, "yesterday");
         return true;
     } else if (StrEqual(bucket, "TIME_BUCKET_WEEKLY")) {
         strcopy(out, outLen, "week");
@@ -216,15 +226,15 @@ stock bool timeBucketDisplayName(const char[] bucket, char[] out, int outLen) {
 }
 
 // formatBucketItem builds the menu option text for a single time bucket.
-stock void formatBucketItem(char[] out, int outLen, const char[] bucket, int rank, int kills) {
+stock void formatBucketItem(char[] out, int outLen, const char[] bucket, int rank, int points, int kills, int assists) {
     char name[32];
     if (!timeBucketDisplayName(bucket, name, sizeof name)) {
         strcopy(name, sizeof name, "Unknown");
     }
 
     if (rank > 0) {
-        Format(out, outLen, "%s: Rank #%d, %d kills", name, rank, kills);
+        Format(out, outLen, "%s: #%d | %dp %dk %da", name, rank, points, kills, assists);
     } else {
-        Format(out, outLen, "%s: Unranked, %d kills", name, kills);
+        Format(out, outLen, "%s: Unranked | %dp %dk %da", name, points, kills, assists);
     }
 }
