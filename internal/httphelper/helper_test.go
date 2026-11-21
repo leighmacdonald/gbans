@@ -2,12 +2,56 @@ package httphelper_test
 
 import (
 	"crypto/tls"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 )
+
+func TestNewInternalServer(t *testing.T) {
+	get := func(t *testing.T, client *http.Client, url string) *http.Response {
+		t.Helper()
+
+		req, errReq := http.NewRequestWithContext(t.Context(), http.MethodGet, url, nil)
+		require.NoError(t, errReq)
+
+		res, errDo := client.Do(req)
+		require.NoError(t, errDo)
+
+		return res
+	}
+
+	t.Run("only metrics registered", func(t *testing.T) {
+		server := httphelper.NewInternalServer("127.0.0.1:0", true, false, prometheus.NewRegistry())
+		testServer := httptest.NewServer(server.Handler)
+		defer testServer.Close()
+
+		res := get(t, testServer.Client(), testServer.URL+"/metrics")
+		defer res.Body.Close()
+		require.Equal(t, http.StatusOK, res.StatusCode)
+
+		resPprof := get(t, testServer.Client(), testServer.URL+"/debug/pprof/")
+		defer resPprof.Body.Close()
+		require.Equal(t, http.StatusNotFound, resPprof.StatusCode)
+	})
+
+	t.Run("only pprof registered", func(t *testing.T) {
+		server := httphelper.NewInternalServer("127.0.0.1:0", false, true, prometheus.NewRegistry())
+		testServer := httptest.NewServer(server.Handler)
+		defer testServer.Close()
+
+		res := get(t, testServer.Client(), testServer.URL+"/debug/pprof/")
+		defer res.Body.Close()
+		require.Equal(t, http.StatusOK, res.StatusCode)
+
+		resMetrics := get(t, testServer.Client(), testServer.URL+"/metrics")
+		defer resMetrics.Body.Close()
+		require.Equal(t, http.StatusNotFound, resMetrics.StatusCode)
+	})
+}
 
 func TestRequestBaseURL(t *testing.T) {
 	t.Run("direct http", func(t *testing.T) {

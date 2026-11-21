@@ -33,6 +33,23 @@ database_dsn: "postgresql://gbans:gbans@192.168.0.200:5432/gbans"
 database_log_queries: false
 ```
 
+## Metrics & profiling
+
+Prometheus metrics (`/metrics`) and pprof (`/debug/pprof/`) are **not** served on the main HTTP
+port. When enabled, they share a separate internal listener, bound to `127.0.0.1:6605` by default:
+
+```yaml
+prometheus_enabled: true
+http_internal_host: 127.0.0.1
+http_internal_port: 6605
+# pprof_enabled: false
+```
+
+Point your scraper at `http://<http_internal_host>:<http_internal_port>/metrics`. Keep
+`http_internal_host` on a loopback or internal-only interface; binding it to `0.0.0.0` exposes both
+the metrics and pprof endpoints to anything that can reach that port. Each endpoint is registered
+only when its matching flag is enabled. Enabling either flag starts the internal listener.
+
 The database connection pool defaults to **16 connections**. Everything in gbans (API requests,
 background workers, stats refresh) shares this pool, so raise it if you run a large number of
 servers or expect heavy traffic — but keep it comfortably below your database's `max_connections`

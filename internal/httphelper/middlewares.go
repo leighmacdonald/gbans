@@ -106,12 +106,55 @@ func useCors(origins []string) func(http.Handler) http.Handler {
 	}
 }
 
-func usePrometheus(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		start := time.Now()
-		next.ServeHTTP(res, req)
-		_ = time.Since(start).Seconds()
-	})
+// HTTPMetrics records the outcome of a handled HTTP request.
+type HTTPMetrics interface {
+	ObserveRequest(method string, route string, status int, duration time.Duration)
+}
+
+// statusWriter captures the response status without hiding optional writer
+// capabilities such as Flush, which streaming RPCs rely on.
+type statusWriter struct {
+	http.ResponseWriter
+
+	status int
+}
+
+func (w *statusWriter) WriteHeader(status int) {
+	w.status = status
+	w.ResponseWriter.WriteHeader(status)
+}
+
+func (w *statusWriter) Flush() {
+	if flusher, ok := w.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
+}
+
+func (w *statusWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
+}
+
+func usePrometheus(metrics HTTPMetrics) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			if metrics == nil {
+				next.ServeHTTP(res, req)
+
+				return
+			}
+
+			start := time.Now()
+			wrapped := &statusWriter{ResponseWriter: res, status: http.StatusOK}
+			next.ServeHTTP(wrapped, req)
+
+			// ServeMux sets Pattern on the request it dispatches to a handler.
+			route := req.Pattern
+			if route == "" {
+				route = req.URL.Path
+			}
+			metrics.ObserveRequest(req.Method, route, wrapped.status, time.Since(start))
+		})
+	}
 }
 
 func useLogging(level log.Level, _ bool) func(http.Handler) http.Handler {
