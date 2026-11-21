@@ -256,6 +256,76 @@ func (s *Servers) Current() []SafeServer {
 	return curState
 }
 
+// STVInfo holds the connection details for a server's SourceTV broadcast.
+type STVInfo struct {
+	ServerID int32
+	Host     string
+	Port     uint16
+	Password string
+}
+
+// STVServers returns SourceTV connection details for the enabled servers. Callers
+// must only expose this to users allowed to join SourceTV broadcasts.
+func (s *Servers) STVServers(ctx context.Context) ([]STVInfo, error) {
+	configured, errServers := s.Servers(ctx, Query{})
+	if errServers != nil {
+		return nil, errServers
+	}
+
+	var info []STVInfo //nolint:prealloc
+
+	s.serversMu.RLock()
+	defer s.serversMu.RUnlock()
+
+	for index := range configured {
+		server := &configured[index]
+		host := ""
+		port := server.Port + 1
+
+		// The status poller knows the real broadcast address and spectator port.
+		// Before the first poll, fall back to the resolved game server address
+		// and the conventional next port.
+		if live, ok := s.servers.byServerID(server.ServerID); ok && live != nil {
+			live.RLock()
+			if net.ParseIP(live.state.STVIP) != nil {
+				host = live.state.STVIP
+			} else if parsed := live.IP.String(); net.ParseIP(parsed) != nil {
+				// Same resolved address the public state endpoint exposes for
+				// the normal connect button.
+				host = parsed
+			}
+			if live.state.STVPort > 0 {
+				port = live.state.STVPort
+			}
+			live.RUnlock()
+		}
+
+		if host == "" {
+			host = server.IP.String()
+		}
+		if net.ParseIP(host) == nil {
+			host = server.Address
+		}
+		if net.ParseIP(host) == nil {
+			// Steam browser links require an IP; hostnames cannot be used.
+			continue
+		}
+
+		info = append(info, STVInfo{
+			ServerID: server.ServerID,
+			Host:     host,
+			Port:     port,
+			Password: server.STVPassword,
+		})
+	}
+
+	sort.SliceStable(info, func(i, j int) bool {
+		return info[i].ServerID < info[j].ServerID
+	})
+
+	return info, nil
+}
+
 func (s *Servers) Broadcast(ctx context.Context, cmd string, args ...any) {
 	if cmd == "" {
 		return

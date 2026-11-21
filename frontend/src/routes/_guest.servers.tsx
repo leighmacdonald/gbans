@@ -34,15 +34,17 @@ import { SortableTable } from "../component/table/SortableTable.tsx";
 import { UserPingRadius } from "../component/UserPingRadius.tsx";
 import { UserPositionMarker } from "../component/UserPositionMarker.tsx";
 import { MapStateCtx } from "../contexts/MapStateCtx.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
 import { useMapStateCtx } from "../hooks/useMapStateCtx.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
+import { Permission } from "../rpc/roles/v1/roles_pb.ts";
 import type { SafeServer } from "../rpc/servers/v1/servers_pb.ts";
-import { state } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
+import { sTVServers, state } from "../rpc/servers/v1/servers-ServersService_connectquery.ts";
 import { tf2Fonts } from "../theme.ts";
 import { logErr } from "../util/errors.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { uniqCI } from "../util/lists.ts";
-import { cleanMapName } from "../util/strings.ts";
+import { cleanMapName, steamConnectURL, steamSTVConnectURL } from "../util/strings.ts";
 
 // Workaround for leaflet not loading icons properly in react
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -108,7 +110,16 @@ function Servers() {
 	const [selectedServers, setSelectedServers] = useState<SafeServer[]>([]);
 	const { customRange, filterByRegion, showOpenOnly, selectedRegion } = search;
 	const { sendFlash } = useUserFlashCtx();
+	const { hasPermission } = useAuth();
+	const canWatchSTV = hasPermission(Permission.BAN_WRITE);
 	const { data, isLoading } = useQuery(state, {}, { refetchInterval: 5000 });
+	// Only fetch STV details for moderators; the endpoint never sends them to
+	// other users.
+	const { data: stvData } = useQuery(sTVServers, {}, { enabled: canWatchSTV, refetchInterval: 5000 });
+	const stvByServer = useMemo(
+		() => new Map((stvData?.servers ?? []).map((s) => [s.serverId, s] as const)),
+		[stvData],
+	);
 	const regions = uniqCI(["any", ...(data?.servers || []).map((value) => value.region)]);
 
 	// Filter state lives in the URL so filtered views are shareable. Replace
@@ -297,22 +308,46 @@ function Servers() {
 				}),
 				columnHelper.display({
 					header: "Connect",
-					size: 125,
-					Cell: ({ row }) => (
-						<Button
-							fullWidth
-							endIcon={<ChevronRightIcon />}
-							component={Link}
-							href={`steam://run/440//+connect ${row.original.ip}:${row.original.port}`}
-							variant={"contained"}
-							sx={{ minWidth: 100 }}
-						>
-							Join
-						</Button>
-					),
+					size: canWatchSTV ? 220 : 125,
+					Cell: ({ row }) => {
+						const joinButton = (
+							<Button
+								fullWidth
+								endIcon={<ChevronRightIcon />}
+								component={Link}
+								href={steamConnectURL(row.original.ip, row.original.port)}
+								variant={"contained"}
+								sx={{ minWidth: 100 }}
+							>
+								Join
+							</Button>
+						);
+
+						const stv = canWatchSTV ? stvByServer.get(row.original.serverId) : undefined;
+						if (!stv) {
+							return joinButton;
+						}
+
+						return (
+							<Stack direction={"row"} spacing={1}>
+								{joinButton}
+								<Button
+									fullWidth
+									endIcon={<ChevronRightIcon />}
+									component={Link}
+									href={steamSTVConnectURL(stv.host, stv.port, stv.password)}
+									variant={"contained"}
+									color={"secondary"}
+									sx={{ minWidth: 100 }}
+								>
+									STV
+								</Button>
+							</Stack>
+						);
+					},
 				}),
 			].filter((f) => f) as Array<MRT_ColumnDef<SafeServer>>,
-		[sendFlash],
+		[canWatchSTV, sendFlash, stvByServer],
 	);
 	const table = useMaterialReactTable({
 		...defaultOptions,

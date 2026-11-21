@@ -38,6 +38,9 @@ const (
 	ServersServiceStateProcedure = "/servers.v1.ServersService/State"
 	// ServersServiceServersProcedure is the fully-qualified name of the ServersService's Servers RPC.
 	ServersServiceServersProcedure = "/servers.v1.ServersService/Servers"
+	// ServersServiceSTVServersProcedure is the fully-qualified name of the ServersService's STVServers
+	// RPC.
+	ServersServiceSTVServersProcedure = "/servers.v1.ServersService/STVServers"
 	// ServersServiceEditServerProcedure is the fully-qualified name of the ServersService's EditServer
 	// RPC.
 	ServersServiceEditServerProcedure = "/servers.v1.ServersService/EditServer"
@@ -65,6 +68,9 @@ const (
 type ServersServiceClient interface {
 	State(context.Context, *emptypb.Empty) (*v1.StateResponse, error)
 	Servers(context.Context, *emptypb.Empty) (*v1.ServersResponse, error)
+	// STVServers is restricted to users with ban write permission because it
+	// includes the SourceTV broadcast passwords.
+	STVServers(context.Context, *emptypb.Empty) (*v1.STVServersResponse, error)
 	EditServer(context.Context, *v1.EditServerRequest) (*v1.EditServerResponse, error)
 	DeleteServer(context.Context, *v1.DeleteServerRequest) (*emptypb.Empty, error)
 	ServersAdmin(context.Context, *emptypb.Empty) (*v1.ServersAdminResponse, error)
@@ -95,6 +101,12 @@ func NewServersServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			httpClient,
 			baseURL+ServersServiceServersProcedure,
 			connect.WithSchema(serversServiceMethods.ByName("Servers")),
+			connect.WithClientOptions(opts...),
+		),
+		sTVServers: connect.NewClient[emptypb.Empty, v1.STVServersResponse](
+			httpClient,
+			baseURL+ServersServiceSTVServersProcedure,
+			connect.WithSchema(serversServiceMethods.ByName("STVServers")),
 			connect.WithClientOptions(opts...),
 		),
 		editServer: connect.NewClient[v1.EditServerRequest, v1.EditServerResponse](
@@ -146,6 +158,7 @@ func NewServersServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 type serversServiceClient struct {
 	state        *connect.Client[emptypb.Empty, v1.StateResponse]
 	servers      *connect.Client[emptypb.Empty, v1.ServersResponse]
+	sTVServers   *connect.Client[emptypb.Empty, v1.STVServersResponse]
 	editServer   *connect.Client[v1.EditServerRequest, v1.EditServerResponse]
 	deleteServer *connect.Client[v1.DeleteServerRequest, emptypb.Empty]
 	serversAdmin *connect.Client[emptypb.Empty, v1.ServersAdminResponse]
@@ -167,6 +180,15 @@ func (c *serversServiceClient) State(ctx context.Context, req *emptypb.Empty) (*
 // Servers calls servers.v1.ServersService.Servers.
 func (c *serversServiceClient) Servers(ctx context.Context, req *emptypb.Empty) (*v1.ServersResponse, error) {
 	response, err := c.servers.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// STVServers calls servers.v1.ServersService.STVServers.
+func (c *serversServiceClient) STVServers(ctx context.Context, req *emptypb.Empty) (*v1.STVServersResponse, error) {
+	response, err := c.sTVServers.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -236,6 +258,9 @@ func (c *serversServiceClient) ClearLogs(ctx context.Context, req *v1.ClearLogsR
 type ServersServiceHandler interface {
 	State(context.Context, *emptypb.Empty) (*v1.StateResponse, error)
 	Servers(context.Context, *emptypb.Empty) (*v1.ServersResponse, error)
+	// STVServers is restricted to users with ban write permission because it
+	// includes the SourceTV broadcast passwords.
+	STVServers(context.Context, *emptypb.Empty) (*v1.STVServersResponse, error)
 	EditServer(context.Context, *v1.EditServerRequest) (*v1.EditServerResponse, error)
 	DeleteServer(context.Context, *v1.DeleteServerRequest) (*emptypb.Empty, error)
 	ServersAdmin(context.Context, *emptypb.Empty) (*v1.ServersAdminResponse, error)
@@ -262,6 +287,12 @@ func NewServersServiceHandler(svc ServersServiceHandler, opts ...connect.Handler
 		ServersServiceServersProcedure,
 		svc.Servers,
 		connect.WithSchema(serversServiceMethods.ByName("Servers")),
+		connect.WithHandlerOptions(opts...),
+	)
+	serversServiceSTVServersHandler := connect.NewUnaryHandlerSimple(
+		ServersServiceSTVServersProcedure,
+		svc.STVServers,
+		connect.WithSchema(serversServiceMethods.ByName("STVServers")),
 		connect.WithHandlerOptions(opts...),
 	)
 	serversServiceEditServerHandler := connect.NewUnaryHandlerSimple(
@@ -312,6 +343,8 @@ func NewServersServiceHandler(svc ServersServiceHandler, opts ...connect.Handler
 			serversServiceStateHandler.ServeHTTP(w, r)
 		case ServersServiceServersProcedure:
 			serversServiceServersHandler.ServeHTTP(w, r)
+		case ServersServiceSTVServersProcedure:
+			serversServiceSTVServersHandler.ServeHTTP(w, r)
 		case ServersServiceEditServerProcedure:
 			serversServiceEditServerHandler.ServeHTTP(w, r)
 		case ServersServiceDeleteServerProcedure:
@@ -341,6 +374,10 @@ func (UnimplementedServersServiceHandler) State(context.Context, *emptypb.Empty)
 
 func (UnimplementedServersServiceHandler) Servers(context.Context, *emptypb.Empty) (*v1.ServersResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("servers.v1.ServersService.Servers is not implemented"))
+}
+
+func (UnimplementedServersServiceHandler) STVServers(context.Context, *emptypb.Empty) (*v1.STVServersResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("servers.v1.ServersService.STVServers is not implemented"))
 }
 
 func (UnimplementedServersServiceHandler) EditServer(context.Context, *v1.EditServerRequest) (*v1.EditServerResponse, error) {

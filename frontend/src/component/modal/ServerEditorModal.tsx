@@ -30,6 +30,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 		address: server?.address ?? "",
 		port: server?.port ?? 27015,
 		password: server?.password ?? randomStringAlphaNum(20),
+		stvPassword: server?.stvPassword ?? "",
 		rcon: server?.rcon ?? "",
 		region: server?.region ?? "",
 		cc: server?.cc ?? "",
@@ -154,7 +155,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 									}}
 								/>
 							</Grid>
-							<Grid size={{ xs: 6 }}>
+							<Grid size={{ xs: 4 }}>
 								<form.AppField
 									name={"rcon"}
 									children={(field) => {
@@ -162,7 +163,20 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 									}}
 								/>
 							</Grid>
-							<Grid size={{ xs: 6 }}>
+							<Grid size={{ xs: 4 }}>
+								<form.AppField
+									name={"stvPassword"}
+									children={(field) => {
+										return (
+											<field.TextField
+												label={"SourceTV Password"}
+												helperText={"Optional password for the SourceTV broadcast."}
+											/>
+										);
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 4 }}>
 								<form.AppField
 									name={"logSecret"}
 									children={(field) => {

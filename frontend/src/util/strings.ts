@@ -56,6 +56,16 @@ export const cleanMapName = (name: string): string => {
 
 export const assetURL = (asset: Asset): string => `/asset/${asset.assetId}`;
 
+/** Builds the steam:// launch URL used by the normal server connect button. */
+export const steamConnectURL = (ip: string, port: number): string => `steam://run/440//+connect%20${ip}:${port}`;
+
+/**
+ * Builds the SourceTV connect URL. The optional password is URL encoded as part
+ * of the steam://connect path; without one the path ends at the port.
+ */
+export const steamSTVConnectURL = (ip: string, port: number, password?: string): string =>
+	`steam://connect/${ip}:${port}${password ? `/${encodeURIComponent(password)}` : ""}`;
+
 export const discordAvatarURL = (user: DiscordProfile) => {
 	return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
 };

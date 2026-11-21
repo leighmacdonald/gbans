@@ -98,10 +98,12 @@ type Server struct {
 	ReservedSlots int32 // TODO remove and ignore
 	// Password is what the sourcemod plugin on each server uses to generate a token to make authenticated calls.
 	// This is *NOT* the general game server password (sv_password)
-	Password  string
-	IsEnabled bool
-	Deleted   bool
-	Region    string
+	Password string
+	// STVPassword is the optional password used to connect to the server's SourceTV broadcast.
+	STVPassword string
+	IsEnabled   bool
+	Deleted     bool
+	Region      string
 	// CC is the 2 letter country code. Used for flags emojis.
 	CC string
 	// Physical Latitude location

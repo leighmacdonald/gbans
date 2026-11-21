@@ -29,6 +29,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type testPermissionResolver struct {
@@ -354,6 +355,68 @@ func TestServersServiceExecCommand(t *testing.T) {
 		var connectErr *connect.Error
 		require.ErrorAs(t, errExec, &connectErr)
 		require.Equal(t, connect.CodeUnauthenticated, connectErr.Code())
+	})
+}
+
+func TestServersServiceSTVServers(t *testing.T) {
+	serverCase, err := servers.New(servers.NewRepository(fixture.Database),
+		broadcaster.New[logparse.EventType, logparse.ServerEvent](), "")
+	require.NoError(t, err)
+
+	saved, errSave := serverCase.Save(t.Context(), servers.NewServer("stv-test", "127.0.0.1", 27015))
+	require.NoError(t, errSave)
+	t.Cleanup(func() {
+		require.NoError(t, serverCase.Delete(context.Background(), saved.ServerID))
+	})
+
+	saved.STVPassword = "stv-secret"
+	saved, errSave = serverCase.Save(t.Context(), saved)
+	require.NoError(t, errSave)
+
+	t.Run("ban write receives stv connection details", func(t *testing.T) {
+		client := newPermissionClient(t, serverCase, []rolesv1.Permission{rolesv1.Permission_PERMISSION_BAN_WRITE})
+
+		resp, errSTV := client.STVServers(t.Context(), &emptypb.Empty{})
+		require.NoError(t, errSTV)
+
+		var found bool
+		for _, stv := range resp.GetServers() {
+			if stv.GetServerId() != saved.ServerID {
+				continue
+			}
+
+			found = true
+			require.Equal(t, "stv-secret", stv.GetPassword())
+			require.Equal(t, "127.0.0.1", stv.GetHost())
+			require.EqualValues(t, 27016, stv.GetPort())
+		}
+		require.True(t, found, "saved server missing from STV response")
+	})
+
+	t.Run("users without ban write receive no stv details", func(t *testing.T) {
+		client := newPermissionClient(t, serverCase, []rolesv1.Permission{rolesv1.Permission_PERMISSION_BAN_CREATE})
+
+		_, errSTV := client.STVServers(t.Context(), &emptypb.Empty{})
+		var connectErr *connect.Error
+		require.ErrorAs(t, errSTV, &connectErr)
+		require.Equal(t, connect.CodeUnauthenticated, connectErr.Code())
+	})
+
+	t.Run("dns only servers are omitted", func(t *testing.T) {
+		dnsServer, errSaveDNS := serverCase.Save(t.Context(), servers.NewServer("stv-dns-test", "game.example.com", 27015))
+		require.NoError(t, errSaveDNS)
+		t.Cleanup(func() {
+			require.NoError(t, serverCase.Delete(context.Background(), dnsServer.ServerID))
+		})
+
+		client := newPermissionClient(t, serverCase, []rolesv1.Permission{rolesv1.Permission_PERMISSION_BAN_WRITE})
+		resp, errSTV := client.STVServers(t.Context(), &emptypb.Empty{})
+		require.NoError(t, errSTV)
+
+		for _, stv := range resp.GetServers() {
+			require.NotEqual(t, dnsServer.ServerID, stv.GetServerId())
+			require.NotContains(t, stv.GetHost(), "example.com")
+		}
 	})
 }
 
