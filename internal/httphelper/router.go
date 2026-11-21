@@ -4,14 +4,12 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"net/http/pprof"
 	"path/filepath"
 	"slices"
 
 	"github.com/leighmacdonald/gbans/frontend"
 	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/opengraph"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
@@ -26,8 +24,8 @@ type RouterOpts struct {
 	HTTPOtelEnabled   bool
 	SentryDSN         string
 	Version           string
-	PProfEnabled      bool
 	PrometheusEnabled bool
+	Metrics           HTTPMetrics
 	FrontendEnable    bool
 	StaticPath        string
 	HTTPCORSEnabled   bool
@@ -57,18 +55,6 @@ func CreateRouter(opts RouterOpts) (*http.ServeMux, http.Handler, error) {
 
 	mux := http.NewServeMux()
 
-	if opts.PProfEnabled {
-		mux.HandleFunc("GET /debug/pprof/", pprof.Index)
-		mux.HandleFunc("GET /debug/pprof/cmdline", pprof.Cmdline)
-		mux.HandleFunc("GET /debug/pprof/profile", pprof.Profile)
-		mux.HandleFunc("GET /debug/pprof/symbol", pprof.Symbol)
-		mux.HandleFunc("GET /debug/pprof/trace", pprof.Trace)
-	}
-
-	if opts.PrometheusEnabled {
-		mux.Handle("GET /metrics", promhttp.Handler())
-	}
-
 	middleware = append(middleware, useSecure(opts.DevMode, ""))
 
 	if opts.HTTPCORSEnabled {
@@ -80,7 +66,7 @@ func CreateRouter(opts RouterOpts) (*http.ServeMux, http.Handler, error) {
 	}
 
 	if opts.PrometheusEnabled {
-		middleware = append(middleware, usePrometheus)
+		middleware = append(middleware, usePrometheus(opts.Metrics))
 	}
 
 	if opts.FrontendEnable {

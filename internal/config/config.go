@@ -66,6 +66,8 @@ type Static struct {
 	DatabaseAutoMigrate bool     `mapstructure:"database_auto_migrate" json:"-"`
 	DatabaseLogQueries  bool     `mapstructure:"database_log_queries" json:"-"`
 	PrometheusEnabled   bool     `mapstructure:"prometheus_enabled" json:"-"`
+	InternalHost        string   `mapstructure:"http_internal_host" json:"-"`
+	InternalPort        uint16   `mapstructure:"http_internal_port" json:"-"`
 	PProfEnabled        bool     `mapstructure:"pprof_enabled" json:"-"`
 	ClientprefsEnabled  bool     `mapstructure:"clientprefs_enabled" json:"-"`
 }
@@ -73,6 +75,12 @@ type Static struct {
 // Addr returns the address in host:port format.
 func (s Static) Addr() string {
 	return net.JoinHostPort(s.HTTPHost, strconv.Itoa(int(s.HTTPPort)))
+}
+
+// InternalAddr returns the metrics/pprof listener address in host:port format.
+// It is kept separate from Addr so it can be bound to an internal interface.
+func (s Static) InternalAddr() string {
+	return net.JoinHostPort(s.InternalHost, strconv.Itoa(int(s.InternalPort)))
 }
 
 // Config is the root config container.
@@ -596,6 +604,8 @@ func setDefaultConfigValues() {
 		"database_auto_migrate": true,
 		"database_log_queries":  false,
 		"prometheus_enabled":    false,
+		"http_internal_host":    "127.0.0.1",
+		"http_internal_port":    6605,
 		"pprof_enabled":         false,
 		"clientprefs_enabled":   true,
 	}

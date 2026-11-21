@@ -55,8 +55,12 @@ http_cookie_key: change_me
 # Show all database queries
 #database_log_queries: false
 
-# Enabled prometheus exports at /metrics
+# Enable the Prometheus exporter at /metrics on its own HTTP listener.
+# Bind it to an internal interface by default; it is never served on the main
+# HTTP port. pprof uses this same address when enabled.
 # prometheus_enabled: false
+# http_internal_host: 127.0.0.1
+# http_internal_port: 6605
 
 # Clientprefs are in-game settings a player manages from the Gameplay tab of
 # their profile settings page. Their choices are written to the sourcemod

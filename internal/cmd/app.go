@@ -218,7 +218,20 @@ func (g *GBans) Init(ctx context.Context) error {
 		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database)))
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), conf.Discord)
 	g.forums = forum.New(forum.NewRepository(g.database), g.notifications, g.persons, "")
-	g.metrics = metrics.New(g.broadcaster)
+	metricsSvc, errMetrics := metrics.New(g.broadcaster, BuildVersion)
+	if errMetrics != nil {
+		return errMetrics
+	}
+	g.metrics = metricsSvc
+	g.metrics.SetServerProvider(func() []metrics.ServerSnapshot {
+		current := g.servers.Current()
+		snapshots := make([]metrics.ServerSnapshot, 0, len(current))
+		for _, server := range current {
+			snapshots = append(snapshots, metrics.ServerSnapshot{Name: server.NameShort, Humans: server.Humans})
+		}
+
+		return snapshots
+	})
 	g.news = news.New(news.NewRepository(g.database), g.bot, conf.Discord.SafePublicLogChannelID())
 	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons, g.notifications, conf.Discord.SafeSeedChannelID(), conf.Discord.LogChannelID, conf.Discord.SafeModPingRoleID(), conf.Discord.SafePublicLogChannelID(), g.servers)
 	g.wiki = wiki.New(wiki.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID(), conf.Discord.LogChannelID)
@@ -597,8 +610,8 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 		HTTPOtelEnabled:   conf.Log.HTTPOtelEnabled,
 		SentryDSN:         g.config.Config().General.SentryDSN,
 		Version:           BuildVersion,
-		PProfEnabled:      conf.PProfEnabled,
 		PrometheusEnabled: conf.PrometheusEnabled,
+		Metrics:           g.metrics,
 		FrontendEnable:    conf.General.Mode != config.TestMode,
 		StaticPath:        conf.HTTPStaticPath,
 		HTTPCORSEnabled:   conf.HTTPCORSEnabled,
@@ -637,6 +650,18 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 
 	httpServer := httphelper.NewServer(conf.Addr(), topMux)
 
+	var internalServer *http.Server
+	if conf.PrometheusEnabled || conf.PProfEnabled {
+		internalServer = httphelper.NewInternalServer(conf.InternalAddr(), conf.PrometheusEnabled, conf.PProfEnabled, g.metrics.Registry())
+
+		go func() { //nolint:gosec
+			slog.Info("Starting internal metrics/pprof server", slog.String("address", conf.InternalAddr()))
+			if errInternal := internalServer.ListenAndServe(); errInternal != nil && !errors.Is(errInternal, http.ErrServerClosed) {
+				slog.Error("Internal server returned error", slog.String("error", errInternal.Error()))
+			}
+		}()
+	}
+
 	go func() { //nolint:gosec
 		<-ctx.Done()
 
@@ -644,6 +669,12 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10) //nolint:contextcheck
 		defer cancel()
+
+		if internalServer != nil {
+			if errShutdown := internalServer.Shutdown(shutdownCtx); errShutdown != nil {
+				slog.Error("Error shutting down internal service", slog.String("error", errShutdown.Error()))
+			}
+		}
 
 		if errShutdown := httpServer.Shutdown(shutdownCtx); errShutdown != nil {
 			slog.Error("Error shutting down http service", slog.String("error", errShutdown.Error()))

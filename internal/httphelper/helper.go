@@ -4,12 +4,15 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"net/netip"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func NewClient() *http.Client {
@@ -52,6 +55,26 @@ func NewServer(listenAddr string, handler http.Handler) *http.Server {
 	}
 
 	return httpServer
+}
+
+// NewInternalServer creates the server for operational endpoints (Prometheus
+// exporter and pprof) that must stay off the public mux. Each endpoint is only
+// registered when enabled, and the whole server is meant to be bound to an
+// internal interface via http_internal_host/http_internal_port.
+func NewInternalServer(listenAddr string, prometheusEnabled bool, pprofEnabled bool, registry prometheus.Gatherer) *http.Server {
+	mux := http.NewServeMux()
+	if prometheusEnabled {
+		mux.Handle("GET /metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+	}
+	if pprofEnabled {
+		mux.HandleFunc("GET /debug/pprof/", pprof.Index)
+		mux.HandleFunc("GET /debug/pprof/cmdline", pprof.Cmdline)
+		mux.HandleFunc("GET /debug/pprof/profile", pprof.Profile)
+		mux.HandleFunc("GET /debug/pprof/symbol", pprof.Symbol)
+		mux.HandleFunc("GET /debug/pprof/trace", pprof.Trace)
+	}
+
+	return NewServer(listenAddr, mux)
 }
 
 func Referral(req *http.Request) string {

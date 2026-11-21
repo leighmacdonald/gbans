@@ -55,6 +55,22 @@ func TestCreateRouterOpenGraphInjection(t *testing.T) {
 	require.Equal(t, htmlBody, res2.Body.String())
 }
 
+func TestCreateRouterDoesNotExposeMetricsOrPprof(t *testing.T) {
+	t.Parallel()
+
+	_, handler, errCreate := httphelper.CreateRouter(httphelper.RouterOpts{
+		LogLevel:          log.Error,
+		PrometheusEnabled: true,
+	}) //nolint:exhaustruct
+	require.NoError(t, errCreate)
+
+	for _, path := range []string{"/metrics", "/debug/pprof/"} {
+		res := httptest.NewRecorder()
+		handler.ServeHTTP(res, httptest.NewRequestWithContext(t.Context(), http.MethodGet, path, nil))
+		require.Equal(t, http.StatusNotFound, res.Code, path)
+	}
+}
+
 func TestCreateRouterWithoutOpenGraph(t *testing.T) {
 	t.Parallel()
 

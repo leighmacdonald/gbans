@@ -159,6 +159,8 @@ func TestConfig(ctx context.Context, dsn string) (*config.Configuration, error) 
 		DatabaseAutoMigrate: true,
 		DatabaseLogQueries:  false,
 		PrometheusEnabled:   false,
+		InternalHost:        "127.0.0.1",
+		InternalPort:        6605,
 		PProfEnabled:        false,
 		General: &config.General{
 			SiteName:           "gbans",

@@ -8,6 +8,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestInternalAddr(t *testing.T) {
+	static := config.Static{InternalHost: "10.0.0.5", InternalPort: 6605}
+	require.Equal(t, "10.0.0.5:6605", static.InternalAddr())
+
+	static.InternalHost = "::1"
+	require.Equal(t, "[::1]:6605", static.InternalAddr())
+}
+
 func TestConfig(t *testing.T) {
 	fixture := tests.NewFixture()
 	defer fixture.Close()
