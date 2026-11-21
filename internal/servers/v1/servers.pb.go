@@ -909,8 +909,10 @@ type Server struct {
 	DiscordSeedRoleIds   []string               `protobuf:"bytes,21,rep,name=discord_seed_role_ids,json=discordSeedRoleIds" json:"discord_seed_role_ids,omitempty"`
 	Ip                   *string                `protobuf:"bytes,22,opt,name=ip" json:"ip,omitempty"`
 	StatsBucketId        *int32                 `protobuf:"varint,23,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// Optional password for connecting to the server's SourceTV broadcast.
+	StvPassword   *string `protobuf:"bytes,24,opt,name=stv_password,json=stvPassword" json:"stv_password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Server) Reset() {
@@ -1104,6 +1106,13 @@ func (x *Server) GetStatsBucketId() int32 {
 	return 0
 }
 
+func (x *Server) GetStvPassword() string {
+	if x != nil && x.StvPassword != nil {
+		return *x.StvPassword
+	}
+	return ""
+}
+
 type StateResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Servers       []*SafeServer          `protobuf:"bytes,1,rep,name=servers" json:"servers,omitempty"`
@@ -1156,6 +1165,119 @@ func (x *StateResponse) GetLatLong() *v1.LatLong {
 	return nil
 }
 
+type STVServer struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	ServerId *int32                 `protobuf:"varint,1,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
+	// IP address of the broadcast, never a hostname: Steam browser links require an IP.
+	Host          *string `protobuf:"bytes,2,opt,name=host" json:"host,omitempty"`
+	Port          *uint32 `protobuf:"varint,3,opt,name=port" json:"port,omitempty"`
+	Password      *string `protobuf:"bytes,4,opt,name=password" json:"password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *STVServer) Reset() {
+	*x = STVServer{}
+	mi := &file_servers_v1_servers_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *STVServer) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*STVServer) ProtoMessage() {}
+
+func (x *STVServer) ProtoReflect() protoreflect.Message {
+	mi := &file_servers_v1_servers_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use STVServer.ProtoReflect.Descriptor instead.
+func (*STVServer) Descriptor() ([]byte, []int) {
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *STVServer) GetServerId() int32 {
+	if x != nil && x.ServerId != nil {
+		return *x.ServerId
+	}
+	return 0
+}
+
+func (x *STVServer) GetHost() string {
+	if x != nil && x.Host != nil {
+		return *x.Host
+	}
+	return ""
+}
+
+func (x *STVServer) GetPort() uint32 {
+	if x != nil && x.Port != nil {
+		return *x.Port
+	}
+	return 0
+}
+
+func (x *STVServer) GetPassword() string {
+	if x != nil && x.Password != nil {
+		return *x.Password
+	}
+	return ""
+}
+
+type STVServersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Servers       []*STVServer           `protobuf:"bytes,1,rep,name=servers" json:"servers,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *STVServersResponse) Reset() {
+	*x = STVServersResponse{}
+	mi := &file_servers_v1_servers_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *STVServersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*STVServersResponse) ProtoMessage() {}
+
+func (x *STVServersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_servers_v1_servers_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use STVServersResponse.ProtoReflect.Descriptor instead.
+func (*STVServersResponse) Descriptor() ([]byte, []int) {
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *STVServersResponse) GetServers() []*STVServer {
+	if x != nil {
+		return x.Servers
+	}
+	return nil
+}
+
 type ServerInfoSafe struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	ServerNameLong *string                `protobuf:"bytes,1,opt,name=server_name_long,json=serverNameLong" json:"server_name_long,omitempty"`
@@ -1168,7 +1290,7 @@ type ServerInfoSafe struct {
 
 func (x *ServerInfoSafe) Reset() {
 	*x = ServerInfoSafe{}
-	mi := &file_servers_v1_servers_proto_msgTypes[11]
+	mi := &file_servers_v1_servers_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1180,7 +1302,7 @@ func (x *ServerInfoSafe) String() string {
 func (*ServerInfoSafe) ProtoMessage() {}
 
 func (x *ServerInfoSafe) ProtoReflect() protoreflect.Message {
-	mi := &file_servers_v1_servers_proto_msgTypes[11]
+	mi := &file_servers_v1_servers_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1193,7 +1315,7 @@ func (x *ServerInfoSafe) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServerInfoSafe.ProtoReflect.Descriptor instead.
 func (*ServerInfoSafe) Descriptor() ([]byte, []int) {
-	return file_servers_v1_servers_proto_rawDescGZIP(), []int{11}
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ServerInfoSafe) GetServerNameLong() string {
@@ -1233,7 +1355,7 @@ type ServersResponse struct {
 
 func (x *ServersResponse) Reset() {
 	*x = ServersResponse{}
-	mi := &file_servers_v1_servers_proto_msgTypes[12]
+	mi := &file_servers_v1_servers_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1245,7 +1367,7 @@ func (x *ServersResponse) String() string {
 func (*ServersResponse) ProtoMessage() {}
 
 func (x *ServersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_servers_v1_servers_proto_msgTypes[12]
+	mi := &file_servers_v1_servers_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1258,7 +1380,7 @@ func (x *ServersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServersResponse.ProtoReflect.Descriptor instead.
 func (*ServersResponse) Descriptor() ([]byte, []int) {
-	return file_servers_v1_servers_proto_rawDescGZIP(), []int{12}
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ServersResponse) GetServers() []*ServerInfoSafe {
@@ -1277,7 +1399,7 @@ type EditServerRequest struct {
 
 func (x *EditServerRequest) Reset() {
 	*x = EditServerRequest{}
-	mi := &file_servers_v1_servers_proto_msgTypes[13]
+	mi := &file_servers_v1_servers_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1289,7 +1411,7 @@ func (x *EditServerRequest) String() string {
 func (*EditServerRequest) ProtoMessage() {}
 
 func (x *EditServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_servers_v1_servers_proto_msgTypes[13]
+	mi := &file_servers_v1_servers_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1302,7 +1424,7 @@ func (x *EditServerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditServerRequest.ProtoReflect.Descriptor instead.
 func (*EditServerRequest) Descriptor() ([]byte, []int) {
-	return file_servers_v1_servers_proto_rawDescGZIP(), []int{13}
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *EditServerRequest) GetServer() *Server {
@@ -1321,7 +1443,7 @@ type EditServerResponse struct {
 
 func (x *EditServerResponse) Reset() {
 	*x = EditServerResponse{}
-	mi := &file_servers_v1_servers_proto_msgTypes[14]
+	mi := &file_servers_v1_servers_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1333,7 +1455,7 @@ func (x *EditServerResponse) String() string {
 func (*EditServerResponse) ProtoMessage() {}
 
 func (x *EditServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_servers_v1_servers_proto_msgTypes[14]
+	mi := &file_servers_v1_servers_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1346,7 +1468,7 @@ func (x *EditServerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditServerResponse.ProtoReflect.Descriptor instead.
 func (*EditServerResponse) Descriptor() ([]byte, []int) {
-	return file_servers_v1_servers_proto_rawDescGZIP(), []int{14}
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *EditServerResponse) GetServer() *Server {
@@ -1365,7 +1487,7 @@ type DeleteServerRequest struct {
 
 func (x *DeleteServerRequest) Reset() {
 	*x = DeleteServerRequest{}
-	mi := &file_servers_v1_servers_proto_msgTypes[15]
+	mi := &file_servers_v1_servers_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1377,7 +1499,7 @@ func (x *DeleteServerRequest) String() string {
 func (*DeleteServerRequest) ProtoMessage() {}
 
 func (x *DeleteServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_servers_v1_servers_proto_msgTypes[15]
+	mi := &file_servers_v1_servers_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1390,7 +1512,7 @@ func (x *DeleteServerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteServerRequest.ProtoReflect.Descriptor instead.
 func (*DeleteServerRequest) Descriptor() ([]byte, []int) {
-	return file_servers_v1_servers_proto_rawDescGZIP(), []int{15}
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *DeleteServerRequest) GetServerId() int32 {
@@ -1409,7 +1531,7 @@ type ServersAdminResponse struct {
 
 func (x *ServersAdminResponse) Reset() {
 	*x = ServersAdminResponse{}
-	mi := &file_servers_v1_servers_proto_msgTypes[16]
+	mi := &file_servers_v1_servers_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1421,7 +1543,7 @@ func (x *ServersAdminResponse) String() string {
 func (*ServersAdminResponse) ProtoMessage() {}
 
 func (x *ServersAdminResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_servers_v1_servers_proto_msgTypes[16]
+	mi := &file_servers_v1_servers_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1434,7 +1556,7 @@ func (x *ServersAdminResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServersAdminResponse.ProtoReflect.Descriptor instead.
 func (*ServersAdminResponse) Descriptor() ([]byte, []int) {
-	return file_servers_v1_servers_proto_rawDescGZIP(), []int{16}
+	return file_servers_v1_servers_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ServersAdminResponse) GetServers() []*Server {
@@ -1522,7 +1644,7 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"\x06humans\x18\x10 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\x06humans\x12\x1a\n" +
 	"\x04tags\x18\x11 \x03(\tB\x06\xbaH\x03\xc8\x01\x01R\x04tags\x12&\n" +
-	"\x0fstats_bucket_id\x18\x12 \x01(\x05R\rstatsBucketId\"\xc2\a\n" +
+	"\x0fstats_bucket_id\x18\x12 \x01(\x05R\rstatsBucketId\"\xe5\a\n" +
 	"\x06Server\x12'\n" +
 	"\tserver_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\bserverId\x12)\n" +
@@ -1557,10 +1679,20 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"\x17discord_seed_channel_id\x18\x14 \x01(\tR\x14discordSeedChannelId\x121\n" +
 	"\x15discord_seed_role_ids\x18\x15 \x03(\tR\x12discordSeedRoleIds\x12\x17\n" +
 	"\x02ip\x18\x16 \x01(\tB\a\xbaH\x04r\x02x\x01R\x02ip\x12&\n" +
-	"\x0fstats_bucket_id\x18\x17 \x01(\x05R\rstatsBucketId\"\x81\x01\n" +
+	"\x0fstats_bucket_id\x18\x17 \x01(\x05R\rstatsBucketId\x12!\n" +
+	"\fstv_password\x18\x18 \x01(\tR\vstvPassword\"\x81\x01\n" +
 	"\rStateResponse\x128\n" +
 	"\aservers\x18\x01 \x03(\v2\x16.servers.v1.SafeServerB\x06\xbaH\x03\xc8\x01\x01R\aservers\x126\n" +
-	"\blat_long\x18\x02 \x01(\v2\x13.network.v1.LatLongB\x06\xbaH\x03\xc8\x01\x01R\alatLong\"\xb4\x01\n" +
+	"\blat_long\x18\x02 \x01(\v2\x13.network.v1.LatLongB\x06\xbaH\x03\xc8\x01\x01R\alatLong\"\x8e\x01\n" +
+	"\tSTVServer\x12'\n" +
+	"\tserver_id\x18\x01 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\x1a\x02 \x00R\bserverId\x12\x1c\n" +
+	"\x04host\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xa8\x01\x01R\x04host\x12\x1e\n" +
+	"\x04port\x18\x03 \x01(\rB\n" +
+	"\xbaH\a\xc8\x01\x01*\x02 \x00R\x04port\x12\x1a\n" +
+	"\bpassword\x18\x04 \x01(\tR\bpassword\"M\n" +
+	"\x12STVServersResponse\x127\n" +
+	"\aservers\x18\x01 \x03(\v2\x15.servers.v1.STVServerB\x06\xbaH\x03\xc8\x01\x01R\aservers\"\xb4\x01\n" +
 	"\x0eServerInfoSafe\x124\n" +
 	"\x10server_name_long\x18\x01 \x01(\tB\n" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x0eserverNameLong\x12+\n" +
@@ -1649,10 +1781,12 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"\x1aLOG_EVENT_TYPE_MAP_STARTED\x10\xf3\a\x12 \n" +
 	"\x1bLOG_EVENT_TYPE_VOTE_DETAILS\x10\xcc\b\x12 \n" +
 	"\x1bLOG_EVENT_TYPE_VOTE_SUCCESS\x10\xcd\b\x12\x1f\n" +
-	"\x1aLOG_EVENT_TYPE_VOTE_FAILED\x10\xce\b2\xa0\x05\n" +
+	"\x1aLOG_EVENT_TYPE_VOTE_FAILED\x10\xce\b2\xe6\x05\n" +
 	"\x0eServersService\x12:\n" +
 	"\x05State\x12\x16.google.protobuf.Empty\x1a\x19.servers.v1.StateResponse\x12>\n" +
-	"\aServers\x12\x16.google.protobuf.Empty\x1a\x1b.servers.v1.ServersResponse\x12K\n" +
+	"\aServers\x12\x16.google.protobuf.Empty\x1a\x1b.servers.v1.ServersResponse\x12D\n" +
+	"\n" +
+	"STVServers\x12\x16.google.protobuf.Empty\x1a\x1e.servers.v1.STVServersResponse\x12K\n" +
 	"\n" +
 	"EditServer\x12\x1d.servers.v1.EditServerRequest\x1a\x1e.servers.v1.EditServerResponse\x12G\n" +
 	"\fDeleteServer\x12\x1f.servers.v1.DeleteServerRequest\x1a\x16.google.protobuf.Empty\x12H\n" +
@@ -1679,7 +1813,7 @@ func file_servers_v1_servers_proto_rawDescGZIP() []byte {
 }
 
 var file_servers_v1_servers_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_servers_v1_servers_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_servers_v1_servers_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_servers_v1_servers_proto_goTypes = []any{
 	(LogEventType)(0),             // 0: servers.v1.LogEventType
 	(*QueryLogsRequest)(nil),      // 1: servers.v1.QueryLogsRequest
@@ -1693,55 +1827,60 @@ var file_servers_v1_servers_proto_goTypes = []any{
 	(*SafeServer)(nil),            // 9: servers.v1.SafeServer
 	(*Server)(nil),                // 10: servers.v1.Server
 	(*StateResponse)(nil),         // 11: servers.v1.StateResponse
-	(*ServerInfoSafe)(nil),        // 12: servers.v1.ServerInfoSafe
-	(*ServersResponse)(nil),       // 13: servers.v1.ServersResponse
-	(*EditServerRequest)(nil),     // 14: servers.v1.EditServerRequest
-	(*EditServerResponse)(nil),    // 15: servers.v1.EditServerResponse
-	(*DeleteServerRequest)(nil),   // 16: servers.v1.DeleteServerRequest
-	(*ServersAdminResponse)(nil),  // 17: servers.v1.ServersAdminResponse
-	(*timestamppb.Timestamp)(nil), // 18: google.protobuf.Timestamp
-	(*v1.LatLong)(nil),            // 19: network.v1.LatLong
-	(*emptypb.Empty)(nil),         // 20: google.protobuf.Empty
+	(*STVServer)(nil),             // 12: servers.v1.STVServer
+	(*STVServersResponse)(nil),    // 13: servers.v1.STVServersResponse
+	(*ServerInfoSafe)(nil),        // 14: servers.v1.ServerInfoSafe
+	(*ServersResponse)(nil),       // 15: servers.v1.ServersResponse
+	(*EditServerRequest)(nil),     // 16: servers.v1.EditServerRequest
+	(*EditServerResponse)(nil),    // 17: servers.v1.EditServerResponse
+	(*DeleteServerRequest)(nil),   // 18: servers.v1.DeleteServerRequest
+	(*ServersAdminResponse)(nil),  // 19: servers.v1.ServersAdminResponse
+	(*timestamppb.Timestamp)(nil), // 20: google.protobuf.Timestamp
+	(*v1.LatLong)(nil),            // 21: network.v1.LatLong
+	(*emptypb.Empty)(nil),         // 22: google.protobuf.Empty
 }
 var file_servers_v1_servers_proto_depIdxs = []int32{
-	18, // 0: servers.v1.ServerLog.created_on:type_name -> google.protobuf.Timestamp
+	20, // 0: servers.v1.ServerLog.created_on:type_name -> google.protobuf.Timestamp
 	2,  // 1: servers.v1.QueryLogsResponse.logs:type_name -> servers.v1.ServerLog
 	0,  // 2: servers.v1.StreamLogsResponse.event_type:type_name -> servers.v1.LogEventType
-	18, // 3: servers.v1.StreamLogsResponse.created_on:type_name -> google.protobuf.Timestamp
-	19, // 4: servers.v1.SafeServer.lat_long:type_name -> network.v1.LatLong
-	19, // 5: servers.v1.Server.lat_long:type_name -> network.v1.LatLong
-	18, // 6: servers.v1.Server.token_created_on:type_name -> google.protobuf.Timestamp
-	18, // 7: servers.v1.Server.created_on:type_name -> google.protobuf.Timestamp
-	18, // 8: servers.v1.Server.updated_on:type_name -> google.protobuf.Timestamp
+	20, // 3: servers.v1.StreamLogsResponse.created_on:type_name -> google.protobuf.Timestamp
+	21, // 4: servers.v1.SafeServer.lat_long:type_name -> network.v1.LatLong
+	21, // 5: servers.v1.Server.lat_long:type_name -> network.v1.LatLong
+	20, // 6: servers.v1.Server.token_created_on:type_name -> google.protobuf.Timestamp
+	20, // 7: servers.v1.Server.created_on:type_name -> google.protobuf.Timestamp
+	20, // 8: servers.v1.Server.updated_on:type_name -> google.protobuf.Timestamp
 	9,  // 9: servers.v1.StateResponse.servers:type_name -> servers.v1.SafeServer
-	19, // 10: servers.v1.StateResponse.lat_long:type_name -> network.v1.LatLong
-	12, // 11: servers.v1.ServersResponse.servers:type_name -> servers.v1.ServerInfoSafe
-	10, // 12: servers.v1.EditServerRequest.server:type_name -> servers.v1.Server
-	10, // 13: servers.v1.EditServerResponse.server:type_name -> servers.v1.Server
-	10, // 14: servers.v1.ServersAdminResponse.servers:type_name -> servers.v1.Server
-	20, // 15: servers.v1.ServersService.State:input_type -> google.protobuf.Empty
-	20, // 16: servers.v1.ServersService.Servers:input_type -> google.protobuf.Empty
-	14, // 17: servers.v1.ServersService.EditServer:input_type -> servers.v1.EditServerRequest
-	16, // 18: servers.v1.ServersService.DeleteServer:input_type -> servers.v1.DeleteServerRequest
-	20, // 19: servers.v1.ServersService.ServersAdmin:input_type -> google.protobuf.Empty
-	1,  // 20: servers.v1.ServersService.QueryLogs:input_type -> servers.v1.QueryLogsRequest
-	4,  // 21: servers.v1.ServersService.StreamLogs:input_type -> servers.v1.StreamLogsRequest
-	6,  // 22: servers.v1.ServersService.ExecCommand:input_type -> servers.v1.ExecCommandRequest
-	8,  // 23: servers.v1.ServersService.ClearLogs:input_type -> servers.v1.ClearLogsRequest
-	11, // 24: servers.v1.ServersService.State:output_type -> servers.v1.StateResponse
-	13, // 25: servers.v1.ServersService.Servers:output_type -> servers.v1.ServersResponse
-	15, // 26: servers.v1.ServersService.EditServer:output_type -> servers.v1.EditServerResponse
-	20, // 27: servers.v1.ServersService.DeleteServer:output_type -> google.protobuf.Empty
-	17, // 28: servers.v1.ServersService.ServersAdmin:output_type -> servers.v1.ServersAdminResponse
-	3,  // 29: servers.v1.ServersService.QueryLogs:output_type -> servers.v1.QueryLogsResponse
-	5,  // 30: servers.v1.ServersService.StreamLogs:output_type -> servers.v1.StreamLogsResponse
-	7,  // 31: servers.v1.ServersService.ExecCommand:output_type -> servers.v1.ExecCommandResponse
-	20, // 32: servers.v1.ServersService.ClearLogs:output_type -> google.protobuf.Empty
-	24, // [24:33] is the sub-list for method output_type
-	15, // [15:24] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	21, // 10: servers.v1.StateResponse.lat_long:type_name -> network.v1.LatLong
+	12, // 11: servers.v1.STVServersResponse.servers:type_name -> servers.v1.STVServer
+	14, // 12: servers.v1.ServersResponse.servers:type_name -> servers.v1.ServerInfoSafe
+	10, // 13: servers.v1.EditServerRequest.server:type_name -> servers.v1.Server
+	10, // 14: servers.v1.EditServerResponse.server:type_name -> servers.v1.Server
+	10, // 15: servers.v1.ServersAdminResponse.servers:type_name -> servers.v1.Server
+	22, // 16: servers.v1.ServersService.State:input_type -> google.protobuf.Empty
+	22, // 17: servers.v1.ServersService.Servers:input_type -> google.protobuf.Empty
+	22, // 18: servers.v1.ServersService.STVServers:input_type -> google.protobuf.Empty
+	16, // 19: servers.v1.ServersService.EditServer:input_type -> servers.v1.EditServerRequest
+	18, // 20: servers.v1.ServersService.DeleteServer:input_type -> servers.v1.DeleteServerRequest
+	22, // 21: servers.v1.ServersService.ServersAdmin:input_type -> google.protobuf.Empty
+	1,  // 22: servers.v1.ServersService.QueryLogs:input_type -> servers.v1.QueryLogsRequest
+	4,  // 23: servers.v1.ServersService.StreamLogs:input_type -> servers.v1.StreamLogsRequest
+	6,  // 24: servers.v1.ServersService.ExecCommand:input_type -> servers.v1.ExecCommandRequest
+	8,  // 25: servers.v1.ServersService.ClearLogs:input_type -> servers.v1.ClearLogsRequest
+	11, // 26: servers.v1.ServersService.State:output_type -> servers.v1.StateResponse
+	15, // 27: servers.v1.ServersService.Servers:output_type -> servers.v1.ServersResponse
+	13, // 28: servers.v1.ServersService.STVServers:output_type -> servers.v1.STVServersResponse
+	17, // 29: servers.v1.ServersService.EditServer:output_type -> servers.v1.EditServerResponse
+	22, // 30: servers.v1.ServersService.DeleteServer:output_type -> google.protobuf.Empty
+	19, // 31: servers.v1.ServersService.ServersAdmin:output_type -> servers.v1.ServersAdminResponse
+	3,  // 32: servers.v1.ServersService.QueryLogs:output_type -> servers.v1.QueryLogsResponse
+	5,  // 33: servers.v1.ServersService.StreamLogs:output_type -> servers.v1.StreamLogsResponse
+	7,  // 34: servers.v1.ServersService.ExecCommand:output_type -> servers.v1.ExecCommandResponse
+	22, // 35: servers.v1.ServersService.ClearLogs:output_type -> google.protobuf.Empty
+	26, // [26:36] is the sub-list for method output_type
+	16, // [16:26] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_servers_v1_servers_proto_init() }
@@ -1755,7 +1894,7 @@ func file_servers_v1_servers_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_servers_v1_servers_proto_rawDesc), len(file_servers_v1_servers_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   17,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -12,6 +12,36 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestSaveServerSTVPassword(t *testing.T) {
+	repo := servers.NewRepository(fixture.Database)
+	svc, errSvc := servers.New(repo, nil, "")
+	require.NoError(t, errSvc)
+
+	ctx := t.Context()
+	newServer := servers.NewServer(stringutil.SecureRandomString(10), "10.0.0.3", 27015)
+	newServer.STVPassword = "stv-secret"
+
+	server, errSave := svc.Save(ctx, newServer)
+	require.NoError(t, errSave)
+	t.Cleanup(func() {
+		require.NoError(t, fixture.Database.Exec(context.Background(),
+			`DELETE FROM server WHERE server_id = $1`, server.ServerID))
+	})
+
+	loaded, errLoad := repo.Query(ctx, servers.Query{ServerID: server.ServerID, IncludeDisabled: true})
+	require.NoError(t, errLoad)
+	require.Len(t, loaded, 1)
+	require.Equal(t, "stv-secret", loaded[0].STVPassword)
+
+	server.STVPassword = "rotated-secret"
+	server, errSave = svc.Save(ctx, server)
+	require.NoError(t, errSave)
+
+	loaded, errLoad = repo.Query(ctx, servers.Query{ServerID: server.ServerID, IncludeDisabled: true})
+	require.NoError(t, errLoad)
+	require.Equal(t, "rotated-secret", loaded[0].STVPassword)
+}
+
 func TestPurgeLogsKeepsLatestEntriesPerServer(t *testing.T) {
 	repo := servers.NewRepository(fixture.Database)
 	svc, errSvc := servers.New(repo, nil, "")

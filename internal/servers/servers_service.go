@@ -39,6 +39,7 @@ func NewServersService(servers *Servers, locations *network.Networks, openGraph 
 	openGraph.Register("/servers", opengraph.Static("Servers", "Browse and connect to active game servers."))
 
 	authMiddleware.PublicRoute(serversv1connect.ServersServiceStateProcedure)
+	authMiddleware.UserRoute(serversv1connect.ServersServiceSTVServersProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_BAN_WRITE))
 	authMiddleware.UserRoute(serversv1connect.ServersServiceEditServerProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_WRITE))
 	authMiddleware.UserRoute(serversv1connect.ServersServiceDeleteServerProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_WRITE))
 	authMiddleware.UserRoute(serversv1connect.ServersServiceServersAdminProcedure, roleAuth.WithOneOf(rolesv1.Permission_PERMISSION_SERVER_READ))
@@ -141,6 +142,27 @@ func (s Service) State(ctx context.Context, _ *emptypb.Empty) (*v1.StateResponse
 	return &resp, nil
 }
 
+// STVServers exposes SourceTV connection details only to users with ban write
+// permission. The public state endpoint deliberately carries none of this data.
+func (s Service) STVServers(ctx context.Context, _ *emptypb.Empty) (*v1.STVServersResponse, error) {
+	stvServers, errSTV := s.servers.STVServers(ctx)
+	if errSTV != nil {
+		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
+	}
+
+	var resp v1.STVServersResponse
+	for _, current := range stvServers {
+		resp.Servers = append(resp.Servers, &v1.STVServer{
+			ServerId: &current.ServerID,
+			Host:     &current.Host,
+			Port:     new(uint32(current.Port)), //nolint:gosec
+			Password: &current.Password,
+		})
+	}
+
+	return &resp, nil
+}
+
 // Servers returns a list of all servers.
 // Public endpoint, no authentication required.
 func (s Service) Servers(ctx context.Context, _ *emptypb.Empty) (*v1.ServersResponse, error) {
@@ -214,6 +236,7 @@ func fromRPCServer(server *v1.Server) Server {
 		DiscordSeedChannelID: server.GetDiscordSeedChannelId(),
 		IP:                   net.ParseIP(server.GetIp()),
 		StatsBucketID:        server.StatsBucketId,
+		STVPassword:          server.GetStvPassword(),
 	}
 }
 
@@ -245,6 +268,7 @@ func toRPCServer(server Server) *v1.Server {
 		DiscordSeedChannelId: new(server.DiscordSeedChannelID),
 		Ip:                   new(server.IP.String()),
 		StatsBucketId:        server.StatsBucketID,
+		StvPassword:          &server.STVPassword,
 	}
 }
 

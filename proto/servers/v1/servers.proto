@@ -10,6 +10,9 @@ import "network/v1/network.proto";
 service ServersService {
   rpc State(google.protobuf.Empty) returns (StateResponse);
   rpc Servers(google.protobuf.Empty) returns (ServersResponse);
+  // STVServers is restricted to users with ban write permission because it
+  // includes the SourceTV broadcast passwords.
+  rpc STVServers(google.protobuf.Empty) returns (STVServersResponse);
   rpc EditServer(EditServerRequest) returns (EditServerResponse);
   rpc DeleteServer(DeleteServerRequest) returns (google.protobuf.Empty);
   rpc ServersAdmin(google.protobuf.Empty) returns (ServersAdminResponse);
@@ -271,11 +274,31 @@ message Server {
   repeated string discord_seed_role_ids = 21;
   string ip = 22 [(buf.validate.field).string.ipv4 = true];
   int32 stats_bucket_id = 23;
+  // Optional password for connecting to the server's SourceTV broadcast.
+  string stv_password = 24;
 }
 
 message StateResponse {
   repeated SafeServer servers = 1 [(buf.validate.field).required = true];
   network.v1.LatLong lat_long = 2 [(buf.validate.field).required = true];
+}
+
+message STVServer {
+  int32 server_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gt = 0
+  ];
+  // IP address of the broadcast, never a hostname: Steam browser links require an IP.
+  string host = 2 [(buf.validate.field).string.address = true];
+  uint32 port = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).uint32.gt = 0
+  ];
+  string password = 4;
+}
+
+message STVServersResponse {
+  repeated STVServer servers = 1 [(buf.validate.field).required = true];
 }
 
 message ServerInfoSafe {

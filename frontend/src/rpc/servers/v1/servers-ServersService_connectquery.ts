@@ -15,6 +15,14 @@ export const state = ServersService.method.state;
 export const servers = ServersService.method.servers;
 
 /**
+ * STVServers is restricted to users with ban write permission because it
+ * includes the SourceTV broadcast passwords.
+ *
+ * @generated from rpc servers.v1.ServersService.STVServers
+ */
+export const sTVServers = ServersService.method.sTVServers;
+
+/**
  * @generated from rpc servers.v1.ServersService.EditServer
  */
 export const editServer = ServersService.method.editServer;
