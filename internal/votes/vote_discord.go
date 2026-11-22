@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -18,6 +19,7 @@ func RegisterDiscordCommands(_ discord.Connection) {
 }
 
 type voteResultView struct {
+	Source     person.Core
 	SourceID   string
 	TargetName string
 	TargetSID  string
@@ -26,7 +28,7 @@ type voteResultView struct {
 	ServerID   int32
 }
 
-func VoteResultMessage(result Result, _ person.Core, target person.Core) *discordgo.MessageSend {
+func VoteResultMessage(result Result, source person.Core, target person.Core) *discordgo.MessageSend {
 	var colour int
 	if result.Success {
 		colour = discord.ColourSuccess
@@ -35,6 +37,7 @@ func VoteResultMessage(result Result, _ person.Core, target person.Core) *discor
 	}
 
 	body, errBody := discord.RenderTemplate("vote_result", voteResultView{
+		Source:     source,
 		SourceID:   result.SourceID.String(),
 		TargetName: target.GetName(),
 		TargetSID:  result.TargetID.String(),
@@ -46,5 +49,7 @@ func VoteResultMessage(result Result, _ person.Core, target person.Core) *discor
 		slog.Error("Failed to render vote result message", slog.String("error", errBody.Error()))
 	}
 
-	return discord.NewMessage(discord.BodyColouredText(colour, body))
+	return discord.NewMessage(
+		discord.BodyColouredText(colour, body),
+		discord.Buttons(discord.Link("👤 Voter", link.Path(source))))
 }

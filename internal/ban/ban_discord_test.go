@@ -59,14 +59,47 @@ func TestBanSuccessTemplate(t *testing.T) {
 	ban.RegisterDiscordCommands(discord.Discard{}, ban.Bans{}, nil, nil)
 
 	view := struct {
-		Mute bool
-		Link string
-	}{Mute: true, Link: "http://localhost/ban/1"}
+		Mute          bool
+		Link          string
+		AuthorName    string
+		AuthorLink    string
+		AuthorSteamID string
+	}{Mute: true, Link: "http://localhost/ban/1", AuthorName: "Mod", AuthorLink: "http://localhost/profile/1", AuthorSteamID: "76561198000000001"}
 
 	out, err := discord.RenderTemplate("ban_success", view)
 	require.NoError(t, err)
 	require.Contains(t, out, "Mute successful")
 	require.Contains(t, out, "http://localhost/ban/1")
+	require.Contains(t, out, "Mod")
+}
+
+func TestBanResponseTemplateIncludesAuthor(t *testing.T) {
+	ban.RegisterDiscordCommands(discord.Discard{}, ban.Bans{}, nil, nil)
+
+	view := struct {
+		Ban           ban.Ban
+		Player        personDomain.Info
+		Author        personDomain.Info
+		SteamIDAuthor string
+		SteamID       string
+		ExpIn         string
+		ExpAt         string
+	}{
+		Ban:           ban.Ban{BanID: 42, BanType: 2},
+		Player:        personDomain.Core{SteamID: steamid.New(76561198000000002), Name: "Cheater"},
+		Author:        personDomain.Core{SteamID: steamid.New(76561198000000003), Name: "Modder"},
+		SteamIDAuthor: "76561198000000003",
+		SteamID:       "76561198000000002",
+		ExpIn:         "Permanent",
+		ExpAt:         "Permanent",
+	}
+
+	out, err := discord.RenderTemplate("ban_response", view)
+	require.NoError(t, err)
+	require.Contains(t, out, "Cheater")
+	require.Contains(t, out, "Modder")
+	require.Contains(t, out, "76561198000000003")
+	require.NotContains(t, out, "Failed to render")
 }
 
 func TestReportNewTemplate(t *testing.T) {

@@ -1,5 +1,6 @@
 {{define "ban_success"}}
 {{ if .Mute }}Mute{{ else }}Ban{{ end }} successful [View]({{ .Link }})
+By: **[{{ .AuthorName }}]({{ .AuthorLink }})** Steam ID: **{{ .AuthorSteamID }}**
 {{end}}
 
 {{define "check"}}
@@ -43,6 +44,7 @@ Open >7 Days: {{ .Open1Week }}
 
 {{define "report_message_deleted"}}
 # User report message deleted
+Deleted by: **[{{ .Person.GetName }}]({{ .Person | linkPath }})** Steam ID: **{{ .Person.GetSteamID | sidString }}**
 {{end}}
 
 {{define "ban_response"}}
@@ -50,6 +52,7 @@ Open >7 Days: {{ .Open1Week }}
 
 Name: **{{ .Player.GetName }}**
 Steam ID: **{{ .SteamID }}**
+By: **[{{ .Author.GetName }}]({{ .Author | linkPath }})** Steam ID: **{{ .SteamIDAuthor }}**
 Expires In: **{{ .ExpIn }}**
 Expires At: **{{ .ExpAt }}**
 {{end}}

@@ -44,8 +44,9 @@ cold-start handshake. It is restored to `gb_net_chan_limit_active` (default `192
 server. Set that convar to a negative value to disable the behaviour entirely.
 
 SourceTV spectator access requires a SourceMod admin entry with the `kick` flag (`ADMFLAG_KICK`). The check runs once
-the spectator is in game so their SteamID is known; admins configured by SteamID (Steam2 or SteamID64) are matched
-first, with IP and name identities as fallbacks. Spectators without the flag are kicked immediately.
+the spectator is in game so their SteamID is known, and matches it against Steam identities only (Steam2 or
+SteamID64). IP- and name-based admin identities are deliberately not accepted, since either could be spoofed by a
+player. Spectators without the flag are kicked immediately.
 
 ## Creating a sourcemod database user for clientprefs
 

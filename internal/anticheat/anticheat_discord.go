@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -88,7 +89,7 @@ func (h discordHandler) onACPlayer(ctx context.Context, session *discordgo.Sessi
 	return discord.RespondUpdate(session, interaction, ACPlayerLogs(player, logs)...)
 }
 
-func ACPlayerLogs(_ person.Info, entries []Entry) []discordgo.MessageComponent {
+func ACPlayerLogs(player person.Info, entries []Entry) []discordgo.MessageComponent {
 	total := 0
 	detections := map[logparse.Detection]int{}
 
@@ -114,10 +115,12 @@ func ACPlayerLogs(_ person.Info, entries []Entry) []discordgo.MessageComponent {
 		Detections map[logparse.Detection]int
 		Servers    map[string]int
 		Count      int
+		Player     person.Info
 	}{
 		Detections: detections,
 		Servers:    servers,
 		Count:      total,
+		Player:     player,
 	})
 	if err != nil {
 		slog.Error("Failed to render template", slog.String("error", err.Error()))
@@ -125,26 +128,42 @@ func ACPlayerLogs(_ person.Info, entries []Entry) []discordgo.MessageComponent {
 		return nil
 	}
 
-	return []discordgo.MessageComponent{discord.BodyText(content)}
+	return []discordgo.MessageComponent{
+		discord.BodyText(content),
+		discord.Buttons(discord.Link("👤 Player", link.Path(player))),
+	}
 }
 
 func NewAnticheatTrigger(note string, action Action, entry logparse.StacEntry, count int32) *discordgo.MessageSend {
+	playerName := entry.Name
+	if playerName == "" {
+		playerName = entry.SteamID.String()
+	}
+
 	content, errContent := discord.RenderTemplate("ac_trigger", struct {
-		Detection string
-		Count     int32
-		Action    string
-		Note      string
-		Entry     logparse.StacEntry
+		Detection     string
+		Count         int32
+		Action        string
+		Note          string
+		Entry         logparse.StacEntry
+		PlayerName    string
+		PlayerProfile string
 	}{
-		Detection: string(entry.Detection),
-		Count:     count,
-		Action:    string(action),
-		Note:      note,
-		Entry:     entry,
+		Detection:     string(entry.Detection),
+		Count:         count,
+		Action:        string(action),
+		Note:          note,
+		Entry:         entry,
+		PlayerName:    playerName,
+		PlayerProfile: link.Raw("/profile/" + entry.SteamID.String()),
 	})
 	if errContent != nil {
 		slog.Error("Failed to render template", slog.String("error", errContent.Error()))
 	}
 
-	return discord.NewMessage(discord.BodyColouredText(discord.ColourSuccess, content))
+	return discord.NewMessage(
+		discord.BodyColouredText(discord.ColourSuccess, content),
+		discord.Buttons(
+			discord.Link("👤 Player", link.Raw("/profile/"+entry.SteamID.String())),
+			discord.Link("🛡️ Anticheat Logs", link.Raw("/admin/anticheat"))))
 }

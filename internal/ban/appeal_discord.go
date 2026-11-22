@@ -13,22 +13,39 @@ func (h discordHandler) onAppealReplySubmit(_ context.Context, _ *discordgo.Sess
 	return nil
 }
 
+func appealAuthorPath(msg AppealMessage) string {
+	return link.Raw(fmt.Sprintf("/profile/%d", msg.AuthorID.Int64()))
+}
+
+func appealAuthorMarkdown(msg AppealMessage) string {
+	name := msg.Personaname
+	if name == "" {
+		name = msg.AuthorID.String()
+	}
+
+	return fmt.Sprintf("By: **[%s](%s)** Steam ID: **%s**", name, appealAuthorPath(msg), msg.AuthorID.String())
+}
+
 func newAppealMessageResponse(msg AppealMessage) *discordgo.MessageSend {
 	return discord.NewMessage(
 		discord.Heading("Appeal Message Create/Edited"),
-		discord.BodyText(msg.MessageMD),
+		discord.BodyText(fmt.Sprintf("%s\n\n%s", appealAuthorMarkdown(msg), msg.MessageMD)),
 		discord.Buttons(
 			discord.Button(discordgo.PrimaryButton, "💬 Reply", fmt.Sprintf("appeal_reply_button_resp_%d", msg.BanID)),
 			discord.Button(discordgo.DangerButton, "❌️ Delete", fmt.Sprintf("appeal_delete_button_resp_%d", msg.BanMessageID)),
 			// discord.Button(discordgo.SecondaryButton, "🚦 Status", fmt.Sprintf("appeal_status_button_resp_%d", msg.BanID)),
 			discord.Link("🔎 View", link.Path(msg)),
+			discord.Link("👤 Author", appealAuthorPath(msg)),
 		))
 }
 
 func newAppealMessageDelete(msg AppealMessage) *discordgo.MessageSend {
 	return discord.NewMessage(
 		discord.Heading("Appeal Message Deleted"),
-		discord.BodyColouredText(discord.ColourError, msg.MessageMD),
-		discord.Buttons(discord.Link("🔎 View", link.Path(msg))),
+		discord.BodyColouredText(discord.ColourError, fmt.Sprintf("%s\n\n%s", appealAuthorMarkdown(msg), msg.MessageMD)),
+		discord.Buttons(
+			discord.Link("🔎 View", link.Path(msg)),
+			discord.Link("👤 Author", appealAuthorPath(msg)),
+		),
 	)
 }

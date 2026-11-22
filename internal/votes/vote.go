@@ -203,9 +203,9 @@ func (u Votes) Start(ctx context.Context) {
 					slog.Error("Failed to load vote source", slog.String("error", errSource.Error()), slog.String("steam_id", result.SourceID.String()))
 				}
 
-				target, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, result.SourceID)
+				target, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, result.TargetID)
 				if errTarget != nil {
-					slog.Error("Failed to load vote target", slog.String("error", errSource.Error()), slog.String("steam_id", result.TargetID.String()))
+					slog.Error("Failed to load vote target", slog.String("error", errTarget.Error()), slog.String("steam_id", result.TargetID.String()))
 				}
 				u.notif.Send(notification.NewDiscord(u.logChannelID, VoteResultMessage(result, source, target)))
 			}

@@ -1,6 +1,7 @@
 {{define "ac_logs"}}
 # Anticheat Detections (count: {{ .Count }}
 
+Player: **[{{ .Player.GetName }}]({{ .Player | linkPath }})** Steam ID: **{{ .Player.GetSteamIDString }}**
 {{ range $key, $value := .Detections }}
     {{$key}}: {{ $value }}
 {{ end }}
@@ -13,7 +14,9 @@
 {{define "ac_trigger"}}
 # Player triggered anti-cheat response
 
-Dection {{ .Detection }}
+Player: **[{{ .PlayerName }}]({{ .PlayerProfile }})** Steam ID: **{{ .Entry.SteamID | sidString }}**
+Server: **{{ .Entry.ServerName }}**
+Detection: {{ .Detection }}
 Count: {{ .Count }}
 Action {{ .Action }}
 {{- if ne .Entry.DemoName "" }}

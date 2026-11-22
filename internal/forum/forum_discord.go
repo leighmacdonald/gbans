@@ -85,5 +85,7 @@ func discordForumSaved(forumMessage Forum) *discordgo.MessageSend {
 		slog.Error("Failed to render forum_saved template", slog.String("error", err.Error()))
 	}
 
-	return discord.NewMessage(discord.BodyColouredText(discord.ColourSuccess, content))
+	return discord.NewMessage(
+		discord.BodyColouredText(discord.ColourSuccess, content),
+		discord.Buttons(discord.Link("🔎 View", link.Path(forumMessage))))
 }

@@ -28,16 +28,41 @@ const (
 	seedRolesCustomID    = "seed_roles_select"
 )
 
+// PersonProvider is the profile lookup surface needed by the Discord handlers:
+// SteamID-based lookups plus resolving the Discord user who ran a command.
+type PersonProvider interface {
+	person.Provider
+	person.DiscordPersonProvider
+}
+
 type DiscordHandler struct {
-	persons       person.Provider
+	persons       PersonProvider
 	servers       *Servers
 	network       network.Networks
 	notifier      notification.Notifier
 	kickChannelID string
 }
 
-func RegisterDiscordCommands(service discord.Connection, persons person.Provider, servers *Servers,
-	network network.Networks, notifier notification.Notifier, kickChannelID string,
+// invokerInfo resolves the Discord user who ran a command into a gbans profile
+// link when possible, falling back to a Discord mention when they have not
+// linked their account.
+func (d DiscordHandler) invokerInfo(ctx context.Context, interaction *discordgo.InteractionCreate) (string, string) {
+	if interaction.Member == nil || interaction.Member.User == nil {
+		return "Unknown", ""
+	}
+
+	discordID := interaction.Member.User.ID
+	if d.persons != nil {
+		if p, errPerson := d.persons.GetPersonByDiscordID(ctx, discordID); errPerson == nil {
+			return fmt.Sprintf("[**%s**](%s)", p.GetName(), link.Path(p)), link.Path(p)
+		}
+	}
+
+	return fmt.Sprintf("<@%s>", discordID), ""
+}
+
+func RegisterDiscordCommands(service discord.Connection, persons PersonProvider,
+	servers *Servers, network network.Networks, notifier notification.Notifier, kickChannelID string,
 ) {
 	discord.MustRegisterTemplate(templateBody)
 
@@ -211,6 +236,8 @@ func (d DiscordHandler) onKick(ctx context.Context, session *discordgo.Session, 
 		return ErrPlayerNotFound
 	}
 
+	actor, actorPath := d.invokerInfo(ctx, interaction)
+
 	var err error
 	for _, result := range results {
 		if errKick := result.Server.Kick(ctx, result.Player.SID, reason); errKick != nil {
@@ -218,9 +245,15 @@ func (d DiscordHandler) onKick(ctx context.Context, session *discordgo.Session, 
 
 			continue
 		}
+		playerPath := link.Raw("/profile/" + result.Player.SID.String())
+		buttons := []discordgo.MessageComponent{discord.Link("👤 Player", playerPath)}
+		if actorPath != "" {
+			buttons = append(buttons, discord.Link("👤 Moderator", actorPath))
+		}
 		d.notifier.Send(notification.NewDiscord(d.kickChannelID, discord.NewMessage(
 			discord.Heading("User Kicked [%s]", result.Server.ShortName),
-			discord.BodyColouredText(discord.ColourInfo, result.Player.Name))))
+			discord.BodyColouredText(discord.ColourInfo, fmt.Sprintf("%s — kicked by %s. Reason: %s", result.Player.Name, actor, reason)),
+			discord.Buttons(buttons...))))
 	}
 
 	if len(results) > 0 {
@@ -246,7 +279,9 @@ func (d DiscordHandler) onSay(ctx context.Context, session *discordgo.Session, i
 		return discord.ErrCommandFailed
 	}
 
-	return discord.Respond(session, interaction, discordSayMessage(serverName, msg)...)
+	actor, _ := d.invokerInfo(ctx, interaction)
+
+	return discord.Respond(session, interaction, discordSayMessage(serverName, msg, actor)...)
 }
 
 func (d DiscordHandler) onCSay(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -269,7 +304,9 @@ func (d DiscordHandler) onCSay(ctx context.Context, session *discordgo.Session, 
 		return discord.ErrCommandFailed
 	}
 
-	return discord.Respond(session, interaction, discordCSayMessage(server.Name, msg)...)
+	actor, _ := d.invokerInfo(ctx, interaction)
+
+	return discord.Respond(session, interaction, discordCSayMessage(server.Name, msg, actor)...)
 }
 
 func (d DiscordHandler) onPSay(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -295,7 +332,9 @@ func (d DiscordHandler) onPSay(ctx context.Context, session *discordgo.Session, 
 		}
 	}
 
-	return discord.Respond(session, interaction, discordPSayMessage(playerSid, msg)...)
+	actor, _ := d.invokerInfo(ctx, interaction)
+
+	return discord.Respond(session, interaction, discordPSayMessage(playerSid, msg, actor)...)
 }
 
 func (d DiscordHandler) onServers(_ context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -506,13 +545,15 @@ func discordFindMessage(found []FindResult) []discordgo.MessageComponent {
 	}
 }
 
-func discordSayMessage(server string, msg string) []discordgo.MessageComponent {
+func discordSayMessage(server string, msg string, actor string) []discordgo.MessageComponent {
 	content, errContent := discord.RenderTemplate("say", struct {
 		Server  string
 		Message string
+		Actor   string
 	}{
 		Server:  server,
 		Message: msg,
+		Actor:   actor,
 	})
 	if errContent != nil {
 		return nil
@@ -523,11 +564,12 @@ func discordSayMessage(server string, msg string) []discordgo.MessageComponent {
 	}
 }
 
-func discordCSayMessage(server string, msg string) []discordgo.MessageComponent {
+func discordCSayMessage(server string, msg string, actor string) []discordgo.MessageComponent {
 	content, errContent := discord.RenderTemplate("csay", struct {
 		Server  string
 		Message string
-	}{Server: server, Message: msg})
+		Actor   string
+	}{Server: server, Message: msg, Actor: actor})
 	if errContent != nil {
 		return nil
 	}
@@ -537,11 +579,12 @@ func discordCSayMessage(server string, msg string) []discordgo.MessageComponent 
 	}
 }
 
-func discordPSayMessage(player steamid.SteamID, msg string) []discordgo.MessageComponent {
+func discordPSayMessage(player steamid.SteamID, msg string, actor string) []discordgo.MessageComponent {
 	content, errContent := discord.RenderTemplate("psay", struct {
 		Player  string
 		Message string
-	}{Player: player.String(), Message: msg})
+		Actor   string
+	}{Player: player.String(), Message: msg, Actor: actor})
 	if errContent != nil {
 		return nil
 	}

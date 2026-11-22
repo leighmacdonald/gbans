@@ -1,6 +1,6 @@
 {{define "vote_result"}}
     # Vote Result
-    Caller SID: {{ .SourceID }}
+    Caller: **[{{ .Source.GetName }}]({{ .Source | linkPath }})** Steam ID: **{{ .SourceID }}**
     Target Name: {{ .TargetName }}
     Target SID: {{ .TargetSID }}
     Code: {{ .Code }}

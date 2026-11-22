@@ -4,6 +4,7 @@ import (
 	_ "embed"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
 )
@@ -23,12 +24,14 @@ func loginMessage(fetchedPerson personDomain.Info) *discordgo.MessageSend {
 	return discord.NewMessage(
 		discord.Heading("User logged in"),
 		discord.BodyTextWithThumbnail(discord.ColourInfo,
-			discord.PlayerThumbnail(fetchedPerson), "login_info", loginInfo{Person: fetchedPerson}))
+			discord.PlayerThumbnail(fetchedPerson), "login_info", loginInfo{Person: fetchedPerson}),
+		discord.Buttons(discord.Link("👤 Profile", link.Path(fetchedPerson))))
 }
 
 func logoutMessage(fetchedPerson personDomain.Info) *discordgo.MessageSend {
 	return discord.NewMessage(
 		discord.Heading("User logged out"),
 		discord.BodyTextWithThumbnail(discord.ColourInfo,
-			discord.PlayerThumbnail(fetchedPerson), "login_info", loginInfo{Person: fetchedPerson}))
+			discord.PlayerThumbnail(fetchedPerson), "login_info", loginInfo{Person: fetchedPerson}),
+		discord.Buttons(discord.Link("👤 Profile", link.Path(fetchedPerson))))
 }
