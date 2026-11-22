@@ -19,18 +19,16 @@ var (
 )
 
 type RouterOpts struct {
-	HTTPLogEnabled    bool
-	LogLevel          log.Level
-	HTTPOtelEnabled   bool
-	SentryDSN         string
-	Version           string
-	PrometheusEnabled bool
-	Metrics           HTTPMetrics
-	FrontendEnable    bool
-	StaticPath        string
-	HTTPCORSEnabled   bool
-	DevMode           bool
-	CORSOrigins       []string
+	HTTPLogEnabled  bool
+	LogLevel        log.Level
+	HTTPOtelEnabled bool
+	SentryDSN       string
+	Version         string
+	FrontendEnable  bool
+	StaticPath      string
+	HTTPCORSEnabled bool
+	DevMode         bool
+	CORSOrigins     []string
 	// OpenGraph, when set, injects opengraph tags into html responses served
 	// to known crawler bots.
 	OpenGraph *opengraph.Repository
@@ -63,10 +61,6 @@ func CreateRouter(opts RouterOpts) (*http.ServeMux, http.Handler, error) {
 		} else {
 			slog.Warn("No cors origins defined, disabling")
 		}
-	}
-
-	if opts.PrometheusEnabled {
-		middleware = append(middleware, usePrometheus(opts.Metrics))
 	}
 
 	if opts.FrontendEnable {

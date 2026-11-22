@@ -624,19 +624,17 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	}
 
 	mux, router, err := httphelper.CreateRouter(httphelper.RouterOpts{
-		HTTPLogEnabled:    conf.Log.HTTPEnabled,
-		LogLevel:          conf.Log.Level,
-		HTTPOtelEnabled:   conf.Log.HTTPOtelEnabled,
-		SentryDSN:         g.config.Config().General.SentryDSN,
-		Version:           BuildVersion,
-		PrometheusEnabled: conf.PrometheusEnabled,
-		Metrics:           g.metrics,
-		FrontendEnable:    conf.General.Mode != config.TestMode,
-		StaticPath:        conf.HTTPStaticPath,
-		HTTPCORSEnabled:   conf.HTTPCORSEnabled,
-		CORSOrigins:       conf.HTTPCorsOrigins,
-		DevMode:           conf.General.Mode == config.DebugMode,
-		OpenGraph:         g.openGraph,
+		HTTPLogEnabled:  conf.Log.HTTPEnabled,
+		LogLevel:        conf.Log.Level,
+		HTTPOtelEnabled: conf.Log.HTTPOtelEnabled,
+		SentryDSN:       g.config.Config().General.SentryDSN,
+		Version:         BuildVersion,
+		FrontendEnable:  conf.General.Mode != config.TestMode,
+		StaticPath:      conf.HTTPStaticPath,
+		HTTPCORSEnabled: conf.HTTPCORSEnabled,
+		CORSOrigins:     conf.HTTPCorsOrigins,
+		DevMode:         conf.General.Mode == config.DebugMode,
+		OpenGraph:       g.openGraph,
 	})
 	if err != nil {
 		slog.Error("Could not setup router", slog.String("error", err.Error()))
@@ -667,7 +665,14 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	topMux.Handle("/", router)
 	auth.RegisterExchangeHandler(topMux, userAuth)
 
-	httpServer := httphelper.NewServer(conf.Addr(), topMux)
+	// Instrument the outermost handler so every route — the main router, the
+	// ConnectRPC API, and the top-level auth/connect handlers — is counted once.
+	var serverHandler http.Handler = topMux
+	if conf.PrometheusEnabled {
+		serverHandler = httphelper.PrometheusMiddleware(g.metrics)(topMux)
+	}
+
+	httpServer := httphelper.NewServer(conf.Addr(), serverHandler)
 
 	var internalServer *http.Server
 	if conf.PrometheusEnabled || conf.PProfEnabled {

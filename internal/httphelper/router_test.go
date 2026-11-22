@@ -59,8 +59,7 @@ func TestCreateRouterDoesNotExposeMetricsOrPprof(t *testing.T) {
 	t.Parallel()
 
 	_, handler, errCreate := httphelper.CreateRouter(httphelper.RouterOpts{
-		LogLevel:          log.Error,
-		PrometheusEnabled: true,
+		LogLevel: log.Error,
 	}) //nolint:exhaustruct
 	require.NoError(t, errCreate)
 

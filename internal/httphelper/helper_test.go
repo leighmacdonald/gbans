@@ -5,11 +5,43 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 )
+
+type recordedRequest struct {
+	method   string
+	route    string
+	status   int
+	duration time.Duration
+}
+
+type recordingMetrics struct {
+	requests []recordedRequest
+}
+
+func (m *recordingMetrics) ObserveRequest(method string, route string, status int, duration time.Duration) {
+	m.requests = append(m.requests, recordedRequest{method, route, status, duration})
+}
+
+func TestPrometheusMiddlewareRecordsRequests(t *testing.T) {
+	metrics := &recordingMetrics{}
+	handler := httphelper.PrometheusMiddleware(metrics)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusCreated)
+	}))
+
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/thing", nil))
+
+	require.Equal(t, http.StatusCreated, res.Code)
+	require.Len(t, metrics.requests, 1)
+	require.Equal(t, http.MethodPost, metrics.requests[0].method)
+	require.Equal(t, http.StatusCreated, metrics.requests[0].status)
+	require.NotEmpty(t, metrics.requests[0].route)
+}
 
 func TestNewInternalServer(t *testing.T) {
 	get := func(t *testing.T, client *http.Client, url string) *http.Response {
