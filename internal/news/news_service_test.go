@@ -117,8 +117,9 @@ func (r *recordingDiscord) DeleteMessage(channelID, messageID string) error {
 	return nil
 }
 
-func (r *recordingDiscord) Start() error { return nil }
-func (r *recordingDiscord) Close()       {}
+func (r *recordingDiscord) Start() error  { return nil }
+func (r *recordingDiscord) Close()        {}
+func (r *recordingDiscord) IsReady() bool { return r.returnIDs }
 func (r *recordingDiscord) Config() *discord.Config {
 	return &discord.Config{}
 }

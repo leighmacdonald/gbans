@@ -44,6 +44,7 @@ type Discord struct {
 	prefixHandlers     map[string]Handler
 	commands           []*discordgo.ApplicationCommand
 	running            atomic.Bool
+	ready              atomic.Bool
 	registeredCommands []*discordgo.ApplicationCommand
 	unregister         bool
 
@@ -166,6 +167,7 @@ func (b *Discord) Start() error {
 
 func (b *Discord) Close() {
 	b.running.Store(false)
+	b.ready.Store(false)
 
 	if b.unregister {
 		for _, cmd := range b.registeredCommands {
@@ -239,14 +241,23 @@ func (b *Discord) CreateRole(name string) (string, error) {
 }
 
 func (b *Discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
+	b.ready.Store(true)
 	slog.Info("Logged in successfully", slog.String("name", session.State.User.Username),
 		slog.String("discriminator", session.State.User.Discriminator))
 }
 
 func (b *Discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
+	b.ready.Store(false)
 	if b.running.Load() {
 		slog.Debug("Discord state changed", slog.String("state", "disconnected"))
 	}
+}
+
+// IsReady reports whether the bot has completed its Ready handshake and is
+// currently connected. Unlike Start's running flag, this reflects actual
+// connectivity.
+func (b *Discord) IsReady() bool {
+	return b.ready.Load()
 }
 
 func (b *Discord) onAppCommand(ctx context.Context, session *discordgo.Session,

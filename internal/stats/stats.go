@@ -60,6 +60,14 @@ type Stats struct {
 	matchLogChannelID string
 	matchNotifier     MatchNotifier
 	refreshSchedule   func() string
+	healthRecorder    *func(error)
+}
+
+// SetHealthRecorder wires stats refresh outcomes into the health overview.
+func (s Stats) SetHealthRecorder(recorder func(error)) {
+	if s.healthRecorder != nil {
+		*s.healthRecorder = recorder
+	}
 }
 
 // MatchNotifier delivers in-game notifications to match participants after a
@@ -310,7 +318,7 @@ func (s Stats) SetBucketEnabled(ctx context.Context, bucketID int32, enabled boo
 }
 
 func New(repo Repository, maps maps.Maps, options ...Option) Stats {
-	stats := Stats{repo: repo, maps: maps, calculator: TrueSkillCalculator{}, balancer: AlternatingBalancer{}}
+	stats := Stats{repo: repo, maps: maps, calculator: TrueSkillCalculator{}, balancer: AlternatingBalancer{}, healthRecorder: new(func(error))}
 
 	for _, option := range options {
 		option(&stats)
@@ -439,8 +447,12 @@ func StatViews() []string {
 
 func (s Stats) UpdateDailyViews(ctx context.Context) func() {
 	return func() {
-		if err := s.RefreshViews(ctx); err != nil {
-			slog.Error("Failed to refresh views", slog.String("error", err.Error()))
+		errRefresh := s.RefreshViews(ctx)
+		if s.healthRecorder != nil && *s.healthRecorder != nil {
+			(*s.healthRecorder)(errRefresh)
+		}
+		if errRefresh != nil {
+			slog.Error("Failed to refresh views", slog.String("error", errRefresh.Error()))
 		}
 	}
 }

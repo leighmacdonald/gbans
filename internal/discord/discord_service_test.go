@@ -47,6 +47,7 @@ func (r *recordingConnection) EditMessage(_ string, _ string, _ *discordgo.Messa
 func (r *recordingConnection) DeleteMessage(_ string, _ string) error { return nil }
 func (r *recordingConnection) Start() error                           { return nil }
 func (r *recordingConnection) Close()                                 {}
+func (r *recordingConnection) IsReady() bool                          { return true }
 func (r *recordingConnection) Config() *discord.Config {
 	return r.config
 }
