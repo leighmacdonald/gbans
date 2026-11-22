@@ -263,7 +263,7 @@ export const assembleMatch = (data: Match): MatchView => {
 			sm.cap += Number(rp.captures);
 			sm.capturesBlocked += Number(rp.capturesBlocked);
 			sm.damage += Number(rp.scoreboardDamage);
-			sm.deaths += Number(rp.scoreboardDeaths);
+			sm.deaths += Number(rp.deaths);
 			sm.dt += Number(rp.damageTaken);
 			sm.kills += Number(rp.kills);
 			sm.heals += Number(rp.heals);

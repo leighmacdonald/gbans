@@ -95,7 +95,7 @@ const RoundPlayersDetail = ({ players, durationMs }: { players: RoundPlayer[]; d
 					{rows.map((p) => {
 						const kills = Number(p.kills);
 						const assists = Number(p.assists);
-						const deaths = Number(p.scoreboardDeaths);
+						const deaths = Number(p.deaths);
 						const damage = Number(p.scoreboardDamage);
 						const damageTaken = Number(p.damageTaken);
 						return (
