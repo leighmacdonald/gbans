@@ -135,18 +135,27 @@ type Networks struct {
 	eb         *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 	// updating guards against concurrent location database refreshes from the
 	// auto updater, the admin ui and the cli.
-	updating *atomic.Bool
+	updating       *atomic.Bool
+	healthRecorder *func(error)
+}
+
+// SetHealthRecorder wires geo location update outcomes into the health overview.
+func (u Networks) SetHealthRecorder(recorder func(error)) {
+	if u.healthRecorder != nil {
+		*u.healthRecorder = recorder
+	}
 }
 
 func NewNetworks(broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
 	repository Repository, config *Config, geoConf *ip2location.Config,
 ) Networks {
 	return Networks{
-		Config:     config,
-		repository: repository,
-		eb:         broadcaster,
-		geoConf:    geoConf,
-		updating:   &atomic.Bool{},
+		Config:         config,
+		repository:     repository,
+		eb:             broadcaster,
+		geoConf:        geoConf,
+		updating:       &atomic.Bool{},
+		healthRecorder: new(func(error)),
 	}
 }
 
@@ -265,13 +274,17 @@ func (u Networks) StartGeoUpdater(ctx context.Context) {
 			return
 		}
 
-		if err := u.RefreshLocationData(ctx); err != nil {
-			slog.Error("Failed to auto update geo location database", slog.String("error", err.Error()))
+		errRefresh := u.RefreshLocationData(ctx)
+		if u.healthRecorder != nil && *u.healthRecorder != nil {
+			(*u.healthRecorder)(errRefresh)
+		}
+		if errRefresh != nil {
+			slog.Error("Failed to auto update geo location database", slog.String("error", errRefresh.Error()))
 
 			// A failed run can leave freshly downloaded files behind that were
 			// never imported. Drop them so the next cycle treats the cache as
 			// stale again and retries the download and import.
-			if !errors.Is(err, ErrUpdateInProgress) {
+			if !errors.Is(errRefresh, ErrUpdateInProgress) {
 				for _, file := range ip2location.ImportedFiles {
 					if errRemove := os.Remove(filepath.Join(u.geoConf.CachePath, string(file))); errRemove != nil {
 						slog.Warn("Failed to remove stale geo database file",

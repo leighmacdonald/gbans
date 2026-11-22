@@ -15,6 +15,7 @@ import ListIcon from "@mui/icons-material/List";
 import LiveHelpIcon from "@mui/icons-material/LiveHelp";
 import MailIcon from "@mui/icons-material/Mail";
 import MenuIcon from "@mui/icons-material/Menu";
+import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import NewspaperIcon from "@mui/icons-material/Newspaper";
 import NoAccountsIcon from "@mui/icons-material/NoAccounts";
 import PersonSearchIcon from "@mui/icons-material/PersonSearch";
@@ -308,6 +309,11 @@ export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 				leftIcon: <ListIcon sx={colourOpts} />,
 				label: "Server Logs",
 				callback: onClickHandler("/admin/serverlogs"),
+			});
+			items.push({
+				leftIcon: <MonitorHeartIcon sx={colourOpts} />,
+				label: "System Health",
+				callback: onClickHandler("/admin/health"),
 			});
 		}
 		if (hasPermission(Permission.CONFIG_WRITE)) {

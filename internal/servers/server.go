@@ -130,6 +130,7 @@ type Server struct {
 
 	lastMaxPlayersUpdate        time.Time
 	lastMaxVisiblePlayersUpdate time.Time
+	rconRecorder                rconRecorder
 
 	// state holds all information we know about the current dynamic game state of the server.
 	state *state
@@ -324,11 +325,14 @@ func (s *Server) Exec(ctx context.Context, command string) (string, error) {
 
 	conn, errConn := rcon.Dial(ctx, addr, passwd, serverQueryTimeout)
 	if errConn != nil {
+		s.recordRCON(errConn)
+
 		return "", fmt.Errorf("%w: %w", ErrExecRCON, errConn)
 	}
 	defer log.Closer(conn)
 
 	resp, errExec := conn.Exec(command)
+	s.recordRCON(errExec)
 	if errExec != nil {
 		return "", fmt.Errorf("%w: %w", ErrExecRCON, errExec)
 	}
@@ -456,6 +460,7 @@ func (s *Server) updateStatus(ctx context.Context) error {
 	s.Lock()
 	defer s.Unlock()
 
+	s.state.LastUpdate = time.Now()
 	s.state.PlayerCount = int32(status.PlayersCount) //nolint:gosec
 	s.state.Bots = int32(status.Bots)                //nolint:gosec
 	players := make([]*Player, len(status.Players))
@@ -526,20 +531,23 @@ func (s *Server) updateMaxVisiblePlayers(ctx context.Context) error {
 	return nil
 }
 
-func (s *Server) updateState(ctx context.Context) {
+func (s *Server) updateState(ctx context.Context) error {
 	s.RLock()
 	if s.Deleted || !s.IsEnabled {
 		s.RUnlock()
 
-		return
+		return nil
 	}
 	lastPlayersUpdate := s.lastMaxVisiblePlayersUpdate
 	s.RUnlock()
+
+	var updateErr error
 
 	waitGroup := &sync.WaitGroup{}
 
 	waitGroup.Go(func() {
 		if err := s.updateStatus(ctx); err != nil {
+			updateErr = errors.Join(updateErr, err)
 			slog.Debug("Failed to parse status", slog.String("error", err.Error()),
 				slog.String("server", s.ShortName))
 		}
@@ -557,4 +565,6 @@ func (s *Server) updateState(ctx context.Context) {
 	}
 
 	waitGroup.Wait()
+
+	return updateErr
 }

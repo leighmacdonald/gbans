@@ -32,6 +32,7 @@ import { Route as GuestPatreonRouteImport } from './routes/_guest.patreon'
 import { Route as GuestPrivacyPolicyRouteImport } from './routes/_guest.privacy-policy'
 import { Route as GuestServersRouteImport } from './routes/_guest.servers'
 import { Route as GuestWikiRouteImport } from './routes/_guest.wiki'
+import { Route as AdminAdminHealthRouteImport } from './routes/_admin.admin.health'
 import { Route as AdminAdminRolesRouteImport } from './routes/_admin.admin.roles'
 import { Route as AdminAdminServerlogsRouteImport } from './routes/_admin.admin.serverlogs'
 import { Route as AdminAdminServersRouteImport } from './routes/_admin.admin.servers'
@@ -177,6 +178,11 @@ const GuestWikiRoute = GuestWikiRouteImport.update({
   id: '/wiki',
   path: '/wiki',
   getParentRoute: () => GuestRoute,
+} as any)
+const AdminAdminHealthRoute = AdminAdminHealthRouteImport.update({
+  id: '/admin/health',
+  path: '/admin/health',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminAdminRolesRoute = AdminAdminRolesRouteImport.update({
   id: '/admin/roles',
@@ -372,6 +378,7 @@ export interface FileRoutesByFullPath {
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/servers': typeof GuestServersRoute
   '/wiki': typeof GuestWikiRouteWithChildren
+  '/admin/health': typeof AdminAdminHealthRoute
   '/admin/roles': typeof AdminAdminRolesRoute
   '/admin/serverlogs': typeof AdminAdminServerlogsRoute
   '/admin/servers': typeof AdminAdminServersRoute
@@ -422,6 +429,7 @@ export interface FileRoutesByTo {
   '/patreon': typeof GuestPatreonRoute
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/servers': typeof GuestServersRoute
+  '/admin/health': typeof AdminAdminHealthRoute
   '/admin/roles': typeof AdminAdminRolesRoute
   '/admin/serverlogs': typeof AdminAdminServerlogsRoute
   '/admin/servers': typeof AdminAdminServersRoute
@@ -482,6 +490,7 @@ export interface FileRoutesById {
   '/_guest/servers': typeof GuestServersRoute
   '/_guest/wiki': typeof GuestWikiRouteWithChildren
   '/_guest/': typeof GuestIndexRoute
+  '/_admin/admin/health': typeof AdminAdminHealthRoute
   '/_admin/admin/roles': typeof AdminAdminRolesRoute
   '/_admin/admin/serverlogs': typeof AdminAdminServerlogsRoute
   '/_admin/admin/servers': typeof AdminAdminServersRoute
@@ -539,6 +548,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/servers'
     | '/wiki'
+    | '/admin/health'
     | '/admin/roles'
     | '/admin/serverlogs'
     | '/admin/servers'
@@ -589,6 +599,7 @@ export interface FileRouteTypes {
     | '/patreon'
     | '/privacy-policy'
     | '/servers'
+    | '/admin/health'
     | '/admin/roles'
     | '/admin/serverlogs'
     | '/admin/servers'
@@ -648,6 +659,7 @@ export interface FileRouteTypes {
     | '/_guest/servers'
     | '/_guest/wiki'
     | '/_guest/'
+    | '/_admin/admin/health'
     | '/_admin/admin/roles'
     | '/_admin/admin/serverlogs'
     | '/_admin/admin/servers'
@@ -853,6 +865,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/wiki'
       preLoaderRoute: typeof GuestWikiRouteImport
       parentRoute: typeof GuestRoute
+    }
+    '/_admin/admin/health': {
+      id: '/_admin/admin/health'
+      path: '/admin/health'
+      fullPath: '/admin/health'
+      preLoaderRoute: typeof AdminAdminHealthRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/_admin/admin/roles': {
       id: '/_admin/admin/roles'
@@ -1096,6 +1115,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminAdminHealthRoute: typeof AdminAdminHealthRoute
   AdminAdminRolesRoute: typeof AdminAdminRolesRoute
   AdminAdminServerlogsRoute: typeof AdminAdminServerlogsRoute
   AdminAdminServersRoute: typeof AdminAdminServersRoute
@@ -1103,6 +1123,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAdminHealthRoute: AdminAdminHealthRoute,
   AdminAdminRolesRoute: AdminAdminRolesRoute,
   AdminAdminServerlogsRoute: AdminAdminServerlogsRoute,
   AdminAdminServersRoute: AdminAdminServersRoute,

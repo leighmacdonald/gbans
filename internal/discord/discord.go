@@ -42,6 +42,9 @@ type Connection interface {
 	// Close the bot session.
 	Close()
 
+	// IsReady reports whether the bot is connected to Discord.
+	IsReady() bool
+
 	Config() *Config
 
 	// MustRegisterCommandHandler allows the caller to register discord slash commands.
@@ -75,6 +78,7 @@ func (d Discard) EditMessage(_ string, _ string, _ *discordgo.MessageSend) error
 func (d Discard) DeleteMessage(_ string, _ string) error                         { return nil }
 func (d Discard) Start() error                                                   { return nil }
 func (d Discard) Close()                                                         {}
+func (d Discard) IsReady() bool                                                  { return false }
 func (d Discard) Config() *Config                                                { return d.config }
 func (d Discard) MustRegisterCommandHandler(_ *discordgo.ApplicationCommand, _ Handler) {
 }

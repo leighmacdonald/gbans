@@ -29,6 +29,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	discordoauth "github.com/leighmacdonald/gbans/internal/discord/oauth"
 	"github.com/leighmacdonald/gbans/internal/forum"
+	"github.com/leighmacdonald/gbans/internal/health"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/maps"
@@ -77,6 +78,7 @@ type GBans struct {
 	database       database.Database
 	demos          demo.Demos
 	forums         forum.Forums
+	health         *health.Tracker
 	discordOAuth   discordoauth.DiscordOAuth
 	memberships    *ban.Memberships
 	metrics        metrics.Metrics
@@ -159,6 +161,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.roles = roles.NewRoles(roles.NewRepository(g.database), steamid.New(conf.Owner))
 	g.roleAuth = rpc.NewRoleAuth(g.roles)
 	g.bot = g.mustCreateBot(conf.Discord)
+	g.health = health.NewTracker()
 	g.notifications = notification.NewNotifications(notification.NewRepository(g.database), g.bot)
 
 	wordFilters := chat.NewWordFilters(chat.NewWordFilterRepository(g.database), g.notifications, conf.Filters)
@@ -184,6 +187,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	if g.servers, errServer = servers.New(servers.NewRepository(g.database), g.broadcaster, conf.General.SrcdsLogAddr); errServer != nil {
 		return errServer
 	}
+	g.servers.SetRCONRecorder(g.health)
 
 	mapsSvc := maps.New(maps.NewRepository(g.database))
 
@@ -464,12 +468,14 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	go g.chat.Start(ctx, g.broadcaster)
 	go g.forums.Start(ctx)
 	go g.metrics.Start(ctx)
+	g.stats.SetHealthRecorder(func(err error) { g.health.Record("stats_refresh", err) })
 	go g.votes.Start(ctx)
 	go g.networks.Start(ctx)
+	g.networks.SetHealthRecorder(func(err error) { g.health.Record("geoip", err) })
 	go g.networks.StartGeoUpdater(ctx)
 	go g.notifications.Sender(ctx)
 
-	go downloadManager(ctx, g.database, conf.SSH, g.demos, g.anticheat)
+	go downloadManager(ctx, g.database, conf.SSH, g.health.RecordSSH, g.demos, g.anticheat)
 
 	go func() {
 		if err := g.servers.Start(ctx, servers.DefaultStatusUpdateFreq); err != nil {
@@ -508,11 +514,15 @@ func (g *GBans) StartBackground(ctx context.Context) {
 
 	logAddrTicker := time.NewTicker(time.Hour)
 	defer logAddrTicker.Stop()
+	workerTicker := time.NewTicker(30 * time.Second)
+	defer workerTicker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
+		case <-workerTicker.C:
+			g.health.Record("worker_tick", nil)
 		case <-logAddrTicker.C:
 			go g.setLogAddress(ctx)
 		case <-membershipsTicker.C:
@@ -561,6 +571,15 @@ func (g *GBans) createAPI(authMiddleware *rpc.Middleware, roleAuth *rpc.RoleAuth
 		discord.NewService(g.bot, roleAuth, authMiddleware, interceptors),
 		discordoauth.NewService(g.discordOAuth, roleAuth, authMiddleware, interceptors),
 		forum.NewService(g.forums, g.openGraph, roleAuth, authMiddleware, interceptors),
+		health.NewService(g.health, g.database, g.bot, health.Config{
+			Version:           BuildVersion,
+			AssetRoot:         conf.LocalStore.PathRoot,
+			GeoIPCache:        conf.GeoLocation.CachePath,
+			CleanupMount:      conf.Demo.DemoCleanupMount,
+			DiscordEnabled:    conf.Discord.Enabled,
+			SSHEnabled:        conf.SSH.Enabled,
+			PrometheusEnabled: conf.PrometheusEnabled,
+		}, g.servers.HealthSnapshot, g.openGraph, roleAuth, authMiddleware, interceptors),
 		mge.NewService(g.mge, g.openGraph, roleAuth, authMiddleware, interceptors),
 		blocklist.NewService(g.blocklists, roleAuth, authMiddleware, interceptors),
 		network.NewNetworkService(g.networks, g.openGraph, roleAuth, authMiddleware, interceptors),
@@ -883,7 +902,9 @@ func (g *GBans) healthCheck(res http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func downloadManager(ctx context.Context, store database.Database, conf *scp.Config, handlers ...scp.ConnectionHandler) {
+func downloadManager(ctx context.Context, store database.Database, conf *scp.Config,
+	recordSSH func(string, error), handlers ...scp.ConnectionHandler,
+) {
 	var (
 		connections []scp.Connection
 		repo        = scp.NewRepository(store)
@@ -939,8 +960,10 @@ func downloadManager(ctx context.Context, store database.Database, conf *scp.Con
 
 			for _, handler := range connections {
 				waitGroup.Go(func() {
-					if err := handler.Update(ctx); err != nil {
-						slog.Error("Error running scp handler", slog.String("error", err.Error()))
+					errUpdate := handler.Update(ctx)
+					recordSSH(handler.Address(), errUpdate)
+					if errUpdate != nil {
+						slog.Error("Error running scp handler", slog.String("error", errUpdate.Error()))
 					}
 				})
 			}

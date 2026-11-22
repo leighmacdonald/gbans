@@ -1,0 +1,41 @@
+edition = "2023";
+
+package health.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service HealthService {
+  rpc Health(google.protobuf.Empty) returns (HealthResponse);
+}
+
+enum HealthStatus {
+  HEALTH_STATUS_UNSPECIFIED = 0;
+  HEALTH_STATUS_OK = 1;
+  HEALTH_STATUS_WARN = 2;
+  HEALTH_STATUS_ERROR = 3;
+  HEALTH_STATUS_DISABLED = 4;
+}
+
+message HealthItem {
+  string name = 1;
+  HealthStatus status = 2;
+  string detail = 3;
+  google.protobuf.Timestamp last_check = 4;
+}
+
+message ServerHealth {
+  int32 server_id = 1;
+  string name = 2;
+  google.protobuf.Timestamp last_rcon_success = 3;
+  google.protobuf.Timestamp last_status_update = 4;
+  google.protobuf.Timestamp last_auth = 5;
+  uint32 stv_port = 6;
+  bool enabled = 7;
+}
+
+message HealthResponse {
+  repeated HealthItem items = 1;
+  repeated ServerHealth servers = 2;
+  google.protobuf.Timestamp checked_on = 3;
+}

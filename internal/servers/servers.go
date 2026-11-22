@@ -104,8 +104,9 @@ type Servers struct {
 	logRecorder *LogEventRecorder
 	logBuffer   *LogBuffer
 
-	secretMu    *sync.RWMutex
-	secretCache map[int64]secretAuthEntry
+	secretMu     *sync.RWMutex
+	secretCache  map[int64]secretAuthEntry
+	rconRecorder rconRecorder
 }
 
 // secretAuthEntry caches the result of authenticating a srcds log secret. A
@@ -414,6 +415,7 @@ func (s *Servers) updateStates(ctx context.Context) error {
 
 				continue
 			}
+			server.rconRecorder = s.rconRecorder
 			valid = append(valid, &server)
 		}
 	}
@@ -422,8 +424,9 @@ func (s *Servers) updateStates(ctx context.Context) error {
 
 	for _, server := range valid {
 		waitGroup.Go(func() {
-			server.updateState(ctx)
-			successful.Add(1)
+			if errState := server.updateState(ctx); errState == nil {
+				successful.Add(1)
+			}
 		})
 	}
 
