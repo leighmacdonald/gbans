@@ -68,6 +68,7 @@ schema.json
 id_stv*
 *.dem
 *.json
+!monitoring/grafana/gbans-dashboard.json
 !frontend/package.json
 !frontend/tsconfig.json
 !frontend/tsconfig.node.json
