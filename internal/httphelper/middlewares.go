@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"runtime/debug"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -134,7 +135,32 @@ func (w *statusWriter) Unwrap() http.ResponseWriter {
 	return w.ResponseWriter
 }
 
-func usePrometheus(metrics HTTPMetrics) func(http.Handler) http.Handler {
+// requestRoute derives a bounded label from a request. Inner ServeMux patterns
+// are preferred, but the outermost mux only reports coarse subtree patterns
+// ("/" or "/connect/"), so those fall back to the URL path with dynamic ID
+// segments collapsed to keep Prometheus cardinality bounded.
+func requestRoute(req *http.Request) string {
+	if pattern := req.Pattern; pattern != "" && pattern != "/" && pattern != "/connect/" {
+		return pattern
+	}
+
+	path := req.URL.Path
+	if strings.HasPrefix(path, "/connect/") {
+		// ConnectRPC procedures are a fixed set, so the full path is bounded.
+		return path
+	}
+
+	segments := strings.Split(strings.Trim(path, "/"), "/")
+	if len(segments) > 1 {
+		return "/" + segments[0] + "/{id}"
+	}
+
+	return path
+}
+
+// PrometheusMiddleware records request count and duration for every request
+// reaching the wrapped handler.
+func PrometheusMiddleware(metrics HTTPMetrics) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			if metrics == nil {
@@ -147,12 +173,7 @@ func usePrometheus(metrics HTTPMetrics) func(http.Handler) http.Handler {
 			wrapped := &statusWriter{ResponseWriter: res, status: http.StatusOK}
 			next.ServeHTTP(wrapped, req)
 
-			// ServeMux sets Pattern on the request it dispatches to a handler.
-			route := req.Pattern
-			if route == "" {
-				route = req.URL.Path
-			}
-			metrics.ObserveRequest(req.Method, route, wrapped.status, time.Since(start))
+			metrics.ObserveRequest(req.Method, requestRoute(req), wrapped.status, time.Since(start))
 		})
 	}
 }
