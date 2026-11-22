@@ -10,6 +10,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
@@ -222,7 +223,8 @@ func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, pers
 		discord.RenderText("chat_message", map[string]any{
 			"Msg":    userMsg,
 			"Player": player,
-		}))))
+		}),
+		discord.Buttons(discord.Link("👤 Player", link.Path(player))))))
 
 	// Chat history is stored from demo imports instead, so filter matches for live
 	// messages are recorded once the matching demo is processed (gbans refresh filters).

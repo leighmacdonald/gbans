@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"strconv"
 	"sync"
 	"time"
 
@@ -428,17 +429,27 @@ func (s Bans) sendBanNotification(ctx context.Context, newBan Ban, author person
 			slog.Error("Failed to kick player", slog.String("error", errKick.Error()),
 				slog.Int64("sid64", newBan.TargetID.Int64()))
 		}
-		s.notif.Send(notification.NewDiscord(s.kickChannelID, discord.NewMessage(
+		kickMsg := discord.NewMessage(
 			discord.Heading("User Kicked [%s]", result.Server.ShortName),
-			discord.BodyColouredText(discord.ColourInfo, result.Player.Name))))
+			discord.BodyColouredText(discord.ColourInfo, fmt.Sprintf("%s — by **[%s](%s)** Steam ID: **%s**",
+				result.Player.Name, author.GetName(), link.Path(author), strconv.FormatInt(author.SteamID.Int64(), 10))),
+			discord.Buttons(
+				discord.Link("🔎 View Ban", link.Path(newBan)),
+				discord.Link("👤 Author", link.Path(author))))
+		s.notif.Send(notification.NewDiscord(s.kickChannelID, kickMsg))
 	case bantype.NoComm:
 		if errSilence := result.Server.Silence(ctx, newBan.TargetID, newBan.Reason.String()); errSilence != nil && !errors.Is(errSilence, servers.ErrPlayerNotFound) {
 			slog.Error("Failed to silence player", slog.String("error", errSilence.Error()),
 				slog.Int64("sid64", newBan.TargetID.Int64()))
 		}
-		s.notif.Send(notification.NewDiscord(s.kickChannelID, discord.NewMessage(
+		muteMsg := discord.NewMessage(
 			discord.Heading("User Muted [%s]", result.Server.ShortName),
-			discord.BodyColouredText(discord.ColourInfo, result.Player.Name))))
+			discord.BodyColouredText(discord.ColourInfo, fmt.Sprintf("%s — by **[%s](%s)** Steam ID: **%s**",
+				result.Player.Name, author.GetName(), link.Path(author), strconv.FormatInt(author.SteamID.Int64(), 10))),
+			discord.Buttons(
+				discord.Link("🔎 View Ban", link.Path(newBan)),
+				discord.Link("👤 Author", link.Path(author))))
+		s.notif.Send(notification.NewDiscord(s.kickChannelID, muteMsg))
 	default:
 		slog.Error("Unknown ban type")
 	}
@@ -469,7 +480,7 @@ func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason strin
 		return false, errors.Join(err, ErrFetchPerson)
 	}
 
-	s.notif.Send(notification.NewDiscord(s.logChannelID, unbanMessage(player, reason)))
+	s.notif.Send(notification.NewDiscord(s.logChannelID, unbanMessage(player, reason, author)))
 	s.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]rolesv1.Permission{rolesv1.Permission_PERMISSION_BAN_READ},
 		notification.Info,

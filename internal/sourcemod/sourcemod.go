@@ -168,10 +168,13 @@ type Sourcemod struct {
 	servers            *servers.Servers
 }
 
-func (h Sourcemod) PingMod(_ context.Context, _ steamid.SteamID, name string, reason string, clientID int32, serverName string) error {
+func (h Sourcemod) PingMod(_ context.Context, steamID steamid.SteamID, name string, reason string, clientID int32, serverName string) error {
+	profileURL := link.Raw(fmt.Sprintf("/profile/%d", steamID.Int64()))
 	h.notifier.Send(notification.NewDiscord(h.modPingChannelID, discord.NewMessage(
 		discord.Heading("Mod Request [%s]", serverName),
-		discord.BodyText(fmt.Sprintf("Mod requested by %s (%s) @<%s> (cid %d)", name, reason, h.modRoleID, clientID)))))
+		discord.BodyText(fmt.Sprintf("Mod requested by **[%s](%s)** Steam ID: **%s** (%s) @<%s> (cid %d)",
+			name, profileURL, steamID.String(), reason, h.modRoleID, clientID)),
+		discord.Buttons(discord.Link("👤 Requester", profileURL)))))
 
 	return nil
 }
@@ -186,6 +189,8 @@ type seedRequestView struct {
 	PlayerCount int32
 	MaxPlayers  int32
 	Message     string
+	Requester   string
+	Profile     string
 }
 
 // maxSeedMessageLength caps user-supplied seed messages so the alert embed
@@ -254,6 +259,7 @@ func (h Sourcemod) seedRequest(
 	}
 
 	targetChannelID := resolveSeedChannelID(seedChannelID, h.seedChannelID, h.publicLogChannelID)
+	requesterProfile := link.Raw("/profile/" + userID)
 	content, errContent := discord.RenderTemplate("seed_req", seedRequestView{
 		Name:        server.Name,
 		Short:       server.NameShort,
@@ -264,6 +270,8 @@ func (h Sourcemod) seedRequest(
 		PlayerCount: server.Players,
 		MaxPlayers:  server.MaxPlayerDisplay(),
 		Message:     sanitizeSeedMessage(message),
+		Requester:   userID,
+		Profile:     requesterProfile,
 	})
 
 	if errContent != nil {
@@ -293,6 +301,8 @@ func (h Sourcemod) seedRequest(
 					Style: discordgo.LinkButton,
 					URL:   server.Connect(),
 				},
+				discord.Link("🌐 Servers", link.Raw("/servers")),
+				discord.Link("👤 Requester", requesterProfile),
 			},
 		})))
 

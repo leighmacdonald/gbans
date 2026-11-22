@@ -217,11 +217,17 @@ func (h discordHandler) onBanResponse(ctx context.Context, session *discordgo.Se
 	}
 
 	content, errContent := discord.RenderTemplate("ban_success", struct {
-		Mute bool
-		Link string
+		Mute          bool
+		Link          string
+		AuthorName    string
+		AuthorLink    string
+		AuthorSteamID string
 	}{
-		Mute: createdBan.BanType == bantype.NoComm,
-		Link: link.Path(createdBan),
+		Mute:          createdBan.BanType == bantype.NoComm,
+		Link:          link.Path(createdBan),
+		AuthorName:    author.GetName(),
+		AuthorLink:    link.Path(author),
+		AuthorSteamID: steamIDString(author.GetSteamID()),
 	})
 	if errContent != nil {
 		return errContent
@@ -232,7 +238,8 @@ func (h discordHandler) onBanResponse(ctx context.Context, session *discordgo.Se
 		discord.Buttons(
 			discord.Button(discordgo.SuccessButton, "🗑️ Unban", fmt.Sprintf("ban_unban_button_resp_%d", createdBan.BanID)),
 			discord.Button(discordgo.SecondaryButton, "🔨 Edit", fmt.Sprintf("ban_edit_button_resp_%d", createdBan.BanID)),
-			discord.Link("🔗 Link", link.Path(createdBan))))
+			discord.Link("🔗 Link", link.Path(createdBan)),
+			discord.Link("👤 Author", link.Path(author))))
 }
 
 func (h discordHandler) onUnbanButton(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -389,18 +396,28 @@ func (h discordHandler) onCheck(ctx context.Context, session *discordgo.Session,
 			discord.Link("🔧 Steam", "https://steamcommunity.com/profiles/"+player.SteamID.String()))...))
 }
 
-func unbanMessage(person person.Info, reason string) *discordgo.MessageSend {
+// steamIDString formats a SteamID64 without relying on the pointer-receiver
+// String method on a temporary value.
+func steamIDString(sid steamid.SteamID) string {
+	return strconv.FormatInt(sid.Int64(), 10)
+}
+
+func unbanMessage(unbanned person.Info, reason string, author person.BaseUser) *discordgo.MessageSend {
 	return discord.NewMessage(
-		discord.Heading("User Unbanned Successfully: %s", person.GetName()),
+		discord.Heading("User Unbanned Successfully: %s", unbanned.GetName()),
 		discord.BodyColour(discord.ColourSuccess, discordgo.MediaGallery{
 			Items: []discordgo.MediaGalleryItem{
 				{
-					Media: discordgo.UnfurledMediaItem{URL: person.GetAvatar().Full()},
+					Media: discordgo.UnfurledMediaItem{URL: unbanned.GetAvatar().Full()},
 				},
 			},
 		},
-			discordgo.TextDisplay{Content: reason}),
-		discord.Buttons(discord.Link("🔗 Link", link.Path(person))))
+			discordgo.TextDisplay{Content: reason},
+			discordgo.TextDisplay{Content: fmt.Sprintf("Unbanned by: **[%s](%s)** Steam ID: **%s**",
+				author.GetName(), link.Path(author), steamIDString(author.GetSteamID()))}),
+		discord.Buttons(
+			discord.Link("🔗 Link", link.Path(unbanned)),
+			discord.Link("👤 Author", link.Path(author))))
 }
 
 type banResponseView struct {
@@ -438,6 +455,7 @@ func createBanResponse(ban Ban, author person.Info, player person.Info) *discord
 			discord.Button(discordgo.SuccessButton, "🗑️ Unban", fmt.Sprintf("ban_unban_button_resp_%d", ban.BanID)),
 			discord.Button(discordgo.SecondaryButton, "🔨 Edit", fmt.Sprintf("ban_edit_button_resp_%d", ban.BanID)),
 			discord.Link("🔎 View", link.Path(ban)),
+			discord.Link("👤 Author", link.Path(author)),
 			discord.Link("🌐 Steam", "https://steamcommunity.com/profiles/"+ban.TargetID.String())))
 }
 
@@ -458,16 +476,26 @@ func DeleteReportMessage(existing ReportMessage, person person.BaseUser) *discor
 	return discord.NewMessage(
 		discord.Heading("Report Message Deleted"),
 		discord.BodyColouredText(discord.ColourWarn, content),
-		discord.Buttons(discord.Link("🔎 View", link.Path(existing))),
+		discord.Buttons(
+			discord.Link("🔎 View", link.Path(existing)),
+			discord.Link("👤 Author", link.Path(person))),
 	)
 }
 
-func EditReportMessageResponse(body string, oldBody string, link string, _ person.BaseUser, _ string) *discordgo.MessageSend {
+func EditReportMessageResponse(body string, oldBody string, viewURL string, actor person.BaseUser, actorURL string) *discordgo.MessageSend {
+	editedBy := ""
+	buttons := []discordgo.MessageComponent{discord.Link("🔎 View", viewURL)}
+	if actor != nil {
+		editedBy = fmt.Sprintf("Edited by: **[%s](%s)** Steam ID: **%s**", actor.GetName(), actorURL, steamIDString(actor.GetSteamID()))
+		buttons = append(buttons, discord.Link("👤 Author", actorURL))
+	}
+
 	return discord.NewMessage(
 		discord.Heading("Report Message Edited"),
 		discord.BodyColouredText(discord.ColourWarn, oldBody),
 		discord.BodyColouredText(discord.ColourSuccess, body),
-		discord.Buttons(discord.Link("🔎 View", link)))
+		discord.BodyText(editedBy),
+		discord.Buttons(buttons...))
 }
 
 type reportStatsView struct {

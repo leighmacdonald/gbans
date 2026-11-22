@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/servers"
@@ -510,6 +511,8 @@ func newCheckDenyMessage(banState PlayerBanState) *discordgo.MessageSend {
 		slog.Error("Error creating check blocked message", slog.String("error", errContent.Error()))
 	}
 
-	return discord.NewMessage(discord.Heading("Player Denied Connection"),
-		discord.BodyColouredText(discord.ColourWarn, content))
+	return discord.NewMessage(
+		discord.Heading("Player Denied Connection"),
+		discord.BodyColouredText(discord.ColourWarn, content),
+		discord.Buttons(discord.Link("🔎 View Ban", link.Path(banState))))
 }

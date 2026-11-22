@@ -12,18 +12,21 @@
     # Sent chat message successfully
     Server: {{ .Server }}
     Message: {{ .Message }}
+    Sent by: {{ .Actor }}
 {{end}}
 
 {{define "csay"}}
     # Sent centered message successfully
     Server: {{ .Server }}
     Message: {{ .Message }}
+    Sent by: {{ .Actor }}
 {{end}}
 
 {{define "psay"}}
     # Sent private message successfully
     Player: {{ .Player }}
     Message: {{ .Message }}
+    Sent by: {{ .Actor }}
 {{end}}
 
 {{define "servers"}}

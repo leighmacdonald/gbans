@@ -3,10 +3,12 @@ package chat
 import (
 	"context"
 	_ "embed"
+	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/datetime"
 	"github.com/leighmacdonald/gbans/internal/discord"
 )
@@ -123,6 +125,7 @@ func WarningMessage(newWarning NewUserWarning, validUntil time.Time) *discordgo.
 		expAt = datetime.FmtTimeShort(validUntil)
 	}
 
+	profileURL := link.Raw(fmt.Sprintf("/profile/%d", newWarning.SteamID))
 	content, err := discord.RenderTemplate("filter_warning", struct {
 		FilterID  int64
 		Matched   string
@@ -130,6 +133,9 @@ func WarningMessage(newWarning NewUserWarning, validUntil time.Time) *discordgo.
 		Pattern   string
 		ExpiresIn string
 		ExpiresAt string
+		Player    string
+		Profile   string
+		SteamID   int64
 	}{
 		FilterID:  newWarning.MatchedFilter.FilterID,
 		Matched:   newWarning.Matched,
@@ -137,10 +143,17 @@ func WarningMessage(newWarning NewUserWarning, validUntil time.Time) *discordgo.
 		Pattern:   newWarning.MatchedFilter.Pattern,
 		ExpiresIn: expIn,
 		ExpiresAt: expAt,
+		Player:    newWarning.Personaname,
+		Profile:   profileURL,
+		SteamID:   newWarning.SteamID,
 	})
 	if err != nil {
 		slog.Error("Failed to render warning message", slog.String("error", err.Error()))
 	}
 
-	return discord.NewMessage(discord.BodyColouredText(discord.ColourInfo, content))
+	return discord.NewMessage(
+		discord.BodyColouredText(discord.ColourInfo, content),
+		discord.Buttons(
+			discord.Link("👤 Player", profileURL),
+			discord.Link("💬 Chat Logs", link.Raw("/chatlogs"))))
 }

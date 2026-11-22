@@ -7,6 +7,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 )
 
 func newInGameReportResponse(report ReportWithAuthor) *discordgo.MessageSend {
@@ -106,15 +107,18 @@ func (h discordHandler) onReportReplySubmit(ctx context.Context, session *discor
 	)
 }
 
-func ReportStatusChangeMessage(report ReportWithAuthor, fromStatus ReportStatus) *discordgo.MessageSend {
+func ReportStatusChangeMessage(report ReportWithAuthor, fromStatus ReportStatus, actor person.BaseUser) *discordgo.MessageSend {
 	return discord.NewMessage(
 		discord.Heading("Report Status Changed"),
 		discord.BodyColouredText(discord.ColourSuccess,
-			fmt.Sprintf("Changed from %s to %s", fromStatus.String(), report.ReportStatus.String())),
-		discord.Buttons(discord.Link("🔎 View Report", link.Path(report))))
+			fmt.Sprintf("Changed from %s to %s by **[%s](%s)** Steam ID: **%s**",
+				fromStatus.String(), report.ReportStatus.String(), actor.GetName(), link.Path(actor), steamIDString(actor.GetSteamID()))),
+		discord.Buttons(
+			discord.Link("🔎 View Report", link.Path(report)),
+			discord.Link("👤 Actor", link.Path(actor))))
 }
 
-func NewReportMessageResponse(report ReportWithAuthor, msg ReportMessage) *discordgo.MessageSend {
+func NewReportMessageResponse(report ReportWithAuthor, msg ReportMessage, author person.BaseUser) *discordgo.MessageSend {
 	content, errContent := discord.RenderTemplate("report_message_new", struct {
 		Message string
 	}{Message: msg.MessageMD})
@@ -124,10 +128,12 @@ func NewReportMessageResponse(report ReportWithAuthor, msg ReportMessage) *disco
 
 	return discord.NewMessage(
 		discord.Heading("New Report Message Posted"),
-		discord.BodyText(content),
+		discord.BodyText(fmt.Sprintf("Posted by: **[%s](%s)** Steam ID: **%s**\n\n%s",
+			author.GetName(), link.Path(author), steamIDString(author.GetSteamID()), content)),
 		discord.Buttons(
 			discord.Button(discordgo.PrimaryButton, "💬 Reply", fmt.Sprintf("report_reply_button_resp_%d", report.ReportID)),
 			discord.Button(discordgo.SecondaryButton, "❌️ Delete", fmt.Sprintf("report_delete_button_resp_%d", report.ReportID)),
 			discord.Button(discordgo.SecondaryButton, "🚦 Status", fmt.Sprintf("report_status_button_resp_%d", report.ReportID)),
-			discord.Link("🔎 View", link.Path(report))))
+			discord.Link("🔎 View", link.Path(report)),
+			discord.Link("👤 Author", link.Path(author))))
 }

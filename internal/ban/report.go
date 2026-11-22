@@ -290,7 +290,7 @@ func (r Reports) SetReportStatus(ctx context.Context, reportID int32, user perso
 
 	go r.notif.Send(notification.NewDiscord(
 		r.logChannel,
-		ReportStatusChangeMessage(report, fromStatus)))
+		ReportStatusChangeMessage(report, fromStatus, user)))
 
 	go r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]rolesv1.Permission{rolesv1.Permission_PERMISSION_BAN_READ},
@@ -619,7 +619,7 @@ func (r Reports) CreateMessage(ctx context.Context, reportID int32, curUser pers
 		return ReportMessage{}, errSave
 	}
 
-	go r.notif.Send(notification.NewDiscord(r.logChannel, NewReportMessageResponse(report, msg)))
+	go r.notif.Send(notification.NewDiscord(r.logChannel, NewReportMessageResponse(report, msg, curUser)))
 
 	r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]rolesv1.Permission{rolesv1.Permission_PERMISSION_BAN_READ},
