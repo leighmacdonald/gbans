@@ -196,7 +196,7 @@ func aggregateMatchPlayers(match Match, validRounds map[uint32]struct{}) ([]matc
 		total.points += row.Points
 		total.kills += row.Kills
 		total.assists += row.Assists
-		total.deaths += row.ScoreboardDeaths
+		total.deaths += row.Deaths
 		total.damage += row.ScoreboardDamage
 		players[row.SteamID] = struct{}{}
 	}

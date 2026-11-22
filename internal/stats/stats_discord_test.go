@@ -96,6 +96,21 @@ func TestMatchMessageDrawWithoutDemo(t *testing.T) {
 	require.Equal(t, link.Path(match), buttons[0].URL)
 }
 
+func TestMatchMessageUsesRealDeaths(t *testing.T) {
+	stats.RegisterDiscordCommands(discord.Discard{})
+
+	match := testMatchDiscordMatch(t)
+	for index := range match.Players {
+		// Scoreboard deaths include feign (Dead Ringer) deaths and must be
+		// ignored in favour of the parsed real deaths.
+		match.Players[index].ScoreboardDeaths = 999
+	}
+
+	content := matchMessageText(t, stats.MatchMessage(match))
+	require.NotContains(t, content, "1998 D")
+	require.Contains(t, content, "4 D")
+}
+
 func testMatchDiscordMatch(t *testing.T) stats.Match {
 	t.Helper()
 
@@ -145,7 +160,7 @@ func matchPlayerRound(roundID uint32, team string, steamID int64, name string, p
 			Points:           points,
 			Kills:            kills,
 			Assists:          assists,
-			ScoreboardDeaths: deaths,
+			Deaths:           deaths,
 			ScoreboardDamage: damage,
 		},
 		Team:    team,

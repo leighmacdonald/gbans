@@ -636,7 +636,7 @@ func (r Repository) getChat(ctx context.Context, match *Match) error {
 func (r Repository) getRoundPlayers(ctx context.Context, match *Match) error {
 	const query = `
 		SELECT
-			p.round_id, p.steam_id, p.team, p.mvp, p.tick_start, p.tick_end, p.kills, p.assists,
+			p.round_id, p.steam_id, p.team, p.mvp, p.tick_start, p.tick_end, p.kills, p.assists, p.deaths,
 			p.postround_kills, p.postround_assists, p.postround_deaths, p.preround_healing, p.healing,
 			p.postround_healing, p.drops, p.near_full_charge_death, p.charges_uber, p.charges_kritz, p.charges_vacc, p.charges_quickfix,
 			p.damage, p.damage_taken, p.dominations, p.dominated, p.revenges, p.revenged,
@@ -667,7 +667,7 @@ func (r Repository) getRoundPlayers(ctx context.Context, match *Match) error {
 
 	for rows.Next() {
 		var mrp MatchOverallStatsRound
-		if err := rows.Scan(&mrp.RoundID, &mrp.SteamID, &mrp.Team, &mrp.MVP, &mrp.TickStart, &mrp.TickEnd, &mrp.Kills, &mrp.Assists,
+		if err := rows.Scan(&mrp.RoundID, &mrp.SteamID, &mrp.Team, &mrp.MVP, &mrp.TickStart, &mrp.TickEnd, &mrp.Kills, &mrp.Assists, &mrp.Deaths,
 			&mrp.PostroundKills, &mrp.PostroundAssists, &mrp.PostroundDeaths, &mrp.PreroundHealing, &mrp.Healing,
 			&mrp.PostroundHealing, &mrp.Drops, &mrp.NearFullChargeDeath, &mrp.ChargesUber, &mrp.ChargesKritz, &mrp.ChargesVacc, &mrp.ChargesQuickfix,
 			&mrp.Damage, &mrp.DamageTaken, &mrp.Dominations, &mrp.Dominated, &mrp.Revenges, &mrp.Revenged,
