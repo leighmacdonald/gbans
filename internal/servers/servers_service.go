@@ -240,6 +240,16 @@ func fromRPCServer(server *v1.Server) Server {
 	}
 }
 
+// serverIPString avoids exposing the "<nil>" sentinel for servers whose
+// address has not been resolved by the status poller yet.
+func serverIPString(ip net.IP) string {
+	if ip == nil {
+		return ""
+	}
+
+	return ip.String()
+}
+
 func toRPCServer(server Server) *v1.Server {
 	return &v1.Server{
 		ServerId:        &server.ServerID,
@@ -266,7 +276,7 @@ func toRPCServer(server Server) *v1.Server {
 		UpdatedOn:            timestamppb.New(server.UpdatedOn),
 		DiscordSeedRoleIds:   server.DiscordSeedRoleIDs,
 		DiscordSeedChannelId: new(server.DiscordSeedChannelID),
-		Ip:                   new(server.IP.String()),
+		Ip:                   new(serverIPString(server.IP)),
 		StatsBucketId:        server.StatsBucketID,
 		StvPassword:          &server.STVPassword,
 	}

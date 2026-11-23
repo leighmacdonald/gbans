@@ -272,7 +272,8 @@ message Server {
   google.protobuf.Timestamp updated_on = 19;
   string discord_seed_channel_id = 20;
   repeated string discord_seed_role_ids = 21;
-  string ip = 22 [(buf.validate.field).string.ipv4 = true];
+  // Derived from address by the status poller; not user-editable and may be empty.
+  string ip = 22;
   int32 stats_bucket_id = 23;
   // Optional password for connecting to the server's SourceTV broadcast.
   string stv_password = 24;

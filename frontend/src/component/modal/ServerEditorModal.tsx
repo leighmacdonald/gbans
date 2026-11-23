@@ -61,6 +61,10 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 				create(EditServerRequestSchema, {
 					server: create(ServerSchema, {
 						...value,
+						latLong: {
+							latitude: value.latitude,
+							longitude: value.longitude,
+						},
 						serverId: server?.serverId,
 					}),
 				}),

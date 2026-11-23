@@ -172,6 +172,20 @@ function AdminServers() {
 				grow: false,
 			}),
 
+			columnHelper.display({
+				id: "latLong",
+				header: "Lat / Long",
+				meta: {
+					tooltip: "Geographic coordinates used for map placement and distance sorting",
+				},
+				grow: false,
+				Cell: ({ row }) => (
+					<Typography variant={"body2"}>
+						{row.original.latLong?.latitude ?? 0}, {row.original.latLong?.longitude ?? 0}
+					</Typography>
+				),
+			}),
+
 			columnHelper.accessor("tokenCreatedOn", {
 				meta: {
 					tooltip: "Last time the server authenticated itself",

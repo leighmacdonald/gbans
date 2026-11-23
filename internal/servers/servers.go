@@ -402,6 +402,9 @@ func (s *Servers) updateStates(ctx context.Context) error {
 		found := false
 		for _, existingServer := range s.servers {
 			if existingServer.ServerID == server.ServerID {
+				// Refresh admin-editable config (coordinates, credentials, etc.)
+				// so edits show up without requiring a backend restart.
+				existingServer.applyConfig(server)
 				valid = append(valid, existingServer)
 				found = true
 

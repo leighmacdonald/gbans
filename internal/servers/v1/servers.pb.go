@@ -907,8 +907,9 @@ type Server struct {
 	UpdatedOn            *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
 	DiscordSeedChannelId *string                `protobuf:"bytes,20,opt,name=discord_seed_channel_id,json=discordSeedChannelId" json:"discord_seed_channel_id,omitempty"`
 	DiscordSeedRoleIds   []string               `protobuf:"bytes,21,rep,name=discord_seed_role_ids,json=discordSeedRoleIds" json:"discord_seed_role_ids,omitempty"`
-	Ip                   *string                `protobuf:"bytes,22,opt,name=ip" json:"ip,omitempty"`
-	StatsBucketId        *int32                 `protobuf:"varint,23,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
+	// Derived from address by the status poller; not user-editable and may be empty.
+	Ip            *string `protobuf:"bytes,22,opt,name=ip" json:"ip,omitempty"`
+	StatsBucketId *int32  `protobuf:"varint,23,opt,name=stats_bucket_id,json=statsBucketId" json:"stats_bucket_id,omitempty"`
 	// Optional password for connecting to the server's SourceTV broadcast.
 	StvPassword   *string `protobuf:"bytes,24,opt,name=stv_password,json=stvPassword" json:"stv_password,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1644,7 +1645,7 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"\x06humans\x18\x10 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\x06humans\x12\x1a\n" +
 	"\x04tags\x18\x11 \x03(\tB\x06\xbaH\x03\xc8\x01\x01R\x04tags\x12&\n" +
-	"\x0fstats_bucket_id\x18\x12 \x01(\x05R\rstatsBucketId\"\xe5\a\n" +
+	"\x0fstats_bucket_id\x18\x12 \x01(\x05R\rstatsBucketId\"\xdc\a\n" +
 	"\x06Server\x12'\n" +
 	"\tserver_id\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\bserverId\x12)\n" +
@@ -1677,8 +1678,8 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"\n" +
 	"updated_on\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x125\n" +
 	"\x17discord_seed_channel_id\x18\x14 \x01(\tR\x14discordSeedChannelId\x121\n" +
-	"\x15discord_seed_role_ids\x18\x15 \x03(\tR\x12discordSeedRoleIds\x12\x17\n" +
-	"\x02ip\x18\x16 \x01(\tB\a\xbaH\x04r\x02x\x01R\x02ip\x12&\n" +
+	"\x15discord_seed_role_ids\x18\x15 \x03(\tR\x12discordSeedRoleIds\x12\x0e\n" +
+	"\x02ip\x18\x16 \x01(\tR\x02ip\x12&\n" +
 	"\x0fstats_bucket_id\x18\x17 \x01(\x05R\rstatsBucketId\x12!\n" +
 	"\fstv_password\x18\x18 \x01(\tR\vstvPassword\"\x81\x01\n" +
 	"\rStateResponse\x128\n" +
