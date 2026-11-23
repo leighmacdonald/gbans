@@ -6,6 +6,7 @@ import OutlinedInput from "@mui/material/OutlinedInput";
 import { useSelector } from "@tanstack/react-form";
 import { useId, useMemo } from "react";
 import { useFieldContext } from "../../../contexts/formContext";
+import { renderHelpText } from "./renderHelpText.ts";
 
 type Props = {
 	label: string; // Make it required
@@ -93,7 +94,7 @@ export const NumberField = ({ label, id: idProp, min, max }: Props) => {
 					/>
 				)}
 			/>
-			<FormHelperText sx={{ ml: 0, "&:empty": { mt: 0 } }}>{message}</FormHelperText>
+			<FormHelperText sx={{ ml: 0, "&:empty": { mt: 0 } }}>{renderHelpText(errors, message)}</FormHelperText>
 		</BaseNumberField.Root>
 	);
 };

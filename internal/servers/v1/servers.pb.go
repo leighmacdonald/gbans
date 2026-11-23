@@ -885,7 +885,8 @@ func (x *SafeServer) GetStatsBucketId() int32 {
 }
 
 type Server struct {
-	state                protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Zero for create requests; assigned by the database on insert.
 	ServerId             *int32                 `protobuf:"varint,1,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
 	ShortName            *string                `protobuf:"bytes,2,opt,name=short_name,json=shortName" json:"short_name,omitempty"`
 	Name                 *string                `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
@@ -1645,10 +1646,9 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"\x06humans\x18\x10 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\x06humans\x12\x1a\n" +
 	"\x04tags\x18\x11 \x03(\tB\x06\xbaH\x03\xc8\x01\x01R\x04tags\x12&\n" +
-	"\x0fstats_bucket_id\x18\x12 \x01(\x05R\rstatsBucketId\"\xdc\a\n" +
-	"\x06Server\x12'\n" +
-	"\tserver_id\x18\x01 \x01(\x05B\n" +
-	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\bserverId\x12)\n" +
+	"\x0fstats_bucket_id\x18\x12 \x01(\x05R\rstatsBucketId\"\xd9\a\n" +
+	"\x06Server\x12$\n" +
+	"\tserver_id\x18\x01 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\bserverId\x12)\n" +
 	"\n" +
 	"short_name\x18\x02 \x01(\tB\n" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\tshortName\x12\x1e\n" +

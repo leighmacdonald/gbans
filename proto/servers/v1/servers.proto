@@ -230,10 +230,8 @@ message SafeServer {
 }
 
 message Server {
-  int32 server_id = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).int32.gte = 0
-  ];
+  // Zero for create requests; assigned by the database on insert.
+  int32 server_id = 1 [(buf.validate.field).int32.gte = 0];
   string short_name = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1

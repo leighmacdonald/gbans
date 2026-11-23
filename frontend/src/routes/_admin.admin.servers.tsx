@@ -1,4 +1,4 @@
-import { useQuery } from "@connectrpc/connect-query";
+import { createConnectQueryKey, useQuery, useTransport } from "@connectrpc/connect-query";
 import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -67,11 +67,25 @@ export const Route = createFileRoute("/_admin/admin/servers")({
 function AdminServers() {
 	const { sendFlash } = useUserFlashCtx();
 	const queryClient = useQueryClient();
+	const transport = useTransport();
 	const search = Route.useSearch();
 	const navigate = useNavigate();
 	const { data: dataBuckets, isLoading: isLoadingBuckets } = useQuery(buckets);
 
 	const { data, isLoading, isError } = useQuery(serversAdmin);
+
+	// connect-query keys are structured (service, method, transport, input), so
+	// invalidating with a plain string never refreshes this list.
+	const refreshServers = useCallback(() => {
+		void queryClient.invalidateQueries({
+			queryKey: createConnectQueryKey({
+				schema: serversAdmin,
+				input: {},
+				cardinality: "finite",
+				transport,
+			}),
+		});
+	}, [queryClient, transport]);
 
 	const visibleServers = useMemo(
 		() => (data?.servers ?? []).filter((server) => search.showDisabled || server.isEnabled),
@@ -80,32 +94,25 @@ function AdminServers() {
 
 	const onCreate = useCallback(async () => {
 		try {
-			const newServer = (await NiceModal.show(ServerEditorModal, {})) as Server;
-			queryClient.setQueryData(["serversAdmin"], [...(data?.servers ?? []), newServer]);
+			await NiceModal.show(ServerEditorModal, {});
+			refreshServers();
 			sendFlash("success", "Server created successfully");
 		} catch (e) {
 			sendFlash("error", `Failed to create new server: ${e}`);
 		}
-	}, [data, sendFlash, queryClient]);
+	}, [sendFlash, refreshServers]);
 
 	const onEdit = useCallback(
 		async (server: Server) => {
 			try {
-				const editedServer = (await NiceModal.show(ServerEditorModal, {
-					server,
-				})) as Server;
-				queryClient.setQueryData(
-					["serversAdmin"],
-					(data?.servers ?? []).map((s) => {
-						return s.serverId === editedServer.serverId ? editedServer : s;
-					}),
-				);
+				await NiceModal.show(ServerEditorModal, { server });
+				refreshServers();
 				sendFlash("success", "Server edited successfully");
 			} catch (e) {
 				sendFlash("error", `Failed to edit server: ${e}`);
 			}
 		},
-		[data, sendFlash, queryClient],
+		[sendFlash, refreshServers],
 	);
 
 	const columns = useMemo(() => {
