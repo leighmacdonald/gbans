@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -412,6 +413,23 @@ func (g *GBans) setupSentry() {
 	}
 }
 
+// validLogAddressTarget reports whether an address can be advertised to game
+// servers through logaddress_add. The UDP listen address may legitimately use
+// a wildcard host (listen on all interfaces), but srcds cannot send logs to
+// 0.0.0.0 or an empty host.
+func validLogAddressTarget(addr string) bool {
+	host, port, errSplit := net.SplitHostPort(addr)
+	if errSplit != nil || host == "" || port == "" {
+		return false
+	}
+
+	if ip := net.ParseIP(host); ip != nil && ip.IsUnspecified() {
+		return false
+	}
+
+	return true
+}
+
 func (g *GBans) setLogAddress(ctx context.Context) {
 	conf := g.config.Config()
 	slog.Debug("Updating server logaddress", slog.String("address", conf.General.SrcdsLogAddr))
@@ -427,16 +445,22 @@ func (g *GBans) setLogAddress(ctx context.Context) {
 	// logaddress entries are in-memory in srcds and lost when a server restarts,
 	// so this is re-run periodically in StartBackground.
 	if conf.General.SrcdsLogAddr != "" {
-		for _, current := range enabledServers {
-			conn, errConn := rcon.Dial(ctx, current.Addr(), current.RCON, time.Second*10)
-			if errConn != nil {
-				continue
-			}
-			defer log.Closer(conn)
+		if !validLogAddressTarget(conf.General.SrcdsLogAddr) {
+			slog.Warn("Skipping logaddress_add: UDP log listen address has no reachable host; "+
+				"set a concrete host:port in the general settings",
+				slog.String("address", conf.General.SrcdsLogAddr))
+		} else {
+			for _, current := range enabledServers {
+				conn, errConn := rcon.Dial(ctx, current.Addr(), current.RCON, time.Second*10)
+				if errConn != nil {
+					continue
+				}
+				defer log.Closer(conn)
 
-			_, errExec := conn.Exec("logaddress_add " + conf.General.SrcdsLogAddr)
-			if errExec != nil {
-				continue
+				_, errExec := conn.Exec("logaddress_add " + conf.General.SrcdsLogAddr)
+				if errExec != nil {
+					continue
+				}
 			}
 		}
 	}

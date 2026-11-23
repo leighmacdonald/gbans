@@ -177,15 +177,16 @@ func (u Networks) Start(ctx context.Context) {
 				continue
 			}
 
-			if newServerEvent.Address == "" {
-				slog.Warn("Empty Person message body, skipping")
-
+			// srcds logs "none" for clients without a real address (bots,
+			// SourceTV/replay spectators, local connections). They have no
+			// useful connection-history IP, so skip them quietly.
+			if newServerEvent.Address == "" || newServerEvent.Address == "none" {
 				continue
 			}
 
 			parsedAddr, errParsedAddr := netip.ParseAddr(newServerEvent.Address)
 			if errParsedAddr != nil {
-				slog.Warn("Received invalid address", slog.String("addr", newServerEvent.Address))
+				slog.Debug("Skipping connection event with unparseable address", slog.String("addr", newServerEvent.Address))
 
 				continue
 			}

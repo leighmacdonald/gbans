@@ -3,6 +3,7 @@ import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import ListIcon from "@mui/icons-material/List";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
@@ -17,6 +18,7 @@ import {
 	useMaterialReactTable,
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
+import z from "zod/v4";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { ServerEditorModal } from "../component/modal/ServerEditorModal.tsx";
 import { RowActionContainer } from "../component/RowActionContainer.tsx";
@@ -40,9 +42,14 @@ import { renderTimestamp } from "../util/time.ts";
 const columnHelper = createMRTColumnHelper<Server>();
 const defaultOptions = createDefaultTableOptions<Server>();
 const defaultValues = {
-	...makeSchemaDefaults({ defaultColumn: "shortName", pageSize: 50 }),
+	...makeSchemaDefaults({ defaultColumn: "shortName", defaultDesc: false, pageSize: 50 }),
+	showDisabled: false,
 };
-const validateSearch = makeSchemaState("shortName", false);
+const validateSearch = z
+	.object({
+		showDisabled: z.boolean().optional().default(false),
+	})
+	.extend(makeSchemaState("shortName", false, 50).shape);
 
 export const Route = createFileRoute("/_admin/admin/servers")({
 	validateSearch,
@@ -65,6 +72,11 @@ function AdminServers() {
 	const { data: dataBuckets, isLoading: isLoadingBuckets } = useQuery(buckets);
 
 	const { data, isLoading, isError } = useQuery(serversAdmin);
+
+	const visibleServers = useMemo(
+		() => (data?.servers ?? []).filter((server) => search.showDisabled || server.isEnabled),
+		[data, search.showDisabled],
+	);
 
 	const onCreate = useCallback(async () => {
 		try {
@@ -280,7 +292,7 @@ function AdminServers() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: data?.servers ?? [],
+		data: visibleServers,
 		enableFilters: true,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
@@ -349,6 +361,21 @@ function AdminServers() {
 						<IconButton key="create" onClick={onCreate} sx={{ color: "primary.contrastText" }}>
 							<AddIcon />
 						</IconButton>,
+						<Tooltip
+							arrow
+							key="show-disabled"
+							title={search.showDisabled ? "Hide Disabled Servers" : "Show Disabled Servers"}
+							onClick={async () => {
+								await navigate({
+									to: Route.fullPath,
+									search: { ...search, showDisabled: !search.showDisabled },
+								});
+							}}
+						>
+							<IconButton sx={{ color: search.showDisabled ? "warning" : "primary.contrastText" }}>
+								<VisibilityOffIcon />
+							</IconButton>
+						</Tooltip>,
 					]}
 				/>
 			</Grid>
