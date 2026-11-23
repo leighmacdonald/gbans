@@ -65,14 +65,18 @@ export const makeSchemaDefaults = <T>({
 	};
 };
 
-export const makeSchemaState = (defaultSortColumn: string = "", defaultDesc: boolean = true) => {
+export const makeSchemaState = (
+	defaultSortColumn: string = "",
+	defaultDesc: boolean = true,
+	defaultPageSize: number = 25,
+) => {
 	return z.object({
 		pagination: z
 			.object({
 				pageIndex: z.number().int().min(0).catch(0),
-				pageSize: z.number().int().positive().catch(25),
+				pageSize: z.number().int().positive().catch(defaultPageSize),
 			})
-			.default({ pageIndex: 0, pageSize: 25 })
+			.default({ pageIndex: 0, pageSize: defaultPageSize })
 			.optional(),
 		columnFilters: z
 			.object({
