@@ -118,7 +118,7 @@ export const ThreadMessageContainer = ({
 								<form.AppField
 									name={"bodyMd"}
 									validators={{
-										onChange: z.string().min(4),
+										onChange: z.string().min(4).max(50_000, "Maximum 50000 characters"),
 									}}
 									children={(field) => {
 										return <field.MarkdownField label={"Message (Markdown)"} />;

@@ -15,6 +15,7 @@ import Typography from "@mui/material/Typography";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
+import { z } from "zod/v4";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { mdEditorRef } from "../component/form/field/MarkdownField.tsx";
 import { ThreadMessageContainer } from "../component/forum/ForumThreadMessageContainer.tsx";
@@ -172,6 +173,10 @@ function ForumThreadPage() {
 		},
 		defaultValues: {
 			bodyMd: "",
+		},
+		validators: {
+			onBlur: z.object({ bodyMd: z.string().min(2, "Message must be at least 2 characters") }),
+			onSubmit: z.object({ bodyMd: z.string().min(2, "Message must be at least 2 characters") }),
 		},
 	});
 

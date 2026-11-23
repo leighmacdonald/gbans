@@ -9,6 +9,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
+import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import { Permission, type Role, type RoleEditRequest, RoleEditRequestSchema } from "../../rpc/roles/v1/roles_pb.ts";
@@ -16,13 +17,19 @@ import { roleEdit } from "../../rpc/roles/v1/roles-RolesService_connectquery.ts"
 import { enumValues } from "../../util/lists.ts";
 import { Heading } from "../Heading.tsx";
 
+const roleSchema = z.object({
+	roleId: z.number().int().gt(0),
+	roleName: z.string().min(1, "Role name is required").max(64, "Maximum 64 characters"),
+	permissions: z.array(z.number().int()),
+});
+
 export const RoleEditModal = NiceModal.create(({ role }: { role: Role }) => {
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const modal = useModal();
 
 	const mutation = useMutation(roleEdit, {
 		onSuccess: async (role) => {
-			sendFlash("success", "Created role successfully");
+			sendFlash("success", "Updated role successfully");
 			modal.resolve(role);
 			await modal.hide();
 		},
@@ -32,13 +39,17 @@ export const RoleEditModal = NiceModal.create(({ role }: { role: Role }) => {
 	const defaultValues: Omit<RoleEditRequest, "$typeName"> = role;
 
 	const form = useAppForm({
-		formId: `role-${role.roleName}`,
+		formId: `role-${role.roleId}`,
 		onSubmit: async ({ value }) => {
 			mutation.mutate(
 				create(RoleEditRequestSchema, { ...value, roleName: value.roleName, permissions: value.permissions }),
 			);
 		},
 		defaultValues,
+		validators: {
+			onBlur: roleSchema,
+			onSubmit: roleSchema,
+		},
 	});
 
 	return (

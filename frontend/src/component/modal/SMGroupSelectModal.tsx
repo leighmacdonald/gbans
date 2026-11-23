@@ -7,9 +7,14 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
+import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import type { Group } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
 import { Heading } from "../Heading";
+
+const groupSelectSchema = z.object({
+	group: z.object({ groupId: z.number().int().gt(0) }),
+});
 
 export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: Group[] }) => {
 	const modal = useModal();
@@ -17,7 +22,7 @@ export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: Group[
 	const form = useAppForm({
 		formId: `group-select-${groups.map((g) => g.groupId).join("-")}`,
 		onSubmit: async ({ value }) => {
-			const group = groups.find((v) => v.groupId === value.group.groupId);
+			const group = value.group && groups.find((v) => v.groupId === value.group.groupId);
 			if (group) {
 				modal.resolve(group);
 			} else {
@@ -27,6 +32,9 @@ export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: Group[
 		},
 		defaultValues: {
 			group: groups[0],
+		},
+		validators: {
+			onSubmit: groupSelectSchema,
 		},
 	});
 

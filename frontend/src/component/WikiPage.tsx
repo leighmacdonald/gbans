@@ -85,8 +85,10 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 		},
 		validators: {
 			onChange: z.object({
-				requiredPermission: z.enum(Permission),
-				bodyMd: z.string(),
+				requiredPermission: z
+					.enum(Permission)
+					.refine((value) => value !== Permission.UNSPECIFIED, "Select a permission"),
+				bodyMd: z.string().min(1, "Page body is required"),
 			}),
 		},
 		defaultValues: {

@@ -6,10 +6,17 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
+import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import type { Category } from "../../rpc/forum/v1/forum_pb.ts";
 import { categoryCreate, categoryEdit } from "../../rpc/forum/v1/forum-ForumService_connectquery.ts";
+
+const categorySchema = z.object({
+	title: z.string().min(2, "Title must be at least 2 characters").max(256, "Maximum 256 characters"),
+	description: z.string().min(2, "Description must be at least 2 characters").max(1024, "Maximum 1024 characters"),
+	ordering: z.string().regex(/^\d+$/, "Ordering must be a non-negative number"),
+});
 
 // interface ForumCategoryEditorProps {
 //     initial_forum_category_id?: number;
@@ -56,6 +63,10 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
 			title: category?.title ?? "",
 			description: category?.description ?? "",
 			ordering: category?.ordering ? String(category.ordering) : "1",
+		},
+		validators: {
+			onBlur: categorySchema,
+			onSubmit: categorySchema,
 		},
 	});
 

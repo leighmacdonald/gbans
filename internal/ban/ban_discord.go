@@ -95,7 +95,7 @@ func createBanOpts() []discordgo.SelectMenuOption {
 		{Label: reason.ItemDescriptions.String(), Value: strconv.Itoa(int(reason.ItemDescriptions))},
 		{Label: reason.Language.String(), Value: strconv.Itoa(int(reason.Language))},
 		{Label: reason.Profile.String(), Value: strconv.Itoa(int(reason.Profile))},
-		{Label: reason.Racism.String(), Value: strconv.Itoa(int(reason.Racism))},
+		{Label: reason.Bigotry.String(), Value: strconv.Itoa(int(reason.Bigotry))},
 		{Label: reason.Spam.String(), Value: strconv.Itoa(int(reason.Spam))},
 		{Label: reason.Username.String(), Value: strconv.Itoa(int(reason.Username))},
 		{Label: reason.WarningsExceeded.String(), Value: strconv.Itoa(int(reason.WarningsExceeded))},

@@ -12,7 +12,7 @@ import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import { delete$ } from "../../rpc/ban/v1/ban-BanService_connectquery.ts";
 
 const onSubmit = z.object({
-	unbanReason: z.string().min(5),
+	unbanReason: z.string().min(4, "Reason must be at least 4 characters"),
 });
 
 export const UnbanModal = NiceModal.create(

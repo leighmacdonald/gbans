@@ -234,8 +234,8 @@ export const banTypeString = (banType: BanType) => {
 // 			return "Language";
 // 		case BanReason.PROFILE:
 // 			return "Profile";
-// 		case BanReason.RACISM:
-// 			return "Racism";
+// 		case BanReason.BIGOTRY:
+// 			return "Bigotry";
 // 		case BanReason.SPAM:
 // 			return "Spam";
 // 		case BanReason.USERNAME:

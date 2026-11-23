@@ -31,10 +31,29 @@ import { type BanDuration, banExpirationFromDuration } from "../../util/ban.ts";
 import { enumValues } from "../../util/lists.ts";
 import { banTypeString } from "../../util/strings.ts";
 import { emptyOrNullString } from "../../util/types.ts";
+import { optionalCIDRSchema } from "../../util/validation.ts";
 import { ErrorDetails } from "../ErrorDetails.tsx";
 import { MarkdownField } from "../form/field/MarkdownField.tsx";
 import { Heading } from "../Heading.tsx";
 import { LoadingPlaceholder } from "../LoadingPlaceholder.tsx";
+
+const banEditSchema = z
+	.object({
+		banType: z.number().int(),
+		reason: z.number().int(),
+		reasonText: z.string(),
+		note: z.string().min(10, "Notes must be at least 10 characters").max(100_000),
+		evadeOk: z.boolean(),
+		cidr: optionalCIDRSchema,
+		validUntil: z.date().optional(),
+		appealState: z.number().int(),
+		banId: z.number().int().gt(0),
+		duration: z.string(),
+	})
+	.refine((value) => value.reason !== BanReason.CUSTOM || value.reasonText.length >= 5, {
+		path: ["reasonText"],
+		message: "Custom reason must be at least 5 characters",
+	});
 
 export const BanEditModal = NiceModal.create(({ banId }: { banId: number }) => {
 	const { data: record, isLoading, isError, error } = useQuery(get, { banId });
@@ -99,6 +118,9 @@ export const BanEditModal = NiceModal.create(({ banId }: { banId: number }) => {
 			);
 		},
 		defaultValues: { ...defaultValues, duration: "custom" as BanDuration },
+		validators: {
+			onSubmit: banEditSchema,
+		},
 	});
 
 	const isExpired = useMemo(() => {
@@ -199,7 +221,7 @@ export const BanEditModal = NiceModal.create(({ banId }: { banId: number }) => {
 										}
 										const result = z.string().min(5).safeParse(value);
 										if (!result.success) {
-											return result.error.message;
+											return "Custom reason must be at least 5 characters";
 										}
 
 										return undefined;

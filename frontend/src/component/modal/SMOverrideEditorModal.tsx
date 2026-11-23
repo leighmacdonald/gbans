@@ -19,9 +19,9 @@ import { smPermissions } from "../../util/strings.ts";
 import { Heading } from "../Heading";
 
 const schema = z.object({
-	name: z.string(),
-	type: z.enum(OverrideType),
-	permissions: z.array(z.number()),
+	name: z.string().min(1, "Name is required"),
+	type: z.enum(OverrideType).refine((value) => value !== OverrideType.COMMAND_UNSPECIFIED, "Select an override type"),
+	permissions: z.array(z.number().int()),
 });
 
 export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?: Override }) => {

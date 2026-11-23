@@ -7,7 +7,7 @@ const (
 	Custom Reason = iota + 1
 	External
 	Cheating
-	Racism
+	Bigotry
 	Harassment
 	Exploiting
 	WarningsExceeded
@@ -25,7 +25,7 @@ func (r Reason) String() string {
 		Custom:           "Custom",
 		External:         "3rd party",
 		Cheating:         "Cheating",
-		Racism:           "Racism",
+		Bigotry:          "Bigotry",
 		Harassment:       "Personal Harassment",
 		Exploiting:       "Exploiting",
 		WarningsExceeded: "Warnings Exceeded",

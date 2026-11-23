@@ -88,7 +88,7 @@ export const AppealMessageView = ({ message, onDelete, assetURL }: AppealMessage
 						<Grid size={{ xs: 12 }}>
 							<form.AppField
 								validators={{
-									onChange: z.string().min(4),
+									onChange: z.string().min(4).max(50_000, "Maximum 50000 characters"),
 								}}
 								name={"bodyMd"}
 								children={(field) => {

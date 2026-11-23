@@ -33,7 +33,7 @@ enum GB_BanReason {
     custom = 1,
     external = 2,
     cheating = 3,
-    racism = 4,
+    bigotry = 4,
     harassment = 5,
     exploiting = 6,
     warningsExceeded = 7,

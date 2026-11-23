@@ -18,7 +18,7 @@ import { enumValues } from "../../util/lists.ts";
 import { Heading } from "../Heading";
 
 const schema = z.object({
-	pattern: z.string({ message: "Must entry pattern" }).min(2),
+	pattern: z.string({ message: "Must enter pattern" }).min(2),
 	isRegex: z.boolean(),
 	action: z.enum(FilterAction),
 	duration: z.string({ message: "Must provide a duration" }),

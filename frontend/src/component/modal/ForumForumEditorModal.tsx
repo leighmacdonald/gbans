@@ -88,7 +88,10 @@ export const ForumForumEditorModal = NiceModal.create(
 								<form.AppField
 									name={"title"}
 									validators={{
-										onChange: z.string().min(1),
+										onChange: z
+											.string()
+											.min(2, "Title must be at least 2 characters")
+											.max(256, "Maximum 256 characters"),
 									}}
 									children={(field) => {
 										return <field.TextField label={"Title"} />;
@@ -99,7 +102,10 @@ export const ForumForumEditorModal = NiceModal.create(
 								<form.AppField
 									name={"description"}
 									validators={{
-										onChange: z.string().min(1),
+										onChange: z
+											.string()
+											.min(2, "Description must be at least 2 characters")
+											.max(1024, "Maximum 1024 characters"),
 									}}
 									children={(field) => {
 										return <field.TextField label={"Description"} rows={5} />;
@@ -110,7 +116,7 @@ export const ForumForumEditorModal = NiceModal.create(
 								<form.AppField
 									name={"ordering"}
 									validators={{
-										onChange: z.string().min(1),
+										onChange: z.string().regex(/^\d+$/, "Order must be a non-negative number"),
 									}}
 									children={(field) => {
 										return <field.TextField label={"Order"} />;

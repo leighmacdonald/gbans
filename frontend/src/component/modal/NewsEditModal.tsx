@@ -52,8 +52,11 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: Article }) =
 		},
 		validators: {
 			onSubmit: z.object({
-				bodyMd: z.string().min(10),
-				title: z.string().min(4),
+				bodyMd: z
+					.string()
+					.min(5, "Body must be at least 5 characters")
+					.max(100_000, "Maximum 100000 characters"),
+				title: z.string().min(5, "Title must be at least 5 characters").max(256, "Maximum 256 characters"),
 				isPublished: z.boolean(),
 			}),
 		},

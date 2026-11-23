@@ -11,10 +11,11 @@ import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import { whitelistSteamCreate } from "../../rpc/blocklist/v1/blocklist-BlocklistService_connectquery.ts";
+import { steamID64Schema } from "../../util/validation.ts";
 import { Heading } from "../Heading";
 
 const schema = z.object({
-	steamId: z.string(),
+	steamId: steamID64Schema,
 });
 
 export const SteamWhitelistEditorModal = NiceModal.create(() => {
