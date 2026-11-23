@@ -8,6 +8,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import { ForumService, type Thread } from "../../rpc/forum/v1/forum_pb.ts";
@@ -76,6 +77,18 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Th
 			title: thread.title,
 			sticky: thread.sticky,
 			locked: thread.locked,
+		},
+		validators: {
+			onBlur: z.object({
+				title: z.string().min(2, "Title must be at least 2 characters").max(256, "Maximum 256 characters"),
+				sticky: z.boolean(),
+				locked: z.boolean(),
+			}),
+			onSubmit: z.object({
+				title: z.string().min(2, "Title must be at least 2 characters").max(256, "Maximum 256 characters"),
+				sticky: z.boolean(),
+				locked: z.boolean(),
+			}),
 		},
 	});
 

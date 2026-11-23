@@ -30,7 +30,8 @@ const searchSchema = z.object({
 });
 
 const schema = z.object({
-	ip: z.ipv4(),
+	// Empty is allowed: it clears the lookup filter.
+	ip: z.union([z.literal(""), z.ipv4()]),
 });
 
 export const Route = createFileRoute("/_mod/admin/network/ipInfo")({

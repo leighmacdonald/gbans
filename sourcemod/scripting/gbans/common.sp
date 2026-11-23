@@ -115,8 +115,8 @@ stock bool BanReasonToApiString(GB_BanReason reason, char[] buffer, int maxlen) 
     case cheating: {
         strcopy(buffer, maxlen, "BAN_REASON_CHEATING");
     }
-    case racism: {
-        strcopy(buffer, maxlen, "BAN_REASON_RACISM");
+    case bigotry: {
+        strcopy(buffer, maxlen, "BAN_REASON_BIGOTRY");
     }
     case harassment: {
         strcopy(buffer, maxlen, "BAN_REASON_HARASSMENT");
@@ -169,8 +169,8 @@ stock bool BanReasonDisplayName(GB_BanReason reason, char[] buffer, int maxlen) 
     case cheating: {
         strcopy(buffer, maxlen, "Cheating");
     }
-    case racism: {
-        strcopy(buffer, maxlen, "Racism");
+    case bigotry: {
+        strcopy(buffer, maxlen, "Bigotry");
     }
     case harassment: {
         strcopy(buffer, maxlen, "Harassment");

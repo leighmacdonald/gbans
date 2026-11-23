@@ -9,12 +9,18 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
+import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import { Permission, type RoleCreateRequest, RoleCreateRequestSchema } from "../../rpc/roles/v1/roles_pb.ts";
 import { roleCreate } from "../../rpc/roles/v1/roles-RolesService_connectquery.ts";
 import { enumValues } from "../../util/lists.ts";
 import { Heading } from "../Heading.tsx";
+
+const roleSchema = z.object({
+	roleName: z.string().min(1, "Role name is required").max(64, "Maximum 64 characters"),
+	permissions: z.array(z.number().int()),
+});
 
 export const RoleCreateModal = NiceModal.create(() => {
 	const { sendError } = useUserFlashCtx();
@@ -38,6 +44,10 @@ export const RoleCreateModal = NiceModal.create(() => {
 			mutation.mutate(create(RoleCreateRequestSchema, value));
 		},
 		defaultValues,
+		validators: {
+			onBlur: roleSchema,
+			onSubmit: roleSchema,
+		},
 	});
 
 	return (

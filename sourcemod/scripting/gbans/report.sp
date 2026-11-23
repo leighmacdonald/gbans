@@ -195,7 +195,7 @@ public
 void ShowReasonMenu(int clientId) {
     Menu menu = CreateMenu(MenuHandler_Reason);
     menu.AddItem("cheating", "Cheating");
-    menu.AddItem("racism", "Racism");
+    menu.AddItem("bigotry", "Bigotry");
     menu.AddItem("harassment", "Harassment");
     menu.AddItem("exploiting", "Exploiting");
     menu.AddItem("spam", "Spam");
@@ -270,8 +270,8 @@ int MenuHandler_Reason(Menu menu, MenuAction action, int clientId, int selectedI
         GetMenuItem(menu, selectedId, sInfo, sizeof sInfo);
         if (StrEqual(sInfo, "cheating")) {
             gReportTargetReason = cheating;
-        } else if (StrEqual(sInfo, "racism")) {
-            gReportTargetReason = racism;
+        } else if (StrEqual(sInfo, "bigotry")) {
+            gReportTargetReason = bigotry;
         } else if (StrEqual(sInfo, "harassment")) {
             gReportTargetReason = harassment;
         } else if (StrEqual(sInfo, "exploiting")) {

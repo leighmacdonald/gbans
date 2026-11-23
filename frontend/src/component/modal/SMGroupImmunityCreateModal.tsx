@@ -8,11 +8,22 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
+import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import type { Group } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
 import { createImmunity } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
 import { Heading } from "../Heading";
+
+const immunitySchema = z
+	.object({
+		group: z.object({ groupId: z.number().int().gt(0) }),
+		other: z.object({ groupId: z.number().int().gt(0) }),
+	})
+	.refine((value) => value.group.groupId !== value.other.groupId, {
+		message: "Select two different groups",
+		path: ["other"],
+	});
 
 export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups: Group[] }) => {
 	const modal = useModal();
@@ -34,6 +45,9 @@ export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups
 		defaultValues: {
 			group: groups[0],
 			other: groups[1],
+		},
+		validators: {
+			onSubmit: immunitySchema,
 		},
 	});
 

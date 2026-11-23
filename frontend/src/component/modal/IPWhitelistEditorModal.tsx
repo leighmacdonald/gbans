@@ -7,11 +7,11 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
-import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import type { CIDRBlockWhitelist } from "../../rpc/blocklist/v1/blocklist_pb.ts";
 import { whitelistAddressCreate } from "../../rpc/blocklist/v1/blocklist-BlocklistService_connectquery.ts";
+import { optionalCIDRSchema } from "../../util/validation.ts";
 import { Heading } from "../Heading";
 
 export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: CIDRBlockWhitelist }) => {
@@ -56,12 +56,7 @@ export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: C
 							<form.AppField
 								name={"address"}
 								validators={{
-									onChange: z.string().refine((arg) => {
-										const pieces = arg.split("/");
-										const addr = pieces[0];
-										const result = z.ipv4().safeParse(addr);
-										return result.success;
-									}),
+									onChange: optionalCIDRSchema,
 								}}
 								children={(field) => {
 									return <field.TextField label={"IP Addr"} />;

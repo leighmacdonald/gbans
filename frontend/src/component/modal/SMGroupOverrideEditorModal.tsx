@@ -8,6 +8,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
+import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import { type Group, type GroupOverrides, OverrideAccess, OverrideType } from "../../rpc/sourcemod/v1/sourcemod_pb.ts";
@@ -17,6 +18,14 @@ import {
 } from "../../rpc/sourcemod/v1/sourcemod-SourcemodService_connectquery.ts";
 import { enumValues } from "../../util/lists.ts";
 import { Heading } from "../Heading";
+
+const overrideSchema = z.object({
+	name: z.string().min(1, "Name is required"),
+	type: z.enum(OverrideType).refine((value) => value !== OverrideType.COMMAND_UNSPECIFIED, "Select an override type"),
+	access: z
+		.enum(OverrideAccess)
+		.refine((value) => value !== OverrideAccess.ALLOW_UNSPECIFIED, "Select an access level"),
+});
 
 export const SMGroupOverrideEditorModal = NiceModal.create(
 	({ group, override }: { group: Group; override?: GroupOverrides }) => {
@@ -51,6 +60,9 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
 				type: override?.overrideType ?? OverrideType.COMMAND_UNSPECIFIED,
 				name: override?.name ?? "",
 				access: override?.overrideAccess ?? OverrideAccess.ALLOW_UNSPECIFIED,
+			},
+			validators: {
+				onSubmit: overrideSchema,
 			},
 		});
 

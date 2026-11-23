@@ -11,6 +11,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
 import { useQueryClient } from "@tanstack/react-query";
+import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import { BanReason, BanService, BanType, CreateRequestSchema, Origin } from "../../rpc/ban/v1/ban_pb.ts";
@@ -19,6 +20,7 @@ import { type BanDuration, banExpirationFromDuration } from "../../util/ban.ts";
 import { enumValues } from "../../util/lists.ts";
 import { banTypeString } from "../../util/strings.ts";
 import { emptyOrNullString, zeroStringUndefined } from "../../util/types.ts";
+import { futureDateSchema, optionalCIDRSchema, steamID64Schema } from "../../util/validation.ts";
 import { MarkdownField } from "../form/field/MarkdownField.tsx";
 import { Heading } from "../Heading.tsx";
 
@@ -31,6 +33,28 @@ type BanCreateProps = {
 	// An optional demotick to provide with the demoId
 	demoTick?: number;
 };
+
+// Mirrors the buf.validate rules in proto/ban/v1/ban.proto CreateRequest.
+const banCreateSchema = z
+	.object({
+		reportId: z.number().int().optional(),
+		targetId: steamID64Schema,
+		cidr: optionalCIDRSchema,
+		banType: z.number().int(),
+		reason: z.number().int(),
+		reasonText: z.string(),
+		note: z.string().min(10, "Notes must be at least 10 characters").max(100_000),
+		evadeOk: z.boolean(),
+		demoId: z.number().int().optional(),
+		demoTick: z.number().int().optional(),
+		origin: z.number().int(),
+		duration: z.string(),
+		validUntil: futureDateSchema,
+	})
+	.refine((value) => value.reason !== BanReason.CUSTOM || value.reasonText.length >= 10, {
+		path: ["reasonText"],
+		message: "Custom reason must be at least 10 characters",
+	});
 
 export const BanCreateModal = NiceModal.create(({ reportId, steamId, demoId, demoTick }: BanCreateProps) => {
 	const { sendFlash, sendError } = useUserFlashCtx();
@@ -98,6 +122,9 @@ export const BanCreateModal = NiceModal.create(({ reportId, steamId, demoId, dem
 			mutation.mutate(updateRequest);
 		},
 		defaultValues,
+		validators: {
+			onSubmit: banCreateSchema,
+		},
 	});
 
 	return (

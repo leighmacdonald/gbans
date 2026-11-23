@@ -18,8 +18,8 @@ import { smPermissions } from "../../util/strings.ts";
 import { Heading } from "../Heading";
 
 const schema = z.object({
-	name: z.string().min(2),
-	permissions: z.array(z.number()),
+	name: z.string().min(1, "Name is required").max(64, "Maximum 64 characters"),
+	permissions: z.array(z.number().int()),
 });
 
 export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: Group }) => {

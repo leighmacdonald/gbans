@@ -18,7 +18,7 @@ func TestReason_String(t *testing.T) {
 		{name: "Custom", reason: reason.Custom, want: "Custom"},
 		{name: "External", reason: reason.External, want: "3rd party"},
 		{name: "Cheating", reason: reason.Cheating, want: "Cheating"},
-		{name: "Racism", reason: reason.Racism, want: "Racism"},
+		{name: "Bigotry", reason: reason.Bigotry, want: "Bigotry"},
 		{name: "Harassment", reason: reason.Harassment, want: "Personal Harassment"},
 		{name: "Exploiting", reason: reason.Exploiting, want: "Exploiting"},
 		{name: "WarningsExceeded", reason: reason.WarningsExceeded, want: "Warnings Exceeded"},

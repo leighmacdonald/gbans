@@ -37,6 +37,7 @@ import { toTitleCase } from "../util/strings.ts";
 import { commonTableSearchSchema } from "../util/table.ts";
 import { renderTimestamp } from "../util/time.ts";
 import { emptyOrNullString, zeroStringUndefined } from "../util/types.ts";
+import { steamID64Schema } from "../util/validation.ts";
 
 const validateSearch = commonTableSearchSchema.extend({
 	rows: z.number().optional(),
@@ -286,6 +287,20 @@ const ReportCreateForm = (): JSX.Element => {
 
 	const navigate = useNavigate();
 
+	const reportSchema = z
+		.object({
+			description: z.string().min(1, "Description is required").max(50_000, "Maximum 50000 characters"),
+			demoId: z.number().int().gte(0).optional(),
+			demoTick: z.number().int().gte(0).optional(),
+			targetId: steamID64Schema,
+			reason: z.number().int(),
+			reasonText: z.string(),
+		})
+		.refine((value) => value.reason !== BanReason.CUSTOM || value.reasonText.length >= 10, {
+			path: ["reasonText"],
+			message: "Custom reason must be at least 10 characters",
+		});
+
 	const form = useAppForm({
 		onSubmit: ({ value }) => {
 			mutation.mutate({
@@ -299,6 +314,9 @@ const ReportCreateForm = (): JSX.Element => {
 			});
 		},
 		defaultValues,
+		validators: {
+			onSubmit: reportSchema,
+		},
 	});
 
 	return (

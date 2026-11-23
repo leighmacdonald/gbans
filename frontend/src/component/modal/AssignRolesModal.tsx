@@ -9,11 +9,18 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
 import { useQueryClient } from "@tanstack/react-query";
+import { z } from "zod/v4";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import { type Role, RolesService } from "../../rpc/roles/v1/roles_pb.ts";
 import { roleList, setUserRoles } from "../../rpc/roles/v1/roles-RolesService_connectquery.ts";
+import { steamID64Schema } from "../../util/validation.ts";
 import { Heading } from "../Heading.tsx";
+
+const assignRolesSchema = z.object({
+	steamId: steamID64Schema,
+	roleIds: z.array(z.number().int().gt(0)),
+});
 
 type AssignRolesFormValues = {
 	steamId: string;
@@ -66,6 +73,7 @@ export const AssignRolesModal = NiceModal.create(({ steamId, roles }: { steamId?
 	};
 
 	const form = useAppForm<AssignRolesFormValues>({
+		formId: `assign-roles-${steamId ?? "create"}`,
 		onSubmit: async ({ value }) => {
 			mutation.mutate({
 				steamId: value.steamId,
@@ -73,6 +81,10 @@ export const AssignRolesModal = NiceModal.create(({ steamId, roles }: { steamId?
 			});
 		},
 		defaultValues,
+		validators: {
+			onBlur: assignRolesSchema,
+			onSubmit: assignRolesSchema,
+		},
 	});
 
 	return (

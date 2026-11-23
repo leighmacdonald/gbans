@@ -118,6 +118,12 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 						<Grid size={{ xs: 4 }}>
 							<form.AppField
 								name={"maxSubmissions"}
+								validators={{
+									onChange: z
+										.string()
+										.regex(/^\d+$/, "Must be a whole number")
+										.refine((value) => Number(value) >= 1, "Must be at least 1"),
+								}}
 								children={(field) => {
 									return <field.TextField label={"Max Submissions"} />;
 								}}
@@ -126,6 +132,9 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 						<Grid size={{ xs: 6 }}>
 							<form.AppField
 								name={"requiredPermission"}
+								validators={{
+									onChange: z.enum(Permission),
+								}}
 								children={(field) => {
 									return (
 										<field.SelectPermissionsField

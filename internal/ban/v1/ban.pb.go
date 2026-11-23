@@ -139,7 +139,7 @@ const (
 	BanReason_BAN_REASON_CUSTOM            BanReason = 1
 	BanReason_BAN_REASON_EXTERNAL          BanReason = 2
 	BanReason_BAN_REASON_CHEATING          BanReason = 3
-	BanReason_BAN_REASON_RACISM            BanReason = 4
+	BanReason_BAN_REASON_BIGOTRY           BanReason = 4
 	BanReason_BAN_REASON_HARASSMENT        BanReason = 5
 	BanReason_BAN_REASON_EXPLOITING        BanReason = 6
 	BanReason_BAN_REASON_WARNINGS_EXCEEDED BanReason = 7
@@ -159,7 +159,7 @@ var (
 		1:  "BAN_REASON_CUSTOM",
 		2:  "BAN_REASON_EXTERNAL",
 		3:  "BAN_REASON_CHEATING",
-		4:  "BAN_REASON_RACISM",
+		4:  "BAN_REASON_BIGOTRY",
 		5:  "BAN_REASON_HARASSMENT",
 		6:  "BAN_REASON_EXPLOITING",
 		7:  "BAN_REASON_WARNINGS_EXCEEDED",
@@ -176,7 +176,7 @@ var (
 		"BAN_REASON_CUSTOM":            1,
 		"BAN_REASON_EXTERNAL":          2,
 		"BAN_REASON_CHEATING":          3,
-		"BAN_REASON_RACISM":            4,
+		"BAN_REASON_BIGOTRY":           4,
 		"BAN_REASON_HARASSMENT":        5,
 		"BAN_REASON_EXPLOITING":        6,
 		"BAN_REASON_WARNINGS_EXCEEDED": 7,
@@ -1559,13 +1559,13 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\x13APPEAL_STATE_DENIED\x10\x01\x12\x19\n" +
 	"\x15APPEAL_STATE_ACCEPTED\x10\x02\x12\x18\n" +
 	"\x14APPEAL_STATE_REDUCED\x10\x03\x12\x1a\n" +
-	"\x16APPEAL_STATE_NO_APPEAL\x10\x04*\x91\x03\n" +
+	"\x16APPEAL_STATE_NO_APPEAL\x10\x04*\x92\x03\n" +
 	"\tBanReason\x12\x1a\n" +
 	"\x16BAN_REASON_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11BAN_REASON_CUSTOM\x10\x01\x12\x17\n" +
 	"\x13BAN_REASON_EXTERNAL\x10\x02\x12\x17\n" +
-	"\x13BAN_REASON_CHEATING\x10\x03\x12\x15\n" +
-	"\x11BAN_REASON_RACISM\x10\x04\x12\x19\n" +
+	"\x13BAN_REASON_CHEATING\x10\x03\x12\x16\n" +
+	"\x12BAN_REASON_BIGOTRY\x10\x04\x12\x19\n" +
 	"\x15BAN_REASON_HARASSMENT\x10\x05\x12\x19\n" +
 	"\x15BAN_REASON_EXPLOITING\x10\x06\x12 \n" +
 	"\x1cBAN_REASON_WARNINGS_EXCEEDED\x10\a\x12\x13\n" +

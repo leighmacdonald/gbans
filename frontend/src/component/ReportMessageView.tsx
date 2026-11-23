@@ -108,7 +108,7 @@ export const ReportMessageView = ({ message, assetURL }: ReportMessageViewProps)
 							<form.AppField
 								name={"bodyMd"}
 								validators={{
-									onChange: z.string().min(3),
+									onChange: z.string().min(3).max(50_000, "Maximum 50000 characters"),
 								}}
 								children={(field) => {
 									return <field.MarkdownField label={"Message"} />;
