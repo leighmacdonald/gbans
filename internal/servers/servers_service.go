@@ -187,6 +187,8 @@ func (s Service) Servers(ctx context.Context, _ *emptypb.Empty) (*v1.ServersResp
 func (s Service) EditServer(ctx context.Context, req *v1.EditServerRequest) (*v1.EditServerResponse, error) {
 	server, errSave := s.servers.Save(ctx, fromRPCServer(req.GetServer()))
 	if errSave != nil {
+		slog.Error("Failed to save server", slog.String("error", errSave.Error()))
+
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}
 
@@ -211,6 +213,13 @@ func (s Service) DeleteServer(ctx context.Context, req *v1.DeleteServerRequest) 
 }
 
 func fromRPCServer(server *v1.Server) Server {
+	// protojson decodes an empty repeated field to nil; pgx would then write
+	// NULL into the NOT NULL discord_seed_role_ids column.
+	seedRoleIDs := server.GetDiscordSeedRoleIds()
+	if seedRoleIDs == nil {
+		seedRoleIDs = []string{}
+	}
+
 	return Server{
 		ServerID:             server.GetServerId(),
 		ShortName:            server.GetShortName(),
@@ -232,7 +241,7 @@ func fromRPCServer(server *v1.Server) Server {
 		TokenCreatedOn:       server.GetTokenCreatedOn().AsTime(),
 		CreatedOn:            server.GetCreatedOn().AsTime(),
 		UpdatedOn:            server.GetUpdatedOn().AsTime(),
-		DiscordSeedRoleIDs:   server.GetDiscordSeedRoleIds(),
+		DiscordSeedRoleIDs:   seedRoleIDs,
 		DiscordSeedChannelID: server.GetDiscordSeedChannelId(),
 		IP:                   net.ParseIP(server.GetIp()),
 		StatsBucketID:        server.StatsBucketId,
