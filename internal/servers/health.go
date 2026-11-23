@@ -50,3 +50,32 @@ func (s *Server) recordRCON(err error) {
 		s.rconRecorder.RecordRCON(s.ServerID, err)
 	}
 }
+
+// applyConfig refreshes admin-editable static fields from a freshly loaded
+// database row while preserving dynamic state and resolved IP addresses.
+func (s *Server) applyConfig(from Server) {
+	s.Lock()
+	defer s.Unlock()
+
+	s.ShortName = from.ShortName
+	s.Name = from.Name
+	s.Address = from.Address
+	s.AddressInternal = from.AddressInternal
+	s.SDREnabled = from.SDREnabled
+	s.Port = from.Port
+	s.RCON = from.RCON
+	s.Password = from.Password
+	s.STVPassword = from.STVPassword
+	s.IsEnabled = from.IsEnabled
+	s.Deleted = from.Deleted
+	s.Region = from.Region
+	s.CC = from.CC
+	s.Latitude = from.Latitude
+	s.Longitude = from.Longitude
+	s.LogSecret = from.LogSecret
+	s.EnableStats = from.EnableStats
+	s.StatsBucketID = from.StatsBucketID
+	s.TokenCreatedOn = from.TokenCreatedOn
+	s.DiscordSeedRoleIDs = from.DiscordSeedRoleIDs
+	s.DiscordSeedChannelID = from.DiscordSeedChannelID
+}
