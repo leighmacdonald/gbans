@@ -39,7 +39,7 @@ import { LoadingPlaceholder } from "../LoadingPlaceholder.tsx";
 
 const banEditSchema = z
 	.object({
-		banType: z.number().int(),
+		banType: z.union([z.literal(BanType.BANNED), z.literal(BanType.NO_COMM)]),
 		reason: z.number().int(),
 		reasonText: z.string(),
 		note: z.string().min(10, "Notes must be at least 10 characters").max(100_000),
@@ -174,7 +174,7 @@ export const BanEditModal = NiceModal.create(({ banId }: { banId: number }) => {
 									return (
 										<field.SelectBanTypeField
 											label={"Ban Action Type"}
-											items={enumValues(BanType)}
+											items={enumValues(BanType, true)}
 											renderItem={(bt) => {
 												return (
 													<MenuItem value={bt} key={`bt-${bt}`}>

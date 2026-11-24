@@ -62,7 +62,7 @@ func discordForumMessageSaved(parent parents, author person.BaseUser, forumMessa
 		discord.BodyTextWithThumbnail(discord.ColourSuccess,
 			discord.PlayerThumbnail(author), "forum_message_created", messageSaveView{
 				Parents: parent, Author: author, Msg: forumMessage,
-			}),
+			}, discord.HydrateLinks()),
 		discord.Buttons(
 			discord.Link("🔎 View", link.Path(forumMessage)),
 			discord.Button(discordgo.SecondaryButton, "Reply",

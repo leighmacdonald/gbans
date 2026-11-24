@@ -15,7 +15,7 @@ func newInGameReportResponse(report ReportWithAuthor) *discordgo.MessageSend {
 		Report ReportWithAuthor
 	}{
 		Report: report,
-	})
+	}, discord.HydrateLinks())
 	if errContent != nil {
 		return nil
 	}
@@ -25,7 +25,7 @@ func newInGameReportResponse(report ReportWithAuthor) *discordgo.MessageSend {
 		discord.BodyText(content),
 		discordgo.Section{
 			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: report.Description},
+				discordgo.TextDisplay{Content: discord.HydrateLinks()(report.Description)},
 			},
 			Accessory: discordgo.Thumbnail{
 				Media:       discordgo.UnfurledMediaItem{URL: report.Subject.GetAvatar().Full()},
@@ -121,7 +121,7 @@ func ReportStatusChangeMessage(report ReportWithAuthor, fromStatus ReportStatus,
 func NewReportMessageResponse(report ReportWithAuthor, msg ReportMessage, author person.BaseUser) *discordgo.MessageSend {
 	content, errContent := discord.RenderTemplate("report_message_new", struct {
 		Message string
-	}{Message: msg.MessageMD})
+	}{Message: msg.MessageMD}, discord.HydrateLinks())
 	if errContent != nil {
 		return nil
 	}

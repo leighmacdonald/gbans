@@ -2,6 +2,7 @@ package sourcemod_test
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -964,6 +965,42 @@ func TestPluginServiceSMSeed(t *testing.T) {
 	requireCode(t, connect.CodeResourceExhausted, err)
 }
 
+// seededMatchInWindow reports whether the seeded timestamp falls in the same
+// date_trunc period as the reference timestamp used by SMPlayerStats. Using
+// Postgres for the comparison keeps the test aligned with the stats views,
+// including their Monday-first weeks.
+func seededMatchInWindow(
+	ctx context.Context,
+	seeded time.Time,
+	reference time.Time,
+	bucket statsv1.TimeBucket,
+) (bool, error) {
+	var trunc string
+	switch bucket {
+	case statsv1.TimeBucket_TIME_BUCKET_DAILY:
+		// SMPlayerStats looks up the previous full day for the daily window.
+		reference = reference.AddDate(0, 0, -1)
+		trunc = "day"
+	case statsv1.TimeBucket_TIME_BUCKET_WEEKLY:
+		trunc = "week"
+	case statsv1.TimeBucket_TIME_BUCKET_MONTHLY:
+		trunc = "month"
+	case statsv1.TimeBucket_TIME_BUCKET_YEARLY:
+		trunc = "year"
+	default:
+		return true, nil // All-time has no period constraint.
+	}
+
+	query := "SELECT date_trunc('" + trunc + "', $1::timestamptz) = date_trunc('" + trunc + "', $2::timestamptz)"
+
+	var same bool
+	if err := fixture.Database.QueryRow(ctx, query, seeded, reference).Scan(&same); err != nil {
+		return false, fmt.Errorf("compare stats date buckets: %w", err)
+	}
+
+	return same, nil
+}
+
 // TestPluginServiceSMPlayerStats covers the in-game /stats lookup: the
 // response shape, the overall (points) rank and kills per time window, and
 // the per-player five-second cooldown.
@@ -1055,8 +1092,24 @@ func TestPluginServiceSMPlayerStats(t *testing.T) {
 		for idx, want := range wantBuckets {
 			bucket := resp.GetBuckets()[idx]
 			require.Equal(t, want, bucket.GetTimeBucket(), "bucket %d", idx)
+
+			// SMPlayerStats reports the previous day for the daily window but
+			// the current period for the longer windows. On Mondays (and the
+			// first of a month/year) the seeded match falls outside the current
+			// period, so those windows correctly have no rows at all.
+			containsSeed, errContains := seededMatchInWindow(ctx, playedAt, time.Now(), want)
+			require.NoError(t, errContains)
+			if !containsSeed {
+				require.Zero(t, bucket.GetRank(), "rank %s", want)
+				require.Zero(t, bucket.GetPoints(), "points %s", want)
+				require.Zero(t, bucket.GetKills(), "kills %s", want)
+				require.Zero(t, bucket.GetAssists(), "assists %s", want)
+
+				continue
+			}
+
 			// The top-points player leads the overall leaderboard in every
-			// window of the seeded match, and tied leaders share rank 1.
+			// window containing the seeded match; tied leaders share rank 1.
 			require.Equal(t, uint64(1), bucket.GetRank(), "rank %s", want)
 			require.Equal(t, topPoints, bucket.GetPoints(), "points %s", want)
 			require.Equal(t, topKills, bucket.GetKills(), "kills %s", want)

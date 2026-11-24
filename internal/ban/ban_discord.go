@@ -492,8 +492,8 @@ func EditReportMessageResponse(body string, oldBody string, viewURL string, acto
 
 	return discord.NewMessage(
 		discord.Heading("Report Message Edited"),
-		discord.BodyColouredText(discord.ColourWarn, oldBody),
-		discord.BodyColouredText(discord.ColourSuccess, body),
+		discord.BodyColouredText(discord.ColourWarn, discord.HydrateLinks()(oldBody)),
+		discord.BodyColouredText(discord.ColourSuccess, discord.HydrateLinks()(body)),
 		discord.BodyText(editedBy),
 		discord.Buttons(buttons...))
 }

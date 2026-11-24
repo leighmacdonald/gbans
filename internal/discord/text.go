@@ -118,13 +118,16 @@ func RenderText(template string, context any, textProcessor ...TextProcessor) di
 	return discordgo.TextDisplay{Content: content}
 }
 
-// HydrateLinks will transform relative markdown links into full urls, eg:
-// [Settings](/wiki/Settings) -> [Settings](http://example.com/wiki/Settings),
+// HydrateLinks transforms relative markdown links and images into absolute
+// urls, eg: [Settings](/wiki/Settings) -> [Settings](http://example.com/wiki/Settings)
+// and ![](/asset/uuid) -> ![](http://example.com/asset/uuid). The `!` prefix
+// and empty alt text are both supported since Discord requires an absolute URL
+// to render an embedded image.
 func HydrateLinks() TextProcessor {
-	extURLRegex := regexp.MustCompile(`\[(.+?)]\((/.+?)\)`)
+	extURLRegex := regexp.MustCompile(`(!?)\[([^\]]*)\]\((/[^)]+)\)`)
 
 	return func(text string) string {
-		return extURLRegex.ReplaceAllString(text, fmt.Sprintf(`[$1](%s$2)`, link.Raw("")))
+		return extURLRegex.ReplaceAllString(text, fmt.Sprintf(`$1[$2](%s$3)`, link.Raw("")))
 	}
 }
 

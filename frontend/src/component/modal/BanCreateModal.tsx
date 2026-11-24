@@ -40,7 +40,7 @@ const banCreateSchema = z
 		reportId: z.number().int().optional(),
 		targetId: steamID64Schema,
 		cidr: optionalCIDRSchema,
-		banType: z.number().int(),
+		banType: z.union([z.literal(BanType.BANNED), z.literal(BanType.NO_COMM)]),
 		reason: z.number().int(),
 		reasonText: z.string(),
 		note: z.string().min(10, "Notes must be at least 10 characters").max(100_000),
@@ -167,7 +167,7 @@ export const BanCreateModal = NiceModal.create(({ reportId, steamId, demoId, dem
 									return (
 										<field.SelectBanTypeField
 											label={"Ban Action Type"}
-											items={enumValues(BanType)}
+											items={enumValues(BanType, true)}
 											renderItem={(bt) => {
 												return (
 													<MenuItem value={bt} key={`bt-${bt}`}>
