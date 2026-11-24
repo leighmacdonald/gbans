@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"syscall"
 	"time"
 
 	"connectrpc.com/connect"
@@ -92,25 +91,14 @@ func diskCheck(name string, root string) check {
 		return check{name: name, status: v1.HealthStatus_HEALTH_STATUS_DISABLED, detail: "not configured"}
 	}
 
-	var stats syscall.Statfs_t
-	if errStat := syscall.Statfs(root, &stats); errStat != nil {
+	total, free, errStat := diskStats(root)
+	if errStat != nil {
 		return check{
 			name: name, status: v1.HealthStatus_HEALTH_STATUS_ERROR,
 			detail: fmt.Sprintf("cannot stat %s: %v", root, errStat), at: time.Now(),
 		}
 	}
 
-	if stats.Bsize < 0 {
-		return check{
-			name:   name,
-			status: v1.HealthStatus_HEALTH_STATUS_ERROR,
-			detail: "invalid block size for " + root,
-			at:     time.Now(),
-		}
-	}
-	blockSize := uint64(stats.Bsize) //nolint:gosec // negative values are rejected above
-	total := stats.Blocks * blockSize
-	free := stats.Bavail * blockSize
 	if total == 0 {
 		return check{name: name, status: v1.HealthStatus_HEALTH_STATUS_ERROR, detail: "zero-size filesystem", at: time.Now()}
 	}
