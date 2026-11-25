@@ -345,6 +345,7 @@ func configFromUpdate(inCfg *configv1.Config, current Config) Config {
 			SeedChannelID:           inDiscord.GetSeedChannelId(),
 			WordFilterLogChannelID:  inDiscord.GetWordFilterLogChannelId(),
 			ChatLogChannelID:        inDiscord.GetChatLogChannelId(),
+			ChatLogEnabled:          inDiscord.GetChatLogEnabled(),
 		},
 		Log: &log.Config{
 			Level:           fromLevel(inLog.GetLevel()),
@@ -460,6 +461,7 @@ func toConfig(conf Config) *configv1.Config {
 			SeedChannelId:           &conf.Discord.SeedChannelID,
 			WordFilterLogChannelId:  &conf.Discord.WordFilterLogChannelID,
 			ChatLogChannelId:        &conf.Discord.ChatLogChannelID,
+			ChatLogEnabled:          &conf.Discord.ChatLogEnabled,
 		},
 		Patreon: &configv1.Patreon{
 			Enabled:             &conf.Patreon.Enabled,

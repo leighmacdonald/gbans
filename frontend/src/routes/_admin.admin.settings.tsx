@@ -1178,6 +1178,14 @@ function AdminSettings() {
 							<Grid size={{ xs: 12 }}>
 								<SubHeading>Output in-game chat messages logs.</SubHeading>
 								<form.AppField
+									name={"discord.chatLogEnabled"}
+									children={(field) => {
+										return (
+											<field.CheckboxField label={"Send chat and connect messages to Discord"} />
+										);
+									}}
+								/>
+								<form.AppField
 									name={"discord.chatLogChannelId"}
 									children={(field) => {
 										return <field.TextField label={"In game chat log channel ID"} />;

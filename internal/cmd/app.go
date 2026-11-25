@@ -210,7 +210,7 @@ func (g *GBans) Init(ctx context.Context) error {
 		stats.WithTeamBalancer(teamBalancer))
 
 	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler,
-		conf.Discord.SafeChatLogChannelID(), steamid.New(conf.Owner))
+		conf.Discord, steamid.New(conf.Owner))
 	g.demos = demo.NewDemos(asset.BucketDemo, demo.NewRepository(g.database), g.assets, g.stats, g.chat, g.persons, conf.Demo, steamid.New(conf.Owner))
 	anonmod := ban.NewAnonmod(ban.NewAnonmodRepository(g.database), g.config)
 

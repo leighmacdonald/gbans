@@ -75,7 +75,7 @@ func TestChatWordFilterPipeline(t *testing.T) {
 	}
 
 	chatUC := chat.New(chat.NewRepository(fixture.Database), cfg, filters,
-		fixture.Persons, notification.NullNotifier{}, exceedHandler, "", tests.OwnerSID)
+		fixture.Persons, notification.NullNotifier{}, exceedHandler, fixture.Config.Config().Discord, tests.OwnerSID)
 
 	go chatUC.Start(ctx, events)
 
@@ -167,7 +167,7 @@ func TestChatWordFilterDisabled(t *testing.T) {
 	}
 
 	chatUC := chat.New(chat.NewRepository(fixture.Database), cfg, filters,
-		fixture.Persons, notification.NullNotifier{}, exceedHandler, "", tests.OwnerSID)
+		fixture.Persons, notification.NullNotifier{}, exceedHandler, fixture.Config.Config().Discord, tests.OwnerSID)
 
 	go chatUC.Start(ctx, events)
 

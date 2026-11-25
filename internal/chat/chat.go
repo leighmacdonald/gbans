@@ -95,12 +95,18 @@ type Chat struct {
 	exceedHandler ExceedHandler
 	WarningChan   chan NewUserWarning
 	logChannelID  string
+	discordConfig *discord.Config
 }
 
 func New(repo Repository, config *Config, filters WordFilters,
 	persons person.Provider, notifications notification.Notifier, actionHandler ExceedHandler,
-	logChannelID string, owner steamid.SteamID,
+	discordConfig *discord.Config, owner steamid.SteamID,
 ) *Chat {
+	logChannelID := ""
+	if discordConfig != nil {
+		logChannelID = discordConfig.SafeChatLogChannelID()
+	}
+
 	return &Chat{
 		Config:        config,
 		repository:    repo,
@@ -109,6 +115,7 @@ func New(repo Repository, config *Config, filters WordFilters,
 		notifications: notifications,
 		persons:       persons,
 		logChannelID:  logChannelID,
+		discordConfig: discordConfig,
 		warnings:      make(map[steamid.SteamID][]UserWarning),
 		warningMu:     &sync.RWMutex{},
 		matchTimeout:  time.Duration(config.MatchTimeout) * time.Second,
@@ -219,12 +226,14 @@ func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, pers
 		})
 	}
 
-	u.notifications.Send(notification.NewDiscord(u.logChannelID, discord.NewMessage(
-		discord.RenderText("chat_message", map[string]any{
-			"Msg":    userMsg,
-			"Player": player,
-		}),
-		discord.Buttons(discord.Link("👤 Player", link.Path(player))))))
+	if u.discordConfig == nil || u.discordConfig.SafeChatLogEnabled() {
+		u.notifications.Send(notification.NewDiscord(u.logChannelID, discord.NewMessage(
+			discord.RenderText("chat_message", map[string]any{
+				"Msg":    userMsg,
+				"Player": player,
+			}),
+			discord.Buttons(discord.Link("👤 Player", link.Path(player))))))
+	}
 
 	// Chat history is stored from demo imports instead, so filter matches for live
 	// messages are recorded once the matching demo is processed (gbans refresh filters).

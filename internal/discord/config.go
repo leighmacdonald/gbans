@@ -27,6 +27,7 @@ type Config struct {
 	SeedChannelID           string
 	WordFilterLogChannelID  string
 	ChatLogChannelID        string
+	ChatLogEnabled          bool
 
 	// Unregister UnregisterOnClose when true, will unregister all the previously registered commands on shutdown.
 	UnregisterOnClose bool
@@ -120,4 +121,21 @@ func (c *Config) SafeChatLogChannelID() string {
 	}
 
 	return c.LogChannelID
+}
+
+// SafeChatLogEnabled reports whether in-game chat/connect messages should be
+// forwarded to the chat log channel.
+func (c *Config) SafeChatLogEnabled() bool {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.ChatLogEnabled
+}
+
+// SetChatLogEnabled updates the chat log forwarding flag.
+func (c *Config) SetChatLogEnabled(enabled bool) {
+	c.Lock()
+	defer c.Unlock()
+
+	c.ChatLogEnabled = enabled
 }
