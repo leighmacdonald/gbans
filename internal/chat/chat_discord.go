@@ -114,6 +114,60 @@ func filterCheckMessage(matches []Filter) *discordgo.MessageSend {
 	return discord.NewMessage(discord.BodyColouredText(colour, content))
 }
 
+// SafePingDiscord reports whether filter events should be announced in Discord.
+func (c *Config) SafePingDiscord() bool {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.PingDiscord
+}
+
+// WarningStatus describes the player's current word-filter warning standing.
+type WarningStatus struct {
+	WarningCount   int
+	CurrentWeight  int32
+	MaxWeight      int32
+	WindowResetsIn string
+}
+
+// WarningFlaggedMessage announces a chat message that matched a filter,
+// including the player's current warning status.
+func WarningFlaggedMessage(warning NewUserWarning, status WarningStatus) *discordgo.MessageSend {
+	profileURL := link.Raw(fmt.Sprintf("/profile/%d", warning.SteamID))
+	content, err := discord.RenderTemplate("filter_warning_flagged", struct {
+		Player         string
+		Profile        string
+		SteamID        int64
+		Server         string
+		Pattern        string
+		Matched        string
+		WarningCount   int
+		CurrentWeight  int32
+		MaxWeight      int32
+		WindowResetsIn string
+	}{
+		Player:         warning.Personaname,
+		Profile:        profileURL,
+		SteamID:        warning.SteamID,
+		Server:         warning.UserMessage.ServerName,
+		Pattern:        warning.MatchedFilter.Pattern,
+		Matched:        warning.Matched,
+		WarningCount:   status.WarningCount,
+		CurrentWeight:  status.CurrentWeight,
+		MaxWeight:      status.MaxWeight,
+		WindowResetsIn: status.WindowResetsIn,
+	})
+	if err != nil {
+		slog.Error("Failed to render flagged warning message", slog.String("error", err.Error()))
+	}
+
+	return discord.NewMessage(
+		discord.BodyColouredText(discord.ColourWarn, content),
+		discord.Buttons(
+			discord.Link("👤 Player", profileURL),
+			discord.Link("💬 Chat Logs", link.Raw("/chatlogs"))))
+}
+
 func WarningMessage(newWarning NewUserWarning, validUntil time.Time) *discordgo.MessageSend {
 	var (
 		expIn = "Permanent"

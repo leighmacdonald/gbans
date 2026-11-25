@@ -47,6 +47,7 @@ func testDomainConfig() Config {
 			ForumLogChannelID: "forum-log-channel", KickLogChannelID: "kick-log-channel",
 			ModPingRoleID: "ping-role", AnticheatChannelID: "anticheat-channel", SeedChannelID: "seed-channel",
 			WordFilterLogChannelID: "filter-log-channel", ChatLogChannelID: "chat-log-channel", ChatLogEnabled: true,
+			ChatFilterWarnChannelID: "warn-log-channel",
 		},
 		Log:         &log.Config{Level: log.Info, File: "/var/log/gbans.log", HTTPEnabled: true, HTTPOtelEnabled: true, HTTPLevel: log.Debug},
 		GeoLocation: &ip2location.Config{Enabled: true, CachePath: "/tmp/geo", Token: "geo-token", UpdateIntervalDays: 30},
