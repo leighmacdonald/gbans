@@ -248,7 +248,7 @@ func (s *Server) resolveIPInternal() error {
 }
 
 func (s *Server) LogAddressAdd(ctx context.Context, logAddress string) error {
-	slog.Warn("Adding logaddress", slog.String("address", logAddress))
+	slog.Debug("Adding logaddress", slog.String("address", logAddress))
 
 	return s.ExecDiscardF(ctx, "logaddress_add %s", logAddress)
 }

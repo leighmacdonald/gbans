@@ -122,6 +122,9 @@ void OnPluginStart() {
     gb_stv_timestop.AddChangeHook(OnConVarChanged);
     gb_stv_path.AddChangeHook(OnConVarChanged);
 
+    // Create the demo directories on startup, before any recording can begin.
+    ensureDemoDirectories();
+
     // Setup log files for crash reporting back to gbans
     BuildPath(Path_SM, g_accelerator_log_path, sizeof(g_accelerator_log_path), "/logs/accelerator.log");
     BuildPath(Path_SM, g_crash_log_path, sizeof(g_crash_log_path), "/data/Stored_data.txt");
@@ -138,6 +141,12 @@ void OnPluginStart() {
     reloadAdmins(true);
 }
 
+public
+void OnAllPluginsLoaded() {
+    // StAC may load before or after gbans, so check once all plugins are ready.
+    ensureStacDirectory();
+}
+
 stock void AccountForLateLoading() {
     char auth[30];
 
@@ -151,18 +160,7 @@ stock void AccountForLateLoading() {
 
 public
 void OnConfigsExecuted() {
-    char sPath[PLATFORM_MAX_PATH];
-
-    gb_stv_path.GetString(sPath, sizeof sPath);
-    if (!DirExists(sPath)) {
-        initDirectory(sPath);
-    }
-
-    char sPathComplete[PLATFORM_MAX_PATH];
-    GetConVarString(gb_stv_path_complete, sPathComplete, sizeof sPathComplete);
-    if (!DirExists(sPathComplete)) {
-        initDirectory(sPathComplete);
-    }
+    ensureDemoDirectories();
 
     authenticateServer();
 
