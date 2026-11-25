@@ -346,7 +346,26 @@ func (u *Chat) trigger(ctx context.Context, newWarn NewUserWarning) {
 	newWarn.MatchedFilter.TriggerCount++
 
 	u.warnings[newWarn.UserMessage.SteamID] = append(u.warnings[newWarn.UserMessage.SteamID], newWarn.UserWarning)
+	warnings := u.warnings[newWarn.UserMessage.SteamID]
+	var windowResetsIn time.Duration
+	if len(warnings) > 0 {
+		windowResetsIn = max(0, u.matchTimeout-time.Since(warnings[0].CreatedOn))
+	}
+	status := WarningStatus{
+		WarningCount:   len(warnings),
+		CurrentWeight:  currentWeight,
+		MaxWeight:      u.maxWeight,
+		WindowResetsIn: windowResetsIn.Round(time.Second).String(),
+	}
 	u.warningMu.Unlock()
+
+	// Announce every flagged message with the player's current warning status.
+	// The exceed handler below sends a second notice when an action is taken.
+	if u.Config != nil && u.SafePingDiscord() && u.discordConfig != nil {
+		go u.notifications.Send(notification.NewDiscord(
+			u.discordConfig.SafeChatFilterWarnChannelID(),
+			WarningFlaggedMessage(newWarn, status)))
+	}
 
 	if err := u.saveWarning(ctx, newWarn); err != nil {
 		slog.Error("Failed to execute warning handler", slog.String("error", err.Error()))

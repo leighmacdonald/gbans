@@ -27,6 +27,7 @@ type Config struct {
 	SeedChannelID           string
 	WordFilterLogChannelID  string
 	ChatLogChannelID        string
+	ChatFilterWarnChannelID string
 	ChatLogEnabled          bool
 
 	// Unregister UnregisterOnClose when true, will unregister all the previously registered commands on shutdown.
@@ -121,6 +122,16 @@ func (c *Config) SafeChatLogChannelID() string {
 	}
 
 	return c.LogChannelID
+}
+
+// SafeChatFilterWarnChannelID returns the dedicated filter-warning channel,
+// falling back to the general word filter log channel.
+func (c *Config) SafeChatFilterWarnChannelID() string {
+	if c.ChatFilterWarnChannelID != "" {
+		return c.ChatFilterWarnChannelID
+	}
+
+	return c.SafeWordFilterLogChannelID()
 }
 
 // SafeChatLogEnabled reports whether in-game chat/connect messages should be

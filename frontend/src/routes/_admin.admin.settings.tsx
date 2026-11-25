@@ -1193,6 +1193,17 @@ function AdminSettings() {
 								/>
 							</Grid>
 							<Grid size={{ xs: 12 }}>
+								<SubHeading>
+									Chat filter warning notices. Falls back to the word filter log channel when empty.
+								</SubHeading>
+								<form.AppField
+									name={"discord.chatFilterWarnLogChannelId"}
+									children={(field) => {
+										return <field.TextField label={"Chat filter warn log channel ID"} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 12 }}>
 								<SubHeading>New appeals and appeal messages are shown here.</SubHeading>
 								<form.AppField
 									name={"discord.appealLogChannelId"}
