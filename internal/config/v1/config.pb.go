@@ -1212,8 +1212,10 @@ type Discord struct {
 	WordFilterLogChannelId  *string                `protobuf:"bytes,20,opt,name=word_filter_log_channel_id,json=wordFilterLogChannelId" json:"word_filter_log_channel_id,omitempty"`
 	ChatLogChannelId        *string                `protobuf:"bytes,21,opt,name=chat_log_channel_id,json=chatLogChannelId" json:"chat_log_channel_id,omitempty"`
 	PublicLogChannelId      *string                `protobuf:"bytes,22,opt,name=public_log_channel_id,json=publicLogChannelId" json:"public_log_channel_id,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	// Forward in-game chat and connect messages to the Discord chat log channel.
+	ChatLogEnabled *bool `protobuf:"varint,23,opt,name=chat_log_enabled,json=chatLogEnabled" json:"chat_log_enabled,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *Discord) Reset() {
@@ -1398,6 +1400,13 @@ func (x *Discord) GetPublicLogChannelId() string {
 		return *x.PublicLogChannelId
 	}
 	return ""
+}
+
+func (x *Discord) GetChatLogEnabled() bool {
+	if x != nil && x.ChatLogEnabled != nil {
+		return *x.ChatLogEnabled
+	}
+	return false
 }
 
 type Log struct {
@@ -2813,7 +2822,7 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\n" +
 	"max_weight\x18\x06 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\tmaxWeight\x12+\n" +
 	"\rcheck_timeout\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fcheckTimeout\x12+\n" +
-	"\rmatch_timeout\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fmatchTimeout\"\xa6\b\n" +
+	"\rmatch_timeout\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\fmatchTimeout\"\xd0\b\n" +
 	"\aDiscord\x12 \n" +
 	"\aenabled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\aenabled\x12'\n" +
 	"\vbot_enabled\x18\x02 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\n" +
@@ -2839,7 +2848,8 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x0fseed_channel_id\x18\x13 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rseedChannelId\x12B\n" +
 	"\x1aword_filter_log_channel_id\x18\x14 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x16wordFilterLogChannelId\x125\n" +
 	"\x13chat_log_channel_id\x18\x15 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10chatLogChannelId\x121\n" +
-	"\x15public_log_channel_id\x18\x16 \x01(\tR\x12publicLogChannelId\"\xf3\x01\n" +
+	"\x15public_log_channel_id\x18\x16 \x01(\tR\x12publicLogChannelId\x12(\n" +
+	"\x10chat_log_enabled\x18\x17 \x01(\bR\x0echatLogEnabled\"\xf3\x01\n" +
 	"\x03Log\x123\n" +
 	"\x05level\x18\x01 \x01(\x0e2\x10.config.v1.LevelB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\x10\x01R\x05level\x12\x1a\n" +
 	"\x04file\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04file\x12)\n" +

@@ -63,7 +63,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 		       discord_public_log_channel_enabled, discord_public_log_channel_id, discord_public_match_log_channel_id, discord_mod_ping_role_id,
 		       discord_bot_enabled, discord_integrations_enabled, discord_vote_log_channel_id ,discord_appeal_log_channel_id,
 		       discord_ban_log_channel_id, discord_forum_log_channel_id, discord_word_filter_log_channel_id, discord_kick_log_channel_id,
-			   discord_seed_channel_id, discord_chat_log_channel_id,
+			   discord_seed_channel_id, discord_chat_log_channel_id, discord_chat_log_enabled,
 
 		       logging_level, logging_file, logging_http_enabled, logging_http_otel_enabled, logging_http_level,
 
@@ -118,7 +118,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 			&cfg.Discord.PublicLogChannelEnable, &cfg.Discord.PublicLogChannelID, &cfg.Discord.PublicMatchLogChannelID, &cfg.Discord.ModPingRoleID,
 			&cfg.Discord.BotEnabled, &cfg.Discord.IntegrationsEnabled, &cfg.Discord.VoteLogChannelID, &cfg.Discord.AppealLogChannelID,
 			&cfg.Discord.BanLogChannelID, &cfg.Discord.ForumLogChannelID, &cfg.Discord.WordFilterLogChannelID, &cfg.Discord.KickLogChannelID,
-			&cfg.Discord.SeedChannelID, &cfg.Discord.ChatLogChannelID,
+			&cfg.Discord.SeedChannelID, &cfg.Discord.ChatLogChannelID, &cfg.Discord.ChatLogEnabled,
 			&cfg.Log.Level, &cfg.Log.File, &cfg.Log.HTTPEnabled, &cfg.Log.HTTPOtelEnabled, &cfg.Log.HTTPLevel,
 			&cfg.GeoLocation.Enabled, &cfg.GeoLocation.CachePath, &cfg.GeoLocation.Token, &cfg.GeoLocation.UpdateIntervalDays,
 			&cfg.Debug.SkipOpenIDValidation, &cfg.Debug.AddRCONLogAddress,
@@ -234,6 +234,7 @@ func (c *Repository) Write(ctx context.Context, config Config) error {
 			"discord_kick_log_channel_id":         config.Discord.KickLogChannelID,
 			"discord_seed_channel_id":             config.Discord.SeedChannelID,
 			"discord_chat_log_channel_id":         config.Discord.ChatLogChannelID,
+			"discord_chat_log_enabled":            config.Discord.ChatLogEnabled,
 			"logging_level":                       config.Log.Level,
 			"logging_file":                        config.Log.File,
 			"logging_http_enabled":                config.Log.HTTPEnabled,
