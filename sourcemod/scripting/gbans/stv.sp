@@ -212,14 +212,54 @@ void initDirectory(const char[] sDir) {
     char sPieces[32][PLATFORM_MAX_PATH];
     char sPath[PLATFORM_MAX_PATH];
     char sNext[PLATFORM_MAX_PATH];
+    bool absolute   = sDir[0] == '/';
     int  iNumPieces = ExplodeString(sDir, "/", sPieces, sizeof sPieces, sizeof sPieces[]);
 
+    sPath[0] = '\0';
     for (int i = 0; i < iNumPieces; i++) {
-        Format(sNext, sizeof sNext, "%s/%s", sPath, sPieces[i]);
+        // Skip empty segments from leading or repeated slashes so a leading
+        // slash is only re-added for genuinely absolute paths. Relative paths
+        // stay relative to the game folder (tf/), where SourceMod resolves them.
+        if (sPieces[i][0] == '\0') {
+            continue;
+        }
+        if (sPath[0] == '\0') {
+            Format(sNext, sizeof sNext, "%s%s", absolute ? "/" : "", sPieces[i]);
+        } else {
+            Format(sNext, sizeof sNext, "%s/%s", sPath, sPieces[i]);
+        }
         strcopy(sPath, sizeof sPath, sNext);
 
-        if (!DirExists(sPath)) {
-            CreateDirectory(sPath, 509);
+        if (!DirExists(sPath) && !CreateDirectory(sPath)) {
+            SetFailState("Failed to create directory: %s", sPath);
         }
+    }
+}
+
+// Ensure the active and completed SourceTV demo directories exist.
+void ensureDemoDirectories() {
+    char sPath[PLATFORM_MAX_PATH];
+
+    gb_stv_path.GetString(sPath, sizeof sPath);
+    if (!DirExists(sPath)) {
+        initDirectory(sPath);
+    }
+
+    gb_stv_path_complete.GetString(sPath, sizeof sPath);
+    if (!DirExists(sPath)) {
+        initDirectory(sPath);
+    }
+}
+
+// Ensure StAC's log directory exists when the StAC plugin is loaded.
+void ensureStacDirectory() {
+    if (!LibraryExists("stac")) {
+        return;
+    }
+
+    char sPath[PLATFORM_MAX_PATH];
+    BuildPath(Path_SM, sPath, sizeof sPath, "logs/stac");
+    if (!DirExists(sPath)) {
+        initDirectory(sPath);
     }
 }
