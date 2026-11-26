@@ -434,6 +434,7 @@ func (s Service) loadMatch(ctx context.Context, matchID uuid.UUID) (*v1.Match, e
 			Duration:        &match.DurationMs,
 			StartTime:       timestamppb.New(match.StartTime),
 			CreatedOn:       timestamppb.New(match.CreatedOn),
+			IsComplete:      &match.IsComplete,
 		},
 		Players:  map[string]*personv1.PersonDisplay{},
 		Rounds:   []*v1.Round{},

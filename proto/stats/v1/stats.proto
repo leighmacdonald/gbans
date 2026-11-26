@@ -513,6 +513,8 @@ message MatchOverview {
   uint64 duration = 14;
   google.protobuf.Timestamp created_on = 15;
   string asset_id = 16 [(buf.validate.field).string.uuid = true];
+  // False when the match ended before the map concluded (aborted recording).
+  bool is_complete = 17;
 }
 
 message MatchChatLog {

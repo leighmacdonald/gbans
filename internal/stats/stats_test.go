@@ -1180,6 +1180,21 @@ func validTestDemo(duration float64, numPlayers int) *demoparse.Demo {
 	}
 }
 
+func TestDemoIsComplete(t *testing.T) {
+	// Legacy demos without any events are treated as complete.
+	require.True(t, stats.DemoIsComplete(validTestDemo(3600, 6)))
+
+	withEvents := validTestDemo(3600, 6)
+	withEvents.Events = []demoparse.MatchEvent{
+		{Type: demoparse.MatchEventRoundWon},
+	}
+	require.False(t, stats.DemoIsComplete(withEvents))
+
+	withEvents.Events = append(withEvents.Events,
+		demoparse.MatchEvent{Type: demoparse.MatchEventGameOver, GameOver: &demoparse.GameOverEvent{Reason: "Win"}})
+	require.True(t, stats.DemoIsComplete(withEvents))
+}
+
 func TestValidateDemo(t *testing.T) {
 	require.NoError(t, stats.ValidateDemo(validTestDemo(3600, 6)))
 	require.NoError(t, stats.ValidateDemo(validTestDemo(7200, 6)))

@@ -653,6 +653,22 @@ func ValidateDemo(demo *demoparse.Demo) error {
 	return nil
 }
 
+// DemoIsComplete reports whether a parsed demo reached a game-over event.
+// Demos with no events at all predate event recording and are treated as
+// complete so older demos keep feeding ratings.
+func DemoIsComplete(demo *demoparse.Demo) bool {
+	if len(demo.Events) == 0 {
+		return true
+	}
+	for _, event := range demo.Events {
+		if event.Type == demoparse.MatchEventGameOver {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (s Stats) Import(ctx context.Context, serverID int32, demoID int32, demo *demoparse.Demo, timeStart time.Time) (*uuid.UUID, error) {
 	if demo.DemoType != demoparse.HL2Demo {
 		return nil, fmt.Errorf("%w: invalid demo type", ErrInvalidState)
@@ -683,7 +699,7 @@ func (s Stats) Import(ctx context.Context, serverID int32, demoID int32, demo *d
 		return nil, fmt.Errorf("%w: %w", ErrInvalidState, errMap)
 	}
 
-	matchID, errMatch := s.repo.CreateMatch(ctx, serverID, demoID, demo, timeStart, mapInfo, nil)
+	matchID, errMatch := s.repo.CreateMatch(ctx, serverID, demoID, demo, timeStart, mapInfo, nil, DemoIsComplete(demo))
 	if errMatch != nil {
 		return nil, errMatch
 	}

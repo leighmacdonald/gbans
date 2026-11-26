@@ -176,6 +176,7 @@ void OnMapEnd() {
         StopRecord();
         gIsManual = false;
     }
+    flushActiveDemos();
 }
 
 public
@@ -186,6 +187,11 @@ void OnMapStart() {
 
 public
 void OnPluginEnd() {
+    if (gIsRecording) {
+        StopRecord();
+    }
+    flushActiveDemos();
+
     if (gTimerCheckStatus != null) {
         KillTimer(gTimerCheckStatus);
     }

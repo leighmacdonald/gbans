@@ -3408,8 +3408,10 @@ type MatchOverview struct {
 	Duration        *uint64                `protobuf:"varint,14,opt,name=duration" json:"duration,omitempty"`
 	CreatedOn       *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
 	AssetId         *string                `protobuf:"bytes,16,opt,name=asset_id,json=assetId" json:"asset_id,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// False when the match ended before the map concluded (aborted recording).
+	IsComplete    *bool `protobuf:"varint,17,opt,name=is_complete,json=isComplete" json:"is_complete,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MatchOverview) Reset() {
@@ -3545,6 +3547,13 @@ func (x *MatchOverview) GetAssetId() string {
 		return *x.AssetId
 	}
 	return ""
+}
+
+func (x *MatchOverview) GetIsComplete() bool {
+	if x != nil && x.IsComplete != nil {
+		return *x.IsComplete
+	}
+	return false
 }
 
 type MatchChatLog struct {
@@ -6030,7 +6039,7 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\fMatchRequest\x12#\n" +
 	"\bmatch_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\amatchId\"6\n" +
 	"\rMatchResponse\x12%\n" +
-	"\x05match\x18\x01 \x01(\v2\x0f.stats.v1.MatchR\x05match\"\xb2\x04\n" +
+	"\x05match\x18\x01 \x01(\v2\x0f.stats.v1.MatchR\x05match\"\xd3\x04\n" +
 	"\rMatchOverview\x12\x19\n" +
 	"\bmatch_id\x18\x01 \x01(\tR\amatchId\x12\x1b\n" +
 	"\tserver_id\x18\x02 \x01(\x05R\bserverId\x12\x1f\n" +
@@ -6050,7 +6059,9 @@ const file_stats_v1_stats_proto_rawDesc = "" +
 	"\bduration\x18\x0e \x01(\x04B\x020\x01R\bduration\x129\n" +
 	"\n" +
 	"created_on\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x12#\n" +
-	"\basset_id\x18\x10 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\aassetId\"\xc6\x01\n" +
+	"\basset_id\x18\x10 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\aassetId\x12\x1f\n" +
+	"\vis_complete\x18\x11 \x01(\bR\n" +
+	"isComplete\"\xc6\x01\n" +
 	"\fMatchChatLog\x124\n" +
 	"\x11person_message_id\x18\x01 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\x0fpersonMessageId\x12#\n" +
 	"\bsteam_id\x18\x02 \x01(\x03B\b\xbaH\x03\xc8\x01\x010\x01R\asteamId\x12\x1a\n" +

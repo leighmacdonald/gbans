@@ -39,6 +39,11 @@ This covers functionality available through the gbans plugin as well as some rec
 | gb_stv_path              | stv_demos/active   | Path to store currently recording demos                        |
 | gb_stv_path_complete     | stv_demos/complete | Path to store complete demos                                   |
 
+When a map ends or the plugin unloads, any active recording is stopped and all remaining demos in
+`gb_stv_path` are moved to `gb_stv_path_complete`. This preserves matches that end abruptly (map
+change or game restart) so their stats can still be tracked. In the web UI such matches are marked
+as **Incomplete** and are excluded from skill/rating calculations.
+
 Before the server hibernates, the plugin disables `net_chan_limit_msec` so the first player can complete the slow
 cold-start handshake. It is restored to `gb_net_chan_limit_active` (default `192`) once a real player is fully in the
 server. Set that convar to a negative value to disable the behaviour entirely.
