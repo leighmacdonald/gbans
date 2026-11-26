@@ -784,7 +784,7 @@ func (r Repository) getMatch(ctx context.Context, matchID uuid.UUID) (*Match, er
 		SELECT
 			m.match_id, m.server_id, m.map_id, m.demo_id, m.stats_bucket_id, m.hostname, m.score_red, m.score_blu,
 			m.start_time, m.duration_ms, m.created_on, COALESCE(a.asset_id, '00000000-0000-0000-0000-000000000000'),
-			COALESCE(mp.map_name, ''), COALESCE(srv.name, ''), COALESCE(srv.short_name, '')
+			COALESCE(mp.map_name, ''), COALESCE(srv.name, ''), COALESCE(srv.short_name, ''), m.is_complete
 		FROM match m
 		LEFT JOIN demo d USING (demo_id)
 		LEFT JOIN asset a ON a.asset_id = d.asset_id AND NOT a.deleted
@@ -795,7 +795,8 @@ func (r Repository) getMatch(ctx context.Context, matchID uuid.UUID) (*Match, er
 	var match Match
 	if err := r.QueryRow(ctx, query, matchID).Scan(&match.MatchID, &match.ServerID, &match.MapID, &match.DemoID,
 		&match.StatsBucketID, &match.Hostname, &match.ScoreRed, &match.ScoreBlu, &match.StartTime, &match.DurationMs,
-		&match.CreatedOn, &match.AssetID, &match.MapName, &match.ServerName, &match.ServerNameShort); err != nil {
+		&match.CreatedOn, &match.AssetID, &match.MapName, &match.ServerName, &match.ServerNameShort,
+		&match.IsComplete); err != nil {
 		return nil, database.Err(err)
 	}
 
@@ -873,7 +874,7 @@ func roundIDForTick(ranges []roundTickRange, tick int) *int64 {
 	return nil
 }
 
-func (r Repository) CreateMatch(ctx context.Context, serverID int32, demoID int32, demo *demoparse.Demo, timeStart time.Time, mapInfo maps.Map, statsBucketID *int32) (uuid.UUID, error) {
+func (r Repository) CreateMatch(ctx context.Context, serverID int32, demoID int32, demo *demoparse.Demo, timeStart time.Time, mapInfo maps.Map, statsBucketID *int32, isComplete bool) (uuid.UUID, error) {
 	newID, errID := uuid.NewV4()
 	if errID != nil {
 		return newID, fmt.Errorf("%w: failed to generate UUID", ErrInvalidState)
@@ -902,12 +903,12 @@ func (r Repository) CreateMatch(ctx context.Context, serverID int32, demoID int3
 	if _, errMatch := transaction.Exec(ctx, `
 		INSERT INTO match (
 			match_id, server_id, map_id, demo_id, stats_bucket_id, hostname,
-			score_red, score_blu, start_time, duration_ms, created_on)
+			score_red, score_blu, start_time, duration_ms, created_on, is_complete)
 		VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
 		)`,
 		newID, serverID, mapInfo.MapID, demoID, statsBucketID, demo.Filename, scores.Red,
-		scores.Blu, timeStart, duration.Milliseconds(), time.Now()); errMatch != nil {
+		scores.Blu, timeStart, duration.Milliseconds(), time.Now(), isComplete); errMatch != nil {
 		if err := transaction.Rollback(ctx); err != nil {
 			slog.Error("Failed to rollback tx", slog.String("error", err.Error()))
 		}

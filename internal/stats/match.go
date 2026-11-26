@@ -56,6 +56,7 @@ type Match struct {
 	StartTime       time.Time
 	DurationMs      uint64
 	CreatedOn       time.Time
+	IsComplete      bool
 
 	// Data sums are split into rounds for a bit more fine grained info.
 	// They are stored in a enturely flat structure here just for ease of processing

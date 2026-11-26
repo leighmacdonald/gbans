@@ -127,6 +127,11 @@ void SourceTV_OnStopRecording(int instance, const char[] filename, int recording
     char sPieces[32][PLATFORM_MAX_PATH];
     char outPath[PLATFORM_MAX_PATH];
 
+    // A map change or shutdown may have already flushed the demo to complete.
+    if (!FileExists(filename)) {
+        return;
+    }
+
     GetConVarString(gb_stv_path_complete, outPath, sizeof outPath);
 
     int iNumPieces = ExplodeString(filename, "/", sPieces, sizeof sPieces, sizeof sPieces[]);
@@ -143,6 +148,47 @@ void SourceTV_OnStopRecording(int instance, const char[] filename, int recording
         LogError("Failed to rename completed demo file");
         return;
     }
+}
+
+// Move any demos left in the active directory into the complete directory.
+// Called when a map is ending or the plugin is unloading so demos from matches
+// that never reached a natural conclusion are still picked up for stats.
+void flushActiveDemos() {
+    char activePath[PLATFORM_MAX_PATH];
+    char completePath[PLATFORM_MAX_PATH];
+    char entry[PLATFORM_MAX_PATH];
+    char from[PLATFORM_MAX_PATH];
+    char to[PLATFORM_MAX_PATH];
+
+    GetConVarString(gb_stv_path, activePath, sizeof activePath);
+    GetConVarString(gb_stv_path_complete, completePath, sizeof completePath);
+
+    DirectoryListing dir = OpenDirectory(activePath);
+    if (dir == null) {
+        LogError("Failed to open active demo directory for flushing: %s", activePath);
+
+        return;
+    }
+
+    FileType entryType;
+    while (ReadDirEntry(dir, entry, sizeof entry, entryType)) {
+        if (entryType != FileType_File || !StrEqual(entry[strlen(entry) - 4], ".dem")) {
+            continue;
+        }
+
+        Format(from, sizeof from, "%s/%s", activePath, entry);
+        Format(to, sizeof to, "%s/%s", completePath, entry);
+        if (FileExists(to)) {
+            continue;
+        }
+
+        LogMessage("Flushing incomplete demo: %s -> %s", from, to);
+        if (!RenameFile(to, from)) {
+            LogError("Failed to flush incomplete demo: %s", from);
+        }
+    }
+
+    delete dir;
 }
 
 /**

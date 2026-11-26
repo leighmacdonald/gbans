@@ -10,6 +10,7 @@ import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { useMemo } from "react";
@@ -127,6 +128,16 @@ function MatchPage() {
 									size="small"
 									variant="outlined"
 								/>
+							)}
+							{overview && !overview.isComplete && (
+								<Tooltip title="This match ended before the map concluded. It is excluded from skill calculations.">
+									<Chip
+										label={"Incomplete Match"}
+										size={"small"}
+										color={"warning"}
+										variant={"outlined"}
+									/>
+								</Tooltip>
 							)}
 						</Stack>
 						<Stack

@@ -118,6 +118,7 @@ func (r Repository) ratedMatchOutcomes(ctx context.Context) ([]ratedOutcomeRow, 
 		JOIN match_round mr ON mr.match_id = m.match_id
 		JOIN match_round_player rp ON rp.round_id = mr.round_id
 		WHERE (m.score_red > 0 OR m.score_blu > 0)
+			AND m.is_complete
 			AND rp.team::text IN ('red', 'blu')
 		GROUP BY m.match_id, m.stats_bucket_id, m.start_time, m.score_red, m.score_blu, rp.steam_id
 		-- Spectators are recorded in every round's player list with no stats.
