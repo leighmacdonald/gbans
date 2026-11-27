@@ -192,45 +192,6 @@ void flushActiveDemos() {
 }
 
 /**
- * Only allow SourceMod admins with kick privileges to watch SourceTV. This
- * runs once the spectator is in game so their SteamID is available for the
- * admin lookup; unauthorized spectators are kicked immediately.
- *
- * This exists because sometimes on slower systems the first user connecting
- * when coming out of hiberation can be kicked due to net_chan_limit_msec
- * getting triggered while doing the warmup phase.
- */
-public
-void SourceTV_OnSpectatorPutInServer(int client) {
-    if (!SourceTV_IsClientConnected(client) || SourceTV_IsClientProxy(client)) {
-        return;
-    }
-
-    AdminId admin = INVALID_ADMIN_ID;
-
-    char steam2[32];
-    if (GetClientAuthId(client, AuthId_Steam2, steam2, sizeof steam2)) {
-        admin = FindAdminByIdentity(AUTHMETHOD_STEAM, steam2);
-    }
-
-    if (admin == INVALID_ADMIN_ID) {
-        char steam64[32];
-        if (GetClientAuthId(client, AuthId_SteamID64, steam64, sizeof steam64)) {
-            admin = FindAdminByIdentity(AUTHMETHOD_STEAM, steam64);
-        }
-    }
-
-    if (admin != INVALID_ADMIN_ID && GetAdminFlag(admin, Admin_Kick, Access_Effective)) {
-        return;
-    }
-
-    char name[64];
-    SourceTV_GetClientName(client, name, sizeof name);
-    LogMessage("Kicking SourceTV spectator %s: missing kick privilege", name);
-    SourceTV_KickClient(client, "SourceTV access requires the SourceMod kick privilege (ADMFLAG_KICK)");
-}
-
-/**
  * Relay chat messages typed by SourceTV spectators to the in-game players so
  * the two audiences can talk to each other.
  */
