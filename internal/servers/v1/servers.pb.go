@@ -887,10 +887,11 @@ func (x *SafeServer) GetStatsBucketId() int32 {
 type Server struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Zero for create requests; assigned by the database on insert.
-	ServerId             *int32                 `protobuf:"varint,1,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
-	ShortName            *string                `protobuf:"bytes,2,opt,name=short_name,json=shortName" json:"short_name,omitempty"`
-	Name                 *string                `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
-	Address              *string                `protobuf:"bytes,4,opt,name=address" json:"address,omitempty"`
+	ServerId  *int32  `protobuf:"varint,1,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
+	ShortName *string `protobuf:"bytes,2,opt,name=short_name,json=shortName" json:"short_name,omitempty"`
+	Name      *string `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
+	Address   *string `protobuf:"bytes,4,opt,name=address" json:"address,omitempty"`
+	// Optional; when empty the normal address is used (e.g. for SSH).
 	AddressInternal      *string                `protobuf:"bytes,5,opt,name=address_internal,json=addressInternal" json:"address_internal,omitempty"`
 	SdrEnabled           *bool                  `protobuf:"varint,6,opt,name=sdr_enabled,json=sdrEnabled" json:"sdr_enabled,omitempty"`
 	Port                 *uint32                `protobuf:"varint,7,opt,name=port" json:"port,omitempty"`
@@ -1646,7 +1647,7 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"\x06humans\x18\x10 \x01(\x05B\n" +
 	"\xbaH\a\xc8\x01\x01\x1a\x02(\x00R\x06humans\x12\x1a\n" +
 	"\x04tags\x18\x11 \x03(\tB\x06\xbaH\x03\xc8\x01\x01R\x04tags\x12&\n" +
-	"\x0fstats_bucket_id\x18\x12 \x01(\x05R\rstatsBucketId\"\xd9\a\n" +
+	"\x0fstats_bucket_id\x18\x12 \x01(\x05R\rstatsBucketId\"\xcf\a\n" +
 	"\x06Server\x12$\n" +
 	"\tserver_id\x18\x01 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\bserverId\x12)\n" +
 	"\n" +
@@ -1654,8 +1655,8 @@ const file_servers_v1_servers_proto_rawDesc = "" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\tshortName\x12\x1e\n" +
 	"\x04name\x18\x03 \x01(\tB\n" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04name\x12%\n" +
-	"\aaddress\x18\x04 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xa8\x01\x01R\aaddress\x123\n" +
-	"\x10address_internal\x18\x05 \x01(\tB\b\xbaH\x05r\x03\xa8\x01\x01R\x0faddressInternal\x12\x1f\n" +
+	"\aaddress\x18\x04 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xa8\x01\x01R\aaddress\x12)\n" +
+	"\x10address_internal\x18\x05 \x01(\tR\x0faddressInternal\x12\x1f\n" +
 	"\vsdr_enabled\x18\x06 \x01(\bR\n" +
 	"sdrEnabled\x12 \n" +
 	"\x04port\x18\a \x01(\rB\f\xbaH\t\xc8\x01\x01*\x04\x18\xff\xff\x03R\x04port\x12\x1e\n" +

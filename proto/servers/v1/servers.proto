@@ -244,7 +244,8 @@ message Server {
     (buf.validate.field).required = true,
     (buf.validate.field).string.address = true
   ];
-  string address_internal = 5 [(buf.validate.field).string.address = true];
+  // Optional; when empty the normal address is used (e.g. for SSH).
+  string address_internal = 5;
   bool sdr_enabled = 6;
   uint32 port = 7 [
     (buf.validate.field).required = true,
