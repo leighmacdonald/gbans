@@ -361,6 +361,18 @@ native bool SteamWorks_ClearRules();
 native bool SteamWorks_SetAdvertiseServerActive(bool bActive);
 
 /**
+ * Returns the FakeIP address and port assigned to the game server, if any.
+ * Does not function on games that don't support -enablefakeip.
+ *
+ * Check the return value before using the IP and port.
+ *
+ * @param ip            Variable to store the FakeIP (host byte order).
+ * @param port          Variable to store the assigned fake port.
+ * @return              True if a FakeIP was successfully retrieved, false otherwise.
+ */
+native bool SteamWorks_GetFakeIP(int &ip, int &port);
+
+/**
  * Deprecated no-op. Newer Steamworks SDKs removed ForceHeartbeat; server list
  * heartbeats are now sent implicitly by Steam.
  *
@@ -1244,6 +1256,7 @@ public void __ext_SteamWorks_SetNTVOptional()
 	MarkNativeAsOptional("SteamWorks_SetRule");
 	MarkNativeAsOptional("SteamWorks_ClearRules");
 	MarkNativeAsOptional("SteamWorks_SetAdvertiseServerActive");
+	MarkNativeAsOptional("SteamWorks_GetFakeIP");
 	MarkNativeAsOptional("SteamWorks_ForceHeartbeat");
 	MarkNativeAsOptional("SteamWorks_GetUserGroupStatus");
 	MarkNativeAsOptional("SteamWorks_GetUserGroupStatusAuthID");
