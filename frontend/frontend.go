@@ -10,7 +10,7 @@ var ErrContentRoot = errors.New("failed to open content root")
 //
 // nolint:gochecknoglobals
 var jsRoutes = []string{
-	"/admin/anticheat", "/admin/appeals", "/admin/bans", "/admin/contests", "/admin/filters",
+	"/admin/anticheat", "/admin/appeals", "/admin/bans", "/admin/contests", "/admin/filters", "/admin/health",
 	"/admin/network", "/admin/network/cidrblocks", "/admin/network/ipInfo", "/admin/network/playersbyip",
 	"/admin/news", "/admin/people", "/admin/reports", "/admin/roles", "/admin/serverlogs",
 	"/admin/servers", "/admin/settings", "/admin/votes", "/ban/{ban_id}", "/changelog",
