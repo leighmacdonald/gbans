@@ -1,6 +1,7 @@
 package person_test
 
 import (
+	"context"
 	"math/rand/v2"
 	"strconv"
 	"testing"
@@ -213,6 +214,18 @@ func TestRefreshFromSteam(t *testing.T) {
 	require.NoError(t, errPersisted)
 	require.Equal(t, "name-"+sid.String(), persisted.PersonaName)
 	require.Equal(t, tests.DefaultAvatarHash, persisted.AvatarHash)
+}
+
+// A failed person lookup must not fall through to a refresh of the zero-value
+// Person, which would send an invalid "0" steam id to the Steam API.
+func TestGetOrCreatePropagatesLookupError(t *testing.T) {
+	personCase := person.NewPersons(person.NewRepository(fixture.Database, true), fixture.TFApi)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	_, err := personCase.GetOrCreatePersonBySteamID(ctx, steamid.RandSID64())
+	require.ErrorIs(t, err, context.Canceled)
 }
 
 func TestActiveBanID(t *testing.T) {

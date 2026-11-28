@@ -105,6 +105,9 @@ backend. Spectators and unassigned players are included. The backend resolves th
 looks up each player's internal rating (`mu`, using the calculator's starting value for unrated players), and returns
 the teams. The gbans plugin then applies the team changes and invokes the caller's callback with the result.
 
+Set `gb_debug_scramble` to `1` to log the resulting red/blu/waiting assignments (name, user ID and SteamID64) to the
+server log. Failed scrambles are logged there as well.
+
 ## Stats refresh schedule
 
 The aggregated stats views (daily, weekly, monthly, yearly and all-time summaries, per-map views and player ratings)

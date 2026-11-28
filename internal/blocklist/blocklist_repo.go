@@ -3,6 +3,7 @@ package blocklist
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/netip"
 	"time"
 
@@ -33,7 +34,7 @@ func (b Repository) InsertCache(ctx context.Context, list CIDRBlockSource, entri
 
 	batchResults := b.SendBatch(ctx, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
-		return errors.Join(errCloseBatch, database.ErrCloseBatch)
+		return fmt.Errorf("failed to insert %d cidr block entries: %w", len(entries), database.Err(errCloseBatch))
 	}
 
 	return nil

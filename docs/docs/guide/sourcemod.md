@@ -28,6 +28,7 @@ This covers functionality available through the gbans plugin as well as some rec
 | gb_net_chan_limit_active | 192                | net_chan_limit_msec after a player connects; negative disables |
 | gb_disable_autoteam      | 1                  | Disallow the use of the autoteam command                       |
 | gb_hide_connections      | 1                  | Dont show the connect/disconnect message to users              |
+| gb_debug_scramble        | 0                  | Log a table of team assignments after a scramble               |
 | gb_stv_enable            | 1                  | Enable SourceTV                                                |
 | gb_auto_record           | 1                  | Enable automatic recording                                     |
 | gb_stv_minplayers        | 1                  | Minimum players on server to start recording                   |

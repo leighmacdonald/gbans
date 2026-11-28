@@ -100,13 +100,14 @@ func (b *Blocklists) UpdateCache(ctx context.Context) error {
 		return errLists
 	}
 
+	var errs []error
 	for _, list := range lists {
 		if err := b.updateSource(ctx, list); err != nil {
-			slog.Error("Failed to update cidr block source", slog.String("error", err.Error()))
+			errs = append(errs, fmt.Errorf("failed to update cidr block source %s: %w", list.Name, err))
 		}
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 func (b *Blocklists) updateSource(ctx context.Context, list CIDRBlockSource) error {
