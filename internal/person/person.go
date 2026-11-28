@@ -560,7 +560,13 @@ func (u *Persons) getOrCreatePerson(
 	forceRefresh bool,
 ) (person.Core, error) {
 	fetchedPerson, errGetPerson := u.BySteamID(ctx, sid64)
-	if errGetPerson != nil && errors.Is(errGetPerson, ErrPlayerDoesNotExist) {
+	if errGetPerson != nil {
+		if !errors.Is(errGetPerson, ErrPlayerDoesNotExist) {
+			// Continuing with the zero-value Person would send an invalid
+			// steam id ("0") to the Steam API and return a bogus profile.
+			return person.Core{}, fmt.Errorf("failed to fetch person %s: %w", sid64.String(), errGetPerson)
+		}
+
 		fetchedPerson = New(sid64)
 		if err := u.repo.Save(ctx, &fetchedPerson); err != nil {
 			return person.Core{}, err
@@ -591,6 +597,11 @@ func (u *Persons) updatePerson(ctx context.Context, person *Person) error {
 	if u.tfAPI == nil {
 		return nil
 	}
+
+	if !person.SteamID.Valid() {
+		return fmt.Errorf("%w: invalid steam id %s", ErrSteamUpdate, person.SteamID.String())
+	}
+
 	summaries, errSummaries := u.tfAPI.Summaries(ctx, []steamid.SteamID{person.SteamID})
 	if errSummaries != nil {
 		return errSummaries

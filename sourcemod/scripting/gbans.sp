@@ -87,6 +87,10 @@ void OnPluginStart() {
         "Broadcast the /seed command when fewer than this many real players are online (0 disables)", FCVAR_NONE, true,
         0.0);
 
+    // Debug settings
+    gb_debug_scramble = AutoExecConfig_CreateConVar(
+        "gb_debug_scramble", "0", "Log a table of team assignments after a scramble", FCVAR_NONE, true, 0.0, true, 1.0);
+
     // STV settings
     gb_stv_enable =
         AutoExecConfig_CreateConVar("gb_stv_enable", "1", "Enable SourceTV", FCVAR_NONE, true, 0.0, true, 1.0);

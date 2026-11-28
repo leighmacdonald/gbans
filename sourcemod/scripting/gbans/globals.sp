@@ -15,6 +15,8 @@ ConVar gb_net_chan_limit_active;
 ConVar gb_disable_autoteam;
 ConVar gb_hide_connections;
 ConVar gb_seed_promo_minplayers;
+// Debug options
+ConVar gb_debug_scramble;
 // STV options
 ConVar gb_stv_enable;
 ConVar gb_auto_record;

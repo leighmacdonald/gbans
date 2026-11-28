@@ -158,6 +158,8 @@ void onBalanceTeamsResp(Handle request, bool failure, bool successful, EHTTPStat
     int bluCount     = collectTeamClients(context, data, "bluSteamIds", bluClients, sizeof bluClients);
     int waitingCount = collectTeamClients(context, data, "waitingSteamIds", waitingClients, sizeof waitingClients);
 
+    debugPrintScrambleResult(true, redClients, redCount, bluClients, bluCount, waitingClients, waitingCount, error);
+
     for (int idx = 0; idx < redCount; idx++) {
         applyScrambleTeam(redClients[idx], SCRAMBLE_TEAM_RED);
     }
@@ -188,7 +190,7 @@ int collectTeamClients(Handle context, JSON_Object data, const char[] field, int
         return 0;
     }
 
-    resetScrambleContext(context);
+    rewindScramblePlayers(context);
     int count = ReadPackCell(context);
 
     int found = 0;
@@ -215,13 +217,16 @@ int collectTeamClients(Handle context, JSON_Object data, const char[] field, int
         }
 
         // Restart the player scan for the next SteamID64.
-        resetScrambleContext(context);
+        rewindScramblePlayers(context);
     }
 
     return found;
 }
 
-void resetScrambleContext(Handle context) {
+void resetScrambleContext(Handle context) { ResetPack(context); }
+
+// Rewind to the first player cell, skipping the stored callback.
+void rewindScramblePlayers(Handle context) {
     ResetPack(context);
     ReadPackFunction(context);
 }
@@ -229,10 +234,58 @@ void resetScrambleContext(Handle context) {
 void finishScramble(Handle context, bool success, const char[] error) {
     int none[SCRAMBLE_MAX_PLAYERS];
 
+    debugPrintScrambleResult(success, none, 0, none, 0, none, 0, error);
+
     resetScrambleContext(context);
     Function callback = ReadPackFunction(context);
     invokeScrambleCallback(callback, success, none, 0, none, 0, none, 0, error);
     delete context;
+}
+
+void debugPrintScrambleResult(bool success, const int[] redClients, int redCount, const int[] bluClients, int bluCount,
+                              const int[] waitingClients, int waitingCount, const char[] error) {
+    if (!GetConVarBool(gb_debug_scramble)) {
+        return;
+    }
+
+    if (!success || error[0] != '\0') {
+        LogMessage("[GB Scramble] Failed: %s", error);
+        return;
+    }
+
+    LogMessage("[GB Scramble] Balanced teams (red=%d blu=%d waiting=%d)", redCount, bluCount, waitingCount);
+    LogMessage("[GB Scramble]   %-8s %2s %-24s %10s %s", "TEAM", "#", "NAME", "USERID", "STEAMID64");
+    debugPrintScrambleTeam("RED", redClients, redCount);
+    debugPrintScrambleTeam("BLU", bluClients, bluCount);
+    debugPrintScrambleTeam("WAITING", waitingClients, waitingCount);
+}
+
+void debugPrintScrambleTeam(const char[] team, const int[] clients, int count) {
+    char name[64];
+    char authId[32];
+    char line[192];
+
+    for (int idx = 0; idx < count; idx++) {
+        int client = clients[idx];
+        if (!isValidClient(client)) {
+            continue;
+        }
+
+        if (!GetClientName(client, name, sizeof name)) {
+            strcopy(name, sizeof name, "unknown");
+        }
+        if (name[24] != '\0') {
+            name[24] = '\0';
+        }
+
+        if (!GetClientAuthId(client, AuthId_SteamID64, authId, sizeof authId)) {
+            strcopy(authId, sizeof authId, "n/a");
+        }
+
+        Format(line, sizeof line, "[GB Scramble]   %-8s %2d %-24s %10d %s", team, idx + 1, name,
+               GetClientUserId(client), authId);
+        LogMessage("%s", line);
+    }
 }
 
 void applyScrambleTeam(int client, int team) {
